@@ -74,7 +74,7 @@
 - [fixture 오프라인 HTML 보고서](screenshots/graph-review/review-report.html), [Markdown](screenshots/graph-review/review-report.md)
 - [실제 Gitrochi 오프라인 보고서](screenshots/graph-review/repository/review.html), [Markdown](screenshots/graph-review/repository/review.md)
 
-실제 저장소 보고서는 생성 시점의 **추적된 수정 3개**를 담는다. 신규 테스트와 캡처·문서는 미추적 파일 제외 정책 때문에 이 보고서의 변경 목록에서 빠진다. 실행 가능한 원본 그래프는 `/tmp/gitrochi-review-real/graph.html`에 생성했다. 저장소 파일의 일반적인 위치 정보는 앱 연동용 원본 그래프에 유지하지만, 공유 보고서는 허용한 항목만 만들며 `repoPath` 및 `/Users/...` 정보가 없는 것을 확인했다.
+실제 저장소 보고서는 생성 시점의 **추적된 수정 3개**를 담는다. 신규 테스트와 캡처·문서는 미추적 파일 제외 정책 때문에 이 보고서의 변경 목록에서 빠진다. 실행 가능한 원본 그래프는 `/tmp/gitrochi-review-real/graph.html`에 생성했다. 저장소 파일의 일반적인 위치 정보는 앱 연동용 원본 그래프에 유지하지만, 공유 보고서는 허용한 항목만 만들며 `repoPath` 및 `/Users/me` 같은 사용자 경로 정보가 없는 것을 확인했다.
 
 ## 성능 측정
 
