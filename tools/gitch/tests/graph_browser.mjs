@@ -49,8 +49,20 @@ try {
   await send("Page.navigate", { url: `file://${html}#test` });
   for (let i = 0; i < 100; i++) { await sleep(100); if (await evaluate("!!window.gitchGraphTest")) break; }
   const checks = [];
-  for (const [tab, layout, style] of [["", "force", "dot"], ["", "force", "box"], ["", "pack", ""], ["", "layers", "box"], ["2", "layers", "box"], ["2", "force", "box"], ["4", "tidy", "box"], ["4", "radial", "dot"], ["4", "pack", ""]])
+  for (const [tab, layout, style] of [["", "force", "dot"], ["", "force", "box"], ["", "pack", ""], ["", "layers", "box"], ["", "stars", "dot"], ["", "stars", "box"], ["2", "layers", "box"], ["2", "force", "box"], ["4", "tidy", "box"], ["4", "radial", "dot"], ["4", "pack", ""]])
     checks.push(await evaluate(settle(tab, layout, style)));
+  // 별자리 → 힘 → 폴더 단위에서 별자리 → 파일 단위로 돌아오면 별자리를 지금 설정으로 다시 잡아야 한다(꼭짓점 별이 제자리, 벗어난 거리 0)
+  const starTrip = await evaluate(`(async () => {
+    const t = window.gitchGraphTest, wait = (ms) => new Promise((r) => setTimeout(r, ms)), click = (sel) => document.querySelector(sel).click();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "1" })); await wait(300);
+    click('#layout button[data-v="stars"]'); await wait(700);
+    click('#layout button[data-v="force"]'); await wait(700);
+    click('#unit button[data-v="folder"]'); await wait(700);
+    click('#layout button[data-v="stars"]'); await wait(700);
+    click('#unit button[data-v="file"]'); await wait(1200);
+    const s = t.state();
+    return { unit: s.unit, layout: s.layout, drift: t.starDrift() };
+  })()`);
   const languages = await evaluate(`(() => {
     const select = document.getElementById("lang"), t = window.gitchGraphTest;
     const options = [...select.options].map((o) => o.value), checks = [];
@@ -106,7 +118,8 @@ try {
       await writeFile(`${process.env.GITCH_TEST_ARTIFACT_DIR}/graph-${theme}.png`, Buffer.from(shot.result.data, "base64"));
     }
   }
-  out = { ok: !errors.length && checks.every((c) => c.overlaps === 0) && languages.ok && views.ok && png.type === "image/png", errors, checks, languages, views, png };
+  const tripOk = starTrip.unit === "file" && starTrip.layout === "stars" && starTrip.drift === 0;
+  out = { ok: !errors.length && checks.every((c) => c.overlaps === 0) && tripOk && languages.ok && views.ok && png.type === "image/png", errors, checks, starTrip, languages, views, png };
 } catch (e) {
   out = { ok: false, errors: [...errors, String(e && e.message || e)] };
 } finally {

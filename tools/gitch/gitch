@@ -8640,6 +8640,7 @@ graph_html() {
   --text: #f2f2f2; --text-2: #b8b8b8; --muted: #8a8a8a; --halo: rgba(10, 10, 10, .92); --shadow: 0 16px 48px rgba(0, 0, 0, .55);
   --line: rgba(255, 255, 255, .15); --ink: rgba(255, 255, 255, .46);
   --accent: #f2f2f2; --accent-soft: rgba(255, 255, 255, .12); --leaf: #4ade80; --leaf-soft: rgba(74, 222, 128, .22); --hl: #ffffff; --hl-glow: rgba(255, 255, 255, .5);
+  --star: rgba(150, 185, 255, .5); --star-glow: rgba(200, 220, 255, .35);   /* 별자리 안내선 · 꼭짓점 별 빛 */
   --core: #0e0e0e; --box: #151515;
   --s1: #d6d6d6; --s2: #e0662e; --s3: #1ea672; --node-other: #8f8f8f; --node-ext: #5e5e5e;
   --h1: #9a3412; --h2: #ea580c; --h3: #fb923c; --h4: #fed7aa;
@@ -8652,6 +8653,7 @@ graph_html() {
   --text: #171717; --text-2: #404040; --muted: #6b6b6b; --halo: rgba(247, 247, 247, .92); --shadow: 0 12px 36px rgba(0, 0, 0, .1);
   --line: rgba(0, 0, 0, .14); --ink: rgba(0, 0, 0, .42);
   --accent: #171717; --accent-soft: rgba(0, 0, 0, .07); --leaf: #16a34a; --leaf-soft: rgba(22, 163, 74, .18); --hl: #0a0a0a; --hl-glow: rgba(0, 0, 0, 0);
+  --star: rgba(37, 99, 235, .45); --star-glow: rgba(37, 99, 235, .18);
   --core: #ffffff; --box: #ffffff;
   --s1: #3d3d3d; --s2: #d4521c; --s3: #0f8a5c; --node-other: #8f8f8f; --node-ext: #ababab;
   --h1: #fb923c; --h2: #ea580c; --h3: #b8410e; --h4: #7c2d12;
@@ -9022,7 +9024,7 @@ HTMLEOF
   const C = {};
   const VS = {};
   let vs = null, m = null, view = { x: 0, y: 0, k: 1 };
-  const LAYOUTS = { files: [["force", "힘"], ["pack", "폴더 원"], ["layers", "층"]], modules: [["layers", "층"], ["force", "힘"]], changes: [["force", "힘"], ["pack", "폴더 원"], ["layers", "층"]], tree: [["tidy", "나무"], ["pack", "폴더 원"], ["radial", "방사형"], ["layers", "층"], ["force", "힘"]] };
+  const LAYOUTS = { files: [["force", "힘"], ["pack", "폴더 원"], ["layers", "층"], ["stars", "별자리"]], modules: [["layers", "층"], ["force", "힘"]], changes: [["force", "힘"], ["pack", "폴더 원"], ["layers", "층"], ["stars", "별자리"]], tree: [["tidy", "나무"], ["pack", "폴더 원"], ["radial", "방사형"], ["layers", "층"], ["force", "힘"]] };
   const BIG = 600;   // 노드가 이보다 많으면 파일 · 같이 바뀜 탭은 폴더 원으로 시작한다(멀리서 접히고 가까이서 펼쳐진다)
   function stateFor(rel) {
     if (VS[rel]) return VS[rel];
@@ -9054,7 +9056,7 @@ HTMLEOF
   const keyName = (k) => (k[0] === "r" ? ROLENAME[k.slice(2)] : FAMNAME[k.slice(2)]) || k.slice(2);
   function readTheme() {
     const cs = getComputedStyle(root), g = (k) => cs.getPropertyValue("--" + k).trim();
-    for (const k of ["bg", "text", "text-2", "muted", "line", "ink", "accent", "leaf", "hl", "hl-glow", "add", "del", "warn", "halo", "core", "box", "s1", "s2", "s3", "h1", "h2", "h3", "h4", "glow"]) C[k] = g(k);
+    for (const k of ["bg", "text", "text-2", "muted", "line", "ink", "accent", "leaf", "hl", "hl-glow", "add", "del", "warn", "halo", "core", "box", "s1", "s2", "s3", "h1", "h2", "h3", "h4", "glow", "star", "star-glow"]) C[k] = g(k);
     C.other = g("node-other"); C.ext = g("node-ext"); C.dim = g("node-ext");
     if (m) { renderGroups(); renderInfo(); if (!$("ana").hidden) renderAna(); }
     request();
@@ -9548,8 +9550,189 @@ HTMLEOF
     if (fit) animateTo(fitView([...T].map(([n, [x, y]]) => ({ x, y, hw: halfW(n), hh: halfH(n) }))), dur);
     request();
   }
-  const targets = () => separate(vs.layout === "layers" ? layersTargets() : vs.layout === "tidy" ? treeTargets() : radialTargets());
+  // ----- 별자리: 그래프 전체를 실제 별자리(전갈자리 · 오리온자리 · 북두칠성 …) 하나의 모양 위에 놓는다.
+  //       연결이 많은 노드가 꼭짓점 별이 되고, 나머지 연결된 노드는 이어진 꼭짓점 별 둘레에 잔별로 흩어진다.
+  //       연결 없는 노드는 둘레에 배경 별로 흩어진다. 연결은 줄이지 않고 전부 그대로 그린다 -----
+  // 별자리선: d3-celestial(GitHub ofrohn/d3-celestial)의 constellations.lines.json(Copyright (c) 2015, Olaf Frohn, BSD-3-Clause)을
+  //   별자리마다 가운데를 기준으로 입체 사영해 옮겼다(별자리판처럼 북쪽 위 · 동쪽 왼쪽, 긴 쪽 6).
+  //   북두칠성 · 여름철 · 겨울철 대삼각형은 별 무리라 따로 실제 별 위치를 옮겼다.
+  // s: 별 좌표, l: 별자리 선의 양 끝 별 번호. 0번 별부터 선을 따라 넓게 훑으며 꼭짓점 노드를 앉힌다
+  //   (d3-celestial 에서 옮긴 별자리는 0번이 선이 가장 많이 모이는 별)
+  const SKY = [
+    { name: "궁수자리", s: [[2.84, 2.16], [4.16, 3.93], [4.39, 2.99], [2.5, 2.91], [3.29, 2.32], [4.14, 2.04], [2.4, 1.2], [1.64, 5.19], [0.04, 4.19], [0, 2.29], [0.88, 1.91], [1.42, 1.81], [1.89, 1.95], [5.06, 3.18], [2.3, 2.45], [2.15, 1.06], [1.76, 0.63], [1.55, 0.4], [2.74, 1.07], [2.91, 1.42], [4.39, 4.46], [4.9, 1.17], [1.73, 6], [0.41, 5.56], [1.53, 0]], l: [[0, 6], [0, 14], [0, 19], [1, 2], [1, 3], [1, 13], [2, 4], [2, 5], [2, 13], [3, 4], [3, 14], [4, 0], [5, 4], [5, 21], [6, 15], [6, 18], [7, 3], [8, 9], [9, 10], [10, 11], [11, 12], [12, 0], [15, 16], [16, 17], [17, 24], [18, 19], [20, 1], [22, 7], [23, 8]] },   // Sgr 별 25
+    { name: "오리온자리", s: [[0.79, 2.57], [2.27, 2.8], [3.75, 2.03], [1.93, 4.12], [1.49, 4.44], [0.88, 0], [0.43, 0.01], [0, 1.19], [0.44, 2.12], [3.8, 3.56], [3.95, 2.93], [4.01, 2.66], [3.96, 2.27], [3.66, 1.36], [3.26, 0.99], [2.3, 4.54], [1.78, 2.08], [1.72, 4.3], [0.22, 1.09], [3.59, 3.71], [3.01, 0.95], [2.8, 5.7], [1.14, 6]], l: [[0, 1], [0, 4], [0, 16], [1, 2], [1, 3], [1, 16], [2, 12], [2, 13], [3, 17], [4, 17], [4, 22], [5, 6], [6, 7], [7, 8], [8, 0], [9, 10], [10, 11], [11, 12], [13, 14], [14, 20], [15, 3], [18, 5], [19, 9], [21, 15]] },   // Ori 별 23
+    { name: "페르세우스자리", s: [[1.3, 2.06], [2.69, 1.62], [2.83, 3.76], [0.48, 5.97], [0.32, 4.97], [0.48, 3.93], [1.12, 3.34], [1.57, 1.97], [2.08, 1.57], [2.8, 0.64], [3.26, 0], [3.21, 0.79], [2.73, 2.8], [2.7, 4.1], [3, 4.28], [3.3, 4.06], [3.23, 3.72], [0, 1.76], [0.23, 1.97], [3.7, 1.62], [1.01, 5.91], [0.41, 1.33], [6, 0.72]], l: [[0, 7], [0, 18], [1, 12], [1, 19], [2, 13], [2, 16], [3, 4], [4, 5], [5, 6], [6, 0], [7, 8], [8, 9], [9, 10], [10, 11], [11, 1], [12, 2], [13, 14], [14, 15], [15, 16], [17, 18], [19, 22], [20, 3], [21, 17]] },   // Per 별 23
+    { name: "물고기자리", s: [[1.73, 0.75], [4.76, 3.27], [5.55, 3.56], [1.83, 0], [1.57, 0.37], [1.78, 1.23], [1.11, 1.97], [0.6, 2.78], [0, 3.63], [0.29, 3.58], [0.72, 3.29], [1.1, 3.21], [1.65, 3.03], [2.01, 3], [2.48, 3.04], [4.11, 3.13], [5.16, 3.16], [5.42, 3.28], [5.22, 3.85], [4.71, 3.8], [4.55, 3.57], [6, 3.47]], l: [[0, 3], [0, 4], [0, 5], [1, 16], [1, 20], [2, 18], [2, 21], [3, 4], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 1], [16, 17], [17, 2], [18, 19], [19, 20]] },   // Psc 별 22
+    { name: "큰곰자리", s: [[3.4, 1.17], [2.11, 0.88], [3.38, 0.47], [2.39, 1.4], [2.4, 2.2], [3.17, 2.71], [5.16, 1.55], [1.4, 0.76], [0.83, 0.63], [2.85, 4.21], [4.75, 0.11], [5.75, 0], [4.59, 0.7], [4.71, 1.34], [0, 1.01], [2.85, 4.42], [4.32, 3.08], [4.42, 2.88], [6, 1.77], [5.95, 1.92]], l: [[0, 3], [0, 12], [0, 13], [1, 2], [1, 3], [1, 7], [2, 0], [2, 10], [3, 4], [4, 5], [4, 9], [5, 16], [5, 17], [6, 18], [6, 19], [7, 8], [8, 14], [9, 15], [10, 11], [11, 12], [13, 6]] },   // UMa 별 20
+    { name: "안드로메다자리", s: [[2.76, 3.37], [1.66, 2.46], [4.78, 1.01], [4.68, 0.83], [2.41, 4.55], [2.78, 3.65], [2.86, 2.86], [2.17, 1.98], [2.43, 1.53], [1.88, 0.38], [0, 0.93], [3.97, 3.66], [1.99, 4.69], [6, 0.92], [4.71, 0.43], [1.07, 0], [4.45, 0.48]], l: [[0, 5], [0, 6], [0, 11], [1, 0], [1, 7], [2, 3], [2, 13], [3, 14], [3, 16], [4, 5], [6, 2], [7, 8], [8, 9], [9, 15], [10, 1], [12, 4]] },   // And 별 17
+    { name: "헤르쿨레스자리", s: [[4.03, 4.63], [3.47, 2.78], [3.34, 1.44], [2.72, 2.93], [2.17, 1.84], [3.61, 0.77], [4.02, 0], [4.41, 0.21], [1.86, 1.76], [2.11, 4.05], [0.84, 3.43], [0.41, 3.1], [4.43, 5.04], [5.03, 0.58], [0.66, 1.63], [0, 3.13], [2.08, 6]], l: [[0, 1], [0, 16], [1, 2], [1, 3], [2, 4], [2, 5], [3, 4], [3, 9], [4, 8], [5, 6], [6, 7], [7, 13], [9, 10], [10, 11], [11, 15], [12, 0], [14, 8]] },   // Her 별 17
+    { name: "뱀주인자리", s: [[2.82, 3.27], [0.5, 1.15], [2.12, 0.46], [1.69, 3.98], [0.34, 1.42], [0.8, 0], [3.06, 1.51], [3.63, 2.32], [3.49, 2.46], [3.01, 4.12], [3.14, 4.38], [3.23, 4.61], [1.33, 5.3], [0, 3.2], [3.16, 5.09], [1.19, 6]], l: [[0, 3], [0, 9], [1, 3], [1, 5], [2, 0], [2, 6], [3, 12], [4, 1], [5, 2], [6, 7], [7, 8], [8, 0], [9, 10], [10, 11], [11, 14], [12, 15], [13, 4]] },   // Oph 별 16
+    { name: "물병자리", s: [[0.76, 1.52], [4.46, 1], [3.27, 0.24], [2.46, 0.2], [5.83, 1.55], [2.71, 0.39], [2.23, 0.21], [1.64, 1.27], [6, 1.64], [1.12, 3.21], [3.23, 2.14], [2.88, 1.29], [2.58, 0], [0.66, 3.08], [0, 2.8]], l: [[0, 9], [0, 13], [0, 14], [1, 2], [1, 10], [2, 5], [2, 11], [3, 6], [3, 12], [4, 1], [5, 3], [6, 7], [7, 0], [8, 4]] },   // Aqr 별 15
+    { name: "용자리", s: [[0.88, 4.73], [0.17, 2.41], [1.15, 2.21], [0.57, 5.62], [1.29, 5.63], [1.32, 5.13], [2.04, 3.39], [2.9, 4.1], [3.44, 4.53], [4.22, 4.26], [5.24, 2.66], [5.55, 0.87], [6, 0], [1.24, 1.98], [0, 1.71]], l: [[0, 1], [0, 3], [0, 5], [1, 2], [1, 14], [2, 6], [2, 13], [3, 4], [4, 5], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12]] },   // Dra 별 15
+    { name: "고래자리", s: [[0.7, 1.02], [2.6, 3.01], [0.98, 0.67], [1.26, 0.25], [0.65, 0], [0.1, 0.17], [0, 0.89], [0.84, 1.45], [1.58, 1.93], [2.86, 3.84], [5.02, 4.23], [6, 2.88], [4.16, 3.01], [3.6, 2.71]], l: [[0, 2], [0, 6], [0, 7], [1, 9], [1, 13], [2, 3], [3, 4], [4, 5], [5, 6], [7, 8], [8, 1], [9, 10], [10, 11], [11, 12], [12, 13]] },   // Cet 별 14
+    { name: "전갈자리", s: [[5.78, 0.76], [4.49, 1.43], [4, 1.62], [3.61, 2.07], [2.81, 3.61], [2.73, 4.58], [2.61, 5.69], [1.79, 5.95], [0.6, 6], [0, 5.33], [0.21, 5.02], [5.77, 1.67], [5.54, 0], [0.6, 4.46]], l: [[0, 1], [0, 12], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 13], [11, 0]] },   // Sco 별 14
+    { name: "페가수스자리", s: [[2.85, 0.86], [2.74, 2.97], [3.6, 0.53], [0.52, 0.47], [0, 2.77], [3.45, 3.48], [3.66, 3.7], [4.96, 4.45], [3.34, 1.45], [3.47, 1.62], [4.93, 1.28], [4.74, 0], [6, 3.78], [5.76, 1.17]], l: [[0, 1], [0, 3], [0, 8], [1, 5], [2, 0], [3, 4], [4, 1], [5, 6], [6, 7], [7, 12], [8, 9], [9, 10], [10, 13], [11, 2]] },   // Peg 별 14
+    { name: "처녀자리", s: [[4.14, 1.64], [3.2, 2.18], [5.84, 1.21], [4.86, 1.54], [2.71, 2.92], [1.03, 2.25], [3.68, 1], [2.39, 1.53], [1.5, 1.24], [6, 0.56], [0.12, 2.22], [3.46, 0], [0, 1.19]], l: [[0, 1], [0, 6], [1, 4], [1, 7], [2, 3], [3, 0], [4, 5], [5, 10], [7, 8], [8, 12], [9, 2], [11, 6]] },   // Vir 별 13
+    { name: "목동자리", s: [[2.01, 5.13], [1.42, 2.14], [1.87, 0.91], [2.8, 5.22], [1.42, 3.38], [0.54, 1.77], [0, 2.83], [0.96, 3.89], [1.91, 0], [1.62, 0], [3.09, 5.35], [1.04, 6]], l: [[0, 4], [0, 7], [0, 11], [1, 2], [1, 5], [2, 8], [2, 9], [3, 0], [4, 1], [5, 6], [6, 7], [8, 9], [10, 3]] },   // Boo 별 12
+    { name: "쌍둥이자리", s: [[1.58, 2.95], [5.45, 2.73], [4.01, 2.03], [2.23, 0.54], [0.77, 0], [0, 1.09], [0.59, 1.46], [2.66, 3.38], [4.52, 4.58], [6, 2.69], [4.01, 5.62], [1.68, 4.55]], l: [[0, 7], [0, 11], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0], [7, 8], [8, 10], [9, 1]] },   // Gem 별 12
+    { name: "황소자리", s: [[3.44, 2.61], [5.88, 3.66], [2.71, 2.43], [3.04, 2.56], [3.3, 2.25], [3.05, 1.94], [4.31, 3.19], [6, 3.79], [0, 1.38], [0.65, 0], [4.22, 4.41], [5.48, 5.45]], l: [[0, 4], [0, 6], [1, 7], [1, 10], [2, 3], [3, 0], [4, 5], [5, 9], [6, 1], [7, 11], [8, 2]] },   // Tau 별 12
+    { name: "큰개자리", s: [[2.86, 1.55], [1.1, 4.73], [1.99, 1.65], [1.48, 3.88], [1.6, 5.22], [1.83, 5.56], [1.39, 1.19], [2.15, 0], [4.61, 2.01], [4.56, 6], [0, 5.73]], l: [[0, 2], [0, 3], [1, 4], [1, 10], [2, 6], [2, 7], [3, 1], [4, 5], [5, 9], [6, 7], [8, 0]] },   // CMa 별 11
+    { name: "염소자리", s: [[6, 0], [5.74, 0.62], [5.18, 1.44], [4, 3.46], [3.63, 3.91], [1.42, 2.7], [0, 1.02], [0.47, 1.14], [1.66, 1.14], [2.74, 1.23]], l: [[0, 1], [0, 9], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9]] },   // Cap 별 10
+    { name: "케페우스자리", s: [[2.63, 4.46], [0, 3.33], [2.13, 2.3], [3.72, 4.46], [1.87, 5.56], [0.71, 6], [0.89, 5.7], [0.23, 5.56], [0.06, 0], [4.12, 4.01]], l: [[0, 2], [0, 4], [1, 2], [1, 8], [3, 0], [4, 5], [5, 6], [6, 7], [7, 1], [8, 2], [9, 3]] },   // Cep 별 10
+    { name: "마차부자리", s: [[1.93, 1.98], [0.19, 2.15], [2.39, 3.06], [2.95, 4.89], [1.52, 6], [0, 3.93], [0.43, 0], [2.55, 2.46], [2.57, 3.09]], l: [[0, 2], [0, 6], [0, 7], [1, 0], [1, 5], [1, 6], [2, 3], [3, 4], [4, 5], [7, 8]] },   // Aur 별 9
+    { name: "백조자리", s: [[2.65, 3.21], [1.44, 4.6], [4.23, 2.05], [4.67, 0.45], [3.85, 4.42], [0, 5.3], [5.06, 0], [1.91, 1.99], [5.24, 6]], l: [[0, 2], [0, 4], [0, 7], [1, 0], [2, 3], [3, 6], [4, 8], [5, 1]] },   // Cyg 별 9
+    { name: "사자자리", s: [[4.42, 1.32], [5.02, 2.91], [5.05, 1.93], [1.82, 1.12], [0, 2.21], [1.75, 2.17], [4.56, 0.58], [5.64, 0], [6, 0.44]], l: [[0, 3], [0, 6], [1, 2], [1, 5], [2, 0], [3, 4], [4, 5], [6, 7], [7, 8]] },   // Leo 별 9
+    { name: "독수리자리", s: [[1.65, 1.62], [3.65, 3.45], [1.29, 2.4], [0, 4.7], [1.5, 4.12], [5.19, 0], [2.01, 1.07], [5.19, 6]], l: [[0, 1], [0, 2], [0, 5], [1, 5], [1, 7], [2, 3], [3, 4], [4, 1], [6, 0]] },   // Aql 별 8
+    { name: "북쪽왕관자리", s: [[6, 1.82], [4.81, 3.82], [3.33, 4.18], [2.07, 4.36], [0.62, 3.66], [5.04, 0], [0, 1.2]], l: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 6], [5, 0]] },   // CrB 별 7
+    { name: "작은곰자리", s: [[0.69, 4.13], [0.04, 4.74], [1.28, 6], [1.85, 5.15], [0, 2.69], [0.17, 1.2], [0.58, 0]], l: [[0, 1], [0, 3], [0, 4], [1, 2], [2, 3], [4, 5], [5, 6]] },   // UMi 별 7
+    { name: "거문고자리", s: [[2.56, 1.75], [2.6, 0], [3.87, 0.69], [0.87, 2.36], [0, 6], [1.63, 5.44]], l: [[0, 1], [0, 2], [0, 3], [0, 5], [1, 2], [3, 4], [4, 5]] },   // Lyr 별 6
+    { name: "천칭자리", s: [[3.24, 2], [0.09, 1.6], [1.41, 0], [0.09, 5.51], [2.25, 4.67], [0, 6]], l: [[0, 1], [0, 2], [1, 3], [2, 1], [3, 5], [4, 0]] },   // Lib 별 6
+    { name: "게자리", s: [[1.05, 3.27], [1.15, 2.25], [0, 5.19], [0.93, 0], [3.18, 6]], l: [[0, 1], [0, 4], [1, 3], [2, 0]] },   // Cnc 별 5
+    { name: "카시오페이아자리", s: [[1.34, 1.88], [3.08, 1.73], [4.17, 3.7], [0, 0], [6, 2.19]], l: [[0, 1], [1, 2], [2, 4], [3, 0]] },   // Cas 별 5
+    { name: "남십자자리", s: [[0, 2.65], [4.17, 1.69], [2.62, 6], [2.08, 0]], l: [[0, 1], [2, 3]] },   // Cru 별 4
+    { name: "양자리", s: [[4.48, 1.93], [5.86, 3.15], [0, 0], [6, 3.86]], l: [[0, 1], [1, 3], [2, 0]] },   // Ari 별 4
+    { name: "북두칠성", s: [[5.73, 0], [5.78, 1.34], [3.96, 2.02], [3.2, 1.18], [1.86, 1.45], [0.81, 1.7], [0, 3.11]], l: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]] },
+    { name: "여름철 대삼각형", s: [[3.36, 0.81], [0, 0], [1.37, 4.55]], l: [[0, 1], [1, 2], [2, 0]] },
+    { name: "겨울철 대삼각형", s: [[4.37, 0], [0, 0.36], [2.29, 4.02]], l: [[0, 1], [1, 2], [2, 0]] },
+  ];
+  // 별자리 지문: 보이는 노드 id · 연결 수 · 고른 횟수 · 그리기 방식. 돌아왔을 때 이 값이 다르면(필터가 바뀌었거나,
+  // 다른 단위에서 별자리를 바꿨거나, 그사이 다른 배치였으면) 별자리를 다시 잡는다
+  const starKey = () => { let h = visEdges.length; for (const n of visNodes) for (const ch of n.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return `${visNodes.length}:${h}:${vs.starPick || 0}:${vs.style}`; };
+  function starTargets() {
+    const T = new Map(), nodes = [...visNodes].sort(byId);
+    m.starLabels = []; m.starFig = new Set(); m.starSig = starKey(); m.starMain = []; m.starLines = []; m.starMainSet = new Set();
+    if (!nodes.length) return T;
+    const wt = (e) => (e.w > 0 ? e.w : 1), pk = (a, b) => (a.id < b.id ? a.id + "\n" + b.id : b.id + "\n" + a.id);
+    const deg = new Map(nodes.map((n) => [n, 0])), adj = new Map(nodes.map((n) => [n, new Map()])), pairE = new Map();   // pairE: 두 노드 → 둘 사이 연결들
+    for (const e of visEdges) {
+      if (e.s === e.t || !deg.has(e.s) || !deg.has(e.t)) continue;
+      const w = wt(e), k = pk(e.s, e.t);
+      deg.set(e.s, deg.get(e.s) + w); deg.set(e.t, deg.get(e.t) + w);
+      adj.get(e.s).set(e.t, (adj.get(e.s).get(e.t) || 0) + w); adj.get(e.t).set(e.s, (adj.get(e.t).get(e.s) || 0) + w);
+      if (pairE.has(k)) pairE.get(k).push(e); else pairE.set(k, [e]);
+    }
+    const aw = (a, b) => (a && b && adj.get(a).get(b)) || 0;
+    // 간격 계산용 별 크기: 점은 반지름의 √2배, 상자는 대각선의 절반
+    const isBox = box(), gap = isBox ? 90 : 46, rad = (n) => Math.hypot(halfW(n), halfH(n));
+    let maxRad = 0;
+    for (const n of nodes) maxRad = Math.max(maxRad, rad(n));
+    const sep = gap * 0.7 + 2 * maxRad;   // 이웃한 두 별 중심 사이의 최소 거리
+    const linked = nodes.filter((n) => adj.get(n).size).sort((a, b) => deg.get(b) - deg.get(a) || byId(a, b)), N = linked.length;
+    const P = new Map();
+    if (N === 2) { P.set(linked[0], [-sep / 2, 0]); P.set(linked[1], [sep / 2, 0]); }
+    else if (N >= 3) {
+      // 별자리 고르기: 별 수가 연결된 노드 수 이하인 것 중 저장소 이름과 고른 횟수로 하나 — 보이는 노드가 같으면 늘 같은 별자리.
+      //               별자리 단추를 다시 누르면 다음 별자리
+      const fit = SKY.filter((x) => x.s.length <= N);
+      let h = 0;
+      for (const ch of String(META.repo || "")) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+      const c = fit[(h + (vs.starPick || 0)) % fit.length], S = c.s.length;
+      // 꼭짓점 별: 연결이 많은 노드 S 개를, 별자리 선을 따라 0번 별부터 훑으며 이미 앉은 이웃 별과 가장 세게 이어진 것부터 앉힌다
+      const vn = new Array(S).fill(null), vAdj = c.s.map(() => []), left = new Set(linked.slice(0, S)), seenV = new Set();
+      for (const [a, b] of c.l) { vAdj[a].push(b); vAdj[b].push(a); }
+      for (let v0 = 0; v0 < S; v0++) {
+        if (seenV.has(v0)) continue;
+        const q = [v0];
+        seenV.add(v0);
+        while (q.length) {
+          const v = q.shift();
+          let best = null, bs = -1;
+          for (const n of left) { let s = 0; for (const u of vAdj[v]) s += aw(n, vn[u]); if (s > bs) { best = n; bs = s; } }
+          vn[v] = best; left.delete(best);
+          for (const u of vAdj[v]) if (!seenV.has(u)) { seenV.add(u); q.push(u); }
+        }
+      }
+      m.starMain = vn; m.starLines = c.l; m.starMainSet = new Set(vn);
+      // 나머지 노드가 모일 꼭짓점: 꼭짓점 노드들에서 동시에 넓게 훑어 먼저 닿은 꼭짓점이 기본이고(닿는 순서대로 자리를 잡는다),
+      // 직접 이어진 꼭짓점 별이 있으면 그중 가장 세게 이어진 별로. 한 별에 몰려 덩어리지지 않게 별마다 받을 수 있는 수에 끝을 두고,
+      // 꽉 찼으면 다음으로 이어진 별, 그것도 없으면 가장 덜 찬 별로 간다. 꼭짓점과 이어지지 않은 덩어리는 맨 뒤에
+      const near = new Map(), order = [], home = new Map(), load = new Array(S).fill(0), capV = Math.ceil(((N - S) / S) * 1.6) + 1;
+      vn.forEach((n, v) => near.set(n, v));
+      const bq = [...vn];
+      for (let i = 0; i < bq.length; i++) for (const o of adj.get(bq[i]).keys()) if (!near.has(o)) { near.set(o, near.get(bq[i])); bq.push(o); order.push(o); }
+      for (const n of linked.slice(S)) if (!near.has(n)) order.push(n);
+      for (const n of order) {
+        let best = -1, bs = -1;
+        for (let v = 0; v < S; v++) {
+          if (load[v] >= capV) continue;
+          const sc = aw(n, vn[v]) * 10 + (near.get(n) === v ? 1 : 0);
+          if (sc > bs) { best = v; bs = sc; }
+        }
+        if (bs <= 0) { best = 0; for (let v = 1; v < S; v++) if (load[v] < load[best]) best = v; }   // 이어진 별이 없거나 다 찼으면 가장 덜 찬 별
+        home.set(n, best); load[best]++;
+      }
+      // 별자리 크기: 잔별이 모두 들어갈 넓이가 되게, 그리고 꼭짓점 별끼리는 충분히 떨어지게
+      let dmin = Infinity, ux0 = Infinity, ux1 = -Infinity, uy0 = Infinity, uy1 = -Infinity;
+      for (let i = 0; i < S; i++) {
+        ux0 = Math.min(ux0, c.s[i][0]); ux1 = Math.max(ux1, c.s[i][0]); uy0 = Math.min(uy0, c.s[i][1]); uy1 = Math.max(uy1, c.s[i][1]);
+        for (let j = i + 1; j < S; j++) dmin = Math.min(dmin, Math.hypot(c.s[i][0] - c.s[j][0], c.s[i][1] - c.s[j][1]));
+      }
+      const area = Math.max((ux1 - ux0) * (uy1 - uy0), dmin * dmin), scale = Math.max((sep * 3) / dmin, Math.sqrt((N * (gap * 0.9) ** 2 * 2.2) / area));
+      for (let v = 0; v < S; v++) P.set(vn[v], [c.s[v][0] * scale, c.s[v][1] * scale]);
+      for (const [a, b] of c.l) for (const e of pairE.get(pk(vn[a], vn[b])) || []) m.starFig.add(e);   // 별자리 선과 겹치는 실제 연결
+      // 잔별: 가까운 꼭짓점 별 둘레에 흐리게 흩뿌린다(가운데일수록 촘촘한 정규 분포, 늘 같은 난수).
+      //       퍼짐은 가장 가까운 다른 꼭짓점까지 거리의 0.35배 — 꼭짓점 별 바로 옆은 비워 둬서 별자리 별이 돋보이게.
+      //       빈자리를 40번 못 찾을 때마다 퍼짐을 15%씩 넓혀 다시 찾는다
+      const spread = vn.map((_, v) => { let d = Infinity; for (let u = 0; u < S; u++) if (u !== v) d = Math.min(d, Math.hypot(c.s[u][0] - c.s[v][0], c.s[u][1] - c.s[v][1])); return d * scale * 0.35; });
+      const qr = (n) => rad(n) + gap * 0.35, cell = 2 * (maxRad + gap * 0.9), grid = new Map(), key = (gx, gy) => gx * 100003 + gy, rnd = lcg(11);
+      const put = (x, y, r) => { const k = key(Math.floor(x / cell), Math.floor(y / cell)); if (grid.has(k)) grid.get(k).push([x, y, r]); else grid.set(k, [[x, y, r]]); };
+      for (const n of vn) { const [x, y] = P.get(n); put(x, y, rad(n) + gap * 0.9); }
+      for (const n of order) {
+        const v = home.get(n), [hx, hy] = P.get(vn[v]), r0 = qr(n);
+        let sd = spread[v], x = hx, y = hy;   // 앞 잔별이 넓혀 둔 퍼짐에서 시작(꽉 찬 가운데를 다시 훑지 않게)
+        for (let t = 1; ; t++) {
+          const d = sd * Math.sqrt(-2 * Math.log(Math.max(rnd(), 1e-9))), a = rnd() * Math.PI * 2;
+          x = hx + Math.cos(a) * d; y = hy + Math.sin(a) * d;
+          if (t % 40 === 0) sd *= 1.15;
+          const gx = Math.floor(x / cell), gy = Math.floor(y / cell);
+          let free = true;
+          for (let ox = -1; ox <= 1 && free; ox++) for (let oy = -1; oy <= 1 && free; oy++) for (const [px, py, pr] of grid.get(key(gx + ox, gy + oy)) || []) if (Math.hypot(px - x, py - y) < pr + r0) { free = false; break; }
+          if (free) break;
+        }
+        spread[v] = sd;
+        put(x, y, r0);
+        P.set(n, [x, y]);
+      }
+      m.starLabels.push({ name: c.name });
+    }
+    // 가운데 맞추기, 이름은 별자리 아래에
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of P.values()) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const cx = P.size ? (x0 + x1) / 2 : 0, cy = P.size ? (y0 + y1) / 2 : 0;
+    let Rc = 0;
+    for (const [n, p] of P) { const x = p[0] - cx, y = p[1] - cy; T.set(n, [x, y]); Rc = Math.max(Rc, Math.hypot(x, y) + rad(n)); }
+    let vy1 = -Infinity, vx0 = Infinity, vx1 = -Infinity;   // 이름은 꼭짓점 별들 바로 아래 가운데
+    for (const n of m.starMain) if (T.has(n)) { const [x, y] = T.get(n); vy1 = Math.max(vy1, y); vx0 = Math.min(vx0, x); vx1 = Math.max(vx1, x); }
+    for (const s of m.starLabels) Object.assign(s, { x: (vx0 + vx1) / 2, y: vy1 + maxRad + 22, R: Rc });
+    // 연결 없는 노드: 별자리 둘레와 빈 곳에 배경 별처럼 흩뿌린다(늘 같은 난수라 열 때마다 같은 자리).
+    //               빈자리를 30번 못 찾을 때마다 뿌리는 범위를 10%씩 넓혀 다시 찾는다
+    const lone = nodes.filter((n) => !adj.get(n).size);
+    if (lone.length) {
+      const qr = (n) => rad(n) + gap * 0.35, cell = 2 * (maxRad + gap * 0.35), grid = new Map(), key = (gx, gy) => gx * 100003 + gy, rnd = lcg(7);
+      const put = (x, y, r) => { const k = key(Math.floor(x / cell), Math.floor(y / cell)); if (grid.has(k)) grid.get(k).push([x, y, r]); else grid.set(k, [[x, y, r]]); };
+      for (const [n, [x, y]] of T) put(x, y, qr(n));
+      let spread = Math.max(Rc * 1.25, 120) + gap;
+      for (const n of lone) {
+        const r0 = qr(n);
+        let x = 0, y = 0;
+        for (let t = 1; ; t++) {
+          const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * spread;
+          x = Math.cos(a) * d; y = Math.sin(a) * d;
+          if (t % 30 === 0) spread *= 1.1;
+          const gx = Math.floor(x / cell), gy = Math.floor(y / cell);
+          let free = true;
+          for (let ox = -1; ox <= 1 && free; ox++) for (let oy = -1; oy <= 1 && free; oy++) for (const [px, py, pr] of grid.get(key(gx + ox, gy + oy)) || []) if (Math.hypot(px - x, py - y) < pr + r0) { free = false; break; }
+          if (free) break;
+        }
+        put(x, y, r0);
+        T.set(n, [x, y]);
+      }
+    }
+    return T;
+  }
+  const targets = () => separate(vs.layout === "layers" ? layersTargets() : vs.layout === "tidy" ? treeTargets() : vs.layout === "stars" ? starTargets() : radialTargets());
   function applyLayout(reset) {
+    if (vs.layout !== "stars") m.starSig = null;   // 다른 배치로 바꾸면 별자리 지문을 지워, 나중에 돌아올 때 다시 잡게
     $("forces").style.opacity = vs.layout === "force" ? "" : ".45";
     if (vs.layout === "pack") { running = false; morph = null; buildPack(); if (!m.userMoved || reset) animateTo(fitView(), 420); request(); return; }
     if (vs.layout === "force") { startForce(reset, reset ? 1 : 0.35); return; }
@@ -10101,26 +10284,67 @@ HTMLEOF
     // 연결: 보통은 한 번에(많을수록 옅게), 강조된 것은 흰 빛
     const ink = isBox ? C.ink : C.line;
     ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineCap = "round";
-    const base = (isBox ? 0.9 : clamp(1.6 / Math.sqrt(visEdges.length / 400 + 0.01), 0.22, 1)) * (1 - dimT * 0.75);
+    // 별자리 배치: 연결은 옅게, 별자리 선과 겹치는 실제 연결(fig)만 밝게 — 별자리 모양이 연결에 묻히지 않게
+    const fig = vs.layout === "stars" && m.starFig && m.starFig.size ? m.starFig : null;
+    const base = (isBox ? 0.9 : clamp(1.6 / Math.sqrt(visEdges.length / 400 + 0.01), 0.22, 1)) * (1 - dimT * 0.75) * (vs.layout === "stars" ? 0.3 : 1);
     for (const dashed of [false, true]) {
       ctx.globalAlpha = Math.min(1, base);
       ctx.setLineDash(dashed ? [4 / k, 3 / k] : []);
       if (m.rel === "changes" || isBox) {
         for (const e of visEdges) {
-          if (e.u !== dashed || hot(e)) continue;
-          ctx.lineWidth = (P.width * (m.rel === "changes" ? 0.8 + Math.log2(Math.max(e.w, 1)) * 0.8 : 1.2)) / k;
+          if (e.u !== dashed || hot(e) || (fig && fig.has(e))) continue;
+          ctx.lineWidth = (P.width * (fig ? 0.7 : m.rel === "changes" ? 0.8 + Math.log2(Math.max(e.w, 1)) * 0.8 : 1.2)) / k;
           const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
           if (showArrows && (seen(e.t, 10) || seen(e.s, 10))) { ctx.beginPath(); arrowHead(g, 8 / k); ctx.fill(); }
         }
       } else {
         ctx.lineWidth = P.width / k; ctx.beginPath();
         const curvy = vs.layout === "tidy" || vs.layout === "radial";
-        for (const e of visEdges) if (e.u === dashed && !hot(e)) { if (curvy) strokeEdge(geom(e)); else { ctx.moveTo(e.s.x, e.s.y); ctx.lineTo(e.t.x, e.t.y); } }
+        for (const e of visEdges) if (e.u === dashed && !hot(e) && !(fig && fig.has(e))) { if (curvy) strokeEdge(geom(e)); else { ctx.moveTo(e.s.x, e.s.y); ctx.lineTo(e.t.x, e.t.y); } }
         ctx.stroke();
         if (showArrows && visEdges.length < 6000) { ctx.beginPath(); for (const e of visEdges) if (e.u === dashed && !hot(e) && seen(e.t, 10)) arrowHead(geom(e), 6 / k); ctx.fill(); }
       }
     }
     ctx.setLineDash([]);
+    if (vs.layout === "stars" && m.starMain && m.starMain.length) {
+      // 별자리 안내선: 꼭짓점 별 사이를 잇는 별자리 모양(데이터 연결이 아니라 모양을 보여 주는 선, 파란빛) · 꼭짓점 별 둘레의 빛
+      ctx.save();
+      ctx.globalAlpha = 1 - dimT * 0.6; ctx.strokeStyle = C.star; ctx.lineWidth = (P.width * 2) / k; ctx.lineCap = "round";
+      ctx.beginPath();
+      for (const [a, b] of m.starLines) { const A = m.starMain[a], B = m.starMain[b]; if (A && B && A.vis && B.vis) { ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); } }
+      ctx.stroke();
+      for (const n of m.starMain) {
+        if (!n || !n.vis) continue;
+        const R = Math.max(n.r * 3.2, 10 / k), gr = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, R);
+        gr.addColorStop(0, C["star-glow"]); gr.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(n.x, n.y, R, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    if (fig) {   // 별자리 선과 겹치는 실제 연결
+      ctx.globalAlpha = 0.85 * (1 - dimT * 0.75); ctx.strokeStyle = C["text-2"];
+      for (const e of visEdges) {
+        if (!fig.has(e) || hot(e)) continue;
+        ctx.lineWidth = (P.width * 1.5) / k; ctx.setLineDash(e.u ? [4 / k, 3 / k] : []);
+        const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
+        // 화살표: 점 그리기(파일 탭)는 위에서 연결 전체에 한 번에 그렸고, 연결을 하나씩 그리는 경우는 여기서
+        if (showArrows && (m.rel === "changes" || isBox)) { ctx.setLineDash([]); ctx.fillStyle = C["text-2"]; ctx.beginPath(); arrowHead(g, 8 / k); ctx.fill(); }
+      }
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+    if (vs.layout === "stars" && m.starLabels && m.starLabels.length) {   // 별자리 이름: 별자리 아래에 옅게, 확대해도 글자 크기는 그대로
+      ctx.save();
+      ctx.globalAlpha = 0.6 * (1 - dimT * 0.6); ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.font = `600 ${13 / k}px ${FONT}`;
+      const taken = [];   // 화면에서 별자리가 너무 작거나 앞서 그린 이름과 겹치면 그리지 않는다
+      for (const s of m.starLabels) {
+        if (s.R * k < 30) continue;
+        const hw = ctx.measureText(s.name).width / 2, r = [s.x - hw, s.y, s.x + hw, s.y + 16 / k];
+        if (taken.some((o) => r[0] < o[2] && o[0] < r[2] && r[1] < o[3] && o[1] < r[3])) continue;
+        taken.push(r); ctx.fillText(s.name, s.x, s.y);
+      }
+      ctx.restore();
+    }
     if (m.G.diff || (VIOL && VIOL.size && P.rules)) {   // 비교의 더함 · 뺌과 규칙 위반은 늘 위에 — 많을수록 옅고 가늘게
       let nd = 0;
       for (const e of visEdges) if ((m.G.diff && e.d.status) || (VIOL && P.rules && VIOL.get(e))) nd++;
@@ -10151,27 +10375,29 @@ HTMLEOF
       ctx.shadowBlur = 0; ctx.setLineDash([]);
     }
     // 노드: git 노드처럼 색 고리 + 가운데 빈 곳, 강조된 것과 이웃만 밝게(나머지는 천천히 흐리게)
+    const dimField = vs.layout === "stars" && m.starMainSet && m.starMainSet.size > 0;
     for (const n of visNodes) {
       const lit = !lit0 || (F && F.has(n)) || (!F && matchSet && matchSet.has(n));
       const want = lit ? 1 : 0.13;
       n.fade += (want - n.fade) * 0.22;
       if (Math.abs(n.fade - want) > 0.01) busy = true;
+      const fa = n.fade * (dimField && !m.starMainSet.has(n) ? 0.5 : 1);   // 별자리 배치의 잔별은 흐리게
       if (!seen(n, 0)) continue;
       const col = colorOf(n);
       if (isBox) {   // 상자: 어두운 바탕에 그 색 테두리 · 살짝 그 색, 글자는 본문 색
-        ctx.globalAlpha = n.fade;
+        ctx.globalAlpha = fa;
         ctx.fillStyle = C.box; ctx.beginPath(); shape(n, 0); ctx.fill();
-        ctx.globalAlpha = n.fade * (neutral(col) ? 0.1 : 0.2); ctx.fillStyle = col; ctx.fill();
-        ctx.globalAlpha = n.fade; ctx.strokeStyle = col; ctx.lineWidth = 1.7 / k;
+        ctx.globalAlpha = fa * (neutral(col) ? 0.1 : 0.2); ctx.fillStyle = col; ctx.fill();
+        ctx.globalAlpha = fa; ctx.strokeStyle = col; ctx.lineWidth = 1.7 / k;
         if (n.fam === "ext" || n.role === "ext") ctx.setLineDash([4 / k, 3 / k]);
         ctx.stroke(); ctx.setLineDash([]);
       } else {
-        ctx.globalAlpha = n.fade; ctx.fillStyle = col;
+        ctx.globalAlpha = fa; ctx.fillStyle = col;
         ctx.beginPath(); shape(n, 0); ctx.fill();
         if (n.r * k >= 3.4 && n.fam !== "ext") {   // 고리 두께는 화면에서 3px 까지 — 크게 보면 가는 고리와 옅은 속
           const sc = Math.max(0.5, 1 - 3 / (n.r * k));
           ctx.fillStyle = C.core; ctx.beginPath(); core(n, sc); ctx.fill();
-          if (sc > 0.55) { ctx.globalAlpha = n.fade * 0.12; ctx.fillStyle = col; ctx.fill(); }
+          if (sc > 0.55) { ctx.globalAlpha = fa * 0.12; ctx.fillStyle = col; ctx.fill(); }
         }
       }
     }
@@ -10539,10 +10765,13 @@ HTMLEOF
     $("depth").value = String(vs.depth);
     seg($("style"), [["dot", "점"], ["box", "상자"]], vs.style, (v) => { vs.style = v; if (v === "box" && vs.layout === "radial") vs.layout = "tidy"; renderControls(); sizeNodes(); m.userMoved = false; applyLayout(true); });
     seg($("layout"), LAYOUTS[REL], vs.layout, (v) => {
+      if (v === "stars" && vs.layout === "stars") vs.starPick = (vs.starPick || 0) + 1;   // 별자리를 다시 누르면 다음 별자리
       vs.layout = v;
       if (v === "pack" && vs.unit !== "file") { vs.unit = "file"; switchModel(); }   // 폴더 원은 파일 단위로 — 접고 펼치기가 폴더 묶음을 대신한다
       renderControls(); m.userMoved = false; applyLayout(true);
     });
+    const starBtn = $("layout").querySelector('button[data-v="stars"]');
+    if (starBtn) starBtn.title = "파란 선은 별자리 모양을 보여 주는 안내선입니다(연결 아님). 다시 누르면 다른 별자리";
     const colors = [["family", "언어"], ...(REL === "modules" ? [["role", "종류"]] : []), ...(heatOk() ? [["heat", "바뀐 횟수"]] : [])];
     seg($("colorBy"), colors, colorMode(), (v) => { vs.colorBy = v; hidden.clear(); renderControls(); filtersChanged(); });
     seg($("sizeBy"), SIZES(), vs.sizeBy, (v) => { vs.sizeBy = v; sizeNodes(); renderControls(); applyLayout(false); });
@@ -10581,7 +10810,9 @@ HTMLEOF
     }
     refreshVisible(); sizeNodes(); renderControls(); renderInfo(); setQuery($("q").value);
     if (!$("ana").hidden) renderAna();
-    if (!m.laid) { m.laid = true; firstLayout(); } else request();
+    if (!m.laid) { m.laid = true; firstLayout(); }
+    else if (vs.layout === "stars" && m.starSig !== starKey()) applyLayout(false);   // 그사이 필터 · 별자리 · 배치가 바뀌었으면 다시 잡는다
+    else request();
     if (!$("table").hidden) renderTable();
   }
   function show(rel) { REL = rel; vs = stateFor(rel); switchModel(); }
@@ -10865,7 +11096,7 @@ HTMLEOF
   renderSavedViews();
   try { const last = sessionStorage.getItem(lastKey); if (last && location.hash !== "#test") restoreView(JSON.parse(last)); } catch { /* other snapshots may omit this relation */ }
   if (location.hash === "#test") window.gitchGraphTest = {
-    state: () => ({ rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig } : null }),
+    state: () => ({ rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig } : null }),
     visible: () => visNodes.map((n) => ({ id: n.id, langs: n.langs, kind: n.kind })),
     select: (id) => { const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
     capture: captureView, restore: restoreView,
@@ -10880,6 +11111,7 @@ HTMLEOF
       return bad;
     },
     zoom: (k) => { const c = { x: W / 2, y: H / 2 }; zoomAt(c.x, c.y, k / view.k, 0); return view.k; },
+    starDrift: () => { if (vs.layout !== "stars") return 0; const T = targets(); let d = 0; for (const n of m.starMain) if (n && T.has(n)) d = Math.max(d, Math.hypot(T.get(n)[0] - n.x, T.get(n)[1] - n.y)); return Math.round(d); },   // 꼭짓점 별이 지금 설정으로 잡은 자리에서 벗어난 가장 큰 거리
     settle: (n) => { for (let i = 0; i < n; i++) collide(visNodes, 1); return window.gitchGraphTest.overlaps(); },
     pairs: () => { const out = [], L = visNodes; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; if (Math.abs(a.x - b.x) < (a.w + b.w) / 2 - 0.5 && Math.abs(a.y - b.y) < (a.h + b.h) / 2 - 0.5) out.push([a.id, b.id, +(a.x - b.x).toFixed(1), +(a.y - b.y).toFixed(1), a.w, b.w, a.fx, b.fx]); } return out.slice(0, 5); },
     redraw: (n) => { for (let i = 0; i < (n || 1); i++) { if (tween) tween(performance.now() + 1e4); if (m.pk) m.pk.at = 0; pending = false; frame(performance.now()); } return true; },   // 창이 가려져 그리기가 멈춘 때
