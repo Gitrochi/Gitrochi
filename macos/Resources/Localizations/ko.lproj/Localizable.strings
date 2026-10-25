@@ -1,5 +1,43 @@
 /* Gitrochi — ko. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+/* 스테이지 변경의 영향과 테스트 후보 */
+"Review staged changes" = "이번 커밋의 영향 확인";
+"Analyze staged changes" = "스테이지 변경 분석";
+"Analyze the files staged for this commit and suggest related tests." = "이번 커밋에 넣을 파일의 영향을 분석하고 관련 테스트 후보를 보여 줍니다.";
+"Staged changes compared with HEAD. Unstaged edits are excluded." = "현재 커밋(HEAD)과 스테이지만 비교합니다. 스테이지하지 않은 수정은 포함하지 않습니다.";
+"Resolve conflicts before analyzing staged changes." = "충돌을 해결한 뒤 스테이지 변경을 분석하세요.";
+"Stage files to review their impact and related tests." = "파일을 스테이지하면 영향 범위와 관련 테스트 후보를 확인할 수 있습니다.";
+"Analyze" = "분석";
+"Analyze again" = "다시 분석";
+"Run an analysis to find files that depend on these changes." = "분석을 실행하면 이번 변경에 의존하는 파일을 찾습니다.";
+"Analyzing staged changes…" = "스테이지 변경을 분석하는 중…";
+"Couldn't analyze staged changes" = "스테이지 변경을 분석하지 못했습니다";
+"Staged changes have changed. Analyze again to refresh this result." = "스테이지 상태가 바뀌었습니다. 다시 분석해 결과를 갱신하세요.";
+"No staged changes were found in this snapshot." = "이 스냅샷에는 스테이지 변경이 없습니다.";
+"%lld of %lld changed files analyzed" = "변경 파일 %2$lld개 중 %1$lld개 분석";
+"%lld changed files could not be analyzed. The impact list may be incomplete." = "변경 파일 %lld개를 분석하지 못해 영향 목록이 완전하지 않을 수 있습니다.";
+"Renamed from %@" = "이전 경로: %@";
+"Not analyzed" = "분석하지 못함";
+"Changed files (%lld)" = "변경 파일 (%lld)";
+"Direct impact (%lld)" = "직접 영향 (%lld)";
+"Indirect impact (%lld)" = "간접 영향 (%lld)";
+"No related test candidates found. Other tests may still be needed." = "관련 테스트 후보를 찾지 못했습니다. 다른 테스트가 필요할 수 있습니다.";
+"Name match" = "파일 이름으로 추정";
+"Dependency path" = "의존 경로로 연결";
+"Estimated" = "추정 포함";
+"Related test candidates (%lld)" = "관련 테스트 후보 (%lld)";
+"Candidates only. Tests have not been run." = "후보 목록입니다. 테스트를 실행한 결과는 아닙니다.";
+"Analysis limits" = "분석 범위와 한계";
+"Open staged graph" = "스테이지 그래프로 열기";
+"Open a dependency graph for the current staged changes in your browser." = "현재 스테이지 변경만 담은 의존 그래프를 브라우저로 엽니다.";
+"No dependent files found in the analyzed dependencies." = "분석한 의존 관계에서 영향을 받는 파일을 찾지 못했습니다.";
+"Estimated dependency" = "추정된 의존 관계";
+"Couldn't read the staged change analysis. Update Gitrochi and try again." = "스테이지 분석 결과를 읽지 못했습니다. Gitrochi를 업데이트한 뒤 다시 시도하세요.";
+"Couldn't verify whether the staged change analysis is current. Analyze again." = "스테이지 분석 결과가 최신인지 확인하지 못했습니다. 다시 분석하세요.";
+"Static dependencies may omit dynamic references and unsupported syntax." = "정적 의존 분석에는 동적 참조나 지원하지 않는 문법의 관계가 빠질 수 있습니다.";
+"Test candidates are inferred from dependency paths or file names; tests have not been run." = "테스트 후보는 의존 경로나 파일 이름으로 추정한 목록이며, 테스트를 실행한 결과는 아닙니다.";
+"Only staged files are selected; unstaged edits and untracked files are excluded." = "스테이지한 변경만 대상으로 합니다. 스테이지하지 않은 수정과 추적하지 않는 파일은 제외합니다.";
+
 /* 앱 안에서 시작하는 Git 계정 설정 */
 "Sign in as %@ to connect this Git identity." = "이 Git 계정을 연결하려면 %1$@ 계정으로 로그인하세요.";
 "Connecting the approved account…" = "승인한 계정을 연결하는 중…";
@@ -1161,3 +1199,47 @@
 "Files affected by changes" = "변경의 영향을 받는 파일";
 "Uses an existing index.scip or .gitch/index.scip for symbol references. Shows the analysis coverage when no current index is available." = "index.scip 또는 .gitch/index.scip 의 심볼 참조를 읽습니다. 최신 인덱스가 없으면 분석 범위를 표시합니다.";
 "Shows changed files and the files that depend on them, including uncommitted changes." = "커밋하지 않은 변경까지 포함해 수정한 파일과 그 파일을 참조하는 파일을 보여 줍니다.";
+
+/* 목적별 작업 화면과 커밋 준비 */
+"Workspace" = "작업 화면";
+"Show history" = "히스토리 보기";
+"Repository tools" = "저장소 도구";
+"Branches" = "브랜치";
+"Actions" = "작업";
+"Options" = "옵션";
+"No remote configured" = "원격 저장소 없음";
+"Push to publish this branch" = "Push로 이 브랜치를 원격에 게시하세요";
+"Up to date" = "최신 상태";
+"↑%lld to push · ↓%lld to pull" = "Push할 커밋 ↑%lld · Pull할 커밋 ↓%lld";
+"Dismiss notification" = "알림 닫기";
+"Operation completed" = "작업을 완료했습니다";
+"Push this branch first to set up remote tracking." = "먼저 이 브랜치를 Push해 원격 추적을 설정하세요.";
+"Bring remote commits into this branch. Choose a pull strategy from the menu. (⇧⌘L)" = "원격 커밋을 현재 브랜치에 반영합니다. 메뉴에서 Pull 방식을 선택할 수 있습니다. (⇧⌘L)";
+"Fetches new commits and branches from all remotes. Your branches aren't changed. (⇧⌘F)" = "모든 원격 저장소의 새 커밋과 브랜치를 가져옵니다. 현재 브랜치는 바뀌지 않습니다. (⇧⌘F)";
+"Pushes this branch to the remote; sets up tracking on the first push. (⇧⌘P)" = "현재 브랜치를 원격에 올립니다. 첫 Push에서는 원격 추적도 설정합니다. (⇧⌘P)";
+"Branches, worktrees, pull requests, stash and undo" = "브랜치, 워크트리, PR, 스태시 및 되돌리기";
+"Show or hide the terminal. Shells keep running when hidden. (⌃`)" = "터미널을 표시하거나 숨깁니다. 숨겨도 셸은 계속 실행됩니다. (⌃`)";
+"Select a file to review" = "확인할 파일을 선택하세요";
+"Review changes, then stage the files or lines you want to commit." = "변경 내용을 확인하고 커밋에 넣을 파일이나 줄을 스테이지하세요.";
+"Resolve conflicts before committing." = "충돌을 해결한 뒤 커밋하세요.";
+"Stage the files you want to include." = "커밋에 넣을 파일을 스테이지하세요.";
+"Write a summary to enable commit." = "요약을 입력하면 커밋할 수 있습니다.";
+"Ready to commit staged changes." = "스테이지된 변경을 커밋할 준비가 되었습니다.";
+"%lld staged files" = "스테이지된 파일 %lld개";
+"AI message" = "AI로 작성";
+"AI writes a message from the staged changes. (⌥⌘M)" = "스테이지된 변경을 바탕으로 AI가 메시지를 작성합니다. (⌥⌘M)";
+"Commit summary" = "커밋 요약";
+"Summary character count" = "요약 글자 수";
+"Commit description" = "커밋 설명";
+"Close diff" = "diff 닫기";
+"Close diff (Esc)" = "diff 닫기 (Esc)";
+"File actions" = "파일 작업";
+"File display" = "파일 표시 방식";
+"Open Changes to stage files and create your first commit." = "변경 사항 화면에서 파일을 스테이지하고 첫 커밋을 만드세요.";
+"Show all graph lanes" = "그래프의 모든 연결선 보기";
+
+"Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
+"Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";
+"Create a branch with a commit before pushing." = "커밋이 있는 브랜치를 만든 뒤 Push하세요.";
+
+"Resize file and detail columns" = "파일 목록과 상세 영역 너비 조절";

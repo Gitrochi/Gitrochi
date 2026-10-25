@@ -9,13 +9,14 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $mode) {
-                Text("List").tag("list")
+            Picker("Repository tools", selection: $mode) {
+                Text("Branches").tag("list")
                 Text(activeAgents > 0 ? "Agents \(activeAgents)" : "Agents").tag("agents")
                 Text("CI/CD").tag("ci")
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .accessibilityLabel("Repository tools")
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             if mode == "agents" {

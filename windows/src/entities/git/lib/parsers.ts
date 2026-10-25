@@ -132,12 +132,12 @@ export function parseRemotes(text: string): { names: string[]; urls: Record<stri
   return { names, urls };
 }
 
-/** `git worktree list --porcelain` (빈 줄로 구분된 블록) */
+/** `git worktree list --porcelain -z` (이전 줄 구분 출력도 읽는다) */
 export function parseWorktrees(text: string): Worktree[] {
   const out: Worktree[] = [];
-  text
-    .replace(/\r/g, "")
-    .split("\n\n")
+  const nul = text.includes("\0");
+  (nul ? text : text.replace(/\r\n/g, "\n"))
+    .split(nul ? "\0\0" : "\n\n")
     .forEach((block, i) => {
       let path: string | null = null,
         head: string | null = null,
@@ -145,7 +145,7 @@ export function parseWorktrees(text: string): Worktree[] {
       let locked = false,
         prunable = false,
         bare = false;
-      for (const line of lines(block)) {
+      for (const line of block.split(nul ? "\0" : "\n")) {
         if (line.startsWith("worktree ")) path = line.slice(9);
         else if (line.startsWith("HEAD ")) head = line.slice(5);
         else if (line.startsWith("branch ")) {
@@ -281,7 +281,6 @@ export function parseDiff(text: string, maxLines = 20000): DiffDocument {
   // 줄 끝의 \r(CRLF 파일)은 화면에서는 빼고, 줄 단위 스테이지 패치용 원문(raw)에는 남긴다
   let body = text;
   if (body.endsWith("\n")) body = body.slice(0, -1);
-  if (body.endsWith("\r")) body = body.slice(0, -1);
   if (!body) return doc;
 
   let oldNo = 0,
@@ -314,6 +313,7 @@ export function parseDiff(text: string, maxLines = 20000): DiffDocument {
     if (s.startsWith("diff ")) {
       inHunk = false;
       files++;
+      if (files > 1) doc.multipleFiles = true;
     }
     if (!inHunk) {
       if (files <= 1) {
@@ -362,9 +362,9 @@ function readInfo(s: string, info: DiffFileInfo) {
 /** 추적하지 않는 새 파일: 내용 전체를 추가된 줄로 */
 export function newFileDiff(text: string, truncated: boolean, maxLines = 20000): DiffDocument {
   const doc: DiffDocument = { lines: [], isBinary: false, truncated, header: [], hunks: [], info: { newFile: true } };
+  if (!text) return doc;
   let body = text.replace(/\r\n/g, "\n");
   if (body.endsWith("\n")) body = body.slice(0, -1);
-  if (!body) return doc;
   const all = body.split("\n");
   doc.lines.push({ kind: "hunk", text: `@@ -0,0 +1,${all.length} @@`, oldNo: null, newNo: null });
   all.slice(0, maxLines).forEach((l, i) => doc.lines.push({ kind: "added", text: l.replace(/\t/g, "    "), oldNo: null, newNo: i + 1 }));
@@ -378,16 +378,27 @@ export function newFileDiff(text: string, truncated: boolean, maxLines = 20000):
 export const fileHistoryFormat = "%x1e%H%x1f%P%x1f%an%x1f%ae%x1f%ct%x1f%s";
 
 export function parseFileHistory(text: string): FileHistoryEntry[] {
-  return text
-    .split("\x1e")
-    .filter((r) => r.trim())
-    .flatMap((rec): FileHistoryEntry[] => {
-      const lines = rec.split(/\r?\n/).filter(Boolean);
-      const f = (lines[0] ?? "").split("\x1f");
-      if (f.length < 6) return [];
-      const commit: Commit = { id: f[0], parents: f[1] ? f[1].split(" ") : [], author: f[2], email: f[3], date: Number(f[4]) || 0, subject: f.slice(5).join("\x1f") };
-      return [{ commit, path: lines[1] ?? "" }];
-    });
+  const records: { header: string; path: string }[] = [];
+  if (text.includes("\0")) {
+    const fields = text.split("\0");
+    for (let i = 0; i < fields.length; i++) {
+      if (!fields[i].startsWith(RS)) continue;
+      const header = fields[i].slice(1);
+      const path = fields[i + 1]?.startsWith("\n") ? fields[++i].slice(1) : "";
+      records.push({ header, path });
+    }
+  } else {
+    for (const rec of text.split(RS).filter((r) => r.trim())) {
+      const parts = rec.split(/\r?\n/).filter(Boolean);
+      records.push({ header: parts[0] ?? "", path: parts[1] ?? "" });
+    }
+  }
+  return records.flatMap(({ header, path }): FileHistoryEntry[] => {
+    const f = header.split(US);
+    if (f.length < 6) return [];
+    const commit: Commit = { id: f[0], parents: f[1] ? f[1].split(" ") : [], author: f[2], email: f[3], date: Number(f[4]) || 0, subject: f.slice(5).join(US) };
+    return [{ commit, path }];
+  });
 }
 
 /** git blame --porcelain */

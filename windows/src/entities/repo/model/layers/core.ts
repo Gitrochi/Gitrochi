@@ -31,6 +31,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract readonly ci: CIStore;
   abstract select(sel: Selection | null): void;
   abstract closeDiff(): void;
+  abstract closeConflict(): void;
+  abstract closeFileInspect(): void;
   protected abstract loadDiff(keepCurrent: boolean): void;
   abstract get repoStateTitle(): string;
   abstract loadPullRequests(): Promise<void>;
@@ -377,6 +379,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   }
 
   protected resetState() {
+    this.closeConflict();
+    this.closeFileInspect();
     this.fileInspect = null;
     this.fileInspectLine = null;
     this.fileHistory = [];
@@ -502,7 +506,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
         this.g(["stash", "list", "--format=" + P.stashFormat], { ok: [0, 1, 128] }),
         this.g(["rev-parse", "--verify", "-q", "HEAD"], { ok: [0, 1, 128] }),
         this.g(["remote", "-v"]),
-        this.g(["worktree", "list", "--porcelain"], { ok: [0, 128] }),
+        this.g(["worktree", "list", "--porcelain", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--no-ext-diff", "--numstat", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], { ok: [0, 128] }),
       ]);

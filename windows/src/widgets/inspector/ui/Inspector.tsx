@@ -10,6 +10,7 @@ import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, type MenuItem, Spinner, tip } from "@/shared/ui";
 import { ChangeList, FileViewToggle } from "./FileList";
+import { CommitImpactPanel } from "./CommitImpactPanel";
 import { GitchBar } from "./GitchBar";
 import "./inspector.css";
 
@@ -117,6 +118,7 @@ function WorkingChanges({ store }: { store: RepoStore }) {
             menu={(c) => [{ label: t("Unstage"), onClick: () => void store.unstage([c]) }, "divider", ...common(c)]}
           />
         </FileSection>
+        <CommitImpactPanel store={store} />
         {statusIsEmpty(st) && (
           <Card>
             <span className="row" style={{ color: "var(--green)", fontWeight: 600 }}>

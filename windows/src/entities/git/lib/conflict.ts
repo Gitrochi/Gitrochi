@@ -36,35 +36,47 @@ export function parseConflict(text: string): ConflictDocument {
     base: string[] | null = null,
     theirs: string[] = [],
     oursLabel = "";
+  let width = 7;
+  let pending: string[] = [];
+  const label = (line: string, marker: string) => {
+    if (!line.startsWith(marker.repeat(width))) return null;
+    const rest = line.slice(width);
+    return !rest || /^[ \t]/.test(rest) ? rest.trim() : null;
+  };
   for (const line of body.split("\n")) {
+    if (state !== "normal") pending.push(line);
     if (state === "normal") {
-      if (line.startsWith("<<<<<<<")) {
+      const start = line.match(/^(<{7,})(?:[ \t](.*))?$/);
+      if (start) {
         if (plain.length) doc.segments.push({ kind: "text", lines: plain });
         plain = [];
-        oursLabel = line.slice(7).trim();
+        width = start[1].length;
+        oursLabel = (start[2] ?? "").trim();
+        pending = [line];
         ours = [];
         base = null;
         theirs = [];
         state = "ours";
       } else plain.push(line);
     } else if (state === "ours") {
-      if (line.startsWith("|||||||")) {
+      if (label(line, "|") !== null) {
         base = [];
         state = "base";
-      } else if (line === "=======") state = "theirs";
+      } else if (line === "=".repeat(width)) state = "theirs";
       else ours.push(line);
     } else if (state === "base") {
-      if (line === "=======") state = "theirs";
+      if (line === "=".repeat(width)) state = "theirs";
       else base!.push(line);
-    } else if (line.startsWith(">>>>>>>")) {
+    } else if (label(line, ">") !== null) {
       const id = doc.blocks.length;
-      doc.blocks.push({ id, oursLabel, theirsLabel: line.slice(7).trim(), ours, base, theirs });
+      doc.blocks.push({ id, oursLabel, theirsLabel: label(line, ">")!, ours, base, theirs });
       doc.segments.push({ kind: "conflict", block: id });
       state = "normal";
+      pending = [];
     } else theirs.push(line);
   }
   // 닫히지 않은 표시는 글로 돌려놓는다
-  if (state !== "normal") plain.push("<<<<<<< " + oursLabel, ...ours, ...(base ? ["|||||||", ...base] : []), "=======", ...theirs);
+  if (state !== "normal") plain.push(...pending);
   if (plain.length) doc.segments.push({ kind: "text", lines: plain });
   return doc;
 }

@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "environment": {
+    "node": "v22.23.3",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "first": {
+    "at": 103.90000000596046,
+    "state": {
+      "rel": "files",
+      "layout": "pack",
+      "style": "dot",
+      "unit": "file",
+      "k": 0.6742102243418329,
+      "running": false,
+      "alpha": 0,
+      "nodes": 2121,
+      "edges": 2100,
+      "sky": null,
+      "pack": {
+        "folders": 21,
+        "agg": 0,
+        "open": 1
+      }
+    },
+    "metrics": {
+      "lastMs": 1.4000000059604645,
+      "renders": 2,
+      "readyMs": 36,
+      "nodes": 2121,
+      "edges": 2100,
+      "htmlBytes": 4175030
+    }
+  },
+  "result": {
+    "state": {
+      "rel": "files",
+      "layout": "pack",
+      "style": "dot",
+      "unit": "file",
+      "k": 0.6742102243418329,
+      "running": false,
+      "alpha": 0,
+      "nodes": 2121,
+      "edges": 2100,
+      "sky": null,
+      "pack": {
+        "folders": 21,
+        "agg": 0,
+        "open": 1
+      }
+    },
+    "metrics": {
+      "lastMs": 1.4000000059604645,
+      "renders": 2,
+      "readyMs": 36,
+      "nodes": 2121,
+      "edges": 2100,
+      "htmlBytes": 4175030
+    },
+    "review": {
+      "coldMs": 3.199999988079071,
+      "warmMs": [
+        0.9000000059604645,
+        0.800000011920929,
+        0.7999999821186066,
+        0.9000000059604645,
+        0.800000011920929
+      ]
+    },
+    "at": 125.40000000596046
+  },
+  "errors": [],
+  "externalRequests": [],
+  "cli": {
+    "seconds": 2,
+    "htmlBytes": 4123183,
+    "clockResolution": "1 second",
+    "fixture": "2000 TypeScript sources + 100 tests + 21 manifests; 20 body changes"
+  }
+}

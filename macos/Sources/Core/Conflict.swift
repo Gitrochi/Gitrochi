@@ -46,31 +46,43 @@ struct ConflictDocument {
         var state = State.normal
         var plain: [String] = [], ours: [String] = [], base: [String]? = nil, theirs: [String] = []
         var oursLabel = ""
+        var width = 7, pending: [String] = []
+        func label(_ line: String, _ marker: Character, width: Int) -> String? {
+            guard line.hasPrefix(String(repeating: String(marker), count: width)) else { return nil }
+            let rest = line.dropFirst(width)
+            guard rest.isEmpty || rest.first == " " || rest.first == "\t" else { return nil }
+            return rest.trimmingCharacters(in: .whitespaces)
+        }
         for line in body.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) {
+            if state != .normal { pending.append(line) }
             switch state {
             case .normal:
-                if line.hasPrefix("<<<<<<<") {
+                let openingWidth = line.prefix(while: { $0 == "<" }).count
+                if openingWidth >= 7, let openingLabel = label(line, "<", width: openingWidth) {
                     if !plain.isEmpty { doc.segments.append(.text(plain)); plain = [] }
-                    oursLabel = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+                    width = openingWidth
+                    oursLabel = openingLabel
+                    pending = [line]
                     ours = []; base = nil; theirs = []
                     state = .ours
                 } else {
                     plain.append(line)
                 }
             case .ours:
-                if line.hasPrefix("|||||||") { base = []; state = .base }
-                else if line == "=======" { state = .theirs }
+                if label(line, "|", width: width) != nil { base = []; state = .base }
+                else if line == String(repeating: "=", count: width) { state = .theirs }
                 else { ours.append(line) }
             case .base:
-                if line == "=======" { state = .theirs } else { base?.append(line) }
+                if line == String(repeating: "=", count: width) { state = .theirs } else { base?.append(line) }
             case .theirs:
-                if line.hasPrefix(">>>>>>>") {
+                if let theirsLabel = label(line, ">", width: width) {
                     let b = Block(id: doc.blocks.count, oursLabel: oursLabel,
-                                  theirsLabel: String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces),
+                                  theirsLabel: theirsLabel,
                                   ours: ours, base: base, theirs: theirs)
                     doc.blocks.append(b)
                     doc.segments.append(.conflict(b.id))
                     state = .normal
+                    pending = []
                 } else {
                     theirs.append(line)
                 }
@@ -78,7 +90,7 @@ struct ConflictDocument {
         }
         // 닫히지 않은 표시는 글로 돌려놓는다
         if state != .normal {
-            plain += ["<<<<<<< " + oursLabel] + ours + (base.map { ["|||||||"] + $0 } ?? []) + ["======="] + theirs
+            plain += pending
         }
         if !plain.isEmpty { doc.segments.append(.text(plain)) }
         return doc

@@ -80,6 +80,12 @@ describe("parsers", () => {
     ]);
   });
 
+  it("worktree -z는 줄바꿈·탭·따옴표가 있는 실제 경로를 보존한다", () => {
+    const path = '/repo/한글\n\t"folder';
+    const w = parseWorktrees(`worktree ${path}\0HEAD abc\0branch refs/heads/main\0\0worktree /repo/two\0HEAD def\0detached\0\0`);
+    expect(w.map((x) => [x.path, x.branch, x.isMain])).toEqual([[path, "main", true], ["/repo/two", null, false]]);
+  });
+
   it("diff with CRLF and line numbers", () => {
     const d = parseDiff("diff --git a/x b/x\r\nindex 1..2\r\n--- a/x\r\n+++ b/x\r\n@@ -1,2 +1,2 @@\r\n a\r\n-b\r\n+c\r\n");
     expect(d.lines.map((l) => [l.kind, l.text, l.oldNo, l.newNo])).toEqual([
@@ -139,6 +145,11 @@ To add an exception for this directory, call:
 import { parseBlame, parseFileHistory } from "@/entities/git/lib/parsers";
 
 describe("파일 히스토리 · blame", () => {
+  it("NUL 경계로 파일명 속 줄바꿈과 레코드 구분 글자를 보존한다", () => {
+    const path = '한글\n\x1e\t"file.txt';
+    const text = `\x1eabc\x1fparent\x1fAuthor\x1fa@example.com\x1f1700000000\x1fsecond\0\n${path}\0\x1eparent\x1f\x1fAuthor\x1fa@example.com\x1f1690000000\x1ffirst\0\nold.txt\0`;
+    expect(parseFileHistory(text).map((e) => [e.commit.id, e.path])).toEqual([["abc", path], ["parent", "old.txt"]]);
+  });
   it("히스토리: 커밋마다 그때의 경로", () => {
     const text =
       "\x1ea1\x1fp1\x1f김하늘\x1fh@example.com\x1f1700000000\x1fRefactor: 이름 바꿈\n\nsrc/pay.ts\n" +

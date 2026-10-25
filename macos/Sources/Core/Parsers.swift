@@ -117,13 +117,15 @@ enum Parsers {
         return (names, urls)
     }
 
-    /// `git worktree list --porcelain` (빈 줄로 구분된 블록)
+    /// `git worktree list --porcelain -z` (이전 줄 구분 출력도 읽는다)
     static func worktrees(_ text: String) -> [Worktree] {
         var out: [Worktree] = []
-        for (i, block) in text.components(separatedBy: "\n\n").enumerated() {
+        let nul = text.contains("\0")
+        let body = nul ? text : text.replacingOccurrences(of: "\r\n", with: "\n")
+        for (i, block) in body.components(separatedBy: nul ? "\0\0" : "\n\n").enumerated() {
             var path: String?, head: String?, branch: String?
             var locked = false, prunable = false, bare = false
-            for line in block.split(separator: "\n") {
+            for line in block.components(separatedBy: nul ? "\0" : "\n") {
                 if line.hasPrefix("worktree ") { path = String(line.dropFirst(9)) }
                 else if line.hasPrefix("HEAD ") { head = String(line.dropFirst(5)) }
                 else if line.hasPrefix("branch ") {
@@ -269,7 +271,7 @@ enum Parsers {
                 push(.hunk, s, nil, nil)
                 continue
             }
-            if s.hasPrefix("diff ") { inHunk = false; files += 1 }
+            if s.hasPrefix("diff ") { inHunk = false; files += 1; doc.multipleFiles = files > 1 }
             if !inHunk {
                 if files <= 1 {
                     doc.header.append(s)
@@ -315,15 +317,31 @@ enum Parsers {
     static let fileHistoryFormat = "%x1e%H%x1f%P%x1f%an%x1f%ae%x1f%ct%x1f%s"
 
     static func fileHistory(_ text: String) -> [FileHistoryEntry] {
-        text.split(separator: "\u{1e}", omittingEmptySubsequences: true).compactMap { rec in
-            let lines = rec.split(separator: "\n", omittingEmptySubsequences: true)
-            guard let head = lines.first else { return nil }
-            let f = head.split(separator: "\u{1f}", omittingEmptySubsequences: false).map(String.init)
+        var records: [(header: String, path: String)] = []
+        if text.contains("\0") {
+            let fields = text.components(separatedBy: "\0")
+            var i = 0
+            while i < fields.count {
+                let field = fields[i]
+                i += 1
+                guard field.hasPrefix("\u{1e}") else { continue }
+                var path = ""
+                if i < fields.count, fields[i].hasPrefix("\n") { path = String(fields[i].dropFirst()); i += 1 }
+                records.append((String(field.dropFirst()), path))
+            }
+        } else {
+            for rec in text.split(separator: "\u{1e}", omittingEmptySubsequences: true) {
+                let lines = rec.split(separator: "\n", omittingEmptySubsequences: true)
+                guard let head = lines.first else { continue }
+                records.append((String(head), lines.dropFirst().first.map(String.init) ?? ""))
+            }
+        }
+        return records.compactMap { record in
+            let f = record.header.components(separatedBy: "\u{1f}")
             guard f.count >= 6 else { return nil }
             let commit = Commit(id: f[0], parents: f[1].split(separator: " ").map(String.init), author: f[2], email: f[3],
                                 date: Date(timeIntervalSince1970: TimeInterval(f[4]) ?? 0), subject: f[5...].joined(separator: "\u{1f}"))
-            let path = lines.dropFirst().first.map(String.init) ?? ""
-            return FileHistoryEntry(commit: commit, path: path)
+            return FileHistoryEntry(commit: commit, path: record.path)
         }
     }
 

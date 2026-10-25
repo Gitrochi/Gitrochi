@@ -286,6 +286,7 @@ export abstract class RepoActions extends RepoFilters {
       actionTitle: t("Discard all"),
       action: async () => {
         if (this.headHash && !(await this.run(t("Undoing…"), ["reset", "--hard", "-q"]))) return;
+        if (!this.headHash && !(await this.run(t("Undoing…"), ["read-tree", "--empty"]))) return;
         await this.run(t("Cleaning up…"), ["clean", "-fd", "-q"]);
       },
     });

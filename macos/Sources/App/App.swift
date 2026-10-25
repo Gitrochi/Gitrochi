@@ -195,6 +195,8 @@ struct AppCommands: Commands {
                 .keyboardShortcut("g", modifiers: [.command, .shift])
             Button("Show uncommitted changes") { store?.select(.wip) }
                 .keyboardShortcut("1")
+            Button("Show history") { store?.showArea(.history) }
+                .keyboardShortcut("2")
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
