@@ -26,7 +26,9 @@ final class RepoStore: Identifiable {
     private(set) var tags: [Tag] = []
     private(set) var stashes: [Stash] = []
     private(set) var status = WorkingStatus()
-    private(set) var headHash: String?
+    private(set) var headHash: String? {
+        didSet { if headHash != oldValue { queueCommitImpactValidation() } }
+    }
     private(set) var headBranch: String?
     private(set) var repoState: RepoState = .clean
     private(set) var hasMore = false
@@ -34,6 +36,13 @@ final class RepoStore: Identifiable {
     var emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
     // MARK: 선택·상세
+    enum Area { case changes, history }
+    var area: Area = .changes
+    var historySelection: Selection?
+    var changesDiff: DiffSource?
+    var historyDiff: DiffSource?
+    var changesInspect: FileInspect?
+    var historyInspect: FileInspect?
     var selection: Selection?
     var detail: CommitDetail?
     var detailFiles: [FileChange] = []
@@ -50,6 +59,7 @@ final class RepoStore: Identifiable {
 
     // MARK: UI
     var busy: String?
+    var operationNotice: String?
     var errorMessage: String?
     var sheet: SheetKind?
     var confirm: ConfirmRequest?
@@ -92,6 +102,13 @@ final class RepoStore: Identifiable {
     var graphJob: GraphJob?
     /// 의존 규칙 검사 창에 보일 결과(gitch graph check)
     var graphCheck: GraphCheckState?
+
+    // MARK: 커밋에 들어갈 스테이지 영향 분석 — 요청할 때만 분석하고 감시 중에는 식별값만 확인한다
+    var commitImpactState: CommitImpactState = .idle
+    var commitImpactValidationError: String?
+    var commitImpactGeneration = 0
+    var commitImpactRevision = 0
+    var commitImpactValidationTask: Task<Void, Never>?
 
     // MARK: 검색
     var searchText = ""
@@ -143,6 +160,8 @@ final class RepoStore: Identifiable {
     var fileHistoryDiff: DiffDocument?
     var blameLines: [BlameLine] = []
     var fileInspectLoading = false
+    @ObservationIgnored var fileInspectGeneration = 0
+    @ObservationIgnored var fileHistoryGeneration = 0
     var fileInspectError: String?
     /// diff 화면에서 고른 줄(DiffLine.id)과 Shift 범위의 시작
     var diffSelection: Set<Int> = []
@@ -378,6 +397,7 @@ final class RepoStore: Identifiable {
     }
 
     private func resetState() {
+        resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]
         localBranches = []; remoteBranches = []; remotes = []; tags = []; stashes = []
@@ -385,6 +405,8 @@ final class RepoStore: Identifiable {
         hasMore = false; limit = 2000; lastLog = nil
         emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
         selection = nil; detail = nil; detailFiles = []; diffSource = nil; diff = nil
+        area = .changes; historySelection = nil; changesDiff = nil; historyDiff = nil
+        changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
         aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
@@ -450,7 +472,7 @@ final class RepoStore: Identifiable {
             async let stashR = Git.run(["stash", "list", "--format=" + Parsers.stashFormat], in: url, ok: [0, 1, 128])
             async let headR = Git.run(["rev-parse", "--verify", "-q", "HEAD"], in: url, ok: [0, 1, 128])
             async let remoteR = Git.run(["remote", "-v"], in: url)
-            async let worktreeR = Git.run(["worktree", "list", "--porcelain"], in: url, ok: [0, 128])
+            async let worktreeR = Git.run(["worktree", "list", "--porcelain", "-z"], in: url, ok: [0, 128])
             async let unstagedNumR = Git.run(["diff", "--no-ext-diff", "--numstat", "-z"], in: url, ok: [0, 128])
             async let stagedNumR = Git.run(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], in: url, ok: [0, 128])
             let ((st, statusTime), lg, rf, sh, hd, rm, wt) = try await (statusR, logR, refsR, stashR, headR, remoteR, worktreeR)
@@ -548,6 +570,7 @@ final class RepoStore: Identifiable {
         guard let root = url?.path else { return }
         let gitDirs = Set([gitDir?.path ?? root + "/.git", commonDir?.path].compactMap { $0 })
         var kind: ReloadKind?
+        var stagedSnapshotChanged = false
         for p in paths {
             if let g = gitDirs.first(where: { p == $0 || p.hasPrefix($0 + "/") }) {
                 let rel = p == g ? "" : String(p.dropFirst(g.count + 1))
@@ -557,8 +580,10 @@ final class RepoStore: Identifiable {
                 if rel == "index" {
                     // 우리가 방금 새로 고쳐 쓴 인덱스면 다시 읽을 것 없음
                     if let own = ownIndexStamp, own == indexModified() { continue }
+                    stagedSnapshotChanged = true
                     kind = max(kind ?? .status, .status)
                 } else {
+                    if rel == "HEAD" || rel.hasPrefix("refs/") || rel == "packed-refs" { stagedSnapshotChanged = true }
                     kind = .full
                 }
             } else {
@@ -566,6 +591,7 @@ final class RepoStore: Identifiable {
             }
             if kind == .full { break }
         }
+        if stagedSnapshotChanged { queueCommitImpactValidation() }
         guard let kind else { return }
         pendingKind = max(pendingKind ?? kind, kind)
         guard isActive else { pendingReload = true; return }
@@ -691,6 +717,9 @@ final class RepoStore: Identifiable {
             if let match = all.first(where: { $0.path == c.path && $0.staged == c.staged }) {
                 diffSource = .working(match)
                 loadDiff(keepCurrent: true)
+            } else if let match = all.first(where: { $0.path == c.path }) {
+                // 파일 전체를 스테이지한 직후에도 같은 파일의 diff 를 이어서 보여 준다.
+                openDiff(.working(match))
             } else {
                 closeDiff()
             }

@@ -22,4 +22,21 @@ describe("충돌 해결", () => {
     expect(d.blocks[0].base).toEqual(["orig"]);
     expect(resolveConflict(d, new Map([[0, { kind: "custom", text: "a\nb" }]]))).toBe("x\r\na\r\nb\r\ny\r\n");
   });
+
+  it("사용자 지정 길이의 충돌 표시와 내용 속 짧은 표시를 구분한다", () => {
+    const text = "before\n<<<<<<<<<< HEAD\nmine\n=======\n|||||||||| base label\nbase\n==========\ntheirs\n>>>>>>>>>> topic\nafter\n";
+    const doc = parseConflict(text);
+    expect(doc.blocks).toHaveLength(1);
+    expect(doc.blocks[0]).toMatchObject({ oursLabel: "HEAD", theirsLabel: "topic", ours: ["mine", "======="], base: ["base"], theirs: ["theirs"] });
+    expect(resolveConflict(doc, new Map([[0, { kind: "ours" }]]))).toBe("before\nmine\n=======\nafter\n");
+  });
+
+  it.each([
+    "before\n<<<<<<< HEAD\nmine\n",
+    "before\n<<<<<<< HEAD\nmine\n||||||| base label\nbase",
+    "before\n<<<<<<< HEAD\nmine\n=======\ntheirs\n",
+    "<<<<<<<not-a-marker\ntext\n",
+  ])("닫히지 않은 표시와 일반 텍스트를 원문 그대로 보존한다: %j", (text) => {
+    expect(resolveConflict(parseConflict(text), new Map())).toBe(text);
+  });
 });

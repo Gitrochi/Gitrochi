@@ -292,6 +292,8 @@ export interface DiffDocument {
   hunks: DiffHunk[];
   /** 머지 커밋의 결합 diff(@@@) */
   combined?: boolean;
+  /** 여러 파일의 변경은 파일 하나의 줄 단위 패치로 만들 수 없다. */
+  multipleFiles?: boolean;
   /** 새 파일·지운 파일·이름·권한(diff 머리에서 읽은 것) */
   info?: DiffFileInfo;
 }

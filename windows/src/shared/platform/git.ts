@@ -46,6 +46,7 @@ function baseEnv(): Record<string, string> {
   return {
     GIT_TERMINAL_PROMPT: "0", // 자격 증명 프롬프트에서 멈추지 않고 실패하게
     GIT_OPTIONAL_LOCKS: "0", // status 가 index 를 다시 써서 파일 감시가 되먹임되지 않게
+    GIT_LITERAL_PATHSPECS: "1", // 고른 파일의 [, *, : 등을 패턴으로 해석해 다른 파일까지 바꾸지 않게
     GIT_EDITOR: "true", // merge/revert 기본 메시지를 편집기 없이 수락
     GIT_PAGER: "cat",
     GCM_INTERACTIVE: "never", // Git Credential Manager 가 창을 띄워 멈추지 않게

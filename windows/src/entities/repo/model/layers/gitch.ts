@@ -1,4 +1,4 @@
-import { countGraphRules, gitch, type GitchAccount, type GitchBackup, type GitchPreflight, type GitchStatus, type GraphCheck, type GraphPage, type GraphRelation, graphRelations, graphRulesFile } from "@/entities/gitch";
+import { countGraphRules, gitch, type GitchAccount, type GitchBackup, type GitchPreflight, type GitchStatus, type GraphCheck, type GraphPage, type GraphRelation, type GraphReview, graphRelations, graphRulesFile } from "@/entities/gitch";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -6,7 +6,12 @@ import { describe } from "@/shared/platform";
 import { RepoTerminal } from "./terminal";
 
 /** gitch graph 로 만드는 페이지 — 한 번에 하나(그동안 구조 그래프 메뉴의 항목을 끈다) */
-export type GraphJob = { kind: "draw"; relation: GraphRelation } | { kind: "diff"; relation: GraphRelation } | { kind: "checkPage" };
+export type GraphJob = { kind: "draw"; relation: GraphRelation } | { kind: "diff"; relation: GraphRelation } | { kind: "checkPage" } | { kind: "review" };
+
+export type CommitImpactState =
+  | { kind: "running" }
+  | { kind: "done"; result: GraphReview; revision: number; notice?: string }
+  | { kind: "failed"; message: string };
 
 /** 의존 규칙 검사 창이 보여 줄 것 */
 export type GraphCheckState =
@@ -25,6 +30,104 @@ export abstract class RepoGitch extends RepoTerminal {
   gitchProtected = new Set<string>();
   gitchChecking = false;
   private gitchGen = 0;
+
+  /** 사용자가 누를 때만 분석한다. 분석하는 동안에도 스테이지나 커밋 작업은 막지 않는다. */
+  commitImpact: CommitImpactState | null = null;
+  commitImpactVerifying = false;
+  private commitImpactGen = 0;
+
+  get commitImpactStale(): boolean {
+    return this.commitImpact?.kind === "done" && (this.commitImpact.result.stale || this.commitImpact.revision !== this.statusGeneration);
+  }
+
+  protected resetState() {
+    super.resetState();
+    this.commitImpactGen++;
+    this.commitImpact = null;
+    this.commitImpactVerifying = false;
+  }
+
+  async reload(quiet = false) {
+    await super.reload(quiet);
+    void this.verifyCommitImpact();
+  }
+
+  async reloadStatus() {
+    await super.reloadStatus();
+    void this.verifyCommitImpact();
+  }
+
+  /** 같은 파일을 다시 올리면 파일 수나 줄 수가 그대로여도 스테이지 내용은 바뀔 수 있다. */
+  private async verifyCommitImpact() {
+    const state = this.commitImpact;
+    const path = this.path;
+    if (!path || state?.kind !== "done" || state.result.stale || state.revision === this.statusGeneration) return;
+    const request = ++this.commitImpactGen;
+    const revision = this.statusGeneration;
+    this.commitImpactVerifying = true;
+    this.emit();
+    try {
+      const stamp = await gitch.commitReviewStamp(path);
+      if (request !== this.commitImpactGen || this.path !== path || this.commitImpact !== state) return;
+      this.commitImpact = { ...state, revision, result: { ...state.result, stale: stamp !== state.result.stamp } };
+    } catch (error) {
+      if (request !== this.commitImpactGen || this.path !== path || this.commitImpact !== state) return;
+      this.commitImpact = { ...state, result: { ...state.result, stale: true }, notice: describe(error) };
+    } finally {
+      if (request === this.commitImpactGen) {
+        this.commitImpactVerifying = false;
+        this.emit();
+      }
+    }
+  }
+
+  async analyzeCommitImpact() {
+    const path = this.path;
+    if (!path || this.commitImpact?.kind === "running" || !this.status.staged.length || this.status.conflicted.length) return;
+    const request = ++this.commitImpactGen;
+    this.commitImpact = { kind: "running" };
+    this.commitImpactVerifying = false;
+    this.emit();
+    try {
+      const result = await gitch.commitReview(path);
+      if (request !== this.commitImpactGen || this.path !== path) return;
+      const revision = this.statusGeneration;
+      const stamp = await gitch.commitReviewStamp(path);
+      if (request !== this.commitImpactGen || this.path !== path) return;
+      this.commitImpact = { kind: "done", result: { ...result, stale: result.stale || stamp !== result.stamp }, revision };
+    } catch (error) {
+      if (request === this.commitImpactGen && this.path === path) this.commitImpact = { kind: "failed", message: describe(error) };
+    } finally {
+      if (request === this.commitImpactGen) this.emit();
+    }
+  }
+
+  /** 최신 여부 확인과 HTML 생성 모두 스테이지와 HEAD를 비교하는 같은 분석을 사용한다. */
+  async openCommitImpactGraph() {
+    const path = this.path;
+    const state = this.commitImpact;
+    if (!path || state?.kind !== "done" || this.commitImpactStale || this.commitImpactVerifying || this.graphJob) return;
+    const job: GraphJob = { kind: "review" };
+    this.graphJob = job;
+    this.emit();
+    const stillCurrent = () => this.path === path && this.commitImpact === state;
+    const stale = () => {
+      if (stillCurrent()) this.commitImpact = { ...state, result: { ...state.result, stale: true } };
+    };
+    try {
+      if (await gitch.commitReviewStamp(path) !== state.result.stamp) { stale(); return; }
+      if (!stillCurrent()) return;
+      const page = await gitch.commitReviewGraph(path);
+      if (!stillCurrent()) return;
+      if (await gitch.commitReviewStamp(path) !== state.result.stamp) { stale(); return; }
+      if (stillCurrent()) await this.openStructureGraphPage(page);
+    } catch (error) {
+      if (stillCurrent()) this.commitImpact = { ...state, notice: describe(error) };
+    } finally {
+      if (this.graphJob === job) this.graphJob = null;
+      this.emit();
+    }
+  }
 
   /** gitch 가 보는 이 저장소의 계정과 점검을 다시 읽는다. fetch 면 원격을 받아 받을 커밋까지 본다(몇 초). */
   async refreshGitch(fetch = false) {
@@ -165,6 +268,7 @@ export abstract class RepoGitch extends RepoTerminal {
   /** gitch graph 가 페이지를 만드는 동안 툴바에 보일 글(관계 이름까지 넣으면 툴바 버튼이 밀려나서 짧게) */
   get graphProgress(): string | null {
     if (!this.graphJob) return null;
+    if (this.graphJob.kind === "review") return t("Drawing staged change impact…");
     return this.graphJob.kind === "diff" ? t("Comparing dependencies…") : t("Drawing the structure graph…");
   }
 

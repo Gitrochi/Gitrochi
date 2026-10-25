@@ -2,7 +2,7 @@ import SwiftUI
 
 enum GraphMetrics {
     static let laneWidth: CGFloat = 22
-    static let rowHeight: CGFloat = 30
+    static let rowHeight: CGFloat = 34
     static let leftPad: CGFloat = 6
     /// Room between the last lane's avatar and the message bar; the lane band runs through it
     static let rightPad: CGFloat = 16
@@ -12,8 +12,8 @@ enum GraphMetrics {
     /// 커밋 동그라미(프로필) 지름
     static let avatar: CGFloat = 20
 
-    static func width(lanes: Int) -> CGFloat {
-        max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
+    static func width(lanes: Int, expanded: Bool = false) -> CGFloat {
+        max(44, CGFloat(expanded ? lanes : min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
     }
 
     /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간).
@@ -45,71 +45,81 @@ struct GraphView: View {
     @ViewState private var width: CGFloat = 1000
     /// Columns the user turned off, comma-separated ("ref,time")
     @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
+    @AppStorage("graphExpandLanes") private var expandLanes = false
 
     var body: some View {
-        let graphWidth = GraphMetrics.width(lanes: store.maxLanes)
-        // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
-        let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)))
+        let graphWidth = GraphMetrics.width(lanes: store.maxLanes, expanded: expandLanes)
+        let hidden = Set(hiddenColumns.split(separator: ",").map(String.init))
+        let canvasWidth = expandLanes && !hidden.contains("graph")
+            ? max(width, graphWidth + (hidden.contains("ref") ? 0 : GraphMetrics.refWidth) + 322)
+            : width
+        // 좁은 화면에서는 시간을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다.
+        let columns = GraphMetrics.columns(width: canvasWidth, graph: graphWidth, hidden: hidden)
         VStack(spacing: 0) {
             SearchBar()
             Divider()
-            GraphHeader(columns: columns, hidden: $hiddenColumns)
-            Divider()
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(store.entries) { entry in
-                            CommitRow(entry: entry,
-                                      graphWidth: graphWidth,
-                                      columns: columns,
-                                      refs: store.refsByCommit[entry.id] ?? [],
-                                      selected: isSelected(entry),
-                                      isHead: entry.id == store.headHash,
-                                      wipCount: entry.commit.isWIP ? store.status.count
-                                          : entry.commit.wipWorktree.map { store.worktreeStatus[$0]?.count ?? 0 } ?? 0,
-                                      wipLabel: entry.commit.wipWorktree.map { p in store.worktrees.first { $0.path == p }?.branch ?? (p as NSString).lastPathComponent },
-                                      match: matchState(entry),
-                                      ci: store.ciBySha[entry.id])
-                                .id(entry.id)
-                                .onTapGesture {
-                                    focused = true
-                                    store.select(entry.commit.rowSelection)
+            ScrollView(.horizontal) {
+                VStack(spacing: 0) {
+                    GraphHeader(columns: columns, hidden: $hiddenColumns)
+                    Divider()
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(store.entries) { entry in
+                                    CommitRow(entry: entry,
+                                              graphWidth: graphWidth,
+                                              columns: columns,
+                                              refs: store.refsByCommit[entry.id] ?? [],
+                                              selected: isSelected(entry),
+                                              isHead: entry.id == store.headHash,
+                                              wipCount: entry.commit.isWIP ? store.status.count
+                                                  : entry.commit.wipWorktree.map { store.worktreeStatus[$0]?.count ?? 0 } ?? 0,
+                                              wipLabel: entry.commit.wipWorktree.map { p in store.worktrees.first { $0.path == p }?.branch ?? (p as NSString).lastPathComponent },
+                                              match: matchState(entry),
+                                              ci: store.ciBySha[entry.id])
+                                        .id(entry.id)
+                                        .onTapGesture {
+                                            focused = true
+                                            store.select(entry.commit.rowSelection)
+                                        }
+                                        .simultaneousGesture(TapGesture(count: 2).onEnded {
+                                            if let path = entry.commit.wipWorktree { Task { await store.switchWorktree(to: path) } }
+                                        })
+                                        // VoiceOver 등 접근성: 행 하나를 버튼처럼 읽고 눌러서 선택한다.
+                                        .accessibilityElement(children: .combine)
+                                        .accessibilityAddTraits(.isButton)
+                                        .accessibilityAction { store.select(entry.commit.rowSelection) }
+                                        .contextMenu { CommitMenu(commit: entry.commit) }
                                 }
-                                .simultaneousGesture(TapGesture(count: 2).onEnded {
-                                    if let path = entry.commit.wipWorktree { Task { await store.switchWorktree(to: path) } }
-                                })
-                                // VoiceOver 등 접근성: 행 하나를 버튼처럼(메시지·작성자·날짜를 한 번에 읽고 눌러서 선택)
-                                .accessibilityElement(children: .combine)
-                                .accessibilityAddTraits(.isButton)
-                                .accessibilityAction { store.select(entry.commit.rowSelection) }
-                                .contextMenu { CommitMenu(commit: entry.commit) }
+                                if store.hasMore {
+                                    Button("Load more commits") { Task { await store.loadMore() } }
+                                        .padding(12)
+                                }
+                            }
                         }
-                        if store.hasMore {
-                            Button("Load more commits") { Task { await store.loadMore() } }
-                                .padding(12)
+                        .focusable()
+                        .focused($focused)
+                        .focusEffectDisabled()
+                        .onKeyPress(.upArrow) { store.moveSelection(-1); return .handled }
+                        .onKeyPress(.downArrow) { store.moveSelection(1); return .handled }
+                        .onChange(of: store.scrollTarget) { _, target in
+                            guard let target else { return }
+                            withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(target, anchor: .center) }
+                            store.scrollTarget = nil
+                        }
+                        .onAppear {
+                            if let target = store.selectedID { proxy.scrollTo(target, anchor: .center) }
                         }
                     }
                 }
-                .focusable()
-                .focused($focused)
-                .focusEffectDisabled()
-                .onKeyPress(.upArrow) { store.moveSelection(-1); return .handled }
-                .onKeyPress(.downArrow) { store.moveSelection(1); return .handled }
-                .onChange(of: store.scrollTarget) { _, target in
-                    guard let target else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(target, anchor: .center) }
-                    store.scrollTarget = nil
-                }
-                .onAppear {
-                    if let target = store.selectedID { proxy.scrollTo(target, anchor: .center) }
-                }
+                .frame(width: canvasWidth)
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .overlay {
             if store.entries.isEmpty {
                 ContentUnavailableView("No commits yet", systemImage: "circle.dotted",
-                                       description: Text("Create a file and make your first commit on the right."))
+                                       description: Text("Open Changes to stage files and create your first commit."))
             }
         }
         .confirmationDialog(store.dropRequest?.title ?? "",
@@ -265,6 +275,7 @@ private struct GraphHeader: View {
 
 /// 그래프 거르기: 현재 브랜치만 보기, 숨긴 브랜치 다시 보이기
 private struct GraphFilterMenu: View {
+    @AppStorage("graphExpandLanes") private var expandLanes = false
     @Environment(RepoStore.self) private var store
 
     var body: some View {
@@ -272,6 +283,7 @@ private struct GraphFilterMenu: View {
         let active = store.graphCurrentOnly || hidden > 0
         Menu {
             Toggle("Show only the current branch", isOn: Binding(get: { store.graphCurrentOnly }, set: { on in Task { await store.setCurrentOnly(on) } }))
+            Toggle("Show all graph lanes", isOn: $expandLanes)
             Divider()
             Button(hidden > 0 ? "Show all \(hidden) hidden branches" : "No hidden branches") { Task { await store.showAllBranches() } }
                 .disabled(hidden == 0)

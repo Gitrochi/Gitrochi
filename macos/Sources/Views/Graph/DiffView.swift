@@ -13,10 +13,10 @@ struct DiffView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Button { store.closeDiff() } label: {
-                    Label("Graph", systemImage: "chevron.left")
+                    Label(store.area == .changes ? "Close diff" : "Graph", systemImage: "chevron.left")
                 }
                 .keyboardShortcut(.escape, modifiers: [])
-                .help("Back to graph (Esc)")
+                .help("Close diff (Esc)")
 
                 StatusBadge(kind: change.kind)
                 VStack(alignment: .leading, spacing: 0) {
@@ -24,13 +24,20 @@ struct DiffView: View {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
-                fileButtons(change)
-                viewOptions
-                actions(change)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(.bar)
+            Divider()
+            HStack(spacing: 10) {
+                viewOptions
+                fileButtons(change)
+                Spacer(minLength: 4)
+                actions(change)
+            }
+            .controlSize(.small)
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .disabled(store.busy != nil)
             Divider()
 
             // 안내 화면(바이너리·빈 파일 등)도 남은 자리를 다 채워 머리줄이 가운데로 내려오지 않게
@@ -142,7 +149,11 @@ struct DiffView: View {
             } else if c.staged {
                 Button("Unstage") { Task { await store.unstage([c]) } }
             } else {
-                Button("Discard changes…", role: .destructive) { store.confirmDiscard(c) }
+                Menu {
+                    Button("Discard changes…", role: .destructive) { store.confirmDiscard(c) }
+                } label: { Image(systemName: "ellipsis.circle") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .accessibilityLabel("File actions")
                 Button("Stage") { Task { await store.stage([c]) } }
                     .buttonStyle(.borderedProminent)
             }

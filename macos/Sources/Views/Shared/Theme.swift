@@ -253,19 +253,21 @@ struct FileRow: View {
                 .fixedSize()
                 .layoutPriority(2)
             }
-            if let actionIcon, hover || selected {
+            if let actionIcon {
                 Button(action: action) {
                     Image(systemName: actionIcon)
                 }
                 .buttonStyle(.borderless)
                 .help(actionHelp)
+                .accessibilityLabel(actionHelp)
             }
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 6)
         .padding(.horizontal, 6)
         .background(RoundedRectangle(cornerRadius: 5).fill(selected ? Color.accentColor.opacity(0.22) : Color.clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
+        .help(change.path)
     }
 }
 

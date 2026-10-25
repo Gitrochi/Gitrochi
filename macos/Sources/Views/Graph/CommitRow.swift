@@ -62,6 +62,12 @@ struct CommitRow: View {
                     .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
                     .frame(width: 3, height: Self.bandHeight)
                     .padding(.trailing, 4)
+                if isHead {
+                    Text("HEAD").font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.horizontal, 4).padding(.vertical, 2)
+                        .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 3))
+                }
                 if c.isPending {
                     if c.wipWorktree != nil {
                         Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
@@ -106,14 +112,14 @@ struct CommitRow: View {
             // selection and search hits tint only the message, at the band's height
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
             .clipped()
-            .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
+            .help(c.isPending ? "" : "\(c.subject)\n\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
         }
         .font(.system(size: 12.5))
         .padding(.trailing, 12)
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {
-            if match == .hit { Rectangle().fill(Color.yellow).frame(width: 3) }
+            if selected || match == .hit { Rectangle().fill(Color.accentColor).frame(width: selected ? 3 : 2) }
         }
         .overlay {
             if dropTargeted {
@@ -198,11 +204,15 @@ private struct RefColumn: View {
             if let g = groups.first {
                 RefPill(group: g, tint: tint, store: store)
                 if groups.count > 1 {
-                    Text("+\(groups.count - 1)")
+                    Menu {
+                        ForEach(groups.dropFirst()) { g in
+                            Menu(g.name) { ForEach(g.all) { r in RefMenu(ref: r) } }
+                        }
+                    } label: { Text("+\(groups.count - 1)") }
+                        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)
-                        .background(Capsule().fill(tint.opacity(0.15)))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))
                         .contextMenu {
                             ForEach(groups.dropFirst()) { g in
@@ -210,7 +220,8 @@ private struct RefColumn: View {
                             }
                         }
                 }
-                Rectangle().fill(tint).frame(height: 1.5)
+                Rectangle().fill(tint.opacity(0.45)).frame(minWidth: 8, maxWidth: 24).frame(height: 1)
+                Spacer(minLength: 0)
             }
         }
         .padding(.leading, 6)
@@ -224,7 +235,7 @@ private struct RefPill: View {
 
     var body: some View {
         let solid = group.isCurrent
-        let color = group.isTag ? Color(nsColor: .systemGray) : (group.isHead ? Color(nsColor: .labelColor) : tint)
+        let color = solid ? Color.accentColor : Color.secondary
         HStack(spacing: 3) {
             if solid { Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy)) }
             if group.isTag { Image(systemName: "tag").font(.system(size: 9, weight: .semibold)) }
@@ -238,9 +249,8 @@ private struct RefPill: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .foregroundStyle(solid ? Color.white : color)
-        .background(RoundedRectangle(cornerRadius: 4).fill(solid ? color : color.opacity(0.18)))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(color.opacity(solid ? 0 : 0.5), lineWidth: 1))
+        .foregroundStyle(solid ? Color.accentColor : Color.primary)
+        .background(RoundedRectangle(cornerRadius: 4).fill(color.opacity(solid ? 0.12 : 0.07)))
         .layoutPriority(1)
         .contentShape(Rectangle())
         .help(helpText)
@@ -311,7 +321,7 @@ struct GraphCell: View {
                     var p = Path()
                     p.move(to: CGPoint(x: 0, y: h / 2))
                     p.addLine(to: CGPoint(x: cx, y: h / 2))
-                    ctx.stroke(p, with: .color(color), lineWidth: 1.5)
+                    ctx.stroke(p, with: .color(color.opacity(0.45)), lineWidth: 1)
                 }
                 for s in row.segments {
                     let a = CGPoint(x: x(s.x1), y: h * s.y1)
@@ -324,8 +334,8 @@ struct GraphCell: View {
                         let mid = (a.y + b.y) / 2
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
-                    ctx.stroke(p, with: .color(Palette.lane(s.color)),
-                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: s.dashed ? [3, 3] : []))
+                    ctx.stroke(p, with: .color(Palette.lane(s.color).opacity(0.75)),
+                               style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
                 func circle(_ r: CGFloat) -> Path { Circle().path(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)) }
@@ -337,17 +347,12 @@ struct GraphCell: View {
                     ctx.fill(circle(5.5), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.fill(circle(4), with: .color(color))
                 } else {
-                    // 프로필 테두리(레인 색)
-                    ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
+                    ctx.fill(circle(4.5), with: .color(Color(nsColor: .textBackgroundColor)))
+                    ctx.stroke(circle(4.5), with: .color(color), lineWidth: 2)
                 }
                 if isHead {
-                    ctx.stroke(circle(isMerge ? 8 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 1.5)
+                    ctx.stroke(circle(8), with: .color(Color.accentColor), lineWidth: 1.5)
                 }
-            }
-            if !isWIP && !isMerge {
-                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar)
-                    .help(author)
-                    .position(x: cx, y: GraphMetrics.rowHeight / 2)
             }
         }
     }

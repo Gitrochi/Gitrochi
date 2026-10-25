@@ -5,14 +5,53 @@ import AppKit
 extension RepoStore {
     // MARK: - 선택
 
-    func select(_ sel: Selection?) {
+    func showArea(_ destination: Area) {
+        guard destination != area else { return }
+        if destination == .history, case .commit(let sha)? = historySelection,
+           commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) {
+            historySelection = nil
+            historyDiff = nil
+            historyInspect = nil
+        }
+        select(destination == .changes ? .wip : historySelection ?? headHash.map { .commit($0) }, restoringContext: true)
+    }
+
+    func select(_ sel: Selection?, restoringContext: Bool = false) {
+        let destination: Area = sel == .wip ? .changes : .history
+        let switching = destination != area
+        if switching {
+            if area == .changes {
+                changesDiff = diffSource
+                changesInspect = fileInspect
+            } else {
+                historySelection = selection
+                historyDiff = diffSource
+                historyInspect = fileInspect
+            }
+            closeFileInspect()
+            area = destination
+        }
         guard sel != selection else { return }
+        closeFileInspect()
         selection = sel
         closeDiff()
         detailTask?.cancel()
         detail = nil
         detailFiles = []
         detailStats = [:]
+        if switching, restoringContext || sel == .wip {
+            let source = destination == .changes ? changesDiff : historyDiff
+            if case .working(let old)? = source {
+                let files = status.staged + status.unstaged + status.conflicted
+                if let current = files.first(where: { $0.path == old.path && $0.staged == old.staged }) ?? files.first(where: { $0.path == old.path }) {
+                    openDiff(.working(current))
+                }
+            } else if let source { openDiff(source) }
+            if let inspect = destination == .changes ? changesInspect : historyInspect {
+                fileInspect = inspect
+                Task { await loadFileInspect() }
+            }
+        }
         guard case .commit(let sha)? = sel, let url else { return }
         let empty = emptyTree
         detailTask = Task {
@@ -62,6 +101,7 @@ extension RepoStore {
 
     func moveSelection(_ delta: Int) {
         guard !entries.isEmpty else { return }
+        let first = entries.startIndex
         let current: Int
         switch selection {
         case .wip?: current = commitIndex[Commit.wipID] ?? -1
@@ -69,7 +109,7 @@ extension RepoStore {
         case .commit(let s)?: current = commitIndex[s] ?? -1
         case .pullRequest?, nil: current = -1
         }
-        let next = max(0, min(entries.count - 1, current + delta))
+        let next = max(first, min(entries.count - 1, current + delta))
         let e = entries[next]
         select(e.commit.rowSelection)
         scrollTarget = e.id
@@ -78,6 +118,7 @@ extension RepoStore {
     // MARK: - Diff
 
     func openDiff(_ source: DiffSource) {
+        if case .working = source, area != .changes { showArea(.changes) }
         if fileInspect != nil { closeFileInspect() }
         guard source != diffSource else { return }
         diffSource = source

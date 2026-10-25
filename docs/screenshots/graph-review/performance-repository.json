@@ -1,0 +1,79 @@
+{
+  "ok": true,
+  "environment": {
+    "node": "v22.23.3",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "first": {
+    "at": 123,
+    "state": {
+      "rel": "files",
+      "layout": "force",
+      "style": "dot",
+      "unit": "file",
+      "k": 0.30404291771936875,
+      "running": true,
+      "alpha": 0.1144,
+      "nodes": 517,
+      "edges": 1629,
+      "sky": null,
+      "pack": null
+    },
+    "metrics": {
+      "lastMs": 0.5,
+      "renders": 2,
+      "readyMs": 26.19999998807907,
+      "nodes": 517,
+      "edges": 1629,
+      "htmlBytes": 4426957
+    }
+  },
+  "result": {
+    "state": {
+      "rel": "files",
+      "layout": "force",
+      "style": "dot",
+      "unit": "file",
+      "k": 0.2937850834074184,
+      "running": false,
+      "alpha": 0.003,
+      "nodes": 517,
+      "edges": 1629,
+      "sky": null,
+      "pack": null
+    },
+    "metrics": {
+      "lastMs": 0.5,
+      "renders": 2,
+      "readyMs": 26.19999998807907,
+      "nodes": 517,
+      "edges": 1629,
+      "htmlBytes": 4426951
+    },
+    "review": {
+      "coldMs": 1.5999999940395355,
+      "warmMs": [
+        0.4000000059604645,
+        0.30000001192092896,
+        0.29999998211860657,
+        0.30000001192092896,
+        0.19999998807907104
+      ]
+    },
+    "at": 258.09999999403954
+  },
+  "errors": [],
+  "externalRequests": [],
+  "cli": {
+    "exit": 0,
+    "seconds": 2.24,
+    "bytes": 4395750,
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "stderr": "",
+    "options": {
+      "GITCH_SWIFT_INDEX": "",
+      "GITSW_SWIFT_DESCRIBE": "0"
+    }
+  }
+}

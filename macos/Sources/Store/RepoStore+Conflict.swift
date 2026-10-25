@@ -26,7 +26,8 @@ extension RepoStore {
 
     /// 고른 대로 파일을 쓰고 해결됨으로 표시(스테이지)
     func saveConflictResolution(_ c: FileChange) async {
-        guard let url, let doc = conflictDoc, let text = doc.resolved(conflictChoices) else { return }
+        guard let url, busy == nil, conflictPath == c.path, let doc = conflictDoc,
+              !doc.isEmpty, let text = doc.resolved(conflictChoices) else { return }
         do {
             try Data(text.utf8).write(to: url.appendingPathComponent(c.path), options: .atomic)
         } catch {

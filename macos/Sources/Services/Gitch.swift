@@ -324,6 +324,28 @@ enum Gitch {
         return page
     }
 
+    /// 작업 트리와 섞이지 않도록 CLI 가 HEAD 와 스테이지만 별도 스냅샷으로 분석한다.
+    static func commitReview(in repo: URL) async throws -> CommitReviewReport {
+        let result = try await runGraph(["review", "--json"], in: repo)
+        do { return try CommitReviewReport.decode(result.data) }
+        catch { throw Failure(message: String(localized: "Couldn't read the staged change analysis. Update Gitrochi and try again.")) }
+    }
+
+    /// 파일 감시로 index 가 바뀌면 비싼 의존 분석 대신 이 값만 다시 확인한다.
+    static func commitReviewStamp(in repo: URL) async throws -> CommitReviewStamp {
+        let result = try await runGraph(["review", "--stamp", "--json"], in: repo)
+        do { return try CommitReviewStamp.decode(result.data) }
+        catch { throw Failure(message: String(localized: "Couldn't verify whether the staged change analysis is current. Analyze again.")) }
+    }
+
+    /// 현재 스테이지만 담은 리뷰 그래프. 감시 서버는 작업 트리까지 포함하므로 붙이지 않는다.
+    static func commitReviewPage(in repo: URL) async throws -> URL {
+        let file = graphFile("staged-review", in: repo)
+        let result = try await runGraph(["review", "--format", "html", "--out", file.path, "--no-open"], in: repo)
+        guard plain(result.output).contains("GRAPH_FILE=") else { throw graphFailure(result) }
+        return file
+    }
+
     private static func graphWatchURL(_ relation: String, file: URL, in repo: URL) async -> URL? {
         struct Watch: Decodable { let url: String }
         guard let r = try? await runGraph(["watch", relation, "--out", file.path, "--no-open", "--detach", "--json"], in: repo),

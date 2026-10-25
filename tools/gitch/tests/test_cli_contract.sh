@@ -23,10 +23,25 @@ test_cli_contract_schema_embedded_matches_standalone() {
   run gitch schema; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -S .)" "$(jq -S . "$ROOT/schema/gitch-v1.schema.json")"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$schema"')" https://json-schema.org/draft/2020-12/schema
-  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 19
+  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 20
   run gitch schema graph; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/graph'
   run gitch schema unknown --json; assert_rc 1; assert_json "$OUT"
+}
+
+test_cli_contract_staged_review_and_stamp() {
+  contract_repo
+  printf 'export const b = 2;\n' > b.ts
+  git add b.ts
+  run gitch graph review --json; assert_ok
+  contract_validate review
+  contract_validate public
+  assert_eq "$(printf '%s' "$OUT" | jq -r .scope)" staged
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.direct[0].path')" a.ts
+  run gitch graph review --stamp --json; assert_ok
+  contract_validate review
+  contract_validate public
+  run gitch graph review --scope worktree --json; assert_rc 1
 }
 
 test_cli_contract_catalog_separates_analysis_depth() {

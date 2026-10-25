@@ -7,9 +7,9 @@ struct FileViewToggle: View {
     @AppStorage(fileViewModeKey) private var mode = "list"
 
     var body: some View {
-        Picker("", selection: $mode) {
-            Image(systemName: "list.bullet").tag("list").help("Show as list")
-            Image(systemName: "list.bullet.indent").tag("tree").help("Show as folder tree")
+        Picker("File display", selection: $mode) {
+            Image(systemName: "list.bullet").tag("list").help("Show as list").accessibilityLabel("Show as list")
+            Image(systemName: "list.bullet.indent").tag("tree").help("Show as folder tree").accessibilityLabel("Show as folder tree")
         }
         .pickerStyle(.segmented)
         .labelsHidden()
@@ -110,6 +110,9 @@ struct ChangeList<MenuContent: View>: View {
         FileRow(change: c, selected: isSelected(c), showDirectory: showDirectory, stat: stats[c.path],
                 actionIcon: actionIcon, actionHelp: actionHelp, action: { onAction([c]) })
             .onTapGesture { onOpen(c) }
+            .focusable()
+            .onKeyPress(.return) { onOpen(c); return .handled }
+            .onKeyPress(.space) { onOpen(c); return .handled }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { onOpen(c) }

@@ -650,7 +650,8 @@ test_graph_formats_and_output() {
     node --check "$T/out/viewer.js" 2>"$T/out/node.err" || fail "보기 스크립트 문법 오류\n$(cat "$T/out/node.err")"
   fi
   grep -Eq '<(script|link)[^>]+(src|href)=' "$T/out/g.html" && fail "외부 파일(CDN)을 불러옴"
-  grep -q 'http' "$T/out/g.html" && fail "인터넷 주소가 들어 있음"
+  # The offline report's CSP uses http-equiv, which is metadata rather than a network request.
+  grep -Eq 'https?://' "$T/out/g.html" && fail "인터넷 주소가 들어 있음"
   awk '/<script id="graph-data"/ { on = 1; next } /<\/script>/ { on = 0 } on' "$T/out/g.html" > "$T/out/data.json"
   jq -e '.initial == "files" and (.views.files.nodes | length == 3) and (.views | keys == ["changes", "files", "modules", "tree"])' "$T/out/data.json" >/dev/null \
     || fail "html 에 네 관계가 들어 있지 않음\n$(head -c 400 "$T/out/data.json")"
@@ -910,8 +911,20 @@ test_graph_html_in_browser() {   # 헤드리스 Chrome 에서: 오류 없이 그
   printf 'fixture asset\n' | gr_put packages/a/src/asset.toString
   local i
   for i in 1 2 3 4 5 6 7 8; do printf 'import { v%s } from "./f%s"\nexport const v%s = 1\n' $(( i % 8 + 1 )) $(( i % 8 + 1 )) "$i" | gr_put "packages/a/src/f$i.ts"; done
+  printf 'import "../src/f1";\nimport "../src/f2";\n' | gr_put packages/a/tests/review.test.ts
+  echo 'struct Caller { let value: Value }' | gr_put swift/Caller.swift
+  echo 'struct Value {}' | gr_put swift/Value.swift
+  echo 'export const special=1;' | gr_put "한글 space ' <b>&.ts"
+  printf '[files]\nforbid packages/a/src/f1.ts -> packages/a/src/f2.ts\nforbid packages/a/src/f2.ts -> packages/a/src/f1.ts\n' | gr_put .gitch/graph.rules
   gr_commit one
   for i in 2 3; do echo "// $i" >> packages/a/src/f1.ts; echo "// $i" >> packages/a/src/f2.ts; gr_commit "c$i"; done   # 같이 바뀌는 쌍
+  echo '// pending body change' >> packages/a/src/f1.ts
+  echo '// pending body change' >> packages/a/src/f2.ts
+  echo 'import "./f1";' >> packages/a/src/f2.ts
+  echo '// pending' >> swift/Value.swift
+  echo '// pending' >> dotnet/App.cs
+  echo '// pending' >> "한글 space ' <b>&.ts"
+  git mv packages/a/src/legacy.js 'packages/a/src/legacy moved.js'
   run gitch graph files --out "$T/out/browser.html"; assert_ok
   run node "$ROOT/tests/graph_browser.mjs" "$chrome" "$T/out/browser.html" "$T"
   assert_ok "브라우저에서 확인 실패"

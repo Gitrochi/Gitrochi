@@ -66,7 +66,7 @@ export abstract class RepoSearch extends RepoSelection {
       else args.push("-n", "1000", "-G", q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
       let out = "";
       try {
-        out = (await git(args, path, { timeoutMs: 180_000 })).stdout;
+        out = (await git(args, path, { timeoutMs: 180_000, env: { GIT_LITERAL_PATHSPECS: "0" } })).stdout;
       } catch {
         out = "";
       }

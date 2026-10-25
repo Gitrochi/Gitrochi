@@ -141,6 +141,8 @@ extension RepoStore {
             let newTip = p.before.headRef.flatMap { p.after.refs[$0] } ?? p.after.head
             if let oldTip, oldTip != newTip {
                 try await Git.run(["reset", p.soft ? "--soft" : "--keep", oldTip], in: url)
+            } else if oldTip == nil, let newTip, p.soft, let ref = p.before.headRef {
+                try await Git.run(["update-ref", "-d", ref, newTip], in: url)
             }
             // 3) 나머지 브랜치·태그: 생긴 건 지우고, 없어진 건 되살리고, 옮겨진 건 되돌린다
             for ref in Set(p.before.refs.keys).union(p.after.refs.keys) where ref != p.before.headRef {

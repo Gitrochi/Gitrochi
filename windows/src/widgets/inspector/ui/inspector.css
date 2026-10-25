@@ -184,3 +184,58 @@
   border-top: 1px solid var(--border);
   padding-top: 8px;
 }
+
+.commit-impact {
+  min-width: 0;
+}
+.commit-impact-result {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.commit-impact-result.outdated {
+  opacity: 0.65;
+}
+.commit-impact-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--orange);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.commit-impact-notice svg {
+  flex: none;
+  margin-top: 1px;
+}
+.commit-impact-group > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 0;
+}
+.commit-impact-group > summary .muted {
+  margin-left: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.commit-impact-group ul {
+  margin: 4px 0;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+.commit-impact-files {
+  max-height: 190px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 4px 10px;
+}
+.commit-impact-file {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+}

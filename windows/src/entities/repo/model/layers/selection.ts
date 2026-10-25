@@ -10,6 +10,8 @@ import { t } from "@/shared/i18n";
 
 /** 선택한 커밋·작업 영역의 상세와 diff */
 export abstract class RepoSelection extends RepoCore {
+  private conflictGeneration = 0;
+  private historyGeneration = 0;
   // MARK: - 선택
 
   select(sel: Selection | null) {
@@ -120,8 +122,14 @@ export abstract class RepoSelection extends RepoCore {
 
   async loadConflict(path: string) {
     if (!this.path) return;
-    const text = (await ipc.readText(joinPath(this.path, path)).catch(() => null)) ?? "";
+    const repo = this.path;
+    const gen = ++this.conflictGeneration;
     this.conflictPath = path;
+    this.conflictDoc = null;
+    this.conflictChoices = new Map();
+    this.emit();
+    const text = (await ipc.readText(joinPath(repo, path)).catch(() => null)) ?? "";
+    if (gen !== this.conflictGeneration || this.path !== repo) return;
     this.conflictDoc = parseConflict(text);
     this.conflictChoices = new Map();
     this.emit();
@@ -137,16 +145,20 @@ export abstract class RepoSelection extends RepoCore {
 
   /** 고른 대로 파일을 쓰고 해결됨으로 표시(스테이지) */
   async saveConflictResolution(c: FileChange) {
-    const text = this.conflictDoc && resolveConflict(this.conflictDoc, this.conflictChoices);
-    if (!this.path || text === null || text === undefined) return;
+    const doc = this.conflictDoc;
+    const path = this.path;
+    if (!path || this.busy != null || this.conflictPath !== c.path || !doc?.blocks.length) return;
+    const text = resolveConflict(doc, this.conflictChoices);
+    if (text === null) return;
     try {
-      await ipc.writeText(joinPath(this.path, c.path), text);
+      await ipc.writeText(joinPath(path, c.path), text);
     } catch (e) {
       this.errorMessage = t("Couldn't save the file.\n\n") + describe(e);
       this.emit();
       return;
     }
-    if (await this.run(t("Marking as resolved…"), ["add", "--", c.path])) this.closeConflict();
+    if (this.path !== path) return;
+    if (await this.run(t("Marking as resolved…"), ["add", "--", c.path]) && this.conflictDoc === doc) this.closeConflict();
   }
 
   /** 파일 전체를 한쪽으로(git checkout --ours/--theirs) */
@@ -161,6 +173,7 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeConflict() {
+    this.conflictGeneration++;
     this.conflictDoc = null;
     this.conflictChoices = new Map();
     this.conflictPath = null;
@@ -170,12 +183,14 @@ export abstract class RepoSelection extends RepoCore {
   // MARK: 파일 히스토리 · blame(가운데 영역에 띄운다)
 
   openFileHistory(path: string) {
+    this.closeFileInspect();
     this.fileInspectLine = null;
     this.fileInspect = { mode: "history", path, rev: null };
     void this.loadFileInspect();
   }
 
   openBlame(path: string, rev: string | null = null, line: number | null = null) {
+    this.closeFileInspect();
     this.fileInspectLine = line;
     this.fileInspect = { mode: "blame", path, rev };
     void this.loadFileInspect();
@@ -188,6 +203,8 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeFileInspect() {
+    this.historyGeneration++;
+    this.fileInspectLoading = false;
     this.fileInspectLine = null;
     this.fileInspect = null;
     this.fileHistory = [];
@@ -206,7 +223,7 @@ export abstract class RepoSelection extends RepoCore {
     this.emit();
     try {
       if (f.mode === "history") {
-        const r = await this.g(["log", "--follow", "-M", "--name-only", "--format=" + P.fileHistoryFormat, "--", f.path]);
+        const r = await this.g(["log", "--follow", "-M", "--name-only", "-z", "--format=" + P.fileHistoryFormat, "--", f.path]);
         if (this.fileInspect !== f) return;
         this.fileHistory = P.parseFileHistory(r.stdout);
         const first = this.fileHistory[0];
@@ -225,14 +242,19 @@ export abstract class RepoSelection extends RepoCore {
 
   /** 히스토리에서 커밋을 고르면 그 커밋에서 이 파일이 어떻게 바뀌었는지 */
   async selectHistory(e: FileHistoryEntry) {
+    const path = this.path;
+    if (!path) return;
+    const inspect = this.fileInspect;
+    const gen = ++this.historyGeneration;
     this.fileHistorySelected = e.commit.id;
     this.fileHistoryDiff = null;
     this.emit();
     try {
       const r = await this.g(["diff", "--no-ext-diff", "-M", e.commit.parents[0] ?? EMPTY_TREE, e.commit.id, "--", e.path]);
-      if (this.fileHistorySelected !== e.commit.id) return;
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
       this.fileHistoryDiff = P.parseDiff(r.stdout);
     } catch (err) {
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
       this.fileHistoryDiff = { lines: [], isBinary: false, truncated: false, header: [], hunks: [], error: describe(err) };
     }
     this.emit();

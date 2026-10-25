@@ -39,6 +39,11 @@ describe("diff 해석", () => {
     const l = d.lines.find((x) => x.kind === "added" && x.text === "three")!;
     expect(l.raw).toBe("three\r");
   });
+
+  it("마지막 줄도 CRLF 원문을 보존한다", () => {
+    const d = parseDiff("diff --git a/f b/f\n--- a/f\n+++ b/f\n@@ -1 +1 @@\n-old\r\n+new\r\n");
+    expect(d.lines.at(-1)?.raw).toBe("new\r");
+  });
 });
 
 describe("줄 단위 패치", () => {
@@ -62,6 +67,25 @@ describe("줄 단위 패치", () => {
   });
   it("새 파일은 줄 단위로 못 함", () => {
     expect(canEditLines(parseDiff(DIFF.replace("index 1111111..2222222 100644", "new file mode 100644")))).toBe(false);
+  });
+
+  it("앞 덩어리에서 줄 수가 달라져도 뒷 덩어리 역적용은 새 파일의 위치를 쓴다", () => {
+    const d = parseDiff("diff --git a/f b/f\n--- a/f\n+++ b/f\n@@ -1 +1,3 @@\n a\n+x\n+y\n@@ -20,3 +22,3 @@\n a\n-old\n+new\n b\n");
+    expect(buildPatch(d, [1], null, true)).toContain("@@ -22,3 +22,3 @@");
+  });
+
+  it("여러 파일 diff를 첫 파일의 패치로 합치지 않는다", () => {
+    expect(canEditLines(parseDiff(DIFF + DIFF.replaceAll("f.txt", "other.txt")))).toBe(false);
+  });
+
+  it("줄만 스테이지할 때 실행 권한 변경을 함께 적용하지 않는다", () => {
+    const d = parseDiff(DIFF.replace("index 1111111..2222222 100644", "old mode 100644\nnew mode 100755"));
+    expect(buildPatch(d, [0], null, false)).not.toMatch(/^(old|new) mode /m);
+  });
+
+  it("Git이 따옴표로 감싼 파일명의 줄도 스테이지할 수 있다", () => {
+    const d = parseDiff('diff --git "a/a\\tb" "b/a\\tb"\n--- "a/a\\tb"\n+++ "b/a\\tb"\n@@ -1 +1 @@\n-old\n+new\n');
+    expect(canEditLines(d)).toBe(true);
   });
 });
 
@@ -101,5 +125,9 @@ describe("파일 종류별", () => {
     const d = newFileDiff("", false);
     expect(d.lines).toEqual([]);
     expect(d.info?.newFile).toBe(true);
+  });
+
+  it.each(["\n", "\r\n"])("줄바꿈 하나로 된 새 파일은 한 줄을 표시한다: %j", (text) => {
+    expect(newFileDiff(text, false).lines.map((l) => l.kind)).toEqual(["hunk", "added"]);
   });
 });
