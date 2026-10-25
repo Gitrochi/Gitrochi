@@ -76,8 +76,6 @@ struct WorkingChangesView: View {
                 }
                 .padding(12)
             }
-            Divider()
-            CommitComposer()
         }
         .background(Color(nsColor: .windowBackgroundColor))
     }
@@ -85,15 +83,10 @@ struct WorkingChangesView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Uncommitted changes").font(.title3.weight(.semibold))
+                Text("Changed files").font(.headline)
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.branch")
-                    Text(store.headBranch ?? String(localized: "Detached HEAD"))
-                    if store.status.ahead > 0 { Text("↑\(store.status.ahead)") }
-                    if store.status.behind > 0 { Text("↓\(store.status.behind)") }
                     if !store.status.isEmpty {
                         let total = totals
-                        Text("·")
                         Text("\(store.status.count) files")
                         if total.added + total.deleted > 0 { LineStatText(added: total.added, deleted: total.deleted) }
                     }
@@ -118,6 +111,7 @@ struct WorkingChangesView: View {
 }
 
 private struct FileSection<Content: View>: View {
+    @Environment(RepoStore.self) private var store
     let title: String
     let color: Color
     let count: Int
@@ -127,17 +121,18 @@ private struct FileSection<Content: View>: View {
 
     var body: some View {
         if count > 0 {
-            Card(spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Circle().fill(color).frame(width: 7, height: 7)
                     Text(title).font(.subheadline.weight(.semibold))
                     Text("\(count)").font(.subheadline).foregroundStyle(.secondary)
                     Spacer()
-                    Button(actionTitle, action: action).buttonStyle(.link).font(.caption)
+                    Button(actionTitle, action: action).buttonStyle(.borderless).font(.caption)
+                        .disabled(store.busy != nil)
                 }
                 .padding(.bottom, 4)
                 content
             }
+            .padding(.vertical, 4)
         }
     }
 }
@@ -165,107 +160,6 @@ private struct OperationBanner: View {
         }
         .padding(12)
         .background(Color.orange.opacity(0.10))
-    }
-}
-
-struct CommitComposer: View {
-    @Environment(RepoStore.self) private var store
-
-    var body: some View {
-        @Bindable var store = store
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                if let me = store.me {
-                    AuthorAvatar(name: me.name, email: me.email, size: 22)
-                        .help("\(me.name) <\(me.email)>")
-                }
-                Text("Commit").font(.headline)
-                Spacer()
-                Button { Task { await store.planSplit() } } label: {
-                    Label("Split into commits", systemImage: "square.stack.3d.up")
-                }
-                .controlSize(.small)
-                .disabled(store.splittableChanges.count < 2 || store.aiWorking != nil || !store.status.conflicted.isEmpty)
-                .help("\(AIStore.shared.short(for: .commit)) groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules.")
-                Button { Task { await store.generateCommitMessage() } } label: {
-                    if store.aiWorking != nil {
-                        HStack(spacing: 4) { ProgressView().controlSize(.mini); Text("Working") }
-                    } else {
-                        Label("Write with \(AIStore.shared.short(for: .commit))", systemImage: "sparkles")
-                    }
-                }
-                .controlSize(.small)
-                .disabled(store.status.staged.isEmpty || store.aiWorking != nil)
-                .help("\(AIStore.shared.provider.title) writes a commit message from the staged changes (⌥⌘M). Change the AI in Settings > AI.")
-            }
-            GitchBar()
-            VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    TextField("Summary (required)", text: $store.summary)
-                        .textFieldStyle(.plain)
-                        .font(.body.weight(.medium))
-                    Text("\(store.summary.count)")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(store.summary.count > 72 ? Color.orange : Color.secondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 7)
-                Divider()
-                ZStack(alignment: .topLeading) {
-                    TextEditor(text: $store.message)
-                        .font(.callout)
-                        .scrollContentBackground(.hidden)
-                        .padding(.horizontal, 3)
-                        .padding(.vertical, 4)
-                    if store.message.isEmpty {
-                        Text("Description (optional)")
-                            .font(.callout)
-                            .foregroundStyle(.tertiary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .frame(height: 70)
-            }
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.25)))
-
-            if let working = store.aiWorking {
-                HStack(spacing: 4) { ProgressView().controlSize(.mini); Text(working) }
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            if let notice = store.aiNotice {
-                Text(notice).font(.caption).foregroundStyle(.secondary)
-            }
-
-            HStack {
-                Toggle("Amend previous commit", isOn: Binding(get: { store.amend },
-                                                  set: { v in Task { await store.setAmend(v) } }))
-                    .toggleStyle(.checkbox)
-                    .disabled(store.headHash == nil)
-                    .help("Amend: combine into the last commit")
-                Spacer()
-                Button {
-                    Task { await store.commit() }
-                } label: {
-                    Text(buttonTitle).frame(minWidth: 120)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(!store.canCommit)
-            }
-        }
-        .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor))
-    }
-
-    private var buttonTitle: String {
-        if store.amend { return String(localized: "Amend previous commit") }
-        if store.repoState == .merging { return String(localized: "Merge commit") }
-        let n = store.status.staged.count
-        return n == 0 ? String(localized: "No staged files") : String(localized: "Commit \(n) files  ⌘↩")
     }
 }
 

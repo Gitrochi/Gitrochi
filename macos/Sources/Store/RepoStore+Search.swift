@@ -10,7 +10,12 @@ extension RepoStore {
         return i + 1
     }
 
-    func requestSearchFocus() { searchFocusRequest += 1 }
+    func requestSearchFocus() {
+        showArea(.history)
+        closeFileInspect()
+        closeDiff()
+        searchFocusRequest += 1
+    }
 
     func updateSearch() {
         searchTask?.cancel()

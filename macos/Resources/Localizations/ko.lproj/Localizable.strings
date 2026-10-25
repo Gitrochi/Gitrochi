@@ -1161,3 +1161,47 @@
 "Files affected by changes" = "변경의 영향을 받는 파일";
 "Uses an existing index.scip or .gitch/index.scip for symbol references. Shows the analysis coverage when no current index is available." = "index.scip 또는 .gitch/index.scip 의 심볼 참조를 읽습니다. 최신 인덱스가 없으면 분석 범위를 표시합니다.";
 "Shows changed files and the files that depend on them, including uncommitted changes." = "커밋하지 않은 변경까지 포함해 수정한 파일과 그 파일을 참조하는 파일을 보여 줍니다.";
+
+/* 목적별 작업 화면과 커밋 준비 */
+"Workspace" = "작업 화면";
+"Show history" = "히스토리 보기";
+"Repository tools" = "저장소 도구";
+"Branches" = "브랜치";
+"Actions" = "작업";
+"Options" = "옵션";
+"No remote configured" = "원격 저장소 없음";
+"Push to publish this branch" = "Push로 이 브랜치를 원격에 게시하세요";
+"Up to date" = "최신 상태";
+"↑%lld to push · ↓%lld to pull" = "Push할 커밋 ↑%lld · Pull할 커밋 ↓%lld";
+"Dismiss notification" = "알림 닫기";
+"Operation completed" = "작업을 완료했습니다";
+"Push this branch first to set up remote tracking." = "먼저 이 브랜치를 Push해 원격 추적을 설정하세요.";
+"Bring remote commits into this branch. Choose a pull strategy from the menu. (⇧⌘L)" = "원격 커밋을 현재 브랜치에 반영합니다. 메뉴에서 Pull 방식을 선택할 수 있습니다. (⇧⌘L)";
+"Fetches new commits and branches from all remotes. Your branches aren't changed. (⇧⌘F)" = "모든 원격 저장소의 새 커밋과 브랜치를 가져옵니다. 현재 브랜치는 바뀌지 않습니다. (⇧⌘F)";
+"Pushes this branch to the remote; sets up tracking on the first push. (⇧⌘P)" = "현재 브랜치를 원격에 올립니다. 첫 Push에서는 원격 추적도 설정합니다. (⇧⌘P)";
+"Branches, worktrees, pull requests, stash and undo" = "브랜치, 워크트리, PR, 스태시 및 되돌리기";
+"Show or hide the terminal. Shells keep running when hidden. (⌃`)" = "터미널을 표시하거나 숨깁니다. 숨겨도 셸은 계속 실행됩니다. (⌃`)";
+"Select a file to review" = "확인할 파일을 선택하세요";
+"Review changes, then stage the files or lines you want to commit." = "변경 내용을 확인하고 커밋에 넣을 파일이나 줄을 스테이지하세요.";
+"Resolve conflicts before committing." = "충돌을 해결한 뒤 커밋하세요.";
+"Stage the files you want to include." = "커밋에 넣을 파일을 스테이지하세요.";
+"Write a summary to enable commit." = "요약을 입력하면 커밋할 수 있습니다.";
+"Ready to commit staged changes." = "스테이지된 변경을 커밋할 준비가 되었습니다.";
+"%lld staged files" = "스테이지된 파일 %lld개";
+"AI message" = "AI로 작성";
+"AI writes a message from the staged changes. (⌥⌘M)" = "스테이지된 변경을 바탕으로 AI가 메시지를 작성합니다. (⌥⌘M)";
+"Commit summary" = "커밋 요약";
+"Summary character count" = "요약 글자 수";
+"Commit description" = "커밋 설명";
+"Close diff" = "diff 닫기";
+"Close diff (Esc)" = "diff 닫기 (Esc)";
+"File actions" = "파일 작업";
+"File display" = "파일 표시 방식";
+"Open Changes to stage files and create your first commit." = "변경 사항 화면에서 파일을 스테이지하고 첫 커밋을 만드세요.";
+"Show all graph lanes" = "그래프의 모든 연결선 보기";
+
+"Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
+"Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";
+"Create a branch with a commit before pushing." = "커밋이 있는 브랜치를 만든 뒤 Push하세요.";
+
+"Resize file and detail columns" = "파일 목록과 상세 영역 너비 조절";

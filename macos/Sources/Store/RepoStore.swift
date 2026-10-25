@@ -34,6 +34,13 @@ final class RepoStore: Identifiable {
     var emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
     // MARK: 선택·상세
+    enum Area { case changes, history }
+    var area: Area = .changes
+    var historySelection: Selection?
+    var changesDiff: DiffSource?
+    var historyDiff: DiffSource?
+    var changesInspect: FileInspect?
+    var historyInspect: FileInspect?
     var selection: Selection?
     var detail: CommitDetail?
     var detailFiles: [FileChange] = []
@@ -50,6 +57,7 @@ final class RepoStore: Identifiable {
 
     // MARK: UI
     var busy: String?
+    var operationNotice: String?
     var errorMessage: String?
     var sheet: SheetKind?
     var confirm: ConfirmRequest?
@@ -367,6 +375,8 @@ final class RepoStore: Identifiable {
         hasMore = false; limit = 2000; lastLog = nil
         emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
         selection = nil; detail = nil; detailFiles = []; diffSource = nil; diff = nil
+        area = .changes; historySelection = nil; changesDiff = nil; historyDiff = nil
+        changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
         aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
@@ -641,6 +651,9 @@ final class RepoStore: Identifiable {
             if let match = all.first(where: { $0.path == c.path && $0.staged == c.staged }) {
                 diffSource = .working(match)
                 loadDiff(keepCurrent: true)
+            } else if let match = all.first(where: { $0.path == c.path }) {
+                // 파일 전체를 스테이지한 직후에도 같은 파일의 diff 를 이어서 보여 준다.
+                openDiff(.working(match))
             } else {
                 closeDiff()
             }

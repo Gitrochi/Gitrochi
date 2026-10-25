@@ -10,6 +10,7 @@ extension RepoStore {
     @discardableResult
     func run(_ label: String, _ args: [String], network: Bool = false, input: String? = nil) async -> Bool {
         guard let url, busy == nil else { return false }
+        operationNotice = nil
         busy = label
         defer { busy = nil }
         let before = repoState == .clean ? await refSnapshot() : nil
@@ -18,6 +19,7 @@ extension RepoStore {
                               env: network ? AccountStore.shared.gitEnvironment(target: target, repoPath: url.path) : [:])
             if let before, let after = await refSnapshot() { recordUndo(args: args, input: input, before: before, after: after) }
             await reload()
+            operationNotice = String(localized: "Operation completed")
             return true
         } catch {
             errorMessage = describe(error)
@@ -262,6 +264,20 @@ extension RepoStore {
         busy == nil && !summary.trimmed.isEmpty
             && (!status.staged.isEmpty || amend || repoState == .merging)
             && status.conflicted.isEmpty
+            && !gitchChecking && gitchPreflight?.result != "STOP"
+    }
+
+    /// 비활성 버튼 옆에서 현재 필요한 다음 행동을 안내한다. Git 실행 조건은 canCommit 에 유지한다.
+    var commitGuidance: String {
+        if let busy { return busy }
+        if !status.conflicted.isEmpty { return String(localized: "Resolve conflicts before committing.") }
+        if gitchChecking { return String(localized: "Checking the Git account and repository…") }
+        if gitchPreflight?.result == "STOP" { return String(localized: "Resolve the gitch checks below before committing.") }
+        if status.staged.isEmpty && !amend && repoState != .merging {
+            return String(localized: "Stage the files you want to include.")
+        }
+        if summary.trimmed.isEmpty { return String(localized: "Write a summary to enable commit.") }
+        return String(localized: "Ready to commit staged changes.")
     }
 
     func setAmend(_ on: Bool) async {
