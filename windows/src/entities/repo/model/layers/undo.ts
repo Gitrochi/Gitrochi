@@ -68,6 +68,7 @@ export abstract class RepoUndo extends RepoActions {
       const oldTip = p.before.headRef ? p.before.refs[p.before.headRef] : p.before.head;
       const newTip = p.before.headRef ? p.after.refs[p.before.headRef] : p.after.head;
       if (oldTip && oldTip !== newTip) await this.g(["reset", p.soft ? "--soft" : "--keep", oldTip]);
+      else if (!oldTip && newTip && p.soft && p.before.headRef) await this.g(["update-ref", "-d", p.before.headRef, newTip]);
       // 3) 나머지 브랜치·태그: 생긴 건 지우고, 없어진 건 되살리고, 옮겨진 건 되돌린다
       for (const ref of new Set([...Object.keys(p.before.refs), ...Object.keys(p.after.refs)])) {
         if (ref === p.before.headRef) continue;

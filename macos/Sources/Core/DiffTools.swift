@@ -114,9 +114,10 @@ enum DiffSplit {
 enum DiffPatch {
     /// 이 diff 로 줄 단위 패치를 만들 수 있는지(새 파일·지운 파일·이름 바꾼 파일·결합 diff·바이너리는 파일째로만)
     static func canEdit(_ doc: DiffDocument) -> Bool {
-        guard !doc.isBinary, !doc.combined, !doc.hunks.isEmpty, !doc.truncated else { return false }
+        guard !doc.isBinary, !doc.combined, !doc.multipleFiles, !doc.hunks.isEmpty, !doc.truncated else { return false }
         let h = doc.header
-        guard h.contains(where: { $0.hasPrefix("--- a/") }), h.contains(where: { $0.hasPrefix("+++ b/") }) else { return false }
+        guard h.contains(where: { $0.hasPrefix("--- a/") || $0.hasPrefix("--- \"a/") }),
+              h.contains(where: { $0.hasPrefix("+++ b/") || $0.hasPrefix("+++ \"b/") }) else { return false }
         return !h.contains { $0.hasPrefix("new file mode") || $0.hasPrefix("deleted file mode") || $0.hasPrefix("rename ") || $0.hasPrefix("similarity") }
     }
 
@@ -125,7 +126,7 @@ enum DiffPatch {
     ///   앞으로 적용(스테이지)이면 고르지 않은 '-' 를 문맥으로 두고 '+' 는 뺀다.
     static func build(_ doc: DiffDocument, hunks: Set<Int>, lines selected: Set<Int>?, reverse: Bool) -> String? {
         guard canEdit(doc) else { return nil }
-        var out = doc.header.filter { !$0.hasPrefix("index ") }
+        var out = doc.header.filter { !$0.hasPrefix("index ") && !$0.hasPrefix("old mode ") && !$0.hasPrefix("new mode ") }
         var delta = 0, any = false
         for (n, h) in doc.hunks.enumerated() where hunks.contains(n) {
             let end = n + 1 < doc.hunks.count ? doc.hunks[n + 1].line : doc.lines.count
@@ -152,8 +153,11 @@ enum DiffPatch {
             guard changed else { continue }
             any = true
             // 새 쪽 시작 줄: 넣기만 하는 덩어리는 다음 줄부터, 지우기만 하는 덩어리는 앞 줄(git 의 표기 규칙)
-            let newStart = h.oldStart + delta + (oldCount == 0 ? 1 : 0) - (newCount == 0 ? 1 : 0)
-            out.append("@@ -\(h.oldStart),\(oldCount) +\(max(0, newStart)),\(newCount) @@")
+            // 역적용의 입력은 새 파일이므로 선택하지 않은 앞 덩어리의 줄 이동도 반영한다.
+            let anchor = reverse ? h.newStart + (h.newCount == 0 ? 1 : 0) : h.oldStart + (h.oldCount == 0 ? 1 : 0)
+            let oldStart = max(0, anchor + (reverse ? -delta : 0) - (oldCount == 0 ? 1 : 0))
+            let newStart = max(0, anchor + (reverse ? 0 : delta) - (newCount == 0 ? 1 : 0))
+            out.append("@@ -\(oldStart),\(oldCount) +\(newStart),\(newCount) @@")
             out += body
             delta += newCount - oldCount
         }

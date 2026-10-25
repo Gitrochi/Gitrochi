@@ -23,6 +23,7 @@ Gitrochi 에 관심 가져 주셔서 고맙습니다. 버그 제보·기능 요�
 - 받은 뒤 한 번 `git config core.hooksPath .githooks` — 커밋할 때 [Git 규칙](#git-규칙)을 검사합니다.
 - 맥은 SwiftPM 없이 `swiftc` 로 바로 빌드합니다. 새 파일은 `macos/Sources/` 아래 알맞은 폴더에 두면 자동으로 포함됩니다.
 - 맥 앱에 함께 들어가는 [gitch](tools/gitch/README.md)(bash 3.2 + git)를 고쳤으면 `tools/gitch/tests/run.sh` 로 확인합니다(3분쯤, 실제 설정은 건드리지 않음).
+- Git 파서·충돌 해결·줄 단위 패치를 고쳤으면 `bash macos/Tools/test-git-core.sh`와 Windows의 `npm test`도 실행합니다. 임시 저장소에서 실제 Git으로 스테이지·버리기·패치 적용·파일 히스토리·워크트리 경계를 검사합니다.
 - 정밀 참조·자동 갱신 도우미를 고쳤으면 `python3 tools/gitch/tests/test_scip.py`와 `python3 tools/gitch/tests/test_watch.py`도 실행합니다. 앱 URL 이동은 `bash macos/Tools/test-app-route.sh`로 검증합니다. CI는 JSON Schema 계약도 검증합니다(테스트 의존성 `jsonschema==4.25.1`; 제품 도우미는 Python 표준 라이브러리만 사용).
 - 앱과 gitch는 같은 릴리스 버전을 씁니다. `bash tools/check-versions.sh`로 macOS · Windows · CLI 버전을 한 번에 확인합니다(맥 빌드와 CI에서도 검사).
 - gitch 옆에 들어가는 Xcode 인덱스 도우미 [gitch-swift-index](tools/gitch-swift-index/README.md)(Swift)를 고쳤으면 `tools/gitch-swift-index/tests/run.sh` 로 확인합니다(30초쯤, 예제를 `swift build` 해서 읽음).

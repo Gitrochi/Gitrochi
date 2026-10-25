@@ -138,6 +138,8 @@ final class RepoStore: Identifiable {
     var fileHistoryDiff: DiffDocument?
     var blameLines: [BlameLine] = []
     var fileInspectLoading = false
+    @ObservationIgnored var fileInspectGeneration = 0
+    @ObservationIgnored var fileHistoryGeneration = 0
     var fileInspectError: String?
     /// diff 화면에서 고른 줄(DiffLine.id)과 Shift 범위의 시작
     var diffSelection: Set<Int> = []
@@ -413,7 +415,7 @@ final class RepoStore: Identifiable {
             async let stashR = Git.run(["stash", "list", "--format=" + Parsers.stashFormat], in: url, ok: [0, 1, 128])
             async let headR = Git.run(["rev-parse", "--verify", "-q", "HEAD"], in: url, ok: [0, 1, 128])
             async let remoteR = Git.run(["remote", "-v"], in: url)
-            async let worktreeR = Git.run(["worktree", "list", "--porcelain"], in: url, ok: [0, 128])
+            async let worktreeR = Git.run(["worktree", "list", "--porcelain", "-z"], in: url, ok: [0, 128])
             async let unstagedNumR = Git.run(["diff", "--no-ext-diff", "--numstat", "-z"], in: url, ok: [0, 128])
             async let stagedNumR = Git.run(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], in: url, ok: [0, 128])
             let ((st, statusTime), lg, rf, sh, hd, rm, wt) = try await (statusR, logR, refsR, stashR, headR, remoteR, worktreeR)

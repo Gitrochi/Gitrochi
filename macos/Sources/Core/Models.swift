@@ -241,6 +241,8 @@ struct DiffDocument {
     var hunks: [DiffHunk] = []
     /// 머지 커밋의 결합 diff(@@@)
     var combined = false
+    /// 여러 파일의 변경은 파일 하나의 줄 단위 패치로 만들 수 없다.
+    var multipleFiles = false
     /// 나란히 보기의 줄들(왼쪽 이전 · 오른쪽 이후)
     var splitRows: [DiffSplitRow] = []
     /// 새 파일·지운 파일·이름·권한(diff 머리에서 읽은 것)

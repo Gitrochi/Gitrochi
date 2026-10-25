@@ -239,10 +239,16 @@ gitsw_cmd_path() {   # 훅/설정에 적을 gitch 경로 (~/bin/gitch 가 이 �
 }
 
 json_esc() {   # 문자열 → JE (따옴표 포함 JSON 문자열) — 서브셸 없이
-  local s="$1"
+  local s="$1" code oct ch escaped
   s=${s//\\/\\\\}; s=${s//\"/\\\"}
   s=${s//$'\n'/\\n}; s=${s//$'\r'/\\r}; s=${s//$'\t'/\\t}
-  case "$s" in *[$'\001'-$'\037']*) s=$(printf '%s' "$s" | tr -d '\001-\037') ;; esac
+  case "$s" in *[$'\001'-$'\037']*)
+    for ((code=1; code<32; code++)); do
+      printf -v oct '%03o' "$code"; printf -v ch '%b' "\\$oct"
+      printf -v escaped '\\u%04x' "$code"
+      s=${s//"$ch"/"$escaped"}
+    done ;;
+  esac
   JE="\"$s\""
 }
 json_str() { json_esc "$1"; printf '%s' "$JE"; }
@@ -1571,10 +1577,10 @@ run_gitleaks() {   # gitleaks 가 설치돼 있으면 스테이지 내용을 한
 hook_check_secrets() {
   local out bad="" f gl
   out=$(git -c core.quotepath=off diff --cached --no-color --no-ext-diff --no-textconv -U0 --diff-filter=ACMR 2>/dev/null | GITSW_LOCKRE="$LOCKFILE_RE" awk "$SECRET_AWK")
-  while IFS= read -r f; do
+  while IFS= read -r -d '' f; do
     [ -z "$f" ] && continue
     sensitive_name "$f" && bad="$bad  $f  — $SN_REASON"$'\n'
-  done < <(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACR 2>/dev/null)
+  done < <(git diff --cached --name-only -z --diff-filter=ACR 2>/dev/null)
   gl=$(run_gitleaks)
   if [ -n "$out" ] || [ -n "$bad" ] || [ -n "$gl" ]; then
     err "✘ [gitch] 비밀값으로 보이는 내용이 있어 커밋을 막았습니다:"
@@ -2003,14 +2009,30 @@ st_word() {
   esac
 }
 
-json_files() {   # name-status 줄들 → [{"status":..,"path":..}]
-  local s f g out="" first=1
-  while IFS=$'\t' read -r s f g; do
-    [ -z "$s" ] && continue
-    [ -n "$first" ] || out="$out,"; first=""
-    out="$out{\"status\":$(json_str "$(st_word "$s")"),\"path\":$(json_str "${g:-$f}")}"
-  done <<< "$1"
-  printf '[%s]' "$out"
+check_diff_files() {   # diff -z → CF_JSON CF_TEXT CF_COUNT (경로의 탭·줄바꿈도 한 파일)
+  local s f display
+  CF_JSON=""; CF_TEXT=""; CF_COUNT=0
+  while IFS= read -r -d '' s && IFS= read -r -d '' f; do
+    case "$s" in R*|C*) IFS= read -r -d '' f || break ;; esac
+    [ "$CF_COUNT" -eq 0 ] || CF_JSON="$CF_JSON,"
+    CF_JSON="$CF_JSON{\"status\":$(json_str "$(st_word "$s")"),\"path\":$(json_str "$f")}"
+    printf -v display '%q' "$f"
+    CF_TEXT="$CF_TEXT$s"$'\t'"$display"$'\n'
+    CF_COUNT=$((CF_COUNT+1))
+  done < <(git diff "$@" --name-status -z 2>/dev/null)
+  CF_JSON="[$CF_JSON]"
+}
+check_path_files() {   # NUL 구분 경로 → CP_JSON CP_TEXT CP_COUNT
+  local f display
+  CP_JSON=""; CP_TEXT=""; CP_COUNT=0
+  while IFS= read -r -d '' f; do
+    [ "$CP_COUNT" -eq 0 ] || CP_JSON="$CP_JSON,"
+    CP_JSON="$CP_JSON$(json_str "$f")"
+    printf -v display '%q' "$f"
+    CP_TEXT="$CP_TEXT$display"$'\n'
+    CP_COUNT=$((CP_COUNT+1))
+  done
+  CP_JSON="[$CP_JSON]"
 }
 json_lines() {   # 줄들 → ["..",".."]
   local l out="" first=1
@@ -2025,20 +2047,23 @@ json_lines() {   # 줄들 → ["..",".."]
 check_cmd() {   # gitch ck
   require_repo
   local json="" fmode=auto a br acc lock staged unstaged untracked ahead=0 behind=0 stash fetched=1 n_s n_u n_n
+  local staged_json unstaged_json untracked_json conflicts_json
   for a in "$@"; do
     case "$a" in --json) json=1 ;; --fetch) fmode=force ;; --no-fetch) fmode=never ;; *) die "사용법: gitch ck [--json] [--fetch|--no-fetch]" ;; esac
   done
   load_config >/dev/null 2>&1
   br=$(cur_branch)
   maybe_fetch "$fmode"; case $? in 1) fetched=0 ;; 2) fetched=skip ;; esac
-  staged=$(git -c core.quotepath=off diff --cached --name-status 2>/dev/null)
-  unstaged=$(git -c core.quotepath=off diff --name-status 2>/dev/null)
-  untracked=$(git -c core.quotepath=off ls-files --others --exclude-standard)
-  n_s=$(printf '%s' "$staged" | grep -c .); n_u=$(printf '%s' "$unstaged" | grep -c .); n_n=$(printf '%s' "$untracked" | grep -c .)
+  check_diff_files --cached; staged=$CF_TEXT; staged_json=$CF_JSON; n_s=$CF_COUNT
+  check_diff_files; unstaged=$CF_TEXT; unstaged_json=$CF_JSON; n_u=$CF_COUNT
+  check_path_files < <(git ls-files --others --exclude-standard -z)
+  untracked=$CP_TEXT; untracked_json=$CP_JSON; n_n=$CP_COUNT
   stash=$(git stash list 2>/dev/null | grep -c .)
   resolve_repo .
   lock=$R_LOCK; acc=$R_ACC
   repo_state
+  check_path_files < <(git diff --name-only --diff-filter=U -z 2>/dev/null)
+  conflicts_json=$CP_JSON
   if has_upstream; then
     read -r behind ahead <<< "$(git rev-list --left-right --count '@{u}...HEAD' 2>/dev/null)"
     behind=${behind:-0}; ahead=${ahead:-0}
@@ -2050,9 +2075,9 @@ check_cmd() {   # gitch ck
     printf '{"schemaVersion":1,"repo":%s,"branch":%s,"account":%s,"locked":%s,"fetched":%s,"hasUpstream":%s,"ahead":%s,"behind":%s,"staged":%s,"unstaged":%s,"untracked":%s,"stash":%s,"inProgress":%s,"conflicts":%s}\n' \
       "$(json_str "$(basename "$(repo_top)")")" "$(json_str "$br")" "$(json_str "$acc")" "$(json_bool "$lock")" \
       "$( [ "$fetched" = 1 ] && echo true || echo false)" "$(has_upstream && echo true || echo false)" \
-      "$(json_num "$ahead")" "$(json_num "$behind")" "$(json_files "$staged")" "$(json_files "$unstaged")" \
-      "$(json_lines "$untracked")" "$(json_num "$stash")" \
-      "$( [ -n "$RS_OP" ] && json_str "$RS_OP" || echo null)" "$(json_lines "$RS_CONFLICT_FILES")"
+      "$(json_num "$ahead")" "$(json_num "$behind")" "$staged_json" "$unstaged_json" \
+      "$untracked_json" "$(json_num "$stash")" \
+      "$( [ -n "$RS_OP" ] && json_str "$RS_OP" || echo null)" "$conflicts_json"
     return 0
   fi
 
@@ -2116,6 +2141,8 @@ auto_msg() {   # 메시지를 안 줬을 때 (스테이지된 파일 기준)
 commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... [메시지...]
   require_repo
   local all=0 msgs=() words=() file="" trailers=() m t files
+  local merging=""
+  [ -f "$(git rev-parse --git-path MERGE_HEAD)" ] && merging=1
   while [ $# -gt 0 ]; do
     case "$1" in
       -a|--all) all=1 ;;
@@ -2139,7 +2166,7 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
   fi
   if [ "$all" = 1 ]; then
     git add -A || die "git add 실패"
-  elif git diff --cached --quiet 2>/dev/null; then
+  elif [ -z "$merging" ] && git diff --cached --quiet 2>/dev/null; then
     if [ -n "$(git status --porcelain)" ]; then
       if can_prompt; then
         dim "ℹ 스테이지된 파일이 없어 변경사항 전체를 올립니다 (git add -A)"
@@ -2151,7 +2178,7 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
       fi
     fi
   fi
-  if git diff --cached --quiet 2>/dev/null; then say "커밋할 변경사항이 없습니다."; return 3; fi
+  if [ -z "$merging" ] && git diff --cached --quiet 2>/dev/null; then say "커밋할 변경사항이 없습니다."; return 3; fi
   local args=(-q)
   if [ ${#msgs[@]} -gt 0 ]; then
     for m in "${msgs[@]}"; do args+=(-m "$m"); done
@@ -2159,6 +2186,8 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
     args+=(-F "$file")
   elif [ ${#words[@]} -gt 0 ]; then
     args+=(-m "${words[*]}")
+  elif [ -n "$merging" ]; then
+    args+=(--no-edit)
   else
     m=""
     can_prompt && read -r -p "커밋 메시지 (Enter = 자동 생성): " m

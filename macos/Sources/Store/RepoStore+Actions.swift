@@ -253,6 +253,8 @@ extension RepoStore {
             guard let self else { return }
             if self.headHash != nil {
                 guard await self.run(String(localized: "Undoing…"), ["reset", "--hard", "-q"]) else { return }
+            } else {
+                guard await self.run(String(localized: "Undoing…"), ["read-tree", "--empty"]) else { return }
             }
             await self.run(String(localized: "Cleaning up…"), ["clean", "-fd", "-q"])
         }

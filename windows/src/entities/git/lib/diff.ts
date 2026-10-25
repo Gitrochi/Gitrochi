@@ -139,9 +139,9 @@ export function splitRows(lines: DiffLine[]): SplitRow[] {
 
 /** 이 diff 로 줄 단위 패치를 만들 수 있는지(새 파일·지운 파일·이름 바꾼 파일·결합 diff·바이너리는 파일째로만) */
 export function canEditLines(doc: DiffDocument): boolean {
-  if (doc.isBinary || doc.combined || !doc.hunks.length || doc.truncated) return false;
+  if (doc.isBinary || doc.combined || doc.multipleFiles || !doc.hunks.length || doc.truncated) return false;
   const h = doc.header;
-  if (!h.some((l) => l.startsWith("--- a/")) || !h.some((l) => l.startsWith("+++ b/"))) return false;
+  if (!h.some((l) => /^--- "?a\//.test(l)) || !h.some((l) => /^\+\+\+ "?b\//.test(l))) return false;
   return !h.some((l) => l.startsWith("new file mode") || l.startsWith("deleted file mode") || l.startsWith("rename ") || l.startsWith("similarity"));
 }
 
@@ -153,7 +153,7 @@ export function canEditLines(doc: DiffDocument): boolean {
  */
 export function buildPatch(doc: DiffDocument, hunks: number[], selected: Set<number> | null, reverse: boolean): string | null {
   if (!canEditLines(doc)) return null;
-  const out = doc.header.filter((l) => !l.startsWith("index "));
+  const out = doc.header.filter((l) => !/^(index |old mode |new mode )/.test(l));
   let delta = 0,
     any = false;
   doc.hunks.forEach((h, n) => {
@@ -199,8 +199,11 @@ export function buildPatch(doc: DiffDocument, hunks: number[], selected: Set<num
     if (!changed) return;
     any = true;
     // 새 쪽 시작 줄: 넣기만 하는 덩어리는 다음 줄부터, 지우기만 하는 덩어리는 앞 줄(git 의 표기 규칙)
-    const newStart = Math.max(0, h.oldStart + delta + (oldCount === 0 ? 1 : 0) - (newCount === 0 ? 1 : 0));
-    out.push(`@@ -${h.oldStart},${oldCount} +${newStart},${newCount} @@`, ...body);
+    // 역적용의 입력은 새 파일이므로 선택하지 않은 앞 덩어리의 줄 이동도 반영한다.
+    const anchor = reverse ? h.newStart + (h.newCount === 0 ? 1 : 0) : h.oldStart + (h.oldCount === 0 ? 1 : 0);
+    const oldStart = Math.max(0, anchor + (reverse ? -delta : 0) - (oldCount === 0 ? 1 : 0));
+    const newStart = Math.max(0, anchor + (reverse ? 0 : delta) - (newCount === 0 ? 1 : 0));
+    out.push(`@@ -${oldStart},${oldCount} +${newStart},${newCount} @@`, ...body);
     delta += newCount - oldCount;
   });
   return any ? out.join("\n") + "\n" : null;

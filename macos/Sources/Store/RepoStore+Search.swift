@@ -47,7 +47,7 @@ extension RepoStore {
             case .files: args += ["-n", "20000", "--", ":(glob,icase)**/*\(q)*"]
             case .code: args += ["-n", "1000", "-G", NSRegularExpression.escapedPattern(for: q)]
             }
-            let r = try? await Git.run(args, in: url, timeout: 180)
+            let r = try? await Git.run(args, in: url, timeout: 180, env: ["GIT_LITERAL_PATHSPECS": "0"])
             guard !Task.isCancelled, searchText.trimmed == q, searchScope == scope else { return }
             searching = false
             var found = Set((r?.output ?? "").split(separator: "\n").map(String.init))
