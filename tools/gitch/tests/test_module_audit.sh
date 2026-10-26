@@ -1,8 +1,10 @@
 # shellcheck shell=bash
 # Runtime uses Bash/Git/AWK only; jq below validates the public result in tests.
 ma_test_repo() {
-  mk_repo "$1"
+  mkdir -p "$1" || fail 'cannot create fixture repository'
   cd "$1" || fail 'cannot open fixture repository'
+  # Starting inside the folder avoids MSYS rewriting special characters in an absolute argument.
+  git init -q . || fail 'cannot initialize fixture repository'
 }
 ma_test_put() { mkdir -p "$(dirname "$1")" && cat > "$1"; }
 ma_test_track() { git add -A -- . || fail 'cannot track fixture files'; }
@@ -161,6 +163,29 @@ test_module_audit_working_bytes_tracked_scope_and_partial_filter() {
   assert_ok
   assert_eq "$(ma_test_q '.path')" src
   assert_eq "$(ma_test_q '[.findings[].dependency]|join(",")')" working-version
+}
+
+test_module_audit_normalizes_repository_root_before_scope_comparison() {
+  ma_test_repo "$T/audit-root-spelling"
+  echo '{"name":"normalized"}' > package.json
+  echo 'import "missing";' | ma_test_put src/index.ts
+  ma_test_track
+  local real_git
+  real_git=$(command -v git)
+  cat > "$T/fakebin/git" <<'EOF'
+#!/bin/bash
+if [ "$1 $2" = 'rev-parse --show-toplevel' ]; then
+  printf '%s/.\n' "$GITCH_TEST_REPO_TOP"
+else
+  exec "$GITCH_TEST_REAL_GIT" "$@"
+fi
+EOF
+  chmod +x "$T/fakebin/git"
+  run env GITCH_TEST_REPO_TOP="$PWD" GITCH_TEST_REAL_GIT="$real_git" gitch module audit src --json
+  assert_ok
+  assert_json "$OUT"
+  assert_eq "$(ma_test_q '.path')" src
+  assert_eq "$(ma_test_q '.stats.errors')" 1
 }
 
 test_module_audit_strings_and_weird_paths_are_never_executed() {

@@ -11,7 +11,11 @@ ov_put() { mkdir -p "$(dirname "$1")" && cat > "$1"; }
 ov_commit() { git add -A && git commit -q -m "${1:-fixture}" || fail 'fixture commit'; }
 ov_worktree() {
   OV_SIDE="$1"
-  git worktree add -q -b "${2:-side}" "$OV_SIDE" || fail 'fixture worktree'
+  local destination="$OV_SIDE"
+  # MSYS does not reliably convert absolute arguments containing an apostrophe.
+  [ -z "$IS_WIN" ] || destination=$(cygpath -m "$destination") || fail 'native fixture path'
+  git worktree add -q -b "${2:-side}" "$destination" || fail 'fixture worktree'
+  [ -d "$OV_SIDE" ] || fail 'fixture worktree directory is missing'
 }
 ov_json() { run gitch overlap --json "$@"; assert_ok; assert_json "$OUT"; }
 ov_q() { printf '%s' "$OUT" | jq -r "$1"; }
@@ -395,79 +399,73 @@ test_overlap_argument_errors_keep_stdout_clean() {
   [ -s "$T/stderr" ] || fail 'outside a repository missing stderr diagnostic'
 }
 
-test_overlap_watch_emits_changes_as_ndjson_and_stops_on_signal() {
+ov_watch_wait_for_lines() {
+  local wanted=$1 deadline=$((SECONDS + 20))
+  while [ "$(wc -l < "$T/watch.stdout" | tr -d '[:space:]')" -lt "$wanted" ]; do
+    if [ "$SECONDS" -ge "$deadline" ] || ! kill -0 "$OV_WATCH_PID" 2>/dev/null; then
+      fail "watch stopped or timed out: $(cat "$T/watch.stderr")"
+    fi
+    sleep 0.1
+  done
+}
+
+ov_watch_wait_for_exit() {
+  local deadline=$((SECONDS + 20))
+  while kill -0 "$OV_WATCH_PID" 2>/dev/null; do
+    [ "$SECONDS" -lt "$deadline" ] || fail 'watch did not stop before its deadline'
+    sleep 0.1
+  done
+  wait "$OV_WATCH_PID"
+  # shellcheck disable=SC2034 # Shared with assert_rc from the test harness.
+  RC=$?
+  OV_WATCH_PID=""
+  OUT=$(cat "$T/watch.stdout")
+}
+
+test_overlap_watch_emits_changes_as_ndjson_and_stops_on_signal() (
+  local OV_WATCH_PID=""
+  # Bash can launch and signal the same CLI process on Unix and Git Bash; native
+  # Windows Python cannot exec an extensionless shell script or select its pipe.
+  trap '[ -z "$OV_WATCH_PID" ] || { kill -KILL "$OV_WATCH_PID" 2>/dev/null; wait "$OV_WATCH_PID" 2>/dev/null; }' EXIT
   ov_repo "$T/watch"
   echo base | ov_put shared.txt
   ov_commit
   ov_worktree "$T/watch-side"
   echo left > shared.txt
-  python3 - "$OV_SIDE/shared.txt" <<'PY'
-import json, os, selectors, signal, subprocess, sys, time
-
-proc = subprocess.Popen(
-    ['gitch', 'overlap', '--json', '--watch', '--interval', '1', '--no-deps'],
-    stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
-selector = selectors.DefaultSelector()
-selector.register(proc.stdout, selectors.EVENT_READ)
-buffer = b''
-
-def next_report(timeout):
-    global buffer
-    deadline = time.monotonic() + timeout
-    while b'\n' not in buffer:
-        left = deadline - time.monotonic()
-        assert left > 0 and selector.select(left), 'watch report timed out'
-        chunk = os.read(proc.stdout.fileno(), 65536)
-        assert chunk, 'watch stopped before emitting its report'
-        buffer += chunk
-    line, buffer = buffer.split(b'\n', 1)
-    return json.loads(line)
-
-try:
-    first = next_report(10)
-    assert first['pairs'] == [], first
-    assert not buffer and not selector.select(1.3), 'unchanged watch emitted another report'
-    with open(sys.argv[1], 'w') as handle:
-        handle.write('right\n')
-    changed = next_report(10)
-    assert changed['stats']['overlappingPairs'] == 1, changed
-    assert changed['pairs'][0]['sameFiles'] == ['shared.txt'], changed
-    os.killpg(proc.pid, signal.SIGTERM)
-    assert proc.wait(timeout=5) == 143, 'TERM must stop watch with exit 143'
-finally:
-    if proc.poll() is None:
-        os.killpg(proc.pid, signal.SIGKILL)
-        proc.wait()
-    selector.close()
-PY
-  [ "$?" -eq 0 ] || fail 'watch NDJSON/lifecycle contract'
+  gitch overlap --json --watch --interval 1 --no-deps > "$T/watch.stdout" 2> "$T/watch.stderr" &
+  OV_WATCH_PID=$!
+  ov_watch_wait_for_lines 1
+  head -1 "$T/watch.stdout" | jq -e '.pairs == []' >/dev/null || fail 'first watch report'
+  sleep 1.3
+  assert_eq "$(wc -l < "$T/watch.stdout" | tr -d '[:space:]')" 1 'unchanged watch emitted another report'
   echo right > "$OV_SIDE/shared.txt"
-  python3 - <<'PY'
-import json, subprocess
-result = subprocess.run(
-    ['gitch', 'overlap', '--json', '--watch', '--interval', '1', '--no-deps', '--fail-on-overlap'],
-    capture_output=True, text=True, timeout=10)
-assert result.returncode == 1, result
-assert json.loads(result.stdout)['stats']['overlappingPairs'] == 1, result.stdout
-PY
-  [ "$?" -eq 0 ] || fail 'watch --fail-on-overlap must stop after its first risk'
-}
+  ov_watch_wait_for_lines 2
+  sed -n '2p' "$T/watch.stdout" | jq -e '.stats.overlappingPairs == 1 and .pairs[0].sameFiles == ["shared.txt"]' >/dev/null || fail 'changed watch report'
+  kill -TERM "$OV_WATCH_PID" || fail 'cannot signal watch'
+  ov_watch_wait_for_exit
+  assert_rc 143 'TERM must stop watch'
+  [ ! -s "$T/watch.stderr" ] || fail "watch diagnostics: $(cat "$T/watch.stderr")"
+  gitch overlap --json --watch --interval 1 --no-deps --fail-on-overlap > "$T/watch.stdout" 2> "$T/watch.stderr" &
+  OV_WATCH_PID=$!
+  ov_watch_wait_for_exit
+  assert_rc 1 'watch --fail-on-overlap must stop after its first risk'
+  assert_json "$OUT"
+  assert_eq "$(ov_q '.stats.overlappingPairs')" 1
+)
 
-test_overlap_watch_stops_after_emitting_an_incomplete_scan() {
+test_overlap_watch_stops_after_emitting_an_incomplete_scan() (
+  local OV_WATCH_PID=""
+  trap '[ -z "$OV_WATCH_PID" ] || { kill -KILL "$OV_WATCH_PID" 2>/dev/null; wait "$OV_WATCH_PID" 2>/dev/null; }' EXIT
   ov_repo "$T/watch-incomplete"
   echo base | ov_put base.txt
   ov_commit
   ov_worktree "$T/watch-incomplete-side"
   rm -rf "$OV_SIDE"
-  python3 - <<'PY'
-import json, subprocess
-result = subprocess.run(
-    ['gitch', 'overlap', '--json', '--watch', '--interval', '1', '--no-deps'],
-    capture_output=True, text=True, timeout=10)
-assert result.returncode == 1, result
-report = json.loads(result.stdout)
-assert report['incomplete'] is True, report
-assert any(d['code'] == 'WORKTREE_UNAVAILABLE' for d in report['diagnostics']), report
-PY
-  [ "$?" -eq 0 ] || fail 'watch must emit its incomplete report and exit 1'
-}
+  gitch overlap --json --watch --interval 1 --no-deps > "$T/watch.stdout" 2> "$T/watch.stderr" &
+  OV_WATCH_PID=$!
+  ov_watch_wait_for_exit
+  assert_rc 1 'watch must emit its incomplete report and exit 1'
+  assert_json "$OUT"
+  assert_eq "$(ov_q '.incomplete')" true
+  ov_assert '.diagnostics|any(.code=="WORKTREE_UNAVAILABLE")' 'incomplete watch diagnostic'
+)

@@ -3377,6 +3377,8 @@ move_cmd() {
   require_repo
   export GIT_OPTIONAL_LOCKS=0
   top=$(git rev-parse --show-toplevel) && prefix=$(git rev-parse --show-prefix) || die '저장소 경로를 읽지 못했습니다.'
+  # Compare paths in Bash's format even when native Git returns a Windows drive path.
+  top=$(real_dir "$top") || die '저장소 경로를 읽지 못했습니다.'
   move_normalize_path "$top" "$prefix" "${args[0]}"; source=$MOVE_PATH
   move_normalize_path "$top" "$prefix" "${args[1]}"; destination=$MOVE_PATH
   [ "$source" != "$destination" ] || die '원본과 대상이 같습니다.'
@@ -3504,7 +3506,7 @@ function suggestion(s,t,sa,ta,ev, p,n,obj,line,spec,plain,suffix,base,goal,nexts
     if(substr(ev,p,1)!="{")break
     n=span(ev,p);obj=substr(ev,p,n);p+=n
     line=field(obj,"line");spec=decoded(field(obj,"declaration"))
-    if(line !~ /^[1-9][0-9]*$/ || spec !~ /^\.\.?\// || spec ~ /[\\\"'\001-\037]/)continue
+    if(line !~ /^[1-9][0-9]*$/ || spec !~ /^\.\.?\// || spec ~ /[\\"'\001-\037]/)continue
     plain=spec;sub(/[?#].*$/,"",plain);suffix=substr(spec,length(plain)+1)
     base=normp(joinp(dirof(s),plain));goal=ta
     if(base==t) {}
@@ -3517,7 +3519,7 @@ function suggestion(s,t,sa,ta,ev, p,n,obj,line,spec,plain,suffix,base,goal,nexts
       js=base;sub(/^.*\./,"",js);sub(/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/,"",goal);goal=goal "." js
     } else continue
     nextspec=relative(dirof(sa),goal) suffix
-    if(nextspec==spec || nextspec ~ /[\\\"'\001-\037]/)continue
+    if(nextspec==spec || nextspec ~ /[\\"'\001-\037]/)continue
     key=s SUBSEP line SUBSEP spec SUBSEP nextspec
     if(key in SUGGESTED)continue
     SUGGESTED[key]=1
@@ -7068,7 +7070,8 @@ module_audit_cmd() (
     shift
   done
   require_repo
-  top=$(repo_top) || return 1
+  # Git for Windows returns a drive path; compare both sides in the shell's path format.
+  top=$(real_dir "$(repo_top)") || return 1
   selection=$(expand_path "$selection")
   [ ! -L "$selection" ] || die '심볼릭 링크를 감사 범위로 지정할 수 없습니다.'
   if [ -d "$selection" ]; then absolute=$(real_dir "$selection")

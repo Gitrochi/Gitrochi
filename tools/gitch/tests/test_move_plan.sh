@@ -185,6 +185,14 @@ test_move_plan_paths_resolve_relative_to_invocation_subdirectory() {
   assert_eq "$(mp_q '.source')" src/core.ts
   assert_eq "$(mp_q '.destination')" lib/core.ts
   mp_assert '.references|any(.source=="src/caller.ts" and .targetAfter=="lib/core.ts")' 'subdirectory plan must retain repository-relative reference paths'
+  mp_json "$MP_ROOT/src/core.ts" "$MP_ROOT/lib/core.ts"
+  assert_eq "$(mp_q '.source')" src/core.ts
+  assert_eq "$(mp_q '.destination')" lib/core.ts
+  if [ -n "$IS_WIN" ]; then
+    mp_json "$(cygpath -w "$MP_ROOT/src/core.ts")" "$(cygpath -w "$MP_ROOT/lib/core.ts")"
+    assert_eq "$(mp_q '.source')" src/core.ts
+    assert_eq "$(mp_q '.destination')" lib/core.ts
+  fi
 }
 
 test_move_plan_suggestions_preserve_runtime_extensions_suffixes_and_evidence() {
