@@ -35,14 +35,25 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
       case "f":
         return run(() => s.path && s.requestSearchFocus());
       case "b":
-        // the sidebar folds into a rail of icons and back
-        return run(() => settings.set("sidebarCollapsed", !settings.get("sidebarCollapsed", false)));
+        // the page list folds into a rail of icons and back
+        return run(() => settings.set("navigationSidebarCollapsed", !settings.get("navigationSidebarCollapsed", false)));
       case "g":
         return run(() => s.nextMatch());
+      // the pages, numbered as in the macOS View menu
+      case "0":
+        return run(() => s.navigate("home"));
       case "1":
-        return run(() => s.path && s.navigate("changes"));
+        return run(() => { if (s.navigate("repository")) s.select({ kind: "wip" }); });
       case "2":
-        return run(() => s.path && s.navigate("commits"));
+        return run(() => { if (s.navigate("repository") && s.headHash) s.select({ kind: "commit", sha: s.headHash }); });
+      case "3":
+        return run(() => s.navigate("compare"));
+      case "4":
+        return run(() => s.navigate("pullRequests"));
+      case "5":
+        return run(() => s.navigate("actions"));
+      case "6":
+        return run(() => s.navigate("flows"));
       case "z":
         // 입력 칸 밖에서만(입력 칸에서는 글자 되돌리기 — 위에서 걸러 짐)
         return run(() => s.path && s.confirmUndo());

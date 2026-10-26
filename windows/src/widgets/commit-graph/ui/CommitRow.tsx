@@ -126,9 +126,9 @@ export const CommitRow = memo(function CommitRow({
             {ci && (
               <span
                 className="ci-badge"
-                data-tip={t("CI: {0} · {1}#{2} — click to open in the browser", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
+                data-tip={t("CI: {0} · {1}#{2} — click to open in Actions", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
                 onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => store.openUrl(ci.url)}
+                onClick={() => store.openCI(ci)}
               >
                 <CIStatusIcon status={ci.status} size={12} />
               </span>

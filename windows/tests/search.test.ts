@@ -53,9 +53,9 @@ describe("커밋 검색", () => {
     expect(store.searchUnloaded).toBe(1);
   });
 
-  it.each(["changes", "pullRequests"] as const)("늦은 코드 검색 결과가 %s 화면의 선택을 바꾸지 않는다", async (page) => {
+  it.each(["code", "pullRequests"] as const)("늦은 코드 검색 결과가 %s 화면의 선택을 바꾸지 않는다", async (page) => {
     const store = storeForSearch([commit("a", "Result")]);
-    store.destination = "commits"; store.setSearch("needle", "code"); store.destination = page;
+    store.destination = "repository"; store.setSearch("needle", "code"); store.destination = page;
     vi.mocked(git).mockResolvedValue({ status: 0, stdout: "a\n", stderr: "" });
     await vi.advanceTimersByTimeAsync(500);
     expect(store.searchMatches).toEqual(["a"]); expect(store.select).not.toHaveBeenCalled(); expect(store.destination).toBe(page);

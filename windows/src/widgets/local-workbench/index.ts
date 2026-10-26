@@ -1,1 +1,1 @@
-export { LocalBranchesPanel, RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource } from "./ui/LocalWorkbench";
+export { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource } from "./ui/LocalWorkbench";
