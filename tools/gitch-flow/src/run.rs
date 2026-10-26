@@ -813,7 +813,14 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                       "git": {"sha": plan.git.sha, "branch": plan.git.branch, "clean": plan.git.clean}, "eventsPath": run_dir.join("events.ndjson").to_string_lossy()});
     let _ = st.write_run(&run_id, &base);
     events.emit("run.planned", None, json!({"flow": plan.flow, "env": plan.env, "hash": plan.hash, "nodes": plan.nodes.iter().map(|n| json!({"id": n.id, "title": n.title, "block": n.block, "needs": n.needs, "decision": n.decision.as_str(), "branchOf": n.branch_of, "group": n.group})).collect::<Vec<_>>(), "estimateMs": plan.estimate_ms()}));
-    let changed = Some(crate::git::changed_files(&spec.root, None, false));
+    // changed('glob') 은 영향 선택과 같은 기준으로: --affected=base 면 기본 브랜치와 갈라진 곳부터, 아니면 작업 트리.
+    let changed = Some(match plan.affected.as_ref() {
+        Some(a) if a["mode"] == "staged" => crate::git::changed_files(&spec.root, None, true),
+        Some(a) if a["mode"] == "base" => {
+            crate::git::changed_files(&spec.root, a["base"].as_str(), false)
+        }
+        _ => crate::git::changed_files(&spec.root, None, false),
+    });
     let sh = Shared {
         spec,
         plan,

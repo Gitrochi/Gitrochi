@@ -141,6 +141,26 @@ fn affected_against_the_base_branch_and_smoke_always_runs() {
     assert_eq!(node(&plan, "smoke")["decision"], "run", "{plan}");
 }
 
+#[test]
+fn changed_conditions_follow_the_affected_base() {
+    let fx = affected_fixture();
+    fx.write(
+        ".gitch/flow.yml",
+        &format!("{AFFECTED_FLOW}  conditional:\n    nodes:\n      only-text: {{ run: \"echo text-changed\", if: \"changed('src/text.ts')\" }}\n"),
+    );
+    fx.commit("conditional flow");
+    fx.trust();
+    fx.git(&["checkout", "-q", "-b", "feature"]);
+    fx.write("src/text.ts", "export const up = (s) => s.trim()\n");
+    fx.commit("change text");
+    // 커밋한 뒤 작업 트리에는 바뀐 것이 없다 → 기본(작업 트리 기준)으로는 건너뛴다.
+    let (_, run) = fx.json("script", &["run", "conditional", "--json"]);
+    assert_eq!(node(&run, "only-text")["state"], "SKIPPED", "{run}");
+    // --affected=base: 기본 브랜치와 갈라진 곳부터 → 돈다(pre-push 게이트와 같은 기준).
+    let (_, run) = fx.json("script", &["run", "conditional", "--affected=base", "--json"]);
+    assert_eq!(node(&run, "only-text")["state"], "PASSED", "{run}");
+}
+
 // ---------- 결과 캐시 ----------
 
 const CACHE_FLOW: &str = r#"version: 1
