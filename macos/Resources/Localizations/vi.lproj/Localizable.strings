@@ -1101,3 +1101,8 @@
 "Show flows" = "Hiện luồng";
 "Show home" = "Hiện trang chủ";
 "(current)" = "(hiện tại)";
+"Checking saved account access…" = "Đang kiểm tra quyền truy cập tài khoản đã lưu…";
+"Allow access to the saved account to use repository services." = "Cho phép truy cập tài khoản đã lưu để dùng các dịch vụ kho lưu trữ.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Đang chờ bạn phê duyệt trên macOS. Bạn vẫn có thể dùng các công cụ Git cục bộ.";
+"Allow saved account access" = "Cho phép truy cập tài khoản đã lưu";
+"Search filters loaded pages. Load more to search older items." = "Tìm kiếm chỉ lọc các trang đã tải. Tải thêm để tìm các mục cũ hơn.";

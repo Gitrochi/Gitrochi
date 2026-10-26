@@ -1133,3 +1133,8 @@
 "Show flows" = "Akışları göster";
 "Show home" = "Ana sayfayı göster";
 "(current)" = "(geçerli)";
+"Checking saved account access…" = "Kayıtlı hesaba erişim denetleniyor…";
+"Allow access to the saved account to use repository services." = "Depo hizmetlerini kullanmak için kayıtlı hesaba erişime izin verin.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "macOS onayınız bekleniyor. Yerel Git araçlarını kullanmaya devam edebilirsiniz.";
+"Allow saved account access" = "Kayıtlı hesaba erişime izin ver";
+"Search filters loaded pages. Load more to search older items." = "Arama, yüklenen sayfaları süzer. Daha eski öğelerde aramak için daha fazlasını yükleyin.";

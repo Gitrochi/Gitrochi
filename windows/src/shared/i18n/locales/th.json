@@ -1132,5 +1132,10 @@
  "Create flow file": "สร้างไฟล์โฟลว์",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi อ่านไฟล์ของรีโพสิทอรีนี้เพื่อหาการทดสอบและเครื่องมือ จะไม่มีการรันหรือเขียนอะไรจนกว่าคุณจะสร้างไฟล์",
  "Proposed .gitch/flow.yml": ".gitch/flow.yml ที่เสนอ",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "มีไฟล์โฟลว์อยู่แล้ว จึงจะไม่เขียนอะไร รวมข้อเสนอด้วยตนเอง"
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "มีไฟล์โฟลว์อยู่แล้ว จึงจะไม่เขียนอะไร รวมข้อเสนอด้วยตนเอง",
+  "Checking saved account access…": "กำลังตรวจสอบสิทธิ์เข้าถึงบัญชีที่บันทึกไว้…",
+  "Allow access to the saved account to use repository services.": "อนุญาตให้เข้าถึงบัญชีที่บันทึกไว้เพื่อใช้บริการของคลัง",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "กำลังรอการอนุมัติจาก macOS ของคุณ คุณยังใช้เครื่องมือ Git ในเครื่องต่อได้",
+  "Allow saved account access": "อนุญาตการเข้าถึงบัญชีที่บันทึกไว้",
+  "Search filters loaded pages. Load more to search older items.": "การค้นหาจะกรองเฉพาะหน้าที่โหลดแล้ว โหลดเพิ่มเพื่อค้นหารายการเก่ากว่า"
 }

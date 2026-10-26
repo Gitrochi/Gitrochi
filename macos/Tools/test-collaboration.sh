@@ -27,16 +27,36 @@ enum Hosting {
         func pull(_ head: String) -> [String: Any] { ["number": 1, "title": "Request", "body": "Body", "user": ["login": "reviewer"], "head": ["ref": "work", "sha": head, "repo": ["full_name": "team/repo"]], "base": ["ref": "main"], "html_url": "https://github.example/x", "state": "open", "mergeable": true, "mergeable_state": "clean"] }
         let repo: [String: Any] = ["state": "success", "total_count": 0, "check_runs": [], "allow_merge_commit": true, "allow_squash_merge": true, "permissions": ["push": true]]
         var head = "head-a", writes = 0
+        var requests = 0
         Hosting.handler = { r in
-            if r.url!.path.contains("/search/issues") {
+            precondition(!r.url!.path.contains("/search/issues"), "The request list must not use the search API")
+            if r.url!.path.hasSuffix("/pulls") {
+                requests += 1
                 let q = URLComponents(url: r.url!, resolvingAgainstBaseURL: false)!.queryItems!
-                precondition(q.first { $0.name == "q" }!.value!.contains("review-requested:reviewer")); precondition(q.first { $0.name == "page" }!.value == "2")
-                return try json(["items": [["number": 1]], "total_count": 70])
+                precondition(q.first { $0.name == "state" }!.value == "open"); precondition(q.first { $0.name == "page" }!.value == "2")
+                var mine = pull("head-a"); mine["requested_reviewers"] = [["login": "Reviewer"]]; mine["title"] = "Fix things"
+                var other = pull("head-a"); other["number"] = 2; other["title"] = "Other"
+                return try json([mine, other])
             }
             if r.httpMethod == "PUT" { writes += 1; let b = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any]; precondition(b["sha"] as? String == "head-a"); return try json(["merged": true]) }
             return try json(r.url!.path.hasSuffix("/pulls/1") ? pull(head) : repo)
         }
-        let page = try await CollaborationAPI.requests(gh, RequestQuery(scope: "reviewRequested", search: "fix", page: 2)); precondition(page.0.count == 1 && page.1)
+        let page = try await CollaborationAPI.requests(gh, RequestQuery(scope: "reviewRequested", search: "fix", page: 2))
+        precondition(page.0.map(\.number) == [1] && !page.1 && page.2 != nil && requests == 1, "The list page was not narrowed on the client in one request")
+        Hosting.handler = { r in
+            let q = URLComponents(url: r.url!, resolvingAgainstBaseURL: false)!.queryItems!
+            precondition(q.first { $0.name == "state" }!.value == "closed" && q.first { $0.name == "per_page" }!.value == "100")
+            var merged = pull("head-a"); merged["state"] = "closed"; merged["merged_at"] = "2026-01-01T00:00:00Z"
+            var closed = pull("head-a"); closed["number"] = 2; closed["state"] = "closed"; closed["merged_at"] = NSNull()
+            return try json([merged, closed])
+        }
+        let merged = try await CollaborationAPI.requests(gh, RequestQuery(scope: "merged")), closed = try await CollaborationAPI.requests(gh, RequestQuery(scope: "closed"))
+        precondition(merged.0.map(\.number) == [1], "Merged requests must be told apart by merged_at")
+        precondition(closed.0.map(\.number) == [2], "Closed requests must exclude merged ones")
+        Hosting.handler = { r in
+            if r.httpMethod == "PUT" { writes += 1; let b = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any]; precondition(b["sha"] as? String == "head-a"); return try json(["merged": true]) }
+            return try json(r.url!.path.hasSuffix("/pulls/1") ? pull(head) : repo)
+        }
         let expected = try await CollaborationAPI.lifecycle(gh, 1); precondition(expected.blockers.isEmpty)
         head = "head-b"
         do { try await CollaborationAPI.merge(gh, expected: expected, method: "merge"); fatalError("Stale merge accepted") } catch {}
@@ -55,7 +75,7 @@ enum Hosting {
         let detail = try await CollaborationAPI.detail(gl, item: inbox.0[0], page: 1); precondition(detail.item.isRequest && detail.comments.count == 1)
         try await CollaborationAPI.inboxAction(gl, item: detail.item, action: "comment", body: "Reply")
         let state = CollaborationState(); state.inbox = inbox.0; let context = state.contextID; state.reset(); precondition(state.inbox.isEmpty && context != state.contextID)
-        print("Collaboration: server search/pagination, merge SHA and context guards, request mention replies, state reset passed")
+        print("Collaboration: REST list paging and page filters, merge SHA and context guards, request mention replies, state reset passed")
     }
 }
 SWIFT

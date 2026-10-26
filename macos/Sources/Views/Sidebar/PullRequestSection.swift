@@ -15,8 +15,11 @@ struct PullRequestSection: View {
             TextField("Search requests (Enter)", text: $search).onSubmit { Task { await store.filterPullRequests(scope: store.collaboration.query.scope, search: search) } }
             if let warning = store.collaboration.warning { Text(warning).font(.caption).foregroundStyle(.secondary) }
             switch store.prState {
+            case .authorizationRequired:
+                if let account = store.pendingCredentialAccount { CredentialAccessNotice(account: account) }
             case .needsAccount:
-                let others = AccountStore.shared.accounts(for: target.provider)
+                // An account on this very host cannot be an alias for it, so only other servers are worth a try.
+                let others = AccountStore.shared.accounts(for: target.provider).filter { $0.host != target.host }
                 if let a = others.first {
                     Button("Try with the connected account (@\(a.username) · \(a.host))") { Task { await store.tryExistingAccounts() } }
                         .buttonStyle(.link)

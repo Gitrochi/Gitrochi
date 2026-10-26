@@ -1136,5 +1136,10 @@
  "Create flow file": "Створити файл потоку",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi прочитав файли цього репозиторію, щоб знайти його тести й інструменти. Нічого не запускається й не записується, доки ви не створите файл.",
  "Proposed .gitch/flow.yml": "Запропонований .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Файл потоку вже існує, тому нічого не буде записано. Об'єднайте пропозицію вручну."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Файл потоку вже існує, тому нічого не буде записано. Об'єднайте пропозицію вручну.",
+  "Checking saved account access…": "Перевірка доступу до збереженого облікового запису…",
+  "Allow access to the saved account to use repository services.": "Дозвольте доступ до збереженого облікового запису, щоб користуватися сервісами репозиторію.",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "Очікування вашого підтвердження в macOS. Локальні інструменти Git можна використовувати далі.",
+  "Allow saved account access": "Дозволити доступ до збереженого облікового запису",
+  "Search filters loaded pages. Load more to search older items.": "Пошук фільтрує завантажені сторінки. Завантажте більше, щоб шукати серед старіших елементів."
 }

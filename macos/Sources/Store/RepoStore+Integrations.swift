@@ -107,6 +107,20 @@ extension RepoStore {
         target.flatMap { AccountStore.shared.account(for: $0, repoPath: url?.path) }
     }
 
+    /// The repository account whose token is still being read or waits for the user to allow keychain access.
+    var pendingCredentialAccount: HostAccount? {
+        hostingAccount.flatMap { AccountStore.shared.awaitsAccess($0) ? $0 : nil }
+    }
+
+    /// The list state for an account whose token could not be read: still answering, needs approval, or holds no token.
+    func credentialLoadState(for account: HostAccount) -> LoadState {
+        switch AccountStore.shared.credentialState(for: account) {
+        case .loading: return .loading
+        case .authorizationRequired: return .authorizationRequired
+        case .ready, .unavailable: return .needsAccount
+        }
+    }
+
     /// 첫 계정을 연결한 직후에도 SSH 별칭을 다시 판별한다. 전체 그래프는 다시 읽지 않는다.
     func refreshHostingAccount() async {
         let accounts = AccountStore.shared
@@ -147,12 +161,16 @@ extension RepoStore {
         let accounts = AccountStore.shared
         if hostingAccount == nil, !accounts.accounts(for: t.provider).isEmpty { await accounts.discoverAlias(for: t, sameAddressOnly: true) }
         guard current() else { return }
-        guard let acct = hostingAccount, let token = accounts.token(for: acct) else {
+        guard let acct = hostingAccount else {
             if t.provider == .gitlab { accounts.suggestedGitLabServer = "https://\(t.host)" }
             pullRequests = []; prState = .needsAccount; return
         }
-        var query = state.query; query.page = append ? query.page + 1 : 1
+        // The keychain may still be asking the user; that is loading, not a missing account.
         prState = .loading
+        let token = await accounts.loadToken(for: acct)
+        guard current() else { return }
+        guard let token else { pullRequests = []; prState = credentialLoadState(for: acct); return }
+        var query = state.query; query.page = append ? query.page + 1 : 1
         do {
             let (items, more, warning) = try await CollaborationAPI.requests(ReviewAccess(target: t, token: token, apiBase: acct.apiBase, me: acct.username, isCurrent: current), query)
             guard current() else { return }

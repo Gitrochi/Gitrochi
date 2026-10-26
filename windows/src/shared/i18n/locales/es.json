@@ -1114,5 +1114,10 @@
  "Create flow file": "Crear archivo de flujo",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi leyó los archivos de este repositorio para encontrar sus pruebas y herramientas. No se ejecuta nada y no se escribe nada hasta que crees el archivo.",
  "Proposed .gitch/flow.yml": ".gitch/flow.yml propuesto",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Ya existe un archivo de flujo, así que no se escribirá nada. Combina la propuesta a mano."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Ya existe un archivo de flujo, así que no se escribirá nada. Combina la propuesta a mano.",
+  "Checking saved account access…": "Comprobando el acceso a la cuenta guardada…",
+  "Allow access to the saved account to use repository services.": "Permite el acceso a la cuenta guardada para usar los servicios del repositorio.",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "Esperando tu aprobación en macOS. Puedes seguir usando las herramientas Git locales.",
+  "Allow saved account access": "Permitir acceso a la cuenta guardada",
+  "Search filters loaded pages. Load more to search older items.": "La búsqueda filtra las páginas cargadas. Carga más para buscar elementos anteriores."
 }

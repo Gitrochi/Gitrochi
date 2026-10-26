@@ -510,6 +510,8 @@ struct RemoteRepo: Identifiable, Hashable {
 
 enum LoadState: Hashable {
     case idle, loading, loaded, needsAccount
+    /// The account is connected, but its token cannot be read until the user allows keychain access (macOS only).
+    case authorizationRequired
     case failed(String)
 }
 

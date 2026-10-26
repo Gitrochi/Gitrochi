@@ -1137,5 +1137,10 @@
  "Create flow file": "フローファイルを作成",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi はこのリポジトリのファイルを読んでテストとツールを見つけました。ファイルを作成するまで、何も実行も書き込みもしません。",
  "Proposed .gitch/flow.yml": "提案する .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "フローファイルがすでにあるため、何も書き込みません。提案は手動でマージしてください。"
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "フローファイルがすでにあるため、何も書き込みません。提案は手動でマージしてください。",
+  "Checking saved account access…": "保存済みアカウントへのアクセスを確認中…",
+  "Allow access to the saved account to use repository services.": "リポジトリサービスを使うには、保存済みアカウントへのアクセスを許可してください。",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "macOS の承認を待っています。ローカルの Git ツールは引き続き使えます。",
+  "Allow saved account access": "保存済みアカウントへのアクセスを許可",
+  "Search filters loaded pages. Load more to search older items.": "検索は読み込んだページを絞り込みます。古い項目を探すにはさらに読み込んでください。"
 }

@@ -1145,3 +1145,8 @@
 "Show flows" = "Показать потоки";
 "Show home" = "Показать главную";
 "(current)" = "(текущая)";
+"Checking saved account access…" = "Проверка доступа к сохранённой учётной записи…";
+"Allow access to the saved account to use repository services." = "Разрешите доступ к сохранённой учётной записи, чтобы пользоваться сервисами репозитория.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Ожидание вашего подтверждения в macOS. Локальные инструменты Git можно использовать и дальше.";
+"Allow saved account access" = "Разрешить доступ к сохранённой учётной записи";
+"Search filters loaded pages. Load more to search older items." = "Поиск фильтрует загруженные страницы. Загрузите ещё, чтобы искать среди более старых элементов.";

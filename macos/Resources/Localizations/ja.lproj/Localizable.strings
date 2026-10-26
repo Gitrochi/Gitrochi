@@ -1146,3 +1146,8 @@
 "Show flows" = "フローを表示";
 "Show home" = "ホームを表示";
 "(current)" = "(現在)";
+"Checking saved account access…" = "保存済みアカウントへのアクセスを確認中…";
+"Allow access to the saved account to use repository services." = "リポジトリサービスを使うには、保存済みアカウントへのアクセスを許可してください。";
+"Waiting for your macOS approval. You can continue using local Git tools." = "macOS の承認を待っています。ローカルの Git ツールは引き続き使えます。";
+"Allow saved account access" = "保存済みアカウントへのアクセスを許可";
+"Search filters loaded pages. Load more to search older items." = "検索は読み込んだページを絞り込みます。古い項目を探すにはさらに読み込んでください。";

@@ -1141,3 +1141,8 @@
 "Show flows" = "แสดงโฟลว์";
 "Show home" = "แสดงหน้าแรก";
 "(current)" = "(ปัจจุบัน)";
+"Checking saved account access…" = "กำลังตรวจสอบสิทธิ์เข้าถึงบัญชีที่บันทึกไว้…";
+"Allow access to the saved account to use repository services." = "อนุญาตให้เข้าถึงบัญชีที่บันทึกไว้เพื่อใช้บริการของคลัง";
+"Waiting for your macOS approval. You can continue using local Git tools." = "กำลังรอการอนุมัติจาก macOS ของคุณ คุณยังใช้เครื่องมือ Git ในเครื่องต่อได้";
+"Allow saved account access" = "อนุญาตการเข้าถึงบัญชีที่บันทึกไว้";
+"Search filters loaded pages. Load more to search older items." = "การค้นหาจะกรองเฉพาะหน้าที่โหลดแล้ว โหลดเพิ่มเพื่อค้นหารายการเก่ากว่า";

@@ -1125,3 +1125,8 @@
 "Show flows" = "Zobrazit toky";
 "Show home" = "Zobrazit domů";
 "(current)" = "(aktuální)";
+"Checking saved account access…" = "Kontrola přístupu k uloženému účtu…";
+"Allow access to the saved account to use repository services." = "Povolte přístup k uloženému účtu, abyste mohli používat služby repozitáře.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Čeká se na vaše schválení v macOS. Místní nástroje Git můžete dál používat.";
+"Allow saved account access" = "Povolit přístup k uloženému účtu";
+"Search filters loaded pages. Load more to search older items." = "Hledání filtruje načtené stránky. Načtěte další, chcete-li hledat ve starších položkách.";

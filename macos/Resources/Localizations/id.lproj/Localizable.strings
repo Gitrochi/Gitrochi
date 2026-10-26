@@ -1096,3 +1096,8 @@
 "Show flows" = "Tampilkan alur";
 "Show home" = "Tampilkan beranda";
 "(current)" = "(saat ini)";
+"Checking saved account access…" = "Memeriksa akses ke akun tersimpan…";
+"Allow access to the saved account to use repository services." = "Izinkan akses ke akun tersimpan untuk menggunakan layanan repositori.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Menunggu persetujuan macOS Anda. Anda tetap dapat menggunakan alat Git lokal.";
+"Allow saved account access" = "Izinkan akses akun tersimpan";
+"Search filters loaded pages. Load more to search older items." = "Pencarian menyaring halaman yang sudah dimuat. Muat lebih banyak untuk mencari item yang lebih lama.";

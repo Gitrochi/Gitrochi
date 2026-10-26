@@ -1118,3 +1118,8 @@
 "Show flows" = "Mostra flussi";
 "Show home" = "Mostra home";
 "(current)" = "(attuale)";
+"Checking saved account access…" = "Verifica dell'accesso all'account salvato…";
+"Allow access to the saved account to use repository services." = "Consenti l'accesso all'account salvato per usare i servizi del repository.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "In attesa della tua approvazione in macOS. Puoi continuare a usare gli strumenti Git locali.";
+"Allow saved account access" = "Consenti accesso all'account salvato";
+"Search filters loaded pages. Load more to search older items." = "La ricerca filtra le pagine caricate. Carica altro per cercare tra gli elementi meno recenti.";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { RequestScope } from "@/entities/hosting";
 import { Plus, RefreshCw } from "lucide-react";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
-import { providerInfo, type RepoTarget } from "@/entities/git";
+import { accountHost, providerInfo, type RepoTarget } from "@/entities/git";
 import { accounts } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
@@ -16,6 +16,8 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
   const info = providerInfo[target.provider];
   const current = store.hostingAccount;
   const candidates = accounts.candidates(target);
+  // An account on this very host cannot be an alias for it, so only other servers are worth a try.
+  const other = accounts.accountsFor(target.provider).find((a) => accountHost(a) !== target.host);
   const st = store.prState;
   const [search, setSearch] = useState("");
   return (
@@ -65,9 +67,9 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
       <div style={{ padding: "0 6px" }}>
         {st.kind === "needsAccount" && (
           <div className="col" style={{ gap: 4, alignItems: "flex-start", padding: "2px 0 4px" }}>
-            {accounts.accountsFor(target.provider)[0] && (
+            {other && (
               <button className="link" onClick={() => void store.tryExistingAccounts()} data-tip={t("If the same server is used under another address, an account you've already connected works there too")}>
-                {t("Try with the connected account (@{0})", accounts.accountsFor(target.provider)[0].username)}</button>
+                {t("Try with the connected account (@{0})", other.username)}</button>
             )}
             <button className="link" onClick={openSettings}>
               {target.provider === "gitlab" ? t("Connect a self-hosted GitLab ({0}) account…", target.host) : t("Connect a GitHub account…")}
