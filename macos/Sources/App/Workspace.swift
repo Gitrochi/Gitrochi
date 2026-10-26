@@ -126,9 +126,14 @@ final class Workspace {
             DispatchQueue.main.async { w.close() }
             return
         }
+        // The window joins the tab group on the next turn; until then keep it invisible so no separate window flashes up
+        w.alphaValue = 0
         DispatchQueue.main.async {
             if host.tabbedWindows?.contains(w) != true { host.addTabbedWindow(w, ordered: .above) }
-            if !launching { w.makeKeyAndOrderFront(nil) }
+            if !launching {
+                w.alphaValue = 1
+                w.makeKeyAndOrderFront(nil)
+            }
         }
     }
 
