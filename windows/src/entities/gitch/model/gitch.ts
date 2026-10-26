@@ -2,7 +2,7 @@ import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { git, tools } from "@/shared/platform";
-import { accountAddArguments, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
+import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
 import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
 
 /**
@@ -553,7 +553,7 @@ class GitchService {
     if (!result) throw new GitchError(machineError(r.stderr.trim()) || t("Couldn't read the browser login result."));
     return result;
   }
-  startBrowserLogin() { return this.browserLogin(["--start", "--yes"]); }
+  startBrowserLogin(capability: GitHubLoginCapability = "standard", expectedLogin?: string) { return this.browserLogin(browserLoginArguments(capability, expectedLogin)); }
   browserLoginStatus(session: string) { return this.browserLogin(["--status", session]); }
   cancelBrowserLogin(session: string) { return this.browserLogin(["--cancel", session]); }
 

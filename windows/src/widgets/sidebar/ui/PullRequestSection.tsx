@@ -1,3 +1,5 @@
+import { useState } from "react";
+import type { RequestScope } from "@/entities/hosting";
 import { Plus, RefreshCw } from "lucide-react";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { providerInfo, type RepoTarget } from "@/entities/git";
@@ -15,10 +17,11 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
   const current = store.hostingAccount;
   const candidates = accounts.candidates(target);
   const st = store.prState;
+  const [search, setSearch] = useState("");
   return (
     <Section
       id="prs"
-      title={st.kind === "loaded" ? `${info.requestsTitle}` : info.requestsTitle}
+      title={t(target.provider === "gitlab" ? "Merge requests" : "Pull requests")}
       count={st.kind === "loaded" ? store.pullRequests.length : undefined}
       actions={
         <>
@@ -52,6 +55,13 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
         </>
       }
     >
+      <form className="col" style={{ padding: "4px 6px", gap: 4 }} onSubmit={(e) => { e.preventDefault(); void store.filterPullRequests(store.requestQuery.scope, search); }}>
+        <select aria-label={t("Request filter")} value={store.requestQuery.scope} onChange={(e) => void store.filterPullRequests(e.target.value as RequestScope, search)}>
+          {(["open", "closed", "merged", "mine", "reviewRequested"] as const).map((scope) => <option key={scope} value={scope}>{t(scope === "reviewRequested" ? "Review requested" : scope === "mine" ? "Created by me" : scope === "open" ? "Open" : scope === "closed" ? "Closed" : "Merged")}</option>)}
+        </select>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("Search requests (Enter)")} aria-label={t("Search requests")} />
+        {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
+      </form>
       <div style={{ padding: "0 6px" }}>
         {st.kind === "needsAccount" && (
           <div className="col" style={{ gap: 4, alignItems: "flex-start", padding: "2px 0 4px" }}>
@@ -107,6 +117,7 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
           </span>
         </div>
       ))}
+      {store.requestsMore && <button className="link" disabled={st.kind === "loading"} onClick={() => void store.loadPullRequests(true)}>{t("Load more")}</button>}
     </Section>
   );
 }

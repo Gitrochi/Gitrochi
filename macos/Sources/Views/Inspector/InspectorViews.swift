@@ -12,8 +12,9 @@ struct WorkingChangesView: View {
                 .padding(.vertical, 10)
             Divider()
             if store.repoState != .clean { OperationBanner() }
-            SharedStack {
-                VStack(alignment: .leading, spacing: 12) {
+            GeometryReader { geometry in
+                SharedStack {
+                    VStack(alignment: .leading, spacing: 12) {
                     if !store.status.conflicted.isEmpty {
                         FileSection(title: String(localized: "Conflict"), color: .red, count: store.status.conflicted.count,
                                     actionTitle: String(localized: "Mark all as resolved"),
@@ -74,30 +75,31 @@ struct WorkingChangesView: View {
                                 .font(.callout).foregroundStyle(.secondary)
                         }
                     }
+                    }
+                    .frame(width: max(0, geometry.size.width - 24), alignment: .topLeading)
+                    .padding(12)
                 }
-                .padding(12)
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
                 Text("Changed files").font(.headline)
-                HStack(spacing: 6) {
-                    if !store.status.isEmpty {
-                        let total = totals
-                        Text("\(store.status.count) files")
-                        if total.added + total.deleted > 0 { LineStatText(added: total.added, deleted: total.deleted) }
-                    }
+                Spacer(minLength: 4)
+                FileViewToggle()
+            }
+            if !store.status.isEmpty {
+                let total = totals
+                WorkbenchFlow(spacing: 6) {
+                    Text("\(store.status.count) files")
+                    if total.added + total.deleted > 0 { LineStatText(added: total.added, deleted: total.deleted) }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
             }
-            Spacer()
-            FileViewToggle()
         }
     }
 
@@ -131,9 +133,7 @@ private struct FileSection<Content: View>: View {
                         .disabled(store.busy != nil)
                 }
                 .padding(.bottom, 4)
-                SharedPane(id: title) {
-                    VStack(alignment: .leading, spacing: 4) { content }
-                }
+                SharedPane(id: title) { content }
             }
             .padding(.vertical, 4)
         }
@@ -176,25 +176,23 @@ struct CommitDetailView: View {
     var body: some View {
         if let d = store.detail, d.sha == sha {
             VStack(spacing: 0) {
-                HStack(spacing: 8) {
-                    Image(systemName: d.parents.count > 1 ? "arrow.triangle.merge" : "smallcircle.filled.circle")
-                        .foregroundStyle(.secondary)
-                    Text(d.parents.count > 1 ? "Merge commit" : "Commit").font(.headline)
+                WorkbenchFlow(spacing: 8) {
+                    Label(d.parents.count > 1 ? "Merge commit" : "Commit", systemImage: d.parents.count > 1 ? "arrow.triangle.merge" : "smallcircle.filled.circle")
+                        .font(.headline)
                     Text(String(d.sha.prefix(8))).font(.system(.callout, design: .monospaced)).foregroundStyle(.secondary)
-                    Spacer()
                     Text(Fmt.short(d.commitDate)).font(.callout).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 Divider()
-                ScrollView {
+                InspectorScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         message(d)
+                        commitActions(d)
                         people(d)
                         claude
                         files(d)
                     }
-                    .padding(12)
                 }
                 .id(sha)   // 다른 커밋을 고르면 맨 위부터 보이게
             }
@@ -210,8 +208,8 @@ struct CommitDetailView: View {
             let refs = store.refsByCommit[sha] ?? []
             if !refs.isEmpty {
                 let tint = store.commitIndex[sha].map { Palette.lane(store.entries[$0].row.color) } ?? .accentColor
-                HStack(spacing: 4) {
-                    ForEach(refs.prefix(4)) { RefBadge(label: $0, color: tint) }
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(refs.prefix(4)) { RefBadge(label: $0, color: tint, constrained: true) }
                     if refs.count > 4 { Text("+\(refs.count - 4)").font(.caption2).foregroundStyle(.secondary) }
                 }
             }
@@ -219,6 +217,7 @@ struct CommitDetailView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("commit-detail-summary")
             if !d.body.isEmpty {
                 let long = d.body.count > 400 || d.body.filter { $0 == "\n" }.count > 8
                 let collapsed = long && !bodyExpanded
@@ -243,23 +242,24 @@ struct CommitDetailView: View {
             HStack(spacing: 10) {
                 AuthorAvatar(name: d.author, email: d.email, size: 34)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(d.author).fontWeight(.semibold)
-                    Text(d.email).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(d.author).fontWeight(.semibold).lineLimit(2).help(d.author)
+                        .accessibilityIdentifier("commit-detail-author")
+                    Text(d.email).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle).help(d.email)
                 }
-                Spacer(minLength: 6)
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text(Fmt.short(d.date)).font(.callout)
-                    Text(Fmt.long(d.date)).font(.caption2).foregroundStyle(.secondary)
-                }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             }
+            Label(Fmt.long(d.date), systemImage: "calendar")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             if d.committer != d.author || abs(d.commitDate.timeIntervalSince(d.date)) > 60 {
                 Label(d.committer == d.author ? "Commit: \(Fmt.long(d.commitDate))" : "Commit: \(d.committer) · \(Fmt.long(d.commitDate))",
                       systemImage: "clock.arrow.circlepath")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Divider()
-            HStack(spacing: 6) {
+            WorkbenchFlow(spacing: 6) {
                 Pill(text: String(d.sha.prefix(8)), icon: "number") { store.copy(d.sha) }
                     .help("Copy full SHA")
                 if !d.parents.isEmpty {
@@ -269,18 +269,31 @@ struct CommitDetailView: View {
                             .help("Go to parent commit")
                     }
                 }
-                Spacer()
             }
         }
     }
 
+    private func commitActions(_ d: CommitDetail) -> some View {
+        WorkbenchFlow(spacing: 8) {
+            Button { store.requestNewBranch(from: d.sha, label: String(d.sha.prefix(7))) } label: {
+                Label("New branch…", systemImage: "arrow.triangle.branch")
+            }
+            Button { store.sheet = .tag(sha: d.sha) } label: { Label("Tag here…", systemImage: "tag") }
+            Menu {
+                CommitMenu(commit: Commit(id: d.sha, parents: d.parents, author: d.author,
+                                          email: d.email, date: d.date, subject: d.summary, body: d.body))
+            } label: { Label("More", systemImage: "ellipsis") }
+                .accessibilityLabel("More commit actions")
+        }
+        .controlSize(.small).disabled(store.busy != nil)
+    }
+
     private var claude: some View {
         Card {
-            HStack {
+            VStack(alignment: .leading, spacing: 8) {
                 Label("\(AIStore.shared.short(for: .explain)) explanation", systemImage: "sparkles")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.accentColor)
-                Spacer()
                 if store.explaining.contains(sha) {
                     HStack(spacing: 4) { ProgressView().controlSize(.mini); Text("Loading").font(.caption) }
                 } else {
@@ -305,10 +318,9 @@ struct CommitDetailView: View {
             let stats = store.detailStats.values
             let added = stats.compactMap(\.added).reduce(0, +)
             let deleted = stats.compactMap(\.deleted).reduce(0, +)
-            HStack(spacing: 8) {
+            WorkbenchFlow(spacing: 8) {
                 Text("Changed files").font(.subheadline.weight(.semibold))
                 Text("\(store.detailFiles.count)").font(.subheadline).foregroundStyle(.secondary)
-                Spacer()
                 FileViewToggle()
             }
             if added + deleted > 0 {

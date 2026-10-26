@@ -200,9 +200,9 @@ export interface Identity {
 
 export type SearchScope = "commits" | "files" | "code";
 export const searchScopes: { id: SearchScope; title: string; prompt: string }[] = [
-  { id: "commits", title: t("Commit"), prompt: t("Search messages, authors, SHAs, branches (Ctrl+F)") },
-  { id: "files", title: t("File path"), prompt: t("Find commits where a file's name or path changed") },
-  { id: "code", title: t("Code changes"), prompt: t("Find commits that added or removed this code") },
+  { id: "commits", get title() { return t("Commit"); }, get prompt() { return t("Search messages, authors, SHAs, branches (Ctrl+F)"); } },
+  { id: "files", get title() { return t("File path"); }, get prompt() { return t("Find commits where a file's name or path changed"); } },
+  { id: "code", get title() { return t("Code changes"); }, get prompt() { return t("Find commits that added or removed this code"); } },
 ];
 
 export type Selection = { kind: "wip" } | { kind: "worktree"; path: string } | { kind: "commit"; sha: string } | { kind: "pullRequest"; number: number };
@@ -456,11 +456,21 @@ export interface RemoteRepo {
 export type LoadState = { kind: "idle" } | { kind: "loading" } | { kind: "loaded" } | { kind: "needsAccount" } | { kind: "failed"; message: string };
 
 export type SheetKind =
-  | { kind: "clone" }
+  | { kind: "clone"; url?: string }
   | { kind: "stash" }
   | { kind: "newBranch"; start: string; label: string }
   | { kind: "tag"; sha: string }
   | { kind: "createPullRequest" }
+  | { kind: "pushReview"; branch: string; force: boolean; remoteOverride?: string }
+  | { kind: "askChanges" }
+  | { kind: "compareRevisions" }
+  | { kind: "batchCommits" }
+  | { kind: "lineHistory" }
+  | { kind: "localWorkflows" }
+  | { kind: "workspaceOverview" }
+  | { kind: "collaborationInbox" }
+  | { kind: "repositoryAssistant" }
+  | { kind: "mcpConnection" }
   | { kind: "startAgent"; path: string | null }
   | { kind: "addWorktree"; branch: string | null; start: string | null }
   | { kind: "splitCommits" }

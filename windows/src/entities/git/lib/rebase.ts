@@ -32,6 +32,8 @@ export interface RebasePlan {
   original: string[];
   /** 이미 원격에 올린 커밋이 들어 있는지 */
   pushed: boolean;
+  /** 확인한 HEAD가 바뀌었으면 실행하지 않는다. */
+  expectedHead?: string;
 }
 
 export function rebaseItem(sha: string, message: string, author: string): RebaseItem {
@@ -66,7 +68,7 @@ export function rebaseTodo(p: RebasePlan, messageFile: (sha: string) => string):
   for (const i of [...p.items].reverse()) {
     if (i.action === "reword") {
       out.push(`pick ${i.sha}`);
-      if (i.newMessage !== i.message) out.push(`exec git commit --amend --no-verify --allow-empty -F ${shellQuote(messageFile(i.sha))}`);
+      if (i.newMessage !== i.message) out.push(`exec git commit --amend --allow-empty -F ${shellQuote(messageFile(i.sha))}`);
     } else out.push(`${i.action} ${i.sha}`);
   }
   return out.join("\n") + "\n";

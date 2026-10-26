@@ -13,7 +13,7 @@ struct DiffView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Button { store.closeDiff() } label: {
-                    Label(store.area == .changes ? "Close diff" : "Graph", systemImage: "chevron.left")
+                    Label(backLabel, systemImage: "chevron.left")
                 }
                 .keyboardShortcut(.escape, modifiers: [])
                 .help("Close diff (Esc)")
@@ -29,10 +29,10 @@ struct DiffView: View {
             .padding(.vertical, 8)
             .background(.bar)
             Divider()
-            HStack(spacing: 10) {
+            WorkbenchFlow(spacing: 10) {
                 viewOptions
                 fileButtons(change)
-                Spacer(minLength: 4)
+                questionButtons(change)
                 actions(change)
             }
             .controlSize(.small)
@@ -42,6 +42,14 @@ struct DiffView: View {
 
             // 안내 화면(바이너리·빈 파일 등)도 남은 자리를 다 채워 머리줄이 가운데로 내려오지 않게
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private var backLabel: LocalizedStringKey {
+        switch source {
+        case .working: return "Changes"
+        case .review: return "Back to conversation"
+        case .commit, .worktree: return "Graph"
         }
     }
 
@@ -82,6 +90,15 @@ struct DiffView: View {
             let name = store.worktrees.first { $0.path == path }?.branch ?? (path as NSString).lastPathComponent
             return "\(c.path) · " + String(localized: "Worktree: \(name)")
         }
+    }
+
+    @ViewBuilder private func questionButtons(_ change: FileChange) -> some View {
+        if !isReview && !isWorktree && change.kind != .untracked {
+            Button("Trace lines…") { store.openSelectedLineHistory() }.disabled(store.diffLoading || store.diff?.isBinary == true)
+        }
+        Button { Task { await store.openChangeQuestion() } } label: { Label("Ask AI…", systemImage: "sparkles") }
+            .help("Ask questions about the selected changes")
+            .disabled(store.diffLoading || store.diff?.isBinary == true)
     }
 
     /// 이 파일의 히스토리·blame 열기
@@ -218,6 +235,7 @@ struct DiffLinesView: View {
                             DiffLineRow(line: line, showOld: doc.hasOldSide, showNew: doc.hasNewSide, numberWidth: numberWidth,
                                         selected: store.diffSelection.contains(line.id))
                                 .modifier(Selectable(line: line, enabled: editable))
+                                .modifier(ReviewCommentable(line: line, side: nil, enabled: !doc.combined && !doc.multipleFiles))
                         }
                     }
                 }
@@ -262,6 +280,7 @@ struct DiffLinesView: View {
             DiffLineRow(line: line, showOld: side == .left, showNew: side == .right, numberWidth: numberWidth,
                         selected: store.diffSelection.contains(line.id))
                 .modifier(Selectable(line: line, enabled: editable))
+                .modifier(ReviewCommentable(line: line, side: side == .left ? .left : .right, enabled: !doc.combined && !doc.multipleFiles))
         } else {
             Color.secondary.opacity(0.06)
         }
@@ -329,6 +348,36 @@ private struct Selectable: ViewModifier {
         } else {
             content
         }
+    }
+}
+
+/// PR 서버가 준 패치의 실제 줄에서만 댓글 초안을 만들고, 작업 파일·히스토리 diff는 구분한다.
+private struct ReviewCommentable: ViewModifier {
+    @Environment(RepoStore.self) private var store
+    let line: DiffLine
+    let side: ReviewLineSide?
+    let enabled: Bool
+
+    @ViewBuilder func body(content: Content) -> some View {
+        let actualSide = side ?? (line.newNo != nil ? .right : .left)
+        let number = actualSide == .left ? line.oldNo : line.newNo
+        if enabled, store.fileInspect == nil, let number, line.kind != .hunk, line.kind != .meta,
+           case .review(let request, let change, _)? = store.diffSource {
+            HStack(alignment: .top, spacing: 0) {
+                Button {
+                    store.addReviewDraft(request, path: change.path, line: number, side: actualSide, oldLine: line.oldNo)
+                } label: {
+                    Image(systemName: "plus.bubble.fill")
+                        .font(.system(size: 11)).foregroundStyle(Color.accentColor)
+                        .frame(width: 22, height: 18)
+                }
+                .buttonStyle(.plain)
+                .help("Add review comment")
+                .accessibilityLabel(Text("Add review comment on line \(number)"))
+                .disabled(store.reviewBusy || store.reviewLoading)
+                content
+            }
+        } else { content }
     }
 }
 

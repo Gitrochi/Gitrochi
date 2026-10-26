@@ -3,11 +3,18 @@ import AppKit
 
 struct PullRequestSection: View {
     @Environment(RepoStore.self) private var store
+    @AppStorage(SidebarSections.key) private var collapsed = ""
     @Environment(\.openSettings) private var openSettings
+    @ViewState private var search = ""
     let target: RepoTarget
 
     var body: some View {
-        SidebarSection("pullRequests") {
+        Section(isExpanded: SidebarSections.binding($collapsed, "pullRequests")) {
+            Picker("Request filter", selection: Binding(get: { store.collaboration.query.scope }, set: { scope in Task { await store.filterPullRequests(scope: scope, search: search) } })) {
+                Text("Open").tag("open"); Text("Closed").tag("closed"); Text("Merged").tag("merged"); Text("Created by me").tag("mine"); Text("Review requested").tag("reviewRequested")
+            }.labelsHidden()
+            TextField("Search requests (Enter)", text: $search).onSubmit { Task { await store.filterPullRequests(scope: store.collaboration.query.scope, search: search) } }
+            if let warning = store.collaboration.warning { Text(warning).font(.caption).foregroundStyle(.secondary) }
             switch store.prState {
             case .needsAccount:
                 let others = AccountStore.shared.accounts(for: target.provider)
@@ -42,7 +49,6 @@ struct PullRequestSection: View {
                         Text("\(pr.source) → \(pr.target)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
-                .sidebarRow()
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
                 .contextMenu {
@@ -51,6 +57,7 @@ struct PullRequestSection: View {
                     Button("Copy link") { store.copy(pr.url) }
                 }
             }
+            if store.collaboration.more { Button("Load more") { Task { await store.loadPullRequests(append: true) } }.disabled(store.prState == .loading) }
         } header: {
             HStack {
                 Text(store.prState == .loaded ? "\(target.provider.requestsTitle) \(store.pullRequests.count)" : target.provider.requestsTitle)

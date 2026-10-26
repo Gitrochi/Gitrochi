@@ -38,7 +38,27 @@ final class RepoStore: Identifiable {
     // MARK: 선택·상세
     enum Area { case changes, history }
     var area: Area = .changes
+    var destination: WorkspaceDestination = .home
+    var repositorySection: RepositorySection = .changes
+    var navigationPreferencesVersion = 0
+    var workspaceNavigationPreparing = false
+    var navigationTrail: [WorkspaceLocation] = [WorkspaceLocation(.home)]
+    var navigationPosition = 0
     var historySelection: Selection?
+    var pullRequestSelection: Int?
+    var pullRequestDiff: DiffSource?
+    var pullRequestInspect: FileInspect?
+    var worktreeDiffs: [String: DiffSource] = [:]
+    var worktreeInspects: [String: FileInspect] = [:]
+    var sidebarToggleRequest = 0
+    var showCommandPalette = false
+    var showHistoryInspector = true
+    var selectedBranchID: String?
+    var selectedBranchContext: Branch? {
+        guard case .commit(let sha)? = selection else { return nil }
+        let matches = localBranches.filter { $0.target == sha } + remoteBranches.filter { $0.target == sha }
+        return matches.first { $0.id == selectedBranchID } ?? matches.first(where: \.isCurrent) ?? matches.first
+    }
     var changesDiff: DiffSource?
     var historyDiff: DiffSource?
     var changesInspect: FileInspect?
@@ -62,7 +82,29 @@ final class RepoStore: Identifiable {
     var operationNotice: String?
     var errorMessage: String?
     var sheet: SheetKind?
-    var confirm: ConfirmRequest?
+    var pushReview: PushReviewPlan?
+    var pushReviewLoading = false
+    var pushReviewGeneration = 0
+    var pushReviewError: String?
+    var pushReviewCompletion: ((Bool) -> Void)?
+    var changeQuestionSession: ChangeQuestionSession?
+    var historyTools = HistoryToolsState()
+    var collaboration = CollaborationState()
+    var localWorkflows = LocalWorkflowState()
+    var repositoryAssistant = RepositoryAssistantState()
+    var hostingHub = HostingHubState()
+    var newPullRequestDraft: NewPullRequestDraft?
+    var pullRequestWorkflowID: UUID?
+    private let confirmationGuard = RepositoryConfirmationGuard()
+    private var pendingConfirmation: ConfirmRequest?
+    var confirm: ConfirmRequest? {
+        get { pendingConfirmation }
+        set {
+            guard let request = newValue else { pendingConfirmation = nil; return }
+            let action = confirmationGuard.wrap(path: url?.path, currentPath: { [weak self] in self?.url?.path }, action: request.action)
+            pendingConfirmation = ConfirmRequest(title: request.title, message: request.message, actionTitle: request.actionTitle, destructive: request.destructive, action: action)
+        }
+    }
     var notRepoPrompt: URL?
     private(set) var recents: [URL] = Recents.load()
 
@@ -152,6 +194,9 @@ final class RepoStore: Identifiable {
     var reviewLoading = false
     var reviewError: String?
     var reviewBusy = false
+    var reviewDrafts: [ReviewDraftComment] = ReviewDraftStorage.load()
+    var reviewLoadID = UUID()
+    var reviewActionID: UUID?
     /// 가운데에 띄운 파일 히스토리·blame
     var fileInspect: FileInspect?
     var fileInspectLine: Int?
@@ -288,6 +333,7 @@ final class RepoStore: Identifiable {
                 }
             }
         }
+        restoreWorkspaceDestination()
         // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
         let shown = Date().timeIntervalSince(started)
         if !quick && shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
@@ -397,6 +443,25 @@ final class RepoStore: Identifiable {
     }
 
     private func resetState() {
+        confirmationGuard.invalidate()
+        cancelPushReview()
+        cancelChangeQuestion()
+        historyTools.reset()
+        collaboration.reset()
+        localWorkflows.reset()
+        repositoryAssistant.reset()
+        hostingHub = .init()
+        destination = .home; repositorySection = .changes; navigationTrail = [WorkspaceLocation(.home)]; navigationPosition = 0
+        sheet = nil; confirm = nil
+        busy = nil; errorMessage = nil
+        newPullRequestDraft = nil
+        pullRequestWorkflowID = nil
+        reviewLoadID = UUID()
+        reviewActionID = nil
+        review = nil; reviewLoading = false; reviewBusy = false; reviewError = nil
+        pullRequestSelection = nil; pullRequestDiff = nil; pullRequestInspect = nil
+        worktreeDiffs = [:]; worktreeInspects = [:]
+        showCommandPalette = false; showHistoryInspector = true; selectedBranchID = nil
         resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]
@@ -488,7 +553,8 @@ final class RepoStore: Identifiable {
             let pendingKey = Self.pendingKey(pending)
             var graph: (commits: [Commit], layout: (rows: [GraphRow], maxLanes: Int), more: Bool)?
             if lastLog?.data != lg.data || lastLog?.wip != wip || lastLog?.head != head || lastLog?.pending != pendingKey || entries.isEmpty {
-                var commits = Parsers.log(lg.data)
+                var commits = await Task.detached(priority: .userInitiated) { Parsers.log(lg.data) }.value
+                guard gen == reloadGeneration, self.url == url else { return }
                 let more = commits.count > limit
                 if more { commits.removeLast(commits.count - limit) }
                 if wip { commits.insert(.wip(parent: head), at: 0) }
@@ -524,7 +590,7 @@ final class RepoStore: Identifiable {
             update(\.unstagedStats, Parsers.numstat(un.data))
             update(\.stagedStats, Parsers.numstat(sn.data))
             let newTarget = Hosting.target(remotes: remotes, urls: remoteURLs,
-                                           gitlabHosts: AccountStore.shared.accounts(for: .gitlab).map(\.host))
+                                           gitlabHosts: AccountStore.shared.accounts(for: .gitlab).map(\.host), sshAliases: AccountStore.shared.sshHostAliases)
             if let t = newTarget, t.provider == .github { AvatarStore.shared.noteGitHubRepo(t.path) }
             if newTarget != target {
                 target = newTarget
@@ -700,11 +766,14 @@ final class RepoStore: Identifiable {
     }
 
     private func fixSelection() {
+        let wasPreparing = workspaceNavigationPreparing
+        workspaceNavigationPreparing = true
+        defer { workspaceNavigationPreparing = wasPreparing }
         switch selection {
         case .wip?:
             break
         case .commit(let sha)?:
-            if commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) { selectDefault() }
+            if commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) { showArea(.history) }
         case .worktree(let path)?:
             if !worktrees.contains(where: { $0.path == path }) { selectDefault() }
         case .pullRequest?:
@@ -719,7 +788,7 @@ final class RepoStore: Identifiable {
                 loadDiff(keepCurrent: true)
             } else if let match = all.first(where: { $0.path == c.path }) {
                 // 파일 전체를 스테이지한 직후에도 같은 파일의 diff 를 이어서 보여 준다.
-                openDiff(.working(match))
+                openDiff(.working(match), revealPage: false)
             } else {
                 closeDiff()
             }

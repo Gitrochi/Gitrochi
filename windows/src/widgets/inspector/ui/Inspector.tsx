@@ -13,6 +13,8 @@ import { ChangeList, FileViewToggle } from "./FileList";
 import { CommitImpactPanel } from "./CommitImpactPanel";
 import { GitchBar } from "./GitchBar";
 import { WorktreeChanges } from "./WorktreeChanges";
+import { ReviewDraftPanel, ReviewThreadActions } from "./ReviewPanels";
+import { RequestLifecyclePanel } from "./RequestLifecyclePanel";
 import "./inspector.css";
 
 /** 오른쪽 열: 작업 영역 또는 커밋 상세 */
@@ -82,7 +84,7 @@ function WorkingChanges({ store }: { store: RepoStore }) {
           </div>
         </div>
       )}
-      <SharedStack className="panel-scroll" bodyClassName="panel-body">
+      <SharedStack className="panel-scroll" bodyClassName="working-file-sections">
         <FileSection title={t("Conflict")} color="var(--red)" count={st.conflicted.length} actionTitle={t("Mark all as resolved")} onAction={() => void store.stage(st.conflicted)}>
           <ChangeList
             folderMenu={(p) => folderMenu(store, p)}
@@ -147,9 +149,7 @@ function FileSection({ title, color, count, actionTitle, onAction, children }: {
           {actionTitle}
         </button>
       </div>
-      <SharedPane id={title} gap={4}>
-        {children}
-      </SharedPane>
+      <SharedPane id={title}>{children}</SharedPane>
     </Card>
   );
 }
@@ -246,7 +246,7 @@ function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
   const deleted = stats.reduce((a, s) => a + (s.deleted ?? 0), 0);
   const explanation = store.explanations[sha];
   return (
-    <div className="col grow" style={{ height: "100%" }}>
+    <div className="col grow commit-detail" style={{ height: "100%" }}>
       <div className="panel-head">
         <span className="muted" style={{ display: "inline-flex" }}>
           {d.parents.length > 1 ? <GitMerge size={15} /> : <CircleDot size={15} />}
@@ -286,19 +286,19 @@ function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
           )}
         </Card>
         <Card>
-          <div className="row" style={{ gap: 10 }}>
+          <div className="commit-identity">
             <Avatar name={d.author} email={d.email} size={34} url={avatars.url(d.email, d.author)} />
-            <div className="col grow">
-              <span style={{ fontWeight: 600 }} className="ellipsis">
+            <div className="col grow commit-author">
+              <span style={{ fontWeight: 600 }} className="ellipsis" title={d.author} data-tip={d.author}>
                 {d.author}
               </span>
-              <span className="muted ellipsis" style={{ fontSize: 11.5 }}>
+              <span className="muted ellipsis" style={{ fontSize: 11.5 }} title={d.email} data-tip={d.email}>
                 {d.email}
               </span>
             </div>
-            <div className="col" style={{ alignItems: "flex-end" }}>
+            <div className="commit-author-date muted">
               <span>{shortDate(d.date)}</span>
-              <span className="muted" style={{ fontSize: 11 }}>
+              <span style={{ fontSize: 11 }}>
                 {longDate(d.date)}
               </span>
             </div>
@@ -388,7 +388,11 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
   const s = r?.state;
   const ci = pr.headSHA ? store.ci.bySha.get(pr.headSHA) : undefined;
   const text = draft.trim();
-  const after = (ok: boolean) => ok && setDraft("");
+  const pending = store.reviewDraftsFor(number).length;
+  const after = (ok: boolean) => {
+    if (ok && store.selection?.kind === "pullRequest" && store.selection.number === number)
+      setDraft((current) => current.trim() === text ? "" : current);
+  };
   return (
     <div className="col grow" style={{ height: "100%" }}>
       <div className="panel-head">
@@ -439,6 +443,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
           {pr.headSHA && store.commitIndex.has(pr.headSHA) && <Button onClick={() => store.reveal(pr.headSHA!)}>{t("Show in graph")}</Button>}
         </div>
         <div style={{ height: 1, background: "var(--border)" }} />
+        <RequestLifecyclePanel store={store} number={number} />
         {pr.body.trim() ? <Markdown text={pr.body} {...md} /> : <span className="muted">{t("No description")}</span>}
         {store.reviewError && (
           <span className="error-text" style={{ fontSize: 11.5, whiteSpace: "pre-wrap" }}>
@@ -474,6 +479,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
                 );
               })}
             </div>
+            <ReviewDraftPanel store={store} number={number} />
             <div className="col" style={{ gap: 8 }}>
               <span style={{ fontWeight: 600 }}>{t("Conversation {0}", r.comments.filter((c) => c.kind !== "system").length)}</span>
               {r.comments.map((c) =>
@@ -497,6 +503,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
                       </span>
                     )}
                     {c.body && <Markdown text={c.body} {...md} />}
+                    <ReviewThreadActions store={store} number={number} comment={c} />
                   </div>
                 ),
               )}
@@ -510,16 +517,20 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
           style={{ height: 58 }}
           placeholder={t("Comment · review feedback")}
           value={draft}
+          disabled={store.reviewBusy || store.reviewLoading}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && text) void store.postReviewComment(number, text).then(after);
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && (text || pending) && !store.reviewBusy) {
+              e.preventDefault();
+              void store.postReviewComment(number, text).then(after);
+            }
           }}
         />
         <div className="row" style={{ gap: 6 }}>
           {store.reviewBusy && <Spinner size={12} />}
           <span className="spacer" />
           {target.provider === "github" && (
-            <Button size="small" disabled={!text || store.reviewBusy} tip={t("Request changes with a comment (comment required)")} onClick={() => void store.requestChanges(number, text).then(after)}>
+            <Button size="small" disabled={(!text && !pending) || store.reviewBusy} tip={t("Request changes with a comment (comment required)")} onClick={() => void store.requestChanges(number, text).then(after)}>
               {t("Request changes")}</Button>
           )}
           {target.provider === "gitlab" && s?.approvedByMe ? (
@@ -529,8 +540,8 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
             <Button size="small" disabled={store.reviewBusy || !!s?.approvedByMe} tip={text ? t("Approve with a comment") : t("Approves this request")} onClick={() => void store.approvePullRequest(number, text).then(after)}>
               {t("✓ Approve")}</Button>
           )}
-          <Button size="small" kind="primary" disabled={!text || store.reviewBusy} tip={keyLabel(t("Comment (Ctrl+Enter)"))} onClick={() => void store.postReviewComment(number, text).then(after)}>
-            {t("Comment")}</Button>
+          <Button size="small" kind="primary" disabled={(!text && !pending) || store.reviewBusy} tip={keyLabel(t("Comment (Ctrl+Enter)"))} onClick={() => void store.postReviewComment(number, text).then(after)}>
+            {pending ? t("Submit review") : t("Comment")}</Button>
         </div>
       </div>
     </div>

@@ -517,10 +517,21 @@ enum LoadState: Hashable {
 
 enum SheetKind: Identifiable {
     case clone
+    case cloneURL(String)
     case stash
     case newBranch(start: String, label: String)
     case tag(sha: String)
     case createPullRequest
+    case pushReview(branch: String, force: Bool, remoteOverride: String?)
+    case changeQuestion
+    case compareRevisions
+    case batchCommits
+    case lineHistory
+    case localWorkflows
+    case workspaceOverview
+    case collaborationInbox
+    case repositoryAssistant
+    case mcpConnection
     /// 에이전트 세션 시작(path 가 있으면 그 워크트리를 미리 고름)
     case startAgent(path: String?)
     /// branch 가 있으면 기존 브랜치를, 없으면 start 에서 새 브랜치를 워크트리로 체크아웃
@@ -539,10 +550,21 @@ enum SheetKind: Identifiable {
     var id: String {
         switch self {
         case .clone: return "clone"
+        case .cloneURL(let url): return "clone:" + url
         case .stash: return "stash"
         case .newBranch(let s, _): return "branch:" + s
         case .tag(let s): return "tag:" + s
         case .createPullRequest: return "pr"
+        case .pushReview(let branch, let force, let remote): return "push:" + branch + ":" + String(force) + ":" + (remote ?? "")
+        case .changeQuestion: return "changeQuestion"
+        case .compareRevisions: return "compareRevisions"
+        case .batchCommits: return "batchCommits"
+        case .lineHistory: return "lineHistory"
+        case .localWorkflows: return "localWorkflows"
+        case .workspaceOverview: return "workspaceOverview"
+        case .collaborationInbox: return "collaborationInbox"
+        case .repositoryAssistant: return "repositoryAssistant"
+        case .mcpConnection: return "mcpConnection"
         case .startAgent(let p): return "agent:" + (p ?? "")
         case .addWorktree(let b, let s): return "wt:" + (b ?? "") + ":" + (s ?? "")
         case .splitCommits: return "split"
@@ -552,6 +574,15 @@ enum SheetKind: Identifiable {
         case .graphCheck: return "graphCheck"
         }
     }
+}
+
+/// Push 검토를 취소하거나 생성에 실패해도 사용자가 작성한 PR 초안은 다시 열 수 있게 보관한다.
+struct NewPullRequestDraft {
+    let branch: String
+    let title: String
+    let body: String
+    let base: String
+    let draft: Bool
 }
 
 struct ConfirmRequest: Identifiable {

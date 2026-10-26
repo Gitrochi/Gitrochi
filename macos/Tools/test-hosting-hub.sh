@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TASK_TMP="$(mktemp -d)"
+trap 'rm -rf "$TASK_TMP"' EXIT
+cat > "$TASK_TMP/main.swift" <<'SWIFT'
+import Foundation
+
+enum Provider: String { case github, gitlab }
+struct RepoTarget { var provider: Provider; var remote: String; var host: String; var path: String }
+struct HostingError: LocalizedError { let status: Int; var errorDescription: String? { "HTTP \(status)" } }
+enum Hosting {
+    static var handler: (URLRequest) throws -> Data = { _ in fatalError("Unexpected HTTP") }
+    static func projectID(_ s: String) -> String { s.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_.~")))! }
+    static func request(_ p: Provider, _ url: String, token: String, method: String = "GET", body: [String: Any]? = nil) throws -> URLRequest { var r = URLRequest(url: URL(string: url)!); r.httpMethod = method; if let body { r.httpBody = try JSONSerialization.data(withJSONObject: body) }; return r }
+    static func data(_ request: URLRequest) async throws -> Data { try handler(request) }
+}
+@main struct HubTests {
+    @MainActor static func main() async throws {
+        func json(_ x: Any) throws -> Data { try JSONSerialization.data(withJSONObject: x) }
+        let gh = HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/repo"), token: "fixture", apiBase: "https://api.github.com", me: "me")
+        let gl = HubAccess(target: RepoTarget(provider: .gitlab, remote: "origin", host: "gitlab.test", path: "team/repo"), token: "fixture", apiBase: "https://gitlab.test/api/v4", me: "me")
+        let ownerTarget = HostingHubAPI.projectTarget(gh.target, provider: .github, host: "github.com", username: "me", personal: false)
+        let myTarget = HostingHubAPI.projectTarget(gh.target, provider: .github, host: "github.com", username: "me", personal: true)
+        precondition(ownerTarget.path == "team/repo" && myTarget.path == "me/workspace" && myTarget.host == "github.com")
+        let absentTarget = HostingHubAPI.projectTarget(nil, provider: .github, host: "github.com", username: "me", personal: false)
+        precondition(absentTarget.path == "me/workspace")
+        var calls = [URLRequest]()
+        Hosting.handler = { r in calls.append(r); return try json((0..<30).map { ["id": $0, "tag_name": "v\($0)", "name": "Release \($0)"] }) }
+        let releases = try await HostingHubAPI.page(gh, section: .releases, page: 2)
+        precondition(releases.items.count == 30 && releases.more && calls[0].url!.query!.contains("page=2"))
+        Hosting.handler = { r in
+            let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any]
+            precondition((body["query"] as! String).contains("user(login:$owner)") && variables["owner"] as? String == "me")
+            return try json(["data": ["user": ["projectsV2": ["nodes": [["id": "personal", "title": "My project"]], "pageInfo": ["hasNextPage": false]]]]])
+        }
+        let personalPage = try await HostingHubAPI.page(HubAccess(target: myTarget, token: "fixture", apiBase: gh.apiBase, me: "me"), section: .projects)
+        precondition(personalPage.items.first?.id == "personal")
+        var stale = gh; stale.isCurrent = { false }
+        let n = calls.count
+        do { try await HostingHubAPI.saveRelease(stale, HubReleaseInput(tag: "v1", name: "One")); fatalError("Stale write") } catch {}
+        precondition(calls.count == n)
+        precondition(HostingHubAPI.safeURL(gh, "javascript:alert(1)") == nil)
+        precondition(HostingHubAPI.safeURL(gh, "https://evil.test/x") == nil)
+        precondition(HostingHubAPI.safeURL(gh, "https://github.com/team/repo") != nil)
+        precondition(HostingHubAPI.safeURL(gh, "https://user:pass@github.com/x") == nil)
+        Hosting.handler = { r in calls.append(r); if r.url!.path.hasSuffix("/star") { throw HostingError(status: 404) }; return try json(["id": "g1", "description": "Example", "owner": ["login": "me"], "updated_at": "a", "files": ["a.txt": ["content": "first", "truncated": false]]]) }
+        let detail = try await HostingHubAPI.detail(gh, section: .gists, item: HubItem(id: "g1", title: "Example"))
+        precondition(detail.files.first?.content == "first" && detail.item.editable && detail.starred == false)
+        var changed = detail; changed.files[0].content = "outdated"
+        let writesBefore = calls.filter { $0.httpMethod != "GET" }.count
+        do { try await HostingHubAPI.saveGist(gh, HubGistInput(description: "new", files: [HubFile(name: "a.txt", content: "updated")]), previous: changed); fatalError("Overwrote remote changes") } catch {}
+        precondition(calls.filter { $0.httpMethod != "GET" }.count == writesBefore)
+        var draft = HubReleaseInput(tag: "v1", name: "One"); draft.draft = true
+        do { try await HostingHubAPI.saveRelease(gl, draft); fatalError("GitLab draft unsupported") } catch {}
+        precondition(HostingHubAPI.snippetRef(rawURL: "https://gitlab.test/-/snippets/1/raw/feature/x/folder/a.txt", file: "folder/a.txt") == "feature/x")
+        Hosting.handler = { r in calls.append(r); if r.httpMethod == "GET" { return try json(["iid": 2, "labels": ["Todo", "Done", "security"]]) }; let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any]; precondition(body["remove_labels"] as? String == "Todo" && body["add_labels"] as? String == "Done"); return try json([:]) }
+        let field = HubProjectField(id: "board", name: "Status", options: [HubProjectOption(id: "1", name: "Todo"), HubProjectOption(id: "2", name: "Done")]), row = HubProjectRow(id: "2", title: "Issue", body: "", url: "", contentID: "22", statuses: [:])
+        try await HostingHubAPI.move(gl, detail: HubDetail(item: HubItem(id: "1", title: "Board"), fields: [field], rows: [row]), row: row, field: field, option: "2")
+        let scope = HostingHubAPI.boardIssueQuery(["hide_closed_list": true, "labels": [["name": "security"]], "assignee": ["id": 7], "milestone": ["title": "1.0"], "weight": 0], page: 2)
+        precondition(scope.contains("assignee_id=7") && scope.contains("labels=security") && scope.contains("milestone=1.0") && scope.contains("weight=0") && scope.contains("state=opened"))
+        var creations = 0
+        Hosting.handler = { request in creations += 1; throw NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "connection lost"]) }
+        do { try await HostingHubAPI.saveGist(gh, HubGistInput(description: "new", files: [HubFile(name: "a.txt", content: "text")])); fatalError("Uncertain creation accepted") } catch is HubUncertainWriteError {} catch { fatalError("Unexpected error type") }
+        precondition(creations == 1)
+        let boardFields = [HubProjectField(id: "priority", name: "Priority", options: [HubProjectOption(id: "high", name: "High")]), HubProjectField(id: "status", name: "Status", options: [HubProjectOption(id: "todo", name: "Todo"), HubProjectOption(id: "done", name: "Done")])]
+        let boardRows = [HubProjectRow(id: "1", title: "Task", body: "", url: "", contentID: "1", statuses: ["status": "todo"]), HubProjectRow(id: "2", title: "Unassigned", body: "", url: "", contentID: "2", statuses: [:]), HubProjectRow(id: "3", title: "Old status", body: "", url: "", contentID: "3", statuses: ["status": "removed"])]
+        let board = HubDetail(item: HubItem(id: "board", title: "Board"), fields: boardFields, rows: boardRows)
+        let columns = HostingHubAPI.projectColumns(board)
+        precondition(columns.map(\.id) == ["", "todo", "done"] && columns.map { $0.rows.count } == [2, 1, 0])
+        precondition(columns.flatMap(\.rows).map(\.id).sorted() == ["1", "2", "3"])
+        precondition(HostingHubAPI.projectColumns(board, fieldID: "priority").map(\.id) == ["", "high"])
+        Hosting.handler = { _ in try json(["errors": [["type": "INSUFFICIENT_SCOPES", "message": "id requires read:project"], ["message": "title requires read:project"]]]) }
+        do { _ = try await HostingHubAPI.page(gh, section: .projects); fatalError("Missing scope accepted") }
+        catch let error as HubProjectPermissionError { precondition(error.localizedDescription.contains("Connect project access") && !error.localizedDescription.contains("id requires")) }
+        catch { fatalError("Scope recovery type missing") }
+        Hosting.handler = { _ in try json(["errors": [["message": "unrelated internal exception"]]]) }
+        do { _ = try await HostingHubAPI.page(gh, section: .projects); fatalError("GraphQL failure accepted") }
+        catch is HubProjectPermissionError { fatalError("Unrelated error offered authorization") }
+        catch { precondition(error.localizedDescription.contains("Projects could not be loaded") && !error.localizedDescription.contains("internal exception")) }
+        let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
+        precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
+        print("Hosting hub: pagination, stale context, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
+    }
+}
+SWIFT
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hub"
+"$TASK_TMP/test-hub"

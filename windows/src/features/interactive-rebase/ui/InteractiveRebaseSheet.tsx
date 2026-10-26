@@ -8,7 +8,7 @@ import { Button, IconButton, Modal } from "@/shared/ui";
 import "./interactive-rebase.css";
 
 /** 커밋 정리(인터랙티브 리베이스): 커밋마다 그대로·메시지 고치기·아래 커밋에 합치기·빼기를 고르고 순서를 바꾼다 (맥 버전 InteractiveRebaseSheet) */
-export function InteractiveRebaseSheet({ store, close }: { store: RepoStore; close: () => void }) {
+export function InteractiveRebaseSheet({ store, close, embedded = false }: { store: RepoStore; close: () => void; embedded?: boolean }) {
   useObserve(store);
   const [plan, setPlan] = useState<RebasePlan | null>(() => store.rebasePlan);
   if (!plan) return null;
@@ -22,12 +22,7 @@ export function InteractiveRebaseSheet({ store, close }: { store: RepoStore; clo
     setPlan({ ...plan, items });
   };
 
-  return (
-    <Modal
-      title={t("Clean up commits")}
-      width={720}
-      onClose={close}
-      footer={
+  const footer = (
         <>
           <span className="hint grow" style={problem ? { color: "var(--red)" } : undefined}>
             {problem ?? t("You can always return to the state before you started (Undo, Ctrl+Z).")}
@@ -43,8 +38,8 @@ export function InteractiveRebaseSheet({ store, close }: { store: RepoStore; clo
           >
             {t("Start cleanup")}</Button>
         </>
-      }
-    >
+  );
+  const content = <>
       <div className="col" style={{ gap: 4, marginBottom: 10 }}>
         <span className="muted">
           {t("{1} commits on '{0}' — newest at the top. Squash combines a commit into the one right below it (older).", store.headBranch, plan.items.length)}</span>
@@ -86,6 +81,6 @@ export function InteractiveRebaseSheet({ store, close }: { store: RepoStore; clo
           </div>
         ))}
       </div>
-    </Modal>
-  );
+  </>;
+  return embedded ? <div className="col" style={{ flex: 1, minHeight: 0 }}>{content}<div className="row" style={{ marginTop: 14 }}>{footer}</div></div> : <Modal title={t("Clean up commits")} width={720} onClose={close} footer={footer}>{content}</Modal>;
 }

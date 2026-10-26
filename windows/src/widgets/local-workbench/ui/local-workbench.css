@@ -1,0 +1,57 @@
+.local-workbench{display:flex;flex-direction:column;gap:14px;height:100%;min-height:0;padding:22px;overflow:auto;background:var(--bg)}.workbench-heading h2{margin:0 0 6px;font-size:20px}.workbench-heading{margin-bottom:4px}.workbench-tabs{gap:7px;flex-wrap:wrap}.workbench-scroll{overflow:auto;min-height:130px;flex:1}.workbench-ref{border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:9px}.workbench-ref.on{border-color:var(--accent)}.workbench-ref-main{display:flex;align-items:center;gap:12px;width:100%;color:inherit;background:none;border:0;text-align:left;padding:0;cursor:pointer}.workbench-ref-main .col{gap:4px}.workbench-ref-actions{margin-top:11px;flex-wrap:wrap;gap:7px}.workbench-rename,.workbench-operation,.workbench-card{padding:14px;border:1px solid var(--border);border-radius:9px}.workbench-card h3{font-size:14px;margin:0 0 12px}.workbench-plan{border-top:1px solid var(--border);padding-top:16px}.workbench-inline-compare{min-height:420px;max-height:70vh;overflow:auto;border-top:1px solid var(--border);padding-top:12px}.workbench-code-layout{display:grid;grid-template-columns:minmax(200px,28%) minmax(0,1fr);flex:1;min-height:250px;border:1px solid var(--border);border-radius:9px;overflow:hidden}.workbench-file-tree{overflow:auto;border-right:1px solid var(--border)}.workbench-file-tree button{display:flex;align-items:center;gap:7px;padding:9px 12px;width:100%;text-align:left;border:0;background:none;color:inherit;cursor:pointer}.workbench-file-tree button span:first-of-type{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.workbench-file-tree button:hover,.workbench-file-tree button.on{background:color-mix(in srgb,var(--accent) 13%,transparent)}.workbench-code-content{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.workbench-code-toolbar,.workbench-code-content>.workbench-tabs,.workbench-code-content>p{padding:12px;margin:0;border-bottom:1px solid var(--border)}.workbench-source{flex:1;min-height:0;overflow:auto;white-space:pre;margin:0;padding:16px;font:12px/1.65 var(--font-mono,monospace);tab-size:4}.workbench-image{overflow:auto;padding:24px;display:grid;place-items:start center;flex:1}.workbench-image img{max-width:100%;height:auto}.local-workbench>.history-tools{flex:1;min-height:0}.local-workbench .history-tools-split{flex:1;min-height:250px;height:auto}.workbench-operation{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+
+.workbench-breadcrumb{display:flex;gap:2px;flex-wrap:wrap;padding:5px;border-bottom:1px solid var(--border)}.workbench-file-tree .workbench-breadcrumb button{width:auto;padding:5px;font-size:11px;color:var(--text-3)}
+
+/* 패널 너비를 기준으로 작업 도구를 줄바꿈한다. 사이드바 너비와 무관하다. */
+.local-workbench { container: workbench / inline-size; min-width: 0; }
+.local-workbench > * { flex-shrink: 0; min-width: 0; }
+.local-workbench > .workbench-scroll,
+.local-workbench > .workbench-code-layout { flex-shrink: 1; }
+.local-workbench > .row,
+.workbench-card > .row,
+.workbench-operation > .row { flex-wrap: wrap; }
+.workbench-header > .grow { flex: 1 1 260px; }
+.workbench-heading .hint { line-height: 1.6; }
+.workbench-search { flex: 1 1 200px; width: 240px; min-width: 140px; max-width: 320px; }
+.workbench-revision { flex-basis: 170px; min-width: 100px; }
+.workbench-controls > button,
+.workbench-ref-actions > button { flex-shrink: 0; }
+.workbench-card .input,
+.workbench-rename .input { flex: 1 1 180px; min-width: 0; }
+.workbench-ref { background: var(--surface); border-radius: 12px; }
+.workbench-ref.row { flex-wrap: wrap; }
+.workbench-ref.row > .grow { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+.workbench-ref-main { min-width: 0; align-items: flex-start; }
+.workbench-ref-main > svg { flex-shrink: 0; margin-top: 3px; color: var(--accent); }
+.workbench-ref-main .col { min-width: 0; overflow-wrap: anywhere; }
+.workbench-ref-main strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workbench-current { color: var(--accent); font-weight: 600; }
+.workbench-ref-main > .hint { max-width: 140px; text-align: right; flex-shrink: 0; }
+.workbench-ref-main .hint { line-height: 1.5; }
+.workbench-code-toolbar { flex-wrap: wrap; }
+.workbench-code-toolbar > strong { min-width: 100px; }
+.workbench-file-tree { min-width: 0; }
+.workbench-file-tree button > svg { flex-shrink: 0; }
+.workbench-breadcrumb button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.workbench-code-content > .workbench-tabs { flex-shrink: 0; }
+.workbench-plan { min-width: 0; }
+@container workbench (max-width: 540px) {
+  .workbench-code-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(130px, 28%) minmax(200px, 1fr); min-height: 420px; }
+  .workbench-file-tree { border-right: 0; border-bottom: 1px solid var(--border); }
+  .workbench-ref-main > .hint { max-width: 90px; }
+  .workbench-tabs > .grow { display: none; }
+  .workbench-tabs > .workbench-search { max-width: none; }
+}
+
+.workbench-rebase-preview { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: color-mix(in srgb, var(--accent) 4%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border)); border-radius: 12px; }
+.workbench-rebase-preview > .row { flex-wrap: wrap; gap: 10px; }
+.workbench-rebase-preview p { margin: 0; line-height: 1.6; }
+.workbench-branch-chip { font: 11px var(--font-mono, monospace); padding: 5px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workbench-rebase-candidates { display: flex; flex-direction: column; gap: 3px; }
+.workbench-rebase-candidates > button { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 0; background: transparent; color: var(--text); text-align: left; border-radius: 8px; cursor: pointer; }
+.workbench-rebase-candidates > button.selected { background: var(--select); }
+.workbench-rebase-candidates > button:hover { background: var(--hover); }
+.workbench-candidate-mark { color: var(--accent); }
+.workbench-rebase-candidates code { font-size: 11px; color: var(--text-2); padding-top: 2px; }
+.workbench-rebase-candidates > button > span:last-child { min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
+.workbench-dirty-note { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 12px 14px; border-radius: 8px; background: color-mix(in srgb, var(--orange) 9%, transparent); font-size: 12px; }

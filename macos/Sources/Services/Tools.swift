@@ -4,7 +4,7 @@ import Observation
 /// 외부 프로그램(git·AI CLI·gh·셸) 위치.
 /// 사람마다 설치 위치가 달라 ① 설정에서 직접 고른 경로 → ② 흔한 설치 위치 → ③ 로그인 셸의 PATH 순서로 찾는다.
 enum ToolID: String, CaseIterable, Identifiable {
-    case git, claude, codex, gemini, gh, shell
+    case git, claude, codex, gemini, gh, node, shell
     var id: String { rawValue }
 
     var title: String {
@@ -14,6 +14,7 @@ enum ToolID: String, CaseIterable, Identifiable {
         case .codex: return "Codex CLI"
         case .gemini: return "Gemini CLI"
         case .gh: return "GitHub CLI (gh)"
+        case .node: return "Node.js"
         case .shell: return String(localized: "Terminal shell")
         }
     }
@@ -25,6 +26,7 @@ enum ToolID: String, CaseIterable, Identifiable {
         case .codex: return String(localized: "Writing and agent sessions with your ChatGPT login")
         case .gemini: return String(localized: "Writing and agent sessions with your Google login")
         case .gh: return String(localized: "When importing the gh login as a GitHub account")
+        case .node: return String(localized: "Read-only repository assistant and MCP connection (Node.js 22 or later)")
         case .shell: return String(localized: "Shell opened in the terminal panel below (zsh, bash, fish, etc.)")
         }
     }
@@ -36,6 +38,7 @@ enum ToolID: String, CaseIterable, Identifiable {
         case .codex: return "https://developers.openai.com/codex/cli"
         case .gemini: return "https://github.com/google-gemini/gemini-cli"
         case .gh: return "https://cli.github.com"
+        case .node: return "https://nodejs.org/"
         case .shell: return nil
         }
     }
@@ -52,6 +55,7 @@ enum ToolID: String, CaseIterable, Identifiable {
         case .codex: return brew.map { "\($0)/codex" } + ["\(home)/.local/bin/codex"]
         case .gemini: return brew.map { "\($0)/gemini" } + ["\(home)/.local/bin/gemini"]
         case .gh: return brew.map { "\($0)/gh" } + ["/usr/bin/gh"]
+        case .node: return brew.map { "\($0)/node" } + ["/usr/bin/node"]
         case .shell: return [TerminalSession.loginShell, "/bin/zsh", "/bin/bash"]
         }
     }

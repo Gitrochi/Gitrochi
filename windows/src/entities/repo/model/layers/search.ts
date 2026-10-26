@@ -1,4 +1,4 @@
-import { isPending, type SearchScope } from "@/entities/git";
+import { CommitSearchQuery, isPending, type SearchScope } from "@/entities/git";
 import { git } from "@/shared/platform";
 import { RepoSelection } from "./selection";
 
@@ -15,6 +15,9 @@ export abstract class RepoSearch extends RepoSelection {
   }
 
   requestSearchFocus() {
+    this.navigate("commits");
+    this.closeFileInspect();
+    this.closeDiff();
     this.searchFocusRequest++;
     this.emit();
   }
@@ -35,19 +38,19 @@ export abstract class RepoSearch extends RepoSelection {
       return;
     }
     const scope = this.searchScope;
+    const query = new CommitSearchQuery(q);
     if (scope === "commits") {
       // 1) 불러온 커밋에서 즉시: 제목·작성자·이메일·SHA·브랜치/태그 이름
-      const lower = q.toLowerCase();
       const found = new Set<string>();
       for (const e of this.entries) {
         const c = e.commit;
         if (isPending(c)) continue;
         if (
-          c.subject.toLowerCase().includes(lower) ||
-          c.author.toLowerCase().includes(lower) ||
-          c.email.toLowerCase().includes(lower) ||
-          c.id.startsWith(lower) ||
-          (this.refsByCommit.get(c.id) ?? []).some((r) => r.name.toLowerCase().includes(lower))
+          query.matches(c.subject) ||
+          query.matches(c.author) ||
+          query.matches(c.email) ||
+          c.id.startsWith(query.key) ||
+          (this.refsByCommit.get(c.id) ?? []).some((r) => query.matches(r.name))
         )
           found.add(c.id);
       }
@@ -61,7 +64,7 @@ export abstract class RepoSearch extends RepoSelection {
     this.emit();
     this.searchTimer = setTimeout(async () => {
       const args = ["log", "--exclude=refs/stash", "--all", "--format=%H"];
-      if (scope === "commits") args.push("-n", "20000", "-i", "-F", "--grep=" + q);
+      if (scope === "commits") args.push("-n", "20000", "-i", "-E", "--grep=" + query.gitPattern);
       else if (scope === "files") args.push("-n", "20000", "--", `:(glob,icase)**/*${q}*`);
       else args.push("-n", "1000", "-G", q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
       let out = "";
@@ -87,7 +90,7 @@ export abstract class RepoSearch extends RepoSelection {
     for (const id of found) if (!this.searchMatchSet.has(id)) unloaded++;
     this.searchUnloaded = unloaded;
     // 지금 고른 커밋이 결과가 아니면 첫 결과로 이동
-    if (jump && ordered.length && !this.searchMatchSet.has(this.selectedID ?? "")) {
+    if (jump && this.destination === "repository" && this.repositorySection === "commits" && ordered.length && !this.searchMatchSet.has(this.selectedID ?? "")) {
       this.select({ kind: "commit", sha: ordered[0] });
       this.scrollTarget = ordered[0];
     }

@@ -18,6 +18,15 @@ extension RepoStore {
         conflictPath = c.path
         conflictDoc = ConflictDocument.parse(text)
         conflictChoices = [:]
+        let loadID = conflictDoc?.loadID
+        Task { [weak self] in
+            async let base = Git.raw(["show", ":1:" + c.path], in: url)
+            async let signature = Git.raw(["ls-files", "--unmerged", "--stage", "-z", "--", c.path], in: url)
+            let values = try? await (base, signature)
+            guard let self, self.url == url, self.conflictPath == c.path, self.conflictDoc?.loadID == loadID, let values else { return }
+            if values.0.status == 0 { self.conflictDoc?.baseText = values.0.output }
+            self.conflictDoc?.indexSignature = values.1.output
+        }
     }
 
     func chooseConflict(_ block: Int, _ choice: ConflictDocument.Choice?) {
@@ -25,10 +34,17 @@ extension RepoStore {
     }
 
     /// 고른 대로 파일을 쓰고 해결됨으로 표시(스테이지)
-    func saveConflictResolution(_ c: FileChange) async {
+    func saveConflictResolution(_ c: FileChange, editedText: String? = nil) async {
         guard let url, busy == nil, conflictPath == c.path, let doc = conflictDoc,
-              !doc.isEmpty, let text = doc.resolved(conflictChoices) else { return }
+              !doc.isEmpty, let text = editedText ?? doc.resolved(conflictChoices) else { return }
+        guard ConflictDocument.parse(text).isEmpty, text.range(of: "(?m)^<{7,}([ \\t]|$)", options: .regularExpression) == nil else { errorMessage = String(localized: "Resolve every conflict marker before saving."); return }
         do {
+            let original = try String(contentsOf: url.appendingPathComponent(c.path), encoding: .utf8)
+            guard original == doc.sourceText else { errorMessage = String(localized: "The conflict file changed outside this editor. Reload before saving."); return }
+            if let signature = doc.indexSignature {
+                let now = try await Git.run(["ls-files", "--unmerged", "--stage", "-z", "--", c.path], in: url).output
+                guard self.url == url, conflictDoc?.loadID == doc.loadID, now == signature else { errorMessage = String(localized: "The conflict file changed outside this editor. Reload before saving."); return }
+            }
             try Data(text.utf8).write(to: url.appendingPathComponent(c.path), options: .atomic)
         } catch {
             errorMessage = String(localized: "Couldn't save the file.\n\n") + describe(error)

@@ -3,49 +3,84 @@ import SwiftUI
 /// 탐색은 사이드바에, 현재 작업의 목적과 원격 상태는 작업 영역 머리에 둔다.
 struct RepoView: View {
     @Environment(RepoStore.self) private var store
-    @ViewState private var columns: NavigationSplitViewVisibility = .all
+    @ViewState private var sidebarPresentation = SidebarPresentationState()
+    @ViewState private var sidebarCollapsed = false
+    @ViewState private var sidebarExpandRequest = 0
+    @ViewState private var pendingCommand: WorkspaceCommand?
+
+    private var showsNavigationRail: Bool { sidebarPresentation.visibility == .detailOnly || sidebarCollapsed }
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 360)
-        } content: {
+        NavigationSplitView(columnVisibility: Binding(get: { sidebarPresentation.visibility }, set: { sidebarPresentation.setVisibility($0) })) {
+            NavigationSidebar()
+                .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
+                .background(SidebarVisibilityObserver(expandRequest: sidebarExpandRequest) { sidebarCollapsed = $0 })
+                .disabled(showsNavigationRail)
+                .accessibilityHidden(showsNavigationRail)
+        } detail: {
             HStack(spacing: 0) {
-                // the sidebar folded away: a rail of its sections, each opening as a flyout
-                if columns != .all {
-                    SidebarRail(show: { columns = .all })
+                if showsNavigationRail {
+                    NavigationSidebarRail {
+                        sidebarPresentation.expand()
+                        sidebarExpandRequest += 1
+                    }
                     Divider()
                 }
-                ContentColumn()
-            }
-            .navigationSplitViewColumnWidth(min: 520, ideal: 780)
-        } detail: {
-            VStack(spacing: 0) {
-                workspaceHeader
-                Divider()
-                ContentColumn()
-                feedback
+                VStack(spacing: 0) {
+                    workspaceHeader
+                    Divider()
+                    if ToolStore.shared.path(.git) == nil {
+                        HStack {
+                            Text("Install Git or locate the existing executable to work with local repositories.").font(.caption).foregroundStyle(.secondary)
+                            Spacer()
+                            SettingsLink { Text("Locate Git…") }
+                        }.padding(12)
+                        Divider()
+                    }
+                    WorkspaceDestinationContent()
+                    if store.showTerminal, !(store.destination == .repository && [.changes, .commits].contains(store.repositorySection)) {
+                        Divider(); TerminalPanel().frame(height: 240)
+                    }
+                    feedback
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationTitle(store.name)
+        .tint(Color(red: 0.43, green: 0.33, blue: 0.89))
+        .accentColor(Color(red: 0.43, green: 0.33, blue: 0.89))
         .toolbar { toolbar }
-        .onChange(of: AccountStore.shared.revision) { _, _ in
-            Task { await store.loadPullRequests() }
+        .sheet(isPresented: Binding(get: { store.showCommandPalette }, set: { store.showCommandPalette = $0 }), onDismiss: {
+            let command = pendingCommand
+            pendingCommand = nil
+            command?.action()
+        }) {
+            WorkspaceCommandPalette { command in
+                pendingCommand = command
+                store.showCommandPalette = false
+            }
         }
+        .onGeometryChange(for: Bool.self) { $0.size.width < 1180 } action: { sidebarPresentation.setNarrow($0) }
+        .onChange(of: store.sidebarToggleRequest) { _, _ in
+            if showsNavigationRail { sidebarPresentation.expand(); sidebarExpandRequest += 1 }
+            else { sidebarPresentation.setVisibility(.detailOnly) }
+        }
+        .onChange(of: AccountStore.shared.revision) { _, _ in
+            Task { await store.refreshHostingAccount() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in store.navigationPreferencesVersion += 1 }
     }
 
     private var workspaceHeader: some View {
-        HStack(spacing: 20) {
-            Picker("Workspace", selection: Binding(get: { store.area }, set: { store.showArea($0) })) {
-                Text("Changes \(store.status.count)").tag(RepoStore.Area.changes)
-                Text("History").tag(RepoStore.Area.history)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 250)
-            .accessibilityLabel("Workspace")
+        HStack(spacing: 16) {
+            HStack(spacing: 5) {
+                Button { store.moveWorkspaceHistory(-1) } label: { Image(systemName: "chevron.left") }.disabled(store.navigationPosition == 0).help("Previous page")
+                Button { store.moveWorkspaceHistory(1) } label: { Image(systemName: "chevron.right") }.disabled(store.navigationPosition + 1 >= store.navigationTrail.count).help("Next page")
+            }.buttonStyle(.borderless)
+            Label(store.destination.title(gitlab: store.target?.provider == .gitlab), systemImage: store.destination.symbol)
+                .font(.callout.weight(.semibold)).lineLimit(1).fixedSize(horizontal: true, vertical: false)
             VStack(alignment: .leading, spacing: 3) {
-                Label(store.headBranch ?? String(localized: "Detached HEAD"), systemImage: "arrow.triangle.branch")
+                Label(store.url == nil ? "Gitrochi" : (store.headBranch ?? String(localized: "Detached HEAD")), systemImage: "arrow.triangle.branch")
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1).truncationMode(.middle)
                     .help(store.headBranch ?? store.headHash ?? "")
@@ -53,8 +88,16 @@ struct RepoView: View {
                     .font(.caption).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.middle)
                     .help(remoteStatus)
-            }
+            }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
+            if store.destination == .repository && store.repositorySection == .commits {
+                Button { store.showHistoryInspector.toggle() } label: {
+                    Image(systemName: "sidebar.right").foregroundStyle(store.showHistoryInspector ? Color.accentColor : .secondary)
+                }
+                .buttonStyle(.borderless).help("Show or hide commit details (⌥⌘I)")
+                .accessibilityLabel("Toggle commit details")
+                .accessibilityValue(store.showHistoryInspector ? String(localized: "Shown") : String(localized: "Hidden"))
+            }
         }
         .padding(.horizontal, 16)
         .frame(height: 62)
@@ -101,6 +144,10 @@ struct RepoView: View {
                 Button("Clone repository…") { store.sheet = .clone }
                 Divider()
                 StructureGraphMenu(store: store)
+                Button("Workspace overview…") { store.navigate(.home) }
+                Button("Issues and mentions…") { store.navigate(.inbox) }.disabled(store.target == nil)
+                Button("Repository tools…") { store.navigate(.operations) }
+                Button("Connect external AI with MCP…") { store.sheet = .mcpConnection }
                 Divider()
                 Button("Close tab") { NSApp.keyWindow?.performClose(nil) }
             } label: { ToolLabel(title: String(localized: "Repository"), icon: "folder") }
@@ -125,9 +172,7 @@ struct RepoView: View {
             Menu {
                 Button("Push") { Task { await store.push() } }
                 Button("Force push (with lease)…") {
-                    store.confirm = ConfirmRequest(title: String(localized: "Force push?"),
-                        message: String(localized: "Overwrites the remote branch only if it's still as you last saw it (--force-with-lease)."),
-                        actionTitle: "Force push") { await store.push(force: true) }
+                    Task { await store.push(force: true) }
                 }
             } label: {
                 ToolLabel(title: store.status.ahead > 0 ? "Push ↑\(store.status.ahead)" : "Push", icon: "arrow.up")
@@ -140,6 +185,9 @@ struct RepoView: View {
                 Button(store.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store.confirmUndo() }
                     .disabled(store.undoStack.isEmpty)
                 Button("Refresh") { Task { await store.reload() } }
+                Button("Ask AI about changes…") { Task { await store.openChangeQuestion() } }
+                Button("Repository assistant…") { store.navigate(.assistant) }
+                Button("Compare revisions…") { store.navigate(.compare) }
                 Divider()
                 Button("New branch…") { store.requestNewBranch() }
                 Button("New worktree…") { store.sheet = .addWorktree(branch: nil, start: nil) }
@@ -156,7 +204,7 @@ struct RepoView: View {
                     Button("Run \(AgentCenter.shared.defaultKind.title) here") { store.startAgent(in: url.path) }
                 }
             } label: { ToolLabel(title: String(localized: "Actions"), icon: "ellipsis.circle") }
-            .disabled(store.busy != nil)
+            .disabled(store.busy != nil || store.url == nil)
             .help("Branches, worktrees, pull requests, stash and undo")
         }
         ToolbarItem(placement: .primaryAction) {
@@ -164,6 +212,10 @@ struct RepoView: View {
                 ToolLabel(title: String(localized: "Terminal"), icon: store.showTerminal ? "apple.terminal.fill" : "apple.terminal")
             }
             .help("Show or hide the terminal. Shells keep running when hidden. (⌃`)")
+            .disabled(store.url == nil)
+        }
+        ToolbarItem(placement: .primaryAction) {
+            AccountQuickControls()
         }
     }
 }
@@ -172,14 +224,10 @@ struct InspectorView: View {
     @Environment(RepoStore.self) private var store
     var body: some View {
         switch store.selection {
-        case .wip?:
-            WorkingChangesView()
-        case .commit(let sha)?:
-            CommitDetailView(sha: sha)
-        case .worktree(let path)?:
-            WorktreeChangesView(path: path)
-        case .pullRequest(let n)?:
-            PullRequestDetailView(number: n)
+        case .wip?: WorkingChangesView()
+        case .commit(let sha)?: CommitDetailView(sha: sha)
+        case .worktree(let path)?: WorktreeChangesView(path: path)
+        case .pullRequest(let n)?: PullRequestDetailView(number: n)
         case nil:
             ContentUnavailableView("No commit selected", systemImage: "point.3.connected.trianglepath.dotted",
                                    description: Text("Select a commit in the graph."))

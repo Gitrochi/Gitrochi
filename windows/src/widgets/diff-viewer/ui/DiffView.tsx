@@ -1,4 +1,4 @@
-import { ChevronLeft, Columns2, CornerDownLeft, Equal, FileArchive, FileText, FolderOpen, History, ImageOff, LockOpen, Pencil, Rows3, ScanText, Space, Trash2, TriangleAlert } from "lucide-react";
+import { ChevronLeft, Columns2, CornerDownLeft, Equal, FileArchive, FileText, FolderOpen, History, ImageOff, LockOpen, Pencil, Rows3, ScanText, Space, Sparkles, Trash2, TriangleAlert } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";
 import { type DiffDocument, type DiffLine, diffSides, modeSummary, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
@@ -38,12 +38,13 @@ export function DiffView({ store }: { store: RepoStore }) {
           ? `${c.path} · ${t("Worktree: {0}", store.worktrees.find((w) => samePath(w.path, source.path))?.branch ?? basename(source.path))}`
           : `${c.oldPath ? c.oldPath + " → " : ""}${c.path} · ${store.target?.provider === "gitlab" ? "MR" : "PR"} #${source.number}`;
   const doc = store.diff;
+  const backLabel = source.kind === "working" ? t("Changes") : source.kind === "review" ? t("Back to conversation") : t("Graph");
 
   return (
     <div className="col grow">
       <div className="diff-head">
-        <Button size="small" onClick={() => store.closeDiff()} tip={t("Back to graph (Esc)")}>
-          <ChevronLeft size={14} /> {" "}{t("Graph")}</Button>
+        <Button size="small" onClick={() => store.closeDiff()} tip={`${backLabel} (Esc)`}>
+          <ChevronLeft size={14} /> {" "}{backLabel}</Button>
         <StatusBadge kind={c.kind} />
         <div className="col grow">
           <span className="ellipsis" style={{ fontWeight: 600 }}>
@@ -67,6 +68,10 @@ export function DiffView({ store }: { store: RepoStore }) {
           </>
         )}
         <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => (source.kind === "worktree" ? void ipc.reveal(joinPath(source.path, c.path)) : store.revealFile(c))} />
+        {source.kind !== "review" && source.kind !== "worktree" && c.kind !== "untracked" && <Button size="small" disabled={store.diffLoading || doc?.isBinary} onClick={() => store.openSelectedLineHistory()}>{t("Trace lines…")}</Button>}
+        <Button size="small" disabled={store.diffLoading || doc?.isBinary} onClick={() => void store.openChangeQuestion()} tip={t("Ask questions about the selected changes")}>
+          <Sparkles size={13} /> {t("Ask AI…")}
+        </Button>
         <div className="segmented" style={{ flex: "none" }}>
           <button type="button" className={!store.diffSplit ? "on" : ""} data-tip={t("Unified view")} aria-label={t("Unified view")} onClick={() => store.setDiffSplit(false)}>
             <Rows3 size={14} />
@@ -270,12 +275,20 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
     if (i === undefined) return <div className="diff-line empty-cell" />;
     const l = doc.lines[i];
     const selectable = editable && (l.kind === "added" || l.kind === "removed");
+    const source = store.diffSource;
+    const reviewSide = side === "left" && halves ? "LEFT" : l.newNo != null ? "RIGHT" : "LEFT";
+    const reviewLine = reviewSide === "LEFT" ? l.oldNo : l.newNo;
+    const commentable = source?.kind === "review" && store.diff === doc && !store.fileInspect && !doc.combined && !doc.multipleFiles
+      && reviewLine != null && l.kind !== "hunk" && l.kind !== "meta";
     return (
       <div
         className={`diff-line ${l.kind} ${store.diffSelection.has(i) ? "selected" : ""} ${selectable ? "selectable" : ""}`}
         data-tip={selectable ? t("Click to select this line (Shift: range) — you can stage only the selected lines") : undefined}
         onClick={selectable ? (e) => store.toggleDiffLine(i, e.shiftKey) : undefined}
       >
+        {commentable && <button type="button" className="review-line-add" aria-label={t("Add review comment on line {0}", reviewLine!)} title={t("Add review comment")}
+          disabled={store.reviewBusy || store.reviewLoading}
+          onClick={(e) => { e.stopPropagation(); store.addReviewDraft(source.number, source.change.path, reviewLine!, reviewSide, l.oldNo ?? undefined); }}>+</button>}
         {(side === "left" || (side === "both" && sides.old)) && <span className="no">{l.oldNo ?? ""}</span>}
         {(side === "right" || (side === "both" && sides.new)) && <span className="no">{l.newNo ?? ""}</span>}
         <span className="mk">{l.kind === "added" ? "+" : l.kind === "removed" ? "−" : ""}</span>

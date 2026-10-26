@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, RefreshCcw, Sparkles, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
 import { structureGraphMenus } from "@/features/git-menus";
 import { agentKind, agents } from "@/entities/agent";
 import { providerInfo, statusIsEmpty } from "@/entities/git";
@@ -8,6 +8,7 @@ import { basename, displayPath, recents, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { type MenuItem, showMenuBelow, Spinner, tip } from "@/shared/ui";
+import { AccountQuickControls } from "./AccountQuickControls";
 import "./toolbar.css";
 
 /** 툴바 버튼은 아이콘만. 무슨 버튼인지는 마우스를 올리면 설명 풍선으로 보여 준다. */
@@ -46,6 +47,13 @@ export function Toolbar({ store }: { store: RepoStore }) {
               { label: t("Clone repository…"), shortcut: "Ctrl+Shift+O", onClick: () => sheet({ kind: "clone" }) },
               "divider",
               ...structureGraphMenus(store),
+              "divider",
+              { label: t("Compare revisions…"), onClick: () => store.navigate("compare") },
+              { label: t("Workspace overview…"), onClick: () => store.navigate("home") },
+              { label: t("Issues and mentions…"), disabled: !store.target, onClick: () => store.navigate("inbox") },
+              { label: t("Repository tools…"), onClick: () => store.navigate("operations") },
+              { label: t("Repository assistant…"), onClick: () => store.navigate("assistant") },
+              { label: t("Connect external AI with MCP…"), onClick: () => sheet({ kind: "mcpConnection" }) },
               "divider",
               { label: t("Close tab"), shortcut: "Ctrl+W", onClick: () => workspace.closeTab(store.id) },
             ])
@@ -88,7 +96,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
         </button>
         <button
           className="tool"
-          onClick={() => store.select({ kind: "wip" })}
+          onClick={() => store.navigate("changes")}
           data-tip={tip(
             t("Uncommitted changes"),
             statusIsEmpty(st) ? t("No modified files. When you edit files, you can stage and commit them here.") : t("{0} modified files — stage and commit them.", store.wipCount),
@@ -146,13 +154,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
           { label: t("Push"), onClick: () => void store.push() },
           {
             label: t("Force push (with lease)…"),
-            onClick: () =>
-              store.ask({
-                title: t("Force push?"),
-                message: t("Overwrites the remote branch only if it's still as you last saw it (--force-with-lease)."),
-                actionTitle: t("Force push"),
-                action: () => store.push(true),
-              }),
+            onClick: () => void store.push(true),
           },
         ],
       )}
@@ -169,6 +171,12 @@ export function Toolbar({ store }: { store: RepoStore }) {
           { label: t("Start agent session…"), shortcut: "Ctrl+Alt+K", onClick: () => sheet({ kind: "startAgent", path: store.path }) },
         ],
       )}
+
+      <div className="tool-group">
+        <button className="tool" disabled={!!store.busy} onClick={() => void store.openChangeQuestion()} aria-label={t("Ask AI about changes…")} data-tip={t("Ask questions about the selected changes")}>
+          <Sparkles size={16} />
+        </button>
+      </div>
 
       {store.target && (
         <div className="tool-group">
@@ -219,6 +227,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
           <SquareTerminal size={16} />
         </button>
       </div>
+      <AccountQuickControls store={store} />
     </div>
   );
 }

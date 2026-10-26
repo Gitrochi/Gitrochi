@@ -8,7 +8,7 @@ import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
-import { AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
+import { AVATAR, type GraphColumns, GRAPH_INK, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
 
 export const CommitRow = memo(function CommitRow({
   store,
@@ -50,7 +50,7 @@ export const CommitRow = memo(function CommitRow({
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
       style={{ top, gap: 0 }}
-      onMouseDown={() => store.select(rowSelection(c))}
+      onMouseDown={(event) => { if (event.button === 2 && store.historyTools.selected.includes(c.id)) return; if (wip) store.select(rowSelection(c)); else store.selectGraphCommit(c.id, event.shiftKey, event.ctrlKey || event.metaKey); }}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
       draggable={!wip}
@@ -96,7 +96,7 @@ export const CommitRow = memo(function CommitRow({
                   +{groups.length - 1}
                 </span>
               )}
-              <span className="ref-line" style={{ background: tint }} />
+              <span className="ref-line" style={{ background: tint, height: GRAPH_INK.refStroke, opacity: GRAPH_INK.refOpacity }} />
             </>
           )}
         </div>
@@ -286,7 +286,7 @@ const GraphCell = memo(function GraphCell({
   return (
     <span style={{ position: "relative", width, height: h, flex: "none", display: "block" }}>
       <svg width={width} height={h} style={{ display: "block", overflow: "hidden" }}>
-        {hasRefs && <line x1={0} y1={cy} x2={cx} y2={cy} stroke={color} strokeWidth={1.5} />}
+        {hasRefs && <line x1={0} y1={cy} x2={cx} y2={cy} stroke={color} strokeWidth={GRAPH_INK.refStroke} strokeOpacity={GRAPH_INK.refOpacity} />}
         {row.segments.map((s, i) => {
           const ax = x(s.x1),
             ay = h * s.y1,
@@ -294,10 +294,10 @@ const GraphCell = memo(function GraphCell({
             by = h * s.y2;
           const mid = (ay + by) / 2;
           const d = s.x1 === s.x2 ? `M${ax},${ay}L${bx},${by}` : `M${ax},${ay}C${ax},${mid} ${bx},${mid} ${bx},${by}`;
-          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
+          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={GRAPH_INK.laneStroke} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
         })}
         {isWIP ? (
-          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={2} strokeDasharray="2.5 2" />
+          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={GRAPH_INK.nodeStroke} strokeDasharray="2.5 2" />
         ) : isMerge ? (
           <>
             <circle cx={cx} cy={cy} r={5.5} fill="var(--surface)" />
@@ -306,7 +306,7 @@ const GraphCell = memo(function GraphCell({
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={1.5} />}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={GRAPH_INK.nodeStroke} />}
       </svg>
       {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
     </span>

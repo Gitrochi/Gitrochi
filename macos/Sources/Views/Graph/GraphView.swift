@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum GraphMetrics {
     static let laneWidth: CGFloat = 22
@@ -11,6 +12,10 @@ enum GraphMetrics {
     static let refWidth: CGFloat = 190
     /// 커밋 동그라미(프로필) 지름
     static let avatar: CGFloat = 20
+    static let laneStroke: CGFloat = 2.4
+    static let refStroke: CGFloat = 1.5
+    static let refOpacity: Double = 0.7
+    static let nodeStroke: CGFloat = 2.2
 
     static func width(lanes: Int, expanded: Bool = false) -> CGFloat {
         max(44, CGFloat(expanded ? lanes : min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
@@ -57,6 +62,19 @@ struct GraphView: View {
         let columns = GraphMetrics.columns(width: canvasWidth, graph: graphWidth, hidden: hidden)
         VStack(spacing: 0) {
             SearchBar()
+            HStack(spacing: 10) {
+                Button { store.openRevisionComparison() } label: { Label("Compare revisions…", systemImage: "arrow.left.arrow.right") }
+                if !store.historyTools.selected.isEmpty {
+                    Text("\(store.historyTools.selected.count) selected").font(.caption).foregroundStyle(.secondary)
+                    Menu("Selected commits…") {
+                        ForEach(BatchCommitAction.allCases) { action in
+                            Button(action.title) { Task { await store.openBatchCommits(action) } }
+                        }
+                    }.disabled(store.busy != nil)
+                    Button("Clear selection") { store.historyTools.selected = []; store.historyTools.anchor = nil }
+                }
+                Spacer()
+            }.buttonStyle(.borderless).font(.caption).padding(.horizontal, 12).padding(.vertical, 6)
             Divider()
             ScrollView(.horizontal) {
                 VStack(spacing: 0) {
@@ -80,14 +98,18 @@ struct GraphView: View {
                                         .id(entry.id)
                                         .onTapGesture {
                                             focused = true
-                                            store.select(entry.commit.rowSelection)
+                                            if entry.commit.isWIP || entry.commit.wipWorktree != nil {
+                                                store.select(entry.commit.rowSelection)
+                                            } else {
+                                                store.selectGraphCommit(entry.id, extend: NSEvent.modifierFlags.contains(.shift), toggle: NSEvent.modifierFlags.contains(.command))
+                                            }
                                         }
                                         .simultaneousGesture(TapGesture(count: 2).onEnded {
                                             if let path = entry.commit.wipWorktree { Task { await store.switchWorktree(to: path) } }
                                         })
                                         // VoiceOver 등 접근성: 행 하나를 버튼처럼 읽고 눌러서 선택한다.
                                         .accessibilityElement(children: .combine)
-                                        .accessibilityAddTraits(.isButton)
+                                        .accessibilityAddTraits(isSelected(entry) ? [.isButton, .isSelected] : .isButton)
                                         .accessibilityAction { store.select(entry.commit.rowSelection) }
                                         .contextMenu { CommitMenu(commit: entry.commit) }
                                 }
@@ -143,6 +165,7 @@ struct GraphView: View {
     }
 
     private func isSelected(_ e: GraphEntry) -> Bool {
+        if store.historyTools.selected.contains(e.id) { return true }
         switch store.selection {
         case .wip?: return e.commit.isWIP
         case .worktree(let p)?: return e.commit.wipWorktree == p
@@ -228,7 +251,7 @@ private struct SearchBar: View {
         .padding(.vertical, 6)
         .onChange(of: store.searchText) { store.updateSearch() }
         .onChange(of: store.searchScope) { store.updateSearch() }
-        .onChange(of: store.searchFocusRequest) { focused = true }
+        .onChange(of: store.searchFocusRequest, initial: true) { if store.searchFocusRequest > 0 { focused = true } }
     }
 
     private var resultText: String {

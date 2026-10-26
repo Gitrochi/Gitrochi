@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { accountAddArguments, gitch, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "@/entities/gitch";
+import { accountAddArguments, browserLoginArguments, browserLoginTimeout, gitch, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "@/entities/gitch";
 import { AccountStore } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
 
@@ -8,6 +8,14 @@ const result = (overrides = {}) => JSON.stringify({ schemaVersion: 1, created: t
   ssh: { alias: "github-alice", keyExists: false, publicKey: "", registrationURL: "https://github.com/settings/ssh/new", authenticated: null, keyProtection: "missing", message: "Register a public key" }, ...overrides });
 
 describe("앱의 Git 계정 설정", () => {
+  it("프로젝트 권한은 선택한 계정의 추가 승인에만 요청한다", () => {
+    expect(browserLoginArguments()).toEqual(["--start", "--yes"]);
+    expect(browserLoginArguments("standard", "alice")).toEqual(["--start", "--yes", "--expected-login", "alice"]);
+    expect(browserLoginArguments("projects", "Alice")).toEqual(["--start", "--yes", "--capability", "projects", "--expected-login", "Alice"]);
+    expect(() => browserLoginArguments("projects")).toThrow("Select the GitHub account");
+    expect(() => browserLoginArguments("projects", "$(touch PWNED)")).toThrow("valid GitHub account");
+    expect(() => browserLoginArguments("projects", "")).toThrow("valid GitHub account");
+  });
   it("계정 추가 인자를 셸 코드로 합치지 않고 별도 인자로 전달한다", () => {
     const folder = "C:/Work/한글 $literal/it's a folder";
     expect(accountAddArguments({ id: " alice ", email: "alice@example.com", host: "github.com", port: 2222, folder, via: null })).toEqual(["add", "--id", "alice", "--email", "alice@example.com", "--host", "github.com", "--port", "2222", "--folder", folder, "--no-setup", "--json", "--yes"]);
@@ -36,7 +44,19 @@ describe("앱의 Git 계정 설정", () => {
   it("로그인 코드는 GitHub의 고정 장치 인증 페이지로만 전달한다", () => {
     const flow = { schemaVersion: 1, session: "session-123", state: "pending", deviceCode: "ABCD-1234", verificationURL: "https://github.com/login/device", login: null, email: null, message: "Waiting" };
     expect(parseBrowserLogin(JSON.stringify(flow))?.deviceCode).toBe("ABCD-1234");
-    for (const patch of [{ session: "../other" }, { verificationURL: "https://evil.example" }, { deviceCode: "<script>" }, { state: "complete" }]) expect(parseBrowserLogin(JSON.stringify({ ...flow, ...patch }))).toBeNull();
+    expect(parseBrowserLogin(JSON.stringify({ ...flow, phase: "approval" }))?.phase).toBe("approval");
+    for (const patch of [{ session: "../other" }, { verificationURL: "https://evil.example" }, { deviceCode: "<script>" }, { state: "complete" }, { phase: "unexpected" }]) expect(parseBrowserLogin(JSON.stringify({ ...flow, ...patch }))).toBeNull();
+  });
+  it("코드 준비와 승인 만료를 구분하고 다른 로그인 대기를 코드 실패로 처리하지 않는다", () => {
+    const flow = parseBrowserLogin(JSON.stringify({ schemaVersion: 1, session: "session-123", state: "pending", deviceCode: null, verificationURL: "https://github.com/login/device", login: null, email: null, message: "Waiting" }))!;
+    expect(browserLoginTimeout(flow, 59_999)).toBeNull();
+    expect(browserLoginTimeout(flow, 60_000)).toBe("code");
+    expect(browserLoginTimeout({ ...flow, phase: "queued" }, 899_999)).toBeNull();
+    expect(browserLoginTimeout({ ...flow, phase: "preparing" }, 150_000, 59_000)).toBeNull();
+    expect(browserLoginTimeout({ ...flow, phase: "preparing" }, 150_000, 60_000)).toBe("code");
+    expect(browserLoginTimeout({ ...flow, deviceCode: "ABCD-1234" }, 899_999)).toBeNull();
+    expect(browserLoginTimeout({ ...flow, deviceCode: "ABCD-1234" }, 900_000)).toBe("approval");
+    expect(browserLoginTimeout({ ...flow, state: "cancelled" }, 900_000)).toBeNull();
   });
   it("계정이 없는 첫 실행도 내장 CLI를 사용하며 SSH 인증 실패 결과를 유지한다", async () => {
     const o = JSON.parse(result()); o.ssh.authenticated = false;

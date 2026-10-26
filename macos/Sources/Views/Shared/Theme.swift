@@ -78,11 +78,13 @@ struct StatusBadge: View {
 
     var body: some View {
         Text(letter)
-            .font(.system(size: 10, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
-            .frame(width: 16, height: 16)
-            .background(RoundedRectangle(cornerRadius: 4).fill(color))
+            .font(.system(size: 10, weight: .semibold, design: .rounded))
+            .foregroundStyle(.primary)
+            .frame(width: 18, height: 18)
+            .background(RoundedRectangle(cornerRadius: 5).fill(color.opacity(0.14)))
+            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(color.opacity(0.25)))
             .help(help)
+            .accessibilityLabel(help)
     }
 
     private var letter: String {
@@ -100,11 +102,10 @@ struct StatusBadge: View {
 
     private var color: Color {
         switch kind {
-        case .added, .untracked: return Color(red: 0.18, green: 0.62, blue: 0.36)
-        case .modified, .typeChanged: return Color(red: 0.86, green: 0.55, blue: 0.10)
-        case .deleted: return Color(red: 0.86, green: 0.26, blue: 0.30)
-        case .renamed, .copied: return Color(red: 0.16, green: 0.52, blue: 0.96)
-        case .conflicted: return Color(red: 0.75, green: 0.10, blue: 0.20)
+        case .added, .untracked: return StudioStyle.added
+        case .modified, .typeChanged: return Color(nsColor: .systemOrange)
+        case .deleted, .conflicted: return StudioStyle.deleted
+        case .renamed, .copied: return Color(nsColor: .systemBlue)
         }
     }
 
@@ -125,6 +126,7 @@ struct StatusBadge: View {
 struct RefBadge: View {
     let label: RefLabel
     let color: Color
+    var constrained = false
 
     var body: some View {
         HStack(spacing: 3) {
@@ -132,6 +134,8 @@ struct RefBadge: View {
             Text(label.name)
                 .font(.system(size: 11, weight: label.isCurrent ? .bold : .medium))
                 .lineLimit(1)
+                .truncationMode(.middle)
+                .layoutPriority(-1)
             if label.isCurrent && label.kind == .local {
                 Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy))
             }
@@ -141,7 +145,8 @@ struct RefBadge: View {
         .foregroundStyle(outlined ? tint : .white)
         .background(RoundedRectangle(cornerRadius: 4).fill(outlined ? tint.opacity(0.12) : tint))
         .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(tint, lineWidth: outlined ? 1 : 0))
-        .fixedSize()
+        .fixedSize(horizontal: !constrained, vertical: true)
+        .help(label.name)
     }
 
     private var outlined: Bool { label.kind == .remote }
@@ -172,9 +177,25 @@ struct Card<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: spacing) { content }
             .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(nsColor: .controlBackgroundColor)))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.primary.opacity(0.07)))
+    }
+}
+
+/// 세로 스크롤의 내용 폭을 패널에 고정해 긴 배지나 문장이 전체 카드를 밀어내지 않게 한다.
+struct InspectorScrollView<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollView {
+                content
+                    .frame(width: max(0, geometry.size.width - 24), alignment: .topLeading)
+                    .padding(12)
+            }
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
     }
 }
 
@@ -223,18 +244,35 @@ struct FileRow: View {
     @ViewState private var hover = false
 
     var body: some View {
-        HStack(spacing: 6) {
+        ViewThatFits(in: .horizontal) {
+            row(showMetadata: true)
+            row(showMetadata: false)
+        }
+        .frame(minHeight: StudioStyle.rowHeight)
+        .padding(.horizontal, 8)
+        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.selection : hover ? StudioStyle.hover : Color.clear))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .help(change.path)
+    }
+
+    // Keep the filename readable before allocating space to secondary metadata.
+    private func row(showMetadata: Bool) -> some View {
+        HStack(spacing: 8) {
             StatusBadge(kind: change.kind)
             Text(change.fileName)
+                .font(.system(size: 13, weight: selected ? .medium : .regular))
                 .lineLimit(1)
+                .truncationMode(.middle)
+                .fixedSize(horizontal: showMetadata, vertical: false)
                 .layoutPriority(1)
-            if let old = change.oldPath {
+            if showMetadata, let old = change.oldPath {
                 Text("← \(showDirectory ? old : (old as NSString).lastPathComponent)")
                     .foregroundStyle(.secondary)
                     .font(.caption)
                     .lineLimit(1)
                     .truncationMode(.head)
-            } else if showDirectory {
+            } else if showMetadata && showDirectory {
                 Text(change.directory)
                     .foregroundStyle(.secondary)
                     .font(.caption)
@@ -242,7 +280,7 @@ struct FileRow: View {
                     .truncationMode(.head)
             }
             Spacer(minLength: 4)
-            if let stat {
+            if showMetadata, let stat {
                 Group {
                     if let a = stat.added, let d = stat.deleted {
                         LineStatText(added: a, deleted: d)
@@ -258,16 +296,11 @@ struct FileRow: View {
                     Image(systemName: actionIcon)
                 }
                 .buttonStyle(.borderless)
+                .foregroundStyle(selected ? StudioStyle.accent : Color.secondary)
                 .help(actionHelp)
                 .accessibilityLabel(actionHelp)
             }
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 5).fill(selected ? Color.accentColor.opacity(0.22) : Color.clear))
-        .contentShape(Rectangle())
-        .onHover { hover = $0 }
-        .help(change.path)
     }
 }
 

@@ -96,12 +96,36 @@ final class ToolPaths {
         let trees = try await git(["worktree", "list", "--porcelain", "-z"])
         let parsedTrees = Parsers.worktrees(trees.output)
         check(parsedTrees.count == 2 && parsedTrees.contains(where: { $0.path.hasSuffix("/" + worktree.lastPathComponent) && fm.fileExists(atPath: $0.path) }), "Worktree path was quoted or split")
-        print("Git core passed: \(checks) checks, real Git staging/discard/patch/history/worktree integration")
+
+        // 제목의 즉시 검색과 Git의 본문 검색이 같은 공백 무시 규칙을 사용한다.
+        let searchCases = [
+            ("정리 1", "정리1"), ("정리1", "정 리 1"), ("정\t리   1", "정리 1"),
+            ("Re Lease 2", "release2"), ("기능 🚀 2", "기능🚀2"),
+            (#"release [1].*+?(){}^$|\done"#, #"release[1].*+?(){}^$|\done"#),
+        ]
+        for (i, pair) in searchCases.enumerated() {
+            let (message, query) = pair
+            let search = CommitSearchQuery(query)
+            check(search.matches(message), "Immediate search missed \(message) for \(query)")
+            let subject = "Search fixture \(i)"
+            try await git(["commit", "--allow-empty", "-qm", subject, "-m", message])
+            let result = try await git(["log", "--format=%s", "-i", "-E", "--grep=" + search.gitPattern, "HEAD^!"])
+            check(result.output.trimmed == subject, "Git body search missed \(message) for \(query)")
+        }
+        let literal = CommitSearchQuery("정리[1].*")
+        check(!literal.matches("정리1xyz"), "Immediate search treated special characters as a pattern")
+        try await git(["commit", "--allow-empty", "-qm", "정리1xyz"])
+        let noMatch = try await git(["log", "--format=%H", "-i", "-E", "--grep=" + literal.gitPattern, "HEAD^!"])
+        check(noMatch.output.isEmpty, "Git search treated special characters as a pattern")
+        print("Git core passed: \(checks) checks, real Git staging/discard/patch/history/worktree/search integration")
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 \
+TASK_CORE="$(bash "$ROOT/../tools/build-core-native.sh")"
+swiftc -I "$ROOT/../crates/gitrochi-core/include" "$ROOT/Sources/Core/RustCore.swift" "$TASK_CORE" -parse-as-library -swift-version 5 \
+  "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
   "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/Parsers.swift" \
   "$ROOT/Sources/Core/DiffTools.swift" "$ROOT/Sources/Core/Conflict.swift" \
+  "$ROOT/Sources/Core/CommitSearch.swift" \
   "$ROOT/Sources/Core/Git.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-git-core"
 "$TASK_TMP/test-git-core" "$TASK_TMP/fixtures"

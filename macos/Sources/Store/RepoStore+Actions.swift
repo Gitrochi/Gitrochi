@@ -8,21 +8,30 @@ extension RepoStore {
     /// git 명령 하나를 실행하고 저장소를 다시 읽는다. 실패하면 git 의 메시지를 그대로 보여 준다.
     /// 전후로 브랜치·태그·HEAD 를 기록해 두어 '되돌리기'로 되돌릴 수 있게 한다(머지·리베이스가 진행 중일 때는 빼고).
     @discardableResult
-    func run(_ label: String, _ args: [String], network: Bool = false, input: String? = nil) async -> Bool {
+    func run(_ label: String, _ args: [String], network: Bool = false, input: String? = nil, env: [String: String]? = nil) async -> Bool {
         guard let url, busy == nil else { return false }
+        let generation = pushReviewGeneration
+        func active() -> Bool { self.url == url && pushReviewGeneration == generation }
         operationNotice = nil
         busy = label
-        defer { busy = nil }
-        let before = repoState == .clean ? await refSnapshot() : nil
+        defer { if active() { busy = nil } }
         do {
+            let before = repoState == .clean ? await refSnapshot() : nil
+            guard active() else { return false }
             try await Git.run(args, in: url, input: input, timeout: network ? 900 : 300,
-                              env: network ? AccountStore.shared.gitEnvironment(target: target, repoPath: url.path) : [:])
-            if let before, let after = await refSnapshot() { recordUndo(args: args, input: input, before: before, after: after) }
+                              env: env ?? (network ? AccountStore.shared.gitEnvironment(target: target, repoPath: url.path) : [:]))
+            guard active() else { return false }
+            let after = before != nil ? await refSnapshot() : nil
+            guard active() else { return false }
+            if let before, let after { recordUndo(args: args, input: input, before: before, after: after) }
             await reload()
+            guard active() else { return false }
             operationNotice = String(localized: "Operation completed")
             return true
         } catch {
-            errorMessage = describe(error)
+            guard active() else { return false }
+            if case .pushReview? = sheet { pushReviewError = PushReview.displayURL(describe(error)) }
+            else { errorMessage = describe(error) }
             await reload(quiet: true)
             return false
         }
@@ -50,35 +59,19 @@ extension RepoStore {
         await run(String(localized: "Pulling…"), args, network: true)
     }
 
-    func push(force: Bool = false) async {
+    @discardableResult
+    func push(force: Bool = false) async -> Bool {
         guard let branch = headBranch, headHash != nil else {
             errorMessage = String(localized: "There's no branch to push. HEAD is detached or there are no commits yet.")
-            return
+            return false
         }
-        var args = ["push"]
-        if force { args.append("--force-with-lease") }
-        if status.upstream == nil {
-            guard let remote = defaultRemote else {
-                errorMessage = String(localized: "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.")
-                return
-            }
-            args += ["-u", remote, branch]
-        }
-        if await run(String(localized: "Pushing…"), args, network: true) {
-            await loadPullRequests()
-            // 올리자마자 파이프라인이 생기므로 조금 뒤에 읽는다
-            try? await Task.sleep(for: .seconds(3))
-            await refreshCIBadges()
-        }
+        return await requestPushReview(branch: branch, force: force)
     }
 
-    func pushBranch(_ b: Branch) async {
-        if b.isCurrent { await push(); return }
-        guard let remote = b.upstream.flatMap({ $0.split(separator: "/").first.map(String.init) }) ?? defaultRemote else {
-            errorMessage = String(localized: "No remote repository.")
-            return
-        }
-        await run(String(localized: "Pushing…"), ["push"] + (b.upstream == nil ? ["-u"] : []) + [remote, b.name], network: true)
+    @discardableResult
+    func pushBranch(_ b: Branch) async -> Bool {
+        guard !b.isRemote else { return false }
+        return await requestPushReview(branch: b.name)
     }
 
     func checkout(_ b: Branch) async {
@@ -240,19 +233,22 @@ extension RepoStore {
         confirm = ConfirmRequest(title: String(localized: "Discard changes to '\(c.fileName)'?"),
                                  message: c.kind == .untracked ? String(localized: "Untracked new files will be deleted.") : String(localized: "Your edits in the working tree will be lost."),
                                  actionTitle: String(localized: "Discard changes")) { [weak self] in
+            guard let self, let repository = self.url,
+                  await self.preserveDiscardedChanges(paths: c.paths), self.url == repository else { return }
             if c.kind == .untracked {
-                await self?.run(String(localized: "Discarding changes…"), ["clean", "-f", "-q", "--", c.path])
+                await self.run(String(localized: "Discarding changes…"), ["clean", "-f", "-q", "--", c.path])
             } else {
-                await self?.run(String(localized: "Discarding changes…"), ["restore", "--worktree", "--"] + c.paths)
+                await self.run(String(localized: "Discarding changes…"), ["restore", "--worktree", "--"] + c.paths)
             }
         }
     }
 
     func confirmDiscardAll() {
         confirm = ConfirmRequest(title: String(localized: "Discard all changes?"),
-                                 message: String(localized: "Staged and unstaged changes and untracked new files will all be lost. This can't be undone."),
+                                 message: String(localized: "A local recovery copy is saved before discarding staged, unstaged and untracked changes."),
                                  actionTitle: String(localized: "Discard all")) { [weak self] in
-            guard let self else { return }
+            guard let self, let repository = self.url,
+                  await self.preserveDiscardedChanges(paths: nil), self.url == repository else { return }
             if self.headHash != nil {
                 guard await self.run(String(localized: "Undoing…"), ["reset", "--hard", "-q"]) else { return }
             } else {

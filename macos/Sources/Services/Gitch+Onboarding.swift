@@ -38,14 +38,24 @@ extension Gitch {
         let session: String
         let state: State
         let deviceCode: String?
+        let phase: String?
         let verificationURL: String
         let login: String?
         let email: String?
         let message: String
     }
 
-    static func startGitHubLogin() async throws -> BrowserLogin {
-        try await onboardingJSON(["login", "github", "--start", "--json", "--yes"])
+    enum GitHubLoginCapability: String { case standard, projects }
+
+    static func startGitHubLogin(capability: GitHubLoginCapability = .standard, expectedLogin: String? = nil) async throws -> BrowserLogin {
+        let expected = expectedLogin?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if capability == .projects && expected?.isEmpty != false {
+            throw Failure(message: String(localized: "Select the GitHub account to connect project access."))
+        }
+        var args = ["login", "github", "--start", "--json", "--yes"]
+        if capability == .projects { args += ["--capability", "projects"] }
+        if let expected, !expected.isEmpty { args += ["--expected-login", expected] }
+        return try await onboardingJSON(args)
     }
 
     static func gitHubLogin(_ session: String, cancel: Bool = false) async throws -> BrowserLogin {

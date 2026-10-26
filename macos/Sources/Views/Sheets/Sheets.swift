@@ -85,6 +85,7 @@ struct StashSheet: View {
 }
 
 struct CloneSheet: View {
+    var initialURL = ""
     @Environment(RepoStore.self) private var store
     private let accounts = AccountStore.shared
     @ViewState private var accountID: String?
@@ -132,6 +133,7 @@ struct CloneSheet: View {
                 .onAppear { if accountID == nil { accountID = accounts.accounts.first?.id } }
             }
             TextField("URL", text: $remote, prompt: Text("https://github.com/user/repo.git"))
+                .onAppear { if remote.isEmpty { remote = initialURL; folder = Self.guessName(initialURL) } }
                 .onChange(of: remote) { _, v in
                     if !folderEdited { folder = Self.guessName(v) }
                 }

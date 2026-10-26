@@ -16,6 +16,7 @@ export function FileInspectView({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(avatars);
   const f = store.fileInspect!;
+  const backLabel = store.repositorySection === "changes" ? t("Changes") : t("Graph");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.querySelector(".modal-backdrop") && !(e.target as HTMLElement)?.closest?.(".xterm")) store.closeFileInspect();
@@ -28,8 +29,8 @@ export function FileInspectView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ minHeight: 0 }}>
       <div className="diff-head">
-        <Button size="small" onClick={() => store.closeFileInspect()} tip={t("Back to graph (Esc)")}>
-          <ChevronLeft size={14} /> {" "}{t("Graph")}</Button>
+        <Button size="small" onClick={() => store.closeFileInspect()} tip={`${backLabel} (Esc)`}>
+          <ChevronLeft size={14} /> {" "}{backLabel}</Button>
         <span className="muted" style={{ display: "inline-flex" }}>
           {f.mode === "history" ? <History size={16} /> : <ScanText size={16} />}
         </span>
@@ -41,6 +42,7 @@ export function FileInspectView({ store }: { store: RepoStore }) {
             {subtitle}
           </span>
         </div>
+        <Button size="small" onClick={() => store.openLineHistory(f.path, f.rev ?? undefined, store.fileInspectLine ?? 1)}>{t("Trace lines…")}</Button>
         {store.fileInspectLoading && <Spinner size={13} />}
         <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => void store.revealPath(f.path)} />
         <Segmented

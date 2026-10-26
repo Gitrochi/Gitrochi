@@ -12,7 +12,7 @@ struct SettingsView: View {
             RulesSettings()
                 .tabItem { Label("Rules", systemImage: "text.badge.checkmark") }
             ToolsSettings()
-                .tabItem { Label("Tools", systemImage: "wrench.and.screwdriver") }
+                .tabItem { Label("Tool locations", systemImage: "wrench.and.screwdriver") }
             CLISettings()
                 .tabItem { Label { Text(verbatim: "CLI") } icon: { Image(systemName: "terminal") } }
             AppearanceSettings()

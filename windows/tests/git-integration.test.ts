@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildPatch } from "@/entities/git/lib/diff";
+import { CommitSearchQuery } from "@/entities/git/lib/search";
 import { fileHistoryFormat, parseDiff, parseFileHistory, parseWorktrees } from "@/entities/git/lib/parsers";
 
 vi.hoisted(() => vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {} })));
@@ -13,6 +14,11 @@ import { RepoStore } from "@/entities/repo";
 let fixture = "";
 vi.mock("@/shared/api/ipc", () => ({
   ipc: {
+    remove: async (path: string) => { rmSync(path, { force: true }); },
+    readHead: async (path: string, max: number) => {
+      const data = readFileSync(path);
+      return { text: data.subarray(0, max).toString("utf8"), binary: data.includes(0), truncated: data.length > max, size: statSync(path).size };
+    },
     run: async (exe: string, args: string[], o: { cwd: string; env: Record<string, string>; stdin?: string }) => {
       const options = { cwd: o.cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: join(fixture, "empty-config"), GIT_CONFIG_NOSYSTEM: "1", ...o.env }, input: o.stdin, encoding: "utf8" as const, stdio: "pipe" as const };
       try {
@@ -36,6 +42,26 @@ beforeEach(async () => {
 afterEach(() => { vi.restoreAllMocks(); rmSync(fixture, { recursive: true, force: true }); });
 
 describe("실제 Git과 파일 경계·패치 적용", () => {
+  it.each([
+    ["정리 1", "정리1"], ["정리1", "정 리 1"], ["정\t리   1", "정리 1"],
+    ["Re Lease 2", "release2"], ["기능 🚀 2", "기능🚀2"],
+    [String.raw`release [1].*+?(){}^$|\done`, String.raw`release[1].*+?(){}^$|\done`],
+  ])("공백을 무시해 Git 본문을 검색한다: %j ← %j", async (message, query) => {
+    const repo = join(fixture, "repo");
+    await git(["commit", "--allow-empty", "-qm", "Search fixture", "-m", message], repo);
+    const search = new CommitSearchQuery(query);
+    const result = await git(["log", "--format=%s", "-i", "-E", "--grep=" + search.gitPattern], repo);
+    expect(result.stdout.trim()).toBe("Search fixture");
+  });
+
+  it("공백 무시 검색에서도 특수문자는 문자 그대로 찾는다", async () => {
+    const repo = join(fixture, "repo");
+    await git(["commit", "--allow-empty", "-qm", "정리1xyz"], repo);
+    const search = new CommitSearchQuery("정리[1].*");
+    const result = await git(["log", "--format=%H", "-i", "-E", "--grep=" + search.gitPattern], repo);
+    expect(result.stdout).toBe("");
+  });
+
   it("첫 커밋을 되돌리면 커밋 없는 브랜치와 스테이지 내용으로 돌아간다", async () => {
     const repo = join(fixture, "repo");
     writeFileSync(join(repo, "f.txt"), "keep staged\n");

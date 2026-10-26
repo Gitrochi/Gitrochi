@@ -87,23 +87,27 @@ struct ChangeList<MenuContent: View>: View {
     private let indent: CGFloat = 14
 
     var body: some View {
-        if mode == "tree" {
-            ForEach(FileTree.rows(changes, collapsed: collapsed)) { row in
-                switch row.kind {
-                case .folder(let path, let name, let files):
-                    FolderRow(path: path, name: name, count: files.count, expanded: !collapsed.contains(path),
-                              actionIcon: actionIcon, actionHelp: actionHelp,
-                              action: { onAction(files) },
-                              toggle: { toggle(path) })
-                        .padding(.leading, CGFloat(row.depth) * indent)
-                case .file(let c):
-                    fileRow(c, showDirectory: false)
-                        .padding(.leading, CGFloat(row.depth) * indent + indent)
+        // 수백 개의 미추적 파일이 있어도 현재 보이는 행부터 만든다.
+        LazyVStack(alignment: .leading, spacing: 0) {
+            if mode == "tree" {
+                ForEach(FileTree.rows(changes, collapsed: collapsed)) { row in
+                    switch row.kind {
+                    case .folder(let path, let name, let files):
+                        FolderRow(path: path, name: name, count: files.count, expanded: !collapsed.contains(path),
+                                  actionIcon: actionIcon, actionHelp: actionHelp,
+                                  action: { onAction(files) },
+                                  toggle: { toggle(path) })
+                            .padding(.leading, CGFloat(row.depth) * indent)
+                    case .file(let c):
+                        fileRow(c, showDirectory: false)
+                            .padding(.leading, CGFloat(row.depth) * indent + indent)
+                    }
                 }
+            } else {
+                ForEach(changes) { c in fileRow(c, showDirectory: true) }
             }
-        } else {
-            ForEach(changes) { c in fileRow(c, showDirectory: true) }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func fileRow(_ c: FileChange, showDirectory: Bool) -> some View {

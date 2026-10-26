@@ -59,7 +59,7 @@ export function GitchBar({ store }: { store: RepoStore }) {
       <span className="spacer" />
       {store.gitchChecking && <Spinner size={11} />}
       {p && (
-        <span style={{ position: "relative" }}>
+        <span>
           <button className={`gitch-pill ${levelClass(p.result)}`} data-tip={t("gitch checks before commit and push")} onClick={() => setShowChecks((v) => !v)}>
             <LevelIcon level={p.result} /> {levelTitle(p.result)}
           </button>

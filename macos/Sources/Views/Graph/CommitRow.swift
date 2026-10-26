@@ -27,7 +27,7 @@ struct CommitRow: View {
 
     var body: some View {
         let c = entry.commit
-        let tint = Palette.lane(entry.row.color)
+        let tint = GraphStyle.lane(entry.row.color)
         let groups = RefGroup.group(refs)
         HStack(spacing: 0) {
             // 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수), 그래프 동그라미까지 이어지는 선
@@ -220,7 +220,7 @@ private struct RefColumn: View {
                             }
                         }
                 }
-                Rectangle().fill(tint.opacity(0.45)).frame(minWidth: 8, maxWidth: 24).frame(height: 1)
+                Rectangle().fill(tint.opacity(GraphMetrics.refOpacity)).frame(minWidth: 8, maxWidth: 24).frame(height: GraphMetrics.refStroke)
                 Spacer(minLength: 0)
             }
         }
@@ -235,7 +235,7 @@ private struct RefPill: View {
 
     var body: some View {
         let solid = group.isCurrent
-        let color = solid ? Color.accentColor : Color.secondary
+        let color = group.isTag ? Color.secondary : tint
         HStack(spacing: 3) {
             if solid { Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy)) }
             if group.isTag { Image(systemName: "tag").font(.system(size: 9, weight: .semibold)) }
@@ -249,8 +249,9 @@ private struct RefPill: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .foregroundStyle(solid ? Color.accentColor : Color.primary)
-        .background(RoundedRectangle(cornerRadius: 4).fill(color.opacity(solid ? 0.12 : 0.07)))
+        .foregroundStyle(solid ? GraphStyle.currentRefText : color)
+        .background(RoundedRectangle(cornerRadius: 6).fill(solid ? color : color.opacity(0.09)))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color.opacity(solid ? 0 : 0.24), lineWidth: 0.75))
         .layoutPriority(1)
         .contentShape(Rectangle())
         .help(helpText)
@@ -286,6 +287,9 @@ private struct BranchInteractions: ViewModifier {
         } else {
             let name = group.local ?? group.remotes.first ?? group.name
             content
+                .simultaneousGesture(TapGesture().onEnded {
+                    if let branch = store.branch(named: name) { store.selectedBranchID = branch.id }
+                })
                 .onTapGesture(count: 2) {
                     if let b = store.branch(named: name) { Task { await store.checkout(b) } }
                 }
@@ -311,7 +315,7 @@ struct GraphCell: View {
     }
 
     var body: some View {
-        let color = Palette.lane(row.color)
+        let color = GraphStyle.lane(row.color)
         let cx = x(Double(row.column))
         ZStack(alignment: .topLeading) {
             Canvas { ctx, size in
@@ -321,7 +325,7 @@ struct GraphCell: View {
                     var p = Path()
                     p.move(to: CGPoint(x: 0, y: h / 2))
                     p.addLine(to: CGPoint(x: cx, y: h / 2))
-                    ctx.stroke(p, with: .color(color.opacity(0.45)), lineWidth: 1)
+                    ctx.stroke(p, with: .color(color.opacity(GraphMetrics.refOpacity)), lineWidth: GraphMetrics.refStroke)
                 }
                 for s in row.segments {
                     let a = CGPoint(x: x(s.x1), y: h * s.y1)
@@ -334,24 +338,24 @@ struct GraphCell: View {
                         let mid = (a.y + b.y) / 2
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
-                    ctx.stroke(p, with: .color(Palette.lane(s.color).opacity(0.75)),
-                               style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: s.dashed ? [3, 3] : []))
+                    ctx.stroke(p, with: .color(GraphStyle.lane(s.color)),
+                               style: StrokeStyle(lineWidth: GraphMetrics.laneStroke, lineCap: .round, lineJoin: .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
                 func circle(_ r: CGFloat) -> Path { Circle().path(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)) }
                 if isWIP {
                     ctx.fill(circle(7), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: 2, dash: [2.5, 2]))
+                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: GraphMetrics.nodeStroke, dash: [2.5, 2]))
                 } else if isMerge {
                     // 머지 커밋은 작은 점
                     ctx.fill(circle(5.5), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.fill(circle(4), with: .color(color))
                 } else {
                     ctx.fill(circle(4.5), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(4.5), with: .color(color), lineWidth: 2)
+                    ctx.stroke(circle(4.5), with: .color(color), lineWidth: GraphMetrics.nodeStroke)
                 }
                 if isHead {
-                    ctx.stroke(circle(8), with: .color(Color.accentColor), lineWidth: 1.5)
+                    ctx.stroke(circle(8), with: .color(Color.accentColor), lineWidth: GraphMetrics.nodeStroke)
                 }
             }
         }
@@ -390,6 +394,10 @@ struct CommitMenu: View {
                 Button("Clean up commits from here (squash, reorder, reword)…") { Task { await store.startInteractiveRebase(from: commit.id) } }
                     .disabled(store.repoState != .clean)
                 Divider()
+            }
+            Button("Compare with HEAD…") { store.openRevisionComparison(left: commit.id, right: "HEAD") }
+            if !store.historyTools.selected.isEmpty {
+                Button("Selected commits…") { Task { await store.openBatchCommits() } }
             }
             Button("New branch from here…") { store.requestNewBranch(from: commit.id, label: commit.short) }
             Button("Tag here…") { store.sheet = .tag(sha: commit.id) }

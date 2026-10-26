@@ -15,9 +15,13 @@ struct WorkspaceColumns<Leading: View, Trailing: View>: View {
             let fixed = min(max(width, 250), upper)
             let left = fixedTrailing ? max(0, geometry.size.width - fixed - 1) : fixed
             HStack(spacing: 0) {
-                leading.frame(width: left, height: geometry.size.height).clipped()
+                leading
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(width: left, height: geometry.size.height, alignment: .topLeading).clipped()
                 divider(upper: upper)
-                trailing.frame(width: max(0, geometry.size.width - left - 1), height: geometry.size.height).clipped()
+                trailing
+                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                    .frame(width: max(0, geometry.size.width - left - 1), height: geometry.size.height, alignment: .topLeading).clipped()
             }
         }
     }

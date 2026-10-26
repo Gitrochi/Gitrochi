@@ -24,11 +24,16 @@ struct ContentColumn: View {
                             CommitComposer()
                         }
                     }
+                } else if !store.showHistoryInspector {
+                    document
                 } else {
                     WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 410) {
                         document
                     } trailing: {
-                        InspectorView()
+                        VStack(spacing: 0) {
+                            BranchContextHeader()
+                            InspectorView()
+                        }
                     }
                 }
             }

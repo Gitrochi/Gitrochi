@@ -83,6 +83,9 @@ struct CreatePullRequestSheet: View {
         .task {
             bases = store.pullRequestBaseCandidates()
             if let b = await store.defaultBaseBranch() { base = b }
+            if let saved = store.newPullRequestDraft, saved.branch == store.headBranch {
+                title = saved.title; bodyText = saved.body; base = saved.base; draft = saved.draft
+            }
             if title.isEmpty, let branch = store.headBranch {
                 title = branch.split(separator: "/").last.map { $0.replacingOccurrences(of: "-", with: " ") } ?? branch
             }

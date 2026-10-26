@@ -11,7 +11,7 @@ extension RepoStore {
     }
 
     func requestSearchFocus() {
-        showArea(.history)
+        navigate(.commits)
         closeFileInspect()
         closeDiff()
         searchFocusRequest += 1
@@ -22,16 +22,16 @@ extension RepoStore {
         let q = searchText.trimmed
         guard !q.isEmpty, let url else { clearSearchResults(); return }
         let scope = searchScope
+        let query = CommitSearchQuery(q)
 
         if scope == .commits {
             // 1) 불러온 커밋에서 즉시: 제목·작성자·이메일·SHA·브랜치/태그 이름
-            let lower = q.lowercased()
             var found = Set<String>()
             for e in entries where !e.commit.isPending {
                 let c = e.commit
-                if c.subject.lowercased().contains(lower) || c.author.lowercased().contains(lower)
-                    || c.email.lowercased().contains(lower) || c.id.hasPrefix(lower)
-                    || (refsByCommit[e.id] ?? []).contains(where: { $0.name.lowercased().contains(lower) }) {
+                if query.matches(c.subject) || query.matches(c.author)
+                    || query.matches(c.email) || c.id.hasPrefix(query.key)
+                    || (refsByCommit[e.id] ?? []).contains(where: { query.matches($0.name) }) {
                     found.insert(e.id)
                 }
             }
@@ -48,7 +48,7 @@ extension RepoStore {
             guard !Task.isCancelled else { return }
             var args = ["log", "--exclude=refs/stash", "--all", "--format=%H"]
             switch scope {
-            case .commits: args += ["-n", "20000", "-i", "-F", "--grep=" + q]
+            case .commits: args += ["-n", "20000", "-i", "-E", "--grep=" + query.gitPattern]
             case .files: args += ["-n", "20000", "--", ":(glob,icase)**/*\(q)*"]
             case .code: args += ["-n", "1000", "-G", NSRegularExpression.escapedPattern(for: q)]
             }
@@ -67,7 +67,7 @@ extension RepoStore {
         searchMatchSet = Set(ordered)
         searchUnloaded = found.subtracting(searchMatchSet).count
         // 지금 고른 커밋이 결과가 아니면 첫 결과로 이동
-        if jump, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
+        if jump, destination == .repository, repositorySection == .commits, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
             select(.commit(first))
             scrollTarget = first
         }
