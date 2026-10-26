@@ -28,6 +28,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Native sidebar visibility test
+        run: bash macos/Tools/test-sidebar-visibility.sh
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin, x86_64-apple-darwin
@@ -77,7 +80,6 @@ jobs:
           bash macos/Tools/test-collaboration.sh
           bash macos/Tools/test-local-workflows.sh
           bash macos/Tools/test-workspace-navigation.sh
-          bash macos/Tools/test-sidebar-visibility.sh
           bash macos/Tools/test-window-content-layout.sh
           bash macos/Tools/test-inspector-layout.sh
           bash macos/Tools/test-adaptive-workbench-identity.sh

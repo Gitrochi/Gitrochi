@@ -26,6 +26,7 @@ private func require(_ condition: @autoclosure () -> Bool, _ message: String = "
     var writeRequest = 0
     var requestedDraft = ""
     var railVisible = false
+    var measuredWidth: CGFloat = 0
 
     func measure(_ value: Bool) {
         collapsed = value
@@ -82,8 +83,9 @@ private struct SidebarFixture: View {
             .onAppear { recorder.railVisible = railShown }
             .onChange(of: railShown) { _, value in recorder.railVisible = value }
         }
-        .onGeometryChange(for: Bool.self) { $0.size.width < 1180 } action: { narrow in
-            recorder.presentation.setNarrow(narrow)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+            recorder.measuredWidth = width
+            recorder.presentation.setNarrow(width < 1180)
         }
     }
 }
@@ -114,6 +116,8 @@ private struct SidebarFixture: View {
                               styleMask: [.titled, .resizable, .closable], backing: .buffered, defer: false)
         window.contentView = host
         window.orderBack(nil)
+        // Initial window presentation can constrain the frame to the runner's display.
+        window.setContentSize(NSSize(width: 1440, height: 650))
 
         func descendants(_ view: NSView) -> [NSView] {
             [view] + view.subviews.flatMap(descendants)
@@ -162,7 +166,8 @@ private struct SidebarFixture: View {
             let splits = descendants(host).compactMap { $0 as? NSSplitView }
             let widths = splits.map { $0.arrangedSubviews.map { $0.frame.width } }
             let binding = recorder.visibility == .detailOnly ? "detail-only" : recorder.visibility == .all ? "all" : "automatic"
-            return "scenario=\(scenario) binding=\(binding) narrow=\(recorder.presentation.isNarrow) collapsed=\(recorder.collapsed) rail=\(recorder.railVisible) mounts=\(recorder.mounted) splitWidths=\(widths) reports=\(recorder.reports)"
+            let screens = NSScreen.screens.map { $0.visibleFrame }
+            return "scenario=\(scenario) binding=\(binding) narrow=\(recorder.presentation.isNarrow) collapsed=\(recorder.collapsed) rail=\(recorder.railVisible) mounts=\(recorder.mounted) windowFrame=\(window.frame) contentFrame=\(window.contentView?.frame ?? .zero) hostFrame=\(host.frame) measuredWidth=\(recorder.measuredWidth) splitWidths=\(widths) screens=\(screens) reports=\(recorder.reports)"
         }
 
         // Native sidebar transitions finish asynchronously, especially on hosted runners.
@@ -188,6 +193,11 @@ private struct SidebarFixture: View {
             require(false, "Timed out waiting for native sidebar state: \(diagnostics())")
         }
 
+        func matchesWidth(_ width: CGFloat) -> Bool {
+            abs(host.frame.width - width) <= 1 && abs(recorder.measuredWidth - width) <= 1
+        }
+
+        waitFor("initial-wide-1440") { matchesWidth(1440) }
         waitFor("initial-expanded") {
             recorder.reports.last == false && !recorder.railVisible && recorder.identity != nil && recorder.mounted == 1
         }
@@ -203,7 +213,8 @@ private struct SidebarFixture: View {
             let split = navigationSplit()
             checks.append(["scenario": scenario, "railVisible": recorder.railVisible,
                            "observerCollapsed": recorder.collapsed, "sidebarWidth": sidebarView(split).frame.width,
-                           "bindingDetailOnly": recorder.visibility == .detailOnly])
+                           "bindingDetailOnly": recorder.visibility == .detailOnly,
+                           "contentWidth": host.frame.width, "measuredWidth": recorder.measuredWidth])
         }
 
         recorder.visibility = .detailOnly
@@ -258,7 +269,7 @@ private struct SidebarFixture: View {
         waitFor("automatic-narrow-1100") {
             let sidebar = sidebarView(navigationSplit())
             let hidden = sidebar.isHiddenOrHasHiddenAncestor || sidebar.frame.width <= 1
-            return recorder.presentation.isNarrow && recorder.visibility == .detailOnly && recorder.railVisible
+            return matchesWidth(1100) && recorder.presentation.isNarrow && recorder.visibility == .detailOnly && recorder.railVisible
                 && recorder.collapsed == hidden
         }
         require(recorder.visibility == .detailOnly && recorder.railVisible,
@@ -273,7 +284,7 @@ private struct SidebarFixture: View {
 
         window.setContentSize(NSSize(width: 1440, height: 650))
         waitFor("automatic-restore-wide-1440") {
-            !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible
+            matchesWidth(1440) && !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible
         }
         require(!recorder.railVisible, "Wide expanded windows must restore the sidebar without duplicate icons")
         capture("automatic-restore-wide-1440")
@@ -281,9 +292,9 @@ private struct SidebarFixture: View {
         recorder.visibility = .detailOnly
         waitFor("manual-collapse-before-resize") { recorder.collapsed && recorder.railVisible }
         window.setContentSize(NSSize(width: 1100, height: 650))
-        waitFor("manual-collapse-retained-narrow") { recorder.presentation.isNarrow && recorder.railVisible }
+        waitFor("manual-collapse-retained-narrow") { matchesWidth(1100) && recorder.presentation.isNarrow && recorder.railVisible }
         window.setContentSize(NSSize(width: 1440, height: 650))
-        waitFor("manual-collapse-retained-wide") { !recorder.presentation.isNarrow && recorder.railVisible }
+        waitFor("manual-collapse-retained-wide") { matchesWidth(1440) && !recorder.presentation.isNarrow && recorder.railVisible }
         require(recorder.visibility == .detailOnly && recorder.railVisible,
                      "Manual sidebar collapse must survive narrow and wide resizing")
         capture("manual-collapse-retained-wide")
@@ -293,7 +304,7 @@ private struct SidebarFixture: View {
         waitFor("manual-expand-before-resize") { !recorder.collapsed && !recorder.railVisible }
         window.setContentSize(NSSize(width: 1100, height: 650))
         waitFor("automatic-collapse-before-manual-expand") {
-            recorder.presentation.isNarrow && recorder.collapsed && recorder.railVisible
+            matchesWidth(1100) && recorder.presentation.isNarrow && recorder.collapsed && recorder.railVisible
         }
         recorder.presentation.expand()
         recorder.expandRequest += 1
@@ -302,7 +313,7 @@ private struct SidebarFixture: View {
                      "Users must be able to expand navigation while the window is narrow")
         capture("manual-expand-narrow")
         window.setContentSize(NSSize(width: 1440, height: 650))
-        waitFor("manual-expand-retained-wide") { !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible }
+        waitFor("manual-expand-retained-wide") { matchesWidth(1440) && !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible }
         require(recorder.visibility == .all && !recorder.railVisible,
                      "Widening must preserve the explicit narrow-window expansion")
         capture("manual-expand-retained-wide")
