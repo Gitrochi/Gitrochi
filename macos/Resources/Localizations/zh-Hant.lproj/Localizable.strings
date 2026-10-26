@@ -102,7 +102,6 @@
 "Account for this repository" = "此存放庫使用的帳號";
 "Accounts" = "帳號";
 "Add account" = "新增帳號";
-"Add account…" = "新增帳號…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "請先新增帳號：gitch add 會詢問帳號名稱、電子郵件與伺服器，並為其建立 SSH 金鑰。之後再安裝。";
 "Add an account in Terminal…" = "在終端機中新增帳號…";
 "Add variable" = "新增變數";
@@ -235,7 +234,6 @@
 "Choose again" = "重新選擇";
 "Choose every conflict block before saving" = "每個衝突區塊都做出選擇後才能儲存";
 "Choose the %@ executable" = "選擇 %1$@ 執行檔";
-"Choose the account for this repository" = "選擇此存放庫使用的帳號";
 "Chore: update" = "Chore: 更新";
 "Chosen: %@" = "已選擇：%1$@";
 "Claude Code (uses your login)" = "Claude Code（使用你的登入）";

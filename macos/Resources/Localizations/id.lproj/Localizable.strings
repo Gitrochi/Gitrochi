@@ -98,7 +98,6 @@
 "Account for this repository" = "Akun untuk repositori ini";
 "Accounts" = "Akun";
 "Add account" = "Tambah akun";
-"Add account…" = "Tambah akun…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Tambahkan akun dulu: gitch add menanyakan nama, email, dan server akun lalu membuat kunci SSH untuknya. Setelah itu instal.";
 "Add an account in Terminal…" = "Tambah akun di Terminal…";
 "Add variable" = "Tambah variabel";
@@ -224,7 +223,6 @@
 "Choose again" = "Pilih lagi";
 "Choose every conflict block before saving" = "Pilih setiap blok konflik sebelum menyimpan";
 "Choose the %@ executable" = "Pilih file eksekusi %1$@";
-"Choose the account for this repository" = "Pilih akun untuk repositori ini";
 "Chore: update" = "Chore: pembaruan";
 "Chosen: %@" = "Dipilih: %1$@";
 "Claude Code (uses your login)" = "Claude Code (memakai login Anda)";

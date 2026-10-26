@@ -102,7 +102,6 @@
 "Account for this repository" = "Konto für dieses Repository";
 "Accounts" = "Konten";
 "Add account" = "Konto hinzufügen";
-"Add account…" = "Konto hinzufügen…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Fügen Sie zuerst ein Konto hinzu: gitch add fragt nach Name, E-Mail und Server des Kontos und erstellt einen SSH-Schlüssel dafür. Danach installieren.";
 "Add an account in Terminal…" = "Konto im Terminal hinzufügen …";
 "Add variable" = "Variable hinzufügen";
@@ -230,7 +229,6 @@
 "Choose again" = "Erneut auswählen";
 "Choose every conflict block before saving" = "Vor dem Speichern für jeden Konfliktblock eine Auswahl treffen";
 "Choose the %@ executable" = "Ausführbare Datei für %1$@ auswählen";
-"Choose the account for this repository" = "Konto für dieses Repository auswählen";
 "Chore: update" = "Chore: Aktualisierung";
 "Chosen: %@" = "Gewählt: %1$@";
 "Claude Code (uses your login)" = "Claude Code (nutzt Ihre Anmeldung)";

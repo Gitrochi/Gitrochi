@@ -102,7 +102,6 @@
 "Account for this repository" = "Обліковий запис для цього репозиторію";
 "Accounts" = "Облікові записи";
 "Add account" = "Додати обліковий запис";
-"Add account…" = "Додати обліковий запис…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Спершу додайте обліковий запис: gitch add запитає ім’я, пошту й сервер облікового запису та створить для нього SSH-ключ. Потім установіть.";
 "Add an account in Terminal…" = "Додати обліковий запис у Терміналі…";
 "Add variable" = "Додати змінну";
@@ -234,7 +233,6 @@
 "Choose again" = "Вибрати знову";
 "Choose every conflict block before saving" = "Перш ніж зберегти, виберіть варіант для кожного блоку конфлікту";
 "Choose the %@ executable" = "Виберіть виконуваний файл %1$@";
-"Choose the account for this repository" = "Виберіть обліковий запис для цього репозиторію";
 "Chore: update" = "Chore: оновлення";
 "Chosen: %@" = "Вибрано: %1$@";
 "Claude Code (uses your login)" = "Claude Code (використовує ваш вхід)";

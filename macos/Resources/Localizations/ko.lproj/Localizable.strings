@@ -228,7 +228,6 @@
 "Account for this repository" = "이 저장소에서 사용할 계정";
 "Accounts" = "계정";
 "Add account" = "계정 추가";
-"Add account…" = "계정 추가…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "먼저 계정을 추가하세요. gitch add 가 계정 이름·이메일·서버를 묻고 SSH 키를 만듭니다. 그다음 설치합니다.";
 "Add an account in Terminal…" = "Terminal 에서 계정 추가…";
 "Add variable" = "변수 추가";
@@ -360,7 +359,6 @@
 "Choose again" = "다시 고르기";
 "Choose every conflict block before saving" = "모든 충돌 블록을 골라야 저장할 수 있습니다";
 "Choose the %@ executable" = "%1$@ 실행 파일을 고르세요";
-"Choose the account for this repository" = "이 저장소에 쓸 계정 고르기";
 "Chore: update" = "Chore: 변경 사항";
 "Chosen: %@" = "고름: %1$@";
 "Claude Code (uses your login)" = "Claude Code (로그인 사용)";

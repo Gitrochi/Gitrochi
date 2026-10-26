@@ -100,7 +100,6 @@
 "Account for this repository" = "Fiók ehhez a tárolóhoz";
 "Accounts" = "Fiókok";
 "Add account" = "Fiók hozzáadása";
-"Add account…" = "Fiók hozzáadása…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Először adjon hozzá egy fiókot: a gitch add megkérdezi a fiók nevét, e-mail-címét és szerverét, és SSH-kulcsot készít hozzá. Utána telepítsen.";
 "Add an account in Terminal…" = "Fiók hozzáadása a Terminálban…";
 "Add variable" = "Változó hozzáadása";
@@ -231,7 +230,6 @@
 "Choose again" = "Újraválasztás";
 "Choose every conflict block before saving" = "Mentés előtt döntsön minden ütközési blokkról";
 "Choose the %@ executable" = "Válassza ki a futtatható fájlt (%1$@)";
-"Choose the account for this repository" = "Válassza ki a tárolóhoz használt fiókot";
 "Chore: update" = "Chore: módosítások";
 "Chosen: %@" = "Kiválasztva: %1$@";
 "Claude Code (uses your login)" = "Claude Code (a bejelentkezését használja)";

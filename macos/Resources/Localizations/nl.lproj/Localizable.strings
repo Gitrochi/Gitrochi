@@ -97,7 +97,6 @@
 "Abort…" = "Afbreken…";
 "Account for this repository" = "Account voor deze repository";
 "Add account" = "Account toevoegen";
-"Add account…" = "Account toevoegen…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Voeg eerst een account toe: gitch add vraagt naar de naam, het e-mailadres en de server van het account en maakt er een SSH-sleutel voor. Installeer daarna.";
 "Add an account in Terminal…" = "Account toevoegen in Terminal…";
 "Add variable" = "Variabele toevoegen";
@@ -223,7 +222,6 @@
 "Choose again" = "Opnieuw kiezen";
 "Choose every conflict block before saving" = "Maak voor elk conflictblok een keuze voordat je opslaat";
 "Choose the %@ executable" = "Kies het uitvoerbare bestand van %1$@";
-"Choose the account for this repository" = "Kies het account voor deze repository";
 "Chosen: %@" = "Gekozen: %1$@";
 "Claude Code (uses your login)" = "Claude Code (gebruikt je login)";
 "Clean up" = "Opschonen";

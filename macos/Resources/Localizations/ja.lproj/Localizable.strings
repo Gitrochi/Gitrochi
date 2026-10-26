@@ -102,7 +102,6 @@
 "Account for this repository" = "このリポジトリで使うアカウント";
 "Accounts" = "アカウント";
 "Add account" = "アカウントを追加";
-"Add account…" = "アカウントを追加…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "まずアカウントを追加してください。gitch add がアカウント名・メール・サーバーを尋ね、SSH キーを作成します。その後でインストールします。";
 "Add an account in Terminal…" = "ターミナルでアカウントを追加…";
 "Add variable" = "変数を追加";
@@ -235,7 +234,6 @@
 "Choose again" = "選び直す";
 "Choose every conflict block before saving" = "保存する前に、すべての競合ブロックを選択してください";
 "Choose the %@ executable" = "%1$@ の実行ファイルを選択してください";
-"Choose the account for this repository" = "このリポジトリで使うアカウントを選択";
 "Chore: update" = "Chore: 更新";
 "Chosen: %@" = "選択済み: %1$@";
 "Claude Code (uses your login)" = "Claude Code (ログインを使用)";

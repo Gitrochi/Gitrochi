@@ -102,7 +102,6 @@
 "Account for this repository" = "此仓库使用的账户";
 "Accounts" = "账户";
 "Add account" = "添加账户";
-"Add account…" = "添加账户…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "请先添加账户：gitch add 会询问账户名、邮箱和服务器，并为其创建 SSH 密钥。然后再安装。";
 "Add an account in Terminal…" = "在终端中添加账户…";
 "Add variable" = "添加变量";
@@ -236,7 +235,6 @@
 "Choose again" = "重新选择";
 "Choose every conflict block before saving" = "保存前请为每个冲突块做出选择";
 "Choose the %@ executable" = "选择 %1$@ 可执行文件";
-"Choose the account for this repository" = "选择此仓库使用的账户";
 "Chore: update" = "Chore: 更新";
 "Chosen: %@" = "已选择：%1$@";
 "Claude Code (uses your login)" = "Claude Code（使用你的登录信息）";

@@ -102,7 +102,6 @@
 "Account for this repository" = "บัญชีสำหรับรีโพสิทอรีนี้";
 "Accounts" = "บัญชี";
 "Add account" = "เพิ่มบัญชี";
-"Add account…" = "เพิ่มบัญชี…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "เพิ่มบัญชีก่อน: gitch add จะถามชื่อ อีเมล และเซิร์ฟเวอร์ของบัญชี แล้วสร้างคีย์ SSH ให้ จากนั้นจึงติดตั้ง";
 "Add an account in Terminal…" = "เพิ่มบัญชีใน Terminal…";
 "Add variable" = "เพิ่มตัวแปร";
@@ -234,7 +233,6 @@
 "Choose again" = "เลือกใหม่";
 "Choose every conflict block before saving" = "เลือกทุกบล็อกคอนฟลิกต์ก่อนบันทึก";
 "Choose the %@ executable" = "เลือกไฟล์ปฏิบัติการของ %1$@";
-"Choose the account for this repository" = "เลือกบัญชีสำหรับรีโพสิทอรีนี้";
 "Chosen: %@" = "ที่เลือก: %1$@";
 "Claude Code (uses your login)" = "Claude Code (ใช้การเข้าสู่ระบบของคุณ)";
 "Clean up" = "จัดระเบียบ";

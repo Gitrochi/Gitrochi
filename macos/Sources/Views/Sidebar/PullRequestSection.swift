@@ -65,25 +65,7 @@ struct PullRequestSection: View {
             HStack {
                 Text(store.prState == .loaded ? "\(target.provider.requestsTitle) \(store.pullRequests.count)" : target.provider.requestsTitle)
                 Spacer()
-                let candidates = AccountStore.shared.candidates(for: target)
-                if let current = store.hostingAccount {
-                    Menu {
-                        ForEach(candidates) { a in
-                            Button {
-                                store.useAccount(a)
-                            } label: {
-                                if a.id == current.id { Label("@\(a.username)", systemImage: "checkmark") } else { Text("@\(a.username)") }
-                            }
-                        }
-                        Divider()
-                        Button("Add account…") { openSettings() }
-                    } label: {
-                        Text("@\(current.username)").font(.caption)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
-                    .help(candidates.count > 1 ? "Choose the account for this repository" : "Account for this repository")
-                }
+                // the account for this repository is chosen in the toolbar's account control
                 Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.borderless)
                     .help("Refresh list")

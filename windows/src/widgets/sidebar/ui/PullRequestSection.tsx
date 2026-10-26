@@ -7,15 +7,13 @@ import { accounts } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
+import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
 import { Section } from "./Section";
 
 export function PullRequestSection({ store, target, openSettings }: { store: RepoStore; target: RepoTarget; openSettings: () => void }) {
   useObserve(accounts);
   useObserve(store.ci);
   const info = providerInfo[target.provider];
-  const current = store.hostingAccount;
-  const candidates = accounts.candidates(target);
   // An account on this very host cannot be an alias for it, so only other servers are worth a try.
   const other = accounts.accountsFor(target.provider).find((a) => accountHost(a) !== target.host);
   const st = store.prState;
@@ -27,22 +25,6 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
       count={st.kind === "loaded" ? store.pullRequests.length : undefined}
       actions={
         <>
-          {current && (
-            <button
-              className="link"
-              style={{ color: "var(--text-2)", fontWeight: 500 }}
-              data-tip={candidates.length > 1 ? t("Choose the account for this repository") : t("Account for this repository")}
-              onClick={(e) =>
-                showMenuBelow(e.currentTarget, [
-                  ...candidates.map((a): MenuItem => ({ label: `@${a.username}`, checked: a.id === current.id, onClick: () => store.useAccount(a) })),
-                  "divider",
-                  { label: t("Add account…"), onClick: openSettings },
-                ])
-              }
-            >
-              @{current.username} ▾
-            </button>
-          )}
           <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
           <IconButton
             small

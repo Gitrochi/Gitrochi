@@ -98,7 +98,6 @@
 "Account for this repository" = "Účet pro tento repozitář";
 "Accounts" = "Účty";
 "Add account" = "Přidat účet";
-"Add account…" = "Přidat účet…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Nejprve přidejte účet: gitch add se zeptá na jméno, e-mail a server účtu a vytvoří pro něj klíč SSH. Potom instalujte.";
 "Add an account in Terminal…" = "Přidat účet v Terminálu…";
 "Add variable" = "Přidat proměnnou";
@@ -229,7 +228,6 @@
 "Choose again" = "Vybrat znovu";
 "Choose every conflict block before saving" = "Před uložením zvolte řešení u každého konfliktního bloku";
 "Choose the %@ executable" = "Vyberte spustitelný soubor %1$@";
-"Choose the account for this repository" = "Vyberte účet pro tento repozitář";
 "Chore: update" = "Chore: aktualizace";
 "Chosen: %@" = "Zvoleno: %1$@";
 "Claude Code (uses your login)" = "Claude Code (používá vaše přihlášení)";

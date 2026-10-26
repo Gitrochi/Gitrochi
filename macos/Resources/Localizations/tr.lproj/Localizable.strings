@@ -98,7 +98,6 @@
 "Account for this repository" = "Bu depo için hesap";
 "Accounts" = "Hesaplar";
 "Add account" = "Hesap ekle";
-"Add account…" = "Hesap ekle…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Önce bir hesap ekleyin: gitch add hesabın adını, e-postasını ve sunucusunu sorar ve onun için bir SSH anahtarı oluşturur. Sonra yükleyin.";
 "Add an account in Terminal…" = "Terminal'de hesap ekle…";
 "Add variable" = "Değişken ekle";
@@ -229,7 +228,6 @@
 "Choose again" = "Yeniden seç";
 "Choose every conflict block before saving" = "Kaydetmeden önce her çakışma bloğu için seçim yapın";
 "Choose the %@ executable" = "%1$@ çalıştırılabilir dosyasını seçin";
-"Choose the account for this repository" = "Bu depo için hesabı seçin";
 "Chore: update" = "Chore: güncelleme";
 "Chosen: %@" = "Seçilen: %1$@";
 "Claude Code (uses your login)" = "Claude Code (oturumunuzu kullanır)";

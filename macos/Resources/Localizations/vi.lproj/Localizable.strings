@@ -98,7 +98,6 @@
 "Account for this repository" = "Tài khoản cho kho lưu trữ này";
 "Accounts" = "Tài khoản";
 "Add account" = "Thêm tài khoản";
-"Add account…" = "Thêm tài khoản…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "Hãy thêm tài khoản trước: gitch add sẽ hỏi tên, email và máy chủ của tài khoản rồi tạo khóa SSH cho nó. Sau đó cài đặt.";
 "Add an account in Terminal…" = "Thêm tài khoản trong Terminal…";
 "Add variable" = "Thêm biến";
@@ -228,7 +227,6 @@
 "Choose again" = "Chọn lại";
 "Choose every conflict block before saving" = "Hãy chọn cho mọi khối xung đột trước khi lưu";
 "Choose the %@ executable" = "Chọn tệp thực thi %1$@";
-"Choose the account for this repository" = "Chọn tài khoản cho kho lưu trữ này";
 "Chore: update" = "Chore: cập nhật";
 "Chosen: %@" = "Đã chọn: %1$@";
 "Claude Code (uses your login)" = "Claude Code (dùng tài khoản đã đăng nhập)";
