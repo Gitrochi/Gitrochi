@@ -243,6 +243,81 @@ final class ShellView: LocalProcessTerminalView {
         onOutput?()
     }
 
+    // MARK: Files dropped or pasted go in as paths, like Terminal.app
+
+    private static let pathTypes: [NSPasteboard.PasteboardType] = [.fileURL, .png, .tiff]
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        registerForDraggedTypes(Self.pathTypes)
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        registerForDraggedTypes(Self.pathTypes)
+    }
+
+    /// ⌘V with files or an image on the clipboard types their paths (an image is saved as a PNG in the temp folder first)
+    override func paste(_ sender: Any) {
+        if let text = Self.pathsText(NSPasteboard.general) { type(text) } else { super.paste(sender) }
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        Self.hasPaths(sender.draggingPasteboard) ? .copy : []
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let text = Self.pathsText(sender.draggingPasteboard) else { return false }
+        type(text)
+        window?.makeFirstResponder(self)
+        onFocus?()
+        return true
+    }
+
+    /// Sent as a paste, so a program in bracketed-paste mode (zsh, Claude Code) takes it as one piece
+    private func type(_ text: String) {
+        if terminal.bracketedPasteMode {
+            send(data: EscapeSequences.bracketedPasteStart[...])
+            send(txt: text)
+            send(data: EscapeSequences.bracketedPasteEnd[...])
+        } else {
+            send(txt: text)
+        }
+    }
+
+    private static func hasPaths(_ pb: NSPasteboard) -> Bool {
+        pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            || (pb.string(forType: .string) == nil && NSImage.canInit(with: pb))
+    }
+
+    /// The paths on the pasteboard, escaped for the shell and each followed by a space; nil when it holds none
+    private static func pathsText(_ pb: NSPasteboard) -> String? {
+        if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty {
+            return urls.map { shellEscape($0.path) + " " }.joined()
+        }
+        // an image with no text: a screenshot, or a picture copied from a browser
+        guard pb.string(forType: .string) == nil, let path = saveImage(pb) else { return nil }
+        return shellEscape(path) + " "
+    }
+
+    private static func saveImage(_ pb: NSPasteboard) -> String? {
+        let png = pb.data(forType: .png)
+            ?? pb.data(forType: .tiff).flatMap { NSBitmapImageRep(data: $0)?.representation(using: .png, properties: [:]) }
+        guard let png else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd-HHmmss"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("gitrochi-image-\(f.string(from: Date())).png")
+        guard (try? png.write(to: url)) != nil else { return nil }
+        return url.path
+    }
+
+    /// Terminal.app style: a backslash before each ASCII character the shell reads specially (space, quotes, $, & …)
+    static func shellEscape(_ path: String) -> String {
+        path.map { ch in
+            ch.isASCII && !(ch.isLetter || ch.isNumber || "_-./+,:=@%".contains(ch)) ? "\\" + String(ch) : String(ch)
+        }.joined()
+    }
+
     /// Clicking into a pane makes its terminal the focused one
     var onFocus: (() -> Void)?
 

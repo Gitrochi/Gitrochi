@@ -102,6 +102,29 @@ pub async fn fs_write_text(path: String, content: String) -> Result<(), String> 
     std::fs::rename(&tmp, &p).map_err(|e| e.to_string())
 }
 
+/// Saves what the webview got from a paste or drop (an image, a dropped file) under the temp folder and returns the path.
+/// The body is raw bytes; the file name comes hex-encoded in a header, since headers are ASCII only.
+#[tauri::command]
+pub fn fs_write_temp(request: tauri::ipc::Request<'_>) -> Result<String, String> {
+    let hex = request.headers().get("x-name-hex").and_then(|v| v.to_str().ok()).ok_or("missing x-name-hex")?;
+    let raw = (0..hex.len())
+        .step_by(2)
+        .map(|i| hex.get(i..i + 2).and_then(|h| u8::from_str_radix(h, 16).ok()))
+        .collect::<Option<Vec<u8>>>()
+        .ok_or("bad x-name-hex")?;
+    let name: String = String::from_utf8_lossy(&raw).chars().filter(|c| !matches!(c, '/' | '\\' | ':')).collect();
+    let name = if name.trim().is_empty() { "pasted".to_string() } else { name };
+    let body = match request.body() {
+        tauri::ipc::InvokeBody::Raw(b) => b,
+        _ => return Err("expected raw bytes".to_string()),
+    };
+    let dir = std::env::temp_dir().join("Gitrochi");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let p = dir.join(name);
+    std::fs::write(&p, body).map_err(|e| e.to_string())?;
+    Ok(p.to_string_lossy().into_owned())
+}
+
 #[tauri::command]
 pub async fn fs_list(path: String) -> Vec<String> {
     std::fs::read_dir(&path)

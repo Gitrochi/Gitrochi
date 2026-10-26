@@ -121,6 +121,11 @@ export const ipc = {
   readText: (path: string) => invoke<string | null>("fs_read_text", { path }),
   readHead: (path: string, max: number) => invoke<FileHead>("fs_read_head", { path, max }),
   writeText: (path: string, content: string) => invoke<void>("fs_write_text", { path, content }),
+  /** Saves bytes as <temp>/Gitrochi/<name> and returns the path (pasted images, dropped files); raw body, name hex-encoded in a header */
+  writeTemp: (name: string, bytes: Uint8Array) =>
+    tauriInvoke<string>("fs_write_temp", bytes, { headers: { "x-name-hex": Array.from(new TextEncoder().encode(name), (b) => b.toString(16).padStart(2, "0")).join("") } }).catch((e) => {
+      throw nativeError(e);
+    }),
   list: (path: string) => invoke<string[]>("fs_list", { path }),
   remove: (path: string) => invoke<void>("fs_remove", { path }),
   mkdirs: (path: string) => invoke<void>("fs_mkdirs", { path }),
