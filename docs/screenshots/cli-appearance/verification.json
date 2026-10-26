@@ -1,0 +1,11 @@
+{
+  "alerts": 0,
+  "checkbox": {
+    "checked": true,
+    "disabled": false
+  },
+  "checks": "PASS: checkbox on/off, pending guard, focus refresh, save failure, retry, account-free appearance, installation guard.",
+  "horizontalOverflow": false,
+  "result": "pass",
+  "theme": "dark"
+}

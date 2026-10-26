@@ -1136,5 +1136,9 @@
  "Create flow file": "Создать файл потока",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi прочитал файлы этого репозитория, чтобы найти его тесты и инструменты. Ничего не запускается и не записывается, пока вы не создадите файл.",
  "Proposed .gitch/flow.yml": "Предлагаемый .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Файл потока уже есть, поэтому ничего не будет записано. Объедините предложение вручную."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Файл потока уже есть, поэтому ничего не будет записано. Объедините предложение вручную.",
+  "CLI appearance": "Внешний вид CLI",
+  "Show the small eye logo in CLI output": "Показывать маленький логотип с глазами в выводе CLI",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Также можно использовать gitch logo on или gitch logo off в терминале.",
+  "Couldn't read the CLI logo setting.": "Не удалось прочитать настройку логотипа CLI."
 }

@@ -1120,5 +1120,9 @@
  "Create flow file": "Folyamatfájl létrehozása",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "A Gitrochi beolvasta a tároló fájljait, hogy megtalálja a teszteket és az eszközöket. Semmi sem fut, és semmi sem íródik ki, amíg létre nem hozza a fájlt.",
  "Proposed .gitch/flow.yml": "Javasolt .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Már van folyamatfájl, ezért semmi sem íródik ki. Egyesítse kézzel a javaslatot."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Már van folyamatfájl, ezért semmi sem íródik ki. Egyesítse kézzel a javaslatot.",
+  "CLI appearance": "A CLI megjelenése",
+  "Show the small eye logo in CLI output": "A kis szemlogó megjelenítése a CLI kimenetében",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "A terminálban a gitch logo on vagy a gitch logo off parancsot is használhatod.",
+  "Couldn't read the CLI logo setting.": "Nem sikerült beolvasni a CLI logójának beállítását."
 }

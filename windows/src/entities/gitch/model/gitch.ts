@@ -402,6 +402,22 @@ class GitchService {
     return out == null ? [] : parseAccounts(out);
   }
 
+  /** 로고 설정은 계정이나 터미널 명령 설치 없이 내장 CLI의 공용 설정을 읽고 쓴다. */
+  private async logoPreference(enabled?: boolean): Promise<boolean> {
+    const exe = this.bundled;
+    if (!exe || !(await ipc.exists(exe))) throw new GitchError(t("Couldn't find gitch inside Gitrochi."));
+    const r = await this.spawn(["logo", ...(enabled === undefined ? [] : [enabled ? "on" : "off"]), "--json"], env.home, 20_000, exe);
+    if (r.status !== 0) throw new GitchError(machineError(r.stderr.trim()) || machineError(r.stdout.trim()) || t("Couldn't read the CLI logo setting."));
+    try {
+      const result = JSON.parse(r.stdout) as { schemaVersion?: unknown; enabled?: unknown };
+      if (result.schemaVersion === 1 && typeof result.enabled === "boolean") return result.enabled;
+    } catch { /* 잘못된 응답을 꺼진 상태로 보이지 않는다. */ }
+    throw new GitchError(t("Couldn't read the CLI logo setting."));
+  }
+
+  logo() { return this.logoPreference(); }
+  setLogo(enabled: boolean) { return this.logoPreference(enabled); }
+
   /** gitch 명령을 실행하고, 실패하면 gitch 가 낸 문구로 던진다. 성공하면 출력 */
   async run(args: string[], repo: string, timeoutMs = 120_000): Promise<string> {
     const r = await this.runRaw(args, repo, timeoutMs);

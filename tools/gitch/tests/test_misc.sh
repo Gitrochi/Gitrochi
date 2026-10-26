@@ -244,7 +244,8 @@ test_install_banner_fits_terminal() {
   mk_config
   # 터미널이 아니면 로고 없이 단계만
   run gitch install; assert_ok; assert_out "◆ 명령  1/5"; assert_out "설치 완료"; assert_no_out "⣿"
-  export GITSW_BANNER=always GITSW_ANIM=0
+  local TERM=xterm-256color
+  export TERM GITSW_BANNER=always GITSW_ANIM=0
   COLUMNS=100 LINES=40 run gitch install; assert_ok; assert_out "⣸⣿⣿⣿⣿⣿⣿⣿⡷"
   COLUMNS=80 LINES=24 run gitch install; assert_ok; assert_out "⢿⣿⣿⡇ ⢀⡆"; assert_no_out "⣸⣿⣿⣿⣿⣿⣿⣿⡷"
   COLUMNS=40 LINES=24 run gitch install; assert_ok; assert_out "⣿⣿⠃⢀⡄"

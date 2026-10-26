@@ -1111,5 +1111,9 @@
  "Create flow file": "Crea file di flusso",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi ha letto i file di questo repository per trovare test e strumenti. Non viene eseguito né scritto nulla finché non crei il file.",
  "Proposed .gitch/flow.yml": ".gitch/flow.yml proposto",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Esiste già un file di flusso, quindi non verrà scritto nulla. Unisci la proposta a mano."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Esiste già un file di flusso, quindi non verrà scritto nulla. Unisci la proposta a mano.",
+  "CLI appearance": "Aspetto della CLI",
+  "Show the small eye logo in CLI output": "Mostra il piccolo logo degli occhi nell’output della CLI",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Puoi anche usare gitch logo on o gitch logo off in un terminale.",
+  "Couldn't read the CLI logo setting.": "Impossibile leggere l’impostazione del logo della CLI."
 }
