@@ -306,12 +306,20 @@ private struct TerminalHost: NSViewRepresentable {
     }
 
     func updateNSView(_ c: TerminalContainer, context: Context) {
+        let gained = focus && !c.takesFocus
         c.takesFocus = focus
-        c.attach(session)
+        if c.session !== session {
+            c.attach(session)
+        } else if gained {
+            // the pane marked focused takes the keyboard (selecting another pane's tab)
+            c.focusSoon()
+        }
+        // Not re-attached otherwise: when a split collapses, SwiftUI still updates the old container after a new one
+        // has taken the terminal view, and attaching here would pull the view back into a container about to be removed
     }
 
     static func dismantleNSView(_ c: TerminalContainer, coordinator: ()) {
-        c.session?.isVisible = false
+        c.detach()
     }
 }
 
@@ -321,7 +329,7 @@ private final class TerminalContainer: NSView {
 
     func attach(_ s: TerminalSession) {
         if session === s, s.view.superview === self { return }
-        session?.isVisible = false
+        detach()
         session = s
         subviews.forEach { $0.removeFromSuperview() }
         let v = s.view
@@ -349,7 +357,13 @@ private final class TerminalContainer: NSView {
         session?.applyColors(for: effectiveAppearance)
     }
 
-    private func focusSoon() {
+    /// The terminal view stays with its session; it only counts as hidden if this container still holds it
+    func detach() {
+        guard let s = session, s.view.superview === self else { return }
+        s.isVisible = false
+    }
+
+    func focusSoon() {
         guard takesFocus else { return }
         DispatchQueue.main.async { [weak self] in
             MainActor.assumeIsolated {
