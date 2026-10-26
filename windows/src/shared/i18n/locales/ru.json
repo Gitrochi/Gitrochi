@@ -1059,5 +1059,9 @@
  "Worktree": "Рабочее дерево",
  "// Uncommitted changes in {0}": "// Незакоммиченные изменения в {0}",
  "Worktree: {0}": "Рабочее дерево: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Незакоммиченные изменения в этом рабочем дереве. Откройте его, чтобы проиндексировать и закоммитить."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Незакоммиченные изменения в этом рабочем дереве. Откройте его, чтобы проиндексировать и закоммитить.",
+ "Split right": "Разделить вправо",
+ "Split down": "Разделить вниз",
+ "Opens another shell next to this one, in the same folder.": "Открывает ещё одну оболочку рядом с этой, в той же папке.",
+ "Opens another shell below this one, in the same folder.": "Открывает ещё одну оболочку под этой, в той же папке."
 }

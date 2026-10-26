@@ -1043,5 +1043,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Nem commitolt módosítások itt: {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "A worktree nem commitolt módosításai. Nyissa meg az előkészítéshez és a commithoz."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "A worktree nem commitolt módosításai. Nyissa meg az előkészítéshez és a commithoz.",
+ "Split right": "Felosztás jobbra",
+ "Split down": "Felosztás lefelé",
+ "Opens another shell next to this one, in the same folder.": "Újabb shellt nyit emellett, ugyanabban a mappában.",
+ "Opens another shell below this one, in the same folder.": "Újabb shellt nyit ez alatt, ugyanabban a mappában."
 }

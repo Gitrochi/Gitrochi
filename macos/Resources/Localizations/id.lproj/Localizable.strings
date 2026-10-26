@@ -1008,3 +1008,7 @@
 "// Uncommitted changes in %@" = "// Perubahan yang belum di-commit di %1$@";
 "Worktree: %@" = "Worktree: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "Perubahan yang belum di-commit di worktree ini. Buka untuk stage dan commit.";
+"Split right" = "Bagi ke kanan";
+"Split down" = "Bagi ke bawah";
+"Opens another shell next to this one, in the same folder." = "Membuka shell lain di samping yang ini, di folder yang sama.";
+"Opens another shell below this one, in the same folder." = "Membuka shell lain di bawah yang ini, di folder yang sama.";

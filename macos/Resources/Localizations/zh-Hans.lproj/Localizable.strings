@@ -1060,3 +1060,7 @@
 "// Uncommitted changes in %@" = "// %1$@ 中未提交的更改";
 "Worktree: %@" = "工作树：%1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "此工作树中未提交的更改。打开它以暂存和提交。";
+"Split right" = "向右拆分";
+"Split down" = "向下拆分";
+"Opens another shell next to this one, in the same folder." = "在同一文件夹中，于此终端旁边再打开一个 Shell。";
+"Opens another shell below this one, in the same folder." = "在同一文件夹中，于此终端下方再打开一个 Shell。";

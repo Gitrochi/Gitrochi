@@ -9,6 +9,7 @@ import { type DropRequest, emptyStatus, isWIP, markdownRefs, statusFiles, status
 import { gitch, graphRulesFile, type GitchAccountSetup as AccountSetup, type GitchBrowserLogin as BrowserLogin } from "@/entities/gitch";
 import { accounts, ReviewAPI, reviewFileChange } from "@/entities/hosting";
 import { branchPayload } from "@/entities/repo";
+import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
@@ -283,6 +284,17 @@ export async function runSelfTest(): Promise<boolean> {
   });
 
   // 도우미 모드(같은 실행 파일): git 자격 증명 응답, Claude Code 훅
+  await step("Split the terminal panel (right, then down) and close the panes", async () => {
+    const first = s.activeTerminal!;
+    const right = s.splitTerminal(panes(s.terminalLayout!).find((p) => p.sessions.includes(first.id))!.id, "row");
+    const down = s.splitTerminal(panes(s.terminalLayout!).find((p) => p.sessions.includes(right.id))!.id, "column");
+    const shown = await until(() => document.querySelectorAll(".term-pane").length === 3, 3000);
+    const ok = shown && down.directory === first.directory && s.activeTerminal === down && (await until(() => down.running, 15000));
+    s.closeTerminal(down);
+    s.closeTerminal(right);
+    const merged = await until(() => document.querySelectorAll(".term-pane").length === 1, 3000);
+    return [ok && merged && s.activeTerminal === first, `panes=${document.querySelectorAll(".term-pane").length} active=${s.activeTerminal?.title}`];
+  });
   await step("GIT_ASKPASS 도우미", async () => {
     const r = await ipc.run(env.exe, ["Username for 'https://example.com': "], {
       env: { GITROCHI_ASKPASS: "1", GITROCHI_ASKPASS_COUNT: "1", GITROCHI_ASKPASS_HOST_1: "example.com", GITROCHI_ASKPASS_USER_1: "x-access-token", GITROCHI_ASKPASS_PASS_1: "secret" },

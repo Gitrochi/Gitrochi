@@ -1015,5 +1015,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Thay đổi chưa commit trong {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Thay đổi chưa commit trong worktree này. Mở worktree để stage và commit."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Thay đổi chưa commit trong worktree này. Mở worktree để stage và commit.",
+ "Split right": "Chia sang phải",
+ "Split down": "Chia xuống dưới",
+ "Opens another shell next to this one, in the same folder.": "Mở thêm một shell bên cạnh shell này, trong cùng thư mục.",
+ "Opens another shell below this one, in the same folder.": "Mở thêm một shell bên dưới shell này, trong cùng thư mục."
 }

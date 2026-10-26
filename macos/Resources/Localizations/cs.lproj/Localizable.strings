@@ -1037,3 +1037,7 @@
 "// Uncommitted changes in %@" = "// Necommitnuté změny v %1$@";
 "Worktree: %@" = "Worktree: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "Necommitnuté změny v tomto worktree. Pro přípravu a commit ho otevřete.";
+"Split right" = "Rozdělit vpravo";
+"Split down" = "Rozdělit dolů";
+"Opens another shell next to this one, in the same folder." = "Otevře další shell vedle tohoto ve stejné složce.";
+"Opens another shell below this one, in the same folder." = "Otevře další shell pod tímto ve stejné složce.";

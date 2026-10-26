@@ -1041,5 +1041,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Necommitnuté změny v {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Necommitnuté změny v tomto worktree. Pro přípravu a commit ho otevřete."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Necommitnuté změny v tomto worktree. Pro přípravu a commit ho otevřete.",
+ "Split right": "Rozdělit vpravo",
+ "Split down": "Rozdělit dolů",
+ "Opens another shell next to this one, in the same folder.": "Otevře další shell vedle tohoto ve stejné složce.",
+ "Opens another shell below this one, in the same folder.": "Otevře další shell pod tímto ve stejné složce."
 }

@@ -62,6 +62,8 @@ final class RepoStore: Identifiable {
     // MARK: 터미널 패널
     var terminals: [TerminalSession] = []
     var activeTerminalID: UUID?
+    /// How the terminal panel is split into panes of tabs
+    var terminalLayout: TerminalNode?
     var showTerminal = false
 
     // MARK: 로딩 화면
