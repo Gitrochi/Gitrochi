@@ -986,3 +986,13 @@
 "Write" = "Schrijven";
 "Preview" = "Voorbeeld";
 "Nothing to preview" = "Niets om te bekijken";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Sessies die hier worden gestart, draaien in tabbladen van de terminal onderaan, en hun status wordt hier getoond. Klik op een sessie om naar de bijbehorende terminal te gaan.";
+"Click to go to that terminal" = "Klik om naar die terminal te gaan";
+"Go to terminal" = "Naar terminal";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Draait in een nieuw tabblad van de terminal onderaan; de status staat op het tabblad Agents.";
+"The process exited" = "Het proces is beëindigd";
+"The process exited (code %lld)" = "Het proces is beëindigd (code %1$lld)";
+"Run coding agents in" = "Codeeragents uitvoeren in";
+"Gitrochi terminal" = "Gitrochi-terminal";
+"Terminal app" = "Terminal-app";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "In Gitrochi draait een sessie in een nieuw tabblad van de terminal onder de grafiek en stopt die wanneer je de app afsluit. Kies de Terminal-app om sessies zonder Gitrochi te laten doorlopen.";

@@ -1043,3 +1043,13 @@
 "Write" = "書く";
 "Preview" = "プレビュー";
 "Nothing to preview" = "プレビューする内容がありません";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "ここで開始したセッションは下のターミナルのタブで実行され、状態がここに表示されます。セッションをクリックすると、そのターミナルへ移動します。";
+"Click to go to that terminal" = "クリックしてそのターミナルへ移動";
+"Go to terminal" = "ターミナルへ移動";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "下のターミナルの新しいタブで実行され、状態はエージェントタブに表示されます。";
+"The process exited" = "プロセスが終了しました";
+"The process exited (code %lld)" = "プロセスが終了しました (コード %1$lld)";
+"Run coding agents in" = "コーディングエージェントの実行場所";
+"Gitrochi terminal" = "Gitrochi のターミナル";
+"Terminal app" = "ターミナル";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Gitrochi ではグラフ下のターミナルの新しいタブで実行され、アプリを終了するとセッションも終了します。Gitrochi なしでセッションを続けるにはターミナルを選んでください。";

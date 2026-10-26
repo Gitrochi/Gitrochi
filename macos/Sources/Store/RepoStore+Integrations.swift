@@ -43,10 +43,10 @@ extension RepoStore {
         await run(String(localized: "Pruning worktrees…"), ["worktree", "prune"])
     }
 
-    /// 코딩 에이전트(Claude Code·Codex·Gemini CLI)를 Terminal 에서 시작
+    /// 코딩 에이전트(Claude Code·Codex·Gemini CLI)를 아래 터미널(설정에 따라 Terminal 앱)에서 시작
     func startAgent(in path: String, task: String = "", permissionMode: String? = nil, kind: AgentKind? = nil) {
         let center = AgentCenter.shared
-        do { try center.start(kind ?? center.defaultKind, in: path, task: task, permissionMode: permissionMode) } catch { errorMessage = describe(error) }
+        do { try center.start(kind ?? center.defaultKind, in: path, task: task, permissionMode: permissionMode, host: self) } catch { errorMessage = describe(error) }
     }
 
     /// 워크트리마다 변경 파일 수와 원격 대비 ↑↓ (에이전트 패널 카드)

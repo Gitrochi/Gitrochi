@@ -125,7 +125,13 @@ struct TerminalPanel: View {
 
     private func ended(_ s: TerminalSession) -> some View {
         VStack(spacing: 8) {
-            Text(s.exitCode.map { "The shell exited (code \($0))" } ?? "The shell exited")
+            Group {
+                if s.command != nil {
+                    Text(s.exitCode.map { "The process exited (code \($0))" } ?? "The process exited")
+                } else {
+                    Text(s.exitCode.map { "The shell exited (code \($0))" } ?? "The shell exited")
+                }
+            }
                 .foregroundStyle(.secondary)
             HStack {
                 Button("Restart") { s.start(); s.focus() }

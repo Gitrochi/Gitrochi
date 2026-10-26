@@ -241,8 +241,27 @@ final class AgentCenter {
         return AgentKind.allCases.first { tools.path($0.tool) != nil } ?? .claude
     }
 
-    /// 폴더에서 에이전트를 새 Terminal 창으로 띄운다. task 가 있으면 첫 요청으로 보낸다.
-    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil) throws {
+    /// Settings > Tools: where new sessions run
+    enum Place: String, CaseIterable, Identifiable {
+        case app, terminal
+        var id: String { rawValue }
+        static let key = "agentTerminal"
+        static var current: Place { UserDefaults.standard.string(forKey: key).flatMap(Place.init(rawValue:)) ?? .app }
+    }
+
+    private final class TerminalLink {
+        weak var session: TerminalSession?
+        weak var store: RepoStore?
+        init(_ session: TerminalSession, _ store: RepoStore) { self.session = session; self.store = store }
+    }
+
+    /// Sessions running in a tab of a Gitrochi terminal panel; the rest are in Terminal.app
+    @ObservationIgnored private var inApp: [String: TerminalLink] = [:]
+
+    func runsInApp(_ s: AgentSession) -> Bool { inApp[s.id]?.session != nil }
+
+    /// 폴더에서 에이전트를 띄운다 — host 저장소 탭 아래 터미널의 새 탭(기본) 또는 새 Terminal 창. task 가 있으면 첫 요청으로 보낸다.
+    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil) throws {
         guard let exe = ToolStore.shared.path(kind.tool) else {
             throw AIError.notConfigured(String(localized: "Couldn't find \(kind.title). Locate the executable in Settings > Tools or install it."))
         }
@@ -251,13 +270,23 @@ final class AgentCenter {
         let meta: [String: Any] = ["id": id, "kind": kind.rawValue, "path": path, "task": task.trimmed, "mode": permissionMode ?? "",
                                    "created": Date().timeIntervalSince1970]
         try JSONSerialization.data(withJSONObject: meta).write(to: file(id + ".meta"))
-        try Launcher.run(exe, args: kind.arguments(hooks: hooksFile.path, task: task.trimmed, mode: permissionMode), in: path,
-                         env: ["GITROCHI_AGENT_ID": id], pidFile: file(id + ".pid").path)
+        let args = kind.arguments(hooks: hooksFile.path, task: task.trimmed, mode: permissionMode)
+        let env = ["GITROCHI_AGENT_ID": id], pidFile = file(id + ".pid").path
+        if let host, Place.current == .app,
+           let session = host.newTerminal(in: path, command: .init(program: exe, args: args, env: env, title: kind.title, pidFile: pidFile)) {
+            inApp[id] = TerminalLink(session, host)
+        } else {
+            try Launcher.run(exe, args: args, in: path, env: env, pidFile: pidFile)
+        }
         load()
     }
 
-    /// 세션이 돌고 있는 Terminal 탭을 앞으로 가져온다(처음 한 번 Terminal 제어 허용을 묻는다).
+    /// 세션이 돌고 있는 터미널 탭을 앞으로 가져온다(Terminal.app 이면 처음 한 번 Terminal 제어 허용을 묻는다).
     func focus(_ s: AgentSession) {
+        if let link = inApp[s.id], let session = link.session, let store = link.store {
+            store.focusTerminal(session)
+            return
+        }
         guard let pid = s.pid, s.status != .ended else { return }
         Task {
             let r = try? await Shell.run("/bin/ps", ["-o", "tty=", "-p", String(pid)], cwd: directory)
@@ -295,6 +324,7 @@ final class AgentCenter {
         for ext in [".meta", ".state", ".pid", ".state.tmp"] {
             try? FileManager.default.removeItem(at: file(id + ext))
         }
+        inApp[id] = nil
         sessions.removeAll { $0.id == id }
     }
 

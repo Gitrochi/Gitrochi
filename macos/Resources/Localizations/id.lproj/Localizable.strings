@@ -993,3 +993,13 @@
 "Write" = "Tulis";
 "Preview" = "Pratinjau";
 "Nothing to preview" = "Tidak ada yang bisa dipratinjau";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Sesi yang dimulai di sini berjalan di tab terminal di bawah, dan statusnya ditampilkan di sini. Klik sesi untuk membuka terminalnya.";
+"Click to go to that terminal" = "Klik untuk membuka terminal tersebut";
+"Go to terminal" = "Buka terminal";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Berjalan di tab baru pada terminal di bawah; statusnya ditampilkan di tab Agen.";
+"The process exited" = "Proses telah berhenti";
+"The process exited (code %lld)" = "Proses telah berhenti (kode %1$lld)";
+"Run coding agents in" = "Jalankan agen coding di";
+"Gitrochi terminal" = "Terminal Gitrochi";
+"Terminal app" = "Aplikasi Terminal";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Di Gitrochi, sesi berjalan di tab baru terminal di bawah grafik dan berakhir saat Anda keluar dari aplikasi. Pilih aplikasi Terminal agar sesi tetap berjalan tanpa Gitrochi.";

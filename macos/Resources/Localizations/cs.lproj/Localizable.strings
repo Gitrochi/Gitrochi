@@ -1022,3 +1022,13 @@
 "Write" = "Psát";
 "Preview" = "Náhled";
 "Nothing to preview" = "Není co zobrazit";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Relace spuštěné zde běží na kartách terminálu dole a jejich stav se zobrazuje zde. Kliknutím na relaci přejdete do jejího terminálu.";
+"Click to go to that terminal" = "Kliknutím přejdete do daného terminálu";
+"Go to terminal" = "Přejít do terminálu";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Běží na nové kartě terminálu dole; stav se zobrazuje na kartě Agenti.";
+"The process exited" = "Proces skončil";
+"The process exited (code %lld)" = "Proces skončil (kód %1$lld)";
+"Run coding agents in" = "Spouštět kódovací agenty v";
+"Gitrochi terminal" = "Terminál Gitrochi";
+"Terminal app" = "Aplikace Terminál";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "V Gitrochi běží relace na nové kartě terminálu pod grafem a skončí po ukončení aplikace. Chcete-li, aby relace běžely i bez Gitrochi, zvolte aplikaci Terminál.";

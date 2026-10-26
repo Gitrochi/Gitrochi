@@ -1168,3 +1168,13 @@
 "Write" = "쓰기";
 "Preview" = "미리 보기";
 "Nothing to preview" = "미리 볼 내용이 없습니다";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "여기서 시작한 세션은 아래 터미널 탭에서 돌고, 상태가 여기 표시됩니다. 세션을 누르면 그 터미널로 이동합니다.";
+"Click to go to that terminal" = "눌러서 그 터미널로 이동";
+"Go to terminal" = "터미널로 이동";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "아래 터미널의 새 탭에서 실행되고, 상태는 에이전트 탭에 표시됩니다.";
+"The process exited" = "프로세스가 종료되었습니다";
+"The process exited (code %lld)" = "프로세스가 종료되었습니다 (코드 %1$lld)";
+"Run coding agents in" = "코딩 에이전트 실행 위치";
+"Gitrochi terminal" = "Gitrochi 터미널";
+"Terminal app" = "Terminal 앱";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Gitrochi에서는 그래프 아래 터미널의 새 탭에서 실행되고, 앱을 끄면 세션도 끝납니다. Gitrochi 없이도 세션을 계속 돌리려면 Terminal 앱을 고르세요.";

@@ -1042,3 +1042,13 @@
 "Write" = "Написать";
 "Preview" = "Предпросмотр";
 "Nothing to preview" = "Нечего показывать";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Сеансы, запущенные здесь, работают во вкладках терминала внизу, а их статус отображается здесь. Нажмите на сеанс, чтобы перейти к его терминалу.";
+"Click to go to that terminal" = "Нажмите, чтобы перейти к этому терминалу";
+"Go to terminal" = "Перейти к терминалу";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Запускается в новой вкладке терминала внизу; статус отображается на вкладке «Агенты».";
+"The process exited" = "Процесс завершился";
+"The process exited (code %lld)" = "Процесс завершился (код %1$lld)";
+"Run coding agents in" = "Запускать агентов в";
+"Gitrochi terminal" = "Терминал Gitrochi";
+"Terminal app" = "Приложение «Терминал»";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "В Gitrochi сеанс запускается в новой вкладке терминала под графом и завершается при выходе из приложения. Выберите приложение «Терминал», чтобы сеансы продолжались без Gitrochi.";
