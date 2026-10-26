@@ -88,9 +88,10 @@ Windows folder rules (`windows/tests/architecture.test.ts` fails when they are b
 - The Windows app runs on a Mac too: `npx tauri dev` (its data folder is separate, `Gitrochi (Tauri)`).
 - Changed [gitch](../tools/gitch/README.md) (bash 3.2 + git, bundled with the macOS app)? Run `tools/gitch/tests/run.sh` (about three minutes, touches no real configuration). Changed the precise-reference or auto-refresh helpers? Also `python3 tools/gitch/tests/test_scip.py` and `python3 tools/gitch/tests/test_watch.py`; app URL routing is checked with `bash macos/Tools/test-app-route.sh`. CI also validates the JSON Schema contracts (test dependency `jsonschema==4.25.1`; the shipped helpers use only the Python standard library).
 - Changed [gitch-swift-index](../tools/gitch-swift-index/README.md) (Swift, the Xcode index helper next to gitch)? Run `tools/gitch-swift-index/tests/run.sh` (about 30 seconds).
-- The apps and gitch share one release version: `bash tools/check-versions.sh` checks macOS, Windows and the CLI at once (the macOS build and CI run it too).
+- The apps, gitch and the flow engine share one release version: `bash tools/check-versions.sh` checks macOS, Windows, the CLI and the engine at once (the macOS build and CI run it too).
 - Shared Rust: run `cargo fmt --manifest-path crates/Cargo.toml -- --check`, `cargo test --locked --manifest-path crates/Cargo.toml` and `cargo clippy --locked --manifest-path crates/Cargo.toml --all-targets -- -D warnings`. Rust 1.88+ and rustup are recommended. Add `wasm32-unknown-unknown` for Windows; universal macOS builds need both Apple targets. See [the shared core notes](../crates/README.md).
 - `npm ci`, `npm run build`, `npm test` and `npm run dev` in `windows/` generate the core. Run `npm run core` before invoking `tsc` or `vitest` directly. Keep lockfiles; generated WASM, binaries and Cargo target directories stay out of commits.
+- Changed the [flow engine](flow/DESIGN.md) (`tools/gitch-flow`, Rust, bundled with both apps and gitch)? Run `cd tools/gitch-flow && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test` (about a minute, with temporary repositories and HOME, a fake docker CLI and fake GitLab, GitHub and Jenkins servers). Changed its JSON? Update `tools/gitch-flow/schema/` and the app models (macOS `FlowModels.swift`, Windows `entities/flow`) in the same pull request and run `bash macos/Tools/test-flow.sh`. The real Docker tests are `GITCH_FLOW_REAL_DOCKER=1 cargo test --test real_docker -- --ignored` (CI's **Flow engine** job runs them too).
 
 Run the matching macOS feature checks when those areas change (commands below start at the repository root):
 
@@ -106,6 +107,7 @@ Run the matching macOS feature checks when those areas change (commands below st
 | Sidebar and titlebar safe areas | `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
 | Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |
 | Credential access | `bash macos/Tools/test-keychain.sh`, `bash macos/Tools/test-credential-access.sh` |
+| Flows (the app ↔ engine contract) | `bash macos/Tools/test-flow.sh` |
 
 Browser-login tests do not change real authentication, account or clipboard settings. Credential-access tests use fake Security entry points to check silent reads, policy restoration, serialization, responsiveness and invalidation of late reads. Server writes and AI responses are simulated in the feature tests; the corresponding Windows checks run through `npm test` and the app self-test.
 

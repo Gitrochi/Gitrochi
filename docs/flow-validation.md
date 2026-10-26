@@ -1,37 +1,37 @@
-# 흐름 검증 범위
+# Flow validation record
 
-흐름 엔진(`tools/gitch-flow`) · gitch 앞문 · 두 앱의 흐름 화면을 **어디까지 실제로 확인했고 무엇이 아직인지** 적습니다. "확인함"은 이 저장소의 시험이 자동으로 다시 보여 주는 것만 씁니다. 설계는 [flow/DESIGN.md](flow/DESIGN.md).
+What has **actually been checked** for the flow engine (`tools/gitch-flow`), gitch's front door and both apps' Flows screens, and what has not. "Checked" lists only what this repository's tests show again automatically. The design is in [flow/DESIGN.md](flow/DESIGN.md).
 
-## 확인함 (macOS 26.5 · Apple Silicon, cargo 1.99 · Swift 6.3 · Node 22)
+## Checked (macOS 26.5 · Apple Silicon, cargo 1.99 · Swift 6.3 · Node 22)
 
-| 무엇 | 어떻게 | 결과 |
+| What | How | Result |
 |---|---|---|
-| 엔진 단위 시험 | `cargo test --lib` — YAML 부분집합 · 스펙 검증(줄 번호) · 표현식과 셸 인용 · 판정 규칙 · 보고서 해석(JUnit · TRX · go test · jest · TAP · libtest) · 마스킹 · 서명 · 되돌림 범위 · 시간대 · 버전 비교 · Docker 인자 · HTTP 리다이렉트 | 93 통과 |
-| 엔진 통합 시험 | `cargo test` — 실행 파일을 임시 저장소 · 임시 HOME 에서(실제 사용자 설정 · 키체인을 건드리지 않음) | 73 통과(아래) |
-| ├ CLI | 신뢰(사람 · AI · 스크립트), 서명 · 위조 감지, 이벤트 seq, failFast · 실패 갈래, 0개 · 거짓말 · 옛 보고서 함정, flaky 정책, 멱등 키, **취소 시 손자 프로세스까지 종료**, 셸 인용(주입 방지), init, CI 결과 계약, export · schema, 게이트 켜고 끄기 | 14 |
-| ├ 흐름 | 영향 선택(이름 관례 · 전역 파일 · 기본 브랜치 기준 · 스모크), `changed()` 기준, 캐시 재생 · 무효화, 프로세스 서비스 + HTTP 스모크 · 정리, 준비 안 되는 서비스, 가짜 docker CLI 로 서비스 라벨 · 네트워크 · 정리 · 마스킹, 조합(matrix) | 10 |
-| ├ 원격 CI | 가짜 GitLab · GitHub · Jenkins · HTTP CI: 상관 ID, **응답을 잃은 트리거를 다시 보내지 않음**(찾으면 이어 봄 · 못 찾으면 CI-01), 외부 취소 CI-04, 계약 없음 CI-03, 계약 실패 CI-02, 로그 표식, 속도 제한(`Retry-After` · `x-ratelimit-reset`), 마감 → 원격 취소 CI-05, 잘못된 토큰 CONN-02, 허용 목록 CI-07, **다른 호스트로 가는 리다이렉트에 토큰이 실리지 않음**(바꾸기 전 코드는 이 시험에서 실패), Jenkins 큐 · crumb · 내부 주소 다시 쓰기 | 19 |
-| ├ 되돌림 | 범위 node · flow, 검사 실패와 onCheckFailure, 되돌림 실패 → hold → GUARD-02 → 사람이 풂(AI 거부), 취소 뒤 되돌림, 언제나 도는 정리, 되돌림 스크립트 셸 인용, **강제 종료된 엔진의 실행 닫기**(바꾼 흔적 → hold, 없으면 EXEC-06) | 10 |
-| ├ Docker 실행 위치 · 블록 | 가짜 docker CLI(컨테이너 명령을 호스트에서 실행): 라벨 · 같은 경로 마운트 · 환경을 이름으로만 · 스크립트가 명령줄에 없음, 환경의 executor, Docker 꺼짐 → 그 노드만 DOCKER-01, docker.build(태그 · 빌드 인자 이름만 · 비밀 값은 CLI 환경으로) · push · run(125 구분) | 6 |
-| ├ 시험 환경 블록 | mock.http(경로 · 파일 · 요청 기록), 장애 스위치 켜고 끄기, check.mock 호출 수, fixture.seed(정리 · keep), gate.window(사전 점검 거부), check.log | 6 |
-| └ 운영 블록 | setup.python(버전 비교 · 잠금 파일 그대로면 설치 건너뜀), gitch.preflight · graph.check(가짜 gitch), 알림이 결과를 바꾸지 않음(웹훅 연결 · 토큰), deploy.compose(교체 · 실패 · 건강 확인 실패 → 이전 이미지로 · 비교 후 교체 거부 · 운영 보호) | 8 |
-| 정적 검사 | `cargo fmt --check` · `cargo clippy --all-targets -- -D warnings` · `shellcheck -S warning`(gitch · install.sh · build.sh · 시험) | 경고 0 |
-| gitch 전체 시험 | `tools/gitch/tests/run.sh` — 앞문 위임 · preflight 의 FLOW 줄 · **실제 push 를 게이트가 통과/차단** · guard 규칙(게이트 켜고 끄기 거부 포함) · 설치기 · self-update 의 엔진 받기(체크섬 · 실행 확인 · 망가진 파일 거부) · 버전 검사 | 213 통과 |
-| 맥 앱 | `macos/build.sh` 로 앱 빌드(엔진이 `Contents/MacOS` 에 서명되어 들어가고 Resources 에서 링크, 앱의 gitch 로 `gitch flow version`), 앱 소스 전체 타입 검사, **`macos/Tools/test-flow.sh`: 실제 엔진의 list · plan · gate · 오류 봉투 · 분리 실행 · 이벤트(줄 중간에서 끊어 넣기) · 실행 목록 · 기록 · init 을 앱 모델로 읽음** | 통과 |
-| Windows 앱(맥에서) | `npx tsc --noEmit` · `npx vitest run`(흐름 이벤트 읽기 · 오류 봉투 · 확인 조건 4건 포함, 폴더 구조 규칙) · `npx vite build` · `src-tauri` 의 `cargo check`(엔진 없이 — 엔진 자원은 `tauri.windows.conf.json` 에만 있어 다른 OS 빌드가 막히지 않음, 기본 설정에 두면 이 검사가 실패) | 130 통과 |
+| Engine unit tests | `cargo test --lib`: the YAML subset, spec validation (line numbers), expressions and shell quoting, verdict rules, report parsing (JUnit, TRX, go test, jest, TAP, libtest), masking, signatures, rollback scopes, time zones, version comparison, Docker arguments, HTTP redirects | 93 passed |
+| Engine integration tests | `cargo test`: the executable in a temporary repository and HOME (real user settings and the keychain are never touched) | 73 passed (below) |
+| ├ CLI | Trust (person, AI, script), signatures and forgery detection, event seq, failFast and failure branches, the zero-tests, lying-exit-code and stale-report traps, flaky policy, idempotency keys, **cancel ends grandchild processes too**, shell quoting (no injection), init, the CI result contract, export and schema, switching the gate | 14 |
+| ├ Flows | Affected selection (naming conventions, global files, default-branch base, smoke), the `changed()` base, cache replay and invalidation, a process service with an HTTP smoke test and cleanup, a service that never gets ready, service labels, network, cleanup and masking through a fake docker CLI, matrix | 10 |
+| ├ Remote CI | Fake GitLab, GitHub, Jenkins and HTTP CI: correlation IDs, **a trigger whose response was lost is never resent** (followed when found, CI-01 when not), external cancel CI-04, missing contract CI-03, failed contract CI-02, log markers, rate limits (`Retry-After`, `x-ratelimit-reset`), deadline → remote cancel CI-05, wrong token CONN-02, allow list CI-07, **no token on a redirect to another host** (the code before the fix fails this test), the Jenkins queue, crumb and internal address rewriting | 19 |
+| ├ Rollback | Scopes node and flow, check failures and onCheckFailure, failed rollback → hold → GUARD-02 → released by a person (AI refused), rollback after cancel, cleanup that always runs, shell quoting in undo scripts, **closing runs of a killed engine** (traces of changes → hold, otherwise EXEC-06) | 10 |
+| ├ Docker executor and blocks | A fake docker CLI (runs the container's command on the host): labels, same-path mounts, environment by name only, no script on the command line, an environment's executor, Docker down → DOCKER-01 for that node only, docker.build (tag, build arguments by name only, secret values through the CLI's environment), push, run (125 told apart) | 6 |
+| ├ Test environment blocks | mock.http (paths, files, request log), fault switches on and off, check.mock call counts, fixture.seed (cleanup, keep), gate.window (refused in preflight), check.log | 6 |
+| └ Operations blocks | setup.python (version comparison, install skipped while the lock file is unchanged), gitch.preflight and graph.check (a fake gitch), notifications never change the result (webhook connection, token), deploy.compose (replace, failure and failed health check → previous image, compare-then-replace refusal, production guard) | 8 |
+| Static checks | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `shellcheck -S warning` (gitch, install.sh, build.sh, tests) | 0 warnings |
+| gitch full suite | `tools/gitch/tests/run.sh`: front-door hand-off, the FLOW line in preflight, **the gate letting a real push through or blocking it**, guard rules (including refusing to switch the gate), the installer and `self-update` fetching the engine (checksum, run check, broken file refused), version checks | 213 passed |
+| macOS app | App build with `macos/build.sh` (the engine signed into `Contents/MacOS`, linked from Resources, `gitch flow version` through the app's gitch), a type check of all app sources, **`macos/Tools/test-flow.sh`: list, plan, gate, the error envelope, a detached run, events (fed cut mid-line), the run list, records and init from the real engine, read with the app's models** | Passed |
+| Windows app (on macOS) | `npx tsc --noEmit`, `npx vitest run` (including 4 for reading flow events, the error envelope, confirmation rules, plus the folder-structure rules), `npx vite build`, `cargo check` in `src-tauri` (without the engine: its resource is only in `tauri.windows.conf.json`, so other systems' builds are not blocked; in the base config this check fails) | 130 passed |
 
-## 아직 확인하지 않음
+## Not checked yet
 
-| 무엇 | 왜 · 어떻게 확인할지 |
+| What | Why, and how to check it |
 |---|---|
-| **Windows 에서 엔진 컴파일 · 시험** | 이 맥에는 Windows 대상 Rust 표준 라이브러리가 없습니다. 작업 개체(Job Object) · 콘솔 신호 · 프로세스 확인 코드는 Windows 에서 빌드된 적이 없습니다. → PR 의 「Flow engine」 작업(windows-latest: fmt · clippy · 시험 · gitch 앞문 시험)과 「Windows」 작업(Windows 전용 설정 `tauri.windows.conf.json` 으로 엔진 빌드 · 설치 파일에 넣기 · 포터블 zip · 자동 점검의 흐름 단계)이 처음으로 확인합니다. |
-| **Linux 에서 엔진 시험 · 정적 링크 빌드** | 같은 이유. → 「Flow engine」 작업(ubuntu-latest) · 태그 실행의 musl 빌드. |
-| **실제 Docker** | 이 맥의 Docker 데몬이 꺼져 있어 `tests/real_docker.rs`(실제 alpine 컨테이너에서 실행 · 파일 소유자 · nginx 서비스 · 컨테이너끼리 별칭 · 라벨로 정리 확인)는 건너뛰었습니다. 가짜 docker CLI 시험은 인자 · 순서 · 정리만 봅니다. → 「Flow engine」 의 「실제 Docker 시험」 작업. compose.up 은 실제 compose 로 돌린 적이 없습니다. |
-| **실제 GitLab · GitHub · Jenkins** | 가짜 서버로 운전 규칙을 확인했지만 실제 서버의 응답 모양 · 권한 · 산출물 경로(특히 GitHub 산출물은 zip 이라 지금은 로그 표식으로 판정) · Jenkins 플러그인 차이는 실제로 보지 않았습니다. → 연결을 만들고 `gitch flow export` 로 만든 CI 파일로 한 번씩. |
-| **앱 화면을 눈으로** | 맥은 빌드 · 타입 검사 · 계약 시험까지, Windows 는 타입 검사 · 단위 시험까지 했고 화면을 띄워 보지는 않았습니다(라이트 · 다크 · VoiceOver 포함). Windows 자동 점검에 흐름 단계(앱에 든 엔진으로 신뢰 · 분리 실행 · 흐름 탭 표시)를 더했고 CI 에서 처음 돕니다. |
-| **맥 유니버설 · 배포본 서명** | 개발 빌드는 이 맥의 arm64 만. `build.sh release`(aarch64 + x86_64 lipo)는 CI 의 태그 실행에서 처음 돕니다. |
-| **OS 비밀 보관소** | 시험은 `GITCH_FLOW_NO_KEYSTORE=1` 로 키체인 · 자격 증명 관리자를 건드리지 않습니다. `connect add`(토큰 저장) · 앱 계정 토큰(`app:`) 읽기는 손으로 확인해야 합니다. |
-| **원격 SSH 배포** | `deploy.compose` 의 `host:`(DOCKER_HOST=ssh://)는 가짜 docker 로 인자만 봤습니다. |
-| **시간대 이름** | `gate.window` 의 IANA 이름(`Asia/Seoul`)은 시스템 `date` 로 풀어 macOS 에서만 확인했습니다. 고정 차이(`+09:00`)는 모든 운영체제에서 같습니다. |
-| **Gitrochi 자신의 흐름** | `.gitch/flow.yml` 은 검증(`gitch flow validate`) · 계획까지 확인했습니다. 실행에는 사람의 신뢰 승인(`gitch flow trust`)이 필요해 아직 돌리지 않았습니다. |
-| **gitch 앞문의 시작 비용** | 특히 Windows Git Bash 에서의 측정은 아직 없습니다. |
+| **The engine compiled and tested on Windows** | This Mac has no Rust standard library for Windows targets. The Job Object, console signal and process-check code has never been built on Windows. → The pull request's **Flow engine** job (windows-latest: fmt, clippy, tests, gitch front-door tests) and **Windows** job (the engine built through the Windows-only `tauri.windows.conf.json` and put into the installer, the portable zip, the self-test's flow step) check it first. |
+| **Engine tests and the static build on Linux** | Same reason. → The **Flow engine** job (ubuntu-latest) and the musl build on tag runs. |
+| **Real Docker** | The Docker daemon on this Mac was off, so `tests/real_docker.rs` (running in a real alpine container, file owner, an nginx service, containers reaching each other by alias, label cleanup) was skipped. The fake docker CLI tests check only arguments, order and cleanup. → The **Real Docker tests** job in **Flow engine**. compose.up has never run against a real compose. |
+| **Real GitLab, GitHub and Jenkins** | The driving rules were checked against fake servers, but not real servers' response shapes, permissions, artifact paths (GitHub artifacts are zip files, so the verdict currently comes from the log marker) or Jenkins plugin differences. → Make a connection and run each once with a CI file from `gitch flow export`. |
+| **The app screens by eye** | macOS: build, type check and contract test; Windows: type check and unit tests. The screens have not been looked at (light, dark, VoiceOver included). The Windows self-test has a new flow step (trust, a detached run and the Flows tab with the bundled engine) that first runs in CI. |
+| **Universal macOS build and release signing** | Development builds are arm64 only on this Mac. `build.sh release` (aarch64 + x86_64 with lipo) first runs on a CI tag run. |
+| **OS secret stores** | The tests set `GITCH_FLOW_NO_KEYSTORE=1` and never touch the Keychain or the Credential Manager. `connect add` (storing a token) and reading app account tokens (`app:`) need a manual check. |
+| **Remote deployment over SSH** | `deploy.compose` with `host:` (DOCKER_HOST=ssh://) was checked only for its arguments with a fake docker. |
+| **Time zone names** | IANA names in `gate.window` (`Asia/Seoul`) are resolved with the system `date` and were checked on macOS only. Fixed offsets (`+09:00`) are the same on every system. |
+| **Gitrochi's own flows** | `.gitch/flow.yml` was validated (`gitch flow validate`) and planned. Running it needs a person's trust approval (`gitch flow trust`), so it has not run yet. |
+| **The front door's start-up cost** | Not measured yet, especially in Git Bash on Windows. |

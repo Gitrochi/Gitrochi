@@ -50,7 +50,7 @@ Never write or tick CLA assent on someone else's behalf. The checklist in the pr
 - After cloning, run `git config core.hooksPath .githooks` once: the hooks check the Git rules when you commit and push.
 - The Windows app runs on a Mac too: `npx tauri dev` (its data folder is separate, `Gitrochi (Tauri)`).
 - Changed a screen? Check it with the demo repository (`docs/make-demo-repo.sh <folder>`) and attach light and dark screenshots to the pull request.
-- The tests for the bundled helpers (gitch, gitch-swift-index) and the version check are in [docs/code-style.md](docs/code-style.md#tests-and-verification).
+- The tests for the bundled helpers (gitch, gitch-swift-index, the flow engine gitch-flow) and the version check are in [docs/code-style.md](docs/code-style.md#tests-and-verification).
 
 ## Shared core and verification
 
