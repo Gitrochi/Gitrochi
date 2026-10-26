@@ -270,6 +270,7 @@ pub fn main(raw: Vec<String>) -> i32 {
         "connect" => crate::connect::cmd_connect(&out, &args),
         "ci" => crate::ci::cmd_ci(&out, &args),
         "gate" => cmd_gate(&out, &args),
+        "_names" => cmd_names(&args),
         other => out.fail(
             "PLAN-01",
             1,
@@ -723,7 +724,8 @@ pub fn run_options(args: &Args, spec: &Spec, actor: &str) -> RunOptions {
         } else {
             None
         },
-        yes: args.has("--yes"),
+        // AI 실행 주체의 --yes 는 사람 확인을 대신하지 못한다.
+        yes: args.has("--yes") && !trust::is_ai(actor),
         interactive: std::io::stdin().is_terminal()
             && std::io::stderr().is_terminal()
             && std::env::var("GITCH_FLOW_DETACHED").is_err(),
@@ -1545,6 +1547,19 @@ fn cmd_gc(out: &Out, args: &Args) -> i32 {
                 )
             )
         );
+    }
+    0
+}
+
+/// 자동완성용 이름 목록(흐름 · 스위트). 오류는 조용히 빈 목록.
+fn cmd_names(args: &Args) -> i32 {
+    let Some(root) = root_of(args) else { return 0 };
+    let Ok(spec) = spec::load(&root) else {
+        return 0;
+    };
+    match args.pos.first().map(|s| s.as_str()) {
+        Some("suites") => spec.suites.iter().for_each(|s| println!("{}", s.name)),
+        _ => spec.flows.iter().for_each(|f| println!("{}", f.name)),
     }
     0
 }
