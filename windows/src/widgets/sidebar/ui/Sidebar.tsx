@@ -9,12 +9,13 @@ import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
 import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
+import { IssueListSection } from "./IssueListSection";
 import { PullRequestSection } from "./PullRequestSection";
 import { Section, SectionFlyout } from "./Section";
 import { WorktreeSection } from "./WorktreeSection";
 import "./sidebar.css";
 
-export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs";
+export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs" | "issues";
 
 export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: SidebarSectionID }) {
   useObserve(store);
@@ -109,6 +110,8 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
   return (
     <SharedStack className="side-scroll">
       {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
+
+      {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
 
       {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
         <Section id="pinned" title={t("Pinned")}>

@@ -1,9 +1,12 @@
 import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
+import type { SheetKind } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
 import { accounts } from "@/entities/hosting";
-import { AccountWorkspacePanel } from "@/pages/repo";
-import { WorkspaceHomePanel, IssuesWorkspacePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { AccountWorkspacePanel, IssuesWorkspace } from "@/pages/repo";
+import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { IssueListSection } from "@/widgets/sidebar";
+import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -20,6 +23,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
   const profile = { id: "workspace-fixture", provider: "github" as const, server: "https://github.com", username: "fixture", name: null, avatarURL: null };
   const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" } };
   const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
+  // read through a function: buttons set the sheet behind TypeScript's narrowing
+  const sheet = (): SheetKind | null => store.sheet;
   const click = async (label: string) => {
     const b = [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent?.trim() === t(label) && !b.disabled);
     check(b, `Missing enabled button: ${label}`);
@@ -98,19 +103,46 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(host.textContent?.includes("Fixture global work"), "Global assigned requests missing");
     reset();
     store.target = repositoryTarget;
-    await mount(<IssuesWorkspacePanel store={store} />);
-    check(host.textContent?.includes("Fixture issue"), "Issues page missing server issues");
-    await click("New issue");
-    const title = host.querySelector<HTMLInputElement>("label input")!;
-    await change(title, "Created fixture issue");
-    await click("Save");
-    check(writes === 2, "Issue create or mark-read writes did not reach the fixture server");
-    check(host.textContent?.includes("Fixture comment"), "Created issue did not open its conversation");
+    store.path = "C:/fixture/repo";
+    // the repository sidebar's issue list: a row opens the Issues page with that issue
+    await mount(<IssueListSection store={store} openSettings={() => {}} />);
+    check(host.querySelector('.side-row[data-issue="7"]')?.textContent?.includes("Fixture issue"), "The sidebar issue list did not load");
+    host.querySelector<HTMLElement>('.side-row[data-issue="7"]')!.click(); await pause();
+    check(store.destination === "issues" && store.inboxDetail?.item.number === 7, "A sidebar issue did not open on the Issues page");
+    reset();
+    // the page keeps the issue that was just opened and shows it like a pull request
+    await mount(<IssuesWorkspace store={store} openSettings={() => {}} />);
+    check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
+    check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    const before = writes;
+    const composer = host.querySelector<HTMLTextAreaElement>(`.issue-detail textarea[aria-label="${t("Comment")}"]`)!;
+    await change(composer, "Fixture reply");
+    await click("Comment");
+    check(writes === before + 1, "The comment composer did not post");
+    await click("Close issue…");
+    check(store.confirm?.destructive === false, "Closing an issue must ask first");
+    store.confirm = null;
+    // new and edited issues use the editor dialog
+    host.querySelector<HTMLButtonElement>(`button[aria-label="${t("New issue")}"]`)!.click(); await pause();
+    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === undefined, "New issue did not open the editor dialog");
+    const dialog = document.createElement("div"); document.body.append(dialog);
+    let editor = createRoot(dialog);
+    const editIn = async (current: SheetKind | null, value: string) => {
+      if (current?.kind !== "issueEditor") throw new Error("Missing issue editor");
+      let closed = false;
+      editor.render(<IssueEditorSheet store={store} close={() => { closed = true; }} number={current.number} title={current.title} body={current.body} />); await pause();
+      await change(dialog.querySelector<HTMLInputElement>(`input[aria-label="${t("Title")}"]`)!, value);
+      [...dialog.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent?.trim() === t("Save"))!.click();
+      for (let i = 0; i < 40 && !closed; i++) await pause();
+      editor.unmount(); editor = createRoot(dialog);
+      return closed;
+    };
+    check(await editIn(sheet(), "Created fixture issue") && writes === before + 2, "Creating an issue did not reach the fixture server");
+    store.sheet = null;
     await click("Edit issue");
-    const edit = host.querySelector<HTMLInputElement>("label input")!;
-    await change(edit, "Edited fixture issue");
-    await click("Save");
-    check(writes === 3, "Issue edit did not reach the fixture server");
+    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
+    check(await editIn(sheet(), "Edited fixture issue") && writes === before + 3, "Editing an issue did not reach the fixture server");
+    store.sheet = null; dialog.remove();
     reset();
     await mount(<ActionsWorkspacePanel store={store} />);
     await change(host.querySelector('select[aria-label="' + t("Job") + '"]')!, "9");
@@ -118,7 +150,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(host.querySelector("pre")?.textContent?.includes("build passed"), "Job log preview missing");
     await click("Copy redacted log");
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
-    return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, releases section and no gists, account-only work, issue create/edit/conversation and CI bounded redacted log passed"];
+    return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, releases section and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {

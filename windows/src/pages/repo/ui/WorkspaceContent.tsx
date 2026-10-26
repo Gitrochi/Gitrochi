@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
-import { Inspector } from "@/widgets/inspector";
-import { FlowPanel, PullRequestSection } from "@/widgets/sidebar";
+import { Inspector, IssueDetail } from "@/widgets/inspector";
+import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
-import { WorkspaceHomePanel, IssuesWorkspacePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -20,12 +20,25 @@ export function WorkspaceContent({ store, openSettings }: { store: RepoStore; op
     case "rebase": return <RebaseWorkbenchPanel store={store} />;
     case "code": return <RepositoryCodePanel store={store} />;
     case "pullRequests": return <PullRequestsWorkspace {...props} />;
-    case "issues": return <IssuesWorkspacePanel {...props} />;
+    case "issues": return <IssuesWorkspace {...props} />;
     case "actions": return <ActionsWorkspacePanel {...props} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
     default: return null;
   }
+}
+
+/** Issues: the shared issue list on the left, the open issue on the right, like the Pull requests page (macOS: IssuesWorkspacePanel) */
+export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
+  useObserve(store);
+  if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={openSettings}>{t("Connect account…")}</Button></div>;
+  const detail = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail : null;
+  return <div className="workspace-pr-page">
+    <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
+    <div className="workspace-pr-detail col">
+      {detail ? <IssueDetail store={store} detail={detail} /> : <Empty title={t("Select an issue")} detail={t("Search the list, then read the conversation and reply here.")} />}
+    </div>
+  </div>;
 }
 
 function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {

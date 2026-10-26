@@ -1,4 +1,4 @@
-import { Archive, Cloud, Folder, GitBranch, GitPullRequest, PanelLeftOpen, Pin, Tag as TagIcon } from "lucide-react";
+import { Archive, CircleDot, Cloud, Folder, GitBranch, GitPullRequest, PanelLeftOpen, Pin, Tag as TagIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
@@ -18,6 +18,7 @@ export function SidebarRail({ store, openSettings }: { store: RepoStore; openSet
       title: t(store.target.provider === "gitlab" ? "Merge requests" : "Pull requests"),
       count: store.prState.kind === "loaded" ? store.pullRequests.length : null,
     });
+    items.push({ id: "issues", icon: <CircleDot size={16} />, title: t("Issues"), count: store.issueState.kind === "loaded" ? store.issues.length : null });
   }
   const pinned = store.localBranches.filter((b) => store.isPinned(b)).length;
   if (pinned) items.push({ id: "pinned", icon: <Pin size={16} />, title: t("Pinned"), count: pinned });

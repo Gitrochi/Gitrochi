@@ -1508,7 +1508,6 @@
   "Invalid notification.": "올바르지 않은 알림입니다.",
   "Issue URL": "이슈 주소",
   "Issue boards": "이슈 보드",
-  "Issue state": "이슈 상태",
   "Issues": "이슈",
   "Issues and mentions": "이슈와 멘션",
   "Issues and mentions…": "이슈와 멘션…",
@@ -2053,5 +2052,14 @@
   "No merge requests match this filter.": "이 필터에 맞는 머지 리퀘스트가 없습니다.",
   "Open in Pull requests": "풀 리퀘스트 화면에서 열기",
   "Open in Merge requests": "머지 리퀘스트 화면에서 열기",
-  "Merged": "병합됨"
+  "Merged": "병합됨",
+  "Open in Issues": "이슈 화면에서 열기",
+  "No issues match this filter.": "이 필터에 맞는 이슈가 없습니다.",
+  "Issue #{0}": "이슈 #{0}",
+  "Refresh conversation": "대화 새로 고침",
+  "State": "상태",
+  "Write a comment (Markdown)": "댓글 쓰기 (Markdown)",
+  "Select an issue": "이슈를 선택하세요",
+  "Search the list, then read the conversation and reply here.": "목록에서 찾은 뒤 여기서 대화를 읽고 답하세요.",
+  "Edit issue #{0}": "이슈 #{0} 수정"
 }
