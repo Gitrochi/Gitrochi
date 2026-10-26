@@ -31,27 +31,31 @@ struct CommitRow: View {
         let groups = RefGroup.group(refs)
         HStack(spacing: 0) {
             // 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수), 그래프 동그라미까지 이어지는 선
-            RefColumn(groups: groups, tint: tint, store: store)
-                .frame(width: columns.ref, height: GraphMetrics.rowHeight)
-            GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
-                      hasRefs: !groups.isEmpty, author: c.author, email: c.email)
-                .frame(width: graphWidth, height: GraphMetrics.rowHeight)
-                // 좁아서 그래프 칸이 잘리면 오른쪽 끝을 흐리게
-                .frame(width: columns.graph, alignment: .leading)
-                .clipped()
-                .mask {
-                    LinearGradient(stops: [.init(color: .black, location: 0),
-                                           .init(color: .black, location: columns.graph < graphWidth ? max(0, 1 - 16 / columns.graph) : 1),
-                                           .init(color: columns.graph < graphWidth ? .clear : .black, location: 1)],
-                                   startPoint: .leading, endPoint: .trailing)
-                }
-                .background(alignment: .leading) {
-                    // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
-                    Rectangle()
-                        .fill(tint.opacity(selected ? 0.4 : 0.1))
-                        .frame(height: Self.bandHeight)
-                        .padding(.leading, min(GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5), columns.graph))
-                }
+            if columns.ref > 0 {
+                RefColumn(groups: groups, tint: tint, store: store)
+                    .frame(width: columns.ref, height: GraphMetrics.rowHeight)
+            }
+            if columns.graph > 0 {
+                GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
+                          hasRefs: !groups.isEmpty, author: c.author, email: c.email)
+                    .frame(width: graphWidth, height: GraphMetrics.rowHeight)
+                    // 좁아서 그래프 칸이 잘리면 오른쪽 끝을 흐리게
+                    .frame(width: columns.graph, alignment: .leading)
+                    .clipped()
+                    .mask {
+                        LinearGradient(stops: [.init(color: .black, location: 0),
+                                               .init(color: .black, location: columns.graph < graphWidth ? max(0, 1 - 16 / columns.graph) : 1),
+                                               .init(color: columns.graph < graphWidth ? .clear : .black, location: 1)],
+                                       startPoint: .leading, endPoint: .trailing)
+                    }
+                    .background(alignment: .leading) {
+                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
+                        Rectangle()
+                            .fill(tint.opacity(selected ? 0.4 : 0.1))
+                            .frame(height: Self.bandHeight)
+                            .padding(.leading, min(GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5), columns.graph))
+                    }
+            }
             // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
             HStack(spacing: 6) {
                 Rectangle()

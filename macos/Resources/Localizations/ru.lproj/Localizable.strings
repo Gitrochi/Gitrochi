@@ -162,7 +162,6 @@
 "Branch being merged" = "Сливаемая ветка";
 "Branch name" = "Имя ветки";
 "Branch to check out" = "Ветка для переключения";
-"Branches hidden from the graph — right-click to show again" = "Ветки, скрытые из графа, — щёлкните правой кнопкой, чтобы снова показать";
 "Branches pinned to the top" = "Ветки, закреплённые вверху";
 "Check again with fetch" = "Проверить снова с fetch";
 "Check this repository with gitch again" = "Снова проверять этот репозиторий через gitch";
@@ -1061,3 +1060,7 @@
 "Split down" = "Разделить вниз";
 "Opens another shell next to this one, in the same folder." = "Открывает ещё одну оболочку рядом с этой, в той же папке.";
 "Opens another shell below this one, in the same folder." = "Открывает ещё одну оболочку под этой, в той же папке.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Столбцы";
+"Time" = "Время";

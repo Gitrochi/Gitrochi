@@ -152,7 +152,6 @@
 "Branch being merged" = "Branch die wordt gemerged";
 "Branch name" = "Branchnaam";
 "Branch to check out" = "Uit te checken branch";
-"Branches hidden from the graph — right-click to show again" = "Branches die in de graaf verborgen zijn — klik met rechts om ze weer te tonen";
 "Branches pinned to the top" = "Bovenaan vastgezette branches";
 "Check again with fetch" = "Opnieuw controleren met fetch";
 "Check this repository with gitch again" = "Deze repository weer met gitch controleren";
@@ -1005,3 +1004,7 @@
 "Split down" = "Omlaag splitsen";
 "Opens another shell next to this one, in the same folder." = "Opent nog een shell naast deze, in dezelfde map.";
 "Opens another shell below this one, in the same folder." = "Opent nog een shell onder deze, in dezelfde map.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolommen";
+"Time" = "Tijd";

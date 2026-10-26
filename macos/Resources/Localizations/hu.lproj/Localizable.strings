@@ -159,7 +159,6 @@
 "Branch being merged" = "Egyesítendő ág";
 "Branch name" = "Ág neve";
 "Branch to check out" = "Ág, amelyre átvált";
-"Branches hidden from the graph — right-click to show again" = "A gráfból elrejtett ágak — jobb kattintással újra megjeleníthetők";
 "Branches pinned to the top" = "Felülre rögzített ágak";
 "Check again with fetch" = "Újraellenőrzés fetch-csel";
 "Check this repository with gitch again" = "A tároló újbóli ellenőrzése gitch-csel";
@@ -1044,3 +1043,7 @@
 "Split down" = "Felosztás lefelé";
 "Opens another shell next to this one, in the same folder." = "Újabb shellt nyit emellett, ugyanabban a mappában.";
 "Opens another shell below this one, in the same folder." = "Újabb shellt nyit ez alatt, ugyanabban a mappában.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Oszlopok";
+"Time" = "Idő";

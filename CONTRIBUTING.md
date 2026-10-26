@@ -9,7 +9,7 @@ The rules live in `docs/`. Coding agents read the same rules from [AGENTS.md](AG
 - [ChoMnSeong](https://github.com/ChoMnSeong)
 - [jjunhaa0211](https://github.com/jjunhaa0211) — gitch CLI, multi-language structure analysis, app integration and verification
 
-The existing copyright notices are preserved in [LICENSE](LICENSE) and in the [original MIT text](LICENSE-MIT). The licensing contacts on record are ChoMnSeong <chemins60217@gmail.com> and jjunhaa0211 <goodjunha@gmail.com>. A contact having been provided does not by itself confirm the rights to every contribution or consent to a license change.
+The existing copyright notices are preserved in [LICENSE](LICENSE); the notice that applies to earlier code is in the [combined notices](THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material). The licensing contacts on record are ChoMnSeong <chemins60217@gmail.com> and jjunhaa0211 <goodjunha@gmail.com>. A contact having been provided does not by itself confirm the rights to every contribution or consent to a license change.
 
 ## Use, distribution and the official contribution path
 

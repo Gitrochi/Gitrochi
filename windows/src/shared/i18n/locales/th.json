@@ -100,7 +100,6 @@
  "Branch being merged": "แบรนช์ที่กำลังเมิร์จเข้ามา",
  "Branch name": "ชื่อแบรนช์",
  "Branch to check out": "แบรนช์ที่จะเช็กเอาต์",
- "Branches hidden from the graph — right-click to show again": "แบรนช์ที่ซ่อนจากกราฟ — คลิกขวาเพื่อแสดงอีกครั้ง",
  "Branches pinned to the top": "แบรนช์ที่ปักหมุดไว้ด้านบน",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi ใช้ git ที่ติดตั้งในพีซีเครื่องนี้ ติดตั้ง Git for Windows หรือระบุตำแหน่ง git.exe หากมีอยู่แล้ว",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} เป็นเวอร์ชันล่าสุดแล้ว",
@@ -1059,5 +1058,7 @@
  "Split right": "แบ่งไปทางขวา",
  "Split down": "แบ่งลงด้านล่าง",
  "Opens another shell next to this one, in the same folder.": "เปิดเชลล์อีกตัวข้างตัวนี้ในโฟลเดอร์เดียวกัน",
- "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน"
+ "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน",
+ "Columns": "คอลัมน์",
+ "Time": "เวลา"
 }

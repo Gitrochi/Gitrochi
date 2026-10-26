@@ -153,7 +153,6 @@
 "Branch being merged" = "Branch yang di-merge";
 "Branch name" = "Nama branch";
 "Branch to check out" = "Branch yang akan di-checkout";
-"Branches hidden from the graph — right-click to show again" = "Branch yang disembunyikan dari grafik — klik kanan untuk menampilkannya lagi";
 "Branches pinned to the top" = "Branch yang disematkan di atas";
 "Check again with fetch" = "Periksa ulang dengan fetch";
 "Check this repository with gitch again" = "Periksa repositori ini dengan gitch lagi";
@@ -1012,3 +1011,7 @@
 "Split down" = "Bagi ke bawah";
 "Opens another shell next to this one, in the same folder." = "Membuka shell lain di samping yang ini, di folder yang sama.";
 "Opens another shell below this one, in the same folder." = "Membuka shell lain di bawah yang ini, di folder yang sama.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolom";
+"Time" = "Waktu";

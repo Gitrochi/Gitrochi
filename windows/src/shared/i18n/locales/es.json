@@ -98,7 +98,6 @@
  "Branch being merged": "Rama que se fusiona",
  "Branch name": "Nombre de la rama",
  "Branch to check out": "Rama para hacer checkout",
- "Branches hidden from the graph — right-click to show again": "Ramas ocultas del grafo: haz clic derecho para volver a mostrarlas",
  "Branches pinned to the top": "Ramas fijadas arriba",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi usa el git instalado en este equipo. Instala Git for Windows o localiza git.exe si ya lo tienes.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} es la versión más reciente.",
@@ -1041,5 +1040,7 @@
  "Split right": "Dividir a la derecha",
  "Split down": "Dividir hacia abajo",
  "Opens another shell next to this one, in the same folder.": "Abre otro shell junto a este, en la misma carpeta.",
- "Opens another shell below this one, in the same folder.": "Abre otro shell debajo de este, en la misma carpeta."
+ "Opens another shell below this one, in the same folder.": "Abre otro shell debajo de este, en la misma carpeta.",
+ "Columns": "Columnas",
+ "Time": "Hora"
 }

@@ -96,7 +96,6 @@
  "Branch being merged": "Branche en cours de fusion",
  "Branch name": "Nom de la branche",
  "Branch to check out": "Branche sur laquelle basculer",
- "Branches hidden from the graph — right-click to show again": "Branches masquées du graphe — clic droit pour les réafficher",
  "Branches pinned to the top": "Branches épinglées en haut",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi utilise le git installé sur ce PC. Installez Git for Windows, ou localisez git.exe si vous l’avez déjà.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} est la dernière version.",
@@ -1037,5 +1036,7 @@
  "Split right": "Diviser à droite",
  "Split down": "Diviser en bas",
  "Opens another shell next to this one, in the same folder.": "Ouvre un autre shell à côté de celui-ci, dans le même dossier.",
- "Opens another shell below this one, in the same folder.": "Ouvre un autre shell sous celui-ci, dans le même dossier."
+ "Opens another shell below this one, in the same folder.": "Ouvre un autre shell sous celui-ci, dans le même dossier.",
+ "Columns": "Colonnes",
+ "Time": "Heure"
 }

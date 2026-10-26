@@ -101,7 +101,6 @@
  "Branch being merged": "要合併的分支",
  "Branch name": "分支名稱",
  "Branch to check out": "要簽出的分支",
- "Branches hidden from the graph — right-click to show again": "已從圖表隱藏的分支 — 按右鍵可重新顯示",
  "Branches pinned to the top": "釘選在最上方的分支",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi 會使用這台電腦上安裝的 git。請安裝 Git for Windows；若已安裝，請手動指定 git.exe。",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} 已是最新版本。",
@@ -1065,5 +1064,7 @@
  "Split right": "向右分割",
  "Split down": "向下分割",
  "Opens another shell next to this one, in the same folder.": "在同一資料夾中，於此終端機旁邊再開啟一個 Shell。",
- "Opens another shell below this one, in the same folder.": "在同一資料夾中，於此終端機下方再開啟一個 Shell。"
+ "Opens another shell below this one, in the same folder.": "在同一資料夾中，於此終端機下方再開啟一個 Shell。",
+ "Columns": "欄",
+ "Time": "時間"
 }

@@ -101,7 +101,6 @@
  "Branch being merged": "Гілка, що зливається",
  "Branch name": "Назва гілки",
  "Branch to check out": "Гілка для переходу",
- "Branches hidden from the graph — right-click to show again": "Гілки, приховані з графа — клацніть правою кнопкою, щоб показати знову",
  "Branches pinned to the top": "Гілки, закріплені вгорі",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi використовує git, установлений на цьому ПК. Установіть Git for Windows або вкажіть git.exe, якщо він уже є.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} — найновіша версія.",
@@ -1063,5 +1062,7 @@
  "Split right": "Розділити праворуч",
  "Split down": "Розділити вниз",
  "Opens another shell next to this one, in the same folder.": "Відкриває ще одну оболонку поруч із цією, у тій самій папці.",
- "Opens another shell below this one, in the same folder.": "Відкриває ще одну оболонку під цією, у тій самій папці."
+ "Opens another shell below this one, in the same folder.": "Відкриває ще одну оболонку під цією, у тій самій папці.",
+ "Columns": "Стовпці",
+ "Time": "Час"
 }

@@ -162,7 +162,6 @@
 "Branch being merged" = "Гілка, що зливається";
 "Branch name" = "Назва гілки";
 "Branch to check out" = "Гілка для переходу";
-"Branches hidden from the graph — right-click to show again" = "Гілки, приховані з графа — клацніть правою кнопкою, щоб показати знову";
 "Branches pinned to the top" = "Гілки, закріплені вгорі";
 "Check again with fetch" = "Перевірити знову з fetch";
 "Check this repository with gitch again" = "Знову перевіряти цей репозиторій через gitch";
@@ -1061,3 +1060,7 @@
 "Split down" = "Розділити вниз";
 "Opens another shell next to this one, in the same folder." = "Відкриває ще одну оболонку поруч із цією, у тій самій папці.";
 "Opens another shell below this one, in the same folder." = "Відкриває ще одну оболонку під цією, у тій самій папці.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Стовпці";
+"Time" = "Час";

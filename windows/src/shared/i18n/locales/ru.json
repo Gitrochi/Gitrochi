@@ -101,7 +101,6 @@
  "Branch being merged": "Сливаемая ветка",
  "Branch name": "Имя ветки",
  "Branch to check out": "Ветка для переключения",
- "Branches hidden from the graph — right-click to show again": "Ветки, скрытые из графа, — щёлкните правой кнопкой, чтобы снова показать",
  "Branches pinned to the top": "Ветки, закреплённые вверху",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi использует git, установленный на этом ПК. Установите Git for Windows или укажите git.exe, если он уже установлен.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} — последняя версия.",
@@ -1063,5 +1062,7 @@
  "Split right": "Разделить вправо",
  "Split down": "Разделить вниз",
  "Opens another shell next to this one, in the same folder.": "Открывает ещё одну оболочку рядом с этой, в той же папке.",
- "Opens another shell below this one, in the same folder.": "Открывает ещё одну оболочку под этой, в той же папке."
+ "Opens another shell below this one, in the same folder.": "Открывает ещё одну оболочку под этой, в той же папке.",
+ "Columns": "Столбцы",
+ "Time": "Время"
 }

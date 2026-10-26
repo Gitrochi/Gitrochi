@@ -295,6 +295,20 @@ export async function runSelfTest(): Promise<boolean> {
     const merged = await until(() => document.querySelectorAll(".term-pane").length === 1, 3000);
     return [ok && merged && s.activeTerminal === first, `panes=${document.querySelectorAll(".term-pane").length} active=${s.activeTerminal?.title}`];
   });
+  await step("Paste an image into the terminal as a file path", async () => {
+    const term = s.activeTerminal!;
+    const got: string[] = [];
+    const sub = term.term.onData((d) => got.push(d));
+    const dt = new DataTransfer();
+    dt.items.add(new File([new Uint8Array([137, 80, 78, 71])], "image.png", { type: "image/png" }));
+    term.host.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+    const pasted = await until(() => got.some((d) => /gitrochi-image-.*\.png/.test(d)), 5000);
+    sub.dispose();
+    const path = got.join("").match(/"?([^"\s]*gitrochi-image-[^"\s]*\.png)"?/)?.[1] ?? "";
+    const exists = !!path && (await ipc.exists(path));
+    if (path) await ipc.remove(path).catch(() => undefined);
+    return [pasted && exists, `pasted=${pasted} exists=${exists} path=${path}`];
+  });
   await step("GIT_ASKPASS 도우미", async () => {
     const r = await ipc.run(env.exe, ["Username for 'https://example.com': "], {
       env: { GITROCHI_ASKPASS: "1", GITROCHI_ASKPASS_COUNT: "1", GITROCHI_ASKPASS_HOST_1: "example.com", GITROCHI_ASKPASS_USER_1: "x-access-token", GITROCHI_ASKPASS_PASS_1: "secret" },
@@ -699,7 +713,13 @@ export async function runSelfTest(): Promise<boolean> {
     s.setPinned(b, true);
     const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.textContent?.startsWith("고정")), 3000);
     s.setPinned(b, false);
-    return [before && hidden && back && current && pinned, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}`];
+    // the eye button on the sidebar row hides the branch and shows it again
+    const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
+    eye()?.click();
+    const eyeHid = await until(() => s.isHidden(b), 5000);
+    eye()?.click();
+    const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
+    return [before && hidden && back && current && pinned && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${eyeHid}/${eyeShown}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침

@@ -157,7 +157,6 @@
 "Branch being merged" = "Scalana gałąź";
 "Branch name" = "Nazwa gałęzi";
 "Branch to check out" = "Gałąź do przełączenia";
-"Branches hidden from the graph — right-click to show again" = "Gałęzie ukryte w grafie — kliknij prawym przyciskiem, aby znów je pokazać";
 "Branches pinned to the top" = "Gałęzie przypięte na górze";
 "Check again with fetch" = "Sprawdź ponownie z fetch";
 "Check this repository with gitch again" = "Znowu sprawdzaj to repozytorium przez gitch";
@@ -1044,3 +1043,7 @@
 "Split down" = "Podziel w dół";
 "Opens another shell next to this one, in the same folder." = "Otwiera kolejną powłokę obok tej, w tym samym folderze.";
 "Opens another shell below this one, in the same folder." = "Otwiera kolejną powłokę pod tą, w tym samym folderze.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolumny";
+"Time" = "Czas";

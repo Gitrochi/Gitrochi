@@ -26,13 +26,15 @@ enum GraphMetrics {
 
     private static let messageMin: CGFloat = 200
 
-    static func columns(width: CGFloat, graph: CGFloat) -> Columns {
-        var c = Columns(graph: graph)
+    /// hidden: the columns the user turned off ("ref", "graph", "time") — they get width 0; the message column always shows
+    static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = []) -> Columns {
+        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, time: !hidden.contains("time"))
+        if hidden.contains("ref") { c.ref = 0 }
         // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 시간 칸 90
         func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + (c.time ? 90 : 0))) }
         if short() > 0 { c.time = false }
-        if short() > 0 { c.ref = max(110, c.ref - short()) }
-        if short() > 0 { c.graph = max(min(graph, 66), c.graph - short()) }
+        if short() > 0, c.ref > 0 { c.ref = max(110, c.ref - short()) }
+        if short() > 0, c.graph > 0 { c.graph = max(min(graph, 66), c.graph - short()) }
         return c
     }
 }
@@ -41,15 +43,17 @@ struct GraphView: View {
     @Environment(RepoStore.self) private var store
     @FocusState private var focused: Bool
     @ViewState private var width: CGFloat = 1000
+    /// Columns the user turned off, comma-separated ("ref,time")
+    @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
 
     var body: some View {
         let graphWidth = GraphMetrics.width(lanes: store.maxLanes)
         // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
-        let columns = GraphMetrics.columns(width: width, graph: graphWidth)
+        let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)))
         VStack(spacing: 0) {
             SearchBar()
             Divider()
-            GraphHeader(columns: columns)
+            GraphHeader(columns: columns, hidden: $hiddenColumns)
             Divider()
             ScrollViewReader { proxy in
                 ScrollView {
@@ -230,19 +234,32 @@ private struct SearchBar: View {
 
 private struct GraphHeader: View {
     let columns: GraphMetrics.Columns
+    @Binding var hidden: String
 
     var body: some View {
         HStack(spacing: 0) {
-            Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading)
-            Text("Graph").padding(.leading, 6).frame(width: columns.graph, alignment: .leading)
+            if columns.ref > 0 { Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading) }
+            if columns.graph > 0 { Text("Graph").padding(.leading, 6).frame(width: columns.graph, alignment: .leading) }
             Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Columns")
         }
+        .contextMenu { toggles }
         .lineLimit(1)
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
         .padding(.trailing, 12)
         .frame(height: 26)
         .background(.bar)
+    }
+
+    /// Which columns show; the message column always does
+    @ViewBuilder private var toggles: some View {
+        Toggle("Branch / Tag", isOn: SidebarSections.binding($hidden, "ref"))
+        Toggle("Graph", isOn: SidebarSections.binding($hidden, "graph"))
+        Toggle("Time", isOn: SidebarSections.binding($hidden, "time"))
     }
 }
 

@@ -162,7 +162,6 @@
 "Branch being merged" = "要合併的分支";
 "Branch name" = "分支名稱";
 "Branch to check out" = "要簽出的分支";
-"Branches hidden from the graph — right-click to show again" = "已從圖表隱藏的分支 — 按右鍵可重新顯示";
 "Branches pinned to the top" = "釘選在最上方的分支";
 "Check again with fetch" = "擷取後重新檢查";
 "Check this repository with gitch again" = "重新用 gitch 檢查此儲存庫";
@@ -1063,3 +1062,7 @@
 "Split down" = "向下分割";
 "Opens another shell next to this one, in the same folder." = "在同一資料夾中，於此終端機旁邊再開啟一個 Shell。";
 "Opens another shell below this one, in the same folder." = "在同一資料夾中，於此終端機下方再開啟一個 Shell。";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "欄";
+"Time" = "時間";

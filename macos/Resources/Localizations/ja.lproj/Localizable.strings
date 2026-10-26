@@ -162,7 +162,6 @@
 "Branch being merged" = "マージするブランチ";
 "Branch name" = "ブランチ名";
 "Branch to check out" = "チェックアウトするブランチ";
-"Branches hidden from the graph — right-click to show again" = "グラフで非表示にしたブランチ — 右クリックで再表示";
 "Branches pinned to the top" = "上部に固定したブランチ";
 "Check again with fetch" = "fetch して再チェック";
 "Check this repository with gitch again" = "このリポジトリを再び gitch でチェック";
@@ -1062,3 +1061,7 @@
 "Split down" = "下に分割";
 "Opens another shell next to this one, in the same folder." = "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。";
 "Opens another shell below this one, in the same folder." = "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "列";
+"Time" = "時刻";

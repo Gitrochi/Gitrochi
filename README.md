@@ -18,7 +18,7 @@
   <a href="https://github.com/Gitrochi/Gitrochi/releases"><img src="https://img.shields.io/github/downloads/Gitrochi/Gitrochi/total?label=downloads&color=2a9a55" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/macOS-15%2B-111?logo=apple&logoColor=white" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078d4?logo=windows&logoColor=white" alt="Windows 10 · 11">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Community%20Use%20v1.0%20proposed-6b6b72" alt="MIT; Community Use v1.0 proposed"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Community%20Use%20v1.0%20proposed-6b6b72" alt="Community Use v1.0 proposed"></a>
 </p>
 
 <p align="center">
@@ -73,6 +73,6 @@ Both apps update themselves: they check for a new version at launch and once a d
 
 [Gitrochi Community Use License v1.0](LICENSE) is **proposed and not yet in effect**. It would allow free personal and business use, restrict unauthorized resale and the distribution of independent derivative projects, and take contributions through pull requests to the official repository. The rights-holder consents and legal details it needs are tracked in the [licensing review](docs/licensing-review.md) (Korean).
 
-The [MIT text](LICENSE-MIT) that applies today is preserved alongside it, and rights already granted under MIT are not withdrawn by the proposal. © 2026 ChoMnSeong, [jjunhaa0211](https://github.com/jjunhaa0211). Even once adopted, the policy is source-available with distribution restrictions, not an open-source license.
+© 2026 ChoMnSeong, [jjunhaa0211](https://github.com/jjunhaa0211). The standalone MIT license file and the MIT labels have been removed; the rights already granted for code provided under MIT, and the [notice that material requires](THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material), remain. Even once adopted, the policy is source-available with distribution restrictions, not an open-source license.
 
 Bundled: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) (MIT). The Windows app builds on [Tauri](https://tauri.app), [React](https://react.dev), [xterm.js](https://xtermjs.org), [portable-pty](https://github.com/wezterm/wezterm) and [Lucide](https://lucide.dev), each under its own license, which the proposal does not restrict — see the [third-party notices and dependency review](THIRD_PARTY_NOTICES.md). The full notice review of the Rust dependencies per release target is not finished.

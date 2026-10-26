@@ -98,7 +98,6 @@
  "Branch being merged": "Scalana gałąź",
  "Branch name": "Nazwa gałęzi",
  "Branch to check out": "Gałąź do przełączenia",
- "Branches hidden from the graph — right-click to show again": "Gałęzie ukryte w grafie — kliknij prawym przyciskiem, aby znów je pokazać",
  "Branches pinned to the top": "Gałęzie przypięte na górze",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi korzysta z gita zainstalowanego na tym komputerze. Zainstaluj Git for Windows albo wskaż git.exe, jeśli już go masz.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} to najnowsza wersja.",
@@ -1046,5 +1045,7 @@
  "Split right": "Podziel w prawo",
  "Split down": "Podziel w dół",
  "Opens another shell next to this one, in the same folder.": "Otwiera kolejną powłokę obok tej, w tym samym folderze.",
- "Opens another shell below this one, in the same folder.": "Otwiera kolejną powłokę pod tą, w tym samym folderze."
+ "Opens another shell below this one, in the same folder.": "Otwiera kolejną powłokę pod tą, w tym samym folderze.",
+ "Columns": "Kolumny",
+ "Time": "Czas"
 }

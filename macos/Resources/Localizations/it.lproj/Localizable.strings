@@ -154,7 +154,6 @@
 "Branch being merged" = "Branch in merge";
 "Branch name" = "Nome del branch";
 "Branch to check out" = "Branch di cui eseguire il checkout";
-"Branches hidden from the graph — right-click to show again" = "Branch nascosti dal grafico — fai clic destro per mostrarli di nuovo";
 "Branches pinned to the top" = "Branch fissati in alto";
 "Check again with fetch" = "Ricontrolla con fetch";
 "Check this repository with gitch again" = "Controlla di nuovo questo repository con gitch";
@@ -1034,3 +1033,7 @@
 "Split down" = "Dividi in basso";
 "Opens another shell next to this one, in the same folder." = "Apre un'altra shell accanto a questa, nella stessa cartella.";
 "Opens another shell below this one, in the same folder." = "Apre un'altra shell sotto questa, nella stessa cartella.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Colonne";
+"Time" = "Ora";
