@@ -125,3 +125,12 @@ Screenshots use synthetic fixtures:
 - Folder hierarchy: [dark](screenshots/graph-layout/graph-folders-dark-1366.png), [light](screenshots/graph-layout/graph-folders-light-1366.png), [680px light](screenshots/graph-layout/graph-folders-light-680.png).
 - Path actions: [dark](screenshots/graph-layout/graph-path-menu-dark-1366.png), [680px light](screenshots/graph-layout/graph-path-menu-light-680.png).
 - Long file paths: [680px light](screenshots/graph-layout/graph-readable-files-light-680.png).
+
+
+## Display-language regression (2026-10-26)
+
+Graph UI strings use English keys with embedded Korean and Japanese resources. App graph generation/watch calls pass the resolved app language through `GITCH_GRAPH_LANG`; language-specific output paths and watcher keys prevent reuse across languages. Without an app override, the HTML chooses the browser language, then the embedded system-language fallback when the browser exposes none. Unsupported languages use English. Source-language filtering remains independent.
+
+The locale browser regression covers explicit and regional app overrides, Korean/English/Japanese browser preferences, system fallback and unsupported-language fallback. It exercises static labels, dynamic details/review, path actions and copy feedback, and Markdown/HTML report localization without network requests. A long Unicode filename containing translation keys remains unchanged. Native app tests verify actual process environment propagation and watcher output separation.
+
+Windows flow-engine CI also exposed two environment restrictions: isolated test children need `SystemRoot` for Winsock, a managed Windows job may deny the breakaway flag for detached processes, and detached workers must not inherit the launcher's captured standard pipes. The existing mock-service and process-tree cancellation tests cover these cases, including a prompt-return deadline and a written cancellation request. Detachment retries without breakaway only after Windows access-denied error 5; standard-handle inheritance flags are restored after spawning.

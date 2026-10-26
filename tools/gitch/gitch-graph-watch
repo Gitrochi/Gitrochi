@@ -122,7 +122,7 @@ class GraphWatch:
         common = self.gitdir / "commondir"
         self.common_dir = (self.gitdir / common.read_text().strip()).resolve() if common.is_file() else self.gitdir
         identity = {"repo": str(self.repo), "cli": str(self.cli), "out": str(self.output), "relation": args.relation,
-                    "bash": self.bash,
+                    "bash": self.bash, "uiLanguage": os.environ.get("GITCH_GRAPH_LANG", ""),
                     "index": args.index, "lang": args.lang, "base": args.base, "since": args.since,
                     "noExternal": args.no_external, "arguments": args.graph_arg, "interval": args.interval,
                     "idleTimeout": args.idle_timeout, "maxLifetime": args.max_lifetime, "buildTimeout": args.build_timeout}

@@ -292,6 +292,21 @@ printf '</body></html>' >> "$out"
         if os.name != "nt":
             self.assertEqual(registries[0].stat().st_mode & 0o777, 0o600)
 
+    def test_changed_ui_language_does_not_reuse_existing_watch(self):
+        with mock.patch.dict(os.environ, {"GITCH_GRAPH_LANG": "en"}):
+            _, original = self.start()
+            self.ready(original)
+        with mock.patch.dict(os.environ, {"GITCH_GRAPH_LANG": "ja"}):
+            _, localized = self.start()
+            self.ready(localized)
+            reopened = subprocess.run(self.command("--detach"), capture_output=True, text=True, timeout=5)
+        self.assertEqual(reopened.returncode, 0, reopened.stdout + reopened.stderr)
+        reused = json.loads(reopened.stdout)
+        self.assertNotEqual(localized["pid"], original["pid"])
+        self.assertNotEqual(localized["url"], original["url"])
+        self.assertEqual(reused["pid"], localized["pid"])
+        self.assertEqual(reused["url"], localized["url"])
+
     def test_graph_arguments_preserve_filters_and_reject_output_flags(self):
         # The fake CLI logs argv in separate lines, preserving spaces.
         write_utf8(self.cli, self.cli.read_text(encoding="utf-8").replace('out=""', 'printf "%s\\n" "$@" > .arguments\nout=""'))

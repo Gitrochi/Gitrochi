@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+export GITCH_GRAPH_LANG=ko # Existing browser snapshots assert Korean text; locale tests cover automatic selection.
 # gitch graph — 구조 그래프 (files · modules · changes · tree / json · html · dot · svg · png)
 export GITCH_SWIFT_INDEX=""   # 이 기계에 Xcode 인덱스 도우미가 있어도 시험은 이름 추정으로(도우미 시험만 따로 켠다)
 
@@ -636,14 +637,14 @@ test_graph_formats_and_output() {
   # 비대화형 기본: json 을 표준출력
   run gitch graph; assert_ok; assert_json "$OUT"
   # html: 오프라인 한 페이지, 데이터 속 </script> 는 끊지 않게
-  run gitch graph files --out "$T/out/g.html"; assert_ok
+  GITCH_GRAPH_LANG='ko</script><script>' run gitch graph files --out "$T/out/g.html"; assert_ok
   assert_out "GRAPH_FILE=$T/out/g.html NODES=3 EDGES=2"
   [ -f "$T/out/g.html" ] || fail "html 파일이 없음"
   grep -q '<script id="graph-data" type="application/json">' "$T/out/g.html" || fail "데이터 블록 없음"
   grep -q '"relation": "files"' "$T/out/g.html" || fail "데이터에 관계가 없음"
   for id in panel table legend info q ana banner logo; do grep -q "id=\"$id\"" "$T/out/g.html" || fail "html 에 #$id 가 없음"; done   # 설정 창 · 표로 보기 · 범례 · 정보 · 찾기 · 분석 · 강조 알림 · 표시
-  grep -q '<html lang="ko" data-theme="dark">' "$T/out/g.html" || fail "기본은 어두운 화면이어야"
-  assert_eq "$(grep -o '</script>' "$T/out/g.html" | wc -l | tr -d ' ')" "3" "데이터 속 </script> 가 그대로 들어감"
+  grep -q '<html lang="en" data-theme="dark">' "$T/out/g.html" || fail "기본은 어두운 화면이어야"
+  assert_eq "$(grep -o '</script>' "$T/out/g.html" | wc -l | tr -d ' ')" "5" "Untrusted graph/locale JSON must not introduce script tags"
   if command -v node >/dev/null 2>&1; then   # 보기 스크립트 문법(브라우저 없이)
     awk '/^<script>$/ { on = 1; next } /^<\/script>$/ { on = 0 } on' "$T/out/g.html" > "$T/out/viewer.js"
     grep -q 'function renderAna' "$T/out/viewer.js" || fail "보기 스크립트를 찾지 못함"
