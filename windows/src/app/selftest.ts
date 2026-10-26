@@ -453,7 +453,8 @@ export async function runSelfTest(): Promise<boolean> {
     const t = s.activeTerminal!;
     const pathOk = await until(() => bufferText(t.term).includes(`pwd=${toWslPath(repo)}`), 30000);
     const hookOk = await until(() => agents.sessions.some((x) => x.kind === "claude" && x.status === "waiting" && x.mode === "bypassPermissions"), 15000);
-    const modeOk = bufferText(t.term).includes("mode=bypassPermissions");
+    // its own short line: the long session line wraps in the CI terminal
+    const modeOk = await until(() => bufferText(t.term).includes("FAKE CLAUDE MODE=bypassPermissions"), 5000);
     const agentLine = bufferText(t.term).split("\n").find((l) => l.includes("FAKE CLAUDE")) ?? bufferText(t.term).slice(-300);
     t.terminate();
     // 3) 터미널 셸을 WSL 로

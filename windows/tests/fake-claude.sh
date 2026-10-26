@@ -24,5 +24,6 @@ while [ $# -gt 0 ]; do
 done
 cmd=$(grep -o '"command": "[^"]*--agent-hook Stop"' "$settings" | sed 's/^"command": "//; s/"$//')
 echo '{"session_id":"wsl-test"}' | sh -c "$cmd"
-echo "FAKE CLAUDE SESSION OK pwd=$(pwd) agent=$GITROCHI_AGENT_ID mode=$mode"
+echo "FAKE CLAUDE SESSION OK pwd=$(pwd) agent=$GITROCHI_AGENT_ID"
+echo "FAKE CLAUDE MODE=$mode"
 sleep 60
