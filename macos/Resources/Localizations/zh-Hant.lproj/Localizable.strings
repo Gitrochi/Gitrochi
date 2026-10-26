@@ -1055,3 +1055,7 @@
 "Terminal app" = "「終端機」App";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "在 Gitrochi 中，工作階段會在圖表下方終端機的新分頁中執行，結束 App 時工作階段也會結束。若要在沒有 Gitrochi 時讓工作階段繼續執行，請選擇「終端機」App。";
 "Open in new tab" = "在新分頁中打開";
+"Worktree" = "工作樹";
+"// Uncommitted changes in %@" = "// %1$@ 中未提交的變更";
+"Worktree: %@" = "工作樹：%1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "此工作樹中未提交的變更。開啟它以暫存和提交。";

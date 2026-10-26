@@ -22,7 +22,7 @@ extension RepoStore {
             // 1) 불러온 커밋에서 즉시: 제목·작성자·이메일·SHA·브랜치/태그 이름
             let lower = q.lowercased()
             var found = Set<String>()
-            for e in entries where !e.commit.isWIP {
+            for e in entries where !e.commit.isPending {
                 let c = e.commit
                 if c.subject.lowercased().contains(lower) || c.author.lowercased().contains(lower)
                     || c.email.lowercased().contains(lower) || c.id.hasPrefix(lower)

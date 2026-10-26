@@ -1051,5 +1051,9 @@
  "Write": "เขียน",
  "Preview": "แสดงตัวอย่าง",
  "Nothing to preview": "ไม่มีเนื้อหาให้แสดงตัวอย่าง",
- "Open in new tab": "เปิดในแท็บใหม่"
+ "Open in new tab": "เปิดในแท็บใหม่",
+ "Worktree": "เวิร์กทรี",
+ "// Uncommitted changes in {0}": "// การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตใน {0}",
+ "Worktree: {0}": "เวิร์กทรี: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในเวิร์กทรีนี้ เปิดเวิร์กทรีเพื่อสเตจและคอมมิต"
 }

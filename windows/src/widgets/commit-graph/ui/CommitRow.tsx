@@ -3,7 +3,7 @@ import { memo, useState } from "react";
 import { commitMenu, refMenu } from "@/features/git-menus";
 import { avatars } from "@/entities/avatar";
 import { type CIPipeline, CIStatusIcon, statusInfo } from "@/entities/ci";
-import { type GraphEntry, type GraphRow, isMerge, isWIP, type RefLabel, short } from "@/entities/git";
+import { type GraphEntry, type GraphRow, isMerge, isPending, type RefLabel, rowSelection, short, wipWorktree } from "@/entities/git";
 import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
@@ -19,6 +19,7 @@ export const CommitRow = memo(function CommitRow({
   selected,
   isHead,
   wipCount,
+  wipLabel,
   match,
   ci,
   cols,
@@ -33,20 +34,24 @@ export const CommitRow = memo(function CommitRow({
   selected: boolean;
   isHead: boolean;
   wipCount: number;
+  /** Branch of another worktree's row */
+  wipLabel?: string;
   match: 0 | 1 | 2;
   /** 이 커밋의 가장 최근 CI 파이프라인 */
   ci?: CIPipeline;
 }) {
   const [dropOn, setDropOn] = useState(false);
   const c = entry.commit;
-  const wip = isWIP(c);
+  const wip = isPending(c);
+  const worktree = wipWorktree(c);
   const tint = laneColor(entry.row.color);
   const groups = groupRefs(refs ?? []);
   return (
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
       style={{ top, gap: 0 }}
-      onMouseDown={() => store.select(wip ? { kind: "wip" } : { kind: "commit", sha: c.id })}
+      onMouseDown={() => store.select(rowSelection(c))}
+      onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
       draggable={!wip}
       onDragStart={(e) => {
@@ -105,7 +110,7 @@ export const CommitRow = memo(function CommitRow({
         <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
         {wip ? (
           <>
-            <i className="muted">{t("// Uncommitted changes")}</i>
+            <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
             <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
               {t("{0} files", wipCount)}
             </span>

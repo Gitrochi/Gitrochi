@@ -1028,5 +1028,9 @@
  "Write": "Schreiben",
  "Preview": "Vorschau",
  "Nothing to preview": "Nichts für die Vorschau",
- "Open in new tab": "In neuem Tab öffnen"
+ "Open in new tab": "In neuem Tab öffnen",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Nicht committete Änderungen in {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Nicht committete Änderungen in diesem Worktree. Öffnen Sie ihn zum Stagen und Committen."
 }

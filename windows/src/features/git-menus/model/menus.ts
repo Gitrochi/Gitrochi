@@ -1,6 +1,7 @@
-import { type Branch, type Commit, isWIP, type RefLabel, short } from "@/entities/git";
+import { type Branch, type Commit, isWIP, type RefLabel, short, wipWorktree } from "@/entities/git";
 import { gitch, graphDiffRelations, graphRelations } from "@/entities/gitch";
 import type { RepoStore } from "@/entities/repo";
+import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
 import { type MenuItem, tip } from "@/shared/ui";
 
@@ -116,6 +117,14 @@ export function commitMenu(store: RepoStore, c: Commit): MenuItem[] {
     store.sheet = s;
     store.changed();
   };
+  const worktree = wipWorktree(c);
+  if (worktree !== null) {
+    return [
+      { label: t("Open worktree"), onClick: () => void store.switchWorktree(worktree) },
+      { label: t("Open in new tab"), onClick: () => void store.openOrReport(worktree) },
+      { label: t("Show in Explorer"), onClick: () => void ipc.reveal(worktree) },
+    ];
+  }
   if (isWIP(c)) {
     return [
       { label: t("Stage all"), onClick: () => void store.stageAll() },

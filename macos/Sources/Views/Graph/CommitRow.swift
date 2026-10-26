@@ -16,6 +16,8 @@ struct CommitRow: View {
     let selected: Bool
     let isHead: Bool
     let wipCount: Int
+    /// Branch of another worktree's row
+    var wipLabel: String?
     var match: Match = .none
     /// 이 커밋의 가장 최근 CI 파이프라인
     var ci: CIPipeline?
@@ -29,7 +31,7 @@ struct CommitRow: View {
             RefColumn(groups: groups, tint: tint, store: store)
                 .frame(width: columns.ref, height: GraphMetrics.rowHeight)
                 .background(groups.isEmpty ? Color.clear : tint.opacity(0.10))
-            GraphCell(row: entry.row, isWIP: c.isWIP, isHead: isHead, isMerge: c.isMerge,
+            GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
                       hasRefs: !groups.isEmpty, author: c.author, email: c.email)
                 .frame(width: graphWidth, height: GraphMetrics.rowHeight)
                 // 좁아서 그래프 칸이 잘리면 오른쪽 끝을 흐리게
@@ -45,11 +47,15 @@ struct CommitRow: View {
             // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
             HStack(spacing: 6) {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(tint.opacity(c.isWIP ? 0.5 : 0.9))
+                    .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
                     .frame(width: 3, height: 16)
                     .padding(.trailing, 4)
-                if c.isWIP {
-                    Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
+                if c.isPending {
+                    if c.wipWorktree != nil {
+                        Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
+                    } else {
+                        Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
+                    }
                     Text("\(wipCount) files")
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 6).padding(.vertical, 1)
@@ -75,7 +81,7 @@ struct CommitRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                if columns.time && !c.isWIP {
+                if columns.time && !c.isPending {
                     Text(Fmt.short(c.date))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -86,7 +92,7 @@ struct CommitRow: View {
             .padding(.leading, 10)
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             .clipped()
-            .help(c.isWIP ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
+            .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
         }
         .font(.system(size: 12.5))
         .padding(.trailing, 12)
@@ -111,10 +117,10 @@ struct CommitRow: View {
                 .background(RoundedRectangle(cornerRadius: 6).fill(.regularMaterial))
         }
         .dropDestination(for: String.self) { items, _ in
-            guard let payload = items.first, !c.isWIP else { return false }
+            guard let payload = items.first, !c.isPending else { return false }
             store.handleDrop(payload, onto: entry)
             return true
-        } isTargeted: { dropTargeted = $0 && !c.isWIP }
+        } isTargeted: { dropTargeted = $0 && !c.isPending }
     }
 }
 
@@ -340,7 +346,11 @@ struct CommitMenu: View {
     let commit: Commit
 
     var body: some View {
-        if commit.isWIP {
+        if let path = commit.wipWorktree {
+            Button("Open worktree") { Task { await store.switchWorktree(to: path) } }
+            Button("Open in new tab") { Task { await store.openOrReport(URL(fileURLWithPath: path, isDirectory: true)) } }
+            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
+        } else if commit.isWIP {
             Button("Stage all") { Task { await store.stageAll() } }
             Button("Stash…") { store.sheet = .stash }
             Divider()

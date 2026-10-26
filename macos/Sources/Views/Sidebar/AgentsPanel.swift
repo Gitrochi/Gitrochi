@@ -62,11 +62,8 @@ struct AgentsPanel: View {
             .padding(10)
         }
         .task(id: store.worktrees.map(\.path)) {
-            // 다른 워크트리는 파일 감시 대상이 아니라 몇 초마다 다시 센다
-            while !Task.isCancelled {
-                await store.refreshWorktreeStats()
-                try? await Task.sleep(for: .seconds(5))
-            }
+            // the store polls other worktrees while this tab is in front; count once right away
+            await store.refreshWorktreeStats()
         }
     }
 }

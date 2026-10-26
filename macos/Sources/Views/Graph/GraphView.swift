@@ -59,18 +59,23 @@ struct GraphView: View {
                                       refs: store.refsByCommit[entry.id] ?? [],
                                       selected: isSelected(entry),
                                       isHead: entry.id == store.headHash,
-                                      wipCount: entry.commit.isWIP ? store.status.count : 0,
+                                      wipCount: entry.commit.isWIP ? store.status.count
+                                          : entry.commit.wipWorktree.map { store.worktreeStatus[$0]?.count ?? 0 } ?? 0,
+                                      wipLabel: entry.commit.wipWorktree.map { p in store.worktrees.first { $0.path == p }?.branch ?? (p as NSString).lastPathComponent },
                                       match: matchState(entry),
                                       ci: store.ciBySha[entry.id])
                                 .id(entry.id)
                                 .onTapGesture {
                                     focused = true
-                                    store.select(entry.commit.isWIP ? .wip : .commit(entry.id))
+                                    store.select(entry.commit.rowSelection)
                                 }
+                                .simultaneousGesture(TapGesture(count: 2).onEnded {
+                                    if let path = entry.commit.wipWorktree { Task { await store.switchWorktree(to: path) } }
+                                })
                                 // VoiceOver 등 접근성: 행 하나를 버튼처럼(메시지·작성자·날짜를 한 번에 읽고 눌러서 선택)
                                 .accessibilityElement(children: .combine)
                                 .accessibilityAddTraits(.isButton)
-                                .accessibilityAction { store.select(entry.commit.isWIP ? .wip : .commit(entry.id)) }
+                                .accessibilityAction { store.select(entry.commit.rowSelection) }
                                 .contextMenu { CommitMenu(commit: entry.commit) }
                         }
                         if store.hasMore {
@@ -124,6 +129,7 @@ struct GraphView: View {
     private func isSelected(_ e: GraphEntry) -> Bool {
         switch store.selection {
         case .wip?: return e.commit.isWIP
+        case .worktree(let p)?: return e.commit.wipWorktree == p
         case .commit(let s)?: return e.id == s
         case .pullRequest?, nil: return false
         }
@@ -134,6 +140,7 @@ extension RepoStore {
     var selectedID: String? {
         switch selection {
         case .wip?: return Commit.wipID
+        case .worktree(let p)?: return Commit.worktreeWIP(path: p, parent: "").id
         case .commit(let s)?: return s
         case .pullRequest?, nil: return nil
         }

@@ -24,6 +24,43 @@ export function wipCommit(parent: string | null): Commit {
   return { id: WIP_ID, parents: parent ? [parent] : [], author: "", email: "", date: Date.now() / 1000, subject: "" };
 }
 
+/** Rows for another worktree's uncommitted changes (GitKraken shows one per worktree) */
+const WORKTREE_WIP = "__WORKTREE__:";
+
+export const worktreeWIPCommit = (path: string, parent: string): Commit => ({
+  id: WORKTREE_WIP + path,
+  parents: [parent],
+  author: "",
+  email: "",
+  date: Date.now() / 1000,
+  subject: "",
+});
+
+/** The worktree path of such a row, otherwise null */
+export const wipWorktree = (c: Commit) => (c.id.startsWith(WORKTREE_WIP) ? c.id.slice(WORKTREE_WIP.length) : null);
+
+/** Uncommitted changes of this or another worktree, not a real commit */
+export const isPending = (c: Commit) => isWIP(c) || wipWorktree(c) !== null;
+
+/** What selecting a graph row selects */
+export function rowSelection(c: Commit): Selection {
+  const wt = wipWorktree(c);
+  return isWIP(c) ? { kind: "wip" } : wt !== null ? { kind: "worktree", path: wt } : { kind: "commit", sha: c.id };
+}
+
+export const selectionID = (s: Selection | null) =>
+  !s ? null : s.kind === "wip" ? WIP_ID : s.kind === "worktree" ? WORKTREE_WIP + s.path : s.kind === "commit" ? s.sha : null;
+
+/** Each file once (conflict, then working tree, then staged), as one list for another worktree */
+export function statusFiles(s: WorkingStatus): FileChange[] {
+  const seen = new Set<string>();
+  return [...s.conflicted, ...s.unstaged, ...s.staged].filter((c) => {
+    if (seen.has(c.path)) return false;
+    seen.add(c.path);
+    return true;
+  });
+}
+
 export interface CommitDetail {
   sha: string;
   parents: string[];
@@ -168,13 +205,15 @@ export const searchScopes: { id: SearchScope; title: string; prompt: string }[] 
   { id: "code", title: t("Code changes"), prompt: t("Find commits that added or removed this code") },
 ];
 
-export type Selection = { kind: "wip" } | { kind: "commit"; sha: string } | { kind: "pullRequest"; number: number };
+export type Selection = { kind: "wip" } | { kind: "worktree"; path: string } | { kind: "commit"; sha: string } | { kind: "pullRequest"; number: number };
 
 export type DiffSource =
   | { kind: "working"; change: FileChange }
   | { kind: "commit"; sha: string; change: FileChange; parent: string | null }
   /** PR·MR 에서 바뀐 파일(서버가 준 패치) */
-  | { kind: "review"; number: number; change: FileChange; patch: string };
+  | { kind: "review"; number: number; change: FileChange; patch: string }
+  /** Another worktree's uncommitted change, against its HEAD (read-only) */
+  | { kind: "worktree"; path: string; change: FileChange };
 
 export function sameDiffSource(a: DiffSource | null, b: DiffSource | null) {
   if (!a || !b) return a === b;
@@ -182,6 +221,7 @@ export function sameDiffSource(a: DiffSource | null, b: DiffSource | null) {
   if (changeId(a.change) !== changeId(b.change)) return false;
   if (a.kind === "commit") return b.kind === "commit" && a.sha === b.sha;
   if (a.kind === "review") return b.kind === "review" && a.number === b.number;
+  if (a.kind === "worktree") return b.kind === "worktree" && a.path === b.path;
   return true;
 }
 

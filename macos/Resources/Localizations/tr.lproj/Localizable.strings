@@ -1041,3 +1041,7 @@
 "Terminal app" = "Terminal uygulaması";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Gitrochi'de oturum, grafiğin altındaki terminalin yeni bir sekmesinde çalışır ve uygulamadan çıktığınızda sona erer. Oturumların Gitrochi olmadan sürmesi için Terminal uygulamasını seçin.";
 "Open in new tab" = "Yeni sekmede aç";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// %1$@ içinde commit edilmemiş değişiklikler";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Bu worktree'deki commit edilmemiş değişiklikler. Hazırlamak ve commit etmek için açın.";

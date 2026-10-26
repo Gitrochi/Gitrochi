@@ -65,12 +65,13 @@ extension RepoStore {
         let current: Int
         switch selection {
         case .wip?: current = commitIndex[Commit.wipID] ?? -1
+        case .worktree(let p)?: current = commitIndex[Commit.worktreeWIP(path: p, parent: "").id] ?? -1
         case .commit(let s)?: current = commitIndex[s] ?? -1
         case .pullRequest?, nil: current = -1
         }
         let next = max(0, min(entries.count - 1, current + delta))
         let e = entries[next]
-        select(e.commit.isWIP ? .wip : .commit(e.id))
+        select(e.commit.rowSelection)
         scrollTarget = e.id
     }
 
@@ -104,6 +105,7 @@ extension RepoStore {
         diffTask = Task {
             var args: [String]
             var ok: Set<Int32> = [0]
+            var dir = url
             switch source {
             case .working(let c):
                 if c.kind == .untracked {
@@ -116,6 +118,15 @@ extension RepoStore {
                 }
             case .commit(let sha, let c, let parent):
                 args = ["diff", "--no-ext-diff", "-M"] + ws + [parent ?? empty, sha, "--"] + c.paths
+            case .worktree(let path, let c):
+                dir = URL(fileURLWithPath: path, isDirectory: true)
+                if c.kind == .untracked {
+                    args = ["diff", "--no-index", "--no-ext-diff"] + ws + ["--", "/dev/null", c.path]
+                    ok = [0, 1]
+                } else {
+                    // staged and unstaged together, as the worktree's whole change
+                    args = ["diff", "HEAD", "--no-ext-diff", "-M"] + ws + ["--"] + c.paths
+                }
             case .review(_, let c, let patch):
                 // 서버가 준 덩어리만 있는 패치에 머리를 붙여 그대로 읽는다(git 실행 없음)
                 let old = c.oldPath ?? c.path
@@ -129,7 +140,7 @@ extension RepoStore {
             }
             do {
                 async let images = loadDiffImages(source)
-                let r = try await Git.run(args, in: url, ok: ok)
+                let r = try await Git.run(args, in: dir, ok: ok)
                 let doc = await Task.detached { Parsers.diff(r.output) }.value
                 let imgs = await images
                 guard !Task.isCancelled, self.diffSource == source else { return }

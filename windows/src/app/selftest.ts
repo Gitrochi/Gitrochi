@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { agents } from "@/entities/agent";
 import { ai } from "@/entities/ai";
 import { canPlay, CIAPI } from "@/entities/ci";
-import { type DropRequest, isWIP, markdownRefs, statusIsEmpty } from "@/entities/git";
+import { type DropRequest, emptyStatus, isWIP, markdownRefs, statusFiles, statusIsEmpty, wipWorktree } from "@/entities/git";
 import { gitch, graphRulesFile, type GitchAccountSetup as AccountSetup, type GitchBrowserLogin as BrowserLogin } from "@/entities/gitch";
 import { accounts, ReviewAPI, reviewFileChange } from "@/entities/hosting";
 import { branchPayload } from "@/entities/repo";
@@ -841,13 +841,21 @@ export async function runSelfTest(): Promise<boolean> {
     const switched = samePath(s.path, wt) && workspace.tabs.length === tabs && s.activeTerminal === inWorktree;
     await s.switchWorktree(repo);
     const back = samePath(s.path, repo) && s.activeTerminal === inRepo && s.terminals.includes(inWorktree);
-    const detail = `path=${s.path} tabs=${workspace.tabs.length}/${tabs} terminal=${s.activeTerminal?.directory}`;
+    // the other worktree's change shows as its own row in this tab's graph, with a read-only diff
+    await ipc.writeText(joinPath(wt, "from-worktree.txt"), "W\n");
+    await s.refreshWorktreeStats();
+    const row = await until(() => s.entries.some((e) => samePath(wipWorktree(e.commit) ?? "", wt)), 8000);
+    const file = statusFiles(s.worktreeStatus[s.worktrees.find((w) => samePath(w.path, wt))?.path ?? ""] ?? emptyStatus())[0];
+    if (file) s.openDiff({ kind: "worktree", path: s.worktrees.find((w) => samePath(w.path, wt))!.path, change: file });
+    const diff = !!file && (await until(() => !!s.diff?.lines.some((l) => l.kind === "added" && l.text === "W"), 5000));
+    s.closeDiff();
+    const detail = `path=${s.path} tabs=${workspace.tabs.length}/${tabs} terminal=${s.activeTerminal?.directory} row=${row} diff=${diff}`;
     s.closeTerminal(inWorktree);
     s.closeTerminal(inRepo);
     await gitRaw(["worktree", "remove", "--force", wt], repo);
     await gitRaw(["branch", "-D", "selftest-worktree"], repo);
     await s.reload();
-    return [switched && back, detail];
+    return [switched && back && row && diff, detail];
   });
 
   await step("설정 화면", async () => {

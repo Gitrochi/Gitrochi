@@ -1026,3 +1026,7 @@
 "Terminal app" = "App Terminale";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "In Gitrochi, una sessione viene eseguita in una nuova scheda del terminale sotto il grafico e termina quando chiudi l'app. Scegli l'app Terminale per mantenere le sessioni attive senza Gitrochi.";
 "Open in new tab" = "Apri in una nuova scheda";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// Modifiche non sottoposte a commit in %1$@";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Modifiche non sottoposte a commit in questo worktree. Aprilo per preparare e fare commit.";

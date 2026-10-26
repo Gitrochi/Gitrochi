@@ -3,6 +3,8 @@ import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState }
 import { ConflictView } from "@/features/resolve-conflict";
 import { type DiffDocument, type DiffLine, diffSides, modeSummary, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
+import { ipc } from "@/shared/api";
+import { basename, joinPath, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, Spinner } from "@/shared/ui";
@@ -32,7 +34,9 @@ export function DiffView({ store }: { store: RepoStore }) {
       ? `${c.path} · ${c.kind === "conflicted" ? t("Conflict") : c.staged ? t("Staged") : t("Working tree")}`
       : source.kind === "commit"
         ? t("{0}{1} · commit {2}", c.oldPath ? c.oldPath + " → " : "", c.path, short(source.sha))
-        : `${c.oldPath ? c.oldPath + " → " : ""}${c.path} · ${store.target?.provider === "gitlab" ? "MR" : "PR"} #${source.number}`;
+        : source.kind === "worktree"
+          ? `${c.path} · ${t("Worktree: {0}", store.worktrees.find((w) => samePath(w.path, source.path))?.branch ?? basename(source.path))}`
+          : `${c.oldPath ? c.oldPath + " → " : ""}${c.path} · ${store.target?.provider === "gitlab" ? "MR" : "PR"} #${source.number}`;
   const doc = store.diff;
 
   return (
@@ -49,7 +53,7 @@ export function DiffView({ store }: { store: RepoStore }) {
             {subtitle}
           </span>
         </div>
-        {c.kind !== "untracked" && source.kind !== "review" && (
+        {c.kind !== "untracked" && source.kind !== "review" && source.kind !== "worktree" && (
           <>
             <IconButton icon={<History size={15} />} aria-label={t("File history")} tip={t("File history|Commits that changed this file")} onClick={() => store.openFileHistory(c.path)} />
             {c.kind !== "deleted" && (
@@ -62,7 +66,7 @@ export function DiffView({ store }: { store: RepoStore }) {
             )}
           </>
         )}
-        <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => store.revealFile(c)} />
+        <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => (source.kind === "worktree" ? void ipc.reveal(joinPath(source.path, c.path)) : store.revealFile(c))} />
         <div className="segmented" style={{ flex: "none" }}>
           <button type="button" className={!store.diffSplit ? "on" : ""} data-tip={t("Unified view")} aria-label={t("Unified view")} onClick={() => store.setDiffSplit(false)}>
             <Rows3 size={14} />

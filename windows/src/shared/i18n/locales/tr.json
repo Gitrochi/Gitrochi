@@ -1044,5 +1044,9 @@
  "Write": "Yaz",
  "Preview": "Önizleme",
  "Nothing to preview": "Önizlenecek bir şey yok",
- "Open in new tab": "Yeni sekmede aç"
+ "Open in new tab": "Yeni sekmede aç",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// {0} içinde commit edilmemiş değişiklikler",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Bu worktree'deki commit edilmemiş değişiklikler. Hazırlamak ve commit etmek için açın."
 }

@@ -1053,3 +1053,7 @@
 "Terminal app" = "Приложение «Терминал»";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "В Gitrochi сеанс запускается в новой вкладке терминала под графом и завершается при выходе из приложения. Выберите приложение «Терминал», чтобы сеансы продолжались без Gitrochi.";
 "Open in new tab" = "Открыть в новой вкладке";
+"Worktree" = "Рабочее дерево";
+"// Uncommitted changes in %@" = "// Незакоммиченные изменения в %1$@";
+"Worktree: %@" = "Рабочее дерево: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Незакоммиченные изменения в этом рабочем дереве. Откройте его, чтобы проиндексировать и закоммитить.";
