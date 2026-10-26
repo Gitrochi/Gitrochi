@@ -1036,3 +1036,7 @@
 "Terminal app" = "Terminál app";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "A Gitrochiban a munkamenet a grafikon alatti terminál új lapján fut, és az alkalmazásból kilépve véget ér. Válassza a Terminál appot, ha a munkamenetek Gitrochi nélkül is fussanak.";
 "Open in new tab" = "Megnyitás új lapon";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// Nem commitolt módosítások itt: %1$@";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "A worktree nem commitolt módosításai. Nyissa meg az előkészítéshez és a commithoz.";

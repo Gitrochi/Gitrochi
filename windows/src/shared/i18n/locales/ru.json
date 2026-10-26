@@ -1055,5 +1055,9 @@
  "Write": "Написать",
  "Preview": "Предпросмотр",
  "Nothing to preview": "Нечего показывать",
- "Open in new tab": "Открыть в новой вкладке"
+ "Open in new tab": "Открыть в новой вкладке",
+ "Worktree": "Рабочее дерево",
+ "// Uncommitted changes in {0}": "// Незакоммиченные изменения в {0}",
+ "Worktree: {0}": "Рабочее дерево: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Незакоммиченные изменения в этом рабочем дереве. Откройте его, чтобы проиндексировать и закоммитить."
 }

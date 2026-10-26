@@ -1030,5 +1030,9 @@
  "Write": "Scrivi",
  "Preview": "Anteprima",
  "Nothing to preview": "Niente da mostrare in anteprima",
- "Open in new tab": "Apri in una nuova scheda"
+ "Open in new tab": "Apri in una nuova scheda",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Modifiche non sottoposte a commit in {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Modifiche non sottoposte a commit in questo worktree. Aprilo per preparare e fare commit."
 }

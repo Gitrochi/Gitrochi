@@ -65,23 +65,37 @@ extension RepoStore {
         do { try center.start(kind ?? center.defaultKind, in: path, task: task, permissionMode: permissionMode, host: self) } catch { errorMessage = describe(error) }
     }
 
-    /// 워크트리마다 변경 파일 수와 원격 대비 ↑↓ (에이전트 패널 카드)
+    /// 워크트리마다 변경 파일 수와 원격 대비 ↑↓ (에이전트 패널 카드), and other worktrees' changes for their graph rows
     func refreshWorktreeStats() async {
+        guard let url else { return }
+        let here = url.path
         let list = worktrees.filter { !$0.prunable }
-        var result: [String: WorktreeStats] = [:]
-        await withTaskGroup(of: (String, WorktreeStats?).self) { group in
-            for w in list {
+        var stats: [String: WorktreeStats] = [:]
+        var status: [String: WorkingStatus] = [:]
+        for w in list where Self.samePath(w.path, here) { stats[w.path] = WorktreeStats(self.status) }
+        await withTaskGroup(of: (String, WorkingStatus?).self) { group in
+            for w in list where !Self.samePath(w.path, here) {
                 group.addTask {
                     let r = try? await Git.run(["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=normal"],
                                                in: URL(fileURLWithPath: w.path, isDirectory: true))
-                    return (w.path, r.map { WorktreeStats(Parsers.status($0.data)) })
+                    return (w.path, r.map { Parsers.status($0.data) })
                 }
             }
-            for await (path, stats) in group {
-                if let stats { result[path] = stats }
+            for await (path, st) in group {
+                guard let st else { continue }
+                status[path] = st
+                stats[path] = WorktreeStats(st)
             }
         }
-        if result != worktreeStats { worktreeStats = result }
+        guard self.url?.path == here else { return }
+        if stats != worktreeStats { worktreeStats = stats }
+        if status != worktreeStatus {
+            worktreeStatus = status
+            // a worktree gained or lost its changes (or moved its HEAD): redraw the graph with its row
+            if let drawn = drawnPendingKey, drawn != Self.pendingKey(pendingWorktrees(worktrees)) {
+                Task { await reload(quiet: true) }
+            }
+        }
     }
 }
 

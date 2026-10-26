@@ -1029,5 +1029,9 @@
  "Write": "Écrire",
  "Preview": "Aperçu",
  "Nothing to preview": "Rien à prévisualiser",
- "Open in new tab": "Ouvrir dans un nouvel onglet"
+ "Open in new tab": "Ouvrir dans un nouvel onglet",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Modifications non validées dans {0}",
+ "Worktree: {0}": "Worktree : {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Modifications non validées dans ce worktree. Ouvrez-le pour indexer et valider."
 }

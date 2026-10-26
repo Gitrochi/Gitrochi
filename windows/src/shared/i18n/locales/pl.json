@@ -1038,5 +1038,9 @@
  "Write": "Pisz",
  "Preview": "Podgląd",
  "Nothing to preview": "Brak treści do podglądu",
- "Open in new tab": "Otwórz w nowej karcie"
+ "Open in new tab": "Otwórz w nowej karcie",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Niezatwierdzone zmiany w {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Niezatwierdzone zmiany w tym worktree. Otwórz go, aby przygotować i zatwierdzić zmiany."
 }

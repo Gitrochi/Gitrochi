@@ -1,4 +1,4 @@
-import { type Commit, type GraphRow, type GraphSegment, isWIP } from "../model/types";
+import { type Commit, type GraphRow, type GraphSegment, isPending } from "../model/types";
 
 /**
  * 커밋 목록(자식 → 부모 순)에 레인을 배정해 행마다 그릴 선분을 만든다. (맥 버전 Graph.swift 와 같은 알고리즘)
@@ -46,7 +46,7 @@ export function layoutGraph(commits: Commit[]): { rows: GraphRow[]; maxLanes: nu
 
     // 아래쪽 절반: 부모들로 이어지는 선
     if (c.parents.length) {
-      const wip = isWIP(c);
+      const wip = isPending(c);
       lanes[col] = c.parents[0];
       colors[col] = nodeColor;
       dashed[col] = wip;

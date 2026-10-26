@@ -189,6 +189,8 @@ struct InspectorView: View {
             WorkingChangesView()
         case .commit(let sha)?:
             CommitDetailView(sha: sha)
+        case .worktree(let path)?:
+            WorktreeChangesView(path: path)
         case .pullRequest(let n)?:
             PullRequestDetailView(number: n)
         case nil:

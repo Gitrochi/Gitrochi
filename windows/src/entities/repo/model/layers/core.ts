@@ -2,7 +2,7 @@ import type { AgentHost } from "@/entities/agent";
 import { avatars } from "@/entities/avatar";
 import { CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
-import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraph, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, WIP_ID, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats } from "@/entities/git";
+import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraph, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { accounts, type PullRequestReview } from "@/entities/hosting";
 import { TerminalSession, type TerminalSpec } from "@/entities/terminal";
@@ -12,6 +12,9 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { describe, git, type GitOptions, gitRaw, unsafeRepository } from "@/shared/platform";
 import type { UndoPoint } from "../../lib/undo-model";
+
+/** Which worktree rows a graph was drawn with */
+export const pendingRowsKey = (list: Worktree[]) => list.map((w) => w.path + "@" + w.head).join("|");
 
 export const EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 
@@ -38,6 +41,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract focusTerminal(s: TerminalSession): void;
   abstract closeAllTerminals(): void;
   abstract switchWorktree(path: string): Promise<void>;
+  abstract refreshWorktreeStats(): Promise<void>;
   abstract run(label: string, args: string[], o?: { network?: boolean; input?: string }): Promise<boolean>;
   abstract refreshGitch(fetch?: boolean): Promise<void>;
 
@@ -123,6 +127,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   // 워크트리·호스팅·Claude
   worktrees: Worktree[] = [];
   worktreeStats: Record<string, WorktreeStats> = {};
+  /** Other worktrees' status (they aren't watched, so it is polled while this tab is in front) */
+  worktreeStatus: Record<string, WorkingStatus> = {};
   remoteURLs: Record<string, string> = {};
   target: RepoTarget | null = null;
   pullRequests: PullRequest[] = [];
@@ -181,7 +187,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   /** 상태만 다시 읽는 가벼운 새로 고침의 세대(전체 새로 고침이 시작되면 함께 올라간다) */
   protected statusGeneration = 0;
   /** 마지막으로 그래프·브랜치를 만든 git 출력 — 같으면 다시 해석·배치하지 않는다(행 객체도 그대로라 화면이 다시 그리지 않음) */
-  protected lastLog: { out: string; wip: boolean; head: string | null } | null = null;
+  protected lastLog: { out: string; wip: boolean; head: string | null; pending: string } | null = null;
+  private worktreePoll: ReturnType<typeof setInterval> | null = null;
   protected lastRefs: string | null = null;
   protected lastIndexRefresh = 0;
   protected gitchKey: string | null = null;
@@ -206,10 +213,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   }
 
   get selectedID(): string | null {
-    if (!this.selection) return null;
-    if (this.selection.kind === "wip") return WIP_ID;
-    if (this.selection.kind === "commit") return this.selection.sha;
-    return null;
+    return selectionID(this.selection);
   }
 
   /** 연결된 워크트리(메인이 아닌)로 연 탭인지 */
@@ -295,6 +299,10 @@ export abstract class RepoCore extends Observable implements AgentHost {
     await this.startWatching();
     await this.reload();
     this.selectDefault();
+    if (this.worktrees.length > 1) void this.refreshWorktreeStats();
+    this.worktreePoll ??= setInterval(() => {
+      if (this.isActive && document.hasFocus() && this.worktrees.length > 1) void this.refreshWorktreeStats();
+    }, 5000);
     // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
     const shown = Date.now() - started;
     if (!quick && shown < 900) await new Promise((res) => setTimeout(res, 900 - shown));
@@ -346,6 +354,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   }
 
   close() {
+    if (this.worktreePoll) clearInterval(this.worktreePoll);
+    this.worktreePoll = null;
     this.closeAllTerminals();
     this.stopWatching();
     this.resetState();
@@ -419,6 +429,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.amend = false;
     this.mergeMessageFilled = false;
     this.worktrees = [];
+    this.worktreeStats = {};
+    this.worktreeStatus = {};
     this.remoteURLs = {};
     this.target = null;
     this.pullRequests = [];
@@ -492,6 +504,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
     }
   }
 
+  /** Other worktrees with uncommitted changes: each gets a row above its HEAD in the graph */
+  protected pendingWorktrees(worktrees: Worktree[]) {
+    return worktrees.filter((w) => !w.prunable && !!w.head && !samePath(w.path, this.path) && !statusIsEmpty(this.worktreeStatus[w.path] ?? emptyStatus()));
+  }
+
   protected async readAll(quiet: boolean) {
     const path = this.path;
     if (!path) return;
@@ -516,12 +533,18 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const head = hd.status === 0 ? hd.stdout.trim() : null;
       // 커밋이 그대로면(파일만 고친 경우 등) 해석·배치를 건너뛰고 지금 그래프를 그대로 쓴다
       const wip = !statusIsEmpty(newStatus);
-      const sameLog = !!this.lastLog && this.lastLog.out === lg.stdout && this.lastLog.wip === wip && this.lastLog.head === head && this.entries.length > 0;
+      const worktrees = P.parseWorktrees(wt.stdout);
+      const pending = this.pendingWorktrees(worktrees);
+      const pendingKey = pendingRowsKey(pending);
+      const sameLog =
+        !!this.lastLog && this.lastLog.out === lg.stdout && this.lastLog.wip === wip && this.lastLog.head === head && this.lastLog.pending === pendingKey && this.entries.length > 0;
       if (!sameLog) {
         let commits = P.parseLog(lg.stdout);
         const more = commits.length > this.limit;
         if (more) commits = commits.slice(0, this.limit);
         if (wip) commits.unshift(wipCommit(head));
+        const known = new Set(commits.map((c) => c.id));
+        commits.splice(wip ? 1 : 0, 0, ...pending.filter((w) => known.has(w.head!)).map((w) => worktreeWIPCommit(w.path, w.head!)));
         if (this.loading) {
           this.loading = { ...this.loading, step: t("Drawing the graph with {0} commits…", commits.length) };
           this.emit();
@@ -534,7 +557,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
         this.entries.forEach((e, i) => {
           if (!this.commitIndex.has(e.commit.id)) this.commitIndex.set(e.commit.id, i);
         });
-        this.lastLog = { out: lg.stdout, wip, head };
+        this.lastLog = { out: lg.stdout, wip, head, pending: pendingKey };
       }
 
       this.status = newStatus;
@@ -552,7 +575,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const parsed = P.parseRemotes(rm.stdout);
       this.remotes = parsed.names;
       this.remoteURLs = parsed.urls;
-      this.worktrees = P.parseWorktrees(wt.stdout);
+      this.worktrees = worktrees;
+      // this worktree's card counts come from the status just read; other worktrees are polled
+      const here = worktrees.find((w) => samePath(w.path, path));
+      const stats = here && P.worktreeStats(newStatus);
+      if (here && JSON.stringify(stats) !== JSON.stringify(this.worktreeStats[here.path])) this.worktreeStats = { ...this.worktreeStats, [here.path]: stats! };
       this.unstagedStats = P.parseNumstat(un.stdout);
       this.stagedStats = P.parseNumstat(sn.stdout);
       const newTarget = Hosting.findTarget(

@@ -1049,3 +1049,7 @@
 "Terminal app" = "แอปเทอร์มินัล";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "ใน Gitrochi เซสชันจะทำงานในแท็บใหม่ของเทอร์มินัลใต้กราฟ และจะสิ้นสุดเมื่อออกจากแอป เลือกแอปเทอร์มินัลหากต้องการให้เซสชันทำงานต่อโดยไม่ต้องเปิด Gitrochi";
 "Open in new tab" = "เปิดในแท็บใหม่";
+"Worktree" = "เวิร์กทรี";
+"// Uncommitted changes in %@" = "// การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตใน %1$@";
+"Worktree: %@" = "เวิร์กทรี: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในเวิร์กทรีนี้ เปิดเวิร์กทรีเพื่อสเตจและคอมมิต";

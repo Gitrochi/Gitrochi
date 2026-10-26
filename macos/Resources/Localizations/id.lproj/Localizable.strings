@@ -1004,3 +1004,7 @@
 "Terminal app" = "Aplikasi Terminal";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Di Gitrochi, sesi berjalan di tab baru terminal di bawah grafik dan berakhir saat Anda keluar dari aplikasi. Pilih aplikasi Terminal agar sesi tetap berjalan tanpa Gitrochi.";
 "Open in new tab" = "Buka di tab baru";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// Perubahan yang belum di-commit di %1$@";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Perubahan yang belum di-commit di worktree ini. Buka untuk stage dan commit.";

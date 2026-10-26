@@ -11,6 +11,7 @@ import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, Markdown, type MenuItem, Spinner, tip } from "@/shared/ui";
 import { ChangeList, FileViewToggle } from "./FileList";
 import { GitchBar } from "./GitchBar";
+import { WorktreeChanges } from "./WorktreeChanges";
 import "./inspector.css";
 
 /** 오른쪽 열: 작업 영역 또는 커밋 상세 */
@@ -21,6 +22,7 @@ export function Inspector({ store }: { store: RepoStore }) {
   if (!sel) return <Empty icon={<Waypoints size={30} strokeWidth={1.5} />} title={t("No commit selected")} detail={t("Select a commit in the graph.")} />;
   if (sel.kind === "wip") return <WorkingChanges store={store} />;
   if (sel.kind === "commit") return <CommitDetailView store={store} sha={sel.sha} />;
+  if (sel.kind === "worktree") return <WorktreeChanges store={store} path={sel.path} />;
   return <PullRequestDetail store={store} number={sel.number} />;
 }
 

@@ -71,13 +71,16 @@ struct DiffView: View {
             return String(localized: "\(c.oldPath.map { "\($0) → " } ?? "")\(c.path) · commit \(sha.prefix(7))")
         case .review(let n, let c, _):
             return "\(c.oldPath.map { "\($0) → " } ?? "")\(c.path) · \(store.target?.provider.requestShort ?? "PR") #\(n)"
+        case .worktree(let path, let c):
+            let name = store.worktrees.first { $0.path == path }?.branch ?? (path as NSString).lastPathComponent
+            return "\(c.path) · " + String(localized: "Worktree: \(name)")
         }
     }
 
     /// 이 파일의 히스토리·blame 열기
     @ViewBuilder
     private func fileButtons(_ c: FileChange) -> some View {
-        if c.kind != .untracked, !isReview {
+        if c.kind != .untracked, !isReview, !isWorktree {
             Button { store.openFileHistory(c.path) } label: { Image(systemName: "clock.arrow.circlepath") }
                 .buttonStyle(.borderless)
                 .help("File history — commits that changed this file")
@@ -91,13 +94,20 @@ struct DiffView: View {
                     .accessibilityLabel("Blame")
             }
         }
-        Button { store.revealInFinder(c) } label: { Image(systemName: "folder") }
+        Button {
+            if case .worktree(let path, _) = source {
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path).appendingPathComponent(c.path)])
+            } else {
+                store.revealInFinder(c)
+            }
+        } label: { Image(systemName: "folder") }
             .buttonStyle(.borderless)
             .help("Show in Finder")
             .accessibilityLabel("Show in Finder")
     }
 
     private var isReview: Bool { if case .review = source { return true } else { return false } }
+    private var isWorktree: Bool { if case .worktree = source { return true } else { return false } }
 
     /// 보기: 한 줄로 / 나란히, 공백 무시
     private var viewOptions: some View {

@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronUp, CircleDashed, ListFilter, Search, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { isWIP, type SearchScope, searchScopes } from "@/entities/git";
+import { type Commit, emptyStatus, isWIP, type SearchScope, searchScopes, statusFiles, wipWorktree } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
+import { basename, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, showMenuBelow, Spinner } from "@/shared/ui";
@@ -52,6 +53,13 @@ export function GraphView({ store }: { store: RepoStore }) {
   const searching = store.isSearching && (!store.searching || store.searchMatchSet.size > 0);
   const selected = store.selectedID;
   const wipCount = store.wipCount;
+  /** Another worktree's row: its branch and number of changed files */
+  const worktreeRow = (c: Commit) => {
+    const wt = wipWorktree(c);
+    if (wt === null) return null;
+    const w = store.worktrees.find((x) => samePath(x.path, wt));
+    return { label: w?.branch ?? basename(wt), count: statusFiles(store.worktreeStatus[wt] ?? emptyStatus()).length };
+  };
 
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
@@ -94,7 +102,8 @@ export function GraphView({ store }: { store: RepoStore }) {
                   refs={store.refsByCommit.get(e.commit.id)}
                   selected={selected === e.commit.id}
                   isHead={e.commit.id === store.headHash}
-                  wipCount={isWIP(e.commit) ? wipCount : 0}
+                  wipCount={isWIP(e.commit) ? wipCount : worktreeRow(e.commit)?.count ?? 0}
+                  wipLabel={worktreeRow(e.commit)?.label}
                   match={!searching ? 0 : store.searchMatchSet.has(e.commit.id) ? 1 : 2}
                   ci={store.ci.bySha.get(e.commit.id)}
                 />

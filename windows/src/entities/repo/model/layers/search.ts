@@ -1,4 +1,4 @@
-import { isWIP, type SearchScope } from "@/entities/git";
+import { isPending, type SearchScope } from "@/entities/git";
 import { git } from "@/shared/platform";
 import { RepoSelection } from "./selection";
 
@@ -41,7 +41,7 @@ export abstract class RepoSearch extends RepoSelection {
       const found = new Set<string>();
       for (const e of this.entries) {
         const c = e.commit;
-        if (isWIP(c)) continue;
+        if (isPending(c)) continue;
         if (
           c.subject.toLowerCase().includes(lower) ||
           c.author.toLowerCase().includes(lower) ||

@@ -1057,5 +1057,9 @@
  "Write": "撰寫",
  "Preview": "預覽",
  "Nothing to preview": "沒有可預覽的內容",
- "Open in new tab": "在新分頁中打開"
+ "Open in new tab": "在新分頁中打開",
+ "Worktree": "工作樹",
+ "// Uncommitted changes in {0}": "// {0} 中未提交的變更",
+ "Worktree: {0}": "工作樹：{0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "此工作樹中未提交的變更。開啟它以暫存和提交。"
 }

@@ -14,10 +14,8 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
   useObserve(agents);
   const paths = store.worktrees.map((w) => w.path).join("|");
   useEffect(() => {
-    // 다른 워크트리는 파일 감시 대상이 아니라 몇 초마다 다시 센다
+    // the store polls other worktrees while this tab is in front; count once right away
     void store.refreshWorktreeStats();
-    const secs = setInterval(() => void store.refreshWorktreeStats(), 5000);
-    return () => clearInterval(secs);
   }, [store, paths]);
 
   const others = agents.sessions.filter((s) => !store.worktrees.some((w) => samePath(w.path, s.path)) && s.status !== "ended");

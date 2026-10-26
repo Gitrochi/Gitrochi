@@ -1037,5 +1037,9 @@
  "Write": "Psát",
  "Preview": "Náhled",
  "Nothing to preview": "Není co zobrazit",
- "Open in new tab": "Otevřít na nové kartě"
+ "Open in new tab": "Otevřít na nové kartě",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Necommitnuté změny v {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Necommitnuté změny v tomto worktree. Pro přípravu a commit ho otevřete."
 }

@@ -1056,5 +1056,9 @@
  "Write": "書く",
  "Preview": "プレビュー",
  "Nothing to preview": "プレビューする内容がありません",
- "Open in new tab": "新しいタブで開く"
+ "Open in new tab": "新しいタブで開く",
+ "Worktree": "ワークツリー",
+ "// Uncommitted changes in {0}": "// {0} の未コミットの変更",
+ "Worktree: {0}": "ワークツリー: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "このワークツリーの未コミットの変更です。ステージやコミットはワークツリーを開いて行います。"
 }

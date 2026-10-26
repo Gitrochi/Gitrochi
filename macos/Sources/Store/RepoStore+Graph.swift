@@ -38,7 +38,7 @@ extension RepoStore {
     /// 끌고 온 브랜치 자신(과 그 원격 추적 브랜치)은 대상에서 뺀다 — 같은 커밋에 main 과 feature 가 함께 있을 때
     /// feature 를 그 줄에 놓으면 main 이 대상이 되게.
     func handleDrop(_ payload: String, onto entry: GraphEntry) {
-        guard !entry.commit.isWIP, busy == nil else { return }
+        guard !entry.commit.isPending, busy == nil else { return }
         let refs = refsByCommit[entry.id] ?? []
         func pick(_ list: [RefLabel]) -> String? {
             list.first { $0.kind == .local && $0.isCurrent }?.name

@@ -1033,3 +1033,7 @@
 "Terminal app" = "Aplikace Terminál";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "V Gitrochi běží relace na nové kartě terminálu pod grafem a skončí po ukončení aplikace. Chcete-li, aby relace běžely i bez Gitrochi, zvolte aplikaci Terminál.";
 "Open in new tab" = "Otevřít na nové kartě";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// Necommitnuté změny v %1$@";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Necommitnuté změny v tomto worktree. Pro přípravu a commit ho otevřete.";

@@ -1003,5 +1003,9 @@
  "Write": "Schrijven",
  "Preview": "Voorbeeld",
  "Nothing to preview": "Niets om te bekijken",
- "Open in new tab": "Openen in nieuw tabblad"
+ "Open in new tab": "Openen in nieuw tabblad",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Niet-gecommitte wijzigingen in {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Niet-gecommitte wijzigingen in deze worktree. Open hem om te stagen en te committen."
 }

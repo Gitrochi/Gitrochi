@@ -1055,5 +1055,9 @@
  "Write": "Написати",
  "Preview": "Попередній перегляд",
  "Nothing to preview": "Немає що переглядати",
- "Open in new tab": "Відкрити в новій вкладці"
+ "Open in new tab": "Відкрити в новій вкладці",
+ "Worktree": "Робоче дерево",
+ "// Uncommitted changes in {0}": "// Незакомічені зміни в {0}",
+ "Worktree: {0}": "Робоче дерево: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Незакомічені зміни в цьому робочому дереві. Відкрийте його, щоб проіндексувати й закомітити."
 }

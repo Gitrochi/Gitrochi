@@ -1020,3 +1020,7 @@
 "Terminal app" = "Terminal-App";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "In Gitrochi läuft eine Sitzung in einem neuen Tab des Terminals unter dem Graphen und endet, wenn Sie die App beenden. Wählen Sie die Terminal-App, damit Sitzungen auch ohne Gitrochi weiterlaufen.";
 "Open in new tab" = "In neuem Tab öffnen";
+"Worktree" = "Worktree";
+"// Uncommitted changes in %@" = "// Nicht committete Änderungen in %1$@";
+"Worktree: %@" = "Worktree: %1$@";
+"Uncommitted changes in this worktree. Open it to stage and commit." = "Nicht committete Änderungen in diesem Worktree. Öffnen Sie ihn zum Stagen und Committen.";

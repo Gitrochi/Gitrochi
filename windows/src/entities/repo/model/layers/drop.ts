@@ -1,4 +1,4 @@
-import { type DropChoice, type DropRequest, type GraphEntry, isWIP, type RefLabel, short } from "@/entities/git";
+import { type DropChoice, type DropRequest, type GraphEntry, isPending, type RefLabel, short } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import { gitRaw } from "@/shared/platform";
 import { RepoUndo } from "./undo";
@@ -33,7 +33,7 @@ export abstract class RepoDrop extends RepoUndo {
    * feature 를 그 줄에 놓으면 main 이 대상이 되게.
    */
   handleDrop(payload: string, entry: GraphEntry) {
-    if (isWIP(entry.commit) || this.busy != null) return;
+    if (isPending(entry.commit) || this.busy != null) return;
     const refs = this.refsByCommit.get(entry.commit.id) ?? [];
     const pick = (list: RefLabel[]) =>
       list.find((r) => r.kind === "local" && r.isCurrent)?.name ?? list.find((r) => r.kind === "local")?.name ?? list.find((r) => r.kind === "remote")?.name ?? null;

@@ -1007,5 +1007,9 @@
  "Write": "Tulis",
  "Preview": "Pratinjau",
  "Nothing to preview": "Tidak ada yang bisa dipratinjau",
- "Open in new tab": "Buka di tab baru"
+ "Open in new tab": "Buka di tab baru",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Perubahan yang belum di-commit di {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Perubahan yang belum di-commit di worktree ini. Buka untuk stage dan commit."
 }

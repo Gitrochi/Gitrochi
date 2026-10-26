@@ -1039,5 +1039,9 @@
  "Write": "Írás",
  "Preview": "Előnézet",
  "Nothing to preview": "Nincs mit megjeleníteni",
- "Open in new tab": "Megnyitás új lapon"
+ "Open in new tab": "Megnyitás új lapon",
+ "Worktree": "Worktree",
+ "// Uncommitted changes in {0}": "// Nem commitolt módosítások itt: {0}",
+ "Worktree: {0}": "Worktree: {0}",
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "A worktree nem commitolt módosításai. Nyissa meg az előkészítéshez és a commithoz."
 }

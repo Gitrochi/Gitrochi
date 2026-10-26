@@ -22,6 +22,20 @@ struct Commit: Identifiable, Hashable {
     static func wip(parent: String?) -> Commit {
         Commit(id: wipID, parents: parent.map { [$0] } ?? [], author: "", email: "", date: Date(), subject: "")
     }
+
+    /// Rows for another worktree's uncommitted changes (GitKraken shows one per worktree)
+    private static let worktreeWIPPrefix = "__WORKTREE__:"
+
+    static func worktreeWIP(path: String, parent: String) -> Commit {
+        Commit(id: worktreeWIPPrefix + path, parents: [parent], author: "", email: "", date: Date(), subject: "")
+    }
+
+    /// The worktree path of such a row, otherwise nil
+    var wipWorktree: String? { id.hasPrefix(Commit.worktreeWIPPrefix) ? String(id.dropFirst(Commit.worktreeWIPPrefix.count)) : nil }
+    /// Uncommitted changes of this or another worktree, not a real commit
+    var isPending: Bool { isWIP || wipWorktree != nil }
+    /// What selecting this graph row selects
+    var rowSelection: Selection { isWIP ? .wip : wipWorktree.map { .worktree($0) } ?? .commit(id) }
 }
 
 struct CommitDetail: Hashable {
@@ -130,6 +144,12 @@ struct WorkingStatus: Hashable {
 
     var isEmpty: Bool { staged.isEmpty && unstaged.isEmpty && conflicted.isEmpty }
     var count: Int { Set((staged + unstaged + conflicted).map(\.path)).count }
+
+    /// Each file once (conflict, then working tree, then staged), as one list for another worktree
+    var files: [FileChange] {
+        var seen = Set<String>()
+        return (conflicted + unstaged + staged).filter { seen.insert($0.path).inserted }
+    }
 }
 
 enum RepoState: Hashable {
@@ -186,6 +206,8 @@ enum SearchScope: String, CaseIterable, Identifiable {
 
 enum Selection: Hashable {
     case wip
+    /// Another worktree's row (its path)
+    case worktree(String)
     case commit(String)
     case pullRequest(Int)
 }
@@ -195,12 +217,15 @@ enum DiffSource: Hashable {
     case commit(sha: String, change: FileChange, parent: String?)
     /// PR·MR 에서 바뀐 파일(서버가 준 패치)
     case review(number: Int, change: FileChange, patch: String)
+    /// Another worktree's uncommitted change, against its HEAD (read-only)
+    case worktree(path: String, change: FileChange)
 
     var change: FileChange {
         switch self {
         case .working(let c): return c
         case .commit(_, let c, _): return c
         case .review(_, let c, _): return c
+        case .worktree(_, let c): return c
         }
     }
 }

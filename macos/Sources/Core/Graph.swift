@@ -54,9 +54,9 @@ enum GraphLayout {
             if let first = c.parents.first {
                 lanes[col] = first
                 colors[col] = nodeColor
-                dashed[col] = c.isWIP
+                dashed[col] = c.isPending
                 segs.append(GraphSegment(x1: Double(col), y1: 0.5, x2: Double(col), y2: 1,
-                                         color: nodeColor, dashed: c.isWIP))
+                                         color: nodeColor, dashed: c.isPending))
                 for p in c.parents.dropFirst() {
                     if let j = lanes.firstIndex(where: { $0 == p }) {
                         segs.append(GraphSegment(x1: Double(col), y1: 0.5, x2: Double(j), y2: 1,

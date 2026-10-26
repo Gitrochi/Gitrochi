@@ -1,9 +1,10 @@
 import { type AgentKind, agents } from "@/entities/agent";
 import * as P from "@/entities/git";
-import { type Worktree, worktreeStats, type WorktreeStats } from "@/entities/git";
+import { type WorkingStatus, type Worktree, worktreeStats, type WorktreeStats } from "@/entities/git";
 import { basename, dirname, joinPath, samePath, samePathKey } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { git } from "@/shared/platform";
+import { pendingRowsKey } from "./core";
 import { RepoRebase } from "./rebase";
 
 /** 워크트리·에이전트 세션 */
@@ -67,23 +68,39 @@ export abstract class RepoWorktrees extends RepoRebase {
     }
   }
 
-  /** 워크트리마다 변경 파일 수와 원격 대비 ↑↓ (에이전트 패널 카드) */
+  /** 워크트리마다 변경 파일 수와 원격 대비 ↑↓ (에이전트 패널 카드), and other worktrees' changes for their graph rows */
   async refreshWorktreeStats() {
     const list = this.worktrees.filter((w) => !w.prunable);
-    const result: Record<string, WorktreeStats> = {};
+    const path = this.path;
+    const stats: Record<string, WorktreeStats> = {};
+    const status: Record<string, WorkingStatus> = {};
     await Promise.all(
       list.map(async (w) => {
+        if (samePath(w.path, path)) {
+          stats[w.path] = worktreeStats(this.status);
+          return;
+        }
         try {
           const r = await git(["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=normal"], w.path);
-          result[w.path] = worktreeStats(P.parseStatus(r.stdout));
+          status[w.path] = P.parseStatus(r.stdout);
+          stats[w.path] = worktreeStats(status[w.path]);
         } catch {
           /* 폴더가 사라짐 */
         }
       }),
     );
-    if (JSON.stringify(result) !== JSON.stringify(this.worktreeStats)) {
-      this.worktreeStats = result;
-      this.emit();
+    if (this.path !== path) return;
+    let changed = false;
+    if (JSON.stringify(stats) !== JSON.stringify(this.worktreeStats)) {
+      this.worktreeStats = stats;
+      changed = true;
     }
+    if (JSON.stringify(status) !== JSON.stringify(this.worktreeStatus)) {
+      this.worktreeStatus = status;
+      changed = true;
+      // a worktree gained or lost its changes (or moved its HEAD): redraw the graph with its row
+      if (this.lastLog && this.lastLog.pending !== pendingRowsKey(this.pendingWorktrees(this.worktrees))) void this.reload(true);
+    }
+    if (changed) this.emit();
   }
 }

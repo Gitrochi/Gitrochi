@@ -104,6 +104,9 @@ final class RepoStore: Identifiable {
     // MARK: 워크트리·호스팅·Claude
     var worktrees: [Worktree] = []
     var worktreeStats: [String: WorktreeStats] = [:]
+    /// Other worktrees' status (they aren't watched, so it is polled while this tab is in front)
+    var worktreeStatus: [String: WorkingStatus] = [:]
+    @ObservationIgnored private var worktreePoll: Task<Void, Never>?
     private(set) var remoteURLs: [String: String] = [:]
     var target: RepoTarget?
     var pullRequests: [PullRequest] = []
@@ -181,7 +184,7 @@ final class RepoStore: Identifiable {
     private var lastIndexRefresh: Date?
     private var ownIndexStamp: Date?
     /// 마지막으로 그래프를 만든 git log 출력·'작업 중인 변경' 행 여부·HEAD — 같으면 다시 해석·배치하지 않는다
-    private var lastLog: (data: Data, wip: Bool, head: String?)?
+    private var lastLog: (data: Data, wip: Bool, head: String?, pending: String)?
 
     enum ReloadKind: Comparable { case status, full }
     var detailTask: Task<Void, Never>?
@@ -254,6 +257,16 @@ final class RepoStore: Identifiable {
         }
         await reload()
         selectDefault()
+        if worktrees.count > 1 { Task { await refreshWorktreeStats() } }
+        if worktreePoll == nil {
+            worktreePoll = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(5))
+                    guard let self else { return }
+                    if self.isActive, NSApp.isActive, self.worktrees.count > 1 { await self.refreshWorktreeStats() }
+                }
+            }
+        }
         // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
         let shown = Date().timeIntervalSince(started)
         if !quick && shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
@@ -300,6 +313,8 @@ final class RepoStore: Identifiable {
     }
 
     func close() {
+        worktreePoll?.cancel()
+        worktreePoll = nil
         closeAllTerminals()
         watcher = nil
         commonDir = nil
@@ -369,7 +384,7 @@ final class RepoStore: Identifiable {
         emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
         selection = nil; detail = nil; detailFiles = []; diffSource = nil; diff = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
-        worktrees = []; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
+        worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
         aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
         ciBadgeTask?.cancel(); ciBadgeTask = nil
         detailTask?.cancel(); diffTask?.cancel(); watchTask?.cancel()
@@ -398,6 +413,25 @@ final class RepoStore: Identifiable {
         return (r, clock.now - start)
     }
 
+    static func samePath(_ a: String, _ b: String) -> Bool {
+        a == b || URL(fileURLWithPath: a).resolvingSymlinksInPath().path == URL(fileURLWithPath: b).resolvingSymlinksInPath().path
+    }
+
+    /// Other worktrees with uncommitted changes: each gets a row above its HEAD in the graph
+    func pendingWorktrees(_ list: [Worktree]) -> [Worktree] {
+        guard let url else { return [] }
+        return list.filter { w in
+            !w.prunable && w.head != nil && !Self.samePath(w.path, url.path) && !(worktreeStatus[w.path]?.isEmpty ?? true)
+        }
+    }
+
+    static func pendingKey(_ list: [Worktree]) -> String {
+        list.map { $0.path + "@" + ($0.head ?? "") }.joined(separator: "|")
+    }
+
+    /// The graph key the last full reload drew its worktree rows with
+    var drawnPendingKey: String? { lastLog?.pending }
+
     func reload(quiet: Bool = false) async {
         guard let url else { return }
         reloadGeneration += 1
@@ -425,19 +459,25 @@ final class RepoStore: Identifiable {
             let head = hd.status == 0 ? hd.output.trimmed : nil
             // 커밋이 그대로면(파일만 고친 경우 등) 해석·배치를 건너뛰고 지금 그래프를 그대로 쓴다
             let wip = !newStatus.isEmpty
+            let parsedWorktrees = Parsers.worktrees(wt.output)
+            let pending = pendingWorktrees(parsedWorktrees)
+            let pendingKey = Self.pendingKey(pending)
             var graph: (commits: [Commit], layout: (rows: [GraphRow], maxLanes: Int), more: Bool)?
-            if lastLog?.data != lg.data || lastLog?.wip != wip || lastLog?.head != head || entries.isEmpty {
+            if lastLog?.data != lg.data || lastLog?.wip != wip || lastLog?.head != head || lastLog?.pending != pendingKey || entries.isEmpty {
                 var commits = Parsers.log(lg.data)
                 let more = commits.count > limit
                 if more { commits.removeLast(commits.count - limit) }
                 if wip { commits.insert(.wip(parent: head), at: 0) }
+                let known = Set(commits.map(\.id))
+                commits.insert(contentsOf: pending.compactMap { w in w.head.flatMap { known.contains($0) ? Commit.worktreeWIP(path: w.path, parent: $0) : nil } },
+                               at: wip ? 1 : 0)
                 if loading != nil { loading?.step = String(localized: "Drawing the graph with \(commits.count) commits…") }
                 let list = commits
                 let layout = await Task.detached(priority: .userInitiated) { GraphLayout.compute(list) }.value
                 graph = (list, layout, more)
             }
             guard gen == reloadGeneration, self.url == url else { return }
-            if graph != nil { lastLog = (lg.data, wip, head) }
+            if graph != nil { lastLog = (lg.data, wip, head, pendingKey) }
             Self.trace("  graph \(graph == nil ? "reused" : "rebuilt (\(graph!.commits.count) commits)"), status \(statusTime)")
 
             let refs = Parsers.refs(rf.output)
@@ -451,7 +491,12 @@ final class RepoStore: Identifiable {
             let parsedRemotes = Parsers.remotes(rm.output)
             update(\.remotes, parsedRemotes.names)
             update(\.remoteURLs, parsedRemotes.urls)
-            update(\.worktrees, Parsers.worktrees(wt.output))
+            update(\.worktrees, parsedWorktrees)
+            // this worktree's card counts come from the status just read; other worktrees are polled
+            if let here = parsedWorktrees.first(where: { Self.samePath($0.path, url.path) }) {
+                let stats = WorktreeStats(newStatus)
+                if worktreeStats[here.path] != stats { worktreeStats[here.path] = stats }
+            }
             update(\.unstagedStats, Parsers.numstat(un.data))
             update(\.stagedStats, Parsers.numstat(sn.data))
             let newTarget = Hosting.target(remotes: remotes, urls: remoteURLs,
@@ -632,6 +677,8 @@ final class RepoStore: Identifiable {
             break
         case .commit(let sha)?:
             if commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) { selectDefault() }
+        case .worktree(let path)?:
+            if !worktrees.contains(where: { $0.path == path }) { selectDefault() }
         case .pullRequest?:
             break
         case nil:

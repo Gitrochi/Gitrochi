@@ -1,7 +1,7 @@
-import { buildPatch, canEditLines, changePaths, type ConflictChoice, type DiffDocument, type DiffLine, type DiffSource, type FileChange, type FileHistoryEntry, isWIP, parseConflict, resolveConflict, sameDiffSource, type Selection } from "@/entities/git";
+import { buildPatch, canEditLines, changePaths, type ConflictChoice, type DiffDocument, type DiffLine, type DiffSource, type FileChange, type FileHistoryEntry, parseConflict, resolveConflict, rowSelection, sameDiffSource, type Selection } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { joinPath, settings } from "@/shared/config";
-import { describe, gitBytes } from "@/shared/platform";
+import { describe, git, gitBytes } from "@/shared/platform";
 
 const IMAGE_EXT: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", bmp: "image/bmp", ico: "image/x-icon", tif: "image/tiff", tiff: "image/tiff" };
 import * as P from "@/entities/git";
@@ -76,7 +76,7 @@ export abstract class RepoSelection extends RepoCore {
     const current = id ? this.commitIndex.get(id) ?? -1 : -1;
     const next = Math.max(0, Math.min(this.entries.length - 1, current + delta));
     const e = this.entries[next];
-    this.select(isWIP(e.commit) ? { kind: "wip" } : { kind: "commit", sha: e.commit.id });
+    this.select(rowSelection(e.commit));
     this.scrollTarget = e.commit.id;
     this.emit();
   }
@@ -375,19 +375,24 @@ export abstract class RepoSelection extends RepoCore {
           doc = source.patch
             ? P.parseDiff(`diff --git a/${old} b/${c.path}\n--- a/${old}\n+++ b/${c.path}\n${source.patch}`)
             : { lines: [], isBinary: true, truncated: false, header: [], hunks: [] };
-        } else if (source.kind === "working" && source.change.kind === "untracked") {
-          const head = await ipc.readHead(joinPath(path, source.change.path), 2_000_000);
+        } else if ((source.kind === "working" || source.kind === "worktree") && source.change.kind === "untracked") {
+          const head = await ipc.readHead(joinPath(source.kind === "worktree" ? source.path : path, source.change.path), 2_000_000);
           doc = head.binary ? { lines: [], isBinary: true, truncated: false, header: [], hunks: [] } : P.newFileDiff(head.text, head.truncated);
         } else {
           let args: string[];
-          if (source.kind === "working") {
+          let cwd = path;
+          if (source.kind === "worktree") {
+            // staged and unstaged together, as the worktree's whole change
+            args = ["diff", "HEAD", "--no-ext-diff", "-M", ...ws, "--", ...changePaths(source.change)];
+            cwd = source.path;
+          } else if (source.kind === "working") {
             args = source.change.staged
               ? ["diff", "--cached", "--no-ext-diff", "-M", ...ws, "--", ...changePaths(source.change)]
               : ["diff", "--no-ext-diff", ...ws, "--", ...changePaths(source.change)];
           } else {
             args = ["diff", "--no-ext-diff", "-M", ...ws, source.parent ?? EMPTY_TREE, source.sha, "--", ...changePaths(source.change)];
           }
-          const r = await this.g(args);
+          const r = cwd === path ? await this.g(args) : await git(args, cwd);
           doc = P.parseDiff(r.stdout);
         }
       } catch (e) {
