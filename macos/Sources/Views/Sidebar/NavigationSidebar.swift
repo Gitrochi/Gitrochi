@@ -6,6 +6,17 @@ struct NavigationSidebar: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Text("Workspace").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).tracking(0.6)
+                Spacer()
+                Button { store.sidebarToggleRequest += 1 } label: {
+                    Image(systemName: "sidebar.left").font(.system(size: 15)).frame(width: 28, height: 24)
+                }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
+                .help("Collapse sidebar").accessibilityLabel("Collapse sidebar")
+                .accessibilityIdentifier("navigation-sidebar-collapse")
+            }
+            .padding(.leading, 16).padding(.trailing, 8).padding(.top, 8)
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     rows([.home, .repository])
@@ -15,7 +26,7 @@ struct NavigationSidebar: View {
                     rows([.pullRequests, .issues, .actions, .account])
                     groupTitle(String(localized: "Tools"))
                     rows([.flows])
-                }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 12)
+                }.padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 12)
             }
             Divider()
             SettingsLink { Label("Settings", systemImage: "gearshape").font(.system(size: 13)).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 10).padding(.horizontal, 12) }

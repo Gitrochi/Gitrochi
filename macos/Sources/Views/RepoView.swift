@@ -14,6 +14,8 @@ struct RepoView: View {
         NavigationSplitView(columnVisibility: Binding(get: { sidebarPresentation.visibility }, set: { sidebarPresentation.setVisibility($0) })) {
             NavigationSidebar()
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
+                // the page list and the rail carry their own collapse and expand buttons
+                .toolbar(removing: .sidebarToggle)
                 .background(SidebarVisibilityObserver(expandRequest: sidebarExpandRequest) { sidebarCollapsed = $0 })
                 .disabled(showsNavigationRail)
                 .accessibilityHidden(showsNavigationRail)
