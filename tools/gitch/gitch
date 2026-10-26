@@ -8,7 +8,7 @@
 # ==========================================================
 
 # shellcheck disable=SC2088,SC2016  # 화면 표시용 ~ 와 $HOME 문자열은 일부러 펼치지 않음
-GITSW_VERSION="0.3.11"
+GITSW_VERSION="0.3.12"
 GITCH_VERSION_SCHEME="gitrochi"
 # shellcheck disable=SC2034  # 앱이 이 선언을 실행하지 않고 파일 머리에서 읽는다.
 GITCH_GRAPH_API="1"
