@@ -3300,21 +3300,33 @@ login_session() {
   LOGIN_ROOT="$STATE_DIR/logins"; LOGIN_DIR="$LOGIN_ROOT/$id"
   [ -d "$LOGIN_ROOT" ] && [ ! -L "$LOGIN_ROOT" ] && [ -d "$LOGIN_DIR" ] && [ ! -L "$LOGIN_DIR" ] && [ -O "$LOGIN_DIR" ] || { login_error LOGIN_SESSION_INVALID 1 "로그인 세션을 찾을 수 없습니다."; return 1; }
   local file
-  for file in created result.json auth.log cancel gh-path browser result.lock; do
+  for file in created auth-started result.json auth.log cancel gh-path browser result.lock capability expected-login; do
     [ ! -L "$LOGIN_DIR/$file" ] || { login_error LOGIN_SESSION_INVALID 1 "로그인 세션 파일이 올바르지 않습니다."; return 1; }
   done
 }
 login_code() {
-  LC_ALL=C sed -nE 's/.*[Oo]ne-time code: ([A-Z0-9]{4}-[A-Z0-9]{4})([^A-Z0-9-].*)?$/\1/p' "$LOGIN_DIR/auth.log" 2>/dev/null | head -1
+  # gh의 clipboard 설정이 켜져 있으면 같은 코드를 괄호 안에 출력한다.
+  # 두 공식 안내 문장만 읽어 다른 로그에 우연히 나온 문자열은 전달하지 않는다.
+  LC_ALL=C sed -nE \
+    -e 's/.*[Ff]irst copy your one-time code: ([A-Z0-9]{4}-[A-Z0-9]{4})[[:space:]]*$/\1/p' \
+    -e 's/.*[Oo]ne-time code \(([A-Z0-9]{4}-[A-Z0-9]{4})\) copied to clipboard[[:space:]]*$/\1/p' \
+    "$LOGIN_DIR/auth.log" 2>/dev/null | head -1
 }
 login_nullable() { if [ -n "$1" ]; then json_str "$1"; else printf null; fi; }
 login_email_valid() {
   case "$1" in ''|*[$'\001'-$'\040']*|*[[:space:]]*) return 1 ;; ?*@?*) return 0 ;; *) return 1 ;; esac
 }
 login_result() {
-  local session=$1 state=$2 code=${3:-} user=${4:-} email=${5:-} message=$6
-  printf '{"schemaVersion":1,"tool":"gitch login","session":%s,"state":%s,"deviceCode":%s,"verificationURL":"https://github.com/login/device","login":%s,"email":%s,"message":%s}\n' \
+  local session=$1 state=$2 code=${3:-} user=${4:-} email=${5:-} message=$6 phase=""
+  if [ "$state" = pending ]; then
+    if [ -n "$code" ]; then phase=approval; message="브라우저에서 GitHub 로그인을 계속하세요."
+    elif [ -f "$LOGIN_DIR/auth-started" ] || [ ! -d "$LOGIN_ROOT/active.lock" ]; then phase=preparing; message="GitHub 로그인 코드를 준비하고 있습니다."
+    else phase=queued; message="다른 GitHub 로그인 작업이 끝나기를 기다립니다."; fi
+  fi
+  printf '{"schemaVersion":1,"tool":"gitch login","session":%s,"state":%s,"deviceCode":%s,"verificationURL":"https://github.com/login/device","login":%s,"email":%s,"message":%s' \
     "$(json_str "$session")" "$(json_str "$state")" "$(login_nullable "$code")" "$(login_nullable "$user")" "$(login_nullable "$email")" "$(json_str "$message")"
+  [ -z "$phase" ] || printf ',"phase":%s' "$(json_str "$phase")"
+  printf '}\n'
 }
 login_finish() {
   local state=$1 user=${2:-} email=${3:-} message=$4
@@ -3392,7 +3404,7 @@ login_created() {
 }
 login_wait() {
   # 이 worker가 직접 만든 자식만 중단한다. 저장된 PID를 신뢰해 kill하지 않는다.
-  local child rc=0 started
+  local child rc=0 started auth_started code_expired
   [ ! -f "$LOGIN_DIR/cancel" ] || return 125
   login_created
   [ "$(( $(date +%s) - LOGIN_CREATED ))" -lt 900 ] || return 124
@@ -3401,12 +3413,20 @@ login_wait() {
   while kill -0 "$child" 2>/dev/null; do
     login_created
     started=$(date +%s)
-    if [ -f "$LOGIN_DIR/cancel" ] || [ "$((started - LOGIN_CREATED))" -ge 900 ]; then
+    code_expired=""
+    if [ -n "${LOGIN_WAIT_FOR_CODE:-}" ]; then
+      auth_started=$(cat "$LOGIN_DIR/auth-started" 2>/dev/null)
+      case "$auth_started" in ''|*[!0-9]*) auth_started=$started ;; esac
+      [ "${#auth_started}" -le 12 ] || auth_started=$started
+      if [ "$((started - auth_started))" -ge 60 ] && [ -z "$(login_code)" ]; then code_expired=1; fi
+    fi
+    if [ -f "$LOGIN_DIR/cancel" ] || [ "$((started - LOGIN_CREATED))" -ge 900 ] || [ -n "$code_expired" ]; then
       kill "$child" 2>/dev/null || :
       sleep 1
       kill -KILL "$child" 2>/dev/null || :
       wait "$child" 2>/dev/null || :
       [ ! -f "$LOGIN_DIR/cancel" ] || return 125
+      [ -z "$code_expired" ] || return 123
       return 124
     fi
     sleep 1
@@ -3420,7 +3440,17 @@ login_worker() (
   unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN GH_HOST
   login_browser_launcher || { login_finish failed "" "" "브라우저 로그인 도우미를 준비하지 못했습니다."; exit 0; }
   export GH_PROMPT_DISABLED=1 NO_COLOR=1 CLICOLOR=0 TERM=dumb
-  local gh user token actual email uid rc=0
+  local gh user token actual email uid rc=0 capability expected scopes
+  capability=$(cat "$LOGIN_DIR/capability" 2>/dev/null); capability=${capability:-standard}
+  expected=$(cat "$LOGIN_DIR/expected-login" 2>/dev/null)
+  scopes=read:user,user:email,repo,read:org,workflow,admin:public_key
+  case "$capability" in
+    standard) ;;
+    projects)
+      [[ "$expected" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]] || { login_finish failed "" "" "프로젝트 접근을 연결할 GitHub 계정이 올바르지 않습니다."; exit 0; }
+      scopes="$scopes,project" ;;
+    *) login_finish failed "" "" "지원하지 않는 GitHub 로그인 권한입니다."; exit 0 ;;
+  esac
   # GitHub CLI 계정 저장은 전역 파일을 공유하므로 서로 다른 세션의 저장을 순서대로 실행한다.
   login_active_lock || rc=$?
   case "$rc" in
@@ -3430,16 +3460,22 @@ login_worker() (
     *) login_finish failed "" "" "다른 로그인 작업의 상태를 확인할 수 없습니다. 다시 시작하세요."; exit 0 ;;
   esac
   gh=$(cat "$LOGIN_DIR/gh-path")
-  login_wait "$gh" auth login --web --hostname github.com --skip-ssh-key --scopes read:user,user:email,repo,read:org,workflow,admin:public_key > "$LOGIN_DIR/auth.log" 2>&1 || rc=$?
+  date +%s > "$LOGIN_DIR/auth-started"
+  LOGIN_WAIT_FOR_CODE=1 login_wait "$gh" auth login --web --hostname github.com --skip-ssh-key --scopes "$scopes" > "$LOGIN_DIR/auth.log" 2>&1 || rc=$?
   case "$rc" in
     125) login_finish cancelled "" "" "로그인을 취소했습니다."; exit 0 ;;
     124) login_finish failed "" "" "로그인 시간이 초과되었습니다. 다시 시작하세요."; exit 0 ;;
+    123) login_finish failed "" "" "GitHub 로그인 코드를 준비하지 못했습니다. 네트워크 연결을 확인하고 다시 시도하세요."; exit 0 ;;
     0) ;;
     *) login_finish failed "" "" "GitHub 로그인이 완료되지 않았습니다. 다시 시도하세요."; exit 0 ;;
   esac
   [ ! -f "$LOGIN_DIR/cancel" ] || { login_finish cancelled "" "" "로그인을 취소했습니다."; exit 0; }
   user=$(LC_ALL=C sed -nE 's/.*Logged in as ([A-Za-z0-9][A-Za-z0-9-]{0,38})[[:space:]]*$/\1/p' "$LOGIN_DIR/auth.log" | tail -1)
   [ -n "$user" ] || { login_finish failed "" "" "로그인한 GitHub 계정을 확인할 수 없습니다. GitHub CLI를 업데이트하고 다시 시도하세요."; exit 0; }
+  # 추가 권한은 사용자가 선택한 계정에만 가져온다. 다른 계정으로 승인해도 앱에 연결하지 않는다.
+  if [ -n "$expected" ] && [ "$(lower "$user")" != "$(lower "$expected")" ]; then
+    login_finish failed "" "" "선택한 GitHub 계정과 승인한 계정이 다릅니다. 선택한 계정으로 다시 승인하세요."; exit 0
+  fi
   # 기존 활성 계정과 섞이지 않도록 완료 로그에 나온 사용자 전용 자격 증명으로 조회한다.
   rc=0; token=$(login_wait "$gh" auth token --hostname github.com --user "$user" 2>/dev/null) || rc=$?
   if [ "$rc" -ne 0 ]; then
@@ -3481,7 +3517,7 @@ login_cleanup() {
   done
 }
 login_cmd() (
-  local mode="" session="" yes="" code="" self
+  local mode="" session="" yes="" code="" self capability=standard expected="" scoped="" identified=""
   [ "${1:-}" = github ] || { login_error LOGIN_ARGUMENT 1 "사용법: gitch login github --start|--status SESSION|--cancel SESSION --json"; return 1; }
   shift
   while [ $# -gt 0 ]; do
@@ -3489,11 +3525,17 @@ login_cmd() (
       --start) [ -z "$mode" ] || { login_error LOGIN_ARGUMENT 1 "로그인 작업을 하나만 선택하세요."; return 1; }; mode=start ;;
       --status|--cancel) [ -z "$mode" ] && [ $# -ge 2 ] || { login_error LOGIN_ARGUMENT 1 "세션 식별자가 필요합니다."; return 1; }; mode=${1#--}; session=$2; shift ;;
       --yes|-y) yes=1 ;;
+      --capability) [ $# -ge 2 ] && [ -z "$scoped" ] || { login_error LOGIN_ARGUMENT 1 "로그인 권한을 하나만 선택하세요."; return 1; }; capability=$2; scoped=1; shift ;;
+      --expected-login) [ $# -ge 2 ] && [ -z "$identified" ] || { login_error LOGIN_ARGUMENT 1 "연결할 GitHub 계정을 하나만 지정하세요."; return 1; }; expected=$2; identified=1; shift ;;
       --json) ;;
       *) login_error LOGIN_ARGUMENT 1 "알 수 없는 로그인 옵션입니다."; return 1 ;;
     esac
     shift
   done
+  case "$capability" in standard|projects) ;; *) login_error LOGIN_ARGUMENT 1 "지원하지 않는 GitHub 로그인 권한입니다."; return 1 ;; esac
+  if [ -n "$identified" ] && ! [[ "$expected" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]; then login_error LOGIN_ARGUMENT 1 "연결할 GitHub 계정이 올바르지 않습니다."; return 1; fi
+  if [ "$mode" != start ] && { [ -n "$scoped" ] || [ -n "$identified" ]; }; then login_error LOGIN_ARGUMENT 1 "로그인 권한과 계정은 시작할 때만 지정하세요."; return 1; fi
+  if [ "$capability" = projects ] && [ -z "$expected" ]; then login_error LOGIN_ARGUMENT 1 "프로젝트 접근을 연결할 GitHub 계정을 지정하세요."; return 1; fi
   case "$mode" in
     start)
       [ -n "$yes" ] || { login_error CONFIRMATION_REQUIRED 2 "GitHub 브라우저 로그인은 앱의 로그인 버튼이나 --yes 확인이 필요합니다."; return 2; }
@@ -3507,6 +3549,8 @@ login_cmd() (
       chmod 700 "$LOGIN_DIR"; session=${LOGIN_DIR##*/}
       date +%s > "$LOGIN_DIR/created"
       printf '%s\n' "$LOGIN_GH" > "$LOGIN_DIR/gh-path"
+      printf '%s\n' "$capability" > "$LOGIN_DIR/capability"
+      [ -z "$expected" ] || printf '%s\n' "$expected" > "$LOGIN_DIR/expected-login"
       printf '#!/bin/sh\nexit 0\n' > "$LOGIN_DIR/browser"; chmod 700 "$LOGIN_DIR/browser"
       : > "$LOGIN_DIR/auth.log"; : > "$LOGIN_DIR/worker.log"
       self=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")
@@ -5602,6 +5646,29 @@ graph_spm_describe() {   # $1 임시 폴더 $2 범위(접두사) $3 고른 언�
   wait
 }
 
+# 앱에 포함된 Rust 도우미. 단독 셸 설치는 기존 분석기를 계속 쓸 수 있다.
+graph_core() {
+  if [ -n "${GITCH_CORE+x}" ]; then [ -n "$GITCH_CORE" ] && [ -x "$GITCH_CORE" ] && printf '%s' "$GITCH_CORE"; return 0; fi
+  local dir
+  dir=$(dirname "$(self_path)")
+  if [ -x "$dir/gitch-core" ]; then printf '%s' "$dir/gitch-core"
+  elif [ -x "$dir/gitch-core.exe" ]; then printf '%s' "$dir/gitch-core.exe"
+  else command -v gitch-core 2>/dev/null || true; fi
+}
+
+# 기존 -v 메타데이터 계약을 유지해 diff·review·HTML도 같은 변환기를 쓴다.
+graph_json() {
+  local helper
+  helper=$(graph_core)
+  if [ -n "$helper" ]; then "$helper" graph-json "$@"; return $?; fi
+  local vars=() files=()
+  while [ $# -gt 0 ]; do
+    if [ "$1" = -v ]; then vars+=("$1" "$2"); shift 2
+    else files+=("$1"); shift; fi
+  done
+  awk ${vars[@]+"${vars[@]}"} "$(graph_awk_lib)$(graph_awk_json)" ${files[@]+"${files[@]}"}
+}
+
 # Swift 파일끼리의 정확한 참조는 Xcode 인덱스에 있다 — 그것을 읽는 도우미(앱이 gitch 옆에 둔다)의 경로, 없으면 빈 값
 # 약속: gitch-swift-index --repo <저장소> --covered <파일> → 표준출력 "원본<TAB>대상<TAB>심볼,…"(저장소 기준 경로), --covered 에는 인덱스에 든 추적 .swift 경로,
 # 종료 0 성공(표준오류 첫 줄은 오래된 인덱스 같은 경고) · 3 인덱스 없음 · 그 밖은 실패
@@ -5665,6 +5732,9 @@ graph_content_key() (   # tracked source bytes, index, HEAD and analyzer options
     printf 'gitch-graph-cache-3\n%s\n' "$GITSW_VERSION"
     printf '%s\0' "$@"
     git hash-object --no-filters -- "$(self_path)" || exit 1
+    local core
+    core=$(graph_core)
+    [ -z "$core" ] || git hash-object --no-filters -- "$core" || exit 1
     git rev-parse HEAD 2>/dev/null
     git ls-files -s -z
     cat "$tmp/files.z"
@@ -5793,6 +5863,12 @@ graph_affected_prepare() {   # entire repo dependency closure, including deleted
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" modules "" 1 "$repo" "" "$sha" > "$tmp/affected-modules-before" || return 1
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" files "" 1 "$repo" "" > "$tmp/affected-now" || return 1
   graph_side "$tmp" modules "" 1 "$repo" "" > "$tmp/affected-modules" || return 1
+  local core
+  core=$(graph_core)
+  if [ -n "$core" ]; then
+    "$core" graph-affected "$tmp" "$sha" > "$tmp/affected.ids" || return $?
+    return 0
+  fi
   awk -F'\t' -v seeds="$tmp/changed" -v now="$tmp/affected-now" -v before="$tmp/affected-before" -v beforemods="$tmp/affected-modules-before" -v mods="$tmp/affected-modules" -v untracked="$tmp/untracked" -v deleted="$tmp/deleted" -v base="$sha" "$(graph_awk_lib)"'
     FILENAME == seeds { if ($0 != "") { CH[$0]=1; A[$0]=1; Q[++nq]=$0 }; next }
     FILENAME == untracked { UT[$0]=1; next }
@@ -6037,6 +6113,10 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
 }
 
 graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … · check …
+  # BSD awk는 일부 UTF-8 로캘에서 서로 다른 한글 경로도 같다고 비교한다.
+  # 경로 키·구분자는 모든 분석 단계에서 같은 바이트 순서로 다룬다.
+  local LC_ALL=C
+  export LC_ALL
   case "${1:-}" in
     review) shift; graph_review_cmd "$@"; return $? ;;
     watch) shift; graph_watch_cmd "$@"; return $? ;;
@@ -6156,12 +6236,12 @@ graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … 
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$top" 2>/dev/null || printf '%s' "$top")
   meta=(-v rel="$rel" -v repo="$repo" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$langs")
   case "$fmt" in
-    json) awk "${meta[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec" > "$tmp/out" ;;
+    json) graph_json "${meta[@]}" "$tmp/rec" > "$tmp/out" ;;
     html)   # {"initial": 처음 탭, "views": {관계: 그 관계의 json, …}}
       { printf '{"initial":"%s","views":{' "$rel"; i=0
         for a in $rels; do
           [ $i -gt 0 ] && printf ','
-          printf '"%s":' "$a"; awk "${meta[@]}" -v rel="$a" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$a"; i=$((i + 1))
+          printf '"%s":' "$a"; graph_json "${meta[@]}" -v rel="$a" "$tmp/rec.$a"; i=$((i + 1))
         done
         printf '}'
         [ ! -f "$tmp/review/review.json" ] || { printf ',"review":'; cat "$tmp/review/review.json"; }
@@ -6335,7 +6415,7 @@ graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs r
       else
         (cd "$tmp/$side/src" && GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/$side" "$rel" "$prefix" "$noext" "$repo" "$langs") > "$tmp/$side/rec.$rel" || return 1
       fi
-      awk "${GRAPH_META[@]}" -v rel="$rel" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
+      graph_json "${GRAPH_META[@]}" -v rel="$rel" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
     done
     if [ -f "$GRAPH_RULES_FILE" ]; then graph_rules_eval "$tmp/$side" "$GRAPH_RULES_FILE" > "$tmp/$side/rules.json"; else printf 'null' > "$tmp/$side/rules.json"; fi
   done
@@ -6346,7 +6426,7 @@ graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs r
   awk -v rel=files "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/b/normalized" "$tmp/a/rec.files" > "$tmp/merged"
   # Also mark content-only changes; dependency equality must not hide them in diff.
   graph_review_mark "$tmp/changes" "$tmp/merged" > "$tmp/review.records"
-  awk "${GRAPH_META[@]}" -v diffbase="$base" -v diffname="$ref" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/review.records" > "$tmp/diff.json"
+  graph_json "${GRAPH_META[@]}" -v diffbase="$base" -v diffname="$ref" "$tmp/review.records" > "$tmp/diff.json"
   {
     printf '{"schemaVersion":1,"scope":%s,"untracked":%s,"selectedRef":%s,"baseSha":%s,"headSha":%s,"snapshot":%s,"mergeBase":%s,"branch":%s,"seconds":%s,"changes":' "$(json_str "$scope")" "$(json_str "$untrackedPolicy")" "$(json_str "$ref")" "$(json_str "$base")" "$(json_str "$(git rev-parse --verify HEAD 2>/dev/null || true)")" "$(json_str "$head")" "$merge" "$(json_str "$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD)")" "$((SECONDS-started))"
     awk -F'\t' "$(graph_awk_lib)"'BEGIN{printf "["} {printf "%s{\"status\":%s,\"path\":%s,\"oldPath\":%s}", (n++?",":""),jstr($1),jstr($2),($3!=""?jstr($3):"null")} END{printf "]"}' "$tmp/changes"
@@ -6621,7 +6701,7 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
             -v diffscope="$analysisScope" -v bold="$BOLD" -v green="$GREEN" -v red="$RED" -v yellow="$YELLOW" -v dim="$DIM" -v reset="$RESET" \
             "$(graph_awk_lib)$(graph_awk_difftext)" "$tmp/rec" > "$tmp/out" ;;
     json) awk -F'\t' "$(graph_awk_lib)$(graph_awk_diffonly)" "$tmp/rec" | \
-            awk "${GRAPH_META[@]}" -v diffhead="$analysisScope" -v reviewfile="$tmp/review/review.json" -v diffbase="$shortbase" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" > "$tmp/out" ;;
+            graph_json "${GRAPH_META[@]}" -v diffhead="$analysisScope" -v reviewfile="$tmp/review/review.json" -v diffbase="$shortbase" -v diffname="$bname" > "$tmp/out" ;;
     html)
       # Keep all existing navigation tabs in a diff report. Every structural view
       # uses the same selected source snapshot; co-change remains observed HEAD history.
@@ -6643,8 +6723,8 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
         for r in files modules changes tree; do
           [ "$count" = 0 ] || printf ','
           printf '"%s":' "$r"
-          if [ "$r" = changes ]; then awk "${GRAPH_META[@]}" -v rel="$r" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/view.$r"
-          else awk "${GRAPH_META[@]}" -v rel="$r" -v diffhead="$analysisScope" -v diffbase="$shortbase" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/view.$r"; fi
+          if [ "$r" = changes ]; then graph_json "${GRAPH_META[@]}" -v rel="$r" "$tmp/view.$r"
+          else graph_json "${GRAPH_META[@]}" -v rel="$r" -v diffhead="$analysisScope" -v diffbase="$shortbase" -v diffname="$bname" "$tmp/view.$r"; fi
           count=$((count+1))
         done
         printf '},"review":'; cat "$tmp/review/review.json"
@@ -6797,7 +6877,7 @@ graph_check_cmd() {   # [--rules 파일] [--base 기준] [--format text|json|htm
         for rel in $rels; do
           [ $a -gt 0 ] && printf ','
           graph_meta "$rel" "$repo" "$prefix" ""
-          printf '"%s":' "$rel"; awk "${GRAPH_META[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$rel"; a=$((a + 1))
+          printf '"%s":' "$rel"; graph_json "${GRAPH_META[@]}" "$tmp/rec.$rel"; a=$((a + 1))
         done
         printf '},"rules":'; graph_check_json "$tmp/v" "$shown" "$bsha" "$n_err"; printf '}\n'; } | graph_html > "$tmp/out" ;;
   esac
@@ -13927,6 +14007,7 @@ schema_cmd() {
   },
   "login": {
     "type": "object",
+    "description": "GitHub device sign-in result. Project access is requested only by an explicit projects capability start with an expected account; response fields stay unchanged.",
     "required": [
       "schemaVersion",
       "tool",
@@ -13955,6 +14036,13 @@ schema_cmd() {
           "complete",
           "failed",
           "cancelled"
+        ]
+      },
+      "phase": {
+        "enum": [
+          "queued",
+          "preparing",
+          "approval"
         ]
       },
       "deviceCode": {
@@ -14230,6 +14318,7 @@ PR / MR
   gitch add --id ID --email 메일 --host 서버 --no-setup --json --yes  앱 계정 설정: 등록만, SSH 키 생성 별도
   gitch setup ID --inspect|--generate|--check --json [--yes]  상태 · 키 생성 · 연결 점검 (생성은 명시적 확인 필요)
   gitch login github --start --json --yes   앱 브라우저 로그인 시작 (상태/취소: --status|--cancel SESSION --json)
+    추가 프로젝트 접근: --capability projects --expected-login <GitHub계정> (사용자 승인 필요)
   gitch org [add <서버/조직> <계정>|rm]     조직 → 계정 규칙
   gitch config [show|path|get|set|add|unset|edit]   설정 파일 ($(tilde "$CFG"))
   gitch setup [계정]                       SSH 키 생성·등록 (사용자만)

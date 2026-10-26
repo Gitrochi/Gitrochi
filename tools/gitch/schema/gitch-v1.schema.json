@@ -1901,6 +1901,7 @@
     },
     "login": {
       "type": "object",
+      "description": "GitHub device sign-in result. Project access is requested only by an explicit projects capability start with an expected account; response fields stay unchanged.",
       "required": [
         "schemaVersion",
         "tool",
@@ -1929,6 +1930,13 @@
             "complete",
             "failed",
             "cancelled"
+          ]
+        },
+        "phase": {
+          "enum": [
+            "queued",
+            "preparing",
+            "approval"
           ]
         },
         "deviceCode": {
