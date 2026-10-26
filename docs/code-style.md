@@ -20,6 +20,8 @@ windows/src/            Feature-Sliced Design — a layer imports only the layer
   entities/  git (models, parsers, graph, diff) · repo (RepoStore) · hosting · ci · ai · agent · terminal · avatar · workspace
   shared/    api (ipc) · config (env, settings) · platform (git, tools, WSL, updates) · i18n · lib · ui (base parts, theme) · assets
 windows/src-tauri/src/  processes, pty, file watching, HTTP, credentials (Rust)
+crates/gitrochi-core/   shared parsing, diff, patches, conflicts, graph layout and CLI analysis
+windows/src/shared/core/  WebAssembly boundary and cancellable worker queue
 ```
 
 Windows folder rules (`windows/tests/architecture.test.ts` fails when they are broken):
@@ -77,7 +79,7 @@ Windows folder rules (`windows/tests/architecture.test.ts` fails when they are b
 | | macOS | Windows |
 |---|---|---|
 | Build | `macos/build.sh` — no errors, no warnings | `cd windows && npm ci && npx tauri build` |
-| Check | | `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` |
+| Check | shared Rust checks below | `npm run build` · `npm test` · `cargo check --manifest-path src-tauri/Cargo.toml` |
 
 - Pure logic (parsers, graph, YAML, layout maths) gets a unit test in `windows/tests/*.test.ts`. The macOS side has no test target; keep such logic in a pure function so it mirrors the tested one.
 - A new screen or behaviour on Windows gets a step in `windows/src/app/selftest.ts`, which drives the real app on GitHub Actions' Windows runner.
@@ -87,4 +89,34 @@ Windows folder rules (`windows/tests/architecture.test.ts` fails when they are b
 - Changed [gitch](../tools/gitch/README.md) (bash 3.2 + git, bundled with the macOS app)? Run `tools/gitch/tests/run.sh` (about three minutes, touches no real configuration). Changed the precise-reference or auto-refresh helpers? Also `python3 tools/gitch/tests/test_scip.py` and `python3 tools/gitch/tests/test_watch.py`; app URL routing is checked with `bash macos/Tools/test-app-route.sh`. CI also validates the JSON Schema contracts (test dependency `jsonschema==4.25.1`; the shipped helpers use only the Python standard library).
 - Changed [gitch-swift-index](../tools/gitch-swift-index/README.md) (Swift, the Xcode index helper next to gitch)? Run `tools/gitch-swift-index/tests/run.sh` (about 30 seconds).
 - The apps and gitch share one release version: `bash tools/check-versions.sh` checks macOS, Windows and the CLI at once (the macOS build and CI run it too).
+- Shared Rust: run `cargo fmt --manifest-path crates/Cargo.toml -- --check`, `cargo test --locked --manifest-path crates/Cargo.toml` and `cargo clippy --locked --manifest-path crates/Cargo.toml --all-targets -- -D warnings`. Rust 1.88+ and rustup are recommended. Add `wasm32-unknown-unknown` for Windows; universal macOS builds need both Apple targets. See [the shared core notes](../crates/README.md).
+- `npm ci`, `npm run build`, `npm test` and `npm run dev` in `windows/` generate the core. Run `npm run core` before invoking `tsc` or `vitest` directly. Keep lockfiles; generated WASM, binaries and Cargo target directories stay out of commits.
+
+Run the matching macOS feature checks when those areas change (commands below start at the repository root):
+
+| Area | Commands |
+|---|---|
+| Core Git parsing and patches | `bash macos/Tools/test-git-core.sh` |
+| Push, review and change questions | `bash macos/Tools/test-push-review.sh`, `bash macos/Tools/test-pull-request-review.sh`, `bash macos/Tools/test-change-question.sh` |
+| History, collaboration and recovery | `bash macos/Tools/test-history-tools.sh`, `bash macos/Tools/test-collaboration.sh`, `bash macos/Tools/test-local-workflows.sh` |
+| Repository reading and MCP | `node --test tools/gitrochi-mcp/server.test.mjs` (Node.js 22+) |
+| Navigation, Code and rebase | `bash macos/Tools/test-workspace-navigation.sh`, `bash macos/Tools/test-repository-browser.sh`, `bash macos/Tools/test-workbench-first-screen.sh` |
+| Accounts, hosting hub and operations | `bash macos/Tools/test-hosting-target.sh`, `bash macos/Tools/test-hosting-hub.sh`, `bash macos/Tools/test-workspace-operations.sh`, `bash macos/Tools/test-confirmation-guard.sh` |
+| Large lists and responsive layout | `bash macos/Tools/test-inspector-layout.sh`, `bash macos/Tools/test-large-changes.sh`, `bash macos/Tools/test-adaptive-workbench-identity.sh` |
+| Sidebar and titlebar safe areas | `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
+| Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |
+| Credential access | `bash macos/Tools/test-keychain.sh`, `bash macos/Tools/test-credential-access.sh` |
+
+Browser-login tests do not change real authentication, account or clipboard settings. Credential-access tests use fake Security entry points to check silent reads, policy restoration, serialization, responsiveness and invalidation of late reads. Server writes and AI responses are simulated in the feature tests; the corresponding Windows checks run through `npm test` and the app self-test.
+
+For graph changes, exercise both implementations after building the native helper:
+
+```sh
+cargo build --locked --release --manifest-path crates/Cargo.toml --bin gitch-core
+GITCH_CORE="$PWD/crates/target/release/gitch-core" bash tools/gitch/tests/run.sh -k graph
+GITCH_CORE='' bash tools/gitch/tests/run.sh -k graph
+```
+
+A macOS build can use separate `GITROCHI_BUILD_DIR` and `GITROCHI_OBJECT_DIR` paths for concurrent validation. `GITROCHI_CARGO` selects a Rust executable. These paths do not belong in committed reports.
+
 - Changed a screen? Check it with the demo repository and attach light and dark screenshots to the pull request.

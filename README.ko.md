@@ -48,7 +48,16 @@ Gitrochi 는 맥과 Windows 용 네이티브 Git 클라이언트입니다. 히�
 - **터미널** — 그래프 아래 저장소 폴더의 셸을 탭과 분할 패널로, git 명령을 치면 그래프가 바로 갱신
 - **gitch** — 함께 들어가는 CLI 가 저장소마다 Git 계정을 섞이지 않게 잠그고, 잘못된 작성자 · 비밀값 · 강제 push 를 훅에서 막음
 
+- **통합 저장소 화면** — 변경 내용·커밋·브랜치·비교·리베이스·Code를 한곳에서 열고, 자주 쓰는 탭을 고정하며 사이드바를 접어도 아이콘 메뉴 유지
+- **리뷰와 고급 Git 도구** — Push 전 계정·목적지·변경 검토, 줄 댓글 초안·일괄 리뷰, 두 시점 비교·여러 커밋 선택·3열 충돌 편집, 복구 이력·LFS·Submodule·Bisect
+- **연결 작업** — PR/MR 관리·이슈·릴리스·프로젝트 보드와 계정 빠른 조작, 선택 변경 AI 질문·저장소 읽기 도구·로컬 읽기 전용 MCP
+- **공통 Rust 코어** — 양쪽 앱의 파서·diff·패치·충돌·그래프 계산을 공유하고 무거운 계산의 취소·백그라운드 실행 지원, 커밋 검색은 띄어쓰기 무시
+
 사용법과 단축키까지 전체 목록: [docs/features.md](docs/features.md)(영어).
+
+## 구현과 검증
+
+[리뷰 작업](docs/review-workflows-validation.md), [확장 기능](docs/complete-workflows-validation.md), [탐색 화면](docs/navigation-workspace-validation.md), [공통 코어](crates/README.md)에 구현 범위와 검증을 정리했습니다. 임시 저장소와 가짜 서비스로 검사했으며, Windows 실기기 설치·실제 LFS 잠금·실서버 쓰기는 환경별 추가 확인이 필요합니다. 저장소 AI·MCP는 Node.js 22 이상, LFS 작업은 Git LFS가 필요합니다.
 
 ## 설치
 

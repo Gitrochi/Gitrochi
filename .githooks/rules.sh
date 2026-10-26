@@ -38,7 +38,7 @@ TAB=$(printf '\t')
 non_english_lines() {
   printf '%s\n' "$1" |
     LC_ALL=C sed -E -e 's/^[A-Za-z]+(-[A-Za-z]+)+: .*//' -e 's/`[^`]*`//g' \
-      -e "s/[$LATIN][$CONT]//g" -e "s/$MIDDOT//g" -e "s/$PUNCT[$CONT]//g" -e "s/$ARROW[$CONT]//g" |
+      -e "s/[$LATIN][$CONT]//g" -e "s/$MIDDOT//g" -e "s/${PUNCT}[$CONT]//g" -e "s/${ARROW}[$CONT]//g" |
     LC_ALL=C grep -n "[^$TAB -~]" | cut -d: -f1 | tr '\n' ',' | sed 's/,$//'
 }
 

@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "name": "review",
+      "ok": true,
+      "detail": "AI: preview before request, input/Send, frozen snapshot and answer rendered; PR: actual editors, remove button and batch submit preserve line/side/body; Push: Cancel sends nothing; Confirm sends once to frozen remote/refspec"
+    },
+    {
+      "name": "history",
+      "ok": true,
+      "detail": "Compare request/file selection, batch order/confirmation and line-history request rendered"
+    },
+    {
+      "name": "local",
+      "ok": true,
+      "detail": "Recovery preview, LFS controls, submodule action, bisect setup and three-way conflict/base/selection/save rendered"
+    },
+    {
+      "name": "collaboration",
+      "ok": true,
+      "detail": "PR merge confirmation, metadata form, inbox conversation/read/reply passed"
+    },
+    {
+      "name": "assistant",
+      "ok": true,
+      "detail": "Repository AI: preview without AI, question input, bounded read tool and answer/activity; MCP config/test; workspace selected repository summary refresh"
+    }
+  ],
+  "unexpected": []
+}

@@ -108,7 +108,9 @@ gitch setup alice --check --json
 
 GitHub 브라우저 로그인은 공식 [GitHub CLI의 웹 인증](https://cli.github.com/manual/gh_auth_login)을 사용한다. 앱에서 로그인 버튼을 누르면 `gitch login github --start --json --yes`가 즉시 `pending` 세션을 반환한다. 앱은 응답의 `verificationURL`을 열고 `--status SESSION --json`으로 일회용 코드와 결과를 읽는다. `--cancel SESSION --json`은 해당 세션만 취소한다. 다른 계정의 인증을 종료하거나 로그아웃하지 않는다. 동시에 요청한 로그인은 GitHub CLI의 계정 저장이 충돌하지 않도록 순서대로 진행한다.
 
-응답은 `schemaVersion`, `tool`, `session`, `state`, `deviceCode`, `verificationURL`, `login`, `email`, `message`를 포함한다(`gitch schema login`). `state`는 `pending`, `complete`, `failed`, `cancelled` 중 하나다. 완료 전 `login`과 `email`, 코드 발급 전 `deviceCode`는 `null`이다. 공식 완료 로그의 계정 이름과 그 계정 전용 자격 증명의 API 응답이 일치해야 완료된다. 이메일은 검증된 기본 이메일만 사용하고 없으면 GitHub noreply 주소를 제공한다. 토큰·원본 인증 로그는 응답하지 않는다. 앱이 완료 계정과 일치하는 자격 증명을 가져온 뒤 사용자가 계정 등록·SSH 키 생성·공개키 업로드를 진행한다.
+프로젝트 조회·상태 변경이 필요한 경우에만 사용자가 프로젝트 화면에서 추가 접근 버튼을 눌러 `gitch login github --start --json --yes --capability projects --expected-login <계정>`을 시작한다. 이 흐름은 `project` 권한(프로젝트 읽기 포함)을 추가 요청하며 기본 로그인 권한은 바꾸지 않는다. 지정 계정이 없거나 승인한 계정이 다르면 완료·앱 가져오기를 거부한다. 권한·대상 계정은 시작 시에만 지정하며 상태 조회·취소는 기존 세션 API를 그대로 쓴다. 완료 후 앱은 같은 사용자 전용 자격 증명을 다시 읽고 기존 앱 계정의 비밀 저장소 항목을 갱신한다. 브라우저의 최종 승인은 사용자가 직접 진행한다.
+
+응답은 `schemaVersion`, `tool`, `session`, `state`, `deviceCode`, `verificationURL`, `login`, `email`, `message`를 포함한다(`gitch schema login`). `state`는 `pending`, `complete`, `failed`, `cancelled` 중 하나다. 대기 중에는 `phase`도 제공한다: 다른 로그인 대기 `queued`, 코드 발급 준비 `preparing`, 브라우저 승인 대기 `approval`. 전체 세션은 최대 15분이며, 순서가 되어 인증 요청을 시작한 뒤 60초 안에 코드를 받지 못하면 네트워크 확인 안내와 함께 실패한다. 완료 전 `login`과 `email`, 코드 발급 전 `deviceCode`는 `null`이다. GitHub CLI의 코드 출력과 클립보드 복사 안내를 모두 지원하며 사용자 클립보드 설정은 바꾸지 않는다. 공식 완료 로그의 계정 이름과 그 계정 전용 자격 증명의 API 응답이 일치해야 완료된다. 이메일은 검증된 기본 이메일만 사용하고 없으면 GitHub noreply 주소를 제공한다. 토큰·원본 인증 로그는 응답하지 않는다. 앱이 완료 계정과 일치하는 자격 증명을 가져온 뒤 사용자가 계정 등록·SSH 키 생성·공개키 업로드를 진행한다.
 
 로그인 세션은 사용자 전용 상태 폴더에 저장하며 15분 후 중단된다. 완료한 세션 중 하루 지난 항목을 다음 시작 때 최대 32개 검사해 정리한다. GitHub CLI가 없으면 설치 링크를 포함한 `GITHUB_CLI_MISSING` 오류를 반환한다. 앱의 도구 설정 경로는 `GITCH_GH`로 전달할 수 있고, 다음으로 `GH_PATH`, `PATH`의 `gh`를 사용한다. 이 API를 검증하는 테스트는 가짜 GitHub CLI와 임시 HOME만 사용한다.
 

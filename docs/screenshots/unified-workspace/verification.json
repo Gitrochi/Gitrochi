@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-26",
+  "platforms": [
+    "macOS SwiftUI",
+    "Windows React/Tauri frontend"
+  ],
+  "fixtureDataOnly": true,
+  "navigation": {
+    "title": "PASS",
+    "result": {
+      "ok": true,
+      "detail": "One Repository entry, six work tabs, pin/unpin customization, keyboard navigation, per-tab Back/Forward, unpinned-tool search, settings and GitLab labels",
+      "unexpected": []
+    },
+    "blocked": []
+  },
+  "prConversation": {
+    "title": "PASS",
+    "result": {
+      "ok": true,
+      "detail": "{\"reviewRoundTrips\":2,\"commentRetained\":true,\"metadataRetained\":true,\"otherRequestReset\":true,\"unexpected\":[]}",
+      "unexpected": []
+    },
+    "blocked": []
+  },
+  "fullWindowCases": 72,
+  "fullWindowPassed": 72,
+  "screenshotsChecked": 84,
+  "windowWidths": [
+    800,
+    1080,
+    1440
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "panelCases": 94,
+  "panelPassed": 94,
+  "panelWidths": [
+    360,
+    480,
+    640,
+    900,
+    1100
+  ],
+  "windowsUnitTests": 372,
+  "windowsTestFiles": 37,
+  "windowsFrontendBuild": "passed",
+  "macOSAppBuild": "passed arm64 full build and strict bundle signature verification",
+  "macOSLiveChecks": [
+    "repository tab switching",
+    "pin and remove branch shortcut",
+    "default unified sidebar restored"
+  ],
+  "accountStatus": "Connected after user reauthenticated the login keychain. The app shows one connected GitHub account matching the approved identity; persisted account metadata and authenticated repository listing both verified.",
+  "limitations": [
+    "Windows native runtime was not run on a Windows host in this local validation."
+  ],
+  "safety": "Demonstration data only in captured fixtures; external traffic and unexpected backend calls blocked.",
+  "macOSFinalLaunch": "Verified isolated build is open in Korean on the repository library page; authenticated remote repository listing loaded successfully.",
+  "dependencyReview": "Windows architecture checks passed. Source dependency analysis reported one Swift same-module heuristic pair (RepoView/TerminalPanel); full Swift compile passed."
+}

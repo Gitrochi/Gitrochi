@@ -5,7 +5,7 @@ Branches, commit messages and pull requests. Run `git config core.hooksPath .git
 ## Branches
 
 - `main` always builds and can be released. Work happens on a branch taken from `main`.
-- Name it `kind/topic`, in lower-case letters, digits and `-`: `feature/ci-branch-view`, `fix/narrow-graph`, `refactor/…`, `docs/…`, `ci/…`; version bumps are `release/0.3.11`.
+- Name it `kind/topic`, in lower-case letters, digits and `-`: `feature/ci-branch-view`, `fix/narrow-graph`, `refactor/…`, `docs/…`, `ci/…`; version bumps are `release/0.3.12`.
 - One topic per branch. Don't let it age: `git fetch && git rebase origin/main` (don't merge `main` into it).
 - **`main` changes only through pull requests.** A GitHub ruleset blocks direct pushes, force pushes and deletion (administrators included), and the Git rules check must pass before merging. The local pre-push hook also refuses a push to `main`.
 - **Collaborators** (write access) create branches in this repository and merge pull requests. A collaborator's pull request needs **one approval from someone else** (a new push dismisses it); administrators merge their own without one.
@@ -29,13 +29,13 @@ Area: Imperative summary of the change
 - The hook checks: English (Latin letters and punctuation) · subject within 100 characters · no period at the end · the area and one space after the colon · imperative mood · a blank line after the subject · no empty subjects like `wip`, `fix`, `update`.
 - Squash `fixup!` and `squash!` commits before opening the pull request: `git rebase -i --autosquash origin/main`.
 - One topic per commit. Keep tidying (moving files) apart from behaviour changes, and make every commit build, so `git bisect` stays useful.
-- Only administrators make the version commit `Release 0.3.11 (summary)` and the tag `v0.3.11` (see [release.md](release.md)).
+- Only administrators make the version commit `Release 0.3.12 (summary)` and the tag `v0.3.12` (see [release.md](release.md)).
 - History from before these rules (Korean messages) stays as it is.
 
 ## Pull requests
 
 1. Branch from `main` (see Branches above) and keep the pull request to one topic.
-2. Pass the checks: macOS build without warnings; Windows `npx tsc --noEmit -p .`, `npx vitest run`, `cargo check`. Changed a screen? Attach light and dark screenshots.
+2. Pass the checks: macOS build without warnings; Windows `npm run build`, `npm test`, `cargo check --manifest-path src-tauri/Cargo.toml` from `windows/`; shared Rust formatting, tests and Clippy when changed (see [code-style.md](code-style.md#tests-and-verification)). Changed a screen? Attach light and dark screenshots.
 3. Fill in the pull request template's checklist. CI (the Windows self-test and the Git rules) must pass before merging.
    - The Windows CI builds and runs the real-app self-test for every pull request that touches `windows/` (about nine minutes; a new push cancels the previous run). It is not a required check, so auto-merge does not wait for it — look at the result in the pull request.
    - Signed installers, the update-signature check and the README screenshots run only for `v*` tags and manual runs (Actions › Windows › Run workflow).

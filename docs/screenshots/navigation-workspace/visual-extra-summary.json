@@ -1,0 +1,66 @@
+{
+  "result": "PASS",
+  "cases": 24,
+  "passed": 24,
+  "screenshots": 28,
+  "pages": [
+    "account-inbox",
+    "changes",
+    "commit-diff",
+    "commits",
+    "pr-diff",
+    "pullRequests"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 1080,
+      "height": 800
+    }
+  ],
+  "checks": {
+    "noDocumentHorizontalOverflow": true,
+    "noClippedDiffControls": true,
+    "diffFileTitlesRemainVisible": true,
+    "noInspectorPanelContentOverlap": true,
+    "settingsFooterStableWhileSidebarScrolls": true,
+    "settingsCallbackWorks": true,
+    "noUnexpectedBackendCalls": true,
+    "noExternalPageRequests": true,
+    "noBrowserErrors": true,
+    "representativeLocaleLabelsFixed": true
+  },
+  "localeCheck": [
+    {
+      "name": "commits",
+      "theme": "dark",
+      "ok": true,
+      "text": {
+        "placeholder": "메시지·작성자·SHA·브랜치 검색 (Ctrl+F)",
+        "scope": "커밋"
+      },
+      "blocked": []
+    },
+    {
+      "name": "pullRequests",
+      "theme": "light",
+      "ok": true,
+      "text": {
+        "title": "풀 리퀘스트"
+      },
+      "blocked": []
+    }
+  ],
+  "detailsFile": "visual-extra-results.json",
+  "snapshotHTML": "fixtures/navigation-visual-extra.html",
+  "snapshotScript": "fixtures/navigation-visual-extra.tsx",
+  "fixtures": "Demo data only. All credentials, network, Git, AI and filesystem adapters were mocked or blocked.",
+  "limitations": "Headless Chrome UI on macOS; not Windows installer/device validation."
+}

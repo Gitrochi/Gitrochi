@@ -46,7 +46,7 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 2. **Look around the graph** — click a commit for its details on the right, a file for its diff. Click a branch on the left to jump to its commit, double-click to check it out.
 3. **Commit** — pick **Uncommitted changes** at the top, stage files, write a summary or press **Write with AI**, then ⌘↩.
 4. **Work with branches** — drag a branch label onto another commit or branch for the merge · rebase · fast-forward menu. Right-click a commit for cherry-pick · revert · reset · tag.
-5. **Push and pull requests** — Push from the toolbar, then ＋ in the sidebar's Pull Requests to create a PR/MR. Connect GitHub and self-hosted GitLab tokens under Settings (⌘,) › Accounts.
+5. **Push and pull requests** — review the account, destination and outgoing changes before confirming Push, then create a PR/MR from the requests view. A required Push during PR creation uses the same review. Connect GitHub or self-hosted GitLab from the account controls or Settings (⌘,) › Accounts.
 6. **CI/CD** — in the sidebar's **CI/CD** tab, expand a pipeline and run a manual job with ▶, or press **Run…** for a new pipeline or workflow.
 
 | Action | macOS | Windows |
@@ -121,6 +121,51 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 
 </details>
 
+## Repository workspace and extended workflows
+
+These additions are implemented in both clients. Earlier fixture-based checks and screenshots are recorded in the [review workflows](review-workflows-validation.md), [extended workflows](complete-workflows-validation.md) and [navigation workspace](navigation-workspace-validation.md) reports (Korean). They do not replace validation against your server, permissions and operating system.
+
+### Navigation and account access
+
+Open **Repository** for Changes, Commits, Branches, Compare, Rebase and Code. Pin only the sections you want in the sidebar; menu search (⌘K / Ctrl+K), back/forward and per-repository restoration also remember the internal section. Collapsing the sidebar leaves an icon rail. Repository lists and remote discovery have their own entry; settings keep account, SSH, AI, executable, appearance and update preferences.
+
+The account controls show the selected hosting account and Git identity and allow account selection or reconnection without leaving the workspace. GitHub browser sign-in displays queued, preparing and approval states. Project access is a separate permission request for the selected account. On macOS, credential reads run away from the main thread and background reads do not display authorization prompts; explicit authorization remains a user action.
+
+### Git and review tools
+
+| Tool | Entry point and behaviour |
+|---|---|
+| Push review | Push, branch Push and a Push required for PR/MR creation show the account, credentials, actual destination URL, branch, outgoing commits/files and gitch checks. Confirmation binds the reviewed source and destination, then verifies them again. A changed context requires a new review. Force Push uses the reviewed remote SHA as its lease. |
+| Line comments and batch reviews | Draft comments beside diff lines, edit or delete them, and submit them together. Drafts are tied to the repository, request and head SHA. Changed heads require a fresh review; partial failures keep unsent drafts. GitHub sends a review, while GitLab publishes discussions before the approval. |
+| Two-revision comparison | Compare commits, branches or tags directly or through their common ancestor. Revisions are resolved to SHAs; reverse the direction and inspect the changed files and diff. |
+| Multiple commits | Select with ⌘/Ctrl or Shift, review the order, then cherry-pick, revert or prepare squash/drop plans. The app checks the operation state, current HEAD and worktree and creates recovery refs. |
+| Three-way conflict editor | Inspect mine, the editable result, theirs and the available base, with synchronized scrolling and block choices. Unresolved markers, source changes and index changes are checked before writing. |
+| Recovery | Browse reflog and create a branch from an earlier point. Discarded edits are stored locally before discard; restoring the worktree and index requires the original HEAD and a clean worktree. This is bounded local recovery, not a separate backup service. |
+| LFS, submodules and bisect | Repository tools detect Git LFS, manage patterns and server locks, inspect or initialize submodules at their recorded commit, and guide good/bad/skip bisect steps and return to the starting branch. Git LFS must be installed for LFS commands. |
+| Line or function history | Open line history from a diff or file view, select a line range or function and a revision, and inspect up to 200 history entries and patches. Deleted lines are followed from the earlier revision. |
+| Search | Commit title/body searches ignore spacing, so `release1`, `release 1` and `re lease 1` match the same text; special characters are searched literally. |
+| Code and rebase | Browse tracked files and their previews; inspect the rebase target and the commits that will move. Large change lists create only the displayed rows and preserve edited state when the layout changes. |
+
+### Hosting workspaces
+
+PR/MR lists support state, personal/review-request scope, search and pagination. Details offer title/body/base/reviewer changes, merge, close and reopen, with fresh SHA, CI, approvals, permissions and server policy checked before merging. Issues and mentions are scoped to the selected repository and connected account; supported comments, issue state and notification-read actions are available there.
+
+The hosting hub provides releases and assets, repository discovery, organizations and gists. GitHub Projects v2 supports items, single-select status fields and adding existing issues. GitLab boards expose their scope and label columns. Advanced project fields, project administration and unsupported GitLab column types continue in the browser. Release creation, editing, publishing and deletion follow the server's capabilities; GitHub draft/prerelease behaviour differs from GitLab's immediate publication.
+
+The overview combines the open repositories' branches, accounts, changes and remote differences. CI and review-request summaries are refreshed explicitly using each repository's selected account and show the pages that were loaded, not a global total across all accounts.
+
+### AI and local MCP
+
+**Ask AI about changes** previews the selected diff, lines, commit or staged changes before sending anything. Follow-up questions reuse that snapshot until refreshed. An available, current dependency-impact result may be attached as context; suggested tests are not presented as executed tests.
+
+**Repository assistant** previews status, history and tracked files, then permits bounded read-only file, history, diff and search requests from the configured AI. The read log is visible. Cancellation, a repository change or a changed AI configuration invalidates late replies. Reading does not change repository files.
+
+**Connect an external AI with MCP** copies and tests the current repository's local stdio configuration. It exposes status, history, diff, tracked-file reads and preflight information with argument and size limits; it does not expose arbitrary shell execution, Git writes or network tools. Repository AI and MCP need Node.js 22+. See the [MCP tool list, setup and limits](../tools/gitrochi-mcp/README.md).
+
+### Verification limits
+
+The checked-in reports use temporary repositories and simulated services for server-dependent behaviour. Windows installation on a real device, real-server writes and live LFS locks need environment-specific verification. Local builds and unit tests do not establish that every hosting-server version or account policy is supported. Rust measurement results in [the core notes](../crates/README.md) concern selected calculations and are not a claim that every Git operation becomes faster.
+
 ## Development
 
 <details>
@@ -134,12 +179,13 @@ macos/     macOS app (SwiftUI)
   Sources/Services  GitHub, GitLab, CI/CD, AI, accounts, agents, tools, avatars
   Sources/Views     screens
   Resources/ Tools/ Vendor/SwiftTerm/  build.sh
+crates/    shared Rust calculations, native static library, WASM and gitch-core CLI
 windows/   Windows app (Tauri 2 + React): src-tauri (Rust), src (Feature-Sliced Design: app · pages · widgets · features · entities · shared), tests
 docs/      README images, the demo repository script, the contributor docs
 tools/gitch  the shell tool for several Git accounts (bash 3.2 + git, Git Bash on Windows) — ships with both apps, tests/run.sh
 ```
 
-**macOS** — Swift 6 or later (Xcode or Command Line Tools) is all you need. No packages are downloaded.
+**macOS** — Swift 6 or later (Xcode or Command Line Tools) and Rust 1.88+ are required. Cargo downloads the locked dependencies for the shared core; packaged-app users do not need a Rust installation.
 
 ```sh
 macos/build.sh           # macos/build/Gitrochi.app (this Mac's architecture)
@@ -155,16 +201,16 @@ macos/build.sh release   # dmg, zip and sha256 for distribution in macos/dist/ (
 - **Update signature**: `macos/Tools/updatekey.sh new` creates an Ed25519 key pair — the private key goes into the login keychain, the public key into `Info.plist` (`GitrochiUpdatePublicKey`). From then on `build.sh release` signs the zip (`<zip>.sig`, private key from `GITROCHI_UPDATE_KEY` or the keychain), and the app installs an update only when the SHA-256 and this signature match
 - **Distribution**: pushing a `v*` tag makes Actions (`.github/workflows/macos.yml`) check that the tag matches the `Info.plist` version, build and sign a universal app and upload it to that tag's release (a draft if there is none), together with the standalone `gitch` and `gitch.sha256`. The app ignores drafts, so write the notes and publish to reach users
 
-**Windows** — Node.js 22 and Rust (stable).
+**Windows** — Node.js 22+, Rust 1.88+ and the `wasm32-unknown-unknown` target. `npm ci` prepares the shared core; run `npm run core` before invoking TypeScript or Vitest directly.
 
 ```sh
 cd windows
 npm ci
 npx tauri build      # src-tauri/target/release/bundle/nsis/*-setup.exe
-npx vitest run       # unit tests for the parsers, the graph and CI
+npm test            # generates the core and runs unit and Git integration tests
 ```
 
-- **Self-test**: run with `GITROCHI_SELFTEST=<test repository>` and the real app opens, stages, commits, branches, merges, searches, stashes, uses the terminal, credentials, tools, AI, split commits, the update signature, CI/CD, WSL, diffs, line staging, conflict resolution, commit tidying, undo, PR review, the tab menu and the theme one after another and writes down the results (fake server: `tests/mock-ai-server.mjs`). It runs on GitHub Actions' Windows runner on every push, which also takes the Windows screenshots for this README (`.github/workflows/windows.yml`)
+- **Self-test**: run with `GITROCHI_SELFTEST=<test repository>` and the real app opens, stages, commits, branches, merges, searches, stashes, uses the terminal, credentials, tools, AI, split commits, the update signature, CI/CD, WSL, diffs, line staging, conflict resolution, commit tidying, undo, PR review, the tab menu and the theme one after another and writes down the results (fake server: `tests/mock-ai-server.mjs`). It runs on GitHub Actions' Windows runner for pull requests affecting the app, tags and manual runs; screenshot and signed-release checks are limited to tag/manual release runs (`.github/workflows/windows.yml`)
 - **Update signature**: release builds are signed with `TAURI_SIGNING_PRIVATE_KEY` (an Actions secret), and the app installs an update only after checking it against the public key in `tauri.conf.json`. The release carries `latest.json` (`windows/scripts/latest-json.mjs`)
 
 </details>
