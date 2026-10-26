@@ -148,6 +148,10 @@ export async function runSelfTest(): Promise<boolean> {
   if (!repo) return false;
   const checks: Check[] = [];
   const out = joinPath(dirname(repo), "selftest-result.json");
+  // a render error unmounts the whole React tree (blank window) — record it so the result says what broke
+  const uncaught: string[] = [];
+  window.addEventListener("error", (e) => uncaught.push(`${e.message} @ ${e.filename?.split("/").pop()}:${e.lineno}`));
+  window.addEventListener("unhandledrejection", (e) => uncaught.push(`unhandled: ${String(e.reason).slice(0, 200)}`));
   const check = (name: string, ok: boolean, detail?: unknown) => {
     checks.push({ name, ok, detail: detail === undefined ? undefined : String(detail).slice(0, 500) });
   };
@@ -896,6 +900,11 @@ export async function runSelfTest(): Promise<boolean> {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await sleep(200);
     return [ok, ""];
+  });
+
+  await step("No uncaught errors and the app still renders", async () => {
+    const alive = !!document.querySelector(".repo");
+    return [uncaught.length === 0 && alive, `alive=${alive} ${uncaught.slice(0, 3).join(" | ")}`];
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다

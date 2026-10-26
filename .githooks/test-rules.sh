@@ -18,7 +18,7 @@ expect() {
 
 expect pass 'Windows: Split sources into Feature-Sliced Design layers\n\n- Body — with “quotes”, café and → arrows\n\nCo-Authored-By: 조문성 <x@example.com>\n'
 expect pass 'Graph: Show avatars in the inspector\n'
-expect pass 'Fix the narrow graph layout\n'
+expect fail 'Fix the narrow graph layout\n'  # the area is required
 expect pass 'Windows: Translate `탐색기에서 보기` label\n'
 expect pass 'Release 0.3.5 (line staging, side-by-side diff, conflict resolution, interactive rebase, undo, PR review, blame)\n'
 expect pass 'README: Link https://example.com\n'
