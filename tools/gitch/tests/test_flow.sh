@@ -1,6 +1,6 @@
 # shellcheck shell=bash
-# gitch flow · gitch test 앞문(gitch-flow 엔진에 위임), preflight FLOW 줄, pre-push 게이트, guard 규칙.
-# 엔진은 GITCH_FLOW_TEST_BIN 또는 tools/gitch-flow/target/{release,debug}/gitch-flow 를 쓴다(없으면 건너뜀).
+# The gitch flow and gitch test front door (handed off to the gitch-flow engine), the FLOW line in preflight, the pre-push gate, guard rules.
+# The engine is GITCH_FLOW_TEST_BIN or tools/gitch-flow/target/{release,debug}/gitch-flow (skipped without one).
 
 flow_bin() {
   local b
@@ -11,12 +11,12 @@ flow_bin() {
   return 1
 }
 
-need_flow() {   # 엔진이 없으면 이 시험은 건너뛴다(통과로 세지 않게 표시만 한다)
-  FLOW_BIN=$(flow_bin) || { echo "건너뜀: gitch-flow 를 빌드하세요 (cd tools/gitch-flow && cargo build)"; return 1; }
+need_flow() {   # Skips this test without an engine (and says so, so it is not counted as a pass)
+  FLOW_BIN=$(flow_bin) || { echo "skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)"; return 1; }
   export GITCH_FLOW="$FLOW_BIN" GITCH_FLOW_NO_KEYSTORE=1
 }
 
-flow_repo() {   # $1 폴더 — 흐름 파일과 가짜 실행기가 있는 저장소
+flow_repo() {   # $1 folder: a repository with a flow file and a fake runner
   mk_repo "$1"
   mkdir -p "$1/.gitch" "$1/tests"
   cat > "$1/tests/r.sh" <<'R'
@@ -52,7 +52,7 @@ test_flow_front_door_delegates() {
   run gitch flow version --json; assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq -r .tool)" "gitch-flow"
   flow_repo "$T/r"; cd "$T/r" || fail cd
-  # 신뢰 전에는 비대화형 실행이 확인 필요(2)로 멈춘다.
+  # Before trust, a non-interactive run stops with confirmation needed (2).
   run gitch test unit --json; assert_rc 2; assert_out "TRUST-01"
   run gitch flow trust --yes; assert_ok
   run gitch test unit --json; assert_ok
@@ -60,7 +60,7 @@ test_flow_front_door_delegates() {
   run gitch flow run bad --summary; assert_rc 1
   assert_out "FLOW=FAILED"; assert_out "src/a.test.ts:3"
   run gitch schema flow-run; assert_ok; assert_json "$OUT"
-  run gitch ci; [ "$RC" -ne 127 ] || fail "gitch ci 기존 동작이 사라짐"
+  run gitch ci; [ "$RC" -ne 127 ] || fail "gitch ci lost its existing behaviour"
 }
 
 test_flow_preflight_line_and_pre_push_gate() {
@@ -78,13 +78,13 @@ test_flow_preflight_line_and_pre_push_gate() {
   printf '{"prePush": {"%s": "ok"}}\n' "$id" > "$HOME/.config/gitsw/flow/settings.json"
   run gitch preflight; assert_out "FLOW=WARN"
   run gitch preflight --json; assert_eq "$(printf '%s' "$OUT" | jq -r .flow)" "WARN"
-  # 게이트가 흐름을 돌려 통과하면 push 된다.
+  # When the gate runs the flow and it passes, the push goes through.
   run gitch p; assert_ok
   run gitch preflight; assert_out "FLOW=OK"
-  # 실패하는 흐름이면 push 를 막는다.
+  # A failing flow blocks the push.
   printf '{"prePush": {"%s": "bad"}}\n' "$id" > "$HOME/.config/gitsw/flow/settings.json"
   echo y > y.txt && git add y.txt && gitch c -m "Add y" >/dev/null 2>&1 || fail commit2
-  run gitch p; [ "$RC" -ne 0 ] || fail "실패하는 흐름에서 push 가 막히지 않음"
+  run gitch p; [ "$RC" -ne 0 ] || fail "a failing flow did not block the push"
   assert_out "FLOW=STOP"
 }
 

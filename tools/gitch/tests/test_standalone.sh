@@ -66,14 +66,14 @@ EOF
 }
 
 gitch_ver() { sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$1" | head -1; }
-with_version() {   # $1 버전 $2 만들 파일 [$3 shared] [$4 bundle] [$5 flow] — 기존 시험 릴리스에는 도우미 · 엔진 배포 표식이 없었다
+with_version() {   # $1 version $2 file to create [$3 shared] [$4 bundle] [$5 flow]; older test releases had no helper or engine markers
   if [ "${3:-}" = shared ]; then sed "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" "$GITSW_SRC"
   else sed -e "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" -e '/^GITCH_VERSION_SCHEME=/d' "$GITSW_SRC"; fi | \
     { if [ "${4:-}" = bundle ]; then cat; else sed '/^GITCH_HELPER_API=/d'; fi; } | \
     { if [ "${5:-}" = flow ]; then cat; else sed '/^GITCH_FLOW_API=/d'; fi; } > "$2"
 }
 
-flow_engine_bin() {   # 이 컴퓨터용으로 빌드한 흐름 엔진(없으면 그 시험은 건너뛴다)
+flow_engine_bin() {   # The flow engine built for this machine (tests that need it are skipped without one)
   local b
   for b in "${GITCH_FLOW_TEST_BIN:-}" "$ROOT/../gitch-flow/target/debug/gitch-flow" "$ROOT/../gitch-flow/target/debug/gitch-flow.exe" \
            "$ROOT/../gitch-flow/target/release/gitch-flow" "$ROOT/../gitch-flow/target/release/gitch-flow.exe"; do
@@ -324,7 +324,7 @@ test_helper_missing_checksum_prevents_bundle_installation() {
 
 test_flow_engine_is_installed_and_updated_with_the_bundle() {
   local d="$HOME/.local/share/gitch" name
-  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "건너뜀: gitch-flow 를 빌드하세요 (cd tools/gitch-flow && cargo build)"; return 0; }
+  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)"; return 0; }
   name=$(flow_installed_name)
   with_version 0.99.1 "$T/new" shared bundle flow
   mk_release v0.99.1 "$T/new" engine
@@ -332,9 +332,9 @@ test_flow_engine_is_installed_and_updated_with_the_bundle() {
   cmp -s "$d/$name" "$FLOW_ENGINE_BIN" || fail 'engine mismatch'
   [ -x "$d/$name" ] || fail 'engine not executable'
   grep -F "releases/download/v0.99.1/$(flow_asset_name).sha256" "$FAKE_WEB/log" >/dev/null || fail 'engine came from another release'
-  # gitch 가 옆에 둔 엔진을 찾는다.
+  # gitch finds the engine it put next to itself.
   run env -u GITCH_FLOW "$d/gitch" flow version; assert_ok; assert_out 'gitch-flow'
-  # 같은 CLI여도 엔진이 사라졌으면 self-update 가 검증해서 다시 둔다.
+  # With the same CLI but the engine gone, self-update verifies it and puts it back.
   mklink_ "$d/gitch" "$HOME/bin/gitch"
   rm "$d/$name"
   run gitch self-update; assert_ok
@@ -343,7 +343,7 @@ test_flow_engine_is_installed_and_updated_with_the_bundle() {
 
 test_flow_engine_checksum_or_broken_binary_keeps_the_installed_bundle() {
   local d="$HOME/.local/share/gitch"
-  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "건너뜀: gitch-flow 를 빌드하세요 (cd tools/gitch-flow && cargo build)"; return 0; }
+  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)"; return 0; }
   standalone_copy
   cp "$d/gitch" "$T/old-cli"
   with_version 0.99.1 "$T/new" shared bundle flow

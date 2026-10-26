@@ -66,7 +66,7 @@ release_stage_helpers() {   # $1 staging directory $2 selected gitch URL $3 help
 }
 # The flow engine is a native binary per OS. It comes from the same release directory, needs its own checksum,
 # must run, and is promoted together with the helpers (as gitch-flow or gitch-flow.exe beside gitch).
-flow_asset() {   # 이 컴퓨터용 흐름 엔진 배포 파일 이름(배포하지 않는 운영체제면 빈 값)
+flow_asset() {   # File name of this machine's flow engine release asset (empty on systems without one)
   case "$(uname -s 2>/dev/null)" in
     Darwin) printf 'gitch-flow-macos' ;;
     Linux) case "$(uname -m 2>/dev/null)" in x86_64|amd64) printf 'gitch-flow-linux-x64' ;; esac ;;

@@ -14,7 +14,7 @@ GITCH_VERSION_SCHEME="gitrochi"
 GITCH_GRAPH_API="1"
 # shellcheck disable=SC2034  # 설치기/업데이터가 받은 파일을 실행하지 않고 배포 방식 표식을 읽는다.
 GITCH_HELPER_API="1"
-# shellcheck disable=SC2034  # 앱이 실행하지 않고 읽는 표식: 흐름 엔진(gitch-flow) 계약 버전.
+# shellcheck disable=SC2034  # a marker the app reads without running gitch: the flow engine (gitch-flow) contract version.
 GITCH_FLOW_API="1"
 # 파서가 옵션을 거부해도 기계 출력 요청은 먼저 알아야 한다. 사람용 색/도움말이 JSON 오류에 섞이지 않게.
 MACHINE_JSON=""
@@ -1668,7 +1668,7 @@ hook_pre_push() {   # $1 원격 이름 $2 주소, 표준입력: <local ref> <loc
   fi
   if [ -n "$managed" ] && ! hook_skip identity; then hook_check_target "$url" "$uh" "$ua" || rc=1; fi
   if [ -n "$refs" ]; then hook_check_refs "$remote" "$refs" "$managed" || rc=1; fi
-  # 흐름 게이트(켠 저장소만): 같은 커밋의 서명된 통과 기록이 없으면 pre-push 흐름을 돌린다
+  # Flow gate (only in repositories that turned it on): without a signed passing record for the same commit, run the pre-push flow
   if [ $rc -eq 0 ] && [ -n "$refs" ] && ! hook_skip flow; then hook_flow_gate || rc=1; fi
   # gitch p 로 한 push 는 결과를 보고 gitch 가 직접 기록하므로 여기서는 건너뜀 (중복 기록 방지)
   if [ $rc -eq 0 ]; then [ "${GITSW_NOLOG_PUSH:-}" = 1 ] || log_action push "remote=$remote" "url=$url" "account=${R_ACC:-}"
@@ -5236,7 +5236,7 @@ release_stage_helpers() {   # $1 staging directory $2 selected gitch URL $3 help
 }
 # The flow engine is a native binary per OS. It comes from the same release directory, needs its own checksum,
 # must run, and is promoted together with the helpers (as gitch-flow or gitch-flow.exe beside gitch).
-flow_asset() {   # 이 컴퓨터용 흐름 엔진 배포 파일 이름(배포하지 않는 운영체제면 빈 값)
+flow_asset() {   # File name of this machine's flow engine release asset (empty on systems without one)
   case "$(uname -s 2>/dev/null)" in
     Darwin) printf 'gitch-flow-macos' ;;
     Linux) case "$(uname -m 2>/dev/null)" in x86_64|amd64) printf 'gitch-flow-linux-x64' ;; esac ;;
@@ -14454,9 +14454,9 @@ menu_cmd() {
   esac
 }
 
-# ================= flow: 조립형 테스트 · CI 흐름 (gitch-flow 엔진에 위임) =================
+# ================= flow: composable test and CI flows (handed off to the gitch-flow engine) =================
 
-flow_engine() {   # 엔진 위치: GITCH_FLOW → gitch 옆(앱 Resources · ~/.local/share/gitch) → PATH
+flow_engine() {   # Where the engine is: GITCH_FLOW → next to gitch (app Resources, ~/.local/share/gitch) → PATH
   local d e
   if [ -n "${GITCH_FLOW:-}" ]; then printf '%s' "$GITCH_FLOW"; return 0; fi
   d=$(dirname "$(self_path)")
@@ -14467,24 +14467,24 @@ flow_engine() {   # 엔진 위치: GITCH_FLOW → gitch 옆(앱 Resources · ~/.
   return 1
 }
 
-flow_bash() {   # 엔진(네이티브 실행 파일)이 부를 bash. Windows 는 Git Bash 의 Windows 경로로 넘긴다.
+flow_bash() {   # The bash the engine (a native executable) calls. On Windows, Git Bash is passed as a Windows path.
   if [ -n "$IS_WINDOWS" ] && command -v cygpath >/dev/null 2>&1; then cygpath -w "${BASH:-/usr/bin/bash}"; else printf '%s' "${BASH:-bash}"; fi
 }
 
 flow_settings() { printf '%s/flow/settings.json' "$(dirname "$CFG")"; }
 
-flow_cmd() {   # gitch flow … · gitch test … · gitch ci <하위 명령> → gitch-flow
+flow_cmd() {   # gitch flow …, gitch test … and gitch ci <subcommand> → gitch-flow
   local engine
   if ! engine=$(flow_engine); then
     if [ -n "$MACHINE_JSON" ]; then machine_error GITCH_ERROR 1 "흐름 엔진(gitch-flow)을 찾지 못했습니다. 앱을 업데이트하거나 gitch self-update 를 실행하세요."
     else err "흐름 엔진(gitch-flow)을 찾지 못했습니다. 앱을 업데이트하거나 gitch self-update 를 실행하세요."; fi
     return 1
   fi
-  # 엔진이 영향 그래프 등을 gitch 에 되물을 때 쓰는 경로.
+  # The path the engine uses to call gitch back (the affected graph and the like).
   GITCH_PATH=$(self_path) GITCH_BASH=$(flow_bash) exec "$engine" "$@"
 }
 
-hook_flow_gate() {   # pre-push: 이 저장소에 게이트를 켰을 때만 흐름 결과로 막는다
+hook_flow_gate() {   # pre-push: blocks on the flow result only when this repository turned the gate on
   local engine settings
   settings=$(flow_settings)
   [ -f "$settings" ] && grep -q '"prePush"' "$settings" 2>/dev/null || return 0
@@ -14492,7 +14492,7 @@ hook_flow_gate() {   # pre-push: 이 저장소에 게이트를 켰을 때만 흐
   GITCH_PATH=$(self_path) GITCH_BASH=$(flow_bash) "$engine" gate prepush 1>&2
 }
 
-flow_preflight_line() {   # preflight 에 덧붙이는 FLOW=… 한 줄(게이트를 켠 저장소만, 기존 PREFLIGHT= 는 그대로)
+flow_preflight_line() {   # The FLOW=… line added to preflight (only where the gate is on; the existing PREFLIGHT= line stays as it is)
   local engine settings out
   settings=$(flow_settings)
   [ -f "$settings" ] && grep -q '"prePush"' "$settings" 2>/dev/null || return 0
