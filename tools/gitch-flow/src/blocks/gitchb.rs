@@ -1,5 +1,5 @@
-//! gitch 블록: `gitch.preflight`(커밋 · push 전 점검) · `gitch.graph.check`(의존 규칙).
-//! gitch 의 JSON 출력만 읽어 판정한다. gitch 는 앞문이 넘긴 `GITCH_PATH`(없으면 PATH 의 gitch)를 bash 로 부른다.
+//! gitch blocks: `gitch.preflight` (the check before commit and push) and `gitch.graph.check` (dependency rules).
+//! They judge only from gitch's JSON output. gitch runs with bash from the `GITCH_PATH` the front door passed (or gitch on PATH).
 
 use super::{observe_outcome, schema, Block, Meta, NodeCx, NodeResult};
 use crate::process::ProcSpec;
@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 pub struct Preflight;
 pub struct GraphCheck;
 
-/// gitch 스크립트 경로.
+/// The gitch script's path.
 pub fn gitch_path() -> Option<String> {
     if let Ok(p) = std::env::var("GITCH_PATH") {
         if !p.is_empty() {

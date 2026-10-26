@@ -1,5 +1,5 @@
-//! 결과 캐시. 입력을 밝힌 순수 노드(`cache: { inputs: [...] }`)의 통과 결과만 저장하고,
-//! 같은 입력이면 다시 돌리지 않고 이전 판정 · 보고서를 재생한다. 서비스 · 네트워크 · 원격 · 바꾸는 노드는 캐시하지 않는다.
+//! Result cache. Stores only the passing results of pure nodes that declare their inputs (`cache: { inputs: [...] }`),
+//! and replays the earlier verdict and reports for the same inputs. Nodes with services, network, remote calls or changes are never cached.
 
 use crate::plan::{Decision, PNode, Plan};
 use crate::spec::Spec;
@@ -11,7 +11,7 @@ fn dir() -> PathBuf {
     util::cache_dir().join("results")
 }
 
-/// 캐시해도 되는 노드인지.
+/// Whether the node may be cached.
 pub fn cacheable(n: &PNode) -> bool {
     n.def.cache.is_some()
         && n.services.is_empty()
@@ -25,7 +25,7 @@ pub fn cacheable(n: &PNode) -> bool {
         && n.block != "gate.manual"
 }
 
-/// 캐시 키: 블록 · 입력 · 환경 · 기대값 · 선택 · 선언한 입력 파일 내용 · 엔진 버전 · 운영체제.
+/// Cache key: block, inputs, environment, expectations, selection, declared input file contents, engine version and OS.
 pub fn key(spec: &Spec, n: &PNode, files: &[String]) -> Option<String> {
     let c = n.def.cache.as_ref()?;
     let mut s = String::new();
@@ -86,7 +86,7 @@ pub fn store(key: &str, node: &Value) {
     );
 }
 
-/// 계획에 캐시 키를 달고, 맞는 결과가 있으면 "캐시" 로 건너뛴다.
+/// Puts cache keys on the plan and skips a node as "cached" when a matching result exists.
 pub fn annotate(spec: &Spec, plan: &mut Plan) {
     if !plan.nodes.iter().any(cacheable) {
         return;
@@ -112,7 +112,7 @@ pub fn annotate(spec: &Spec, plan: &mut Plan) {
     }
 }
 
-/// 오래된 캐시 지우기(바뀐 시각 기준).
+/// Removes old cache entries (by modification time).
 pub fn gc(older_than_ms: u64, dry_run: bool) -> usize {
     let now = util::now_ms();
     let mut n = 0;

@@ -1,6 +1,6 @@
-//! `gate.window` — 시간대 관문. 금지 시간대(`deny`)에 걸리거나 허용 시간대(`allow`) 밖이면 멈춘다.
-//! 흐름 사전 점검에서 **예상 시작 시각**(앞 노드 예상 시간의 합)으로 먼저 보고, 차례가 오면 지금 시각으로 다시 본다.
-//! 시간대는 반드시 적는다(`tz: "+09:00"` · `UTC` · `Asia/Seoul`). 시간대를 풀지 못하면 판정 불가(= 통과 아님).
+//! `gate.window`: a time-window gate. It stops in a blocked window (`deny`) or outside the allowed ones (`allow`).
+//! The flow preflight checks it first at the **expected start time** (the sum of the earlier nodes' expected durations), and again at the current time when the node's turn comes.
+//! The time zone is required (`tz: "+09:00"`, `UTC`, `Asia/Seoul`). A time zone that cannot be resolved makes the verdict INDETERMINATE (not a pass).
 
 use super::{schema, Block, Issue, Meta, NodeCx, NodeResult, PreCx};
 use crate::util::{self, tr};
@@ -38,7 +38,7 @@ static META: Meta = Meta {
     estimate_ms: 0,
 };
 
-/// `+09:00` · `-0530` · `UTC` · `Z` → 분. 그 밖은 None(IANA 이름은 `offset_at` 이 푼다).
+/// `+09:00`, `-0530`, `UTC` or `Z` → minutes. Anything else is None (`offset_at` resolves IANA names).
 pub fn fixed_offset(tz: &str) -> Option<i64> {
     let t = tz.trim();
     if t.eq_ignore_ascii_case("utc") || t == "Z" || t.eq_ignore_ascii_case("gmt") {
@@ -58,7 +58,7 @@ pub fn fixed_offset(tz: &str) -> Option<i64> {
     (h <= 14 && m < 60).then_some(sign * (h * 60 + m))
 }
 
-/// 그 시각의 UTC 차이(분). IANA 이름은 시스템 `date` 의 시간대 자료로 푼다(GNU · BSD 둘 다).
+/// The UTC offset at that moment, in minutes. IANA names are resolved with the system `date` and its time zone data (GNU and BSD alike).
 pub fn offset_at(tz: &str, ms: u64) -> Option<i64> {
     if let Some(o) = fixed_offset(tz) {
         return Some(o);
@@ -84,7 +84,7 @@ pub fn offset_at(tz: &str, ms: u64) -> Option<i64> {
         if let Ok(o) = out {
             if o.status.success() {
                 if let Some(v) = fixed_offset(String::from_utf8_lossy(&o.stdout).trim()) {
-                    // 시간대 자료가 없으면 date 는 조용히 UTC 를 쓴다 — 이름이 UTC 가 아닌데 0 이면 한 번 더 의심한다.
+                    // Without time zone data, date silently uses UTC, so a non-UTC name that comes back as 0 is checked once more.
                     if v == 0 && !known_utc_zone(tz) && !zone_file_exists(tz) {
                         return None;
                     }
@@ -123,7 +123,7 @@ fn hm(s: &str) -> Option<i64> {
 
 const DAYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-/// 현지 시각에 창 하나가 걸리는지.
+/// Whether a window covers the local time.
 pub fn in_window(w: &Value, local_ms: i64) -> bool {
     let days = local_ms.div_euclid(86_400_000);
     let (y, mo, d) = util::civil_from_days(days);
@@ -153,7 +153,7 @@ pub fn in_window(w: &Value, local_ms: i64) -> bool {
     };
     match (from, to) {
         (Some(f), Some(t)) if t <= f => {
-            // 자정을 넘는 창(예: 22:00–06:00): 오늘 f 이후이거나, 어제 시작한 창의 t 이전.
+            // A window across midnight (22:00–06:00, say): after f today, or before t in a window that started yesterday.
             let yesterday = DAYS[(days + 3).rem_euclid(7) as usize];
             (minute >= f && day_ok(dow)) || (minute < t && day_ok(yesterday))
         }
@@ -161,7 +161,7 @@ pub fn in_window(w: &Value, local_ms: i64) -> bool {
     }
 }
 
-/// (막힘?, 이유). 시간대를 못 풀면 Err.
+/// (blocked?, reason). Err when the time zone cannot be resolved.
 pub fn blocked(with: &Value, ms: u64) -> Result<Option<String>, String> {
     let tz = with.get("tz").and_then(|t| t.as_str()).ok_or_else(|| {
         tr(
@@ -284,7 +284,7 @@ impl Block for Window {
 mod tests {
     use super::*;
 
-    // 2026-10-26 은 월요일. 00:30Z = 09:30 KST.
+    // 2026-10-26 is a Monday. 00:30Z = 09:30 KST.
     const MON_0030Z: u64 = 1_792_974_600_000;
 
     #[test]
@@ -302,14 +302,14 @@ mod tests {
         let b = blocked(&business, MON_0030Z).unwrap().unwrap();
         assert!(b.contains("2026-10-26 09:30"), "{b}");
         assert!(b.contains("business hours"));
-        // 같은 순간을 UTC 로 보면 00:30 이라 열림.
+        // The same moment in UTC is 00:30, so it is open.
         let utc = json!({"tz": "UTC", "deny": business["deny"].clone()});
         assert!(blocked(&utc, MON_0030Z).unwrap().is_none());
-        // 자정을 넘는 창: 일요일 23:00 ~ 월요일 06:00.
+        // A window across midnight: Sunday 23:00 to Monday 06:00.
         let night =
             json!({"tz": "UTC", "deny": [{"days": ["sun"], "from": "23:00", "to": "06:00"}]});
         assert!(blocked(&night, MON_0030Z).unwrap().is_some());
-        // 날짜 지정 · 허용 창.
+        // Dated and allowed windows.
         let freeze = json!({"tz": "+09:00", "deny": [{"dates": ["2026-10-26"]}]});
         assert!(blocked(&freeze, MON_0030Z).unwrap().is_some());
         let only_weekend = json!({"tz": "+09:00", "allow": [{"days": ["sat", "sun"]}]});

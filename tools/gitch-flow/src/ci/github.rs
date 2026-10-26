@@ -1,5 +1,5 @@
-//! GitHub Actions. `workflow_dispatch` 는 ID 를 돌려주지 않아(204) 상관 ID(run-name 의 `[gitch-…]`)로 찾고,
-//! 워크플로가 상관 입력을 받지 않으면 보내기 전 목록과 비교해 새로 생긴 실행을 고른다.
+//! GitHub Actions. `workflow_dispatch` returns no ID (204), so the run is found by correlation ID (`[gitch-…]` in run-name);
+//! when the workflow takes no correlation input, the new run is picked by comparing with the list from before sending.
 
 use super::{CiErr, Provider, RState, RStatus, RemoteRun, Triggered};
 use crate::connect::Connection;
@@ -83,8 +83,8 @@ impl Api {
         .map_err(CiErr::transport)?;
         Self::check(r)
     }
-    /// 작업 로그: 302 의 Location 을 인증 없이 받는다(토큰을 저장소 밖 호스트로 보내지 않게).
-    /// 따라가는 곳은 API 와 같은 호스트이거나 GitHub 로그 저장소 호스트만.
+    /// Job logs: the 302 Location is fetched without credentials, so the token never goes to a host outside the repository.
+    /// Only the API's own host or GitHub's log storage hosts are followed.
     pub fn job_log(&self, repo: &str, job: &str) -> Result<String, CiErr> {
         let r = self.get(&format!("/repos/{repo}/actions/jobs/{job}/logs"))?;
         if r.status != 302 {
@@ -119,7 +119,7 @@ impl Api {
     }
 }
 
-/// 작업 로그가 옮겨 가는 저장소 호스트.
+/// Storage hosts that job logs redirect to.
 const LOG_HOSTS: &[&str] = &[
     "github.com",
     ".github.com",
@@ -147,7 +147,7 @@ pub struct Workflow {
     pub workflow: String,
     pub git_ref: String,
     pub inputs: Value,
-    /// 워크플로가 `gitch_flow_corr` 입력을 받는지(gitch flow export 로 만든 워크플로는 받는다).
+    /// Whether the workflow takes the `gitch_flow_corr` input (workflows written by gitch flow export do).
     pub correlate: bool,
     pub before: RefCell<Vec<u64>>,
     pub sent: RefCell<bool>,
@@ -181,7 +181,7 @@ impl Provider for Workflow {
                 })
                 .cloned()
         } else if *self.sent.borrow() {
-            // 시각 기반: 보내기 전에 없던 가장 새 실행.
+            // By time: the newest run that did not exist before sending.
             let before = self.before.borrow();
             runs.iter()
                 .filter(|r| !before.contains(&r["id"].as_u64().unwrap_or(0)))

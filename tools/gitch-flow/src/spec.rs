@@ -1,5 +1,5 @@
-//! 흐름 파일 규격 v1(`.gitch/flow.yml`). 읽고 · 겹치고 · 검사해서 형식 있는 모델로 만든다.
-//! 오류는 모두 `파일:줄 경로: 설명` 과 실패 코드로 돌려준다(한 번에 여러 개).
+//! The flow file format v1 (`.gitch/flow.yml`): read, overlay and validate the files into a typed model.
+//! Every error comes back as `file:line path: description` with a failure code (many at once).
 
 use crate::expr;
 use crate::util::tr;
@@ -179,7 +179,7 @@ pub struct NodeDef {
     pub cwd: Option<String>,
     pub weight: Option<u32>,
     pub description: Option<String>,
-    /// 조합마다 노드 하나: `{ node: [18, 20, 22] }`.
+    /// One node per combination: `{ node: [18, 20, 22] }`.
     pub matrix: Vec<(String, Vec<Value>)>,
     pub src: Src,
 }
@@ -208,16 +208,16 @@ pub struct FlowDef {
     pub concurrency: Concurrency,
     pub rollback_scope: Option<RollbackScope>,
     pub rollback_on_check_failure: bool,
-    /// 되돌림 전체 예산.
+    /// The time budget for the whole rollback.
     pub rollback_timeout_ms: Option<u64>,
-    /// 실행이 끝나면 보낼 알림.
+    /// Notifications to send when the run ends.
     pub notify: Vec<NotifyDef>,
     pub timeout_ms: Option<u64>,
     pub nodes: Vec<NodeDef>,
     pub src: Src,
 }
 
-/// 흐름 끝 알림 하나.
+/// One end-of-flow notification.
 #[derive(Debug, Clone)]
 pub struct NotifyDef {
     /// success · failure · cancelled · always
@@ -229,9 +229,9 @@ pub struct NotifyDef {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EnvPolicy {
-    /// 호스트 환경을 물려주되 비밀처럼 보이는 이름은 뺀다(기본).
+    /// Pass the host environment on, minus names that look secret (default).
     Inherit,
-    /// 허용 목록 + 기본 목록만.
+    /// Only the allow list plus the base list.
     Allowlist,
 }
 
@@ -297,7 +297,7 @@ pub struct Spec {
     pub flaky: Vec<Quarantine>,
 }
 
-/// `.gitch/flaky.yml` 의 격리 항목.
+/// A quarantine entry from `.gitch/flaky.yml`.
 #[derive(Debug, Clone)]
 pub struct Quarantine {
     pub test: String,
@@ -322,7 +322,7 @@ impl Spec {
     pub fn composite(&self, name: &str) -> Option<&CompositeDef> {
         self.blocks.iter().find(|b| b.name == name)
     }
-    /// 신뢰 해시에 넣는 파일들의 해시.
+    /// Hashes of the files that go into the trust hash.
     pub fn files_hash(&self) -> String {
         let mut s = String::new();
         for f in &self.files {
@@ -335,7 +335,7 @@ impl Spec {
     }
 }
 
-// ---------- 검사 도구 ----------
+// ---------- validation helpers ----------
 
 struct V<'a> {
     file: String,
@@ -436,7 +436,7 @@ impl<'a> V<'a> {
             }
         }
     }
-    /// 글자 하나 또는 글자 목록.
+    /// A string or a list of strings.
     fn texts(&mut self, v: &Value, path: &str) -> Vec<String> {
         match v {
             Value::Null => Vec::new(),
@@ -564,7 +564,7 @@ impl<'a> V<'a> {
         }
         ok
     }
-    /// 글자 안의 표현식 문법 · 이름 검사. `allow_secrets` 가 거짓이면 secrets 참조를 막는다.
+    /// Checks the syntax and names of the expressions in a string. With `allow_secrets` false, secrets references are refused.
     fn exprs_in(&mut self, v: &Value, path: &str, allow_secrets: bool) {
         match v {
             Value::String(s) => match expr::find(s) {
@@ -613,7 +613,7 @@ impl<'a> V<'a> {
     }
 }
 
-/// 철자 실수 힌트: 한 글자 차이까지.
+/// Spelling hints, for up to one character off.
 fn similar(a: &str, b: &str) -> bool {
     if a == b {
         return false;
@@ -733,7 +733,7 @@ fn parse_expect(v: &mut V, val: &Value, path: &str) -> Expect {
         ..Default::default()
     };
     if let Some(m) = v.obj(val, path) {
-        // 블록마다 받는 키가 달라 여기서는 공통 키만 형식을 본다. 나머지는 블록이 검사한다.
+        // Blocks take different keys, so only the common keys are checked here; each block checks the rest.
         if let Some(x) = m.get("minTests") {
             e.min_tests = v.number(x, &join(path, "minTests")).map(|f| f as u64);
         }
@@ -782,7 +782,7 @@ fn parse_expect(v: &mut V, val: &Value, path: &str) -> Expect {
 
 fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Option<NodeDef> {
     v.name_ok(id, path);
-    // 줄임: `lint: npm run lint` 는 run 노드.
+    // Shorthand: `lint: npm run lint` is a run node.
     if let Value::String(s) = val {
         v.exprs_in(val, path, false);
         return Some(NodeDef {
@@ -877,7 +877,7 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
         );
     }
     v.exprs_in(&with, &join(path, "with"), false);
-    // `undo:` 는 run 노드의 줄임(with.undo). 다른 블록은 그 블록의 되돌림 입력을 with 에 쓴다.
+    // `undo:` is run-node shorthand for with.undo. Other blocks put their undo input in with.
     if let Some(u) = m.get("undo") {
         let p = join(path, "undo");
         if !matches!(kind, NodeKind::Run(_)) {
@@ -914,7 +914,7 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
         .get("executor")
         .and_then(|x| v.text(x, &join(path, "executor")));
     if let Some(e) = &executor {
-        // 조합 · 입력 값을 쓰는 실행 위치는 계획 때 풀어서 본다.
+        // An executor that uses matrix or input values is checked at planning time, once resolved.
         if !e.contains("${{") {
             if let Err(msg) = crate::executor::Executor::parse(e) {
                 v.err("SPEC-03", &join(path, "executor"), msg);
@@ -1506,7 +1506,7 @@ fn parse_composite(v: &mut V, val: &Value, rel: &str) -> Option<CompositeDef> {
     })
 }
 
-/// 객체는 키별로 합치고, 배열 · 값은 위의 것으로 바꾼다.
+/// Objects merge key by key; arrays and values are replaced by the upper one.
 pub fn deep_merge(base: &mut Value, over: &Value) {
     match (base, over) {
         (Value::Object(b), Value::Object(o)) => {
@@ -1567,14 +1567,14 @@ fn yaml_files(dir: &Path) -> Vec<String> {
     out
 }
 
-/// 흐름 파일이 있는지(감지 · 안내용).
+/// Whether a flow file exists (for detection and hints).
 pub fn exists(root: &Path) -> bool {
     root.join(".gitch/flow.yml").is_file()
         || root.join(".gitch/flow.yaml").is_file()
         || !yaml_files(&root.join(".gitch/flows")).is_empty()
 }
 
-/// 흐름 파일들을 읽고 검사한다.
+/// Reads and validates the flow files.
 pub fn load(root: &Path) -> Result<Spec, Vec<SpecError>> {
     let mut errs = Vec::new();
     let mut files = Vec::new();
@@ -1614,7 +1614,7 @@ pub fn load(root: &Path) -> Result<Spec, Vec<SpecError>> {
         });
         return Err(errs);
     }
-    // 기계별 겹침(커밋하지 않는 파일)은 첫 파일 위에 합친다. 명령이 바뀔 수 있으니 신뢰 해시에 넣는다.
+    // The per-machine overlay (an uncommitted file) merges onto the first file. It can change commands, so it goes into the trust hash.
     for local in [".gitch/flow.local.yml", ".gitch/flow.local.yaml"] {
         if root.join(local).is_file() {
             if let Some((d, sha)) = read(root, local, &mut errs) {
@@ -1856,7 +1856,7 @@ fn ref_err(errs: &mut Vec<SpecError>, src: &Src, path: &str, message: String) {
     });
 }
 
-/// 이름 참조 · 순환 검사(모든 파일을 합친 뒤에).
+/// Name references and cycle checks (after all files are merged).
 fn check_references(spec: &Spec, errs: &mut Vec<SpecError>) {
     for s in &spec.services {
         for n in &s.needs {
@@ -2018,7 +2018,7 @@ fn check_references(spec: &Spec, errs: &mut Vec<SpecError>) {
     for b in &spec.blocks {
         check_nodes(errs, &format!("block {}", b.name), &b.nodes);
     }
-    // 흐름 · 복합 블록이 서로를 부르며 돌지 않는지.
+    // Flows and composite blocks must not call each other in a loop.
     let mut graph: HashMap<String, Vec<String>> = HashMap::new();
     let collect = |nodes: &[NodeDef]| -> Vec<String> {
         let mut out = Vec::new();
@@ -2085,7 +2085,7 @@ fn check_references(spec: &Spec, errs: &mut Vec<SpecError>) {
     }
 }
 
-/// `./blocks/x` · `blocks/x` · `local:x` → 복합 블록 이름.
+/// `./blocks/x`, `blocks/x` or `local:x` → the composite block's name.
 pub fn composite_name(u: &str) -> Option<&str> {
     u.strip_prefix("./blocks/")
         .or_else(|| u.strip_prefix("blocks/"))
@@ -2093,7 +2093,7 @@ pub fn composite_name(u: &str) -> Option<&str> {
         .map(|s| s.trim_end_matches(".yml").trim_end_matches(".yaml"))
 }
 
-/// needs 순환을 찾으면 그 경로.
+/// The path of a needs cycle, if there is one.
 pub fn find_cycle(nodes: &[NodeDef]) -> Option<Vec<String>> {
     let idx: HashMap<&str, usize> = nodes
         .iter()

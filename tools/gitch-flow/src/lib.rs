@@ -1,5 +1,5 @@
-//! gitch-flow — 조립형 테스트 · CI 흐름 엔진. `gitch flow` · `gitch test` 의 실행 계층이고,
-//! Gitrochi 맥 · Windows 앱은 이 엔진의 JSON · NDJSON 계약만 읽는다.
+//! gitch-flow: the engine for composable test and CI flows. It is the execution layer of `gitch flow` and `gitch test`,
+//! and the Gitrochi macOS and Windows apps read only its JSON and NDJSON contracts.
 
 pub mod affected;
 pub mod blocks;

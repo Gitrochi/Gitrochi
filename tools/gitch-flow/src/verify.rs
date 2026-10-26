@@ -1,5 +1,5 @@
-//! 판정 규칙. 관측값만 보고 PASS · FAIL · INDETERMINATE 를 정하는 순수 함수들이다.
-//! 판정 불가(INDETERMINATE)는 실패로 센다. 종료 코드는 여러 관측값 중 하나일 뿐이다.
+//! Verdict rules: pure functions that decide PASS, FAIL or INDETERMINATE from observations only.
+//! INDETERMINATE counts as a failure. The exit code is just one observation among several.
 
 use crate::report::{CaseStatus, TestReport};
 use crate::spec::FlakyPolicy;
@@ -59,7 +59,7 @@ impl Verdict {
     }
 }
 
-/// 여러 판정을 하나로: FAIL > INDETERMINATE > PASS, 코드는 처음 나온 PASS 아닌 것.
+/// Combines verdicts: FAIL > INDETERMINATE > PASS, with the code of the first verdict that is not PASS.
 pub fn combine(vs: &[Verdict]) -> (Outcome, Option<&'static str>) {
     let mut out = Outcome::Pass;
     let mut code = None;
@@ -74,13 +74,13 @@ pub fn combine(vs: &[Verdict]) -> (Outcome, Option<&'static str>) {
         };
     }
     if vs.is_empty() {
-        // 판정 근거가 하나도 없으면 통과가 아니다.
+        // No evidence at all is not a pass.
         return (Outcome::Indeterminate, Some("VERIFY-03"));
     }
     (out, code)
 }
 
-/// E1: 명령 종료 코드(일반 명령 블록의 주 관측값).
+/// E1: the command's exit code (the main observation for plain command blocks).
 pub fn exit_code(
     exit: Option<i32>,
     allowed: &[i64],
@@ -147,7 +147,7 @@ pub fn exit_code(
     }
 }
 
-/// T2: 보고서가 있고 읽히는지. 테스트 밖 실패(빌드 · 로드)는 실패.
+/// T2: the report exists and parses. A failure outside the tests (build, load) is a failure.
 pub fn report_present(report: Option<&TestReport>) -> Verdict {
     let title = tr("테스트 보고서", "test report");
     let expected = tr("읽을 수 있는 보고서", "a readable report");
@@ -193,7 +193,7 @@ pub fn report_present(report: Option<&TestReport>) -> Verdict {
     }
 }
 
-/// T3: 실제로 돈 테스트 수. 0개는 통과가 아니다.
+/// T3: the number of tests that actually ran. Zero is not a pass.
 pub fn min_tests(report: &TestReport, min: u64) -> Verdict {
     let n = report.executed();
     let title = tr("실행된 테스트 수", "tests executed");
@@ -218,7 +218,7 @@ pub fn min_tests(report: &TestReport, min: u64) -> Verdict {
     }
 }
 
-/// 격리 목록에 있는 실패인지(만료 전).
+/// Whether a failure is on the quarantine list (and not expired).
 pub struct Quarantined<'a> {
     pub entries: &'a [crate::spec::Quarantine],
     pub today: String,
@@ -233,7 +233,7 @@ impl Quarantined<'_> {
     }
 }
 
-/// T1: 통과율. 기본 기준 1.0, 정수 비교(내림)로 부동소수 오차를 피한다.
+/// T1: the pass rate. The default threshold is 1.0, compared in integers (rounded down) to avoid floating-point error.
 pub fn pass_rate(report: &TestReport, rate: f64, flaky: FlakyPolicy, q: &Quarantined) -> Verdict {
     let title = tr("통과율", "pass rate");
     let mut executed = 0u64;
@@ -298,10 +298,10 @@ pub fn pass_rate(report: &TestReport, rate: f64, flaky: FlakyPolicy, q: &Quarant
     }
 }
 
-/// X1: 종료 코드와 보고서가 같은 이야기를 하는지. 다르면 실행기 설정을 믿을 수 없다.
+/// X1: the exit code and the report tell the same story. When they disagree, the runner's setup cannot be trusted.
 pub fn consistency(exit: Option<i32>, report: &TestReport, _flaky: FlakyPolicy) -> Verdict {
     let title = tr("종료 코드와 보고서", "exit code vs report");
-    // 재시도로 통과한 FLAKY 는 실패로 세지 않는다(마지막 시도의 종료 코드와 비교).
+    // FLAKY cases that passed on retry don't count as failures (compared with the last attempt's exit code).
     let failing = report.failed();
     let says_fail = failing > 0 || report.harness_failed;
     let exit_fail = exit != Some(0);
@@ -314,7 +314,7 @@ pub fn consistency(exit: Option<i32>, report: &TestReport, _flaky: FlakyPolicy) 
     if says_fail == exit_fail {
         Verdict::new("X1", title, observed, expected, Outcome::Pass, None)
     } else if !says_fail && exit_fail && report.flaky() > 0 {
-        // 첫 시도는 실패, 재시도는 통과 — 재시도 결과와 맞다.
+        // Failed on the first attempt, passed on the retry: consistent with the retry.
         Verdict::new("X1", title, observed, expected, Outcome::Pass, None)
     } else {
         Verdict::new(
@@ -328,7 +328,7 @@ pub fn consistency(exit: Option<i32>, report: &TestReport, _flaky: FlakyPolicy) 
     }
 }
 
-/// 기대 HTTP 상태: 200 · [200, 204] · "2xx" · "200-299".
+/// Expected HTTP status: 200 · [200, 204] · "2xx" · "200-299".
 pub fn status_matches(expect: &Value, status: u16) -> bool {
     match expect {
         Value::Null => (200..400).contains(&status),
@@ -357,7 +357,7 @@ pub fn status_text(expect: &Value) -> String {
     }
 }
 
-/// S1: 기대한 응답에 닿았는지(재시도 × 간격 안에).
+/// S1: the expected response was reached (within retries × interval).
 pub fn reach(status: Option<u16>, attempts: u32, expect: &Value, error: Option<&str>) -> Verdict {
     let title = tr("응답", "response");
     let expected = status_text(expect);
@@ -389,7 +389,7 @@ pub fn reach(status: Option<u16>, attempts: u32, expect: &Value, error: Option<&
     }
 }
 
-/// S2: 앱이 스스로 말하는 빌드 식별자가 기대값과 같은지(짧은 SHA 도 앞부분이 같으면 같다).
+/// S2: the build identity the app reports matches the expected one (a short SHA matches when the prefix does).
 pub fn identity(observed: Option<&str>, expected: &str) -> Verdict {
     let title = tr("빌드 식별자", "build identifier");
     match observed {
@@ -427,7 +427,7 @@ pub fn identity(observed: Option<&str>, expected: &str) -> Verdict {
     }
 }
 
-/// O1: 출력에 기대한 글(정규식)이 있는지.
+/// O1: the output contains the expected text (a regular expression).
 pub fn output(text: &str, pattern: &str) -> Verdict {
     let title = tr("출력", "output");
     let ok = regex::Regex::new(pattern)
@@ -447,7 +447,7 @@ pub fn output(text: &str, pattern: &str) -> Verdict {
     )
 }
 
-/// C1: 원격 실행 결과 계약. CI 의 결론은 참고만 하고, 계약 · 보고서가 없으면 판정 불가.
+/// C1: the remote run's result contract. CI's conclusion is only a hint; without a contract or report the verdict is INDETERMINATE.
 pub fn remote_result(contract: Option<Outcome>, conclusion: &str) -> Verdict {
     let title = tr("원격 결과 계약", "remote result contract");
     match contract {

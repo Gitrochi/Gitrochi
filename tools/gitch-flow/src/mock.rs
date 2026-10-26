@@ -1,8 +1,8 @@
-//! `mock.http` 서비스: 경로 · 응답 표로 도는 결정적 가짜 HTTP 서버. 엔진 안의 스레드로 돌아 따로 설치할 것이 없다.
-//! 이름 붙은 장애 스위치(지연 · 상태 코드 · 응답 없이 끊기)를 흐름 안에서 켜고 끌 수 있고(`mock.fault`),
-//! 받은 요청을 기록해 기대한 호출이 왔는지 판정한다(`check.mock`).
+//! `mock.http` service: a deterministic fake HTTP server driven by a table of paths and responses. It runs as a thread inside the engine, so there is nothing to install.
+//! Named fault switches (delay, status code, closing without a response) can be turned on and off within a flow (`mock.fault`),
+//! and received requests are recorded to judge whether the expected calls arrived (`check.mock`).
 //!
-//! 표는 `with.routes` · `with.faults` 또는 `with.dir`(기본 `.gitch/mocks/<서비스>`)의 `routes.yml`:
+//! The tables come from `with.routes` and `with.faults`, or from `routes.yml` in `with.dir` (default `.gitch/mocks/<service>`):
 //! ```yaml
 //! routes:
 //!   - { method: GET, path: /health, status: 200, body: ok }
@@ -12,7 +12,7 @@
 //!   down: [{ path: "*", status: 503 }]
 //!   drop: [{ path: /charge, drop: true }]
 //! ```
-//! 제어 주소(`/__gitch/…`): `GET requests` · `POST faults {"on":[…],"off":[…]}` · `POST reset` · `GET health`.
+//! Control endpoints (`/__gitch/…`): `GET requests` · `POST faults {"on":[…],"off":[…]}` · `POST reset` · `GET health`.
 
 use crate::util::{self, tr};
 use serde_json::{json, Value};
@@ -100,7 +100,7 @@ fn rule_of(v: &Value, base: &Path) -> Result<Rule, String> {
     })
 }
 
-/// 서비스 입력과 모의 폴더에서 표를 만든다(입력에 적은 것이 폴더 것보다 앞선다).
+/// Builds the tables from the service inputs and the mock folder (inputs win over the folder).
 pub fn load(with: &Value, root: &Path, name: &str) -> Result<Table, String> {
     let dir = root.join(
         with.get("dir")
@@ -159,7 +159,7 @@ pub fn load(with: &Value, root: &Path, name: &str) -> Result<Table, String> {
     Ok(t)
 }
 
-/// `*` 는 아무 글자열, 나머지는 그대로(질의 문자열은 보지 않는다).
+/// `*` matches any text, everything else literally (the query string is ignored).
 pub fn path_matches(pattern: &str, path: &str) -> bool {
     if pattern == "*" {
         return true;
@@ -206,7 +206,7 @@ pub struct Mock {
 }
 
 impl Mock {
-    /// 127.0.0.1(또는 `bind`)의 `port` 에서 듣기 시작한다.
+    /// Starts listening on `port` at 127.0.0.1 (or `bind`).
     pub fn start(
         table: Table,
         faults: Vec<String>,
@@ -325,7 +325,7 @@ fn serve(conn: TcpStream, st: &Mutex<State>, log: &Path) {
     let _ = r.read_exact(&mut body);
     let body = String::from_utf8_lossy(&body).into_owned();
     let mut conn = conn;
-    // 제어 주소.
+    // Control endpoints.
     if let Some(cmd) = path.strip_prefix("/__gitch/") {
         let resp = control(cmd, &method, &body, st);
         write_resp(

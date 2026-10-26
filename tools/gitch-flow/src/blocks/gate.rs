@@ -1,4 +1,4 @@
-//! `gate.manual` — 사람 확인. 대화형이면 묻고, `--yes`(앱이 확인한 뒤)면 통과, 둘 다 아니면 종료 코드 2.
+//! `gate.manual`: a person's approval. Asks when interactive, passes with `--yes` (after the app has asked), and otherwise exits with code 2.
 
 use super::{schema, Block, Meta, NodeCx, NodeResult};
 use crate::util::tr;

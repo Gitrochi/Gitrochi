@@ -1,6 +1,6 @@
-//! 원격 CI 운전. 모든 어댑터가 같은 규칙을 따른다:
-//! 상관 ID 를 넣고 · 보내기 전에 먼저 찾고 · 응답을 잃은 트리거는 다시 보내지 않고 · 마감 안에서 기다리며 ·
-//! 중단 · 마감이면 원격 취소 · 우리가 요청하지 않은 취소는 외부 취소로 · CI 의 결론은 참고만(판정은 결과 계약 · 보고서).
+//! Driving remote CI. Every adapter follows the same rules:
+//! put in a correlation ID, look before sending, never resend a trigger whose response was lost, wait within the deadline,
+//! cancel remotely on abort or deadline, treat a cancel we did not ask for as external, and take CI's conclusion only as a hint (the verdict comes from the result contract and reports).
 
 pub mod contract;
 pub mod export;
@@ -16,7 +16,7 @@ use crate::util::tr;
 use serde_json::Value;
 use std::time::{Duration, Instant};
 
-/// base64 (Basic 인증용 — 작은 구현으로 crate 를 늘리지 않는다).
+/// base64 (for Basic auth; a tiny implementation rather than another crate).
 pub fn b64(s: &str) -> String {
     const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let b = s.as_bytes();
@@ -46,11 +46,11 @@ pub struct CiErr {
     pub code: &'static str,
     pub http: Option<u16>,
     pub message: String,
-    /// 결과를 모름(요청이 닿았는지 알 수 없음) — 다시 보내지 않는다.
+    /// Outcome unknown (whether the request arrived cannot be told): never resend.
     pub unknown_outcome: bool,
-    /// 잠깐 뒤 다시 읽어도 되는 오류(GET 만).
+    /// An error that may be read again shortly (GET only).
     pub transient: bool,
-    /// 서버가 알려 준 기다릴 시간(`Retry-After` · `x-ratelimit-reset`).
+    /// How long the server said to wait (`Retry-After`, `x-ratelimit-reset`).
     pub retry_after_ms: Option<u64>,
 }
 
@@ -74,7 +74,7 @@ impl CiErr {
             retry_after_ms: None,
         }
     }
-    /// 응답에서: 상태 코드 + 속도 제한 헤더.
+    /// From a response: the status code and rate-limit headers.
     pub fn from_resp(r: &crate::http::Resp) -> CiErr {
         let mut e = CiErr::from_status(r.status, &r.body);
         if r.header("x-ratelimit-remaining") == Some("0") && matches!(r.status, 403 | 429) {
@@ -102,7 +102,7 @@ impl CiErr {
 pub struct RemoteRun {
     pub id: String,
     pub url: String,
-    /// 어댑터가 쓰는 추가 정보(큐 주소 등).
+    /// Extra information for the adapter (the queue URL and so on).
     pub extra: Value,
 }
 
@@ -113,7 +113,7 @@ pub enum RState {
     Succeeded,
     Failed,
     Cancelled,
-    /// 사람이 눌러야 함(수동 작업 · 승인 대기).
+    /// Waiting for a person (a manual job or an approval).
     Waiting,
 }
 
@@ -125,29 +125,29 @@ pub struct RStatus {
 
 pub enum Triggered {
     Created(RemoteRun),
-    /// 받아들였지만 ID 를 주지 않음(GitHub dispatch 204 · Jenkins 큐) — 상관 ID 로 찾는다.
+    /// Accepted but no ID given (GitHub dispatch 204, the Jenkins queue): find it by correlation ID.
     Accepted(Option<Value>),
 }
 
 pub trait Provider {
     fn label(&self) -> String;
-    /// 상관 ID 로 실행을 찾을 수 있는지. 못 찾는 곳(수동 작업 등)은 응답을 잃으면 바로 "결과 모름"으로 끝낸다.
+    /// Whether runs can be found by correlation ID. Where they cannot (manual jobs, say), a lost response ends right away as "outcome unknown".
     fn searchable(&self) -> bool {
         true
     }
     fn find(&self, corr: &str, since_ms: u64) -> Result<Option<RemoteRun>, CiErr>;
     fn trigger(&self, corr: &str) -> Result<Triggered, CiErr>;
-    /// Accepted 의 손잡이(큐 주소 등)로 실행을 알아낸다. 모르면 None.
+    /// Finds the run from the Accepted handle (a queue URL, say). None when unknown.
     fn resolve_accepted(&self, _handle: &Value) -> Result<Option<RemoteRun>, CiErr> {
         Ok(None)
     }
     fn status(&self, run: &RemoteRun) -> Result<RStatus, CiErr>;
-    /// 새로 생긴 로그 줄. `cursor` 는 어댑터가 쓰는 자리(작업별 오프셋 등).
+    /// New log lines. `cursor` is the adapter's own slot (per-job offsets and so on).
     fn logs(&self, run: &RemoteRun, cursor: &mut Value) -> Result<Vec<String>, CiErr>;
     fn report(&self, _run: &RemoteRun) -> Result<Option<TestReport>, CiErr> {
         Ok(None)
     }
-    /// 결과 계약(산출물의 gitch-flow-result.json). 없으면 None — 로그 표식은 드라이버가 따로 본다.
+    /// The result contract (gitch-flow-result.json in the artifacts). None when missing; the driver checks the log marker separately.
     fn contract(&self, _run: &RemoteRun) -> Result<Option<Value>, CiErr> {
         Ok(None)
     }
@@ -184,7 +184,7 @@ fn nap(cx: &NodeCx, ms: u64) -> bool {
     true
 }
 
-/// 상관 ID(실행 · 노드마다 하나). CI 쪽 이름 규칙에 맞게 영숫자 · - 만.
+/// The correlation ID (one per run and node), with only letters, digits and - to fit CI naming rules.
 pub fn correlation(run_id: &str, node: &str) -> String {
     let raw = format!("gitch-{run_id}-{node}");
     raw.chars()
@@ -199,14 +199,14 @@ pub fn correlation(run_id: &str, node: &str) -> String {
         .collect()
 }
 
-/// GET 을 일시 오류일 때만 몇 번 다시(트리거 POST 에는 쓰지 않는다).
+/// Retries a GET a few times, only on transient errors (never for the trigger POST).
 pub fn with_retry<T>(cx: &NodeCx, mut f: impl FnMut() -> Result<T, CiErr>) -> Result<T, CiErr> {
     let mut wait = 1000;
     for i in 0..5 {
         match f() {
             Ok(v) => return Ok(v),
             Err(e) if e.transient && i < 4 => {
-                // 서버가 기다릴 시간을 알려 주면 그만큼(최대 5분) 기다린다.
+                // When the server says how long to wait, wait that long (at most 5 minutes).
                 let ms = e
                     .retry_after_ms
                     .map(|r| r.clamp(1000, 300_000))
@@ -222,7 +222,7 @@ pub fn with_retry<T>(cx: &NodeCx, mut f: impl FnMut() -> Result<T, CiErr>) -> Re
     f()
 }
 
-/// 응답을 잃었거나 ID 없이 받아들여진 트리거: 다시 보내지 않고 상관 ID 로만 찾는다.
+/// A trigger whose response was lost or that was accepted without an ID: never resend, only search by correlation ID.
 fn search_after_trigger(
     p: &dyn Provider,
     cx: &NodeCx,
@@ -273,7 +273,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
         p.label(),
         tr("상관 ID", "correlation id")
     ));
-    // 1) 먼저 찾는다(같은 실행 · 노드가 이미 보낸 것이 있으면 이어서 본다).
+    // 1) Look first (if this run and node already sent one, follow it).
     match with_retry(cx, || p.find(&corr, since)) {
         Ok(Some(r)) => {
             cx.note(&tr(
@@ -290,7 +290,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
         }
         Err(_) => {}
     }
-    // 2) 보낸다. 응답을 잃으면 다시 보내지 않고 찾기만 한다.
+    // 2) Send. With the response lost, never resend; only search.
     if d.run.is_none() {
         let sent_at = crate::util::now_ms();
         let mut attempt = 0;
@@ -298,7 +298,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
             attempt += 1;
             match p.trigger(&corr) {
                 Err(e) if e.code == "CONN-06" && e.http == Some(429) && attempt < 3 => {
-                    // 속도 제한은 처리되지 않은 요청이라 기다렸다가 다시 보낼 수 있다.
+                    // A rate-limited request was not processed, so it may be sent again after waiting.
                     let ms = e
                         .retry_after_ms
                         .map(|r| r.clamp(1000, 120_000))
@@ -375,7 +375,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
     }
     let run = d.run.clone().expect("run");
     cx.note(&format!("{}: {}", tr("원격 실행", "remote run"), run.url));
-    // 3) 기다린다(마감 · 취소 · 외부 취소).
+    // 3) Wait (deadline, cancel, external cancel).
     let deadline = Instant::now() + Duration::from_millis(opts.timeout_ms);
     let mut cursor = Value::Null;
     let base_poll = opts.poll_ms.max(200);
@@ -426,7 +426,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
         }
         poll = (poll + base_poll / 5 + 200).min(15_000.max(base_poll));
     }
-    // 4) 결과 계약과 보고서. 로그 표식은 마지막 줄이 이긴다.
+    // 4) The result contract and reports. The last log marker wins.
     if let Ok(Some(c)) = p.contract(&run) {
         d.contract = Some(c);
     }
@@ -444,7 +444,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
     d
 }
 
-/// `gitch flow ci status|logs|report|trigger` — 이 저장소의 원격 CI 를 CLI 에서(앱 CI/CD 탭과 같은 일).
+/// `gitch flow ci status|logs|report|trigger`: this repository's remote CI from the command line (what the apps' CI/CD tab does).
 pub fn cmd_ci(out: &crate::cli::Out, args: &crate::cli::Args) -> i32 {
     let Some(root) = crate::cli::repo_root(args) else {
         return 1;
@@ -496,7 +496,7 @@ pub fn cmd_ci(out: &crate::cli::Out, args: &crate::cli::Args) -> i32 {
     }
 }
 
-/// 원격 주소의 저장소 경로(owner/name, group/sub/name).
+/// The repository path in a remote URL (owner/name, group/sub/name).
 pub fn repo_path(remote: &str) -> String {
     let s = remote.trim().trim_end_matches(".git");
     let after = if let Some(i) = s.find("://") {
@@ -517,7 +517,7 @@ fn host_of(remote: &str) -> String {
     rest.split(['/', ':']).next().unwrap_or("").to_string()
 }
 
-/// 원격 호스트와 같은 연결을 고른다(github.com → github, 그 밖엔 URL 의 호스트가 같은 gitlab).
+/// Picks the connection that matches the remote host (github.com → github; otherwise a gitlab connection with the same host).
 fn guess_connection(remote: &str) -> Option<crate::connect::Connection> {
     let host = host_of(remote);
     let all = crate::connect::list();

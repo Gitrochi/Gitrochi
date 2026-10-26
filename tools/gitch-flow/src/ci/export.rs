@@ -1,6 +1,6 @@
-//! `gitch flow export github|gitlab|jenkins`: 같은 흐름을 CI 러너에서 돌리는 얇은 설정을 만든다.
-//! 설정은 고정 버전 gitch 를 받아 `gitch flow run <흐름> --ci` 를 돌리고 결과 계약(gitch-flow-out/)을 올린다.
-//! 기존 CI 파일은 바꾸지 않고, 같은 경로에 다른 내용이 있으면 --force 없이는 쓰지 않는다.
+//! `gitch flow export github|gitlab|jenkins`: writes a thin configuration that runs the same flow on a CI runner.
+//! It downloads a pinned gitch, runs `gitch flow run <flow> --ci` and uploads the result contract (gitch-flow-out/).
+//! Existing CI files are not changed, and a different file at the same path is not overwritten without --force.
 
 use crate::cli::{Args, Out};
 use crate::util::tr;
@@ -17,7 +17,7 @@ fn install_lines(ver: &str) -> Vec<String> {
     ]
 }
 
-/// 프로젝트 감지 결과로 CI 이미지를 고른다(GitLab · Jenkins docker 에이전트용).
+/// Picks the CI image from what project detection found (for GitLab and Jenkins docker agents).
 fn guess_image(root: &Path) -> &'static str {
     if root.join("package.json").is_file() {
         "node:22"

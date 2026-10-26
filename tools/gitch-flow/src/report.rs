@@ -1,4 +1,4 @@
-//! 테스트 보고서를 한 모델(TestReport)로 읽는다. 실행 수는 형식마다 정한 규칙으로 센다.
+//! Reads test reports into one model (TestReport). Executed counts follow each format's own rule.
 //! JUnit XML(surefire · pytest · jest-junit · vitest · swift xunit) · `go test -json` · Jest/Vitest JSON · TAP · cargo libtest.
 
 use serde_json::{json, Value};
@@ -8,7 +8,7 @@ pub enum CaseStatus {
     Passed,
     Failed,
     Skipped,
-    /// 재시도해서 통과(처음엔 실패).
+    /// Passed on retry after failing first.
     Flaky,
 }
 
@@ -39,11 +39,11 @@ pub struct TestReport {
     pub format: String,
     pub cases: Vec<Case>,
     pub duration_ms: u64,
-    /// 읽은 보고서 파일(저장소 기준 경로).
+    /// The report files read (paths relative to the repository).
     pub sources: Vec<String>,
-    /// 해석하지 못한 부분 · 경고.
+    /// Parts that could not be parsed, and warnings.
     pub problems: Vec<String>,
-    /// 보고서에 테스트 단위가 아닌 실패(빌드 실패 등)가 있었는지.
+    /// Whether the report has a failure outside any test (a build failure, say).
     pub harness_failed: bool,
 }
 
@@ -89,7 +89,7 @@ impl TestReport {
         self.harness_failed |= other.harness_failed;
     }
 
-    /// 재시도 결과를 합친다: 처음 실패하고 다시 통과한 케이스는 FLAKY.
+    /// Merges retry results: a case that failed and then passed is FLAKY.
     pub fn apply_retry(&mut self, retry: &TestReport) {
         for c in self
             .cases
@@ -160,7 +160,7 @@ fn short(msg: &str) -> String {
     }
 }
 
-/// 실패 메시지에서 `파일:줄` 을 찾아낸다(스택에 나오는 첫 위치).
+/// Finds `file:line` in a failure message (the first location in the stack).
 pub fn locate(msg: &str) -> Option<(String, u32)> {
     let re = regex::Regex::new(r"((?:[A-Za-z]:)?[\w./\\-]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|go|rs|swift|java|kt|rb|php|cs|vue|svelte)):(\d+)").ok()?;
     for c in re.captures_iter(msg) {
@@ -208,7 +208,7 @@ pub fn parse_junit(xml: &str, source: &str) -> TestReport {
         {
             suite_time += secs_to_ms(suite.attribute("time"));
         }
-        // 테스트 밖에서 난 오류(모듈을 못 읽음 등)는 <testsuite errors=…> 에만 남는 실행기가 있다.
+        // Some runners record errors outside tests (a module that fails to load, say) only in <testsuite errors=…>.
         let errors_attr = suite
             .attribute("errors")
             .and_then(|e| e.parse::<u64>().ok())
@@ -398,7 +398,7 @@ pub fn parse_gotest(text: &str, source: &str) -> TestReport {
                 });
             }
             ("fail", None) => {
-                // 패키지 단위 실패. 테스트가 하나도 없으면 빌드 실패로 본다.
+                // A package-level failure; with no tests at all it is a build failure.
                 if !rep
                     .cases
                     .iter()
@@ -463,7 +463,7 @@ pub fn parse_jest_json(text: &str, source: &str, root: &str) -> TestReport {
             .cloned()
             .unwrap_or_default();
         if asserts.is_empty() && file["status"].as_str() == Some("failed") {
-            // 파일을 읽지 못해 테스트가 하나도 돌지 않은 경우(문법 오류 등).
+            // The file could not load, so no test ran (a syntax error, say).
             rep.harness_failed = true;
             let msg = file["message"]
                 .as_str()
@@ -587,7 +587,7 @@ pub fn parse_tap(text: &str, source: &str) -> TestReport {
                 None
             };
         } else if let Some(i) = pending_fail {
-            // 실패 뒤의 YAML 진단 블록을 메시지로.
+            // The YAML diagnostics block after a failure becomes its message.
             let t = line.trim();
             if !t.is_empty() && t != "---" && t != "..." {
                 let m = rep.cases[i].message.get_or_insert_with(String::new);
@@ -610,7 +610,7 @@ pub fn parse_tap(text: &str, source: &str) -> TestReport {
     rep
 }
 
-// ---------- cargo test (libtest 사람용 출력) ----------
+// ---------- cargo test (libtest human-readable output) ----------
 
 pub fn parse_libtest(text: &str, source: &str) -> TestReport {
     let mut rep = TestReport {
@@ -643,7 +643,7 @@ pub fn parse_libtest(text: &str, source: &str) -> TestReport {
             rep.harness_failed = true;
         }
     }
-    // 실패 상세 블록("---- name stdout ----")을 붙인다.
+    // Attach the failure detail blocks ("---- name stdout ----").
     let mut current: Option<String> = None;
     let mut buf = String::new();
     for line in text.lines() {

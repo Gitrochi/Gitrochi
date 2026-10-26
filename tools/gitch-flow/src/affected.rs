@@ -1,5 +1,5 @@
-//! 영향 선택: 바뀐 파일 → 영향받는 테스트 파일. 확신이 없으면 그 스위트는 전부 돌리고 이유를 남긴다.
-//! "후보가 없다"는 "테스트가 필요 없다"가 아니다 — 고른 근거와 뺀 이유를 계획에 그대로 적는다.
+//! Affected selection: changed files → the test files they affect. When unsure, the whole suite runs and the plan says why.
+//! "No candidates" does not mean "no tests needed": the plan records why each test was picked or left out.
 
 use crate::plan::{Decision, Plan};
 use crate::spec::Spec;
@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use std::collections::BTreeSet;
 use std::path::Path;
 
-/// 바뀌면 그 범위 전체를 다시 돌려야 하는 파일(의존 · 빌드 · 테스트 설정).
+/// Files whose change means rerunning the whole scope (dependencies, build and test configuration).
 const GLOBAL: &[&str] = &[
     "package.json",
     "package-lock.json",
@@ -108,7 +108,7 @@ pub fn is_global(path: &str) -> bool {
     GLOBAL.iter().any(|g| glob_match(g, path))
 }
 
-/// 파일 이름에서 테스트 표식을 뺀 줄기: `a/foo.test.ts` → `foo`, `test_foo.py` → `foo`, `FooTests.swift` → `foo`.
+/// The file name without its test marker: `a/foo.test.ts` → `foo`, `test_foo.py` → `foo`, `FooTests.swift` → `foo`.
 pub fn stem(path: &str) -> String {
     let name = path.rsplit('/').next().unwrap_or(path);
     let base = name.split('.').next().unwrap_or(name);
@@ -131,7 +131,7 @@ pub struct Changes {
     pub files: Vec<String>,
 }
 
-/// 바뀐 파일. base = 기본 브랜치와 갈라진 곳부터 작업 트리까지(커밋 안 한 것 포함).
+/// Changed files. base = from the fork point with the default branch to the working tree, uncommitted changes included.
 pub fn changes(root: &Path, mode: &str) -> Changes {
     match mode {
         "staged" => Changes {
@@ -167,7 +167,7 @@ pub fn changes(root: &Path, mode: &str) -> Changes {
     }
 }
 
-/// `gitch graph affected --json` 로 전이 영향 파일을 받는다. gitch 가 없으면 None.
+/// Transitively affected files from `gitch graph affected --json`; None without gitch.
 fn graph_affected(root: &Path, base: Option<&str>) -> Option<(Vec<String>, Vec<String>)> {
     let gitch = std::env::var("GITCH_PATH").ok().filter(|s| !s.is_empty())?;
     let bash = crate::process::bash_path();

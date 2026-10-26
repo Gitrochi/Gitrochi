@@ -1,5 +1,5 @@
-//! 흐름 파일 신뢰. 흐름 파일은 코드라서, 사람이 내용을 보고 승인한 해시와 같을 때만 비대화형으로 돈다.
-//! 기록은 저장소 밖 `~/.config/gitsw/flow/trust/` 에 둔다(gitch guard 가 AI 의 편집을 막는 곳).
+//! Trusting flow files. A flow file is code, so it runs unattended only when its hash matches one a person reviewed and approved.
+//! The records live outside the repository in `~/.config/gitsw/flow/trust/`, where gitch guard keeps AI agents from editing.
 
 use crate::spec::Spec;
 use crate::util;
@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
-/// gitch 와 같은 규칙으로 실행 주체를 고른다.
+/// Identifies the actor by the same rules as gitch.
 pub fn actor() -> String {
     if let Ok(a) = std::env::var("GITSW_ACTOR") {
         if !a.is_empty() {
@@ -45,7 +45,7 @@ pub fn is_ai(actor: &str) -> bool {
     matches!(actor, "claude" | "codex" | "cursor" | "gemini" | "ai")
 }
 
-/// 저장소마다 고정된 ID(공통 .git 폴더의 절대 경로로).
+/// A fixed ID per repository (from the absolute path of the common .git folder).
 pub fn repo_id(root: &Path) -> String {
     let base = crate::git::common_dir(root).unwrap_or_else(|| root.to_path_buf());
     let canonical = base.canonicalize().unwrap_or(base);
@@ -62,7 +62,7 @@ pub fn trust_path(root: &Path) -> PathBuf {
 #[derive(Debug, Clone)]
 pub struct Status {
     pub trusted: bool,
-    /// 승인 뒤 바뀌었거나 새로 생긴 파일.
+    /// Files that changed or appeared since the approval.
     pub changed: Vec<String>,
     pub approved_at: Option<String>,
     pub ever: bool,

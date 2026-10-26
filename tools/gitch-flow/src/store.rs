@@ -1,5 +1,5 @@
-//! 실행 기록. `<git 공통 폴더>/gitch/flow/runs/<워크트리ID>/<실행ID>/` 에 계획 · 이벤트 · 로그 · 보고서를 둔다.
-//! 이벤트는 파일에 먼저 쓰고 내보낸다(앱이 다시 켜져도 이어 읽게). 게이트가 믿는 요약은 HMAC 으로 서명한다.
+//! Run records. Plans, events, logs and reports live in `<git common dir>/gitch/flow/runs/<worktree-id>/<run-id>/`.
+//! Events are written to the file before they go out, so an app that restarts can keep reading. The summary the gate trusts is signed with HMAC.
 
 use crate::mask::Masker;
 use crate::util;
@@ -44,7 +44,7 @@ impl Store {
         )
     }
 
-    /// 실행 ID 목록(새것부터).
+    /// Run IDs, newest first.
     pub fn run_ids(&self) -> Vec<String> {
         let mut ids: Vec<String> = std::fs::read_dir(self.runs_dir())
             .map(|rd| {
@@ -59,7 +59,7 @@ impl Store {
         ids
     }
 
-    /// 전체 ID 또는 앞부분 · `last` 로 찾는다.
+    /// Finds a run by full ID, a prefix or `last`.
     pub fn resolve(&self, key: &str, flow: Option<&str>) -> Option<String> {
         let ids = self.run_ids();
         if key == "last" || key == "--last" || key.is_empty() {
@@ -115,7 +115,7 @@ impl Store {
         self.base.join("holds").join(format!("{}.json", safe(env)))
     }
 
-    /// 오래된 실행을 지운다. 흐름마다 최근 `keep` 개는 남긴다.
+    /// Removes old runs, keeping the latest `keep` per flow.
     pub fn gc(&self, older_than_ms: u64, keep: usize, dry_run: bool) -> Vec<String> {
         let now = util::now_ms();
         let mut per_flow: std::collections::HashMap<String, usize> =
@@ -163,7 +163,7 @@ pub fn safe(s: &str) -> String {
         .collect()
 }
 
-/// 실행 폴더의 pid 파일이 살아 있는 프로세스를 가리키는지.
+/// Whether the run folder's pid file points at a live process.
 pub fn pid_alive(run_dir: &Path) -> bool {
     let Some(pid) = std::fs::read_to_string(run_dir.join("pid"))
         .ok()
@@ -199,7 +199,7 @@ pub fn process_alive(pid: u32) -> bool {
     }
 }
 
-// ---------- 이벤트 ----------
+// ---------- events ----------
 
 pub struct Events {
     inner: Mutex<(File, u64)>,
@@ -218,7 +218,7 @@ impl Events {
         if let Some(p) = path.parent() {
             std::fs::create_dir_all(p)?;
         }
-        // 이어 쓰기: 같은 실행을 다시 열어도 seq 가 이어지게 마지막 번호를 읽는다.
+        // Appending: read the last number so seq continues when the same run is reopened.
         let last = last_seq(path);
         let f = OpenOptions::new().create(true).append(true).open(path)?;
         Ok(Events {
@@ -229,7 +229,7 @@ impl Events {
         })
     }
 
-    /// 이벤트 하나를 쓴다(마스킹 → 파일 → 표준출력).
+    /// Writes one event (mask, then file, then stdout).
     pub fn emit(&self, ty: &str, node: Option<&str>, data: Value) -> u64 {
         let data = self.masker.mask_value(&data);
         let mut g = self.inner.lock().unwrap_or_else(|e| e.into_inner());
@@ -269,8 +269,8 @@ fn last_seq(path: &Path) -> u64 {
     last
 }
 
-/// 이벤트 파일을 재생하고, `follow` 면 `run.done` 이 나올 때까지 따라간다.
-/// 실행 프로세스가 사라졌는데 done 이 없으면 만들어 알려 준다.
+/// Replays the events file and, with `follow`, keeps following until `run.done`.
+/// When the run's process is gone without a done event, it reports one.
 pub fn follow(run_dir: &Path, since: u64, follow: bool, on: &mut dyn FnMut(&Value)) {
     let path = run_dir.join("events.ndjson");
     let mut offset: u64 = 0;
@@ -313,7 +313,7 @@ pub fn follow(run_dir: &Path, since: u64, follow: bool, on: &mut dyn FnMut(&Valu
         }
         if !pid_alive(run_dir) {
             idle_rounds += 1;
-            // 쓰는 쪽이 끝났는데 done 이 없다 → 끊긴 실행으로 알린다.
+            // The writer is gone without a done event: report the run as cut off.
             if idle_rounds > 3 {
                 on(
                     &json!({"schemaVersion": 1, "type": "run.done", "seq": u64::MAX, "synthetic": true,
@@ -326,7 +326,7 @@ pub fn follow(run_dir: &Path, since: u64, follow: bool, on: &mut dyn FnMut(&Valu
     }
 }
 
-// ---------- 서명 ----------
+// ---------- signatures ----------
 
 fn key_path() -> PathBuf {
     util::gitsw_dir().join("flow").join("key")
@@ -353,7 +353,7 @@ fn signing_key() -> Option<Vec<u8>> {
     Some(k.into_bytes())
 }
 
-/// 서명에 넣는 필드(순서 고정).
+/// The signed fields, in a fixed order.
 fn signed_payload(run: &Value) -> String {
     let nodes: Vec<String> = run["nodes"]
         .as_array()
@@ -392,7 +392,7 @@ pub fn sign_with(key: &[u8], run: &Value) -> String {
     util::hex(&util::hmac_sha256(key, signed_payload(run).as_bytes()))
 }
 
-/// 기록이 엔진이 쓴 그대로인지. 키가 없거나 다르면 믿지 않는다.
+/// Whether the record is exactly what the engine wrote. A missing or different key means it is not trusted.
 pub fn verify(run: &Value) -> bool {
     let Ok(k) = std::fs::read_to_string(key_path()) else {
         return false;
@@ -405,7 +405,7 @@ pub fn verify_with(key: &[u8], run: &Value) -> bool {
         return false;
     };
     let expect = sign_with(key, run);
-    // 길이 차이로 새지 않게 끝까지 비교한다.
+    // Compare to the end so the length difference leaks nothing.
     expect.len() == sig.len()
         && expect
             .bytes()
@@ -414,7 +414,7 @@ pub fn verify_with(key: &[u8], run: &Value) -> bool {
             == 0
 }
 
-/// 잠금: 같은 (워크트리, 흐름, 환경)에 실행은 하나. PID 가 죽었으면 잠금을 이어받는다.
+/// Lock: one run per (worktree, flow, environment). The lock of a dead PID is taken over.
 pub struct Lock {
     path: PathBuf,
 }
@@ -480,7 +480,7 @@ mod tests {
         let mut later = Vec::new();
         follow(&dir, 2, false, &mut |v| later.push(v.clone()));
         assert_eq!(later.len(), 1);
-        // 다시 열어도 seq 가 이어진다.
+        // seq continues after reopening.
         let ev2 = Events::create(&dir.join("events.ndjson"), "r1", false, m).unwrap();
         assert_eq!(ev2.emit("x", None, json!({})), 4);
         let _ = std::fs::remove_dir_all(&dir);
@@ -509,7 +509,7 @@ mod tests {
         drop(l1);
         let _l2 = Lock::acquire(&p, "run-2").unwrap();
         std::fs::write(&p, "999999\nghost\n").unwrap();
-        // 죽은 PID 의 잠금은 이어받는다.
+        // A dead PID's lock is taken over.
         let _l3 = Lock::acquire(&p, "run-3");
         assert!(std::fs::read_to_string(&p).unwrap().contains("run-3"));
     }

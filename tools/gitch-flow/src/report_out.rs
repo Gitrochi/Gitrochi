@@ -1,4 +1,4 @@
-//! 결과 보여 주기: 사람용 요약, AI 용 짧은 요약(--summary), 보고서 형식(text · md · json · junit · html).
+//! Showing results: a summary for people, a short one for AI agents (--summary), and report formats (text, md, json, junit, html).
 
 use crate::cli::{resolve_run, Args, Out};
 use crate::store::{self, Store};
@@ -29,7 +29,7 @@ fn state_word(s: &str) -> String {
     }
 }
 
-/// 실행 요약 글. `ai` 면 색 · 장식 없이 짧고 결정적으로(같은 실패 = 같은 글).
+/// The run summary. With `ai` it is short and deterministic, without colour or decoration (the same failure gives the same text).
 pub fn digest(r: &Value, st: &Store, ai: bool) -> String {
     let mut s = String::new();
     let state = r["state"].as_str().unwrap_or("");
@@ -111,7 +111,7 @@ pub fn digest(r: &Value, st: &Store, ai: bool) -> String {
             ));
         }
         if failures.is_empty() {
-            // 테스트가 아닌 노드: 어긋난 판정과 로그 끝.
+            // A node that is not a test: the failed verdict and the end of the log.
             for v in n["verdicts"].as_array().cloned().unwrap_or_default() {
                 if v["result"] != "PASS" {
                     s.push_str(&format!(
@@ -184,7 +184,7 @@ fn esc(s: &str) -> String {
         .replace('"', "&quot;")
 }
 
-/// 실행의 모든 노드 보고서를 JUnit 하나로 합친다(CI 업로드용).
+/// Merges every node's report in the run into one JUnit file (for CI uploads).
 pub fn junit(r: &Value, st: &Store) -> String {
     let dir = st.run_dir(r["runId"].as_str().unwrap_or(""));
     let mut out = String::from(
@@ -228,7 +228,7 @@ pub fn junit(r: &Value, st: &Store) -> String {
                 out.push_str("  </testsuite>\n");
             }
             None => {
-                // 테스트가 아닌 노드는 케이스 하나로(판정이 실패면 실패).
+                // A node that is not a test becomes one case (failed when its verdict failed).
                 let state = n["state"].as_str().unwrap_or("");
                 out.push_str(&format!(
                     "  <testsuite name=\"{}\" tests=\"1\" failures=\"{}\">\n",
@@ -253,7 +253,7 @@ pub fn junit(r: &Value, st: &Store) -> String {
     out
 }
 
-/// Markdown 요약(PR 댓글 · CI 요약 칸용).
+/// Markdown summary (for pull request comments and CI summaries).
 pub fn markdown(r: &Value) -> String {
     let mut s = format!(
         "### {} gitch flow `{}` · {} · {}\n\n| {} | {} | {} | {} |\n|---|---|---|---|\n",

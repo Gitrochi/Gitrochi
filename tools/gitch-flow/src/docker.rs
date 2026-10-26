@@ -1,5 +1,5 @@
-//! Docker 연결. SDK 대신 docker(또는 podman) CLI 를 셸 없이 인자 배열로 부르고,
-//! 만든 것에는 모두 라벨(gitch.flow.run …)을 붙여 정리 · gc 가 라벨로만 찾게 한다.
+//! Docker access. Calls the docker (or podman) CLI with an argument array and no shell, instead of an SDK,
+//! and labels everything it creates (gitch.flow.run …) so cleanup and gc find it by label only.
 
 use crate::process::{self, Cancel, ProcSpec};
 use crate::services::SvcCx;
@@ -24,7 +24,7 @@ pub struct Out {
     pub stderr: String,
 }
 
-/// docker 명령 하나(시간 제한 있음).
+/// One docker command, with a time limit.
 pub fn run(args: &[&str], timeout_ms: u64) -> Out {
     let spec = ProcSpec {
         program: bin(),
@@ -58,7 +58,7 @@ pub fn run(args: &[&str], timeout_ms: u64) -> Out {
     }
 }
 
-/// 데몬에 닿는지. 닿지 않으면 이유.
+/// Whether the daemon is reachable; the reason when it is not.
 pub fn available() -> Result<String, String> {
     let o = run(&["version", "--format", "{{.Server.Version}}"], 8000);
     match o.code {
@@ -107,7 +107,7 @@ fn container_running(name: &str) -> bool {
     o.code == Some(0) && o.stdout.trim() == "true"
 }
 
-/// `docker.service`: 이미지 하나를 띄우고 건강 확인을 기다린다.
+/// `docker.service`: starts one image and waits for its health check.
 pub fn start_service(
     def: &ServiceDef,
     with: &Value,
@@ -261,7 +261,7 @@ pub fn remove_container(name: &str) {
     let _ = run(&["rm", "-f", "-v", name], 30_000);
 }
 
-/// `compose.up`: compose 파일로 여러 서비스를 띄우고 `--wait` 로 건강 확인을 기다린다.
+/// `compose.up`: starts the services of a compose file and waits for their health checks with `--wait`.
 pub fn compose_up(
     def: &ServiceDef,
     with: &Value,
@@ -365,7 +365,7 @@ pub fn compose_down(file: &str, project: &str, _run_dir: &Path) {
     );
 }
 
-/// 이 실행이 만든 컨테이너 · 네트워크를 라벨로 찾아 지운다.
+/// Removes the containers and networks this run created, found by label.
 pub fn cleanup_run(run_id: &str) {
     let filter = format!("label=gitch.flow.run={run_id}");
     let o = run(&["ps", "-aq", "--filter", &filter], 15_000);
@@ -375,7 +375,7 @@ pub fn cleanup_run(run_id: &str) {
     let _ = run(&["network", "rm", &network_name(run_id)], 15_000);
 }
 
-/// 끝난 실행의 남은 컨테이너(라벨 기준).
+/// Containers left behind by finished runs (by label).
 pub fn leftovers() -> Vec<(String, String)> {
     let o = run(
         &[

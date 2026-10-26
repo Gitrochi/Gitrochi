@@ -1,7 +1,7 @@
-//! 되돌림: 실패 · 취소 뒤 노드가 등록한 되돌림 단계를 거꾸로 돌리고, 되돌림이 실패하면 그 환경을 잠근다(hold).
-//! 범위 node(기본) = 실패한 노드가 바꾼 것만 · flow = 바꾼 노드 전부(대상을 바꾸지 않는 검사 노드의 실패로는
-//! `onCheckFailure: true` 일 때만). 취소는 범위와 상관없이 바꾼 것을 전부 되돌린다. 엔진은 되돌림을 마음대로
-//! 다시 시도하지 않는다 — 실패하면 사람이 환경을 보고 `gitch flow hold release` 로 푼다.
+//! Rollback: after a failure or cancel, runs the undo steps nodes registered, in reverse; if that fails, the environment is put on hold.
+//! Scope node (default) undoes only what the failed node changed; flow undoes every node that changed something (after a failed check node, which changes nothing,
+//! only with `onCheckFailure: true`). A cancel undoes every change whatever the scope. The engine never retries
+//! a rollback on its own: when one fails, a person checks the environment and releases it with `gitch flow hold release`.
 
 use crate::blocks::{UndoAction, UndoStep};
 use crate::mask::Masker;
@@ -14,7 +14,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-/// 되돌림을 돌릴 때 쓰는 노드의 환경(노드가 돌던 그대로).
+/// The node's environment for its undo steps (as the node ran).
 #[derive(Debug, Clone, Default)]
 pub struct UndoCtx {
     pub env: Vec<(String, String)>,
@@ -22,7 +22,7 @@ pub struct UndoCtx {
     pub shell: String,
 }
 
-/// 무언가를 바꾼 노드 하나(끝난 순서대로).
+/// A node that changed something (in the order nodes finished).
 pub struct Changed<'a> {
     pub node: &'a str,
     pub bad: bool,
@@ -31,14 +31,14 @@ pub struct Changed<'a> {
 }
 
 pub struct Choice {
-    /// 되돌릴 노드(끝난 순서 — 실행은 거꾸로).
+    /// Nodes to undo, in finishing order (they run in reverse).
     pub nodes: Vec<String>,
-    /// 바꿨지만 그대로 둔 노드.
+    /// Nodes that changed something but are kept.
     pub kept: Vec<String>,
     pub why: String,
 }
 
-/// 무엇을 되돌릴지 정한다. `check_failed` = 아무것도 바꾸지 않은 노드가 실패했는지(스모크 같은 검사).
+/// Decides what to undo. `check_failed` says whether a node that changed nothing failed (a check such as a smoke test).
 pub fn decide(
     scope: RollbackScope,
     on_check: bool,
@@ -122,7 +122,7 @@ fn spec_for(action: &UndoAction, ctx: &UndoCtx, timeout_ms: u64) -> ProcSpec {
     }
 }
 
-/// 한 동작을 돌리고 출력은 마스킹해서 기록 파일에 남긴다. 종료 코드 0 이면 Ok.
+/// Runs one action and writes its masked output to the log. Ok on exit code 0.
 fn run_action(
     spec: &ProcSpec,
     masker: &Masker,
@@ -160,8 +160,8 @@ fn run_action(
     }
 }
 
-/// 고른 노드의 되돌림 단계를 끝난 순서의 반대로, 노드 안에서는 등록의 반대로 돌린다.
-/// 단계마다 `check` 가 있으면 되돌린 뒤 확인한다. 예산을 넘기면 남은 단계는 돌리지 않고 실패로 본다.
+/// Runs the chosen nodes' undo steps in reverse finishing order, and within a node in reverse registration order.
+/// A step with a `check` is verified after it runs. Past the time budget the remaining steps do not run and count as failed.
 pub fn execute(
     choice: &Choice,
     changed: &[Changed],
@@ -191,7 +191,7 @@ pub fn execute(
             let left = budget_ms.saturating_sub(started.elapsed().as_millis() as u64);
             let mut rec = json!({"node": c.node, "title": masker.mask(&step.title), "action": masker.mask(&step.action.show())});
             if failed_at.is_some() || left == 0 {
-                // 앞 단계가 실패했거나 예산이 끝나면 더 바꾸지 않는다(사람이 상태를 보게).
+                // After a failed step, or with the budget spent, change nothing more so a person sees the state as it is.
                 rec["state"] = json!("NOT_RUN");
                 rec["reason"] = json!(if left == 0 {
                     tr("되돌림 예산을 넘김", "rollback budget exhausted")
@@ -262,7 +262,7 @@ pub fn execute(
     }
 }
 
-/// 언제나 도는 정리 단계(`always: true`). 실패해도 실행 결과는 바꾸지 않고 기록한다.
+/// Cleanup steps that always run (`always: true`). A failure is recorded but does not change the run's result.
 pub fn cleanup(
     changed: &[Changed],
     run_dir: &Path,
@@ -297,7 +297,7 @@ pub fn cleanup(
     out
 }
 
-/// 되돌림이 실패한 환경을 잠근다. 풀기 전까지 그 환경의 새 실행은 GUARD-02 로 거부된다.
+/// Puts an environment whose rollback failed on hold. Until it is released, new runs there are refused with GUARD-02.
 pub fn hold(st: &Store, env: &str, run_id: &str, flow: &str, at: &(String, String)) -> PathBuf {
     let p = st.hold_path(env);
     let message = tr(
@@ -321,7 +321,7 @@ pub fn hold(st: &Store, env: &str, run_id: &str, flow: &str, at: &(String, Strin
     p
 }
 
-/// 잠금 기록의 사람용 글(옛 형식은 글 그대로).
+/// The hold record's text for people (old records are plain text).
 pub fn hold_message(text: &str) -> String {
     serde_json::from_str::<Value>(text)
         .ok()
@@ -329,9 +329,9 @@ pub fn hold_message(text: &str) -> String {
         .unwrap_or_else(|| text.trim().to_string())
 }
 
-/// 끝나지 않았는데 엔진이 사라진 실행을 닫는다. 바꾼 흔적(되돌림 등록)이 있으면 대상을 건드리지 않고
-/// ROLLBACK_FAILED + hold 로, 없으면 FAILED(EXEC-06) 로 닫는다. 막 시작한 분리 실행을 잘못 닫지 않게
-/// pid 파일이 없으면 1분 지난 기록만 본다.
+/// Closes runs whose engine disappeared before they finished. With traces of changes (registered undo steps) the target is left alone
+/// and the run closes as ROLLBACK_FAILED with a hold, otherwise as FAILED (EXEC-06). So that a detached run that just started is not closed by mistake,
+/// records without a pid file count only after a minute.
 pub fn sweep_orphans(st: &Store, current: &str) -> Vec<String> {
     let mut closed = Vec::new();
     for id in st.run_ids() {
@@ -435,14 +435,14 @@ mod tests {
                 ctx: &ctx,
             },
         ];
-        // node: 실패한 노드만.
+        // node: only the failed node.
         let c = decide(RollbackScope::Node, false, false, true, &changed, false);
         assert_eq!(c.nodes, vec!["deploy-web"]);
         assert_eq!(c.kept, vec!["deploy-api"]);
-        // flow: 바꾸는 노드가 실패하면 모두.
+        // flow: everything when a changing node fails.
         let c = decide(RollbackScope::Flow, false, false, true, &changed, false);
         assert_eq!(c.nodes, vec!["deploy-api", "deploy-web"]);
-        // flow + 검사만 실패: onCheckFailure 일 때만.
+        // flow with only a check failing: only with onCheckFailure.
         let ok = [Changed {
             node: "deploy",
             bad: false,
@@ -456,11 +456,11 @@ mod tests {
             decide(RollbackScope::Flow, true, false, true, &ok, true).nodes,
             vec!["deploy"]
         );
-        // node 범위에서는 검사 실패로 앞 노드를 되돌리지 않는다.
+        // In node scope a failed check does not undo earlier nodes.
         assert!(decide(RollbackScope::Node, true, false, true, &ok, true)
             .nodes
             .is_empty());
-        // 취소는 모두, 성공은 아무것도.
+        // A cancel undoes everything, a success nothing.
         assert_eq!(
             decide(RollbackScope::Node, false, true, false, &ok, false).nodes,
             vec!["deploy"]
@@ -468,7 +468,7 @@ mod tests {
         assert!(decide(RollbackScope::Flow, true, false, false, &ok, false)
             .nodes
             .is_empty());
-        // 정리 단계(always)만 있는 노드는 되돌림 대상이 아니다.
+        // A node with only cleanup steps (always) is not undone.
         let a = [step(true)];
         let only_cleanup = [Changed {
             node: "seed",

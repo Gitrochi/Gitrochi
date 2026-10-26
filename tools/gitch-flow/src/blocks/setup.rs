@@ -1,8 +1,8 @@
-//! 준비 블록: `setup.node` · `setup.python` · `setup.go` · `setup.rust` · `setup.java` · `setup.dotnet` · `setup.swift`.
-//! ① 저장소가 바라는 런타임 버전(.nvmrc · .python-version · go.mod · rust-toolchain …)과 실제 버전을 비교하고(V1),
-//! ② 잠금 파일 기준으로 의존을 설치한다(npm ci · pnpm --frozen-lockfile · uv sync --frozen …).
-//! 잠금 파일 · 설치 명령 · 실행 위치가 지난번 성공 때와 같고 설치 폴더가 남아 있으면 설치를 건너뛴다(`force: true` 로 끔).
-//! 명령은 노드의 실행 위치(local · docker)를 따른다.
+//! Setup blocks: `setup.node`, `setup.python`, `setup.go`, `setup.rust`, `setup.java`, `setup.dotnet` and `setup.swift`.
+//! ① compare the runtime version the repository asks for (.nvmrc, .python-version, go.mod, rust-toolchain …) with the real one (V1),
+//! ② install dependencies from the lock file (npm ci, pnpm --frozen-lockfile, uv sync --frozen …).
+//! The install is skipped while the lock file, install command and executor match the last success and the install folder still exists (`force: true` turns that off).
+//! The commands follow the node's executor (local or docker).
 
 use super::{observe_outcome, schema, Block, Meta, NodeCx, NodeResult};
 use crate::util::{self, shell_quote, tr};
@@ -94,7 +94,7 @@ pub static SETUPS: &[Setup] = &[
     ),
 ];
 
-/// 준비 계획: 바라는 버전 · 버전 명령 · 설치 명령 · 잠금 파일 · 설치 폴더.
+/// The setup plan: wanted version, version command, install command, lock file, install folder.
 #[derive(Debug, Default)]
 pub struct Plan {
     pub wanted: Option<(String, String)>,
@@ -120,7 +120,7 @@ fn first_line(dir: &Path, f: &str) -> Option<(String, String)> {
     Some((l, f.to_string()))
 }
 
-/// `.tool-versions` (asdf · mise) 의 한 도구 버전.
+/// One tool's version from `.tool-versions` (asdf, mise).
 fn tool_versions(dir: &Path, names: &[&str]) -> Option<(String, String)> {
     let t = read(dir, ".tool-versions")?;
     for l in t.lines() {
@@ -432,7 +432,7 @@ fn cmp_ver(a: &[u64], b: &[u64]) -> std::cmp::Ordering {
     std::cmp::Ordering::Equal
 }
 
-/// 비교식 하나(`>=3.11` · `<21` · `^18.2` · `~1.22` · `22` · `22.x`). None = 모르는 표기.
+/// One comparator (`>=3.11`, `<21`, `^18.2`, `~1.22`, `22`, `22.x`). None = an unknown notation.
 fn comparator(p: &str, a: &[u64]) -> Option<bool> {
     use std::cmp::Ordering::*;
     let p = p.trim();
@@ -458,7 +458,7 @@ fn comparator(p: &str, a: &[u64]) -> Option<bool> {
                 && cmp_ver(a, &b) != Less,
         );
     }
-    // 22 · 22.3 · 22.x · 22.* → 앞자리 일치.
+    // 22, 22.3, 22.x, 22.* → the leading parts match.
     let core = p.trim_start_matches(['v', '=']);
     let fixed: Vec<&str> = core
         .split('.')
@@ -475,7 +475,7 @@ fn comparator(p: &str, a: &[u64]) -> Option<bool> {
     Some(a.len() >= b.len() && a[..b.len()] == b[..])
 }
 
-/// 바라는 버전과 실제 버전 비교(공백 = 그리고, `||` = 또는). None = 판정할 수 없는 표기(lts/* · latest 등).
+/// Compares the wanted and actual versions (a space = and, `||` = or). None = a notation that cannot be judged (lts/*, latest and so on).
 pub fn version_ok(wanted: &str, actual: &str) -> Option<bool> {
     let a = nums(actual)?;
     let mut known_any = false;
@@ -525,7 +525,7 @@ impl Block for Setup {
             .map(|v| (v, "with.version".to_string()))
             .or(p.wanted.clone());
         r.observe("manager", json!(p.manager));
-        // ① 버전.
+        // ① Version.
         let c = cx.run_script(&p.version_cmd, &[]);
         let text = format!("{}\n{}", c.stdout, c.tail.join("\n"));
         let actual = regex::Regex::new(p.version_re)
@@ -567,7 +567,7 @@ impl Block for Setup {
         if r.verdicts.iter().any(|v| v.result != Outcome::Pass) {
             return r;
         }
-        // ② 설치.
+        // ② Install.
         let install = cx.input_str("command").or(p.install.clone());
         let want_install = cx
             .with

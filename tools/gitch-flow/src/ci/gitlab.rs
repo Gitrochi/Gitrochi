@@ -1,4 +1,4 @@
-//! GitLab CI(자체 호스팅 포함). 파이프라인 생성 · 수동 작업 실행 · 작업 로그 · 파이프라인 테스트 보고서 · 산출물 결과 계약.
+//! GitLab CI (self-hosted too): creating pipelines, playing manual jobs, job logs, pipeline test reports and the result contract from artifacts.
 
 use super::{CiErr, Provider, RState, RStatus, RemoteRun, Triggered};
 use crate::connect::Connection;
@@ -7,7 +7,7 @@ use crate::report::{Case, CaseStatus, TestReport};
 use crate::util::tr;
 use serde_json::{json, Value};
 
-/// 경로 조각 하나를 URL 에 넣을 수 있게(`group/repo` → `group%2Frepo`).
+/// Makes one path segment safe for a URL (`group/repo` → `group%2Frepo`).
 pub fn enc(s: &str) -> String {
     let mut out = String::new();
     for b in s.bytes() {
@@ -102,11 +102,11 @@ fn state_of(s: &str) -> RState {
     }
 }
 
-/// 작업 로그 상한(작업당 끝부분).
+/// The job log limit (the tail of each job).
 const TRACE_TAIL: usize = 1024 * 1024;
 
-/// 작업 로그를 이어 읽는다. cursor = {"<job id>": 읽은 바이트, "done": [끝난 작업]}.
-/// 아직 도는 작업은 마지막 줄바꿈까지만 읽어 줄이 반으로 잘리지 않게 한다.
+/// Keeps reading job logs. cursor = {"<job id>": bytes read, "done": [finished jobs]}.
+/// A job that is still running is read only up to its last newline, so no line is cut in half.
 fn job_logs(api: &Api, project: &str, jobs: &[Value], cursor: &mut Value) -> Vec<String> {
     if !cursor.is_object() {
         *cursor = json!({"done": []});
@@ -150,7 +150,7 @@ fn job_logs(api: &Api, project: &str, jobs: &[Value], cursor: &mut Value) -> Vec
                 start += 1;
             }
             for l in body[start..end].lines() {
-                // GitLab 의 접기 표식(section_start …) 같은 제어 글자를 걷어 낸다.
+                // Strip control text such as GitLab's collapsible section markers (section_start …).
                 let clean: String = l
                     .chars()
                     .filter(|c| !c.is_control() || *c == '\t')
@@ -339,7 +339,7 @@ impl Provider for Pipeline {
     }
 }
 
-/// 수동 작업 하나를 실행(▶)하고 그 작업만 기다린다.
+/// Plays (▶) one manual job and waits for that job only.
 pub struct ManualJob {
     pub api: Api,
     pub project: String,
@@ -359,7 +359,7 @@ impl Provider for ManualJob {
     }
 
     fn find(&self, _corr: &str, _since: u64) -> Result<Option<RemoteRun>, CiErr> {
-        // 수동 작업은 이미 돌고 있으면 다시 누를 수 없으니 찾기 대신 상태로 판단한다.
+        // A manual job that is already running cannot be played again, so decide by its state instead of searching.
         Ok(None)
     }
 

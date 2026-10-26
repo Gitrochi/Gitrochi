@@ -1,5 +1,5 @@
-//! 테스트 블록: 실행기 하나 = 기본 명령 + 보고서 출처 + 파일 고르기 방식.
-//! 판정은 언제나 보고서(T2) · 실행 수(T3) · 통과율(T1) · 종료 코드와의 정합(X1)으로 한다.
+//! Test blocks: a runner = a default command + where its report comes from + how files are picked.
+//! The verdict always comes from the report (T2), the executed count (T3), the pass rate (T1) and agreement with the exit code (X1).
 
 use super::{find_files, observe_outcome, schema, Block, Meta, NodeCx, NodeResult};
 use crate::report::{self, TestReport};
@@ -161,7 +161,7 @@ pub static RUNNERS: &[Runner] = &[
     ),
 ];
 
-/// Node 패키지 실행 앞부분. 잠금 파일로 패키지 관리자를 고르고, npx 는 몰래 내려받지 않게 --no-install.
+/// The start of a Node package command. The lock file picks the package manager; npx gets --no-install so nothing is downloaded silently.
 pub fn node_exec(cwd: &Path, root: &Path) -> &'static str {
     for d in [cwd, root] {
         if d.join("pnpm-lock.yaml").is_file() {
@@ -379,7 +379,7 @@ impl Runner {
                     let g = g.replace('\\', "/");
                     let p = Path::new(&g);
                     if p.is_absolute() {
-                        // 노드 출력 폴더(.git 안) 같은 절대 경로는 그 폴더에서 바로 찾는다.
+                        // An absolute path, like the node output folder inside .git, is searched right there.
                         let (dir, pat) = split_glob(p);
                         found.extend(find_files(&dir, &[pat], cx.started_ms));
                     } else {
@@ -417,7 +417,7 @@ impl Runner {
     }
 }
 
-/// `/a/b/**/*.xml` → (`/a/b`, `**/*.xml`): 고정 앞부분 폴더와 나머지 glob.
+/// `/a/b/**/*.xml` → (`/a/b`, `**/*.xml`): the fixed leading folder and the rest of the glob.
 fn split_glob(p: &Path) -> (std::path::PathBuf, String) {
     let s = p.to_string_lossy().replace('\\', "/");
     let mut fixed = Vec::new();
@@ -507,7 +507,7 @@ impl Block for Runner {
             .as_ref()
             .map(|x| x.flaky)
             .unwrap_or(FlakyPolicy::Fail);
-        // 재시도: 실패가 있으면 같은 명령을 다시(실행기 대부분이 실패만 다시 돌리는 방법을 따로 요구한다).
+        // Retry: with failures, run the same command again (most runners need their own way to rerun only the failures).
         if let (Some(retry), Some(base)) = (cx.retry.clone(), rep.as_mut()) {
             let mut tries = 0;
             while base.failed() > 0

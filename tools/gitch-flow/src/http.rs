@@ -1,11 +1,11 @@
-//! 작은 HTTP 도구. 점검 블록과 원격 CI 어댑터가 함께 쓴다. 모든 호출은 시간 제한을 가진다.
-//! 리다이렉트는 직접 따라간다: 출처(스킴 · 호스트 · 포트)가 바뀌면 인증 헤더를 모두 빼고,
-//! https 에서 http 로 내려가는 리다이렉트는 거부한다(ureq 는 Authorization · Cookie 만 빼서 PRIVATE-TOKEN 같은 헤더가 새어 나간다).
+//! A small HTTP client shared by the check blocks and the remote CI adapters. Every call has a time limit.
+//! Redirects are followed by hand: when the origin (scheme, host, port) changes every credential header is dropped,
+//! and a redirect from https to http is refused (ureq drops only Authorization and Cookie, which would leak headers like PRIVATE-TOKEN).
 
 use std::io::Read;
 use std::time::Duration;
 
-/// 응답 본문 상한. 넘으면 앞부분만 읽고 `truncated` 를 켠다.
+/// Response body limit. Past it only the start is read and `truncated` is set.
 pub const BODY_CAP: u64 = 16 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
@@ -13,7 +13,7 @@ pub struct Resp {
     pub status: u16,
     pub body: String,
     pub headers: Vec<(String, String)>,
-    /// 마지막으로 받은 주소(리다이렉트 뒤).
+    /// The final URL, after redirects.
     pub url: String,
     pub truncated: bool,
 }
@@ -28,7 +28,7 @@ impl Resp {
     pub fn json(&self) -> Option<serde_json::Value> {
         serde_json::from_str(&self.body).ok()
     }
-    /// `Retry-After`(초) 또는 `x-ratelimit-reset`(유닉스 시각)로 기다릴 시간.
+    /// How long to wait, from `Retry-After` (seconds) or `x-ratelimit-reset` (Unix time).
     pub fn retry_after_ms(&self) -> Option<u64> {
         if let Some(s) = self
             .header("retry-after")
@@ -71,7 +71,7 @@ impl<'a> Req<'a> {
     }
 }
 
-/// 비밀이 실릴 수 있는 헤더 이름.
+/// Header names that may carry secrets.
 pub fn credential_header(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
     n == "cookie"
@@ -82,7 +82,7 @@ pub fn credential_header(name: &str) -> bool {
         || n.contains("apikey")
 }
 
-/// 주소의 호스트(소문자). 해석할 수 없으면 None.
+/// The URL's host in lower case; None when it cannot be parsed.
 pub fn host_of(url: &str) -> Option<String> {
     url::Url::parse(url)
         .ok()?
@@ -90,7 +90,7 @@ pub fn host_of(url: &str) -> Option<String> {
         .map(|h| h.to_ascii_lowercase())
 }
 
-/// 호스트가 목록의 이름과 같거나 그 하위 도메인인지(`.example.com` 처럼 점으로 시작하면 하위만).
+/// Whether the host equals a listed name or is its subdomain (a leading dot, `.example.com`, means subdomains only).
 pub fn host_matches(host: &str, allowed: &[&str]) -> bool {
     let h = host.to_ascii_lowercase();
     allowed.iter().any(|a| {
@@ -157,7 +157,7 @@ fn once(
     })
 }
 
-/// 요청을 보낸다. 4xx · 5xx 도 응답으로 돌려준다(오류는 연결 실패 같은 전송 문제만).
+/// Sends a request. 4xx and 5xx come back as responses; errors are transport problems such as a failed connection.
 pub fn send(r: &Req) -> Result<Resp, String> {
     let agent = ureq::AgentBuilder::new()
         .timeout_connect(Duration::from_millis(r.timeout_ms.min(10_000)))
@@ -206,7 +206,7 @@ mod tests {
     use std::io::{BufRead, BufReader, Write};
     use std::net::TcpListener;
 
-    /// 한 번에 요청 하나씩 받아 미리 정한 응답을 돌려주는 서버. 받은 요청의 첫 줄과 헤더를 기록한다.
+    /// A server that takes one request at a time and answers with canned responses, recording each request line and headers.
     fn serve(replies: Vec<String>) -> (String, std::sync::mpsc::Receiver<Vec<String>>) {
         let l = TcpListener::bind("127.0.0.1:0").unwrap();
         let base = format!("http://{}", l.local_addr().unwrap());

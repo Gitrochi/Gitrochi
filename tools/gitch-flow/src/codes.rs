@@ -1,9 +1,9 @@
-//! 실패 코드 목록. 모든 실패는 코드 · 설명 · 조치를 함께 보인다.
-//! 앱은 코드로 화면 글을 고르고, 모르는 코드는 엔진이 준 글을 그대로 보인다.
+//! Failure codes. Every failure shows its code, a description and what to do.
+//! The apps pick their text by code and show the engine's text for codes they don't know.
 
 use serde_json::{json, Value};
 
-/// (코드, 분류, 한국어 설명, 한국어 조치, 영어 설명, 영어 조치)
+/// (code, category, Korean description, Korean action, English description, English action)
 type Row = (
     &'static str,
     &'static str,
@@ -87,7 +87,7 @@ fn row(code: &str) -> Option<&'static Row> {
     CODES.iter().find(|r| r.0 == code)
 }
 
-/// 지금 언어의 설명. 모르는 코드는 코드 그대로.
+/// The description in the current language; an unknown code is returned as is.
 pub fn describe(code: &str) -> String {
     match row(code) {
         Some(r) => crate::util::tr(r.2, r.4),
@@ -106,7 +106,7 @@ pub fn known(code: &str) -> bool {
     row(code).is_some()
 }
 
-/// 사람용 한 줄: `[CODE] 설명 (조치: …)`.
+/// One line for people: `[CODE] description (action: …)`.
 pub fn line(code: &str) -> String {
     let a = action(code);
     if a.is_empty() {
@@ -120,7 +120,7 @@ pub fn line(code: &str) -> String {
     }
 }
 
-/// JSON 으로 넣을 실패 정보. `detail` 은 상황별 설명(마스킹을 거친 글).
+/// Failure details for JSON. `detail` explains this occurrence (already masked).
 pub fn failure(code: &str, detail: &str) -> Value {
     json!({
         "code": code,
@@ -131,7 +131,7 @@ pub fn failure(code: &str, detail: &str) -> Value {
     })
 }
 
-/// `gitch flow explain` 용 전체 표.
+/// The whole table, for `gitch flow explain`.
 pub fn catalog() -> Value {
     Value::Array(
         CODES

@@ -1,6 +1,6 @@
-//! Docker 블록: `docker.run`(일회성 컨테이너) · `docker.build`(태그 = git sha) · `docker.push`(외부 동작).
-//! docker CLI 를 셸 없이 인자 배열로 부르고, 만든 컨테이너 · 이미지에는 실행 라벨을 붙인다.
-//! 환경 값과 빌드 인자는 이름만 넘겨(`-e NAME` · `--build-arg NAME`) 비밀값이 명령줄에 보이지 않는다.
+//! Docker blocks: `docker.run` (a one-off container), `docker.build` (tag = git sha) and `docker.push` (an outward action).
+//! They call the docker CLI with an argument array and no shell, and label the containers and images they create with the run.
+//! Environment values and build arguments pass by name only (`-e NAME`, `--build-arg NAME`), so secrets never appear on a command line.
 
 use super::{exit_verdict, observe_outcome, schema, Block, Meta, NodeCx, NodeResult};
 use crate::process::ProcSpec;
@@ -36,7 +36,7 @@ fn docker_spec(cx: &NodeCx, args: Vec<String>, env: Vec<(String, String)>) -> Pr
     }
 }
 
-/// `docker image inspect` 의 한 값(형식 문자열). 실패하면 None.
+/// One value from `docker image inspect` (a format string); None on failure.
 fn inspect(cx: &mut NodeCx, image: &str, format: &str) -> Option<String> {
     let spec = docker_spec(
         cx,
@@ -61,7 +61,7 @@ fn inspect(cx: &mut NodeCx, image: &str, format: &str) -> Option<String> {
     }
 }
 
-/// docker CLI 오류 글 → 실패 코드. "Error response from daemon" 은 모든 데몬 오류의 머리말이라 닿지 못함이 아니다.
+/// docker CLI error text → failure code. "Error response from daemon" prefixes every daemon error, so it does not mean unreachable.
 pub fn docker_error_code(text: &str) -> &'static str {
     let t = text.to_ascii_lowercase();
     if t.contains("cannot connect to the docker daemon")
@@ -237,7 +237,7 @@ impl Block for Run {
             workdir: &workdir,
             forward: env.iter().map(|(k, _)| k.clone()).collect(),
             network,
-            // 호스트 프로세스 서비스(별칭 없음)에 닿게.
+            // So host process services (which have no alias) are reachable.
             host_gateway: cx
                 .services
                 .as_object()
@@ -250,7 +250,7 @@ impl Block for Run {
             },
             command,
         });
-        // 이미지 바로 앞에 넣을 선택 인자.
+        // Optional arguments that go right before the image.
         let at = args.iter().position(|a| a == &image).unwrap_or(args.len());
         let mut extra = Vec::new();
         if let Some(ep) = cx.input_str("entrypoint") {
@@ -270,7 +270,7 @@ impl Block for Run {
         }
         observe_outcome(&mut r, &c);
         let tail = c.tail.join("\n");
-        // docker 자체의 실패(125: 데몬 · 이미지 · 인자)는 명령 실패와 구분한다.
+        // docker's own failures (125: daemon, image, arguments) are told apart from the command failing.
         if c.outcome.exit_code == Some(125) {
             let code = docker_error_code(&tail);
             r.verdicts.push(Verdict::new(
@@ -322,7 +322,7 @@ static BUILD_META: Meta = docker_meta(
     180_000,
 );
 
-/// 기본 태그: 프로젝트 이름(없으면 폴더 이름)을 docker 규칙에 맞게 + 짧은 sha.
+/// Default tag: the project name (or the folder name) under docker's naming rules, plus the short sha.
 pub fn default_tag(project: Option<&str>, root: &std::path::Path, sha: &str) -> String {
     let base = project
         .map(|s| s.to_string())
@@ -411,7 +411,7 @@ impl Block for Build {
         {
             args.push("--no-cache".into());
         }
-        // 값이 null 인 빌드 인자는 노드 환경(secrets: 로 넘긴 값 등)에서 그대로 읽힌다.
+        // A build argument whose value is null is read as is from the node environment (values passed with secrets:, say).
         let mut build_args = Vec::new();
         for (k, v) in cx
             .with

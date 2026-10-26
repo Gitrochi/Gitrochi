@@ -1,6 +1,6 @@
-//! `gitch flow import`: 기존 CI 설정(GitHub 워크플로 · .gitlab-ci.yml · 선언형 Jenkinsfile)을 읽어 흐름을 제안한다.
-//! 로컬에서 돌 수 있는 `run`/`script` 는 로컬 노드로, 원격에서만 의미 있는 작업(배포 · 수동)은 ci.* 노드 주석으로.
-//! 읽지 못한 부분(include · 행렬 · 플러그인 단계)은 진단으로 남기고 이해한 척하지 않는다.
+//! `gitch flow import`: reads existing CI configuration (GitHub workflows, .gitlab-ci.yml, declarative Jenkinsfile) and proposes a flow.
+//! `run`/`script` steps that can run locally become local nodes; jobs that only make sense remotely (deploys, manual jobs) become ci.* node comments.
+//! What it cannot read (include, matrices, plugin steps) is reported as diagnostics rather than pretended to be understood.
 
 use crate::cli::{Args, Out};
 use crate::util::tr;
@@ -8,7 +8,7 @@ use serde_json::{json, Map, Value};
 use std::path::Path;
 use yaml_rust2::{Yaml, YamlLoader};
 
-/// 느슨한 YAML → JSON(가져오기 전용: 앵커 · 별칭 · 병합 키를 푼다).
+/// Loose YAML → JSON (import only: anchors, aliases and merge keys are resolved).
 fn loose(y: &Yaml) -> Value {
     match y {
         Yaml::Real(s) => s

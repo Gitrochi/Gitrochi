@@ -1,9 +1,9 @@
-//! OS 비밀 보관소(맥 키체인 · Windows 자격 증명 관리자 · 리눅스 키링). 앱과 같은 keyring crate 형식을 쓴다.
+//! The OS secret store (macOS Keychain, Windows Credential Manager, Linux keyring), in the same keyring-crate format as the apps.
 
-/// 엔진이 저장하는 연결 비밀값의 서비스 이름.
+/// Service name for the connection secrets the engine stores.
 pub const ENGINE_SERVICE: &str = "gitch-flow";
 
-/// Gitrochi 앱이 호스팅 계정 토큰을 둔 서비스 이름(맥 Accounts.swift · Windows system.rs 와 같아야 한다).
+/// Service name under which the Gitrochi apps keep hosting account tokens (must match macOS Accounts.swift and Windows system.rs).
 pub fn app_service() -> &'static str {
     if cfg!(target_os = "macos") {
         "com.ensnif.Gitrochi"
@@ -13,7 +13,7 @@ pub fn app_service() -> &'static str {
 }
 
 fn disabled() -> bool {
-    // 테스트 · CI 에서는 보관소를 건드리지 않는다(확인 창이 뜨거나 멈추지 않게).
+    // Tests and CI never touch the store, so no prompt appears and nothing hangs.
     std::env::var("GITCH_FLOW_NO_KEYSTORE")
         .map(|v| !v.is_empty() && v != "0")
         .unwrap_or(false)
@@ -30,7 +30,7 @@ pub fn get_from(service: &str, account: &str) -> Option<String> {
         .filter(|s| !s.is_empty())
 }
 
-/// 엔진 연결 비밀값.
+/// An engine connection secret.
 pub fn get(name: &str) -> Option<String> {
     get_from(ENGINE_SERVICE, name)
 }
@@ -55,7 +55,7 @@ pub fn delete(name: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// 앱이 저장한 호스팅 계정 토큰(`acct:<id>`).
+/// A hosting account token the app stored (`acct:<id>`).
 pub fn app_token(account_id: &str) -> Option<String> {
     get_from(app_service(), &format!("acct:{account_id}"))
 }

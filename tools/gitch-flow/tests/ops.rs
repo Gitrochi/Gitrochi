@@ -1,5 +1,5 @@
-//! 운영 블록 시험: setup.*(버전 비교 · 바뀐 것 없으면 설치 건너뛰기) · gitch.preflight · gitch.graph.check ·
-//! 알림(블록 · 흐름 끝) · deploy.compose(비교 후 교체 · 실패하면 이전 이미지로 되돌림 · 운영 보호).
+//! Operations block tests: setup.* (version comparison, skipping the install when nothing changed), gitch.preflight, gitch.graph.check,
+//! notifications (block and end of flow), deploy.compose (compare then replace, back to the previous image on failure, production guard).
 
 #![cfg(unix)]
 
@@ -128,7 +128,7 @@ fn gitch_blocks_read_gitch_json() {
     assert_eq!(deps["observations"]["violations"], 1);
 }
 
-// ---------- 알림 ----------
+// ---------- notifications ----------
 
 #[test]
 fn notifications_never_change_the_result() {
@@ -194,7 +194,7 @@ fn notifications_never_change_the_result() {
         "{body}"
     );
     assert_eq!(body["data"]["state"], "FAILED");
-    // 보내지 못해도(500) 노드는 통과로 남고 관측값에 기록된다.
+    // Even when sending fails (500) the node stays passed and the error is recorded as an observation.
     let (code, run) = run_with(&fx, &["run", "pinging", "--json"], &[]);
     assert_eq!(code, 0, "{run}");
     assert_eq!(node(&run, "ping")["observations"]["delivered"], false);
@@ -315,7 +315,7 @@ fn deploy_swaps_one_service_and_reports_both_versions() {
         "{log}"
     );
     assert!(log.contains("up -d --no-deps --wait web"), "{log}");
-    // 이미 그 이미지면 아무것도 바꾸지 않는다.
+    // Already on that image: nothing changes.
     let (code, again) = d.run("ship", &[]);
     assert_eq!(code, 0);
     assert_eq!(

@@ -1,5 +1,5 @@
-//! 점검 블록: `check.http` · `check.port` · `check.version` · `check.log`. 스모크의 기본 단위다.
-//! 기대한 응답에 닿았는지(S1), 앱이 말하는 빌드가 우리가 기대한 것인지(S2)를 본다.
+//! Check blocks: `check.http`, `check.port`, `check.version` and `check.log`, the basic units of a smoke test.
+//! They look at whether the expected response was reached (S1) and whether the build the app reports is the one expected (S2).
 
 use super::{schema, Block, Meta, NodeCx, NodeResult};
 use crate::http::{self, Req};
@@ -25,7 +25,7 @@ fn retry_of(v: Option<&Value>) -> (u32, u64) {
     (times, interval)
 }
 
-/// 취소를 보며 잠깐 쉰다.
+/// Sleeps briefly while watching for a cancel.
 fn nap(cx: &NodeCx, ms: u64) -> bool {
     let until = Instant::now() + Duration::from_millis(ms);
     while Instant::now() < until {
@@ -37,7 +37,7 @@ fn nap(cx: &NodeCx, ms: u64) -> bool {
     true
 }
 
-/// 점 경로로 JSON 값 꺼내기(`build.sha`, `items.0.id`).
+/// Reads a JSON value by dotted path (`build.sha`, `items.0.id`).
 pub fn dig<'a>(v: &'a Value, path: &str) -> Option<&'a Value> {
     let mut cur = v;
     for part in path.split('.').filter(|p| !p.is_empty()) {
@@ -165,7 +165,7 @@ impl Block for Http {
     }
 
     fn validate(&self, with: &Value) -> Vec<String> {
-        // 표현식이 아직 남아 있을 수 있어 모양만 본다.
+        // Expressions may still be unresolved here, so only the shape is checked.
         match checks_of(with, &Value::Null) {
             Ok(_) => Vec::new(),
             Err(e) => vec![e],
@@ -499,7 +499,7 @@ static LOG_META: Meta = Meta {
     estimate_ms: 5_000,
 };
 
-/// 서비스 로그 글: 프로세스 서비스는 실행 폴더의 파일, 컨테이너는 `docker logs`.
+/// A service's log text: the file in the run folder for process services, `docker logs` for containers.
 fn service_log(cx: &NodeCx, name: &str) -> Option<String> {
     let info = &cx.services[name];
     if let Some(rel) = info["log"].as_str() {

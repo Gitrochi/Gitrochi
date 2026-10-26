@@ -1,4 +1,4 @@
-//! 시간 · 해시 · 난수 · 경로 · 언어 · glob 처럼 모든 모듈이 쓰는 작은 도구.
+//! Small helpers every module uses: time, hashes, random numbers, paths, language, globs.
 
 use regex::Regex;
 use sha2::{Digest, Sha256};
@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// ---------- 시간 ----------
+// ---------- time ----------
 
-/// 1970-01-01 UTC 부터의 밀리초.
+/// Milliseconds since 1970-01-01 UTC.
 pub fn now_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -17,7 +17,7 @@ pub fn now_ms() -> u64 {
         .unwrap_or(0)
 }
 
-/// 밀리초를 RFC 3339 UTC 문자열로. 시간대 데이터베이스 없이 쓰려고 직접 계산한다.
+/// Milliseconds as an RFC 3339 UTC string, computed by hand so no time zone database is needed.
 pub fn rfc3339(ms: u64) -> String {
     let secs = (ms / 1000) as i64;
     let millis = ms % 1000;
@@ -35,7 +35,7 @@ pub fn rfc3339(ms: u64) -> String {
     )
 }
 
-/// 실행 ID 앞부분처럼 정렬되는 짧은 시각 표기(UTC): 20261026-123456.
+/// A short UTC timestamp that sorts like the start of a run ID: 20261026-123456.
 pub fn compact_stamp(ms: u64) -> String {
     let secs = (ms / 1000) as i64;
     let (y, m, d) = civil_from_days(secs.div_euclid(86_400));
@@ -51,13 +51,13 @@ pub fn compact_stamp(ms: u64) -> String {
     )
 }
 
-/// 하루 안의 분(0..1440). `offset_min` 은 UTC 와의 차이(분).
+/// Minutes into the day (0..1440). `offset_min` is the offset from UTC in minutes.
 pub fn minute_of_day(ms: u64, offset_min: i64) -> i64 {
     let secs = (ms / 1000) as i64 + offset_min * 60;
     secs.rem_euclid(86_400) / 60
 }
 
-// Howard Hinnant 의 날짜 계산(그레고리력, 날짜 → 연월일).
+// Howard Hinnant's date algorithm (Gregorian calendar, days → year, month, day).
 pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let z = z + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
@@ -71,7 +71,7 @@ pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
-/// "90s" · "10m" · "1h30m" · "1500ms" · 숫자(초)를 밀리초로.
+/// "90s", "10m", "1h30m", "1500ms" or a number (seconds) in milliseconds.
 pub fn parse_duration(text: &str) -> Option<u64> {
     let s = text.trim();
     if s.is_empty() {
@@ -119,7 +119,7 @@ pub fn parse_duration(text: &str) -> Option<u64> {
     }
 }
 
-/// 사람이 읽는 소요 시간: 850ms · 12.3s · 2m 5s.
+/// A duration for people: 850ms · 12.3s · 2m 5s.
 pub fn human_duration(ms: u64) -> String {
     if ms < 1000 {
         format!("{ms}ms")
@@ -131,7 +131,7 @@ pub fn human_duration(ms: u64) -> String {
     }
 }
 
-// ---------- 해시 · 난수 ----------
+// ---------- hashes and random numbers ----------
 
 pub fn sha256_hex(data: &[u8]) -> String {
     hex(&Sha256::digest(data))
@@ -147,7 +147,7 @@ pub fn hex(bytes: &[u8]) -> String {
     out
 }
 
-/// RFC 2104 HMAC-SHA256. 결과 위조 방지 서명에 쓴다(별도 crate 없이 sha2 로).
+/// RFC 2104 HMAC-SHA256, for the signature that keeps results from being forged (built on sha2, no extra crate).
 pub fn hmac_sha256(key: &[u8], msg: &[u8]) -> [u8; 32] {
     let mut block = [0u8; 64];
     if key.len() > 64 {
@@ -172,7 +172,7 @@ pub fn hmac_sha256(key: &[u8], msg: &[u8]) -> [u8; 32] {
     outer.into()
 }
 
-/// 운영체제 난수. 실패하면 시각 · PID 로 만든 값으로 대신한다(실행 ID 처럼 겹치지만 않으면 되는 곳에만).
+/// OS random numbers. On failure falls back to a value from the time and PID (only where values just must not collide, like run IDs).
 pub fn random_bytes(n: usize) -> Vec<u8> {
     let mut buf = vec![0u8; n];
     if getrandom::getrandom(&mut buf).is_err() {
@@ -194,9 +194,9 @@ pub fn random_hex(n_bytes: usize) -> String {
     hex(&random_bytes(n_bytes))
 }
 
-// ---------- 경로 ----------
+// ---------- paths ----------
 
-/// 사용자 홈. Windows 에서 Git Bash 가 넘긴 `/c/Users/me` 는 `C:\Users\me` 로 바꾼다.
+/// The user's home. On Windows `/c/Users/me` from Git Bash becomes `C:\Users\me`.
 pub fn home_dir() -> Option<PathBuf> {
     if let Ok(h) = std::env::var("HOME") {
         if !h.is_empty() {
@@ -209,7 +209,7 @@ pub fn home_dir() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-/// MSYS 형식 경로(/c/x)를 Windows 형식(C:\x)으로. 다른 운영체제에서는 그대로.
+/// An MSYS path (/c/x) in Windows form (C:\x). Unchanged on other systems.
 pub fn msys_to_native(p: &str) -> String {
     if cfg!(windows) {
         let b = p.as_bytes();
@@ -226,7 +226,7 @@ pub fn msys_to_native(p: &str) -> String {
     p.to_string()
 }
 
-/// gitch 설정 폴더(`~/.config/gitsw`). gitch 와 같은 규칙으로 찾는다.
+/// gitch's settings folder (`~/.config/gitsw`), found by the same rules as gitch.
 pub fn gitsw_dir() -> PathBuf {
     if let Ok(cfg) = std::env::var("GITSW_CONFIG") {
         if !cfg.is_empty() {
@@ -247,7 +247,7 @@ pub fn gitsw_dir() -> PathBuf {
         .join("gitsw")
 }
 
-/// gitch 상태 폴더(`~/.local/state/gitsw`) — 행동 기록 actions.jsonl 이 있는 곳.
+/// gitch's state folder (`~/.local/state/gitsw`), where the action log actions.jsonl lives.
 pub fn gitsw_state_dir() -> PathBuf {
     if let Ok(x) = std::env::var("XDG_STATE_HOME") {
         if !x.is_empty() {
@@ -261,7 +261,7 @@ pub fn gitsw_state_dir() -> PathBuf {
         .join("gitsw")
 }
 
-/// 결과 캐시 폴더.
+/// The result cache folder.
 pub fn cache_dir() -> PathBuf {
     if let Ok(p) = std::env::var("GITCH_FLOW_CACHE") {
         if !p.is_empty() {
@@ -291,13 +291,13 @@ pub fn cache_dir() -> PathBuf {
     }
 }
 
-/// 저장소 안 경로를 `/` 로 통일한 상대 경로로.
+/// A path inside the repository as a relative path with `/`.
 pub fn rel_slash(root: &Path, p: &Path) -> String {
     let r = p.strip_prefix(root).unwrap_or(p);
     r.to_string_lossy().replace('\\', "/")
 }
 
-/// 원자적으로 쓰기: 임시 파일에 쓰고 이름을 바꾼다(읽는 쪽이 반쯤 쓴 파일을 보지 않게).
+/// Writes atomically: to a temporary file, then renamed, so readers never see a half-written file.
 pub fn write_atomic(path: &Path, data: &[u8]) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -307,11 +307,11 @@ pub fn write_atomic(path: &Path, data: &[u8]) -> std::io::Result<()> {
     std::fs::rename(&tmp, path)
 }
 
-// ---------- 언어 ----------
+// ---------- language ----------
 
 static LANG_EN: OnceLock<bool> = OnceLock::new();
 
-/// 사람용 글의 언어. gitch 와 같게 기본은 한국어, `--lang en` · `GITCH_FLOW_LANG=en` 이면 영어.
+/// The language of text for people: Korean by default like gitch; English with `--lang en` or `GITCH_FLOW_LANG=en`.
 pub fn set_lang(lang: Option<&str>) {
     let from_env = std::env::var("GITCH_FLOW_LANG").ok();
     let pick = lang.map(|s| s.to_string()).or(from_env).unwrap_or_default();
@@ -326,7 +326,7 @@ pub fn is_en() -> bool {
     })
 }
 
-/// 두 언어 중 지금 언어의 글.
+/// The text in the current language, out of the two.
 pub fn tr(ko: &str, en: &str) -> String {
     if is_en() {
         en.to_string()
@@ -342,7 +342,7 @@ fn glob_cache() -> &'static Mutex<HashMap<String, Regex>> {
     CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-/// glob(`*` · `**` · `?` · `{a,b}` · `[abc]`)을 정규식으로. 경로 구분자는 `/`.
+/// A glob (`*`, `**`, `?`, `{a,b}`, `[abc]`) as a regular expression. The path separator is `/`.
 pub fn glob_to_regex(pattern: &str) -> String {
     let p: Vec<char> = pattern.chars().collect();
     let mut out = String::from("^");
@@ -353,7 +353,7 @@ pub fn glob_to_regex(pattern: &str) -> String {
         match c {
             '*' => {
                 if i + 1 < p.len() && p[i + 1] == '*' {
-                    // "**/" 는 0개 이상의 폴더, 끝의 "**" 는 무엇이든
+                    // "**/" is zero or more folders, a trailing "**" anything
                     if i + 2 < p.len() && p[i + 2] == '/' {
                         out.push_str("(?:.*/)?");
                         i += 3;
@@ -411,7 +411,7 @@ pub fn glob_to_regex(pattern: &str) -> String {
     out
 }
 
-/// 경로가 glob 에 맞는지. 패턴에 `/` 가 없으면 파일 이름만 비교한다(`*.ts` 가 하위 폴더에도 맞게).
+/// Whether the path matches the glob. A pattern without `/` compares only the file name, so `*.ts` matches in subfolders too.
 pub fn glob_match(pattern: &str, path: &str) -> bool {
     let path = path.trim_start_matches("./");
     let pattern = pattern.trim_start_matches("./");
@@ -431,9 +431,9 @@ pub fn glob_match(pattern: &str, path: &str) -> bool {
         .unwrap_or(false)
 }
 
-// ---------- 셸 ----------
+// ---------- shell ----------
 
-/// POSIX 셸에 한 인자로 넘기도록 작은따옴표로 감싼다.
+/// Single-quotes a value so a POSIX shell takes it as one argument.
 pub fn shell_quote(s: &str) -> String {
     if !s.is_empty()
         && s.chars()
@@ -444,7 +444,7 @@ pub fn shell_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
 }
 
-/// PowerShell 에 한 인자로 넘기도록 감싼다.
+/// Quotes a value so PowerShell takes it as one argument.
 pub fn pwsh_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
@@ -459,7 +459,7 @@ mod tests {
         // 2026-10-26T12:34:56.789Z
         assert_eq!(rfc3339(1_793_018_096_789), "2026-10-26T12:34:56.789Z");
         assert_eq!(compact_stamp(1_793_018_096_789), "20261026-123456");
-        // 윤년 2월 29일
+        // February 29 in a leap year
         assert_eq!(rfc3339(951_782_400_000), "2000-02-29T00:00:00.000Z");
     }
 
@@ -513,7 +513,7 @@ mod tests {
 
     #[test]
     fn minute_of_day_offsets() {
-        // 1970-01-01T00:30Z → UTC 30분, +09:00 이면 570분
+        // 1970-01-01T00:30Z → 30 minutes UTC, 570 minutes at +09:00
         assert_eq!(minute_of_day(30 * 60_000, 0), 30);
         assert_eq!(minute_of_day(30 * 60_000, 540), 570);
         assert_eq!(minute_of_day(30 * 60_000, -60), 1410);

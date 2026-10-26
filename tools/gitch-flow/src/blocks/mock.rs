@@ -1,5 +1,5 @@
-//! 모의 서버 블록: `mock.fault`(장애 스위치 켜고 끄기) · `check.mock`(기대한 호출이 왔는지).
-//! 둘 다 `mock.http` 서비스의 제어 주소(`/__gitch/…`)만 쓴다.
+//! Mock server blocks: `mock.fault` (turn fault switches on and off) and `check.mock` (did the expected calls arrive).
+//! Both use only the `mock.http` service's control endpoints (`/__gitch/…`).
 
 use super::{schema, Block, Meta, NodeCx, NodeResult};
 use crate::http::{self, Req};
@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 pub struct Fault;
 pub struct Check;
 
-/// 노드가 쓰는 모의 서비스의 제어 주소. 서비스 이름을 쓰면 노드 `services:` 에도 적어야 떠 있다.
+/// The control address of the mock service the node uses. A service named here must also be in the node's `services:` to be running.
 fn control(cx: &NodeCx) -> Result<String, String> {
     if let Some(u) = cx.input_str("url") {
         return Ok(format!("{}/__gitch", u.trim_end_matches('/')));

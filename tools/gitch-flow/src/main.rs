@@ -1,4 +1,4 @@
-//! gitch-flow 실행 파일. 사람 · AI 는 `gitch flow …` · `gitch test …` 로 부르고, 앱은 같은 JSON 계약을 쓴다.
+//! The gitch-flow executable. People and AI agents call it through `gitch flow …` and `gitch test …`; the apps use the same JSON contract.
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();

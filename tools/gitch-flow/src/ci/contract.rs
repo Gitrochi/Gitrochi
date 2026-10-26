@@ -1,5 +1,5 @@
-//! 결과 계약 v1: `gitch flow run --ci` 가 남기는 파일과 표식 줄. 원격 어댑터는 이것으로 판정한다(로컬 = CI).
-//! 표식 줄은 작고 비밀이 없다. CI 가 짧은 비밀값을 가리며 JSON 이 깨질 수 있어 파일도 함께 남긴다.
+//! Result contract v1: the files and marker line `gitch flow run --ci` leaves behind. The remote adapters judge by it (local = CI).
+//! The marker line is small and holds no secrets. CI masking of short secrets can break the JSON, so the files are kept as well.
 
 use crate::store::Store;
 use crate::util::tr;
@@ -14,7 +14,7 @@ pub fn out_dir(root: &Path) -> PathBuf {
         .unwrap_or_else(|_| root.join("gitch-flow-out"))
 }
 
-/// 작은 요약(표식 줄 · 원격 판정용).
+/// A small summary (for the marker line and remote verdicts).
 pub fn small(summary: &Value) -> Value {
     let failures: Vec<Value> = summary["nodes"]
         .as_array()
@@ -37,7 +37,7 @@ pub fn small(summary: &Value) -> Value {
            "sha": summary["git"]["sha"], "counts": summary["counts"], "failures": failures})
 }
 
-/// CI 모드 산출물: 결과 JSON · 합친 JUnit · Markdown 요약 · 표식 줄 · GitHub 주석.
+/// CI mode outputs: result JSON, merged JUnit, Markdown summary, marker line, GitHub annotations.
 pub fn write(root: &Path, summary: &Value, st: &Store) {
     let dir = out_dir(root);
     let _ = std::fs::create_dir_all(&dir);
@@ -108,11 +108,11 @@ pub fn write(root: &Path, summary: &Value, st: &Store) {
     );
 }
 
-/// 로그에서 마지막 표식 줄을 읽는다(JSON 이 아닌 줄은 건너뜀).
+/// Reads the last marker line from a log (skipping lines that are not JSON).
 pub fn parse_marker(text: &str) -> Option<Value> {
     let mut last = None;
     for line in text.lines() {
-        // CI 로그는 줄 앞에 시각 · 단계 이름을 붙이기도 한다.
+        // CI logs may prefix lines with a timestamp or step name.
         if let Some(i) = line.find(MARKER) {
             let rest = line[i + MARKER.len()..].trim();
             if let Ok(v) = serde_json::from_str::<Value>(rest) {
@@ -125,7 +125,7 @@ pub fn parse_marker(text: &str) -> Option<Value> {
     last
 }
 
-/// 계약의 판정: 실행 상태가 SUCCEEDED 이면 PASS.
+/// The contract's verdict: PASS when the run state is SUCCEEDED.
 pub fn outcome(c: &Value) -> crate::verify::Outcome {
     match c["state"].as_str() {
         Some("SUCCEEDED") => crate::verify::Outcome::Pass,

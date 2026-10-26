@@ -1,5 +1,5 @@
-//! 서비스: 흐름 동안 떠 있는 의존 프로세스 · 컨테이너. 처음 필요한 노드 직전에 띄우고
-//! 건강 확인이 끝난 뒤에만 노드를 시작하며, 실행이 끝나면 언제나 정리한다.
+//! Services: processes and containers that stay up during a flow. They start right before the first node that needs them,
+//! nodes start only after their health checks pass, and services are always stopped when the run ends.
 
 use crate::http::{self, Req};
 use crate::mask::Masker;
@@ -53,7 +53,7 @@ pub struct SvcCx<'a> {
     pub cancel: &'a process::Cancel,
 }
 
-/// 비어 있는 로컬 포트 하나.
+/// A free local port.
 pub fn free_port() -> u16 {
     std::net::TcpListener::bind("127.0.0.1:0")
         .and_then(|l| l.local_addr())
@@ -127,7 +127,7 @@ fn log_tail(path: &Path, n: usize) -> String {
     lines[lines.len().saturating_sub(n)..].join("\n")
 }
 
-/// 서비스를 띄운다. `with` 는 이미 표현식을 풀었고 `port` 는 미리 정했다.
+/// Starts a service. `with` has its expressions resolved already, and `port` is chosen in advance.
 pub fn start(
     def: &ServiceDef,
     with: &Value,
@@ -254,7 +254,7 @@ pub fn start(
     }
 }
 
-/// 서비스를 정리한다(실패 · 취소 뒤에도 부른다).
+/// Stops a service (also called after a failure or cancel).
 pub fn stop(r: Running, run_dir: &Path) {
     match r.kind {
         Kind::Process { mut child, group } => {
@@ -276,14 +276,14 @@ pub fn stop(r: Running, run_dir: &Path) {
     }
 }
 
-/// 서비스 로그 경로(앱 · 보고서용).
+/// The service's log path (for the apps and reports).
 pub fn log_path(run_dir: &Path, name: &str) -> PathBuf {
     run_dir
         .join("logs")
         .join(format!("service-{}.log", crate::store::safe(name)))
 }
 
-/// 남겨 둔 서비스(--keep-services) 기록.
+/// Records the services left running (--keep-services).
 pub fn keep_note(run_dir: &Path, r: &Running) {
     if let Ok(mut f) = std::fs::OpenOptions::new()
         .create(true)

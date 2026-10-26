@@ -1,5 +1,5 @@
-//! 비밀값 찾기. 흐름 파일에는 참조 이름만 있고, 값은 여기서만 꺼낸다(꺼내는 즉시 마스킹 사전에 넣는다).
-//! 순서: 앱이 표준 입력으로 넘긴 값 → GITCH_SECRET_<이름> → (CI 모드) 같은 이름의 환경변수 → OS 보관소.
+//! Secret lookup. Flow files hold only reference names; values come out only here and go straight into the masking dictionary.
+//! Order: values the app passed on stdin, then GITCH_SECRET_<name>, then (CI mode) the environment variable of that name, then the OS secret store.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -9,7 +9,7 @@ fn provided() -> &'static Mutex<HashMap<String, String>> {
     P.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-/// 앱이 `--secrets-stdin` 으로 넘긴 {"이름": "값"} 을 받아 둔다.
+/// Keeps the {"name": "value"} map the app passed with `--secrets-stdin`.
 pub fn provide_json(text: &str) -> Result<usize, String> {
     let v: serde_json::Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
     let obj = v.as_object().ok_or("expected a JSON object")?;
@@ -59,7 +59,7 @@ pub fn resolve(name: &str, ci: bool) -> Option<String> {
     crate::keystore::get(name)
 }
 
-/// 비밀처럼 보이는 환경변수 이름(물려줄 때 뺀다).
+/// Environment variable names that look secret (left out when passing the environment on).
 pub fn looks_secret(name: &str) -> bool {
     let u = name.to_ascii_uppercase();
     if u.starts_with("GITCH_SECRET_") {

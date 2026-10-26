@@ -1,5 +1,5 @@
-//! 되돌림 시험: 범위 node · flow, 검사 실패와 onCheckFailure, 되돌림 실패 → 환경 잠금(hold),
-//! 취소 뒤 되돌림, 언제나 도는 정리 단계, 되돌림 스크립트의 셸 인용, 엔진이 죽은 실행 닫기.
+//! Rollback tests: node and flow scope, check failures and onCheckFailure, a failed rollback → environment hold,
+//! rollback after a cancel, cleanup steps that always run, shell quoting in undo scripts, closing runs whose engine died.
 
 mod common;
 
@@ -111,7 +111,7 @@ fn a_failed_rollback_puts_the_environment_on_hold() {
     assert!(std::fs::read_to_string(log)
         .unwrap()
         .contains("cannot-undo"));
-    // 잠긴 환경의 새 실행은 무엇이든 거부된다.
+    // Any new run in a held environment is refused.
     let (code, next) = fx.json("script", &["run", "other", "--json"]);
     assert_eq!(code, 1);
     assert_eq!(next["state"], "REJECTED", "{next}");
@@ -121,7 +121,7 @@ fn a_failed_rollback_puts_the_environment_on_hold() {
         .as_str()
         .unwrap()
         .contains("hold release"));
-    // AI 는 잠금을 풀 수 없다. 사람(스크립트)은 풀 수 있다.
+    // An AI agent cannot release the hold; a person (script) can.
     let (code, v) = fx.json("claude", &["hold", "release", "local", "--json"]);
     assert_eq!(code, 2, "{v}");
     let (code, v) = fx.json("script", &["hold", "release", "local", "--json"]);
@@ -222,7 +222,7 @@ fn kill_engine(fx: &Fx, flow: &str) -> String {
 fn an_engine_that_died_after_a_change_leaves_the_environment_on_hold() {
     let fx = fx();
     let id = kill_engine(&fx, "slow");
-    // 다음 실행이 시작하면서 남은 실행을 닫는다: 바꾼 흔적이 있으니 대상을 건드리지 않고 잠근다.
+    // The next run closes the leftover run as it starts: it changed something, so the target is left alone and held.
     let (code, next) = fx.json("script", &["run", "other", "--json"]);
     assert_eq!(code, 1, "{next}");
     assert_eq!(next["code"], "GUARD-02", "{next}");

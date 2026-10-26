@@ -1,5 +1,5 @@
-//! 시험용 가짜 HTTP 서버. 요청마다 처리기를 부르고 모든 요청을 기록한다.
-//! 처리기가 None 을 돌려주면 응답 없이 연결을 끊는다(응답을 잃은 트리거 흉내).
+//! A fake HTTP server for tests. It calls a handler for every request and records all requests.
+//! When the handler returns None the connection closes without a response (imitating a trigger whose response was lost).
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -21,7 +21,7 @@ impl Req {
             .find(|(k, _)| k.eq_ignore_ascii_case(name))
             .map(|(_, v)| v.as_str())
     }
-    /// 질의 문자열 값(퍼센트 인코딩을 푼다).
+    /// A query string value (percent-decoded).
     pub fn param(&self, key: &str) -> Option<String> {
         self.query.split('&').find_map(|kv| {
             let (k, v) = kv.split_once('=').unwrap_or((kv, ""));
@@ -115,7 +115,7 @@ impl Server {
     pub fn requests(&self) -> Vec<Req> {
         self.log.lock().unwrap().clone()
     }
-    /// 방법이 같고 경로에 `part` 가 들어간 요청 수.
+    /// The number of requests with this method whose path contains `part`.
     pub fn count(&self, method: &str, part: &str) -> usize {
         self.requests()
             .iter()
@@ -194,7 +194,7 @@ fn serve(s: TcpStream, h: &Handler, log: &Mutex<Vec<Req>>) {
             let _ = s.flush();
         }
         None => {
-            // 응답 없이 끊는다.
+            // Close without a response.
             let _ = s.shutdown(std::net::Shutdown::Both);
         }
     }

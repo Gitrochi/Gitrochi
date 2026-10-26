@@ -1,11 +1,11 @@
-//! `gitch flow doctor`: 흐름이 쓰는 도구 · Docker · 신뢰 · 잠긴 환경을 점검한다. 바꾸지 않고 보기만 한다.
+//! `gitch flow doctor`: checks the tools flows use, Docker, trust and held environments. It only looks and changes nothing.
 
 use crate::cli::{Args, Out};
 use crate::util::tr;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-/// PATH 에서 실행 파일 찾기(Windows 는 PATHEXT).
+/// Finds an executable on PATH (with PATHEXT on Windows).
 pub fn which(cmd: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
     let exts: Vec<String> = if cfg!(windows) {
@@ -84,7 +84,7 @@ fn tools_for(block: &str, root: &Path) -> Vec<(&'static str, &'static str)> {
     }
 }
 
-/// 짧은 점검(init 결과에 붙인다).
+/// A short check, attached to the init result.
 pub fn quick(root: &Path) -> Value {
     json!({"git": which("git").is_some(), "docker": which(&crate::docker::bin()).is_some(), "node": which("node").is_some(), "bash": crate::process::bash_path(), "flowFile": crate::spec::exists(root)})
 }

@@ -1,5 +1,5 @@
-//! 실행 파일을 임시 저장소 · 임시 HOME 에서 돌려 보는 통합 시험. 실제 사용자 설정은 건드리지 않는다.
-//! 실행 주체는 시험마다 정한다(사람 · 스크립트 · AI) — gitch 시험 도구(t_setup)와 같은 방식.
+//! Integration tests that run the executable in a temporary repository and HOME. Real user settings are never touched.
+//! Each test sets the actor (person, script, AI), the same way as gitch's test helper (t_setup).
 
 mod common;
 
@@ -67,7 +67,7 @@ fn fixture() -> Fx {
             "<testsuite><testcase classname='x' name='old'/></testsuite>",
         ),
     ]);
-    // 오래된 보고서를 "예전 것"으로 만든다(이번 실행 시작 전).
+    // Make the old report "stale" (from before this run started).
     let old = fx.repo().join("old/junit.xml");
     let past = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
     let f = std::fs::File::options().write(true).open(&old).unwrap();
@@ -91,11 +91,11 @@ fn untrusted_flows_need_a_person() {
     assert_eq!(code, 2);
     assert_eq!(v["error"]["code"], "GITCH_CONFIRMATION_REQUIRED");
     assert_eq!(v["error"]["flowCode"], "TRUST-01");
-    // AI 는 신뢰를 승인할 수 없다.
+    // An AI agent cannot approve trust.
     let (code, v) = fx.json("claude", &["trust", "--yes", "--json"]);
     assert_eq!(code, 2);
     assert_eq!(v["error"]["flowCode"], "TRUST-02");
-    // 비대화형 스크립트도 --yes 없이는 안 된다.
+    // Nor can a non-interactive script without --yes.
     let (code, _) = fx.json("script", &["run", "ok", "--json"]);
     assert_eq!(code, 2);
 }
@@ -110,10 +110,10 @@ fn a_passing_flow_is_signed_and_replayable() {
     assert_eq!(node(&run, "unit")["state"], "PASSED");
     assert_eq!(node(&run, "unit")["tests"]["executed"], 2);
     assert!(run["signature"].is_string());
-    // 서명된 기록은 status 에서 signed=true.
+    // A signed record shows signed=true in status.
     let (_, st) = fx.json("script", &["status", "last", "--json"]);
     assert_eq!(st["signed"], true);
-    // 이벤트: seq 가 1부터 빠짐없이 늘고 run.done 으로 끝난다.
+    // Events: seq counts up from 1 without gaps and ends with run.done.
     let id = run["runId"].as_str().unwrap();
     let (_, evs, _) = fx.run("script", &["events", id]);
     let lines: Vec<Value> = evs
@@ -126,7 +126,7 @@ fn a_passing_flow_is_signed_and_replayable() {
     assert_eq!(lines.last().unwrap()["type"], "run.done");
     let (_, later, _) = fx.run("script", &["events", id, "--since", "3"]);
     assert_eq!(later.lines().count(), lines.len() - 3);
-    // 기록을 고치면 서명이 맞지 않는다.
+    // Editing the record breaks the signature.
     let path = Path::new(run["runDir"].as_str().unwrap()).join("run.json");
     let text = std::fs::read_to_string(&path)
         .unwrap()
@@ -153,7 +153,7 @@ fn failures_branch_and_fail_fast() {
     assert_eq!(broken["failures"][0]["line"], 14);
     assert_eq!(node(&run, "broken/on-failure/dump")["state"], "PASSED");
     assert_eq!(node(&run, "later")["state"], "SKIPPED");
-    // AI 용 짧은 요약은 결정적이다.
+    // The short summary for AI agents is deterministic.
     let (_, s1, _) = fx.run("script", &["report", "last"]);
     assert!(s1.contains("src/m.test.ts:14"));
 }
@@ -174,7 +174,7 @@ fn traps_are_not_passes() {
         .unwrap()
         .iter()
         .any(|v| v["rule"] == "X1" && v["result"] == "INDETERMINATE"));
-    // 시작 전에 있던 보고서는 읽지 않는다 → 보고서 없음(판정 불가).
+    // A report from before the start is not read → no report (INDETERMINATE).
     let stale = node(&run, "stale");
     assert_eq!(stale["state"], "INDETERMINATE");
     assert_eq!(stale["code"], "TEST-02");
@@ -252,7 +252,7 @@ fn cancel_stops_the_whole_process_tree() {
         }
     }
     assert_eq!(state["state"], "CANCELLED", "{state}");
-    // 손자 프로세스(sleep 30 뒤 touch)는 묶음째 끝나야 한다.
+    // The grandchild (sleep 30, then touch) must end with the group.
     std::thread::sleep(std::time::Duration::from_millis(500));
     assert!(!fx.repo().join("survived.txt").exists());
 }
@@ -351,7 +351,7 @@ fn ci_mode_writes_the_result_contract() {
         .is_file());
     let junit = std::fs::read_to_string(fx.repo().join("gitch-flow-out/junit.xml")).unwrap();
     assert!(junit.contains("<testsuites"));
-    // AI 는 CI 예외로 신뢰를 건너뛸 수 없다.
+    // An AI agent cannot skip trust through the CI exception.
     let mut c2 = fx.cmd("claude", &["run", "ok", "--ci"]);
     c2.env("CI", "true");
     assert_eq!(c2.output().unwrap().status.code(), Some(2));

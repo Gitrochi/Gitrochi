@@ -1,5 +1,5 @@
-//! 실행기: 계획대로 노드를 병렬로 돌리고(needs · 잠금 · 슬롯), 판정을 모아 실행 상태를 정한다.
-//! 상태 전이는 한 표에서만 허용하고, 표에 없는 전이는 엔진 버그(ENGINE-01)로 기록한다.
+//! The runner: runs the plan's nodes in parallel (needs, locks, slots) and turns their verdicts into the run's state.
+//! State changes are allowed only by one table; a change missing from it is recorded as an engine bug (ENGINE-01).
 
 use crate::blocks::{self, NodeCx, NodeResult};
 use crate::expr::{self, Ctx, StatusCtx};
@@ -57,7 +57,7 @@ impl NState {
     }
 }
 
-/// 노드 상태 전이 표.
+/// Node state transitions.
 pub fn node_transition_ok(from: NState, to: NState) -> bool {
     use NState::*;
     matches!(
@@ -75,7 +75,7 @@ pub fn node_transition_ok(from: NState, to: NState) -> bool {
     )
 }
 
-/// 실행 상태 전이 표.
+/// Run state transitions.
 pub fn run_transition_ok(from: &str, to: &str) -> bool {
     matches!(
         (from, to),
@@ -138,7 +138,7 @@ fn install_signals() {
     }
 }
 
-/// 표현식 맥락.
+/// Expression context.
 struct Xc<'a> {
     roots: Map<String, Value>,
     root: &'a Path,
@@ -170,7 +170,7 @@ impl Ctx for Xc<'_> {
     }
 }
 
-/// 조건 평가용 상태: 직접 needs 의 결과.
+/// Status for conditions: the results of the direct needs.
 struct St {
     needs_bad: bool,
     cancelled: bool,
@@ -188,7 +188,7 @@ impl StatusCtx for St {
             "always" => true,
             "cancelled" => self.cancelled,
             "changed" => match &self.changed {
-                // 바뀐 파일을 모르면 바뀐 것으로 본다(보수적으로 실행).
+                // When the changed files are unknown, assume a change (run rather than skip).
                 None => true,
                 Some(files) => files
                     .iter()
@@ -257,7 +257,7 @@ const CORE_ENV: &[&str] = &[
     "SDKROOT",
 ];
 
-/// 하위 프로세스에 물려줄 호스트 환경.
+/// The host environment passed to child processes.
 fn base_env(spec: &Spec, ci: bool) -> Vec<(String, String)> {
     let allow: HashSet<&str> = spec.defaults.env.iter().map(|s| s.as_str()).collect();
     let mut out = Vec::new();
@@ -304,7 +304,7 @@ struct NodeOut {
     outputs: Map<String, Value>,
     needs_confirmation: bool,
     mutated: bool,
-    /// 이 노드가 등록한 되돌림 단계와 그때의 환경(메모리에만 — 비밀값이 들어 있다).
+    /// The undo steps this node registered and its environment at the time (memory only: it holds secrets).
     undo: Vec<blocks::UndoStep>,
     undo_ctx: crate::rollback::UndoCtx,
 }
@@ -343,7 +343,7 @@ struct Shared<'a> {
     base_env: Vec<(String, String)>,
     changed: Option<Vec<String>>,
     today: String,
-    /// Docker 데몬에 닿는지(처음 물을 때 한 번만 본다).
+    /// Whether the Docker daemon is reachable (checked once, on first use).
     docker_ok: std::sync::OnceLock<Result<String, String>>,
 }
 
@@ -390,8 +390,8 @@ fn roots(
     r
 }
 
-/// 노드 입력 하나를 푼다. 셸 스크립트 자리(`run` · `undo` · `undo.run` · `undo.check`)는 셸 인용으로 넣어
-/// 값이 명령으로 해석되지 않게 한다.
+/// Resolves one node input. Shell script slots (`run`, `undo`, `undo.run`, `undo.check`) get shell-quoted values
+/// so a value is never read as a command.
 fn render_input(
     k: &str,
     v: &Value,
@@ -418,7 +418,7 @@ fn render_input(
     }
 }
 
-/// 노드 하나 실행(작업 스레드에서).
+/// Runs one node (on a worker thread).
 fn run_node(
     sh: &Shared,
     n: &PNode,
@@ -441,7 +441,7 @@ fn run_node(
         out.code = Some("SPEC-04".into());
         return out;
     };
-    // Docker 에서 도는 노드: 데몬이 꺼져 있으면 이 노드만 거부하고 나머지는 계획대로.
+    // A node that runs in Docker: with the daemon down only this node is refused; the rest go on as planned.
     if n.executor.is_docker() {
         if let Err(e) = sh.docker_ok.get_or_init(crate::docker::available) {
             out.state = NState::Rejected;
@@ -450,7 +450,7 @@ fn run_node(
             return out;
         }
     }
-    // 비밀값: secrets: 와 env 의 ${{ secrets.X }} 를 풀고 마스킹 사전에 넣는다.
+    // Secrets: resolve secrets: and ${{ secrets.X }} in env, and add them to the masking dictionary.
     let mut secret_vals = Map::new();
     let mut missing = Vec::new();
     let mut wanted: Vec<String> = n.def.secrets.iter().map(|(_, r)| r.clone()).collect();
@@ -481,7 +481,7 @@ fn run_node(
         ));
         return out;
     }
-    // 컨테이너 안에서 도는 노드는 서비스를 네트워크 별칭 · host.docker.internal 로 본다.
+    // A node inside a container reaches services by network alias or host.docker.internal.
     let docker_exec = n.executor.is_docker();
     let (svc_view, gateway) = if docker_exec || n.block == "docker.run" {
         crate::executor::services_inside(services)
@@ -509,7 +509,7 @@ fn run_node(
     } else {
         expr::Quote::Shell
     };
-    // with: 셸로 들어가는 입력(run · undo)은 셸 인용, 나머지는 값 그대로.
+    // with: inputs that go into a shell (run, undo) are shell-quoted; the rest are used as they are.
     let mut with = Map::new();
     if let Some(o) = n.with.as_object() {
         for (k, v) in o {
@@ -528,7 +528,7 @@ fn run_node(
         }
     }
     let mut env = sh.base_env.clone();
-    // 흐름이 정한 환경 이름(컨테이너로 넘기는 것).
+    // Environment names the flow set (passed into containers).
     let mut flow_keys: Vec<String> = sh.spec.defaults.env.clone();
     flow_keys.extend(["CI", "LANG", "LC_ALL", "TZ"].iter().map(|s| s.to_string()));
     if let Some(e) = sh.spec.environment(&sh.plan.env) {
@@ -750,14 +750,14 @@ fn mark(state: NState) -> &'static str {
     }
 }
 
-/// 실행. 계획을 받아 끝까지 돌리고 서명한 요약을 돌려준다.
+/// Runs a plan to the end and returns the signed summary.
 pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunResult {
     install_signals();
     let run_id = opts.run_id.clone().unwrap_or_else(Store::new_run_id);
     let run_dir = st.run_dir(&run_id);
     let _ = std::fs::create_dir_all(run_dir.join("logs"));
     let _ = std::fs::write(run_dir.join("pid"), std::process::id().to_string());
-    // 엔진이 사라진 채 남은 실행을 먼저 닫는다(바꾼 흔적이 있으면 그 환경을 잠근다).
+    // First close runs left behind by a vanished engine (holding the environment if they changed something).
     let orphans = crate::rollback::sweep_orphans(st, &run_id);
     let masker = Arc::new(Masker::new());
     let events = Arc::new(
@@ -813,7 +813,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                       "git": {"sha": plan.git.sha, "branch": plan.git.branch, "clean": plan.git.clean}, "eventsPath": run_dir.join("events.ndjson").to_string_lossy()});
     let _ = st.write_run(&run_id, &base);
     events.emit("run.planned", None, json!({"flow": plan.flow, "env": plan.env, "hash": plan.hash, "nodes": plan.nodes.iter().map(|n| json!({"id": n.id, "title": n.title, "block": n.block, "needs": n.needs, "decision": n.decision.as_str(), "branchOf": n.branch_of, "group": n.group})).collect::<Vec<_>>(), "estimateMs": plan.estimate_ms()}));
-    // changed('glob') 은 영향 선택과 같은 기준으로: --affected=base 면 기본 브랜치와 갈라진 곳부터, 아니면 작업 트리.
+    // changed('glob') uses the same base as affected selection: the fork point with the default branch for --affected=base, otherwise the working tree.
     let changed = Some(match plan.affected.as_ref() {
         Some(a) if a["mode"] == "staged" => crate::git::changed_files(&spec.root, None, true),
         Some(a) if a["mode"] == "base" => {
@@ -850,7 +850,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
             states.insert(id.to_string(), to);
         };
     set_run("PREFLIGHT", &events, &mut violations);
-    // 흐름 사전 점검: 바꾸기 전에 거부할 것은 먼저 거부한다.
+    // Flow preflight: refuse what must be refused before anything changes.
     let mut rejected_pre: Vec<(String, String, String)> = Vec::new();
     let mut planned_start = started_ms;
     for n in &plan.nodes {
@@ -957,7 +957,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         let mut services_info = Map::new();
         let mut service_failed: HashMap<String, (String, String)> = HashMap::new();
         let mut cancels: HashMap<String, Cancel> = HashMap::new();
-        // 노드가 끝난 순서(되돌림은 이 반대로).
+        // The order nodes finished in (rollback runs in reverse).
         let mut completed: Vec<String> = Vec::new();
         let mut held_locks: HashSet<String> = HashSet::new();
         let mut running: HashSet<String> = HashSet::new();
@@ -969,7 +969,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
             .timeout_ms
             .map(|ms| Instant::now() + Duration::from_millis(ms));
         let cancel_file = run_dir.join("cancel.request");
-        // 계획에서 이미 건너뛰기로 정한 노드.
+        // Nodes the plan already skips.
         for n in &plan.nodes {
             if let Decision::Skip(code, msg) = &n.decision {
                 let st_ = if *code == "cached" {
@@ -1013,7 +1013,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                     events.emit("run.cancelling", None, json!({}));
                     print_line(opts, &tr("◌ 취소하는 중…", "◌ cancelling…"));
                 }
-                // 시작할 수 있는 노드 고르기.
+                // Pick the nodes that can start.
                 let mut progressed = false;
                 for n in &plan.nodes {
                     if states[&n.id] != NState::Pending {
@@ -1055,7 +1055,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                         progressed = true;
                         continue;
                     }
-                    // 실패 갈래: 부모가 실패했을 때만, 그 밖의 조건은 if: 로.
+                    // Failure branches run only when their parent failed; other conditions go in if:.
                     let status = St {
                         needs_bad,
                         cancelled: cancelled_all,
@@ -1113,7 +1113,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                     if n.def.locks.iter().any(|l| held_locks.contains(l)) {
                         continue;
                     }
-                    // 서비스 준비(처음 필요할 때).
+                    // Start services (when first needed).
                     let mut svc_error: Option<(String, String)> = None;
                     for s in &n.services {
                         let mut order = Vec::new();
@@ -1172,7 +1172,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                                 json!({"service": name, "state": "STARTING"}),
                             );
                             print_line(opts, &format!("▶ service {name}"));
-                            // 준비를 기다리는 동안에도 취소 요청 · Ctrl-C · 흐름 마감을 본다.
+                            // Keep watching for a cancel request, Ctrl-C and the flow deadline while waiting for readiness.
                             let cancel_svc = Cancel::new();
                             let started = Cancel::new();
                             {
@@ -1244,7 +1244,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                         .map(|(c, _)| c == "EXEC-05")
                         .unwrap_or(false)
                     {
-                        // 서비스를 띄우는 중에 취소됨: 다음 바퀴에서 나머지 노드와 함께 취소로 정리한다.
+                        // Cancelled while starting services: the next round closes it as cancelled with the other nodes.
                         progressed = true;
                         continue;
                     }
@@ -1293,7 +1293,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                     break;
                 }
                 if running.is_empty() && !progressed {
-                    // 시작할 수 없는 노드만 남음(needs 가 없는 노드를 가리키는 등) — 엔진 버그로 기록하고 끝낸다.
+                    // Only nodes that can never start are left (needs pointing at a missing node, say): record an engine bug and stop.
                     for n in &plan.nodes {
                         if states[&n.id] == NState::Pending {
                             transition(&mut states, &n.id, NState::Skipped, &mut violations);
@@ -1406,7 +1406,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         } else {
             set_run("SUCCEEDED", &events, &mut violations);
         }
-        // 되돌림 · 정리: 서비스를 끄기 전에(되돌림이 서비스에 기대는 경우 — 시드 지우기 등).
+        // Rollback and cleanup come before the services stop, since undo steps may need them (removing seeded data, say).
         let changed: Vec<crate::rollback::Changed> = completed
             .iter()
             .filter_map(|id| outs.get(id).map(|o| (id, o)))
@@ -1499,7 +1499,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         if !cleaned.is_empty() {
             cleanup_steps = Value::Array(cleaned);
         }
-        // 서비스 정리(언제나).
+        // Stop the services (always).
         for r in services_up.drain(..) {
             if opts.keep_services {
                 services::keep_note(&run_dir, &r);
@@ -1532,7 +1532,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
     if !violations.is_empty() {
         events.emit("engine.violation", None, json!({"violations": violations}));
     }
-    // 노드 요약 + 서명.
+    // Node summaries and the signature.
     let finished_ms = util::now_ms();
     let nodes: Vec<Value> = plan
         .nodes
@@ -1565,7 +1565,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
     summary["affected"] = plan.affected.clone().unwrap_or(Value::Null);
     summary["exitCode"] = json!(exit_code);
     summary["runDir"] = json!(run_dir.to_string_lossy());
-    // 흐름 끝 알림(결과는 바꾸지 않는다).
+    // End-of-flow notifications (they never change the result).
     if let Some(f) = spec.flow(&plan.flow) {
         let outcome = match run_state.as_str() {
             "SUCCEEDED" => "success",
@@ -1623,7 +1623,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
     RunResult { summary, exit_code }
 }
 
-/// gitch 행동 기록(actions.jsonl)에 남겨 `gitch report` 가 보이게 한다.
+/// Records the run in gitch's action log (actions.jsonl) so `gitch report` shows it.
 fn record_action(spec: &Spec, plan: &Plan, opts: &RunOptions, summary: &Value) {
     let path = util::gitsw_state_dir().join("actions.jsonl");
     if !path.parent().map(|p| p.is_dir()).unwrap_or(false) {
@@ -1641,7 +1641,7 @@ fn record_action(spec: &Spec, plan: &Plan, opts: &RunOptions, summary: &Value) {
     }
 }
 
-/// 같은 흐름 · 환경을 동시에 돌리지 않게 잠근다. 잠금을 가진 실행 ID 를 돌려준다(오류).
+/// Locks the flow and environment against concurrent runs. The error carries the ID of the run that holds the lock.
 pub fn lock(st: &Store, plan: &Plan, run_id: &str) -> Result<Option<Lock>, String> {
     if plan.concurrency == crate::spec::Concurrency::Parallel {
         return Ok(None);

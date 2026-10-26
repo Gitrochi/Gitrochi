@@ -1,7 +1,7 @@
-//! 실제 Docker 시험. 데몬이 있는 곳에서만 돈다:
+//! Real Docker tests. They run only where a daemon is available:
 //!   GITCH_FLOW_REAL_DOCKER=1 cargo test --test real_docker -- --ignored --test-threads 1
-//! executor(컨테이너 안 실행 · 같은 경로 마운트 · 파일 소유자) · docker.service(건강 확인 · 포트) ·
-//! 서비스 별칭으로 컨테이너끼리 닿기 · 끝난 뒤 라벨로 남은 것 없음을 본다.
+//! the executor (running inside a container, same-path mounts, file owner), docker.service (health check, port),
+//! containers reaching each other by service alias, and nothing left behind by label afterwards.
 
 #![cfg(unix)]
 
@@ -56,7 +56,7 @@ flows:
 
 fn run(fx: &Fx, flow: &str) -> (i32, Value) {
     let mut c = fx.cmd("script", &["run", flow, "--json"]);
-    // 이 시험만은 진짜 docker 를 쓴다(가짜 CLI 를 고르지 않게).
+    // Only this test uses the real docker (so the fake CLI is not picked).
     c.env_remove("GITCH_DOCKER");
     if let Ok(h) = std::env::var("DOCKER_HOST") {
         c.env("DOCKER_HOST", h);

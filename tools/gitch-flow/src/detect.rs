@@ -1,5 +1,5 @@
-//! `gitch flow init`: 프로젝트 파일을 읽기만 해서(실행하지 않음) 테스트 · 도구를 감지하고 흐름 파일을 제안한다.
-//! 감지마다 근거(파일:줄)와 확신도를 남긴다. 기존 파일은 묻지 않고 덮어쓰지 않는다.
+//! `gitch flow init`: detects tests and tools by reading project files (never running them) and proposes a flow file.
+//! Each detection records its evidence (file:line) and confidence. An existing file is never overwritten without asking.
 
 use crate::cli::{Args, Out};
 use crate::util::tr;
@@ -41,7 +41,7 @@ fn read(p: &Path) -> Option<String> {
     std::fs::read_to_string(p).ok()
 }
 
-/// 글에서 처음 나오는 줄 번호(1부터).
+/// The 1-based line where the text first appears.
 fn line_of(text: &str, needle: &str) -> usize {
     text.lines()
         .position(|l| l.contains(needle))
@@ -79,7 +79,7 @@ fn pm_install(dir: &Path, root: &Path) -> (&'static str, &'static str) {
     ("npm", "npm install")
 }
 
-/// 워크스페이스 패키지 폴더(pnpm-workspace.yaml · package.json workspaces). 단순 glob(`packages/*`)만 펼친다.
+/// Workspace package folders (pnpm-workspace.yaml, package.json workspaces). Only simple globs (`packages/*`) are expanded.
 fn workspace_dirs(root: &Path) -> Vec<PathBuf> {
     let mut pats: Vec<String> = Vec::new();
     if let Some(t) = read(&root.join("pnpm-workspace.yaml")) {
@@ -310,7 +310,7 @@ fn detect_python(root: &Path, p: &mut Proposal) {
     .iter()
     .any(|f| root.join(f).is_file());
     if has_reqs && !p.setup.iter().any(|(id, _, _)| id == "install-python") {
-        // .venv 를 만들고 그 안에 설치한다(시스템 Python 을 건드리지 않게).
+        // Install into a .venv so the system Python is left alone.
         p.setup.push((
             "install-python".into(),
             "setup.python".into(),
@@ -637,7 +637,7 @@ fn render(root: &Path, p: &Proposal) -> String {
         y.push_str("    nodes:\n");
         let mut setup_ids = Vec::new();
         for (id, block, cwd) in &p.setup {
-            // 준비 블록은 버전을 맞춰 보고, 잠금 파일이 그대로면 설치를 건너뛴다.
+            // Setup blocks check the version and skip the install while the lock file is unchanged.
             if cwd.is_empty() {
                 y.push_str(&format!("      {id}: {{ use: {block} }}\n"));
             } else {
@@ -746,7 +746,7 @@ pub fn cmd_init(out: &Out, args: &Args) -> i32 {
         );
     };
     let (info, yaml) = propose(&root);
-    // 제안이 실제로 읽히는지 스스로 검사한다(파서 · 검증과 같은 길).
+    // Check that the proposal actually parses, through the same parser and validation.
     let parsed_ok = crate::yaml::parse(&yaml).is_ok();
     let target = root.join(".gitch").join("flow.yml");
     let exists = crate::spec::exists(&root);

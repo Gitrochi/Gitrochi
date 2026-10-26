@@ -1,8 +1,8 @@
-//! `deploy.compose` — compose 서비스 하나의 이미지를 바꾼다(이 컴퓨터, 또는 `host:` 로 SSH 원격 docker).
-//! ① 지금 떠 있는 이미지를 관측하고(`expectCurrent` 가 있으면 비교 후 교체), ② 새 이미지를 받고,
-//! ③ 지금 이미지에 되돌림 태그를 붙여 **바꾸기 전에** 되돌림을 등록한 뒤, ④ 덧붙임 compose 파일로 그 서비스만
-//! 바꿔 띄우고(`--no-deps --wait`), ⑤ 새 이미지로 떴는지(S2) · 건강 확인(S1)을 본다.
-//! 되돌림 = 되돌림 태그로 다시 바꿔 띄우고 그 이미지로 떴는지 확인. DB 스키마는 되돌리지 않는다(앞으로만).
+//! `deploy.compose`: replaces the image of one compose service (on this machine, or on a remote docker over SSH with `host:`).
+//! ① observe the image running now (comparing first when `expectCurrent` is set), ② pull the new image,
+//! ③ tag the current image for rollback and register the undo step **before changing anything**, ④ restart only that service with an
+//! override compose file (`--no-deps --wait`), ⑤ check that the new image runs (S2) and is healthy (S1).
+//! Undo = switch back to the rollback tag and check that image runs. Database schemas are not rolled back (forward only).
 
 use super::{observe_outcome, schema, Block, Meta, NodeCx, NodeResult, UndoAction, UndoStep};
 use crate::process::ProcSpec;
@@ -89,7 +89,7 @@ impl Ctx {
         v.extend(extra.iter().map(|s| s.to_string()));
         v
     }
-    /// 지금 그 서비스의 컨테이너와 이미지 id.
+    /// The service's current container and image id.
     fn current(&self, cx: &mut NodeCx) -> Option<(String, String, String)> {
         let ps = docker(cx, &self.compose(&["ps", "-q", &self.service]), 60_000);
         let cid = first_line(&ps)?;
@@ -184,7 +184,7 @@ impl Block for Compose {
             } else {
                 format!("ssh://{h}")
             };
-            // 되돌림도 같은 대상으로 가게 노드 환경에 둔다.
+            // Kept in the node environment so the undo step targets the same place.
             cx.env.retain(|(k, _)| k != "DOCKER_HOST");
             cx.env.push(("DOCKER_HOST".into(), h));
         }
@@ -198,7 +198,7 @@ impl Block for Compose {
             ],
             service: service.clone(),
         };
-        // ① 지금 것.
+        // ① What runs now.
         let before = c.current(cx);
         r.observe("previous", json!(before.as_ref().map(|b| &b.1)));
         if let Some(expect) = cx.input_str("expectCurrent") {
@@ -218,7 +218,7 @@ impl Block for Compose {
                 return r;
             }
         }
-        // ② 새 이미지.
+        // ② The new image.
         if cx
             .with
             .get("pull")
@@ -284,7 +284,7 @@ impl Block for Compose {
             ));
             return r;
         }
-        // ③ 되돌림 등록(바꾸기 전에).
+        // ③ Register the undo step (before changing anything).
         let out = cx.out_dir.clone();
         let undo_file = out.join("compose.undo.yml");
         let compose_q = |extra: &str| -> String {
@@ -327,7 +327,7 @@ impl Block for Compose {
                 let _ = std::fs::write(&undo_file, override_yaml(&service, &tag));
                 let mut args =
                     c.compose(&["-f", &undo_file.to_string_lossy(), "up", "-d", "--no-deps"]);
-                // 덧붙임 파일은 앞의 -f 뒤에 와야 한다: compose -f F -p P -f U … 는 허용된다.
+                // The override file must come after the earlier -f: compose -f F -p P -f U … is allowed.
                 if wait {
                     args.push("--wait".into());
                 }
@@ -364,7 +364,7 @@ impl Block for Compose {
             }
         }
         r.mutated = true;
-        // ④ 바꿔 띄우기.
+        // ④ Switch and restart.
         let over = out.join("compose.override.yml");
         let _ = std::fs::write(&over, override_yaml(&service, &image));
         let mut args = c.compose(&["-f", &over.to_string_lossy(), "up", "-d", "--no-deps"]);
@@ -386,7 +386,7 @@ impl Block for Compose {
             );
             return r;
         }
-        // ⑤ 새 이미지로 떴는지 · 건강 확인.
+        // ⑤ Check that the new image runs and is healthy.
         let after = c.current(cx);
         let running = after.as_ref().map(|a| a.1.clone());
         r.verdicts.push(Verdict::new(

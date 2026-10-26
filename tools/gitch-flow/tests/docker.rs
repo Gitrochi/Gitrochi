@@ -1,6 +1,6 @@
-//! Docker 실행 위치(`executor: docker:<이미지>`)와 docker.run · docker.build · docker.push 블록 시험.
-//! 가짜 docker CLI 가 `run` 의 명령을 호스트에서 그대로 돌려(작업 폴더 · 환경은 그대로) 컨테이너를 흉내 낸다.
-//! 엔진이 docker 에 넘기는 인자(라벨 · 마운트 · 이름만 넘기는 환경 · 정리)를 확인한다.
+//! Tests for the Docker executor (`executor: docker:<image>`) and the docker.run, docker.build and docker.push blocks.
+//! A fake docker CLI imitates containers by running `run`'s command on the host (with the same working folder and environment).
+//! They check the arguments the engine passes to docker (labels, mounts, environment by name, cleanup).
 
 #![cfg(unix)]
 
@@ -250,10 +250,10 @@ fn docker_build_tags_the_commit_and_passes_build_args_by_name() {
         !calls.contains("npm-Tok3n-value-xyz"),
         "secret on the command line"
     );
-    // 비밀값은 docker CLI 의 환경으로만 간다.
+    // Secrets go only into the docker CLI's environment.
     let env = std::fs::read_to_string(d.log.with_extension("log.env")).unwrap();
     assert!(env.contains("BUILDARG_TOKEN=npm-Tok3n-value-xyz"), "{env}");
-    // 앞 노드의 출력(이미지 태그)이 다음 노드로 이어진다.
+    // The earlier node's output (the image tag) carries over to the next node.
     assert!(
         calls.contains(&format!("push demo-shop:{}", &sha[..12])),
         "{calls}"
@@ -272,7 +272,7 @@ fn docker_run_passes_env_by_name_and_checks_output() {
     assert!(calls.contains(" -e DB_PASSWORD "), "{calls}");
     assert!(!calls.contains("pw-Very-Secret-1"));
     assert!(calls.contains("IMAGE flyway/flyway:10"));
-    // docker 자체의 실패(125)는 명령 실패와 구분한다.
+    // docker's own failure (125) is told apart from the command failing.
     let (code, bad) = d.run(
         &["run", "migrate", "--json"],
         &[("FAKE_DOCKER_RUN_125", "1")],

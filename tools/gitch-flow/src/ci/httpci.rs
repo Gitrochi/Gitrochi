@@ -1,5 +1,5 @@
-//! 일반 HTTP CI(웹훅 · 폴링형). 트리거 주소 + 상태 주소 + JSON 포인터로 여러 CI 를 얕게 잇는다.
-//! 예: Buildkite · TeamCity · 사내 배포 콘솔. 상관 ID 를 받는 곳이면 `{corr}` 자리 글자로 넘긴다.
+//! Plain HTTP CI (webhook or polling): a trigger URL, a status URL and JSON pointers connect many CI systems loosely.
+//! For example Buildkite, TeamCity or an in-house deployment console. Where a correlation ID is accepted, it goes in through the `{corr}` placeholder.
 
 use super::{CiErr, Provider, RState, RStatus, RemoteRun, Triggered};
 use crate::http::{self, Req};
@@ -14,7 +14,7 @@ fn fill(s: &str, id: &str, corr: &str) -> String {
     s.replace("{id}", id).replace("{corr}", corr)
 }
 
-/// 주소에 넣는 값은 인코딩한다(원격이 돌려준 ID 에 `/` · `?` 가 있어도 다른 경로가 되지 않게).
+/// Values put into URLs are encoded, so an ID from the remote with `/` or `?` cannot turn into another path.
 fn fill_url(s: &str, id: &str, corr: &str) -> String {
     fill(s, &super::gitlab::enc(id), &super::gitlab::enc(corr))
 }

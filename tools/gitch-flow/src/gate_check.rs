@@ -1,5 +1,5 @@
-//! pre-push 게이트 판단. gitch 의 pre-push 훅 · `gitch p` · 앱 Push 검토가 같은 판단을 쓴다.
-//! 같은 커밋 · 깨끗한 작업 트리에서 엔진이 서명한 통과 기록이 있으면 다시 돌리지 않는다.
+//! The pre-push gate's decision, shared by gitch's pre-push hook, `gitch p` and the apps' push review.
+//! A passing record signed by the engine for the same commit and a clean working tree means no rerun.
 
 use crate::cli::{Args, Out};
 use crate::store::{self, Store};
@@ -7,7 +7,7 @@ use crate::util::tr;
 use serde_json::{json, Value};
 use std::path::Path;
 
-/// 저장소별 게이트 설정(~/.config/gitsw/flow/settings.json 의 prePush.<저장소ID>).
+/// Per-repository gate settings (prePush.<repo-id> in ~/.config/gitsw/flow/settings.json).
 pub fn enabled(root: &Path) -> Option<String> {
     let s = crate::cli::settings();
     let id = crate::trust::repo_id(root);
@@ -18,7 +18,7 @@ pub fn enabled(root: &Path) -> Option<String> {
     }
 }
 
-/// 지금 HEAD 에 맞는 서명된 통과 기록.
+/// A signed passing record for the current HEAD.
 pub fn passing_record(st: &Store, flow: &str, sha: &str) -> Option<Value> {
     for id in st.run_ids().into_iter().take(40) {
         let Some(r) = st.read_run(&id) else { continue };
@@ -28,13 +28,13 @@ pub fn passing_record(st: &Store, flow: &str, sha: &str) -> Option<Value> {
         if r["state"] == "SUCCEEDED" && r["git"]["clean"] == true && store::verify(&r) {
             return Some(r);
         }
-        // 같은 커밋의 가장 최근 기록이 실패면 그것이 답이다.
+        // If the latest record for this commit failed, that is the answer.
         return None;
     }
     None
 }
 
-/// `gate on [--flow F]` · `gate off`: 이 저장소의 pre-push 게이트 켜고 끄기. 사람만(앱 · 터미널).
+/// `gate on [--flow F]` and `gate off`: switch this repository's pre-push gate. People only (app or terminal).
 fn toggle(out: &Out, root: &Path, on: bool, flow: Option<String>) -> i32 {
     let actor = crate::trust::actor();
     if crate::trust::is_ai(&actor) {
@@ -161,7 +161,7 @@ pub fn cmd_gate(out: &Out, args: &Args) -> i32 {
         }
         return 0;
     }
-    // prepush: 흐름을 돌린다(영향만). 사람 출력은 표준오류로(훅 출력이 push 출력과 섞이지 않게).
+    // prepush: run the flow (affected only). Human output goes to stderr so the hook does not mix with push output.
     if !clean {
         eprintln!(
             "{}",

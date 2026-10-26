@@ -1,12 +1,12 @@
-//! YAML → JSON 값. 흐름 파일에서 위험하거나 헷갈리는 YAML 기능(앵커 · 별칭 · 병합 키 · 태그 · 여러 문서)은
-//! 오류로 막고, 값마다 줄 번호를 남겨 오류를 `파일:줄` 로 보이게 한다.
+//! YAML → JSON values. YAML features that are dangerous or confusing in a flow file (anchors, aliases, merge keys, tags, multiple documents)
+//! are errors, and every value keeps its line number so errors show as `file:line`.
 
 use serde_json::{Map, Number, Value};
 use std::collections::HashMap;
 use yaml_rust2::parser::{Event, MarkedEventReceiver, Parser};
 use yaml_rust2::scanner::{Marker, TScalarStyle};
 
-/// 읽은 문서와 경로별 줄 번호. 경로는 `flows.pre-push.nodes.unit` · `suites.unit.with.args[0]` 형식.
+/// The parsed document and a line number per path. Paths look like `flows.pre-push.nodes.unit` or `suites.unit.with.args[0]`.
 #[derive(Debug, Clone, Default)]
 pub struct Doc {
     pub value: Value,
@@ -14,7 +14,7 @@ pub struct Doc {
 }
 
 impl Doc {
-    /// 경로의 줄. 정확한 값이 없으면 가장 가까운 상위 경로의 줄.
+    /// The line of a path, or of the nearest parent path when there is no exact value.
     pub fn line_of(&self, path: &str) -> Option<usize> {
         let mut p = path.to_string();
         loop {
@@ -70,7 +70,7 @@ impl Builder {
         }
     }
 
-    /// 다음 값이 들어갈 경로. 맵에서 키를 기다리는 중이면 None.
+    /// The path the next value goes to; None while a map waits for a key.
     fn next_path(&self) -> Option<String> {
         match self.stack.last() {
             None => Some(String::new()),
@@ -87,7 +87,7 @@ impl Builder {
                 if let Some(k) = key.take() {
                     map.insert(k, v);
                 } else {
-                    // 키 자리. 키는 글자로만 받는다.
+                    // The key position. Keys are accepted only as strings.
                     let k = match v {
                         Value::String(s) => s,
                         Value::Number(n) => n.to_string(),
@@ -164,7 +164,7 @@ fn scalar_value(text: &str, style: TScalarStyle) -> Value {
             return Value::Number(i.into());
         }
     }
-    // 숫자처럼 보이는 글자만 실수로(1.0 · 1e3). "1.2.3" 같은 버전 문자열은 글자로 남는다.
+    // Only number-like strings become floats (1.0, 1e3); a version string like "1.2.3" stays a string.
     let looks_float = t.chars().all(|c| c.is_ascii_digit() || "+-.eE".contains(c))
         && t.chars().any(|c| c.is_ascii_digit());
     if looks_float {
@@ -258,7 +258,7 @@ impl MarkedEventReceiver for Builder {
                     }
                 };
                 self.lines.entry(path.clone()).or_insert(line);
-                // 맵과 배열을 구분해 쌓는다(이벤트 종류를 다시 본다).
+                // Push maps and sequences separately (look at the event kind again).
                 self.stack.push(Frame::Seq {
                     items: Vec::new(),
                     path,
@@ -278,7 +278,7 @@ impl MarkedEventReceiver for Builder {
     }
 }
 
-/// 맵 시작을 배열과 구분하기 위해 이벤트를 먼저 걸러 주는 얇은 수신기.
+/// A thin receiver that filters events first, to tell a map start from a sequence start.
 struct Router {
     inner: Builder,
 }
@@ -287,7 +287,7 @@ impl MarkedEventReceiver for Router {
     fn on_event(&mut self, ev: Event, mark: Marker) {
         match ev {
             Event::MappingStart(anchor, tag) => {
-                // Builder 의 공통 검사를 거친 뒤 마지막 프레임을 맵으로 바꾼다.
+                // After the Builder's common checks, turn the last frame into a map.
                 let before = self.inner.stack.len();
                 self.inner.on_event(Event::MappingStart(anchor, tag), mark);
                 if self.inner.stack.len() == before + 1 {
@@ -305,7 +305,7 @@ impl MarkedEventReceiver for Router {
     }
 }
 
-/// YAML 글을 읽는다. 빈 파일은 빈 맵.
+/// Reads YAML text. An empty file is an empty map.
 pub fn parse(src: &str) -> Result<Doc, YamlError> {
     let mut router = Router {
         inner: Builder {

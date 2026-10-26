@@ -1,5 +1,5 @@
-//! `fixture.seed` — 시험 자료 넣기. 넣기 직전에 지우는 명령을 되돌림으로 등록해, 기본은 실행이 끝날 때마다
-//! 지우고(`keep: false`), `keep: true` 면 흐름이 실패 · 취소될 때만 지운다. 명령은 노드의 실행 위치(local · docker)를 따른다.
+//! `fixture.seed`: puts in test data. The command that removes it is registered as an undo step right before seeding; by default the data is removed at the end of every run
+//! (`keep: false`), and with `keep: true` only when the flow fails or is cancelled. The commands follow the node's executor (local or docker).
 
 use super::{
     exit_verdict, observe_outcome, schema, Block, Meta, NodeCx, NodeResult, UndoAction, UndoStep,

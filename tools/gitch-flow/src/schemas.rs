@@ -1,4 +1,4 @@
-//! 공개 JSON Schema(Draft 2020-12). `gitch schema flow*` 는 여기로 위임한다(gitch-v1 의 20개 이름은 그대로).
+//! Public JSON Schemas (Draft 2020-12). `gitch schema flow*` hands off to these (gitch-v1's 20 names stay as they are).
 
 pub const NAMES: &[&str] = &[
     "flow",

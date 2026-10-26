@@ -2,7 +2,7 @@
 name = "gitch-flow"
 version = "0.3.12"
 edition = "2021"
-# Community Use 제안 채택 전에는 발효된 라이선스 식별자를 선언하지 않는다. 적용 범위는 루트 LICENSE와 통합 고지문을 따른다.
+# No license identifier until the Community Use proposal is adopted; the scope follows the root LICENSE and the combined notices.
 description = "Composable test and CI flow engine for gitch and Gitrochi"
 publish = false
 

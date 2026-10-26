@@ -1,5 +1,5 @@
-//! 명령 해석과 출력. 사람용 글은 gitch 처럼 한국어가 기본(`--lang en`), 기계용은 `--json` · `--events`.
-//! 치명 오류는 gitch 와 같은 봉투 `{"schemaVersion":1,"error":{…}}` 를 표준오류에 쓴다.
+//! Command parsing and output. Text for people defaults to Korean like gitch (`--lang en`); machines use `--json` and `--events`.
+//! Fatal errors go to stderr in gitch's envelope `{"schemaVersion":1,"error":{…}}`.
 
 use crate::plan::{self, Decision, PlanOptions};
 use crate::run::{self, RunOptions};
@@ -89,7 +89,7 @@ impl Args {
     }
 }
 
-/// 기계 출력 요청인지(파서가 실패해도 오류를 JSON 으로 내기 위해 먼저 본다).
+/// Whether machine output was asked for; checked first so even a parse error comes out as JSON.
 fn wants_json(raw: &[String]) -> bool {
     raw.iter()
         .any(|a| a == "--json" || a == "--format=json" || a == "--events")
@@ -162,7 +162,7 @@ fn load(out: &Out, args: &Args) -> Result<Spec, i32> {
     spec::load(&root).map_err(|e| spec_errors(out, &e))
 }
 
-/// 사용자 설정(~/.config/gitsw/flow/settings.json): 운영 허용 · 기본 병렬 수 · 내부 도메인.
+/// User settings (~/.config/gitsw/flow/settings.json): production allowances, default parallelism, internal domains.
 pub fn settings() -> Value {
     std::fs::read_to_string(util::gitsw_dir().join("flow").join("settings.json"))
         .ok()
@@ -364,7 +364,7 @@ fn cmd_schema(out: &Out, args: &Args) -> i32 {
 fn cmd_validate(out: &Out, args: &Args) -> i32 {
     match load(out, args) {
         Ok(spec) => {
-            // 블록 입력까지 보려면 흐름마다 계획을 만든다.
+            // Block inputs are only known after planning each flow.
             let mut errs = Vec::new();
             for f in &spec.flows {
                 if let Err(e) = plan::build(
@@ -573,7 +573,7 @@ fn cmd_plan(out: &Out, args: &Args) -> i32 {
     }
 }
 
-/// 신뢰 확인. Ok(true) 면 실행해도 된다.
+/// Trust check. Ok(true) means the flow may run.
 fn ensure_trust(
     out: &Out,
     args: &Args,
@@ -584,7 +584,7 @@ fn ensure_trust(
     if p.trust.trusted {
         return Ok(());
     }
-    // CI 러너는 이미 저장소 코드를 실행하는 곳이라 따로 승인받지 않는다. AI 실행 주체에는 이 예외를 주지 않는다.
+    // A CI runner already executes the repository's code, so it needs no approval; AI actors never get this exception.
     let in_ci = std::env::var("CI")
         .map(|v| v == "true" || v == "1")
         .unwrap_or(false);
@@ -734,7 +734,7 @@ pub fn run_options(args: &Args, spec: &Spec, actor: &str) -> RunOptions {
         } else {
             None
         },
-        // AI 실행 주체의 --yes 는 사람 확인을 대신하지 못한다.
+        // --yes from an AI actor does not stand in for a person's confirmation.
         yes: args.has("--yes") && !trust::is_ai(actor),
         interactive: std::io::stdin().is_terminal()
             && std::io::stderr().is_terminal()
@@ -750,7 +750,7 @@ pub fn run_options(args: &Args, spec: &Spec, actor: &str) -> RunOptions {
     }
 }
 
-/// 실행 한 번(흐름 또는 즉석 흐름).
+/// One run (a flow or an ad-hoc flow).
 pub fn cmd_run(out: &Out, args: &Args, adhoc: Option<Spec>) -> i32 {
     let spec = match adhoc {
         Some(s) => s,
@@ -854,7 +854,7 @@ pub fn cmd_run(out: &Out, args: &Args, adhoc: Option<Spec>) -> i32 {
     res.exit_code
 }
 
-/// 즉석 흐름: 고른 스위트(없으면 전부)를 노드 하나씩으로.
+/// Ad-hoc flow: one node per chosen suite (all suites when none is chosen).
 fn cmd_test(out: &Out, args: &Args) -> i32 {
     let mut spec = match load(out, args) {
         Ok(s) => s,
@@ -1579,7 +1579,7 @@ fn cmd_gc(out: &Out, args: &Args) -> i32 {
     0
 }
 
-/// 자동완성용 이름 목록(흐름 · 스위트). 오류는 조용히 빈 목록.
+/// Names for shell completion (flows and suites); errors give an empty list.
 fn cmd_names(args: &Args) -> i32 {
     let Some(root) = root_of(args) else { return 0 };
     let Ok(spec) = spec::load(&root) else {
@@ -1592,7 +1592,7 @@ fn cmd_names(args: &Args) -> i32 {
     0
 }
 
-/// `gate prepush|status|on|off`: pre-push 게이트 판단과 켜고 끄기(gitch 훅 · Push 검토 · 앱이 같은 함수를 쓴다).
+/// `gate prepush|status|on|off`: the pre-push gate's decision and switch (the gitch hook, the push review and the apps share it).
 fn cmd_gate(out: &Out, args: &Args) -> i32 {
     crate::gate_check::cmd_gate(out, args)
 }

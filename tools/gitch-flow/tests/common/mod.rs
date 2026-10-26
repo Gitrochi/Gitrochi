@@ -1,5 +1,5 @@
-//! 통합 시험 공통 도구: 임시 저장소 · 임시 HOME 에서 실행 파일을 돌린다. 실제 사용자 설정은 건드리지 않는다.
-//! 실행 주체는 시험마다 정한다(사람 · 스크립트 · AI) — gitch 시험 도구(t_setup)와 같은 방식.
+//! Shared helpers for integration tests: run the executable in a temporary repository and HOME. Real user settings are never touched.
+//! Each test sets the actor (person, script, AI), the same way as gitch's test helper (t_setup).
 #![allow(dead_code)]
 
 pub mod fake;
@@ -17,7 +17,7 @@ impl Fx {
         let dir = std::env::temp_dir().join(format!("gf-cli-{}-{}", std::process::id(), rand()));
         std::fs::create_dir_all(dir.join("home")).unwrap();
         std::fs::create_dir_all(dir.join("repo")).unwrap();
-        // 사용자의 git 설정(전역 훅 · 템플릿)이 섞이지 않게 임시 HOME 에 설정 파일을 둔다.
+        // A configuration file in the temporary HOME keeps the user's git settings (global hooks, templates) out.
         std::fs::write(
             dir.join("home").join("gitconfig"),
             "[user]\n\tname = Flow Test\n\temail = flow-test@example.invalid\n[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",
@@ -30,7 +30,7 @@ impl Fx {
         }
         fx
     }
-    /// 임시 저장소에서 git 을 돌린다(임시 HOME 의 설정만).
+    /// Runs git in the temporary repository (with the temporary HOME's settings only).
     pub fn git(&self, args: &[&str]) -> String {
         let o = Command::new("git")
             .args(args)
@@ -47,7 +47,7 @@ impl Fx {
         );
         String::from_utf8_lossy(&o.stdout).to_string()
     }
-    /// 지금 작업 트리를 모두 커밋한다.
+    /// Commits the whole working tree.
     pub fn commit(&self, msg: &str) {
         self.git(&["add", "-A"]);
         self.git(&["commit", "-q", "-m", msg]);
@@ -114,7 +114,7 @@ impl Drop for Fx {
 }
 
 pub fn rand() -> String {
-    // 시험이 병렬로 돌아 같은 순간에 만들어도 폴더가 겹치지 않게 순번을 붙인다.
+    // Tests run in parallel; a sequence number keeps folders made at the same moment apart.
     static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let n = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

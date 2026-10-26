@@ -1,5 +1,5 @@
-//! 연결: Jenkins · GitLab · GitHub · 일반 HTTP CI · 웹훅 의 주소와 인증 참조. 저장소 밖 사용자 설정에 두고
-//! (`~/.config/gitsw/flow/connections.json`), 비밀값은 OS 보관소 · 환경변수 · 앱 계정 토큰으로만 꺼낸다.
+//! Connections: addresses and credential references for Jenkins, GitLab, GitHub, plain HTTP CI and webhooks. They live in user settings outside the repository
+//! (`~/.config/gitsw/flow/connections.json`); secrets come only from the OS secret store, environment variables or the app's account tokens.
 
 use crate::cli::{Args, Out};
 use crate::util::{self, tr};
@@ -15,7 +15,7 @@ pub struct Connection {
     pub url: String,
     pub user: Option<String>,
     pub project: Option<String>,
-    /// keystore · env:NAME · app:<계정ID> · gh:<로그인>
+    /// keystore · env:NAME · app:<account-id> · gh:<login>
     pub secret: String,
     pub allow: Vec<String>,
 }
@@ -75,7 +75,7 @@ pub fn list() -> Vec<Connection> {
     load_all().iter().filter_map(from_json).collect()
 }
 
-/// 연결의 비밀값. 꺼내면 바로 마스킹 사전에 넣도록 부르는 쪽이 책임진다.
+/// The connection's secret. The caller must add it to the masking dictionary right away.
 pub fn secret(c: &Connection, ci: bool) -> Option<String> {
     if let Some(v) = crate::secret::resolve(&format!("conn-{}", c.name), ci) {
         return Some(v);
@@ -122,7 +122,7 @@ pub fn secret(c: &Connection, ci: bool) -> Option<String> {
     crate::keystore::get(&format!("conn:{}", c.name))
 }
 
-/// 허용 목록에 있는 작업인지. 목록이 비면 모두 허용한다(연결을 만들 때 --allow 로 좁힌다).
+/// Whether the job is on the allow list. An empty list allows everything (narrow it with --allow when adding the connection).
 pub fn allowed(c: &Connection, job: &str) -> bool {
     c.allow.is_empty() || c.allow.iter().any(|p| util::glob_match(p, job) || p == job)
 }
@@ -131,7 +131,7 @@ fn to_json(c: &Connection) -> Value {
     json!({"name": c.name, "kind": c.kind, "url": c.url, "user": c.user, "project": c.project, "secret": c.secret, "allow": c.allow})
 }
 
-/// 읽기 전용 연결 시험.
+/// A read-only connection test.
 pub fn probe(c: &Connection) -> Result<String, (&'static str, String)> {
     let tok = secret(c, true);
     let (url, headers): (String, Vec<(String, String)>) = match c.kind.as_str() {

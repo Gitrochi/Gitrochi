@@ -1,5 +1,5 @@
-//! 계획: 흐름을 펼쳐(복합 블록 · 하위 흐름 · 실패 갈래) 노드마다 실행 · 건너뜀 · 거부를 정한다.
-//! `gitch flow plan` 이 보여 주는 것과 `run` 이 쓰는 것은 같은 계획이다.
+//! Planning: expands a flow (composite blocks, sub-flows, failure branches) and decides run, skip or refuse for each node.
+//! What `gitch flow plan` shows is the same plan `run` uses.
 
 use crate::blocks;
 use crate::spec::{
@@ -53,9 +53,9 @@ pub struct PNode {
     pub selection: Option<Vec<String>>,
     pub selection_reason: Option<String>,
     pub cache_key: Option<String>,
-    /// 셸 명령을 돌리는 곳(노드 → 환경 → local).
+    /// Where shell commands run (node, then environment, then local).
     pub executor: crate::executor::Executor,
-    /// 이 노드의 조합 값(`${{ matrix.X }}`). 조합이 없으면 빈 맵.
+    /// This node's matrix values (`${{ matrix.X }}`); empty without a matrix.
     pub matrix: Value,
     pub src: Src,
 }
@@ -95,9 +95,9 @@ pub struct PlanOptions {
     pub flow: String,
     pub env: Option<String>,
     pub only: Vec<String>,
-    /// 사용자 설정이 이 저장소 · 환경에서 운영 등급의 파괴적 블록을 허용했는지.
+    /// Whether user settings allow destructive production-class blocks for this repository and environment.
     pub prod_allowed: bool,
-    /// 영향 선택(None 이면 끔). 값은 base · staged · worktree.
+    /// Affected selection (None turns it off): base, staged or worktree.
     pub affected: Option<String>,
     pub no_cache: bool,
 }
@@ -136,7 +136,7 @@ fn merge_expect(base: &Expect, over: &Expect) -> Expect {
     }
 }
 
-/// 조합 목록(정의 순서대로 곱한다).
+/// The matrix combinations, multiplied in the order they are defined.
 fn combinations(m: &[(String, Vec<Value>)]) -> Vec<Vec<(String, Value)>> {
     let mut out: Vec<Vec<(String, Value)>> = vec![Vec::new()];
     for (k, vals) in m {
@@ -153,7 +153,7 @@ fn combinations(m: &[(String, Vec<Value>)]) -> Vec<Vec<(String, Value)>> {
     out
 }
 
-/// 계획 때 풀 수 있는 자리 글자(`${{ matrix.X }}` · `${{ inputs.X }}`)만 바꾼다.
+/// Replaces only the placeholders known at planning time (`${{ matrix.X }}` and `${{ inputs.X }}`).
 fn render_static(text: &str, matrix: &Value, inputs: &Value) -> String {
     let re = regex::Regex::new(r"\$\{\{\s*(matrix|inputs)\.([A-Za-z0-9_]+)\s*\}\}").expect("re");
     re.replace_all(text, |c: &regex::Captures| {
@@ -276,7 +276,7 @@ impl Ex<'_> {
                     self.groups.insert(id, members);
                 }
                 _ if !n.matrix.is_empty() => {
-                    // 조합마다 노드 하나(`unit/node-20`). needs: [unit] 은 조합 전부를 기다린다.
+                    // One node per combination (`unit/node-20`); needs: [unit] waits for all of them.
                     let mut members = Vec::new();
                     for combo in combinations(&n.matrix) {
                         let suffix = combo
@@ -421,7 +421,7 @@ impl Ex<'_> {
     }
 }
 
-/// 계획을 만든다. 오류가 있으면 실행하지 않는다.
+/// Builds the plan. Nothing runs when it has errors.
 pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
     let Some(flow) = spec.flow(&opts.flow) else {
         return Err(vec![PlanError {
@@ -462,7 +462,7 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
     if !ex.errors.is_empty() {
         return Err(ex.errors);
     }
-    // 그룹(하위 흐름 · 복합 블록)을 needs 에 쓴 자리는 그 구성원 전체로 바꾼다.
+    // A group (sub-flow or composite block) in needs stands for all of its members.
     let groups = ex.groups.clone();
     fn expand_need(
         n: &str,
@@ -489,7 +489,7 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
         n.needs = needs;
     }
     let mut warnings = Vec::new();
-    // 실행 위치: 노드가 정한 것 → 환경이 정한 것 → local. 셸 명령을 돌리는 블록(cmd · test.*)만 따른다.
+    // Executor: the node's, then the environment's, then local. Only blocks that run shell commands (cmd, test.*) follow it.
     let env_exec = spec.environment(&env_name).and_then(|e| e.executor.clone());
     for n in nodes.iter_mut() {
         let raw = n.def.executor.clone().or_else(|| env_exec.clone());
@@ -525,7 +525,7 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
         }
         n.executor = ex;
     }
-    // --only: 고른 노드와 그 노드가 기대는 노드만.
+    // --only: the chosen nodes and what they depend on.
     if !opts.only.is_empty() {
         let mut keep: BTreeSet<String> = BTreeSet::new();
         let mut stack: Vec<String> = Vec::new();
@@ -572,7 +572,7 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
             }
         }
     }
-    // 운영 보호.
+    // Production guard.
     for n in nodes.iter_mut() {
         if n.decision != Decision::Run {
             continue;
@@ -749,7 +749,7 @@ impl Plan {
                 "cacheKey": n.cache_key,
                 "executor": n.executor.as_str(),
                 "matrix": n.matrix,
-                // 신뢰 확인 화면이 "이 명령들이 돈다"를 보여 주게(흐름 파일에 있는 그대로, 비밀값은 run 에 넣을 수 없다).
+                // So the trust prompt can show the commands that will run, as written in the flow file (secrets cannot appear in run).
                 "run": n.with.get("run").and_then(|r| r.as_str()),
                 "undo": n.with.get("undo").map(|u| if u.is_string() { u.clone() } else { u["run"].clone() }),
                 "src": n.src.show(),
@@ -757,7 +757,7 @@ impl Plan {
         })
     }
 
-    /// 임계 경로(가장 긴 needs 사슬)로 본 예상 시간.
+    /// Estimated duration along the critical path (the longest needs chain).
     pub fn estimate_ms(&self) -> u64 {
         let mut memo: HashMap<&str, u64> = HashMap::new();
         fn longest<'a>(

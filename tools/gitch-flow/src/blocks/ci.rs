@@ -1,5 +1,5 @@
-//! 원격 CI 블록: `ci.gitlab.pipeline` · `ci.gitlab.job` · `ci.github.workflow` · `ci.jenkins.job` · `ci.http`.
-//! 같은 운전 규칙(ci::drive)을 쓰고, 판정은 결과 계약 → 기본 보고서 → 판정 불가 순서. CI 결론은 관측값으로만 남긴다.
+//! Remote CI blocks: `ci.gitlab.pipeline`, `ci.gitlab.job`, `ci.github.workflow`, `ci.jenkins.job` and `ci.http`.
+//! They share the driving rules (ci::drive) and judge by the result contract, then the default report, otherwise INDETERMINATE. CI's conclusion is kept only as an observation.
 
 use super::{schema, Block, Issue, Meta, NodeCx, NodeResult, PreCx};
 use crate::ci::{self, DriveOpts, RState};

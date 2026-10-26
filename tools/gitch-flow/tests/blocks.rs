@@ -1,4 +1,4 @@
-//! 시험 환경 조립 블록: mock.http 서비스 · mock.fault · check.mock · fixture.seed · gate.window · check.log.
+//! Blocks for assembling test environments: the mock.http service, mock.fault, check.mock, fixture.seed, gate.window and check.log.
 
 mod common;
 
@@ -67,7 +67,7 @@ const ROUTES: &str = r#"routes:
     file: items.json
 "#;
 
-/// Windows 러너에는 python3 가 없고 python 만 있다.
+/// Windows runners have python but no python3.
 const PY: &str = if cfg!(windows) { "python" } else { "python3" };
 
 fn fx() -> Fx {
@@ -98,7 +98,7 @@ fn a_mock_service_answers_and_records_calls() {
     let (code, run) = fx.json("script", &["run", "mocked", "--json"]);
     assert_eq!(code, 0, "{run}");
     assert_eq!(node(&run, "verify")["state"], "PASSED", "{run}");
-    // 받은 요청은 실행 폴더에 남는다.
+    // Received requests stay in the run folder.
     let log = std::path::Path::new(run["runDir"].as_str().unwrap()).join("logs/service-pay.log");
     assert!(std::fs::read_to_string(log)
         .unwrap()

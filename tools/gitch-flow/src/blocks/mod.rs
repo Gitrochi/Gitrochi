@@ -1,5 +1,5 @@
-//! 블록 계약과 내장 블록 목록. 블록은 관측(observe) · 실행(run) · 판정(verify) · 되돌림(undo)을 섞지 않고,
-//! 판정은 verify 모듈의 순수 규칙으로만 한다.
+//! The block contract and the built-in blocks. A block keeps observe, run, verify and undo apart,
+//! and verdicts come only from the pure rules in the verify module.
 
 pub mod check;
 pub mod ci;
@@ -27,7 +27,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-/// 블록이 스스로 밝히는 정보.
+/// What a block declares about itself.
 pub struct Meta {
     pub id: &'static str,
     pub version: &'static str,
@@ -35,15 +35,15 @@ pub struct Meta {
     pub category: &'static str,
     /// process · docker · network · secrets · ssh · ci-api · outward
     pub capabilities: &'static [&'static str],
-    /// 비면 모든 환경 등급.
+    /// Empty means every environment class.
     pub env_classes: &'static [EnvClass],
     pub destructive: bool,
-    /// 바깥(원격 CI · 게시 · 배포)에 영향을 주는지. 계획에 "외부 동작"으로 보인다.
+    /// Whether it affects the outside world (remote CI, publishing, deploying). The plan shows it as an outward action.
     pub outward: bool,
     pub codes: &'static [&'static str],
-    /// 입력 JSON Schema(앱의 입력 폼 · 검증).
+    /// The input JSON Schema (the apps' input forms and validation).
     pub inputs: fn() -> Value,
-    /// 이 블록이 영향 선택(파일 목록 넘기기)을 지원하는지.
+    /// Whether the block supports affected selection (taking a file list).
     pub selects_files: bool,
     pub estimate_ms: u64,
 }
@@ -62,7 +62,7 @@ impl Meta {
     }
 }
 
-/// 계획 단계의 점검 결과(관측만).
+/// A check result at planning time (observation only).
 pub struct Issue {
     pub code: &'static str,
     pub message: String,
@@ -70,12 +70,12 @@ pub struct Issue {
 
 pub trait Block: Send + Sync {
     fn meta(&self) -> &Meta;
-    /// 입력 검사. 오류 문장 목록.
+    /// Validates the inputs; returns error sentences.
     fn validate(&self, with: &Value) -> Vec<String> {
         let _ = with;
         Vec::new()
     }
-    /// 아무것도 바꾸기 전에 보는 전제 조건(흐름 사전 점검).
+    /// Preconditions checked before anything changes (the flow preflight).
     fn preflight(&self, cx: &PreCx) -> Vec<Issue> {
         let _ = cx;
         Vec::new()
@@ -86,28 +86,28 @@ pub trait Block: Send + Sync {
 pub struct PreCx<'a> {
     pub root: &'a Path,
     pub with: &'a Value,
-    /// 예상 시작 시각(밀리초). 금지 시간대처럼 앞 노드 소요를 더해 본다.
+    /// The expected start time in milliseconds, adding up the earlier nodes' durations (for blocked time windows, say).
     pub planned_start_ms: u64,
 }
 
-/// 되돌림 단계(선언형). 블록이 대상을 바꾸기 **직전에** 등록하고(실행 폴더 `undo.ndjson` 에도 남는다),
-/// 엔진은 실패 · 취소 뒤 거꾸로 돌린다. 엔진이 중간에 멈추면 남은 단계를 보고 그 환경을 잠근다(hold).
+/// A declarative undo step. A block registers it **right before** it changes the target (it is also kept in the run folder's `undo.ndjson`),
+/// and the engine runs the steps in reverse after a failure or cancel. If the engine stops midway, the remaining steps are noticed and the environment is put on hold.
 #[derive(Debug, Clone)]
 pub struct UndoStep {
     pub title: String,
     pub action: UndoAction,
-    /// 되돌린 뒤 확인(종료 코드 0 = 확인됨).
+    /// A check after undoing (exit code 0 = confirmed).
     pub check: Option<UndoAction>,
     pub timeout_ms: u64,
-    /// 실행 결과와 상관없이 끝에 언제나 돈다(임시 시드 정리 같은 것).
+    /// Always runs at the end, whatever the result (cleaning up temporary seed data, say).
     pub always: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum UndoAction {
-    /// 노드와 같은 셸 · 작업 폴더 · 환경에서 도는 스크립트.
+    /// A script run with the node's shell, working folder and environment.
     Script(String),
-    /// 셸 없이 부르는 프로그램(docker 등).
+    /// A program called without a shell (docker and the like).
     Argv { program: String, args: Vec<String> },
 }
 
@@ -134,7 +134,7 @@ pub struct NodeResult {
     pub mutated: bool,
     pub outputs: Map<String, Value>,
     pub attempts: u32,
-    /// 사람 확인이 필요해 멈춘 경우(종료 코드 2).
+    /// Stopped because a person must confirm (exit code 2).
     pub needs_confirmation: bool,
     pub detail: Option<String>,
 }
@@ -145,7 +145,7 @@ impl NodeResult {
     }
 }
 
-/// 노드 하나를 실행하는 동안의 맥락.
+/// The context while one node runs.
 pub struct NodeCx<'a> {
     pub id: String,
     pub block: String,
@@ -162,7 +162,7 @@ pub struct NodeCx<'a> {
     pub events: &'a Events,
     pub masker: &'a Masker,
     pub log: Option<std::fs::File>,
-    /// 영향 선택으로 고른 테스트 파일(None 이면 전부).
+    /// Test files picked by affected selection (None means all).
     pub selection: Option<Vec<String>>,
     pub interactive: bool,
     pub yes: bool,
@@ -174,18 +174,18 @@ pub struct NodeCx<'a> {
     pub services: Value,
     pub run_id: String,
     pub log_file: PathBuf,
-    /// 이 노드가 등록한 되돌림 단계(등록 순서).
+    /// The undo steps this node registered, in registration order.
     pub undo: Vec<UndoStep>,
-    /// 실행 폴더의 `undo.ndjson`(엔진이 멈췄을 때 남은 변경을 알아보는 기록).
+    /// The run folder's `undo.ndjson`, a record that reveals leftover changes if the engine stops.
     pub undo_log: PathBuf,
-    /// 셸 명령을 돌리는 곳(local · docker:<이미지>).
+    /// Where shell commands run (local or docker:<image>).
     pub exec: ExecCx,
     pub project: Option<String>,
-    /// 실행 폴더(서비스 로그 · 산출물).
+    /// The run folder (service logs, outputs).
     pub run_dir: PathBuf,
 }
 
-/// 셸 명령을 컨테이너에서 돌릴 때 필요한 것.
+/// What it takes to run shell commands in a container.
 #[derive(Debug, Clone)]
 pub struct ExecCx {
     pub executor: crate::executor::Executor,
@@ -193,7 +193,7 @@ pub struct ExecCx {
     pub repo_id: String,
     pub network: Option<String>,
     pub host_gateway: bool,
-    /// 컨테이너로 넘길 환경 이름(흐름이 정한 것 · 허용 목록).
+    /// Environment names to pass into the container (set by the flow, or on the allow list).
     pub forward: Vec<String>,
     pub explicit_shell: bool,
     pub seq: u32,
@@ -214,7 +214,7 @@ impl Default for ExecCx {
     }
 }
 
-/// 명령 실행 결과와 출력.
+/// A command's result and output.
 pub struct Captured {
     pub outcome: Outcome,
     pub stdout: String,
@@ -239,7 +239,7 @@ impl NodeCx<'_> {
         }
     }
 
-    /// 사람용 진행 줄(로그 + 이벤트).
+    /// A progress line for people (log and event).
     pub fn note(&mut self, text: &str) {
         self.log_line(&format!("[gitch-flow] {text}"));
         self.events.emit(
@@ -249,7 +249,7 @@ impl NodeCx<'_> {
         );
     }
 
-    /// 셸 스크립트를 돌리고 출력을 로그 · 이벤트로 흘려 보낸다(실행 위치가 docker 면 컨테이너 안에서).
+    /// Runs a shell script and streams its output into the log and events (inside a container when the executor is docker).
     pub fn run_script(&mut self, script: &str, extra_env: &[(String, String)]) -> Captured {
         let mut env = self.env.clone();
         env.extend(extra_env.iter().cloned());
@@ -322,7 +322,7 @@ impl NodeCx<'_> {
         };
         let c = self.run_proc(&spec);
         if c.outcome.cancelled || c.outcome.timed_out || c.outcome.hung {
-            // docker CLI 를 끝내도 컨테이너는 남을 수 있다.
+            // The container can outlive the docker CLI.
             crate::docker::remove_container(&name);
         }
         c
@@ -374,7 +374,7 @@ impl NodeCx<'_> {
         }
     }
 
-    /// 대상을 바꾸기 직전에 되돌림 단계를 등록한다. 바꾸다 실패해도 부분 변경이 있을 수 있어 되돌림은 언제나 시도한다.
+    /// Registers an undo step right before the target changes. A change that fails midway may still be partial, so the undo step always runs.
     pub fn register_undo(&mut self, step: UndoStep) {
         if let Ok(mut f) = std::fs::OpenOptions::new()
             .create(true)
@@ -401,7 +401,7 @@ impl NodeCx<'_> {
     }
 }
 
-/// 실행 결과 공통 관측값.
+/// Observations every run produces.
 pub fn observe_outcome(r: &mut NodeResult, c: &Captured) {
     r.observe("exitCode", json!(c.outcome.exit_code));
     r.observe("durationMs", json!(c.outcome.duration_ms));
@@ -429,7 +429,7 @@ pub fn observe_outcome(r: &mut NodeResult, c: &Captured) {
     r.observe("outputTail", json!(tail));
 }
 
-/// E1 을 만들되, 멈춤(hung)은 EXEC-03 으로 구분한다.
+/// Builds E1, telling a hung process apart as EXEC-03.
 pub fn exit_verdict(c: &Captured, allowed: &[i64]) -> Verdict {
     let mut v = verify::exit_code(
         c.outcome.exit_code,
@@ -463,7 +463,7 @@ static NOTIFY_WEBHOOK: notify::Webhook = notify::Webhook;
 static NOTIFY_DESKTOP: notify::Desktop = notify::Desktop;
 static DEPLOY_COMPOSE: deploy::Compose = deploy::Compose;
 
-/// 내장 블록 전체.
+/// All built-in blocks.
 pub fn all() -> Vec<&'static dyn Block> {
     let mut v: Vec<&'static dyn Block> = vec![
         &CMD,
@@ -501,12 +501,12 @@ pub fn get(id: &str) -> Option<&'static dyn Block> {
     all().into_iter().find(|b| b.meta().id == id)
 }
 
-/// 노드 입력 공통 스키마 조각.
+/// Schema pieces common to node inputs.
 pub fn schema(props: Value, required: &[&str]) -> Value {
     json!({"type": "object", "properties": props, "required": required, "additionalProperties": true})
 }
 
-/// 저장소 아래에서 glob 에 맞고 `since_ms` 뒤에 바뀐 파일(오래된 보고서를 읽지 않게).
+/// Files under the repository that match the glob and changed after `since_ms`, so stale reports are never read.
 pub fn find_files(root: &Path, globs: &[String], since_ms: u64) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut visited = 0usize;

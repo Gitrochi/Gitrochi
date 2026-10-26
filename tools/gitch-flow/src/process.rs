@@ -1,5 +1,5 @@
-//! 하위 프로세스 실행. 손자 프로세스까지 한 묶음으로 끝낼 수 있게
-//! Unix 는 프로세스 그룹, Windows 는 작업 개체(Job Object)에 넣는다.
+//! Child processes. To end grandchildren together with them,
+//! they go into a process group on Unix and a Job Object on Windows.
 
 use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-/// Windows 에서 콘솔 창이 뜨지 않게(CONTRIBUTING: CREATE_NO_WINDOW).
+/// No console window on Windows (code style: CREATE_NO_WINDOW).
 pub fn hide_window(cmd: &mut Command) {
     #[cfg(windows)]
     {
@@ -49,7 +49,7 @@ pub struct ProcSpec {
     pub env: Vec<(String, String)>,
     pub clear_env: bool,
     pub timeout_ms: Option<u64>,
-    /// 취소 · 시간 초과 뒤 기다리는 시간. 지나면 강제로 끝내고 "멈춤"으로 본다.
+    /// How long to wait after a cancel or timeout before killing the processes and calling them stuck.
     pub settle_ms: u64,
 }
 
@@ -73,7 +73,7 @@ impl Outcome {
     }
 }
 
-/// 프로세스 묶음을 끝내는 손잡이.
+/// A handle that ends the whole process group.
 pub struct Group {
     #[cfg(unix)]
     pgid: i32,
@@ -97,7 +97,7 @@ impl Group {
         }
     }
 
-    /// 부드럽게 끝내라고 알린다(Unix SIGTERM). Windows 는 신호가 없어 바로 끝낸다.
+    /// Asks the processes to stop (SIGTERM on Unix). Windows has no such signal, so they end at once.
     pub fn terminate(&self) {
         #[cfg(unix)]
         unsafe {
@@ -170,7 +170,7 @@ mod win {
     }
 }
 
-/// 새 프로세스 묶음으로 띄운다.
+/// Starts the command in a new process group.
 pub fn spawn(spec: &ProcSpec, stdout: Stdio, stderr: Stdio) -> std::io::Result<(Child, Group)> {
     let mut cmd = Command::new(&spec.program);
     cmd.args(&spec.args)
@@ -223,7 +223,7 @@ fn pump<R: Read + Send + 'static>(
     })
 }
 
-/// 끝날 때까지 돌리며 줄마다 `on_line` 을 부른다. 시간 초과 · 취소면 묶음 전체를 끝낸다.
+/// Runs to the end and calls `on_line` for every line. A timeout or cancel ends the whole group.
 pub fn run(spec: &ProcSpec, cancel: &Cancel, on_line: &mut dyn FnMut(Stream, &str)) -> Outcome {
     let started = Instant::now();
     let (mut child, group) = match spawn(spec, Stdio::piped(), Stdio::piped()) {
@@ -284,7 +284,7 @@ pub fn run(spec: &ProcSpec, cancel: &Cancel, on_line: &mut dyn FnMut(Stream, &st
             }
         }
     };
-    // 주 프로세스가 끝나도 남은 손자가 파이프를 잡고 있으면 읽기가 끝나지 않는다. 묶음째 정리한다.
+    // A grandchild holding the pipe keeps reading from finishing after the main process exits, so end the whole group.
     group.kill();
     let drain_until = Instant::now() + Duration::from_millis(1500);
     loop {
@@ -315,7 +315,7 @@ pub fn run(spec: &ProcSpec, cancel: &Cancel, on_line: &mut dyn FnMut(Stream, &st
     out
 }
 
-/// 셸로 스크립트를 돌릴 프로그램과 인자. Windows 의 bash 는 Git for Windows 것을 찾는다.
+/// The program and arguments that run a script in a shell. On Windows, bash is Git for Windows' bash.
 pub fn shell_command(shell: &str, script: &str) -> (String, Vec<String>) {
     match shell {
         "sh" => ("sh".into(), vec!["-c".into(), script.into()]),
@@ -353,7 +353,7 @@ pub fn shell_command(shell: &str, script: &str) -> (String, Vec<String>) {
     }
 }
 
-/// bash 위치: GITCH_BASH → (Windows) Git for Windows 의 bash.exe → PATH 의 bash.
+/// Where bash is: GITCH_BASH, then (Windows) Git for Windows' bash.exe, then bash on PATH.
 pub fn bash_path() -> String {
     if let Ok(b) = std::env::var("GITCH_BASH") {
         if !b.is_empty() {
@@ -422,7 +422,7 @@ mod tests {
     #[test]
     fn timeout_kills_the_whole_group() {
         let marker = std::env::temp_dir().join(format!("gf-orphan-{}", crate::util::random_hex(4)));
-        // 손자 프로세스가 1.5초 뒤 파일을 만들려 한다. 묶음째 끝나면 파일이 생기지 않아야 한다.
+        // A grandchild tries to create a file after 1.5 s; ending the group must prevent it.
         let script = format!("(sleep 1.5; touch {}) & sleep 30", marker.display());
         let (o, _) = sh(&script, Some(300));
         assert!(o.timed_out);

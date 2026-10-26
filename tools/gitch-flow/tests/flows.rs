@@ -1,5 +1,5 @@
-//! 흐름 시험: 영향 선택 · 결과 캐시 · 프로세스 서비스 + HTTP 스모크 · 가짜 docker CLI 로 본 Docker 서비스.
-//! Docker 데몬 없이도 엔진이 docker 에 무엇을 시키는지(라벨 · 네트워크 · 정리 · 마스킹)를 확인한다.
+//! Flow tests: affected selection, the result cache, process services with an HTTP smoke test, and Docker services seen through a fake docker CLI.
+//! Even without a Docker daemon they check what the engine asks docker to do (labels, network, cleanup, masking).
 
 mod common;
 
@@ -15,9 +15,9 @@ fn node<'a>(run: &'a Value, id: &str) -> &'a Value {
         .unwrap_or_else(|| panic!("no node {id} in {run}"))
 }
 
-// ---------- 영향 선택 ----------
+// ---------- affected selection ----------
 
-/// 고른 파일마다 테스트 하나를 JUnit 으로 남긴다(고른 것이 없으면 전부 = 두 개).
+/// Writes one JUnit test per picked file (with nothing picked, all of them = two).
 const SELECTED_RUNNER: &str = r#"#!/bin/sh
 out="$GITCH_FLOW_OUT/junit.xml"
 printf '%s\n' "${GITCH_FLOW_SELECTED:-ALL}" > "$GITCH_FLOW_OUT/selected.txt"
@@ -75,10 +75,10 @@ fn plan_node(fx: &Fx, extra: &[&str]) -> Value {
 fn affected_picks_tests_by_name_and_widens_on_config_changes() {
     let fx = affected_fixture();
     fx.trust();
-    // 바뀐 것이 없으면 건너뛰고 이유를 남긴다.
+    // With no changes the node is skipped, with the reason.
     let n = plan_node(&fx, &["--affected=worktree"]);
     assert_eq!(n["decision"], "skip", "{n}");
-    // 소스 하나를 고치면 이름이 같은 테스트만.
+    // Changing one source file picks only the test with the same name.
     fx.write("src/math.ts", "export const add = (a, b) => b + a\n");
     let n = plan_node(&fx, &["--affected=worktree"]);
     assert_eq!(n["decision"], "run", "{n}");
@@ -88,11 +88,11 @@ fn affected_picks_tests_by_name_and_widens_on_config_changes() {
         "{n}"
     );
     assert!(n["selectionReason"].as_str().unwrap().contains('1'), "{n}");
-    // 실제로 돌리면 실행기는 고른 파일만 받는다.
+    // In a real run the runner gets only the picked files.
     let (code, run) = fx.json("script", &["run", "ci", "--affected=worktree", "--json"]);
     assert_eq!(code, 0, "{run}");
     assert_eq!(node(&run, "unit")["tests"]["executed"], 1);
-    // 의존 · 설정 파일이 바뀌면 전부(고르지 않음) + 이유.
+    // A changed dependency or configuration file means everything (nothing picked), with the reason.
     fx.write("package.json", "{\"name\":\"demo\",\"version\":\"2\"}\n");
     let n = plan_node(&fx, &["--affected=worktree"]);
     assert_eq!(n["decision"], "run");
@@ -101,7 +101,7 @@ fn affected_picks_tests_by_name_and_widens_on_config_changes() {
         .as_str()
         .unwrap()
         .contains("package.json"));
-    // 새 테스트 파일(추적 전)도 바뀐 것으로 본다.
+    // A new test file (not yet tracked) counts as changed too.
     fx.git(&["checkout", "-q", "--", "package.json", "src/math.ts"]);
     fx.write("src/extra.test.ts", "test('x', () => {})\n");
     let n = plan_node(&fx, &["--affected=worktree"]);
@@ -124,14 +124,14 @@ fn affected_against_the_base_branch_and_smoke_always_runs() {
     fx.git(&["checkout", "-q", "-b", "feature"]);
     fx.write("src/text.ts", "export const up = (s) => s.toLowerCase()\n");
     fx.commit("change text");
-    // 기본 브랜치(main)와 갈라진 곳부터: 커밋한 변경도 본다.
+    // From the fork point with the default branch (main): committed changes count as well.
     let n = plan_node(&fx, &["--affected=base"]);
     assert_eq!(
         n["selection"],
         serde_json::json!(["src/text.test.ts"]),
         "{n}"
     );
-    // 스모크 태그는 범위에 바뀐 파일이 없어도 돈다.
+    // Smoke-tagged nodes run even with no changed files in scope.
     fx.git(&["checkout", "-q", "main"]);
     let (code, plan) = fx.json(
         "script",
@@ -153,10 +153,10 @@ fn changed_conditions_follow_the_affected_base() {
     fx.git(&["checkout", "-q", "-b", "feature"]);
     fx.write("src/text.ts", "export const up = (s) => s.trim()\n");
     fx.commit("change text");
-    // 커밋한 뒤 작업 트리에는 바뀐 것이 없다 → 기본(작업 트리 기준)으로는 건너뛴다.
+    // After the commit the working tree has no changes → skipped by default (working-tree base).
     let (_, run) = fx.json("script", &["run", "conditional", "--json"]);
     assert_eq!(node(&run, "only-text")["state"], "SKIPPED", "{run}");
-    // --affected=base: 기본 브랜치와 갈라진 곳부터 → 돈다(pre-push 게이트와 같은 기준).
+    // --affected=base: from the fork point with the default branch → runs (the same base as the pre-push gate).
     let (_, run) = fx.json(
         "script",
         &["run", "conditional", "--affected=base", "--json"],
@@ -164,7 +164,7 @@ fn changed_conditions_follow_the_affected_base() {
     assert_eq!(node(&run, "only-text")["state"], "PASSED", "{run}");
 }
 
-// ---------- 결과 캐시 ----------
+// ---------- result cache ----------
 
 const CACHE_FLOW: &str = r#"version: 1
 flows:
@@ -188,27 +188,27 @@ fn cache_replays_passes_and_misses_when_inputs_change() {
     assert_eq!(code, 0, "{first}");
     assert_eq!(node(&first, "gen")["state"], "PASSED");
     assert!(node(&first, "gen")["cacheKey"].is_string());
-    // 네트워크 블록은 cache 를 적어도 캐시하지 않는다.
+    // A network block is not cached even when it declares cache.
     assert!(node(&first, "net")["cacheKey"].is_null(), "{first}");
     assert_eq!(count(), 1);
     let (_, second) = fx.json("script", &["run", "build", "--json"]);
     assert_eq!(node(&second, "gen")["state"], "CACHED", "{second}");
     assert_eq!(second["counts"]["cached"], 1);
     assert_eq!(count(), 1, "a cached node must not run again");
-    // 입력 파일이 바뀌면 다시 돈다.
+    // A changed input file makes it run again.
     fx.write("src/a.txt", "two\n");
     let (_, third) = fx.json("script", &["run", "build", "--json"]);
     assert_eq!(node(&third, "gen")["state"], "PASSED", "{third}");
     assert_eq!(count(), 2);
-    // --no-cache 는 언제나 돈다.
+    // --no-cache always runs.
     let (_, fourth) = fx.json("script", &["run", "build", "--no-cache", "--json"]);
     assert_eq!(node(&fourth, "gen")["state"], "PASSED");
     assert_eq!(count(), 3);
 }
 
-// ---------- 프로세스 서비스 + HTTP 스모크 ----------
+// ---------- process services + HTTP smoke ----------
 
-/// Windows 러너에는 python3 가 없고 python 만 있다.
+/// Windows runners have python but no python3.
 const PY: &str = if cfg!(windows) { "python" } else { "python3" };
 
 const SERVICE_FLOW: &str = r#"version: 1
@@ -256,7 +256,7 @@ fn process_service_backs_http_smoke_checks_and_is_cleaned_up() {
     let missing = node(&run, "missing");
     assert_eq!(missing["state"], "FAILED");
     assert_eq!(missing["code"], "VERIFY-01", "{missing}");
-    // 서비스 주소는 실행 기록에 남고, 끝나면 그 포트는 닫혀 있어야 한다.
+    // The service address is in the run record, and its port must be closed afterwards.
     let id = run["runId"].as_str().unwrap();
     let (_, evs, _) = fx.run("script", &["events", id]);
     let ready: Value = evs
@@ -291,8 +291,8 @@ fn a_service_that_never_gets_ready_rejects_only_its_nodes() {
     assert_eq!(node(&run, "alone")["state"], "PASSED");
 }
 
-// ---------- Docker (가짜 CLI) ----------
-// 가짜 docker 는 셸 스크립트라 Windows 에서는 바로 실행되지 않는다(실제 Docker 시험은 real_docker.rs).
+// ---------- Docker (fake CLI) ----------
+// The fake docker is a shell script, so it does not run directly on Windows (the real Docker tests are in real_docker.rs).
 
 #[cfg(unix)]
 const FAKE_DOCKER: &str = r#"#!/bin/sh
@@ -395,7 +395,7 @@ fn docker_service_is_labelled_networked_and_removed() {
     assert!(run_line.ends_with("postgres:16-alpine"));
     assert!(calls.contains(&format!("network create --label gitch.flow.run={id}")));
     assert!(calls.contains("exec gitch-flow-"), "{calls}");
-    // 실행이 끝나면 컨테이너와 네트워크를 지운다.
+    // The container and network are removed when the run ends.
     assert!(
         calls.contains(&format!("rm -f -v gitch-flow-{id}-db")),
         "{calls}"
@@ -438,7 +438,7 @@ fn unhealthy_container_logs_are_saved_masked() {
     assert!(calls.lines().any(|l| l.starts_with("rm -f -v gitch-flow-")));
 }
 
-// ---------- 조합(matrix) ----------
+// ---------- matrix ----------
 
 const MATRIX_FLOW: &str = r#"version: 1
 flows:

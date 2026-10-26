@@ -1,7 +1,7 @@
-//! 실행 위치: 노드의 셸 명령을 어디서 돌릴지. `local`(기본) · `docker:<이미지>`.
-//! docker 는 노드마다 컨테이너 하나(`--rm`, 라벨 붙임)로 돌린다. 저장소와 실행 폴더를 **같은 경로**로 마운트해
-//! 보고서 경로 · `GITCH_FLOW_OUT` 이 안팎에서 같고, 환경 값은 이름만 넘겨(`-e NAME`) 비밀값이 명령줄에 보이지 않는다.
-//! CI 와 같은 이미지를 쓰면 로컬 = CI. Windows 호스트는 `C:\a` 를 `/c/a` 로 바꿔 마운트한다(검증 범위 문서 참고).
+//! Executors: where a node's shell command runs. `local` (default) or `docker:<image>`.
+//! Docker runs one labelled `--rm` container per node. The repository and the run folder are mounted at **the same path**,
+//! so report paths and `GITCH_FLOW_OUT` are the same inside and out; environment values pass by name (`-e NAME`), so secrets never appear on a command line.
+//! With the same image as CI, local equals CI. A Windows host mounts `C:\a` as `/c/a` (see the validation record).
 
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -46,7 +46,7 @@ impl Executor {
     }
 }
 
-/// 컨테이너 안의 경로. Unix 는 같은 경로, Windows 는 `C:\a\b` → `/c/a/b`.
+/// The path inside the container: the same path on Unix, `C:\a\b` → `/c/a/b` on Windows.
 pub fn container_path(host: &Path) -> String {
     let s = host.to_string_lossy().replace('\\', "/");
     let b = s.as_bytes();
@@ -57,7 +57,7 @@ pub fn container_path(host: &Path) -> String {
     s
 }
 
-/// 마운트할 호스트 폴더(겹치면 바깥 것 하나만).
+/// Host folders to mount; of nested ones only the outermost.
 pub fn mounts(dirs: &[PathBuf]) -> Vec<PathBuf> {
     let mut list: Vec<PathBuf> = dirs
         .iter()
@@ -74,7 +74,7 @@ pub fn mounts(dirs: &[PathBuf]) -> Vec<PathBuf> {
     out
 }
 
-/// 글 안의 호스트 경로를 컨테이너 경로로(Windows 호스트에서만 뜻이 있다).
+/// Rewrites host paths in text to container paths (only matters on a Windows host).
 pub fn rewrite_paths(text: &str, mounts: &[PathBuf]) -> String {
     let mut s = text.to_string();
     for m in mounts {
@@ -84,7 +84,7 @@ pub fn rewrite_paths(text: &str, mounts: &[PathBuf]) -> String {
         }
         let inside = container_path(m);
         for variant in [host.clone(), host.replace('\\', "/")] {
-            // 경로 뒤에 붙은 하위 경로의 `\` 도 `/` 로.
+            // Backslashes in the rest of the path become `/` too.
             while let Some(i) = s.find(&variant) {
                 let tail_start = i + variant.len();
                 let tail_end = s[tail_start..]
@@ -99,7 +99,7 @@ pub fn rewrite_paths(text: &str, mounts: &[PathBuf]) -> String {
     s
 }
 
-/// 컨테이너로 넘기지 않는 호스트 전용 환경 이름.
+/// Host-only environment names that are not passed into containers.
 fn host_only(k: &str) -> bool {
     matches!(
         k,
@@ -134,7 +134,7 @@ fn host_only(k: &str) -> bool {
         || k.starts_with("GITCH_FLOW_INTERNAL")
 }
 
-/// `docker run` 인자. `forward` 는 컨테이너로 넘길 환경 이름(값은 docker CLI 의 환경에서 읽힌다).
+/// `docker run` arguments. `forward` names the environment variables to pass in (docker reads their values from its own environment).
 pub struct RunArgs<'a> {
     pub image: &'a str,
     pub name: &'a str,
@@ -144,7 +144,7 @@ pub struct RunArgs<'a> {
     pub mounts: &'a [PathBuf],
     pub workdir: &'a Path,
     pub forward: Vec<String>,
-    /// 실행 전용 네트워크(서비스 컨테이너와 같은 곳).
+    /// The run's own network, shared with the service containers.
     pub network: Option<String>,
     pub host_gateway: bool,
     pub pull: &'a str,
@@ -184,7 +184,7 @@ pub fn docker_args(a: &RunArgs) -> Vec<String> {
     }
     #[cfg(target_os = "linux")]
     {
-        // 저장소에 쓰는 파일이 root 소유가 되지 않게 호스트 사용자로 돈다.
+        // Run as the host user so files written to the repository are not owned by root.
         let (uid, gid) = unsafe { (libc::getuid(), libc::getgid()) };
         v.push("--user".into());
         v.push(format!("{uid}:{gid}"));
@@ -203,8 +203,8 @@ pub fn docker_args(a: &RunArgs) -> Vec<String> {
     v
 }
 
-/// 셸 스크립트를 컨테이너 안에서 돌리는 명령. 스크립트는 환경 변수로 넘겨 인용 문제를 피하고,
-/// 기본 셸(bash)이 이미지에 없으면 sh 로 돈다.
+/// The command that runs a shell script inside the container. The script goes in through an environment variable to avoid quoting problems,
+/// and it falls back to sh when the image has no bash.
 pub fn shell_command(shell: &str, explicit: bool) -> Vec<String> {
     match shell {
         "pwsh" | "powershell" => vec!["pwsh".into(), "-NoProfile".into(), "-Command".into(), "$env:GITCH_FLOW_SCRIPT | Invoke-Expression".into()],
@@ -218,7 +218,7 @@ pub fn shell_command(shell: &str, explicit: bool) -> Vec<String> {
     }
 }
 
-/// 컨테이너 안에서 본 서비스 주소: docker 서비스는 네트워크 별칭 + 컨테이너 포트, 호스트 프로세스는 host.docker.internal.
+/// Service addresses as seen from a container: network alias and container port for docker services, host.docker.internal for host processes.
 pub fn services_inside(services: &Value) -> (Value, bool) {
     let mut gateway = false;
     let Some(o) = services.as_object() else {

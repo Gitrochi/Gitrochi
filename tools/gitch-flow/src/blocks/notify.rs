@@ -1,6 +1,6 @@
-//! 알림: `notify.webhook` · `notify.desktop` 블록과 흐름 끝의 `notify:` 목록이 함께 쓰는 보내기.
-//! 알림은 실행 결과를 바꾸지 않는다 — 보내지 못해도 판정은 통과로 두고 관측값에 오류를 남긴다.
-//! 웹훅 주소는 연결(kind: webhook)에 두면 주소 · 토큰이 흐름 파일과 기록에 남지 않는다.
+//! Notifications: the sending shared by the `notify.webhook` and `notify.desktop` blocks and the `notify:` list at the end of a flow.
+//! A notification never changes the run's result: when sending fails the verdict stays a pass and the error is kept as an observation.
+//! With the webhook URL in a connection (kind: webhook), neither the URL nor the token ends up in the flow file or the records.
 
 use super::{schema, Block, Meta, NodeCx, NodeResult};
 use crate::http::{self, Req};
@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 pub struct Webhook;
 pub struct Desktop;
 
-/// 웹훅 대상: 연결 이름(kind webhook) 또는 https 주소.
+/// Webhook target: a connection name (kind webhook) or an https URL.
 pub fn send_webhook(
     target: &str,
     text: &str,
@@ -41,7 +41,7 @@ pub fn send_webhook(
         }
     };
     masker.add_secret("webhook-url", &url);
-    // Slack · Teams · Mattermost 는 text 를, 다른 곳은 data 를 읽는다.
+    // Slack, Teams and Mattermost read text; others read data.
     let body = json!({"text": text, "data": data});
     let mut req = Req {
         method: "POST",
@@ -59,7 +59,7 @@ pub fn send_webhook(
     }
 }
 
-/// 데스크톱 알림(macOS · Linux). Windows 는 앱이 이벤트로 알린다.
+/// Desktop notification (macOS, Linux). On Windows the app notifies from the events.
 pub fn send_desktop(title: &str, text: &str) -> Result<(), String> {
     let clean = |s: &str| s.replace(['"', '\\', '\n'], " ");
     let (prog, args): (&str, Vec<String>) = if cfg!(target_os = "macos") {
@@ -148,7 +148,7 @@ fn delivered(r: &mut NodeResult, res: Result<String, String>) {
     };
     r.observe("delivered", json!(ok));
     r.observe("detail", json!(detail));
-    // 알림은 결과를 바꾸지 않는다.
+    // Notifications never change the result.
     r.verdicts.push(Verdict::new(
         "N1",
         tr("알림", "notification"),

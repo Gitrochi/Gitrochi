@@ -1,4 +1,4 @@
-//! `cmd` — 셸 명령 한 줄(`run:` 줄임 노드). 주 관측값은 종료 코드, 선택으로 출력 기대.
+//! `cmd`: one shell command (the `run:` shorthand node). The main observation is the exit code, optionally with output expectations.
 
 use super::{
     exit_verdict, observe_outcome, schema, Block, Meta, NodeCx, NodeResult, UndoAction, UndoStep,
@@ -88,7 +88,7 @@ impl Block for Cmd {
     }
 }
 
-/// `undo:` 입력 → 되돌림 단계.
+/// The `undo:` input → an undo step.
 fn undo_step(with: &Value) -> Option<UndoStep> {
     let (run, check, timeout, always) = match with.get("undo")? {
         Value::String(s) if !s.trim().is_empty() => (s.clone(), None, None, false),

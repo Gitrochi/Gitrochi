@@ -1,5 +1,5 @@
-//! Jenkins. crumb(CSRF) · buildWithParameters(상관 ID 파라미터) · 큐 항목 → 빌드 번호 · 진행형 로그 ·
-//! JUnit 플러그인 testReport · 산출물 결과 계약 · 중지. 폴더 · 멀티브랜치 경로를 받는다.
+//! Jenkins: crumb (CSRF), buildWithParameters (correlation ID parameter), queue item → build number, progressive log,
+//! JUnit plugin testReport, the result contract from artifacts, and stopping. Folder and multibranch paths are accepted.
 
 use super::{CiErr, Provider, RState, RStatus, RemoteRun, Triggered};
 use crate::connect::Connection;
@@ -8,7 +8,7 @@ use crate::report::{Case, CaseStatus, TestReport};
 use serde_json::{json, Value};
 use std::cell::RefCell;
 
-/// `folder/sub/job` → `job/folder/job/sub/job/job` (각 조각은 URL 인코딩).
+/// `folder/sub/job` → `job/folder/job/sub/job/job` (each segment URL-encoded).
 pub fn job_path(path: &str) -> String {
     path.split('/')
         .filter(|s| !s.is_empty())
@@ -87,7 +87,7 @@ impl Job {
         })
     }
 
-    /// crumb 는 한 번만 받는다(없으면 CSRF 보호가 꺼진 서버).
+    /// The crumb is fetched once (none means the server has CSRF protection off).
     fn crumb(&self) -> Option<(String, String)> {
         if let Some(c) = self.crumb.borrow().clone() {
             return c;
@@ -125,8 +125,8 @@ impl Job {
         Ok(r)
     }
 
-    /// Jenkins 가 돌려준 절대 주소를 연결에 적은 서버로 옮긴다. Jenkins 의 "루트 주소" 설정이 다른 호스트(내부 이름 등)여도
-    /// 인증을 그 호스트로 보내지 않는다.
+    /// Moves absolute URLs Jenkins returns onto the server in the connection. Even when Jenkins' "root URL" setting names another host (an internal name, say),
+    /// the credentials never go to that host.
     fn rebase(&self, url: &str) -> String {
         let (Ok(b), Ok(u)) = (url::Url::parse(&self.base), url::Url::parse(url)) else {
             return url.to_string();

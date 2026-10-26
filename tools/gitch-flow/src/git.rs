@@ -1,4 +1,4 @@
-//! 시스템 git 호출. 엔진은 git 동작을 새로 만들지 않고 기계용 출력만 읽는다.
+//! Calls the system git. The engine never reimplements git; it only reads machine-readable output.
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -21,7 +21,7 @@ pub fn command(dir: &Path) -> Command {
     c
 }
 
-/// 성공하면 표준출력(끝 줄바꿈 제거), 실패하면 None.
+/// Stdout without the final newline on success, None on failure.
 pub fn run(dir: &Path, args: &[&str]) -> Option<String> {
     let out = command(dir)
         .args(args)
@@ -43,7 +43,7 @@ pub fn toplevel(dir: &Path) -> Option<PathBuf> {
         .map(|s| PathBuf::from(crate::util::msys_to_native(&s)))
 }
 
-/// 모든 워크트리가 함께 쓰는 .git 폴더(절대 경로).
+/// The .git folder all worktrees share (absolute path).
 pub fn common_dir(root: &Path) -> Option<PathBuf> {
     let s = run(
         root,
@@ -60,7 +60,7 @@ pub fn branch(root: &Path) -> Option<String> {
     run(root, &["symbolic-ref", "--quiet", "--short", "HEAD"])
 }
 
-/// 원격 기본 브랜치(origin/main 등). 모르면 main · master 중 있는 것.
+/// The remote default branch (origin/main and so on); otherwise main or master, whichever exists.
 pub fn default_branch(root: &Path) -> Option<String> {
     if let Some(s) = run(
         root,
@@ -95,7 +95,7 @@ fn lines(s: Option<String>) -> Vec<String> {
     .unwrap_or_default()
 }
 
-/// 바뀐 파일. `base` 가 있으면 그 커밋부터 작업 트리까지, 없으면 커밋하지 않은 변경만. 추적 안 하는 새 파일도 넣는다.
+/// Changed files: from `base` to the working tree, or only uncommitted changes without it. New untracked files count.
 pub fn changed_files(root: &Path, base: Option<&str>, staged_only: bool) -> Vec<String> {
     let mut out = Vec::new();
     if staged_only {
@@ -124,7 +124,7 @@ pub fn changed_files(root: &Path, base: Option<&str>, staged_only: bool) -> Vec<
     out
 }
 
-/// 추적 파일 목록.
+/// Tracked files.
 pub fn ls_files(root: &Path) -> Vec<String> {
     lines(run(
         root,
@@ -132,12 +132,12 @@ pub fn ls_files(root: &Path) -> Vec<String> {
     ))
 }
 
-/// 작업 트리가 깨끗한지(추적 안 하는 새 파일도 변경으로 본다).
+/// Whether the working tree is clean (new untracked files count as changes).
 pub fn is_clean(root: &Path) -> bool {
     matches!(run(root, &["status", "--porcelain"]), Some(s) if s.trim().is_empty())
 }
 
-/// 원격 주소(origin).
+/// The origin remote's URL.
 pub fn remote_url(root: &Path) -> Option<String> {
     run(root, &["remote", "get-url", "origin"])
 }

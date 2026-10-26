@@ -1,21 +1,21 @@
-//! `${{ … }}` 표현식과 `if:` 조건. 값 참조와 몇 가지 함수만 있고 임의 코드는 없다.
-//! 명령(`run:`) 안에 넣는 값은 셸 인용을 거쳐 주입을 막는다.
+//! `${{ … }}` expressions and `if:` conditions: value references and a few functions, never arbitrary code.
+//! Values placed in a command (`run:`) are shell-quoted, so they cannot inject.
 
 use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExprError(pub String);
 
-/// 표현식이 읽는 값. 경로는 `git.sha` 같은 점 경로를 낱말로 나눈 것.
+/// Values an expression can read. A path is a dotted name like `git.sha` split into words.
 pub trait Ctx {
     fn lookup(&self, path: &[String]) -> Option<Value>;
-    /// `hashFiles('glob', …)` — 맞는 추적 파일 내용의 해시. 모르면 None.
+    /// `hashFiles('glob', …)`: hash of the matching tracked files' contents; None when unknown.
     fn hash_files(&self, _globs: &[String]) -> Option<String> {
         None
     }
 }
 
-/// 값 없이 문법만 볼 때 쓰는 빈 맥락.
+/// An empty context, for checking syntax without values.
 pub struct NoCtx;
 impl Ctx for NoCtx {
     fn lookup(&self, _path: &[String]) -> Option<Value> {
@@ -129,7 +129,7 @@ fn lex(src: &str) -> Result<Vec<Tok>, ExprError> {
     Ok(out)
 }
 
-/// 표현식 나무.
+/// Expression tree.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
     Lit(Value),
@@ -302,15 +302,15 @@ const FUNCS: &[&str] = &[
     "startsWith",
     "format",
 ];
-/// `if:` 에서만 쓰는 상태 함수.
+/// Status functions, only for `if:`.
 pub const STATUS_FUNCS: &[&str] = &["success", "failure", "always", "cancelled", "changed"];
-/// 표현식이 읽을 수 있는 맨 앞 이름.
+/// The top-level names an expression may read.
 pub const ROOTS: &[&str] = &[
     "git", "run", "node", "inputs", "services", "env", "matrix", "nodes", "secrets", "flow",
     "project",
 ];
 
-/// 문법과 이름을 검사하고 참조한 경로를 돌려준다(검증용).
+/// Checks syntax and names and returns the referenced paths (for validation).
 pub fn references(
     n: &Node,
     out: &mut Vec<Vec<String>>,
@@ -364,7 +364,7 @@ pub fn to_text(v: &Value) -> String {
     }
 }
 
-/// 상태 함수는 맥락이 정한다(조건 평가에서만).
+/// Status functions are answered by the context (only when evaluating conditions).
 pub trait StatusCtx {
     fn status(&self, func: &str, args: &[String]) -> Option<bool>;
 }
@@ -461,7 +461,7 @@ pub fn eval(src: &str, ctx: &dyn Ctx) -> Result<Value, ExprError> {
     eval_node(&parse(src)?, ctx, &NoStatus)
 }
 
-/// 글 안의 `${{ … }}` 위치(시작, 끝, 안쪽 글).
+/// Positions of `${{ … }}` in text (start, end, inner text).
 pub fn find(s: &str) -> Result<Vec<(usize, usize, String)>, ExprError> {
     let mut out = Vec::new();
     let mut i = 0;
@@ -477,7 +477,7 @@ pub fn find(s: &str) -> Result<Vec<(usize, usize, String)>, ExprError> {
     Ok(out)
 }
 
-/// 글의 표현식을 값으로 바꾼다. 셸 · PowerShell 이면 각 값을 한 인자로 인용한다.
+/// Replaces the expressions in text with their values. For a shell or PowerShell each value is quoted as one argument.
 pub fn render(s: &str, ctx: &dyn Ctx, quote: Quote) -> Result<String, ExprError> {
     let spans = find(s)?;
     if spans.is_empty() {
@@ -499,7 +499,7 @@ pub fn render(s: &str, ctx: &dyn Ctx, quote: Quote) -> Result<String, ExprError>
     Ok(out)
 }
 
-/// JSON 값 안의 글을 렌더링한다. 글 전체가 표현식 하나면 그 값의 형식(숫자 등)을 그대로 쓴다.
+/// Renders the text inside a JSON value. When the whole text is one expression, its value keeps its type (number and so on).
 pub fn render_value(v: &Value, ctx: &dyn Ctx) -> Result<Value, ExprError> {
     match v {
         Value::String(s) => {
@@ -525,7 +525,7 @@ pub fn render_value(v: &Value, ctx: &dyn Ctx) -> Result<Value, ExprError> {
     }
 }
 
-/// `if:` 조건. 상태 함수가 없으면 GitHub Actions 처럼 `success() &&` 를 앞에 붙인 것으로 본다.
+/// An `if:` condition. Without a status function it reads as `success() && …`, as in GitHub Actions.
 #[derive(Debug, Clone)]
 pub struct Cond {
     pub node: Node,
@@ -683,7 +683,7 @@ mod tests {
         let fail = parse_cond("${{ failure() }}").unwrap();
         assert!(eval_cond(&fail, &c, &bad).unwrap());
         assert!(!eval_cond(&fail, &c, &ok).unwrap());
-        // 상태 함수 없는 조건은 success() 가 붙는다
+        // a condition without a status function gets success()
         let br = parse_cond("git.branch == 'feat/x'").unwrap();
         assert!(eval_cond(&br, &c, &ok).unwrap());
         assert!(!eval_cond(&br, &c, &bad).unwrap());

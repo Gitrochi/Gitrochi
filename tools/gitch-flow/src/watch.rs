@@ -1,5 +1,5 @@
-//! 감시 모드: 파일을 저장하면 영향받은 노드만 다시 돌린다. 파일 상태를 짧은 간격으로 비교하는 방식이라
-//! 운영체제별 감시 API 에 기대지 않는다(큰 저장소는 추적 파일의 크기 · 시각만 본다).
+//! Watch mode: saving a file reruns only the affected nodes. It compares file states at a short interval,
+//! so it needs no OS-specific watch API (in large repositories only the size and time of tracked files are compared).
 
 use crate::cli::{Args, Out};
 use crate::spec::Spec;
@@ -56,7 +56,7 @@ fn loop_runs(out: &Out, args: &Args, root: &Path, mut once: impl FnMut(&Args) ->
         if diff.is_empty() {
             continue;
         }
-        // 저장이 몇 번 이어지는 동안 기다렸다가 한 번만 돌린다.
+        // Wait while saves keep coming, then run once.
         let settle = Instant::now();
         let mut cur = now;
         while settle.elapsed() < Duration::from_millis(300) {
@@ -109,7 +109,7 @@ pub fn watch_tests(out: &Out, args: &Args, spec: Spec) -> i32 {
             flags: a.flags.clone(),
         };
         b.flags.remove("--watch");
-        // 즉석 흐름은 cmd_test 가 매번 새로 만든다.
+        // cmd_test builds the ad-hoc flow afresh every time.
         crate::cli::main(
             std::iter::once("test".to_string())
                 .chain(b.pos.clone())

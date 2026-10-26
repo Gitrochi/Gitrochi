@@ -1,7 +1,7 @@
-//! 가짜 GitLab · GitHub · Jenkins · HTTP CI 서버로 보는 원격 CI 운전 규칙:
-//! 상관 ID · 보내기 전에 찾기 · 응답을 잃은 트리거는 다시 보내지 않기(CI-01) · 외부 취소(CI-04) ·
-//! 결과 계약(CI-02 · CI-03) · 인증(CONN-02) · 속도 제한 · 마감 뒤 원격 취소(CI-05) · 허용 목록(CI-07) ·
-//! 다른 출처로 가는 리다이렉트에 토큰을 싣지 않기.
+//! The remote CI driving rules, checked against fake GitLab, GitHub, Jenkins and HTTP CI servers:
+//! correlation IDs, looking before sending, never resending a trigger whose response was lost (CI-01), external cancel (CI-04),
+//! the result contract (CI-02, CI-03), authentication (CONN-02), rate limits, remote cancel after the deadline (CI-05), the allow list (CI-07),
+//! and no token on a redirect to another origin.
 
 mod common;
 
@@ -10,7 +10,7 @@ use common::Fx;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 
-/// 시험용 토큰(알려진 토큰 접두를 쓰지 않는다).
+/// A test token (without any known token prefix).
 fn token() -> String {
     format!("ci-token-{}-Zq9xK", std::process::id())
 }
@@ -88,9 +88,9 @@ fn marker(state: &str) -> String {
 #[derive(Clone, Copy, PartialEq)]
 enum Post {
     Normal,
-    /// 만들고 응답은 잃음.
+    /// Created, but the response is lost.
     DropAfterCreate,
-    /// 만들지도 않고 응답도 없음.
+    /// Not created, and no response.
     DropWithoutCreate,
 }
 
@@ -104,7 +104,7 @@ struct Gl {
     pipelines: Vec<Pl>,
 }
 
-/// 가짜 파이프라인: 변수 · 상태를 몇 번 물었는지 · 우리가 취소했는지.
+/// A fake pipeline: its variables, how often its state was asked for, and whether we cancelled it.
 struct Pl {
     id: u64,
     vars: Vec<(String, String)>,
@@ -288,7 +288,7 @@ fn gitlab_pipeline_passes_on_the_result_contract() {
     let ci = node(&run, "ci");
     assert_eq!(ci["state"], "PASSED", "{ci}");
     assert_eq!(srv.count("POST", "/pipeline"), 1);
-    // 상관 ID 는 실행 · 노드에서 만들고 파이프라인 변수로 보낸다.
+    // The correlation ID comes from the run and node and goes out as a pipeline variable.
     let corr = ci["observations"]["correlation"]
         .as_str()
         .unwrap()
@@ -298,7 +298,7 @@ fn gitlab_pipeline_passes_on_the_result_contract() {
     assert!(g.pipelines[0]
         .vars
         .contains(&("GITCH_FLOW_CORR".into(), corr)));
-    // 원격 로그에 섞여 온 토큰은 가린다.
+    // A token mixed into the remote log is masked.
     let log = node_log(&run, "ci");
     assert!(log.contains("[flow] $ gitch flow run ci --ci"), "{log}");
     assert!(!log.contains(&token()), "token leaked into the node log");
@@ -489,7 +489,7 @@ fn github(old_run: bool) -> (Server, Arc<Mutex<Gh>>) {
     let base_cell = srv.clone();
     let server = Server::start(move |r: &Req| {
         if r.path.starts_with("/logstore/") {
-            // 로그 저장소 — 인증 없이 와야 한다(인증이 오면 표식 없는 로그를 줘서 시험이 실패하게).
+            // Log storage: requests must arrive without credentials (with credentials it serves a log without the marker, so the test fails).
             if r.header("Authorization").is_some() {
                 return Some(Resp::text(400, "credentials must not be sent here"));
             }
@@ -661,7 +661,7 @@ fn jenkins(result: &'static str, queue_cancelled: bool) -> (Server, Arc<Mutex<Jk
                 if j.queued_polls < 2 {
                     Some(Resp::json(json!({"why": "waiting for executor"})))
                 } else {
-                    // Jenkins 의 루트 주소가 내부 이름으로 잡혀 있어도 엔진은 연결 주소로만 묻는다.
+                    // Even with Jenkins' root URL set to an internal name, the engine asks only the connection's address.
                     Some(Resp::json(
                         json!({"executable": {"number": 42, "url": "http://jenkins.internal.invalid:8080/job/team/job/app/42/"}}),
                     ))
@@ -760,7 +760,7 @@ fn jenkins_cancelled_queue_item_is_ci04() {
     assert_eq!(node(&run, "build")["code"], "CI-04", "{run}");
 }
 
-// ---------- 일반 HTTP CI ----------
+// ---------- plain HTTP CI ----------
 
 #[test]
 fn http_ci_drives_trigger_status_and_logs_with_encoded_ids() {

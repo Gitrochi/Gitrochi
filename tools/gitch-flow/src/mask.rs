@@ -1,5 +1,5 @@
-//! 마스킹. 이벤트 · 로그 · 보고서 · 오류는 모두 여기를 지난 뒤에만 기록 · 출력한다.
-//! 순서가 중요하다: 알고 있는 비밀값(사전)을 먼저 참조 이름으로 바꾸고, 그다음 모양으로 찾는다.
+//! Masking. Events, logs, reports and errors are written or printed only after passing through here.
+//! Order matters: known secrets (the dictionary) are replaced by their reference names first, then secrets are found by shape.
 
 use regex::{Captures, Regex};
 use std::sync::{OnceLock, RwLock};
@@ -51,10 +51,10 @@ const MASK: &str = "***";
 fn looks_random(s: &str) -> bool {
     let core = s.trim_end_matches('=');
     if core.chars().all(|c| c.is_ascii_hexdigit()) {
-        return false; // 커밋 SHA · 다이제스트는 남긴다
+        return false; // keep commit SHAs and digests
     }
     if core.contains('/') && core.split('/').filter(|p| !p.is_empty()).count() > 2 {
-        return false; // 경로처럼 보이면 남긴다
+        return false; // keep what looks like a path
     }
     let upper = core.chars().any(|c| c.is_ascii_uppercase());
     let lower = core.chars().any(|c| c.is_ascii_lowercase());
@@ -74,13 +74,13 @@ impl Masker {
         }
     }
 
-    /// 사용자 설정의 내부 도메인(예: corp.example)을 가린다.
+    /// Hides the internal domains from user settings (for example corp.example).
     pub fn with_domains(mut self, domains: Vec<String>) -> Masker {
         self.extra_domains = domains.into_iter().filter(|d| d.contains('.')).collect();
         self
     }
 
-    /// 실행 중 알게 된 비밀값을 사전에 넣는다. 4글자 미만은 일반 글자와 겹쳐 넣지 않는다.
+    /// Adds a secret learned during the run to the dictionary. Values under four characters would match ordinary text and are skipped.
     pub fn add_secret(&self, name: &str, value: &str) {
         if value.len() < 4 {
             return;
@@ -90,7 +90,7 @@ impl Masker {
             return;
         }
         d.push((value.to_string(), format!("${{secrets.{name}}}")));
-        // 긴 값부터 바꿔야 한 비밀이 다른 비밀의 일부일 때도 맞게 가린다.
+        // Longest first, so a secret that contains another is still hidden correctly.
         d.sort_by_key(|x| std::cmp::Reverse(x.0.len()));
     }
 
@@ -173,7 +173,7 @@ impl Masker {
         s
     }
 
-    /// JSON 값 안의 모든 글자를 가린다.
+    /// Masks every string inside a JSON value.
     pub fn mask_value(&self, v: &serde_json::Value) -> serde_json::Value {
         use serde_json::Value;
         match v {
@@ -195,7 +195,7 @@ impl Default for Masker {
     }
 }
 
-/// `host.corp.example` 처럼 지정 도메인으로 끝나는 호스트 이름을 `***.corp.example` 로.
+/// Host names ending in a listed domain, like `host.corp.example`, become `***.corp.example`.
 fn mask_domain(s: &str, dom: &str) -> String {
     let re = Regex::new(&format!(r"(?i)\b[a-z0-9\-.]*{}\b", regex::escape(dom))).unwrap();
     re.replace_all(s, format!("***.{dom}").as_str())
@@ -225,7 +225,7 @@ mod tests {
             k.mask("Authorization: Bearer abcdefghijklmnop"),
             "Authorization: Bearer ***"
         );
-        // 저장소 검사(.githooks)가 진짜 토큰으로 보지 않게 시험 값은 실행 중에 이어 붙인다.
+        // Test values are assembled at run time so the repository checks (.githooks) don't take them for real tokens.
         let gl = format!("PRIVATE-TOKEN: {}{}", "glpat", "-abcdefghijklmnopqrst");
         assert_eq!(k.mask(&gl), "PRIVATE-TOKEN: ***");
         assert_eq!(
