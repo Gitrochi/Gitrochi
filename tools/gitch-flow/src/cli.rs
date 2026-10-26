@@ -694,6 +694,11 @@ fn detach(out: &Out, store: &Store) -> i32 {
         // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB | CREATE_NO_WINDOW
         c.creation_flags(0x0000_0008 | 0x0000_0200 | 0x0100_0000 | 0x0800_0000);
     }
+    #[cfg(windows)]
+    let stdio_inheritance = match crate::process::StdioInheritanceGuard::new() {
+        Ok(guard) => guard,
+        Err(e) => return out.fail("ENGINE-01", 1, &e.to_string(), Value::Null),
+    };
     let spawned = c.spawn();
     #[cfg(windows)]
     let spawned = match spawned {
@@ -706,6 +711,8 @@ fn detach(out: &Out, store: &Store) -> i32 {
         }
         result => result,
     };
+    #[cfg(windows)]
+    drop(stdio_inheritance);
     match spawned {
         Ok(ch) => {
             let _ = std::fs::write(run_dir.join("pid"), ch.id().to_string());

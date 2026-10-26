@@ -21,6 +21,59 @@ pub fn hide_window(cmd: &mut Command) {
     let _ = cmd;
 }
 
+/// Keeps a detached worker from retaining the launcher's original standard handles.
+#[cfg(windows)]
+pub struct StdioInheritanceGuard(Vec<(windows_sys::Win32::Foundation::HANDLE, u32)>);
+
+#[cfg(windows)]
+impl StdioInheritanceGuard {
+    /// Saves and clears inheritance until the guard is dropped.
+    pub fn new() -> std::io::Result<Self> {
+        use windows_sys::Win32::Foundation::{
+            GetHandleInformation, SetHandleInformation, HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE,
+        };
+        use windows_sys::Win32::System::Console::{
+            GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
+        };
+        // Redirecting child stdio to NUL does not exclude other inheritable pipe handles.
+        let mut guard = Self(Vec::new());
+        for stream in [STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE] {
+            unsafe {
+                let handle = GetStdHandle(stream);
+                if handle.is_null()
+                    || handle == INVALID_HANDLE_VALUE
+                    || guard.0.iter().any(|(saved, _)| *saved == handle)
+                {
+                    continue;
+                }
+                let mut flags = 0;
+                if GetHandleInformation(handle, &mut flags) == 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                if flags & HANDLE_FLAG_INHERIT != 0 {
+                    if SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0) == 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    guard.0.push((handle, flags));
+                }
+            }
+        }
+        Ok(guard)
+    }
+}
+
+#[cfg(windows)]
+impl Drop for StdioInheritanceGuard {
+    fn drop(&mut self) {
+        use windows_sys::Win32::Foundation::{SetHandleInformation, HANDLE_FLAG_INHERIT};
+        for (handle, flags) in &self.0 {
+            unsafe {
+                SetHandleInformation(*handle, HANDLE_FLAG_INHERIT, *flags);
+            }
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Cancel(Arc<AtomicBool>);
 
