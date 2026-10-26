@@ -43,12 +43,24 @@ enum AgentKind: String, CaseIterable, Identifiable {
 
     /// 권한 모드: (값, 이름)
     var modes: [(String, String)] {
+        let bypass = (bypassMode, String(localized: "Skip all permission checks"))
         switch self {
-        case .claude: return [("", String(localized: "Default (ask every time)")), ("acceptEdits", String(localized: "Auto-approve file edits")), ("plan", String(localized: "Plan only")), ("auto", String(localized: "Auto"))]
-        case .codex: return [("", String(localized: "Default")), ("read-only", String(localized: "Read-only")), ("workspace-write", String(localized: "Allow writing to the working folder"))]
-        case .gemini: return [("", String(localized: "Default (ask every time)")), ("auto_edit", String(localized: "Auto-approve file edits")), ("plan", String(localized: "Plan only (read-only)")), ("yolo", String(localized: "Fully automatic"))]
+        case .claude: return [("", String(localized: "Default (ask every time)")), ("acceptEdits", String(localized: "Auto-approve file edits")), ("plan", String(localized: "Plan only")), ("auto", String(localized: "Auto")), bypass]
+        case .codex: return [("", String(localized: "Default")), ("read-only", String(localized: "Read-only")), ("workspace-write", String(localized: "Allow writing to the working folder")), bypass]
+        case .gemini: return [("", String(localized: "Default (ask every time)")), ("auto_edit", String(localized: "Auto-approve file edits")), ("plan", String(localized: "Plan only (read-only)")), bypass]
         }
     }
+
+    /// The mode that skips every permission check. Never remembered; the start sheet asks for confirmation.
+    var bypassMode: String {
+        switch self {
+        case .claude: return "bypassPermissions"
+        case .codex: return "bypass"
+        case .gemini: return "yolo"
+        }
+    }
+
+    func skipsPermissions(_ mode: String?) -> Bool { mode == bypassMode }
 
     /// 실행 인자
     func arguments(hooks: String, task: String, mode: String?) -> [String] {
@@ -57,6 +69,8 @@ enum AgentKind: String, CaseIterable, Identifiable {
         case .claude:
             return ["--settings", hooks] + (m.map { ["--permission-mode", $0] } ?? []) + (task.isEmpty ? [] : [task])
         case .codex:
+            // --sandbox danger-full-access keeps the approval prompts; this flag drops both
+            if m == bypassMode { return ["--dangerously-bypass-approvals-and-sandbox"] + (task.isEmpty ? [] : [task]) }
             return (m.map { ["--sandbox", $0] } ?? []) + (task.isEmpty ? [] : [task])
         case .gemini:
             return (m.map { ["--approval-mode", $0] } ?? []) + (task.isEmpty ? [] : ["-i", task])
@@ -69,6 +83,8 @@ struct AgentSession: Identifiable, Hashable {
     var kind: AgentKind = .claude
     let path: String
     let task: String
+    /// Permission mode it was started with ("" = default)
+    var mode = ""
     let created: Date
     var pid: Int32?
     var status: AgentStatus
@@ -208,6 +224,7 @@ final class AgentCenter {
                 continue
             }
             list.append(AgentSession(id: id, kind: kind, path: meta["path"] as? String ?? "", task: meta["task"] as? String ?? "",
+                                     mode: meta["mode"] as? String ?? "",
                                      created: created, pid: pid, status: status, detail: detail, updated: updated))
         }
         list.sort { $0.created > $1.created }
@@ -231,7 +248,8 @@ final class AgentCenter {
         }
         UserDefaults.standard.set(kind.rawValue, forKey: "agentKind")
         let id = UUID().uuidString.lowercased()
-        let meta: [String: Any] = ["id": id, "kind": kind.rawValue, "path": path, "task": task.trimmed, "created": Date().timeIntervalSince1970]
+        let meta: [String: Any] = ["id": id, "kind": kind.rawValue, "path": path, "task": task.trimmed, "mode": permissionMode ?? "",
+                                   "created": Date().timeIntervalSince1970]
         try JSONSerialization.data(withJSONObject: meta).write(to: file(id + ".meta"))
         try Launcher.run(exe, args: kind.arguments(hooks: hooksFile.path, task: task.trimmed, mode: permissionMode), in: path,
                          env: ["GITROCHI_AGENT_ID": id], pidFile: file(id + ".pid").path)

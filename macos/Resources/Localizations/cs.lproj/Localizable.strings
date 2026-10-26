@@ -455,7 +455,6 @@
 "Force remove…" = "Vynutit odebrání…";
 "Found automatically" = "Nalezeno automaticky";
 "Friendly tone" = "Přátelský tón";
-"Fully automatic" = "Plně automaticky";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (používá vaše přihlášení Google)";
 "Go to Terminal window" = "Přejít do okna Terminálu";
 "Go to parent commit" = "Přejít na nadřazený commit";
@@ -1015,3 +1014,8 @@
 "… The diff is too long; only the beginning is shown" = "… Změny jsou příliš dlouhé; zobrazuje se jen začátek";
 "… show %lld more lines" = "… zobrazit další řádky (%1$lld)";
 "✅ Response: %@" = "✅ Odpověď: %1$@";
+"Skip all permission checks" = "Přeskočit všechny kontroly oprávnění";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "Agent spouští příkazy a mění soubory, aniž by se předem zeptal. Používejte to jen pro úkoly, kterým důvěřujete, nejlépe v samostatném worktree.";
+"I understand the risk" = "Rozumím riziku";
+"Skips permissions" = "Bez kontroly oprávnění";
+"Started with all permission checks skipped" = "Spuštěno s přeskočením všech kontrol oprávnění";

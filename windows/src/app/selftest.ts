@@ -449,10 +449,11 @@ export async function runSelfTest(): Promise<boolean> {
     await s.unstageAll();
     await ipc.remove(joinPath(repo, "ai-wsl.txt"));
     // 2) 에이전트 세션: WSL 경로로 열리고, 훅(윈도 실행 파일)이 세션 상태를 남기는지
-    await s.startAgent(repo, "", null, "claude");
+    await s.startAgent(repo, "", "bypassPermissions", "claude");
     const t = s.activeTerminal!;
     const pathOk = await until(() => bufferText(t.term).includes(`pwd=${toWslPath(repo)}`), 30000);
-    const hookOk = await until(() => agents.sessions.some((x) => x.kind === "claude" && x.status === "waiting"), 15000);
+    const hookOk = await until(() => agents.sessions.some((x) => x.kind === "claude" && x.status === "waiting" && x.mode === "bypassPermissions"), 15000);
+    const modeOk = bufferText(t.term).includes("mode=bypassPermissions");
     const agentLine = bufferText(t.term).split("\n").find((l) => l.includes("FAKE CLAUDE")) ?? bufferText(t.term).slice(-300);
     t.terminate();
     // 3) 터미널 셸을 WSL 로
@@ -469,8 +470,8 @@ export async function runSelfTest(): Promise<boolean> {
     tools.useWindows("claude");
     ai.setProvider(prevProvider);
     return [
-      summary === `WSL 커밋: You write git / b/ai-wsl.txt` && pathOk && hookOk && shellOk,
-      `distro=${distro} path=${w?.path} summary=${summary} err=${aiErr} agent=${agentLine} hook=${hookOk} shell=${shellOk} ${shellLine.replace(/\s+/g, " ")}`,
+      summary === `WSL 커밋: You write git / b/ai-wsl.txt` && pathOk && hookOk && modeOk && shellOk,
+      `distro=${distro} path=${w?.path} summary=${summary} err=${aiErr} agent=${agentLine} hook=${hookOk} mode=${modeOk} shell=${shellOk} ${shellLine.replace(/\s+/g, " ")}`,
     ];
   });
 

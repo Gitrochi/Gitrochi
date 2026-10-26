@@ -468,7 +468,6 @@
 "Force remove…" = "Примусово вилучити…";
 "Found automatically" = "Знайдено автоматично";
 "Friendly tone" = "Дружній тон";
-"Fully automatic" = "Повністю автоматично";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (використовує ваш вхід Google)";
 "Go to Terminal window" = "Перейти до вікна Терміналу";
 "Go to parent commit" = "Перейти до батьківського коміту";
@@ -1035,3 +1034,8 @@
 "… The diff is too long; only the beginning is shown" = "… Зміни задовгі; показано лише початок";
 "… show %lld more lines" = "… показати ще рядки (%1$lld)";
 "✅ Response: %@" = "✅ Відповідь: %1$@";
+"Skip all permission checks" = "Пропускати всі перевірки дозволів";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "Агент виконує команди й змінює файли, не питаючи. Використовуйте лише для завдань, яким довіряєте, краще в окремому робочому дереві.";
+"I understand the risk" = "Я розумію ризик";
+"Skips permissions" = "Без перевірки дозволів";
+"Started with all permission checks skipped" = "Запущено з пропуском усіх перевірок дозволів";

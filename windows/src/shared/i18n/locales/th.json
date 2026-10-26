@@ -381,7 +381,6 @@
  "Force remove…": "นำออกแบบบังคับ…",
  "Found automatically": "พบโดยอัตโนมัติ",
  "Friendly tone": "น้ำเสียงเป็นกันเอง",
- "Fully automatic": "อัตโนมัติทั้งหมด",
  "Gemini CLI (uses your Google login)": "Gemini CLI (ใช้การเข้าสู่ระบบ Google ของคุณ)",
  "Gemini blocked this request ({0}).": "Gemini บล็อกคำขอนี้ ({0})",
  "Gemini didn't respond because of its safety policy.": "Gemini ไม่ตอบกลับเนื่องจากนโยบายความปลอดภัย",
@@ -1043,5 +1042,10 @@
  "Couldn't check the rules": "ตรวจกฎไม่ได้",
  "No dependency rules yet": "ยังไม่มีกฎการพึ่งพา",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check อ่านกฎจาก .gitch/graph.rules ในรีโพสิทอรีนี้ สร้างไฟล์ที่มีตัวอย่างแบบคอมเมนต์ไว้ (gitch graph check --init) แล้วเปิดหรือไม่",
- "Create rules file": "สร้างไฟล์กฎ"
+ "Create rules file": "สร้างไฟล์กฎ",
+ "Skip all permission checks": "ข้ามการตรวจสอบสิทธิ์ทั้งหมด",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "เอเจนต์จะรันคำสั่งและแก้ไขไฟล์โดยไม่ถามก่อน ใช้เฉพาะกับงานที่คุณไว้ใจ และควรใช้ในเวิร์กทรีแยก",
+ "I understand the risk": "ฉันเข้าใจความเสี่ยง",
+ "Skips permissions": "ไม่ตรวจสอบสิทธิ์",
+ "Started with all permission checks skipped": "เริ่มโดยข้ามการตรวจสอบสิทธิ์ทั้งหมด"
 }

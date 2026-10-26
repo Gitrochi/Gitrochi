@@ -374,7 +374,6 @@
  "Force remove…": "Forcer la suppression…",
  "Found automatically": "Détecté automatiquement",
  "Friendly tone": "Ton convivial",
- "Fully automatic": "Entièrement automatique",
  "Gemini CLI (uses your Google login)": "Gemini CLI (utilise votre connexion Google)",
  "Gemini blocked this request ({0}).": "Gemini a bloqué cette requête ({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini n’a pas répondu en raison de sa politique de sécurité.",
@@ -1021,5 +1020,10 @@
  "Couldn't check the rules": "Impossible de vérifier les règles",
  "No dependency rules yet": "Pas encore de règles de dépendances",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check lit ses règles dans le fichier .gitch/graph.rules de ce dépôt. Créer ce fichier avec des exemples en commentaire (gitch graph check --init) et l’ouvrir ?",
- "Create rules file": "Créer le fichier de règles"
+ "Create rules file": "Créer le fichier de règles",
+ "Skip all permission checks": "Ignorer toutes les vérifications d’autorisation",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "L’agent exécute des commandes et modifie des fichiers sans demander. À réserver aux tâches de confiance, de préférence dans un worktree séparé.",
+ "I understand the risk": "Je comprends le risque",
+ "Skips permissions": "Sans vérification d’autorisation",
+ "Started with all permission checks skipped": "Démarrée en ignorant toutes les vérifications d’autorisation"
 }

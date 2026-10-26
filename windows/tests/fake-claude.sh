@@ -16,11 +16,13 @@ if [ "$1" = "-p" ]; then
   exit 0
 fi
 settings=""
+mode=""
 while [ $# -gt 0 ]; do
   if [ "$1" = "--settings" ]; then settings="$2"; fi
+  if [ "$1" = "--permission-mode" ]; then mode="$2"; fi
   shift
 done
 cmd=$(grep -o '"command": "[^"]*--agent-hook Stop"' "$settings" | sed 's/^"command": "//; s/"$//')
 echo '{"session_id":"wsl-test"}' | sh -c "$cmd"
-echo "FAKE CLAUDE SESSION OK pwd=$(pwd) agent=$GITROCHI_AGENT_ID"
+echo "FAKE CLAUDE SESSION OK pwd=$(pwd) agent=$GITROCHI_AGENT_ID mode=$mode"
 sleep 60

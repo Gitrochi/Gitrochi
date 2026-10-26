@@ -1,6 +1,6 @@
-import { GitBranch, House, Pencil, Plus, Sparkles, Zap } from "lucide-react";
+import { GitBranch, House, Pencil, Plus, ShieldOff, Sparkles, Zap } from "lucide-react";
 import { useEffect } from "react";
-import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle } from "@/entities/agent";
+import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, skipsPermissions } from "@/entities/agent";
 import { statsClean, type Worktree, type WorktreeStats } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
@@ -190,6 +190,12 @@ function SessionRow({ store, session: s, showPath }: { store: RepoStore; session
           <span className="faint" style={{ fontSize: 11 }}>
             {agentKind(s.kind).title.split(" (")[0]}
           </span>
+          {skipsPermissions(s.kind, s.mode) && (
+            <span className="row" style={{ color: "var(--red)", fontSize: 11, gap: 2, flex: "none" }} data-tip={t("Started with all permission checks skipped")}>
+              <ShieldOff size={11} />
+              {t("Skips permissions")}
+            </span>
+          )}
           {s.detail && s.status !== "ended" && <span className="muted ellipsis">· {s.detail}</span>}
         </span>
         {s.task && (

@@ -4,6 +4,7 @@ import { env, isWindows, joinPath, samePath, settings, slash, toWslPath, wslDist
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tempFile, type ToolId, tools, withWslEnv, wslArgs } from "@/shared/platform";
+import { agentArguments } from "../lib/arguments";
 
 /** 세션 상태: Claude Code 는 훅 이벤트로 자세히, 다른 에이전트는 실행 중/종료만 */
 export type AgentStatus = "starting" | "working" | "permission" | "waiting" | "running" | "ended";
@@ -39,6 +40,7 @@ export const agentKinds: AgentKindInfo[] = [
       { value: "acceptEdits", label: t("Auto-approve file edits") },
       { value: "plan", label: t("Plan only") },
       { value: "auto", label: t("Auto") },
+      { value: "bypassPermissions", label: t("Skip all permission checks") },
     ],
   },
   {
@@ -49,6 +51,7 @@ export const agentKinds: AgentKindInfo[] = [
       { value: "", label: t("Default") },
       { value: "read-only", label: t("Read-only") },
       { value: "workspace-write", label: t("Allow writing to the working folder") },
+      { value: "bypass", label: t("Skip all permission checks") },
     ],
   },
   {
@@ -59,7 +62,7 @@ export const agentKinds: AgentKindInfo[] = [
       { value: "", label: t("Default (ask every time)") },
       { value: "auto_edit", label: t("Auto-approve file edits") },
       { value: "plan", label: t("Plan only (read-only)") },
-      { value: "yolo", label: t("Fully automatic") },
+      { value: "yolo", label: t("Skip all permission checks") },
     ],
   },
 ];
@@ -71,6 +74,8 @@ export interface AgentSession {
   kind: AgentKind;
   path: string;
   task: string;
+  /** Permission mode it was started with ("" = default) */
+  mode: string;
   created: number;
   status: AgentStatus;
   detail: string | null;
@@ -193,7 +198,7 @@ class AgentCenter extends Observable {
       if (kind !== "claude" && !state) status = "running";
       const term = this.terminals.get(id);
       if (!term || !term.term.running) status = "ended";
-      list.push({ id, kind, path: String(meta.path ?? ""), task: String(meta.task ?? ""), created, status, detail, updated });
+      list.push({ id, kind, path: String(meta.path ?? ""), task: String(meta.task ?? ""), mode: String(meta.mode ?? ""), created, status, detail, updated });
     }
     list.sort((a, b) => b.created - a.created);
     if (JSON.stringify(list) !== JSON.stringify(this.sessions)) {
@@ -218,18 +223,9 @@ class AgentCenter extends Observable {
     settings.set("agentKind", kind);
     const id = crypto.randomUUID().toLowerCase();
     const text = task.trim();
-    const meta = { id, kind, path, task: text, created: Date.now() / 1000 };
+    const meta = { id, kind, path, task: text, mode: mode ?? "", created: Date.now() / 1000 };
     await ipc.writeText(joinPath(this.dir, id + ".meta"), JSON.stringify(meta));
-    let args: string[];
-    if (kind === "claude") {
-      args = ["--settings", inWsl ? toWslPath(this.hooksWslFile) : this.hooksFile];
-      if (mode) args.push("--permission-mode", mode);
-      if (text) args.push(text);
-    } else if (kind === "codex") {
-      args = [...(mode ? ["--sandbox", mode] : []), ...(text ? [text] : [])];
-    } else {
-      args = [...(mode ? ["--approval-mode", mode] : []), ...(text ? ["-i", text] : [])];
-    }
+    const args = agentArguments(kind, inWsl ? toWslPath(this.hooksWslFile) : this.hooksFile, text, mode);
     const title = info.title.split(" (")[0];
     let term: TerminalSession;
     if (cmd.kind === "native") {

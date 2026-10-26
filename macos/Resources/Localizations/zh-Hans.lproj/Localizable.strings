@@ -470,7 +470,6 @@
 "Force remove…" = "强制移除…";
 "Found automatically" = "已自动找到";
 "Friendly tone" = "友好的语气";
-"Fully automatic" = "全自动";
 "Gemini CLI (uses your Google login)" = "Gemini CLI（使用你的 Google 登录信息）";
 "Go to Terminal window" = "转到“终端”窗口";
 "Go to parent commit" = "转到父提交";
@@ -1038,3 +1037,8 @@
 "… The diff is too long; only the beginning is shown" = "… 差异过长，仅显示开头部分";
 "… show %lld more lines" = "… 再显示 %1$lld 行";
 "✅ Response: %@" = "✅ 响应：%1$@";
+"Skip all permission checks" = "跳过所有权限确认";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "代理会不经询问直接运行命令并修改文件。仅用于你信任的任务，最好在单独的工作树中使用。";
+"I understand the risk" = "我了解风险";
+"Skips permissions" = "跳过权限确认";
+"Started with all permission checks skipped" = "以跳过所有权限确认的方式启动";

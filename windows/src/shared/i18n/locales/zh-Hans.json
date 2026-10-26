@@ -387,7 +387,6 @@
  "Force remove…": "强制移除…",
  "Found automatically": "已自动找到",
  "Friendly tone": "友好的语气",
- "Fully automatic": "全自动",
  "Gemini CLI (uses your Google login)": "Gemini CLI（使用你的 Google 登录信息）",
  "Gemini blocked this request ({0}).": "Gemini 拦截了此请求（{0}）。",
  "Gemini didn't respond because of its safety policy.": "由于安全策略，Gemini 未作出响应。",
@@ -1049,5 +1048,10 @@
  "Couldn't check the rules": "无法检查规则",
  "No dependency rules yet": "还没有依赖规则",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check 从此仓库的 .gitch/graph.rules 读取规则。要创建带有注释示例的文件（gitch graph check --init）并打开吗？",
- "Create rules file": "创建规则文件"
+ "Create rules file": "创建规则文件",
+ "Skip all permission checks": "跳过所有权限确认",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "代理会不经询问直接运行命令并修改文件。仅用于你信任的任务，最好在单独的工作树中使用。",
+ "I understand the risk": "我了解风险",
+ "Skips permissions": "跳过权限确认",
+ "Started with all permission checks skipped": "以跳过所有权限确认的方式启动"
 }
