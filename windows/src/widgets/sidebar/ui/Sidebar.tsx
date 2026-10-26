@@ -1,4 +1,4 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, EyeOff, Folder, FolderOpen, GitBranch, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
+import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
@@ -7,7 +7,7 @@ import { branchPayload, type RepoStore } from "@/entities/repo";
 import { displayPath, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
-import { Segmented, showContextMenu, tip } from "@/shared/ui";
+import { IconButton, Segmented, showContextMenu, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
 import { CIPanel } from "./CIPanel";
 import { PullRequestSection } from "./PullRequestSection";
@@ -221,6 +221,7 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
 
 function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Branch; label: string }) {
   const w = !b.isRemote ? store.worktreeUsing(b.name) : null;
+  const hidden = store.isHidden(b);
   return (
     <div
       className={`side-row ${b.isCurrent ? "current" : ""}`}
@@ -237,7 +238,7 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       data-tip={tip(b.name, t("Click: show in graph · Double-click: check out · Drag onto another branch in the graph: merge or rebase"))}
     >
       <span className="lead">{b.isCurrent ? <CircleCheck size={14} /> : <GitBranch size={14} />}</span>
-      <span className="ellipsis grow" style={store.isHidden(b) ? { color: "var(--text-2)" } : undefined}>
+      <span className="ellipsis grow" style={hidden ? { color: "var(--text-2)" } : undefined}>
         {label}
       </span>
       {store.isPinned(b) && (
@@ -250,10 +251,19 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
           <ShieldCheck size={12} />
         </span>
       )}
-      {store.isHidden(b) && (
-        <span className="muted" data-tip={t("Branches hidden from the graph — right-click to show again")} style={{ display: "inline-flex" }}>
-          <EyeOff size={12} />
-        </span>
+      {(hidden || !b.isCurrent) && (
+        // the eye shows on hover; a hidden branch keeps it so the state stays visible (the current branch always shows)
+        <IconButton
+          small
+          className={hidden ? "" : "hover-only"}
+          icon={hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+          tip={hidden ? t("Show in graph again") : t("Hide from graph")}
+          onClick={(e) => {
+            e.stopPropagation();
+            void store.setHidden(b, !hidden);
+          }}
+          onDoubleClick={(e) => e.stopPropagation()}
+        />
       )}
       {w && (
         <span className="muted" data-tip={t("In use by a worktree: {0}", displayPath(w.path))} style={{ display: "inline-flex" }}>

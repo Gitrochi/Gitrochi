@@ -60,11 +60,13 @@
   border: 1.5px solid var(--accent);
 }
 
-.wt-card .hover-only {
+.wt-card .hover-only,
+.side-row .hover-only {
   visibility: hidden;
 }
 
-.wt-card:hover .hover-only {
+.wt-card:hover .hover-only,
+.side-row:hover .hover-only {
   visibility: visible;
 }
 

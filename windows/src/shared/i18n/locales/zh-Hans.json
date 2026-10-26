@@ -101,7 +101,6 @@
  "Branch being merged": "被合并的分支",
  "Branch name": "分支名称",
  "Branch to check out": "要检出的分支",
- "Branches hidden from the graph — right-click to show again": "已从提交图中隐藏的分支 — 右键单击可重新显示",
  "Branches pinned to the top": "置顶的分支",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi 使用此电脑上安装的 git。请安装 Git for Windows；如果已安装，请手动定位 git.exe。",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} 已是最新版本。",

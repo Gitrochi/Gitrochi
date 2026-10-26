@@ -97,7 +97,6 @@
  "Branch being merged": "Zu mergender Branch",
  "Branch name": "Branch-Name",
  "Branch to check out": "Auszucheckender Branch",
- "Branches hidden from the graph — right-click to show again": "Im Graphen ausgeblendete Branches — per Rechtsklick wieder einblenden",
  "Branches pinned to the top": "Oben angeheftete Branches",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi verwendet das auf diesem PC installierte git. Installieren Sie Git for Windows oder wählen Sie git.exe aus, falls es bereits vorhanden ist.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} ist die neueste Version.",

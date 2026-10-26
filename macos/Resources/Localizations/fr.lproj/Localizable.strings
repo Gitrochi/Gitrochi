@@ -154,7 +154,6 @@
 "Branch being merged" = "Branche en cours de fusion";
 "Branch name" = "Nom de la branche";
 "Branch to check out" = "Branche sur laquelle basculer";
-"Branches hidden from the graph — right-click to show again" = "Branches masquées du graphe — clic droit pour les réafficher";
 "Branches pinned to the top" = "Branches épinglées en haut";
 "Check again with fetch" = "Revérifier avec fetch";
 "Check this repository with gitch again" = "Vérifier à nouveau ce dépôt avec gitch";

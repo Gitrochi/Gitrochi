@@ -101,7 +101,6 @@
  "Branch being merged": "머지하는 브랜치",
  "Branch name": "브랜치 이름",
  "Branch to check out": "체크아웃할 브랜치",
- "Branches hidden from the graph — right-click to show again": "그래프에서 숨긴 브랜치 — 우클릭으로 다시 보이기",
  "Branches pinned to the top": "맨 위에 고정한 브랜치",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi 는 이 PC 의 git 을 그대로 씁니다. Git for Windows 를 설치하거나, 이미 있다면 git.exe 를 직접 불러오세요.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} 이(가) 가장 새 버전입니다.",

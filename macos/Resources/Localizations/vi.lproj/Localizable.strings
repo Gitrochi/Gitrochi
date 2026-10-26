@@ -156,7 +156,6 @@
 "Branch being merged" = "Nhánh đang được merge";
 "Branch name" = "Tên nhánh";
 "Branch to check out" = "Nhánh cần checkout";
-"Branches hidden from the graph — right-click to show again" = "Các nhánh đã ẩn khỏi đồ thị — nhấp chuột phải để hiện lại";
 "Branches pinned to the top" = "Các nhánh được ghim lên đầu";
 "Check again with fetch" = "Kiểm tra lại có fetch";
 "Check this repository with gitch again" = "Kiểm tra lại kho này bằng gitch";

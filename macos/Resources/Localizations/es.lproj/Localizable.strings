@@ -157,7 +157,6 @@
 "Branch being merged" = "Rama que se fusiona";
 "Branch name" = "Nombre de la rama";
 "Branch to check out" = "Rama para hacer checkout";
-"Branches hidden from the graph — right-click to show again" = "Ramas ocultas del grafo: haz clic derecho para volver a mostrarlas";
 "Branches pinned to the top" = "Ramas fijadas arriba";
 "Check again with fetch" = "Volver a comprobar con fetch";
 "Check this repository with gitch again" = "Volver a comprobar este repositorio con gitch";
