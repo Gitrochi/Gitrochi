@@ -1012,3 +1012,6 @@
 "I understand the risk" = "Je comprends le risque";
 "Skips permissions" = "Sans vérification d’autorisation";
 "Started with all permission checks skipped" = "Démarrée en ignorant toutes les vérifications d’autorisation";
+"Write" = "Écrire";
+"Preview" = "Aperçu";
+"Nothing to preview" = "Rien à prévisualiser";

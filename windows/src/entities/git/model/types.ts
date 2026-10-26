@@ -1,4 +1,5 @@
 import { t } from "@/shared/i18n";
+import type { MdRefs } from "@/shared/lib";
 // 맥 버전(Models.swift)과 같은 모델
 
 export const WIP_ID = "__WORKING_TREE__";
@@ -359,6 +360,32 @@ export interface RepoTarget {
   /** owner/repo, group/sub/repo */
   path: string;
 }
+
+/** Where #123, !123 and @name in this repository's PR/MR text point */
+export function markdownRefs(t: RepoTarget): MdRefs {
+  const web = `https://${t.host}/${t.path}`;
+  const user = (name: string) => `https://${t.host}/${name}`;
+  return t.provider === "github"
+    ? { issue: (n) => `${web}/issues/${n}`, user }
+    : { issue: (n) => `${web}/-/issues/${n}`, request: (n) => `${web}/-/merge_requests/${n}`, user };
+}
+
+/** Images load only from the repository's own server, so a PR can't make the app contact any other host */
+export function canLoadImage(t: RepoTarget | null, src: string) {
+  if (!t) return false;
+  let host: string;
+  try {
+    const u = new URL(src);
+    if (u.protocol !== "https:") return false;
+    host = u.hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return host === t.host.toLowerCase().replace(/:\d+$/, "") || (t.provider === "github" && (host === "github.com" || host.endsWith(".githubusercontent.com")));
+}
+
+/** <Markdown> props for this repository: #123 · @name links and allowed images */
+export const markdownLinks = (t: RepoTarget | null) => (t ? { refs: markdownRefs(t), canLoadImage: (src: string) => canLoadImage(t, src) } : {});
 
 export const sameTarget = (a: RepoTarget | null, b: RepoTarget | null) =>
   a === b || (!!a && !!b && a.provider === b.provider && a.remote === b.remote && a.host === b.host && a.path === b.path);

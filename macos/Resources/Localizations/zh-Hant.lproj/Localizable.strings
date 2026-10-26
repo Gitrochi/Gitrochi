@@ -1041,3 +1041,6 @@
 "I understand the risk" = "我了解風險";
 "Skips permissions" = "略過權限確認";
 "Started with all permission checks skipped" = "以略過所有權限確認的方式啟動";
+"Write" = "撰寫";
+"Preview" = "預覽";
+"Nothing to preview" = "沒有可預覽的內容";

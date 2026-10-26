@@ -1040,3 +1040,6 @@
 "I understand the risk" = "リスクを理解しました";
 "Skips permissions" = "権限確認なし";
 "Started with all permission checks skipped" = "すべての権限確認をスキップして開始したセッション";
+"Write" = "書く";
+"Preview" = "プレビュー";
+"Nothing to preview" = "プレビューする内容がありません";

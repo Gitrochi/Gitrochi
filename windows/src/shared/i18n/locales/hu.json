@@ -1035,5 +1035,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Az ügynök előzetes kérdés nélkül futtat parancsokat és módosít fájlokat. Csak megbízható feladatokhoz használja, lehetőleg külön worktree-ben.",
  "I understand the risk": "Értem a kockázatot",
  "Skips permissions": "Jogosultság-ellenőrzés nélkül",
- "Started with all permission checks skipped": "Minden jogosultság-ellenőrzés kihagyásával indítva"
+ "Started with all permission checks skipped": "Minden jogosultság-ellenőrzés kihagyásával indítva",
+ "Write": "Írás",
+ "Preview": "Előnézet",
+ "Nothing to preview": "Nincs mit megjeleníteni"
 }

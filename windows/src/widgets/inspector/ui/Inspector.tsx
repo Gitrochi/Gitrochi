@@ -1,14 +1,14 @@
 import { ArrowDownToLine, ArrowLeft, CircleCheck, CircleDot, CircleMinus, CirclePlus, Clock, ExternalLink, GitBranch, GitMerge, GitPullRequest, Hash, Layers, RefreshCw, Sparkles, TriangleAlert, Waypoints } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
-import { type FileChange, providerInfo, RefBadge, sameDiffSource, short, StatusBadge, statusCount, statusIsEmpty } from "@/entities/git";
+import { type FileChange, markdownLinks, providerInfo, RefBadge, sameDiffSource, short, StatusBadge, statusCount, statusIsEmpty } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, type MenuItem, Spinner, tip } from "@/shared/ui";
+import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, Markdown, type MenuItem, Spinner, tip } from "@/shared/ui";
 import { ChangeList, FileViewToggle } from "./FileList";
 import { GitchBar } from "./GitchBar";
 import "./inspector.css";
@@ -223,6 +223,7 @@ function CommitComposer({ store }: { store: RepoStore }) {
 function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
   useObserve(avatars);
   const [expanded, setExpanded] = useState(false);
+  const md = useMemo(() => markdownLinks(store.target), [store.target]);
   const d = store.detail;
   if (!d || d.sha !== sha)
     return (
@@ -264,12 +265,12 @@ function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
           </div>
           {d.body && (
             <>
-              <div
-                className="selectable muted markdown"
+              <Markdown
+                text={d.body}
+                {...md}
+                className="muted"
                 style={long && !expanded ? { maxHeight: 8 * 20, overflow: "hidden", maskImage: "linear-gradient(black 70%, transparent)" } : undefined}
-              >
-                {d.body}
-              </div>
+              />
               {long && (
                 <button className="link" style={{ alignSelf: "flex-start" }} onClick={() => setExpanded(!expanded)}>
                   {expanded ? t("Collapse") : t("Show all")}
@@ -373,6 +374,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
     setDraft("");
     void store.loadReview(number);
   }, [store, number]);
+  const md = useMemo(() => markdownLinks(store.target), [store.target]);
   const pr = store.pullRequests.find((p) => p.number === number);
   const target = store.target;
   if (!pr || !target) return <Empty icon={<GitPullRequest size={30} />} title={t("{0} not in the list", target ? providerInfo[target.provider].requestShort : "PR")} detail={t("It was closed or hasn't been loaded yet.")} />;
@@ -431,7 +433,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
           {pr.headSHA && store.commitIndex.has(pr.headSHA) && <Button onClick={() => store.reveal(pr.headSHA!)}>{t("Show in graph")}</Button>}
         </div>
         <div style={{ height: 1, background: "var(--border)" }} />
-        {pr.body.trim() ? <div className="selectable markdown">{pr.body}</div> : <span className="muted">{t("No description")}</span>}
+        {pr.body.trim() ? <Markdown text={pr.body} {...md} /> : <span className="muted">{t("No description")}</span>}
         {store.reviewError && (
           <span className="error-text" style={{ fontSize: 11.5, whiteSpace: "pre-wrap" }}>
             {store.reviewError}
@@ -488,7 +490,7 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
                         {c.line != null ? `:${c.line}` : ""}
                       </span>
                     )}
-                    {c.body && <div className="selectable markdown">{c.body}</div>}
+                    {c.body && <Markdown text={c.body} {...md} />}
                   </div>
                 ),
               )}

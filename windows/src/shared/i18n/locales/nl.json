@@ -999,5 +999,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "De agent voert opdrachten uit en wijzigt bestanden zonder eerst te vragen. Gebruik dit alleen voor taken die je vertrouwt, bij voorkeur in een aparte worktree.",
  "I understand the risk": "Ik begrijp het risico",
  "Skips permissions": "Zonder toestemmingscontrole",
- "Started with all permission checks skipped": "Gestart zonder toestemmingscontroles"
+ "Started with all permission checks skipped": "Gestart zonder toestemmingscontroles",
+ "Write": "Schrijven",
+ "Preview": "Voorbeeld",
+ "Nothing to preview": "Niets om te bekijken"
 }

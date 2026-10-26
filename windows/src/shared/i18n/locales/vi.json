@@ -1007,5 +1007,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Agent chạy lệnh và thay đổi tệp mà không hỏi trước. Chỉ dùng cho tác vụ bạn tin tưởng, tốt nhất trong một worktree riêng.",
  "I understand the risk": "Tôi hiểu rủi ro",
  "Skips permissions": "Bỏ qua kiểm tra quyền",
- "Started with all permission checks skipped": "Đã bắt đầu và bỏ qua mọi kiểm tra quyền"
+ "Started with all permission checks skipped": "Đã bắt đầu và bỏ qua mọi kiểm tra quyền",
+ "Write": "Viết",
+ "Preview": "Xem trước",
+ "Nothing to preview": "Không có gì để xem trước"
 }

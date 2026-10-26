@@ -1053,5 +1053,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "代理会不经询问直接运行命令并修改文件。仅用于你信任的任务，最好在单独的工作树中使用。",
  "I understand the risk": "我了解风险",
  "Skips permissions": "跳过权限确认",
- "Started with all permission checks skipped": "以跳过所有权限确认的方式启动"
+ "Started with all permission checks skipped": "以跳过所有权限确认的方式启动",
+ "Write": "编写",
+ "Preview": "预览",
+ "Nothing to preview": "没有可预览的内容"
 }

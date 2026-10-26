@@ -1047,5 +1047,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "เอเจนต์จะรันคำสั่งและแก้ไขไฟล์โดยไม่ถามก่อน ใช้เฉพาะกับงานที่คุณไว้ใจ และควรใช้ในเวิร์กทรีแยก",
  "I understand the risk": "ฉันเข้าใจความเสี่ยง",
  "Skips permissions": "ไม่ตรวจสอบสิทธิ์",
- "Started with all permission checks skipped": "เริ่มโดยข้ามการตรวจสอบสิทธิ์ทั้งหมด"
+ "Started with all permission checks skipped": "เริ่มโดยข้ามการตรวจสอบสิทธิ์ทั้งหมด",
+ "Write": "เขียน",
+ "Preview": "แสดงตัวอย่าง",
+ "Nothing to preview": "ไม่มีเนื้อหาให้แสดงตัวอย่าง"
 }

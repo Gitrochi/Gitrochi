@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { agents } from "@/entities/agent";
 import { ai } from "@/entities/ai";
 import { canPlay, CIAPI } from "@/entities/ci";
-import { type DropRequest, isWIP, statusIsEmpty } from "@/entities/git";
+import { type DropRequest, isWIP, markdownRefs, statusIsEmpty } from "@/entities/git";
 import { gitch, graphRulesFile, type GitchAccountSetup as AccountSetup, type GitchBrowserLogin as BrowserLogin } from "@/entities/gitch";
 import { accounts, ReviewAPI, reviewFileChange } from "@/entities/hosting";
 import { branchPayload } from "@/entities/repo";
@@ -15,7 +15,7 @@ import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
-import { theme } from "@/shared/ui";
+import { Markdown, theme } from "@/shared/ui";
 import { GitchAccountSetup, GitchBrowserLogin } from "@/widgets/settings";
 import { applyAppLaunch } from "./lib/app-launch";
 
@@ -614,6 +614,27 @@ export async function runSelfTest(): Promise<boolean> {
       calls.includes("/merge_requests/5/unapprove") &&
       diff;
     return [ok, `gh=${r.comments.map((c) => c.author + ":" + c.kind)} gl=${m.comments.length}/${m.state.approvalsLeft} diff=${diff}`];
+  });
+
+  await step("Markdown in PR text (no scripts, safe links only)", async () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    const root = createRoot(el);
+    const text = '## Title\n\n- [x] done\n- [ ] todo\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n<script>window.mdHacked = 1</script><img src=x onerror="window.mdHacked = 1"> [js](javascript:window.mdHacked=1) Fixes #5';
+    root.render(createElement(Markdown, { text, refs: markdownRefs({ provider: "github", remote: "origin", host: "github.com", path: "o/r" }), canLoadImage: () => false }));
+    const drawn = await until(() => !!el.querySelector("table"), 3000);
+    const links = Array.from(el.querySelectorAll("a")).map((a) => a.getAttribute("href") ?? "");
+    const ok =
+      drawn &&
+      !!el.querySelector("h2") &&
+      el.querySelectorAll("li.task input:checked").length === 1 &&
+      !el.querySelector("script, img, iframe") &&
+      links.join() === "https://github.com/o/r/issues/5" &&
+      !(window as { mdHacked?: number }).mdHacked;
+    const detail = `links=${links} tags=${Array.from(el.querySelectorAll("*")).map((e) => e.tagName.toLowerCase()).join(",")}`;
+    root.unmount();
+    el.remove();
+    return [ok, detail];
   });
 
   // 파일 히스토리·blame: app.txt 를 바꾼 커밋들과 줄마다 마지막 커밋

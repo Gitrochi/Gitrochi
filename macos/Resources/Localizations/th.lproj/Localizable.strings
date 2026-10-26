@@ -1035,3 +1035,6 @@
 "I understand the risk" = "ฉันเข้าใจความเสี่ยง";
 "Skips permissions" = "ไม่ตรวจสอบสิทธิ์";
 "Started with all permission checks skipped" = "เริ่มโดยข้ามการตรวจสอบสิทธิ์ทั้งหมด";
+"Write" = "เขียน";
+"Preview" = "แสดงตัวอย่าง";
+"Nothing to preview" = "ไม่มีเนื้อหาให้แสดงตัวอย่าง";

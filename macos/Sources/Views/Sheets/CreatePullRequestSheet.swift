@@ -10,6 +10,7 @@ struct CreatePullRequestSheet: View {
     @ViewState private var bases: [String] = []
     @ViewState private var draft = false
     @ViewState private var generating = false
+    @ViewState private var previewing = false
 
     var body: some View {
         let provider = store.target?.provider ?? .github
@@ -26,13 +27,33 @@ struct CreatePullRequestSheet: View {
             }
             TextField("Title", text: $title)
                 .textFieldStyle(.roundedBorder)
-            TextEditor(text: $bodyText)
-                .font(.body)
-                .scrollContentBackground(.hidden)
-                .padding(4)
-                .frame(height: 200)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.3)))
+            Picker("", selection: $previewing) {
+                Text("Write").tag(false)
+                Text("Preview").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            Group {
+                if previewing {
+                    ScrollView {
+                        if bodyText.trimmed.isEmpty {
+                            Text("Nothing to preview").foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            MarkdownView(bodyText, target: store.target)
+                        }
+                    }
+                    .padding(8)
+                } else {
+                    TextEditor(text: $bodyText)
+                        .font(.body)
+                        .scrollContentBackground(.hidden)
+                        .padding(4)
+                }
+            }
+            .frame(height: 200)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.3)))
             HStack {
                 Toggle("Draft", isOn: $draft)
                 Spacer()

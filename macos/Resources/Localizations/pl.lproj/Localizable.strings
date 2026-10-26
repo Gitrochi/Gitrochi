@@ -1022,3 +1022,6 @@
 "I understand the risk" = "Rozumiem ryzyko";
 "Skips permissions" = "Bez sprawdzania uprawnień";
 "Started with all permission checks skipped" = "Uruchomiono z pominięciem wszystkich sprawdzeń uprawnień";
+"Write" = "Pisz";
+"Preview" = "Podgląd";
+"Nothing to preview" = "Brak treści do podglądu";
