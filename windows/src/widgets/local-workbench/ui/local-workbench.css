@@ -28,6 +28,38 @@
   .workbench-tabs > .workbench-search { max-width: none; }
 }
 
+/* The Compare page: pickers and the branch list on the left, the comparison filling the rest */
+.compare-page { flex-direction: row; gap: 0; padding: 0; overflow: hidden; }
+.compare-side { width: 320px; flex: none; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); background: var(--surface); overflow: auto; }
+.compare-form { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-bottom: 1px solid var(--border); flex: none; }
+.compare-form > .revision-picker { gap: 4px; }
+.compare-form > .revision-picker > .input { flex: 1 1 120px; min-width: 0; }
+.compare-form > .revision-picker > .revision-picker-list { flex: 0 1 150px; width: auto; min-width: 0; }
+.compare-form > .compare-swap { align-self: center; }
+.compare-form > label.row { align-items: flex-start; line-height: 1.5; }
+.compare-form > label.row > input[type="checkbox"] { flex-shrink: 0; margin-top: 3px; }
+.compare-branches { display: flex; flex-direction: column; flex: 1; min-height: 160px; gap: 8px; padding: 12px 16px 0; }
+.compare-branches > .row > .input { min-width: 0; }
+.compare-branch-list { flex: 1; min-height: 0; overflow: auto; margin: 0 -8px; padding-bottom: 8px; }
+.compare-branch { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 2px 8px; border-radius: 6px; }
+.compare-branch:hover { background: var(--hover); }
+.compare-branch.on { background: var(--select); }
+.compare-branch-icon { display: inline-flex; flex: none; }
+.compare-branch > button { flex: none; visibility: hidden; }
+.compare-branch:hover > button, .compare-branch:focus-within > button, .compare-branch.on > button { visibility: visible; }
+.compare-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; }
+.compare-main > .hint { flex: none; }
+.compare-result { flex: 1; min-height: 0; display: grid; grid-template-columns: 260px minmax(0, 1fr); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.compare-result > .history-tools-list { min-width: 0; }
+.compare-empty { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+@container workbench (max-width: 760px) {
+  .compare-page { flex-direction: column; overflow: auto; }
+  .compare-side { width: auto; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
+  .compare-branches { min-height: 0; max-height: 260px; }
+  .compare-main { min-height: 360px; }
+  .compare-result { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(100px, 30%) minmax(0, 1fr); }
+}
+
 .workbench-rebase-preview { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: color-mix(in srgb, var(--accent) 4%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border)); border-radius: 12px; }
 .workbench-rebase-preview > .row { flex-wrap: wrap; gap: 10px; }
 .workbench-rebase-preview p { margin: 0; line-height: 1.6; }

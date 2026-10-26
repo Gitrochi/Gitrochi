@@ -1171,5 +1171,10 @@
  "Remote branches": "遠端分支",
  "From revision": "起始修訂",
  "To revision": "目標修訂",
- "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 點擊在 Actions 中開啟"
+ "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 點擊在 Actions 中開啟",
+ "Add account…": "新增帳號…",
+ "Choose the account for this repository": "選擇此存放庫使用的帳號",
+ "Filter branches and tags": "篩選分支和標籤",
+ "Use branches, tags or commit IDs, or pick a branch on the left.": "使用分支、標籤或提交 ID，或在左側選擇一個分支。",
+ "No matching branches": "沒有符合的分支"
 }

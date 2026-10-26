@@ -1146,5 +1146,10 @@
  "Remote branches": "Remote-Branches",
  "From revision": "Von Revision",
  "To revision": "Bis Revision",
- "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Klick öffnet in Actions"
+ "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Klick öffnet in Actions",
+ "Add account…": "Konto hinzufügen…",
+ "Choose the account for this repository": "Konto für dieses Repository auswählen",
+ "Filter branches and tags": "Branches und Tags filtern",
+ "Use branches, tags or commit IDs, or pick a branch on the left.": "Verwenden Sie Branches, Tags oder Commit-IDs, oder wählen Sie links einen Branch.",
+ "No matching branches": "Keine passenden Branches"
 }

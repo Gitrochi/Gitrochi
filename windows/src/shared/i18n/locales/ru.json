@@ -1169,5 +1169,10 @@
  "Remote branches": "Удалённые ветки",
  "From revision": "Исходная ревизия",
  "To revision": "Целевая ревизия",
- "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — нажмите, чтобы открыть в Actions"
+ "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — нажмите, чтобы открыть в Actions",
+ "Add account…": "Добавить учётную запись…",
+ "Choose the account for this repository": "Выберите учётную запись для этого репозитория",
+ "Filter branches and tags": "Фильтр веток и тегов",
+ "Use branches, tags or commit IDs, or pick a branch on the left.": "Используйте ветки, теги или ID коммитов либо выберите ветку слева.",
+ "No matching branches": "Нет подходящих веток"
 }

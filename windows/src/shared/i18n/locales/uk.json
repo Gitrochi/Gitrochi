@@ -1169,5 +1169,10 @@
  "Remote branches": "Віддалені гілки",
  "From revision": "Початкова ревізія",
  "To revision": "Кінцева ревізія",
- "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — натисніть, щоб відкрити в Actions"
+ "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — натисніть, щоб відкрити в Actions",
+ "Add account…": "Додати обліковий запис…",
+ "Choose the account for this repository": "Виберіть обліковий запис для цього репозиторію",
+ "Filter branches and tags": "Фільтр гілок і тегів",
+ "Use branches, tags or commit IDs, or pick a branch on the left.": "Використовуйте гілки, теги або ID комітів, або виберіть гілку ліворуч.",
+ "No matching branches": "Немає відповідних гілок"
 }

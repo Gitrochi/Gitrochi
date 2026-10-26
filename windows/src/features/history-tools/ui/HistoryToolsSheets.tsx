@@ -34,7 +34,7 @@ export function CompareRevisionsSheet({ store, close, embedded = false }: { stor
   return embedded ? content : <Modal title={t("Compare revisions")} width={1100} onClose={() => closeTools(store, close)} footer={<Button onClick={() => closeTools(store, close)}>{t("Close")}</Button>}>{content}</Modal>;
 }
 /** A revision field: type a branch, tag or commit, or pick one from the list next to it (macOS: RevisionPicker) */
-function RevisionPicker({ title, value, store, onChange }: { title: string; value: string; store: RepoStore; onChange: (value: string) => void }) {
+export function RevisionPicker({ title, value, store, onChange }: { title: string; value: string; store: RepoStore; onChange: (value: string) => void }) {
   const head = store.headBranch;
   return <div className="row revision-picker">
     <input aria-label={title} className="input grow" placeholder={t("Branch, tag or commit")} value={value} onChange={(e) => onChange(e.target.value)} />

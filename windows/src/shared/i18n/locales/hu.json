@@ -1153,5 +1153,10 @@
  "Remote branches": "Távoli ágak",
  "From revision": "Kiinduló revízió",
  "To revision": "Célrevízió",
- "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kattintson a megnyitáshoz az Actions oldalon"
+ "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kattintson a megnyitáshoz az Actions oldalon",
+ "Add account…": "Fiók hozzáadása…",
+ "Choose the account for this repository": "Válassza ki a tárolóhoz használt fiókot",
+ "Filter branches and tags": "Ágak és címkék szűrése",
+ "Use branches, tags or commit IDs, or pick a branch on the left.": "Használjon ágakat, címkéket vagy commit-azonosítókat, vagy válasszon egy ágat a bal oldalon.",
+ "No matching branches": "Nincs egyező ág"
 }
