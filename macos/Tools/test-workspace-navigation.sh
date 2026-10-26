@@ -101,7 +101,7 @@ import SwiftUI
                 precondition(message >= 199, "The commit message needs readable width")
             }
         }
-        precondition(GraphMetrics.width(lanes: 24, expanded: true) > GraphMetrics.width(lanes: 24))
+        precondition(GraphMetrics.width(lanes: 24) == GraphMetrics.width(lanes: GraphMetrics.maxVisibleLanes), "Lanes past the visible limit do not widen the graph column")
         precondition(WorkspaceDestination.allCases.count == 23)
         let nav = RepoStore()
         func navMatches(_ page: WorkspaceDestination) -> Bool {

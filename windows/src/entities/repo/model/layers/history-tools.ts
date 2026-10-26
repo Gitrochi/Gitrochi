@@ -41,7 +41,6 @@ export abstract class RepoHistoryTools extends RepoGitch {
     this.emit();
   }
   clearHistorySelection() { this.historyTools.selected = []; this.historyTools.anchor = null; }
-  clearGraphSelection() { this.historyTools.selected = []; this.historyTools.anchor = null; this.emit(); }
   openRevisionComparison(left?: string, right?: string) {
     this.cancelHistoryTools();
     const s = this.historyTools;

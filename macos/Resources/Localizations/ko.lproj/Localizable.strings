@@ -1226,8 +1226,6 @@
 "Close diff (Esc)" = "diff 닫기 (Esc)";
 "File actions" = "파일 작업";
 "File display" = "파일 표시 방식";
-"Open Changes to stage files and create your first commit." = "변경 사항 화면에서 파일을 스테이지하고 첫 커밋을 만드세요.";
-"Show all graph lanes" = "그래프의 모든 연결선 보기";
 
 "Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
 "Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";
@@ -1333,7 +1331,6 @@
 "Credential account" = "인증 계정";
 
 "%lld review requests loaded" = "리뷰 요청 %lld개 불러옴";
-"%lld selected" = "%lld개 선택";
 "A clean working tree is required. A conflict stops the sequence; use Continue or Abort in the operation banner. Completed operations can be undone." = "작업 트리에 변경이 없어야 합니다. 충돌이 나면 멈추며 진행 중 작업 배너에서 계속하거나 중단할 수 있습니다. 완료한 작업은 실행 취소할 수 있습니다.";
 "A function name replaces the line range. Git detects function boundaries using its language rules. Only committed content is traced, up to 200 commits." = "함수 이름을 입력하면 줄 범위 대신 사용합니다. Git의 언어 규칙으로 함수 범위를 판단합니다. 커밋된 내용만 최대 200개 커밋까지 추적합니다.";
 "A local recovery copy is saved before discarding staged, unstaged and untracked changes." = "스테이지·작업 파일·새 파일 변경을 버리기 전에 로컬 복구본을 보관합니다.";
@@ -1361,7 +1358,6 @@
 "Choose a committed file." = "커밋된 파일을 선택하세요.";
 "Choose two revisions to compare" = "비교할 두 시점을 선택하세요";
 "Cleanup rewrites history on the current branch. Squash requires adjacent commits; a second plan shows every affected commit before starting." = "정리는 현재 브랜치 이력을 다시 씁니다. 합치려면 서로 붙어 있는 커밋을 선택하세요. 시작 전 다음 계획에서 영향받는 모든 커밋을 확인합니다.";
-"Clear selection" = "선택 해제";
 "Close issue" = "이슈 닫기";
 "Close issue…" = "이슈 닫기…";
 "Close request" = "요청 닫기";
@@ -1512,7 +1508,6 @@
 "Select an item to read its conversation." = "대화를 보려면 항목을 선택해 주세요.";
 "Select at least one commit." = "커밋을 하나 이상 선택하세요.";
 "Select commits on the current branch." = "현재 브랜치의 커밋을 선택하세요.";
-"Selected commits…" = "선택한 커밋 작업…";
 "Sending a question lets AI read tracked files, status and history in this repository. Each read is shown below. Files are never changed." = "질문을 보내면 AI가 이 저장소의 추적 파일·상태·이력을 읽을 수 있습니다. 읽은 내용은 아래에 표시하며 파일을 수정하지 않습니다.";
 "Server locks" = "서버 파일 잠금";
 "Show common ancestor" = "공통 조상 보기";
