@@ -4,9 +4,9 @@
   "version": "0.3.12",
   "identifier": "io.github.chomnseong.gitrochi",
   "build": {
-    "beforeDevCommand": "npm run engine && npm run dev",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run engine && npm run build",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -65,8 +65,7 @@
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
       "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
       "../../tools/gitrochi-mcp/server.mjs": "gitrochi-mcp.mjs",
-      "generated/gitch-core.exe": "gitch-core.exe",
-      "../../tools/gitch-flow/target/release/gitch-flow.exe": "gitch-flow.exe"
+      "generated/gitch-core.exe": "gitch-core.exe"
     }
   },
   "plugins": {

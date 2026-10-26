@@ -1,0 +1,11 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run engine && npm run dev",
+    "beforeBuildCommand": "npm run engine && npm run build"
+  },
+  "bundle": {
+    "resources": {
+      "../../tools/gitch-flow/target/release/gitch-flow.exe": "gitch-flow.exe"
+    }
+  }
+}

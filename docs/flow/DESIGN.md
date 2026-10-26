@@ -73,4 +73,4 @@
 | gitch 앞문 | `tools/gitch/gitch` 의 `flow_cmd` · `hook_flow_gate` · guard 규칙, 시험 `tools/gitch/tests/test_flow.sh` |
 | 맥 앱 | `macos/Sources/Core/FlowModels.swift` · `Services/FlowEngine.swift` · `Store/FlowStore.swift` · `Views/Sidebar/FlowPanel.swift` · `Views/Sheets/FlowSheets.swift` |
 | Windows 앱 | `windows/src/entities/flow/` · `windows/src/widgets/sidebar/ui/FlowPanel.tsx` |
-| 빌드 · 배포 | `tools/gitch-flow/build.sh` · `macos/build.sh` · `windows/src-tauri/tauri.conf.json` · `.github/workflows/flow.yml` |
+| 빌드 · 배포 | `tools/gitch-flow/build.sh` · `macos/build.sh` · `windows/src-tauri/tauri.windows.conf.json` · `.github/workflows/flow.yml` |
