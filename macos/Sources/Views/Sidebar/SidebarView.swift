@@ -30,17 +30,15 @@ struct SidebarView: View {
             Picker("Repository tools", selection: $mode) {
                 Text("Branches").tag("list")
                 Text(activeAgents > 0 ? "Agents \(activeAgents)" : "Agents").tag("agents")
-                Text("CI/CD").tag("ci")
             }
             .pickerStyle(.segmented)
             .labelsHidden()
             .accessibilityLabel("Repository tools")
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
+            // a saved "ci" mode from before the Actions page falls through to the branch list
             if mode == "agents" {
                 AgentsPanel()
-            } else if mode == "ci" {
-                CIPanel()
             } else {
                 branchList
             }
