@@ -1,5 +1,5 @@
 #!/bin/sh
-# Gitrochi Git 규칙 검사 — 설명은 CONTRIBUTING.md 「Git 규칙」.
+# Gitrochi Git rules — explained in docs/git-workflow.md.
 #   rules.sh message <파일>        커밋 메시지(commit-msg 훅)
 #   rules.sh staged                스테이지한 파일(pre-commit 훅)
 #   rules.sh range <base> <head>   그 사이의 커밋과 바뀐 파일(GitHub Actions)
@@ -82,6 +82,12 @@ check_message() {
       *) err "${at}Use \"Area: Summary\" with one space after the colon: $subject" ;;
     esac
     [ -n "$area" ] || err "${at}Put the area before the colon: $subject"
+  else
+    # the area is required (Graph, Sidebar, Terminal, macOS, Windows …); only the version commit goes without
+    case $subject in
+      "Release "[0-9]*) ;;
+      *) err "${at}Start the subject with an area and a colon (\"Area: Summary\", e.g. Graph: Show avatars): $subject" ;;
+    esac
   fi
   # 명령형: 「Add …」(과거형·3인칭·진행형 아님)
   case $(printf '%s' "${summary%% *}" | tr 'A-Z' 'a-z') in

@@ -1,28 +1,28 @@
-## 무엇을 · 왜
+## What and why
 
-<!-- 바꾼 내용과 이유. 관련 이슈가 있으면: Closes #123 -->
+<!-- What changed and why. Related issue: Closes #123 -->
 
-## 화면
+## Screenshots
 
-<!-- 화면이 바뀌었다면 라이트·다크 스크린샷(데모 저장소 docs/make-demo-repo.sh 로). 회사·개인 정보는 가려 주세요. -->
+<!-- If a screen changed: light and dark screenshots (demo repository: docs/make-demo-repo.sh). Hide company and personal details. -->
 
-## 확인
+## Checklist
 
-- [ ] 맥: `macos/build.sh` 가 오류·경고 없이 빌드됨
-- [ ] Windows: `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` 통과
-- [ ] 두 플랫폼에 함께 넣었음(한쪽만이면 이유: )
-- [ ] 새 동작은 단위 테스트나 `windows/src/app/selftest.ts` 점검 항목을 더했음
-- [ ] 라이트·다크 테마에서 모두 확인
-- [ ] 토큰·회사 정보가 코드·로그·스크린샷에 없음
-- [ ] [기여 안내](https://github.com/Gitrochi/Gitrochi/blob/main/CONTRIBUTING.md)의 규칙(주석·화면 글)과 Git 규칙(브랜치 이름·영어 커밋 메시지·한 커밋 한 주제)을 따름
+- [ ] macOS: `macos/build.sh` builds with no errors or warnings
+- [ ] Windows: `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` pass
+- [ ] Both platforms (if one only, why: )
+- [ ] New behaviour has a unit test or a `windows/src/app/selftest.ts` step
+- [ ] Checked in the light and the dark theme
+- [ ] No tokens or company details in code, logs or screenshots
+- [ ] Follows the [code style](https://github.com/Gitrochi/Gitrochi/blob/main/docs/code-style.md) and the [Git workflow](https://github.com/Gitrochi/Gitrochi/blob/main/docs/git-workflow.md) (branch name, `Area: Summary` commit messages in English, one topic per commit)
 
-## 기여 권한 · CLA (채택 후 코드·문서 기여에 적용)
+## Contribution rights · CLA (for code and documentation contributions after adoption)
 
-<!-- 현재 CLA v1.0은 제안 단계·미발효입니다. 전환 PR의 승인이나 과거 기여자의 동의를 추정하지 마세요. 제안 미발효·적용 범위 밖·저작물에 해당하지 않는 변경 등 비해당 사유를 적을 수 있습니다. -->
+<!-- CLA v1.0 is a proposal and not yet in effect. Do not assume the adoption pull request was approved or that past contributors agreed. You may note why this does not apply: proposal not in effect, outside the covered scope, a change that is not a copyrightable work, and so on. -->
 
-- [ ] 제삼자 코드의 출처·라이선스와 필요한 고지를 밝혔음 (없으면 없음으로 표시)
-- [ ] CLA 채택 이후의 적용 대상 기여라면, 각 권리자가 [CLA.md](https://github.com/Gitrochi/Gitrochi/blob/main/CLA.md)의 승인된 버전·불변 링크와 대상 커밋 SHA를 명시하여 직접 동의 댓글을 남겼음
+- [ ] Third-party code is identified with its origin, license and required notices (or marked as none)
+- [ ] For a covered contribution after CLA adoption, each rights holder has posted their own assent comment naming the approved version and permanent link of [CLA.md](https://github.com/Gitrochi/Gitrochi/blob/main/CLA.md) and the covered commit SHAs
 
-동의 댓글 영구 링크 / 승인된 CLA 문서 불변 링크 / 대상 SHA / 비해당 사유:
+Permanent link to the assent comment / permanent link to the approved CLA document / covered SHAs / reason this does not apply:
 
-<!-- 체크박스나 PR 제출 자체는 CLA 동의가 아닙니다. 신원·고용 자료는 공개 댓글에 올리지 마세요. 관리자가 권리자별 커버리지와 동의 대상 SHA를 병합 전에 수동 확인합니다. 자동 CLA 검사는 없습니다. -->
+<!-- A checkbox or the pull request itself is not CLA assent. Do not post identity or employment documents in public comments. A maintainer checks the coverage per rights holder and the covered SHAs by hand before merging. There is no automated CLA check. -->
