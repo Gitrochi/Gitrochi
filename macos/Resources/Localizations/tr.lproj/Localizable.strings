@@ -1048,3 +1048,6 @@
 "Split down" = "Aşağı böl";
 "Opens another shell next to this one, in the same folder." = "Aynı klasörde bunun yanında başka bir kabuk açar.";
 "Opens another shell below this one, in the same folder." = "Aynı klasörde bunun altında başka bir kabuk açar.";
+
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Kenar çubuğunu göster";

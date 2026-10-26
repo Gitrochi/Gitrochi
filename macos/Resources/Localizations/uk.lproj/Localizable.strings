@@ -1060,3 +1060,6 @@
 "Split down" = "Розділити вниз";
 "Opens another shell next to this one, in the same folder." = "Відкриває ще одну оболонку поруч із цією, у тій самій папці.";
 "Opens another shell below this one, in the same folder." = "Відкриває ще одну оболонку під цією, у тій самій папці.";
+
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Показати бічну панель";

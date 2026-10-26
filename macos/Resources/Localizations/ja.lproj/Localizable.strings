@@ -1061,3 +1061,6 @@
 "Split down" = "下に分割";
 "Opens another shell next to this one, in the same folder." = "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。";
 "Opens another shell below this one, in the same folder." = "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。";
+
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "サイドバーを表示";

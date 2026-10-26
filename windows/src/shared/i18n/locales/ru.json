@@ -1062,5 +1062,8 @@
  "Split right": "Разделить вправо",
  "Split down": "Разделить вниз",
  "Opens another shell next to this one, in the same folder.": "Открывает ещё одну оболочку рядом с этой, в той же папке.",
- "Opens another shell below this one, in the same folder.": "Открывает ещё одну оболочку под этой, в той же папке."
+ "Opens another shell below this one, in the same folder.": "Открывает ещё одну оболочку под этой, в той же папке.",
+ "Show sidebar": "Показать боковую панель",
+ "Hide sidebar": "Скрыть боковую панель",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Разделы остаются под рукой в виде панели значков; наведите на значок, чтобы открыть раздел."
 }

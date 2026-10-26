@@ -81,3 +81,62 @@
 .session-row:hover {
   background: var(--hover);
 }
+
+/* The sidebar folded away: a rail of section icons; hovering one opens that section beside it (the flyout overlaps the rail's edge so the pointer can cross) */
+.sidebar-rail {
+  width: 44px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+}
+
+.rail-item {
+  position: relative;
+}
+
+.rail-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 6px;
+  color: var(--text-2);
+}
+
+.rail-count {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rail-item:hover .rail-icon {
+  background: var(--hover);
+  color: var(--accent);
+}
+
+.rail-flyout {
+  display: none;
+  position: absolute;
+  left: 40px;
+  top: 0;
+  width: 280px;
+  max-height: 70vh;
+  z-index: 20;
+  flex-direction: column;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.rail-item:hover .rail-flyout {
+  display: flex;
+}

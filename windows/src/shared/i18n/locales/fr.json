@@ -1036,5 +1036,8 @@
  "Split right": "Diviser à droite",
  "Split down": "Diviser en bas",
  "Opens another shell next to this one, in the same folder.": "Ouvre un autre shell à côté de celui-ci, dans le même dossier.",
- "Opens another shell below this one, in the same folder.": "Ouvre un autre shell sous celui-ci, dans le même dossier."
+ "Opens another shell below this one, in the same folder.": "Ouvre un autre shell sous celui-ci, dans le même dossier.",
+ "Show sidebar": "Afficher la barre latérale",
+ "Hide sidebar": "Masquer la barre latérale",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Les sections restent à portée dans une barre d’icônes ; survolez-en une pour l’ouvrir."
 }

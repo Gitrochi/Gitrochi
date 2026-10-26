@@ -1046,5 +1046,8 @@
  "Split right": "Felosztás jobbra",
  "Split down": "Felosztás lefelé",
  "Opens another shell next to this one, in the same folder.": "Újabb shellt nyit emellett, ugyanabban a mappában.",
- "Opens another shell below this one, in the same folder.": "Újabb shellt nyit ez alatt, ugyanabban a mappában."
+ "Opens another shell below this one, in the same folder.": "Újabb shellt nyit ez alatt, ugyanabban a mappában.",
+ "Show sidebar": "Oldalsáv megjelenítése",
+ "Hide sidebar": "Oldalsáv elrejtése",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "A szakaszok ikonsávként kéznél maradnak; vigye az egeret egy ikonra a megnyitáshoz."
 }

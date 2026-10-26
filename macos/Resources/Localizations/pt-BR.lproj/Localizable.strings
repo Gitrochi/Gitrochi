@@ -1024,3 +1024,6 @@
 "Split down" = "Dividir para baixo";
 "Opens another shell next to this one, in the same folder." = "Abre outro shell ao lado deste, na mesma pasta.";
 "Opens another shell below this one, in the same folder." = "Abre outro shell abaixo deste, na mesma pasta.";
+
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Mostrar barra lateral";

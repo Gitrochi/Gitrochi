@@ -1,4 +1,4 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
+import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
@@ -11,29 +11,40 @@ import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shar
 import { AgentsPanel } from "./AgentsPanel";
 import { CIPanel } from "./CIPanel";
 import { PullRequestSection } from "./PullRequestSection";
-import { Section } from "./Section";
+import { Section, SectionFlyout } from "./Section";
 import { WorktreeSection } from "./WorktreeSection";
 import "./sidebar.css";
 
-export function Sidebar({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
+export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: string }) {
   useObserve(store);
   useObserve(settings);
   useObserve(agents);
   const mode = settings.get<"list" | "agents" | "ci">("sidebarMode", "list");
   const active = agents.sessions.filter((s) => isActiveStatus(s.status) && store.worktrees.some((w) => samePath(w.path, s.path))).length;
+  if (flyout) {
+    // one section as a flyout of the rail (the sidebar folded away)
+    return (
+      <SectionFlyout.Provider value={true}>
+        <BranchList store={store} openSettings={openSettings} only={flyout} />
+      </SectionFlyout.Provider>
+    );
+  }
   return (
     <>
-      <div style={{ padding: "8px 10px 4px" }}>
-        <Segmented
-          stretch
-          value={mode}
-          onChange={(v) => settings.set("sidebarMode", v)}
-          options={[
-            { value: "list", label: t("List") },
-            { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
-            { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
-          ]}
-        />
+      <div className="row" style={{ padding: "8px 6px 4px 10px", gap: 4 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Segmented
+            stretch
+            value={mode}
+            onChange={(v) => settings.set("sidebarMode", v)}
+            options={[
+              { value: "list", label: t("List") },
+              { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
+              { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
+            ]}
+          />
+        </div>
+        <IconButton small icon={<PanelLeftClose size={15} />} tip={tip(t("Hide sidebar"), t("The sections stay at hand as a rail of icons; hover one to open it."), "Ctrl+B")} onClick={() => settings.set("sidebarCollapsed", true)} />
       </div>
       {mode === "agents" ? <AgentsPanel store={store} /> : mode === "ci" ? <CIPanel store={store} openSettings={openSettings} /> : <BranchList store={store} openSettings={openSettings} />}
     </>
@@ -66,7 +77,8 @@ function groupFolders(branches: Branch[], key: (b: Branch) => string) {
 
 const leaf = (n: string) => (n.includes("/") ? n.slice(n.indexOf("/") + 1) : n);
 
-function BranchList({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
+function BranchList({ store, openSettings, only }: { store: RepoStore; openSettings: () => void; only?: string }) {
+  const show = (id: string) => !only || only === id;
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const h = store.headBranch;
     return new Set(h && h.includes("/") ? ["l:" + h.slice(0, h.indexOf("/"))] : []);
@@ -102,9 +114,9 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
 
   return (
     <SharedStack className="side-scroll">
-      {store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
+      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
 
-      {store.localBranches.some((b) => store.isPinned(b)) && (
+      {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
         <Section id="pinned" title={t("Pinned")}>
           {store.localBranches
             .filter((b) => store.isPinned(b))
@@ -114,24 +126,26 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
         </Section>
       )}
 
-      <Section id="local" title={t("Local branches")} count={store.localBranches.length}>
-        {locals.loose.map((b) => (
-          <BranchRow key={b.name} store={store} branch={b} label={b.name} />
-        ))}
-        {locals.folders.map((f) =>
-          folder(
-            "l:" + f.name,
-            f.name,
-            f.branches.length,
-            f.branches.some((b) => b.isCurrent),
-            f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(b.name)} />),
-          ),
-        )}
-      </Section>
+      {show("local") && (
+        <Section id="local" title={t("Local branches")} count={store.localBranches.length}>
+          {locals.loose.map((b) => (
+            <BranchRow key={b.name} store={store} branch={b} label={b.name} />
+          ))}
+          {locals.folders.map((f) =>
+            folder(
+              "l:" + f.name,
+              f.name,
+              f.branches.length,
+              f.branches.some((b) => b.isCurrent),
+              f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(b.name)} />),
+            ),
+          )}
+        </Section>
+      )}
 
-      {store.worktrees.length > 1 && <WorktreeSection store={store} />}
+      {show("worktrees") && store.worktrees.length > 1 && <WorktreeSection store={store} />}
 
-      {store.remoteBranches.length > 0 && (
+      {show("remote") && store.remoteBranches.length > 0 && (
         <Section id="remote" title={t("Remotes")} count={store.remoteBranches.length}>
           {[...remoteGroups.entries()]
             .sort(([a], [b]) => a.localeCompare(b))
@@ -162,7 +176,7 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
         </Section>
       )}
 
-      {store.tags.length > 0 && (
+      {show("tags") && store.tags.length > 0 && (
         <Section id="tags" title={t("Tags")} count={store.tags.length} defaultOpen={false}>
           {store.tags.map((tag) => (
             <div
@@ -187,7 +201,7 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
         </Section>
       )}
 
-      {store.stashes.length > 0 && (
+      {show("stashes") && store.stashes.length > 0 && (
         <Section id="stashes" title={t("Stashes")} count={store.stashes.length}>
           {store.stashes.map((s) => (
             <div

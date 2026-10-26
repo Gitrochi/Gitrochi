@@ -1063,5 +1063,8 @@
  "Split right": "右に分割",
  "Split down": "下に分割",
  "Opens another shell next to this one, in the same folder.": "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。",
- "Opens another shell below this one, in the same folder.": "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。"
+ "Opens another shell below this one, in the same folder.": "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。",
+ "Show sidebar": "サイドバーを表示",
+ "Hide sidebar": "サイドバーを隠す",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "各セクションはアイコンの列として残り、マウスを乗せると開きます。"
 }
