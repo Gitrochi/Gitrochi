@@ -157,7 +157,10 @@ fn changed_conditions_follow_the_affected_base() {
     let (_, run) = fx.json("script", &["run", "conditional", "--json"]);
     assert_eq!(node(&run, "only-text")["state"], "SKIPPED", "{run}");
     // --affected=base: 기본 브랜치와 갈라진 곳부터 → 돈다(pre-push 게이트와 같은 기준).
-    let (_, run) = fx.json("script", &["run", "conditional", "--affected=base", "--json"]);
+    let (_, run) = fx.json(
+        "script",
+        &["run", "conditional", "--affected=base", "--json"],
+    );
     assert_eq!(node(&run, "only-text")["state"], "PASSED", "{run}");
 }
 
