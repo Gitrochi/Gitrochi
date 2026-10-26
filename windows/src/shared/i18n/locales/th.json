@@ -1059,5 +1059,7 @@
  "Split right": "แบ่งไปทางขวา",
  "Split down": "แบ่งลงด้านล่าง",
  "Opens another shell next to this one, in the same folder.": "เปิดเชลล์อีกตัวข้างตัวนี้ในโฟลเดอร์เดียวกัน",
- "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน"
+ "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน",
+ "Columns": "คอลัมน์",
+ "Time": "เวลา"
 }

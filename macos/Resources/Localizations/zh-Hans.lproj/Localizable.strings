@@ -1064,3 +1064,7 @@
 "Split down" = "向下拆分";
 "Opens another shell next to this one, in the same folder." = "在同一文件夹中，于此终端旁边再打开一个 Shell。";
 "Opens another shell below this one, in the same folder." = "在同一文件夹中，于此终端下方再打开一个 Shell。";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "列";
+"Time" = "时间";

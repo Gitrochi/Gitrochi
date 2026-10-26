@@ -1063,3 +1063,7 @@
 "Split down" = "向下分割";
 "Opens another shell next to this one, in the same folder." = "在同一資料夾中，於此終端機旁邊再開啟一個 Shell。";
 "Opens another shell below this one, in the same folder." = "在同一資料夾中，於此終端機下方再開啟一個 Shell。";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "欄";
+"Time" = "時間";

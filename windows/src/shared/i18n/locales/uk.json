@@ -1063,5 +1063,7 @@
  "Split right": "Розділити праворуч",
  "Split down": "Розділити вниз",
  "Opens another shell next to this one, in the same folder.": "Відкриває ще одну оболонку поруч із цією, у тій самій папці.",
- "Opens another shell below this one, in the same folder.": "Відкриває ще одну оболонку під цією, у тій самій папці."
+ "Opens another shell below this one, in the same folder.": "Відкриває ще одну оболонку під цією, у тій самій папці.",
+ "Columns": "Стовпці",
+ "Time": "Час"
 }

@@ -76,34 +76,38 @@ export const CommitRow = memo(function CommitRow({
       }}
     >
       {/* 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수)와 그래프까지 이어지는 선 */}
-      <div className="ref-col" style={{ width: cols.ref }}>
-        {groups.length > 0 && (
-          <>
-            <RefPill store={store} group={groups[0]} tint={tint} />
-            {groups.length > 1 && (
-              <span
-                className="ref-more"
-                style={{ color: tint, background: `color-mix(in srgb, ${tint} 15%, transparent)` }}
-                data-tip={groups.slice(1).map((g) => g.name).join("\n")}
-                onContextMenu={(e) =>
-                  showContextMenu(
-                    e,
-                    groups.slice(1).map((g) => ({ label: g.name, submenu: g.all.length > 1 ? g.all.map((r) => ({ label: r.name, submenu: refMenu(store, r) })) : refMenu(store, g.primary) })),
-                  )
-                }
-              >
-                +{groups.length - 1}
-              </span>
-            )}
-            <span className="ref-line" style={{ background: tint }} />
-          </>
-        )}
-      </div>
-      <div className={cols.graph < gw ? "graph-clipped" : undefined} style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}>
-        {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
-        <span className="lane-band" style={{ left: LEFT_PAD + LANE_W * (entry.row.column + 0.5), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
-        <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
-      </div>
+      {cols.ref > 0 && (
+        <div className="ref-col" style={{ width: cols.ref }}>
+          {groups.length > 0 && (
+            <>
+              <RefPill store={store} group={groups[0]} tint={tint} />
+              {groups.length > 1 && (
+                <span
+                  className="ref-more"
+                  style={{ color: tint, background: `color-mix(in srgb, ${tint} 15%, transparent)` }}
+                  data-tip={groups.slice(1).map((g) => g.name).join("\n")}
+                  onContextMenu={(e) =>
+                    showContextMenu(
+                      e,
+                      groups.slice(1).map((g) => ({ label: g.name, submenu: g.all.length > 1 ? g.all.map((r) => ({ label: r.name, submenu: refMenu(store, r) })) : refMenu(store, g.primary) })),
+                    )
+                  }
+                >
+                  +{groups.length - 1}
+                </span>
+              )}
+              <span className="ref-line" style={{ background: tint }} />
+            </>
+          )}
+        </div>
+      )}
+      {cols.graph > 0 && (
+        <div className={cols.graph < gw ? "graph-clipped" : undefined} style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}>
+          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
+          <span className="lane-band" style={{ left: LEFT_PAD + LANE_W * (entry.row.column + 0.5), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
+          <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
+        </div>
+      )}
       {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면. */}
       <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
         <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />

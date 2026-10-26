@@ -1045,5 +1045,7 @@
  "Split right": "Rozdělit vpravo",
  "Split down": "Rozdělit dolů",
  "Opens another shell next to this one, in the same folder.": "Otevře další shell vedle tohoto ve stejné složce.",
- "Opens another shell below this one, in the same folder.": "Otevře další shell pod tímto ve stejné složce."
+ "Opens another shell below this one, in the same folder.": "Otevře další shell pod tímto ve stejné složce.",
+ "Columns": "Sloupce",
+ "Time": "Čas"
 }

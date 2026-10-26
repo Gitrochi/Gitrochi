@@ -13,6 +13,10 @@ describe("그래프 칸", () => {
     for (const w of [800, 700, 600, 560, 520, 480]) expect(msg(w, graphColumns(w, g))).toBeGreaterThanOrEqual(200);
     expect(graphColumns(600, g).time).toBe(false);
   });
+  it("leaves out the columns the user turned off", () => {
+    expect(graphColumns(1100, graphWidth(5), new Set(["ref", "time"]))).toEqual({ ref: 0, graph: graphWidth(5), time: false });
+    expect(graphColumns(400, graphWidth(5), new Set(["graph"]))).toEqual({ ref: 168, graph: 0, time: false });
+  });
   it("아주 좁으면 그래프 칸도 줄이되(레인은 잘림) 너무 작게는 안 줄인다", () => {
     const c = graphColumns(420, graphWidth(14));
     expect(c.ref).toBe(110);
