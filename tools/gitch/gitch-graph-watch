@@ -17,6 +17,7 @@ from pathlib import Path
 import secrets
 import shutil
 import signal
+import socket
 from socketserver import TCPServer
 import stat
 import subprocess
@@ -32,6 +33,11 @@ MAX_HTML_BYTES = 64 * 1024 * 1024
 
 class LoopbackHTTPServer(ThreadingHTTPServer):
     def server_bind(self):
+        if os.name == "nt":
+            # Windows SO_REUSEADDR can bind over another live watcher and route
+            # this token's requests to that server. Reserve each port instead.
+            self.allow_reuse_address = False
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         # HTTPServer performs reverse DNS for server_name. Framework Python on
         # recent macOS runners can block there for tens of seconds, although this
         # server only needs its pinned numeric loopback address.

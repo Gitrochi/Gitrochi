@@ -298,6 +298,7 @@ printf '</body></html>' >> "$out"
             self.ready(original)
         with mock.patch.dict(os.environ, {"GITCH_GRAPH_LANG": "ja"}):
             _, localized = self.start()
+            self.assertNotEqual(urlsplit(localized["url"]).port, urlsplit(original["url"]).port)
             self.ready(localized)
             reopened = subprocess.run(self.command("--detach"), capture_output=True, text=True, timeout=5)
         self.assertEqual(reopened.returncode, 0, reopened.stdout + reopened.stderr)
@@ -306,6 +307,21 @@ printf '</body></html>' >> "$out"
         self.assertNotEqual(localized["url"], original["url"])
         self.assertEqual(reused["pid"], localized["pid"])
         self.assertEqual(reused["url"], localized["url"])
+        # Each listener must continue serving its own token after both starts
+        # and a same-language reopen, rather than returning an intermittent 404.
+        for _ in range(3):
+            for info, other in ((original, localized), (localized, original)):
+                with self.subTest(pid=info["pid"]):
+                    state = self.state(info)
+                    self.assertEqual(state["pid"], info["pid"])
+                    self.assertTrue(state["watching"])
+                    with urlopen(info["url"], timeout=2) as response:
+                        self.assertEqual(response.status, 200)
+                        self.assertIn(info["stateUrl"].encode(), response.read())
+                    own_uri, other_uri = urlsplit(info["url"]), urlsplit(other["url"])
+                    with self.assertRaises(HTTPError) as error:
+                        urlopen(own_uri.scheme + "://" + own_uri.netloc + other_uri.path, timeout=2)
+                    self.assertEqual(error.exception.code, 404)
 
     def test_graph_arguments_preserve_filters_and_reject_output_flags(self):
         # The fake CLI logs argv in separate lines, preserving spaces.
@@ -401,6 +417,25 @@ printf '</body></html>' >> "$out"
                 watcher.stop.set()
                 worker.join(timeout=3)
             self.assertFalse(worker.is_alive(), "loopback watcher did not stop")
+
+    def test_windows_listener_reserves_port_before_binding(self):
+        module, _ = self.atomic_watcher()
+        server = module.LoopbackHTTPServer.__new__(module.LoopbackHTTPServer)
+        server.socket = mock.Mock()
+        server.server_address = ("127.0.0.1", 23456)
+        server.socket.getsockname.return_value = server.server_address
+        # Check the Windows policy on every host; the real two-language test
+        # additionally exercises native port allocation and token isolation.
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", -5)
+        with mock.patch.object(module.os, "name", "nt"), \
+                mock.patch.object(module.socket, "SO_EXCLUSIVEADDRUSE", exclusive, create=True):
+            server.server_bind()
+        self.assertFalse(server.allow_reuse_address)
+        self.assertEqual(server.socket.mock_calls, [
+            mock.call.setsockopt(socket.SOL_SOCKET, exclusive, 1),
+            mock.call.bind(server.server_address),
+            mock.call.getsockname(),
+        ])
 
     def test_served_html_and_generation_snapshot_are_atomic(self):
         _, watcher = self.atomic_watcher()
