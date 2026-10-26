@@ -8,7 +8,7 @@ For AI coding agents working in this repository — Codex, Claude Code, Gemini C
 
 ## The short version
 
-1. **English everywhere.** Reply to the maintainer in English even when they write to you in another language, and write issues, pull requests, commit messages, code and comments in English. Only the app's translations are in other languages.
+1. **English in everything that goes into the repository.** Issues, pull requests, commit messages, code, comments and docs are English; only the app's translations are in other languages. Talk to the person running you in whatever language they use.
 2. **Both platforms.** A feature goes into `macos/` (SwiftUI) and `windows/` (Tauri: Rust + React/TypeScript), with mirrored names. If it can only work on one, say why in the pull request.
 3. **Branch from `main`**, named `feature/…`, `fix/…`, `refactor/…`, `docs/…` or `ci/…`. Never push to `main`; open a pull request with the template filled in. A change that depends on an open pull request is stacked on that branch.
 4. **Commit subjects are `Area: Imperative summary`.** The area is required (`Graph`, `Sidebar`, `Terminal`, `Inspector`, `CI/CD`, `Agents`, `Settings`, `i18n`, `Docs`, `CI`, `gitch`; `macOS` or `Windows` only for a platform-specific change). Bullets in the body say why. One topic per commit, every commit builds. The hook in `.githooks` enforces this; run `git config core.hooksPath .githooks` once.
@@ -22,4 +22,4 @@ For AI coding agents working in this repository — Codex, Claude Code, Gemini C
 
 ## Pull request text
 
-Use `.github/PULL_REQUEST_TEMPLATE.md`, in English. Tick only the checklist items you actually did, and name the checks you could not run. End the description with the attribution line your tool gives you.
+Use `.github/PULL_REQUEST_TEMPLATE.md`, in English, whatever language you talk to your user in. Tick only the checklist items you actually did, and name the checks you could not run. End the description with the attribution line your tool gives you.
