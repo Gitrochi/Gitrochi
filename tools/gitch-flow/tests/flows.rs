@@ -216,7 +216,7 @@ services:
   web:
     use: process.service
     with:
-      run: "exec python3 -m http.server $PORT --bind 127.0.0.1 --directory site"
+      run: "exec python3 serve.py"
       ready: { http: "${{ services.web.url }}/", timeout: 20s }
   dead:
     use: process.service
@@ -243,16 +243,32 @@ flows:
       alone: { run: "echo independent" }
 "#;
 
+/// A static file server for the web service. http.server's HTTPServer looks up the host name
+/// before it listens, which can stall for half a minute on macOS runners; a plain TCPServer does not.
+const SERVE_PY: &str = r#"import functools, http.server, os, socketserver
+
+handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory="site")
+socketserver.TCPServer(("127.0.0.1", int(os.environ["PORT"])), handler).serve_forever()
+"#;
+
 #[test]
 fn process_service_backs_http_smoke_checks_and_is_cleaned_up() {
     let fx = Fx::new(&[
         (".gitch/flow.yml", &SERVICE_FLOW.replace("python3", PY)),
+        ("serve.py", SERVE_PY),
         ("site/hello.txt", "hello flow\n"),
     ]);
     fx.trust();
     let (code, run) = fx.json("script", &["run", "smoke", "--json"]);
     assert_eq!(code, 1, "{run}");
-    assert_eq!(node(&run, "page")["state"], "PASSED", "{run}");
+    let service_log = std::path::Path::new(run["runDir"].as_str().unwrap_or_default())
+        .join("logs/service-web.log");
+    let service_log = std::fs::read_to_string(service_log).unwrap_or_default();
+    assert_eq!(
+        node(&run, "page")["state"],
+        "PASSED",
+        "{run}\nservice log:\n{service_log}"
+    );
     let missing = node(&run, "missing");
     assert_eq!(missing["state"], "FAILED");
     assert_eq!(missing["code"], "VERIFY-01", "{missing}");
