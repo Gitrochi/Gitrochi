@@ -1132,3 +1132,12 @@
 "Proposed .gitch/flow.yml" = ".gitch/flow.yml ที่เสนอ";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "มีไฟล์โฟลว์อยู่แล้ว จึงจะไม่เขียนอะไร รวมข้อเสนอด้วยตนเอง";
 "Create flow file" = "สร้างไฟล์โฟลว์";
+
+"An empty search lists repositories you belong to." = "การค้นหาว่างจะแสดงรายการที่เก็บที่คุณเป็นสมาชิก";
+"Connect a GitHub or GitLab account to search its repositories." = "เชื่อมต่อบัญชี GitHub หรือ GitLab เพื่อค้นหาที่เก็บของบัญชีนั้น";
+"Remote branches" = "สาขาระยะไกล";
+"Section" = "ส่วน";
+"Show compare" = "แสดงการเปรียบเทียบ";
+"Show flows" = "แสดงโฟลว์";
+"Show home" = "แสดงหน้าแรก";
+"(current)" = "(ปัจจุบัน)";

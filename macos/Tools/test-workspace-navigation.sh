@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 실제 Git 작업 없이 선택 복원·커밋 준비 조건·그래프 너비를 확인한다.
+# Checks selection restore, commit readiness, graph widths and page navigation without a real Git repository.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -102,106 +102,76 @@ import SwiftUI
             }
         }
         precondition(GraphMetrics.width(lanes: 24, expanded: true) > GraphMetrics.width(lanes: 24))
-        precondition(WorkspaceDestination.allCases.count == 23)
+        precondition(WorkspaceDestination.allCases.count == 10)
         let nav = RepoStore()
-        func navMatches(_ page: WorkspaceDestination) -> Bool {
-            nav.destination == (page.repositorySection == nil ? page : .repository) && (page.repositorySection == nil || nav.repositorySection == page.repositorySection)
-        }
         for page in WorkspaceDestination.allCases {
-            let previous = nav.destination, trail = nav.navigationTrail
+            let previous = nav.destination
             let allowed = nav.navigate(page, prepare: false)
-            precondition(allowed == !page.needsRepository, "Local pages require a repository; global menus remain available")
-            if page.needsRepository { precondition(nav.destination == previous && nav.navigationTrail == trail) }
-            else { precondition(navMatches(page)) }
+            precondition(allowed == !page.needsRepository, "Repository pages need a repository; Home, Issues and Account stay available")
+            precondition(nav.destination == (page.needsRepository ? previous : page))
         }
         let firstPath = NSTemporaryDirectory() + "gitrochi-navigation-first", secondPath = NSTemporaryDirectory() + "gitrochi-navigation-second"
         nav.fixtureRepository(firstPath)
         nav.fixture(status: WorkingStatus(), head: head, commits: commits)
-        for page in WorkspaceDestination.allCases { precondition(nav.navigate(page, prepare: false)); precondition(navMatches(page)) }
-        for page in WorkspaceDestination.allCases where ![WorkspaceDestination.repository, .changes, .commits, .pullRequests].contains(page) {
+        for page in WorkspaceDestination.allCases { precondition(nav.navigate(page, prepare: false)); precondition(nav.destination == page) }
+        for page in WorkspaceDestination.allCases where ![WorkspaceDestination.repository, .pullRequests].contains(page) {
             nav.navigate(page, prepare: false)
-            let trail = nav.navigationTrail
             for selection in [Selection.wip, .commit(head), .pullRequest(7)] {
                 nav.select(selection)
-                precondition(navMatches(page), "Background selection must not replace a utility or hosting page")
+                precondition(nav.destination == page, "Background selection must not replace a full-width page")
             }
             nav.syncWorkspaceSelection(nil)
-            precondition(nav.navigationTrail == trail)
+            precondition(nav.destination == page)
         }
-        nav.select(.commit(parent)); nav.diffSource = .commit(sha: parent, change: staged, parent: nil)
-        nav.navigate(.changes)
-        precondition(navMatches(.changes) && nav.selection == .wip, "Changes must activate working-tree selection")
-        nav.navigate(.commits)
-        precondition(navMatches(.commits) && nav.selection == .commit(parent), "Commits must restore the user's previous history selection")
-        nav.select(.pullRequest(7)); nav.navigate(.commits)
-        precondition(navMatches(.commits) && nav.selection == .commit(parent), "Leaving PR selection for Commits must restore the previous history selection")
+        nav.navigate(.repository); nav.select(.commit(parent)); nav.diffSource = .commit(sha: parent, change: staged, parent: nil)
+        nav.showArea(.changes)
+        precondition(nav.destination == .repository && nav.selection == .wip, "Changes must activate the working-tree selection")
+        nav.showArea(.history)
+        precondition(nav.selection == .commit(parent), "History must restore the previous history selection")
+        nav.select(.pullRequest(7)); precondition(nav.destination == .repository, "A request chosen on the repository screen opens in the inspector")
+        nav.showArea(.history)
+        precondition(nav.selection == .commit(parent), "Leaving a request for history must restore the previous history selection")
+        nav.navigate(.pullRequests); nav.select(.wip); precondition(nav.destination == .repository, "A graph selection leaves the Pull requests page")
+        nav.navigate(.pullRequests); nav.select(.pullRequest(7)); precondition(nav.destination == .pullRequests)
+        nav.navigate(.repository); nav.showArea(.history)
         nav.diffSource = .working(file); nav.fileInspect = FileInspect(mode: .history, path: file.path)
         nav.navigate(.pullRequests)
-        precondition(nav.destination == .pullRequests && nav.diffSource == nil && nav.fileInspect == nil, "PR menu must clear unrelated file panels")
-        nav.select(.pullRequest(7)); let reviewSource = DiffSource.review(number: 7, change: file, patch: "+fixture")
+        precondition(nav.destination == .pullRequests && nav.selection == .pullRequest(7) && nav.diffSource == nil && nav.fileInspect == nil, "The Pull requests page must bring back its request and clear unrelated file panels")
+        let reviewSource = DiffSource.review(number: 7, change: file, patch: "+fixture")
         nav.diffSource = reviewSource; nav.navigate(.code); nav.navigate(.pullRequests)
-        precondition(nav.diffSource == reviewSource, "An existing PR review should survive menu navigation")
-        nav.navigate(.changes); nav.select(.commit(parent)); precondition(navMatches(.commits))
-        nav.select(.pullRequest(7)); precondition(nav.destination == .pullRequests)
-        nav.select(.wip); precondition(navMatches(.changes))
-        nav.navigate(.branches); nav.reveal(parent)
-        precondition(navMatches(.commits) && nav.scrollTarget == parent, "Explicit graph reveal must open the commit menu")
+        precondition(nav.diffSource == reviewSource, "An existing PR review should survive page navigation")
+        nav.navigate(.code); nav.reveal(parent)
+        precondition(nav.destination == .repository && nav.scrollTarget == parent, "Explicit graph reveal must open the repository screen")
         nav.navigate(.code); nav.openDiff(.working(file), revealPage: false)
-        precondition(navMatches(.code), "Restoring a background diff must not take over a utility page")
+        precondition(nav.destination == .code, "Restoring a background diff must not take over a utility page")
         nav.openDiff(.working(file))
-        precondition(navMatches(.changes) && nav.diffSource == .working(file), "An explicit working diff should open Changes")
-        nav.navigate(.gists); nav.openDiff(.commit(sha: head, change: staged, parent: parent))
-        precondition(navMatches(.commits), "An explicit commit diff should open Commits")
+        precondition(nav.destination == .repository && nav.diffSource == .working(file), "An explicit working diff should open the repository screen")
+        nav.navigate(.flows); nav.openDiff(.commit(sha: head, change: staged, parent: parent))
+        precondition(nav.destination == .repository, "An explicit commit diff should open the repository screen")
         nav.navigate(.issues); nav.selection = .pullRequest(7); nav.openDiff(reviewSource)
         precondition(nav.destination == .pullRequests && nav.diffSource == reviewSource, "An explicit review diff should open Pull requests")
         nav.navigate(.code); nav.openFileHistory(file.path)
-        precondition(navMatches(.commits) && nav.fileInspect?.mode == .history)
-        nav.navigate(.organizations); nav.openBlame(file.path, rev: head)
-        precondition(navMatches(.commits) && nav.fileInspect?.mode == .blame && nav.fileInspect?.rev == head)
-        nav.navigate(.changes); nav.openBlame(file.path)
-        precondition(navMatches(.changes), "File inspection should retain an active local document menu")
-        nav.destination = .home; nav.navigationTrail = [WorkspaceLocation(.home)]; nav.navigationPosition = 0
-        for page in [WorkspaceDestination.code, .branches, .rebase] { nav.navigate(page, prepare: false) }
-        let trail = nav.navigationTrail
-        nav.moveWorkspaceHistory(-1); precondition(navMatches(.branches))
-        nav.moveWorkspaceHistory(1); precondition(navMatches(.rebase) && nav.navigationTrail == trail)
-        nav.moveWorkspaceHistory(10); nav.moveWorkspaceHistory(-10)
-        precondition(navMatches(.rebase) && nav.navigationTrail == trail)
-        nav.moveWorkspaceHistory(-1); nav.navigate(.issues)
-        precondition(nav.navigationTrail == [WorkspaceLocation(.home), WorkspaceLocation(.code), WorkspaceLocation(.branches), WorkspaceLocation(.issues, section: .branches)] && nav.navigationPosition == 3, "A new page after Back must remove Forward history")
-        nav.moveWorkspaceHistory(1); precondition(nav.destination == .issues)
-        nav.navigate(.issues); precondition(nav.navigationTrail.count == 4, "The current page must not add duplicate entries")
-        for index in 0..<60 { nav.navigate(index.isMultiple(of: 2) ? .branches : .code, prepare: false) }
-        precondition(nav.navigationTrail.count == 40 && nav.navigationPosition == 39)
+        precondition(nav.destination == .repository && nav.fileInspect?.mode == .history)
+        nav.navigate(.account); nav.openBlame(file.path, rev: head)
+        precondition(nav.destination == .repository && nav.fileInspect?.mode == .blame && nav.fileInspect?.rev == head)
         workspaceNavigationFixtureDefaults.set([firstPath: "code", secondPath: "issues"], forKey: "workspaceDestinations")
         nav.fixtureRepository(firstPath); nav.restoreWorkspaceDestination()
-        precondition(navMatches(.code) && nav.navigationTrail == [WorkspaceLocation(.code)] && nav.navigationPosition == 0)
+        precondition(nav.destination == .code)
         nav.resetNavigationFixture(); nav.fixtureRepository(secondPath); nav.restoreWorkspaceDestination()
-        precondition(nav.destination == .issues && nav.navigationTrail == [WorkspaceLocation(.issues)], "A repository must restore its own menu, without another repository's history")
-        for saved in ["missing-page", "settings", "__proto__"] {
-            workspaceNavigationFixtureDefaults.removeObject(forKey: "workspaceRepositorySections")
+        precondition(nav.destination == .issues, "A repository must restore its own page")
+        for saved in ["missing-page", "settings", "__proto__", "changes", "branches", "worktrees"] {
             workspaceNavigationFixtureDefaults.set([secondPath: saved], forKey: "workspaceDestinations")
-            nav.area = .history; nav.selection = .commit(head); nav.restoreWorkspaceDestination()
-            precondition(navMatches(.commits) && nav.navigationTrail == [WorkspaceLocation(.commits)], "Unknown saved pages must fall back safely")
+            nav.restoreWorkspaceDestination()
+            precondition(nav.destination == .repository, "Unknown saved pages must fall back to the repository screen")
         }
-        workspaceNavigationFixtureDefaults.removeObject(forKey: "workspaceRepositorySections")
+        nav.navigate(.issues)
         workspaceNavigationFixtureDefaults.set([secondPath: 7], forKey: "workspaceDestinations")
-        nav.area = .changes; nav.selection = .wip; nav.restoreWorkspaceDestination()
-        precondition(navMatches(.changes) && nav.navigationTrail == [WorkspaceLocation(.changes)], "Incorrectly typed saved pages must fall back safely")
-        nav.navigate(.compare, prepare: false); nav.navigate(.issues, prepare: false); nav.navigate(.repository, prepare: false)
-        precondition(navMatches(.compare), "The unified repository must retain the previous internal tool")
-        let beforePin = nav.navigationTrail
-        precondition(nav.pinnedRepositoryPages.isEmpty)
-        nav.toggleRepositoryPagePin(.compare); nav.toggleRepositoryPagePin(.changes)
-        precondition(nav.pinnedRepositoryPages == [.changes, .compare] && nav.navigationTrail == beforePin)
-        let otherWindow = RepoStore()
-        precondition(otherWindow.pinnedRepositoryPages == [.changes, .compare], "Pinned shortcuts are shared between windows")
-        otherWindow.toggleRepositoryPagePin(.compare)
-        precondition(!nav.isRepositoryPagePinned(.compare) && navMatches(.compare), "Removing a shortcut must not close its workspace")
-        workspaceNavigationFixtureDefaults.set([firstPath: "repository", secondPath: "repository"], forKey: "workspaceDestinations")
-        workspaceNavigationFixtureDefaults.set([firstPath: "compare", secondPath: "rebase"], forKey: "workspaceRepositorySections")
-        nav.fixtureRepository(firstPath); nav.restoreWorkspaceDestination(); precondition(navMatches(.compare))
-        nav.resetNavigationFixture(); nav.fixtureRepository(secondPath); nav.restoreWorkspaceDestination(); precondition(navMatches(.rebase))
+        nav.restoreWorkspaceDestination()
+        precondition(nav.destination == .repository, "Incorrectly typed saved pages must fall back safely")
+        nav.resetNavigationFixture(); nav.fixtureRepository(nil)
+        workspaceNavigationFixtureDefaults.set([secondPath: "code"], forKey: "workspaceDestinations")
+        nav.restoreWorkspaceDestination(); precondition(nav.destination == .home, "Without a repository the window shows Home")
+        precondition(!nav.navigate(.repository) && nav.destination == .home)
         do {
         let contexts = RepoStore()
         contexts.fixtureRepository(firstPath)
@@ -216,24 +186,24 @@ import SwiftUI
         let contextReviewSource = DiffSource.review(number: 17, change: file, patch: "+context fixture")
         let workingInspect = FileInspect(mode: .history, path: file.path)
         let commitInspect = FileInspect(mode: .blame, path: file.path, rev: parent)
-        contexts.navigate(.changes); contexts.diffSource = workingSource; contexts.fileInspect = workingInspect
-        contexts.navigate(.commits); contexts.select(.commit(parent))
+        contexts.navigate(.repository); contexts.showArea(.changes); contexts.diffSource = workingSource; contexts.fileInspect = workingInspect
+        contexts.showArea(.history); contexts.select(.commit(parent))
         contexts.diffSource = historySource; contexts.fileInspect = commitInspect
         contexts.select(.pullRequest(17)); contexts.diffSource = contextReviewSource
-        contexts.navigate(.commits)
+        contexts.showArea(.history)
         precondition(contexts.selection == .commit(parent) && contexts.diffSource == historySource && contexts.fileInspect == commitInspect, "PR review must not overwrite commit document context")
         contexts.navigate(.pullRequests)
         precondition(contexts.selection == .pullRequest(17) && contexts.diffSource == contextReviewSource, "Returning to requests must restore its selected file")
         contexts.select(.pullRequest(18))
         precondition(contexts.diffSource == nil && contexts.pullRequestDiff == nil, "A different request must not inherit the previous request's file")
-        contexts.navigate(.commits)
+        contexts.showArea(.history)
         precondition(contexts.selection == .commit(parent) && contexts.diffSource == historySource)
         contexts.select(.worktree(worktreePath)); contexts.diffSource = linkedSource
-        contexts.navigate(.changes)
+        contexts.showArea(.changes)
         precondition(contexts.diffSource == workingSource && contexts.fileInspect == workingInspect, "Linked-worktree browsing must not overwrite the working document")
         contexts.select(.worktree(worktreePath), restoringContext: true)
         precondition(contexts.diffSource == linkedSource, "Linked-worktree files have their own document context")
-        contexts.navigate(.commits)
+        contexts.showArea(.history)
         precondition(contexts.selection == .commit(parent) && contexts.diffSource == historySource, "A worktree row must not become the saved history commit")
         let currentBranch = Branch(name: "main", target: head, upstream: nil, ahead: 0, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false)
         let featureBranch = Branch(name: "feature/demo", target: head, upstream: nil, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false)
@@ -247,22 +217,20 @@ import SwiftUI
         precondition(contexts.historyTools.selected == [head, parent], "Batch commit selection must exclude linked-worktree WIP nodes")
         contexts.select(.commit(head)); contexts.moveSelection(-1)
         precondition(contexts.selection == .worktree(worktreePath), "Keyboard graph navigation must retain linked-worktree rows")
-        contexts.navigate(.commits); contexts.select(.commit(parent)); contexts.navigate(.agents)
-        let backgroundTrail = contexts.navigationTrail, backgroundPosition = contexts.navigationPosition
+        contexts.showArea(.history); contexts.select(.commit(parent)); contexts.navigate(.flows)
         contexts.fixture(status: WorkingStatus(unstaged: [file]), head: head, commits: [commits[0], commits[1]])
         contexts.reconcileFixture()
-        precondition(contexts.destination == .agents && contexts.selection == .commit(head), "Background reload must repair removed history without replacing a tool page")
-        precondition(contexts.navigationTrail == backgroundTrail && contexts.navigationPosition == backgroundPosition, "Background reload must not add page visits or erase Forward history")
-        contexts.showCommandPalette = true; contexts.showHistoryInspector = false
+        precondition(contexts.destination == .flows && contexts.selection == .commit(head), "Background reload must repair removed history without replacing a full-width page")
+        contexts.showCommandPalette = true; contexts.selectedBranchID = featureBranch.id
         contexts.resetNavigationFixture()
-        precondition(!contexts.showCommandPalette && contexts.showHistoryInspector && contexts.selectedBranchID == nil)
+        precondition(!contexts.showCommandPalette && contexts.selectedBranchID == nil && contexts.destination == .home)
         let hiddenColumns = GraphMetrics.columns(width: 520, graph: 600, hidden: ["ref", "graph", "time"])
         precondition(hiddenColumns.ref == 0 && hiddenColumns.graph == 0 && !hiddenColumns.time, "Latest-main graph column visibility must survive UI integration")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; 23 route gates, six tools in one repository, pin persistence/shared windows, internal-section restore, background selection, explicit document/review navigation, history branching/limits and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
     }
 }
 SWIFT

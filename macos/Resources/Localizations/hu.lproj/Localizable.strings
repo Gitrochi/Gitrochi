@@ -1119,3 +1119,12 @@
 "Proposed .gitch/flow.yml" = "Javasolt .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Már van folyamatfájl, ezért semmi sem íródik ki. Egyesítse kézzel a javaslatot.";
 "Create flow file" = "Folyamatfájl létrehozása";
+
+"An empty search lists repositories you belong to." = "Üres keresés azokat a tárolókat listázza, amelyekhez tartozol.";
+"Connect a GitHub or GitLab account to search its repositories." = "Kapcsolj össze egy GitHub- vagy GitLab-fiókot a tárolói kereséséhez.";
+"Remote branches" = "Távoli ágak";
+"Section" = "Szakasz";
+"Show compare" = "Összehasonlítás megjelenítése";
+"Show flows" = "Folyamatok megjelenítése";
+"Show home" = "Kezdőlap megjelenítése";
+"(current)" = "(jelenlegi)";

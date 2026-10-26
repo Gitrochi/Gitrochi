@@ -103,7 +103,7 @@ struct LocalBranchesPanel: View {
             if !branch.isRemote { Button { store.setPinned(branch, !store.isPinned(branch)) } label: { Label(store.isPinned(branch) ? String(localized: "Unpin") : String(localized: "Pin to top"), systemImage: "pin") } }
             Button(store.isHidden(branch) ? "Show in graph again" : "Hide from graph") { Task { await store.setHidden(branch, !store.isHidden(branch)) } }.disabled(store.busy != nil)
             Button("Check out") { Task { await store.checkout(branch) } }.disabled(branch.isCurrent || store.busy != nil)
-            Button("View commits") { store.selectedBranchID = branch.id; store.navigate(.commits); store.reveal(branch.target) }
+            Button("View commits") { store.selectedBranchID = branch.id; store.navigate(.repository, prepare: false); store.reveal(branch.target) }
             Button("Compare") { store.historyTools.left = store.headBranch ?? "HEAD"; store.historyTools.right = branch.name; comparing = true; Task { await store.loadRevisionComparison() } }
             Button("Merge into current") { Task { await store.merge(branch.name) } }.disabled(branch.isCurrent || store.busy != nil || store.headBranch == nil)
             Button("Rebase current onto") { Task { await store.rebase(onto: branch.name) } }.disabled(branch.isCurrent || store.busy != nil || store.headBranch == nil)

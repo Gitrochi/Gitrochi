@@ -141,9 +141,9 @@ These additions are implemented in both clients. Earlier fixture-based checks an
 
 ### Navigation and account access
 
-Open **Repository** for Changes, Commits, Branches, Compare, Rebase and Code. Pin only the sections you want in the sidebar; menu search (⌘K / Ctrl+K), back/forward and per-repository restoration also remember the internal section. Collapsing the sidebar leaves an icon rail. Repository lists and remote discovery have their own entry; settings keep account, SSH, AI, executable, appearance and update preferences.
+The page list on the left has **Home**, **Repository**, the workspace pages **Compare**, **Rebase** and **Code**, the hosting pages **Pull requests**, **Issues**, **Actions** and **Account**, and **Flows**. Home opens, clones or creates a repository, lists recent ones and searches repositories on a connected server. Repository is the three-column screen: branches, tags, stashes and worktrees on the left; the graph, a diff or a file history with the terminal underneath in the middle; the uncommitted changes with the commit form, or the details of the selected commit, on the right. While it is open the page list folds into an icon rail, which expands it again. Quick navigation (⌘K / Ctrl+K) reaches every page, branch and request, and each repository reopens on the page it was last on. Account gathers the inbox, your work, releases, projects and organizations (groups on GitLab) in one page. Settings keep account, SSH, AI, executable, appearance and update preferences, and open the Git account guide and the gitch setup check.
 
-The account controls show the selected hosting account and Git identity and allow account selection or reconnection without leaving the workspace. GitHub browser sign-in displays queued, preparing and approval states. Project access is a separate permission request for the selected account. On macOS, credential reads run away from the main thread and background reads do not display authorization prompts; explicit authorization remains a user action.
+GitHub browser sign-in displays queued, preparing and approval states. Project access is a separate permission request for the selected account. On macOS, credential reads run away from the main thread and background reads do not display authorization prompts; explicit authorization remains a user action.
 
 ### Git and review tools
 
@@ -151,7 +151,7 @@ The account controls show the selected hosting account and Git identity and allo
 |---|---|
 | Push review | Push, branch Push and a Push required for PR/MR creation show the account, credentials, actual destination URL, branch, outgoing commits/files and gitch checks. Confirmation binds the reviewed source and destination, then verifies them again. A changed context requires a new review. Force Push uses the reviewed remote SHA as its lease. |
 | Line comments and batch reviews | Draft comments beside diff lines, edit or delete them, and submit them together. Drafts are tied to the repository, request and head SHA. Changed heads require a fresh review; partial failures keep unsent drafts. GitHub sends a review, while GitLab publishes discussions before the approval. |
-| Two-revision comparison | Compare commits, branches or tags directly or through their common ancestor. Revisions are resolved to SHAs; reverse the direction and inspect the changed files and diff. |
+| Two-revision comparison | Compare commits, branches or tags directly or through their common ancestor. Type a revision or pick a branch or tag from the list next to each field; revisions are resolved to SHAs; reverse the direction and inspect the changed files and diff. |
 | Multiple commits | Select with ⌘/Ctrl or Shift, review the order, then cherry-pick, revert or prepare squash/drop plans. The app checks the operation state, current HEAD and worktree and creates recovery refs. |
 | Three-way conflict editor | Inspect mine, the editable result, theirs and the available base, with synchronized scrolling and block choices. Unresolved markers, source changes and index changes are checked before writing. |
 | Recovery | Browse reflog and create a branch from an earlier point. Discarded edits are stored locally before discard; restoring the worktree and index requires the original HEAD and a clean worktree. This is bounded local recovery, not a separate backup service. |
@@ -164,9 +164,7 @@ The account controls show the selected hosting account and Git identity and allo
 
 PR/MR lists support state, personal/review-request scope, search and pagination. Details offer title/body/base/reviewer changes, merge, close and reopen, with fresh SHA, CI, approvals, permissions and server policy checked before merging. Issues and mentions are scoped to the selected repository and connected account; supported comments, issue state and notification-read actions are available there.
 
-The hosting hub provides releases and assets, repository discovery, organizations and gists. GitHub Projects v2 supports items, single-select status fields and adding existing issues. GitLab boards expose their scope and label columns. Advanced project fields, project administration and unsupported GitLab column types continue in the browser. Release creation, editing, publishing and deletion follow the server's capabilities; GitHub draft/prerelease behaviour differs from GitLab's immediate publication.
-
-The overview combines the open repositories' branches, accounts, changes and remote differences. CI and review-request summaries are refreshed explicitly using each repository's selected account and show the pages that were loaded, not a global total across all accounts.
+The Account page provides releases and assets, organizations and project boards; Home searches repositories on the server. GitHub Projects v2 supports items, single-select status fields and adding existing issues. GitLab boards expose their scope and label columns. Advanced project fields, project administration and unsupported GitLab column types continue in the browser. Release creation, editing, publishing and deletion follow the server's capabilities; GitHub draft/prerelease behaviour differs from GitLab's immediate publication.
 
 ### AI and local MCP
 

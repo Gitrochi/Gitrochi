@@ -1103,3 +1103,12 @@
 "Proposed .gitch/flow.yml" = "Vorgeschlagene .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Es gibt bereits eine Ablaufdatei, daher wird nichts geschrieben. Führen Sie den Vorschlag von Hand zusammen.";
 "Create flow file" = "Ablaufdatei erstellen";
+
+"An empty search lists repositories you belong to." = "Eine leere Suche listet die Repositories auf, zu denen Sie gehören.";
+"Connect a GitHub or GitLab account to search its repositories." = "Verbinden Sie ein GitHub- oder GitLab-Konto, um dessen Repositories zu durchsuchen.";
+"Remote branches" = "Remote-Branches";
+"Section" = "Abschnitt";
+"Show compare" = "Vergleich anzeigen";
+"Show flows" = "Flows anzeigen";
+"Show home" = "Start anzeigen";
+"(current)" = "(aktuell)";

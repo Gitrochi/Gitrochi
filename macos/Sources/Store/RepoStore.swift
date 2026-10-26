@@ -39,11 +39,7 @@ final class RepoStore: Identifiable {
     enum Area { case changes, history }
     var area: Area = .changes
     var destination: WorkspaceDestination = .home
-    var repositorySection: RepositorySection = .changes
-    var navigationPreferencesVersion = 0
     var workspaceNavigationPreparing = false
-    var navigationTrail: [WorkspaceLocation] = [WorkspaceLocation(.home)]
-    var navigationPosition = 0
     var historySelection: Selection?
     var pullRequestSelection: Int?
     var pullRequestDiff: DiffSource?
@@ -52,7 +48,6 @@ final class RepoStore: Identifiable {
     var worktreeInspects: [String: FileInspect] = [:]
     var sidebarToggleRequest = 0
     var showCommandPalette = false
-    var showHistoryInspector = true
     var selectedBranchID: String?
     var selectedBranchContext: Branch? {
         guard case .commit(let sha)? = selection else { return nil }
@@ -451,7 +446,7 @@ final class RepoStore: Identifiable {
         localWorkflows.reset()
         repositoryAssistant.reset()
         hostingHub = .init()
-        destination = .home; repositorySection = .changes; navigationTrail = [WorkspaceLocation(.home)]; navigationPosition = 0
+        destination = .home
         sheet = nil; confirm = nil
         busy = nil; errorMessage = nil
         newPullRequestDraft = nil
@@ -461,7 +456,7 @@ final class RepoStore: Identifiable {
         review = nil; reviewLoading = false; reviewBusy = false; reviewError = nil
         pullRequestSelection = nil; pullRequestDiff = nil; pullRequestInspect = nil
         worktreeDiffs = [:]; worktreeInspects = [:]
-        showCommandPalette = false; showHistoryInspector = true; selectedBranchID = nil
+        showCommandPalette = false; selectedBranchID = nil
         resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]

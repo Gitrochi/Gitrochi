@@ -1087,3 +1087,12 @@
 "Proposed .gitch/flow.yml" = "Usulan .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "File alur sudah ada, jadi tidak ada yang ditulis. Gabungkan usulan secara manual.";
 "Create flow file" = "Buat file alur";
+
+"An empty search lists repositories you belong to." = "Pencarian kosong menampilkan repositori yang Anda ikuti.";
+"Connect a GitHub or GitLab account to search its repositories." = "Hubungkan akun GitHub atau GitLab untuk mencari repositorinya.";
+"Remote branches" = "Cabang remote";
+"Section" = "Bagian";
+"Show compare" = "Tampilkan perbandingan";
+"Show flows" = "Tampilkan alur";
+"Show home" = "Tampilkan beranda";
+"(current)" = "(saat ini)";

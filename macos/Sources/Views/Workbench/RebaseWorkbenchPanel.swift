@@ -58,7 +58,7 @@ struct RebaseWorkbenchPanel: View {
                     }.padding(16).background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 9))
                 }
                 if !store.status.isEmpty && store.repoState == .clean {
-                    WorkbenchFlow { Label("Commit or stash working changes before starting rebase.", systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.orange); Button("Open Changes") { store.navigate(.changes) } }
+                    WorkbenchFlow { Label("Commit or stash working changes before starting rebase.", systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.orange); Button("Open Changes") { store.navigate(.repository); store.showArea(.changes) } }
                 }
                 if planning { ProgressView().controlSize(.small) }
                 if let error { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) }

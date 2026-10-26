@@ -1092,3 +1092,12 @@
 "Proposed .gitch/flow.yml" = ".gitch/flow.yml đề xuất";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Đã có tệp luồng nên sẽ không ghi gì. Hãy gộp đề xuất theo cách thủ công.";
 "Create flow file" = "Tạo tệp luồng";
+
+"An empty search lists repositories you belong to." = "Tìm kiếm trống sẽ liệt kê các kho lưu trữ mà bạn thuộc về.";
+"Connect a GitHub or GitLab account to search its repositories." = "Kết nối tài khoản GitHub hoặc GitLab để tìm kiếm kho lưu trữ của tài khoản đó.";
+"Remote branches" = "Nhánh từ xa";
+"Section" = "Mục";
+"Show compare" = "Hiện so sánh";
+"Show flows" = "Hiện luồng";
+"Show home" = "Hiện trang chủ";
+"(current)" = "(hiện tại)";

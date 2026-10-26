@@ -11,7 +11,7 @@ extension RepoStore {
     }
 
     func requestSearchFocus() {
-        navigate(.commits)
+        navigate(.repository)
         closeFileInspect()
         closeDiff()
         searchFocusRequest += 1
@@ -67,7 +67,7 @@ extension RepoStore {
         searchMatchSet = Set(ordered)
         searchUnloaded = found.subtracting(searchMatchSet).count
         // 지금 고른 커밋이 결과가 아니면 첫 결과로 이동
-        if jump, destination == .repository, repositorySection == .commits, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
+        if jump, destination == .repository, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
             select(.commit(first))
             scrollTarget = first
         }

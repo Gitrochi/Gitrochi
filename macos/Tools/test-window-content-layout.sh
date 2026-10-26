@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 실제 저장소 화면의 헤더가 macOS 제목 막대를 침범하지 않는지 검사한다.
+# Checks that the repository window's content stays below the macOS title bar.
 # --fullscreen 은 화면 전환을 수반하므로 명시적으로 요청할 때만 실행한다.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -46,9 +46,9 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Sidebar measurement attachment changed'
         text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "sidebar"))')
     elif relative == 'Views/RepoView.swift':
-        needle = '.frame(height: 62)\n        .background(Color(nsColor: .windowBackgroundColor))'
-        assert text.count(needle) == 1, 'Workspace header measurement attachment changed'
-        text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "workspace-header"))')
+        needle = '                    WorkspaceDestinationContent()\n'
+        assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
+        text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
     elif relative == 'Services/Accounts.swift':
         # 실제 툴바를 렌더링해도 사용자 인증 도우미를 설치하지 않는다.
         text = text.replace('        Askpass.install()', '        // 렌더링 검사에서는 인증 도우미를 설치하지 않는다.')

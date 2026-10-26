@@ -197,23 +197,15 @@ struct AppCommands: Commands {
                 .keyboardShortcut("s", modifiers: [.command, .control])
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
-            Button("Go back") { store?.moveWorkspaceHistory(-1) }
-                .keyboardShortcut("[", modifiers: .command)
-                .disabled((store?.navigationPosition ?? 0) == 0)
-            Button("Go forward") { store?.moveWorkspaceHistory(1) }
-                .keyboardShortcut("]", modifiers: .command)
-                .disabled(store == nil || (store!.navigationPosition + 1 >= store!.navigationTrail.count))
-            Button("Toggle commit details") { store?.showHistoryInspector.toggle() }
-                .keyboardShortcut("i", modifiers: [.command, .option])
-            Button("Show overview") { store?.navigate(.home) }.keyboardShortcut("0")
-            Button("Show branches") { store?.navigate(.branches) }.keyboardShortcut("3")
+            Button("Show home") { store?.navigate(.home) }.keyboardShortcut("0")
+            Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
+                .keyboardShortcut("1")
+            Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
+                .keyboardShortcut("2")
+            Button("Show compare") { store?.navigate(.compare) }.keyboardShortcut("3")
             Button("Show pull requests") { store?.navigate(.pullRequests) }.keyboardShortcut("4")
             Button("Show CI/CD") { store?.navigate(.actions) }.keyboardShortcut("5")
-            Button("Show agents") { store?.navigate(.agents) }.keyboardShortcut("6")
-            Button("Show uncommitted changes") { store?.navigate(.changes) }
-                .keyboardShortcut("1")
-            Button("Show history") { store?.navigate(.commits) }
-                .keyboardShortcut("2")
+            Button("Show flows") { store?.navigate(.flows) }.keyboardShortcut("6")
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
@@ -284,8 +276,6 @@ struct RepoContainer: View {
             case .batchCommits: BatchCommitsSheet(store: store)
             case .lineHistory: LineHistorySheet(store: store)
             case .localWorkflows: LocalWorkflowsSheet()
-            case .workspaceOverview: WorkspaceOverviewSheet()
-            case .collaborationInbox: CollaborationInboxSheet()
             case .repositoryAssistant: RepositoryAssistantSheet()
             case .mcpConnection: MCPConnectionSheet()
             case .startAgent(let path): StartAgentSheet(presetPath: path)

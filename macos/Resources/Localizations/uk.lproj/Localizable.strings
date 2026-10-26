@@ -1136,3 +1136,12 @@
 "Proposed .gitch/flow.yml" = "Запропонований .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Файл потоку вже існує, тому нічого не буде записано. Об'єднайте пропозицію вручну.";
 "Create flow file" = "Створити файл потоку";
+
+"An empty search lists repositories you belong to." = "Порожній пошук показує репозиторії, до яких ви належите.";
+"Connect a GitHub or GitLab account to search its repositories." = "Підключіть обліковий запис GitHub або GitLab, щоб шукати його репозиторії.";
+"Remote branches" = "Віддалені гілки";
+"Section" = "Розділ";
+"Show compare" = "Показати порівняння";
+"Show flows" = "Показати потоки";
+"Show home" = "Показати головну";
+"(current)" = "(поточна)";

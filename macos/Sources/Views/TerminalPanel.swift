@@ -3,44 +3,27 @@ import AppKit
 import Darwin
 import SwiftTerm
 
-/// 가운데 열: 그래프(또는 diff) 위, 터미널 패널 아래. 경계선을 끌어 높이를 바꾼다.
+/// The middle column of the repository screen: graph, diff or file history above, the terminal below
 struct ContentColumn: View {
     @Environment(RepoStore.self) private var store
     @AppStorage("terminalHeight") private var terminalHeight = 260.0
     @ViewState private var columnHeight: CGFloat = 800
-    @AppStorage("changesListWidth") private var changesWidth = 300.0
-    @AppStorage("historyInspectorWidth") private var inspectorWidth = 320.0
 
     var body: some View {
         VStack(spacing: 0) {
             Group {
-                if store.area == .changes {
-                    WorkspaceColumns(width: $changesWidth, fixedTrailing: false, minimumFlexible: 380) {
-                        WorkingChangesView()
-                    } trailing: {
-                        VStack(spacing: 0) {
-                            document.frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                            Divider()
-                            CommitComposer()
-                        }
-                    }
-                } else if !store.showHistoryInspector {
-                    document
+                if let f = store.fileInspect {
+                    FileInspectView(inspect: f)
+                } else if let source = store.diffSource {
+                    DiffView(source: source)
                 } else {
-                    WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 410) {
-                        document
-                    } trailing: {
-                        VStack(spacing: 0) {
-                            BranchContextHeader()
-                            InspectorView()
-                        }
-                    }
+                    GraphView()
                 }
             }
             .frame(minHeight: 0, maxHeight: .infinity)
 
             if store.showTerminal {
-                let range = 100.0...max(100.0, Double(columnHeight) - 440)
+                let range = 120.0...max(120.0, Double(columnHeight) - 200)
                 TerminalPanel()
                     .frame(height: min(max(terminalHeight, range.lowerBound), range.upperBound))
                     .overlay(alignment: .top) {
@@ -49,20 +32,6 @@ struct ContentColumn: View {
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
-    }
-
-    @ViewBuilder private var document: some View {
-        if let f = store.fileInspect {
-            FileInspectView(inspect: f)
-        } else if let source = store.diffSource {
-            DiffView(source: source)
-        } else if store.area == .history {
-            GraphView()
-        } else {
-            ContentUnavailableView(store.status.isEmpty ? "Working directory is clean" : "Select a file to review",
-                systemImage: store.status.isEmpty ? "checkmark.circle" : "doc.text.magnifyingglass",
-                description: Text(store.status.isEmpty ? "Modified files appear here." : "Review changes, then stage the files or lines you want to commit."))
-        }
     }
 }
 

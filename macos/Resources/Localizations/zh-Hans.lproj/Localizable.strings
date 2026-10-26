@@ -1139,3 +1139,12 @@
 "Proposed .gitch/flow.yml" = "建议的 .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "流程文件已存在，因此不会写入任何内容。请手动合并建议。";
 "Create flow file" = "创建流程文件";
+
+"An empty search lists repositories you belong to." = "留空搜索会列出你所属的仓库。";
+"Connect a GitHub or GitLab account to search its repositories." = "连接 GitHub 或 GitLab 账户后即可搜索其仓库。";
+"Remote branches" = "远程分支";
+"Section" = "分区";
+"Show compare" = "显示比较";
+"Show flows" = "显示流程";
+"Show home" = "显示主页";
+"(current)" = "(当前)";

@@ -80,6 +80,8 @@ struct WorkingChangesView: View {
                     .padding(12)
                 }
             }
+            Divider()
+            CommitComposer()
         }
         .background(Color(nsColor: .windowBackgroundColor))
     }

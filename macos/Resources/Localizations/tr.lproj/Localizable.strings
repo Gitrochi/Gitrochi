@@ -1124,3 +1124,12 @@
 "Proposed .gitch/flow.yml" = "Önerilen .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Zaten bir akış dosyası var, bu yüzden hiçbir şey yazılmayacak. Öneriyi elle birleştirin.";
 "Create flow file" = "Akış dosyası oluştur";
+
+"An empty search lists repositories you belong to." = "Boş bir arama, üyesi olduğunuz depoları listeler.";
+"Connect a GitHub or GitLab account to search its repositories." = "Depolarını aramak için bir GitHub veya GitLab hesabı bağlayın.";
+"Remote branches" = "Uzak dallar";
+"Section" = "Bölüm";
+"Show compare" = "Karşılaştırmayı göster";
+"Show flows" = "Akışları göster";
+"Show home" = "Ana sayfayı göster";
+"(current)" = "(geçerli)";

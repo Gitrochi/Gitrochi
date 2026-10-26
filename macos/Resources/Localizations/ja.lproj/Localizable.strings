@@ -1137,3 +1137,12 @@
 "Proposed .gitch/flow.yml" = "提案する .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "フローファイルがすでにあるため、何も書き込みません。提案は手動でマージしてください。";
 "Create flow file" = "フローファイルを作成";
+
+"An empty search lists repositories you belong to." = "検索欄を空にすると、所属しているリポジトリを一覧します。";
+"Connect a GitHub or GitLab account to search its repositories." = "GitHub または GitLab のアカウントを接続すると、そのリポジトリを検索できます。";
+"Remote branches" = "リモートブランチ";
+"Section" = "セクション";
+"Show compare" = "比較を表示";
+"Show flows" = "フローを表示";
+"Show home" = "ホームを表示";
+"(current)" = "(現在)";

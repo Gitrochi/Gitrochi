@@ -1080,3 +1080,12 @@
 "Proposed .gitch/flow.yml" = "Voorgestelde .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Er is al een flowbestand, dus er wordt niets geschreven. Voeg het voorstel handmatig samen.";
 "Create flow file" = "Flowbestand maken";
+
+"An empty search lists repositories you belong to." = "Een lege zoekopdracht toont de repositories waartoe je behoort.";
+"Connect a GitHub or GitLab account to search its repositories." = "Koppel een GitHub- of GitLab-account om de repositories ervan te doorzoeken.";
+"Remote branches" = "Externe branches";
+"Section" = "Sectie";
+"Show compare" = "Vergelijking tonen";
+"Show flows" = "Flows tonen";
+"Show home" = "Start tonen";
+"(current)" = "(huidig)";

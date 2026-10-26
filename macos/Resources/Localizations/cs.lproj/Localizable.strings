@@ -1116,3 +1116,12 @@
 "Proposed .gitch/flow.yml" = "Navrhovaný .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Soubor toku už existuje, takže se nic nezapíše. Návrh slučte ručně.";
 "Create flow file" = "Vytvořit soubor toku";
+
+"An empty search lists repositories you belong to." = "Prázdné hledání vypíše repozitáře, do kterých patříte.";
+"Connect a GitHub or GitLab account to search its repositories." = "Připojte účet GitHub nebo GitLab, abyste mohli prohledávat jeho repozitáře.";
+"Remote branches" = "Vzdálené větve";
+"Section" = "Sekce";
+"Show compare" = "Zobrazit porovnání";
+"Show flows" = "Zobrazit toky";
+"Show home" = "Zobrazit domů";
+"(current)" = "(aktuální)";

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 커밋 준비는 넓은 diff 아래에 고정해 파일 선택·스테이지 후 바로 이어 쓸 수 있게 한다.
+/// The commit form at the bottom of the changes column: author and account first, then the message
 struct CommitComposer: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var descriptionExpanded = false
@@ -39,6 +39,12 @@ struct CommitComposer: View {
                 .disabled(store.busy != nil)
             }
             .controlSize(.small)
+            if let me = store.me {
+                Label { Text(verbatim: "\(me.name) · \(me.email)") } icon: { Image(systemName: "person.crop.circle") }
+                    .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    .help("\(me.name) <\(me.email)>")
+            }
+            GitchBar()
             HStack(spacing: 8) {
                 TextField("Summary (required)", text: $store.summary)
                     .textFieldStyle(.plain)
@@ -87,15 +93,6 @@ struct CommitComposer: View {
                 .disabled(!store.canCommit)
                 .help(store.commitGuidance)
                 .fixedSize()
-            }
-            Divider()
-            VStack(alignment: .leading, spacing: 5) {
-                if let me = store.me {
-                    Label { Text(verbatim: "\(me.name) · \(me.email)") } icon: { Image(systemName: "person.crop.circle") }
-                        .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
-                        .help("\(me.name) <\(me.email)>")
-                }
-                GitchBar()
             }
         }
         .padding(12)
