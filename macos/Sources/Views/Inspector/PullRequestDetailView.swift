@@ -35,7 +35,7 @@ struct PullRequestDetailView: View {
                         if pr.body.trimmed.isEmpty {
                             Text("No description").foregroundStyle(.secondary)
                         } else {
-                            Text(markdown(pr.body)).textSelection(.enabled)
+                            MarkdownView(pr.body, target: t)
                         }
                         if let e = store.reviewError {
                             Text(e).font(.caption).foregroundStyle(.red).textSelection(.enabled)
@@ -173,7 +173,10 @@ struct PullRequestDetailView: View {
                             Text(path + (c.line.map { ":\($0)" } ?? ""))
                                 .font(.caption.monospaced()).foregroundStyle(.secondary)
                         }
-                        if !c.body.isEmpty { Text(markdown(c.body)).font(.callout).textSelection(.enabled) }
+                        if !c.body.isEmpty {
+                            MarkdownView(c.body, target: store.target)
+                                .font(.callout)
+                        }
                     }
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -227,9 +230,5 @@ struct PullRequestDetailView: View {
             .controlSize(.small)
         }
         .padding(10)
-    }
-
-    private func markdown(_ s: String) -> AttributedString {
-        (try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(s)
     }
 }

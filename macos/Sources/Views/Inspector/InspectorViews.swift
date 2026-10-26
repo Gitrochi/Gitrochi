@@ -324,12 +324,14 @@ struct CommitDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
             if !d.body.isEmpty {
                 let long = d.body.count > 400 || d.body.filter { $0 == "\n" }.count > 8
-                Text(d.body)
+                let collapsed = long && !bodyExpanded
+                MarkdownView(d.body, target: store.target)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-                    .lineLimit(long && !bodyExpanded ? 8 : nil)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxHeight: collapsed ? 160 : nil, alignment: .top)
+                    .clipped()
+                    .mask { LinearGradient(stops: [.init(color: .black, location: collapsed ? 0.7 : 1), .init(color: collapsed ? .clear : .black, location: 1)], startPoint: .top, endPoint: .bottom) }
                 if long {
                     Button(bodyExpanded ? "Collapse" : "Show all") { bodyExpanded.toggle() }
                         .buttonStyle(.link)

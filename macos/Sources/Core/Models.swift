@@ -440,6 +440,24 @@ struct RepoTarget: Hashable {
     var webURL: String { "https://\(host)/\(path)" }
 }
 
+extension RepoTarget {
+    /// Where #123, !123 and @name in this repository's PR/MR text point
+    var markdownRefs: Markdown.Refs {
+        let web = webURL, host = host
+        let user = { (name: String) in "https://\(host)/\(name)" }
+        return provider == .github
+            ? Markdown.Refs(issue: { "\(web)/issues/\($0)" }, user: user)
+            : Markdown.Refs(issue: { "\(web)/-/issues/\($0)" }, request: { "\(web)/-/merge_requests/\($0)" }, user: user)
+    }
+
+    /// Images load only from the repository's own server, so a PR can't make the app contact any other host
+    func canLoadImage(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "https", let h = url.host?.lowercased() else { return false }
+        let own = host.lowercased().split(separator: ":").first.map(String.init) ?? host
+        return h == own || (provider == .github && (h == "github.com" || h.hasSuffix(".githubusercontent.com")))
+    }
+}
+
 struct PullRequest: Identifiable, Hashable {
     let number: Int
     let title: String
