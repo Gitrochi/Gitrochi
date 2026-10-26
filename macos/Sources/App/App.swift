@@ -275,7 +275,7 @@ struct RepoContainer: View {
             case .clone: CloneSheet()
             case .cloneURL(let url): CloneSheet(initialURL: url)
             case .stash: StashSheet()
-            case .newBranch(let start, let label): NewBranchSheet(start: start, label: label)
+            case .newBranch(let start, let label, let name, let task): NewBranchSheet(start: start, label: label, suggestedName: name, projectTask: task)
             case .tag(let sha): TagSheet(sha: sha)
             case .createPullRequest: CreatePullRequestSheet()
             case .pushReview(let branch, let force, let remote): PushReviewSheet(branch: branch, force: force, remoteOverride: remote)

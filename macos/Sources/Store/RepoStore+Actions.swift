@@ -104,9 +104,17 @@ extension RepoStore {
         sheet = .newBranch(start: s, label: label ?? headBranch ?? String(s.prefix(7)))
     }
 
-    func createBranch(_ name: String, at start: String, checkout: Bool) async {
+    @discardableResult
+    func createBranch(_ name: String, at start: String, checkout: Bool, projectTask: ProjectTaskReference? = nil) async -> Bool {
+        let path = url?.path
         let args = checkout ? ["switch", "-c", name, start] : ["branch", name, start]
-        await run(String(localized: "Creating branch…"), args)
+        let created = await run(String(localized: "Creating branch…"), args)
+        if created, let path, url?.path == path, let projectTask,
+           target?.host.caseInsensitiveCompare(projectTask.host) == .orderedSame,
+           target?.path.caseInsensitiveCompare(projectTask.repository) == .orderedSame {
+            ProjectTaskLinks.remember(projectTask, repositoryPath: path, branch: name)
+        }
+        return created
     }
 
     func confirmDelete(_ b: Branch) {

@@ -36,16 +36,19 @@ struct NewBranchSheet: View {
     @Environment(RepoStore.self) private var store
     let start: String
     let label: String
+    var suggestedName = ""
+    var projectTask: ProjectTaskReference?
     @ViewState private var name = ""
     @ViewState private var checkout = true
 
     var body: some View {
         SheetFrame(title: String(localized: "New branch"), confirmTitle: String(localized: "Create"), canConfirm: valid,
-                   onConfirm: { Task { await store.createBranch(name.trimmed, at: start, checkout: checkout) } }) {
+                   onConfirm: { Task { await store.createBranch(name.trimmed, at: start, checkout: checkout, projectTask: projectTask) } }) {
             TextField("Name", text: $name, prompt: Text("feature/new-feature"))
             LabeledContent("Start point", value: label)
             Toggle("Check out after creating", isOn: $checkout)
         }
+        .onAppear { if name.isEmpty { name = suggestedName } }
     }
 
     private var valid: Bool {

@@ -4,6 +4,7 @@ import { DiffView, FileInspectView } from "@/widgets/diff-viewer";
 import { Inspector } from "@/widgets/inspector";
 import { AgentsPanel, FlowPanel, PullRequestSection, WorktreeSection } from "@/widgets/sidebar";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
+import { projectBranchName } from "@/widgets/hosting-hub";
 import { LocalBranchesPanel, RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { WorkspaceHomePanel, RepositoryLibraryPanel, WorkInboxPanel, MyWorkPanel, IssuesWorkspacePanel, ActionsWorkspacePanel, OperationsWorkspacePanel } from "@/widgets/workspace-panels";
 import { RepositoryAssistantSheet } from "@/features/repository-assistant";
@@ -29,7 +30,7 @@ export function WorkspaceContent({ store, openSettings }: { store: RepoStore; op
     case "actions": return <ActionsWorkspacePanel {...props} />;
     case "operations": return <OperationsWorkspacePanel {...props} />;
     case "pullRequests": return <PullRequestsWorkspace {...props} />;
-    case "releases": case "projects": case "organizations": case "gists": return <HostingHubPanel store={store} section={page} onClone={(url) => store.openSheet({ kind: "clone", url })} />;
+    case "releases": case "projects": case "organizations": case "gists": return <HostingHubPanel store={store} section={page} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) store.select({kind:"pullRequest",number:row.number});}}} />;
     case "assistant": return <RepositoryAssistantSheet store={store} embedded close={() => store.navigate("home")} />;
     case "agents": return <AgentsPanel store={store} />;
     case "flows": return <FlowPanel store={store} />;

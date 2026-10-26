@@ -88,6 +88,9 @@ jobs:
           bash macos/Tools/test-workbench-first-screen.sh
           bash macos/Tools/test-hosting-target.sh
           bash macos/Tools/test-hosting-hub.sh
+          bash macos/Tools/test-hosting-hub-credentials.sh
+          bash macos/Tools/test-project-workbench.sh
+          bash macos/Tools/test-project-management.sh
           bash macos/Tools/test-workspace-operations.sh
           bash macos/Tools/test-confirmation-guard.sh
 

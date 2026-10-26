@@ -14,3 +14,5 @@ export { type BatchCommitAction, type BatchCommitItem, type LineHistoryEntry, ba
 export { initialRepositoryFile, repositoryFolderCount, loadRepositoryTree, loadRepositoryBlob, safeRepositoryPath, parseRepositoryTree, repositoryImageMime, type RepositoryTreeEntry, type RepositoryTree, type RepositoryBlob } from "./lib/repository-browser";
 
 export { defaultRebaseBase, loadRebasePreview, type RebasePreview } from "./lib/rebase-preview";
+
+export type { ProjectTaskReference } from "./model/types";

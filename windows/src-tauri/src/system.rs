@@ -10,20 +10,62 @@ use tauri_plugin_opener::OpenerExt;
 const SERVICE: &str = "Gitrochi";
 /// Credentials saved before the rename (Branchwork, up to 0.3.5) move to SERVICE when first read
 const LEGACY_SERVICE: &str = "Branchwork";
+const CREDENTIAL_READ_FAILED: &str = "credential_read_failed";
 
 // MARK: 자격 증명(Windows 자격 증명 관리자 / macOS 키체인)
 
 #[tauri::command]
-pub async fn secret_get(name: String) -> Option<String> {
-    if let Some(value) = keyring::Entry::new(SERVICE, &name).ok().and_then(|e| e.get_password().ok()) {
-        return Some(value);
+pub async fn secret_get(name: String) -> Result<Option<String>, String> {
+    let entry =
+        keyring::Entry::new(SERVICE, &name).map_err(|_| CREDENTIAL_READ_FAILED.to_owned())?;
+    if let Some(value) = credential_value(entry.get_password())? {
+        return Ok(Some(value));
     }
-    let old = keyring::Entry::new(LEGACY_SERVICE, &name).ok()?;
-    let value = old.get_password().ok()?;
-    if keyring::Entry::new(SERVICE, &name).and_then(|e| e.set_password(&value)).is_ok() {
+    let old = keyring::Entry::new(LEGACY_SERVICE, &name)
+        .map_err(|_| CREDENTIAL_READ_FAILED.to_owned())?;
+    let Some(value) = credential_value(old.get_password())? else {
+        return Ok(None);
+    };
+    if entry.set_password(&value).is_ok() {
         let _ = old.delete_credential();
     }
-    Some(value)
+    Ok(Some(value))
+}
+
+fn credential_value(result: keyring::Result<String>) -> Result<Option<String>, String> {
+    match result {
+        Ok(value) => Ok(Some(value)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(_) => Err(CREDENTIAL_READ_FAILED.to_owned()),
+    }
+}
+
+#[cfg(test)]
+mod credential_tests {
+    use super::{credential_value, CREDENTIAL_READ_FAILED};
+
+    #[test]
+    fn only_missing_entries_are_reported_as_absent() {
+        assert_eq!(
+            credential_value(Ok("fixture-token".into())),
+            Ok(Some("fixture-token".into()))
+        );
+        assert_eq!(credential_value(Err(keyring::Error::NoEntry)), Ok(None));
+        for error in [
+            keyring::Error::NoStorageAccess(Box::new(std::io::Error::other(
+                "private credential detail",
+            ))),
+            keyring::Error::PlatformFailure(Box::new(std::io::Error::other(
+                "private platform detail",
+            ))),
+            keyring::Error::BadEncoding(b"private credential bytes".to_vec()),
+        ] {
+            assert_eq!(
+                credential_value(Err(error)),
+                Err(CREDENTIAL_READ_FAILED.to_owned())
+            );
+        }
+    }
 }
 
 #[tauri::command]

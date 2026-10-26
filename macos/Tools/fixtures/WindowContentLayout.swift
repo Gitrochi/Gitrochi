@@ -135,6 +135,10 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
                 let frame = probe.convert(probe.bounds, to: nil)
                 precondition(frame.maxY <= safe.maxY + 1,
                              "\(probe.identifierForFixture) enters native titlebar during \(scenario): \(frame), safe \(safe)")
+                if probe.identifierForFixture == "workspace-header" {
+                    precondition(abs(frame.maxY - safe.maxY) <= 1,
+                                 "Workspace header leaves an extra titlebar gap during \(scenario): \(frame), safe \(safe)")
+                }
                 // 다른 네이티브 창에 속한 전체화면 제목 막대는 시스템 오버레이로 별도 기록한다.
                 precondition(ownTraffic.allSatisfy { !$0.intersects(frame) }, "Content overlaps a traffic-light button during \(scenario)")
                 measuredFrames[probe.identifierForFixture] = rect(frame)
@@ -168,6 +172,13 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
         settle(0.6)
         try capture("loaded-wide")
         precondition(window.toolbar != nil, "Actual RepoView toolbar must be installed by NSHostingController")
+
+        // SwiftUI can restore this style after the initial window attachment.
+        // The lifetime attachment must contain it without another configure call.
+        let beforeLateStyle = window.frame
+        window.styleMask.insert(.fullSizeContentView)
+        try capture("late-toolbar-style-restored")
+        precondition(equal(window.frame, beforeLateStyle), "Late toolbar changes must preserve the outer window frame")
 
         store.loading = LoadingInfo(title: "Opening fixture", step: "Rendering the actual loading overlay")
         settle(0.6)
@@ -232,11 +243,47 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
         window.setFrame(fullFixtureFrame, display: true)
         waitForNativeFrame("full-fixture-restored", expected: fullFixtureFrame) { equal(window.frame, fullFixtureFrame) }
 
+        let secondWindow = NSWindow(contentRect: window.contentLayoutRect,
+                                    styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+                                    backing: .buffered, defer: false)
+        secondWindow.isReleasedWhenClosed = false
+        secondWindow.title = "Second repository tab"
+        secondWindow.contentView = NSView()
+        RepositoryWindowLayout.configure(secondWindow)
+        window.tabbingIdentifier = "GitrochiWindowLayoutFixture"
+        secondWindow.tabbingIdentifier = window.tabbingIdentifier
+        window.tabbingMode = .preferred
+        secondWindow.tabbingMode = .preferred
+        secondWindow.orderBack(nil)
+        let beforeTabs = window.frame
+        window.addTabbedWindow(secondWindow, ordered: .above)
+        window.tabGroup?.selectedWindow = window
+        settle(0.4)
+        precondition(window.tabbedWindows?.count == 2, "Fixture must install a real AppKit tab bar")
+        precondition(equal(window.frame, beforeTabs), "Adding native tabs must preserve the outer frame")
+        try capture("native-tab-group")
+        window.tabGroup?.selectedWindow = secondWindow
+        settle(0.3)
+        window.tabGroup?.selectedWindow = window
+        settle(0.3)
+        window.styleMask.insert(.fullSizeContentView)
+        try capture("native-tab-switch-restored")
+
+        let beforeFrameRestore = window.frame
+        let restoredFrame = NSRect(x: beforeFrameRestore.minX + 24, y: beforeFrameRestore.minY + 16,
+                                   width: beforeFrameRestore.width - 40, height: beforeFrameRestore.height - 20)
+        window.styleMask.insert(.fullSizeContentView)
+        window.setFrame(restoredFrame, display: false)
+        try capture("native-tab-frame-restored")
+        precondition(equal(window.frame, restoredFrame), "A restored frame must take precedence over the previous style geometry")
+        window.setFrame(beforeFrameRestore, display: false)
+        settle(0.3)
+
         // 루트 뷰가 안전 영역을 무시해도 네이티브 콘텐츠 경계가 헤더를 보호해야 한다.
         host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
             .frame(minWidth: 1080, minHeight: 640).ignoresSafeArea())
-        window.styleMask.insert(.fullSizeContentView)
         let beforeRepair = window.frame
+        window.styleMask.insert(.fullSizeContentView)
         RepositoryWindowLayout.configure(window)
         precondition(equal(window.frame, beforeRepair), "Repairing an unsafe root must preserve the outer frame")
         try capture("safe-area-ignoring-root-contained")
@@ -272,9 +319,15 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
             try capture("native-fullscreen-restored")
         }
 
+        window.tabGroup?.removeWindow(secondWindow)
+        secondWindow.orderOut(nil)
+        settle(0.3)
+        try capture("native-tabs-detached")
+
         window.orderOut(nil)
         let result: [String: Any] = ["ok": true, "actualViews": ["RepoContainer", "RepoView", "NavigationSidebar", "LoadingView"],
                                      "safeAreaIgnoringRootContained": true, "framePreserved": true,
+                                     "lateToolbarStyleContained": true, "nativeTabsChecked": true,
                                      "fullscreenRequested": fullscreen, "inspectionRequested": inspect, "checks": checks]
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         if let output { try data.write(to: output.appendingPathComponent("result.json")) }

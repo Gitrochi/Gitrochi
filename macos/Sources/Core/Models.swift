@@ -519,7 +519,7 @@ enum SheetKind: Identifiable {
     case clone
     case cloneURL(String)
     case stash
-    case newBranch(start: String, label: String)
+    case newBranch(start: String, label: String, suggestedName: String = "", projectTask: ProjectTaskReference? = nil)
     case tag(sha: String)
     case createPullRequest
     case pushReview(branch: String, force: Bool, remoteOverride: String?)
@@ -552,7 +552,7 @@ enum SheetKind: Identifiable {
         case .clone: return "clone"
         case .cloneURL(let url): return "clone:" + url
         case .stash: return "stash"
-        case .newBranch(let s, _): return "branch:" + s
+        case .newBranch(let s, _, let name, _): return "branch:" + s + ":" + name
         case .tag(let s): return "tag:" + s
         case .createPullRequest: return "pr"
         case .pushReview(let branch, let force, let remote): return "push:" + branch + ":" + String(force) + ":" + (remote ?? "")

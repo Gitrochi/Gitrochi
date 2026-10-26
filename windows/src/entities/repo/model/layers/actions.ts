@@ -1,5 +1,5 @@
-import { displayPushURL, type Branch, branchRemote, branchShort, changePaths, type ConfirmRequest, type FileChange, fileName, type PullMode, type RepoState, type ResetMode, short, type Stash, type Tag } from "@/entities/git";
-import { accounts } from "@/entities/hosting";
+import { displayPushURL, type Branch, branchRemote, branchShort, changePaths, type ConfirmRequest, type FileChange, fileName, type PullMode, type ProjectTaskReference, type RepoState, type ResetMode, short, type Stash, type Tag } from "@/entities/git";
+import { accounts, rememberProjectBranch } from "@/entities/hosting";
 import { samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { describe, git } from "@/shared/platform";
@@ -113,14 +113,17 @@ export abstract class RepoActions extends RepoPushReview {
     return this.run(t("Checking out…"), ["switch", "--detach", sha]);
   }
 
-  requestNewBranch(start?: string, label?: string) {
+  requestNewBranch(start?: string, label?: string, suggestedName?: string, projectTask?: ProjectTaskReference) {
     const s = start ?? this.headHash ?? "HEAD";
-    this.sheet = { kind: "newBranch", start: s, label: label ?? this.headBranch ?? short(s) };
+    this.sheet = { kind: "newBranch", start: s, label: label ?? this.headBranch ?? short(s), suggestedName, projectTask };
     this.emit();
   }
 
-  createBranch(name: string, start: string, checkout: boolean) {
-    return this.run(t("Creating branch…"), checkout ? ["switch", "-c", name, start] : ["branch", name, start]);
+  async createBranch(name: string, start: string, checkout: boolean, projectTask?: ProjectTaskReference) {
+    const path = this.path;
+    const created = await this.run(t("Creating branch…"), checkout ? ["switch", "-c", name, start] : ["branch", name, start]);
+    if (created && path && this.path === path && projectTask && this.target?.host.toLocaleLowerCase() === projectTask.host.toLocaleLowerCase() && this.target.path.toLocaleLowerCase() === projectTask.repository.toLocaleLowerCase()) rememberProjectBranch(path, name, projectTask);
+    return created;
   }
 
   ask(c: ConfirmRequest) {

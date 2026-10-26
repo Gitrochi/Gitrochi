@@ -455,10 +455,13 @@ export interface RemoteRepo {
 
 export type LoadState = { kind: "idle" } | { kind: "loading" } | { kind: "loaded" } | { kind: "needsAccount" } | { kind: "failed"; message: string };
 
+/** A local task reference contains no account credentials. */
+export interface ProjectTaskReference { id: string; title: string; url: string; number?: number; repository: string; host: string }
+
 export type SheetKind =
   | { kind: "clone"; url?: string }
   | { kind: "stash" }
-  | { kind: "newBranch"; start: string; label: string }
+  | { kind: "newBranch"; start: string; label: string; suggestedName?: string; projectTask?: ProjectTaskReference }
   | { kind: "tag"; sha: string }
   | { kind: "createPullRequest" }
   | { kind: "pushReview"; branch: string; force: boolean; remoteOverride?: string }
