@@ -1973,5 +1973,8 @@
   "Creates a new branch at the current position. From ▾: new worktree, compare revisions, run an agent (Claude Code, Codex, Gemini).": "현재 위치에서 새 브랜치를 만듭니다. ▾ 에서: 새 워크트리, 두 시점 비교, 에이전트 실행(Claude Code, Codex, Gemini).",
   "Branches": "브랜치",
   "Remote branches": "원격 브랜치",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 누르면 Actions 에서 엽니다"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 누르면 Actions 에서 엽니다",
+  "Filter branches and tags": "브랜치·태그 검색",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "브랜치·태그·커밋 ID를 입력하거나 왼쪽에서 브랜치를 고르세요.",
+  "No matching branches": "일치하는 브랜치가 없습니다"
 }

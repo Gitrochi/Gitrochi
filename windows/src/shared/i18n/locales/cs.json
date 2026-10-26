@@ -1148,5 +1148,8 @@
   "Remote branches": "Vzdálené větve",
   "From revision": "Výchozí revize",
   "To revision": "Cílová revize",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kliknutím otevřete v Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kliknutím otevřete v Actions",
+  "Filter branches and tags": "Filtrovat větve a tagy",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Použijte větve, tagy nebo ID commitů, nebo vyberte větev vlevo.",
+  "No matching branches": "Žádné odpovídající větve"
 }

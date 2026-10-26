@@ -1142,5 +1142,8 @@
   "Remote branches": "Branches distantes",
   "From revision": "Révision de départ",
   "To revision": "Révision d'arrivée",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI : {0} · {1}#{2} — cliquer pour ouvrir dans Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI : {0} · {1}#{2} — cliquer pour ouvrir dans Actions",
+  "Filter branches and tags": "Filtrer les branches et les tags",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Utilisez des branches, des tags ou des identifiants de commit, ou choisissez une branche à gauche.",
+  "No matching branches": "Aucune branche correspondante"
 }

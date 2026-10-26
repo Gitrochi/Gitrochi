@@ -1149,5 +1149,8 @@
   "Remote branches": "Gałęzie zdalne",
   "From revision": "Rewizja początkowa",
   "To revision": "Rewizja końcowa",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kliknij, aby otworzyć w Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kliknij, aby otworzyć w Actions",
+  "Filter branches and tags": "Filtruj gałęzie i tagi",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Użyj gałęzi, tagów lub identyfikatorów commitów albo wybierz gałąź po lewej.",
+  "No matching branches": "Brak pasujących gałęzi"
 }

@@ -1118,5 +1118,8 @@
   "Remote branches": "Cabang jarak jauh",
   "From revision": "Revisi awal",
   "To revision": "Revisi akhir",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — klik untuk membuka di Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — klik untuk membuka di Actions",
+  "Filter branches and tags": "Saring cabang dan tag",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Gunakan cabang, tag, atau ID commit, atau pilih cabang di sebelah kiri.",
+  "No matching branches": "Tidak ada cabang yang cocok"
 }

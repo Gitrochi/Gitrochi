@@ -17,7 +17,18 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     store.localBranches = [{ name: "main", target: a, upstream: "origin/main", ahead: 1, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false }, { name: "topic", target: b, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false }];
     store.remoteBranches = [{ ...store.localBranches[1], name: "origin/topic", isRemote: true }]; store.tags = [{ name: "v1", target: a }]; store.stashes = [{ ref: "stash@{0}", hash: b, message: "Saved fixture" }];
     store.loadRevisionComparison = async () => { comparisons++; const s = store.historyTools; s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [], stats: {} }; store.changed(); };
-    await mount(<RevisionComparisonPanel store={store}/>); await click("Compare"); check(comparisons === 1 && !host.querySelector('[role="dialog"]'), "Comparison was not embedded");
+    store.headBranch = "main";
+    await mount(<RevisionComparisonPanel store={store}/>);
+    check(host.querySelector(".compare-side") && host.querySelector(".compare-main") && host.textContent?.includes(t("Choose two revisions to compare")), "Compare page did not show its two columns and empty state");
+    const refs = () => [...host.querySelectorAll<HTMLElement>(".compare-branch")].map((row) => row.dataset.ref).join(",");
+    check(refs() === "main,topic,origin/topic,v1", `Branch list order: ${refs()}`);
+    const filter = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Filter branches and tags")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(filter, "top"); filter.dispatchEvent(new Event("input", { bubbles: true })); await pause();
+    check(refs() === "topic,origin/topic", `Filtered branch list: ${refs()}`);
+    host.querySelector<HTMLButtonElement>('.compare-branch[data-ref="topic"] button')!.click(); await pause();
+    check(comparisons === 1 && store.historyTools.left === "main" && store.historyTools.right === "topic", "The row's Compare did not compare the current branch with that branch");
+    check(host.querySelector('.compare-branch[data-ref="topic"]')?.classList.contains("on") && host.querySelector(".compare-result") && !host.querySelector('[role="dialog"]'), "The compared branch is not highlighted or the result is not on the page");
+    await click("Compare"); check(comparisons === 2, "The main Compare button did not run the comparison");
     reset(); store.path = "C:/gitrochi-workbench-fixture";
     const source: RepositoryCodeSource = { tree: async () => ({ revision: a, entries: [{ path: "src/fixture.ts", mode: "100644", oid: b, size: 17, kind: "file" }], truncated: false }), blob: async () => ({ text: "const fixture = 1;\n" }), read: async (args) => { reads++; return args[0] === "blame" ? "fixture blame" : args[0] === "log" ? "fixture history" : "+fixture changes"; } };
     await mount(<RepositoryCodePanel store={store} source={source}/>); await pause(); check(host.querySelector("pre")?.textContent?.includes("const fixture"), "Code first screen did not preview a safe source file"); await click("fixture.ts"); check(host.querySelector("pre")?.textContent?.includes("const fixture"), "Code tree did not display the blob"); await click("File history"); check(host.querySelector("pre")?.textContent?.includes("fixture history"), "File history missing"); await click("Blame"); check(host.querySelector("pre")?.textContent?.includes("fixture blame"), "Blame missing"); await click("Working changes"); check(reads === 3 && host.querySelector("pre")?.textContent?.includes("+fixture changes"), "Working-change preview missing");
@@ -27,7 +38,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(previewReads===1&&host.textContent?.includes("Newest fixture commit")&&host.textContent?.includes(t("{0} commits to replay",2)),"Rebase first screen did not load its branch summary");
     check(host.querySelectorAll(".workbench-rebase-candidates button").length===2&&!store.confirm,"Opening rebase must only preview commits");
     reset(); store.repoState = "rebasing"; store.continueOperation = async () => { rebases++; }; await mount(<RebaseWorkbenchPanel store={store}/>); await click("Continue"); check(rebases === 1 && host.textContent?.includes(t("Abort…")), "In-progress rebase controls missing");
-    return [true, "Embedded comparison, automatic safe Code preview, immutable rebase summary, folder/source/history/blame/change previews and rebase continue rendered"];
+    return [true, "Two-column Compare page with branch list, filter and row action, automatic safe Code preview, immutable rebase summary, folder/source/history/blame/change previews and rebase continue rendered"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); store.cancelHistoryTools(); }
 }

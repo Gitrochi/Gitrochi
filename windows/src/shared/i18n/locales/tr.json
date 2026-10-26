@@ -1155,5 +1155,8 @@
   "Remote branches": "Uzak dallar",
   "From revision": "Başlangıç revizyonu",
   "To revision": "Bitiş revizyonu",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Actions içinde açmak için tıklayın"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Actions içinde açmak için tıklayın",
+  "Filter branches and tags": "Dalları ve etiketleri süz",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Dal, etiket veya commit kimliği kullanın ya da soldan bir dal seçin.",
+  "No matching branches": "Eşleşen dal yok"
 }

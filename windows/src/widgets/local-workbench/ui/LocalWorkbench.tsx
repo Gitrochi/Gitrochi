@@ -14,12 +14,6 @@ type Props = { store: RepoStore };
 const refs = (store: RepoStore) => [...store.localBranches.map((b) => b.name), ...store.remoteBranches.map((b) => b.name), ...store.tags.map((b) => b.name)];
 function Heading({ title, detail }: { title: string; detail: string }) { return <div className="workbench-heading"><h2>{t(title)}</h2><span className="hint">{t(detail)}</span></div>; }
 
-export function RevisionComparisonPanel({ store }: Props) {
-  useObserve(store);
-  useEffect(() => () => store.cancelHistoryTools(), [store]);
-  return <section className="local-workbench"><Heading title="Compare revisions" detail="Inspect the complete change between branches, tags or commits." /><CompareRevisionsSheet store={store} close={() => {}} embedded /></section>;
-}
-
 export interface RepositoryCodeSource { tree: typeof loadRepositoryTree; blob: typeof loadRepositoryBlob; read: (args: string[], repo: string) => Promise<string> }
 const defaultCodeSource: RepositoryCodeSource = { tree: loadRepositoryTree, blob: loadRepositoryBlob, read: async (args, repo) => (await git(args, repo)).stdout };
 export function RepositoryCodePanel({ store, source = defaultCodeSource }: Props & { source?: RepositoryCodeSource }) {

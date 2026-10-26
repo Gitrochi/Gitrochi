@@ -1162,5 +1162,8 @@
   "Remote branches": "สาขาระยะไกล",
   "From revision": "รีวิชันต้นทาง",
   "To revision": "รีวิชันปลายทาง",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — คลิกเพื่อเปิดใน Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — คลิกเพื่อเปิดใน Actions",
+  "Filter branches and tags": "กรองสาขาและแท็ก",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "ใช้สาขา แท็ก หรือรหัสคอมมิต หรือเลือกสาขาทางซ้าย",
+  "No matching branches": "ไม่มีสาขาที่ตรงกัน"
 }

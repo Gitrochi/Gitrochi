@@ -1167,5 +1167,8 @@
   "Remote branches": "リモートブランチ",
   "From revision": "比較元のリビジョン",
   "To revision": "比較先のリビジョン",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — クリックで Actions に開く"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — クリックで Actions に開く",
+  "Filter branches and tags": "ブランチとタグを絞り込む",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "ブランチ、タグ、コミット ID を入力するか、左のブランチを選んでください。",
+  "No matching branches": "一致するブランチはありません"
 }

@@ -1122,5 +1122,8 @@
   "Remote branches": "Nhánh từ xa",
   "From revision": "Bản sửa đổi nguồn",
   "To revision": "Bản sửa đổi đích",
-  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — nhấp để mở trong Actions"
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — nhấp để mở trong Actions",
+  "Filter branches and tags": "Lọc nhánh và thẻ",
+  "Use branches, tags or commit IDs, or pick a branch on the left.": "Dùng nhánh, thẻ hoặc ID commit, hoặc chọn một nhánh ở bên trái.",
+  "No matching branches": "Không có nhánh phù hợp"
 }
