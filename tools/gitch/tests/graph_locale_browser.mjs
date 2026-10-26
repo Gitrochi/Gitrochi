@@ -98,6 +98,7 @@ try {
       const detailLocalized=${JSON.stringify(code)}==='ko'||!/[가-힣]/.test(strip(detail));
       $('reviewTab').click();
       const dynamicReview=$('reviewDetail').querySelector('h2')?.textContent===expected.review;
+      const notesLocalized=${JSON.stringify(code)}==='ko'||!/[가-힣]/.test(strip($('notes').textContent));
       const reviewLocalized=${JSON.stringify(code)}==='ko'||!/[가-힣]/.test(strip($('reviewDetail').textContent));
       row.querySelector('.path-action').click();
       const menu=$('pathMenu'),relative=$('relativePathValue').textContent,absolute=$('absolutePathValue').textContent;
@@ -113,7 +114,7 @@ try {
       const reports=markdown.includes(expected.review)&&parsed.querySelector('h1')?.textContent.includes(expected.review)&&parsed.documentElement.lang===${JSON.stringify(code)}&&report.selection.some(value=>value.path===path)&&markdown.includes(path)&&parsed.body.textContent.includes(path);
       const reportLocalized=${JSON.stringify(code)}==='ko'||(!/[가-힣]/.test(strip(markdown))&&!/[가-힣]/.test(strip(parsed.body.textContent)));
       const offline=parsed.querySelectorAll('script,[src]').length===0;
-      return {ok:staticLabels&&filenamePreserved&&readableActions&&selected&&detailLocalized&&dynamicReview&&reviewLocalized&&pathMenu&&copied&&copyLocalized&&reports&&reportLocalized&&offline,staticLabels,filenamePreserved,readableActions,selected,detailLocalized,dynamicReview,reviewLocalized,pathMenu,copied,copyLocalized,reports,reportLocalized,offline,
+      return {ok:staticLabels&&filenamePreserved&&readableActions&&selected&&detailLocalized&&dynamicReview&&notesLocalized&&reviewLocalized&&pathMenu&&copied&&copyLocalized&&reports&&reportLocalized&&offline,staticLabels,filenamePreserved,readableActions,selected,detailLocalized,dynamicReview,notesLocalized,reviewLocalized,pathMenu,copied,copyLocalized,reports,reportLocalized,offline,
         actual:{settings:$('gear').textContent,review:$('reviewDetail').querySelector('h2')?.textContent,folders:$('foldersNav').textContent,copy:$('copyRelativePath').textContent,finder:$('revealPath').textContent},
         leftovers:${JSON.stringify(code)}==='ko'?[]:[strip(detail),strip($('reviewDetail').textContent),strip(markdown),strip(parsed.body.textContent)].flatMap(value=>value.match(/[^\\n]{0,30}[가-힣][^\\n]{0,70}/g)||[]).slice(0,8)};
     })()`);

@@ -21,7 +21,7 @@ test_graph_html_locales_in_browser() {
   printf '{"name":"locale-fixture"}\n' > package.json
   filename='very long file name with 변경 리뷰 Graph settings 相対パス intact.ts'
   printf 'export const value = 1;\n' > "src/nested/$filename"
-  printf 'import { value } from "./nested/%s";\nexport const result = value;\n' "$filename" > src/consumer.ts
+  printf 'import { value } from "./nested/%s";\nimport "./generated-missing";\nexport const result = value;\n' "$filename" > src/consumer.ts
   printf 'import { result } from "../src/consumer";\nconsole.log(result);\n' > tests/review.test.ts
   git add -A
   git commit -q -m 'Locale fixture'

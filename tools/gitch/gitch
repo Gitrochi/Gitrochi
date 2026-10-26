@@ -10406,7 +10406,29 @@ HTMLEOF
     "Details": "Details",
     "Copy": "Copy",
     "Inferred": "Inferred",
-    " references": " references"
+    " references": " references",
+    "{0} file paths containing control characters or symbolic links were excluded for safety.": "{0} file paths containing control characters or symbolic links were excluded for safety.",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges.": "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges.",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges; {1} files missing from the index use type-name inference.": "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges; {1} files missing from the index use type-name inference.",
+    "Swift: gitch-swift-index failed with exit code {0}; type names were used for inference.": "Swift: gitch-swift-index failed with exit code {0}; type names were used for inference.",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed.": "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed.",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed; {1} names excluded.": "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed; {1} names excluded.",
+    "{0} relative import / mod references were not found in tracked files and were excluded (for example, generated files).": "{0} relative import / mod references were not found in tracked files and were excluded (for example, generated files).",
+    "{1} commits changing more than {0} files were excluded (large cleanup / rename commits; adjust with --max-files).": "{1} commits changing more than {0} files were excluded (large cleanup / rename commits; adjust with --max-files).",
+    "Only the latest {0} commits were analyzed (adjust with --max-commits / --since).": "Only the latest {0} commits were analyzed (adjust with --max-commits / --since).",
+    "{0} file renames were traced back to merge earlier history into current files.": "{0} file renames were traced back to merge earlier history into current files.",
+    "{0} historical paths containing tabs, newlines or other delimiters were excluded from analysis.": "{0} historical paths containing tabs, newlines or other delimiters were excluded from analysis.",
+    "For each folder, files = all descendant files; bytes = their total size (based on index contents); filesHere = direct files; exts = five most common extensions.": "For each folder, files = all descendant files; bytes = their total size (based on index contents); filesHere = direct files; exts = five most common extensions.",
+    "For each folder, files = all descendant files; bytes = their total size (based on the selected comparison snapshot); filesHere = direct files; exts = five most common extensions.": "For each folder, files = all descendant files; bytes = their total size (based on the selected comparison snapshot); filesHere = direct files; exts = five most common extensions.",
+    "The fast analysis could not resolve the package.json imports alias. Use a SCIP index.": "The fast analysis could not resolve the package.json imports alias. Use a SCIP index.",
+    "The path was not found in tracked files. Check generated files, aliases and extensions.": "The path was not found in tracked files. Check generated files, aliases and extensions.",
+    "The relative path was not found in tracked files.": "The relative path was not found in tracked files.",
+    "The relative Python module was not found in tracked files.": "The relative Python module was not found in tracked files.",
+    "The Go module contains no tracked package files.": "The Go module contains no tracked package files.",
+    "No tracked file was found for the Rust mod declaration.": "No tracked file was found for the Rust mod declaration.",
+    "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.",
+    "Symlink or submodule entries were excluded from the staged source snapshot.": "Symlink or submodule entries were excluded from the staged source snapshot.",
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "Changed file is listed, but its dependency syntax is not supported by this analysis."
   },
   "ko": {
     "Select a file first.": "먼저 파일을 선택하세요.",
@@ -11172,7 +11194,29 @@ HTMLEOF
     "Details": "상세",
     "Copy": "복사",
     "Inferred": "추정",
-    " references": "곳"
+    " references": "곳",
+    "{0} file paths containing control characters or symbolic links were excluded for safety.": "제어 문자 또는 심볼릭 링크가 든 파일 경로 {0}개는 안전하게 제외했습니다.",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges.": "Swift: Xcode 인덱스(gitch-swift-index)로 읽은 정확한 참조입니다 (연결 {0}개).",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges; {1} files missing from the index use type-name inference.": "Swift: Xcode 인덱스(gitch-swift-index)로 읽은 정확한 참조입니다 (연결 {0}개, 인덱스에 없는 파일 {1}개는 타입 이름으로 추정).",
+    "Swift: gitch-swift-index failed with exit code {0}; type names were used for inference.": "Swift: gitch-swift-index 가 실패해(종료 코드 {0}) 타입 이름으로 추정했습니다.",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed.": "Swift: Tuist · SwiftPM 매니페스트로 파일의 모듈을 정해, 다른 모듈의 타입은 그 모듈을 import 했고 public · open · package 로 선언됐을 때만 이었습니다(@testable 이면 internal 도) (모듈 {0}개).",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed; {1} names excluded.": "Swift: Tuist · SwiftPM 매니페스트로 파일의 모듈을 정해, 다른 모듈의 타입은 그 모듈을 import 했고 public · open · package 로 선언됐을 때만 이었습니다(@testable 이면 internal 도) (모듈 {0}개, 그래서 뺀 이름 {1}개).",
+    "{0} relative import / mod references were not found in tracked files and were excluded (for example, generated files).": "상대 경로 import · mod 중 {0}개는 추적하는 파일에서 찾지 못해 뺐습니다 (빌드 때 생기는 파일 등).",
+    "{1} commits changing more than {0} files were excluded (large cleanup / rename commits; adjust with --max-files).": "파일이 {0}개 넘게 바뀐 커밋 {1}개는 뺐습니다 (정리 · 이름 바꾸기 같은 큰 커밋 — --max-files 로 바꿈).",
+    "Only the latest {0} commits were analyzed (adjust with --max-commits / --since).": "최근 커밋 {0}개만 봤습니다 (--max-commits · --since 로 바꿈).",
+    "{0} file renames were traced back to merge earlier history into current files.": "파일 이름 변경 {0}건을 거슬러 옛 이력을 현재 파일에 합쳤습니다.",
+    "{0} historical paths containing tabs, newlines or other delimiters were excluded from analysis.": "탭/줄바꿈 등 구분 문자가 든 이력 경로 {0}건은 분석에서 뺐습니다.",
+    "For each folder, files = all descendant files; bytes = their total size (based on index contents); filesHere = direct files; exts = five most common extensions.": "폴더마다 files = 아래 모든 파일 수, bytes = 그 크기 합(인덱스의 내용 기준), filesHere = 바로 아래 파일 수, exts = 많은 확장자 다섯 개.",
+    "For each folder, files = all descendant files; bytes = their total size (based on the selected comparison snapshot); filesHere = direct files; exts = five most common extensions.": "폴더마다 files = 아래 모든 파일 수, bytes = 그 크기 합(선택한 비교 범위의 내용 기준), filesHere = 바로 아래 파일 수, exts = 많은 확장자 다섯 개.",
+    "The fast analysis could not resolve the package.json imports alias. Use a SCIP index.": "package.json imports 별칭은 빠른 분석에서 해석하지 못했습니다. SCIP 인덱스를 사용하세요.",
+    "The path was not found in tracked files. Check generated files, aliases and extensions.": "추적 파일에서 경로를 찾지 못했습니다. 생성 파일·별칭·확장자를 확인하세요.",
+    "The relative path was not found in tracked files.": "추적 파일에서 상대 경로를 찾지 못했습니다.",
+    "The relative Python module was not found in tracked files.": "Python 상대 모듈을 추적 파일에서 찾지 못했습니다.",
+    "The Go module contains no tracked package files.": "Go 모듈 안에 추적하는 패키지 파일이 없습니다.",
+    "No tracked file was found for the Rust mod declaration.": "Rust mod 선언의 추적 파일을 찾지 못했습니다.",
+    "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "제어 문자나 심볼릭 링크가 있는 경로는 파일명 경계와 저장소 범위를 유지하기 위해 소스 파일을 읽기 전에 제외했습니다.",
+    "Symlink or submodule entries were excluded from the staged source snapshot.": "스테이지 소스 스냅샷에서 심볼릭 링크와 하위 모듈 항목을 제외했습니다.",
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "변경 파일은 목록에 있지만 이 분석은 해당 의존성 문법을 지원하지 않습니다."
   },
   "ja": {
     "Select a file first.": "先にファイルを選択してください。",
@@ -11938,7 +11982,29 @@ HTMLEOF
     "Details": "詳細",
     "Copy": "コピー",
     "Inferred": "推定",
-    " references": "か所"
+    " references": "か所",
+    "{0} file paths containing control characters or symbolic links were excluded for safety.": "制御文字またはシンボリックリンクを含むファイルパス{0}件を安全のため除外しました。",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges.": "Swift：Xcodeインデックス（gitch-swift-index）による正確な参照です（接続{0}件）。",
+    "Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges; {1} files missing from the index use type-name inference.": "Swift：Xcodeインデックス（gitch-swift-index）による正確な参照です（接続{0}件）。インデックスにないファイル{1}件は型名から推定しました。",
+    "Swift: gitch-swift-index failed with exit code {0}; type names were used for inference.": "Swift：gitch-swift-indexが終了コード{0}で失敗したため、型名から推定しました。",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed.": "Swift：Tuist・SwiftPMマニフェストでファイルのモジュールを特定しました。他のモジュールの型はインポート済みかつpublic・open・packageの場合のみ接続します（@testableではinternalも対象）。{0}個のモジュールを分析しました。",
+    "Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed; {1} names excluded.": "Swift：Tuist・SwiftPMマニフェストでファイルのモジュールを特定しました。他のモジュールの型はインポート済みかつpublic・open・packageの場合のみ接続します（@testableではinternalも対象）。{0}個のモジュールを分析し、{1}個の名前を除外しました。",
+    "{0} relative import / mod references were not found in tracked files and were excluded (for example, generated files).": "相対パスのimport・modのうち{0}件は追跡ファイル内に見つからないため除外しました（ビルド時に生成されるファイルなど）。",
+    "{1} commits changing more than {0} files were excluded (large cleanup / rename commits; adjust with --max-files).": "変更ファイルが{0}件を超えるコミット{1}件を除外しました（整理・名前変更などの大きなコミット。--max-filesで調整）。",
+    "Only the latest {0} commits were analyzed (adjust with --max-commits / --since).": "直近のコミット{0}件のみ分析しました（--max-commits・--sinceで調整）。",
+    "{0} file renames were traced back to merge earlier history into current files.": "ファイル名変更{0}件をさかのぼり、過去履歴を現在のファイルに統合しました。",
+    "{0} historical paths containing tabs, newlines or other delimiters were excluded from analysis.": "タブ・改行などの区切り文字を含む履歴パス{0}件を分析から除外しました。",
+    "For each folder, files = all descendant files; bytes = their total size (based on index contents); filesHere = direct files; exts = five most common extensions.": "各フォルダーのfiles＝配下の全ファイル数、bytes＝合計サイズ（インデックスの内容に基づく）、filesHere＝直下のファイル数、exts＝多い拡張子上位5つ。",
+    "For each folder, files = all descendant files; bytes = their total size (based on the selected comparison snapshot); filesHere = direct files; exts = five most common extensions.": "各フォルダーのfiles＝配下の全ファイル数、bytes＝合計サイズ（選択した比較範囲の内容に基づく）、filesHere＝直下のファイル数、exts＝多い拡張子上位5つ。",
+    "The fast analysis could not resolve the package.json imports alias. Use a SCIP index.": "高速解析ではpackage.jsonのimportsエイリアスを解決できませんでした。SCIPインデックスを使用してください。",
+    "The path was not found in tracked files. Check generated files, aliases and extensions.": "追跡ファイル内にパスが見つかりませんでした。生成ファイル、エイリアス、拡張子を確認してください。",
+    "The relative path was not found in tracked files.": "追跡ファイル内に相対パスが見つかりませんでした。",
+    "The relative Python module was not found in tracked files.": "追跡ファイル内にPythonの相対モジュールが見つかりませんでした。",
+    "The Go module contains no tracked package files.": "Goモジュール内に追跡対象のパッケージファイルがありません。",
+    "No tracked file was found for the Rust mod declaration.": "Rustのmod宣言に対応する追跡ファイルが見つかりませんでした。",
+    "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "ファイル名の境界とリポジトリの範囲を維持するため、制御文字やシンボリックリンクを含むパスはソースの読み取り前に除外しました。",
+    "Symlink or submodule entries were excluded from the staged source snapshot.": "ステージ済みソースのスナップショットからシンボリックリンクとサブモジュールの項目を除外しました。",
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "変更ファイルは一覧にありますが、この解析はその依存関係の構文に対応していません。"
   }
 }
 </script>
@@ -11955,7 +12021,29 @@ HTMLEOF
   const UI_LANGUAGE = normalizeUILanguage(UI_PREFERENCE.language
     || navigator.languages?.[0] || navigator.language || UI_PREFERENCE.systemLanguage) || 'en';
   const UI_SOURCE_KEYS = new Map(Object.entries(UI_MESSAGES.ko).map(([key,value])=>[value,key]));
-  const trAnalysis = value => UI_SOURCE_KEYS.has(value)?tr(UI_SOURCE_KEYS.get(value)):value;
+  const UI_ANALYSIS_PATTERNS = ["{0} file paths containing control characters or symbolic links were excluded for safety.","Impact follows reverse dependencies from changed files. Deleted files also use the base commit. Unsupported languages, dynamic references and untracked files may have incomplete impact analysis.","Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges.","Swift: exact references from the Xcode index (gitch-swift-index), with {0} edges; {1} files missing from the index use type-name inference.","Swift: type names were used for inference because no Xcode index exists (build once in Xcode to create one).","Swift: gitch-swift-index failed with exit code {0}; type names were used for inference.","Swift: because files do not import each other, uses of top-level type names declared in other files (class, struct, enum, protocol, actor, typealias) are inferred as edges (heuristic: true; dashed lines).","Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed.","Swift: Tuist / SwiftPM manifests identify each file’s module. Cross-module edges require an import and public / open / package visibility (also internal with @testable). {0} modules analyzed; {1} names excluded.","Kotlin/Java: same-package types are used without imports, so their names are inferred as edges (heuristic: true; dashed lines).","{0} relative import / mod references were not found in tracked files and were excluded (for example, generated files).","Without declared module dependencies, only modules are shown, with no edges.","File pairs changed in the same commit. weight = co-changing commits; degree = percentage relative to the average change count of both files; node changes = change count (hotspots).","Renames are traced back into current tracked paths. Addition/deletion boundaries prevent merging older history from recreated files. Reverts count as independent change commits.","{1} commits changing more than {0} files were excluded (large cleanup / rename commits; adjust with --max-files).","Only the latest {0} commits were analyzed (adjust with --max-commits / --since).","Only local history from the shallow clone was analyzed. Older remote commits are excluded.","{0} file renames were traced back to merge earlier history into current files.","{0} historical paths containing tabs, newlines or other delimiters were excluded from analysis.","Lock files (package-lock.json, Cargo.lock, etc.) are excluded because they usually change with manifests.","For each folder, files = all descendant files; bytes = their total size (based on index contents); filesHere = direct files; exts = five most common extensions.","For each folder, files = all descendant files; bytes = their total size (based on the selected comparison snapshot); filesHere = direct files; exts = five most common extensions.","The fast analysis could not resolve the package.json imports alias. Use a SCIP index.","The path was not found in tracked files. Check generated files, aliases and extensions.","The relative path was not found in tracked files.","The relative Python module was not found in tracked files.","The Go module contains no tracked package files.","No tracked file was found for the Rust mod declaration.","Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.","Symlink or submodule entries were excluded from the staged source snapshot.","Changed file is listed, but its dependency syntax is not supported by this analysis."].map(key => {
+    const source=UI_MESSAGES.ko[key], slots=[], chunks=[];let cursor=0;
+    const escape=text=>Array.from(text).map(char=>'.*+?^$()[]{}|\\'.includes(char)?'\\'+char:char).join('');
+    for(const match of source.matchAll(/\{(\d+)\}/g)) {
+      chunks.push(escape(source.slice(cursor,match.index)), '([0-9]+)');
+      slots.push(Number(match[1]));cursor=match.index+match[0].length;
+    }
+    chunks.push(escape(source.slice(cursor)));
+    return {key,slots,pattern:new RegExp('^'+chunks.join('')+'$')};
+  });
+  // Only match authored messages and numeric slots, leaving repository paths and arbitrary errors intact.
+  const UI_ENGLISH_SOURCE_KEYS = new Map(Object.entries(UI_MESSAGES.en).map(([key,value])=>[value,key]));
+  function trAnalysis(value) {
+    if(UI_SOURCE_KEYS.has(value))return tr(UI_SOURCE_KEYS.get(value));
+    if(UI_ENGLISH_SOURCE_KEYS.has(value))return tr(UI_ENGLISH_SOURCE_KEYS.get(value));
+    for(const {key,slots,pattern} of UI_ANALYSIS_PATTERNS) {
+      const match=pattern.exec(value);if(!match)continue;
+      const values=[];slots.forEach((slot,index)=>{values[slot]=match[index+1];});
+      return tr(key,...values);
+    }
+    return value;
+  }
+
   function tr(key,...values) {
     const text=UI_MESSAGES[UI_LANGUAGE]?.[key]??UI_MESSAGES.en[key]??key;
     return text.replace(/\{(\d+)\}/g,(match,index)=>index<values.length?String(values[index]):match);
