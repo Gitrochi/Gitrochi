@@ -1,4 +1,8 @@
 .DS_Store
+.build/
+crates/target/
+windows/src-tauri/generated/
+windows/src/shared/core/core.generated.ts
 # 비밀값·환경 파일 — 업데이트 서명 키 같은 것은 저장소 밖(~/.tauri 등)에 둔다
 *.key
 *.pem

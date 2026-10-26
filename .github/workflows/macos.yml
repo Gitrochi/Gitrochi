@@ -6,7 +6,7 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    paths: ["macos/**", "tools/gitch/**", "tools/gitch-swift-index/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
+    paths: ["crates/**", "tools/build-core*", "macos/**", "tools/gitch/**", "tools/gitch-swift-index/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
   workflow_dispatch:
 
 # 같은 PR 에 새로 푸시하면 돌던 실행은 취소
@@ -27,6 +27,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Rust 공통 코어 검사
+        run: cargo test --locked --manifest-path crates/Cargo.toml
 
       - name: 빌드
         run: macos/build.sh
@@ -86,6 +93,13 @@ jobs:
       - name: 테스트
         run: tools/gitch/tests/run.sh
 
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust CLI 가속 경로 테스트
+        run: |
+          cargo build --locked --release --manifest-path crates/Cargo.toml --bin gitch-core
+          GITCH_CORE="$GITHUB_WORKSPACE/crates/target/release/gitch-core" bash tools/gitch/tests/run.sh -k graph
+
       - name: 정밀 참조 · 자동 갱신 테스트
         run: |
           python tools/gitch/tests/test_scip.py
@@ -128,6 +142,10 @@ jobs:
             echo "::error::태그 $GITHUB_REF_NAME 와 Info.plist 버전 $app 이 다릅니다. 버전을 올린 커밋에 태그를 다세요."
             exit 1
           fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
 
       - name: 배포 파일 (유니버설 · 업데이트 서명)
         env:
