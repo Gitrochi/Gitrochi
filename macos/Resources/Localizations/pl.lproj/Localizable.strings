@@ -1044,6 +1044,8 @@
 "Opens another shell next to this one, in the same folder." = "Otwiera kolejną powłokę obok tej, w tym samym folderze.";
 "Opens another shell below this one, in the same folder." = "Otwiera kolejną powłokę pod tą, w tym samym folderze.";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Pokaż pasek boczny";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Kolumny";
 "Time" = "Czas";

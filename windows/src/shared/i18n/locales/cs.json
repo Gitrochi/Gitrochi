@@ -1045,6 +1045,9 @@
  "Split down": "Rozdělit dolů",
  "Opens another shell next to this one, in the same folder.": "Otevře další shell vedle tohoto ve stejné složce.",
  "Opens another shell below this one, in the same folder.": "Otevře další shell pod tímto ve stejné složce.",
+ "Show sidebar": "Zobrazit postranní panel",
+ "Hide sidebar": "Skrýt postranní panel",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Sekce zůstanou po ruce jako lišta ikon; najeďte na ikonu a sekce se otevře.",
  "Columns": "Sloupce",
  "Time": "Čas"
 }

@@ -1064,6 +1064,8 @@
 "Opens another shell next to this one, in the same folder." = "在同一文件夹中，于此终端旁边再打开一个 Shell。";
 "Opens another shell below this one, in the same folder." = "在同一文件夹中，于此终端下方再打开一个 Shell。";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "显示侧边栏";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "列";
 "Time" = "时间";

@@ -3,11 +3,29 @@ import SwiftUI
 struct SidebarView: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var expanded: Set<String> = []
+    /// Set: only this section, as a flyout of the rail (the sidebar folded away)
+    var flyout: String? = nil
+    @ViewState private var flyoutHeight: CGFloat = 200
 
     @AppStorage("sidebarMode") private var mode = "list"
     @AppStorage(SidebarSections.key) private var collapsed = ""
 
     var body: some View {
+        if let flyout {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) { sections(only: flyout) }
+                    .padding(.bottom, 8)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { flyoutHeight = $0 }
+            }
+            .frame(width: 280, height: min(max(flyoutHeight, 40), 520))
+            .environment(\.sidebarFlyout, true)
+            .onAppear(perform: expandCurrent)
+        } else {
+            list
+        }
+    }
+
+    private var list: some View {
         VStack(spacing: 0) {
             Picker("", selection: $mode) {
                 Text("List").tag("list")
@@ -41,111 +59,119 @@ struct SidebarView: View {
 
     private var branchList: some View {
         SharedStack {
-            VStack(alignment: .leading, spacing: 0) {
-                if let target = store.target {
-                    PullRequestSection(target: target)
-                }
-
-                let pinned = store.localBranches.filter { store.isPinned($0) }
-                if !pinned.isEmpty {
-                    SidebarSection("pinned") {
-                        ForEach(pinned) { b in localRow(b, label: b.name) }
-                    } header: {
-                        Text("Pinned")
-                    }
-                }
-
-                SidebarSection("local") {
-                    let groups = BranchFolders(store.localBranches) { $0.name }
-                    ForEach(groups.loose) { b in localRow(b, label: b.name) }
-                    ForEach(groups.folders) { f in
-                        DisclosureGroup(isExpanded: expansion("l:" + f.name)) {
-                            ForEach(f.branches) { b in localRow(b, label: BranchFolders.leaf(b.name)) }
-                        } label: {
-                            folderLabel(f)
-                        }
-                    }
-                } header: {
-                    Text("Local branches \(store.localBranches.count)")
-                }
-
-                if store.worktrees.count > 1 {
-                    WorktreeSection()
-                }
-
-                if !store.remoteBranches.isEmpty {
-                    SidebarSection("remotes") {
-                        ForEach(remoteGroups, id: \.0) { remote, branches in
-                            DisclosureGroup(isExpanded: expansion("r:" + remote)) {
-                                let groups = BranchFolders(branches) { $0.shortName }
-                                ForEach(groups.loose) { b in remoteRow(b, label: b.shortName) }
-                                ForEach(groups.folders) { f in
-                                    DisclosureGroup(isExpanded: expansion("r:\(remote)/\(f.name)")) {
-                                        ForEach(f.branches) { b in remoteRow(b, label: BranchFolders.leaf(b.shortName)) }
-                                    } label: {
-                                        folderLabel(f)
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Label(remote, systemImage: "cloud")
-                                    Spacer()
-                                    Text("\(branches.count)").font(.caption).foregroundStyle(.secondary)
-                                }
-                                .sidebarRow()
-                            }
-                        }
-                    } header: {
-                        Text("Remotes \(store.remoteBranches.count)")
-                    }
-                }
-
-                if !store.tags.isEmpty {
-                    SidebarSection("tags") {
-                        ForEach(store.tags) { t in
-                            Label(t.name, systemImage: "tag")
-                                .lineLimit(1)
-                                .sidebarRow()
-                                .contentShape(Rectangle())
-                                .onTapGesture { store.reveal(t.target) }
-                                .contextMenu {
-                                    Button("Go to this tag") { store.reveal(t.target) }
-                                    Button("Push tag") { Task { await store.pushTag(t) } }
-                                    Divider()
-                                    Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
-                                }
-                        }
-                    } header: {
-                        Text("Tags \(store.tags.count)")
-                    }
-                }
-
-                if !store.stashes.isEmpty {
-                    SidebarSection("stashes") {
-                        ForEach(store.stashes) { s in
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(s.message).lineLimit(1)
-                                Text(s.ref).font(.caption).foregroundStyle(.secondary)
-                            }
-                            .sidebarRow()
-                            .contentShape(Rectangle())
-                            .onTapGesture { store.reveal(s.hash) }
-                            .contextMenu {
-                                Button("Apply") { Task { await store.stashApply(s) } }
-                                Button("Pop") { Task { await store.stashPop(s) } }
-                                Divider()
-                                Button("Drop…", role: .destructive) { store.stashDrop(s) }
-                            }
-                        }
-                    } header: {
-                        Text("Stashes \(store.stashes.count)")
-                    }
-                }
-            }
-            .padding(.bottom, 8)
+            VStack(alignment: .leading, spacing: 0) { sections(only: nil) }
+                .padding(.bottom, 8)
         }
         .onAppear(perform: expandCurrent)
         .onChange(of: store.headBranch) { _, _ in expandCurrent() }
+    }
+
+    /// The sections, or just the one with this id (the rail's flyout)
+    @ViewBuilder
+    private func sections(only: String?) -> some View {
+        let show = { (id: String) in only == nil || only == id }
+
+        if show("pullRequests"), let target = store.target {
+            PullRequestSection(target: target)
+        }
+
+        let pinned = store.localBranches.filter { store.isPinned($0) }
+        if show("pinned"), !pinned.isEmpty {
+            SidebarSection("pinned") {
+                ForEach(pinned) { b in localRow(b, label: b.name) }
+            } header: {
+                Text("Pinned")
+            }
+        }
+
+        if show("local") {
+            SidebarSection("local") {
+                let groups = BranchFolders(store.localBranches) { $0.name }
+                ForEach(groups.loose) { b in localRow(b, label: b.name) }
+                ForEach(groups.folders) { f in
+                    DisclosureGroup(isExpanded: expansion("l:" + f.name)) {
+                        ForEach(f.branches) { b in localRow(b, label: BranchFolders.leaf(b.name)) }
+                    } label: {
+                        folderLabel(f)
+                    }
+                }
+            } header: {
+                Text("Local branches \(store.localBranches.count)")
+            }
+        }
+
+        if show("worktrees"), store.worktrees.count > 1 {
+            WorktreeSection()
+        }
+
+        if show("remotes"), !store.remoteBranches.isEmpty {
+            SidebarSection("remotes") {
+                ForEach(remoteGroups, id: \.0) { remote, branches in
+                    DisclosureGroup(isExpanded: expansion("r:" + remote)) {
+                        let groups = BranchFolders(branches) { $0.shortName }
+                        ForEach(groups.loose) { b in remoteRow(b, label: b.shortName) }
+                        ForEach(groups.folders) { f in
+                            DisclosureGroup(isExpanded: expansion("r:\(remote)/\(f.name)")) {
+                                ForEach(f.branches) { b in remoteRow(b, label: BranchFolders.leaf(b.shortName)) }
+                            } label: {
+                                folderLabel(f)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Label(remote, systemImage: "cloud")
+                            Spacer()
+                            Text("\(branches.count)").font(.caption).foregroundStyle(.secondary)
+                        }
+                        .sidebarRow()
+                    }
+                }
+            } header: {
+                Text("Remotes \(store.remoteBranches.count)")
+            }
+        }
+
+        if show("tags"), !store.tags.isEmpty {
+            SidebarSection("tags") {
+                ForEach(store.tags) { t in
+                    Label(t.name, systemImage: "tag")
+                        .lineLimit(1)
+                        .sidebarRow()
+                        .contentShape(Rectangle())
+                        .onTapGesture { store.reveal(t.target) }
+                        .contextMenu {
+                            Button("Go to this tag") { store.reveal(t.target) }
+                            Button("Push tag") { Task { await store.pushTag(t) } }
+                            Divider()
+                            Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
+                        }
+                }
+            } header: {
+                Text("Tags \(store.tags.count)")
+            }
+        }
+
+        if show("stashes"), !store.stashes.isEmpty {
+            SidebarSection("stashes") {
+                ForEach(store.stashes) { s in
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(s.message).lineLimit(1)
+                        Text(s.ref).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .sidebarRow()
+                    .contentShape(Rectangle())
+                    .onTapGesture { store.reveal(s.hash) }
+                    .contextMenu {
+                        Button("Apply") { Task { await store.stashApply(s) } }
+                        Button("Pop") { Task { await store.stashPop(s) } }
+                        Divider()
+                        Button("Drop…", role: .destructive) { store.stashDrop(s) }
+                    }
+                }
+            } header: {
+                Text("Stashes \(store.stashes.count)")
+            }
+        }
     }
 
     /// 현재 브랜치가 든 폴더는 펼쳐 둔다
@@ -363,6 +389,8 @@ struct SidebarSection<Header: View, Content: View>: View {
     let content: Content
     let header: Header
     @AppStorage(SidebarSections.key) private var collapsed = ""
+    /// In the rail's flyout the section is always open and does not fold
+    @Environment(\.sidebarFlyout) private var flyout
 
     init(_ id: String, @ViewBuilder content: () -> Content, @ViewBuilder header: () -> Header) {
         self.id = id
@@ -371,13 +399,15 @@ struct SidebarSection<Header: View, Content: View>: View {
     }
 
     var body: some View {
-        let open = SidebarSections.binding($collapsed, id)
+        let open = flyout ? .constant(true) : SidebarSections.binding($collapsed, id)
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                Image(systemName: "chevron.down")
-                    .font(.caption2.weight(.bold))
-                    .rotationEffect(.degrees(open.wrappedValue ? 0 : -90))
-                    .frame(width: 10)
+                if !flyout {
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.bold))
+                        .rotationEffect(.degrees(open.wrappedValue ? 0 : -90))
+                        .frame(width: 10)
+                }
                 header
             }
             .font(.subheadline.weight(.semibold))
@@ -396,6 +426,18 @@ struct SidebarSection<Header: View, Content: View>: View {
             }
         }
         .padding(.top, 6)
+    }
+}
+
+private struct SidebarFlyoutKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// The sidebar section is shown as a flyout of the rail
+    var sidebarFlyout: Bool {
+        get { self[SidebarFlyoutKey.self] }
+        set { self[SidebarFlyoutKey.self] = newValue }
     }
 }
 

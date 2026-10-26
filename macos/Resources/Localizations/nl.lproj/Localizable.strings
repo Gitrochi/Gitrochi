@@ -1005,6 +1005,8 @@
 "Opens another shell next to this one, in the same folder." = "Opent nog een shell naast deze, in dezelfde map.";
 "Opens another shell below this one, in the same folder." = "Opent nog een shell onder deze, in dezelfde map.";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Zijbalk tonen";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Kolommen";
 "Time" = "Tijd";

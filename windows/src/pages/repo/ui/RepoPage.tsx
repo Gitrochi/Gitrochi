@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { GraphView } from "@/widgets/commit-graph";
 import { DiffView, FileInspectView } from "@/widgets/diff-viewer";
 import { Inspector } from "@/widgets/inspector";
-import { Sidebar } from "@/widgets/sidebar";
+import { Sidebar, SidebarRail } from "@/widgets/sidebar";
 import { TerminalPanel } from "@/widgets/terminal-panel";
 import { Toolbar } from "@/widgets/toolbar";
 import type { RepoStore } from "@/entities/repo";
@@ -14,6 +14,7 @@ import "./repo-page.css";
 export function RepoPage({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(settings);
   const sidebarW = settings.get("sidebarWidth", 250);
+  const sidebarCollapsed = settings.get("sidebarCollapsed", false);
   const inspectorW = settings.get("inspectorWidth", 380);
   const centerRef = useRef<HTMLDivElement>(null);
   const [centerH, setCenterH] = useState(800);
@@ -43,10 +44,16 @@ export function RepoPage({ store, openSettings }: { store: RepoStore; openSettin
     <div className="repo">
       <Toolbar store={store} />
       <div className="main">
-        <div className="sidebar" style={{ width: sidebarW }}>
-          <Sidebar store={store} openSettings={openSettings} />
-        </div>
-        <div className="splitter" onMouseDown={resize("sidebarWidth", sidebarW, 200, 420, 1)} />
+        {sidebarCollapsed ? (
+          <SidebarRail store={store} openSettings={openSettings} />
+        ) : (
+          <>
+            <div className="sidebar" style={{ width: sidebarW }}>
+              <Sidebar store={store} openSettings={openSettings} />
+            </div>
+            <div className="splitter" onMouseDown={resize("sidebarWidth", sidebarW, 200, 420, 1)} />
+          </>
+        )}
         <div className="center" ref={centerRef}>
           {store.fileInspect ? <FileInspectView store={store} /> : store.diffSource ? <DiffView store={store} /> : <GraphView store={store} />}
           {store.showTerminal && <TerminalPanel store={store} columnHeight={centerH} />}

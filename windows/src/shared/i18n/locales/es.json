@@ -1041,6 +1041,9 @@
  "Split down": "Dividir hacia abajo",
  "Opens another shell next to this one, in the same folder.": "Abre otro shell junto a este, en la misma carpeta.",
  "Opens another shell below this one, in the same folder.": "Abre otro shell debajo de este, en la misma carpeta.",
+ "Show sidebar": "Mostrar barra lateral",
+ "Hide sidebar": "Ocultar barra lateral",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Las secciones quedan a mano como una barra de iconos; pase el cursor por uno para abrirla.",
  "Columns": "Columnas",
  "Time": "Hora"
 }

@@ -1011,6 +1011,9 @@
  "Split down": "Omlaag splitsen",
  "Opens another shell next to this one, in the same folder.": "Opent nog een shell naast deze, in dezelfde map.",
  "Opens another shell below this one, in the same folder.": "Opent nog een shell onder deze, in dezelfde map.",
+ "Show sidebar": "Zijbalk tonen",
+ "Hide sidebar": "Zijbalk verbergen",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "De secties blijven bij de hand als een rij pictogrammen; wijs er een aan om hem te openen.",
  "Columns": "Kolommen",
  "Time": "Tijd"
 }

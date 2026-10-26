@@ -1041,6 +1041,8 @@
 "Opens another shell next to this one, in the same folder." = "Otevře další shell vedle tohoto ve stejné složce.";
 "Opens another shell below this one, in the same folder." = "Otevře další shell pod tímto ve stejné složce.";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "Zobrazit postranní panel";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Sloupce";
 "Time" = "Čas";

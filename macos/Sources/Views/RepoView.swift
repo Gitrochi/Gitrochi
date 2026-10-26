@@ -3,14 +3,22 @@ import SwiftUI
 /// 저장소를 연 뒤의 메인 화면: 사이드바(참조) | 그래프 또는 diff (+ 터미널) | 상세
 struct RepoView: View {
     @Environment(RepoStore.self) private var store
+    @ViewState private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 360)
         } content: {
-            ContentColumn()
-                .navigationSplitViewColumnWidth(min: 520, ideal: 780)
+            HStack(spacing: 0) {
+                // the sidebar folded away: a rail of its sections, each opening as a flyout
+                if columns != .all {
+                    SidebarRail(show: { columns = .all })
+                    Divider()
+                }
+                ContentColumn()
+            }
+            .navigationSplitViewColumnWidth(min: 520, ideal: 780)
         } detail: {
             InspectorView()
                 .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 560)

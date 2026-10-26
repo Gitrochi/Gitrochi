@@ -1063,6 +1063,9 @@
  "Split down": "Розділити вниз",
  "Opens another shell next to this one, in the same folder.": "Відкриває ще одну оболонку поруч із цією, у тій самій папці.",
  "Opens another shell below this one, in the same folder.": "Відкриває ще одну оболонку під цією, у тій самій папці.",
+ "Show sidebar": "Показати бічну панель",
+ "Hide sidebar": "Сховати бічну панель",
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Розділи лишаються під рукою як панель значків; наведіть на значок, щоб відкрити розділ.",
  "Columns": "Стовпці",
  "Time": "Час"
 }

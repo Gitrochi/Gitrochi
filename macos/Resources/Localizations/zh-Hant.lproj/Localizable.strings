@@ -1063,6 +1063,8 @@
 "Opens another shell next to this one, in the same folder." = "在同一資料夾中，於此終端機旁邊再開啟一個 Shell。";
 "Opens another shell below this one, in the same folder." = "在同一資料夾中，於此終端機下方再開啟一個 Shell。";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "顯示側邊欄";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "欄";
 "Time" = "時間";

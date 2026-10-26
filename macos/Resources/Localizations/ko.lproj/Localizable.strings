@@ -1187,6 +1187,8 @@
 "Opens another shell next to this one, in the same folder." = "같은 폴더에서 이 터미널 옆에 셸을 하나 더 엽니다.";
 "Opens another shell below this one, in the same folder." = "같은 폴더에서 이 터미널 아래에 셸을 하나 더 엽니다.";
 
+/* The sidebar folded into a rail of icons */
+"Show sidebar" = "사이드바 보이기";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "칸";
 "Time" = "시간";
