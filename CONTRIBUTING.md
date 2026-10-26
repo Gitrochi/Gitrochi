@@ -16,10 +16,14 @@ Gitrochi 에 관심 가져 주셔서 고맙습니다. 버그 제보·기능 요�
 | | 맥 | Windows |
 |---|---|---|
 | 위치 | `macos/` (SwiftUI, macOS 15+) | `windows/` (Tauri 2: Rust + React/TypeScript) |
-| 필요 | Swift 6 이상(Xcode 또는 Command Line Tools) | Node.js 22, Rust stable |
+| 필요 | Swift 6 이상(Xcode 또는 Command Line Tools), Rust stable | Node.js 22, Rust stable |
 | 빌드 | `macos/build.sh` | `cd windows && npm ci && npx tauri build` |
 | 확인 | 빌드 오류·경고 없이 | `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` |
 
+- Rust는 rustup 배포판을 권장합니다. Windows 프런트엔드의 공통 코어를 만들기 전에 `rustup target add wasm32-unknown-unknown`을 실행하세요. macOS 유니버설 배포에는 `rustup target add aarch64-apple-darwin x86_64-apple-darwin`도 필요합니다. 제품 사용자는 Rust 설치가 필요 없습니다.
+- 공통 계산은 `crates/gitrochi-core/`에 있습니다. `cargo test --locked --manifest-path crates/Cargo.toml`로 검사합니다. Windows는 `npm ci`와 `npm run build/dev/test`에서 WASM·CLI를 자동 생성합니다. 생성 파일은 커밋하지 않습니다. 직접 타입 검사를 할 때는 먼저 `npm run core`를 실행합니다.
+- macOS의 `tools/build-core-native.sh`는 정적 라이브러리와 CLI를 만들고, `macos/build.sh`가 앱에 연결·서명합니다. `GITROCHI_BUILD_DIR`·`GITROCHI_OBJECT_DIR`로 동시에 실행하는 빌드의 출력 폴더를 분리할 수 있습니다. Rust 실행 파일 위치는 `GITROCHI_CARGO`로 지정합니다.
+- 공통 코어 구조·검증·성능 관찰값은 [`crates/README.md`](crates/README.md)에 있습니다.
 - 받은 뒤 한 번 `git config core.hooksPath .githooks` — 커밋할 때 [Git 규칙](#git-규칙)을 검사합니다.
 - 맥은 SwiftPM 없이 `swiftc` 로 바로 빌드합니다. 새 파일은 `macos/Sources/` 아래 알맞은 폴더에 두면 자동으로 포함됩니다.
 - 맥 앱에 함께 들어가는 [gitch](tools/gitch/README.md)(bash 3.2 + git)를 고쳤으면 `tools/gitch/tests/run.sh` 로 확인합니다(3분쯤, 실제 설정은 건드리지 않음).
@@ -48,6 +52,8 @@ windows/src/            Feature-Sliced Design — 위 계층이 아래 계층만
   entities/  git(모델·파서·그래프·diff) · repo(RepoStore) · hosting · ci · ai · agent · terminal · avatar · workspace
   shared/    api(ipc) · config(env·settings) · platform(git 실행·도구·WSL·업데이트) · i18n · lib · ui(기본 부품·테마) · assets
 windows/src-tauri/src/  프로세스 실행·pty·파일 감시·HTTP·자격 증명(Rust)
+crates/gitrochi-core/   공통 Git 파서·diff·패치·충돌·그래프·CLI 변경 영향 계산(Rust)
+windows/src/shared/core/  WebAssembly 경계·취소 가능한 worker 작업 큐
 ```
 
 Windows 폴더 규칙(어기면 `windows/tests/architecture.test.ts` 가 실패합니다):

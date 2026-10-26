@@ -448,7 +448,8 @@ final class RepoStore: Identifiable {
             let wip = !newStatus.isEmpty
             var graph: (commits: [Commit], layout: (rows: [GraphRow], maxLanes: Int), more: Bool)?
             if lastLog?.data != lg.data || lastLog?.wip != wip || lastLog?.head != head || entries.isEmpty {
-                var commits = Parsers.log(lg.data)
+                var commits = await Task.detached(priority: .userInitiated) { Parsers.log(lg.data) }.value
+                guard gen == reloadGeneration, self.url == url else { return }
                 let more = commits.count > limit
                 if more { commits.removeLast(commits.count - limit) }
                 if wip { commits.insert(.wip(parent: head), at: 0) }

@@ -1432,6 +1432,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "tokio",
  "url",
  "wait-timeout",
  "webview2-com",

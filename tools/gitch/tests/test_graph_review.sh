@@ -131,3 +131,14 @@ test_graph_review_utf8_basename_keeps_character_boundaries() {
   gr_json diff --base HEAD
   assert_eq "$(gr_q '.review.changes[]|select(.path=="새이름.ts")|.oldPath')" 한글.ts
 }
+
+# 실제 UTF-8 로캘에서도 ASCII 접미사가 같은 한글 경로를 별개로 취급한다.
+test_graph_review_utf8_locale_preserves_character_boundaries() {
+  local task_locale
+  task_locale=$(locale -a 2>/dev/null | LC_ALL=C awk '
+    tolower($0) ~ /^en_us[.]utf-?8$/ { print; found = 1; exit }
+    tolower($0) ~ /^c[.]utf-?8$/ { fallback = $0 }
+    END { if (!found && fallback != "") print fallback }')
+  [ -n "$task_locale" ] || return 0
+  LC_ALL="$task_locale" test_graph_review_utf8_basename_keeps_character_boundaries
+}

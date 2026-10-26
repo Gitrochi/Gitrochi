@@ -28,6 +28,7 @@ keyring = { version = "3", features = ["apple-native", "windows-native"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 dirs = "5"
 wait-timeout = "0.2"
+tokio = { version = "1", features = ["sync"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

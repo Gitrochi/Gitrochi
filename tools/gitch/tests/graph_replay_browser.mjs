@@ -39,12 +39,17 @@ try {
   };
   await send('Runtime.enable');await send('Page.enable');await send('Network.enable');
   await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});
+  // 실행 기기의 접근성 설정은 재생 검사와 분리하고 마지막에 reduce를 따로 검증한다.
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   await send('Emulation.setDeviceMetricsOverride',{width:1366,height:900,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url:pathToFileURL(html).href+'#test'});
+  await send('Page.bringToFront');
   for(let i=0;i<100;i++){if(await evaluate('!!window.gitchGraphTest'))break;await sleep(100);}
   const results=await evaluate(`(async()=>{
     const t=window.gitchGraphTest,$=id=>document.getElementById(id),wait=ms=>new Promise(r=>setTimeout(r,ms));
     const assert=(value,message)=>{if(!value)throw new Error(message);};
+    // CI 부하로 프레임이 늦어져도 실제 상태 전환을 기다리되 정지는 제한 시간 안에 실패시킨다.
+    const waitFor=async(predicate,message)=>{const end=performance.now()+3000;while(!predicate()&&performance.now()<end)await wait(25);assert(predicate(),message);};
     const seek=value=>{$('replayRange').value=String(value);$('replayRange').dispatchEvent(new Event('input'));t.redraw();return t.replay();};
     assert(!$('replay').hidden,'replay controls missing on diff');
     t.select('src/same.ts');const old=t.capture();$('replayOpen').click();
@@ -62,13 +67,13 @@ try {
     assert(edge(current,'src/gone.ts').opacity===0&&edge(current,'src/new.ts').opacity===1,'incorrect current edge membership');
     assert(node(current,'src/moved.ts').label==='moved.ts','current rename label incorrect');
     assert(baselineImage!==$('c').toDataURL(),'canvas did not change');
-    seek(0);$('replayPlay').click();await wait(200);assert(t.replay().progress>0&&t.replay().playing,'play did not advance');
+    seek(0);$('replayPlay').click();await waitFor(()=>t.replay().progress>0&&t.replay().playing,'play did not advance');
     $('replayPlay').click();const paused=t.replay().progress;await wait(120);assert(t.replay().progress===paused,'pause did not stop');
     $('replaySpeed').value='2';$('replaySpeed').dispatchEvent(new Event('change'));
-    $('replayLoop').checked=true;$('replayLoop').dispatchEvent(new Event('change'));seek(990);$('replayPlay').click();await wait(250);
-    assert(t.replay().playing&&t.replay().progress<.5,'repeat did not restart');
-    $('replayLoop').checked=false;$('replayLoop').dispatchEvent(new Event('change'));seek(990);$('replayPlay').click();await wait(250);
-    assert(!t.replay().playing&&t.replay().progress===1,'play did not stop at current snapshot');
+    $('replayLoop').checked=true;$('replayLoop').dispatchEvent(new Event('change'));seek(990);$('replayPlay').click();
+    await waitFor(()=>t.replay().playing&&t.replay().progress<.5,'repeat did not restart');
+    $('replayLoop').checked=false;$('replayLoop').dispatchEvent(new Event('change'));seek(990);$('replayPlay').click();
+    await waitFor(()=>!t.replay().playing&&t.replay().progress===1,'play did not stop at current snapshot');
     seek(0);t.select('src/new.ts');assert(t.replay().progress===1&&t.capture().selected==='src/new.ts','search/select cannot reveal future node');
     $('q').value='src/old.ts';$('q').dispatchEvent(new Event('input'));assert($('searchResults').textContent.includes('moved.ts'),'old rename path is not searchable');
     $('q').value='src/new.ts';$('q').dispatchEvent(new Event('input'));

@@ -12,6 +12,7 @@ import { t } from "@/shared/i18n";
 export abstract class RepoSelection extends RepoCore {
   private conflictGeneration = 0;
   private historyGeneration = 0;
+  private diffCalculation?: AbortController;
   // MARK: - 선택
 
   select(sel: Selection | null) {
@@ -95,6 +96,8 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeDiff() {
+    this.diffCalculation?.abort();
+    this.diffCalculation = undefined;
     this.diffGen++;
     this.diffSource = null;
     this.diff = null;
@@ -225,13 +228,17 @@ export abstract class RepoSelection extends RepoCore {
       if (f.mode === "history") {
         const r = await this.g(["log", "--follow", "-M", "--name-only", "-z", "--format=" + P.fileHistoryFormat, "--", f.path]);
         if (this.fileInspect !== f) return;
-        this.fileHistory = P.parseFileHistory(r.stdout);
+        const history = await P.parseFileHistoryAsync(r.stdout);
+        if (this.fileInspect !== f) return;
+        this.fileHistory = history;
         const first = this.fileHistory[0];
         if (first && !this.fileHistory.some((e) => e.commit.id === this.fileHistorySelected)) void this.selectHistory(first);
       } else {
         const r = await this.g(["blame", "--porcelain", ...(f.rev ? [f.rev] : []), "--", f.path]);
         if (this.fileInspect !== f) return;
-        this.blameLines = P.parseBlame(r.stdout);
+        const blame = await P.parseBlameAsync(r.stdout);
+        if (this.fileInspect !== f) return;
+        this.blameLines = blame;
       }
     } catch (e) {
       if (this.fileInspect === f) this.fileInspectError = describe(e);
@@ -252,7 +259,9 @@ export abstract class RepoSelection extends RepoCore {
     try {
       const r = await this.g(["diff", "--no-ext-diff", "-M", e.commit.parents[0] ?? EMPTY_TREE, e.commit.id, "--", e.path]);
       if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
-      this.fileHistoryDiff = P.parseDiff(r.stdout);
+      const doc = await P.parseDiffAsync(r.stdout);
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
+      this.fileHistoryDiff = doc;
     } catch (err) {
       if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
       this.fileHistoryDiff = { lines: [], isBinary: false, truncated: false, header: [], hunks: [], error: describe(err) };
@@ -373,6 +382,9 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   protected loadDiff(keepCurrent: boolean) {
+    this.diffCalculation?.abort();
+    const calculation = new AbortController();
+    this.diffCalculation = calculation;
     const source = this.diffSource;
     const path = this.path;
     if (!source || !path) {
@@ -395,11 +407,11 @@ export abstract class RepoSelection extends RepoCore {
           const c = source.change;
           const old = c.oldPath ?? c.path;
           doc = source.patch
-            ? P.parseDiff(`diff --git a/${old} b/${c.path}\n--- a/${old}\n+++ b/${c.path}\n${source.patch}`)
+            ? await P.parseDiffAsync(`diff --git a/${old} b/${c.path}\n--- a/${old}\n+++ b/${c.path}\n${source.patch}`, 20000, calculation.signal)
             : { lines: [], isBinary: true, truncated: false, header: [], hunks: [] };
         } else if (source.kind === "working" && source.change.kind === "untracked") {
           const head = await ipc.readHead(joinPath(path, source.change.path), 2_000_000);
-          doc = head.binary ? { lines: [], isBinary: true, truncated: false, header: [], hunks: [] } : P.newFileDiff(head.text, head.truncated);
+          doc = head.binary ? { lines: [], isBinary: true, truncated: false, header: [], hunks: [] } : await P.newFileDiffAsync(head.text, head.truncated, 20000, calculation.signal);
         } else {
           let args: string[];
           if (source.kind === "working") {
@@ -410,11 +422,13 @@ export abstract class RepoSelection extends RepoCore {
             args = ["diff", "--no-ext-diff", "-M", ...ws, source.parent ?? EMPTY_TREE, source.sha, "--", ...changePaths(source.change)];
           }
           const r = await this.g(args);
-          doc = P.parseDiff(r.stdout);
+          if (gen !== this.diffGen) return;
+          doc = await P.parseDiffAsync(r.stdout, 20000, calculation.signal);
         }
       } catch (e) {
         doc = { lines: [], isBinary: false, truncated: false, error: describe(e), header: [], hunks: [] };
       }
+      if (gen !== this.diffGen) return;
       const images = await this.loadDiffImages(source).catch(() => null);
       if (gen !== this.diffGen) return;
       this.diff = doc;

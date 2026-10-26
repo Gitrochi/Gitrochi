@@ -5,7 +5,20 @@ use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+
+/// 여러 탭의 새로 고침이 겹쳐도 OS 프로세스·파이프를 한꺼번에 수십 개씩 만들지 않는다.
+async fn process_permit() -> Result<OwnedSemaphorePermit, String> {
+    static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
+    LIMIT
+        .get_or_init(|| Arc::new(Semaphore::new(16)))
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|e| e.to_string())
+}
 use wait_timeout::ChildExt;
 
 #[derive(Serialize)]
@@ -24,7 +37,12 @@ pub fn find_program(program: &str) -> Option<PathBuf> {
     let exts: Vec<String> = if cfg!(windows) {
         let pathext = std::env::var("PATHEXT").unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".into());
         let mut v = vec![String::new()];
-        v.extend(pathext.split(';').filter(|e| !e.is_empty()).map(|e| e.to_lowercase()));
+        v.extend(
+            pathext
+                .split(';')
+                .filter(|e| !e.is_empty())
+                .map(|e| e.to_lowercase()),
+        );
         v
     } else {
         vec![String::new()]
@@ -53,10 +71,12 @@ pub fn native(p: &str) -> String {
 // 명령들은 async 로 둔다: Tauri 는 async 가 아닌 명령을 화면(메인) 스레드에서 돌려, 오래 걸리면 창이 '응답 없음'이 된다
 #[tauri::command]
 pub async fn which(program: String) -> Option<String> {
-    tauri::async_runtime::spawn_blocking(move || find_program(&program).map(|p| p.to_string_lossy().into_owned()))
-        .await
-        .ok()
-        .flatten()
+    tauri::async_runtime::spawn_blocking(move || {
+        find_program(&program).map(|p| p.to_string_lossy().into_owned())
+    })
+    .await
+    .ok()
+    .flatten()
 }
 
 pub fn hide_window(cmd: &mut Command) {
@@ -83,7 +103,11 @@ fn run_blocking(
     let mut cmd = Command::new(&exe);
     cmd.args(&args)
         .envs(&env)
-        .stdin(if stdin.is_some() { Stdio::piped() } else { Stdio::null() })
+        .stdin(if stdin.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     if let Some(dir) = cwd.as_deref().filter(|d| !d.is_empty()) {
@@ -94,8 +118,13 @@ fn run_blocking(
         cmd.current_dir(dir);
     }
     hide_window(&mut cmd);
-    let name = Path::new(&program).file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or(program.clone());
-    let mut child = cmd.spawn().map_err(|e| format!("Couldn't run {name}: {e}"))?;
+    let name = Path::new(&program)
+        .file_name()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or(program.clone());
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Couldn't run {name}: {e}"))?;
 
     if let (Some(input), Some(mut pipe)) = (stdin, child.stdin.take()) {
         std::thread::spawn(move || {
@@ -128,11 +157,22 @@ fn run_blocking(
     let stderr = err_thread.join().unwrap_or_default();
     let mut stderr = String::from_utf8_lossy(&stderr).into_owned();
     if status == -2 {
-        stderr.push_str(&format!("\n{name} didn't finish within {}s and was stopped.", timeout.as_secs()));
+        stderr.push_str(&format!(
+            "\n{name} didn't finish within {}s and was stopped.",
+            timeout.as_secs()
+        ));
     }
     // binary: 이미지처럼 글이 아닌 출력은 그대로(base64) 넘긴다
-    let stdout = if binary { crate::net::base64(&stdout) } else { String::from_utf8_lossy(&stdout).into_owned() };
-    Ok(ProcOutput { status, stdout, stderr })
+    let stdout = if binary {
+        crate::net::base64(&stdout)
+    } else {
+        String::from_utf8_lossy(&stdout).into_owned()
+    };
+    Ok(ProcOutput {
+        status,
+        stdout,
+        stderr,
+    })
 }
 
 /// 프로그램을 실행하고 끝날 때까지 기다린다. 종료 코드와 출력을 그대로 돌려준다.
@@ -146,15 +186,66 @@ pub async fn run_process(
     timeout_ms: Option<u64>,
 ) -> Result<ProcOutput, String> {
     let timeout = Duration::from_millis(timeout_ms.unwrap_or(120_000));
-    tauri::async_runtime::spawn_blocking(move || run_blocking(program, args, cwd, env.unwrap_or_default(), stdin, timeout, false))
-        .await
-        .map_err(|e| e.to_string())?
+    let permit = process_permit().await?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _permit = permit;
+        run_blocking(
+            program,
+            args,
+            cwd,
+            env.unwrap_or_default(),
+            stdin,
+            timeout,
+            false,
+        )
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// run_process 와 같되 stdout 을 바이트 그대로 base64 로(git show 로 이미지 읽기 등)
 #[tauri::command]
-pub async fn run_process_bytes(program: String, args: Vec<String>, cwd: Option<String>, env: Option<HashMap<String, String>>) -> Result<ProcOutput, String> {
-    tauri::async_runtime::spawn_blocking(move || run_blocking(program, args, cwd, env.unwrap_or_default(), None, Duration::from_secs(60), true))
-        .await
-        .map_err(|e| e.to_string())?
+pub async fn run_process_bytes(
+    program: String,
+    args: Vec<String>,
+    cwd: Option<String>,
+    env: Option<HashMap<String, String>>,
+) -> Result<ProcOutput, String> {
+    let permit = process_permit().await?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _permit = permit;
+        run_blocking(
+            program,
+            args,
+            cwd,
+            env.unwrap_or_default(),
+            None,
+            Duration::from_secs(60),
+            true,
+        )
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::process_permit;
+    use std::future::Future;
+    use std::task::{Context, Poll, Waker};
+
+    #[test]
+    fn queued_processes_wait_without_starting_blocking_threads() {
+        tauri::async_runtime::block_on(async {
+            let mut held = Vec::new();
+            for _ in 0..16 {
+                held.push(process_permit().await.unwrap());
+            }
+            let mut waiting = Box::pin(process_permit());
+            let mut cx = Context::from_waker(Waker::noop());
+            assert!(matches!(waiting.as_mut().poll(&mut cx), Poll::Pending));
+            held.pop();
+            assert!(waiting.await.is_ok());
+        });
+    }
 }

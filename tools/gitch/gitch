@@ -5602,6 +5602,29 @@ graph_spm_describe() {   # $1 임시 폴더 $2 범위(접두사) $3 고른 언�
   wait
 }
 
+# 앱에 포함된 Rust 도우미. 단독 셸 설치는 기존 분석기를 계속 쓸 수 있다.
+graph_core() {
+  if [ -n "${GITCH_CORE+x}" ]; then [ -n "$GITCH_CORE" ] && [ -x "$GITCH_CORE" ] && printf '%s' "$GITCH_CORE"; return 0; fi
+  local dir
+  dir=$(dirname "$(self_path)")
+  if [ -x "$dir/gitch-core" ]; then printf '%s' "$dir/gitch-core"
+  elif [ -x "$dir/gitch-core.exe" ]; then printf '%s' "$dir/gitch-core.exe"
+  else command -v gitch-core 2>/dev/null || true; fi
+}
+
+# 기존 -v 메타데이터 계약을 유지해 diff·review·HTML도 같은 변환기를 쓴다.
+graph_json() {
+  local helper
+  helper=$(graph_core)
+  if [ -n "$helper" ]; then "$helper" graph-json "$@"; return $?; fi
+  local vars=() files=()
+  while [ $# -gt 0 ]; do
+    if [ "$1" = -v ]; then vars+=("$1" "$2"); shift 2
+    else files+=("$1"); shift; fi
+  done
+  awk ${vars[@]+"${vars[@]}"} "$(graph_awk_lib)$(graph_awk_json)" ${files[@]+"${files[@]}"}
+}
+
 # Swift 파일끼리의 정확한 참조는 Xcode 인덱스에 있다 — 그것을 읽는 도우미(앱이 gitch 옆에 둔다)의 경로, 없으면 빈 값
 # 약속: gitch-swift-index --repo <저장소> --covered <파일> → 표준출력 "원본<TAB>대상<TAB>심볼,…"(저장소 기준 경로), --covered 에는 인덱스에 든 추적 .swift 경로,
 # 종료 0 성공(표준오류 첫 줄은 오래된 인덱스 같은 경고) · 3 인덱스 없음 · 그 밖은 실패
@@ -5665,6 +5688,9 @@ graph_content_key() (   # tracked source bytes, index, HEAD and analyzer options
     printf 'gitch-graph-cache-3\n%s\n' "$GITSW_VERSION"
     printf '%s\0' "$@"
     git hash-object --no-filters -- "$(self_path)" || exit 1
+    local core
+    core=$(graph_core)
+    [ -z "$core" ] || git hash-object --no-filters -- "$core" || exit 1
     git rev-parse HEAD 2>/dev/null
     git ls-files -s -z
     cat "$tmp/files.z"
@@ -5793,6 +5819,12 @@ graph_affected_prepare() {   # entire repo dependency closure, including deleted
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" modules "" 1 "$repo" "" "$sha" > "$tmp/affected-modules-before" || return 1
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" files "" 1 "$repo" "" > "$tmp/affected-now" || return 1
   graph_side "$tmp" modules "" 1 "$repo" "" > "$tmp/affected-modules" || return 1
+  local core
+  core=$(graph_core)
+  if [ -n "$core" ]; then
+    "$core" graph-affected "$tmp" "$sha" > "$tmp/affected.ids" || return $?
+    return 0
+  fi
   awk -F'\t' -v seeds="$tmp/changed" -v now="$tmp/affected-now" -v before="$tmp/affected-before" -v beforemods="$tmp/affected-modules-before" -v mods="$tmp/affected-modules" -v untracked="$tmp/untracked" -v deleted="$tmp/deleted" -v base="$sha" "$(graph_awk_lib)"'
     FILENAME == seeds { if ($0 != "") { CH[$0]=1; A[$0]=1; Q[++nq]=$0 }; next }
     FILENAME == untracked { UT[$0]=1; next }
@@ -6037,6 +6069,10 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
 }
 
 graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … · check …
+  # BSD awk는 일부 UTF-8 로캘에서 서로 다른 한글 경로도 같다고 비교한다.
+  # 경로 키·구분자는 모든 분석 단계에서 같은 바이트 순서로 다룬다.
+  local LC_ALL=C
+  export LC_ALL
   case "${1:-}" in
     review) shift; graph_review_cmd "$@"; return $? ;;
     watch) shift; graph_watch_cmd "$@"; return $? ;;
@@ -6156,12 +6192,12 @@ graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … 
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$top" 2>/dev/null || printf '%s' "$top")
   meta=(-v rel="$rel" -v repo="$repo" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$langs")
   case "$fmt" in
-    json) awk "${meta[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec" > "$tmp/out" ;;
+    json) graph_json "${meta[@]}" "$tmp/rec" > "$tmp/out" ;;
     html)   # {"initial": 처음 탭, "views": {관계: 그 관계의 json, …}}
       { printf '{"initial":"%s","views":{' "$rel"; i=0
         for a in $rels; do
           [ $i -gt 0 ] && printf ','
-          printf '"%s":' "$a"; awk "${meta[@]}" -v rel="$a" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$a"; i=$((i + 1))
+          printf '"%s":' "$a"; graph_json "${meta[@]}" -v rel="$a" "$tmp/rec.$a"; i=$((i + 1))
         done
         printf '}'
         [ ! -f "$tmp/review/review.json" ] || { printf ',"review":'; cat "$tmp/review/review.json"; }
@@ -6335,7 +6371,7 @@ graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs r
       else
         (cd "$tmp/$side/src" && GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/$side" "$rel" "$prefix" "$noext" "$repo" "$langs") > "$tmp/$side/rec.$rel" || return 1
       fi
-      awk "${GRAPH_META[@]}" -v rel="$rel" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
+      graph_json "${GRAPH_META[@]}" -v rel="$rel" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
     done
     if [ -f "$GRAPH_RULES_FILE" ]; then graph_rules_eval "$tmp/$side" "$GRAPH_RULES_FILE" > "$tmp/$side/rules.json"; else printf 'null' > "$tmp/$side/rules.json"; fi
   done
@@ -6346,7 +6382,7 @@ graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs r
   awk -v rel=files "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/b/normalized" "$tmp/a/rec.files" > "$tmp/merged"
   # Also mark content-only changes; dependency equality must not hide them in diff.
   graph_review_mark "$tmp/changes" "$tmp/merged" > "$tmp/review.records"
-  awk "${GRAPH_META[@]}" -v diffbase="$base" -v diffname="$ref" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/review.records" > "$tmp/diff.json"
+  graph_json "${GRAPH_META[@]}" -v diffbase="$base" -v diffname="$ref" "$tmp/review.records" > "$tmp/diff.json"
   {
     printf '{"schemaVersion":1,"scope":%s,"untracked":%s,"selectedRef":%s,"baseSha":%s,"headSha":%s,"snapshot":%s,"mergeBase":%s,"branch":%s,"seconds":%s,"changes":' "$(json_str "$scope")" "$(json_str "$untrackedPolicy")" "$(json_str "$ref")" "$(json_str "$base")" "$(json_str "$(git rev-parse --verify HEAD 2>/dev/null || true)")" "$(json_str "$head")" "$merge" "$(json_str "$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD)")" "$((SECONDS-started))"
     awk -F'\t' "$(graph_awk_lib)"'BEGIN{printf "["} {printf "%s{\"status\":%s,\"path\":%s,\"oldPath\":%s}", (n++?",":""),jstr($1),jstr($2),($3!=""?jstr($3):"null")} END{printf "]"}' "$tmp/changes"
@@ -6621,7 +6657,7 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
             -v diffscope="$analysisScope" -v bold="$BOLD" -v green="$GREEN" -v red="$RED" -v yellow="$YELLOW" -v dim="$DIM" -v reset="$RESET" \
             "$(graph_awk_lib)$(graph_awk_difftext)" "$tmp/rec" > "$tmp/out" ;;
     json) awk -F'\t' "$(graph_awk_lib)$(graph_awk_diffonly)" "$tmp/rec" | \
-            awk "${GRAPH_META[@]}" -v diffhead="$analysisScope" -v reviewfile="$tmp/review/review.json" -v diffbase="$shortbase" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" > "$tmp/out" ;;
+            graph_json "${GRAPH_META[@]}" -v diffhead="$analysisScope" -v reviewfile="$tmp/review/review.json" -v diffbase="$shortbase" -v diffname="$bname" > "$tmp/out" ;;
     html)
       # Keep all existing navigation tabs in a diff report. Every structural view
       # uses the same selected source snapshot; co-change remains observed HEAD history.
@@ -6643,8 +6679,8 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
         for r in files modules changes tree; do
           [ "$count" = 0 ] || printf ','
           printf '"%s":' "$r"
-          if [ "$r" = changes ]; then awk "${GRAPH_META[@]}" -v rel="$r" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/view.$r"
-          else awk "${GRAPH_META[@]}" -v rel="$r" -v diffhead="$analysisScope" -v diffbase="$shortbase" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/view.$r"; fi
+          if [ "$r" = changes ]; then graph_json "${GRAPH_META[@]}" -v rel="$r" "$tmp/view.$r"
+          else graph_json "${GRAPH_META[@]}" -v rel="$r" -v diffhead="$analysisScope" -v diffbase="$shortbase" -v diffname="$bname" "$tmp/view.$r"; fi
           count=$((count+1))
         done
         printf '},"review":'; cat "$tmp/review/review.json"
@@ -6797,7 +6833,7 @@ graph_check_cmd() {   # [--rules 파일] [--base 기준] [--format text|json|htm
         for rel in $rels; do
           [ $a -gt 0 ] && printf ','
           graph_meta "$rel" "$repo" "$prefix" ""
-          printf '"%s":' "$rel"; awk "${GRAPH_META[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$rel"; a=$((a + 1))
+          printf '"%s":' "$rel"; graph_json "${GRAPH_META[@]}" "$tmp/rec.$rel"; a=$((a + 1))
         done
         printf '},"rules":'; graph_check_json "$tmp/v" "$shown" "$bsha" "$n_err"; printf '}\n'; } | graph_html > "$tmp/out" ;;
   esac

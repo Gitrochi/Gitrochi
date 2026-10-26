@@ -62,7 +62,8 @@
     "resources": {
       "../../tools/gitch/gitch": "gitch",
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
-      "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch"
+      "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
+      "generated/gitch-core.exe": "gitch-core.exe"
     }
   },
   "plugins": {

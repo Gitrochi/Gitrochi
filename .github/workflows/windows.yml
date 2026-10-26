@@ -8,7 +8,7 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    paths: ["windows/**", "tools/gitch/**", "tools/check-versions.sh", "macos/Resources/Info.plist", "docs/make-demo-repo.sh", ".github/workflows/windows.yml"]
+    paths: ["crates/**", "tools/build-core*", "windows/**", "tools/gitch/**", "tools/check-versions.sh", "macos/Resources/Info.plist", "docs/make-demo-repo.sh", ".github/workflows/windows.yml"]
   workflow_dispatch:
 
 # 같은 PR 에 새로 푸시하면 돌던 실행은 취소한다(겹쳐 돌며 줄 서지 않게)
@@ -45,6 +45,8 @@ jobs:
           cache-dependency-path: windows/package-lock.json
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -101,7 +103,8 @@ jobs:
             cp "../tools/gitch/$file" "$out/$file"
             (cd "$out" && sha256sum "$file" | sed 's/ \*/  /' > "$file.sha256")
           done
-          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt gitch gitch-scip-index gitch-graph-watch >/dev/null)
+          cp ../crates/target/release/gitch-core.exe "$stage/gitch-core.exe"
+          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt gitch gitch-scip-index gitch-graph-watch gitch-core.exe >/dev/null)
           # Git Bash 의 sha256sum 이 이름 앞에 붙이는 *(바이너리 표시)는 빼서 맥과 같은 「해시  이름」으로
           (cd "$out" && sha256sum "$setup" "$zip" | sed 's/ \*/  /' > "Gitrochi_${ver}_windows.sha256")
           if [ -f "$nsis/$setup.sig" ]; then
@@ -339,6 +342,14 @@ jobs:
         run: |
           python -m pip install jsonschema==4.25.1
           printf 'GITCH_JSONSCHEMA_PYTHON=%s\n' "$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust CLI 준비
+        shell: bash
+        run: |
+          cargo build --locked --release --manifest-path crates/Cargo.toml --bin gitch-core
+          printf 'GITCH_CORE=%s/crates/target/release/gitch-core.exe\n' "$(cygpath -m "$GITHUB_WORKSPACE")" >> "$GITHUB_ENV"
 
       - name: 테스트
         shell: bash

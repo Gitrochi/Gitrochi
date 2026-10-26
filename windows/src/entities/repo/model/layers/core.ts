@@ -2,7 +2,7 @@ import type { AgentHost } from "@/entities/agent";
 import { avatars } from "@/entities/avatar";
 import { CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
-import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraph, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, WIP_ID, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats } from "@/entities/git";
+import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraphAsync, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, WIP_ID, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { accounts, type PullRequestReview } from "@/entities/hosting";
 import { TerminalSession, type TerminalSpec } from "@/entities/terminal";
@@ -518,7 +518,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const wip = !statusIsEmpty(newStatus);
       const sameLog = !!this.lastLog && this.lastLog.out === lg.stdout && this.lastLog.wip === wip && this.lastLog.head === head && this.entries.length > 0;
       if (!sameLog) {
-        let commits = P.parseLog(lg.stdout);
+        let commits = await P.parseLogAsync(lg.stdout);
+        if (gen !== this.reloadGeneration || this.path !== path) return;
         const more = commits.length > this.limit;
         if (more) commits = commits.slice(0, this.limit);
         if (wip) commits.unshift(wipCommit(head));
@@ -526,7 +527,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
           this.loading = { ...this.loading, step: t("Drawing the graph with {0} commits…", commits.length) };
           this.emit();
         }
-        const layout = layoutGraph(commits);
+        const layout = await layoutGraphAsync(commits);
+        if (gen !== this.reloadGeneration || this.path !== path) return;
         this.hasMore = more;
         this.maxLanes = layout.maxLanes;
         this.entries = commits.map((c, i) => ({ commit: c, row: layout.rows[i] }));
