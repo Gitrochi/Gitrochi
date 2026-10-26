@@ -2,7 +2,7 @@
 
 흐름 엔진(`tools/gitch-flow`) · gitch 앞문 · 두 앱의 흐름 화면을 **어디까지 실제로 확인했고 무엇이 아직인지** 적습니다. "확인함"은 이 저장소의 시험이 자동으로 다시 보여 주는 것만 씁니다. 설계는 [flow/DESIGN.md](flow/DESIGN.md).
 
-## 확인함 (macOS 15 · Apple Silicon, cargo 1.99 · Swift 6.3 · Node 22)
+## 확인함 (macOS 26.5 · Apple Silicon, cargo 1.99 · Swift 6.3 · Node 22)
 
 | 무엇 | 어떻게 | 결과 |
 |---|---|---|
@@ -18,13 +18,13 @@
 | 정적 검사 | `cargo fmt --check` · `cargo clippy --all-targets -- -D warnings` · `shellcheck -S warning`(gitch · install.sh · build.sh · 시험) | 경고 0 |
 | gitch 전체 시험 | `tools/gitch/tests/run.sh` — 앞문 위임 · preflight 의 FLOW 줄 · **실제 push 를 게이트가 통과/차단** · guard 규칙(게이트 켜고 끄기 거부 포함) · 설치기 · self-update 의 엔진 받기(체크섬 · 실행 확인 · 망가진 파일 거부) · 버전 검사 | 213 통과 |
 | 맥 앱 | `macos/build.sh` 로 앱 빌드(엔진이 `Contents/MacOS` 에 서명되어 들어가고 Resources 에서 링크, 앱의 gitch 로 `gitch flow version`), 앱 소스 전체 타입 검사, **`macos/Tools/test-flow.sh`: 실제 엔진의 list · plan · gate · 오류 봉투 · 분리 실행 · 이벤트(줄 중간에서 끊어 넣기) · 실행 목록 · 기록 · init 을 앱 모델로 읽음** | 통과 |
-| Windows 앱(맥에서) | `npx tsc --noEmit` · `npx vitest run`(흐름 이벤트 읽기 · 오류 봉투 · 확인 조건 4건 포함, 폴더 구조 규칙) · `npx vite build` | 126 통과 |
+| Windows 앱(맥에서) | `npx tsc --noEmit` · `npx vitest run`(흐름 이벤트 읽기 · 오류 봉투 · 확인 조건 4건 포함, 폴더 구조 규칙) · `npx vite build` · `src-tauri` 의 `cargo check`(엔진 없이 — 엔진 자원은 `tauri.windows.conf.json` 에만 있어 다른 OS 빌드가 막히지 않음, 기본 설정에 두면 이 검사가 실패) | 130 통과 |
 
 ## 아직 확인하지 않음
 
 | 무엇 | 왜 · 어떻게 확인할지 |
 |---|---|
-| **Windows 에서 엔진 컴파일 · 시험** | 이 맥에는 Windows 대상 Rust 표준 라이브러리가 없습니다. 작업 개체(Job Object) · 콘솔 신호 · 프로세스 확인 코드는 Windows 에서 빌드된 적이 없습니다. → PR 의 「Flow engine」 작업(windows-latest: fmt · clippy · 시험 · gitch 앞문 시험)과 「Windows」 작업(엔진 빌드 · 설치 파일 · 포터블 zip · 자동 점검의 흐름 단계)이 처음으로 확인합니다. |
+| **Windows 에서 엔진 컴파일 · 시험** | 이 맥에는 Windows 대상 Rust 표준 라이브러리가 없습니다. 작업 개체(Job Object) · 콘솔 신호 · 프로세스 확인 코드는 Windows 에서 빌드된 적이 없습니다. → PR 의 「Flow engine」 작업(windows-latest: fmt · clippy · 시험 · gitch 앞문 시험)과 「Windows」 작업(Windows 전용 설정 `tauri.windows.conf.json` 으로 엔진 빌드 · 설치 파일에 넣기 · 포터블 zip · 자동 점검의 흐름 단계)이 처음으로 확인합니다. |
 | **Linux 에서 엔진 시험 · 정적 링크 빌드** | 같은 이유. → 「Flow engine」 작업(ubuntu-latest) · 태그 실행의 musl 빌드. |
 | **실제 Docker** | 이 맥의 Docker 데몬이 꺼져 있어 `tests/real_docker.rs`(실제 alpine 컨테이너에서 실행 · 파일 소유자 · nginx 서비스 · 컨테이너끼리 별칭 · 라벨로 정리 확인)는 건너뛰었습니다. 가짜 docker CLI 시험은 인자 · 순서 · 정리만 봅니다. → 「Flow engine」 의 「실제 Docker 시험」 작업. compose.up 은 실제 compose 로 돌린 적이 없습니다. |
 | **실제 GitLab · GitHub · Jenkins** | 가짜 서버로 운전 규칙을 확인했지만 실제 서버의 응답 모양 · 권한 · 산출물 경로(특히 GitHub 산출물은 zip 이라 지금은 로그 표식으로 판정) · Jenkins 플러그인 차이는 실제로 보지 않았습니다. → 연결을 만들고 `gitch flow export` 로 만든 CI 파일로 한 번씩. |
