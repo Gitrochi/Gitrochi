@@ -1055,3 +1055,4 @@
 "Gitrochi terminal" = "Gitrochi 终端";
 "Terminal app" = "“终端”App";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "在 Gitrochi 中，会话在图表下方终端的新标签页中运行，退出应用时会话也会结束。若要在没有 Gitrochi 时保持会话运行，请选择“终端”App。";
+"Open in new tab" = "在新标签页中打开";

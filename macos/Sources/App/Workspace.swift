@@ -101,6 +101,15 @@ final class Workspace {
         openWindow?()
     }
 
+    /// Selects the tab (other than except) already showing folder; false if there is none
+    func bringForward(showing folder: URL, except: RepoStore) -> Bool {
+        let path = folder.resolvingSymlinksInPath().path
+        guard let other = stores.compactMap(\.store).first(where: { $0 !== except && $0.url?.resolvingSymlinksInPath().path == path }) else { return false }
+        other.window?.tabGroup?.selectedWindow = other.window
+        other.window?.makeKeyAndOrderFront(nil)
+        return true
+    }
+
     func isDuplicate(_ w: NSWindow?) -> Bool { w.map { duplicates.contains(ObjectIdentifier($0)) } ?? false }
 
     /// 창이 화면에 뜨기 전에 불린다.

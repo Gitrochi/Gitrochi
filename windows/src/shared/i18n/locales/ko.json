@@ -1200,5 +1200,6 @@
  "Started with all permission checks skipped": "모든 권한 확인을 건너뛰고 시작한 세션",
  "Write": "쓰기",
  "Preview": "미리 보기",
- "Nothing to preview": "미리 볼 내용이 없습니다"
+ "Nothing to preview": "미리 볼 내용이 없습니다",
+ "Open in new tab": "새 탭에서 열기"
 }

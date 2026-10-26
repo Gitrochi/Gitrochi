@@ -29,6 +29,22 @@ extension RepoStore {
         if launchClaude { startAgent(in: path, task: task) }
     }
 
+    /// Shows another worktree of this repository in this tab, like GitKraken (a tab already showing it comes forward instead).
+    /// Terminals stay; the newest one opened in that worktree is selected.
+    func switchWorktree(to path: String) async {
+        let target = URL(fileURLWithPath: path, isDirectory: true)
+        let key = { (p: String) in URL(fileURLWithPath: p).resolvingSymlinksInPath().standardizedFileURL.path }
+        guard key(path) != url.map({ key($0.path) }), !Workspace.shared.bringForward(showing: target, except: self) else { return }
+        await openInPlace(target, quick: true)
+        // a worktree may sit inside another one, so the longest matching path owns the terminal
+        let roots = worktrees.map { key($0.path) }
+        func owner(_ dir: String) -> String? {
+            let d = key(dir)
+            return roots.filter { d == $0 || d.hasPrefix($0 + "/") }.max { $0.count < $1.count }
+        }
+        if let s = terminals.last(where: { owner($0.directory) == key(path) }) { selectTerminal(s) }
+    }
+
     func confirmRemove(_ w: Worktree, force: Bool = false) {
         confirm = ConfirmRequest(title: String(localized: "Remove worktree '\(w.name)'?"),
                                  message: force

@@ -1002,5 +1002,6 @@
  "Started with all permission checks skipped": "Gestart zonder toestemmingscontroles",
  "Write": "Schrijven",
  "Preview": "Voorbeeld",
- "Nothing to preview": "Niets om te bekijken"
+ "Nothing to preview": "Niets om te bekijken",
+ "Open in new tab": "Openen in nieuw tabblad"
 }

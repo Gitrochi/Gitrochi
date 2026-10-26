@@ -1050,5 +1050,6 @@
  "Started with all permission checks skipped": "เริ่มโดยข้ามการตรวจสอบสิทธิ์ทั้งหมด",
  "Write": "เขียน",
  "Preview": "แสดงตัวอย่าง",
- "Nothing to preview": "ไม่มีเนื้อหาให้แสดงตัวอย่าง"
+ "Nothing to preview": "ไม่มีเนื้อหาให้แสดงตัวอย่าง",
+ "Open in new tab": "เปิดในแท็บใหม่"
 }

@@ -1038,5 +1038,6 @@
  "Started with all permission checks skipped": "Minden jogosultság-ellenőrzés kihagyásával indítva",
  "Write": "Írás",
  "Preview": "Előnézet",
- "Nothing to preview": "Nincs mit megjeleníteni"
+ "Nothing to preview": "Nincs mit megjeleníteni",
+ "Open in new tab": "Megnyitás új lapon"
 }

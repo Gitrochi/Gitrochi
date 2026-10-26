@@ -12,7 +12,7 @@ import { branchPayload } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, settings, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -828,6 +828,26 @@ export async function runSelfTest(): Promise<boolean> {
     await sleep(200);
     const ok = dark.attr === "dark" && dark.bg === "#1e1e21" && light.attr === "light" && light.bg === "#f3f3f4" && !setErr && (dark.win === "dark" || env.os !== "windows");
     return [ok, `dark=${JSON.stringify(dark)} light=${JSON.stringify(light)} setTheme=${setErr || "ok"} system=${document.documentElement.dataset.theme}`];
+  });
+
+  await step("Switch worktrees in the same tab (terminals follow)", async () => {
+    const wt = joinPath(dirname(repo), "selftest-worktree");
+    await gitRaw(["worktree", "add", "-b", "selftest-worktree", wt], repo);
+    await s.reload();
+    const inWorktree = s.newTerminal(wt);
+    const inRepo = s.newTerminal(repo);
+    const tabs = workspace.tabs.length;
+    await s.switchWorktree(wt);
+    const switched = samePath(s.path, wt) && workspace.tabs.length === tabs && s.activeTerminal === inWorktree;
+    await s.switchWorktree(repo);
+    const back = samePath(s.path, repo) && s.activeTerminal === inRepo && s.terminals.includes(inWorktree);
+    const detail = `path=${s.path} tabs=${workspace.tabs.length}/${tabs} terminal=${s.activeTerminal?.directory}`;
+    s.closeTerminal(inWorktree);
+    s.closeTerminal(inRepo);
+    await gitRaw(["worktree", "remove", "--force", wt], repo);
+    await gitRaw(["branch", "-D", "selftest-worktree"], repo);
+    await s.reload();
+    return [switched && back, detail];
   });
 
   await step("설정 화면", async () => {

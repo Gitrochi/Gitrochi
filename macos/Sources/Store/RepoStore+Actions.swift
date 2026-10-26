@@ -84,7 +84,7 @@ extension RepoStore {
             confirm = ConfirmRequest(title: String(localized: "'\(b.name)' is in use by another worktree"),
                                      message: String(localized: "\(w.path)\nA branch can be checked out in only one worktree. Open that worktree?"),
                                      actionTitle: String(localized: "Open worktree"), destructive: false) { [weak self] in
-                await self?.openOrReport(URL(fileURLWithPath: w.path, isDirectory: true))
+                await self?.switchWorktree(to: w.path)
             }
             return
         }

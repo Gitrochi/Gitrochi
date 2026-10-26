@@ -111,7 +111,7 @@ export abstract class RepoActions extends RepoFilters {
           message: t("{0}\nA branch can be checked out in only one worktree. Open that worktree?", w.path),
           actionTitle: t("Open worktree"),
           destructive: false,
-          action: () => this.openOrReport(w.path),
+          action: () => this.switchWorktree(w.path),
         });
         return;
       }

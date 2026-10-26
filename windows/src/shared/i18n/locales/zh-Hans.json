@@ -1056,5 +1056,6 @@
  "Started with all permission checks skipped": "以跳过所有权限确认的方式启动",
  "Write": "编写",
  "Preview": "预览",
- "Nothing to preview": "没有可预览的内容"
+ "Nothing to preview": "没有可预览的内容",
+ "Open in new tab": "在新标签页中打开"
 }

@@ -1,7 +1,7 @@
 import { type AgentKind, agents } from "@/entities/agent";
 import * as P from "@/entities/git";
 import { type Worktree, worktreeStats, type WorktreeStats } from "@/entities/git";
-import { basename, dirname, joinPath } from "@/shared/config";
+import { basename, dirname, joinPath, samePath, samePathKey } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { git } from "@/shared/platform";
 import { RepoRebase } from "./rebase";
@@ -21,6 +21,26 @@ export abstract class RepoWorktrees extends RepoRebase {
     if (!(await this.run(t("Creating worktree…"), args))) return false;
     if (launchClaude) await this.startAgent(path, task);
     return true;
+  }
+
+  /**
+   * Shows another worktree of this repository in this tab, like GitKraken (a tab already showing it comes forward instead).
+   * Terminals stay; the newest one opened in that worktree is selected.
+   */
+  async switchWorktree(path: string) {
+    if (samePath(path, this.path) || this.showTab?.(path)) return;
+    await this.openInPlace(path, true);
+    // a worktree may sit inside another one, so the longest matching path owns the terminal
+    const owner = (dir: string) =>
+      this.worktrees
+        .filter((w) => samePath(w.path, dir) || samePathKey(dir).startsWith(samePathKey(w.path) + "/"))
+        .sort((a, b) => b.path.length - a.path.length)[0]?.path;
+    const s = [...this.terminals].reverse().find((t) => samePath(owner(t.directory) ?? "", path));
+    if (s) {
+      this.activeTerminalID = s.id;
+      s.unseenOutput = false;
+      this.emit();
+    }
   }
 
   confirmRemove(w: Worktree, force = false) {

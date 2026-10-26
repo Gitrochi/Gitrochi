@@ -1054,5 +1054,6 @@
  "Started with all permission checks skipped": "Запущено з пропуском усіх перевірок дозволів",
  "Write": "Написати",
  "Preview": "Попередній перегляд",
- "Nothing to preview": "Немає що переглядати"
+ "Nothing to preview": "Немає що переглядати",
+ "Open in new tab": "Відкрити в новій вкладці"
 }

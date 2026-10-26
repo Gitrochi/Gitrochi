@@ -38,10 +38,11 @@ export function WorktreeSection({ store }: { store: RepoStore }) {
             key={w.path}
             className={`side-row ${current ? "current" : ""}`}
             style={{ alignItems: "flex-start" }}
-            onDoubleClick={() => void store.openOrReport(w.path)}
+            onDoubleClick={() => void store.switchWorktree(w.path)}
             onContextMenu={(e) =>
               showContextMenu(e, [
-                { label: t("Open in Gitrochi"), disabled: current, onClick: () => void store.openOrReport(w.path) },
+                { label: t("Open worktree"), disabled: current, onClick: () => void store.switchWorktree(w.path) },
+                { label: t("Open in new tab"), disabled: current, onClick: () => void store.openOrReport(w.path) },
                 { label: t("Show in Explorer"), onClick: () => void ipc.reveal(w.path) },
                 { label: t("Open in the terminal below"), onClick: () => store.newTerminal(w.path) },
                 { label: t("Open in external terminal"), onClick: () => void ipc.openTerminal(w.path) },

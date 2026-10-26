@@ -1010,5 +1010,6 @@
  "Started with all permission checks skipped": "Đã bắt đầu và bỏ qua mọi kiểm tra quyền",
  "Write": "Viết",
  "Preview": "Xem trước",
- "Nothing to preview": "Không có gì để xem trước"
+ "Nothing to preview": "Không có gì để xem trước",
+ "Open in new tab": "Mở trong tab mới"
 }

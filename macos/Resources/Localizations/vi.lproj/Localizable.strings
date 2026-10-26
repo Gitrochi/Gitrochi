@@ -1008,3 +1008,4 @@
 "Gitrochi terminal" = "Terminal của Gitrochi";
 "Terminal app" = "Ứng dụng Terminal";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Trong Gitrochi, phiên chạy trong một tab mới của terminal bên dưới biểu đồ và kết thúc khi bạn thoát ứng dụng. Chọn ứng dụng Terminal để phiên tiếp tục chạy mà không cần Gitrochi.";
+"Open in new tab" = "Mở trong tab mới";

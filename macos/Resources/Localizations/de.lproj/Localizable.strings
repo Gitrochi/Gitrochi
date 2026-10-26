@@ -1019,3 +1019,4 @@
 "Gitrochi terminal" = "Gitrochi-Terminal";
 "Terminal app" = "Terminal-App";
 "In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "In Gitrochi läuft eine Sitzung in einem neuen Tab des Terminals unter dem Graphen und endet, wenn Sie die App beenden. Wählen Sie die Terminal-App, damit Sitzungen auch ohne Gitrochi weiterlaufen.";
+"Open in new tab" = "In neuem Tab öffnen";

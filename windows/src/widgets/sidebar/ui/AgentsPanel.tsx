@@ -66,7 +66,7 @@ function WorktreeCard({ store, worktree: w, stats, sessions, isCurrent }: { stor
   return (
     <div
       className={`wt-card ${isCurrent ? "current" : ""}`}
-      onDoubleClick={() => !isCurrent && void store.openOrReport(w.path)}
+      onDoubleClick={() => !isCurrent && void store.switchWorktree(w.path)}
       onContextMenu={(e) =>
         showContextMenu(e, [
           {
@@ -76,7 +76,8 @@ function WorktreeCard({ store, worktree: w, stats, sessions, isCurrent }: { stor
               store.changed();
             },
           },
-          { label: t("Open in Gitrochi"), disabled: isCurrent, onClick: () => void store.openOrReport(w.path) },
+          { label: t("Open worktree"), disabled: isCurrent, onClick: () => void store.switchWorktree(w.path) },
+          { label: t("Open in new tab"), disabled: isCurrent, onClick: () => void store.openOrReport(w.path) },
           { label: t("Show in Explorer"), onClick: () => void ipc.reveal(w.path) },
           { label: t("Open in the terminal below"), onClick: () => store.newTerminal(w.path) },
           { label: t("Open in external terminal"), onClick: () => void ipc.openTerminal(w.path) },

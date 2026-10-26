@@ -213,7 +213,8 @@ final class RepoStore: Identifiable {
     }
 
     @discardableResult
-    func open(_ folder: URL) async -> OpenResult {
+    /// quick: switching worktrees, so skip the minimum loading animation
+    func open(_ folder: URL, quick: Bool = false) async -> OpenResult {
         let started = Date()
         loading = LoadingInfo(title: String(localized: "Opening \(folder.lastPathComponent)"), step: String(localized: "Checking repository…"))
         defer { if url == nil { loading = nil } }
@@ -255,7 +256,7 @@ final class RepoStore: Identifiable {
         selectDefault()
         // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
         let shown = Date().timeIntervalSince(started)
-        if shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
+        if !quick && shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
         loading = nil
         return .opened
     }
@@ -272,8 +273,8 @@ final class RepoStore: Identifiable {
         openRepo(top)
     }
 
-    func openInPlace(_ folder: URL) async {
-        switch await open(folder) {
+    func openInPlace(_ folder: URL, quick: Bool = false) async {
+        switch await open(folder, quick: quick) {
         case .opened: break
         case .notRepository(let u): notRepoPrompt = u
         case .failed(let m): errorMessage = m

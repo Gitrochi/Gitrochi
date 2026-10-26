@@ -1027,5 +1027,6 @@
  "Started with all permission checks skipped": "Mit übersprungenen Berechtigungsabfragen gestartet",
  "Write": "Schreiben",
  "Preview": "Vorschau",
- "Nothing to preview": "Nichts für die Vorschau"
+ "Nothing to preview": "Nichts für die Vorschau",
+ "Open in new tab": "In neuem Tab öffnen"
 }

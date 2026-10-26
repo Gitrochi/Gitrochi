@@ -1043,5 +1043,6 @@
  "Started with all permission checks skipped": "Tüm izin denetimleri atlanarak başlatıldı",
  "Write": "Yaz",
  "Preview": "Önizleme",
- "Nothing to preview": "Önizlenecek bir şey yok"
+ "Nothing to preview": "Önizlenecek bir şey yok",
+ "Open in new tab": "Yeni sekmede aç"
 }

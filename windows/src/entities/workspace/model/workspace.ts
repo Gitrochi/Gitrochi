@@ -22,6 +22,11 @@ class Workspace extends Observable {
     const s = new RepoStore();
     s.openRepo = (path) => void this.openInNewTab(path);
     s.activateTab = () => this.select(s.id);
+    s.showTab = (path) => {
+      const other = this.tabs.find((tab) => tab !== s && samePath(tab.path, path));
+      if (other) this.select(other.id);
+      return !!other;
+    };
     s.subscribe(() => {
       // 저장소가 바뀌면 탭 목록 저장
       this.persist();

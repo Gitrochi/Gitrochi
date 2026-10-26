@@ -1029,5 +1029,6 @@
  "Started with all permission checks skipped": "Avviata saltando tutti i controlli dei permessi",
  "Write": "Scrivi",
  "Preview": "Anteprima",
- "Nothing to preview": "Niente da mostrare in anteprima"
+ "Nothing to preview": "Niente da mostrare in anteprima",
+ "Open in new tab": "Apri in una nuova scheda"
 }

@@ -62,7 +62,7 @@ export function localBranchMenu(store: RepoStore, b: Branch): MenuItem[] {
   );
   if (w) {
     items.push(
-      { label: t("Open this branch's worktree"), onClick: () => void store.openOrReport(w.path) },
+      { label: t("Open this branch's worktree"), onClick: () => void store.switchWorktree(w.path) },
       { label: t("Run an agent in a worktree"), onClick: () => void store.startAgent(w.path) },
     );
   }
