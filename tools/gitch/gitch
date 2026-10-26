@@ -6069,6 +6069,10 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
 }
 
 graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … · check …
+  # BSD awk는 일부 UTF-8 로캘에서 서로 다른 한글 경로도 같다고 비교한다.
+  # 경로 키·구분자는 모든 분석 단계에서 같은 바이트 순서로 다룬다.
+  local LC_ALL=C
+  export LC_ALL
   case "${1:-}" in
     review) shift; graph_review_cmd "$@"; return $? ;;
     watch) shift; graph_watch_cmd "$@"; return $? ;;
