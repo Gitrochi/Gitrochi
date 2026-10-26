@@ -383,7 +383,7 @@ fn roots(
     r.insert("nodes".into(), Value::Object(nodes));
     r.insert("flow".into(), json!({"name": sh.plan.flow}));
     r.insert("project".into(), json!({"name": sh.spec.project_name}));
-    r.insert("matrix".into(), json!({}));
+    r.insert("matrix".into(), n.matrix.clone());
     if let Some(s) = with_secrets {
         r.insert("secrets".into(), Value::Object(s.clone()));
     }

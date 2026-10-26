@@ -403,3 +403,62 @@ fn unhealthy_container_logs_are_saved_masked() {
     let calls = std::fs::read_to_string(&log).unwrap();
     assert!(calls.lines().any(|l| l.starts_with("rm -f -v gitch-flow-")));
 }
+
+// ---------- 조합(matrix) ----------
+
+const MATRIX_FLOW: &str = r#"version: 1
+flows:
+  versions:
+    nodes:
+      unit:
+        run: "echo v=${{ matrix.v }} os=${{ matrix.os }} >> ../matrix.txt"
+        matrix: { v: [1, 2], os: [a, b] }
+      after: { needs: [unit], run: "echo done >> ../matrix.txt" }
+  boxed:
+    nodes:
+      t: { run: "echo hi", executor: "docker:node:${{ matrix.node }}", matrix: { node: [20, 22] } }
+"#;
+
+#[test]
+fn a_matrix_node_runs_once_per_combination() {
+    let fx = Fx::new(&[(".gitch/flow.yml", MATRIX_FLOW)]);
+    fx.trust();
+    let (code, plan) = fx.json("script", &["plan", "versions", "--json"]);
+    assert_eq!(code, 0, "{plan}");
+    let ids: Vec<&str> = plan["nodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|n| n["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        ids,
+        [
+            "unit/v-1-os-a",
+            "unit/v-1-os-b",
+            "unit/v-2-os-a",
+            "unit/v-2-os-b",
+            "after"
+        ]
+    );
+    assert_eq!(node(&plan, "after")["needs"].as_array().unwrap().len(), 4);
+    assert_eq!(node(&plan, "unit/v-2-os-a")["matrix"]["v"], 2);
+    let (code, run) = fx.json("script", &["run", "versions", "--json", "--jobs", "4"]);
+    assert_eq!(code, 0, "{run}");
+    let text = std::fs::read_to_string(fx.dir.join("matrix.txt")).unwrap();
+    let mut lines: Vec<&str> = text.lines().collect();
+    assert_eq!(
+        lines.pop(),
+        Some("done"),
+        "the dependant waits for every combination"
+    );
+    lines.sort();
+    assert_eq!(lines, ["v=1 os=a", "v=1 os=b", "v=2 os=a", "v=2 os=b"]);
+    let (_, boxed) = fx.json("script", &["plan", "boxed", "--json"]);
+    assert_eq!(
+        node(&boxed, "t/node-20")["executor"],
+        "docker:node:20",
+        "{boxed}"
+    );
+    assert_eq!(node(&boxed, "t/node-22")["executor"], "docker:node:22");
+}

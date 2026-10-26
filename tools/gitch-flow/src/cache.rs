@@ -42,8 +42,14 @@ pub fn key(spec: &Spec, n: &PNode, files: &[String]) -> Option<String> {
             .unwrap_or("?")
     ));
     s.push_str(&format!(
-        "with={}\nexpect={}\nenv={:?}\nselection={:?}\nscope={}\n",
-        n.with, n.expect.raw, n.def.env, n.selection, n.scope_inputs
+        "with={}\nexpect={}\nenv={:?}\nselection={:?}\nscope={}\nmatrix={}\nexecutor={}\n",
+        n.with,
+        n.expect.raw,
+        n.def.env,
+        n.selection,
+        n.scope_inputs,
+        n.matrix,
+        n.executor.as_str()
     ));
     for k in &c.key {
         s.push_str(&format!("key={k}\n"));

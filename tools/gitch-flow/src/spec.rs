@@ -179,6 +179,8 @@ pub struct NodeDef {
     pub cwd: Option<String>,
     pub weight: Option<u32>,
     pub description: Option<String>,
+    /// 조합마다 노드 하나: `{ node: [18, 20, 22] }`.
+    pub matrix: Vec<(String, Vec<Value>)>,
     pub src: Src,
 }
 
@@ -674,6 +676,7 @@ const NODE_KEYS: &[&str] = &[
     "description",
     "name",
     "undo",
+    "matrix",
 ];
 
 fn parse_retry(v: &mut V, val: &Value, path: &str) -> Option<Retry> {
@@ -804,6 +807,7 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
             cwd: None,
             weight: None,
             description: None,
+            matrix: Vec::new(),
             src: v.src(path),
         });
     }
@@ -910,8 +914,60 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
         .get("executor")
         .and_then(|x| v.text(x, &join(path, "executor")));
     if let Some(e) = &executor {
-        if let Err(msg) = crate::executor::Executor::parse(e) {
-            v.err("SPEC-03", &join(path, "executor"), msg);
+        // 조합 · 입력 값을 쓰는 실행 위치는 계획 때 풀어서 본다.
+        if !e.contains("${{") {
+            if let Err(msg) = crate::executor::Executor::parse(e) {
+                v.err("SPEC-03", &join(path, "executor"), msg);
+            }
+        }
+    }
+    let mut matrix: Vec<(String, Vec<Value>)> = Vec::new();
+    if let Some(mx) = m.get("matrix") {
+        let p = join(path, "matrix");
+        if let Some(mo) = v.obj(mx, &p) {
+            let mut combos: usize = 1;
+            for (k, vals) in mo {
+                let kp = join(&p, k);
+                if !k.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') || k.is_empty() {
+                    v.err(
+                        "SPEC-03",
+                        &kp,
+                        tr(
+                            "조합 이름은 영문 · 숫자 · _ 만 씁니다.",
+                            "matrix names use letters, digits and _ only.",
+                        ),
+                    );
+                    continue;
+                }
+                match vals {
+                    Value::Array(a)
+                        if !a.is_empty()
+                            && a.iter()
+                                .all(|x| x.is_string() || x.is_number() || x.is_boolean()) =>
+                    {
+                        combos = combos.saturating_mul(a.len());
+                        matrix.push((k.clone(), a.clone()));
+                    }
+                    _ => v.err(
+                        "SPEC-03",
+                        &kp,
+                        tr(
+                            "조합 값은 비지 않은 값 목록입니다.",
+                            "matrix values are a non-empty list of scalars.",
+                        ),
+                    ),
+                }
+            }
+            if combos > 64 {
+                v.err(
+                    "SPEC-03",
+                    &p,
+                    tr(
+                        &format!("조합이 {combos}개입니다(최대 64)."),
+                        &format!("{combos} combinations (at most 64)."),
+                    ),
+                );
+            }
         }
     }
     let timeout_ms = m
@@ -1009,6 +1065,7 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
         cwd,
         weight,
         description,
+        matrix,
         src: v.src(path),
     })
 }

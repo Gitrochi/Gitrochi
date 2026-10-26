@@ -906,6 +906,7 @@ fn cmd_test(out: &Out, args: &Args) -> i32 {
             cwd: None,
             weight: None,
             description: None,
+            matrix: Vec::new(),
             src: s.src.clone(),
         })
         .collect();

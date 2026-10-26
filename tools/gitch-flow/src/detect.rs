@@ -155,8 +155,12 @@ fn detect_node(root: &Path, p: &mut Proposal) {
                 confidence: "high",
                 note: pm.to_string(),
             });
-            p.setup
-                .push(("install".into(), install.into(), "package.json".into()));
+            let _ = install;
+            p.setup.push((
+                "install".into(),
+                "setup.node".into(),
+                cwd.clone().unwrap_or_default(),
+            ));
             installed = true;
         }
         let suffix = |base: &str| {
@@ -270,16 +274,11 @@ fn detect_python(root: &Path, p: &mut Proposal) {
         if t.contains("[tool.pytest") || t.contains("pytest") {
             evidence = Some(ev(root, &pyproject, &t, "pytest"));
         }
-        if t.contains("[tool.uv]") || root.join("uv.lock").is_file() {
-            p.setup
-                .push(("install-python".into(), "uv sync".into(), "uv.lock".into()));
-        } else if root.join("poetry.lock").is_file() {
-            p.setup.push((
-                "install-python".into(),
-                "poetry install".into(),
-                "poetry.lock".into(),
-            ));
-        }
+        p.setup.push((
+            "install-python".into(),
+            "setup.python".into(),
+            String::new(),
+        ));
     }
     for f in ["pytest.ini", "tox.ini", "setup.cfg"] {
         let path = root.join(f);
@@ -299,13 +298,24 @@ fn detect_python(root: &Path, p: &mut Proposal) {
             if let Some(t) = read(&path) {
                 if t.contains("pytest") {
                     evidence = Some(ev(root, &path, &t, "pytest"));
-                    p.commented.push(format!(
-                        "# install-python: {{ run: python3 -m pip install -r {f} }}   # {}",
-                        tr("가상환경에서 쓰세요", "use a virtual environment")
-                    ));
                 }
             }
         }
+    }
+    let has_reqs = [
+        "requirements.txt",
+        "requirements-dev.txt",
+        "requirements-test.txt",
+    ]
+    .iter()
+    .any(|f| root.join(f).is_file());
+    if has_reqs && !p.setup.iter().any(|(id, _, _)| id == "install-python") {
+        // .venv 를 만들고 그 안에 설치한다(시스템 Python 을 건드리지 않게).
+        p.setup.push((
+            "install-python".into(),
+            "setup.python".into(),
+            String::new(),
+        ));
     }
     if evidence.is_none() && root.join("tests").is_dir() {
         let has = std::fs::read_dir(root.join("tests"))
@@ -356,6 +366,8 @@ fn detect_simple(root: &Path, p: &mut Proposal) {
             tags: vec!["unit".into()],
             in_prepush: true,
         });
+        p.setup
+            .push(("install-go".into(), "setup.go".into(), String::new()));
         p.checks.push(("vet".into(), "go vet ./...".into()));
     }
     if let Some(t) = read(&root.join("Cargo.toml")) {
@@ -375,6 +387,8 @@ fn detect_simple(root: &Path, p: &mut Proposal) {
             tags: vec!["unit".into()],
             in_prepush: true,
         });
+        p.setup
+            .push(("install-rust".into(), "setup.rust".into(), String::new()));
         p.commented
             .push("# clippy: { run: cargo clippy --all-targets -- -D warnings }".into());
     }
@@ -622,12 +636,16 @@ fn render(root: &Path, p: &Proposal) -> String {
         }
         y.push_str("    nodes:\n");
         let mut setup_ids = Vec::new();
-        for (id, cmd, input) in &p.setup {
-            y.push_str(&format!(
-                "      {id}: {{ run: {}, cache: {{ inputs: [{}] }} }}\n",
-                yaml_str(cmd),
-                yaml_str(input)
-            ));
+        for (id, block, cwd) in &p.setup {
+            // 준비 블록은 버전을 맞춰 보고, 잠금 파일이 그대로면 설치를 건너뛴다.
+            if cwd.is_empty() {
+                y.push_str(&format!("      {id}: {{ use: {block} }}\n"));
+            } else {
+                y.push_str(&format!(
+                    "      {id}: {{ use: {block}, cwd: {} }}\n",
+                    yaml_str(cwd)
+                ));
+            }
             setup_ids.push(id.clone());
         }
         let needs = if setup_ids.is_empty() {
@@ -702,7 +720,7 @@ pub fn propose(root: &Path) -> (Value, String) {
     let commands: Vec<Value> = p
         .setup
         .iter()
-        .map(|(id, c, _)| json!({"node": id, "run": c}))
+        .map(|(id, b, cwd)| json!({"node": id, "use": b, "cwd": if cwd.is_empty() { Value::Null } else { json!(cwd) }}))
         .chain(p.checks.iter().map(|(id, c)| json!({"node": id, "run": c})))
         .chain(
             p.suites
@@ -893,7 +911,7 @@ mod tests {
             .iter()
             .any(|f| f["evidence"] == "package.json:5"));
         assert!(yaml.contains("use: test.vitest"));
-        assert!(yaml.contains("npm ci"));
+        assert!(yaml.contains("install: { use: setup.node }"), "{yaml}");
         assert!(yaml.contains("lint"));
         let doc = crate::yaml::parse(&yaml).unwrap();
         assert_eq!(doc.value["version"], 1);
@@ -919,6 +937,10 @@ mod tests {
             .collect();
         assert!(kinds.contains(&"pytest".to_string()) && kinds.contains(&"go".to_string()));
         assert!(yaml.contains("test.pytest") && yaml.contains("test.go"));
+        assert!(
+            yaml.contains("use: setup.python") && yaml.contains("use: setup.go"),
+            "{yaml}"
+        );
         crate::yaml::parse(&yaml).unwrap();
         let e = tmp(&[("README.md", "hi")]);
         let (_, y2) = propose(&e);

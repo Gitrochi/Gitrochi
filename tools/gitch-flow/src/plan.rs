@@ -55,6 +55,8 @@ pub struct PNode {
     pub cache_key: Option<String>,
     /// 셸 명령을 돌리는 곳(노드 → 환경 → local).
     pub executor: crate::executor::Executor,
+    /// 이 노드의 조합 값(`${{ matrix.X }}`). 조합이 없으면 빈 맵.
+    pub matrix: Value,
     pub src: Src,
 }
 
@@ -132,6 +134,35 @@ fn merge_expect(base: &Expect, over: &Expect) -> Expect {
         exit: over.exit.clone().or(base.exit.clone()),
         raw,
     }
+}
+
+/// 조합 목록(정의 순서대로 곱한다).
+fn combinations(m: &[(String, Vec<Value>)]) -> Vec<Vec<(String, Value)>> {
+    let mut out: Vec<Vec<(String, Value)>> = vec![Vec::new()];
+    for (k, vals) in m {
+        let mut next = Vec::new();
+        for base in &out {
+            for v in vals {
+                let mut c = base.clone();
+                c.push((k.clone(), v.clone()));
+                next.push(c);
+            }
+        }
+        out = next;
+    }
+    out
+}
+
+/// 계획 때 풀 수 있는 자리 글자(`${{ matrix.X }}` · `${{ inputs.X }}`)만 바꾼다.
+fn render_static(text: &str, matrix: &Value, inputs: &Value) -> String {
+    let re = regex::Regex::new(r"\$\{\{\s*(matrix|inputs)\.([A-Za-z0-9_]+)\s*\}\}").expect("re");
+    re.replace_all(text, |c: &regex::Captures| {
+        let src = if &c[1] == "matrix" { matrix } else { inputs };
+        src.get(&c[2])
+            .map(crate::expr::to_text)
+            .unwrap_or_else(|| c[0].to_string())
+    })
+    .into_owned()
 }
 
 struct Ex<'a> {
@@ -242,6 +273,34 @@ impl Ex<'_> {
                         .filter(|x| x.branch_of.is_none())
                         .map(|x| x.id.clone())
                         .collect();
+                    self.groups.insert(id, members);
+                }
+                _ if !n.matrix.is_empty() => {
+                    // 조합마다 노드 하나(`unit/node-20`). needs: [unit] 은 조합 전부를 기다린다.
+                    let mut members = Vec::new();
+                    for combo in combinations(&n.matrix) {
+                        let suffix = combo
+                            .iter()
+                            .map(|(k, v)| {
+                                format!("{k}-{}", crate::store::safe(&crate::expr::to_text(v)))
+                            })
+                            .collect::<Vec<_>>()
+                            .join("-");
+                        let cid = format!("{id}/{suffix}");
+                        let mvals: Map<String, Value> = combo.into_iter().collect();
+                        let before = self.out.len();
+                        self.push_leaf(n, &cid, needs.clone(), scope, Some(&id), None);
+                        for f in &n.on_failure {
+                            let fid = format!("{cid}/on-failure/{}", f.id);
+                            let mut fneeds = vec![cid.clone()];
+                            fneeds.extend(f.needs.iter().map(|x| format!("{cid}/on-failure/{x}")));
+                            self.push_leaf(f, &fid, fneeds, scope, Some(&id), Some(cid.clone()));
+                        }
+                        for p in self.out[before..].iter_mut() {
+                            p.matrix = Value::Object(mvals.clone());
+                        }
+                        members.push(cid);
+                    }
                     self.groups.insert(id, members);
                 }
                 _ => {
@@ -356,6 +415,7 @@ impl Ex<'_> {
             selection_reason: None,
             cache_key: None,
             executor: crate::executor::Executor::Local,
+            matrix: Value::Object(Map::new()),
             src: n.src.clone(),
         });
     }
@@ -434,8 +494,13 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
     for n in nodes.iter_mut() {
         let raw = n.def.executor.clone().or_else(|| env_exec.clone());
         let Some(raw) = raw else { continue };
-        let Ok(ex) = crate::executor::Executor::parse(&raw) else {
-            continue;
+        let raw = render_static(&raw, &n.matrix, &n.scope_inputs);
+        let ex = match crate::executor::Executor::parse(&raw) {
+            Ok(ex) => ex,
+            Err(msg) => {
+                n.decision = Decision::Rejected("SPEC-03", format!("executor: {msg}"));
+                continue;
+            }
         };
         if ex.is_docker() {
             if n.block == "cmd" || n.block.starts_with("test.") {
@@ -683,6 +748,7 @@ impl Plan {
                 "selectionReason": n.selection_reason,
                 "cacheKey": n.cache_key,
                 "executor": n.executor.as_str(),
+                "matrix": n.matrix,
                 "src": n.src.show(),
             })).collect::<Vec<_>>(),
         })
