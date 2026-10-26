@@ -163,8 +163,8 @@ final class AIStore {
             d.set(old == "api" ? AIProvider.anthropic.rawValue : AIProvider.claudeCode.rawValue, forKey: "aiProvider")
             d.set(["anthropic": d.string(forKey: "claudeModel") ?? "claude-opus-5-5", "claudeCode": d.string(forKey: "claudeCLIModel") ?? ""],
                   forKey: "aiModels")
-            if d.bool(forKey: "hasClaudeKey"), let k = Keychain.get("anthropic") {
-                Keychain.set(k, for: "ai:anthropic")
+            if d.bool(forKey: "hasClaudeKey") {
+                // 예전 키는 사용할 때 비동기로 읽는다. 초기 화면에서 키체인 승인을 띄우지 않는다.
                 d.set(["anthropic": true], forKey: "aiKeys")
             }
         }
@@ -230,16 +230,19 @@ final class AIStore {
 
     func setKey(_ p: AIProvider, _ key: String) {
         let k = key.trimmed
-        Keychain.set(k.isEmpty ? nil : k, for: "ai:" + p.rawValue)
-        keys[p.rawValue] = k.isEmpty ? nil : k
-        hasKey[p.rawValue] = !k.isEmpty
-        UserDefaults.standard.set(hasKey, forKey: "aiKeys")
+        Task {
+            guard await Keychain.set(k.isEmpty ? nil : k, for: "ai:" + p.rawValue) else { return }
+            keys[p.rawValue] = k.isEmpty ? nil : k
+            hasKey[p.rawValue] = !k.isEmpty
+            UserDefaults.standard.set(hasKey, forKey: "aiKeys")
+        }
     }
 
-    private func key(_ p: AIProvider) -> String? {
+    private func key(_ p: AIProvider) async -> String? {
         guard hasKey[p.rawValue] == true else { return nil }
         if let k = keys[p.rawValue] { return k }
-        let k = Keychain.get("ai:" + p.rawValue)
+        var k = await Keychain.get("ai:" + p.rawValue)
+        if k == nil, p == .anthropic, UserDefaults.standard.bool(forKey: "hasClaudeKey") { k = await Keychain.get("anthropic") }
         keys[p.rawValue] = k
         return k
     }
@@ -274,13 +277,15 @@ final class AIStore {
             if !model.isEmpty { args += ["-m", model] }
             return try await Self.cli(tools.path(.gemini)!, args, stdin: prompt, name: "Gemini CLI")
         case .anthropic:
-            return try await Self.anthropic(key: key(p)!, model: model, system: system, prompt: prompt, effort: effort)
+            guard let key = await key(p) else { throw AIError.notConfigured(String(localized: "Allow Keychain access or save the API key again.")) }
+            return try await Self.anthropic(key: key, model: model, system: system, prompt: prompt, effort: effort)
         case .openai:
-            return try await Self.chat(base: "https://api.openai.com/v1", key: key(p), model: model, system: system, prompt: prompt, name: "ChatGPT")
+            return try await Self.chat(base: "https://api.openai.com/v1", key: await key(p), model: model, system: system, prompt: prompt, name: "ChatGPT")
         case .compatible:
-            return try await Self.chat(base: baseURL, key: key(p), model: model, system: system, prompt: prompt, name: String(localized: "AI server"))
+            return try await Self.chat(base: baseURL, key: await key(p), model: model, system: system, prompt: prompt, name: String(localized: "AI server"))
         case .gemini:
-            return try await Self.gemini(key: key(p)!, model: model, system: system, prompt: prompt)
+            guard let key = await key(p) else { throw AIError.notConfigured(String(localized: "Allow Keychain access or save the API key again.")) }
+            return try await Self.gemini(key: key, model: model, system: system, prompt: prompt)
         }
     }
 
@@ -394,7 +399,7 @@ final class AIStore {
 
     /// 계정에서 쓸 수 있는 모델 목록(API 방식)
     func listModels(_ p: AIProvider) async throws -> [String] {
-        let k = key(p)
+        let k = await key(p)
         func ids(_ data: Data, field: String = "data") -> [[String: Any]] {
             ((try? JSONSerialization.jsonObject(with: data)) as? [String: Any])?[field] as? [[String: Any]] ?? []
         }

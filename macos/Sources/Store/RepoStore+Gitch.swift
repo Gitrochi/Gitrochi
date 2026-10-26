@@ -253,7 +253,7 @@ extension RepoStore {
         }
     }
 
-    private func openGraphPage(_ file: URL) async {
+    func openGraphPage(_ file: URL) async {
         do {
             try await Launcher.openInBrowser(file)
         } catch {

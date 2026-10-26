@@ -65,11 +65,15 @@ export function parseRemote(s: string): { host: string; path: string } | null {
   return { host: host.toLowerCase(), path };
 }
 
-export function findTarget(remotes: string[], urls: Record<string, string>, gitlabHosts: string[]): RepoTarget | null {
+export function findTarget(remotes: string[], urls: Record<string, string>, gitlabHosts: string[], sshAliases: Record<string, string> = {}): RepoTarget | null {
   const order = remotes.includes("origin") ? ["origin", ...remotes.filter((r) => r !== "origin")] : remotes;
   for (const name of order) {
-    const r = urls[name] ? parseRemote(urls[name]) : null;
-    if (!r) continue;
+    const url = urls[name];
+    const parsed = url ? parseRemote(url) : null;
+    if (!parsed) continue;
+    // 연결된 계정의 gitch SSH 별칭만 API 서버로 정규화한다. HTTPS 호스트는 그대로 둔다.
+    const ssh = !url.includes("://") || /^ssh:\/\//i.test(url);
+    const r = { ...parsed, host: ssh ? sshAliases[parsed.host] ?? parsed.host : parsed.host };
     if (r.host === "github.com") return { provider: "github", remote: name, host: r.host, path: r.path };
     if (gitlabHosts.includes(r.host) || r.host.includes("gitlab")) return { provider: "gitlab", remote: name, host: r.host, path: r.path };
   }

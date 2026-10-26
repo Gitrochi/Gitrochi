@@ -31,6 +31,8 @@ export function RefBadge({ label, color }: { label: RefLabel; color: string }) {
   return (
     <span
       className={`ref-badge ${label.isCurrent ? "current" : ""}`}
+      data-tip={label.name}
+      title={label.name}
       style={{
         color: outlined ? tint : label.kind === "head" ? "var(--surface)" : "#fff",
         background: outlined ? `color-mix(in srgb, ${tint} 12%, transparent)` : tint,

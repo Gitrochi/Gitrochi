@@ -11,6 +11,7 @@ final class Workspace {
     private static let selectedKey = "selectedTab"
     private final class Weak { weak var store: RepoStore?; init(_ s: RepoStore) { store = s } }
     private var stores: [Weak] = []
+    var openRepositories: [RepoStore] { stores.compactMap(\.store).filter { $0.url != nil } }
     private var restoreTaken = false
     private var terminating = false
     private let launchedAt = Date()
@@ -114,6 +115,7 @@ final class Workspace {
 
     /// 창이 화면에 뜨기 전에 불린다.
     func attach(_ w: NSWindow) {
+        RepositoryWindowLayout.configure(w)
         w.tabbingIdentifier = WindowTabbing.identifier
         w.tabbingMode = .preferred
         let launching = RestoreState.shared.active

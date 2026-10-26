@@ -19,7 +19,7 @@ describe("커밋 정리 계획", () => {
     p.items.push(p.items.shift()!);
     expect(planChanged(p)).toBe(true);
     expect(rebaseTodo(p, (sha) => `/g/msg-${sha}`)).toBe(
-      ["pick e", "pick b", "exec git commit --amend --no-verify --allow-empty -F '/g/msg-b'", "squash c", "drop d", ""].join("\n"),
+      ["pick e", "pick b", "exec git commit --amend --allow-empty -F '/g/msg-b'", "squash c", "drop d", ""].join("\n"),
     );
   });
   it("가장 오래된 커밋은 합칠 수 없고, 모두 빼거나 빈 메시지는 안 됨", () => {

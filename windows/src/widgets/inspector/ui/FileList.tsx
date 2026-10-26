@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Folder, FolderOpen, List, ListTree } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { changeId, type FileChange, fileDir, fileName, type LineStat, StatusBadge } from "@/entities/git";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -129,7 +129,7 @@ export function ChangeList({
     );
   };
 
-  if (mode === "list") return <div className="col">{changes.map((c) => fileRow(c, true))}</div>;
+  const rows = useMemo(() => mode === "tree" ? treeRows(changes, collapsed) : changes.map((change) => ({ id: changeId(change), kind: "file" as const, change, depth: 0 })), [changes, collapsed, mode]);
 
   const toggle = (p: string) => {
     const s = new Set(collapsed);
@@ -138,8 +138,7 @@ export function ChangeList({
     setCollapsed(s);
   };
   return (
-    <div className="col">
-      {treeRows(changes, collapsed).map((r) =>
+    <VisibleFileRows rows={rows} render={(r) =>
         r.kind === "folder" ? (
           <div
             key={r.id}
@@ -171,9 +170,40 @@ export function ChangeList({
             )}
           </div>
         ) : (
-          fileRow(r.change, false, r.depth * indent + indent)
-        ),
-      )}
-    </div>
+          fileRow(r.change, mode === "list", mode === "list" ? 0 : r.depth * indent + indent)
+        )
+      } />
   );
+}
+
+const FILE_ROW_HEIGHT = 28;
+
+/** 전체 목록 높이는 유지하고 스크롤 근처의 행만 만들어 변경 화면 진입 비용을 제한한다. */
+function VisibleFileRows<T extends { id: string }>({ rows, render }: { rows: T[]; render: (row: T) => ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState({ first: 0, last: 40 });
+  const virtual = rows.length > 120;
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || !virtual) return;
+    let scroll = element.parentElement;
+    while (scroll && !/(auto|scroll)/.test(getComputedStyle(scroll).overflowY)) scroll = scroll.parentElement;
+    if (!scroll) return;
+    const viewport = scroll;
+    const update = () => {
+      const offset = Math.max(0, viewport.getBoundingClientRect().top - element.getBoundingClientRect().top);
+      const first = Math.min(rows.length, Math.max(0, Math.floor(offset / FILE_ROW_HEIGHT) - 8));
+      const last = Math.min(rows.length, Math.ceil((offset + viewport.clientHeight) / FILE_ROW_HEIGHT) + 8);
+      setRange((old) => old.first === first && old.last === last ? old : { first, last });
+    };
+    update();
+    viewport.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(viewport); observer.observe(element);
+    return () => { viewport.removeEventListener("scroll", update); observer.disconnect(); };
+  }, [virtual, rows.length]);
+  if (!virtual) return <div className="col">{rows.map(render)}</div>;
+  return <div ref={ref} className="file-list-virtual" style={{ height: rows.length * FILE_ROW_HEIGHT }} data-total-rows={rows.length}>
+    {rows.slice(range.first, range.last).map((row, index) => <div key={row.id} className="file-list-virtual-row" style={{ top: (range.first + index) * FILE_ROW_HEIGHT, height: FILE_ROW_HEIGHT }}>{render(row)}</div>)}
+  </div>;
 }

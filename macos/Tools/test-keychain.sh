@@ -14,19 +14,26 @@ PY
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
 import Foundation
 @main struct KeychainTests {
-    static func main() {
+    static func main() async {
         let name = "selftest-keychain-" + UUID().uuidString
-        defer { Keychain.set(nil, for: name) }
-        precondition(Keychain.set("test-one", for: name), "Keychain creation failed")
-        precondition(Keychain.get(name) == "test-one", "Keychain read failed")
-        precondition(Keychain.set("test-two", for: name), "Keychain update failed")
-        precondition(Keychain.get(name) == "test-two", "Keychain replacement failed")
-        precondition(Keychain.set(nil, for: name), "Keychain cleanup failed")
-        precondition(Keychain.get(name) == nil, "Keychain item remained")
-        precondition(Keychain.set(nil, for: name), "Keychain deletion was not idempotent")
+        defer { Task { await Keychain.set(nil, for: name) } }
+        let created = await Keychain.set("test-one", for: name)
+        precondition(created, "Keychain creation failed")
+        let first = await Keychain.get(name)
+        precondition(first == "test-one", "Keychain read failed")
+        let updated = await Keychain.set("test-two", for: name)
+        precondition(updated, "Keychain update failed")
+        let second = await Keychain.get(name)
+        precondition(second == "test-two", "Keychain replacement failed")
+        let removed = await Keychain.set(nil, for: name)
+        precondition(removed, "Keychain cleanup failed")
+        let missing = await Keychain.get(name)
+        precondition(missing == nil, "Keychain item remained")
+        let removedAgain = await Keychain.set(nil, for: name)
+        precondition(removedAgain, "Keychain deletion was not idempotent")
         print("macOS Keychain: unique credential create/read/update/delete and idempotent cleanup passed")
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$TASK_TMP/Keychain.swift" "$ROOT/Sources/Core/LegacyData.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-keychain"
+swiftc -parse-as-library -swift-version 5 "$TASK_TMP/Keychain.swift" "$ROOT/Sources/Core/LegacyData.swift" "$ROOT/Sources/Core/CredentialCache.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-keychain"
 "$TASK_TMP/test-keychain"

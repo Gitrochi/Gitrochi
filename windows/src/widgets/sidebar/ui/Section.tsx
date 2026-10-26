@@ -4,7 +4,6 @@ import { settings } from "@/shared/config";
 import { useObserve } from "@/shared/lib";
 import { SharedPane } from "@/shared/ui";
 
-/** True inside the rail's flyout: the section is always open and does not fold */
 export const SectionFlyout = createContext(false);
 
 export function Section({ id, title, count, actions, children, defaultOpen = true }: { id: string; title: string; count?: number; actions?: ReactNode; children: ReactNode; defaultOpen?: boolean }) {

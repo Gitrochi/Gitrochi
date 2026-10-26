@@ -107,6 +107,20 @@ extension RepoStore {
         target.flatMap { AccountStore.shared.account(for: $0, repoPath: url?.path) }
     }
 
+    /// 첫 계정을 연결한 직후에도 SSH 별칭을 다시 판별한다. 전체 그래프는 다시 읽지 않는다.
+    func refreshHostingAccount() async {
+        let accounts = AccountStore.shared
+        let next = Hosting.target(remotes: remotes, urls: remoteURLs,
+                                  gitlabHosts: accounts.accounts(for: .gitlab).map(\.host), sshAliases: accounts.sshHostAliases)
+        if next != target {
+            target = next
+            resetCI()
+            if let next, next.provider == .github { AvatarStore.shared.noteGitHubRepo(next.path) }
+        }
+        await loadPullRequests()
+        await refreshCIBadges()
+    }
+
     /// 사용자가 눌렀을 때: 이미 연결한 계정이 이 저장소 서버에도 통하는지 직접 확인
     func tryExistingAccounts() async {
         guard let t = target else { return }
@@ -120,32 +134,31 @@ extension RepoStore {
     func useAccount(_ a: HostAccount) {
         guard let path = url?.path else { return }
         AccountStore.shared.setPreferred(a, for: path)
+        collaboration.reset()
+        reviewLoadID = UUID(); reviewActionID = nil; reviewBusy = false; review = nil
+        Task { await loadPullRequests() }
     }
 
-    func loadPullRequests() async {
+    func loadPullRequests(append: Bool = false) async {
+        let state = collaboration, context = collaboration.contextID, loadID = UUID(), repoURL = url
+        state.listID = loadID
         guard let t = target else { pullRequests = []; prState = .idle; return }
+        let current = { self.url == repoURL && self.target == t && state.contextID == context && state.listID == loadID }
         let accounts = AccountStore.shared
-        // 연결된 계정 서버의 다른 주소(같은 IP)면 그 계정으로 확인해 이어 쓴다
-        if hostingAccount == nil, !accounts.accounts(for: t.provider).isEmpty {
-            await accounts.discoverAlias(for: t, sameAddressOnly: true)
-        }
+        if hostingAccount == nil, !accounts.accounts(for: t.provider).isEmpty { await accounts.discoverAlias(for: t, sameAddressOnly: true) }
+        guard current() else { return }
         guard let acct = hostingAccount, let token = accounts.token(for: acct) else {
-            // 사내 GitLab 이면 설정 화면에 그 서버 주소를 미리 채워 둔다
             if t.provider == .gitlab { accounts.suggestedGitLabServer = "https://\(t.host)" }
-            pullRequests = []
-            prState = .needsAccount
-            return
+            pullRequests = []; prState = .needsAccount; return
         }
+        var query = state.query; query.page = append ? query.page + 1 : 1
         prState = .loading
         do {
-            let list = try await Hosting.pullRequests(t, token: token, apiBase: acct.apiBase)
-            guard target == t else { return }
-            pullRequests = list
-            prState = .loaded
-        } catch {
-            guard target == t else { return }
-            prState = .failed(describe(error))
-        }
+            let (items, more, warning) = try await CollaborationAPI.requests(ReviewAccess(target: t, token: token, apiBase: acct.apiBase, me: acct.username, isCurrent: current), query)
+            guard current() else { return }
+            pullRequests = append ? pullRequests + items.filter { item in !pullRequests.contains(where: { $0.number == item.number }) } : items
+            state.query = query; state.more = more; state.warning = warning; prState = .loaded
+        } catch { if current() { prState = .failed(describe(error)) } }
     }
 
     /// PR 브랜치 체크아웃: 같은 저장소 브랜치면 추적 브랜치로, 포크면 pr/번호 로컬 브랜치로 가져온다.
@@ -187,28 +200,59 @@ extension RepoStore {
     }
 
     func createPullRequest(title: String, body: String, base: String, draft: Bool) async {
-        guard let t = target, let branch = headBranch else { return }
+        guard let t = target, let branch = headBranch, let originalURL = url, busy == nil else { return }
+        let workflow = UUID()
+        pullRequestWorkflowID = workflow
+        let current = { self.pullRequestWorkflowID == workflow && self.url == originalURL && self.target == t }
+        let originalHead = headHash
+        newPullRequestDraft = NewPullRequestDraft(branch: branch, title: title, body: body, base: base, draft: draft)
         guard let acct = hostingAccount, let token = AccountStore.shared.token(for: acct) else {
             errorMessage = String(localized: "Connect a \(t.provider.title) (\(t.host)) account first (Settings > Accounts).")
             return
         }
-        // 원격에 브랜치가 없거나 올리지 않은 커밋이 있으면 먼저 push
-        if status.upstream == nil {
-            guard await run(String(localized: "Pushing…"), ["push", "-u", t.remote, branch], network: true) else { return }
-        } else if status.ahead > 0 {
-            guard await run(String(localized: "Pushing…"), ["push"], network: true) else { return }
+        guard await validatePullRequestPushTarget(t, in: originalURL, account: acct, workflow: workflow), current() else { return }
+        // PR 서버와 다른 pushRemote가 설정되어 있어도, 검토한 PR 원격에만 게시한다.
+        guard await requestPushReview(branch: branch, remoteOverride: t.remote) else { return }
+        guard current() else { return }
+        guard headBranch == branch, headHash == originalHead, hostingAccount?.id == acct.id, busy == nil else {
+            errorMessage = String(localized: "The repository or branch changed. Review the pull request again; your draft has been kept.")
+            return
         }
+        guard await validatePullRequestPushTarget(t, in: originalURL, account: acct, workflow: workflow), current() else { return }
         busy = String(localized: "Creating \(t.provider.requestShort)…")
-        defer { busy = nil }
+        defer { if current() { busy = nil } }
         do {
             let pr = try await Hosting.createPullRequest(t, token: token, apiBase: acct.apiBase,
                                                          title: title, body: body, source: branch, target: base, draft: draft)
+            guard current() else { return }
+            newPullRequestDraft = nil
             await loadPullRequests()
+            guard current() else { return }
             select(.pullRequest(pr.number))
             if let u = URL(string: pr.url) { NSWorkspace.shared.open(u) }
         } catch {
-            errorMessage = describe(error)
+            if current() { errorMessage = describe(error) }
         }
+    }
+}
+
+extension RepoStore {
+    /// 같은 remote도 fetch와 push가 다른 저장소일 수 있으므로 PR 게시 전에 실제 주소를 확인한다.
+    private func validatePullRequestPushTarget(_ request: RepoTarget, in repo: URL, account: HostAccount, workflow: UUID) async -> Bool {
+        do {
+            let urls = try await Git.run(["remote", "get-url", "--push", "--all", request.remote], in: repo).output
+                .split(separator: "\n").map(String.init)
+            guard url == repo, pullRequestWorkflowID == workflow else { return false }
+            if urls.count == 1, let destination = Hosting.parseRemote(urls[0]), destination.path == request.path {
+                if destination.host == request.host { return true }
+                let aliasTarget = RepoTarget(provider: request.provider, remote: request.remote, host: destination.host, path: destination.path)
+                if AccountStore.shared.account(for: aliasTarget, repoPath: repo.path)?.id == account.id { return true }
+            }
+            errorMessage = String(localized: "The push URL points to a different repository than this pull request. Check the remote configuration; your draft has been kept.")
+        } catch {
+            if url == repo, pullRequestWorkflowID == workflow { errorMessage = PushReview.displayURL(describe(error)) }
+        }
+        return false
     }
 }
 

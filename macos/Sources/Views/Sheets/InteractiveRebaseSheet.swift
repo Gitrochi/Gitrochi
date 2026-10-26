@@ -2,6 +2,8 @@ import SwiftUI
 
 /// 커밋 정리(인터랙티브 리베이스): 커밋마다 그대로·메시지 고치기·아래 커밋에 합치기·빼기를 고르고 순서를 바꾼다
 struct InteractiveRebaseSheet: View {
+    var embedded = false
+    var onClose: (() -> Void)? = nil
     @Environment(RepoStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @ViewState private var plan: RebasePlan?
@@ -36,11 +38,11 @@ struct InteractiveRebaseSheet: View {
                     Text("You can always return to the state before you started (Undo, ⌥⌘Z).").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
+                Button("Cancel", role: .cancel) { close() }
                     .keyboardShortcut(.cancelAction)
                 Button("Start cleanup") {
                     guard let p = plan else { return }
-                    dismiss()
+                    close()
                     Task { await store.runInteractiveRebase(p) }
                 }
                 .keyboardShortcut(.defaultAction)
@@ -48,9 +50,11 @@ struct InteractiveRebaseSheet: View {
             }
             .padding(20)
         }
-        .frame(width: 720)
+        .frame(width: embedded ? nil : 720)
         .onAppear { if plan == nil { plan = store.rebasePlan } }
     }
+
+    private func close() { if let onClose { onClose() } else { dismiss() } }
 
     private func binding(_ i: Int) -> Binding<RebaseItem> {
         Binding(get: { plan?.items[i] ?? RebaseItem(sha: "", message: "", author: "") },

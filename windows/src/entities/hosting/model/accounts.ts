@@ -5,6 +5,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import * as Hosting from "../api/hosting";
+import { AccountConnectionFailure } from "./connection-failure";
 
 /** GitHub·사내 GitLab 계정(여러 개). 앱 전체에서 하나만 쓴다. (맥 버전 AccountStore) */
 class AccountStore extends Observable {
@@ -36,6 +37,16 @@ class AccountStore extends Observable {
   /** 이 저장소 서버에 쓸 수 있는 계정(같은 주소이거나, 같은 서버의 다른 주소로 확인된 계정) */
   candidates(target: RepoTarget) {
     return this.accounts.filter((a) => a.provider === target.provider && (accountHost(a) === target.host || this.aliases[target.host] === a.id));
+  }
+
+  /** gitch 별칭과 연결된 서버를 정확히 대조한다. 서로 다른 서버의 같은 별칭은 제외한다. */
+  get sshHostAliases(): Record<string, string> {
+    const hosts = new Map<string, Set<string>>();
+    for (const account of this.accounts) {
+      const host = accountHost(account).toLowerCase(), alias = `${host.split(".")[0]}-${account.username.toLowerCase()}`;
+      const values = hosts.get(alias) ?? new Set<string>(); values.add(host); hosts.set(alias, values);
+    }
+    return Object.fromEntries([...hosts].filter(([, values]) => values.size === 1).map(([alias, values]) => [alias, [...values][0]]));
   }
 
   /** 이 저장소에 쓸 계정: 저장소마다 고른 계정 → 없으면 그 서버의 첫 계정 */
@@ -133,7 +144,8 @@ class AccountStore extends Observable {
       name: m.name,
       avatarURL: m.avatarURL,
     };
-    await ipc.secretSet("acct:" + acc.id, text);
+    try { await ipc.secretSet("acct:" + acc.id, text); }
+    catch { throw new AccountConnectionFailure("credential-save"); }
     this.secrets.set("acct:" + acc.id, text);
     this.accounts = [...this.accounts.filter((a) => a.id !== acc.id), acc];
     this.save();
@@ -142,15 +154,22 @@ class AccountStore extends Observable {
 
   /** gh CLI 에 로그인돼 있는 GitHub 계정을 가져온다 */
   async importGitHubCLI(expectedUsername?: string) {
-    if (!this.ghPath) throw new Error(t("Couldn't find the gh CLI."));
-    const r = await ipc.run(this.ghPath, ["auth", "token", "--hostname", "github.com", ...(expectedUsername ? ["--user", expectedUsername] : [])], { cwd: env.temp, timeoutMs: 30000 });
+    if (!this.ghPath) throw new AccountConnectionFailure("missing-cli");
+    let r: Awaited<ReturnType<typeof ipc.run>>;
+    try { r = await ipc.run(this.ghPath, ["auth", "token", "--hostname", "github.com", ...(expectedUsername ? ["--user", expectedUsername] : [])], { cwd: env.temp, timeoutMs: 30000 }); }
+    catch { throw new AccountConnectionFailure("credential-read"); }
     const text = r.stdout.trim();
-    if (r.status !== 0 || !text) throw new Error(r.stderr.trim() || t("You're not logged in to gh. Run `gh auth login` in a terminal first."));
-    if (expectedUsername) {
-      const me = await Hosting.me("github", text, "https://api.github.com");
-      if (me.username.toLowerCase() !== expectedUsername.toLowerCase()) throw new Error(t("The browser login belongs to a different account. Try signing in again."));
+    if (r.status !== 0 || !text) throw new AccountConnectionFailure("credential-read");
+    try {
+      if (expectedUsername) {
+        const me = await Hosting.me("github", text, "https://api.github.com");
+        if (me.username.toLowerCase() !== expectedUsername.toLowerCase()) throw new AccountConnectionFailure("identity-mismatch");
+      }
+      return await this.connectGitHub(text);
+    } catch (error) {
+      if (error instanceof AccountConnectionFailure) throw error;
+      throw new AccountConnectionFailure("verification", { status: error instanceof Hosting.HostingError ? error.status : undefined });
     }
-    return this.connectGitHub(text);
   }
 
   /** 공개키만 GitHub에 전송한다. 현재 인증 사용자와 Git identity가 일치해야 한다. */

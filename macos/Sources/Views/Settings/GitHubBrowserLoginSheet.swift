@@ -1,9 +1,10 @@
 import SwiftUI
 import AppKit
 
-/// The user starts GitHub's device flow; credentials stay in gh and the Keychain.
+/// 사용자 승인 흐름과 계정 가져오기를 분리하고 코드 발급 전에도 복구 동작을 제공한다.
 struct GitHubBrowserLoginSheet: View {
     var expectedLogin: String? = nil
+    var capability: Gitch.GitHubLoginCapability = .standard
     let onConnected: (Gitch.BrowserLogin, HostAccount) -> Void
     @Environment(\.dismiss) private var dismiss
     @ViewState private var login: Gitch.BrowserLogin?
@@ -19,9 +20,14 @@ struct GitHubBrowserLoginSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Sign in to GitHub").font(.title2.weight(.semibold))
+            Text(capability == .projects ? String(localized: "Connect GitHub project access") : String(localized: "Sign in to GitHub")).font(.title2.weight(.semibold))
             Text("GitHub opens in your default browser. Approve the login there, then return here. Gitrochi imports the approved account without showing its token.")
                 .font(.callout).foregroundStyle(.secondary)
+            if capability == .projects {
+                Text("GitHub Projects needs the additional project permission to list projects and update their status. Review it in your browser before approving.")
+                    .font(.callout).foregroundStyle(.secondary)
+                if let expectedLogin { Text("Approve access with the selected account: @\(expectedLogin)").font(.callout.weight(.medium)) }
+            }
             if tools.path(.gh) == nil {
                 Text("GitHub CLI is needed for secure browser sign-in. Install it from its official site, then check again.")
                 HStack {
@@ -39,9 +45,18 @@ struct GitHubBrowserLoginSheet: View {
                         Button("Open browser") { openBrowser(login) }
                     }
                 }
-                if working { ProgressView().controlSize(.small) }
-                if importing { Text("Connecting the approved account…").font(.callout).foregroundStyle(.secondary) }
-                Text(verbatim: login.message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                if login.state == .pending {
+                    pendingProgress(login)
+                    if login.deviceCode?.isEmpty != false {
+                        Button("Open browser") { openBrowser(login) }
+                        Text("The sign-in code will appear here when GitHub is ready. Opening the page alone doesn't approve access.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                } else {
+                    if working { ProgressView().controlSize(.small) }
+                    if importing { Text("Connecting the approved account…").font(.callout).foregroundStyle(.secondary) }
+                    Text(verbatim: login.message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                }
                 if login.state == .complete, error != nil {
                     Button("Retry connecting account") {
                         let attempt = generation
@@ -52,9 +67,11 @@ struct GitHubBrowserLoginSheet: View {
                     Button("Try signing in again") { begin() }
                 }
             } else {
-                Text("GitHub will request access for repositories, pull requests, workflows and SSH public keys. You can review the permissions in the browser before approving.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Button("Continue to GitHub") { begin() }.buttonStyle(.borderedProminent).disabled(working)
+                if capability == .standard {
+                    Text("GitHub will request access for repositories, pull requests, workflows and SSH public keys. You can review the permissions in the browser before approving.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Button(capability == .projects ? String(localized: "Continue to approve project access") : String(localized: "Continue to GitHub")) { begin() }.buttonStyle(.borderedProminent).disabled(working)
                 if working { ProgressView().controlSize(.small) }
             }
             if let error { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) }
@@ -65,7 +82,7 @@ struct GitHubBrowserLoginSheet: View {
                     .disabled(importing)
             }
         }
-        .padding(24).frame(width: 590, height: 420)
+        .padding(24).frame(width: 590, height: capability == .projects ? 560 : 480)
         .interactiveDismissDisabled(working)
         .onDisappear { invalidate() }
     }
@@ -79,7 +96,8 @@ struct GitHubBrowserLoginSheet: View {
             do {
                 if let previous, previous.state == .pending { _ = try? await Gitch.gitHubLogin(previous.session, cancel: true) }
                 guard active(attempt) else { return }
-                var next = try await Gitch.startGitHubLogin()
+                var timing = GitHubLoginProgress()
+                var next = try await Gitch.startGitHubLogin(capability: capability, expectedLogin: expectedLogin)
                 guard active(attempt) else {
                     let abandonedSession = next.session
                     Task { _ = try? await Gitch.gitHubLogin(abandonedSession, cancel: true) }
@@ -87,6 +105,9 @@ struct GitHubBrowserLoginSheet: View {
                 }
                 login = next; openWhenReady(next)
                 while next.state == .pending {
+                    if let failure = timing.failure(phase: GitHubLoginProgress.phase(next.phase, code: next.deviceCode)) {
+                        throw Gitch.Failure(message: failure.message)
+                    }
                     try await Task.sleep(for: .milliseconds(1500))
                     next = try await Gitch.gitHubLogin(next.session)
                     guard active(attempt) else { return }
@@ -118,8 +139,7 @@ struct GitHubBrowserLoginSheet: View {
             dismiss()
         } catch is CancellationError {} catch {
             guard active(attempt) else { return }
-            self.error = (error as? GitHubLoginIdentity.Mismatch)?.errorDescription
-                ?? String(localized: "Couldn't connect the approved GitHub account. Retry connecting before continuing.")
+            self.error = AccountConnectionFailure.message(for: error)
         }
     }
 
@@ -130,7 +150,20 @@ struct GitHubBrowserLoginSheet: View {
 
     private func openBrowser(_ state: Gitch.BrowserLogin) {
         guard state.verificationURL == "https://github.com/login/device", let url = URL(string: state.verificationURL) else { return }
-        NSWorkspace.shared.open(url)
+        if !NSWorkspace.shared.open(url) {
+            error = String(localized: "Couldn't open your browser. Open https://github.com/login/device and enter the code shown here.")
+        }
+    }
+
+    @ViewBuilder private func pendingProgress(_ state: Gitch.BrowserLogin) -> some View {
+        HStack(spacing: 10) {
+            if working { ProgressView().controlSize(.small) }
+            switch GitHubLoginProgress.phase(state.phase, code: state.deviceCode) {
+            case .queued: Text("Another GitHub sign-in is in progress. Waiting for it to finish…")
+            case .preparing: Text("Getting a sign-in code from GitHub…")
+            case .approval: Text("Enter the code in your browser, approve access, then return here.")
+            }
+        }.font(.callout).foregroundStyle(.secondary)
     }
 
     private func cancel() {

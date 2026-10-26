@@ -2,6 +2,10 @@ import Foundation
 
 /// 충돌 난 파일: 충돌 표시(<<<<<<< ======= >>>>>>>) 사이를 블록으로 나눈 것
 struct ConflictDocument {
+    var sourceText = ""
+    var loadID = UUID()
+    var baseText: String?
+    var indexSignature: String?
     enum Segment {
         /// 충돌 없는 줄들
         case text([String])
@@ -37,50 +41,18 @@ struct ConflictDocument {
 
     /// 충돌 표시를 읽는다(표시가 없으면 블록이 없다)
     static func parse(_ text: String) -> ConflictDocument {
+        let v = RustCore.object(RustCore.call("conflict", ["text": text]))
         var doc = ConflictDocument()
-        doc.newline = text.contains("\r\n") ? "\r\n" : "\n"
-        var body = text.replacingOccurrences(of: "\r\n", with: "\n")
-        doc.trailingNewline = body.hasSuffix("\n")
-        if doc.trailingNewline { body.removeLast() }
-        enum State { case normal, ours, base, theirs }
-        var state = State.normal
-        var plain: [String] = [], ours: [String] = [], base: [String]? = nil, theirs: [String] = []
-        var oursLabel = ""
-        for line in body.split(separator: "\n", omittingEmptySubsequences: false).map(String.init) {
-            switch state {
-            case .normal:
-                if line.hasPrefix("<<<<<<<") {
-                    if !plain.isEmpty { doc.segments.append(.text(plain)); plain = [] }
-                    oursLabel = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
-                    ours = []; base = nil; theirs = []
-                    state = .ours
-                } else {
-                    plain.append(line)
-                }
-            case .ours:
-                if line.hasPrefix("|||||||") { base = []; state = .base }
-                else if line == "=======" { state = .theirs }
-                else { ours.append(line) }
-            case .base:
-                if line == "=======" { state = .theirs } else { base?.append(line) }
-            case .theirs:
-                if line.hasPrefix(">>>>>>>") {
-                    let b = Block(id: doc.blocks.count, oursLabel: oursLabel,
-                                  theirsLabel: String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces),
-                                  ours: ours, base: base, theirs: theirs)
-                    doc.blocks.append(b)
-                    doc.segments.append(.conflict(b.id))
-                    state = .normal
-                } else {
-                    theirs.append(line)
-                }
-            }
+        doc.sourceText = text
+        doc.newline = RustCore.string(v["newline"])
+        doc.trailingNewline = RustCore.flag(v["trailingNewline"])
+        doc.blocks = RustCore.objects(v["blocks"]).map { b in
+            Block(id: RustCore.integer(b["id"]), oursLabel: RustCore.string(b["oursLabel"]), theirsLabel: RustCore.string(b["theirsLabel"]),
+                  ours: RustCore.strings(b["ours"]), base: b["base"] as? [String], theirs: RustCore.strings(b["theirs"]))
         }
-        // 닫히지 않은 표시는 글로 돌려놓는다
-        if state != .normal {
-            plain += ["<<<<<<< " + oursLabel] + ours + (base.map { ["|||||||"] + $0 } ?? []) + ["======="] + theirs
+        doc.segments = RustCore.objects(v["segments"]).map { s in
+            RustCore.string(s["kind"]) == "text" ? .text(RustCore.strings(s["lines"])) : .conflict(RustCore.integer(s["block"]))
         }
-        if !plain.isEmpty { doc.segments.append(.text(plain)) }
         return doc
     }
 
@@ -96,12 +68,42 @@ struct ConflictDocument {
 
     /// 고른 대로 합친 파일 내용(모든 블록을 골랐을 때만)
     func resolved(_ choices: [Int: Choice]) -> String? {
-        guard blocks.allSatisfy({ choices[$0.id] != nil }) else { return nil }
+        let blocks: [[String: Any]] = self.blocks.map { ["id": $0.id, "oursLabel": $0.oursLabel, "theirsLabel": $0.theirsLabel,
+            "ours": $0.ours, "base": $0.base.map { $0 as Any } ?? NSNull(), "theirs": $0.theirs] }
+        let segments: [[String: Any]] = self.segments.map {
+            switch $0 { case .text(let lines): return ["kind": "text", "lines": lines]; case .conflict(let block): return ["kind": "conflict", "block": block] }
+        }
+        let mapped = Dictionary(uniqueKeysWithValues: choices.map { id, choice -> (String, [String: String]) in
+            let v: [String: String]
+            switch choice {
+            case .ours: v = ["kind": "ours"]
+            case .theirs: v = ["kind": "theirs"]
+            case .oursThenTheirs: v = ["kind": "oursThenTheirs"]
+            case .theirsThenOurs: v = ["kind": "theirsThenOurs"]
+            case .custom(let text): v = ["kind": "custom", "text": text]
+            }
+            return (String(id), v)
+        })
+        return RustCore.call("resolveConflict", ["doc": ["sourceText": sourceText, "blocks": blocks, "segments": segments, "newline": newline, "trailingNewline": trailingNewline], "choices": mapped]) as? String
+    }
+
+    /// 미선택 블록은 표식을 남겨 전체 결과 편집에서도 누락을 확인할 수 있다.
+    func projection(_ side: String, choices: [Int: Choice] = [:]) -> String {
+        if side == "base", let baseText { return baseText }
         var out: [String] = []
-        for s in segments {
-            switch s {
-            case .text(let l): out += l
-            case .conflict(let i): out += Self.lines(blocks[i], choices[i]!)
+        for segment in segments {
+            switch segment {
+            case .text(let lines): out += lines
+            case .conflict(let id):
+                let block = blocks[id]
+                switch side {
+                case "ours": out += block.ours
+                case "theirs": out += block.theirs
+                case "base": out += block.base ?? [String(localized: "Common ancestor is unavailable for this block.")]
+                default:
+                    if let choice = choices[id] { out += Self.lines(block, choice) }
+                    else { out += ["<<<<<<< " + block.oursLabel] + block.ours + ["======="] + block.theirs + [">>>>>>> " + block.theirsLabel] }
+                }
             }
         }
         return out.joined(separator: newline) + (trailingNewline ? newline : "")

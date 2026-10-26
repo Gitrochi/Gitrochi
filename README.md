@@ -48,7 +48,16 @@ Gitrochi is a native Git client for macOS and Windows. It draws your history as 
 - **Terminal** — shells in the repository folder below the graph, in tabs and split panes; the graph refreshes as you run git commands
 - **gitch** — the bundled CLI keeps several Git accounts apart per repository and blocks the wrong author, secrets and force pushes in hooks
 
+- **Repository workspace** — changes, commits, branches, comparison, rebase and Code in one place; pin frequently used sections and keep icon navigation when the sidebar is collapsed
+- **Review and advanced Git tools** — review the account, destination and outgoing changes before pushing; draft line comments and batch reviews; compare revisions, select several commits, edit three-way conflicts, browse recovery history, LFS, submodules and bisect
+- **Connected work** — PR/MR management, issues, releases and project boards; quick account controls; AI questions about selected changes, repository reading tools and a local read-only MCP server
+- **Shared Rust core** — parsing, diff, patches, conflicts and graph calculations shared by both apps, with cancellable background calculations; commit searches ignore spacing
+
 The full list, with usage and shortcuts: [docs/features.md](docs/features.md).
+
+## Implementation and verification
+
+[Review workflows](docs/review-workflows-validation.md), [extended workflows](docs/complete-workflows-validation.md), [workspace navigation](docs/navigation-workspace-validation.md) (Korean), and the [shared core](crates/README.md) document the implementation and checks. Local fixtures and simulated services cover these flows; Windows installation on a real device, live LFS locks and real-server writes still need environment-specific verification. Repository AI and MCP require Node.js 22+; LFS operations require Git LFS.
 
 ## Install
 

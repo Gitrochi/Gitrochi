@@ -9,7 +9,8 @@ set -euo pipefail
 BIN="Gitrochi"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$ROOT/.." && pwd)"
-BUILD="$ROOT/build"
+BUILD="${GITROCHI_BUILD_DIR:-$ROOT/build}"
+OBJECTS="${GITROCHI_OBJECT_DIR:-$ROOT/.build/swiftc}"
 BUNDLE="$BUILD/$BIN.app"
 CONTENTS="$BUNDLE/Contents"
 MODE="${1:-}"
@@ -41,7 +42,7 @@ build_arch() {
     local arch="$1"
     local target="$arch-apple-macos15.0"
     local st="$ROOT/.build/swiftterm/$arch"
-    local obj="$ROOT/.build/swiftc/$arch"
+    local obj="$OBJECTS/$arch"
     # 터미널 에뮬레이터 SwiftTerm(MIT, Vendor/SwiftTerm)은 정적 라이브러리로 따로 빌드해 두고, 소스가 바뀔 때만 다시 만든다.
     if [[ ! -f "$st/libSwiftTerm.a" || -n "$(find "$ST_SRC" -name '*.swift' -newer "$st/libSwiftTerm.a" -print -quit)" ]]; then
         echo "▶ SwiftTerm ($arch, 처음 한 번 1분쯤)…"
@@ -50,23 +51,40 @@ build_arch() {
             -module-name SwiftTerm -emit-module -emit-module-path "$st/SwiftTerm.swiftmodule" \
             -emit-library -static -o "$st/libSwiftTerm.a"
     fi
+    local core
+    core="$(bash "$REPO/tools/build-core-native.sh" "$arch")"
     echo "▶ swiftc ($arch)…"
     mkdir -p "$obj"
+    # 다른 검사에서 공통 코어를 다시 빌드해도 현재 링크 입력은 바뀌지 않게 고정한다.
+    local core_link
+    core_link="$(mktemp -d "$obj/core-link.XXXXXX")"
+    cp "$core" "$core_link/libgitrochi_core.a"
+    # 편집 중인 소스가 컴파일 도중 바뀌어도 이 빌드는 시작 시점의 사본으로 끝낸다.
+    cp -R "$ROOT/Sources" "$core_link/Sources"
     local sources=()
-    while IFS= read -r -d '' f; do sources+=("$f"); done < <(find "$ROOT/Sources" -name '*.swift' -print0 | sort -z)
-    swiftc "${SWIFT_FLAGS[@]}" -target "$target" -I "$st" -L "$st" -lSwiftTerm \
-        -module-name "$BIN" "${sources[@]}" -o "$obj/$BIN"
+    while IFS= read -r -d '' f; do sources+=("$f"); done < <(find "$core_link/Sources" -name '*.swift' -print0 | sort -z)
+    if ! swiftc "${SWIFT_FLAGS[@]}" -target "$target" -I "$st" -I "$REPO/crates/gitrochi-core/include" -L "$st" -lSwiftTerm \
+        -module-name "$BIN" "${sources[@]}" "$core_link/libgitrochi_core.a" -o "$obj/$BIN"; then
+        rm -rf "$core_link"
+        return 1
+    fi
+    rm -rf "$core_link"
 }
 
 BINS=()
+CORE_BINS=()
 for arch in "${ARCHS[@]}"; do
     build_arch "$arch"
-    BINS+=("$ROOT/.build/swiftc/$arch/$BIN")
+    BINS+=("$OBJECTS/$arch/$BIN")
+    case "$arch" in arm64) core_target=aarch64-apple-darwin ;; *) core_target=x86_64-apple-darwin ;; esac
+    CORE_BINS+=("$REPO/crates/target/$core_target/release/gitch-core")
 done
 
 rm -rf "$BUILD"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 lipo -create "${BINS[@]}" -output "$CONTENTS/MacOS/$BIN"
+lipo -create "${CORE_BINS[@]}" -output "$CONTENTS/MacOS/gitch-core"
+ln -s ../MacOS/gitch-core "$CONTENTS/Resources/gitch-core"
 cp "$ROOT/Resources/Info.plist" "$CONTENTS/Info.plist"
 cp "$ROOT/Resources/AppIcon.icns" "$CONTENTS/Resources/AppIcon.icns"
 # 화면 번역(한국어 글자가 키, <언어>.lproj/Localizable.strings)
@@ -78,6 +96,7 @@ chmod 755 "$CONTENTS/Resources/gitch"
 cp "$REPO/tools/gitch/gitch-scip-index" "$CONTENTS/Resources/gitch-scip-index"
 chmod 755 "$CONTENTS/Resources/gitch-scip-index"
 cp "$REPO/tools/gitch/gitch-graph-watch" "$CONTENTS/Resources/gitch-graph-watch"
+cp "$REPO/tools/gitrochi-mcp/server.mjs" "$CONTENTS/Resources/gitrochi-mcp.mjs"
 chmod 755 "$CONTENTS/Resources/gitch-graph-watch"
 # gitch graph files 가 Swift 파일 사이 참조를 Xcode 인덱스에서 읽는 도우미 — gitch 가 자기 옆에서 찾으므로 Resources 에는 링크를 둔다.
 # 실행 파일은 Apple 의 번들 배치대로 Contents/MacOS 에: Resources 의 Mach-O 는 데이터로 봉인돼 앱과 함께 중첩 코드로 검사받지 않는다
@@ -105,6 +124,7 @@ sign() {
 }
 echo "▶ 서명: ${IDENTITY:-ad-hoc}"
 # 안에 든 실행 파일을 먼저(번들 서명은 그 서명까지 묶는다)
+sign "$CONTENTS/MacOS/gitch-core"
 sign "$CONTENTS/MacOS/gitch-swift-index"
 sign "$BUNDLE"
 echo "✅ 빌드 완료: $BUNDLE ($(lipo -archs "$CONTENTS/MacOS/$BIN"))"

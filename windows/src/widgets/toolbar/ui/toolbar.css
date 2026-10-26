@@ -1,11 +1,13 @@
 /* widgets/toolbar — 저장소 도구 막대 */
 
 .toolbar {
-  height: 48px;
+  min-height: 48px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
-  padding: 0 10px;
+  padding: 6px 10px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex: none;
@@ -15,6 +17,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1 1 100px;
   margin-left: 4px;
   line-height: 1.2;
 }

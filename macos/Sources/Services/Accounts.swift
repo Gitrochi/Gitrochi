@@ -5,62 +5,77 @@ import Observation
 /// 토큰·API 키를 macOS 키체인(일반 암호)에 보관한다.
 enum Keychain {
     private static let service = "com.ensnif.Gitrochi"
+    private static let queue = DispatchQueue(label: "com.ensnif.Gitrochi.keychain", qos: .userInitiated)
 
-    static func get(_ account: String) -> String? {
-        if let value = read(service, account) { return value }
-        // Saved before the rename: move it to the new service on first use
-        guard let value = read(LegacyData.keychainService, account) else { return nil }
-        set(value, for: account)
-        return value
+    /// 모든 Keychain 호출은 같은 큐에서 실행해 UI 허용 정책과 사용자 승인이 경합하지 않게 한다.
+    static func read(_ account: String, allowInteraction: Bool = false) async -> CredentialReadResult {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                let result = withInteraction(allowInteraction) {
+                    let current = copy(service, account)
+                    guard current.status == errSecItemNotFound else { return current }
+                    // 이전 서비스는 읽기만 한다. 자동 조회에서 이동·수정으로 승인창을 띄우지 않는다.
+                    return copy(LegacyData.keychainService, account)
+                }
+                continuation.resume(returning: result)
+            }
+        }
     }
+
+    static func get(_ account: String) async -> String? { await read(account).value }
 
     @discardableResult
-    static func set(_ value: String?, for account: String) -> Bool {
-        guard let value, !value.isEmpty else {
-            let current = delete(service, account)
-            let legacy = delete(LegacyData.keychainService, account)
-            return current && legacy
+    static func set(_ value: String?, for account: String) async -> Bool {
+        await write(value, for: account) == errSecSuccess
+    }
+
+    /// 자격 증명 내용은 넘기지 않고 저장 실패 코드만 호출자에게 보존한다.
+    static func write(_ value: String?, for account: String) async -> OSStatus {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                let result = withInteraction(true) {
+                    guard let value, !value.isEmpty else {
+                        let current = delete(service, account), legacy = delete(LegacyData.keychainService, account)
+                        return CredentialReadResult(value: nil, status: current == errSecSuccess ? legacy : current)
+                    }
+                    let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
+                    let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: Data(value.utf8)] as CFDictionary)
+                    if update == errSecSuccess { _ = delete(LegacyData.keychainService, account); return CredentialReadResult(value: nil, status: errSecSuccess) }
+                    guard update == errSecItemNotFound else { return CredentialReadResult(value: nil, status: update) }
+                    var add = query; add[kSecValueData as String] = Data(value.utf8)
+                    let status = SecItemAdd(add as CFDictionary, nil)
+                    if status == errSecSuccess { _ = delete(LegacyData.keychainService, account) }
+                    return CredentialReadResult(value: nil, status: status)
+                }
+                continuation.resume(returning: result.status)
+            }
         }
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: Data(value.utf8)] as CFDictionary)
-        if update == errSecSuccess { _ = delete(LegacyData.keychainService, account); return true }
-        guard update == errSecItemNotFound else { return false }
-        let add: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: Data(value.utf8),
-        ]
-        guard SecItemAdd(add as CFDictionary, nil) == errSecSuccess else { return false }
-        _ = delete(LegacyData.keychainService, account)
-        return true
     }
 
-    private static func read(_ service: String, _ account: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+    // file-based 키체인은 LAContext의 무음 옵션을 따르지 않아 공식 legacy 정책을 큐 안에서 한정한다.
+    private static func withInteraction(_ allowed: Bool, operation: () -> CredentialReadResult) -> CredentialReadResult {
+        KeychainInteractionPolicy.perform(allowInteraction: allowed, get: {
+            var previous = DarwinBoolean(false)
+            let status = SecKeychainGetUserInteractionAllowed(&previous)
+            return (status, previous.boolValue)
+        }, set: { SecKeychainSetUserInteractionAllowed($0) }, operation: operation)
+    }
+
+    private static func copy(_ service: String, _ account: String) -> CredentialReadResult {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                                  kSecAttrAccount as String: account, kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
         var out: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess, let data = out as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        let status = SecItemCopyMatching(query as CFDictionary, &out)
+        guard status == errSecSuccess, let data = out as? Data, let value = String(data: data, encoding: .utf8) else {
+            return CredentialReadResult(value: nil, status: status == errSecSuccess ? errSecDecode : status)
+        }
+        return CredentialReadResult(value: value, status: errSecSuccess)
     }
 
-    private static func delete(_ service: String, _ account: String) -> Bool {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
+    private static func delete(_ service: String, _ account: String) -> OSStatus {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
         let status = SecItemDelete(query as CFDictionary)
-        return status == errSecSuccess || status == errSecItemNotFound
+        return status == errSecItemNotFound ? errSecSuccess : status
     }
 }
 
@@ -82,8 +97,8 @@ final class AccountStore {
     private var preferred: [String: String]
     /// 같은 서버의 다른 주소: 저장소 원격 호스트 → 계정 ID (예: git.example.com → gitlab.example.com 계정, 같은 서버를 다른 도메인으로 쓸 때)
     private var aliases: [String: String]
-    /// 키체인은 처음 필요할 때 한 번만 읽는다
-    private var secrets: [String: String] = [:]
+    private let credentials = CredentialCache { await Keychain.read($0) }
+    private var connectionAttempts: [String: UUID] = [:]
 
     private init() {
         let d = UserDefaults.standard
@@ -97,11 +112,24 @@ final class AccountStore {
                 d.set(try? JSONEncoder().encode(saved), forKey: "accounts")
             }
         }
+        credentials.onChange = { [weak self] in self?.revision += 1 }
+        for account in accounts {
+            credentials.prepare("acct:" + account.id)
+            if account.id.hasPrefix("legacy-") { credentials.prepare(account.provider.rawValue) }
+        }
         Askpass.install()
     }
 
     func accounts(for provider: Provider) -> [HostAccount] {
         accounts.filter { $0.provider == provider }
+    }
+
+    /// gitch의 서버-로그인 SSH 별칭을 API 서버 주소와 연결한다. 겹치는 별칭은 추측하지 않는다.
+    var sshHostAliases: [String: String] {
+        let pairs = accounts.map { (alias: String($0.host.split(separator: ".").first ?? "") + "-" + $0.username.lowercased(), host: $0.host.lowercased()) }
+        return Dictionary(grouping: pairs, by: \.alias).compactMapValues { values in
+            let hosts = Set(values.map(\.host)); return hosts.count == 1 ? hosts.first : nil
+        }
     }
 
     /// 이 저장소에 쓸 계정: 저장소마다 고른 계정 → 없으면 그 서버의 첫 계정
@@ -169,10 +197,44 @@ final class AccountStore {
     }
 
     private func secret(_ name: String) -> String? {
-        if let v = secrets[name] { return v }
-        let v = Keychain.get(name)
-        if let v { secrets[name] = v }
-        return v
+        credentials.value(name)
+    }
+
+    func credentialState(for account: HostAccount) -> CredentialCache.State {
+        if token(for: account) != nil { return .ready }
+        let primary = credentials.state("acct:" + account.id)
+        if primary == .authorizationRequired { return primary }
+        if account.id.hasPrefix("legacy-") {
+            let legacy = credentials.state(account.provider.rawValue)
+            if legacy == .authorizationRequired || legacy == .loading { return legacy }
+        }
+        return primary
+    }
+
+    /// 사용자가 누른 경우에만 시스템 승인을 허용하고 기존 토큰의 계정을 다시 확인한다.
+    func allowStoredAccess(for account: HostAccount) async throws {
+        guard accounts.contains(account) else { return }
+        let name = "acct:" + account.id, attempt = credentials.begin("acct:" + account.id)
+        var result = await Keychain.read(name, allowInteraction: true)
+        if result.status == errSecItemNotFound, account.id.hasPrefix("legacy-") {
+            result = await Keychain.read(account.provider.rawValue, allowInteraction: true)
+        }
+        guard credentials.isCurrent(name, attempt: attempt), accounts.contains(account) else { return }
+        guard let value = result.value else {
+            credentials.complete(name, attempt: attempt, result: result)
+            throw AccountConnectionFailure.credentialAccess(status: result.status)
+        }
+        do {
+            let me = try await Hosting.me(account.provider, token: value, apiBase: account.apiBase)
+            guard credentials.isCurrent(name, attempt: attempt), accounts.contains(account) else { return }
+            guard me.username.caseInsensitiveCompare(account.username) == .orderedSame else { throw AccountConnectionFailure.identityMismatch }
+            credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: value, status: errSecSuccess))
+        } catch {
+            guard credentials.isCurrent(name, attempt: attempt), accounts.contains(account) else { return }
+            credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: nil, status: errSecAuthFailed))
+            if let known = error as? AccountConnectionFailure { throw known }
+            throw AccountConnectionFailure.verification(status: (error as? HostingError)?.status)
+        }
     }
 
     // MARK: 연결·해제
@@ -205,16 +267,23 @@ final class AccountStore {
 
     private func add(_ provider: Provider, server: String, token: String) async throws -> HostAccount {
         let t = token.trimmed
+        let connectionKey = provider.rawValue + "|" + server, attempt = UUID(), initialAccounts = accounts
+        connectionAttempts[connectionKey] = attempt
         let probe = HostAccount(id: "", provider: provider, server: server, username: "", name: nil, avatarURL: nil)
         let me = try await Hosting.me(provider, token: t, apiBase: probe.apiBase)
+        let original = initialAccounts.first { $0.provider == provider && $0.host == probe.host && $0.username == me.username }
+        let current = { self.connectionAttempts[connectionKey] == attempt && (original == nil || self.accounts.contains { $0.id == original?.id }) }
+        guard current() else { throw CancellationError() }
         // 같은 서버의 같은 사용자면 토큰만 바꾼다
         let existing = accounts.first { $0.provider == provider && $0.host == probe.host && $0.username == me.username }
         let acc = HostAccount(id: existing?.id ?? UUID().uuidString, provider: provider, server: server,
                               username: me.username, name: me.name, avatarURL: me.avatarURL)
-        guard Keychain.set(t, for: "acct:" + acc.id) else {
-            throw Gitch.Failure(message: String(localized: "Couldn't save the login in macOS Keychain. Allow Keychain access, then retry connecting."))
+        let status = await Keychain.write(t, for: "acct:" + acc.id)
+        guard current() else { throw CancellationError() }
+        guard status == errSecSuccess else {
+            throw AccountConnectionFailure.credentialSave(status: status)
         }
-        secrets["acct:" + acc.id] = t
+        credentials.store(t, for: "acct:" + acc.id)
         accounts.removeAll { $0.id == acc.id }
         accounts.append(acc)
         save()
@@ -224,24 +293,39 @@ final class AccountStore {
     /// gh CLI 에 로그인돼 있는 GitHub 계정을 가져온다
     @discardableResult
     func importGitHubCLI(expectedLogin: String? = nil) async throws -> HostAccount {
-        guard let gh = ghPath else { throw GitError(command: "gh", message: String(localized: "Couldn't find the gh CLI.")) }
+        guard let gh = ghPath else { throw AccountConnectionFailure.missingCLI }
         let args = ["auth", "token", "--hostname", "github.com"] + (expectedLogin.map { ["--user", $0] } ?? [])
         var env = ProcessInfo.processInfo.environment
         if expectedLogin != nil {
             for key in ["GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"] { env.removeValue(forKey: key) }
         }
-        let r = try await Shell.run(gh, args, cwd: FileManager.default.temporaryDirectory, env: env, timeout: 30)
+        let r: GitResult
+        do {
+            r = try await Shell.run(gh, args, cwd: FileManager.default.temporaryDirectory, env: env, timeout: 30)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw AccountConnectionFailure.credentialRead
+        }
         let t = r.output.trimmed
         guard r.status == 0, !t.isEmpty else {
-            throw GitError(command: "gh", message: String(localized: "Couldn't import the GitHub login. Sign in again and retry."))
+            throw AccountConnectionFailure.credentialRead
         }
-        if let expectedLogin {
-            let me = try await Hosting.me(.github, token: t, apiBase: "https://api.github.com")
-            guard me.username.caseInsensitiveCompare(expectedLogin) == .orderedSame else {
-                throw Gitch.Failure(message: String(localized: "The signed-in GitHub account doesn't match this account. Sign in with the intended account."))
+        do {
+            if let expectedLogin {
+                let me = try await Hosting.me(.github, token: t, apiBase: "https://api.github.com")
+                guard me.username.caseInsensitiveCompare(expectedLogin) == .orderedSame else {
+                    throw AccountConnectionFailure.identityMismatch
+                }
             }
+            return try await connectGitHub(token: t)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let failure as AccountConnectionFailure {
+            throw failure
+        } catch {
+            throw AccountConnectionFailure.verification(status: (error as? HostingError)?.status)
         }
-        return try await connectGitHub(token: t)
     }
 
     /// Uploads only a public key after the user chooses the registration action.
@@ -255,11 +339,11 @@ final class AccountStore {
     }
 
     func disconnect(_ a: HostAccount) {
-        Keychain.set(nil, for: "acct:" + a.id)
-        secrets["acct:" + a.id] = nil
+        credentials.store(nil, for: "acct:" + a.id)
+        Task { await Keychain.set(nil, for: "acct:" + a.id) }
         if a.id.hasPrefix("legacy-") {
-            Keychain.set(nil, for: a.provider.rawValue)
-            secrets[a.provider.rawValue] = nil
+            credentials.store(nil, for: a.provider.rawValue)
+            Task { await Keychain.set(nil, for: a.provider.rawValue) }
         }
         accounts.removeAll { $0.id == a.id }
         preferred = preferred.filter { $0.value != a.id }

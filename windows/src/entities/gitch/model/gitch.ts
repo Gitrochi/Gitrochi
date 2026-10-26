@@ -2,7 +2,8 @@ import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { git, tools } from "@/shared/platform";
-import { accountAddArguments, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
+import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
+import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
 
 /**
  * gitch — 여러 Git 계정을 섞이지 않게 쓰는 셸 도구(tools/gitch, 예전 이름 gitsw). (맥 버전 Gitch.swift)
@@ -454,6 +455,29 @@ class GitchService {
     return { file, ...parseGraphSummary(plain(r.stdout)), ...(liveUrl ? { liveUrl } : {}) };
   }
 
+  /** 이번 커밋의 영향은 스테이지 내용과 HEAD만 비교한다. 작업 트리나 브랜치 분기점은 쓰지 않는다. */
+  async commitReview(repo: string): Promise<GraphReview> {
+    const r = await this.runGraph(["review", "--json"], repo);
+    const result = parseGraphReview(r.stdout);
+    if (!result) throw new GitchError(t("The staged analysis returned an unreadable result. Update Gitrochi and try again."));
+    return result;
+  }
+
+  /** 소스 분석을 반복하지 않고 스테이지와 HEAD의 변경 여부만 확인한다. */
+  async commitReviewStamp(repo: string): Promise<string> {
+    const r = await this.runGraph(["review", "--stamp", "--json"], repo);
+    const result = parseGraphReviewStamp(r.stdout);
+    if (!result) throw new GitchError(t("Couldn't verify that the staged analysis is current. Analyze again."));
+    return result.stamp;
+  }
+
+  /** 요약과 같은 스테이지 범위의 HTML을 만든다. 작업 트리 감시 서버는 켜지 않는다. */
+  async commitReviewGraph(repo: string): Promise<GraphPage> {
+    const file = await graphFile("staged-review", repo);
+    const r = await this.runGraph(["review", "--format", "html", "--out", file, "--no-open"], repo);
+    return { file, ...parseGraphSummary(plain(r.stdout)) };
+  }
+
   private async graphWatchURL(relation: string, file: string, repo: string): Promise<string | null> {
     try {
       const r = await this.runGraph(["watch", relation, "--out", file, "--no-open", "--detach", "--json"], repo);
@@ -529,7 +553,7 @@ class GitchService {
     if (!result) throw new GitchError(machineError(r.stderr.trim()) || t("Couldn't read the browser login result."));
     return result;
   }
-  startBrowserLogin() { return this.browserLogin(["--start", "--yes"]); }
+  startBrowserLogin(capability: GitHubLoginCapability = "standard", expectedLogin?: string) { return this.browserLogin(browserLoginArguments(capability, expectedLogin)); }
   browserLoginStatus(session: string) { return this.browserLogin(["--status", session]); }
   cancelBrowserLogin(session: string) { return this.browserLogin(["--cancel", session]); }
 

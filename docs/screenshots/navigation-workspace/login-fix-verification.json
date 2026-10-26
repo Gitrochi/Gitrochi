@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-26",
+  "cause": "GitHub CLI clipboard-enabled device-code output was not recognized",
+  "gitchFullSuitePassed": 225,
+  "loginAndContractPassed": 22,
+  "windowsUnitPassed": 365,
+  "nativeProgressTests": "passed",
+  "nativeIdentityTests": "passed",
+  "nativeBuild": "passed in isolated output; active login window preserved",
+  "reactLoginLifecycleTests": "passed with mocks and virtual clocks",
+  "liveMacCodeDisplayConfirmed": true,
+  "realLoginApprovalPerformedByAgent": false,
+  "clipboardSettingChanged": false,
+  "accountOrSSHConfigurationChanged": false
+}

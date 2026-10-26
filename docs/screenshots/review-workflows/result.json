@@ -1,0 +1,11 @@
+{
+  "result": [
+    true,
+    "AI: preview before request, input/Send, frozen snapshot and answer rendered; PR: actual editors, remove button and batch submit preserve line/side/body; Push: Cancel sends nothing; Confirm sends once to frozen remote/refspec"
+  ],
+  "captures": [
+    "ai",
+    "pr",
+    "push"
+  ]
+}

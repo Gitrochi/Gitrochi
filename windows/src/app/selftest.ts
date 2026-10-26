@@ -13,12 +13,28 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
-import { GitchAccountSetup, GitchBrowserLogin } from "@/widgets/settings";
+import { GitchAccountSetup } from "@/widgets/settings";
+import { GitchBrowserLogin } from "@/features/account-connection";
 import { applyAppLaunch } from "./lib/app-launch";
+import { reviewWorkflowsSelfTest } from "./lib/review-workflows-selftest";
+import { historyToolsSelfTest } from "./lib/history-tools-selftest";
+import { collaborationSelfTest } from "./lib/collaboration-selftest";
+import { localWorkflowsSelfTest } from "./lib/local-workflows-selftest";
+import { repositoryAssistantSelfTest } from "./lib/repository-assistant-selftest";
+import { navigationSelfTest } from "./lib/navigation-selftest";
+import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
+import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
+import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
+import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
+import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
+import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
+import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
+import { accountQuickControlsSelfTest } from "./lib/account-quick-controls-selftest";
+import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -169,6 +185,7 @@ export async function runSelfTest(): Promise<boolean> {
   const s = workspace.newTab();
   await step("저장소 열기", async () => {
     await s.openInPlace(repo);
+    s.navigate("commits");
     return [!!s.path && s.entries.length > 0, `path=${s.path} commits=${s.entries.length} error=${s.errorMessage}`];
   });
   await step("화면에 커밋 행 표시", async () => [await until(() => document.querySelectorAll(".commit-row").length > 0, 5000), document.querySelectorAll(".commit-row").length]);
@@ -185,21 +202,40 @@ export async function runSelfTest(): Promise<boolean> {
     const fields = document.querySelectorAll('[aria-label="Git 계정 설정"] input');
     return [ready && fields.length >= 4 && !!question?.title.includes("22") && !!find("브라우저로 GitHub 로그인"), `fields=${fields.length} tooltip=${question?.title}`];
   });
-  await step("앱의 gitch 명령 안내와 읽기 전용 진단", async () => {
-    const find = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".modal button")).find((b) => b.textContent?.trim() === label);
-    find("시작 안내 · 명령 설명")?.click();
-    const guide = await until(() => !!find("전체 명령과 옵션 보기"), 5000);
-    find("전체 명령과 옵션 보기")?.click();
-    const help = await until(() => Array.from(document.querySelectorAll(".modal pre")).some((p) => p.textContent?.includes("gitch preflight")), 10000);
-    find("설정 확인")?.click();
-    const doctor = await until(() => document.querySelector(".modal")?.textContent?.includes("설정 확인 결과") ?? false, 15000);
-    document.querySelector<HTMLButtonElement>(".modal-footer button")?.click();
+  await step("왼쪽 도구의 gitch 명령 안내와 읽기 전용 진단", async () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await sleep(150);
+    s.navigate("operations");
+    const find = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".workspace-pane button")).find((b) => b.textContent?.trim() === t(label));
+    const guide = await until(() => !!find("All commands and options"), 5000);
+    find("All commands and options")?.click();
+    const help = await until(() => Array.from(document.querySelectorAll(".workspace-pane pre")).some((p) => p.textContent?.includes("gitch preflight")), 10000);
+    find("Check setup")?.click();
+    const doctor = await until(() => !!document.querySelector(".workspace-pane .workspace-card strong"), 15000);
+    s.navigate("commits");
     return [guide && help && doctor, `guide=${guide} help=${help} diagnosis=${doctor}`];
   });
   await step("브라우저 로그인 시작 응답 전 화면 이탈 → 늦은 세션 취소", () => browserLoginLifecycle("start"));
   await step("브라우저 로그인 취소 → 늦은 완료 응답 연결 차단", () => browserLoginLifecycle("status"));
   await step("브라우저 열기 중 화면 이탈 → 후속 poll과 연결 중단", () => browserLoginLifecycle("browser"));
   await step("GitHub 로그인 대소문자 차이 → 같은 서버의 기존 계정 설정 재개", browserLoginResumesExistingIdentity);
+  await step("로그인 코드 준비·클립보드 코드 표시·조회 오류 중단과 재시작", browserLoginGuidanceSelfTest);
+  await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
+  await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
+  await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
+  await step("PR 대화·파일 검토 전환에서 미전송 초안 유지", prConversationSelfTest);
+  await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);
+  await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
+  await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
+  await step("저장소 AI·MCP·통합 작업함의 실제 React 화면", repositoryAssistantSelfTest);
+
+  await step("왼쪽 전체 메뉴·검색·빈 저장소·GitLab 이름", navigationSelfTest);
+  await step("접힌 메뉴와 좁은 창에서도 아이콘·고정 도구·설정·검색 유지", compactNavigationSelfTest);
+  await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
+  await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
+  await step("브랜치·비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
+  await step("릴리스·프로젝트·조직·gist 작업 화면", hostingHubSelfTest);
+  await step("홈·저장소·이슈·CI·도구 작업 화면", workspacePanelsSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");
   await step("파일 감시 → 새 파일 표시", async () => {
@@ -531,9 +567,9 @@ export async function runSelfTest(): Promise<boolean> {
     const badge = await until(() => !!document.querySelector(".commit-row .ci-badge"), 3000);
     s.ci.reset();
     // 화면: CI/CD 탭이 그려지는지(이 저장소는 원격이 없어 안내 문구)
-    settings.set("sidebarMode", "ci");
-    const panel = await until(() => document.body.innerText.includes("원격이 있는 저장소에서 파이프라인"), 3000);
-    settings.set("sidebarMode", "list");
+    s.navigate("actions");
+    const panel = await until(() => document.body.innerText.includes(t("Open a repository with a GitHub or GitLab remote to use this workspace.")), 3000);
+    s.navigate("commits");
     const ok =
       pipes.length === 1 &&
       pipes[0].status === "success" &&
@@ -714,9 +750,11 @@ export async function runSelfTest(): Promise<boolean> {
     await s.setCurrentOnly(true);
     const current = !has() && s.entries.length > 0;
     await s.setCurrentOnly(false);
+    s.navigate("branches");
     s.setPinned(b, true);
-    const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.textContent?.startsWith("고정")), 3000);
+    const pinned = await until(() => [...document.querySelectorAll(".workbench-ref")].some((x) => x.textContent?.includes(b.name) && !!x.querySelector("[data-pinned=\"true\"]")), 3000);
     s.setPinned(b, false);
+    s.navigate("commits");
     // the eye button on the sidebar row hides the branch and shows it again
     const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
     eye()?.click();
@@ -908,7 +946,7 @@ export async function runSelfTest(): Promise<boolean> {
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다
-  s.select({ kind: "wip" });
+  s.navigate("commits");
   s.select({ kind: "commit", sha: s.headHash! });
   const result = { ok: checks.every((c) => c.ok), os: env.os, windows: isWindows(), checks };
   await ipc.writeText(out, JSON.stringify(result, null, 2));

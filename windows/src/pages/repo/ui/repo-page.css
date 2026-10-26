@@ -5,12 +5,14 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
+  min-width: 0;
 }
 
 .main {
   flex: 1;
   min-height: 0;
   display: flex;
+  min-width: 0;
 }
 
 /* 창이 좁으면 양옆 패널도 함께 줄어든다(가운데는 최소 너비를 지키고, 정보 패널이 창 밖으로 밀리지 않게) */
@@ -22,10 +24,11 @@
   min-width: 180px;
   flex: 0 1 auto;
 }
+.sidebar.compact { width:56px; min-width:56px; max-width:56px; flex:0 0 56px; }
 
 .center {
   flex: 1;
-  min-width: 480px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -36,7 +39,7 @@
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  min-width: 280px;
+  min-width: 240px;
   flex: 0 1 auto;
 }
 
@@ -46,4 +49,56 @@
   cursor: col-resize;
   z-index: 5;
   flex: none;
+}
+
+.workspace-main { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; container-type:inline-size; container-name:workspace-area; }
+.workspace-location { display:flex; align-items:center; gap:7px; min-height:44px; padding:0 18px; border-bottom:1px solid var(--border); background:var(--surface); flex:none; }
+.workspace-location>strong { font-size:12px; font-weight:600; margin-left:7px; flex:none; }
+.workspace-repository-context { max-width:60%; font-size:11px; }
+.workspace-location>button { display:flex; padding:5px; border:0; border-radius:5px; background:transparent; color:var(--text-2); cursor:pointer; }
+.workspace-location>button:hover:not(:disabled) { background:var(--hover); }
+.workspace-location>button:disabled { opacity:.3; cursor:default; }
+.workspace-pane { flex:1; min-height:0; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.workspace-pane>section,.workspace-pane>.col { min-height:0; }
+.workspace-git-layout { display:flex; flex:1; min-height:0; min-width:0; overflow:hidden; }
+.workspace-git-layout>.center { min-width:0; overflow:hidden; }
+.workspace-changes-list { display:flex; flex-direction:column; flex:0 1 330px; min-width:250px; max-width:420px; border-right:1px solid var(--border); background:var(--bg); }
+.workspace-pr-page { display:flex; height:100%; min-height:0; min-width:0; }
+.workspace-pr-list { flex:0 1 300px; min-width:240px; overflow:auto; background:var(--sidebar); border-right:1px solid var(--border); }
+.workspace-pr-detail { flex:1; min-width:0; min-height:0; }
+.workspace-worktrees { flex:1; min-height:0; overflow:auto; padding:24px; }
+.workspace-worktrees h1 { font-size:22px; margin:0; }
+.workspace-git-notice { display:flex; gap:12px; align-items:center; justify-content:space-between; padding:10px 18px; border-bottom:1px solid var(--border); color:var(--orange); font-size:12px; }
+.repository-workspace-tabs { display:flex; flex:none; gap:10px; align-items:center; min-width:0; padding:9px 14px; border-bottom:1px solid var(--border); background:var(--surface); }
+.repository-tab-list { display:flex; flex:1; min-width:0; gap:4px; overflow-x:auto; scrollbar-width:thin; }
+.repository-tab { display:flex; flex:none; align-items:center; justify-content:center; gap:6px; height:34px; padding:0 12px; border:0; border-radius:7px; background:transparent; color:var(--text-2); font-size:12px; font-weight:500; white-space:nowrap; cursor:pointer; }
+.repository-tab:hover { background:var(--hover); color:var(--text); }
+.repository-tab.selected { background:var(--accent-soft); color:var(--accent); font-weight:650; }
+.repository-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.repository-tab-count { min-width:17px; padding:1px 5px; border-radius:9px; background:color-mix(in srgb,var(--accent) 10%,transparent); color:var(--accent); font-size:10px; font-variant-numeric:tabular-nums; }
+.repository-tab-pin { flex:none; width:30px; height:30px; padding:0!important; justify-content:center; }
+.repository-tab-pin.pinned { color:var(--accent); background:var(--accent-soft); border-color:transparent; }
+@media (max-width:1150px) { .workspace-git-layout>.inspector { min-width:240px; max-width:290px; }.workspace-changes-list{flex-basis:280px;}.workspace-pr-list{flex-basis:250px;} }
+/* 작은 작업 영역에서는 목록과 본문을 세로로 나눠 두 내용을 모두 사용할 수 있게 한다. */
+@container workspace-area (max-width:570px) {
+  .workspace-git-layout { flex-direction:column; }
+  .workspace-git-layout>.splitter { display:none; }
+  .workspace-git-layout>.workspace-changes-list { flex:0 0 42%; min-width:0; max-width:none; max-height:42%; border-right:0; border-bottom:1px solid var(--border); }
+  .workspace-changes-list { overflow:auto; }
+  .workspace-changes-list>.col { height:auto!important; flex:none; min-height:100%; }
+  .workspace-changes-list .panel-scroll { flex:none; overflow:visible; }
+  .workspace-git-layout>.inspector { flex:0 0 44%; min-width:0; max-width:none; width:100%!important; max-height:44%; border-left:0; border-top:1px solid var(--border); }
+}
+@media (max-width:850px) {
+  .workspace-git-layout { flex-direction:column; }
+  .workspace-git-layout>.workspace-changes-list { flex:0 0 42%; min-width:0; max-width:none; border-right:0; border-bottom:1px solid var(--border); }
+  .workspace-changes-list { overflow:auto; }
+  .workspace-changes-list>.col { height:auto!important; flex:none; min-height:100%; }
+  .workspace-changes-list .panel-scroll { flex:none; overflow:visible; }
+  .workspace-git-layout>.inspector { flex:0 0 44%; min-width:0; max-width:none; width:100%!important; border-left:0; border-top:1px solid var(--border); }
+  .workspace-git-layout>.splitter { display:none; }
+  .workspace-location { padding:0 12px; }
+  .workspace-git-notice { flex-wrap:wrap; }
+  .workspace-pr-page { flex-direction:column; }
+  .workspace-pr-list { flex:0 0 32%; min-width:0; border-right:0; border-bottom:1px solid var(--border); }
 }

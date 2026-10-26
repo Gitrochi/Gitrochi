@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { gitch, type GitchAccount, type GitchAccountSetup } from "@/entities/gitch";
 import { accounts as hostingAccounts } from "@/entities/hosting";
-import { GitchBrowserLogin } from "./GitchBrowserLogin";
+import { GitchBrowserLogin } from "@/features/account-connection";
 import { ipc } from "@/shared/api";
 import { env, joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";

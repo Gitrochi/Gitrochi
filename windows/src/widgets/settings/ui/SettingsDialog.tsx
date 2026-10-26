@@ -21,7 +21,7 @@ export function SettingsDialog({ onClose, initialTab = "accounts" }: { onClose: 
           { value: "accounts", label: t("Accounts") },
           { value: "ai", label: "AI" },
           { value: "rules", label: t("Rules") },
-          { value: "tools", label: t("Tools") },
+          { value: "tools", label: t("Tool locations") },
           { value: "cli", label: "CLI" },
           { value: "appearance", label: t("Appearance") },
           { value: "about", label: t("Update") },

@@ -15,7 +15,8 @@ Closes #
 ## Checklist
 
 - [ ] macOS: `macos/build.sh` builds with no errors or warnings
-- [ ] Windows: `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` pass
+- [ ] Windows: `npm run build` · `npm test` · `cargo check --manifest-path src-tauri/Cargo.toml` pass (run from `windows/`)
+- [ ] When shared Rust changed: formatting, `cargo test --locked --manifest-path crates/Cargo.toml` and Clippy pass
 - [ ] Both platforms (if one only, why: )
 - [ ] New behaviour has a unit test or a `windows/src/app/selftest.ts` step
 - [ ] Checked in the light and the dark theme

@@ -4,6 +4,10 @@ import SwiftUI
 struct ConflictView: View {
     @Environment(RepoStore.self) private var store
     let change: FileChange
+    @ViewState private var threeWay = true
+    @ViewState private var showBase = false
+    @ViewState private var manualResult: String?
+    @ViewState private var scrollGroup = ConflictScrollGroup()
 
     var body: some View {
         Group {
@@ -39,20 +43,25 @@ struct ConflictView: View {
     private func resolver(_ doc: ConflictDocument) -> some View {
         let sides = store.conflictSides
         let done = doc.blocks.filter { store.conflictChoices[$0.id] != nil }.count
+        let result = manualResult ?? doc.projection("result", choices: store.conflictChoices)
+        let remaining = ConflictDocument.parse(result).blocks.count
+        let canSave = manualResult == nil ? done == doc.blocks.count : remaining == 0 && result.range(of: "(?m)^<{7,}([ \\t]|$)", options: .regularExpression) == nil
         return VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Text("\(doc.blocks.count) conflicts — \(done) chosen").font(.callout.weight(.semibold))
                 Spacer()
+                Button(threeWay ? String(localized: "Block view") : String(localized: "Three-way editor")) { threeWay.toggle() }
+                Button("Reload") { store.loadConflict(change); manualResult = nil }
                 Menu("Whole file") {
                     Button("All mine (\(sides.ours))") { Task { await store.resolveWholeFile(change, ours: true) } }
                     Button("All theirs (\(sides.theirs))") { Task { await store.resolveWholeFile(change, ours: false) } }
                 }
                 .fixedSize()
                 .help("Resolves the whole file to one side at once instead of choosing block by block")
-                Button("Save and mark as resolved") { Task { await store.saveConflictResolution(change) } }
+                Button("Save and mark as resolved") { Task { await store.saveConflictResolution(change, editedText: manualResult) } }
                     .buttonStyle(.borderedProminent)
-                    .disabled(done < doc.blocks.count || store.busy != nil)
+                    .disabled(!canSave || store.busy != nil)
                     .help(done < doc.blocks.count ? "Choose every conflict block before saving" : "Saves the file as chosen and stages it")
             }
             .controlSize(.small)
@@ -60,6 +69,25 @@ struct ConflictView: View {
             .padding(.vertical, 8)
             .background(Color.orange.opacity(0.08))
             Divider()
+            if threeWay {
+                HStack {
+                    Text("Non-conflicting lines are included automatically.").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button(showBase ? String(localized: "Hide common ancestor") : String(localized: "Show common ancestor")) { showBase.toggle() }
+                    if manualResult != nil { Button("Use block choices") { manualResult = nil } }
+                }.controlSize(.small).padding(8)
+                HStack(spacing: 1) {
+                    if showBase { pane(String(localized: "Common ancestor"), text: .constant(doc.projection("base")), editable: false) }
+                    pane(String(localized: "Mine · \(sides.ours)"), text: .constant(doc.projection("ours")), editable: false)
+                    pane(String(localized: "Final result"), text: Binding(get: { result }, set: { manualResult = $0 }), editable: true)
+                    pane(String(localized: "Theirs · \(sides.theirs)"), text: .constant(doc.projection("theirs")), editable: false)
+                }.frame(minHeight: 240, maxHeight: .infinity).background(Color(nsColor: .separatorColor))
+                HStack {
+                    Text("\(remaining) unresolved blocks in the result").font(.caption)
+                    if manualResult != nil { Text("Manual result editing is active. Use block choices to rebuild from the selections below.").font(.caption).foregroundStyle(.secondary) }
+                    Spacer()
+                }.padding(8)
+            }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(Array(doc.segments.enumerated()), id: \.offset) { _, seg in
@@ -71,8 +99,17 @@ struct ConflictView: View {
                 }
                 .padding(12)
             }
+            .frame(maxHeight: threeWay ? 230 : .infinity)
             .background(Color(nsColor: .textBackgroundColor))
         }
+        .onChange(of: doc.sourceText) { _, _ in manualResult = nil }
+    }
+
+    private func pane(_ title: String, text: Binding<String>, editable: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(7).frame(maxWidth: .infinity, alignment: .leading).background(Color.accentColor.opacity(0.06))
+            ConflictTextPane(text: text, editable: editable, group: scrollGroup).accessibilityLabel(title)
+        }.frame(maxWidth: .infinity).background(Color(nsColor: .textBackgroundColor))
     }
 }
 

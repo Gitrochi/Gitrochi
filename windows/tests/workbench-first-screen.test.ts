@@ -1,0 +1,11 @@
+import {describe,it,expect,vi} from "vitest";
+import {initialRepositoryFile,repositoryFolderCount,defaultRebaseBase,loadRebasePreview,type RepositoryTreeEntry} from "@/entities/git";
+const a="a".repeat(40),b="b".repeat(40);
+const entry=(path:string,kind:RepositoryTreeEntry["kind"]="file",size=40):RepositoryTreeEntry=>({path,kind,size,oid:a,mode:kind==="file"?"100644":kind==="symlink"?"120000":"160000"});
+describe("workbench first screen",()=>{
+ it("prefers a committed README and never auto-previews a link, submodule, secret file or oversized blob",()=>{const entries=[entry(".env"),entry("README.md","symlink"),entry("README.txt","file",2_000_001),entry("submodule","submodule"),entry("src/main.ts"),entry("package.json")];expect(initialRepositoryFile(entries)?.path).toBe("package.json");expect(initialRepositoryFile([...entries,entry("readme.MD")])?.path).toBe("readme.MD");expect(initialRepositoryFile([entry(".env"),entry("image.png")])).toBeNull();});
+ it("summarizes unique folder paths without counting files or repeating ancestors",()=>{expect(repositoryFolderCount([entry("README.md"),entry("src/ui/A.tsx"),entry("src/ui/B.tsx"),entry("test/a.ts")])).toBe(3);});
+ it("chooses the base from existing refs before using a feature branch upstream",()=>{expect(defaultRebaseBase(["topic","main","origin/main","origin/topic"],"topic","origin/topic")).toBe("origin/main");expect(defaultRebaseBase(["topic","release"],"topic",null)).toBe("release");});
+ it("reads replay counts and candidates from fixed object IDs without changing Git state",async()=>{const read=vi.fn(async(args:string[])=>args[0]==="rev-parse"?(args[2].startsWith("main")?b:a):args[0]==="rev-list"?"3\t2\n":`${a}\tCurrent commit\n${b}\tOlder commit\n`);const result=await loadRebasePreview("fixture","main","HEAD",read);expect(result).toMatchObject({base:b,head:a,incoming:3,replay:2});expect(result.commits.map(commit=>commit.subject)).toEqual(["Current commit","Older commit"]);expect(read.mock.calls.every(([args])=>["rev-parse","rev-list","log"].includes(args[0]))).toBe(true);expect(read.mock.calls.find(([args])=>args[0]==="log")![0]).toContain(`${b}..${a}`);});
+ it("rejects option-like revisions before making any read",async()=>{const read=vi.fn();await expect(loadRebasePreview("fixture","--all","HEAD",read)).rejects.toThrow("valid base");expect(read).not.toHaveBeenCalled();});
+});

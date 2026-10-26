@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "cases": 48,
+  "passed": 48,
+  "screenshotCount": 56,
+  "originalSummary": "visual-summary.json",
+  "extraSummary": "visual-extra-summary.json",
+  "screenshotsDirectory": "screenshots",
+  "additionalLayoutIssuesFoundAndFixed": [
+    "Narrow diff toolbar controls were clipped and the filename collapsed; parent fixed wrapping and minimum title width.",
+    "PR detail sections shrank and overlapped; parent disabled shrinking for inspector scroll contents."
+  ],
+  "allRequestsMocked": true,
+  "windowsDeviceTested": false
+}

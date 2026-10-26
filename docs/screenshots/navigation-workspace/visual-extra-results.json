@@ -1,0 +1,1422 @@
+[
+  {
+    "name": "changes",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "changes-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commits",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "commits-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commit-diff",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "commit-diff-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pullRequests",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "pullRequests-light-1440x1000.png",
+    "extraPath": "pullRequests-review-bottom-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pr-diff",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "pr-diff-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "account-inbox",
+    "theme": "light",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "account-inbox-light-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 0,
+        "width": 1196,
+        "height": 1000,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 244,
+        "height": 1000,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "changes",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "changes-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commits",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "commits-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commit-diff",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "commit-diff-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pullRequests",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "pullRequests-dark-1440x1000.png",
+    "extraPath": "pullRequests-review-bottom-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pr-diff",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "pr-diff-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 1196,
+        "height": 952,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 952,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "account-inbox",
+    "theme": "dark",
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "ok": true,
+    "path": "account-inbox-dark-1440x1000.png",
+    "initial": {
+      "footerTop": 941,
+      "footerBottom": 1000,
+      "navScrollable": true,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 0,
+        "width": 1196,
+        "height": 1000,
+        "right": 1440,
+        "bottom": 1000
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 244,
+        "height": 1000,
+        "right": 244,
+        "bottom": 1000
+      },
+      "footer": {
+        "x": 0,
+        "y": 941,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 1000
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1440,
+      "viewport": 1440,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "changes",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "changes-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commits",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "commits-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commit-diff",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "commit-diff-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pullRequests",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "pullRequests-light-1080x800.png",
+    "extraPath": "pullRequests-review-bottom-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pr-diff",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "pr-diff-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "account-inbox",
+    "theme": "light",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "account-inbox-light-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 0,
+        "width": 836,
+        "height": 800,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 244,
+        "height": 800,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "changes",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "changes-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commits",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "commits-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "commit-diff",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "commit-diff-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pullRequests",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "pullRequests-dark-1080x800.png",
+    "extraPath": "pullRequests-review-bottom-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "pr-diff",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "pr-diff-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 48,
+        "width": 836,
+        "height": 752,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 48,
+        "width": 244,
+        "height": 752,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  },
+  {
+    "name": "account-inbox",
+    "theme": "dark",
+    "size": {
+      "width": 1080,
+      "height": 800
+    },
+    "ok": true,
+    "path": "account-inbox-dark-1080x800.png",
+    "initial": {
+      "footerTop": 741,
+      "footerBottom": 800,
+      "navScrollable": true,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "navScrollTop": 0
+    },
+    "footerStable": true,
+    "settingsWorks": true,
+    "blocked": [],
+    "errors": [],
+    "layout": {
+      "unexpected": [],
+      "errors": [],
+      "ready": true,
+      "settingsClicks": 1,
+      "main": {
+        "x": 244,
+        "y": 0,
+        "width": 836,
+        "height": 800,
+        "right": 1080,
+        "bottom": 800
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 0,
+        "width": 244,
+        "height": 800,
+        "right": 244,
+        "bottom": 800
+      },
+      "footer": {
+        "x": 0,
+        "y": 741,
+        "width": 243,
+        "height": 59,
+        "right": 243,
+        "bottom": 800
+      },
+      "clippedDiffControls": [],
+      "collapsedDiffTitle": false,
+      "panelContentOverlaps": [],
+      "verticalOverlap": false,
+      "documentWidth": 1080,
+      "viewport": 1080,
+      "overflowing": []
+    }
+  }
+]

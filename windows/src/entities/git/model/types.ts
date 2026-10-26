@@ -200,9 +200,9 @@ export interface Identity {
 
 export type SearchScope = "commits" | "files" | "code";
 export const searchScopes: { id: SearchScope; title: string; prompt: string }[] = [
-  { id: "commits", title: t("Commit"), prompt: t("Search messages, authors, SHAs, branches (Ctrl+F)") },
-  { id: "files", title: t("File path"), prompt: t("Find commits where a file's name or path changed") },
-  { id: "code", title: t("Code changes"), prompt: t("Find commits that added or removed this code") },
+  { id: "commits", get title() { return t("Commit"); }, get prompt() { return t("Search messages, authors, SHAs, branches (Ctrl+F)"); } },
+  { id: "files", get title() { return t("File path"); }, get prompt() { return t("Find commits where a file's name or path changed"); } },
+  { id: "code", get title() { return t("Code changes"); }, get prompt() { return t("Find commits that added or removed this code"); } },
 ];
 
 export type Selection = { kind: "wip" } | { kind: "worktree"; path: string } | { kind: "commit"; sha: string } | { kind: "pullRequest"; number: number };
@@ -292,6 +292,8 @@ export interface DiffDocument {
   hunks: DiffHunk[];
   /** 머지 커밋의 결합 diff(@@@) */
   combined?: boolean;
+  /** 여러 파일의 변경은 파일 하나의 줄 단위 패치로 만들 수 없다. */
+  multipleFiles?: boolean;
   /** 새 파일·지운 파일·이름·권한(diff 머리에서 읽은 것) */
   info?: DiffFileInfo;
 }
@@ -454,11 +456,21 @@ export interface RemoteRepo {
 export type LoadState = { kind: "idle" } | { kind: "loading" } | { kind: "loaded" } | { kind: "needsAccount" } | { kind: "failed"; message: string };
 
 export type SheetKind =
-  | { kind: "clone" }
+  | { kind: "clone"; url?: string }
   | { kind: "stash" }
   | { kind: "newBranch"; start: string; label: string }
   | { kind: "tag"; sha: string }
   | { kind: "createPullRequest" }
+  | { kind: "pushReview"; branch: string; force: boolean; remoteOverride?: string }
+  | { kind: "askChanges" }
+  | { kind: "compareRevisions" }
+  | { kind: "batchCommits" }
+  | { kind: "lineHistory" }
+  | { kind: "localWorkflows" }
+  | { kind: "workspaceOverview" }
+  | { kind: "collaborationInbox" }
+  | { kind: "repositoryAssistant" }
+  | { kind: "mcpConnection" }
   | { kind: "startAgent"; path: string | null }
   | { kind: "addWorktree"; branch: string | null; start: string | null }
   | { kind: "splitCommits" }

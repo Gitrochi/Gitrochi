@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Shared core worker validation</title>
+<pre id="result">Running…</pre>
+<script type="module">
+  import { runCore, runCoreAsync } from "/src/shared/core/index.ts";
+  import { layoutGraph, layoutGraphAsync } from "/src/entities/git/lib/graph.ts";
+  const result = document.querySelector("#result");
+  try {
+    let ticks = 0;
+    const timer = setInterval(() => ticks++, 0);
+    const old = Array.from({ length: 80 }, (_, i) => `word${i}`).join(" + ");
+    const text = "diff --git a/f b/f\n--- a/f\n+++ b/f\n@@ -1,400 +1,400 @@\n" + Array.from({ length: 400 }, () => `-${old}\n+${old.replace("word40", "changed")}\n`).join("");
+    const start = performance.now();
+    const doc = await runCoreAsync({ op: "diffBundle", text });
+    clearInterval(timer);
+    if (!ticks || doc.doc.lines.length !== 801 || !doc.doc.lines[1].changes.length) throw new Error("Worker did not process the diff off the main thread");
+    const commits = Array.from({ length: 2000 }, (_, i) => ({ id: String(i), parents: i < 1999 ? [String(i + 1)] : [], author: "", email: "", subject: "", date: 0 }));
+    const asyncGraph = await layoutGraphAsync(commits);
+    if (JSON.stringify(asyncGraph) !== JSON.stringify(layoutGraph(commits))) throw new Error("Worker graph differs from synchronous graph");
+    const responses = await Promise.all(Array.from({ length: 10 }, (_, i) => runCoreAsync({ op: "bodyPreview", text: `- queued ${i}` })));
+    if (responses.some((v, i) => v !== `queued ${i}`)) throw new Error("Worker queue mixed responses");
+    if (runCore({ op: "wordRanges", a: "prefix old suffix", b: "prefix new suffix" })[0][0][0] !== 7) throw new Error("Shared core result mismatch");
+    result.textContent = JSON.stringify({ passed: true, mainThreadTicks: ticks, diffLines: doc.doc.lines.length, graphRows: asyncGraph.rows.length, queuedRequests: responses.length, elapsedMs: Math.round(performance.now() - start) }, null, 2);
+  } catch (error) { result.textContent = `FAILED: ${error.stack || error}`; }
+</script>

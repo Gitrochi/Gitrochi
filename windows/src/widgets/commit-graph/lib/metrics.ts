@@ -10,6 +10,8 @@ const MAX_LANES = 16;
 export const REF_W = 190;
 /** 커밋 동그라미(프로필) 지름 */
 export const AVATAR = 20;
+/** 레인은 선명하게, 참조 연결선은 한 단계 가볍게 유지한다. (Mac과 동일) */
+export const GRAPH_INK = { laneStroke: 2.4, refStroke: 1.5, refOpacity: 0.7, nodeStroke: 2.2 } as const;
 
 export const graphWidth = (lanes: number) => Math.max(44, Math.min(lanes, MAX_LANES) * LANE_W + LEFT_PAD + RIGHT_PAD);
 

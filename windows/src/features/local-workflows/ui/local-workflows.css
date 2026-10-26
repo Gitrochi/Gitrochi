@@ -1,0 +1,7 @@
+.local-workflows { display: flex; flex-direction: column; gap: 10px; max-height: 65vh; overflow: auto; }
+.local-tabs { gap: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.local-entry { padding: 9px; gap: 9px; border: 1px solid var(--border); border-radius: 6px; }
+.local-entry small { display: block; color: var(--text-2); overflow-wrap: anywhere; }
+.local-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow: auto; }
+.local-preview { background: var(--surface); border: 1px solid var(--border); padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; font: 12px var(--mono); }
+.local-error { color: var(--red); white-space: pre-wrap; }

@@ -1,13 +1,164 @@
-import { ai, clip, Prompts, splitMessage } from "@/entities/ai";
+import { ai, changeQuestionLimits, changeQuestionPrompt, changeQuestionSystem, createChangeQuestionSnapshot, type ChangeQuestionMessage, type ChangeQuestionSnapshot, type AIProviderId, clip, Prompts, providerById, splitMessage } from "@/entities/ai";
+import { gitch, type GraphReview } from "@/entities/gitch";
 import { type FileChange, parseSplitPlan, type SplitGroup } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { describe } from "@/shared/platform";
+import { describe, git } from "@/shared/platform";
 import { RepoHosting } from "./hosting";
+
+export interface ChangeQuestionSession {
+  readonly repository: string;
+  readonly origin: string;
+  readonly provider: AIProviderId;
+  readonly providerTitle: string;
+  readonly system: string;
+  readonly configuration: string;
+  snapshot: ChangeQuestionSnapshot | null;
+  loading: boolean;
+  question: string;
+  messages: ChangeQuestionMessage[];
+  error: string | null;
+  working: boolean;
+  active: boolean;
+  generation: number;
+}
+
+const changeQuestionConfiguration = () => {
+  const provider = ai.providerFor("explain");
+  return JSON.stringify([provider, ai.model(provider), provider === "compatible" ? ai.baseURL : "", ai.instructions.global ?? "", ai.instructions.explain ?? ""]);
+};
 
 /** AI: 커밋 메시지·설명·PR 글, 나눠서 커밋 */
 export abstract class RepoAI extends RepoHosting {
+  changeQuestionSession: ChangeQuestionSession | null = null;
+
+  /** 보내기 전에는 AI를 호출하지 않고, 사용자가 확인할 로컬 스냅샷만 준비한다. */
+  async openChangeQuestion(refresh = false) {
+    const repository = this.path;
+    if (!repository) return;
+    const origin = JSON.stringify([this.diffSource, this.selection, this.headHash]);
+    const existing = this.changeQuestionSession;
+    if (!refresh && existing?.repository === repository && existing.origin === origin && existing.snapshot) {
+      existing.active = true;
+      this.openSheet({ kind: "askChanges" });
+      return;
+    }
+    this.cancelChangeQuestion();
+    const provider = ai.providerFor("explain");
+    const model = ai.model(provider);
+    const session: ChangeQuestionSession = { repository, origin, provider, providerTitle: providerById(provider).title + (model ? ` · ${model}` : ""),
+      system: ai.systemFor("explain", changeQuestionSystem), configuration: changeQuestionConfiguration(), snapshot: null, loading: true, question: "", messages: [], error: null, working: false, active: true, generation: 0 };
+    this.changeQuestionSession = session;
+    this.openSheet({ kind: "askChanges" });
+    // 기다리는 사이 선택이 바뀌어도 같은 표시 내용을 참조한다.
+    const source = this.diffSource;
+    const selection = this.selection;
+    const doc = this.diff;
+    const picked = new Set(this.diffSelection);
+    const loading = this.diffLoading;
+    const ignoreWhitespace = this.diffIgnoreWhitespace;
+    const current = () => this.path === repository && this.changeQuestionSession === session && session.active;
+    try {
+      const head = (await git(["rev-parse", "--verify", "HEAD"], repository).catch(() => null))?.stdout.trim() || "(unborn HEAD)";
+      let scope: string, path: string | null = null, text: string;
+      const limitations: string[] = [];
+      let impact: string | null = null;
+      if (source) {
+        path = source.change.path;
+        scope = source.kind === "review" ? `PR/MR #${source.number}` : source.kind === "commit" ? `${t("Commit")} ${source.sha}`
+          : source.change.kind === "untracked" ? t("Untracked file") : source.change.staged ? t("Staged file") : t("Unstaged file");
+        // 새 파일도 이미 읽은 표시 내용을 재사용해 경로를 다시 읽거나 심볼릭 링크를 따라가지 않는다.
+        if (!doc || loading) throw new Error(t("Wait for the selected diff to finish loading."));
+        if (doc.error) throw new Error(doc.error);
+        if (doc.isBinary) throw new Error(t("This is a binary file. Select a text diff to ask AI."));
+        if (doc.truncated) limitations.push(t("The displayed diff was truncated."));
+        if (ignoreWhitespace) limitations.push(t("Whitespace-only changes are hidden in this snapshot."));
+        if (picked.size) {
+          text = doc.lines.filter((_, i) => picked.has(i)).map((l) => `old:${l.oldNo ?? "-"} new:${l.newNo ?? "-"} ${l.kind === "added" ? "+" : l.kind === "removed" ? "-" : " "}${l.raw ?? l.text}`).join("\n");
+          scope += ` · ${t("Selected lines")}`;
+          limitations.push(t("Only selected lines are included; surrounding code may be missing."));
+        } else {
+          text = [...doc.header, ...doc.lines.map((l) => l.kind === "added" ? "+" + (l.raw ?? l.text) : l.kind === "removed" ? "-" + (l.raw ?? l.text) : l.kind === "context" ? " " + (l.raw ?? l.text) : l.raw || l.text)].join("\n");
+        }
+      } else if (selection?.kind === "commit") {
+        scope = `${t("Commit")} ${selection.sha}`;
+        text = (await git(["show", "--stat", "--patch", "--diff-merges=first-parent", "--no-ext-diff", "--no-textconv", "--format=commit %H%n%B", selection.sha], repository)).stdout;
+      } else if (selection?.kind === "pullRequest") {
+        throw new Error(t("Select a PR/MR file to ask AI about its changes."));
+      } else {
+        scope = t("Staged changes");
+        const before = await gitch.commitReviewStamp(repository).catch(() => null);
+        text = (await git(["diff", "--cached", "--no-ext-diff", "--no-textconv", "-M", "--stat", "--patch"], repository)).stdout;
+        // 뒤 단계 gitch 분석 결과는 스테이지를 읽기 전후의 식별값이 같을 때만 첨부한다.
+        const state = (this as unknown as { commitImpact?: { kind: string; result?: GraphReview }; commitImpactStale?: boolean }).commitImpact;
+        const report = state?.kind === "done" ? state.result : null;
+        if (before && report && !report.stale && report.stamp === before && report.headSha === (head === "(unborn HEAD)" ? "" : head)
+          && await gitch.commitReviewStamp(repository).catch(() => null) === before) {
+          impact = JSON.stringify({ changed: report.changed, direct: report.direct, indirect: report.indirect, testCandidatesNotRun: report.tests, limitations: report.limitations }, null, 2);
+        }
+        if (!text.trim()) throw new Error(t("No staged changes. Stage files first."));
+      }
+      if (!text.trim()) throw new Error(t("No text changes are available for this selection."));
+      if (!current()) return;
+      session.snapshot = createChangeQuestionSnapshot({ repository, head, scope, path, diff: text, limitations, impact });
+    } catch (error) {
+      if (!current()) return;
+      session.error = describe(error);
+    } finally {
+      if (current()) { session.loading = false; this.emit(); }
+    }
+  }
+
+  setChangeQuestion(question: string) {
+    if (!this.changeQuestionSession) return;
+    this.changeQuestionSession.question = question;
+    this.emit();
+  }
+
+  async sendChangeQuestion() {
+    const session = this.changeQuestionSession;
+    if (!session?.snapshot || !session.active || session.working || this.path !== session.repository) return;
+    const question = session.question.trim();
+    if (!question || question.length > changeQuestionLimits.question) return;
+    if (session.configuration !== changeQuestionConfiguration()) {
+      session.error = t("AI settings changed. Choose New snapshot before sending.");
+      this.emit();
+      return;
+    }
+    const problem = ai.problem(session.provider);
+    if (problem) { session.error = problem; this.emit(); return; }
+    const request = ++session.generation;
+    session.working = true;
+    session.error = null;
+    this.emit();
+    const current = () => this.path === session.repository && this.changeQuestionSession === session && session.active && session.generation === request;
+    try {
+      const answer = await ai.complete(session.system, changeQuestionPrompt(session.snapshot, question, session.messages), "medium", session.provider);
+      if (!current()) return;
+      session.messages = [...session.messages, { role: "user", text: question }, { role: "assistant", text: answer.slice(0, changeQuestionLimits.answer) }];
+      if (session.question.trim() === question) session.question = "";
+    } catch (error) {
+      if (!current()) return;
+      session.error = describe(error);
+    } finally {
+      if (current()) { session.working = false; this.emit(); }
+    }
+  }
+
+  stopChangeQuestion() {
+    const session = this.changeQuestionSession;
+    if (!session) return;
+    session.generation++;
+    session.working = false;
+    this.emit();
+  }
+
+  cancelChangeQuestion() {
+    if (this.changeQuestionSession) this.changeQuestionSession.active = false;
+    this.stopChangeQuestion();
+  }
+
   // MARK: 나눠서 커밋 — AI 가 변경 파일을 주요 내용별로 묶고, 확인한 뒤 차례로 커밋한다
 
   /** 나눌 수 있는 변경(충돌 파일 제외, 스테이지 여부 상관없이) */

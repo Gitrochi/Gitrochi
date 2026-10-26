@@ -8,7 +8,7 @@ import { commandVersion, findCommand, isExecutable, listDistros } from "./wsl";
  * 외부 프로그램(git·AI CLI·gh·셸) 위치. PC 마다 설치 위치가 달라
  * ① 설정에서 직접 고른 경로 → ② 흔한 설치 위치 → ③ PATH 순서로 찾는다.
  */
-export type ToolId = "git" | "claude" | "codex" | "gemini" | "gh" | "shell";
+export type ToolId = "git" | "claude" | "codex" | "gemini" | "gh" | "node" | "shell";
 
 export interface ToolInfo {
   id: ToolId;
@@ -27,6 +27,7 @@ export const toolList: ToolInfo[] = [
   { id: "codex", title: "Codex CLI", detail: t("Writing and agent sessions with your ChatGPT login"), command: "codex", versionArgs: ["--version"], install: "https://developers.openai.com/codex/cli" },
   { id: "gemini", title: "Gemini CLI", detail: t("Writing and agent sessions with your Google login"), command: "gemini", versionArgs: ["--version"], install: "https://github.com/google-gemini/gemini-cli" },
   { id: "gh", title: "GitHub CLI (gh)", detail: t("When importing the gh login as a GitHub account"), command: "gh", versionArgs: ["--version"], install: "https://cli.github.com" },
+  { id: "node", title: "Node.js", detail: t("Read-only repository assistant and MCP connection (Node.js 22 or later)"), command: "node", versionArgs: ["--version"], install: "https://nodejs.org/" },
   { id: "shell", title: t("Terminal shell"), detail: t("Shell opened in the terminal panel below (PowerShell, cmd, Git Bash, etc.)"), command: "", versionArgs: [] },
 ];
 
@@ -70,6 +71,8 @@ function candidates(id: ToolId): string[] {
         return [joinPath(roaming, "npm/gemini.cmd"), joinPath(home, "scoop/shims/gemini.exe")];
       case "gh":
         return [...pf.map((p) => p + "/GitHub CLI/gh.exe"), joinPath(local, "Programs/GitHub CLI/gh.exe"), joinPath(home, "scoop/shims/gh.exe")];
+      case "node":
+        return [...pf.map((p) => p + "/nodejs/node.exe"), joinPath(home, "scoop/shims/node.exe")];
       case "shell":
         return ["C:/Program Files/PowerShell/7/pwsh.exe", "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"];
     }
@@ -86,6 +89,8 @@ function candidates(id: ToolId): string[] {
       return [...brew.map((b) => b + "/gemini"), joinPath(home, ".local/bin/gemini")];
     case "gh":
       return brew.map((b) => b + "/gh");
+    case "node":
+      return brew.map((b) => b + "/node");
     case "shell":
       return [env.shell, "/bin/zsh", "/bin/bash"];
   }

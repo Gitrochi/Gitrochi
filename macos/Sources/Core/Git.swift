@@ -41,6 +41,7 @@ enum Git {
         var env = ProcessInfo.processInfo.environment
         env["GIT_TERMINAL_PROMPT"] = "0"   // 자격 증명 프롬프트에서 멈추지 않고 실패하게
         env["GIT_OPTIONAL_LOCKS"] = "0"    // status 가 index 를 다시 써서 파일 감시가 되먹임되지 않게
+        env["GIT_LITERAL_PATHSPECS"] = "1" // 고른 파일의 [, *, : 등을 패턴으로 해석하지 않게
         env["GIT_EDITOR"] = "true"         // merge/revert 기본 메시지를 편집기 없이 수락
         env["GIT_PAGER"] = "cat"
         env["LC_ALL"] = "en_US.UTF-8"

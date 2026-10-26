@@ -1,8 +1,10 @@
+import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
+import { isWorkspaceDestination, isRepositorySection, repositoryDestinations, repositorySections, workspaceLocation, type WorkspaceDestination, type RepositorySection, type WorkspaceLocation } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
-import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraph, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
+import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraphAsync, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { accounts, type PullRequestReview } from "@/entities/hosting";
 import { TerminalSession, type TerminalSpec, type TermNode } from "@/entities/terminal";
@@ -34,6 +36,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract readonly ci: CIStore;
   abstract select(sel: Selection | null): void;
   abstract closeDiff(): void;
+  abstract closeConflict(): void;
+  abstract closeFileInspect(): void;
   protected abstract loadDiff(keepCurrent: boolean): void;
   abstract get repoStateTitle(): string;
   abstract loadPullRequests(): Promise<void>;
@@ -42,8 +46,13 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract closeAllTerminals(): void;
   abstract switchWorktree(path: string): Promise<void>;
   abstract refreshWorktreeStats(): Promise<void>;
-  abstract run(label: string, args: string[], o?: { network?: boolean; input?: string }): Promise<boolean>;
+  abstract run(label: string, args: string[], o?: { network?: boolean; input?: string; env?: Record<string, string> }): Promise<boolean>;
   abstract refreshGitch(fetch?: boolean): Promise<void>;
+  abstract cancelPushReview(): void;
+  abstract cancelChangeQuestion(): void;
+  abstract cancelRepositoryAssistant(): void;
+  abstract preserveDiscardedChanges(paths?: string[]): Promise<boolean>;
+  abstract clearHistorySelection(): void;
 
   readonly id = crypto.randomUUID();
   /** 지금 보이는 탭인지 — 뒤에 있는 탭은 파일이 바뀌어도 바로 다시 읽지 않고 돌아왔을 때 읽는다 */
@@ -52,9 +61,87 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   // 저장소
   path: string | null = null;
+  destination: WorkspaceDestination = "home";
+  repositorySection: RepositorySection = "changes";
+  navigationTrail: WorkspaceLocation[] = [workspaceLocation("home")];
+  private workspaceNavigationPreparing = false;
+  navigationPosition = 0;
   gitDir: string | null = null;
   get name() {
     return this.path ? basename(this.path) : "Gitrochi";
+  }
+
+  get pinnedRepositoryPages(): RepositorySection[] {
+    const saved = settings.get<unknown>("pinnedRepositoryPages", []);
+    return repositorySections.filter((section) => Array.isArray(saved) && saved.includes(section));
+  }
+
+  isRepositoryPagePinned(section: RepositorySection) { return this.pinnedRepositoryPages.includes(section); }
+
+  toggleRepositoryPagePin(section: RepositorySection) {
+    if (!isRepositorySection(section)) return;
+    const pinned = new Set(this.pinnedRepositoryPages);
+    if (pinned.has(section)) pinned.delete(section); else pinned.add(section);
+    settings.set("pinnedRepositoryPages", repositorySections.filter((item) => pinned.has(item)));
+    this.emit();
+  }
+
+  selectRepositorySection(section: RepositorySection, prepare = true, remember = true) { return this.navigate(section, prepare, remember); }
+
+  /** 작업별 이전 주소는 통합 저장소 화면의 내부 탭으로 연결한다. */
+  navigate(page: WorkspaceDestination, prepare = true, remember = true) {
+    if (!isWorkspaceDestination(page) || (repositoryDestinations.has(page) && !this.path)) return false;
+    return this.navigateLocation(workspaceLocation(page, this.repositorySection), prepare, remember);
+  }
+
+  private navigateLocation(location: WorkspaceLocation, prepare: boolean, remember: boolean) {
+    if (repositoryDestinations.has(location.destination) && !this.path) return false;
+    const current = workspaceLocation(this.destination, this.repositorySection);
+    if (remember && (location.destination !== current.destination || location.repositorySection !== current.repositorySection)) {
+      this.navigationTrail = [...this.navigationTrail.slice(0, this.navigationPosition + 1), location].slice(-40);
+      this.navigationPosition = this.navigationTrail.length - 1;
+    }
+    this.destination = location.destination;
+    this.repositorySection = location.repositorySection;
+    if (this.path) {
+      settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: this.destination });
+      settings.set("workspaceRepositorySections", { ...settings.get<Record<string, string>>("workspaceRepositorySections", {}), [this.path]: this.repositorySection });
+    }
+    if (prepare) {
+      this.workspaceNavigationPreparing = true;
+      try {
+        if (this.destination === "repository") {
+          if (this.repositorySection === "changes") this.select({ kind: "wip" });
+          if (this.repositorySection === "commits" && this.selection?.kind !== "commit" && this.headHash) this.select({ kind: "commit", sha: this.headHash });
+        }
+        if (this.destination === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
+      } finally { this.workspaceNavigationPreparing = false; }
+    }
+    this.emit(); return true;
+  }
+
+  moveWorkspaceHistory(delta: number) {
+    const next = this.navigationPosition + delta;
+    if (next < 0 || next >= this.navigationTrail.length) return;
+    this.navigationPosition = next; this.navigateLocation(this.navigationTrail[next], true, false);
+  }
+
+  syncWorkspaceSelection(selection: Selection | null) {
+    if (this.workspaceNavigationPreparing || !selection) return;
+    const inDocument = this.destination === "repository" && (this.repositorySection === "changes" || this.repositorySection === "commits");
+    if (!inDocument && this.destination !== "pullRequests") return;
+    const next = selection.kind === "wip" ? "changes" : selection.kind === "commit" || selection.kind === "worktree" ? "commits" : "pullRequests";
+    const location = workspaceLocation(next, this.repositorySection);
+    if (this.destination !== location.destination || this.repositorySection !== location.repositorySection) this.navigate(next, false);
+  }
+
+  private restoreWorkspaceDestination() {
+    const saved = this.path ? settings.get<Record<string, unknown>>("workspaceDestinations", {})[this.path] : null;
+    const savedSection = this.path ? settings.get<Record<string, unknown>>("workspaceRepositorySections", {})[this.path] : null;
+    const section = isRepositorySection(savedSection) ? savedSection : this.selection?.kind === "commit" ? "commits" : "changes";
+    const initial = workspaceLocation(isWorkspaceDestination(saved) ? saved : "repository", section);
+    this.navigationTrail = [initial]; this.navigationPosition = 0;
+    this.navigateLocation(initial, true, false);
   }
 
   // 데이터
@@ -76,6 +163,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   // 선택·상세
   selection: Selection | null = null;
+  newPullRequestDraft: { branch: string; title: string; body: string; base: string; draft: boolean } | null = null;
   detail: CommitDetail | null = null;
   detailFiles: FileChange[] = [];
   detailStats: Record<string, LineStat> = {};
@@ -99,7 +187,12 @@ export abstract class RepoCore extends Observable implements AgentHost {
   busy: string | null = null;
   errorMessage: string | null = null;
   sheet: SheetKind | null = null;
-  confirm: ConfirmRequest | null = null;
+  private readonly confirmationGuard = new RepositoryConfirmationGuard();
+  private pendingConfirmation: ConfirmRequest | null = null;
+  get confirm(): ConfirmRequest | null { return this.pendingConfirmation; }
+  set confirm(request: ConfirmRequest | null) {
+    this.pendingConfirmation = request ? { ...request, action: this.confirmationGuard.wrap(this.path, () => this.path, request.action) } : null;
+  }
   notRepoPrompt: string | null = null;
   /** git 이 "소유자가 달라 믿을 수 없는 저장소"로 막았을 때(WSL·외장 디스크 등): 등록할 경로 */
   unsafePrompt: { folder: string; safePath: string } | null = null;
@@ -301,6 +394,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     await this.startWatching();
     await this.reload();
     this.selectDefault();
+    this.restoreWorkspaceDestination();
     if (this.worktrees.length > 1) void this.refreshWorktreeStats();
     this.worktreePoll ??= setInterval(() => {
       if (this.isActive && document.hasFocus() && this.worktrees.length > 1) void this.refreshWorktreeStats();
@@ -393,6 +487,18 @@ export abstract class RepoCore extends Observable implements AgentHost {
   }
 
   protected resetState() {
+    this.confirmationGuard.invalidate();
+    this.destination = "home"; this.repositorySection = "changes"; this.navigationTrail = [workspaceLocation("home")]; this.navigationPosition = 0;
+    this.cancelPushReview();
+    this.cancelChangeQuestion();
+    this.cancelRepositoryAssistant();
+    this.sheet = null;
+    this.confirm = null;
+    this.busy = null;
+    this.errorMessage = null;
+    this.newPullRequestDraft = null;
+    this.closeConflict();
+    this.closeFileInspect();
     this.fileInspect = null;
     this.fileInspectLine = null;
     this.fileHistory = [];
@@ -436,6 +542,10 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.remoteURLs = {};
     this.target = null;
     this.pullRequests = [];
+    this.review = null;
+    this.reviewLoading = false;
+    this.reviewBusy = false;
+    this.reviewError = null;
     this.prState = { kind: "idle" };
     this.ci.reset();
     this.aiWorking = null;
@@ -525,7 +635,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
         this.g(["stash", "list", "--format=" + P.stashFormat], { ok: [0, 1, 128] }),
         this.g(["rev-parse", "--verify", "-q", "HEAD"], { ok: [0, 1, 128] }),
         this.g(["remote", "-v"]),
-        this.g(["worktree", "list", "--porcelain"], { ok: [0, 128] }),
+        this.g(["worktree", "list", "--porcelain", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--no-ext-diff", "--numstat", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], { ok: [0, 128] }),
       ]);
@@ -541,7 +651,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const sameLog =
         !!this.lastLog && this.lastLog.out === lg.stdout && this.lastLog.wip === wip && this.lastLog.head === head && this.lastLog.pending === pendingKey && this.entries.length > 0;
       if (!sameLog) {
-        let commits = P.parseLog(lg.stdout);
+        let commits = await P.parseLogAsync(lg.stdout);
+        if (gen !== this.reloadGeneration || this.path !== path) return;
         const more = commits.length > this.limit;
         if (more) commits = commits.slice(0, this.limit);
         if (wip) commits.unshift(wipCommit(head));
@@ -551,7 +662,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
           this.loading = { ...this.loading, step: t("Drawing the graph with {0} commits…", commits.length) };
           this.emit();
         }
-        const layout = layoutGraph(commits);
+        const layout = await layoutGraphAsync(commits);
+        if (gen !== this.reloadGeneration || this.path !== path) return;
         this.hasMore = more;
         this.maxLanes = layout.maxLanes;
         this.entries = commits.map((c, i) => ({ commit: c, row: layout.rows[i] }));
@@ -588,6 +700,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
         this.remotes,
         this.remoteURLs,
         accounts.accountsFor("gitlab").map((a) => new URL(a.server).host.toLowerCase()),
+        accounts.sshHostAliases,
       );
       if (newTarget?.provider === "github") avatars.noteGitHubRepo(newTarget.path);
       if (!sameTarget(newTarget, this.target)) {

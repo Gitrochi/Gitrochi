@@ -1,0 +1,8 @@
+.collaboration-inbox { width: 100%; max-width: 960px; min-width: 0; gap: 10px; }
+.inbox-columns { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(260px, 1.8fr); min-height: 300px; max-height: 65vh; border-block: 1px solid var(--border); }
+.inbox-list, .inbox-detail { overflow: auto; padding: 10px; gap: 8px; }
+.inbox-list { border-right: 1px solid var(--border); }
+.inbox-item { display: flex; flex-direction: column; text-align: left; gap: 4px; padding: 9px; border-radius: 5px; color: var(--text); background: transparent; border: 1px solid var(--border); }
+.inbox-item.selected { background: var(--select); }
+.inbox-comment { padding: 9px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; }
+.inbox-detail p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 5px 0; }

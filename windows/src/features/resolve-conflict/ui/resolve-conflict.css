@@ -89,3 +89,10 @@
   font-family: var(--mono);
   font-size: 12px;
 }
+.conflict-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 240px; height: 45vh; flex: 1; gap: 1px; background: var(--border); }
+.conflict-three.with-base { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.conflict-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface); }
+.conflict-pane b { padding: 7px; font-size: 11px; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.conflict-pane.result b { color: var(--green); }
+.conflict-pane textarea { resize: none; flex: 1; min-height: 0; padding: 8px; font: 12px/18px var(--mono); border: 0; border-radius: 0; background: var(--surface); color: var(--text); white-space: pre; }
+.conflict-block-list { max-height: 230px; flex: none; }

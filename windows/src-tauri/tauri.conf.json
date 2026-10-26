@@ -63,7 +63,9 @@
       "../../THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
       "../../tools/gitch/gitch": "gitch",
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
-      "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch"
+      "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
+      "../../tools/gitrochi-mcp/server.mjs": "gitrochi-mcp.mjs",
+      "generated/gitch-core.exe": "gitch-core.exe"
     }
   },
   "plugins": {

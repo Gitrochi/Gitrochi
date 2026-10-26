@@ -1,6 +1,6 @@
 import { Check, ChevronDown, TriangleAlert } from "lucide-react";
-import { useEffect, useState } from "react";
-import { choiceLines, choiceTitle, type ConflictBlock, type ConflictDocument, type FileChange } from "@/entities/git";
+import { useEffect, useRef, useState } from "react";
+import { choiceLines, choiceTitle, conflictProjection, parseConflict, type ConflictBlock, type ConflictDocument, type FileChange } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { Button, showMenuBelow, Spinner } from "@/shared/ui";
@@ -45,9 +45,17 @@ function NoMarkers({ store, change }: { store: RepoStore; change: FileChange }) 
 }
 
 function Resolver({ store, change, doc }: { store: RepoStore; change: FileChange; doc: ConflictDocument }) {
+  const [threeWay, setThreeWay] = useState(true);
+  const [base, setBase] = useState(false);
+  const [manual, setManual] = useState<string | null>(null);
+  const panes = useRef<(HTMLTextAreaElement | null)[]>([]);
+  useEffect(() => { setManual(null); }, [doc]);
   const sides = store.conflictSides;
   const done = doc.blocks.filter((b) => store.conflictChoices.has(b.id)).length;
-  const all = done === doc.blocks.length;
+  const result = manual ?? conflictProjection(doc, "result", store.conflictChoices);
+  const remaining = parseConflict(result).blocks.length;
+  const all = manual !== null ? !remaining && !/^<{7,}(?:[ \t]|$)/m.test(result) : done === doc.blocks.length;
+  const syncScroll = (source: HTMLTextAreaElement) => { const ratio = source.scrollTop / Math.max(1, source.scrollHeight - source.clientHeight); for (const target of panes.current) if (target && target !== source) target.scrollTop = ratio * Math.max(0, target.scrollHeight - target.clientHeight); };
   return (
     <div className="col grow" style={{ minHeight: 0 }}>
       <div className="conflict-bar">
@@ -55,6 +63,8 @@ function Resolver({ store, change, doc }: { store: RepoStore; change: FileChange
         <span style={{ fontWeight: 600 }}>
           {t("{0} conflicts — {1} chosen", doc.blocks.length, done)}</span>
         <span className="spacer" />
+        <Button size="small" onClick={() => setThreeWay(!threeWay)}>{threeWay ? t("Block view") : t("Three-way editor")}</Button>
+        <Button size="small" onClick={() => void store.loadConflict(change.path)}>{t("Reload")}</Button>
         <Button
           size="small"
           tip={t("Resolves the whole file to one side at once instead of choosing block by block")}
@@ -72,11 +82,18 @@ function Resolver({ store, change, doc }: { store: RepoStore; change: FileChange
           kind="primary"
           disabled={!all || !!store.busy}
           tip={all ? t("Saves the file as chosen and stages it") : t("Choose every conflict block before saving")}
-          onClick={() => void store.saveConflictResolution(change)}
+          onClick={() => void store.saveConflictResolution(change, manual ?? undefined)}
         >
           {t("Save and mark as resolved")}</Button>
       </div>
-      <div className="conflict-scroll">
+      {threeWay && <>
+        <div className="conflict-bar"><span>{t("Non-conflicting lines are included automatically.")}</span><span className="spacer" /><Button size="small" onClick={() => setBase(!base)}>{base ? t("Hide common ancestor") : t("Show common ancestor")}</Button>{manual !== null && <Button size="small" onClick={() => setManual(null)}>{t("Use block choices")}</Button>}</div>
+        <div className={`conflict-three ${base ? "with-base" : ""}`}>
+          {([...(base ? ["base"] : []), "ours", "result", "theirs"] as ("base" | "ours" | "result" | "theirs")[]).map((side, index) => <label key={side} className={`conflict-pane ${side}`}><b>{side === "base" ? t("Common ancestor") : side === "ours" ? t("Mine · {0}", sides.ours) : side === "theirs" ? t("Theirs · {0}", sides.theirs) : t("Final result")}</b><textarea aria-label={side === "result" ? t("Final result") : side} spellCheck={false} wrap="off" readOnly={side !== "result"} ref={(el) => { panes.current[index] = el; }} value={side === "result" ? result : conflictProjection(doc, side)} onChange={(e) => setManual(e.target.value)} onScroll={(e) => syncScroll(e.currentTarget)} /></label>)}
+        </div>
+        <div className="conflict-bar"><span>{t("{0} unresolved blocks in the result", remaining)}</span>{manual !== null && <span className="hint">{t("Manual result editing is active. Use block choices to rebuild from the selections below.")}</span>}</div>
+      </>}
+      <div className={`conflict-scroll ${threeWay ? "conflict-block-list" : ""}`}>
         {doc.segments.map((s, i) =>
           s.kind === "text" ? <TextSegment key={i} lines={s.lines} /> : <BlockCard key={i} store={store} block={doc.blocks[s.block]} sides={sides} />,
         )}

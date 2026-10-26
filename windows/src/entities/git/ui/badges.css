@@ -23,14 +23,18 @@
   font-weight: 500;
   white-space: nowrap;
   flex: none;
-  max-width: 220px;
+  min-width: 0;
+  max-width: min(220px, 100%);
   line-height: 16px;
 }
 
 .ref-badge .name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.ref-badge > svg { flex: none; }
 
 .ref-badge.current {
   font-weight: 700;

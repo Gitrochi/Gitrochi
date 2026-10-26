@@ -16,16 +16,16 @@ function guessName(url: string) {
   return last.endsWith(".git") ? last.slice(0, -4) : last;
 }
 
-export function CloneSheet({ store, close }: { store: RepoStore; close: () => void }) {
+export function CloneSheet({ store, close, initialURL = "" }: { store: RepoStore; close: () => void; initialURL?: string }) {
   useObserve(accounts);
   const [accountID, setAccountID] = useState<string | null>(accounts.accounts[0]?.id ?? null);
   const [repos, setRepos] = useState<RemoteRepo[]>([]);
   const [reposError, setReposError] = useState<string | null>(null);
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [query, setQuery] = useState("");
-  const [remote, setRemote] = useState("");
+  const [remote, setRemote] = useState(initialURL);
   const [parent, setParent] = useState(isWindows() ? joinPath(env.home, "source", "repos") : joinPath(env.home, "Desktop"));
-  const [folder, setFolder] = useState("");
+  const [folder, setFolder] = useState(guessName(initialURL));
   const [folderEdited, setFolderEdited] = useState(false);
 
   useEffect(() => {

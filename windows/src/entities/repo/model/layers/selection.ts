@@ -1,7 +1,7 @@
 import { buildPatch, canEditLines, changePaths, type ConflictChoice, type DiffDocument, type DiffLine, type DiffSource, type FileChange, type FileHistoryEntry, parseConflict, resolveConflict, rowSelection, sameDiffSource, type Selection } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { joinPath, settings } from "@/shared/config";
-import { describe, git, gitBytes } from "@/shared/platform";
+import { describe, git, gitBytes, gitRaw } from "@/shared/platform";
 
 const IMAGE_EXT: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", bmp: "image/bmp", ico: "image/x-icon", tif: "image/tiff", tiff: "image/tiff" };
 import * as P from "@/entities/git";
@@ -10,10 +10,15 @@ import { t } from "@/shared/i18n";
 
 /** 선택한 커밋·작업 영역의 상세와 diff */
 export abstract class RepoSelection extends RepoCore {
+  private conflictGeneration = 0;
+  private historyGeneration = 0;
+  private diffCalculation?: AbortController;
   // MARK: - 선택
 
   select(sel: Selection | null) {
+    this.syncWorkspaceSelection(sel);
     if (JSON.stringify(sel) === JSON.stringify(this.selection)) return;
+    this.clearHistorySelection();
     this.selection = sel;
     this.closeDiff();
     this.detail = null;
@@ -45,6 +50,7 @@ export abstract class RepoSelection extends RepoCore {
 
   /** 사이드바에서 브랜치·태그를 누르면 그래프에서 해당 커밋을 찾아 보여 준다 */
   reveal(sha: string) {
+    this.navigate("commits", false);
     if (this.commitIndex.has(sha) || this.stashes.some((s) => s.hash === sha)) {
       this.select({ kind: "commit", sha });
       this.scrollTarget = sha;
@@ -84,6 +90,9 @@ export abstract class RepoSelection extends RepoCore {
   // MARK: - Diff
 
   openDiff(source: DiffSource) {
+    const page = source.kind === "working" ? "changes" : source.kind === "review" ? "pullRequests" : "commits";
+    const currentPage = this.destination === "repository" ? this.repositorySection : this.destination;
+    if (currentPage !== page) this.navigate(page, source.kind === "working");
     if (this.fileInspect) this.closeFileInspect();
     if (sameDiffSource(source, this.diffSource)) return;
     this.diffSource = source;
@@ -93,6 +102,8 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeDiff() {
+    this.diffCalculation?.abort();
+    this.diffCalculation = undefined;
     this.diffGen++;
     this.diffSource = null;
     this.diff = null;
@@ -120,9 +131,18 @@ export abstract class RepoSelection extends RepoCore {
 
   async loadConflict(path: string) {
     if (!this.path) return;
-    const text = (await ipc.readText(joinPath(this.path, path)).catch(() => null)) ?? "";
+    const repo = this.path;
+    const gen = ++this.conflictGeneration;
     this.conflictPath = path;
+    this.conflictDoc = null;
+    this.conflictChoices = new Map();
+    this.emit();
+    const [textValue, base, signature] = await Promise.all([ipc.readText(joinPath(repo, path)).catch(() => null), gitRaw(["show", ":1:" + path], repo).catch(() => null), gitRaw(["ls-files", "--unmerged", "--stage", "-z", "--", path], repo).catch(() => null)]);
+    const text = textValue ?? "";
+    if (gen !== this.conflictGeneration || this.path !== repo) return;
     this.conflictDoc = parseConflict(text);
+    if (base?.status === 0) this.conflictDoc.baseText = base.stdout;
+    if (signature?.status === 0) this.conflictDoc.indexSignature = signature.stdout;
     this.conflictChoices = new Map();
     this.emit();
   }
@@ -136,17 +156,26 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   /** 고른 대로 파일을 쓰고 해결됨으로 표시(스테이지) */
-  async saveConflictResolution(c: FileChange) {
-    const text = this.conflictDoc && resolveConflict(this.conflictDoc, this.conflictChoices);
-    if (!this.path || text === null || text === undefined) return;
+  async saveConflictResolution(c: FileChange, editedText?: string) {
+    const doc = this.conflictDoc;
+    const path = this.path;
+    if (!path || this.busy != null || this.conflictPath !== c.path || !doc?.blocks.length) return;
+    const text = editedText ?? resolveConflict(doc, this.conflictChoices);
+    if (text === null) return;
+    if (parseConflict(text).blocks.length || /^<{7,}(?:[ \t]|$)/m.test(text)) { this.showError(t("Resolve every conflict marker before saving.")); return; }
     try {
-      await ipc.writeText(joinPath(this.path, c.path), text);
+      const original = await ipc.readText(joinPath(path, c.path));
+      if (this.path !== path || this.conflictDoc !== doc) return;
+      if (original !== doc.sourceText) { this.showError(t("The conflict file changed outside this editor. Reload before saving.")); return; }
+      if (doc.indexSignature !== undefined) { const signature = await gitRaw(["ls-files", "--unmerged", "--stage", "-z", "--", c.path], path); if (this.path !== path || this.conflictDoc !== doc || signature.stdout !== doc.indexSignature) { this.showError(t("The conflict file changed outside this editor. Reload before saving.")); return; } }
+      await ipc.writeText(joinPath(path, c.path), text);
     } catch (e) {
       this.errorMessage = t("Couldn't save the file.\n\n") + describe(e);
       this.emit();
       return;
     }
-    if (await this.run(t("Marking as resolved…"), ["add", "--", c.path])) this.closeConflict();
+    if (this.path !== path) return;
+    if (await this.run(t("Marking as resolved…"), ["add", "--", c.path]) && this.conflictDoc === doc) this.closeConflict();
   }
 
   /** 파일 전체를 한쪽으로(git checkout --ours/--theirs) */
@@ -161,6 +190,7 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeConflict() {
+    this.conflictGeneration++;
     this.conflictDoc = null;
     this.conflictChoices = new Map();
     this.conflictPath = null;
@@ -170,12 +200,16 @@ export abstract class RepoSelection extends RepoCore {
   // MARK: 파일 히스토리 · blame(가운데 영역에 띄운다)
 
   openFileHistory(path: string) {
+    if (this.destination !== "repository" || !["changes", "commits"].includes(this.repositorySection)) this.navigate("commits", false);
+    this.closeFileInspect();
     this.fileInspectLine = null;
     this.fileInspect = { mode: "history", path, rev: null };
     void this.loadFileInspect();
   }
 
   openBlame(path: string, rev: string | null = null, line: number | null = null) {
+    if (this.destination !== "repository" || !["changes", "commits"].includes(this.repositorySection)) this.navigate("commits", false);
+    this.closeFileInspect();
     this.fileInspectLine = line;
     this.fileInspect = { mode: "blame", path, rev };
     void this.loadFileInspect();
@@ -188,6 +222,8 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   closeFileInspect() {
+    this.historyGeneration++;
+    this.fileInspectLoading = false;
     this.fileInspectLine = null;
     this.fileInspect = null;
     this.fileHistory = [];
@@ -206,15 +242,19 @@ export abstract class RepoSelection extends RepoCore {
     this.emit();
     try {
       if (f.mode === "history") {
-        const r = await this.g(["log", "--follow", "-M", "--name-only", "--format=" + P.fileHistoryFormat, "--", f.path]);
+        const r = await this.g(["log", "--follow", "-M", "--name-only", "-z", "--format=" + P.fileHistoryFormat, "--", f.path]);
         if (this.fileInspect !== f) return;
-        this.fileHistory = P.parseFileHistory(r.stdout);
+        const history = await P.parseFileHistoryAsync(r.stdout);
+        if (this.fileInspect !== f) return;
+        this.fileHistory = history;
         const first = this.fileHistory[0];
         if (first && !this.fileHistory.some((e) => e.commit.id === this.fileHistorySelected)) void this.selectHistory(first);
       } else {
         const r = await this.g(["blame", "--porcelain", ...(f.rev ? [f.rev] : []), "--", f.path]);
         if (this.fileInspect !== f) return;
-        this.blameLines = P.parseBlame(r.stdout);
+        const blame = await P.parseBlameAsync(r.stdout);
+        if (this.fileInspect !== f) return;
+        this.blameLines = blame;
       }
     } catch (e) {
       if (this.fileInspect === f) this.fileInspectError = describe(e);
@@ -225,14 +265,21 @@ export abstract class RepoSelection extends RepoCore {
 
   /** 히스토리에서 커밋을 고르면 그 커밋에서 이 파일이 어떻게 바뀌었는지 */
   async selectHistory(e: FileHistoryEntry) {
+    const path = this.path;
+    if (!path) return;
+    const inspect = this.fileInspect;
+    const gen = ++this.historyGeneration;
     this.fileHistorySelected = e.commit.id;
     this.fileHistoryDiff = null;
     this.emit();
     try {
       const r = await this.g(["diff", "--no-ext-diff", "-M", e.commit.parents[0] ?? EMPTY_TREE, e.commit.id, "--", e.path]);
-      if (this.fileHistorySelected !== e.commit.id) return;
-      this.fileHistoryDiff = P.parseDiff(r.stdout);
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
+      const doc = await P.parseDiffAsync(r.stdout);
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
+      this.fileHistoryDiff = doc;
     } catch (err) {
+      if (gen !== this.historyGeneration || this.path !== path || this.fileInspect !== inspect) return;
       this.fileHistoryDiff = { lines: [], isBinary: false, truncated: false, header: [], hunks: [], error: describe(err) };
     }
     this.emit();
@@ -299,6 +346,10 @@ export abstract class RepoSelection extends RepoCore {
     const picked = new Set([...this.diffSelection].filter((i) => doc.lines[i]?.hunk === hunk));
     const patch = buildPatch(doc, [hunk], picked.size ? picked : null, action !== "stage");
     if (!patch) return;
+    if (action === "discard") {
+      const repository = this.path, source = this.diffSource;
+      if (!repository || !source || !await this.preserveDiscardedChanges(source.change.oldPath ? [source.change.oldPath, source.change.path] : [source.change.path]) || this.path !== repository) return;
+    }
     const args = ["apply", "--recount", "--whitespace=nowarn", ...(action === "stage" ? ["--cached"] : action === "unstage" ? ["--cached", "--reverse"] : ["--reverse"]), "-"];
     const label = action === "stage" ? t("Staging…") : action === "unstage" ? t("Unstaging…") : t("Discarding changes…");
     if (await this.run(label, args, { input: patch })) {
@@ -312,7 +363,7 @@ export abstract class RepoSelection extends RepoCore {
     const n = this.selectedCount(hunk);
     this.confirm = {
       title: n ? t("Discard changes in {0} selected lines?", n) : t("Discard the changes in this hunk?"),
-      message: t("That part of the working tree returns to its committed (staged) state. This can't be undone."),
+      message: t("A local recovery copy of this file is saved before discarding the selected changes."),
       actionTitle: t("Discard"),
       destructive: true,
       action: () => this.applyLines("discard", hunk),
@@ -351,6 +402,9 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   protected loadDiff(keepCurrent: boolean) {
+    this.diffCalculation?.abort();
+    const calculation = new AbortController();
+    this.diffCalculation = calculation;
     const source = this.diffSource;
     const path = this.path;
     if (!source || !path) {
@@ -373,11 +427,11 @@ export abstract class RepoSelection extends RepoCore {
           const c = source.change;
           const old = c.oldPath ?? c.path;
           doc = source.patch
-            ? P.parseDiff(`diff --git a/${old} b/${c.path}\n--- a/${old}\n+++ b/${c.path}\n${source.patch}`)
+            ? await P.parseDiffAsync(`diff --git a/${old} b/${c.path}\n--- a/${old}\n+++ b/${c.path}\n${source.patch}`, 20000, calculation.signal)
             : { lines: [], isBinary: true, truncated: false, header: [], hunks: [] };
         } else if ((source.kind === "working" || source.kind === "worktree") && source.change.kind === "untracked") {
           const head = await ipc.readHead(joinPath(source.kind === "worktree" ? source.path : path, source.change.path), 2_000_000);
-          doc = head.binary ? { lines: [], isBinary: true, truncated: false, header: [], hunks: [] } : P.newFileDiff(head.text, head.truncated);
+          doc = head.binary ? { lines: [], isBinary: true, truncated: false, header: [], hunks: [] } : await P.newFileDiffAsync(head.text, head.truncated, 20000, calculation.signal);
         } else {
           let args: string[];
           let cwd = path;
@@ -393,11 +447,13 @@ export abstract class RepoSelection extends RepoCore {
             args = ["diff", "--no-ext-diff", "-M", ...ws, source.parent ?? EMPTY_TREE, source.sha, "--", ...changePaths(source.change)];
           }
           const r = cwd === path ? await this.g(args) : await git(args, cwd);
-          doc = P.parseDiff(r.stdout);
+          if (gen !== this.diffGen) return;
+          doc = await P.parseDiffAsync(r.stdout, 20000, calculation.signal);
         }
       } catch (e) {
         doc = { lines: [], isBinary: false, truncated: false, error: describe(e), header: [], hunks: [] };
       }
+      if (gen !== this.diffGen) return;
       const images = await this.loadDiffImages(source).catch(() => null);
       if (gen !== this.diffGen) return;
       this.diff = doc;

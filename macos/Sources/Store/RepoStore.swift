@@ -26,7 +26,9 @@ final class RepoStore: Identifiable {
     private(set) var tags: [Tag] = []
     private(set) var stashes: [Stash] = []
     private(set) var status = WorkingStatus()
-    private(set) var headHash: String?
+    private(set) var headHash: String? {
+        didSet { if headHash != oldValue { queueCommitImpactValidation() } }
+    }
     private(set) var headBranch: String?
     private(set) var repoState: RepoState = .clean
     private(set) var hasMore = false
@@ -34,6 +36,33 @@ final class RepoStore: Identifiable {
     var emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
     // MARK: 선택·상세
+    enum Area { case changes, history }
+    var area: Area = .changes
+    var destination: WorkspaceDestination = .home
+    var repositorySection: RepositorySection = .changes
+    var navigationPreferencesVersion = 0
+    var workspaceNavigationPreparing = false
+    var navigationTrail: [WorkspaceLocation] = [WorkspaceLocation(.home)]
+    var navigationPosition = 0
+    var historySelection: Selection?
+    var pullRequestSelection: Int?
+    var pullRequestDiff: DiffSource?
+    var pullRequestInspect: FileInspect?
+    var worktreeDiffs: [String: DiffSource] = [:]
+    var worktreeInspects: [String: FileInspect] = [:]
+    var sidebarToggleRequest = 0
+    var showCommandPalette = false
+    var showHistoryInspector = true
+    var selectedBranchID: String?
+    var selectedBranchContext: Branch? {
+        guard case .commit(let sha)? = selection else { return nil }
+        let matches = localBranches.filter { $0.target == sha } + remoteBranches.filter { $0.target == sha }
+        return matches.first { $0.id == selectedBranchID } ?? matches.first(where: \.isCurrent) ?? matches.first
+    }
+    var changesDiff: DiffSource?
+    var historyDiff: DiffSource?
+    var changesInspect: FileInspect?
+    var historyInspect: FileInspect?
     var selection: Selection?
     var detail: CommitDetail?
     var detailFiles: [FileChange] = []
@@ -50,9 +79,32 @@ final class RepoStore: Identifiable {
 
     // MARK: UI
     var busy: String?
+    var operationNotice: String?
     var errorMessage: String?
     var sheet: SheetKind?
-    var confirm: ConfirmRequest?
+    var pushReview: PushReviewPlan?
+    var pushReviewLoading = false
+    var pushReviewGeneration = 0
+    var pushReviewError: String?
+    var pushReviewCompletion: ((Bool) -> Void)?
+    var changeQuestionSession: ChangeQuestionSession?
+    var historyTools = HistoryToolsState()
+    var collaboration = CollaborationState()
+    var localWorkflows = LocalWorkflowState()
+    var repositoryAssistant = RepositoryAssistantState()
+    var hostingHub = HostingHubState()
+    var newPullRequestDraft: NewPullRequestDraft?
+    var pullRequestWorkflowID: UUID?
+    private let confirmationGuard = RepositoryConfirmationGuard()
+    private var pendingConfirmation: ConfirmRequest?
+    var confirm: ConfirmRequest? {
+        get { pendingConfirmation }
+        set {
+            guard let request = newValue else { pendingConfirmation = nil; return }
+            let action = confirmationGuard.wrap(path: url?.path, currentPath: { [weak self] in self?.url?.path }, action: request.action)
+            pendingConfirmation = ConfirmRequest(title: request.title, message: request.message, actionTitle: request.actionTitle, destructive: request.destructive, action: action)
+        }
+    }
     var notRepoPrompt: URL?
     private(set) var recents: [URL] = Recents.load()
 
@@ -92,6 +144,13 @@ final class RepoStore: Identifiable {
     var graphJob: GraphJob?
     /// 의존 규칙 검사 창에 보일 결과(gitch graph check)
     var graphCheck: GraphCheckState?
+
+    // MARK: 커밋에 들어갈 스테이지 영향 분석 — 요청할 때만 분석하고 감시 중에는 식별값만 확인한다
+    var commitImpactState: CommitImpactState = .idle
+    var commitImpactValidationError: String?
+    var commitImpactGeneration = 0
+    var commitImpactRevision = 0
+    var commitImpactValidationTask: Task<Void, Never>?
 
     // MARK: 검색
     var searchText = ""
@@ -135,6 +194,9 @@ final class RepoStore: Identifiable {
     var reviewLoading = false
     var reviewError: String?
     var reviewBusy = false
+    var reviewDrafts: [ReviewDraftComment] = ReviewDraftStorage.load()
+    var reviewLoadID = UUID()
+    var reviewActionID: UUID?
     /// 가운데에 띄운 파일 히스토리·blame
     var fileInspect: FileInspect?
     var fileInspectLine: Int?
@@ -143,6 +205,8 @@ final class RepoStore: Identifiable {
     var fileHistoryDiff: DiffDocument?
     var blameLines: [BlameLine] = []
     var fileInspectLoading = false
+    @ObservationIgnored var fileInspectGeneration = 0
+    @ObservationIgnored var fileHistoryGeneration = 0
     var fileInspectError: String?
     /// diff 화면에서 고른 줄(DiffLine.id)과 Shift 범위의 시작
     var diffSelection: Set<Int> = []
@@ -269,6 +333,7 @@ final class RepoStore: Identifiable {
                 }
             }
         }
+        restoreWorkspaceDestination()
         // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
         let shown = Date().timeIntervalSince(started)
         if !quick && shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
@@ -378,6 +443,26 @@ final class RepoStore: Identifiable {
     }
 
     private func resetState() {
+        confirmationGuard.invalidate()
+        cancelPushReview()
+        cancelChangeQuestion()
+        historyTools.reset()
+        collaboration.reset()
+        localWorkflows.reset()
+        repositoryAssistant.reset()
+        hostingHub = .init()
+        destination = .home; repositorySection = .changes; navigationTrail = [WorkspaceLocation(.home)]; navigationPosition = 0
+        sheet = nil; confirm = nil
+        busy = nil; errorMessage = nil
+        newPullRequestDraft = nil
+        pullRequestWorkflowID = nil
+        reviewLoadID = UUID()
+        reviewActionID = nil
+        review = nil; reviewLoading = false; reviewBusy = false; reviewError = nil
+        pullRequestSelection = nil; pullRequestDiff = nil; pullRequestInspect = nil
+        worktreeDiffs = [:]; worktreeInspects = [:]
+        showCommandPalette = false; showHistoryInspector = true; selectedBranchID = nil
+        resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]
         localBranches = []; remoteBranches = []; remotes = []; tags = []; stashes = []
@@ -385,6 +470,8 @@ final class RepoStore: Identifiable {
         hasMore = false; limit = 2000; lastLog = nil
         emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
         selection = nil; detail = nil; detailFiles = []; diffSource = nil; diff = nil
+        area = .changes; historySelection = nil; changesDiff = nil; historyDiff = nil
+        changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
         aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
@@ -450,7 +537,7 @@ final class RepoStore: Identifiable {
             async let stashR = Git.run(["stash", "list", "--format=" + Parsers.stashFormat], in: url, ok: [0, 1, 128])
             async let headR = Git.run(["rev-parse", "--verify", "-q", "HEAD"], in: url, ok: [0, 1, 128])
             async let remoteR = Git.run(["remote", "-v"], in: url)
-            async let worktreeR = Git.run(["worktree", "list", "--porcelain"], in: url, ok: [0, 128])
+            async let worktreeR = Git.run(["worktree", "list", "--porcelain", "-z"], in: url, ok: [0, 128])
             async let unstagedNumR = Git.run(["diff", "--no-ext-diff", "--numstat", "-z"], in: url, ok: [0, 128])
             async let stagedNumR = Git.run(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], in: url, ok: [0, 128])
             let ((st, statusTime), lg, rf, sh, hd, rm, wt) = try await (statusR, logR, refsR, stashR, headR, remoteR, worktreeR)
@@ -466,7 +553,8 @@ final class RepoStore: Identifiable {
             let pendingKey = Self.pendingKey(pending)
             var graph: (commits: [Commit], layout: (rows: [GraphRow], maxLanes: Int), more: Bool)?
             if lastLog?.data != lg.data || lastLog?.wip != wip || lastLog?.head != head || lastLog?.pending != pendingKey || entries.isEmpty {
-                var commits = Parsers.log(lg.data)
+                var commits = await Task.detached(priority: .userInitiated) { Parsers.log(lg.data) }.value
+                guard gen == reloadGeneration, self.url == url else { return }
                 let more = commits.count > limit
                 if more { commits.removeLast(commits.count - limit) }
                 if wip { commits.insert(.wip(parent: head), at: 0) }
@@ -502,7 +590,7 @@ final class RepoStore: Identifiable {
             update(\.unstagedStats, Parsers.numstat(un.data))
             update(\.stagedStats, Parsers.numstat(sn.data))
             let newTarget = Hosting.target(remotes: remotes, urls: remoteURLs,
-                                           gitlabHosts: AccountStore.shared.accounts(for: .gitlab).map(\.host))
+                                           gitlabHosts: AccountStore.shared.accounts(for: .gitlab).map(\.host), sshAliases: AccountStore.shared.sshHostAliases)
             if let t = newTarget, t.provider == .github { AvatarStore.shared.noteGitHubRepo(t.path) }
             if newTarget != target {
                 target = newTarget
@@ -548,6 +636,7 @@ final class RepoStore: Identifiable {
         guard let root = url?.path else { return }
         let gitDirs = Set([gitDir?.path ?? root + "/.git", commonDir?.path].compactMap { $0 })
         var kind: ReloadKind?
+        var stagedSnapshotChanged = false
         for p in paths {
             if let g = gitDirs.first(where: { p == $0 || p.hasPrefix($0 + "/") }) {
                 let rel = p == g ? "" : String(p.dropFirst(g.count + 1))
@@ -557,8 +646,10 @@ final class RepoStore: Identifiable {
                 if rel == "index" {
                     // 우리가 방금 새로 고쳐 쓴 인덱스면 다시 읽을 것 없음
                     if let own = ownIndexStamp, own == indexModified() { continue }
+                    stagedSnapshotChanged = true
                     kind = max(kind ?? .status, .status)
                 } else {
+                    if rel == "HEAD" || rel.hasPrefix("refs/") || rel == "packed-refs" { stagedSnapshotChanged = true }
                     kind = .full
                 }
             } else {
@@ -566,6 +657,7 @@ final class RepoStore: Identifiable {
             }
             if kind == .full { break }
         }
+        if stagedSnapshotChanged { queueCommitImpactValidation() }
         guard let kind else { return }
         pendingKind = max(pendingKind ?? kind, kind)
         guard isActive else { pendingReload = true; return }
@@ -674,11 +766,14 @@ final class RepoStore: Identifiable {
     }
 
     private func fixSelection() {
+        let wasPreparing = workspaceNavigationPreparing
+        workspaceNavigationPreparing = true
+        defer { workspaceNavigationPreparing = wasPreparing }
         switch selection {
         case .wip?:
             break
         case .commit(let sha)?:
-            if commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) { selectDefault() }
+            if commitIndex[sha] == nil && !stashes.contains(where: { $0.hash == sha }) { showArea(.history) }
         case .worktree(let path)?:
             if !worktrees.contains(where: { $0.path == path }) { selectDefault() }
         case .pullRequest?:
@@ -691,6 +786,9 @@ final class RepoStore: Identifiable {
             if let match = all.first(where: { $0.path == c.path && $0.staged == c.staged }) {
                 diffSource = .working(match)
                 loadDiff(keepCurrent: true)
+            } else if let match = all.first(where: { $0.path == c.path }) {
+                // 파일 전체를 스테이지한 직후에도 같은 파일의 diff 를 이어서 보여 준다.
+                openDiff(.working(match), revealPage: false)
             } else {
                 closeDiff()
             }
