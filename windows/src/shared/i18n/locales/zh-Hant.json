@@ -1164,5 +1164,9 @@
   "Open a repository to use this page.": "開啟儲存庫以使用此頁面。",
   "Merge requests": "合併請求",
   "Setup diagnosis": "設定診斷",
-  "Branches": "分支"
+  "Branches": "分支",
+  "Choose a branch or tag": "選擇分支或標籤",
+  "Remote branches": "遠端分支",
+  "From revision": "起始修訂",
+  "To revision": "目標修訂"
 }

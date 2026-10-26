@@ -1118,5 +1118,9 @@
   "Open a repository to use this page.": "Mở kho lưu trữ để sử dụng trang này.",
   "Merge requests": "Merge request",
   "Setup diagnosis": "Chẩn đoán thiết lập",
-  "Branches": "Nhánh"
+  "Branches": "Nhánh",
+  "Choose a branch or tag": "Chọn nhánh hoặc thẻ",
+  "Remote branches": "Nhánh từ xa",
+  "From revision": "Bản sửa đổi nguồn",
+  "To revision": "Bản sửa đổi đích"
 }

@@ -1113,5 +1113,9 @@
   "Open a repository to use this page.": "Open een repository om deze pagina te gebruiken.",
   "Merge requests": "Merge requests",
   "Setup diagnosis": "Installatiediagnose",
-  "Branches": "Branches"
+  "Branches": "Branches",
+  "Choose a branch or tag": "Kies een branch of tag",
+  "Remote branches": "Externe branches",
+  "From revision": "Vanaf revisie",
+  "To revision": "Tot revisie"
 }

@@ -1163,5 +1163,9 @@
   "Open a repository to use this page.": "このページを使うにはリポジトリを開いてください。",
   "Merge requests": "マージリクエスト",
   "Setup diagnosis": "設定の診断",
-  "Branches": "ブランチ"
+  "Branches": "ブランチ",
+  "Choose a branch or tag": "ブランチまたはタグを選択",
+  "Remote branches": "リモートブランチ",
+  "From revision": "比較元のリビジョン",
+  "To revision": "比較先のリビジョン"
 }

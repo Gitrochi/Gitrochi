@@ -1164,5 +1164,9 @@
   "Open a repository to use this page.": "打开仓库以使用此页面。",
   "Merge requests": "合并请求",
   "Setup diagnosis": "设置诊断",
-  "Branches": "分支"
+  "Branches": "分支",
+  "Choose a branch or tag": "选择分支或标签",
+  "Remote branches": "远程分支",
+  "From revision": "起始版本",
+  "To revision": "目标版本"
 }

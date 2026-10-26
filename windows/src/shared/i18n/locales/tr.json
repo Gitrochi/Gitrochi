@@ -1151,5 +1151,9 @@
   "Open a repository to use this page.": "Bu sayfayı kullanmak için bir depo açın.",
   "Merge requests": "Merge request'ler",
   "Setup diagnosis": "Kurulum tanılaması",
-  "Branches": "Dallar"
+  "Branches": "Dallar",
+  "Choose a branch or tag": "Bir dal veya etiket seçin",
+  "Remote branches": "Uzak dallar",
+  "From revision": "Başlangıç revizyonu",
+  "To revision": "Bitiş revizyonu"
 }

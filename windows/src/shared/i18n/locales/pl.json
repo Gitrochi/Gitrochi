@@ -1145,5 +1145,9 @@
   "Open a repository to use this page.": "Otwórz repozytorium, aby użyć tej strony.",
   "Merge requests": "Merge requesty",
   "Setup diagnosis": "Diagnostyka konfiguracji",
-  "Branches": "Gałęzie"
+  "Branches": "Gałęzie",
+  "Choose a branch or tag": "Wybierz gałąź lub tag",
+  "Remote branches": "Gałęzie zdalne",
+  "From revision": "Rewizja początkowa",
+  "To revision": "Rewizja końcowa"
 }

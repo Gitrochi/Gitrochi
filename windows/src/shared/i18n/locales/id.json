@@ -1114,5 +1114,9 @@
   "Open a repository to use this page.": "Buka repositori untuk menggunakan halaman ini.",
   "Merge requests": "Merge request",
   "Setup diagnosis": "Diagnosis penyiapan",
-  "Branches": "Cabang"
+  "Branches": "Cabang",
+  "Choose a branch or tag": "Pilih cabang atau tag",
+  "Remote branches": "Cabang jarak jauh",
+  "From revision": "Revisi awal",
+  "To revision": "Revisi akhir"
 }

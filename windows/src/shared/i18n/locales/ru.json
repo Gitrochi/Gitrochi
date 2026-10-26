@@ -1162,5 +1162,9 @@
   "Open a repository to use this page.": "Откройте репозиторий, чтобы использовать эту страницу.",
   "Merge requests": "Merge-реквесты",
   "Setup diagnosis": "Диагностика настройки",
-  "Branches": "Ветки"
+  "Branches": "Ветки",
+  "Choose a branch or tag": "Выберите ветку или тег",
+  "Remote branches": "Удалённые ветки",
+  "From revision": "Исходная ревизия",
+  "To revision": "Целевая ревизия"
 }

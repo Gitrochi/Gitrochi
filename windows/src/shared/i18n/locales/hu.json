@@ -1146,5 +1146,9 @@
   "Open a repository to use this page.": "Az oldal használatához nyisson meg egy tárolót.",
   "Merge requests": "Merge requestek",
   "Setup diagnosis": "Beállítás-diagnosztika",
-  "Branches": "Ágak"
+  "Branches": "Ágak",
+  "Choose a branch or tag": "Válasszon ágat vagy címkét",
+  "Remote branches": "Távoli ágak",
+  "From revision": "Kiinduló revízió",
+  "To revision": "Célrevízió"
 }

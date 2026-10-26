@@ -1158,5 +1158,9 @@
   "Open a repository to use this page.": "เปิดที่เก็บเพื่อใช้หน้านี้",
   "Merge requests": "Merge requests",
   "Setup diagnosis": "การวินิจฉัยการตั้งค่า",
-  "Branches": "สาขา"
+  "Branches": "สาขา",
+  "Choose a branch or tag": "เลือกสาขาหรือแท็ก",
+  "Remote branches": "สาขาระยะไกล",
+  "From revision": "รีวิชันต้นทาง",
+  "To revision": "รีวิชันปลายทาง"
 }

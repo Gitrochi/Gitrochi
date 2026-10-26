@@ -1144,5 +1144,9 @@
   "Open a repository to use this page.": "Pro použití této stránky otevřete repozitář.",
   "Merge requests": "Merge requesty",
   "Setup diagnosis": "Diagnostika nastavení",
-  "Branches": "Větve"
+  "Branches": "Větve",
+  "Choose a branch or tag": "Vyberte větev nebo tag",
+  "Remote branches": "Vzdálené větve",
+  "From revision": "Výchozí revize",
+  "To revision": "Cílová revize"
 }

@@ -1162,5 +1162,9 @@
   "Open a repository to use this page.": "Відкрийте репозиторій, щоб користуватися цією сторінкою.",
   "Merge requests": "Merge-запити",
   "Setup diagnosis": "Діагностика налаштування",
-  "Branches": "Гілки"
+  "Branches": "Гілки",
+  "Choose a branch or tag": "Виберіть гілку або тег",
+  "Remote branches": "Віддалені гілки",
+  "From revision": "Початкова ревізія",
+  "To revision": "Кінцева ревізія"
 }
