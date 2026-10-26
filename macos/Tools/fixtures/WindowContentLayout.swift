@@ -198,15 +198,39 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
         settle(0.45)
         try capture("sidebar-restored")
 
+        let fullFixtureFrame = window.frame, fullFixtureMinimum = window.contentMinSize
+        guard let zoomScreen = window.screen ?? NSScreen.main else { fatalError("Native zoom needs a screen") }
+        let zoomScreenFrame = zoomScreen.visibleFrame
+        let zoomMinimum = NSSize(width: min(700, zoomScreenFrame.width * 0.6),
+                                 height: min(400, zoomScreenFrame.height * 0.5))
+        // AppKit cannot toggle zoom when the fixture minimum exceeds the runner's screen.
+        // Keep the full production minimum for the other layout scenarios.
+        host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
+            .frame(minWidth: zoomMinimum.width, minHeight: zoomMinimum.height))
+        window.contentMinSize = zoomMinimum
+        settle()
+        let zoomBaseline = NSRect(x: zoomScreenFrame.minX + 60, y: zoomScreenFrame.minY + 60,
+                                  width: min(900, zoomScreenFrame.width - 120),
+                                  height: min(540, zoomScreenFrame.height - 120))
+        window.setFrame(zoomBaseline, display: true)
+        settle()
         let beforeZoom = window.frame
+        precondition(zoomScreenFrame.contains(beforeZoom), "The native zoom baseline must fit its screen: \(beforeZoom), screen \(zoomScreenFrame)")
+        precondition(!window.isZoomed, "The native zoom baseline must leave room to zoom")
         window.zoom(nil)
-        waitForNativeFrame("native-zoom") { !equal(window.frame, beforeZoom) }
-        precondition(!equal(window.frame, beforeZoom), "Native zoom must actually resize the window")
+        waitForNativeFrame("native-zoom") { window.isZoomed && !equal(window.frame, beforeZoom) }
+        precondition(window.isZoomed && !equal(window.frame, beforeZoom), "Native zoom must actually enter the zoomed state")
         try capture("native-zoom")
         window.zoom(nil)
-        waitForNativeFrame("native-zoom-restored", expected: beforeZoom) { equal(window.frame, beforeZoom) }
-        precondition(equal(window.frame, beforeZoom), "Unzoom must restore the outer window frame")
+        waitForNativeFrame("native-zoom-restored", expected: beforeZoom) { !window.isZoomed && equal(window.frame, beforeZoom) }
+        precondition(!window.isZoomed && equal(window.frame, beforeZoom), "Unzoom must restore the outer window frame")
         try capture("native-zoom-restored")
+
+        host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
+            .frame(minWidth: 1080, minHeight: 640))
+        window.contentMinSize = fullFixtureMinimum
+        window.setFrame(fullFixtureFrame, display: true)
+        waitForNativeFrame("full-fixture-restored", expected: fullFixtureFrame) { equal(window.frame, fullFixtureFrame) }
 
         // 루트 뷰가 안전 영역을 무시해도 네이티브 콘텐츠 경계가 헤더를 보호해야 한다.
         host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
