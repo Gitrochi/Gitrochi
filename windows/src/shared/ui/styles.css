@@ -348,9 +348,10 @@
 }
 
 .tooltip {
+  overflow-wrap: anywhere;
   position: fixed;
   z-index: 1100;
-  max-width: 340px;
+  max-width: min(340px, calc(100vw - 12px));
   padding: 7px 10px;
   border-radius: 6px;
   background: var(--card);
@@ -833,3 +834,6 @@
   margin-left: 6px;
   cursor: pointer;
 }
+
+/* Panes retain their natural width and scroll within their allocated height. */
+.shared-pane { flex:none; min-width:0; overflow-x:hidden; }

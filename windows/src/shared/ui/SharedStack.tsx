@@ -52,10 +52,13 @@ export function SharedStack({
     if (!o || !b) return;
     let panes = 0;
     b.querySelectorAll<HTMLElement>(".shared-pane").forEach((p) => {
-      if (p.parentElement?.closest(".shared-stack") === o) panes += p.offsetHeight;
+      if (p.parentElement?.closest(".shared-stack") === o) panes += p.getBoundingClientRect().height;
     });
     const cs = getComputedStyle(o);
-    setAvailable(Math.max(0, o.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (b.offsetHeight - panes)));
+    const fixed = b.getBoundingClientRect().height - panes;
+    const next = Math.max(0, Math.floor(o.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - fixed));
+    // Fractional flex heights must not alternate the rounded measurement on every layout effect.
+    setAvailable((previous) => Math.abs(previous - next) <= 1 ? previous : next);
   }, []);
   useLayoutEffect(measure); // after every render: the fixed parts may have changed
   useLayoutEffect(() => {
