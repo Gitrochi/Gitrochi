@@ -1,0 +1,4 @@
+module GitrochiCore {
+    header "gitrochi_core.h"
+    export *
+}
