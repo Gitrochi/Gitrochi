@@ -695,25 +695,24 @@ fn detach(out: &Out, store: &Store) -> i32 {
         c.creation_flags(0x0000_0008 | 0x0000_0200 | 0x0100_0000 | 0x0800_0000);
     }
     #[cfg(windows)]
-    let stdio_inheritance = match crate::process::StdioInheritanceGuard::new() {
+    let _stdio_inheritance = match crate::process::NoInheritedStdio::new() {
         Ok(guard) => guard,
-        Err(e) => return out.fail("ENGINE-01", 1, &e.to_string(), Value::Null),
+        Err(error) => return out.fail("ENGINE-01", 1, &error.to_string(), Value::Null),
     };
-    let spawned = c.spawn();
+    let child = c.spawn();
     #[cfg(windows)]
-    let spawned = match spawned {
-        // CI runners can forbid job breakaway; keep their job membership while detaching.
-        Err(e) if e.raw_os_error() == Some(5) => {
+    let child = match child {
+        Err(error) if error.raw_os_error() == Some(5) => {
             use std::os::windows::process::CommandExt;
-            // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+            // Managed terminals and CI jobs can prohibit breakaway. Stay in that job when required.
             c.creation_flags(0x0000_0008 | 0x0000_0200 | 0x0800_0000);
             c.spawn()
         }
         result => result,
     };
     #[cfg(windows)]
-    drop(stdio_inheritance);
-    match spawned {
+    drop(_stdio_inheritance);
+    match child {
         Ok(ch) => {
             let _ = std::fs::write(run_dir.join("pid"), ch.id().to_string());
             let v = json!({"schemaVersion": 1, "runId": run_id, "pid": ch.id(), "runDir": run_dir.to_string_lossy(), "eventsPath": run_dir.join("events.ndjson").to_string_lossy()});

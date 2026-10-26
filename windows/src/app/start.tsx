@@ -12,7 +12,8 @@ import { theme } from "@/shared/ui";
 import { runSelfTest } from "./selftest";
 import { App } from "./ui/App";
 import { startAppLaunches } from "./lib/app-launch";
-import { selfTestProgress } from "./lib/selftest-progress";
+import { selfTestProgress } from "./lib/selftest-report";
+import { SelfTestBoundary } from "./lib/selftest-boundary";
 // 웹뷰 기본 우클릭 메뉴(새로 고침·검사 등)는 끄고, 앱 메뉴만 쓴다(입력 칸은 그대로)
 window.addEventListener("contextmenu", (e) => {
   const el = e.target as HTMLElement;
@@ -22,13 +23,15 @@ window.addEventListener("contextmenu", (e) => {
 /** 언어를 정한 뒤에 불러온다(모듈 맨 위의 t() 가 고른 언어로 읽히게) */
 export async function start() {
   theme.init();
-  await selfTestProgress("Detecting external tools");
+  await selfTestProgress("Detect tools");
   await tools.detectAll();
-  await selfTestProgress("Loading accounts, AI and agents");
+  await selfTestProgress("Load accounts, AI and agents");
   await Promise.all([accounts.load(), ai.load(), agents.init()]);
   const git = gitAvailable();
-  createRoot(document.getElementById("root")!).render(<App gitMissing={!git} />);
-  await selfTestProgress("Rendering app");
+  await selfTestProgress("Mount React application");
+  const application = <App gitMissing={!git} />;
+  createRoot(document.getElementById("root")!).render(env.selftest ? <SelfTestBoundary>{application}</SelfTestBoundary> : application);
+  await selfTestProgress("React render requested");
   // 첫 화면(로딩 애니메이션)이 그려진 뒤 창을 보여 준다 — 흰 화면 번쩍임 없이.
   // 숨긴 창에서는 requestAnimationFrame 이 돌지 않으므로 타이머로 부른다.
   setTimeout(() => void ipc.appReady(), 30);

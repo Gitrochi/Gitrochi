@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Render actual PR and organization screens using isolated, deterministic data and disabled networking.
+# Optional: GITROCHI_REQUEST_LAYOUT_SCENARIOS=organizations,members for a targeted render.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d /tmp/gitrochi-request-layout-source.XXXXXX)"
@@ -39,6 +40,9 @@ for source in (root / 'Sources').rglob('*.swift'):
         text = text.replace('        Askpass.install()', '        // Disabled in deterministic fixture.')
         text = replace_body(text, '    func token(for a: HostAccount)', '        return \"fixture-value\"')
         text += '\nextension AccountStore { func fixtureAccounts(_ values: [HostAccount]) { accounts = values } }\n'
+    elif relative == 'Services/AvatarStore.swift':
+        # Keep initials deterministic without disk caches or external image requests.
+        text = replace_body(text, '    func image(for rawEmail:', '        return nil')
     elif relative == 'Services/Tools.swift':
         text = replace_body(text, '    private init()', '        states[.git] = State(path: "/usr/bin/git", source: .auto, version: "fixture")')
     elif relative == 'Services/Hosting.swift':
@@ -61,8 +65,10 @@ for source in (root / 'Sources').rglob('*.swift'):
         # Exercise the loaded-image layout without external HTTP or authentication.
         text = replace_body(text, '    private func load() async', '        image = requestFixtureImage; loading = false')
     elif relative == 'Views/Shared/HostingAvatar.swift':
-        # Keep both a loaded avatar and the normal initials fallback in the same screenshot.
-        text = text.replace('if let image = phase.image {', 'if let image = avatarURL.map({ _ in Image(nsImage: requestFixtureAvatar) }) {')
+        # Exercise loaded member photos and organization logos without external image requests.
+        original = 'AsyncImage(url: AvatarStore.shared.enabled ? avatarURL : nil)'
+        assert original in text, 'HostingAvatar loader changed; update deterministic image injection.'
+        text = text.replace(original, 'RequestFixtureAvatarImage(url: AvatarStore.shared.enabled ? avatarURL : nil)')
     dest = target / 'Sources' / relative
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(text)

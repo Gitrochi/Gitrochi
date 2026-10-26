@@ -51,7 +51,8 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLButtonElement>(".workspace-nav-customize")!.click();
     const settingsButton = [...host.querySelectorAll<HTMLButtonElement>(".workspace-nav-footer button")][0]; settingsButton.click(); ensure(opened === 1, "Settings footer did not open preferences");
     const input = host.querySelector<HTMLInputElement>(".workspace-nav-search input")!;
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })); ensure(document.activeElement === input, "Page search shortcut did not focus navigation");
+    settingsButton.focus();
+    settingsButton.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true })); ensure(document.activeElement === input, "Page search shortcut did not focus navigation");
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, t("Rebase")); input.dispatchEvent(new Event("input", { bubbles: true })); await pause();
     ensure(host.querySelectorAll(".workspace-nav-scroll .workspace-nav-item").length === 1 && row("rebase"), "Page search must find tools that are not pinned");
     row("rebase")!.click(); await pause(); ensure(matches("rebase"), "Search did not open the unpinned repository tool");

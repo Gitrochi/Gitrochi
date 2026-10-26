@@ -2,6 +2,14 @@ import SwiftUI
 import AppKit
 import Observation
 
+private func require(_ condition: @autoclosure () -> Bool, _ message: String = "Sidebar assertion failed",
+                     file: StaticString = #fileID, line: UInt = #line) {
+    if !condition() {
+        FileHandle.standardError.write(Data("\(file):\(line): \(message)\n".utf8))
+        exit(1)
+    }
+}
+
 @MainActor @Observable private final class SidebarRecorder {
     var presentation = SidebarPresentationState()
     var suppressNativeVisibilityEcho = false
@@ -18,6 +26,7 @@ import Observation
     var writeRequest = 0
     var requestedDraft = ""
     var railVisible = false
+    var measuredWidth: CGFloat = 0
 
     func measure(_ value: Bool) {
         collapsed = value
@@ -74,8 +83,9 @@ private struct SidebarFixture: View {
             .onAppear { recorder.railVisible = railShown }
             .onChange(of: railShown) { _, value in recorder.railVisible = value }
         }
-        .onGeometryChange(for: Bool.self) { $0.size.width < 1180 } action: { narrow in
-            recorder.presentation.setNarrow(narrow)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+            recorder.measuredWidth = width
+            recorder.presentation.setNarrow(width < 1180)
         }
     }
 }
@@ -84,20 +94,20 @@ private struct SidebarFixture: View {
     @MainActor static func main() {
         var automatic = SidebarPresentationState()
         automatic.setNarrow(true)
-        precondition(automatic.isNarrow && automatic.visibility == .detailOnly)
+        require(automatic.isNarrow && automatic.visibility == .detailOnly)
         automatic.setVisibility(.detailOnly)
         automatic.setNarrow(false)
-        precondition(automatic.visibility == .automatic, "An unchanged native echo must preserve automatic restoration")
+        require(automatic.visibility == .automatic, "An unchanged native echo must preserve automatic restoration")
         var manual = SidebarPresentationState()
         manual.setVisibility(.detailOnly)
         manual.setNarrow(true)
         manual.setNarrow(false)
-        precondition(manual.visibility == .detailOnly, "Manual collapse must never be automatically expanded")
+        require(manual.visibility == .detailOnly, "Manual collapse must never be automatically expanded")
         manual.expand()
         manual.setNarrow(true)
         manual.expand()
         manual.setNarrow(false)
-        precondition(manual.visibility == .all, "Explicit narrow expansion must survive widening")
+        require(manual.visibility == .all, "Explicit narrow expansion must survive widening")
         let app = NSApplication.shared
         app.setActivationPolicy(.prohibited)
         let recorder = SidebarRecorder()
@@ -106,16 +116,8 @@ private struct SidebarFixture: View {
                               styleMask: [.titled, .resizable, .closable], backing: .buffered, defer: false)
         window.contentView = host
         window.orderBack(nil)
-
-        func settle(_ duration: TimeInterval = 0.15) {
-            let end = Date().addingTimeInterval(duration)
-            repeat {
-                host.layoutSubtreeIfNeeded()
-                window.displayIfNeeded()
-                RunLoop.current.run(until: Date().addingTimeInterval(0.015))
-            } while Date() < end
-            host.layoutSubtreeIfNeeded()
-        }
+        // Initial window presentation can constrain the frame to the runner's display.
+        window.setContentSize(NSSize(width: 1440, height: 650))
 
         func descendants(_ view: NSView) -> [NSView] {
             [view] + view.subviews.flatMap(descendants)
@@ -148,24 +150,62 @@ private struct SidebarFixture: View {
         func sidebarContainer(_ split: NSSplitView) -> NSView {
             var view = sidebarView(split)
             while let parent = view.superview, parent !== split { view = parent }
-            precondition(view.superview === split, "The sidebar must belong to the native split view")
+            require(view.superview === split, "The sidebar must belong to the native split view")
             return view
         }
 
         func checkRetainedState() {
-            precondition(recorder.mounted == 1, "Sidebar changes must not remount the detail screen")
-            precondition(recorder.identity == initialIdentity, "Sidebar changes replaced the detail identity")
-            precondition(recorder.draft == recorder.requestedDraft, "Sidebar changes discarded the unsent draft")
+            require(recorder.mounted == 1, "Sidebar changes must not remount the detail screen")
+            require(recorder.identity == initialIdentity, "Sidebar changes replaced the detail identity")
+            require(recorder.draft == recorder.requestedDraft, "Sidebar changes discarded the unsent draft")
         }
 
-        settle(0.3)
-        precondition(recorder.reports.last == false, "Expanded sidebar must be reported as visible")
-        precondition(!recorder.railVisible, "Expanded sidebar must not duplicate navigation in a rail")
+        var scenario = "initial-expanded"
+
+        func diagnostics() -> String {
+            let splits = descendants(host).compactMap { $0 as? NSSplitView }
+            let widths = splits.map { $0.arrangedSubviews.map { $0.frame.width } }
+            let binding = recorder.visibility == .detailOnly ? "detail-only" : recorder.visibility == .all ? "all" : "automatic"
+            let screens = NSScreen.screens.map { $0.visibleFrame }
+            return "scenario=\(scenario) binding=\(binding) narrow=\(recorder.presentation.isNarrow) collapsed=\(recorder.collapsed) rail=\(recorder.railVisible) mounts=\(recorder.mounted) windowFrame=\(window.frame) contentFrame=\(window.contentView?.frame ?? .zero) hostFrame=\(host.frame) measuredWidth=\(recorder.measuredWidth) splitWidths=\(widths) screens=\(screens) reports=\(recorder.reports)"
+        }
+
+        // Native sidebar transitions finish asynchronously, especially on hosted runners.
+        func waitFor(_ name: String, timeout: TimeInterval = 5, _ condition: () -> Bool) {
+            scenario = name
+            let deadline = ProcessInfo.processInfo.systemUptime + timeout
+            var matchedSince: TimeInterval?
+            repeat {
+                host.layoutSubtreeIfNeeded()
+                window.displayIfNeeded()
+                RunLoop.current.run(until: Date().addingTimeInterval(0.015))
+                let now = ProcessInfo.processInfo.systemUptime
+                if condition() {
+                    if let matchedSince, now - matchedSince >= 0.1 {
+                        FileHandle.standardError.write(Data("Sidebar visibility passed: \(diagnostics())\n".utf8))
+                        return
+                    }
+                    if matchedSince == nil { matchedSince = now }
+                } else {
+                    matchedSince = nil
+                }
+            } while ProcessInfo.processInfo.systemUptime < deadline
+            require(false, "Timed out waiting for native sidebar state: \(diagnostics())")
+        }
+
+        func matchesWidth(_ width: CGFloat) -> Bool {
+            abs(host.frame.width - width) <= 1 && abs(recorder.measuredWidth - width) <= 1
+        }
+
+        waitFor("initial-wide-1440") { matchesWidth(1440) }
+        waitFor("initial-expanded") {
+            recorder.reports.last == false && !recorder.railVisible && recorder.identity != nil && recorder.mounted == 1
+        }
         let initialIdentity = recorder.identity
-        precondition(initialIdentity != nil && recorder.mounted == 1)
+        require(initialIdentity != nil && recorder.mounted == 1)
         recorder.requestedDraft = "Unsent commit review — keep me across sidebar changes"
         recorder.writeRequest += 1
-        settle()
+        waitFor("draft-edited") { recorder.draft == recorder.requestedDraft }
 
         var checks: [[String: Any]] = []
         func capture(_ scenario: String) {
@@ -173,94 +213,108 @@ private struct SidebarFixture: View {
             let split = navigationSplit()
             checks.append(["scenario": scenario, "railVisible": recorder.railVisible,
                            "observerCollapsed": recorder.collapsed, "sidebarWidth": sidebarView(split).frame.width,
-                           "bindingDetailOnly": recorder.visibility == .detailOnly])
+                           "bindingDetailOnly": recorder.visibility == .detailOnly,
+                           "contentWidth": host.frame.width, "measuredWidth": recorder.measuredWidth])
         }
 
         recorder.visibility = .detailOnly
-        settle(0.3)
-        precondition(recorder.railVisible, "Explicit collapse must keep the icon rail visible")
+        waitFor("binding-detail-only") { recorder.collapsed && recorder.railVisible }
+        require(recorder.railVisible, "Explicit collapse must keep the icon rail visible")
         capture("binding-detail-only")
         recorder.visibility = .all
-        settle(0.3)
-        precondition(!recorder.railVisible, "Expanding the sidebar must remove the duplicate rail")
+        waitFor("binding-expanded") { !recorder.collapsed && !recorder.railVisible }
+        require(!recorder.railVisible, "Expanding the sidebar must remove the duplicate rail")
         capture("binding-expanded")
 
         let split = navigationSplit()
         let controller = splitController(split)
         controller.toggleSidebar(nil)
-        settle(0.4)
-        precondition(recorder.railVisible, "Native sidebar toggle must keep the icon rail visible")
+        waitFor("native-sidebar-toggle") { recorder.collapsed && recorder.railVisible }
+        require(recorder.railVisible, "Native sidebar toggle must keep the icon rail visible")
         capture("native-sidebar-toggle")
         controller.toggleSidebar(nil)
-        settle(0.4)
-        precondition(!recorder.railVisible, "Native sidebar expand must remove the duplicate rail")
+        waitFor("native-sidebar-expand") { !recorder.collapsed && !recorder.railVisible }
+        require(!recorder.railVisible, "Native sidebar expand must remove the duplicate rail")
         capture("native-sidebar-expand")
 
-        // 자동 레이아웃이 바인딩을 갱신하지 않고 뷰만 접는 경로도 별도로 검증한다.
+        // Also check native layout changes that leave the SwiftUI binding untouched.
         let nativeSidebar = sidebarContainer(navigationSplit())
         nativeSidebar.isHidden = true
-        settle(0.25)
-        precondition(recorder.visibility != .detailOnly, "The visibility-only case must not rely on the SwiftUI binding")
-        precondition(recorder.collapsed && recorder.railVisible, "Actual hidden sidebar must reveal icons without a binding update")
+        waitFor("native-visibility-only-collapse") { recorder.collapsed && recorder.railVisible }
+        require(recorder.visibility != .detailOnly, "The visibility-only case must not rely on the SwiftUI binding")
+        require(recorder.collapsed && recorder.railVisible, "Actual hidden sidebar must reveal icons without a binding update")
         capture("native-visibility-only-collapse")
         nativeSidebar.isHidden = false
-        settle(0.25)
-        precondition(!recorder.collapsed && !recorder.railVisible, "Restored native visibility must remove the duplicate icons")
+        waitFor("native-visibility-only-expand") { !recorder.collapsed && !recorder.railVisible }
+        require(!recorder.collapsed && !recorder.railVisible, "Restored native visibility must remove the duplicate icons")
         capture("native-visibility-only-expand")
 
         recorder.suppressNativeVisibilityEcho = true
         let sidebarItem = controller.splitViewItems.first(where: { $0.behavior == .sidebar })!
         sidebarItem.isCollapsed = true
-        settle(0.3)
-        precondition(recorder.visibility == .all && recorder.collapsed && recorder.railVisible,
+        waitFor("native-only-collapse") { recorder.collapsed && recorder.railVisible }
+        require(recorder.visibility == .all && recorder.collapsed && recorder.railVisible,
                      "The native-only collapse must retain an expanded binding for this regression")
         recorder.presentation.expand()
         recorder.expandRequest += 1
-        settle(0.3)
-        precondition(!sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible,
+        waitFor("rail-expands-native-only-collapse") {
+            !sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible
+        }
+        require(!sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible,
                      "The icon rail expansion must open the actual sidebar even when the binding was already expanded")
         recorder.suppressNativeVisibilityEcho = false
         capture("rail-expands-native-only-collapse")
 
         window.setContentSize(NSSize(width: 1100, height: 650))
-        settle(0.4)
-        precondition(recorder.visibility == .detailOnly && recorder.railVisible,
+        waitFor("automatic-narrow-1100") {
+            let sidebar = sidebarView(navigationSplit())
+            let hidden = sidebar.isHiddenOrHasHiddenAncestor || sidebar.frame.width <= 1
+            return matchesWidth(1100) && recorder.presentation.isNarrow && recorder.visibility == .detailOnly && recorder.railVisible
+                && recorder.collapsed == hidden
+        }
+        require(recorder.visibility == .detailOnly && recorder.railVisible,
                      "A narrow window must automatically retain navigation as an icon rail")
         let narrowedSplit = navigationSplit()
         let narrowedSidebar = sidebarView(narrowedSplit)
         let actuallyCollapsed = narrowedSidebar.isHiddenOrHasHiddenAncestor || narrowedSidebar.frame.width <= 1
-        precondition(recorder.collapsed == actuallyCollapsed, "Observer must follow actual native geometry at narrow widths")
-        precondition(recorder.railVisible == (actuallyCollapsed || recorder.visibility == .detailOnly),
+        require(recorder.collapsed == actuallyCollapsed, "Observer must follow actual native geometry at narrow widths")
+        require(recorder.railVisible == (actuallyCollapsed || recorder.visibility == .detailOnly),
                      "Narrow windows must retain navigation whenever the sidebar is actually hidden")
         capture("automatic-narrow-1100")
 
         window.setContentSize(NSSize(width: 1440, height: 650))
-        settle(0.4)
-        precondition(!recorder.railVisible, "Wide expanded windows must restore the sidebar without duplicate icons")
+        waitFor("automatic-restore-wide-1440") {
+            matchesWidth(1440) && !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible
+        }
+        require(!recorder.railVisible, "Wide expanded windows must restore the sidebar without duplicate icons")
         capture("automatic-restore-wide-1440")
 
         recorder.visibility = .detailOnly
-        settle(0.25)
+        waitFor("manual-collapse-before-resize") { recorder.collapsed && recorder.railVisible }
         window.setContentSize(NSSize(width: 1100, height: 650))
-        settle(0.25)
+        waitFor("manual-collapse-retained-narrow") { matchesWidth(1100) && recorder.presentation.isNarrow && recorder.railVisible }
         window.setContentSize(NSSize(width: 1440, height: 650))
-        settle(0.3)
-        precondition(recorder.visibility == .detailOnly && recorder.railVisible,
+        waitFor("manual-collapse-retained-wide") { matchesWidth(1440) && !recorder.presentation.isNarrow && recorder.railVisible }
+        require(recorder.visibility == .detailOnly && recorder.railVisible,
                      "Manual sidebar collapse must survive narrow and wide resizing")
         capture("manual-collapse-retained-wide")
 
         recorder.presentation.expand()
-        settle(0.25)
+        recorder.expandRequest += 1
+        waitFor("manual-expand-before-resize") { !recorder.collapsed && !recorder.railVisible }
         window.setContentSize(NSSize(width: 1100, height: 650))
-        settle(0.3)
+        waitFor("automatic-collapse-before-manual-expand") {
+            matchesWidth(1100) && recorder.presentation.isNarrow && recorder.collapsed && recorder.railVisible
+        }
         recorder.presentation.expand()
-        settle(0.3)
-        precondition(recorder.visibility == .all && !recorder.railVisible,
+        recorder.expandRequest += 1
+        waitFor("manual-expand-narrow") { !recorder.collapsed && !recorder.railVisible }
+        require(recorder.visibility == .all && !recorder.railVisible,
                      "Users must be able to expand navigation while the window is narrow")
         capture("manual-expand-narrow")
         window.setContentSize(NSSize(width: 1440, height: 650))
-        settle(0.3)
-        precondition(recorder.visibility == .all && !recorder.railVisible,
+        waitFor("manual-expand-retained-wide") { matchesWidth(1440) && !recorder.presentation.isNarrow && !recorder.collapsed && !recorder.railVisible }
+        require(recorder.visibility == .all && !recorder.railVisible,
                      "Widening must preserve the explicit narrow-window expansion")
         capture("manual-expand-retained-wide")
         let result: [String: Any] = ["ok": true, "checks": checks, "presentationStateChecks": 3, "detailMounts": recorder.mounted,

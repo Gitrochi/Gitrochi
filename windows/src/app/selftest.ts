@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
+import { dirname, env, joinPath, samePath, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -36,7 +36,8 @@ import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
-import { selfTestProgress } from "./lib/selftest-progress";
+import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
+import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -165,11 +166,6 @@ export async function runSelfTest(): Promise<boolean> {
   const repo = env.selftest;
   if (!repo) return false;
   const checks: Check[] = [];
-  const out = joinPath(dirname(repo), "selftest-result.json");
-  // a render error unmounts the whole React tree (blank window) — record it so the result says what broke
-  const uncaught: string[] = [];
-  window.addEventListener("error", (e) => uncaught.push(`${e.message} @ ${e.filename?.split("/").pop()}:${e.lineno}`));
-  window.addEventListener("unhandledrejection", (e) => uncaught.push(`unhandled: ${String(e.reason).slice(0, 200)}`));
   const check = (name: string, ok: boolean, detail?: unknown) => {
     checks.push({ name, ok, detail: detail === undefined ? undefined : String(detail).slice(0, 500) });
   };
@@ -182,7 +178,7 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
-    await selfTestProgress(`Completed: ${name}`, checks);
+    await selfTestProgress(`${name}: finished`, checks);
   };
 
   workspace.restoring = false;
@@ -237,6 +233,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("접힌 메뉴와 좁은 창에서도 아이콘·고정 도구·설정·검색 유지", compactNavigationSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
+  await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("브랜치·비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직·gist 작업 화면", hostingHubSelfTest);
   await step("홈·저장소·이슈·CI·도구 작업 화면", workspacePanelsSelfTest);
@@ -572,7 +569,7 @@ export async function runSelfTest(): Promise<boolean> {
     s.ci.reset();
     // 화면: CI/CD 탭이 그려지는지(이 저장소는 원격이 없어 안내 문구)
     s.navigate("actions");
-    const panel = await until(() => document.body.innerText.includes(t("Open a repository with a GitHub or GitLab remote to use this workspace.")), 3000);
+    const panel = await until(() => document.querySelector(".workspace-ci")?.textContent?.includes(t("You can view and run pipelines in repositories with a GitHub or GitLab remote.")) === true, 3000);
     s.navigate("commits");
     const ok =
       pipes.length === 1 &&
@@ -699,7 +696,8 @@ export async function runSelfTest(): Promise<boolean> {
       !!el.querySelector("h2") &&
       el.querySelectorAll("li.task input:checked").length === 1 &&
       !el.querySelector("script, img, iframe") &&
-      links.join() === "https://github.com/o/r/issues/5" &&
+      links.join() === "https://raw.githubusercontent.com/o/r/HEAD/x,https://github.com/o/r/issues/5" &&
+      el.querySelectorAll(".md-image-alt").length === 1 &&
       !(window as { mdHacked?: number }).mdHacked;
     const detail = `links=${links} tags=${Array.from(el.querySelectorAll("*")).map((e) => e.tagName.toLowerCase()).join(",")}`;
     root.unmount();
@@ -758,14 +756,16 @@ export async function runSelfTest(): Promise<boolean> {
     s.setPinned(b, true);
     const pinned = await until(() => [...document.querySelectorAll(".workbench-ref")].some((x) => x.textContent?.includes(b.name) && !!x.querySelector("[data-pinned=\"true\"]")), 3000);
     s.setPinned(b, false);
+    // Exercise the current branch workspace controls, including their updated state.
+    const row = () => [...document.querySelectorAll(".workbench-ref")].find((r) => r.querySelector(".workbench-ref-main strong")?.getAttribute("title") === b.name);
+    const visibilityButton = (label: string) => [...(row()?.querySelectorAll<HTMLButtonElement>(".workbench-ref-actions button") ?? [])].find((button) => button.textContent?.trim() === t(label));
+    const ready = await until(() => visibilityButton("Hide from graph")?.disabled === false, 3000);
+    visibilityButton("Hide from graph")?.click();
+    const eyeHid = await until(() => s.isHidden(b) && !!visibilityButton("Show in graph again"), 5000);
+    visibilityButton("Show in graph again")?.click();
+    const eyeShown = await until(() => !s.isHidden(b) && has() && !!visibilityButton("Hide from graph"), 5000);
     s.navigate("commits");
-    // the eye button on the sidebar row hides the branch and shows it again
-    const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
-    eye()?.click();
-    const eyeHid = await until(() => s.isHidden(b), 5000);
-    eye()?.click();
-    const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
-    return [before && hidden && back && current && pinned && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${eyeHid}/${eyeShown}`];
+    return [before && hidden && back && current && pinned && ready && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} controls=${ready} eye=${eyeHid}/${eyeShown}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침
@@ -969,14 +969,14 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("No uncaught errors and the app still renders", async () => {
     const alive = !!document.querySelector(".repo");
+    const uncaught = selfTestRecorder()?.errors ?? [];
     return [uncaught.length === 0 && alive, `alive=${alive} ${uncaught.slice(0, 3).join(" | ")}`];
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다
   s.navigate("commits");
   s.select({ kind: "commit", sha: s.headHash! });
-  const result = { ok: checks.every((c) => c.ok), os: env.os, windows: isWindows(), checks };
-  await ipc.writeText(out, JSON.stringify(result, null, 2));
+  await selfTestRecorder()?.finish(checks);
   if (env.selftestOpen) window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: env.selftestOpen }));
   return true;
 }

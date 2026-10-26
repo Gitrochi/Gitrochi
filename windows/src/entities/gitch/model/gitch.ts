@@ -1,6 +1,6 @@
 import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, slash } from "@/shared/config";
-import { t } from "@/shared/i18n";
+import { language, t } from "@/shared/i18n";
 import { git, tools } from "@/shared/platform";
 import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
 import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
@@ -278,6 +278,12 @@ function graphFailure(r: { status: number; stdout: string; stderr: string }) {
   return new GitchError(plain(r.stderr) || plain(r.stdout) || `exit ${r.status}`);
 }
 
+/** macOS: AppLanguage.graphCode(for:). Unsupported app languages use English. */
+export function graphLanguage(code = language): "en" | "ko" | "ja" {
+  const base = code.toLowerCase().replaceAll("_", "-").split("-")[0];
+  return base === "ko" || base === "ja" ? base : "en";
+}
+
 /**
  * 임시 폴더의 gitch-graph/(터미널의 gitch graph 가 쓰는 곳)에 <저장소 폴더>-<이름>-<경로 해시>.html(이름: 관계 · <관계>-diff · check).
  * 다시 그리면 덮어쓰고, 폴더 이름이 같은 다른 저장소 · 워크트리와는 해시로 갈린다.
@@ -286,7 +292,8 @@ async function graphFile(kind: string, repo: string): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(slash(repo))));
   const hash = [...digest.slice(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join("");
   const name = slash(repo).replace(/\/+$/, "").split("/").pop() || "repo";
-  return joinPath(env.temp, "gitch-graph", `${name}-${kind}-${hash}.html`);
+  // Separate watcher identities so an earlier language cannot overwrite this page.
+  return joinPath(env.temp, "gitch-graph", `${name}-${kind}-${graphLanguage()}-${hash}.html`);
 }
 
 class GitchService {
@@ -541,7 +548,7 @@ class GitchService {
   private async runGraph(args: string[], repo: string, ok = [0]) {
     const reason = await this.graphUnavailable();
     if (reason) throw new GitchError(reason);
-    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled);
+    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage() });
     if (!ok.includes(r.status)) throw graphFailure(r);
     return r;
   }

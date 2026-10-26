@@ -40,6 +40,15 @@ enum AppLanguage {
     /// 지금 화면에 쓰는 언어(번역 묶음 기준)
     static var current: String { Bundle.main.preferredLocalizations.first ?? defaultCode }
 
+    /// Keep the offline graph in the app language, including an explicit choice before relaunch.
+    static var graphCode: String { graphCode(for: choice == "system" ? current : choice) }
+
+    /// Windows: graphLanguage in entities/gitch/model/gitch.ts.
+    static func graphCode(for language: String) -> String {
+        let code = language.lowercased().replacingOccurrences(of: "_", with: "-").split(separator: "-").first.map(String.init) ?? "en"
+        return ["en", "ko", "ja"].contains(code) ? code : "en"
+    }
+
     static var locale: Locale { Locale(identifier: current) }
 
     /// AI 에게 쓰라고 할 언어 이름(영어)

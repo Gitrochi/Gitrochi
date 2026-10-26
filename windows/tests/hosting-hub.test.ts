@@ -7,6 +7,38 @@ const item=(data:Record<string,unknown>={}):HubItem=>({id:"1",title:"Release",su
 const detail=(i=item()):HubDetail=>({item:i,files:[],members:[],repositories:[],assets:[],fields:[],rows:[],more:false});
 afterEach(()=>vi.restoreAllMocks());
 describe("hosting workspace endpoints",()=>{
+ it("keeps organization icons from list and detail responses without extra requests", async () => {
+   const listAvatar = "https://avatars.githubusercontent.com/u/5?v=4";
+   const detailAvatar = "https://avatars.githubusercontent.com/u/5?v=5";
+   const http = vi.spyOn(ipc, "http").mockImplementation(async (_method, url) => response(
+     url.includes("/user/orgs?") ? [{id:5, login:"team", avatar_url:listAvatar}]
+       : url.includes("/repos?") ? [] : {name:"Team", avatar_url:detailAvatar}
+   ));
+   const page = await hubPage(c(), "organizations");
+   expect(page.items[0].avatarURL).toBe(listAvatar);
+   expect((await hubDetail(c(), "organizations", page.items[0])).item.avatarURL).toBe(detailAvatar);
+   expect(http).toHaveBeenCalledTimes(3);
+   expect(http.mock.calls.every(([method]) => method === "GET")).toBe(true);
+ });
+ it("resolves GitLab group icons and retains them when detail omits the field", async () => {
+   let profile: Record<string, unknown> = {name:"Team"};
+   vi.spyOn(ipc, "http").mockImplementation(async (_method, url) => response(
+     url.includes("/groups?") ? [{id:5, name:"Team", full_path:"team", avatar_url:"/uploads/group/avatar/5/team.png"}]
+       : url.includes("/projects?") ? [] : profile
+   ));
+   const page = await hubPage(c("gitlab"), "organizations");
+   expect(page.items[0].avatarURL).toBe("https://gitlab.test/uploads/group/avatar/5/team.png");
+   expect((await hubDetail(c("gitlab"), "organizations", page.items[0])).item.avatarURL).toBe(page.items[0].avatarURL);
+   profile = {name:"Team", avatar_url:null};
+   expect((await hubDetail(c("gitlab"), "organizations", page.items[0])).item.avatarURL).toBeNull();
+ });
+ it("rejects unsafe organization icon addresses and keeps initials available", async () => {
+   const values = ["javascript:alert(1)", "data:image/png;base64,test", "http://github.com/team.png", "https://me:secret@github.com/team.png", "https://evil.test/team.png", "//avatars.githubusercontent.com/u/5", "", null];
+   vi.spyOn(ipc, "http").mockResolvedValue(response(values.map((avatar_url, id) => ({id, login:`team-${id}`, avatar_url}))));
+   const page = await hubPage(c(), "organizations");
+   expect(page.items).toHaveLength(values.length);
+   expect(page.items.every(item => item.avatarURL === null)).toBe(true);
+ });
  it("switches explicitly between repository-owner and personal Projects without affecting releases",async()=>{const saved=accounts.accounts,account={id:"gh",provider:"github" as const,server:"https://github.com",username:"me",name:null,avatarURL:null};accounts.accounts=[account];vi.spyOn(accounts,"token").mockResolvedValue("fixture-token");const http=vi.spyOn(ipc,"http").mockImplementation(async(_method,url,_headers,body)=>{if(url.endsWith("/graphql")){const query=JSON.parse(body!);return response({data:query.query.includes("user(login:$owner)")?{user:{projectsV2:{nodes:[{id:"personal",title:"My roadmap"}],pageInfo:{}}}}:{repository:{owner:{projectsV2:{nodes:[],pageInfo:{}}}}}});}return response([]);});try{const hub=new HostingHubStore({path:"fixture",target:c().target,hostingAccount:account});await hub.activate("projects");expect(hub.projectOwner).toBe("team");expect(hub.items).toHaveLength(0);await hub.selectProjectScope("personal");expect(hub.projectOwner).toBe("me");expect(hub.items[0].id).toBe("personal");const personal=JSON.parse(http.mock.calls[1][3]!);expect(personal.variables.owner).toBe("me");expect(personal.query).toContain("user(login:$owner)");await hub.activate("releases");expect(http.mock.calls[2][1]).toContain("/repos/team/repo/releases");expect(http.mock.calls.every(([method,, ,body])=>method==="GET"||!JSON.parse(body!).query.includes("mutation"))).toBe(true);}finally{accounts.accounts=saved;}});
  it("ignores a delayed owner-project response after switching to personal Projects",async()=>{const saved=accounts.accounts,account={id:"gh",provider:"github" as const,server:"https://github.com",username:"me",name:null,avatarURL:null};accounts.accounts=[account];vi.spyOn(accounts,"token").mockResolvedValue("fixture-token");let finish!:(value:ReturnType<typeof response>)=>void;vi.spyOn(ipc,"http").mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValue(response({data:{user:{projectsV2:{nodes:[{id:"personal",title:"Personal"}],pageInfo:{}}}}}));try{const hub=new HostingHubStore({path:"fixture",target:c().target,hostingAccount:account});const old=hub.activate("projects");await vi.waitFor(()=>expect(finish).toBeDefined());await hub.selectProjectScope("personal");finish(response({data:{repository:{owner:{projectsV2:{nodes:[{id:"old",title:"Old owner"}],pageInfo:{}}}}}}));await old;expect(hub.items.map(item=>item.id)).toEqual(["personal"]);expect(hub.error).toBeNull();}finally{accounts.accounts=saved;}});
 

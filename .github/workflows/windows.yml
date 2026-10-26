@@ -224,7 +224,7 @@ jobs:
           $exe = Resolve-Path "src-tauri/target/release/gitrochi.exe"
           $result = "$env:ST_ROOT/selftest-result.json"
           $env:GITROCHI_SELFTEST = "$env:ST_ROOT/repo"
-          $p = Start-Process -FilePath $exe -PassThru
+          $p = Start-Process -FilePath $exe -PassThru -RedirectStandardOutput "$env:ST_ROOT/app-stdout.log" -RedirectStandardError "$env:ST_ROOT/app-stderr.log"
           $deadline = (Get-Date).AddSeconds(240)
           while (-not (Test-Path $result) -and (Get-Date) -lt $deadline -and -not $p.HasExited) { Start-Sleep -Milliseconds 500 }
           Start-Sleep -Seconds 3
@@ -234,12 +234,16 @@ jobs:
           $g = [System.Drawing.Graphics]::FromImage($bmp)
           $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("$env:ST_ROOT/selftest.png")
+          $p.Refresh()
+          $appStatus = if ($p.HasExited) { "exited with code $($p.ExitCode)" } else { "still running" }
+          Write-Host "Application status: $appStatus"
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           if (-not $mock.HasExited) { Stop-Process -Id $mock.Id -Force }
-          if (-not (Test-Path $result)) {
-            if (Test-Path "$env:ST_ROOT/selftest-progress.json") { Get-Content "$env:ST_ROOT/selftest-progress.json" -Raw -Encoding utf8 | Write-Host }
-            Write-Error "자동 점검 결과가 없습니다(앱이 시작하지 못했거나 멈춤)"; exit 1
+          foreach ($log in @("selftest-progress.json", "app-stdout.log", "app-stderr.log")) {
+            $path = "$env:ST_ROOT/$log"
+            if (Test-Path $path) { Write-Host "--- $log ---"; Get-Content $path -Tail 100 | Write-Host }
           }
+          if (-not (Test-Path $result)) { Write-Error "자동 점검 결과가 없습니다(앱이 시작하지 못했거나 멈춤)"; exit 1 }
           $r = Get-Content $result -Raw -Encoding utf8 | ConvertFrom-Json
           foreach ($c in $r.checks) { $mark = if ($c.ok) { "OK  " } else { "FAIL" }; Write-Host "$mark $($c.name) $(if (-not $c.ok) { $c.detail })" }
           if (-not $r.ok) { Write-Error "자동 점검 실패"; exit 1 }
@@ -332,6 +336,8 @@ jobs:
             ${{ env.ST_ROOT }}/selftest-result.json
             ${{ env.ST_ROOT }}/selftest-progress.json
             ${{ env.ST_ROOT }}/selftest.png
+            ${{ env.ST_ROOT }}/app-stdout.log
+            ${{ env.ST_ROOT }}/app-stderr.log
           if-no-files-found: ignore
 
   # gitch(설치본에 함께 들어가는 셸 도구): Git Bash 로 전체 테스트(임시 HOME · 가짜 ssh/gh/curl/원격 · 가짜 PowerShell 로 사용자 PATH).

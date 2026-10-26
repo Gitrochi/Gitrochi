@@ -240,10 +240,17 @@ fn cancel_stops_the_whole_process_tree() {
     let (code, d) = fx.json("script", &["run", "slow", "--detach", "--json"]);
     let detach_elapsed = started.elapsed();
     assert_eq!(code, 0, "{d}");
+    assert!(
+        detach_elapsed < std::time::Duration::from_secs(15),
+        "detached launch waited {detach_elapsed:?} for the worker's captured pipes: {d}"
+    );
     let id = d["runId"].as_str().unwrap().to_string();
     std::thread::sleep(std::time::Duration::from_millis(1500));
     let (code, cancel) = fx.json("script", &["cancel", &id, "--json"]);
     assert_eq!(code, 0, "{cancel}");
+    assert!(Path::new(d["runDir"].as_str().unwrap())
+        .join("cancel.request")
+        .exists());
     let mut state = Value::Null;
     for _ in 0..60 {
         std::thread::sleep(std::time::Duration::from_millis(250));
@@ -253,10 +260,6 @@ fn cancel_stops_the_whole_process_tree() {
             break;
         }
     }
-    assert!(
-        detach_elapsed < std::time::Duration::from_secs(15),
-        "detach response waited {detach_elapsed:?} for the 60-second worker"
-    );
     assert_eq!(state["state"], "CANCELLED", "{state}");
     // The grandchild (sleep 30, then touch) must end with the group.
     std::thread::sleep(std::time::Duration::from_millis(500));

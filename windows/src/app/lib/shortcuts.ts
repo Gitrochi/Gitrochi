@@ -1,5 +1,5 @@
 import { workspace } from "@/entities/workspace";
-import { isMac, settings } from "@/shared/config";
+import { isMac } from "@/shared/config";
 
 /** 앱 단축키(Windows: Ctrl, 맥: ⌘). 터미널에 포커스가 있으면 터미널이 넘겨준 조합만 온다. */
 export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
@@ -34,9 +34,6 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
         return run(() => (s.path ? workspace.newTab() : s).pickAndOpen());
       case "f":
         return run(() => s.path && s.requestSearchFocus());
-      case "b":
-        // the sidebar folds into a rail of icons and back
-        return run(() => settings.set("sidebarCollapsed", !settings.get("sidebarCollapsed", false)));
       case "g":
         return run(() => s.nextMatch());
       case "1":

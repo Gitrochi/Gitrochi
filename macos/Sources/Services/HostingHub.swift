@@ -5,7 +5,7 @@ enum HostingHubSection: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String { switch self { case .releases: return String(localized: "Releases"); case .projects: return String(localized: "Projects"); case .organizations: return String(localized: "Organizations"); case .gists: return String(localized: "Gists") } }
 }
-struct HubItem: Identifiable { var id: String; var title: String; var subtitle = ""; var body = ""; var url = ""; var editable = false; var data: [String: Any] = [:] }
+struct HubItem: Identifiable { var id: String; var title: String; var subtitle = ""; var body = ""; var url = ""; var editable = false; var data: [String: Any] = [:]; var avatarURL: URL? = nil }
 struct HubFile: Identifiable { var id: String { name }; var name: String; var content: String; var truncated = false }
 struct HubMember: Identifiable {
     var id: String
@@ -101,14 +101,17 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             + (provider == .github ? ["avatars.githubusercontent.com", "github.com"] : [])
         return allowed.contains(avatarHost) ? u : nil
     }
+    static func avatarURL(_ c: HubAccess, _ value: String) -> URL? {
+        let server = c.target.provider == .gitlab && c.apiBase.hasSuffix("/api/v4") ? String(c.apiBase.dropLast("/api/v4".count)) : "https://" + c.target.host
+        let resolved = value.hasPrefix("/") && !value.hasPrefix("//") ? URL(string: value, relativeTo: URL(string: server))?.absoluteURL.absoluteString ?? "" : value
+        return safeAvatarURL(provider: c.target.provider, host: c.target.host, resolved)
+    }
     static func member(_ c: HubAccess, _ x: J) -> HubMember {
         let username = s(x, c.target.provider == .github ? "login" : "username").trimmingCharacters(in: .whitespacesAndNewlines)
         let name = s(x, "name").trimmingCharacters(in: .whitespacesAndNewlines)
         let server = c.target.provider == .gitlab && c.apiBase.hasSuffix("/api/v4") ? String(c.apiBase.dropLast("/api/v4".count)) : "https://" + c.target.host
         let rawProfile = s(x, c.target.provider == .github ? "html_url" : "web_url")
         let profile = safeURL(c, rawProfile) ?? (username.isEmpty ? nil : safeURL(c, server + "/" + enc(username)))
-        let rawAvatar = s(x, "avatar_url")
-        let avatar = rawAvatar.hasPrefix("/") && !rawAvatar.hasPrefix("//") ? URL(string: rawAvatar, relativeTo: URL(string: server))?.absoluteURL.absoluteString ?? "" : rawAvatar
         let role: String
         if c.target.provider == .gitlab {
             switch Int(id(x, "access_level")) {
@@ -123,7 +126,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             }
         } else { role = String(localized: "Member") }
         return HubMember(id: id(x).isEmpty ? username : id(x), name: name.isEmpty ? username : name, role: role, username: username,
-                         avatarURL: safeAvatarURL(provider: c.target.provider, host: c.target.host, avatar), profileURL: profile)
+                         avatarURL: avatarURL(c, s(x, "avatar_url")), profileURL: profile)
     }
     static func members(_ c: HubAccess, rows: [J]) async throws -> [HubMember] {
         var result = rows.map { member(c, $0) }
@@ -161,6 +164,14 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         return HubItem(id: p == .github ? id(x) : tag, title: name.isEmpty ? tag : name, subtitle: tag + (draft ? " · draft" : "") + (prerelease ? " · prerelease" : ""), body: s(x, p == .github ? "body" : "description"), url: p == .github ? s(x, "html_url") : s(obj(x, "_links"), "self"), data: x)
     }
     static func gistItem(_ c: HubAccess, _ x: J) -> HubItem { let p = c.target.provider, description = s(x, "description"), title = s(x, "title"), owner = p == .github ? s(obj(x, "owner"), "login") : s(obj(x, "author"), "username"); return HubItem(id: id(x), title: !description.isEmpty ? description : !title.isEmpty ? title : obj(x, "files").keys.sorted().first ?? id(x), subtitle: (p == .github ? x["public"] as? Bool == true ? "public" : "secret" : s(x, "visibility")) + " · " + owner, body: description, url: s(x, p == .github ? "html_url" : "web_url"), editable: owner == c.me, data: x) }
+    static func organizationItem(_ c: HubAccess, _ x: J) -> HubItem {
+        let github = c.target.provider == .github, login = s(x, "login"), name = s(x, "name")
+        let url = s(x, github ? "html_url" : "web_url")
+        return HubItem(id: github ? login : id(x), title: name.isEmpty ? github ? login : s(x, "full_name") : name,
+                       subtitle: github ? login : s(x, "full_path"), body: s(x, "description"),
+                       url: github && url.isEmpty ? "https://" + c.target.host + "/" + enc(login) : url,
+                       data: x, avatarURL: avatarURL(c, s(x, "avatar_url")))
+    }
     static let projectFields = "id number title shortDescription url closed"
     static func page(_ c: HubAccess, section: HostingHubSection, page: Int = 1, cursor: String? = nil) async throws -> HubPage {
         let p = c.target.provider, query = "per_page=30&page=\(max(1, page))"
@@ -170,7 +181,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             return HubPage(items: rows.map { releaseItem(p, $0) }, more: rows.count == 30, notice: p == .gitlab ? String(localized: "GitLab releases are published immediately; GitHub-style drafts and prereleases are unavailable.") : nil)
         case .organizations:
             let rows = try await list(c, c.apiBase + (p == .github ? "/user/orgs?" : "/groups?all_available=false&") + query)
-            return HubPage(items: rows.map { x in let login = s(x, "login"), name = s(x, "name"); return HubItem(id: p == .github ? login : id(x), title: name.isEmpty ? p == .github ? login : s(x, "full_name") : name, subtitle: p == .github ? login : s(x, "full_path"), body: s(x, "description"), url: p == .github ? "https://github.com/" + enc(login) : s(x, "web_url"), data: x) }, more: rows.count == 30)
+            return HubPage(items: rows.map { organizationItem(c, $0) }, more: rows.count == 30)
         case .gists:
             let rows = try await list(c, c.apiBase + (p == .github ? "/gists?" : "/snippets?") + query)
             return HubPage(items: rows.map { gistItem(c, $0) }, more: rows.count == 30, notice: p == .gitlab ? String(localized: "GitLab personal snippets correspond to gists. Stars are not supported by its snippets API.") : nil)
@@ -194,7 +205,13 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             else { let assets = obj(x, "assets"); d.assets = arr(assets, "links").map { HubAsset(id: id($0), name: s($0, "name"), url: s($0, "direct_asset_url").isEmpty ? s($0, "url") : s($0, "direct_asset_url")) } + arr(assets, "sources").map { HubAsset(id: s($0, "format"), name: s($0, "format"), url: s($0, "url")) } }; return d
         case .organizations:
             let base = c.apiBase + (p == .github ? "/orgs/" : "/groups/") + enc(item.id), x = try await object(c, base)
-            var updated = item; updated.title = s(x, "name").isEmpty ? item.title : s(x, "name"); updated.body = s(x, "description"); updated.url = s(x, p == .github ? "html_url" : "web_url"); updated.data = x; var d = HubDetail(item: updated)
+            var updated = organizationItem(c, x)
+            if updated.id.isEmpty { updated.id = item.id }
+            if s(x, "name").isEmpty { updated.title = item.title }
+            if updated.subtitle.isEmpty { updated.subtitle = item.subtitle }
+            if s(x, p == .github ? "html_url" : "web_url").isEmpty { updated.url = item.url }
+            if x["avatar_url"] == nil { updated.avatarURL = item.avatarURL }
+            var d = HubDetail(item: updated)
             let route = tab == "members" ? p == .github ? "/members" : "/members/all" : p == .github ? "/repos" : "/projects"
             let extra = tab == "repositories" ? p == .github ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""
             let rows = try await list(c, base + route + "?" + qs + extra)
