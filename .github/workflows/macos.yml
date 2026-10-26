@@ -93,6 +93,10 @@ jobs:
       - name: 읽기 전용 MCP 계약 테스트
         run: node --test tools/gitrochi-mcp/server.test.mjs
 
+      # 흐름 화면이 읽는 엔진 JSON(앱에 넣은 엔진으로): list · plan · 분리 실행 · 이벤트 · 기록 · init · gate · 오류
+      - name: 흐름 화면 계약 테스트
+        run: bash macos/Tools/test-flow.sh
+
       - name: Keychain 저장 · 갱신 · 삭제 테스트
         run: |
           bash macos/Tools/test-keychain.sh

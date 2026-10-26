@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { agents } from "@/entities/agent";
 import { ai } from "@/entities/ai";
 import { canPlay, CIAPI } from "@/entities/ci";
+import { flowEngine, flowStoreFor } from "@/entities/flow";
 import { type DropRequest, emptyStatus, isWIP, markdownRefs, statusFiles, statusIsEmpty, wipWorktree } from "@/entities/git";
 import { gitch, graphRulesFile, type GitchAccountSetup as AccountSetup, type GitchBrowserLogin as BrowserLogin } from "@/entities/gitch";
 import { accounts, ReviewAPI, reviewFileChange } from "@/entities/hosting";
@@ -13,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -930,6 +931,29 @@ export async function runSelfTest(): Promise<boolean> {
     await gitRaw(["branch", "-D", "selftest-worktree"], repo);
     await s.reload();
     return [switched && back && row && diff, detail];
+  });
+
+  // 흐름: 앱에 든 엔진으로 제안 · 신뢰 · 분리 실행 · 이벤트 따라 읽기, 그리고 사이드바 흐름 탭(이 저장소는 흐름 파일이 없어 설정 안내)
+  await step("흐름 엔진 · 신뢰 · 분리 실행 · 흐름 탭", async () => {
+    const v = await flowEngine.version();
+    if (!v || v.flowApi !== 1) return [false, `engine=${JSON.stringify(v)} path=${await flowEngine.executable()}`];
+    const dir = joinPath(env.temp, `gitrochi-flow-selftest-${Date.now()}`);
+    await ipc.mkdirs(joinPath(dir, ".gitch"));
+    await gitRaw(["init", "-q"], dir);
+    await ipc.writeText(joinPath(dir, ".gitch/flow.yml"), 'version: 1\nflows:\n  smoke:\n    nodes:\n      hello: { run: "echo hello-from-flow" }\n      after: { needs: [hello], run: "echo done" }\n');
+    const fs = flowStoreFor(dir);
+    await fs.refresh();
+    const listed = fs.list?.flows.map((f) => f.name).join(",") === "smoke" && fs.list?.trusted === false;
+    await fs.trust();
+    const id = await fs.start("smoke", false, false);
+    const done = await until(() => !!fs.views.get(id)?.done, 60000);
+    const view = fs.views.get(id);
+    const ran = view?.state === "SUCCEEDED" && view.nodes.length === 2 && view.nodes.every((n) => n.state === "PASSED") && view.nodes[0].tail.some((l) => l.includes("hello-from-flow"));
+    settings.set("sidebarMode", "flow");
+    const panel = await until(() => document.body.innerText.includes("흐름 설정…"), 5000);
+    settings.set("sidebarMode", "list");
+    await ipc.remove(dir);
+    return [listed && done && ran && panel, `version=${v.version} listed=${listed} done=${done} state=${view?.state} nodes=${view?.nodes.map((n) => n.state)} panel=${panel}`];
   });
 
   await step("설정 화면", async () => {
