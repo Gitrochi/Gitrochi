@@ -162,7 +162,6 @@
 "Branch being merged" = "マージするブランチ";
 "Branch name" = "ブランチ名";
 "Branch to check out" = "チェックアウトするブランチ";
-"Branches hidden from the graph — right-click to show again" = "グラフで非表示にしたブランチ — 右クリックで再表示";
 "Branches pinned to the top" = "上部に固定したブランチ";
 "Check again with fetch" = "fetch して再チェック";
 "Check this repository with gitch again" = "このリポジトリを再び gitch でチェック";

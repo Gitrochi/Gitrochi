@@ -94,7 +94,6 @@
  "Branch being merged": "Branch yang di-merge",
  "Branch name": "Nama branch",
  "Branch to check out": "Branch yang akan di-checkout",
- "Branches hidden from the graph — right-click to show again": "Branch yang disembunyikan dari grafik — klik kanan untuk menampilkannya lagi",
  "Branches pinned to the top": "Branch yang disematkan di atas",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi menggunakan git yang terinstal di PC ini. Instal Git for Windows, atau pilih lokasi git.exe jika sudah ada.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} adalah versi terbaru.",

@@ -98,7 +98,6 @@
  "Branch being merged": "Birleştirilen dal",
  "Branch name": "Dal adı",
  "Branch to check out": "Geçilecek dal",
- "Branches hidden from the graph — right-click to show again": "Grafikte gizlenen dallar — yeniden göstermek için sağ tıklayın",
  "Branches pinned to the top": "En üste sabitlenen dallar",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi bu bilgisayarda kurulu olan git'i kullanır. Git for Windows'u yükleyin ya da zaten kuruluysa git.exe'nin konumunu seçin.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} en son sürüm.",

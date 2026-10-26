@@ -699,7 +699,13 @@ export async function runSelfTest(): Promise<boolean> {
     s.setPinned(b, true);
     const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.textContent?.startsWith("고정")), 3000);
     s.setPinned(b, false);
-    return [before && hidden && back && current && pinned, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}`];
+    // the eye button on the sidebar row hides the branch and shows it again
+    const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
+    eye()?.click();
+    const eyeHid = await until(() => s.isHidden(b), 5000);
+    eye()?.click();
+    const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
+    return [before && hidden && back && current && pinned && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${eyeHid}/${eyeShown}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침

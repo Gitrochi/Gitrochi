@@ -161,7 +161,6 @@
 "Branch being merged" = "แบรนช์ที่กำลังเมิร์จเข้ามา";
 "Branch name" = "ชื่อแบรนช์";
 "Branch to check out" = "แบรนช์ที่จะเช็กเอาต์";
-"Branches hidden from the graph — right-click to show again" = "แบรนช์ที่ซ่อนจากกราฟ — คลิกขวาเพื่อแสดงอีกครั้ง";
 "Branches pinned to the top" = "แบรนช์ที่ปักหมุดไว้ด้านบน";
 "Check again with fetch" = "ตรวจใหม่พร้อม fetch";
 "Check this repository with gitch again" = "ตรวจรีโพซิทอรีนี้ด้วย gitch อีกครั้ง";

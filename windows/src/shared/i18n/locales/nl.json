@@ -93,7 +93,6 @@
  "Branch being merged": "Branch die wordt gemerged",
  "Branch name": "Branchnaam",
  "Branch to check out": "Uit te checken branch",
- "Branches hidden from the graph — right-click to show again": "Branches die in de graaf verborgen zijn — klik met rechts om ze weer te tonen",
  "Branches pinned to the top": "Bovenaan vastgezette branches",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi gebruikt de git die op deze pc is geïnstalleerd. Installeer Git for Windows, of wijs git.exe aan als je het al hebt.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} is de nieuwste versie.",

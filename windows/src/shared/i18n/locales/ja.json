@@ -101,7 +101,6 @@
  "Branch being merged": "マージするブランチ",
  "Branch name": "ブランチ名",
  "Branch to check out": "チェックアウトするブランチ",
- "Branches hidden from the graph — right-click to show again": "グラフで非表示にしたブランチ — 右クリックで再表示",
  "Branches pinned to the top": "上部に固定したブランチ",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi はこの PC にインストールされている git を使います。Git for Windows をインストールするか、すでにある場合は git.exe の場所を指定してください。",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} は最新バージョンです。",

@@ -97,7 +97,6 @@
  "Branch being merged": "Nhánh đang được merge",
  "Branch name": "Tên nhánh",
  "Branch to check out": "Nhánh cần checkout",
- "Branches hidden from the graph — right-click to show again": "Các nhánh đã ẩn khỏi đồ thị — nhấp chuột phải để hiện lại",
  "Branches pinned to the top": "Các nhánh được ghim lên đầu",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi dùng git được cài trên máy tính này. Hãy cài Git for Windows, hoặc chỉ định git.exe nếu bạn đã có.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} là phiên bản mới nhất.",

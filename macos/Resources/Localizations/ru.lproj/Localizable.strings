@@ -162,7 +162,6 @@
 "Branch being merged" = "Сливаемая ветка";
 "Branch name" = "Имя ветки";
 "Branch to check out" = "Ветка для переключения";
-"Branches hidden from the graph — right-click to show again" = "Ветки, скрытые из графа, — щёлкните правой кнопкой, чтобы снова показать";
 "Branches pinned to the top" = "Ветки, закреплённые вверху";
 "Check again with fetch" = "Проверить снова с fetch";
 "Check this repository with gitch again" = "Снова проверять этот репозиторий через gitch";

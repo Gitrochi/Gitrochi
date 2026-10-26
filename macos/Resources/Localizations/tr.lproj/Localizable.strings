@@ -157,7 +157,6 @@
 "Branch being merged" = "Birleştirilen dal";
 "Branch name" = "Dal adı";
 "Branch to check out" = "Geçilecek dal";
-"Branches hidden from the graph — right-click to show again" = "Grafikte gizlenen dallar — yeniden göstermek için sağ tıklayın";
 "Branches pinned to the top" = "En üste sabitlenen dallar";
 "Check again with fetch" = "fetch ile yeniden denetle";
 "Check this repository with gitch again" = "Bu depoyu yeniden gitch ile denetle";

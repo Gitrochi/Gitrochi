@@ -164,8 +164,11 @@ struct SidebarView: View {
     }
 
     private func localRow(_ b: Branch, label: String) -> some View {
-        BranchRow(branch: b, label: label, worktreePath: store.worktree(using: b.name)?.path,
-                  hidden: store.isHidden(b), pinned: store.isPinned(b), protected: store.gitchProtected.contains(b.name))
+        // the current branch always shows in the graph
+        let canHide = !b.isCurrent || store.isHidden(b)
+        return BranchRow(branch: b, label: label, worktreePath: store.worktree(using: b.name)?.path,
+                         hidden: store.isHidden(b), pinned: store.isPinned(b), protected: store.gitchProtected.contains(b.name),
+                         toggleHidden: canHide ? { Task { await store.setHidden(b, !store.isHidden(b)) } } : nil)
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "arrow.triangle.branch").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
@@ -174,7 +177,8 @@ struct SidebarView: View {
     }
 
     private func remoteRow(_ b: Branch, label: String) -> some View {
-        BranchRow(branch: b, label: label, hidden: store.isHidden(b))
+        BranchRow(branch: b, label: label, hidden: store.isHidden(b),
+                  toggleHidden: { Task { await store.setHidden(b, !store.isHidden(b)) } })
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "cloud").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
@@ -286,6 +290,9 @@ private struct BranchRow: View {
     var pinned = false
     /// gitch 가 직접 push 를 막는 브랜치(gitch protect)
     var protected = false
+    /// Hides the branch from the graph or shows it again (nil: not allowed, the eye is not shown)
+    var toggleHidden: (() -> Void)? = nil
+    @ViewState private var hovering = false
 
     var body: some View {
         HStack(spacing: 6) {
@@ -306,8 +313,17 @@ private struct BranchRow: View {
                 Image(systemName: "lock.shield").font(.caption2).foregroundStyle(.secondary)
                     .help("Protected by gitch: no direct pushes, merge through a pull request")
             }
-            if hidden {
-                Image(systemName: "eye.slash").foregroundStyle(.secondary).help("Branches hidden from the graph — right-click to show again")
+            if let toggleHidden {
+                // the eye shows on hover; a hidden branch keeps it so the state stays visible
+                Button(action: toggleHidden) {
+                    Image(systemName: hidden ? "eye.slash" : "eye")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 16, height: 16)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .opacity(hovering || hidden ? 1 : 0)
+                .help(hidden ? String(localized: "Show in graph again") : String(localized: "Hide from graph"))
             }
             if let worktreePath {
                 Image(systemName: "folder").foregroundStyle(.secondary)
@@ -320,6 +336,7 @@ private struct BranchRow: View {
             if branch.ahead > 0 { counter("↑\(branch.ahead)") }
             if branch.behind > 0 { counter("↓\(branch.behind)") }
         }
+        .onHover { hovering = $0 }
     }
 
     private func counter(_ s: String) -> some View {

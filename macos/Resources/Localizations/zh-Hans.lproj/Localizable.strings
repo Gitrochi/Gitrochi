@@ -162,7 +162,6 @@
 "Branch being merged" = "被合并的分支";
 "Branch name" = "分支名称";
 "Branch to check out" = "要检出的分支";
-"Branches hidden from the graph — right-click to show again" = "已从提交图中隐藏的分支 — 右键单击可重新显示";
 "Branches pinned to the top" = "置顶的分支";
 "Check again with fetch" = "获取后重新检查";
 "Check this repository with gitch again" = "重新用 gitch 检查此仓库";

@@ -98,7 +98,6 @@
  "Branch being merged": "Slučovaná větev",
  "Branch name": "Název větve",
  "Branch to check out": "Větev, na kterou přepnout",
- "Branches hidden from the graph — right-click to show again": "Větve skryté v grafu — znovu je zobrazíte kliknutím pravým tlačítkem",
  "Branches pinned to the top": "Větve připnuté nahoře",
  "Gitrochi uses the git installed on this PC. Install Git for Windows, or locate git.exe if you already have it.": "Gitrochi používá git nainstalovaný v tomto PC. Nainstalujte Git for Windows, nebo pokud ho již máte, vyberte git.exe.",
  "Gitrochi {0} is the latest version.": "Gitrochi {0} je nejnovější verze.",
