@@ -37,6 +37,7 @@ pub const CODES: &[Row] = &[
     ("EXEC-03", "exec", "취소 신호 뒤에도 끝나지 않아 강제로 끝냈습니다.", "종료 신호를 무시하는 하위 프로세스가 있는지 확인하세요.", "The process ignored the stop signal and was killed.", "Check for child processes that ignore termination signals."),
     ("EXEC-04", "exec", "실행 파일을 찾지 못했습니다.", "도구가 설치됐는지 gitch flow doctor 로 확인하세요.", "The program could not be started.", "Check that the tool is installed with gitch flow doctor."),
     ("EXEC-05", "exec", "실행이 취소됐습니다.", "필요하면 다시 실행하세요.", "The run was cancelled.", "Run it again if needed."),
+    ("EXEC-06", "exec", "엔진이 실행을 끝내지 못하고 멈췄습니다(강제 종료 · 전원 꺼짐).", "기록을 닫았습니다. 다시 실행하세요.", "The engine stopped before the run finished (killed or powered off).", "The record was closed. Run the flow again."),
     ("TEST-01", "test", "통과율이 기준보다 낮습니다.", "실패한 테스트를 고치세요.", "The pass rate is below the threshold.", "Fix the failing tests."),
     ("TEST-02", "test", "테스트 보고서가 없거나 읽을 수 없습니다(판정 불가).", "실행기의 보고서 출력 설정(경로 · 형식)을 확인하세요.", "The test report is missing or unreadable (cannot judge).", "Check the runner's report output path and format."),
     ("TEST-03", "test", "실행된 테스트가 없습니다.", "테스트 경로 · 필터 · 설정을 확인하세요. 0개 실행은 통과가 아닙니다.", "No tests were executed.", "Check test paths, filters and configuration. Zero tests is not a pass."),

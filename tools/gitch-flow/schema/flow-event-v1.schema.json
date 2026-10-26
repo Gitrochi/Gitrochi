@@ -9,7 +9,7 @@
     "runId": {"type": "string"},
     "seq": {"type": "integer", "minimum": 1, "description": "Strictly increasing within a run. Readers drop duplicates by seq."},
     "at": {"type": "string"},
-    "type": {"enum": ["run.planned", "run.state", "run.cancelling", "node.state", "node.verdict", "log", "service.state", "artifact", "engine.violation", "run.done"]},
+    "type": {"enum": ["run.planned", "run.state", "run.cancelling", "node.state", "node.verdict", "log", "service.state", "rollback.step", "artifact", "engine.violation", "engine.orphans", "run.done"]},
     "node": {"type": "string"},
     "data": {"type": "object"}
   }

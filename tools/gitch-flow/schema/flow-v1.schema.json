@@ -114,7 +114,14 @@
             "cwd": {"type": "string"},
             "weight": {"type": "integer", "minimum": 1},
             "description": {"type": "string"},
-            "name": {"type": "string"}
+            "name": {"type": "string"},
+            "undo": {
+              "description": "Run nodes only. Reverses the command when the flow fails or is cancelled (rollback). It also runs when the command failed half-way, so it must be safe when nothing changed. With always: true it is a cleanup step that runs at the end of every run.",
+              "oneOf": [
+                {"type": "string"},
+                {"type": "object", "additionalProperties": false, "required": ["run"], "properties": {"run": {"type": "string"}, "check": {"type": "string"}, "timeout": {"$ref": "#/$defs/duration"}, "always": {"type": "boolean"}}}
+              ]
+            }
           },
           "oneOf": [{"required": ["use"]}, {"required": ["run"]}, {"required": ["suite"]}, {"required": ["flow"]}]
         }
@@ -130,7 +137,7 @@
         "env": {"type": "string"},
         "failFast": {"type": "boolean"},
         "concurrency": {"enum": ["reject", "queue", "cancel-previous", "parallel"]},
-        "rollback": {"type": "object", "additionalProperties": false, "properties": {"scope": {"enum": ["node", "flow"]}, "onCheckFailure": {"type": "boolean"}}},
+        "rollback": {"type": "object", "additionalProperties": false, "properties": {"scope": {"enum": ["node", "flow"], "description": "node (default): undo only what the failed nodes changed. flow: undo every changed node in reverse."}, "onCheckFailure": {"type": "boolean", "description": "With scope flow: also roll back when only a node that changes nothing (a smoke check) failed."}, "timeout": {"$ref": "#/$defs/duration", "description": "Budget for the whole rollback (default 10m)."}}},
         "timeout": {"$ref": "#/$defs/duration"},
         "nodes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/node"}}
       }

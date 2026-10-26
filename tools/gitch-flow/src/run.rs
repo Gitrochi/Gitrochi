@@ -304,6 +304,9 @@ struct NodeOut {
     outputs: Map<String, Value>,
     needs_confirmation: bool,
     mutated: bool,
+    /// 이 노드가 등록한 되돌림 단계와 그때의 환경(메모리에만 — 비밀값이 들어 있다).
+    undo: Vec<blocks::UndoStep>,
+    undo_ctx: crate::rollback::UndoCtx,
 }
 
 impl NodeOut {
@@ -323,6 +326,8 @@ impl NodeOut {
             outputs: Map::new(),
             needs_confirmation: false,
             mutated: false,
+            undo: Vec::new(),
+            undo_ctx: Default::default(),
         }
     }
 }
@@ -381,6 +386,34 @@ fn roots(
         r.insert("secrets".into(), Value::Object(s.clone()));
     }
     r
+}
+
+/// 노드 입력 하나를 푼다. 셸 스크립트 자리(`run` · `undo` · `undo.run` · `undo.check`)는 셸 인용으로 넣어
+/// 값이 명령으로 해석되지 않게 한다.
+fn render_input(
+    k: &str,
+    v: &Value,
+    ctx: &Xc,
+    quote: expr::Quote,
+) -> Result<Value, expr::ExprError> {
+    match (k, v) {
+        ("run" | "undo", Value::String(s)) => expr::render(s, ctx, quote).map(Value::String),
+        ("run", other) => Ok(other.clone()),
+        ("undo", Value::Object(o)) => {
+            let mut m = Map::new();
+            for (kk, vv) in o {
+                let r = match (kk.as_str(), vv) {
+                    ("run" | "check", Value::String(s)) => {
+                        expr::render(s, ctx, quote).map(Value::String)?
+                    }
+                    _ => expr::render_value(vv, ctx)?,
+                };
+                m.insert(kk.clone(), r);
+            }
+            Ok(Value::Object(m))
+        }
+        _ => expr::render_value(v, ctx),
+    }
 }
 
 /// 노드 하나 실행(작업 스레드에서).
@@ -458,18 +491,11 @@ fn run_node(
     } else {
         expr::Quote::Shell
     };
-    // with: run 은 셸 인용, 나머지는 값 그대로.
+    // with: 셸로 들어가는 입력(run · undo)은 셸 인용, 나머지는 값 그대로.
     let mut with = Map::new();
     if let Some(o) = n.with.as_object() {
         for (k, v) in o {
-            let r = if k == "run" {
-                match v {
-                    Value::String(s) => expr::render(s, &plain, quote).map(Value::String),
-                    other => Ok(other.clone()),
-                }
-            } else {
-                expr::render_value(v, &plain)
-            };
+            let r = render_input(k, v, &plain, quote);
             match r {
                 Ok(x) => {
                     with.insert(k.clone(), x);
@@ -559,8 +585,18 @@ fn run_node(
         services: services.clone(),
         run_id: sh.run_id.clone(),
         log_file: log_path.clone(),
+        undo: Vec::new(),
+        undo_log: sh.run_dir.join("undo.ndjson"),
     };
     let result: NodeResult = block.run(&mut cx);
+    out.undo = std::mem::take(&mut cx.undo);
+    if !out.undo.is_empty() {
+        out.undo_ctx = crate::rollback::UndoCtx {
+            env: cx.env.clone(),
+            cwd: cx.cwd.clone(),
+            shell: cx.shell.clone(),
+        };
+    }
     let (outcome, code) = verify::combine(&result.verdicts);
     out.duration_ms = started.elapsed().as_millis() as u64;
     out.attempts = result.attempts.max(1);
@@ -572,7 +608,7 @@ fn run_node(
         .cloned()
         .unwrap_or_default();
     out.outputs = result.outputs.clone();
-    out.mutated = result.mutated;
+    out.mutated = result.mutated || !out.undo.is_empty();
     out.needs_confirmation = result.needs_confirmation;
     out.detail = result.detail.clone();
     out.state = if cx.cancel.is_cancelled() && outcome != Outcome::Pass {
@@ -637,6 +673,7 @@ fn node_summary(n: &PNode, o: &NodeOut) -> Value {
         "tests": o.tests,
         "failures": o.failures,
         "verdicts": o.verdicts,
+        "undo": o.undo.iter().map(|u| json!({"title": u.title, "always": u.always})).collect::<Vec<_>>(),
         "observations": o.observations,
         "selection": n.selection.as_ref().map(|s| s.len()),
         "selectionReason": n.selection_reason,
@@ -669,6 +706,8 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
     let run_dir = st.run_dir(&run_id);
     let _ = std::fs::create_dir_all(run_dir.join("logs"));
     let _ = std::fs::write(run_dir.join("pid"), std::process::id().to_string());
+    // 엔진이 사라진 채 남은 실행을 먼저 닫는다(바꾼 흔적이 있으면 그 환경을 잠근다).
+    let orphans = crate::rollback::sweep_orphans(st, &run_id);
     let masker = Arc::new(Masker::new());
     let events = Arc::new(
         match Events::create(
@@ -686,6 +725,22 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
             }
         },
     );
+    if !orphans.is_empty() {
+        events.emit("engine.orphans", None, json!({"closed": orphans}));
+        print_line(
+            opts,
+            &tr(
+                &format!(
+                    "⚠ 엔진이 멈춘 채 남은 실행을 닫았습니다: {}",
+                    orphans.join(", ")
+                ),
+                &format!(
+                    "⚠ closed runs left behind by a stopped engine: {}",
+                    orphans.join(", ")
+                ),
+            ),
+        );
+    }
     let started_ms = util::now_ms();
     let _ = util::write_atomic(
         &run_dir.join("plan.json"),
@@ -776,12 +831,13 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         rejected_pre.push((
             String::new(),
             "GUARD-02".into(),
-            std::fs::read_to_string(&hold).unwrap_or_default(),
+            crate::rollback::hold_message(&std::fs::read_to_string(&hold).unwrap_or_default()),
         ));
     }
     let mut exit_code = 0;
     let mut run_code: Option<String> = None;
     let mut rolled = Value::Null;
+    let mut cleanup_steps = Value::Null;
     if !rejected_pre.is_empty() {
         for (id, code, msg) in &rejected_pre {
             if !id.is_empty() {
@@ -842,6 +898,8 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         let mut services_info = Map::new();
         let mut service_failed: HashMap<String, (String, String)> = HashMap::new();
         let mut cancels: HashMap<String, Cancel> = HashMap::new();
+        // 노드가 끝난 순서(되돌림은 이 반대로).
+        let mut completed: Vec<String> = Vec::new();
         let mut held_locks: HashSet<String> = HashSet::new();
         let mut running: HashSet<String> = HashSet::new();
         let mut used_weight = 0usize;
@@ -1195,6 +1253,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                 }
                 match rx.recv_timeout(Duration::from_millis(150)) {
                     Ok((id, o)) => {
+                        completed.push(id.clone());
                         running.remove(&id);
                         used_weight = used_weight.saturating_sub(weights.remove(&id).unwrap_or(1));
                         cancels.remove(&id);
@@ -1258,6 +1317,129 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                 }
             }
         });
+        let main_bad = plan.nodes.iter().any(|n| {
+            n.branch_of.is_none()
+                && !n.def.optional
+                && outs
+                    .get(&n.id)
+                    .map(|o| o.state.bad() && o.state != NState::Cancelled)
+                    .unwrap_or(false)
+        });
+        let any_cancel = cancelled_all;
+        let needs_conf = outs.values().any(|o| o.needs_confirmation);
+        if any_cancel {
+            set_run("CANCELLED", &events, &mut violations);
+            run_code = run_code.or(Some("EXEC-05".into()));
+            exit_code = 1;
+        } else if main_bad {
+            set_run("FAILED", &events, &mut violations);
+            let first_bad = plan
+                .nodes
+                .iter()
+                .filter(|n| n.branch_of.is_none() && !n.def.optional)
+                .find_map(|n| {
+                    outs.get(&n.id)
+                        .filter(|o| o.state.bad())
+                        .and_then(|o| o.code.clone())
+                });
+            run_code = first_bad;
+            exit_code = if needs_conf { 2 } else { 1 };
+        } else {
+            set_run("SUCCEEDED", &events, &mut violations);
+        }
+        // 되돌림 · 정리: 서비스를 끄기 전에(되돌림이 서비스에 기대는 경우 — 시드 지우기 등).
+        let changed: Vec<crate::rollback::Changed> = completed
+            .iter()
+            .filter_map(|id| outs.get(id).map(|o| (id, o)))
+            .filter(|(_, o)| !o.undo.is_empty())
+            .map(|(id, o)| crate::rollback::Changed {
+                node: id.as_str(),
+                bad: o.state.bad(),
+                steps: &o.undo,
+                ctx: &o.undo_ctx,
+            })
+            .collect();
+        let check_failed = plan.nodes.iter().any(|n| {
+            n.branch_of.is_none()
+                && !n.def.optional
+                && outs
+                    .get(&n.id)
+                    .map(|o| o.state.bad() && o.state != NState::Cancelled && o.undo.is_empty())
+                    .unwrap_or(false)
+        });
+        let choice = crate::rollback::decide(
+            plan.rollback_scope,
+            plan.on_check_failure,
+            any_cancel,
+            main_bad,
+            &changed,
+            check_failed,
+        );
+        if !choice.nodes.is_empty() {
+            set_run("ROLLING_BACK", &events, &mut violations);
+            print_line(
+                opts,
+                &tr(
+                    &format!(
+                        "↺ 되돌리는 중: {}",
+                        choice
+                            .nodes
+                            .iter()
+                            .rev()
+                            .cloned()
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ),
+                    &format!(
+                        "↺ rolling back: {}",
+                        choice
+                            .nodes
+                            .iter()
+                            .rev()
+                            .cloned()
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ),
+                ),
+            );
+            let done = crate::rollback::execute(
+                &choice,
+                &changed,
+                plan.rollback_timeout_ms,
+                &run_dir,
+                &masker,
+                &events,
+            );
+            let mut hold_path = Value::Null;
+            if done.ok {
+                set_run("ROLLED_BACK", &events, &mut violations);
+            } else {
+                set_run("ROLLBACK_FAILED", &events, &mut violations);
+                run_code = Some("ROLLBACK-01".into());
+                exit_code = 1;
+                if let Some(at) = &done.failed_at {
+                    let p = crate::rollback::hold(st, &plan.env, &run_id, &plan.flow, at);
+                    hold_path = json!(p.to_string_lossy());
+                    print_line(
+                        opts,
+                        &format!("✘ [ROLLBACK-01] {}", crate::codes::describe("ROLLBACK-01")),
+                    );
+                }
+            }
+            rolled = json!({"needed": true, "state": if done.ok { "ROLLED_BACK" } else { "ROLLBACK_FAILED" },
+                            "scope": match plan.rollback_scope { crate::spec::RollbackScope::Node => "node", crate::spec::RollbackScope::Flow => "flow" },
+                            "why": choice.why, "nodes": choice.nodes, "kept": choice.kept, "steps": done.steps, "hold": hold_path});
+        } else if !choice.kept.is_empty() {
+            rolled = json!({"needed": false, "why": choice.why, "kept": choice.kept});
+            print_line(
+                opts,
+                &format!("⚠ {}: {}", choice.why, choice.kept.join(", ")),
+            );
+        }
+        let cleaned = crate::rollback::cleanup(&changed, &run_dir, &masker, &events);
+        if !cleaned.is_empty() {
+            cleanup_steps = Value::Array(cleaned);
+        }
         // 서비스 정리(언제나).
         for r in services_up.drain(..) {
             if opts.keep_services {
@@ -1280,40 +1462,6 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
             })
         {
             crate::docker::cleanup_run(&run_id);
-        }
-        let main_bad = plan.nodes.iter().any(|n| {
-            n.branch_of.is_none()
-                && !n.def.optional
-                && outs
-                    .get(&n.id)
-                    .map(|o| o.state.bad() && o.state != NState::Cancelled)
-                    .unwrap_or(false)
-        });
-        let any_cancel = cancelled_all;
-        let needs_conf = outs.values().any(|o| o.needs_confirmation);
-        let mutated = outs.values().any(|o| o.mutated);
-        if any_cancel {
-            set_run("CANCELLED", &events, &mut violations);
-            run_code = run_code.or(Some("EXEC-05".into()));
-            exit_code = 1;
-        } else if main_bad {
-            set_run("FAILED", &events, &mut violations);
-            let first_bad = plan
-                .nodes
-                .iter()
-                .filter(|n| n.branch_of.is_none() && !n.def.optional)
-                .find_map(|n| {
-                    outs.get(&n.id)
-                        .filter(|o| o.state.bad())
-                        .and_then(|o| o.code.clone())
-                });
-            run_code = first_bad;
-            exit_code = if needs_conf { 2 } else { 1 };
-        } else {
-            set_run("SUCCEEDED", &events, &mut violations);
-        }
-        if mutated && (main_bad || any_cancel) {
-            rolled = json!({"needed": true, "note": tr("되돌릴 단계를 가진 블록이 없어 되돌림을 건너뜀", "no block registered undo steps")});
         }
     }
     if !violations.is_empty() {
@@ -1347,6 +1495,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                                "skipped": count(NState::Skipped), "cached": count(NState::Cached), "cancelled": count(NState::Cancelled), "total": plan.nodes.len()});
     summary["nodes"] = Value::Array(nodes);
     summary["rollback"] = rolled;
+    summary["cleanup"] = cleanup_steps;
     summary["violations"] = json!(violations);
     summary["affected"] = plan.affected.clone().unwrap_or(Value::Null);
     summary["exitCode"] = json!(exit_code);

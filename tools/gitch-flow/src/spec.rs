@@ -206,6 +206,8 @@ pub struct FlowDef {
     pub concurrency: Concurrency,
     pub rollback_scope: Option<RollbackScope>,
     pub rollback_on_check_failure: bool,
+    /// 되돌림 전체 예산.
+    pub rollback_timeout_ms: Option<u64>,
     pub timeout_ms: Option<u64>,
     pub nodes: Vec<NodeDef>,
     pub src: Src,
@@ -659,6 +661,7 @@ const NODE_KEYS: &[&str] = &[
     "weight",
     "description",
     "name",
+    "undo",
 ];
 
 fn parse_retry(v: &mut V, val: &Value, path: &str) -> Option<Retry> {
@@ -849,7 +852,7 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
             v.err("SPEC-06", &join(path, "if"), format!("if: {}", e.0));
         }
     }
-    let with = get("with");
+    let mut with = get("with");
     if !with.is_null() && !with.is_object() {
         v.err(
             "SPEC-03",
@@ -858,6 +861,34 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
         );
     }
     v.exprs_in(&with, &join(path, "with"), false);
+    // `undo:` 는 run 노드의 줄임(with.undo). 다른 블록은 그 블록의 되돌림 입력을 with 에 쓴다.
+    if let Some(u) = m.get("undo") {
+        let p = join(path, "undo");
+        if !matches!(kind, NodeKind::Run(_)) {
+            v.err(
+                "SPEC-03",
+                &p,
+                tr(
+                    "undo: 는 run 노드에만 씁니다. 다른 블록은 with 에 그 블록의 되돌림 입력을 쓰세요.",
+                    "undo: is for run nodes only; other blocks take their undo input in with.",
+                ),
+            );
+        } else if !(u.is_string() || u.get("run").map(|r| r.is_string()).unwrap_or(false)) {
+            v.err(
+                "SPEC-03",
+                &p,
+                tr(
+                    "undo 는 명령 글이거나 { run, check, timeout, always } 입니다.",
+                    "undo is a command string or { run, check, timeout, always }.",
+                ),
+            );
+        } else {
+            v.exprs_in(u, &p, false);
+            let mut w = with.as_object().cloned().unwrap_or_default();
+            w.insert("undo".into(), u.clone());
+            with = Value::Object(w);
+        }
+    }
     let env_v = get("env");
     v.exprs_in(&env_v, &join(path, "env"), true);
     let env = v.string_map(&env_v, &join(path, "env"));
@@ -1042,11 +1073,14 @@ fn parse_flow(v: &mut V, name: &str, val: &Value, path: &str) -> Option<FlowDef>
             Concurrency::Reject
         }
     };
-    let (mut scope, mut on_check) = (None, false);
+    let (mut scope, mut on_check, mut rb_timeout) = (None, false, None);
     if let Some(r) = m.get("rollback") {
         let p = join(path, "rollback");
         if let Some(rm) = v.obj(r, &p) {
-            v.keys(rm, &p, &["scope", "onCheckFailure"]);
+            v.keys(rm, &p, &["scope", "onCheckFailure", "timeout"]);
+            rb_timeout = rm
+                .get("timeout")
+                .and_then(|x| v.duration(x, &join(&p, "timeout")));
             scope = match rm
                 .get("scope")
                 .and_then(|x| v.text(x, &join(&p, "scope")))
@@ -1102,6 +1136,7 @@ fn parse_flow(v: &mut V, name: &str, val: &Value, path: &str) -> Option<FlowDef>
         concurrency,
         rollback_scope: scope,
         rollback_on_check_failure: on_check,
+        rollback_timeout_ms: rb_timeout,
         timeout_ms: m
             .get("timeout")
             .and_then(|x| v.duration(x, &join(path, "timeout"))),

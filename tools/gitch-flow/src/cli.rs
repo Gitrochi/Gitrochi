@@ -920,6 +920,7 @@ fn cmd_test(out: &Out, args: &Args) -> i32 {
         concurrency: spec::Concurrency::Reject,
         rollback_scope: None,
         rollback_on_check_failure: false,
+        rollback_timeout_ms: None,
         timeout_ms: None,
         nodes,
         src: Default::default(),
@@ -1381,7 +1382,11 @@ fn cmd_hold(out: &Out, args: &Args) -> i32 {
         _ => {
             let dir = st.base.join("holds");
             let holds: Vec<Value> = std::fs::read_dir(&dir)
-                .map(|rd| rd.flatten().map(|e| json!({"env": e.file_name().to_string_lossy().trim_end_matches(".json"), "reason": std::fs::read_to_string(e.path()).unwrap_or_default()})).collect())
+                .map(|rd| rd.flatten().map(|e| {
+                    let text = std::fs::read_to_string(e.path()).unwrap_or_default();
+                    json!({"env": e.file_name().to_string_lossy().trim_end_matches(".json"), "reason": crate::rollback::hold_message(&text),
+                           "record": serde_json::from_str::<Value>(&text).unwrap_or(Value::Null)})
+                }).collect())
                 .unwrap_or_default();
             if out.json {
                 out.print(&json!({"schemaVersion": 1, "holds": holds}));

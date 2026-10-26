@@ -21,6 +21,7 @@ pub mod plan;
 pub mod process;
 pub mod report;
 pub mod report_out;
+pub mod rollback;
 pub mod run;
 pub mod schemas;
 pub mod secret;

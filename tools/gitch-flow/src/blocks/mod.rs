@@ -82,8 +82,41 @@ pub struct PreCx<'a> {
     pub planned_start_ms: u64,
 }
 
-/// 되돌림 함수. 실패하면 오류 글.
-pub type Undo = Box<dyn FnOnce(&mut NodeCx) -> Result<(), String> + Send>;
+/// 되돌림 단계(선언형). 블록이 대상을 바꾸기 **직전에** 등록하고(실행 폴더 `undo.ndjson` 에도 남는다),
+/// 엔진은 실패 · 취소 뒤 거꾸로 돌린다. 엔진이 중간에 멈추면 남은 단계를 보고 그 환경을 잠근다(hold).
+#[derive(Debug, Clone)]
+pub struct UndoStep {
+    pub title: String,
+    pub action: UndoAction,
+    /// 되돌린 뒤 확인(종료 코드 0 = 확인됨).
+    pub check: Option<UndoAction>,
+    pub timeout_ms: u64,
+    /// 실행 결과와 상관없이 끝에 언제나 돈다(임시 시드 정리 같은 것).
+    pub always: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum UndoAction {
+    /// 노드와 같은 셸 · 작업 폴더 · 환경에서 도는 스크립트.
+    Script(String),
+    /// 셸 없이 부르는 프로그램(docker 등).
+    Argv { program: String, args: Vec<String> },
+}
+
+impl UndoAction {
+    pub fn show(&self) -> String {
+        match self {
+            UndoAction::Script(s) => s.lines().next().unwrap_or("").to_string(),
+            UndoAction::Argv { program, args } => {
+                let name = Path::new(program)
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_else(|| program.clone());
+                format!("{name} {}", args.join(" "))
+            }
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct NodeResult {
@@ -91,7 +124,6 @@ pub struct NodeResult {
     pub observations: Map<String, Value>,
     pub report: Option<TestReport>,
     pub mutated: bool,
-    pub undo: Vec<(String, Undo)>,
     pub outputs: Map<String, Value>,
     pub attempts: u32,
     /// 사람 확인이 필요해 멈춘 경우(종료 코드 2).
@@ -134,6 +166,10 @@ pub struct NodeCx<'a> {
     pub services: Value,
     pub run_id: String,
     pub log_file: PathBuf,
+    /// 이 노드가 등록한 되돌림 단계(등록 순서).
+    pub undo: Vec<UndoStep>,
+    /// 실행 폴더의 `undo.ndjson`(엔진이 멈췄을 때 남은 변경을 알아보는 기록).
+    pub undo_log: PathBuf,
 }
 
 /// 명령 실행 결과와 출력.
@@ -232,6 +268,24 @@ impl NodeCx<'_> {
             stdout,
             tail: tail.into_iter().collect(),
         }
+    }
+
+    /// 대상을 바꾸기 직전에 되돌림 단계를 등록한다. 바꾸다 실패해도 부분 변경이 있을 수 있어 되돌림은 언제나 시도한다.
+    pub fn register_undo(&mut self, step: UndoStep) {
+        if let Ok(mut f) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.undo_log)
+        {
+            let line = json!({"node": self.id, "seq": self.undo.len() + 1, "title": step.title,
+                              "action": self.masker.mask(&step.action.show()), "always": step.always, "at": crate::util::rfc3339(crate::util::now_ms())});
+            let _ = writeln!(f, "{line}");
+        }
+        self.note(&tr(
+            &format!("되돌림 등록: {}", step.title),
+            &format!("undo registered: {}", step.title),
+        ));
+        self.undo.push(step);
     }
 
     pub fn input_str(&self, key: &str) -> Option<String> {
