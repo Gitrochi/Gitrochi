@@ -38,6 +38,7 @@
         "hold": {"type": ["string", "null"], "description": "Hold file written when the rollback failed."}
       }
     },
+    "notifications": {"type": ["array", "null"], "items": {"type": "object", "properties": {"to": {"enum": ["webhook", "desktop"]}, "target": {"type": "string"}, "ok": {"type": "boolean"}, "error": {"type": ["string", "null"]}}}},
     "cleanup": {"type": ["array", "null"], "items": {"type": "object", "properties": {"node": {"type": "string"}, "title": {"type": "string"}, "state": {"enum": ["DONE", "FAILED"]}}}},
     "nodes": {
       "type": "array",

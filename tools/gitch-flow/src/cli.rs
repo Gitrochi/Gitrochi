@@ -921,6 +921,7 @@ fn cmd_test(out: &Out, args: &Args) -> i32 {
         rollback_scope: None,
         rollback_on_check_failure: false,
         rollback_timeout_ms: None,
+        notify: Vec::new(),
         timeout_ms: None,
         nodes,
         src: Default::default(),

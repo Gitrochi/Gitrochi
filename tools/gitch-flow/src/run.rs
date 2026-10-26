@@ -1558,6 +1558,49 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
     summary["affected"] = plan.affected.clone().unwrap_or(Value::Null);
     summary["exitCode"] = json!(exit_code);
     summary["runDir"] = json!(run_dir.to_string_lossy());
+    // 흐름 끝 알림(결과는 바꾸지 않는다).
+    if let Some(f) = spec.flow(&plan.flow) {
+        let outcome = match run_state.as_str() {
+            "SUCCEEDED" => "success",
+            "CANCELLED" => "cancelled",
+            _ if run_code.as_deref() == Some("EXEC-05") => "cancelled",
+            _ => "failure",
+        };
+        let mut sent = Vec::new();
+        for nd in f
+            .notify
+            .iter()
+            .filter(|nd| nd.on.iter().any(|o| o == "always" || o == outcome))
+        {
+            let line = crate::report_out::digest(&summary, st, true);
+            let text = nd
+                .message
+                .clone()
+                .map(|m| format!("{m}\n{}", line.lines().next().unwrap_or("")))
+                .unwrap_or_else(|| line.lines().next().unwrap_or("").to_string());
+            let small = crate::ci::contract::small(&summary);
+            if let Some(w) = &nd.webhook {
+                let res = blocks::notify::send_webhook(
+                    w,
+                    &masker.mask(&text),
+                    &masker.mask_value(&small),
+                    &masker,
+                    opts.ci,
+                );
+                sent.push(json!({"to": "webhook", "target": masker.mask(w), "ok": res.is_ok(), "error": res.err()}));
+            }
+            if nd.desktop {
+                let res = blocks::notify::send_desktop(
+                    &format!("gitch flow · {}", plan.flow),
+                    &masker.mask(&text),
+                );
+                sent.push(json!({"to": "desktop", "ok": res.is_ok(), "error": res.err()}));
+            }
+        }
+        if !sent.is_empty() {
+            summary["notifications"] = Value::Array(sent);
+        }
+    }
     summary = masker.mask_value(&summary);
     summary["signature"] = store::sign(&summary)
         .map(Value::String)

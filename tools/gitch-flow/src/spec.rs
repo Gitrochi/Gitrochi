@@ -208,9 +208,21 @@ pub struct FlowDef {
     pub rollback_on_check_failure: bool,
     /// 되돌림 전체 예산.
     pub rollback_timeout_ms: Option<u64>,
+    /// 실행이 끝나면 보낼 알림.
+    pub notify: Vec<NotifyDef>,
     pub timeout_ms: Option<u64>,
     pub nodes: Vec<NodeDef>,
     pub src: Src,
+}
+
+/// 흐름 끝 알림 하나.
+#[derive(Debug, Clone)]
+pub struct NotifyDef {
+    /// success · failure · cancelled · always
+    pub on: Vec<String>,
+    pub webhook: Option<String>,
+    pub desktop: bool,
+    pub message: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1028,8 +1040,65 @@ fn parse_flow(v: &mut V, name: &str, val: &Value, path: &str) -> Option<FlowDef>
             "rollback",
             "timeout",
             "nodes",
+            "notify",
         ],
     );
+    let mut notify = Vec::new();
+    if let Some(Value::Array(list)) = m.get("notify") {
+        for (i, item) in list.iter().enumerate() {
+            let p = format!("{}[{i}]", join(path, "notify"));
+            let Some(o) = v.obj(item, &p) else { continue };
+            v.keys(o, &p, &["on", "webhook", "desktop", "message"]);
+            let on = match o.get("on") {
+                Some(Value::String(s)) => vec![s.clone()],
+                Some(x) => v.texts(x, &join(&p, "on")),
+                None => vec!["failure".to_string()],
+            };
+            for w in &on {
+                if !["success", "failure", "cancelled", "always"].contains(&w.as_str()) {
+                    v.err(
+                        "SPEC-03",
+                        &join(&p, "on"),
+                        tr(
+                            &format!("'{w}' 대신 success · failure · cancelled · always."),
+                            &format!("use success, failure, cancelled or always instead of '{w}'."),
+                        ),
+                    );
+                }
+            }
+            let webhook = o
+                .get("webhook")
+                .and_then(|x| v.text(x, &join(&p, "webhook")));
+            let desktop = o
+                .get("desktop")
+                .and_then(|x| v.boolean(x, &join(&p, "desktop")))
+                .unwrap_or(false);
+            if webhook.is_none() && !desktop {
+                v.err(
+                    "SPEC-03",
+                    &p,
+                    tr(
+                        "webhook 또는 desktop: true 가 필요합니다.",
+                        "needs webhook or desktop: true.",
+                    ),
+                );
+            }
+            notify.push(NotifyDef {
+                on,
+                webhook,
+                desktop,
+                message: o
+                    .get("message")
+                    .and_then(|x| v.text(x, &join(&p, "message"))),
+            });
+        }
+    } else if m.get("notify").map(|x| !x.is_null()).unwrap_or(false) {
+        v.err(
+            "SPEC-03",
+            &join(path, "notify"),
+            tr("notify 는 목록입니다.", "notify is a list."),
+        );
+    }
     let trigger = v.texts(
         m.get("trigger").unwrap_or(&Value::Null),
         &join(path, "trigger"),
@@ -1142,6 +1211,7 @@ fn parse_flow(v: &mut V, name: &str, val: &Value, path: &str) -> Option<FlowDef>
         rollback_scope: scope,
         rollback_on_check_failure: on_check,
         rollback_timeout_ms: rb_timeout,
+        notify,
         timeout_ms: m
             .get("timeout")
             .and_then(|x| v.duration(x, &join(path, "timeout"))),

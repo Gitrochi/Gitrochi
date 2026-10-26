@@ -139,6 +139,15 @@
         "concurrency": {"enum": ["reject", "queue", "cancel-previous", "parallel"]},
         "rollback": {"type": "object", "additionalProperties": false, "properties": {"scope": {"enum": ["node", "flow"], "description": "node (default): undo only what the failed nodes changed. flow: undo every changed node in reverse."}, "onCheckFailure": {"type": "boolean", "description": "With scope flow: also roll back when only a node that changes nothing (a smoke check) failed."}, "timeout": {"$ref": "#/$defs/duration", "description": "Budget for the whole rollback (default 10m)."}}},
         "timeout": {"$ref": "#/$defs/duration"},
+        "notify": {
+          "type": "array",
+          "description": "Notifications sent when the run ends. They never change the result.",
+          "items": {"type": "object", "additionalProperties": false, "properties": {
+            "on": {"oneOf": [{"enum": ["success", "failure", "cancelled", "always"]}, {"type": "array", "items": {"enum": ["success", "failure", "cancelled", "always"]}}], "default": "failure"},
+            "webhook": {"type": "string", "description": "Connection name (kind webhook) or an https address."},
+            "desktop": {"type": "boolean"},
+            "message": {"type": "string"}}}
+        },
         "nodes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/node"}}
       }
     }

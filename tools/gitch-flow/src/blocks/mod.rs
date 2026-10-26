@@ -5,9 +5,13 @@ pub mod check;
 pub mod ci;
 pub mod cmd;
 pub mod container;
+pub mod deploy;
 pub mod fixture;
 pub mod gate;
+pub mod gitchb;
 pub mod mock;
+pub mod notify;
+pub mod setup;
 pub mod test;
 pub mod window;
 
@@ -453,6 +457,11 @@ static MOCK_CHECK: mock::Check = mock::Check;
 static SEED: fixture::Seed = fixture::Seed;
 static WINDOW: window::Window = window::Window;
 static LOG: check::Log = check::Log;
+static GITCH_PREFLIGHT: gitchb::Preflight = gitchb::Preflight;
+static GITCH_GRAPH: gitchb::GraphCheck = gitchb::GraphCheck;
+static NOTIFY_WEBHOOK: notify::Webhook = notify::Webhook;
+static NOTIFY_DESKTOP: notify::Desktop = notify::Desktop;
+static DEPLOY_COMPOSE: deploy::Compose = deploy::Compose;
 
 /// 내장 블록 전체.
 pub fn all() -> Vec<&'static dyn Block> {
@@ -470,9 +479,17 @@ pub fn all() -> Vec<&'static dyn Block> {
         &SEED,
         &WINDOW,
         &LOG,
+        &GITCH_PREFLIGHT,
+        &GITCH_GRAPH,
+        &NOTIFY_WEBHOOK,
+        &NOTIFY_DESKTOP,
+        &DEPLOY_COMPOSE,
     ];
     for t in test::RUNNERS {
         v.push(t);
+    }
+    for s in setup::SETUPS {
+        v.push(s);
     }
     for c in ci::CI_BLOCKS {
         v.push(c);
