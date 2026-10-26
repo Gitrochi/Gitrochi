@@ -60,8 +60,11 @@ jobs:
       - name: 타입 검사 · 단위 테스트
         run: |
           npx tsc --noEmit
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npx vitest run
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --test ../tools/gitrochi-mcp/server.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Git 훅 시험 (Git Bash)
         shell: bash
@@ -233,7 +236,10 @@ jobs:
           $bmp.Save("$env:ST_ROOT/selftest.png")
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           if (-not $mock.HasExited) { Stop-Process -Id $mock.Id -Force }
-          if (-not (Test-Path $result)) { Write-Error "자동 점검 결과가 없습니다(앱이 시작하지 못했거나 멈춤)"; exit 1 }
+          if (-not (Test-Path $result)) {
+            if (Test-Path "$env:ST_ROOT/selftest-progress.json") { Get-Content "$env:ST_ROOT/selftest-progress.json" -Raw -Encoding utf8 | Write-Host }
+            Write-Error "자동 점검 결과가 없습니다(앱이 시작하지 못했거나 멈춤)"; exit 1
+          }
           $r = Get-Content $result -Raw -Encoding utf8 | ConvertFrom-Json
           foreach ($c in $r.checks) { $mark = if ($c.ok) { "OK  " } else { "FAIL" }; Write-Host "$mark $($c.name) $(if (-not $c.ok) { $c.detail })" }
           if (-not $r.ok) { Write-Error "자동 점검 실패"; exit 1 }
@@ -324,6 +330,7 @@ jobs:
           name: selftest
           path: |
             ${{ env.ST_ROOT }}/selftest-result.json
+            ${{ env.ST_ROOT }}/selftest-progress.json
             ${{ env.ST_ROOT }}/selftest.png
           if-no-files-found: ignore
 

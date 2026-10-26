@@ -36,6 +36,7 @@ import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
+import { selfTestProgress } from "./lib/selftest-progress";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -173,6 +174,7 @@ export async function runSelfTest(): Promise<boolean> {
     checks.push({ name, ok, detail: detail === undefined ? undefined : String(detail).slice(0, 500) });
   };
   const step = async (name: string, f: () => Promise<boolean | [boolean, unknown]>) => {
+    await selfTestProgress(name, checks);
     try {
       const r = await f();
       if (Array.isArray(r)) check(name, r[0], r[1]);
@@ -180,6 +182,7 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
+    await selfTestProgress(`Completed: ${name}`, checks);
   };
 
   workspace.restoring = false;
