@@ -1061,5 +1061,9 @@
  "Worktree": "工作樹",
  "// Uncommitted changes in {0}": "// {0} 中未提交的變更",
  "Worktree: {0}": "工作樹：{0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "此工作樹中未提交的變更。開啟它以暫存和提交。"
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "此工作樹中未提交的變更。開啟它以暫存和提交。",
+ "Split right": "向右分割",
+ "Split down": "向下分割",
+ "Opens another shell next to this one, in the same folder.": "在同一資料夾中，於此終端機旁邊再開啟一個 Shell。",
+ "Opens another shell below this one, in the same folder.": "在同一資料夾中，於此終端機下方再開啟一個 Shell。"
 }

@@ -1001,3 +1001,7 @@
 "// Uncommitted changes in %@" = "// Niet-gecommitte wijzigingen in %1$@";
 "Worktree: %@" = "Worktree: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "Niet-gecommitte wijzigingen in deze worktree. Open hem om te stagen en te committen.";
+"Split right" = "Rechts splitsen";
+"Split down" = "Omlaag splitsen";
+"Opens another shell next to this one, in the same folder." = "Opent nog een shell naast deze, in dezelfde map.";
+"Opens another shell below this one, in the same folder." = "Opent nog een shell onder deze, in dezelfde map.";

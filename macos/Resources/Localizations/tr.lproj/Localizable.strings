@@ -1045,3 +1045,7 @@
 "// Uncommitted changes in %@" = "// %1$@ içinde commit edilmemiş değişiklikler";
 "Worktree: %@" = "Worktree: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "Bu worktree'deki commit edilmemiş değişiklikler. Hazırlamak ve commit etmek için açın.";
+"Split right" = "Sağa böl";
+"Split down" = "Aşağı böl";
+"Opens another shell next to this one, in the same folder." = "Aynı klasörde bunun yanında başka bir kabuk açar.";
+"Opens another shell below this one, in the same folder." = "Aynı klasörde bunun altında başka bir kabuk açar.";

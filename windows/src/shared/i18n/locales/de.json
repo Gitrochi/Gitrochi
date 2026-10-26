@@ -1032,5 +1032,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Nicht committete Änderungen in {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Nicht committete Änderungen in diesem Worktree. Öffnen Sie ihn zum Stagen und Committen."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Nicht committete Änderungen in diesem Worktree. Öffnen Sie ihn zum Stagen und Committen.",
+ "Split right": "Rechts teilen",
+ "Split down": "Unten teilen",
+ "Opens another shell next to this one, in the same folder.": "Öffnet eine weitere Shell neben dieser im selben Ordner.",
+ "Opens another shell below this one, in the same folder.": "Öffnet eine weitere Shell unter dieser im selben Ordner."
 }

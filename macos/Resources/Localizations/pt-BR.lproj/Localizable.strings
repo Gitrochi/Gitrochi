@@ -1021,3 +1021,7 @@
 "// Uncommitted changes in %@" = "// Alterações sem commit em %1$@";
 "Worktree: %@" = "Worktree: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "Alterações sem commit neste worktree. Abra-o para preparar e fazer commit.";
+"Split right" = "Dividir à direita";
+"Split down" = "Dividir para baixo";
+"Opens another shell next to this one, in the same folder." = "Abre outro shell ao lado deste, na mesma pasta.";
+"Opens another shell below this one, in the same folder." = "Abre outro shell abaixo deste, na mesma pasta.";

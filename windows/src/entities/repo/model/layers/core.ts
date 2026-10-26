@@ -5,7 +5,7 @@ import * as P from "@/entities/git";
 import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraph, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { accounts, type PullRequestReview } from "@/entities/hosting";
-import { TerminalSession, type TerminalSpec } from "@/entities/terminal";
+import { TerminalSession, type TerminalSpec, type TermNode } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
 import { addRecent, basename, env, joinPath, samePath, settings, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -169,6 +169,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   // 터미널 패널
   terminals: TerminalSession[] = [];
   activeTerminalID: string | null = null;
+  /** How the terminal panel is split into panes of tabs */
+  terminalLayout: TermNode | null = null;
   showTerminal = false;
 
   /** 다른 저장소·워크트리를 새 탭으로 여는 동작(작업 공간이 넣어 준다) */

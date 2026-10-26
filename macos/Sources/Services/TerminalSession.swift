@@ -40,6 +40,7 @@ final class TerminalSession: Identifiable {
         self.title = URL(fileURLWithPath: directory).lastPathComponent
         view = ShellView(frame: NSRect(x: 0, y: 0, width: 640, height: 260))
         _ = ShellView.controlReturnMonitor
+        _ = ShellView.clickMonitor
         let relay = Relay(owner: self)
         self.relay = relay
         view.processDelegate = relay
@@ -241,6 +242,18 @@ final class ShellView: LocalProcessTerminalView {
         super.dataReceived(slice: slice)
         onOutput?()
     }
+
+    /// Clicking into a pane makes its terminal the focused one
+    var onFocus: (() -> Void)?
+
+    /// SwiftTerm doesn't let subclasses override becomeFirstResponder, so watch clicks instead
+    static let clickMonitor: Any? = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { event in
+        guard let content = event.window?.contentView else { return event }
+        var view = content.hitTest(content.superview?.convert(event.locationInWindow, from: nil) ?? event.locationInWindow)
+        while let v = view, !(v is ShellView) { view = v.superview }
+        (view as? ShellView)?.onFocus?()
+        return event
+    }
 }
 
 // MARK: - 저장소 창과 연결
@@ -261,20 +274,50 @@ extension RepoStore {
         }
     }
 
-    /// A shell in path (default: the repository), or the given program in its place
-    @discardableResult
-    func newTerminal(in path: String? = nil, command: TerminalSession.Command? = nil) -> TerminalSession? {
-        guard let dir = path ?? url?.path else { return nil }
+    private func makeTerminal(in dir: String, command: TerminalSession.Command?) -> TerminalSession {
         let s = TerminalSession(directory: dir, command: command)
+        s.view.onFocus = { [weak self, weak s] in
+            guard let self, let s, self.activeTerminalID != s.id else { return }
+            self.selectTerminal(s)
+        }
         terminals.append(s)
         activeTerminalID = s.id
         showTerminal = true
+        return s
+    }
+
+    /// A new tab in the focused pane: a shell in path (default: the repository), or the given program in its place
+    @discardableResult
+    func newTerminal(in path: String? = nil, command: TerminalSession.Command? = nil) -> TerminalSession? {
+        guard let dir = path ?? url?.path else { return nil }
+        let focused = terminalLayout?.pane(of: activeTerminalID)?.id
+        let s = makeTerminal(in: dir, command: command)
+        terminalLayout = TerminalNode.adding(s.id, to: focused, in: terminalLayout)
         s.start()
         return s
     }
 
+    /// The tab a pane shows
+    func shownTerminal(in pane: TerminalNode.Pane) -> TerminalSession? {
+        let id = pane.shown(active: activeTerminalID)
+        return terminals.first { $0.id == id }
+    }
+
+    /// A new shell beside or below the pane, in the folder its terminal is in
+    func splitTerminal(_ pane: TerminalNode.Pane, _ axis: TerminalNode.Axis) {
+        guard let layout = terminalLayout, let dir = shownTerminal(in: pane)?.directory ?? url?.path else { return }
+        let s = makeTerminal(in: dir, command: nil)
+        terminalLayout = layout.splitting(pane.id, axis, with: s.id)
+        s.start()
+    }
+
+    func resizeTerminalSplit(_ id: UUID, to ratio: Double) {
+        terminalLayout = terminalLayout?.resizing(id, to: ratio)
+    }
+
     func selectTerminal(_ s: TerminalSession) {
         activeTerminalID = s.id
+        terminalLayout = terminalLayout?.selecting(s.id)
         s.unseenOutput = false
     }
 
@@ -303,14 +346,20 @@ extension RepoStore {
 
     func closeTerminal(_ s: TerminalSession) {
         s.terminate()
+        let sibling = terminalLayout?.pane(of: s.id)?.sessions.first { $0 != s.id }
         terminals.removeAll { $0.id == s.id }
-        if activeTerminalID == s.id { activeTerminalID = terminals.last?.id }
+        terminalLayout = terminalLayout?.removing(s.id)
+        if activeTerminalID == s.id {
+            // stay in the same pane if it still has tabs, otherwise move to the first pane
+            activeTerminalID = (terminalLayout?.pane(of: sibling) ?? terminalLayout?.panes.first)?.selected ?? terminals.last?.id
+        }
         if terminals.isEmpty { showTerminal = false }
     }
 
     func closeAllTerminals() {
         terminals.forEach { $0.terminate() }
         terminals = []
+        terminalLayout = nil
         activeTerminalID = nil
         showTerminal = false
     }

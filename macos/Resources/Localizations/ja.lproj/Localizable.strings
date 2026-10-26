@@ -1058,3 +1058,7 @@
 "// Uncommitted changes in %@" = "// %1$@ の未コミットの変更";
 "Worktree: %@" = "ワークツリー: %1$@";
 "Uncommitted changes in this worktree. Open it to stage and commit." = "このワークツリーの未コミットの変更です。ステージやコミットはワークツリーを開いて行います。";
+"Split right" = "右に分割";
+"Split down" = "下に分割";
+"Opens another shell next to this one, in the same folder." = "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。";
+"Opens another shell below this one, in the same folder." = "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。";

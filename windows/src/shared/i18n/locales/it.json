@@ -1034,5 +1034,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Modifiche non sottoposte a commit in {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Modifiche non sottoposte a commit in questo worktree. Aprilo per preparare e fare commit."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Modifiche non sottoposte a commit in questo worktree. Aprilo per preparare e fare commit.",
+ "Split right": "Dividi a destra",
+ "Split down": "Dividi in basso",
+ "Opens another shell next to this one, in the same folder.": "Apre un'altra shell accanto a questa, nella stessa cartella.",
+ "Opens another shell below this one, in the same folder.": "Apre un'altra shell sotto questa, nella stessa cartella."
 }

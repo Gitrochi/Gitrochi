@@ -1055,5 +1055,9 @@
  "Worktree": "เวิร์กทรี",
  "// Uncommitted changes in {0}": "// การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตใน {0}",
  "Worktree: {0}": "เวิร์กทรี: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในเวิร์กทรีนี้ เปิดเวิร์กทรีเพื่อสเตจและคอมมิต"
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในเวิร์กทรีนี้ เปิดเวิร์กทรีเพื่อสเตจและคอมมิต",
+ "Split right": "แบ่งไปทางขวา",
+ "Split down": "แบ่งลงด้านล่าง",
+ "Opens another shell next to this one, in the same folder.": "เปิดเชลล์อีกตัวข้างตัวนี้ในโฟลเดอร์เดียวกัน",
+ "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน"
 }

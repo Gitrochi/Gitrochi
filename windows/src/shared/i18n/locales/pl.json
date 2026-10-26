@@ -1042,5 +1042,9 @@
  "Worktree": "Worktree",
  "// Uncommitted changes in {0}": "// Niezatwierdzone zmiany w {0}",
  "Worktree: {0}": "Worktree: {0}",
- "Uncommitted changes in this worktree. Open it to stage and commit.": "Niezatwierdzone zmiany w tym worktree. Otwórz go, aby przygotować i zatwierdzić zmiany."
+ "Uncommitted changes in this worktree. Open it to stage and commit.": "Niezatwierdzone zmiany w tym worktree. Otwórz go, aby przygotować i zatwierdzić zmiany.",
+ "Split right": "Podziel w prawo",
+ "Split down": "Podziel w dół",
+ "Opens another shell next to this one, in the same folder.": "Otwiera kolejną powłokę obok tej, w tym samym folderze.",
+ "Opens another shell below this one, in the same folder.": "Otwiera kolejną powłokę pod tą, w tym samym folderze."
 }
