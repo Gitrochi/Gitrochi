@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 📖 사용법 · 단축키
-    url: https://github.com/Gitrochi/Gitrochi#사용법
-    about: README 의 빠른 시작과 단축키 표
-  - name: 🔒 보안 문제 비공개로 알리기
+  - name: 📖 Usage · shortcuts
+    url: https://github.com/Gitrochi/Gitrochi/blob/main/docs/features.md
+    about: How to get started, every feature, and the keyboard shortcuts
+  - name: 🔒 Report a security problem privately
     url: https://github.com/Gitrochi/Gitrochi/security/advisories/new
-    about: 토큰 유출처럼 공개하면 위험한 문제는 이슈 대신 여기로
-  - name: ⬇ 최신 버전 받기
+    about: Anything dangerous to publish, such as a token leak, goes here instead of an issue
+  - name: ⬇ Get the latest release
     url: https://github.com/Gitrochi/Gitrochi/releases/latest
-    about: 문제를 올리기 전에 최신 버전인지 확인해 주세요
+    about: Please check that you are on the latest release before reporting a problem

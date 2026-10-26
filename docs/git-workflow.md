@@ -34,13 +34,14 @@ Area: Imperative summary of the change
 
 ## Pull requests
 
-1. Branch from `main` (see Branches above) and keep the pull request to one topic.
-2. Pass the checks: macOS build without warnings; Windows `npx tsc --noEmit -p .`, `npx vitest run`, `cargo check`. Changed a screen? Attach light and dark screenshots.
-3. Fill in the pull request template's checklist. CI (the Windows self-test and the Git rules) must pass before merging.
+1. **Every pull request belongs to an issue.** Open one before you start — a bug report, a feature request or a [task](../.github/ISSUE_TEMPLATE/task.yml) (`gh issue create`) — or at the latest when you open the pull request, and put `Closes #<number>` at the top of the pull request description. The issue says what and why, the pull request says how. One issue and one topic per pull request; a pull request that closes several unrelated issues should be split.
+2. Branch from `main` (see Branches above) and keep the pull request to one topic.
+3. Pass the checks: macOS build without warnings; Windows `npx tsc --noEmit -p .`, `npx vitest run`, `cargo check`. Changed a screen? Attach light and dark screenshots.
+4. Fill in the pull request template's checklist. CI (the Windows self-test and the Git rules) must pass before merging.
    - The Windows CI builds and runs the real-app self-test for every pull request that touches `windows/` (about nine minutes; a new push cancels the previous run). It is not a required check, so auto-merge does not wait for it — look at the result in the pull request.
    - Signed installers, the update-signature check and the README screenshots run only for `v*` tags and manual runs (Actions › Windows › Run workflow).
-4. Merge with a merge commit so each pull request stays one unit in the history. `gh pr merge --auto --merge` merges as soon as the checks pass and deletes the branch.
-5. Contribution rights: identify third-party code in the pull request with its origin and license, and keep its notices. The [Community Use License](../LICENSE) and [CLA v1.0](../CLA.md) are proposals that are not in effect; once adopted, each rights holder posts the assent comment described in CLA.md and the maintainer verifies it before merging (see [CONTRIBUTING.md](../CONTRIBUTING.md)). Nothing is collected before that.
+5. Merge with a merge commit so each pull request stays one unit in the history. `gh pr merge --auto --merge` merges as soon as the checks pass and deletes the branch.
+6. Contribution rights: identify third-party code in the pull request with its origin and license, and keep its notices. The [Community Use License](../LICENSE) and [CLA v1.0](../CLA.md) are proposals that are not in effect; once adopted, each rights holder posts the assent comment described in CLA.md and the maintainer verifies it before merging (see [CONTRIBUTING.md](../CONTRIBUTING.md)). Nothing is collected before that.
 
 ### Fixing a pull request the checks rejected
 

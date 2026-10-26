@@ -68,10 +68,11 @@ The ones to remember:
 
 ## Pull requests
 
-1. Branch from `main` (`feature/…`, `fix/…`, `docs/…`). One topic per pull request.
-2. Pass the checks above (build · `tsc` · `vitest` · `cargo check`). Changed a screen? Attach light and dark screenshots.
-3. Fill in the pull request template's checklist. CI (the Windows self-test and the Git rules) must pass before merging.
-4. Merge with a merge commit, so each pull request stays one unit in the history. `gh pr merge --auto --merge` merges as soon as the checks pass and deletes the branch.
+1. Open an issue for the work first — a bug report, a feature request or a task (`gh issue create`) — and link the pull request to it with `Closes #<number>`. Every pull request belongs to an issue.
+2. Branch from `main` (`feature/…`, `fix/…`, `docs/…`). One topic per pull request.
+3. Pass the checks above (build · `tsc` · `vitest` · `cargo check`). Changed a screen? Attach light and dark screenshots.
+4. Fill in the pull request template's checklist. CI (the Windows self-test and the Git rules) must pass before merging.
+5. Merge with a merge commit, so each pull request stays one unit in the history. `gh pr merge --auto --merge` merges as soon as the checks pass and deletes the branch.
 
 The details — collaborator permissions, stacked pull requests, fixing a pull request the checks rejected, what the Windows CI does — are in [docs/git-workflow.md](docs/git-workflow.md).
 

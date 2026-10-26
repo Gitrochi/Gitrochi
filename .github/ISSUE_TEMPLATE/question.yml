@@ -1,17 +1,17 @@
-name: 💬 질문 · 도움
-description: 쓰는 방법이 궁금하거나 설정이 잘 안 될 때
-title: "[질문] "
+name: 💬 Question · help
+description: How something works, or a setup that does not come together
+title: "[Question] "
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: |
-        [README 사용법](https://github.com/Gitrochi/Gitrochi#사용법)과 [기능 자세히](https://github.com/Gitrochi/Gitrochi#기능-자세히)에 답이 있을 수 있습니다.
+        The [usage and features](https://github.com/Gitrochi/Gitrochi/blob/main/docs/features.md) document may already have the answer.
 
   - type: dropdown
     id: platform
     attributes:
-      label: 플랫폼
+      label: Platform
       options:
         - macOS
         - Windows
@@ -21,7 +21,7 @@ body:
   - type: textarea
     id: question
     attributes:
-      label: 궁금한 점
-      description: 하려는 일과, 해 본 것을 적어 주세요
+      label: Your question
+      description: What you are trying to do, and what you have tried
     validations:
       required: true
