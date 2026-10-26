@@ -51,7 +51,7 @@ Gitrochi is a native Git client for macOS and Windows. It draws your history as 
 
 - **Repository screen** — branches, the graph with the terminal underneath and the changes or commit details side by side; Compare, Rebase and Code as pages; the page list folds into an icon rail
 - **Review and advanced Git tools** — review the account, destination and outgoing changes before pushing; draft line comments and batch reviews; compare revisions, select several commits, edit three-way conflicts, browse recovery history, LFS, submodules and bisect
-- **Connected work** — PR/MR management, issues, actions and one Account page for the inbox, releases, projects and organizations; AI questions about selected changes, repository reading tools and a local read-only MCP server
+- **Connected work** — PR/MR management, issues, actions and one Account page for the inbox, releases, projects and organizations; the account control in the toolbar; AI questions about selected changes, repository reading tools and a local read-only MCP server
 - **Shared Rust core** — parsing, diff, patches, conflicts and graph calculations shared by both apps, with cancellable background calculations; commit searches ignore spacing
 
 The full list, with usage and shortcuts: [docs/features.md](docs/features.md).

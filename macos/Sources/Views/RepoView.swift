@@ -238,6 +238,10 @@ struct RepoView: View {
                                          : String(localized: "Opens a terminal in this repository's folder below the graph. The graph updates as soon as you run git commands."),
                       shortcut: "⌃`")
         }
+        // the hosting account and Git identity stay in the toolbar's trailing corner
+        ToolbarItem(placement: .primaryAction) {
+            AccountQuickControls()
+        }
     }
 }
 
