@@ -100,6 +100,12 @@ describe("workspace navigation", () => {
     store.navigate("code"); store.openFileHistory(file.path); expect(store.destination).toBe("repository"); expect(store.fileInspect?.mode).toBe("history");
     store.navigate("account"); store.openBlame(file.path, head, 8); expect(store.destination).toBe("repository"); expect(store.fileInspect).toEqual({ mode: "blame", path: file.path, rev: head }); expect(store.fileInspectLine).toBe(8);
   });
+  it("opens the Actions page focused on the run of a graph badge, only with a repository", () => {
+    const pipeline = { id: 42, number: 7, name: "CI", title: "", ref: "main", sha: head, status: "failed" as const, url: "https://example.com/p/42", created: null, event: "push", actor: null };
+    const empty = new RepoStore(); empty.openCI(pipeline); expect(empty.destination).toBe("home"); expect(empty.ciFocus).toBeNull();
+    const store = fixture(); store.navigate("code"); store.openCI(pipeline); expect(store.destination).toBe("actions"); expect(store.ciFocus).toBe(42);
+    internal(store).resetState(); expect(store.ciFocus).toBeNull();
+  });
   it("opens commit search on the repository screen and clears documents hiding the graph", () => {
     const store = fixture(); store.navigate("code"); store.fileInspect = { mode: "history", path: file.path, rev: null }; store.diffSource = { kind: "working", change: file };
     const request = store.searchFocusRequest; store.requestSearchFocus(); expect(store.destination).toBe("repository"); expect(store.fileInspect).toBeNull(); expect(store.diffSource).toBeNull(); expect(store.searchFocusRequest).toBe(request + 1);

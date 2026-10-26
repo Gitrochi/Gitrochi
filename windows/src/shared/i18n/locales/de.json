@@ -102,7 +102,6 @@
  "Gitrochi {0} is the latest version.": "Gitrochi {0} ist die neueste Version.",
  "Brings {0} new commits from the remote into the current branch.": "Holt neue Commits ({0}) vom Remote in den aktuellen Branch.",
  "By branch": "Nach Branch",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — klicken, um im Browser zu öffnen",
  "Calls Chat Completions with an OpenAI API key.": "Ruft Chat Completions mit einem OpenAI-API-Schlüssel auf.",
  "Calls Gemini with a Google AI Studio API key.": "Ruft Gemini mit einem API-Schlüssel von Google AI Studio auf.",
  "Cancel": "Abbrechen",
@@ -1143,5 +1142,6 @@
   "Choose a branch or tag": "Branch oder Tag wählen",
   "Remote branches": "Remote-Branches",
   "From revision": "Von Revision",
-  "To revision": "Bis Revision"
+  "To revision": "Bis Revision",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Klick öffnet in Actions"
 }

@@ -103,7 +103,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Đưa {0} commit mới từ remote vào nhánh hiện tại.",
  "Browser": "Trình duyệt",
  "By branch": "Theo nhánh",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — nhấp để mở trong trình duyệt",
  "Calls Chat Completions with an OpenAI API key.": "Gọi Chat Completions bằng khóa API OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Gọi Gemini bằng khóa API Google AI Studio.",
  "Cancel": "Hủy",
@@ -1122,5 +1121,6 @@
   "Choose a branch or tag": "Chọn nhánh hoặc thẻ",
   "Remote branches": "Nhánh từ xa",
   "From revision": "Bản sửa đổi nguồn",
-  "To revision": "Bản sửa đổi đích"
+  "To revision": "Bản sửa đổi đích",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — nhấp để mở trong Actions"
 }

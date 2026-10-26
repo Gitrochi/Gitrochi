@@ -104,7 +104,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Přenese nové commity ({0}) ze vzdáleného repozitáře do aktuální větve.",
  "Browser": "Prohlížeč",
  "By branch": "Podle větví",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — kliknutím otevřete v prohlížeči",
  "Calls Chat Completions with an OpenAI API key.": "Volá Chat Completions s klíčem API OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Volá Gemini s klíčem API z Google AI Studio.",
  "Cancel": "Zrušit",
@@ -1148,5 +1147,6 @@
   "Choose a branch or tag": "Vyberte větev nebo tag",
   "Remote branches": "Vzdálené větve",
   "From revision": "Výchozí revize",
-  "To revision": "Cílová revize"
+  "To revision": "Cílová revize",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kliknutím otevřete v Actions"
 }

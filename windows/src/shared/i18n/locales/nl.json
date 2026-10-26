@@ -98,7 +98,6 @@
  "Gitrochi {0} is the latest version.": "Gitrochi {0} is de nieuwste versie.",
  "Brings {0} new commits from the remote into the current branch.": "Haalt nieuwe commits ({0}) van de remote binnen in de huidige branch.",
  "By branch": "Per branch",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — klik om te openen in de browser",
  "Calls Chat Completions with an OpenAI API key.": "Roept Chat Completions aan met een OpenAI API-sleutel.",
  "Calls Gemini with a Google AI Studio API key.": "Roept Gemini aan met een Google AI Studio API-sleutel.",
  "Cancel": "Annuleren",
@@ -1117,5 +1116,6 @@
   "Choose a branch or tag": "Kies een branch of tag",
   "Remote branches": "Externe branches",
   "From revision": "Vanaf revisie",
-  "To revision": "Tot revisie"
+  "To revision": "Tot revisie",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — klik om te openen in Actions"
 }

@@ -107,7 +107,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Переносит новые коммиты из удалённого репозитория в текущую ветку. Новых коммитов: {0}.",
  "Browser": "Браузер",
  "By branch": "По веткам",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — нажмите, чтобы открыть в браузере",
  "Calls Chat Completions with an OpenAI API key.": "Вызывает Chat Completions с ключом API OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Вызывает Gemini с ключом API Google AI Studio.",
  "Cancel": "Отмена",
@@ -1166,5 +1165,6 @@
   "Choose a branch or tag": "Выберите ветку или тег",
   "Remote branches": "Удалённые ветки",
   "From revision": "Исходная ревизия",
-  "To revision": "Целевая ревизия"
+  "To revision": "Целевая ревизия",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — нажмите, чтобы открыть в Actions"
 }

@@ -107,7 +107,6 @@
  "Brings {0} new commits from the remote into the current branch.": "リモートの新しいコミット {0} 件を現在のブランチに取り込みます。",
  "Browser": "ブラウザー",
  "By branch": "ブランチ別",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — クリックしてブラウザーで開く",
  "Calls Chat Completions with an OpenAI API key.": "OpenAI の API キーで Chat Completions を呼び出します。",
  "Calls Gemini with a Google AI Studio API key.": "Google AI Studio の API キーで Gemini を呼び出します。",
  "Cancel": "キャンセル",
@@ -1167,5 +1166,6 @@
   "Choose a branch or tag": "ブランチまたはタグを選択",
   "Remote branches": "リモートブランチ",
   "From revision": "比較元のリビジョン",
-  "To revision": "比較先のリビジョン"
+  "To revision": "比較先のリビジョン",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — クリックで Actions に開く"
 }

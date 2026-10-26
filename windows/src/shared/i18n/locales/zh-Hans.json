@@ -107,7 +107,6 @@
  "Brings {0} new commits from the remote into the current branch.": "将远程的 {0} 个新提交拉取到当前分支。",
  "Browser": "浏览器",
  "By branch": "按分支",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI：{0} · {1}#{2} — 点击在浏览器中打开",
  "Calls Chat Completions with an OpenAI API key.": "使用 OpenAI API 密钥调用 Chat Completions。",
  "Calls Gemini with a Google AI Studio API key.": "使用 Google AI Studio API 密钥调用 Gemini。",
  "Cancel": "取消",
@@ -1168,5 +1167,6 @@
   "Choose a branch or tag": "选择分支或标签",
   "Remote branches": "远程分支",
   "From revision": "起始版本",
-  "To revision": "目标版本"
+  "To revision": "目标版本",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 点击在 Actions 中打开"
 }

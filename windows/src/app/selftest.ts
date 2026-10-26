@@ -569,6 +569,10 @@ export async function runSelfTest(): Promise<boolean> {
     const head = s.headHash!;
     s.ci.showPipelines([{ id: 1, number: 7, name: "CI", title: "", ref: "main", sha: head, status: "failed", url: "http://127.0.0.1/p/1", created: null, event: "push", actor: null }]);
     const badge = await until(() => !!document.querySelector(".commit-row .ci-badge"), 3000);
+    // the badge opens the in-app Actions page on that run; without a remote the page lets the focus go
+    document.querySelector<HTMLElement>(".commit-row .ci-badge")?.click();
+    const opened = await until(() => s.destination === "actions", 3000);
+    const released = await until(() => s.ciFocus === null, 3000);
     s.ci.reset();
     // 화면: CI/CD 탭이 그려지는지(이 저장소는 원격이 없어 안내 문구)
     s.navigate("actions");
@@ -585,8 +589,10 @@ export async function runSelfTest(): Promise<boolean> {
       flows[0].inputs[0]?.options.join(",") === "staging,production" &&
       calls.some((c) => c.url === "/gh/repos/o/r/actions/workflows/7/dispatches" && JSON.stringify(c.body) === '{"ref":"main","inputs":{"target":"production"}}' && c.token === "Bearer gh-token") &&
       panel &&
-      badge;
-    return [ok, `badge=${badge} pipes=${pipes.length} jobs=${jobs.map((j) => `${j.stage}/${j.name}:${j.status}`)} flows=${flows.map((f) => f.name + ":" + f.inputs.map((i) => i.name))} calls=${urls} panel=${panel}`];
+      badge &&
+      opened &&
+      released;
+    return [ok, `badge=${badge} opened=${opened} released=${released} pipes=${pipes.length} jobs=${jobs.map((j) => `${j.stage}/${j.name}:${j.status}`)} flows=${flows.map((f) => f.name + ":" + f.inputs.map((i) => i.name))} calls=${urls} panel=${panel}`];
   });
 
   // 다른 브랜치에 머지: 방금 만든 브랜치(같은 커밋)를 그 줄에 놓으면 '이미 들어 있음', 커밋 후 놓으면 '…에 머지 — 체크아웃'

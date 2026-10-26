@@ -91,6 +91,23 @@ export function CIPanel({
     };
   }, [key, ci]);
 
+  // a run opened from a graph badge: expand its branch group and the run, show it, then let go of the focus
+  const root = useRef<HTMLDivElement>(null);
+  const focus = store.ciFocus;
+  useEffect(() => {
+    if (focus === null) return;
+    if (target && (ci.state.kind === "idle" || ci.state.kind === "loading")) return; // the list is still on its way
+    const p = ci.pipelines.find((x) => x.id === focus);
+    if (p) {
+      setCollapsed((prev) => { if (!prev.has(p.ref)) return prev; const next = new Set(prev); next.delete(p.ref); return next; });
+      setExpanded((prev) => (prev.has(p.id) ? prev : new Set(prev).add(p.id)));
+      if (!ci.jobs.has(p.id)) void ci.loadJobs(p);
+      requestAnimationFrame(() => root.current?.querySelector(`[data-pipeline="${p.id}"]`)?.scrollIntoView({ block: "center" }));
+    }
+    store.ciFocus = null;
+    store.changed();
+  }, [focus, target, ci, ci.state.kind, ci.pipelines, store]);
+
   if (!target) {
     return (
       <div
@@ -125,7 +142,7 @@ export function CIPanel({
 
   const st = ci.state;
   return (
-    <div className="col" style={{ flex: 1, minHeight: 0 }}>
+    <div className="col" style={{ flex: 1, minHeight: 0 }} ref={root}>
       <div
         className="row"
         style={{
@@ -326,6 +343,7 @@ function PipelineRow({
     <div
       className="side-row"
       style={{ alignItems: "center", cursor: "default" }}
+      data-pipeline={p.id}
       onClick={() => toggle()}
       onContextMenu={(e) =>
         showContextMenu(e, [

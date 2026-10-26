@@ -107,7 +107,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Підтягує нові коміти з віддаленого репозиторію в поточну гілку (нових комітів: {0}).",
  "Browser": "Браузер",
  "By branch": "За гілками",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — клацніть, щоб відкрити в браузері",
  "Calls Chat Completions with an OpenAI API key.": "Викликає Chat Completions із ключем API OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Викликає Gemini з ключем API Google AI Studio.",
  "Cancel": "Скасувати",
@@ -1166,5 +1165,6 @@
   "Choose a branch or tag": "Виберіть гілку або тег",
   "Remote branches": "Віддалені гілки",
   "From revision": "Початкова ревізія",
-  "To revision": "Кінцева ревізія"
+  "To revision": "Кінцева ревізія",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — натисніть, щоб відкрити в Actions"
 }

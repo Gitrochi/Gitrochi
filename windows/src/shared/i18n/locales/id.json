@@ -99,7 +99,6 @@
  "Gitrochi {0} is the latest version.": "Gitrochi {0} adalah versi terbaru.",
  "Brings {0} new commits from the remote into the current branch.": "Mengambil {0} commit baru dari remote ke branch saat ini.",
  "By branch": "Per branch",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — klik untuk membuka di browser",
  "Calls Chat Completions with an OpenAI API key.": "Memanggil Chat Completions dengan kunci API OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Memanggil Gemini dengan kunci API Google AI Studio.",
  "Cancel": "Batal",
@@ -1118,5 +1117,6 @@
   "Choose a branch or tag": "Pilih cabang atau tag",
   "Remote branches": "Cabang jarak jauh",
   "From revision": "Revisi awal",
-  "To revision": "Revisi akhir"
+  "To revision": "Revisi akhir",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — klik untuk membuka di Actions"
 }

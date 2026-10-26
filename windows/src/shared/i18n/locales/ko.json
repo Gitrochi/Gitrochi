@@ -139,7 +139,6 @@
   "Browser login didn't finish. Try again.": "브라우저 로그인을 완료하지 못했습니다. 다시 시도해 주세요.",
   "Browse…": "폴더 선택…",
   "By branch": "브랜치별",
-  "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — 눌러서 브라우저로",
   "Calls Chat Completions with an OpenAI API key.": "OpenAI API 키로 Chat Completions 를 부릅니다.",
   "Calls Gemini with a Google AI Studio API key.": "Google AI Studio API 키로 Gemini 를 부릅니다.",
   "Cancel": "취소",
@@ -1973,5 +1972,6 @@
   "An empty search lists repositories you belong to.": "검색어를 비워 두면 내가 속한 저장소를 모두 보여 줍니다.",
   "Creates a new branch at the current position. From ▾: new worktree, compare revisions, run an agent (Claude Code, Codex, Gemini).": "현재 위치에서 새 브랜치를 만듭니다. ▾ 에서: 새 워크트리, 두 시점 비교, 에이전트 실행(Claude Code, Codex, Gemini).",
   "Branches": "브랜치",
-  "Remote branches": "원격 브랜치"
+  "Remote branches": "원격 브랜치",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 누르면 Actions 에서 엽니다"
 }

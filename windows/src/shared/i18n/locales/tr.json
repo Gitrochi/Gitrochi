@@ -104,7 +104,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Uzak depodaki {0} yeni commit'i geçerli dala çeker.",
  "Browser": "Tarayıcı",
  "By branch": "Dala göre",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — tarayıcıda açmak için tıklayın",
  "Calls Chat Completions with an OpenAI API key.": "OpenAI API anahtarıyla Chat Completions'ı çağırır.",
  "Calls Gemini with a Google AI Studio API key.": "Google AI Studio API anahtarıyla Gemini'yi çağırır.",
  "Cancel": "Vazgeç",
@@ -1155,5 +1154,6 @@
   "Choose a branch or tag": "Bir dal veya etiket seçin",
   "Remote branches": "Uzak dallar",
   "From revision": "Başlangıç revizyonu",
-  "To revision": "Bitiş revizyonu"
+  "To revision": "Bitiş revizyonu",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — Actions içinde açmak için tıklayın"
 }

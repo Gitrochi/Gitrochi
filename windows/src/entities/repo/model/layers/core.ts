@@ -2,7 +2,7 @@ import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
 import { isWorkspaceDestination, repositoryDestinations, restoredDestination, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
-import { CIStore } from "@/entities/ci";
+import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
 import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraphAsync, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
@@ -77,6 +77,16 @@ export abstract class RepoCore extends Observable implements AgentHost {
     // the Pull requests page shows one request at a time; an unrelated diff or file view would hide its list
     if (prepare && page === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
     this.emit(); return true;
+  }
+
+  /** The run the Actions page should expand and show next, set by a CI badge in the graph (macOS: ciFocus) */
+  ciFocus: number | null = null;
+
+  /** Opens the Actions page on a run; the page expands it, loads its jobs and lets go of the focus */
+  openCI(pipeline: CIPipeline) {
+    if (!this.navigate("actions")) return;
+    this.ciFocus = pipeline.id;
+    this.emit();
   }
 
   /** A graph selection made from the Pull requests page (keyboard, routes) belongs to the repository screen */
@@ -436,6 +446,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   protected resetState() {
     this.confirmationGuard.invalidate();
     this.destination = "home";
+    this.ciFocus = null;
     this.cancelPushReview();
     this.cancelChangeQuestion();
     this.cancelRepositoryAssistant();

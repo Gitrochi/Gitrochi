@@ -101,7 +101,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Traz para o branch atual os novos commits do remoto ({0}).",
  "Browser": "Navegador",
  "By branch": "Por branch",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — clique para abrir no navegador",
  "Calls Chat Completions with an OpenAI API key.": "Chama a API Chat Completions com uma chave de API da OpenAI.",
  "Calls Gemini with a Google AI Studio API key.": "Chama o Gemini com uma chave de API do Google AI Studio.",
  "Cancel": "Cancelar",
@@ -1135,5 +1134,6 @@
   "Choose a branch or tag": "Escolha um branch ou tag",
   "Remote branches": "Branches remotos",
   "From revision": "Revisão de origem",
-  "To revision": "Revisão de destino"
+  "To revision": "Revisão de destino",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — clique para abrir em Actions"
 }

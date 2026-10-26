@@ -106,7 +106,6 @@
  "Brings {0} new commits from the remote into the current branch.": "ดึงคอมมิตใหม่ {0} รายการจากรีโมตเข้ามาในแบรนช์ปัจจุบัน",
  "Browser": "เบราว์เซอร์",
  "By branch": "ตามแบรนช์",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — คลิกเพื่อเปิดในเบราว์เซอร์",
  "Calls Chat Completions with an OpenAI API key.": "เรียก Chat Completions ด้วยคีย์ API ของ OpenAI",
  "Calls Gemini with a Google AI Studio API key.": "เรียก Gemini ด้วยคีย์ API ของ Google AI Studio",
  "Cancel": "ยกเลิก",
@@ -1162,5 +1161,6 @@
   "Choose a branch or tag": "เลือกสาขาหรือแท็ก",
   "Remote branches": "สาขาระยะไกล",
   "From revision": "รีวิชันต้นทาง",
-  "To revision": "รีวิชันปลายทาง"
+  "To revision": "รีวิชันปลายทาง",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — คลิกเพื่อเปิดใน Actions"
 }

@@ -105,7 +105,6 @@
  "Brings {0} new commits from the remote into the current branch.": "Lehúzza a távoli tároló új commitjait ({0}) az aktuális ágba.",
  "Browser": "Böngésző",
  "By branch": "Áganként",
- "CI: {0} · {1}#{2} — click to open in the browser": "CI: {0} · {1}#{2} — kattintással megnyitható a böngészőben",
  "Calls Chat Completions with an OpenAI API key.": "A Chat Completions API-t hívja OpenAI API-kulccsal.",
  "Calls Gemini with a Google AI Studio API key.": "A Geminit hívja Google AI Studio API-kulccsal.",
  "Cancel": "Mégse",
@@ -1150,5 +1149,6 @@
   "Choose a branch or tag": "Válasszon ágat vagy címkét",
   "Remote branches": "Távoli ágak",
   "From revision": "Kiinduló revízió",
-  "To revision": "Célrevízió"
+  "To revision": "Célrevízió",
+  "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — kattintson a megnyitáshoz az Actions oldalon"
 }
