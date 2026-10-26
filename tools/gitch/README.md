@@ -336,6 +336,14 @@ gitch schema error             # 기계 출력 요청 중 치명적 오류의 �
 
 공개 종료 코드는 0(정상, `gitch c`의 변경 없음 포함), 1(문제·실패·규칙 위반), 2(사용자 확인 필요), 4(비대화형 커밋에서 올릴 파일을 고르지 않음)이다. 내부 커밋 함수의 3은 `gitch c`에서 0으로 바꾸므로 공개 계약으로 사용하지 않는다. 외부 Git·SSH 도구를 직접 실행하는 명령은 그 도구의 종료 코드와 진단을 전달할 수도 있다.
 
+### Offline graph display language
+
+The offline graph UI and its Markdown/HTML review reports support English, Korean and Japanese. When Gitrochi opens a graph, it passes the app's selected language, including the resolved system language when the app follows the system. Other app languages fall back to English.
+
+Graphs generated outside the app use the browser/system language. Set `GITCH_GRAPH_LANG=en`, `GITCH_GRAPH_LANG=ko` or `GITCH_GRAPH_LANG=ja` for an explicit display-language override; regional codes such as `ko-KR` and `ja-JP` also work. This does not change the source-language filter `--lang`, repository paths, filenames or analysis data. Translation resources are embedded, so graphs and exported reports work offline.
+
+Automatic-refresh pages and watcher identities include the display language so a previously opened page cannot overwrite a graph in another language.
+
 ### 비교 (`gitch graph diff`)
 
 ```bash

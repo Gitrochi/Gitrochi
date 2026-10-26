@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+export GITCH_GRAPH_LANG=ko # Keep replay text assertions independent of the host locale.
 # The shared graph fixtures are defined in test_graph.sh.
 test_graph_replay_in_browser() {
   local chrome

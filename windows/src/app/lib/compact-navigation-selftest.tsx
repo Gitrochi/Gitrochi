@@ -9,6 +9,8 @@ const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 60));
 
 /** 실제 저장소 화면을 접고 넓혀도 아이콘·선택·설정·검색을 계속 사용할 수 있는지 확인한다. */
 export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
+  // Finish earlier checks' debounced settings writes before replacing IPC.
+  await settings.flush();
   const original = { get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText };
   const memory = new Map<string, unknown>([["navigationToolsExpanded", false], ["pinnedRepositoryPages", ["changes", "branches"]], ["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], navigated: string[] = [];
@@ -52,7 +54,8 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     nav().querySelector<HTMLButtonElement>(".workspace-nav-footer button")!.click();
     row("repositories")!.click();
     ensure(opened === 1 && navigated.includes("repositories"), "Compact Settings and library actions did not work");
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
+    row("repositories")!.focus();
+    row("repositories")!.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true }));
     await pause();
     const search = host.querySelector<HTMLInputElement>(".workspace-nav-search input");
     ensure(!isCompact() && search === document.activeElement, "Ctrl+K must expand the rail and focus page search");
@@ -75,9 +78,9 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     ensure(navigated.length === previewNavigation, "Opening a flyout must preserve the active workspace");
     preview.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); await pause();
     ensure(!document.querySelector(".workspace-nav-preview") && document.activeElement === branches, "Escape must dismiss the flyout and restore its icon focus");
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true })); await pause();
+    branches.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true, cancelable: true })); await pause();
     ensure(!isCompact(), "Ctrl+B must expand the narrow icon rail");
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "b", metaKey: true, bubbles: true })); await pause();
+    branches.dispatchEvent(new KeyboardEvent("keydown", { key: "b", metaKey: true, bubbles: true, cancelable: true })); await pause();
     ensure(isCompact(), "Command+B must collapse the navigation too");
     await resize(1200);
     ensure(!isCompact(), "Automatically compacted menu must expand when space returns");

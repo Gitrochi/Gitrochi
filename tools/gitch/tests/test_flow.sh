@@ -73,16 +73,14 @@ test_flow_preflight_line_and_pre_push_gate() {
   git add -A && gitch c -m "Add flow" >/dev/null 2>&1 || fail commit
   run gitch flow trust --yes; assert_ok
   run gitch preflight; assert_no_out "FLOW="
-  id=$(gitch flow trust --show --json | jq -r .record | sed 's#.*/##; s#\.json$##')
-  mkdir -p "$HOME/.config/gitsw/flow"
-  printf '{"prePush": {"%s": "ok"}}\n' "$id" > "$HOME/.config/gitsw/flow/settings.json"
+  run gitch flow gate on --flow ok --json; assert_ok
   run gitch preflight; assert_out "FLOW=WARN"
   run gitch preflight --json; assert_eq "$(printf '%s' "$OUT" | jq -r .flow)" "WARN"
   # When the gate runs the flow and it passes, the push goes through.
   run gitch p; assert_ok
   run gitch preflight; assert_out "FLOW=OK"
   # A failing flow blocks the push.
-  printf '{"prePush": {"%s": "bad"}}\n' "$id" > "$HOME/.config/gitsw/flow/settings.json"
+  run gitch flow gate on --flow bad --json; assert_ok
   echo y > y.txt && git add y.txt && gitch c -m "Add y" >/dev/null 2>&1 || fail commit2
   run gitch p; [ "$RC" -ne 0 ] || fail "a failing flow did not block the push"
   assert_out "FLOW=STOP"

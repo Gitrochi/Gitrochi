@@ -15,6 +15,7 @@ const icons = { home: Home, repositories: FolderGit2, repository: FolderGit2, ch
 export function NavigationSidebar({ store, openSettings, compact = false, onToggle }: { store: RepoStore; openSettings: () => void; compact?: boolean; onToggle?: () => void }) {
   useObserve(store); useObserve(settings);
   const [query, setQuery] = useState(""), [customizing, setCustomizing] = useState(false);
+  const navigation = useRef<HTMLElement>(null);
   const input = useRef<HTMLInputElement>(null), customize = useRef<HTMLDivElement>(null), searchAfterExpand = useRef(false);
   const [preview, setPreview] = useState<{ page: WorkspaceDestination; trigger: HTMLElement; focusFirst: boolean } | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -49,6 +50,13 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
+      const current = navigation.current;
+      if (!current?.getClientRects().length) return;
+      // Retained tabs also mount sidebars. Route global keys to the focused
+      // workspace, or the first visible sidebar when focus is on the window.
+      const source = event.target instanceof Element ? event.target : document.activeElement;
+      const scope = source?.closest(".repo, .workspace-navigation");
+      if (scope ? !scope.contains(current) : [...document.querySelectorAll<HTMLElement>(".workspace-navigation")].find((nav) => nav.getClientRects().length) !== current) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); focusSearch(); }
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "b") { event.preventDefault(); onToggle?.(); }
       if (event.key === "Escape") { setCustomizing(false); setPreview(null); }
@@ -76,7 +84,7 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
     </div>;
   });
   const label = (text: string) => <div className="workspace-nav-group"><span className="ellipsis">{text}</span><span /></div>;
-  return <nav className={`workspace-navigation${compact ? " compact" : ""}`} aria-label={t("Workspace navigation")}>
+  return <nav ref={navigation} className={`workspace-navigation${compact ? " compact" : ""}`} aria-label={t("Workspace navigation")}>
     {onToggle && <div className="workspace-nav-header"><span>{t("Workspace")}</span><button type="button" className="workspace-nav-toggle" aria-label={t(compact ? "Expand sidebar" : "Collapse sidebar")} aria-expanded={!compact} onClick={onToggle} data-tip={`${t(compact ? "Show sidebar" : "Hide sidebar")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} B\n${t("The sections stay at hand as a rail of icons; hover one to open it.")}`}>{compact ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button></div>}
     {compact ? <button type="button" className="workspace-nav-search-compact" aria-label={t("Find a workspace page")} onClick={focusSearch} data-tip={t("Go to a page…")}><Search size={18} /></button> : <div className="workspace-nav-search"><Search size={14} /><input ref={input} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Go to a page…")} aria-label={t("Find a workspace page")} />{query ? <button aria-label={t("Clear search")} onClick={() => setQuery("")}><X size={12} /></button> : <kbd>{navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} K</kbd>}</div>}
     <div className="workspace-nav-scroll">

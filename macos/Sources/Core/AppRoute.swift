@@ -46,8 +46,9 @@ struct AppRoute: Equatable {
             number = n
         }
         if let view = values["view"] {
-            guard ["graph", "files", "modules", "changes", "tree", "diff", "affected", "precise"].contains(view),
-                  view != "diff" || values["file"] != nil else { throw Invalid.link }
+            guard ["graph", "files", "modules", "changes", "tree", "diff", "affected", "precise", "finder"].contains(view),
+                  view != "diff" || values["file"] != nil,
+                  view != "finder" || (values["line"] == nil && values["commit"] == nil) else { throw Invalid.link }
         }
         if let commit = values["commit"] {
             guard [40, 64].contains(commit.utf8.count), commit.utf8.allSatisfy({ ($0 >= 48 && $0 <= 57) || ($0 >= 65 && $0 <= 70) || ($0 >= 97 && $0 <= 102) }) else { throw Invalid.link }

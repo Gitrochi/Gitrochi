@@ -236,12 +236,20 @@ fn idempotency_key_replays_the_same_run() {
 fn cancel_stops_the_whole_process_tree() {
     let fx = fixture();
     fx.trust();
+    let started = std::time::Instant::now();
     let (code, d) = fx.json("script", &["run", "slow", "--detach", "--json"]);
     assert_eq!(code, 0, "{d}");
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(15),
+        "detached launch waited for the worker's captured pipes: {d}"
+    );
     let id = d["runId"].as_str().unwrap().to_string();
     std::thread::sleep(std::time::Duration::from_millis(1500));
     let (code, _) = fx.json("script", &["cancel", &id, "--json"]);
     assert_eq!(code, 0);
+    assert!(Path::new(d["runDir"].as_str().unwrap())
+        .join("cancel.request")
+        .exists());
     let mut state = Value::Null;
     for _ in 0..60 {
         std::thread::sleep(std::time::Duration::from_millis(250));

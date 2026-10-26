@@ -415,7 +415,9 @@ enum Gitch {
     private static func runGraph(_ args: [String], in repo: URL, ok: Set<Int32> = [0]) async throws -> GitResult {
         if let reason = graphUnavailableReason { throw Failure(message: reason) }
         guard let exe = bundled else { throw Failure(message: String(localized: "Couldn't find gitch inside Gitrochi.")) }
-        let r = try await Shell.run("/bin/bash", [exe, "graph"] + args, cwd: repo, env: environment, timeout: 600)
+        var graphEnvironment = environment
+        graphEnvironment["GITCH_GRAPH_LANG"] = AppLanguage.graphCode
+        let r = try await Shell.run("/bin/bash", [exe, "graph"] + args, cwd: repo, env: graphEnvironment, timeout: 600)
         guard ok.contains(r.status) else { throw graphFailure(r) }
         return r
     }
@@ -432,7 +434,8 @@ enum Gitch {
         let hash = SHA256.hash(data: Data(repo.path.utf8)).prefix(4).map { String(format: "%02x", $0) }.joined()
         return FileManager.default.temporaryDirectory
             .appendingPathComponent("gitch-graph", isDirectory: true)
-            .appendingPathComponent("\(repo.lastPathComponent)-\(name)-\(hash).html")
+            // Separate watcher identities so an earlier language cannot overwrite this page.
+            .appendingPathComponent("\(repo.lastPathComponent)-\(name)-\(AppLanguage.graphCode)-\(hash).html")
     }
 
     private static func json<T: Decodable>(_ args: [String], in repo: URL) async -> T? {
