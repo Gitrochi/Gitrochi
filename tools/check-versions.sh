@@ -19,5 +19,7 @@ check 'windows/package-lock.json packages[""]' "$(json_versions "$ROOT/windows/p
 check windows/src-tauri/tauri.conf.json "$(json_versions "$ROOT/windows/src-tauri/tauri.conf.json" | head -1)"
 check windows/src-tauri/Cargo.toml "$(sed -n 's/^version = "\([^"]*\)".*/\1/p' "$ROOT/windows/src-tauri/Cargo.toml" | head -1)"
 check 'windows/src-tauri/Cargo.lock gitrochi' "$(awk '/^name = "gitrochi"$/ { found = 1; next } found && /^version = / { sub(/^version = "/, ""); sub(/".*$/, ""); print; exit }' "$ROOT/windows/src-tauri/Cargo.lock")"
+check tools/gitch-flow/Cargo.toml "$(sed -n 's/^version = "\([^"]*\)".*/\1/p' "$ROOT/tools/gitch-flow/Cargo.toml" | head -1)"
+check 'tools/gitch-flow/Cargo.lock gitch-flow' "$(awk '/^name = "gitch-flow"$/ { found = 1; next } found && /^version = / { sub(/^version = "/, ""); sub(/".*$/, ""); print; exit }' "$ROOT/tools/gitch-flow/Cargo.lock")"
 [ "$failed" -eq 0 ] || exit 1
-printf 'Gitrochi · gitch 버전 일치: %s\n' "$expected"
+printf 'Gitrochi · gitch · gitch-flow 버전 일치: %s\n' "$expected"

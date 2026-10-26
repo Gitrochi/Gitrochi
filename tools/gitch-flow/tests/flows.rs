@@ -185,6 +185,9 @@ fn cache_replays_passes_and_misses_when_inputs_change() {
 
 // ---------- 프로세스 서비스 + HTTP 스모크 ----------
 
+/// Windows 러너에는 python3 가 없고 python 만 있다.
+const PY: &str = if cfg!(windows) { "python" } else { "python3" };
+
 const SERVICE_FLOW: &str = r#"version: 1
 services:
   web:
@@ -220,7 +223,7 @@ flows:
 #[test]
 fn process_service_backs_http_smoke_checks_and_is_cleaned_up() {
     let fx = Fx::new(&[
-        (".gitch/flow.yml", SERVICE_FLOW),
+        (".gitch/flow.yml", &SERVICE_FLOW.replace("python3", PY)),
         ("site/hello.txt", "hello flow\n"),
     ]);
     fx.trust();
@@ -248,7 +251,7 @@ fn process_service_backs_http_smoke_checks_and_is_cleaned_up() {
 
 #[test]
 fn a_service_that_never_gets_ready_rejects_only_its_nodes() {
-    let fx = Fx::new(&[(".gitch/flow.yml", SERVICE_FLOW)]);
+    let fx = Fx::new(&[(".gitch/flow.yml", &SERVICE_FLOW.replace("python3", PY))]);
     fx.trust();
     let (code, run) = fx.json("script", &["run", "broken", "--json"]);
     assert_eq!(code, 1, "{run}");
@@ -266,7 +269,9 @@ fn a_service_that_never_gets_ready_rejects_only_its_nodes() {
 }
 
 // ---------- Docker (가짜 CLI) ----------
+// 가짜 docker 는 셸 스크립트라 Windows 에서는 바로 실행되지 않는다(실제 Docker 시험은 real_docker.rs).
 
+#[cfg(unix)]
 const FAKE_DOCKER: &str = r#"#!/bin/sh
 printf '%s\n' "$*" >> "$FAKE_DOCKER_LOG"
 case "$1" in
@@ -287,6 +292,7 @@ esac
 exit 0
 "#;
 
+#[cfg(unix)]
 const DOCKER_FLOW: &str = r#"version: 1
 services:
   db:
@@ -303,6 +309,7 @@ flows:
       alone: { run: "echo independent" }
 "#;
 
+#[cfg(unix)]
 fn docker_fixture() -> (Fx, std::path::PathBuf, std::path::PathBuf) {
     let fx = Fx::new(&[(".gitch/flow.yml", DOCKER_FLOW)]);
     let shim = fx.dir.join("bin").join("docker");
@@ -318,6 +325,7 @@ fn docker_fixture() -> (Fx, std::path::PathBuf, std::path::PathBuf) {
     (fx, shim, log)
 }
 
+#[cfg(unix)]
 fn run_docker(
     fx: &Fx,
     shim: &std::path::Path,
@@ -338,6 +346,7 @@ fn run_docker(
     )
 }
 
+#[cfg(unix)]
 #[test]
 fn docker_service_is_labelled_networked_and_removed() {
     let (fx, shim, log) = docker_fixture();
@@ -374,6 +383,7 @@ fn docker_service_is_labelled_networked_and_removed() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn docker_down_rejects_its_nodes_with_docker01() {
     let (fx, shim, log) = docker_fixture();
@@ -385,6 +395,7 @@ fn docker_down_rejects_its_nodes_with_docker01() {
     assert_eq!(node(&run, "alone")["state"], "PASSED");
 }
 
+#[cfg(unix)]
 #[test]
 fn unhealthy_container_logs_are_saved_masked() {
     let (fx, shim, log) = docker_fixture();

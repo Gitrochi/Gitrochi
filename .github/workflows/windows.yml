@@ -8,7 +8,7 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    paths: ["crates/**", "tools/build-core*", "windows/**", "tools/gitch/**", "tools/gitrochi-mcp/**", "tools/check-versions.sh", "macos/Resources/Info.plist", "docs/make-demo-repo.sh", ".github/workflows/windows.yml"]
+    paths: ["crates/**", "tools/build-core*", "windows/**", "tools/gitch/**", "tools/gitch-flow/**", "tools/gitrochi-mcp/**", "tools/check-versions.sh", "macos/Resources/Info.plist", "docs/make-demo-repo.sh", ".github/workflows/windows.yml"]
   workflow_dispatch:
 
 # 같은 PR 에 새로 푸시하면 돌던 실행은 취소한다(겹쳐 돌며 줄 서지 않게)
@@ -50,7 +50,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "windows/src-tauri -> target"
+          workspaces: |
+            windows/src-tauri -> target
+            tools/gitch-flow -> target
 
       - name: 패키지 설치
         run: npm ci
@@ -107,7 +109,12 @@ jobs:
           done
           cp ../crates/target/release/gitch-core.exe "$stage/gitch-core.exe"
           cp ../tools/gitrochi-mcp/server.mjs "$stage/gitrochi-mcp.mjs"
-          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe >/dev/null)
+          # 흐름 엔진(beforeBuildCommand 가 만든 것): 포터블 zip 에는 gitch 옆에, CLI 만 쓰는 사람용으로는 따로(install.sh · self-update)
+          engine=../tools/gitch-flow/target/release/gitch-flow.exe
+          cp "$engine" "$stage/gitch-flow.exe"
+          cp "$engine" "$out/gitch-flow-windows-x64.exe"
+          (cd "$out" && sha256sum gitch-flow-windows-x64.exe | sed 's/ \*/  /' > gitch-flow-windows-x64.exe.sha256)
+          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe gitch-flow.exe >/dev/null)
           # Git Bash 의 sha256sum 이 이름 앞에 붙이는 *(바이너리 표시)는 빼서 맥과 같은 「해시  이름」으로
           (cd "$out" && sha256sum "$setup" "$zip" | sed 's/ \*/  /' > "Gitrochi_${ver}_windows.sha256")
           if [ -f "$nsis/$setup.sig" ]; then

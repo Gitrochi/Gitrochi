@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "engine": "cargo build --release --locked --manifest-path ../tools/gitch-flow/Cargo.toml",
     "test": "vitest run",
     "tauri": "tauri",
     "core": "node ../tools/build-core.mjs",

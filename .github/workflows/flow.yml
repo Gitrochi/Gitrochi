@@ -1,0 +1,141 @@
+name: Flow engine
+
+# 흐름 엔진(tools/gitch-flow)과 gitch 앞문(gitch flow · gitch test · pre-push 게이트).
+# PR: 세 운영체제에서 형식 · 정적 검사 · 단위 · 통합 시험 → gitch 앞문 시험 → 실제 Docker 시험(Linux).
+# v* 태그: Linux 엔진(정적 링크)을 그 태그의 릴리스(없으면 초안)에 올린다. 맥 · Windows 엔진은 각 앱 작업이 올린다.
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths: ["tools/gitch-flow/**", "tools/gitch/gitch", "tools/gitch/install.sh", "tools/gitch/tests/test_flow.sh", "tools/gitch/tests/test_standalone.sh", "tools/gitch/tests/test_guard.sh", "tools/gitch/tests/lib.sh", ".github/workflows/flow.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: flow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: 엔진 시험 (${{ matrix.os }})
+    if: github.ref_type != 'tag'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/gitch-flow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
+      - name: 형식 · 정적 검사
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+
+      - name: 단위 · 통합 시험
+        run: cargo test --locked
+
+      # gitch 의 실제 앞문(tools/gitch/gitch)으로: 엔진 위임 · preflight 의 FLOW 줄 · pre-push 게이트 · guard 규칙
+      - name: gitch 앞문 시험
+        run: |
+          cargo build --locked
+          command -v jq >/dev/null || { if [ "$RUNNER_OS" = Windows ]; then choco install jq -y --no-progress; fi; }
+          # test_guard.sh 는 guard 판정 도우미(expect · gd)를 주려고 함께 읽는다. 실행은 이름에 flow 가 든 시험만.
+          bash ../gitch/tests/run.sh -k flow ../gitch/tests/test_guard.sh ../gitch/tests/test_flow.sh ../gitch/tests/test_standalone.sh
+
+  # Docker 데몬이 있는 러너에서만: 실제 컨테이너로 executor · docker.service · 정리(라벨)를 본다
+  docker:
+    name: 실제 Docker 시험
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/gitch-flow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
+      - name: 이미지 미리 받기
+        run: docker pull -q alpine:3.20 && docker pull -q nginx:1.27-alpine
+
+      - name: 실제 Docker 시험
+        env:
+          GITCH_FLOW_REAL_DOCKER: "1"
+        run: cargo test --locked --test real_docker -- --ignored --test-threads 1
+
+  # 앱 없이 gitch 만 쓰는 Linux 사용자용: install.sh · gitch self-update 가 받는다
+  release:
+    name: Linux 엔진 배포 파일
+    if: github.ref_type == 'tag'
+    environment: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    # 맥 · Windows 배포 작업과 같은 그룹으로 하나씩: 같은 태그의 초안이 둘 생기지 않게
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: 태그와 엔진 버전 맞추기
+        run: |
+          ver="$(sed -n 's/^version = "\([^"]*\)".*/\1/p' tools/gitch-flow/Cargo.toml | head -1)"
+          if [ "v$ver" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::태그 $GITHUB_REF_NAME 와 gitch-flow 버전 $ver 이 다릅니다."
+            exit 1
+          fi
+
+      - name: 빌드 (정적 링크)
+        run: |
+          sudo apt-get install -y -q musl-tools
+          mkdir -p dist
+          tools/gitch-flow/build.sh dist/gitch-flow-linux-x64 x86_64-unknown-linux-musl
+          (cd dist && sha256sum gitch-flow-linux-x64 > gitch-flow-linux-x64.sha256)
+          file dist/gitch-flow-linux-x64
+
+      - name: 릴리스에 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft --verify-tag --title "Gitrochi ${tag#v}" --notes ""
+          gh release upload "$tag" dist/* --clobber
+          {
+            echo "### Linux 흐름 엔진 → $tag"
+            echo '```'
+            cat dist/*.sha256
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

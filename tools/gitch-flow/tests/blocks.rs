@@ -67,9 +67,12 @@ const ROUTES: &str = r#"routes:
     file: items.json
 "#;
 
+/// Windows 러너에는 python3 가 없고 python 만 있다.
+const PY: &str = if cfg!(windows) { "python" } else { "python3" };
+
 fn fx() -> Fx {
     let fx = Fx::new(&[
-        (".gitch/flow.yml", FLOW),
+        (".gitch/flow.yml", &FLOW.replace("python3", PY)),
         (".gitch/mocks/files/routes.yml", ROUTES),
         (
             ".gitch/mocks/files/items.json",

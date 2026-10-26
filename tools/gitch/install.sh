@@ -64,6 +64,30 @@ release_stage_helpers() {   # $1 staging directory $2 selected gitch URL $3 help
   done
   [ -z "$missing" ] || say "이전 릴리스에는 선택적 그래프 도우미가 없습니다. 기본 CLI는 설치하며 정밀 분석·자동 갱신은 도우미가 포함된 최신 Gitrochi 배포본에서 사용하세요."
 }
+# The flow engine is a native binary per OS. It comes from the same release directory, needs its own checksum,
+# must run, and is promoted together with the helpers (as gitch-flow or gitch-flow.exe beside gitch).
+flow_asset() {   # 이 컴퓨터용 흐름 엔진 배포 파일 이름(배포하지 않는 운영체제면 빈 값)
+  case "$(uname -s 2>/dev/null)" in
+    Darwin) printf 'gitch-flow-macos' ;;
+    Linux) case "$(uname -m 2>/dev/null)" in x86_64|amd64) printf 'gitch-flow-linux-x64' ;; esac ;;
+    MINGW*|MSYS*|CYGWIN*) printf 'gitch-flow-windows-x64.exe' ;;
+  esac
+}
+release_stage_engine() {   # $1 staging directory $2 selected gitch URL $3 flow API (empty = release without the engine)
+  local stage=$1 base=${2%/gitch} api=$3 asset name want have
+  [ -n "$api" ] || return 0
+  asset=$(flow_asset)
+  if [ -z "$asset" ]; then say "이 운영체제용 흐름 엔진은 배포하지 않습니다 — gitch flow · gitch test 는 직접 빌드한 gitch-flow 가 있어야 합니다."; return 0; fi
+  case "$asset" in *.exe) name=gitch-flow.exe ;; *) name=gitch-flow ;; esac
+  curl_get -o "$stage/$name" "$base/$asset" || die "흐름 엔진을 받지 못했습니다: $base/$asset (설치 파일은 바꾸지 않았습니다)"
+  curl_get -o "$stage/$asset.sha256" "$base/$asset.sha256" || die "흐름 엔진 체크섬을 받지 못했습니다: $asset.sha256 (설치 파일은 바꾸지 않았습니다)"
+  want=$(awk -v name="$asset" '$2 == name || $2 == "*" name { print $1; exit }' "$stage/$asset.sha256")
+  have=$(sha256_of "$stage/$name")
+  [ -n "$want" ] && [ "$want" = "$have" ] || die "SHA-256 이 $asset.sha256 과 맞지 않아 설치 파일을 바꾸지 않았습니다."
+  chmod 755 "$stage/$name" || die "실행 권한을 설정하지 못했습니다: $name"
+  "$stage/$name" version --json 2>/dev/null | grep -q '"flowApi"' || die "받은 흐름 엔진이 이 컴퓨터에서 돌지 않아 설치하지 않았습니다: $asset"
+  STAGED_HELPERS="$STAGED_HELPERS $name"
+}
 release_promote() {   # $1 staging directory $2 destination directory $3 CLI destination basename
   local stage=$1 dir=$2 cli=$3 name rollback_name promoted="" existed=""
   mkdir "$stage/rollback" || die "업데이트 복구 폴더를 만들지 못했습니다."
@@ -119,6 +143,7 @@ main() {
 
   helper_api=$(sed -n 's/^GITCH_HELPER_API="\([^"]*\)".*/\1/p' "$TMP/gitch" | head -1)
   release_stage_helpers "$TMP" "$url" "$helper_api"
+  release_stage_engine "$TMP" "$url" "$(sed -n 's/^GITCH_FLOW_API="\([^"]*\)".*/\1/p' "$TMP/gitch" | head -1)"
   if [ -n "$old" ] && [ "$have" = "$(sha256_of "$DEST")" ]; then
     release_promote "$TMP" "$DEST_DIR" gitch
     say "✔ 이미 최신입니다: gitch $new ($tag) — $(tilde "$DEST")"
