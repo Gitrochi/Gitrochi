@@ -1132,3 +1132,8 @@
 "Filter branches and tags" = "Filtrovat větve a značky";
 "Comparing…" = "Porovnávání…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Použijte větve, značky nebo ID commitů, nebo vyberte větev vlevo.";
+"Toolbar" = "Panel nástrojů";
+"Toolbar buttons" = "Tlačítka panelu";
+"Icons only" = "Jen ikony";
+"Icons and text" = "Ikony a text";
+"With text, each button's name sits to the right of its icon." = "S textem je název každého tlačítka vpravo od ikony.";

@@ -1152,3 +1152,8 @@
 "Filter branches and tags" = "Фільтр гілок і тегів";
 "Comparing…" = "Порівняння…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Вкажіть гілки, теги або ID комітів або виберіть гілку ліворуч.";
+"Toolbar" = "Панель інструментів";
+"Toolbar buttons" = "Кнопки панелі";
+"Icons only" = "Лише значки";
+"Icons and text" = "Значки й текст";
+"With text, each button's name sits to the right of its icon." = "З текстом назва кожної кнопки стоїть праворуч від значка.";

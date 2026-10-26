@@ -1108,3 +1108,8 @@
 "Filter branches and tags" = "Lọc nhánh và thẻ";
 "Comparing…" = "Đang so sánh…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Dùng nhánh, thẻ hoặc ID commit, hoặc chọn một nhánh ở bên trái.";
+"Toolbar" = "Thanh công cụ";
+"Toolbar buttons" = "Nút thanh công cụ";
+"Icons only" = "Chỉ biểu tượng";
+"Icons and text" = "Biểu tượng và chữ";
+"With text, each button's name sits to the right of its icon." = "Khi bật chữ, tên mỗi nút nằm bên phải biểu tượng.";

@@ -1135,3 +1135,8 @@
 "Filter branches and tags" = "Filtruj gałęzie i tagi";
 "Comparing…" = "Porównywanie…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Użyj gałęzi, tagów lub identyfikatorów commitów albo wybierz gałąź po lewej.";
+"Toolbar" = "Pasek narzędzi";
+"Toolbar buttons" = "Przyciski paska";
+"Icons only" = "Tylko ikony";
+"Icons and text" = "Ikony i tekst";
+"With text, each button's name sits to the right of its icon." = "Z tekstem nazwa każdego przycisku jest po prawej stronie ikony.";

@@ -50,6 +50,7 @@ struct RepoView: View {
         .navigationTitle(store.name)
         .navigationSubtitle(subtitle)
         .toolbar { toolbar }
+        .background(ToolbarTitles.Observer())
         .sheet(isPresented: Binding(get: { store.showCommandPalette }, set: { store.showCommandPalette = $0 }), onDismiss: {
             let command = pendingCommand
             pendingCommand = nil
@@ -266,11 +267,21 @@ struct InspectorView: View {
     }
 }
 
-/// Toolbar buttons show only their icon; what they do is in the hover tip
+/// Toolbar buttons show their icon, and their title beside it when the toolbar is set to show text; what they do is in the hover tip
 struct ToolLabel: View {
     let title: String
     let icon: String
+    @AppStorage(ToolbarTitles.key) private var showsTitles = false
     var body: some View {
-        Label(title, systemImage: icon).labelStyle(.iconOnly)
+        if showsTitles {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                Text(title).font(.system(size: 12))
+            }
+            .fixedSize()
+            .accessibilityElement(children: .combine)
+        } else {
+            Label(title, systemImage: icon).labelStyle(.iconOnly)
+        }
     }
 }

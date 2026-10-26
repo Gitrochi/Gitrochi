@@ -1153,3 +1153,8 @@
 "Filter branches and tags" = "ブランチとタグを絞り込む";
 "Comparing…" = "比較中…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "ブランチ・タグ・コミット ID を入力するか、左の一覧からブランチを選びます。";
+"Toolbar" = "ツールバー";
+"Toolbar buttons" = "ツールバーのボタン";
+"Icons only" = "アイコンのみ";
+"Icons and text" = "アイコンとテキスト";
+"With text, each button's name sits to the right of its icon." = "テキストを表示すると、各ボタンの名前がアイコンの右に並びます。";

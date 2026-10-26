@@ -1152,3 +1152,8 @@
 "Filter branches and tags" = "Фильтр веток и тегов";
 "Comparing…" = "Сравнение…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Укажите ветки, теги или ID коммитов либо выберите ветку слева.";
+"Toolbar" = "Панель инструментов";
+"Toolbar buttons" = "Кнопки панели";
+"Icons only" = "Только значки";
+"Icons and text" = "Значки и текст";
+"With text, each button's name sits to the right of its icon." = "С текстом название каждой кнопки стоит справа от значка.";

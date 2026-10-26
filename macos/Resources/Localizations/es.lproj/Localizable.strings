@@ -1126,3 +1126,8 @@
 "Filter branches and tags" = "Filtrar ramas y etiquetas";
 "Comparing…" = "Comparando…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Usa ramas, etiquetas o ID de commit, o elige una rama a la izquierda.";
+"Toolbar" = "Barra de herramientas";
+"Toolbar buttons" = "Botones de la barra";
+"Icons only" = "Solo iconos";
+"Icons and text" = "Iconos y texto";
+"With text, each button's name sits to the right of its icon." = "Con texto, el nombre de cada botón aparece a la derecha de su icono.";

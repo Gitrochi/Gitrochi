@@ -1135,3 +1135,8 @@
 "Filter branches and tags" = "Ágak és címkék szűrése";
 "Comparing…" = "Összehasonlítás…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Használj ágakat, címkéket vagy commit-azonosítókat, vagy válassz egy ágat balra.";
+"Toolbar" = "Eszköztár";
+"Toolbar buttons" = "Eszköztár gombjai";
+"Icons only" = "Csak ikonok";
+"Icons and text" = "Ikonok és szöveg";
+"With text, each button's name sits to the right of its icon." = "Szöveggel minden gomb neve az ikonja jobb oldalán jelenik meg.";

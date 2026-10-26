@@ -1148,3 +1148,8 @@
 "Filter branches and tags" = "กรองสาขาและแท็ก";
 "Comparing…" = "กำลังเปรียบเทียบ…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "ใช้สาขา แท็ก หรือรหัสคอมมิต หรือเลือกสาขาจากด้านซ้าย";
+"Toolbar" = "แถบเครื่องมือ";
+"Toolbar buttons" = "ปุ่มแถบเครื่องมือ";
+"Icons only" = "ไอคอนเท่านั้น";
+"Icons and text" = "ไอคอนและข้อความ";
+"With text, each button's name sits to the right of its icon." = "เมื่อแสดงข้อความ ชื่อปุ่มจะอยู่ทางขวาของไอคอน";

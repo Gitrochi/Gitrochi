@@ -1155,3 +1155,8 @@
 "Filter branches and tags" = "筛选分支和标签";
 "Comparing…" = "正在比较…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "输入分支、标签或提交 ID，或在左侧选择一个分支。";
+"Toolbar" = "工具栏";
+"Toolbar buttons" = "工具栏按钮";
+"Icons only" = "仅图标";
+"Icons and text" = "图标和文字";
+"With text, each button's name sits to the right of its icon." = "显示文字时，每个按钮的名称位于图标右侧。";
