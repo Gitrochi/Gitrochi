@@ -85,6 +85,12 @@ struct CIPanel: View {
     @ViewBuilder
     private func list(_ target: RepoTarget) -> some View {
         switch store.ciState {
+        case .authorizationRequired:
+            if let account = store.pendingCredentialAccount {
+                CredentialAccessNotice(account: account)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
         case .needsAccount:
             VStack(alignment: .leading, spacing: 8) {
                 Text("Connect a \(target.provider == .gitlab ? String(localized: "Self-hosted GitLab (\(target.host))") : "GitHub") account to see pipelines.")

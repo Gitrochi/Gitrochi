@@ -117,7 +117,21 @@ actor CacheFixture {
         for _ in 0..<20 { _ = cache.value("denied") }
         let finalCount = await source.count
         precondition(finalCount == count, "Denied automatic access caused repeated prompts")
-        print("Credential policy, serialized background access, responsive MainActor, coalescing and stale-result guards passed (fake Security only)")
+        cache.retryInterval = 0
+        precondition(cache.value("denied") == nil && cache.state("denied") == .loading, "Denied access was not retried after the back-off")
+        await until { await source.pending }
+        let retried = await source.count
+        precondition(retried == finalCount + 1, "The retry did not read again")
+        await source.finish("approved-later")
+        await until { cache.value("denied") == "approved-later" }
+        precondition(cache.state("denied") == .ready)
+        cache.retryInterval = 30
+        let waited = Task { await cache.awaitValue("awaited") }
+        await until { await source.pending }
+        await source.finish("awaited-value")
+        let awaited = await waited.value
+        precondition(awaited == "awaited-value" && cache.value("awaited") == "awaited-value", "awaitValue did not wait for the read in flight")
+        print("Credential policy, serialized background access, responsive MainActor, coalescing, stale-result guards, retry after back-off and awaited reads passed (fake Security only)")
     }
 }
 SWIFT

@@ -20,7 +20,7 @@ export interface InboxDetail { item: InboxItem; comments: { id: string; author: 
 export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "github" ? `${c.apiBase}/repos/${c.target.path}` : `${c.apiBase}/projects/${H.projectID(c.target.path)}`;
 const reqURL = (c: ReviewAccess, n: number) => `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "pulls" : "merge_requests"}/${n}`;
 interface User { login?: string; username?: string; id?: number }
-interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
+interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; merged_at?: string | null; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
 interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number }
 const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase() });
 const glPull = (p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id });
@@ -28,27 +28,36 @@ const ensureCurrent = (c: ReviewAccess) => { if (c.stillCurrent?.() === false) t
 const send = <T>(c: ReviewAccess, url: string, method = "GET", body?: unknown) => { ensureCurrent(c); return H.send<T>(c.target.provider, url, c.token, method, body); };
 const raw = (c: ReviewAccess, url: string, method: string, body?: unknown) => { ensureCurrent(c); return H.sendRaw(c.target.provider, url, c.token, method, body); };
 
-/** 서버 검색과 페이지를 사용하여 닫힌 요청까지 찾는다. */
+/**
+ * One page of the request list. GitHub's list endpoint carries everything the list shows, so no request is read on its own;
+ * it has no author, reviewer or text filter, so those narrow each loaded page here (the search API is rate limited,
+ * lags behind and is refused for some repositories). macOS: CollaborationAPI.requests.
+ */
 export async function requestPage(c: ReviewAccess, query: RequestQuery): Promise<RequestPage> {
-  const page = Math.max(1, Math.floor(query.page));
+  const page = Math.max(1, Math.floor(query.page)), search = query.search.trim();
   if (c.target.provider === "github") {
-    const qualifier = query.scope === "mine" ? `is:open author:${c.me}` : query.scope === "reviewRequested" ? `is:open review-requested:${c.me}` : query.scope === "merged" ? "is:merged" : query.scope === "closed" ? "is:closed -is:merged" : "is:open";
-    const text = query.search.trim().replace(/["\\]/g, " ").trim();
-    const q = `repo:${c.target.path} is:pr ${qualifier}${text ? ` "${text}"` : ""}`;
-    const r = await send<{ items: { number: number }[]; total_count: number; incomplete_results?: boolean }>(c, `${c.apiBase}/search/issues?${new URLSearchParams({ q, sort: "updated", order: "desc", per_page: "30", page: String(page) })}`);
-    const items: PullRequest[] = [];
-    for (let offset = 0; offset < r.items.length; offset += 4) {
-      const batch = r.items.slice(offset, offset + 4);
-      items.push(...await Promise.all(batch.map(async (i) => ghPull(c, await send<GHPull>(c, reqURL(c, i.number))))));
-    }
-    return { items, more: page * 30 < Math.min(r.total_count, 1000), warning: r.incomplete_results || r.total_count > 1000 ? t("The server limited search results. Narrow the search to see more.") : undefined };
+    const closed = query.scope === "closed" || query.scope === "merged";
+    const filtered = closed || query.scope === "mine" || query.scope === "reviewRequested" || !!search;
+    const perPage = filtered ? 100 : 30;
+    const list = await send<GHPull[]>(c, `${collaborationRepoURL(c)}/pulls?${new URLSearchParams({ state: closed ? "closed" : "open", sort: "updated", direction: "desc", per_page: String(perPage), page: String(page) })}`);
+    return { items: list.filter((p) => matchesQuery(c, p, query.scope, search)).map((p) => ghPull(c, p)), more: list.length === perPage, warning: search ? t("Search filters loaded pages. Load more to search older items.") : undefined };
   }
   const p = new URLSearchParams({ state: query.scope === "closed" ? "closed" : query.scope === "merged" ? "merged" : "opened", per_page: "30", page: String(page), order_by: "updated_at", sort: "desc", scope: "all" });
-  if (query.search.trim()) p.set("search", query.search.trim());
+  if (search) p.set("search", search);
   if (query.scope === "mine") p.set("author_username", c.me);
   if (query.scope === "reviewRequested") p.set("reviewer_username", c.me);
   const items = await send<GLMerge[]>(c, `${collaborationRepoURL(c)}/merge_requests?${p}`);
   return { items: items.map(glPull), more: items.length === 30 };
+}
+function matchesQuery(c: ReviewAccess, p: GHPull, scope: RequestScope, search: string) {
+  const me = (name?: string) => (name ?? "").toLowerCase() === c.me.toLowerCase();
+  if (scope === "merged" && !p.merged_at) return false;
+  if (scope === "closed" && p.merged_at) return false;
+  if (scope === "mine" && !me(p.user.login)) return false;
+  if (scope === "reviewRequested" && !(p.requested_reviewers ?? []).some((u) => me(u.login))) return false;
+  if (!search) return true;
+  const needle = search.toLowerCase();
+  return [p.title, `#${p.number}`, p.user.login ?? "", p.head.ref].some((s) => s.toLowerCase().includes(needle));
 }
 
 /** 병합 권한·프로젝트 정책·최신 커밋 상태를 확인한다. 알 수 없는 상태는 병합하지 않는다. */

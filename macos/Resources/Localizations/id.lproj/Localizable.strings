@@ -1087,3 +1087,8 @@
 "Proposed .gitch/flow.yml" = "Usulan .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "File alur sudah ada, jadi tidak ada yang ditulis. Gabungkan usulan secara manual.";
 "Create flow file" = "Buat file alur";
+"Checking saved account access…" = "Memeriksa akses ke akun tersimpan…";
+"Allow access to the saved account to use repository services." = "Izinkan akses ke akun tersimpan untuk menggunakan layanan repositori.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Menunggu persetujuan macOS Anda. Anda tetap dapat menggunakan alat Git lokal.";
+"Allow saved account access" = "Izinkan akses akun tersimpan";
+"Search filters loaded pages. Load more to search older items." = "Pencarian menyaring halaman yang sudah dimuat. Muat lebih banyak untuk mencari item yang lebih lama.";

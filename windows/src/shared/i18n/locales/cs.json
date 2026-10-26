@@ -1118,5 +1118,10 @@
  "Create flow file": "Vytvořit soubor toku",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi přečetl soubory tohoto repozitáře, aby našel jeho testy a nástroje. Nic se nespouští a nic se nezapíše, dokud soubor nevytvoříte.",
  "Proposed .gitch/flow.yml": "Navrhovaný .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Soubor toku už existuje, takže se nic nezapíše. Návrh slučte ručně."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Soubor toku už existuje, takže se nic nezapíše. Návrh slučte ručně.",
+  "Checking saved account access…": "Kontrola přístupu k uloženému účtu…",
+  "Allow access to the saved account to use repository services.": "Povolte přístup k uloženému účtu, abyste mohli používat služby repozitáře.",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "Čeká se na vaše schválení v macOS. Místní nástroje Git můžete dál používat.",
+  "Allow saved account access": "Povolit přístup k uloženému účtu",
+  "Search filters loaded pages. Load more to search older items.": "Hledání filtruje načtené stránky. Načtěte další, chcete-li hledat ve starších položkách."
 }

@@ -42,7 +42,9 @@ private struct WorkspaceAccountNotice: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings
     var body: some View {
-        if store.collaborationAccess == nil {
+        if let account = store.pendingCredentialAccount {
+            WorkspaceCard { CredentialAccessNotice(account: account) }
+        } else if store.collaborationAccess == nil {
             WorkspaceCard {
                 Text(
                     store.target == nil

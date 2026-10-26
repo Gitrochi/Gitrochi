@@ -1092,3 +1092,8 @@
 "Proposed .gitch/flow.yml" = ".gitch/flow.yml đề xuất";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Đã có tệp luồng nên sẽ không ghi gì. Hãy gộp đề xuất theo cách thủ công.";
 "Create flow file" = "Tạo tệp luồng";
+"Checking saved account access…" = "Đang kiểm tra quyền truy cập tài khoản đã lưu…";
+"Allow access to the saved account to use repository services." = "Cho phép truy cập tài khoản đã lưu để dùng các dịch vụ kho lưu trữ.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Đang chờ bạn phê duyệt trên macOS. Bạn vẫn có thể dùng các công cụ Git cục bộ.";
+"Allow saved account access" = "Cho phép truy cập tài khoản đã lưu";
+"Search filters loaded pages. Load more to search older items." = "Tìm kiếm chỉ lọc các trang đã tải. Tải thêm để tìm các mục cũ hơn.";

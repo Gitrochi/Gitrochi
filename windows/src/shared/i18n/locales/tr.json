@@ -1125,5 +1125,10 @@
  "Create flow file": "Akış dosyası oluştur",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi, testlerini ve araçlarını bulmak için bu deponun dosyalarını okudu. Siz dosyayı oluşturana kadar hiçbir şey çalıştırılmaz ve yazılmaz.",
  "Proposed .gitch/flow.yml": "Önerilen .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Zaten bir akış dosyası var, bu yüzden hiçbir şey yazılmayacak. Öneriyi elle birleştirin."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Zaten bir akış dosyası var, bu yüzden hiçbir şey yazılmayacak. Öneriyi elle birleştirin.",
+  "Checking saved account access…": "Kayıtlı hesaba erişim denetleniyor…",
+  "Allow access to the saved account to use repository services.": "Depo hizmetlerini kullanmak için kayıtlı hesaba erişime izin verin.",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "macOS onayınız bekleniyor. Yerel Git araçlarını kullanmaya devam edebilirsiniz.",
+  "Allow saved account access": "Kayıtlı hesaba erişime izin ver",
+  "Search filters loaded pages. Load more to search older items.": "Arama, yüklenen sayfaları süzer. Daha eski öğelerde aramak için daha fazlasını yükleyin."
 }

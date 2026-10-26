@@ -5,8 +5,6 @@ struct AccountQuickControls: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var showing = false
     @ViewState private var sheet: AccountQuickSheet?
-    @ViewState private var allowingAccess = false
-    @ViewState private var credentialError: String?
     private let accounts = AccountStore.shared
 
     private var account: HostAccount? { store.hostingAccount }
@@ -82,18 +80,7 @@ struct AccountQuickControls: View {
                 } else if let target = store.target {
                     Text("Connect an account on \(target.host) to use repository services.").font(.caption).foregroundStyle(.secondary)
                 }
-                if let account {
-                    let status = accounts.credentialState(for: account)
-                    if status != .ready {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(status == .loading && !allowingAccess ? String(localized: "Checking saved account access…") : String(localized: "Allow access to the saved account to use repository services."))
-                                .font(.caption).foregroundStyle(.secondary)
-                            if allowingAccess { ProgressView().controlSize(.small); Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.caption).foregroundStyle(.secondary) }
-                            Button("Allow saved account access") { allowStoredAccess(account) }.disabled(allowingAccess)
-                        }
-                    }
-                }
-                if let credentialError { Text(credentialError).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
+                if let account { CredentialAccessNotice(account: account) }
                 Divider()
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -121,15 +108,6 @@ struct AccountQuickControls: View {
     }
 
     private func present(_ request: AccountQuickSheet) { showing = false; sheet = request }
-
-    private func allowStoredAccess(_ account: HostAccount) {
-        allowingAccess = true; credentialError = nil
-        Task {
-            do { try await accounts.allowStoredAccess(for: account) }
-            catch { credentialError = AccountConnectionFailure.message(for: error) }
-            allowingAccess = false
-        }
-    }
 
     private func accountLine(_ key: LocalizedStringKey, value: String) -> some View {
         HStack(alignment: .top, spacing: 12) {

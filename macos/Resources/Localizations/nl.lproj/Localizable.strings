@@ -1080,3 +1080,8 @@
 "Proposed .gitch/flow.yml" = "Voorgestelde .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Er is al een flowbestand, dus er wordt niets geschreven. Voeg het voorstel handmatig samen.";
 "Create flow file" = "Flowbestand maken";
+"Checking saved account access…" = "Toegang tot het opgeslagen account wordt gecontroleerd…";
+"Allow access to the saved account to use repository services." = "Sta toegang tot het opgeslagen account toe om repositorydiensten te gebruiken.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Wachten op uw macOS-goedkeuring. U kunt lokale Git-tools blijven gebruiken.";
+"Allow saved account access" = "Toegang tot opgeslagen account toestaan";
+"Search filters loaded pages. Load more to search older items." = "Zoeken filtert de geladen pagina's. Laad meer om oudere items te doorzoeken.";

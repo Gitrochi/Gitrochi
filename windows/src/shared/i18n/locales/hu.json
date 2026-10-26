@@ -1120,5 +1120,10 @@
  "Create flow file": "Folyamatfájl létrehozása",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "A Gitrochi beolvasta a tároló fájljait, hogy megtalálja a teszteket és az eszközöket. Semmi sem fut, és semmi sem íródik ki, amíg létre nem hozza a fájlt.",
  "Proposed .gitch/flow.yml": "Javasolt .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Már van folyamatfájl, ezért semmi sem íródik ki. Egyesítse kézzel a javaslatot."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Már van folyamatfájl, ezért semmi sem íródik ki. Egyesítse kézzel a javaslatot.",
+  "Checking saved account access…": "A mentett fiók hozzáférésének ellenőrzése…",
+  "Allow access to the saved account to use repository services.": "Engedélyezze a mentett fiók elérését a tárolószolgáltatások használatához.",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "Várakozás a macOS jóváhagyására. A helyi Git-eszközöket közben használhatja.",
+  "Allow saved account access": "Mentett fiók elérésének engedélyezése",
+  "Search filters loaded pages. Load more to search older items.": "A keresés a betöltött oldalakat szűri. Töltsön be többet a régebbi elemek kereséséhez."
 }

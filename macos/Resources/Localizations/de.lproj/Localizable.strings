@@ -1103,3 +1103,8 @@
 "Proposed .gitch/flow.yml" = "Vorgeschlagene .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "Es gibt bereits eine Ablaufdatei, daher wird nichts geschrieben. Führen Sie den Vorschlag von Hand zusammen.";
 "Create flow file" = "Ablaufdatei erstellen";
+"Checking saved account access…" = "Zugriff auf das gespeicherte Konto wird geprüft…";
+"Allow access to the saved account to use repository services." = "Erlauben Sie den Zugriff auf das gespeicherte Konto, um Repository-Dienste zu nutzen.";
+"Waiting for your macOS approval. You can continue using local Git tools." = "Warten auf Ihre macOS-Freigabe. Lokale Git-Werkzeuge können Sie weiter verwenden.";
+"Allow saved account access" = "Zugriff auf gespeichertes Konto erlauben";
+"Search filters loaded pages. Load more to search older items." = "Die Suche filtert die geladenen Seiten. Laden Sie mehr, um ältere Einträge zu durchsuchen.";

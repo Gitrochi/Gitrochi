@@ -93,6 +93,7 @@ private struct AccountWorkPanel: View {
                 if AccountStore.shared.accounts.isEmpty {
                     Button("Connect account…") { openSettings() }
                 }
+                if let account, AccountStore.shared.awaitsAccess(account) { CredentialAccessNotice(account: account) }
                 if !inbox {
                     Picker("Work category", selection: $kind) {
                         Text("Authored requests").tag("mine")

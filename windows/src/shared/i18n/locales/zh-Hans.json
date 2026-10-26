@@ -1138,5 +1138,10 @@
  "Create flow file": "创建流程文件",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi 读取了此仓库的文件以查找其测试和工具。在你创建文件之前，不会运行或写入任何内容。",
  "Proposed .gitch/flow.yml": "建议的 .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "流程文件已存在，因此不会写入任何内容。请手动合并建议。"
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "流程文件已存在，因此不会写入任何内容。请手动合并建议。",
+  "Checking saved account access…": "正在检查已保存账户的访问权限…",
+  "Allow access to the saved account to use repository services.": "允许访问已保存的账户以使用仓库服务。",
+  "Waiting for your macOS approval. You can continue using local Git tools.": "正在等待你的 macOS 批准。本地 Git 工具可以继续使用。",
+  "Allow saved account access": "允许访问已保存的账户",
+  "Search filters loaded pages. Load more to search older items.": "搜索只筛选已加载的页面。加载更多以搜索更早的项目。"
 }

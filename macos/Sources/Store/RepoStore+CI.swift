@@ -58,13 +58,22 @@ extension RepoStore {
         if hostingAccount == nil, !accounts.accounts(for: t.provider).isEmpty {
             await accounts.discoverAlias(for: t, sameAddressOnly: true)
         }
-        guard let c = ciAccess else {
+        guard let a = hostingAccount else {
             if t.provider == .gitlab { accounts.suggestedGitLabServer = "https://\(t.host)" }
             ciPipelines = []
             ciState = .needsAccount
             return
         }
         if !silent || ciState != .loaded { ciState = .loading }
+        // The keychain may still be asking the user; that is loading, not a missing account.
+        let token = await accounts.loadToken(for: a)
+        guard target == t else { return }
+        guard let token else {
+            ciPipelines = []
+            ciState = credentialLoadState(for: a)
+            return
+        }
+        let c = CIAccess(target: t, token: token, apiBase: a.apiBase)
         do {
             let list = try await CIAPI.pipelines(t, token: c.token, apiBase: c.apiBase, ref: ciCurrentBranchOnly ? ciCurrentRef : nil)
             guard target == t else { return }

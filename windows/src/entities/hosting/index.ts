@@ -1,5 +1,5 @@
 // entities/hosting 의 공개 API — 다른 조각은 이 파일로만 가져온다
-export { createPullRequest, date, defaultBranch, findTarget, HostingError, parseRemote, projectID, pullRequests, repositories, send, sendRaw } from "./api/hosting";
+export { createPullRequest, date, defaultBranch, findTarget, HostingError, parseRemote, projectID, repositories, send, sendRaw } from "./api/hosting";
 export { type PullRequestReview, type ReviewAccess, ReviewAPI, type ReviewComment, type ReviewDraftComment, type ReviewFile, type ReviewLineAnchor, type ReviewLineSide, type ReviewRefs, type ReviewVerdict, ReviewSubmissionError, reviewFileChange, reviewRepositoryKey, reviewDraftMatches } from "./api/review";
 export { accounts, AccountStore } from "./model/accounts";
 export { AccountConnectionFailure, accountConnectionMessage } from "./model/connection-failure";
