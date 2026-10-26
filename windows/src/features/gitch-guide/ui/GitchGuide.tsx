@@ -107,7 +107,7 @@ const commands = [
     "doctor · scan · audit",
     "Accounts and tools",
     "Diagnose setup problems and inspect account rules across repositories.",
-    "Tools > Check setup",
+    "Settings > CLI > Check setup",
   ],
   [
     "use · unlock · ignore · protect",

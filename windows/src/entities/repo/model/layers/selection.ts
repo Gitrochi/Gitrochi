@@ -50,7 +50,7 @@ export abstract class RepoSelection extends RepoCore {
 
   /** 사이드바에서 브랜치·태그를 누르면 그래프에서 해당 커밋을 찾아 보여 준다 */
   reveal(sha: string) {
-    this.navigate("commits", false);
+    this.navigate("repository", false);
     if (this.commitIndex.has(sha) || this.stashes.some((s) => s.hash === sha)) {
       this.select({ kind: "commit", sha });
       this.scrollTarget = sha;
@@ -90,9 +90,10 @@ export abstract class RepoSelection extends RepoCore {
   // MARK: - Diff
 
   openDiff(source: DiffSource) {
-    const page = source.kind === "working" ? "changes" : source.kind === "review" ? "pullRequests" : "commits";
-    const currentPage = this.destination === "repository" ? this.repositorySection : this.destination;
-    if (currentPage !== page) this.navigate(page, source.kind === "working");
+    const page = source.kind === "review" ? "pullRequests" : "repository";
+    if (this.destination !== page) this.navigate(page, false);
+    // a working-tree diff belongs to the uncommitted changes shown in the inspector
+    if (source.kind === "working" && this.selection?.kind !== "wip") this.select({ kind: "wip" });
     if (this.fileInspect) this.closeFileInspect();
     if (sameDiffSource(source, this.diffSource)) return;
     this.diffSource = source;
@@ -200,7 +201,7 @@ export abstract class RepoSelection extends RepoCore {
   // MARK: 파일 히스토리 · blame(가운데 영역에 띄운다)
 
   openFileHistory(path: string) {
-    if (this.destination !== "repository" || !["changes", "commits"].includes(this.repositorySection)) this.navigate("commits", false);
+    if (this.destination !== "repository") this.navigate("repository", false);
     this.closeFileInspect();
     this.fileInspectLine = null;
     this.fileInspect = { mode: "history", path, rev: null };
@@ -208,7 +209,7 @@ export abstract class RepoSelection extends RepoCore {
   }
 
   openBlame(path: string, rev: string | null = null, line: number | null = null) {
-    if (this.destination !== "repository" || !["changes", "commits"].includes(this.repositorySection)) this.navigate("commits", false);
+    if (this.destination !== "repository") this.navigate("repository", false);
     this.closeFileInspect();
     this.fileInspectLine = line;
     this.fileInspect = { mode: "blame", path, rev };

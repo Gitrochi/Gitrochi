@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -186,7 +186,7 @@ export async function runSelfTest(): Promise<boolean> {
   const s = workspace.newTab();
   await step("저장소 열기", async () => {
     await s.openInPlace(repo);
-    s.navigate("commits");
+    s.navigate("repository");
     return [!!s.path && s.entries.length > 0, `path=${s.path} commits=${s.entries.length} error=${s.errorMessage}`];
   });
   await step("화면에 커밋 행 표시", async () => [await until(() => document.querySelectorAll(".commit-row").length > 0, 5000), document.querySelectorAll(".commit-row").length]);
@@ -203,18 +203,21 @@ export async function runSelfTest(): Promise<boolean> {
     const fields = document.querySelectorAll('[aria-label="Git 계정 설정"] input');
     return [ready && fields.length >= 4 && !!question?.title.includes("22") && !!find("브라우저로 GitHub 로그인"), `fields=${fields.length} tooltip=${question?.title}`];
   });
-  await step("왼쪽 도구의 gitch 명령 안내와 읽기 전용 진단", async () => {
+  await step("설정 > CLI 의 gitch 명령 안내와 읽기 전용 진단", async () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await sleep(150);
-    s.navigate("operations");
-    const find = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".workspace-pane button")).find((b) => b.textContent?.trim() === t(label));
+    window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" }));
+    const find = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".modal button")).find((b) => b.textContent?.trim() === t(label));
+    const tab = await until(() => !!find("Getting started and commands"), 15000);
+    find("Getting started and commands")?.click();
     const guide = await until(() => !!find("All commands and options"), 5000);
     find("All commands and options")?.click();
-    const help = await until(() => Array.from(document.querySelectorAll(".workspace-pane pre")).some((p) => p.textContent?.includes("gitch preflight")), 10000);
+    const help = await until(() => Array.from(document.querySelectorAll(".modal pre")).some((p) => p.textContent?.includes("gitch preflight")), 10000);
     find("Check setup")?.click();
-    const doctor = await until(() => !!document.querySelector(".workspace-pane .workspace-card strong"), 15000);
-    s.navigate("commits");
-    return [guide && help && doctor, `guide=${guide} help=${help} diagnosis=${doctor}`];
+    const doctor = await until(() => Array.from(document.querySelectorAll(".modal strong")).some((e) => e.textContent === t("Setup diagnosis")), 15000);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await sleep(150);
+    return [tab && guide && help && doctor, `tab=${tab} guide=${guide} help=${help} diagnosis=${doctor}`];
   });
   await step("브라우저 로그인 시작 응답 전 화면 이탈 → 늦은 세션 취소", () => browserLoginLifecycle("start"));
   await step("브라우저 로그인 취소 → 늦은 완료 응답 연결 차단", () => browserLoginLifecycle("status"));
@@ -230,13 +233,13 @@ export async function runSelfTest(): Promise<boolean> {
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
   await step("저장소 AI·MCP·통합 작업함의 실제 React 화면", repositoryAssistantSelfTest);
 
-  await step("왼쪽 전체 메뉴·검색·빈 저장소·GitLab 이름", navigationSelfTest);
-  await step("접힌 메뉴와 좁은 창에서도 아이콘·고정 도구·설정·검색 유지", compactNavigationSelfTest);
+  await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
+  await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
-  await step("브랜치·비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
-  await step("릴리스·프로젝트·조직·gist 작업 화면", hostingHubSelfTest);
-  await step("홈·저장소·이슈·CI·도구 작업 화면", workspacePanelsSelfTest);
+  await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
+  await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);
+  await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");
   await step("파일 감시 → 새 파일 표시", async () => {
@@ -570,7 +573,7 @@ export async function runSelfTest(): Promise<boolean> {
     // 화면: CI/CD 탭이 그려지는지(이 저장소는 원격이 없어 안내 문구)
     s.navigate("actions");
     const panel = await until(() => document.body.innerText.includes(t("Open a repository with a GitHub or GitLab remote to use this workspace.")), 3000);
-    s.navigate("commits");
+    s.navigate("repository");
     const ok =
       pipes.length === 1 &&
       pipes[0].status === "success" &&
@@ -751,11 +754,12 @@ export async function runSelfTest(): Promise<boolean> {
     await s.setCurrentOnly(true);
     const current = !has() && s.entries.length > 0;
     await s.setCurrentOnly(false);
-    s.navigate("branches");
+    s.navigate("repository");
+    settings.set("sidebarCollapsed", false);
     s.setPinned(b, true);
-    const pinned = await until(() => [...document.querySelectorAll(".workbench-ref")].some((x) => x.textContent?.includes(b.name) && !!x.querySelector("[data-pinned=\"true\"]")), 3000);
+    // a pinned branch gets its own section at the top of the branch list
+    const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.querySelector(".side-head")?.textContent?.includes(t("Pinned")) && x.textContent?.includes(b.name)), 3000);
     s.setPinned(b, false);
-    s.navigate("commits");
     // the eye button on the sidebar row hides the branch and shows it again
     const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
     eye()?.click();
@@ -951,7 +955,7 @@ export async function runSelfTest(): Promise<boolean> {
     const ran = view?.state === "SUCCEEDED" && view.nodes.length === 2 && view.nodes.every((n) => n.state === "PASSED") && view.nodes[0].tail.some((l) => l.includes("hello-from-flow"));
     s.navigate("flows");
     const panel = await until(() => document.body.innerText.includes("흐름 설정…"), 5000);
-    s.navigate("commits");
+    s.navigate("repository");
     await ipc.remove(dir);
     return [listed && done && ran && panel, `version=${v.version} listed=${listed} done=${done} state=${view?.state} nodes=${view?.nodes.map((n) => n.state)} panel=${panel}`];
   });
@@ -970,7 +974,7 @@ export async function runSelfTest(): Promise<boolean> {
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다
-  s.navigate("commits");
+  s.navigate("repository");
   s.select({ kind: "commit", sha: s.headHash! });
   const result = { ok: checks.every((c) => c.ok), os: env.os, windows: isWindows(), checks };
   await ipc.writeText(out, JSON.stringify(result, null, 2));

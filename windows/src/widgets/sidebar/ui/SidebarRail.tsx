@@ -29,7 +29,7 @@ export function SidebarRail({ store, openSettings }: { store: RepoStore; openSet
   if (store.stashes.length) items.push({ id: "stashes", icon: <Archive size={16} />, title: t("Stashes"), count: store.stashes.length });
   return (
     <div className="sidebar-rail">
-      <IconButton small icon={<PanelLeftOpen size={15} />} tip={tip(t("Show sidebar"), t("Local branches"), "Ctrl+B")} onClick={() => settings.set("sidebarCollapsed", false)} />
+      <IconButton small icon={<PanelLeftOpen size={15} />} tip={tip(t("Show sidebar"), t("Local branches"))} onClick={() => settings.set("sidebarCollapsed", false)} />
       {items.map((it) => (
         <div key={it.id} className="rail-item">
           <div className="rail-icon" aria-label={it.title}>

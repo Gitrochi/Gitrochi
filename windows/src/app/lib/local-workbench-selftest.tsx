@@ -1,14 +1,14 @@
 import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import { RepoStore } from "@/entities/repo";
-import { LocalBranchesPanel, RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource } from "@/widgets/local-workbench";
+import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource } from "@/widgets/local-workbench";
 import { t } from "@/shared/i18n";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 40));
 /** Exercises real controls with fixture data. No repository mutation or network request. */
 export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
   const host = document.createElement("div"); host.hidden = true; document.body.append(host); let root = createRoot(host);
   const store = new RepoStore(), a = "a".repeat(40), b = "b".repeat(40);
-  let checkouts = 0, stashes = 0, branches = 0, comparisons = 0, reads = 0, rebases = 0;
+  let comparisons = 0, reads = 0, rebases = 0;
   const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const click = async (label: string) => { const button = [...host.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.trim() === t(label) && !item.disabled); check(button, `Missing enabled button: ${label}`); button!.click(); await pause(); };
   const mount = async (view: ReactNode) => { root.render(view); await pause(); };
@@ -16,11 +16,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
   try {
     store.localBranches = [{ name: "main", target: a, upstream: "origin/main", ahead: 1, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false }, { name: "topic", target: b, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false }];
     store.remoteBranches = [{ ...store.localBranches[1], name: "origin/topic", isRemote: true }]; store.tags = [{ name: "v1", target: a }]; store.stashes = [{ ref: "stash@{0}", hash: b, message: "Saved fixture" }];
-    store.setHidden = async (branch, hidden) => { const ref = `refs/${branch.isRemote ? "remotes" : "heads"}/${branch.name}`; hidden ? store.hiddenRefs.add(ref) : store.hiddenRefs.delete(ref); store.changed(); };
-    store.checkout = async () => { checkouts++; }; store.stashApply = async () => { stashes++; return true; }; store.requestNewBranch = () => { branches++; };
-    await mount(<LocalBranchesPanel store={store}/>); await click("Pin to top"); check(host.querySelector('[data-pinned="true"]'), "Pinned branch marker missing"); await click("Unpin"); await click("Hide from graph"); check(host.textContent?.includes(t("Show in graph again")), "Hidden branch could not be shown again"); await click("Show in graph again"); await click("Remote"); await click("Check out"); await click("Tags"); await click("New branch"); await click("Stashes"); await click("Apply");
-    check(checkouts === 1 && branches === 1 && stashes === 1, "Reference tabs did not dispatch the existing protected actions");
-    reset(); store.loadRevisionComparison = async () => { comparisons++; const s = store.historyTools; s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [], stats: {} }; store.changed(); };
+    store.loadRevisionComparison = async () => { comparisons++; const s = store.historyTools; s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [], stats: {} }; store.changed(); };
     await mount(<RevisionComparisonPanel store={store}/>); await click("Compare"); check(comparisons === 1 && !host.querySelector('[role="dialog"]'), "Comparison was not embedded");
     reset(); store.path = "C:/gitrochi-workbench-fixture";
     const source: RepositoryCodeSource = { tree: async () => ({ revision: a, entries: [{ path: "src/fixture.ts", mode: "100644", oid: b, size: 17, kind: "file" }], truncated: false }), blob: async () => ({ text: "const fixture = 1;\n" }), read: async (args) => { reads++; return args[0] === "blame" ? "fixture blame" : args[0] === "log" ? "fixture history" : "+fixture changes"; } };
@@ -31,7 +27,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(previewReads===1&&host.textContent?.includes("Newest fixture commit")&&host.textContent?.includes(t("{0} commits to replay",2)),"Rebase first screen did not load its branch summary");
     check(host.querySelectorAll(".workbench-rebase-candidates button").length===2&&!store.confirm,"Opening rebase must only preview commits");
     reset(); store.repoState = "rebasing"; store.continueOperation = async () => { rebases++; }; await mount(<RebaseWorkbenchPanel store={store}/>); await click("Continue"); check(rebases === 1 && host.textContent?.includes(t("Abort…")), "In-progress rebase controls missing");
-    return [true, "Branches/remote/tags/stash actions, embedded comparison, automatic safe Code preview, immutable rebase summary, folder/source/history/blame/change previews and rebase continue rendered"];
+    return [true, "Embedded comparison, automatic safe Code preview, immutable rebase summary, folder/source/history/blame/change previews and rebase continue rendered"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); store.cancelHistoryTools(); }
 }

@@ -1,4 +1,4 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
+import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
@@ -26,17 +26,20 @@ export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; ope
   if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} openSettings={openSettings} only={flyout === "repository" ? undefined : flyout} /></SectionFlyout.Provider>;
   return (
     <>
-      <div style={{ padding: "8px 10px 4px" }}>
-        <Segmented
-          stretch
-          value={mode}
-          onChange={(v) => settings.set("sidebarMode", v)}
-          options={[
-            { value: "list", label: t("List") },
-            { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
-            { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
-          ]}
-        />
+      <div className="row" style={{ padding: "8px 6px 4px 10px", gap: 4 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Segmented
+            stretch
+            value={mode}
+            onChange={(v) => settings.set("sidebarMode", v)}
+            options={[
+              { value: "list", label: t("List") },
+              { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
+              { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
+            ]}
+          />
+        </div>
+        <IconButton small icon={<PanelLeftClose size={15} />} tip={tip(t("Hide sidebar"), t("The sections stay at hand as a rail of icons; hover one to open it."))} onClick={() => settings.set("sidebarCollapsed", true)} />
       </div>
       {mode === "agents" ? <AgentsPanel store={store} /> : mode === "ci" ? <CIPanel store={store} openSettings={openSettings} /> : <BranchList store={store} openSettings={openSettings} />}
     </>

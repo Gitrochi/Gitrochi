@@ -1,39 +1,29 @@
 import { useEffect } from "react";
-import { GraphView } from "@/widgets/commit-graph";
-import { DiffView, FileInspectView } from "@/widgets/diff-viewer";
+import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector } from "@/widgets/inspector";
-import { AgentsPanel, FlowPanel, PullRequestSection, WorktreeSection } from "@/widgets/sidebar";
-import { HostingHubPanel } from "@/widgets/hosting-hub";
-import { LocalBranchesPanel, RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
-import { WorkspaceHomePanel, RepositoryLibraryPanel, WorkInboxPanel, MyWorkPanel, IssuesWorkspacePanel, ActionsWorkspacePanel, OperationsWorkspacePanel } from "@/widgets/workspace-panels";
-import { RepositoryAssistantSheet } from "@/features/repository-assistant";
+import { FlowPanel, PullRequestSection } from "@/widgets/sidebar";
+import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
+import { WorkspaceHomePanel, IssuesWorkspacePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty } from "@/shared/ui";
+import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
 
+/** The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift) */
 export function WorkspaceContent({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
-  const page = store.destination === "repository" ? store.repositorySection : store.destination;
-  useEffect(() => { if (page === "assistant") void store.openRepositoryAssistant(false, false); }, [page, store]);
+  useObserve(store);
   const props = { store, openSettings };
-  switch (page) {
+  switch (store.destination) {
     case "home": return <WorkspaceHomePanel {...props} />;
-    case "repositories": return <RepositoryLibraryPanel {...props} />;
-    case "branches": return <LocalBranchesPanel store={store} />;
     case "compare": return <RevisionComparisonPanel store={store} />;
     case "rebase": return <RebaseWorkbenchPanel store={store} />;
     case "code": return <RepositoryCodePanel store={store} />;
-    case "inbox": return <WorkInboxPanel {...props} />;
-    case "myWork": return <MyWorkPanel {...props} />;
+    case "pullRequests": return <PullRequestsWorkspace {...props} />;
     case "issues": return <IssuesWorkspacePanel {...props} />;
     case "actions": return <ActionsWorkspacePanel {...props} />;
-    case "operations": return <OperationsWorkspacePanel {...props} />;
-    case "pullRequests": return <PullRequestsWorkspace {...props} />;
-    case "releases": case "projects": case "organizations": case "gists": return <HostingHubPanel store={store} section={page} onClone={(url) => store.openSheet({ kind: "clone", url })} />;
-    case "assistant": return <RepositoryAssistantSheet store={store} embedded close={() => store.navigate("home")} />;
-    case "agents": return <AgentsPanel store={store} />;
+    case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
-    case "worktrees": return <section className="workspace-worktrees col"><header className="row"><h1 className="grow">{t("Worktrees")}</h1><Button onClick={() => store.openSheet({ kind: "addWorktree", branch: null, start: null })}>{t("New worktree…")}</Button></header><WorktreeSection store={store} /></section>;
     default: return null;
   }
 }
@@ -56,11 +46,4 @@ function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; open
       </>}
     </div>
   </div>;
-}
-
-export function RepositoryDocument({ store }: { store: RepoStore }) {
-  if (store.fileInspect) return <FileInspectView store={store} />;
-  if (store.diffSource) return <DiffView store={store} />;
-  if (store.repositorySection === "changes") return <Empty title={t(store.wipCount ? "Select a file to review" : "Working directory is clean")} detail={t("Review changes, then stage the files or lines you want to commit.")} />;
-  return <GraphView store={store} />;
 }

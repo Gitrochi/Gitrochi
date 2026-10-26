@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, RefreshCcw, Sparkles, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
 import { structureGraphMenus } from "@/features/git-menus";
 import { agentKind, agents } from "@/entities/agent";
 import { providerInfo, statusIsEmpty } from "@/entities/git";
@@ -47,12 +47,10 @@ export function Toolbar({ store }: { store: RepoStore }) {
               { label: t("Clone repository…"), shortcut: "Ctrl+Shift+O", onClick: () => sheet({ kind: "clone" }) },
               "divider",
               ...structureGraphMenus(store),
+              { label: t("Repository tools…"), onClick: () => sheet({ kind: "localWorkflows" }) },
               "divider",
-              { label: t("Compare revisions…"), onClick: () => store.navigate("compare") },
-              { label: t("Workspace overview…"), onClick: () => store.navigate("home") },
-              { label: t("Issues and mentions…"), disabled: !store.target, onClick: () => store.navigate("inbox") },
-              { label: t("Repository tools…"), onClick: () => store.navigate("operations") },
-              { label: t("Repository assistant…"), onClick: () => store.navigate("assistant") },
+              { label: t("Ask AI about changes…"), disabled: !!store.busy, onClick: () => void store.openChangeQuestion() },
+              { label: t("Repository assistant…"), onClick: () => void store.openRepositoryAssistant() },
               { label: t("Connect external AI with MCP…"), onClick: () => sheet({ kind: "mcpConnection" }) },
               "divider",
               { label: t("Close tab"), shortcut: "Ctrl+W", onClick: () => workspace.closeTab(store.id) },
@@ -96,7 +94,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
         </button>
         <button
           className="tool"
-          onClick={() => store.navigate("changes")}
+          onClick={() => { store.navigate("repository"); store.select({ kind: "wip" }); }}
           data-tip={tip(
             t("Uncommitted changes"),
             statusIsEmpty(st) ? t("No modified files. When you edit files, you can stage and commit them here.") : t("{0} modified files — stage and commit them.", store.wipCount),
@@ -161,22 +159,17 @@ export function Toolbar({ store }: { store: RepoStore }) {
 
       {split(
         <GitBranch size={16} />,
-        tip(t("Branch"), t("Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)."), "Ctrl+Shift+B"),
+        tip(t("Branch"), t("Creates a new branch at the current position. From ▾: new worktree, compare revisions, run an agent (Claude Code, Codex, Gemini)."), "Ctrl+Shift+B"),
         () => store.requestNewBranch(),
         () => [
           { label: t("New branch…"), shortcut: "Ctrl+Shift+B", onClick: () => store.requestNewBranch() },
           { label: t("New worktree…"), shortcut: "Ctrl+Alt+W", onClick: () => sheet({ kind: "addWorktree", branch: null, start: null }) },
+          { label: t("Compare revisions…"), shortcut: "Ctrl+3", onClick: () => store.navigate("compare") },
           "divider",
           { label: t("Run {0} here", agentKind(agents.defaultKind).title), onClick: () => store.path && void store.startAgent(store.path) },
           { label: t("Start agent session…"), shortcut: "Ctrl+Alt+K", onClick: () => sheet({ kind: "startAgent", path: store.path }) },
         ],
       )}
-
-      <div className="tool-group">
-        <button className="tool" disabled={!!store.busy} onClick={() => void store.openChangeQuestion()} aria-label={t("Ask AI about changes…")} data-tip={t("Ask questions about the selected changes")}>
-          <Sparkles size={16} />
-        </button>
-      </div>
 
       {store.target && (
         <div className="tool-group">

@@ -103,6 +103,20 @@
 
 .workspace-page>header{flex-wrap:wrap}.workspace-page>header>.row{flex-wrap:wrap}
 
+/* Home: open, clone or create | recent repositories and the search of repositories on a server */
+.welcome { height: 100%; min-height: 0; display: flex; }
+.welcome-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; overflow: auto; padding: 24px; }
+.welcome-recents { width: 340px; flex: none; border-left: 1px solid var(--border); background: var(--sidebar); display: flex; flex-direction: column; min-height: 0; }
+.welcome-recent-list { flex: 0 1 auto; min-height: 60px; overflow: auto; }
+.recent-item { padding: 6px 10px; border-radius: 6px; margin: 0 6px; }
+.recent-item:hover { background: var(--hover); }
+.remote-search { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; border-top: 1px solid var(--border); margin-top: 8px; }
+.remote-search > .col > .row > .input { min-width: 0; }
+.remote-search-results { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--border); }
+.remote-search-row { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+.remote-search-row > button { flex: none; }
+@media (max-width: 850px) { .welcome { flex-direction: column; overflow: auto; } .welcome-recents { width: auto; border-left: 0; border-top: 1px solid var(--border); } }
+
 /* 긴 명령 안내는 카드 높이를 줄이지 않고 페이지 자체에서 스크롤한다. */
 .workspace-page > * { flex-shrink: 0; }
 

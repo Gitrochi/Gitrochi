@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { gitch, type GitchAccount, type GitchDoctor } from "@/entities/gitch";
 import { displayPath, env, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { Button, Spinner } from "@/shared/ui";
+import { Button, Segmented, Spinner } from "@/shared/ui";
 import { GitchAccountSetup } from "./GitchAccountSetup";
 import { GitchGuide } from "./GitchGuide";
 
@@ -97,7 +97,8 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
   );
   return (
     <div className="col" style={{ gap: 10 }}>
-      <span className="hint">{t("Command guides and diagnostics are available in Tools in the left sidebar.")}</span>
+      {/* the guide and the read-only diagnosis live here, next to the account setup they explain */}
+      <Segmented value={panel} onChange={setPanel} options={[{ value: "setup", label: t("Account setup") }, { value: "guide", label: t("Getting started and commands") }]} />
       {panel === "guide" ? <GitchGuide onAddAccount={() => { setPanel("setup"); setWizard({ account: null }); }} onDoctor={() => { setPanel("setup"); void run(async () => setDiagnosis(await gitch.doctor())); }} /> : <>
       <div className="form-section" style={{ gap: 8, padding: 12 }}>
         <div className="row">
