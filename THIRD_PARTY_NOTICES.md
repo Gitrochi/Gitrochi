@@ -1,11 +1,51 @@
-# Third-party notices and dependency review
+# Third-party and historical license notices
 
 Gitrochi includes third-party components under their own licenses. Those licenses,
 not the proposed Gitrochi Community Use License v1.0, govern the components and
 any rights to copy, modify, redistribute, or sell them. Keep applicable copyright,
 license, attribution, patent, and NOTICE files when distributing these components.
-The Community Use proposal is not in effect; see `LICENSE` and `LICENSE-MIT` for
-the current Gitrochi terms and preserved MIT rights.
+The Community Use proposal is not in effect; see `LICENSE` for its adoption
+status. The historical-material notice below records prior permissions without
+labeling all current or future Gitrochi material as MIT-licensed.
+
+## Prior MIT-covered Gitrochi material
+
+The separate root MIT license file and project-wide MIT labels have been removed.
+This notice is retained only for material previously provided under MIT, where
+that license requires it in copies or substantial portions. It does not grant
+MIT permissions for newly authored material offered only under other terms, and
+it does not establish that all current or future Gitrochi material is MIT-covered.
+Existing grants are not withdrawn by deleting a standalone file.
+
+Historical source revision:
+https://github.com/Gitrochi/Gitrochi/blob/a95665f1006a3741ed4dd11bccc62e2ac7782cde/LICENSE
+
+Original notice for that material:
+
+```text
+MIT License
+
+Copyright (c) 2026 조문성 (ChoMnSeong)
+Copyright (c) 2026 jjunhaa0211
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## Review scope and remaining work
 

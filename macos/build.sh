@@ -84,7 +84,6 @@ chmod 755 "$CONTENTS/Resources/gitch-graph-watch"
 "$REPO/tools/gitch-swift-index/build.sh" "$CONTENTS/MacOS/gitch-swift-index" "${ARCHS[@]}"
 ln -s ../MacOS/gitch-swift-index "$CONTENTS/Resources/gitch-swift-index"
 cp "$REPO/LICENSE" "$CONTENTS/Resources/LICENSE.txt"
-cp "$REPO/LICENSE-MIT" "$CONTENTS/Resources/LICENSE-MIT.txt"
 cp "$REPO/THIRD_PARTY_NOTICES.md" "$CONTENTS/Resources/THIRD_PARTY_NOTICES.md"
 cp "$ROOT/Vendor/SwiftTerm/LICENSE" "$CONTENTS/Resources/SwiftTerm-LICENSE.txt"
 
