@@ -4644,6 +4644,7 @@ guard_gitsw() {
       case "$sub:${rest[0]:-}" in
         flow:trust) g_in_list --show "${rest[@]}" || g_in_list --revoke "${rest[@]}" || g_decide deny "흐름 파일 신뢰는 사람이 터미널에서 'gitch flow trust' 로 승인합니다." ;;
         flow:hold) [ "${rest[1]:-}" = release ] && g_decide deny "잠긴 환경(hold)은 사람이 상태를 확인한 뒤 직접 풉니다." ;;
+        flow:gate) case "${rest[1]:-status}" in on|off) g_decide deny "pre-push 게이트는 사람이 켜고 끕니다(앱의 흐름 화면 또는 터미널)." ;; esac ;;
         flow:connect) case "${rest[1]:-list}" in list|ls|test) ;; *) g_decide ask "흐름 연결(CI 주소 · 인증)을 바꿉니다." ;; esac ;;
         flow:init|flow:export|flow:import) g_in_list --force "${rest[@]}" && g_decide ask "이미 있는 흐름 · CI 파일을 덮어씁니다." ;;
         flow:run|flow:rerun|flow:watch|test:*)

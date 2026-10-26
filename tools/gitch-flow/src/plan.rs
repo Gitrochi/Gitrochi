@@ -749,6 +749,9 @@ impl Plan {
                 "cacheKey": n.cache_key,
                 "executor": n.executor.as_str(),
                 "matrix": n.matrix,
+                // 신뢰 확인 화면이 "이 명령들이 돈다"를 보여 주게(흐름 파일에 있는 그대로, 비밀값은 run 에 넣을 수 없다).
+                "run": n.with.get("run").and_then(|r| r.as_str()),
+                "undo": n.with.get("undo").map(|u| if u.is_string() { u.clone() } else { u["run"].clone() }),
                 "src": n.src.show(),
             })).collect::<Vec<_>>(),
         })

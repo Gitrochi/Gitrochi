@@ -308,7 +308,7 @@ pub fn help() -> String {
   status [실행ID|last] · events <실행ID> [--follow] [--since N] · logs <실행ID> [노드] [--follow]
   report <실행ID|last> [--format text|md|json|junit|html] [--out 파일]
   rerun <실행ID> [--failed] · cancel <실행ID> · watch <흐름> [--affected]
-  trust [--show|--revoke] [--yes] · hold list|release <환경> · gate prepush|status
+  trust [--show|--revoke] [--yes] · hold list|release <환경> · gate prepush|status|on [--flow 흐름]|off
   blocks · block <ID> · explain <코드> · gc [--older-than 7d] [--dry-run] · schema [이름]
   export github|gitlab|jenkins [--flow F] [--out 경로] [--dry-run] · import [--dry-run]
   connect list|add|test|remove · ci status|logs|report|trigger
@@ -327,7 +327,7 @@ pub fn help() -> String {
   status [run-id|last] · events <run-id> [--follow] [--since N] · logs <run-id> [node] [--follow]
   report <run-id|last> [--format text|md|json|junit|html] [--out file]
   rerun <run-id> [--failed] · cancel <run-id> · watch <flow> [--affected]
-  trust [--show|--revoke] [--yes] · hold list|release <env> · gate prepush|status
+  trust [--show|--revoke] [--yes] · hold list|release <env> · gate prepush|status|on [--flow F]|off
   blocks · block <ID> · explain <code> · gc [--older-than 7d] [--dry-run] · schema [name]
   export github|gitlab|jenkins [--flow F] [--out path] [--dry-run] · import [--dry-run]
   connect list|add|test|remove · ci status|logs|report|trigger
@@ -982,7 +982,18 @@ fn cmd_status(out: &Out, args: &Args) -> i32 {
         Err(c) => return c,
     };
     if args.has("--all") {
-        let runs: Vec<Value> = st.run_ids().iter().take(50).filter_map(|id| st.read_run(id)).map(|r| json!({"runId": r["runId"], "flow": r["flow"], "env": r["env"], "state": r["state"], "startedAt": r["startedAt"], "durationMs": r["durationMs"], "signed": store::verify(&r)})).collect();
+        let runs: Vec<Value> = st
+            .run_ids()
+            .iter()
+            .take(50)
+            .filter_map(|id| st.read_run(id).map(|r| (id.clone(), r)))
+            .map(|(id, r)| {
+                let running = matches!(r["state"].as_str(), Some("RUNNING" | "PENDING" | "PREFLIGHT" | "ROLLING_BACK"))
+                    && store::pid_alive(&st.run_dir(&id));
+                json!({"runId": r["runId"], "flow": r["flow"], "env": r["env"], "state": r["state"], "code": r["code"], "running": running,
+                       "startedAt": r["startedAt"], "durationMs": r["durationMs"], "counts": r["counts"], "signed": store::verify(&r)})
+            })
+            .collect();
         if out.json {
             out.print(&json!({"schemaVersion": 1, "runs": runs}));
         } else {
@@ -1581,7 +1592,7 @@ fn cmd_names(args: &Args) -> i32 {
     0
 }
 
-/// `gate prepush|status`: pre-push 게이트 판단(gitch 훅 · Push 검토가 같은 함수를 쓴다).
+/// `gate prepush|status|on|off`: pre-push 게이트 판단과 켜고 끄기(gitch 훅 · Push 검토 · 앱이 같은 함수를 쓴다).
 fn cmd_gate(out: &Out, args: &Args) -> i32 {
     crate::gate_check::cmd_gate(out, args)
 }

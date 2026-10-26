@@ -377,3 +377,21 @@ fn export_and_schema_commands() {
     assert_eq!(code, 0);
     assert_eq!(gate["gate"], "OFF");
 }
+
+#[test]
+fn the_pre_push_gate_is_switched_by_people_only() {
+    let fx = fixture();
+    let (code, v) = fx.json("claude", &["gate", "on", "--json"]);
+    assert_eq!(code, 2, "{v}");
+    let (code, v) = fx.json("script", &["gate", "on", "--flow", "ok", "--json"]);
+    assert_eq!(code, 0, "{v}");
+    assert_eq!(v["gate"], "ON");
+    let (_, st) = fx.json("script", &["gate", "status", "--json"]);
+    assert_eq!(st["gate"], "WARN", "{st}");
+    assert_eq!(st["flow"], "ok");
+    let (code, v) = fx.json("script", &["gate", "off", "--json"]);
+    assert_eq!(code, 0);
+    assert_eq!(v["gate"], "OFF");
+    let (_, st) = fx.json("script", &["gate", "status", "--json"]);
+    assert_eq!(st["gate"], "OFF");
+}

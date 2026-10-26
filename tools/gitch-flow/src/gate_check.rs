@@ -34,11 +34,83 @@ pub fn passing_record(st: &Store, flow: &str, sha: &str) -> Option<Value> {
     None
 }
 
+/// `gate on [--flow F]` · `gate off`: 이 저장소의 pre-push 게이트 켜고 끄기. 사람만(앱 · 터미널).
+fn toggle(out: &Out, root: &Path, on: bool, flow: Option<String>) -> i32 {
+    let actor = crate::trust::actor();
+    if crate::trust::is_ai(&actor) {
+        let msg = tr(
+            "pre-push 게이트는 사람이 켜고 끕니다(앱의 흐름 화면 또는 터미널).",
+            "a person turns the pre-push gate on and off (the app's Flows panel or a terminal).",
+        );
+        if out.json {
+            eprintln!(
+                "{}",
+                json!({"schemaVersion": 1, "error": {"code": "GITCH_CONFIRMATION_REQUIRED", "flowCode": "CONFIRM-01", "message": msg, "exitCode": 2}})
+            );
+        } else {
+            eprintln!("{msg}");
+        }
+        return 2;
+    }
+    let path = crate::util::gitsw_dir().join("flow").join("settings.json");
+    let mut s = crate::cli::settings();
+    if !s.is_object() {
+        s = json!({});
+    }
+    if !s["prePush"].is_object() {
+        s["prePush"] = json!({});
+    }
+    let id = crate::trust::repo_id(root);
+    let flow = flow.unwrap_or_else(|| "pre-push".into());
+    if on {
+        s["prePush"][&id] = json!(flow);
+    } else if let Some(o) = s["prePush"].as_object_mut() {
+        o.remove(&id);
+    }
+    if let Err(e) = crate::util::write_atomic(
+        &path,
+        serde_json::to_string_pretty(&s)
+            .unwrap_or_default()
+            .as_bytes(),
+    ) {
+        eprintln!("{e}");
+        return 1;
+    }
+    if out.json {
+        println!(
+            "{}",
+            json!({"schemaVersion": 1, "gate": if on { "ON" } else { "OFF" }, "flow": if on { json!(flow) } else { Value::Null }})
+        );
+    } else if on {
+        println!(
+            "{}",
+            tr(
+                &format!("✔ push 전에 '{flow}' 흐름을 확인합니다."),
+                &format!("✔ pushes now check the '{flow}' flow first.")
+            )
+        );
+    } else {
+        println!(
+            "{}",
+            tr(
+                "✔ pre-push 게이트를 껐습니다.",
+                "✔ the pre-push gate is off."
+            )
+        );
+    }
+    0
+}
+
 pub fn cmd_gate(out: &Out, args: &Args) -> i32 {
     let Some(root) = crate::cli::repo_root(args) else {
         return 1;
     };
     let sub = args.pos.first().map(|s| s.as_str()).unwrap_or("status");
+    match sub {
+        "on" => return toggle(out, &root, true, args.val("--flow")),
+        "off" => return toggle(out, &root, false, None),
+        _ => {}
+    }
     let flow = args.val("--flow").or_else(|| enabled(&root));
     let Some(flow) = flow else {
         if out.json {

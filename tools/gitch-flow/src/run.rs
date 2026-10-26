@@ -1270,7 +1270,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                     }
                     let cancel = Cancel::new();
                     cancels.insert(n.id.clone(), cancel.clone());
-                    events.emit("node.state", Some(&n.id), json!({"state": "RUNNING", "block": n.block, "selection": n.selection.as_ref().map(|s| s.len())}));
+                    events.emit("node.state", Some(&n.id), json!({"state": "RUNNING", "block": n.block, "selection": n.selection.as_ref().map(|s| s.len()), "log": format!("logs/{}.log", store::safe(&n.id))}));
                     print_line(opts, &format!("▶ {} ({})", n.id, n.block));
                     let tx = tx.clone();
                     let svc = Value::Object(services_info.clone());
