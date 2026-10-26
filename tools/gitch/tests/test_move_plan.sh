@@ -8,7 +8,7 @@ mp_repo() {
   MP_ROOT="$PWD"
 }
 mp_put() { mkdir -p "$(dirname -- "$1")" && cat > "$1"; }
-mp_commit() { git add -A && git commit -q -m "${1:-fixture}" || fail 'fixture commit'; }
+mp_commit() { git add -A && git commit -q -m fixture || fail 'fixture commit'; }
 mp_json() { run gitch move "$@" --plan --json; assert_ok; assert_json "$OUT"; }
 mp_q() { printf '%s' "$OUT" | jq -r "$1"; }
 mp_assert() { printf '%s' "$OUT" | jq -e "$1" >/dev/null || fail "$2\n$OUT"; }
