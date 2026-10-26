@@ -40,6 +40,7 @@ Area: Imperative summary of the change
    - The Windows CI builds and runs the real-app self-test for every pull request that touches `windows/` (about nine minutes; a new push cancels the previous run). It is not a required check, so auto-merge does not wait for it — look at the result in the pull request.
    - Signed installers, the update-signature check and the README screenshots run only for `v*` tags and manual runs (Actions › Windows › Run workflow).
 4. Merge with a merge commit so each pull request stays one unit in the history. `gh pr merge --auto --merge` merges as soon as the checks pass and deletes the branch.
+5. Contribution rights: identify third-party code in the pull request with its origin and license, and keep its notices. The [Community Use License](../LICENSE) and [CLA v1.0](../CLA.md) are proposals that are not in effect; once adopted, each rights holder posts the assent comment described in CLA.md and the maintainer verifies it before merging (see [CONTRIBUTING.md](../CONTRIBUTING.md)). Nothing is collected before that.
 
 ### Fixing a pull request the checks rejected
 

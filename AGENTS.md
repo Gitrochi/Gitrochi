@@ -18,7 +18,8 @@ For AI coding agents working in this repository — Codex, Claude Code, Gemini C
 8. **Secrets and privacy.** Tokens only in the Keychain or the Credential Manager. No real names, internal hostnames, personal emails or home paths (`/Users/<name>`) in code, tests, docs or commit messages.
 9. **Git is the system `git`.** Don't reimplement it; parse machine-readable output in `Parsers`.
 10. **Don't widen the scope.** Do what was asked, in the smallest change that does it well; leave unrelated tidying for its own pull request.
-11. **Your session may be running inside Gitrochi's own terminal** (`TERM_PROGRAM=Gitrochi`). Then never run `macos/build.sh install`, relaunch or quit the app — it ends your session. Build to `macos/build/Gitrochi.app`, and leave installing to the maintainer.
+11. **Licensing.** The Community Use License and the CLA in this repository are proposals and not in effect; the MIT text in `LICENSE-MIT` is what applies. Never post, tick or imply CLA assent on anyone's behalf, never describe the proposal as adopted, and identify third-party code with its license in the pull request.
+12. **Your session may be running inside Gitrochi's own terminal** (`TERM_PROGRAM=Gitrochi`). Then never run `macos/build.sh install`, relaunch or quit the app — it ends your session. Build to `macos/build/Gitrochi.app`, and leave installing to the maintainer.
 
 ## Pull request text
 

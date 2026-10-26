@@ -18,7 +18,7 @@
   <a href="https://github.com/Gitrochi/Gitrochi/releases"><img src="https://img.shields.io/github/downloads/Gitrochi/Gitrochi/total?label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89&color=2a9a55" alt="ダウンロード"></a>
   <img src="https://img.shields.io/badge/macOS-15%2B-111?logo=apple&logoColor=white" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078d4?logo=windows&logoColor=white" alt="Windows 10 · 11">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Gitrochi/Gitrochi?color=6b6b72" alt="MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Community%20Use%20v1.0%20proposed-6b6b72" alt="MIT; Community Use v1.0 proposed"></a>
 </p>
 
 <p align="center">
@@ -73,6 +73,8 @@ Gitrochi は macOS と Windows 向けのネイティブ Git クライアント�
 
 ## ライセンス
 
-Copyright © 2026 ChoMnSeong, [jjunhaa0211](https://github.com/jjunhaa0211)。[MIT ライセンス](LICENSE)です。著作権表示を残せば、商用利用・改変・再配布ができます。保証はなく、名前とアイコンはライセンスの対象外です。
+[Gitrochi Community Use License v1.0](LICENSE) は**提案段階で、まだ発効していません**。個人・企業の無料利用を認め、無断の再販売や独立した派生プロジェクトの配布を制限し、貢献は公式リポジトリへのプルリクエストで受け付ける内容です。発効に必要な権利者の同意と法的な詳細は[ライセンス移行の検討記録](docs/licensing-review.md)（韓国語）に記録しています。
 
-同梱：[SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)（MIT）。Windows 版は [Tauri](https://tauri.app)、[React](https://react.dev)、[xterm.js](https://xtermjs.org)、[portable-pty](https://github.com/wezterm/wezterm)、[Lucide](https://lucide.dev) の上に作られており、それぞれのライセンスに従います。
+現在適用される [MIT の原文](LICENSE-MIT)は併せて保存しており、すでに MIT で付与された権利はこの提案によって取り消されません。© 2026 ChoMnSeong, [jjunhaa0211](https://github.com/jjunhaa0211)。採択後も、配布制限のある source-available ポリシーであり、オープンソースライセンスではありません。
+
+同梱：[SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)（MIT）。Windows 版は [Tauri](https://tauri.app)、[React](https://react.dev)、[xterm.js](https://xtermjs.org)、[portable-pty](https://github.com/wezterm/wezterm)、[Lucide](https://lucide.dev) の上に作られており、それぞれのライセンスに従います。提案ライセンスはこれらサードパーティコードの権利を制限しません — [サードパーティ通知と依存関係レビュー](THIRD_PARTY_NOTICES.md)（英語）。Rust 依存関係の配布対象ごとの完全な通知レビューはまだ完了していません。
