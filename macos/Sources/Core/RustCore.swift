@@ -3,12 +3,17 @@ import GitrochiCore
 
 /// 호출마다 독립 버퍼를 사용하므로 여러 탭·Task.detached에서도 공유 잠금이 필요 없다.
 enum RustCore {
-    static func graph(_ input: [UInt32]) -> [UInt32] {
+    /// Nil when the core sent back an empty or malformed buffer (a panic, or an input past its
+    /// size limit); the caller falls back to the Swift layout instead of crashing the app.
+    static func graph(_ input: [UInt32]) -> [UInt32]? {
         input.withUnsafeBytes { bytes in
             let output = gitrochi_graph(bytes.bindMemory(to: UInt8.self).baseAddress!, bytes.count)
             let count = Int(UInt64(littleEndian: UnsafeRawPointer(output).loadUnaligned(as: UInt64.self)))
             defer { gitrochi_free(output, count + 8) }
-            precondition(count >= 8 && count % 4 == 0, "Invalid shared graph response")
+            guard count >= 8, count % 4 == 0 else {
+                FileHandle.standardError.write(Data("[gitrochi] shared graph core returned \(count) bytes; using the Swift layout\n".utf8))
+                return nil
+            }
             return (0..<(count / 4)).map { UInt32(littleEndian: UnsafeRawPointer(output).loadUnaligned(fromByteOffset: 8 + $0 * 4, as: UInt32.self)) }
         }
     }

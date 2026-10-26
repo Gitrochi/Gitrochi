@@ -150,7 +150,6 @@ export function commitMenu(store: RepoStore, c: Commit): MenuItem[] {
   }
   items.push(
     { label: t("Compare with HEAD…"), onClick: () => store.openRevisionComparison(c.id, "HEAD") },
-    { label: t("Selected commits…"), disabled: !store.historyTools.selected.length, onClick: () => void store.openBatchCommits() },
     { label: t("New branch from here…"), onClick: () => store.requestNewBranch(c.id, short(c.id)) },
     { label: t("Tag here…"), onClick: () => sheet({ kind: "tag", sha: c.id }) },
     { label: t("Create worktree from here…"), onClick: () => sheet({ kind: "addWorktree", branch: null, start: c.id }) },
