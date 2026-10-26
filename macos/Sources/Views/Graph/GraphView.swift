@@ -4,6 +4,8 @@ enum GraphMetrics {
     static let laneWidth: CGFloat = 22
     static let rowHeight: CGFloat = 30
     static let leftPad: CGFloat = 6
+    /// Room between the last lane's avatar and the message bar; the lane band runs through it
+    static let rightPad: CGFloat = 16
     static let maxVisibleLanes = 16
     /// 왼쪽 브랜치·태그 칸 너비
     static let refWidth: CGFloat = 190
@@ -11,7 +13,7 @@ enum GraphMetrics {
     static let avatar: CGFloat = 20
 
     static func width(lanes: Int) -> CGFloat {
-        max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad * 2)
+        max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
     }
 
     /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간).

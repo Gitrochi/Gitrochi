@@ -22,6 +22,9 @@ struct CommitRow: View {
     /// 이 커밋의 가장 최근 CI 파이프라인
     var ci: CIPipeline?
 
+    /// Rows stay 6pt apart, like GitKraken
+    static let bandHeight = GraphMetrics.rowHeight - 6
+
     var body: some View {
         let c = entry.commit
         let tint = Palette.lane(entry.row.color)
@@ -30,7 +33,6 @@ struct CommitRow: View {
             // 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수), 그래프 동그라미까지 이어지는 선
             RefColumn(groups: groups, tint: tint, store: store)
                 .frame(width: columns.ref, height: GraphMetrics.rowHeight)
-                .background(groups.isEmpty ? Color.clear : tint.opacity(0.10))
             GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
                       hasRefs: !groups.isEmpty, author: c.author, email: c.email)
                 .frame(width: graphWidth, height: GraphMetrics.rowHeight)
@@ -43,12 +45,18 @@ struct CommitRow: View {
                                            .init(color: columns.graph < graphWidth ? .clear : .black, location: 1)],
                                    startPoint: .leading, endPoint: .trailing)
                 }
-                .background(tint.opacity(groups.isEmpty ? 0.04 : 0.10))
+                .background(alignment: .leading) {
+                    // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
+                    Rectangle()
+                        .fill(tint.opacity(selected ? 0.4 : 0.1))
+                        .frame(height: Self.bandHeight)
+                        .padding(.leading, min(GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5), columns.graph))
+                }
             // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
             HStack(spacing: 6) {
-                RoundedRectangle(cornerRadius: 1.5)
+                Rectangle()
                     .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
-                    .frame(width: 3, height: 16)
+                    .frame(width: 3, height: Self.bandHeight)
                     .padding(.trailing, 4)
                 if c.isPending {
                     if c.wipWorktree != nil {
@@ -89,8 +97,10 @@ struct CommitRow: View {
                         .fixedSize()
                 }
             }
-            .padding(.leading, 10)
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .frame(height: Self.bandHeight)
+            // selection and search hits tint only the message, at the band's height
+            .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
             .clipped()
             .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
         }
@@ -98,7 +108,6 @@ struct CommitRow: View {
         .padding(.trailing, 12)
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
-        .background(selected ? Color.accentColor.opacity(0.22) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
         .overlay(alignment: .leading) {
             if match == .hit { Rectangle().fill(Color.yellow).frame(width: 3) }
         }
