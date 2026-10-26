@@ -577,7 +577,6 @@
 "No new commits to merge." = "Žádné nové commity ke sloučení.";
 "No newline at end of file" = "Na konci souboru chybí nový řádek";
 "No one has approved yet." = "Zatím nikdo neschválil.";
-"No open %@" = "Žádné otevřené %1$@";
 "No permission (403): %@" = "Chybí oprávnění (403): %1$@";
 "No remote repository." = "Žádný vzdálený repozitář.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Žádný vzdálený repozitář. Nejprve ho přidejte v terminálu příkazem `git remote add origin <URL>`.";
@@ -1137,3 +1136,15 @@
 "Icons only" = "Jen ikony";
 "Icons and text" = "Ikony a text";
 "With text, each button's name sits to the right of its icon." = "S textem je název každého tlačítka vpravo od ikony.";
+"Clear search" = "Vymazat hledání";
+"Filter" = "Filtr";
+"Search pull requests" = "Hledat pull requesty";
+"Search merge requests" = "Hledat merge requesty";
+"No pull requests match this filter." = "Tomuto filtru neodpovídá žádný pull request.";
+"No merge requests match this filter." = "Tomuto filtru neodpovídá žádný merge request.";
+"Open in Pull requests" = "Otevřít v Pull requestech";
+"Open in Merge requests" = "Otevřít v Merge requestech";
+"Merge request" = "Merge request";
+"open" = "otevřené";
+"closed" = "uzavřené";
+"merged" = "sloučené";

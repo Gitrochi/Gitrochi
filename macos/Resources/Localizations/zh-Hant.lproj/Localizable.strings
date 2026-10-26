@@ -592,7 +592,6 @@
 "No new commits to merge." = "沒有可合併的新提交。";
 "No newline at end of file" = "檔案結尾沒有換行字元";
 "No one has approved yet." = "尚無人核准。";
-"No open %@" = "沒有開啟中的 %1$@";
 "No permission (403): %@" = "沒有權限 (403)：%1$@";
 "No remote repository." = "沒有遠端存放庫。";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "沒有遠端存放庫。請先在終端機中以 `git remote add origin <URL>` 新增。";
@@ -1159,3 +1158,15 @@
 "Icons only" = "僅圖示";
 "Icons and text" = "圖示和文字";
 "With text, each button's name sits to the right of its icon." = "顯示文字時，每個按鈕的名稱位於圖示右側。";
+"Clear search" = "清除搜尋";
+"Filter" = "篩選";
+"Search pull requests" = "搜尋拉取請求";
+"Search merge requests" = "搜尋合併請求";
+"No pull requests match this filter." = "沒有符合此篩選條件的拉取請求。";
+"No merge requests match this filter." = "沒有符合此篩選條件的合併請求。";
+"Open in Pull requests" = "在拉取請求中開啟";
+"Open in Merge requests" = "在合併請求中開啟";
+"Merge request" = "合併請求";
+"open" = "開放";
+"closed" = "已關閉";
+"merged" = "已合併";

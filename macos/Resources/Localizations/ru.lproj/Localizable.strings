@@ -591,7 +591,6 @@
 "No new commits to merge." = "Нет новых коммитов для слияния.";
 "No newline at end of file" = "Нет перевода строки в конце файла";
 "No one has approved yet." = "Пока никто не одобрил.";
-"No open %@" = "Нет открытых %1$@";
 "No permission (403): %@" = "Нет доступа (403): %1$@";
 "No remote repository." = "Нет удалённого репозитория.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Нет удалённого репозитория. Сначала добавьте его в терминале командой `git remote add origin <URL>`.";
@@ -1157,3 +1156,15 @@
 "Icons only" = "Только значки";
 "Icons and text" = "Значки и текст";
 "With text, each button's name sits to the right of its icon." = "С текстом название каждой кнопки стоит справа от значка.";
+"Clear search" = "Очистить поиск";
+"Filter" = "Фильтр";
+"Search pull requests" = "Поиск pull request";
+"Search merge requests" = "Поиск merge request";
+"No pull requests match this filter." = "Нет pull request, подходящих под фильтр.";
+"No merge requests match this filter." = "Нет merge request, подходящих под фильтр.";
+"Open in Pull requests" = "Открыть в Pull requests";
+"Open in Merge requests" = "Открыть в Merge requests";
+"Merge request" = "Merge request";
+"open" = "открытые";
+"closed" = "закрытые";
+"merged" = "слитые";

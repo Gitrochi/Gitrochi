@@ -580,7 +580,6 @@
 "No new commits to merge." = "Birleştirilecek yeni commit yok.";
 "No newline at end of file" = "Dosya sonunda yeni satır yok";
 "No one has approved yet." = "Henüz kimse onaylamadı.";
-"No open %@" = "Açık %1$@ yok";
 "No permission (403): %@" = "İzin yok (403): %1$@";
 "No remote repository." = "Uzak depo yok.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Uzak depo yok. Önce terminalde `git remote add origin <URL>` ile bir tane ekleyin.";
@@ -1145,3 +1144,15 @@
 "Icons only" = "Yalnızca simgeler";
 "Icons and text" = "Simgeler ve metin";
 "With text, each button's name sits to the right of its icon." = "Metin açıkken her düğmenin adı simgesinin sağında görünür.";
+"Clear search" = "Aramayı temizle";
+"Filter" = "Filtre";
+"Search pull requests" = "Pull request ara";
+"Search merge requests" = "Merge request ara";
+"No pull requests match this filter." = "Bu filtreyle eşleşen pull request yok.";
+"No merge requests match this filter." = "Bu filtreyle eşleşen merge request yok.";
+"Open in Pull requests" = "Pull request'lerde aç";
+"Open in Merge requests" = "Merge request'lerde aç";
+"Merge request" = "Merge request";
+"open" = "açık";
+"closed" = "kapalı";
+"merged" = "birleştirilmiş";

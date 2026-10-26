@@ -568,7 +568,6 @@
 "No new commits to merge." = "Không có commit mới để merge.";
 "No newline at end of file" = "Không có ký tự xuống dòng ở cuối tệp";
 "No one has approved yet." = "Chưa có ai phê duyệt.";
-"No open %@" = "Không có %1$@ đang mở";
 "No permission (403): %@" = "Không có quyền (403): %1$@";
 "No remote repository." = "Không có kho lưu trữ từ xa.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Không có kho lưu trữ từ xa. Hãy thêm trước trong terminal bằng `git remote add origin <URL>`.";
@@ -1113,3 +1112,15 @@
 "Icons only" = "Chỉ biểu tượng";
 "Icons and text" = "Biểu tượng và chữ";
 "With text, each button's name sits to the right of its icon." = "Khi bật chữ, tên mỗi nút nằm bên phải biểu tượng.";
+"Clear search" = "Xóa tìm kiếm";
+"Filter" = "Bộ lọc";
+"Search pull requests" = "Tìm pull request";
+"Search merge requests" = "Tìm merge request";
+"No pull requests match this filter." = "Không có pull request nào khớp bộ lọc này.";
+"No merge requests match this filter." = "Không có merge request nào khớp bộ lọc này.";
+"Open in Pull requests" = "Mở trong Pull request";
+"Open in Merge requests" = "Mở trong Merge request";
+"Merge request" = "Merge request";
+"open" = "đang mở";
+"closed" = "đã đóng";
+"merged" = "đã hợp nhất";

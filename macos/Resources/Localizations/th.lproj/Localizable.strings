@@ -586,7 +586,6 @@
 "No new commits to merge." = "ไม่มีคอมมิตใหม่ให้เมิร์จ";
 "No newline at end of file" = "ไม่มีบรรทัดใหม่ท้ายไฟล์";
 "No one has approved yet." = "ยังไม่มีใครอนุมัติ";
-"No open %@" = "ไม่มี %1$@ ที่เปิดอยู่";
 "No permission (403): %@" = "ไม่มีสิทธิ์ (403): %1$@";
 "No remote repository." = "ไม่มีรีโพสิทอรีรีโมต";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "ไม่มีรีโพสิทอรีรีโมต เพิ่มรีโมตก่อนในเทอร์มินัลด้วย `git remote add origin <URL>`";
@@ -1153,3 +1152,15 @@
 "Icons only" = "ไอคอนเท่านั้น";
 "Icons and text" = "ไอคอนและข้อความ";
 "With text, each button's name sits to the right of its icon." = "เมื่อแสดงข้อความ ชื่อปุ่มจะอยู่ทางขวาของไอคอน";
+"Clear search" = "ล้างการค้นหา";
+"Filter" = "ตัวกรอง";
+"Search pull requests" = "ค้นหาพูลรีเควสต์";
+"Search merge requests" = "ค้นหาเมิร์จรีเควสต์";
+"No pull requests match this filter." = "ไม่มีพูลรีเควสต์ที่ตรงกับตัวกรองนี้";
+"No merge requests match this filter." = "ไม่มีเมิร์จรีเควสต์ที่ตรงกับตัวกรองนี้";
+"Open in Pull requests" = "เปิดในพูลรีเควสต์";
+"Open in Merge requests" = "เปิดในเมิร์จรีเควสต์";
+"Merge request" = "เมิร์จรีเควสต์";
+"open" = "เปิดอยู่";
+"closed" = "ปิดแล้ว";
+"merged" = "รวมแล้ว";

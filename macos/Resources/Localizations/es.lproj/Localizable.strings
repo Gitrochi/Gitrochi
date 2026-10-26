@@ -576,7 +576,6 @@
 "No new commits to merge." = "No hay commits nuevos que fusionar.";
 "No newline at end of file" = "No hay salto de línea al final del archivo";
 "No one has approved yet." = "Nadie lo ha aprobado todavía.";
-"No open %@" = "No hay ningún %1$@ abierto";
 "No permission (403): %@" = "Sin permiso (403): %1$@";
 "No remote repository." = "No hay repositorio remoto.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "No hay repositorio remoto. Primero agrega uno en una terminal con `git remote add origin <URL>`.";
@@ -1131,3 +1130,15 @@
 "Icons only" = "Solo iconos";
 "Icons and text" = "Iconos y texto";
 "With text, each button's name sits to the right of its icon." = "Con texto, el nombre de cada botón aparece a la derecha de su icono.";
+"Clear search" = "Borrar búsqueda";
+"Filter" = "Filtro";
+"Search pull requests" = "Buscar pull requests";
+"Search merge requests" = "Buscar merge requests";
+"No pull requests match this filter." = "Ningún pull request coincide con este filtro.";
+"No merge requests match this filter." = "Ningún merge request coincide con este filtro.";
+"Open in Pull requests" = "Abrir en Pull requests";
+"Open in Merge requests" = "Abrir en Merge requests";
+"Merge request" = "Merge request";
+"open" = "abiertas";
+"closed" = "cerradas";
+"merged" = "fusionadas";

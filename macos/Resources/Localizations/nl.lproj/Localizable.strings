@@ -564,7 +564,6 @@
 "No new commits to merge." = "Geen nieuwe commits om te mergen.";
 "No newline at end of file" = "Geen nieuwe regel aan het einde van het bestand";
 "No one has approved yet." = "Nog niemand heeft goedgekeurd.";
-"No open %@" = "Geen open %1$@";
 "No permission (403): %@" = "Geen toestemming (403): %1$@";
 "No remote repository." = "Geen remote repository.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Geen remote repository. Voeg er eerst een toe in een terminal met `git remote add origin <URL>`.";
@@ -1101,3 +1100,15 @@
 "Icons only" = "Alleen symbolen";
 "Icons and text" = "Symbolen en tekst";
 "With text, each button's name sits to the right of its icon." = "Met tekst staat de naam van elke knop rechts van het symbool.";
+"Clear search" = "Zoekopdracht wissen";
+"Filter" = "Filter";
+"Search pull requests" = "Pull requests zoeken";
+"Search merge requests" = "Merge requests zoeken";
+"No pull requests match this filter." = "Geen pull requests voldoen aan dit filter.";
+"No merge requests match this filter." = "Geen merge requests voldoen aan dit filter.";
+"Open in Pull requests" = "Openen in Pull requests";
+"Open in Merge requests" = "Openen in Merge requests";
+"Merge request" = "Merge request";
+"open" = "open";
+"closed" = "gesloten";
+"merged" = "samengevoegd";

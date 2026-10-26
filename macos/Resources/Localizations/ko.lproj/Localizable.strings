@@ -714,7 +714,6 @@
 "No new commits to merge." = "머지할 새 커밋이 없습니다.";
 "No newline at end of file" = "파일 끝에 줄바꿈 없음";
 "No one has approved yet." = "아직 승인한 사람이 없습니다.";
-"No open %@" = "열린 %1$@ 없음";
 "No permission (403): %@" = "권한이 없습니다(403): %1$@";
 "No remote repository." = "원격 저장소가 없습니다.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "원격 저장소가 없습니다. 터미널에서 `git remote add origin <URL>` 로 먼저 추가하세요.";
@@ -1457,7 +1456,6 @@
 "Repository assistant" = "저장소 AI 도우미";
 "Repository assistant…" = "저장소 AI 도우미…";
 "Repository tools…" = "저장소 도구…";
-"Request filter" = "요청 필터";
 "Request management" = "요청 관리";
 "Requires Node.js 22 or later and Git. No server, account changes or network listener is created." = "Node.js 22 이상과 Git이 필요합니다. 서버나 네트워크 수신기를 만들거나 계정을 변경하지 않습니다.";
 "Reset bisect" = "탐색 종료 후 복귀";
@@ -1483,7 +1481,6 @@
 "Save reviewers" = "리뷰어 저장";
 "Saved working trees" = "보관한 작업 파일";
 "Search requests" = "요청 검색";
-"Search requests (Enter)" = "요청 검색 (Enter)";
 "Select an item to read its conversation." = "대화를 보려면 항목을 선택해 주세요.";
 "Select at least one commit." = "커밋을 하나 이상 선택하세요.";
 "Select commits on the current branch." = "현재 브랜치의 커밋을 선택하세요.";
@@ -2046,3 +2043,12 @@
 "Icons only" = "아이콘만";
 "Icons and text" = "아이콘과 텍스트";
 "With text, each button's name sits to the right of its icon." = "텍스트를 켜면 각 버튼 이름이 아이콘 오른쪽에 표시됩니다.";
+"Clear search" = "검색어 지우기";
+"Filter" = "필터";
+"Search pull requests" = "풀 리퀘스트 검색";
+"Search merge requests" = "머지 리퀘스트 검색";
+"No pull requests match this filter." = "이 조건에 맞는 풀 리퀘스트가 없습니다.";
+"No merge requests match this filter." = "이 조건에 맞는 머지 리퀘스트가 없습니다.";
+"Open in Pull requests" = "풀 리퀘스트 페이지에서 열기";
+"Open in Merge requests" = "머지 리퀘스트 페이지에서 열기";
+"Merge request" = "머지 리퀘스트";

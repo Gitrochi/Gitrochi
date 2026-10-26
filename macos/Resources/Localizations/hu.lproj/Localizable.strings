@@ -582,7 +582,6 @@
 "No new commits to merge." = "Nincs egyesítendő új commit.";
 "No newline at end of file" = "Nincs újsor a fájl végén";
 "No one has approved yet." = "Még senki sem hagyta jóvá.";
-"No open %@" = "Nincs nyitott %1$@";
 "No permission (403): %@" = "Nincs jogosultság (403): %1$@";
 "No remote repository." = "Nincs távoli tároló.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Nincs távoli tároló. Előbb adjon hozzá egyet egy terminálban: `git remote add origin <URL>`.";
@@ -1140,3 +1139,15 @@
 "Icons only" = "Csak ikonok";
 "Icons and text" = "Ikonok és szöveg";
 "With text, each button's name sits to the right of its icon." = "Szöveggel minden gomb neve az ikonja jobb oldalán jelenik meg.";
+"Clear search" = "Keresés törlése";
+"Filter" = "Szűrő";
+"Search pull requests" = "Pull requestek keresése";
+"Search merge requests" = "Merge requestek keresése";
+"No pull requests match this filter." = "Egy pull request sem felel meg a szűrőnek.";
+"No merge requests match this filter." = "Egy merge request sem felel meg a szűrőnek.";
+"Open in Pull requests" = "Megnyitás a Pull requestekben";
+"Open in Merge requests" = "Megnyitás a Merge requestekben";
+"Merge request" = "Merge request";
+"open" = "nyitott";
+"closed" = "lezárt";
+"merged" = "egyesítve";

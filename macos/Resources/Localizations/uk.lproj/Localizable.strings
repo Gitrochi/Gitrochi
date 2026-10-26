@@ -591,7 +591,6 @@
 "No new commits to merge." = "Немає нових комітів для злиття.";
 "No newline at end of file" = "Немає символу нового рядка в кінці файлу";
 "No one has approved yet." = "Ще ніхто не схвалив.";
-"No open %@" = "Відкритих %1$@ немає";
 "No permission (403): %@" = "Немає дозволу (403): %1$@";
 "No remote repository." = "Немає віддаленого репозиторію.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Немає віддаленого репозиторію. Спершу додайте його в терміналі командою `git remote add origin <URL>`.";
@@ -1157,3 +1156,15 @@
 "Icons only" = "Лише значки";
 "Icons and text" = "Значки й текст";
 "With text, each button's name sits to the right of its icon." = "З текстом назва кожної кнопки стоїть праворуч від значка.";
+"Clear search" = "Очистити пошук";
+"Filter" = "Фільтр";
+"Search pull requests" = "Пошук pull request";
+"Search merge requests" = "Пошук merge request";
+"No pull requests match this filter." = "Немає pull request, що відповідають фільтру.";
+"No merge requests match this filter." = "Немає merge request, що відповідають фільтру.";
+"Open in Pull requests" = "Відкрити в Pull requests";
+"Open in Merge requests" = "Відкрити в Merge requests";
+"Merge request" = "Merge request";
+"open" = "відкриті";
+"closed" = "закриті";
+"merged" = "злиті";

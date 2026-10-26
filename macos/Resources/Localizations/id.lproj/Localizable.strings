@@ -562,7 +562,6 @@
 "No new commits to merge." = "Tidak ada commit baru untuk di-merge.";
 "No newline at end of file" = "Tidak ada baris baru di akhir file";
 "No one has approved yet." = "Belum ada yang menyetujui.";
-"No open %@" = "Tidak ada %1$@ yang terbuka";
 "No permission (403): %@" = "Tidak ada izin (403): %1$@";
 "No remote repository." = "Tidak ada repositori remote.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "Tidak ada repositori remote. Tambahkan dulu di terminal dengan `git remote add origin <URL>`.";
@@ -1108,3 +1107,15 @@
 "Icons only" = "Hanya ikon";
 "Icons and text" = "Ikon dan teks";
 "With text, each button's name sits to the right of its icon." = "Dengan teks, nama tiap tombol tampil di sebelah kanan ikonnya.";
+"Clear search" = "Hapus pencarian";
+"Filter" = "Filter";
+"Search pull requests" = "Cari pull request";
+"Search merge requests" = "Cari merge request";
+"No pull requests match this filter." = "Tidak ada pull request yang cocok dengan filter ini.";
+"No merge requests match this filter." = "Tidak ada merge request yang cocok dengan filter ini.";
+"Open in Pull requests" = "Buka di Pull request";
+"Open in Merge requests" = "Buka di Merge request";
+"Merge request" = "Merge request";
+"open" = "terbuka";
+"closed" = "ditutup";
+"merged" = "digabungkan";

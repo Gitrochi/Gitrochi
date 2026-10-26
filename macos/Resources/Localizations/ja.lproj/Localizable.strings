@@ -592,7 +592,6 @@
 "No new commits to merge." = "マージする新しいコミットはありません。";
 "No newline at end of file" = "ファイル末尾に改行がありません";
 "No one has approved yet." = "まだ誰も承認していません。";
-"No open %@" = "開いている %1$@ はありません";
 "No permission (403): %@" = "権限がありません (403): %1$@";
 "No remote repository." = "リモートリポジトリがありません。";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "リモートリポジトリがありません。先にターミナルで `git remote add origin <URL>` を実行して追加してください。";
@@ -1158,3 +1157,15 @@
 "Icons only" = "アイコンのみ";
 "Icons and text" = "アイコンとテキスト";
 "With text, each button's name sits to the right of its icon." = "テキストを表示すると、各ボタンの名前がアイコンの右に並びます。";
+"Clear search" = "検索をクリア";
+"Filter" = "フィルター";
+"Search pull requests" = "プルリクエストを検索";
+"Search merge requests" = "マージリクエストを検索";
+"No pull requests match this filter." = "この条件に一致するプルリクエストはありません。";
+"No merge requests match this filter." = "この条件に一致するマージリクエストはありません。";
+"Open in Pull requests" = "プルリクエストで開く";
+"Open in Merge requests" = "マージリクエストで開く";
+"Merge request" = "マージリクエスト";
+"open" = "オープン";
+"closed" = "クローズ";
+"merged" = "マージ済み";

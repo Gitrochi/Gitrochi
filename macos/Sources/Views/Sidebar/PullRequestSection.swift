@@ -1,18 +1,25 @@
 import SwiftUI
 import AppKit
 
+/// The repository's pull/merge requests: in the repository sidebar, and as the list of the Pull requests page (onPage)
 struct PullRequestSection: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings
     @ViewState private var search = ""
     let target: RepoTarget
+    var onPage = false
+
+    private var filters: [(value: String, title: String)] {
+        [("open", WorkState.title("open")), ("closed", WorkState.title("closed")), ("merged", WorkState.title("merged")),
+         ("mine", String(localized: "Created by me")), ("reviewRequested", String(localized: "Review requested"))]
+    }
 
     var body: some View {
         SidebarSection("pullRequests") {
-            Picker("Request filter", selection: Binding(get: { store.collaboration.query.scope }, set: { scope in Task { await store.filterPullRequests(scope: scope, search: search) } })) {
-                Text("Open").tag("open"); Text("Closed").tag("closed"); Text("Merged").tag("merged"); Text("Created by me").tag("mine"); Text("Review requested").tag("reviewRequested")
-            }.labelsHidden()
-            TextField("Search requests (Enter)", text: $search).onSubmit { Task { await store.filterPullRequests(scope: store.collaboration.query.scope, search: search) } }
+            ListSearchRow(prompt: target.provider == .gitlab ? String(localized: "Search merge requests") : String(localized: "Search pull requests"),
+                          text: $search, filters: filters, selection: store.collaboration.query.scope, defaultFilter: "open",
+                          onSearch: { Task { await store.filterPullRequests(scope: store.collaboration.query.scope, search: search) } },
+                          onFilter: { scope in Task { await store.filterPullRequests(scope: scope, search: search) } })
             if let warning = store.collaboration.warning { Text(warning).font(.caption).foregroundStyle(.secondary) }
             switch store.prState {
             case .authorizationRequired:
@@ -32,7 +39,8 @@ struct PullRequestSection: View {
             case .loading where store.pullRequests.isEmpty:
                 ProgressView().controlSize(.small)
             case .loaded where store.pullRequests.isEmpty:
-                Text("No open \(target.provider.requestShort)").font(.callout).foregroundStyle(.secondary)
+                Text(target.provider == .gitlab ? "No merge requests match this filter." : "No pull requests match this filter.")
+                    .font(.callout).foregroundStyle(.secondary).sidebarRow()
             default:
                 EmptyView()
             }
@@ -54,7 +62,14 @@ struct PullRequestSection: View {
                 .sidebarRow()
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
+                .background(onPage && store.selection == .pullRequest(pr.number) ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                 .contextMenu {
+                    if !onPage {
+                        Button(target.provider == .gitlab ? "Open in Merge requests" : "Open in Pull requests") {
+                            store.navigate(.pullRequests, prepare: false); store.select(.pullRequest(pr.number))
+                        }
+                        Divider()
+                    }
                     Button("Check out branch") { Task { await store.checkoutPullRequest(pr) } }
                     Button("Open in browser") { if let u = URL(string: pr.url) { NSWorkspace.shared.open(u) } }
                     Button("Copy link") { store.copy(pr.url) }
@@ -63,9 +78,14 @@ struct PullRequestSection: View {
             if store.collaboration.more { Button("Load more") { Task { await store.loadPullRequests(append: true) } }.disabled(store.prState == .loading) }
         } header: {
             HStack {
-                Text(store.prState == .loaded ? "\(target.provider.requestsTitle) \(store.pullRequests.count)" : target.provider.requestsTitle)
+                Text(verbatim: store.prState == .loaded ? "\(target.provider.requestsTitle) \(store.pullRequests.count)" : target.provider.requestsTitle)
                 Spacer()
                 // the account for this repository is chosen in the toolbar's account control
+                if !onPage {
+                    Button { store.navigate(.pullRequests) } label: { Image(systemName: "arrow.up.forward.square") }
+                        .buttonStyle(.borderless)
+                        .help(target.provider == .gitlab ? "Open in Merge requests" : "Open in Pull requests")
+                }
                 Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
                     .buttonStyle(.borderless)
                     .help("Refresh list")

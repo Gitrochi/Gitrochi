@@ -417,9 +417,9 @@ enum Provider: String, Codable, Hashable, CaseIterable, Identifiable {
     case github, gitlab
     var id: String { rawValue }
     var title: String { self == .github ? "GitHub" : "GitLab" }
-    var requestName: String { self == .github ? "Pull Request" : "Merge Request" }
+    var requestName: String { self == .github ? String(localized: "Pull request") : String(localized: "Merge request") }
     var requestShort: String { self == .github ? "PR" : "MR" }
-    var requestsTitle: String { self == .github ? "Pull Requests" : "Merge Requests" }
+    var requestsTitle: String { self == .github ? String(localized: "Pull requests") : String(localized: "Merge requests") }
 }
 
 struct HostAccount: Codable, Hashable, Identifiable {
