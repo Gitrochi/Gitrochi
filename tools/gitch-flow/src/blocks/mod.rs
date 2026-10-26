@@ -5,8 +5,11 @@ pub mod check;
 pub mod ci;
 pub mod cmd;
 pub mod container;
+pub mod fixture;
 pub mod gate;
+pub mod mock;
 pub mod test;
+pub mod window;
 
 use crate::mask::Masker;
 use crate::process::{self, Cancel, Outcome, ProcSpec, Stream};
@@ -174,6 +177,8 @@ pub struct NodeCx<'a> {
     /// 셸 명령을 돌리는 곳(local · docker:<이미지>).
     pub exec: ExecCx,
     pub project: Option<String>,
+    /// 실행 폴더(서비스 로그 · 산출물).
+    pub run_dir: PathBuf,
 }
 
 /// 셸 명령을 컨테이너에서 돌릴 때 필요한 것.
@@ -443,6 +448,11 @@ static VERSION: check::Version = check::Version;
 static DOCKER_RUN: container::Run = container::Run;
 static DOCKER_BUILD: container::Build = container::Build;
 static DOCKER_PUSH: container::Push = container::Push;
+static MOCK_FAULT: mock::Fault = mock::Fault;
+static MOCK_CHECK: mock::Check = mock::Check;
+static SEED: fixture::Seed = fixture::Seed;
+static WINDOW: window::Window = window::Window;
+static LOG: check::Log = check::Log;
 
 /// 내장 블록 전체.
 pub fn all() -> Vec<&'static dyn Block> {
@@ -455,6 +465,11 @@ pub fn all() -> Vec<&'static dyn Block> {
         &DOCKER_RUN,
         &DOCKER_BUILD,
         &DOCKER_PUSH,
+        &MOCK_FAULT,
+        &MOCK_CHECK,
+        &SEED,
+        &WINDOW,
+        &LOG,
     ];
     for t in test::RUNNERS {
         v.push(t);

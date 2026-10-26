@@ -58,7 +58,7 @@ pub fn minute_of_day(ms: u64, offset_min: i64) -> i64 {
 }
 
 // Howard Hinnant 의 날짜 계산(그레고리력, 날짜 → 연월일).
-fn civil_from_days(z: i64) -> (i64, u32, u32) {
+pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let z = z + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
     let doe = (z - era * 146_097) as u64;

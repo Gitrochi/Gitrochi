@@ -637,6 +637,7 @@ fn run_node(
             blocks::ExecCx::default()
         },
         project: sh.spec.project_name.clone(),
+        run_dir: sh.run_dir.clone(),
     };
     let result: NodeResult = block.run(&mut cx);
     out.undo = std::mem::take(&mut cx.undo);

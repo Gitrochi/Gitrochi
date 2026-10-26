@@ -18,6 +18,7 @@ pub mod git;
 pub mod http;
 pub mod keystore;
 pub mod mask;
+pub mod mock;
 pub mod plan;
 pub mod process;
 pub mod report;

@@ -1,4 +1,4 @@
-//! 점검 블록: `check.http` · `check.port` · `check.version`. 스모크의 기본 단위다.
+//! 점검 블록: `check.http` · `check.port` · `check.version` · `check.log`. 스모크의 기본 단위다.
 //! 기대한 응답에 닿았는지(S1), 앱이 말하는 빌드가 우리가 기대한 것인지(S2)를 본다.
 
 use super::{schema, Block, Meta, NodeCx, NodeResult};
@@ -463,6 +463,178 @@ impl Block for Version {
         }
         r.verdicts
             .push(verify::identity(observed.as_deref(), &expected));
+        r
+    }
+}
+
+// ---------- check.log ----------
+
+pub struct Log;
+
+fn log_inputs() -> Value {
+    schema(
+        json!({
+            "service": {"type": "string", "description": "Service whose log to read (list it in the node's services:)."},
+            "contains": {"type": "string"},
+            "regex": {"type": "string"},
+            "absent": {"type": "string", "description": "Regex that must not appear (checked once the line is found or time runs out)."},
+            "timeout": {"type": "string", "default": "30s"},
+        }),
+        &["service"],
+    )
+}
+
+static LOG_META: Meta = Meta {
+    id: "check.log",
+    version: "1.0.0",
+    title: ("서비스 로그 점검", "Service log check"),
+    category: "check",
+    capabilities: &[],
+    env_classes: &[],
+    destructive: false,
+    outward: false,
+    codes: &["VERIFY-01", "VERIFY-03", "VERIFY-04"],
+    inputs: log_inputs,
+    selects_files: false,
+    estimate_ms: 5_000,
+};
+
+/// 서비스 로그 글: 프로세스 서비스는 실행 폴더의 파일, 컨테이너는 `docker logs`.
+fn service_log(cx: &NodeCx, name: &str) -> Option<String> {
+    let info = &cx.services[name];
+    if let Some(rel) = info["log"].as_str() {
+        if info["kind"] != "mock" {
+            return std::fs::read_to_string(cx.run_dir.join(rel)).ok();
+        }
+    }
+    if let Some(c) = info["container"].as_str() {
+        let o = crate::docker::run(&["logs", "--tail", "5000", c], 15_000);
+        return Some(format!("{}{}", o.stdout, o.stderr));
+    }
+    None
+}
+
+impl Block for Log {
+    fn meta(&self) -> &Meta {
+        &LOG_META
+    }
+
+    fn validate(&self, with: &Value) -> Vec<String> {
+        let mut e = Vec::new();
+        if with.get("contains").is_none()
+            && with.get("regex").is_none()
+            && with.get("absent").is_none()
+        {
+            e.push(tr(
+                "contains · regex · absent 중 하나가 필요합니다.",
+                "needs contains, regex or absent.",
+            ));
+        }
+        for k in ["regex", "absent"] {
+            if let Some(p) = with.get(k).and_then(|v| v.as_str()) {
+                if !p.contains("${{") && regex::Regex::new(p).is_err() {
+                    e.push(format!("{k}: invalid regex"));
+                }
+            }
+        }
+        e
+    }
+
+    fn run(&self, cx: &mut NodeCx) -> NodeResult {
+        let mut r = NodeResult {
+            attempts: 1,
+            ..Default::default()
+        };
+        let name = cx.input_str("service").unwrap_or_default();
+        let want: Option<regex::Regex> = match (cx.input_str("regex"), cx.input_str("contains")) {
+            (Some(p), _) => regex::Regex::new(&p).ok(),
+            (None, Some(c)) => regex::Regex::new(&regex::escape(&c)).ok(),
+            _ => None,
+        };
+        let absent = cx
+            .input_str("absent")
+            .and_then(|p| regex::Regex::new(&p).ok());
+        let timeout = cx
+            .input_str("timeout")
+            .and_then(|t| crate::util::parse_duration(&t))
+            .unwrap_or(30_000);
+        let started = Instant::now();
+        let mut text = None;
+        loop {
+            text = service_log(cx, &name).or(text);
+            let found = match (&want, &text) {
+                (Some(re), Some(t)) => re.is_match(t),
+                (None, _) => true,
+                _ => false,
+            };
+            if found || started.elapsed().as_millis() as u64 >= timeout || !nap(cx, 250) {
+                break;
+            }
+        }
+        let Some(t) = text else {
+            r.verdicts.push(Verdict {
+                rule: "S3",
+                title: tr("서비스 로그", "service log"),
+                observed: tr(
+                    &format!("'{name}' 의 로그 없음"),
+                    &format!("no log for '{name}'"),
+                ),
+                expected: "-".into(),
+                result: Outcome::Indeterminate,
+                code: Some("VERIFY-03"),
+                phase: "main",
+            });
+            return r;
+        };
+        let t = cx.masker.mask(&t);
+        if let Some(re) = &want {
+            let line = t
+                .lines()
+                .find(|l| re.is_match(l))
+                .map(|l| l.trim().to_string());
+            r.verdicts.push(Verdict {
+                rule: "S3",
+                title: tr("로그 줄", "log line"),
+                observed: line
+                    .clone()
+                    .unwrap_or_else(|| tr("나타나지 않음", "did not appear")),
+                expected: re.as_str().to_string(),
+                result: if line.is_some() {
+                    Outcome::Pass
+                } else {
+                    Outcome::Fail
+                },
+                code: if line.is_some() {
+                    None
+                } else {
+                    Some("VERIFY-04")
+                },
+                phase: "main",
+            });
+        }
+        if let Some(re) = &absent {
+            let bad = t
+                .lines()
+                .find(|l| re.is_match(l))
+                .map(|l| l.trim().to_string());
+            r.verdicts.push(Verdict {
+                rule: "S4",
+                title: tr("없어야 할 로그", "log that must not appear"),
+                observed: bad.clone().unwrap_or_else(|| tr("없음", "none")),
+                expected: format!("!{}", re.as_str()),
+                result: if bad.is_none() {
+                    Outcome::Pass
+                } else {
+                    Outcome::Fail
+                },
+                code: if bad.is_none() {
+                    None
+                } else {
+                    Some("VERIFY-04")
+                },
+                phase: "main",
+            });
+        }
         r
     }
 }

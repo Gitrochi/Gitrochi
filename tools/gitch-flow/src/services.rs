@@ -12,7 +12,12 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::time::{Duration, Instant};
 
-pub const KINDS: &[&str] = &["process.service", "docker.service", "compose.up"];
+pub const KINDS: &[&str] = &[
+    "process.service",
+    "docker.service",
+    "compose.up",
+    "mock.http",
+];
 
 pub fn known(uses: &str) -> bool {
     KINDS.contains(&uses)
@@ -36,6 +41,7 @@ enum Kind {
         file: String,
         project: String,
     },
+    Mock(crate::mock::Mock),
 }
 
 pub struct SvcCx<'a> {
@@ -203,6 +209,28 @@ pub fn start(
                 }
             }
         }
+        "mock.http" => {
+            let table =
+                crate::mock::load(with, cx.root, &def.name).map_err(|e| ("SERVICE-02", e))?;
+            let faults: Vec<String> = with
+                .get("faults")
+                .and_then(|f| f.as_array())
+                .map(|a| a.iter().map(crate::expr::to_text).collect())
+                .unwrap_or_default();
+            let bind = with
+                .get("bind")
+                .and_then(|b| b.as_str())
+                .unwrap_or("127.0.0.1");
+            let m = crate::mock::Mock::start(table, faults, bind, port, log_path.clone())
+                .map_err(|e| ("SERVICE-02", e))?;
+            let p = m.port;
+            Ok(Running {
+                name: def.name.clone(),
+                info: json!({"host": "127.0.0.1", "port": p, "url": format!("http://127.0.0.1:{p}"), "kind": "mock",
+                             "control": format!("http://127.0.0.1:{p}/__gitch"), "readyMs": 0, "log": crate::util::rel_slash(cx.run_dir, &log_path)}),
+                kind: Kind::Mock(m),
+            })
+        }
         "docker.service" => crate::docker::start_service(def, with, port, cx, &log_path, timeout)
             .map(|(container, info)| Running {
                 name: def.name.clone(),
@@ -244,6 +272,7 @@ pub fn stop(r: Running, run_dir: &Path) {
         }
         Kind::Docker { container } => crate::docker::remove_container(&container),
         Kind::Compose { file, project } => crate::docker::compose_down(&file, &project, run_dir),
+        Kind::Mock(m) => m.stop(),
     }
 }
 

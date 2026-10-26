@@ -195,12 +195,7 @@ impl Block for Run {
             .and_then(|m| m.as_bool())
             .unwrap_or(true);
         let common = crate::git::common_dir(&cx.root).unwrap_or_default();
-        let run_dir = cx
-            .out_dir
-            .parent()
-            .and_then(|p| p.parent())
-            .map(|p| p.to_path_buf())
-            .unwrap_or_default();
+        let run_dir = cx.run_dir.clone();
         let mounts = if mount {
             crate::executor::mounts(&[cx.root.clone(), run_dir, common])
         } else {
