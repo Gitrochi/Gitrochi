@@ -81,6 +81,26 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
             host.view.layoutSubtreeIfNeeded()
         }
 
+        // Native zoom can outlast a fixed delay while SwiftUI is laying out the repository.
+        func waitForNativeFrame(_ scenario: String, expected: NSRect? = nil, _ ready: () -> Bool) {
+            let deadline = ProcessInfo.processInfo.systemUptime + 5
+            var previous = window.frame
+            var stableSince = ProcessInfo.processInfo.systemUptime
+            repeat {
+                settle(0.025)
+                let now = ProcessInfo.processInfo.systemUptime
+                if !equal(window.frame, previous) {
+                    previous = window.frame
+                    stableSince = now
+                }
+                if ready() && now - stableSince >= 0.15 {
+                    FileHandle.standardError.write(Data("Window frame passed: \(scenario) frame=\(window.frame) zoomed=\(window.isZoomed)\n".utf8))
+                    return
+                }
+            } while ProcessInfo.processInfo.systemUptime < deadline
+            preconditionFailure("Native frame did not settle during \(scenario): expected=\(String(describing: expected)) actual=\(window.frame) content=\(host.view.frame) zoomed=\(window.isZoomed) screen=\(window.screen?.visibleFrame ?? .zero)")
+        }
+
         func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
         func probes() -> [WindowContentProbe.ProbeView] {
             descendants(host.view).compactMap { $0 as? WindowContentProbe.ProbeView }
@@ -180,11 +200,11 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
 
         let beforeZoom = window.frame
         window.zoom(nil)
-        settle(0.5)
+        waitForNativeFrame("native-zoom") { !equal(window.frame, beforeZoom) }
         precondition(!equal(window.frame, beforeZoom), "Native zoom must actually resize the window")
         try capture("native-zoom")
         window.zoom(nil)
-        settle(0.5)
+        waitForNativeFrame("native-zoom-restored", expected: beforeZoom) { equal(window.frame, beforeZoom) }
         precondition(equal(window.frame, beforeZoom), "Unzoom must restore the outer window frame")
         try capture("native-zoom-restored")
 
