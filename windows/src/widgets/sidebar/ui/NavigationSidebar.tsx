@@ -1,4 +1,4 @@
-import { Blocks, Bot, Check, ChevronDown, ChevronRight, CircleDot, Code2, ExternalLink, FileDiff, FolderGit2, GitBranch, GitCommitHorizontal, GitCompareArrows, GitPullRequest, Home, Inbox, ListOrdered, PanelLeftClose, PanelLeftOpen, Pin, PlayCircle, Search, Settings, SlidersHorizontal, Sparkles, Tag, UserRound, UsersRound, Workflow, Wrench, X } from "lucide-react";
+import { Blocks, Bot, Check, ChevronDown, ChevronRight, CircleDot, Code2, ExternalLink, FileDiff, FolderGit2, GitBranch, GitCommitHorizontal, GitCompareArrows, GitPullRequest, Home, Inbox, ListOrdered, PanelLeftClose, PanelLeftOpen, Pin, PlayCircle, Search, Settings, SlidersHorizontal, Sparkles, Tag, UserRound, UsersRound, Waypoints, Workflow, Wrench, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { isRepositorySection, repositoryDestinations, repositorySections, type WorkspaceDestination } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -8,9 +8,9 @@ import { useObserve } from "@/shared/lib";
 import { CompactNavigationPreview } from "./CompactNavigationPreview";
 import "./navigation-sidebar.css";
 
-export const destinationTitles: Record<WorkspaceDestination, string> = { home: "Home", repositories: "Repository library", repository: "Repository", changes: "Changes", commits: "Commits", branches: "Branches", compare: "Compare", rebase: "Rebase", code: "Code", inbox: "Inbox", myWork: "My work", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", organizations: "Organizations", gists: "Gists", assistant: "Repository assistant", agents: "Agents", worktrees: "Worktrees", operations: "Tools and diagnosis" };
+export const destinationTitles: Record<WorkspaceDestination, string> = { home: "Home", repositories: "Repository library", repository: "Repository", changes: "Changes", commits: "Commits", branches: "Branches", compare: "Compare", rebase: "Rebase", code: "Code", inbox: "Inbox", myWork: "My work", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", organizations: "Organizations", gists: "Gists", assistant: "Repository assistant", agents: "Agents", flows: "Flows", worktrees: "Worktrees", operations: "Tools and diagnosis" };
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : gitlab && page === "organizations" ? "Groups" : gitlab && page === "gists" ? "Snippets" : destinationTitles[page]);
-const icons = { home: Home, repositories: FolderGit2, repository: FolderGit2, changes: FileDiff, commits: GitCommitHorizontal, branches: GitBranch, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, inbox: Inbox, myWork: UserRound, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, releases: Tag, projects: Blocks, organizations: UsersRound, gists: Code2, assistant: Sparkles, agents: Bot, worktrees: Workflow, operations: Wrench };
+const icons = { home: Home, repositories: FolderGit2, repository: FolderGit2, changes: FileDiff, commits: GitCommitHorizontal, branches: GitBranch, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, inbox: Inbox, myWork: UserRound, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, releases: Tag, projects: Blocks, organizations: UsersRound, gists: Code2, assistant: Sparkles, agents: Bot, flows: Waypoints, worktrees: Workflow, operations: Wrench };
 
 export function NavigationSidebar({ store, openSettings, compact = false, onToggle }: { store: RepoStore; openSettings: () => void; compact?: boolean; onToggle?: () => void }) {
   useObserve(store); useObserve(settings);
@@ -90,7 +90,7 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
       {label(gitlab ? "GitLab" : "GitHub")}
       {rows(["inbox", "myWork", "pullRequests", "issues", "actions", "releases", "projects", "organizations", "gists"])}
       {compact ? label(t("Workspace tools")) : <button className="workspace-nav-tools" aria-expanded={expanded || !!query} onClick={() => settings.set("navigationToolsExpanded", !expanded)}><span>{t("Workspace tools")}</span>{expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</button>}
-      {(compact || expanded || !!query) && rows(["assistant", "agents", "worktrees", "operations"])}
+      {(compact || expanded || !!query) && rows(["assistant", "agents", "flows", "worktrees", "operations"])}
     </div>
     <div className="workspace-nav-footer"><button className="workspace-nav-item" aria-label={t("Settings")} data-tip={t("Settings")} onClick={openSettings}><Settings size={18} strokeWidth={1.7} /><span>{t("Settings")}</span><span className="grow" /><ExternalLink size={11} /></button></div>
     {compact && preview && <CompactNavigationPreview {...preview} title={title(preview.page)} store={store} openSettings={openSettings} keepOpen={keepPreview} dismiss={dismissPreview} />}

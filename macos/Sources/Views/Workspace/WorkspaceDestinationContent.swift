@@ -24,6 +24,7 @@ struct WorkspaceDestinationContent: View {
             case .gists: HostingHubPanel(store: store, section: .gists, onClone: clone)
             case .assistant: RepositoryAssistantSheet(embedded: true)
             case .agents: AgentsPanel()
+            case .flows: FlowPanel()
             case .worktrees: WorktreesWorkspace()
             case .operations: OperationsWorkspacePanel()
             }

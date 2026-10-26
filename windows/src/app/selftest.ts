@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -933,8 +933,8 @@ export async function runSelfTest(): Promise<boolean> {
     return [switched && back && row && diff, detail];
   });
 
-  // Flows: proposal, trust, a detached run and following its events with the engine in the app, then the sidebar's Flows tab (this repository has no flow file, so it shows the setup hint)
-  await step("Flow engine, trust, a detached run and the Flows tab", async () => {
+  // Flows: proposal, trust, a detached run and following its events with the engine in the app, then the Flows page (this repository has no flow file, so it shows the setup hint)
+  await step("Flow engine, trust, a detached run and the Flows page", async () => {
     const v = await flowEngine.version();
     if (!v || v.flowApi !== 1) return [false, `engine=${JSON.stringify(v)} path=${await flowEngine.executable()}`];
     const dir = joinPath(env.temp, `gitrochi-flow-selftest-${Date.now()}`);
@@ -949,9 +949,9 @@ export async function runSelfTest(): Promise<boolean> {
     const done = await until(() => !!fs.views.get(id)?.done, 60000);
     const view = fs.views.get(id);
     const ran = view?.state === "SUCCEEDED" && view.nodes.length === 2 && view.nodes.every((n) => n.state === "PASSED") && view.nodes[0].tail.some((l) => l.includes("hello-from-flow"));
-    settings.set("sidebarMode", "flow");
+    s.navigate("flows");
     const panel = await until(() => document.body.innerText.includes("흐름 설정…"), 5000);
-    settings.set("sidebarMode", "list");
+    s.navigate("commits");
     await ipc.remove(dir);
     return [listed && done && ran && panel, `version=${v.version} listed=${listed} done=${done} state=${view?.state} nodes=${view?.nodes.map((n) => n.state)} panel=${panel}`];
   });

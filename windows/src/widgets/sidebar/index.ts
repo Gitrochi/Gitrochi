@@ -2,5 +2,6 @@
 export { Sidebar } from "./ui/Sidebar";
 export { NavigationSidebar, destinationTitles, destinationTitle } from "./ui/NavigationSidebar";
 export { AgentsPanel } from "./ui/AgentsPanel";
+export { FlowPanel } from "./ui/FlowPanel";
 export { WorktreeSection } from "./ui/WorktreeSection";
 export { PullRequestSection } from "./ui/PullRequestSection";

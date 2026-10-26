@@ -31,7 +31,7 @@ struct NavigationSidebarRail: View {
                     separator
                     rows([.inbox, .myWork, .pullRequests, .issues, .actions, .releases, .projects, .organizations, .gists])
                     separator
-                    rows([.assistant, .agents, .worktrees, .operations])
+                    rows([.assistant, .agents, .flows, .worktrees, .operations])
                 }.padding(.horizontal, 8).padding(.bottom, 8)
             }
             Divider()

@@ -31,7 +31,6 @@ struct SidebarView: View {
                 Text("Branches").tag("list")
                 Text(activeAgents > 0 ? "Agents \(activeAgents)" : "Agents").tag("agents")
                 Text("CI/CD").tag("ci")
-                Text("Flows").tag("flow")
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -42,8 +41,6 @@ struct SidebarView: View {
                 AgentsPanel()
             } else if mode == "ci" {
                 CIPanel()
-            } else if mode == "flow" {
-                FlowPanel()
             } else {
                 branchList
             }

@@ -9,7 +9,7 @@ import { shortDate, useObserve } from "@/shared/lib";
 import { Button, IconButton, Modal, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
 
 /**
- * The sidebar's Flows tab: the flows (.gitch/flow.yml) that assemble this repository's tests, checks and deploy steps, and the recent runs (like the macOS FlowPanel.swift).
+ * The Flows workspace page: the flows (.gitch/flow.yml) that assemble this repository's tests, checks and deploy steps, and the recent runs (like the macOS FlowPanel.swift).
  * The flow engine (gitch-flow) runs, judges and rolls back; this screen sends the actions a person clicks and shows the results.
  */
 export function FlowPanel({ store }: { store: RepoStore }) {
