@@ -9,7 +9,7 @@ Gitrochi 맥 앱(`Gitrochi.app/Contents/Resources/gitch`)과 Windows 앱(설치 
 - 비밀값·큰 파일·강제 push·다른 계정 커밋을 **git 훅에서 막는다** (어떤 도구로 git 을 써도 적용).
 - AI 에게는 규칙(CLAUDE.md/AGENTS.md), 스킬, Claude Code 명령 검사 훅을 깔아 준다.
 - macOS 기본 bash 3.2 + git 만으로 동작한다 (jq 는 Claude 훅/JSON 요약에만 사용). Windows 는 Git for Windows 의 Git Bash 로 돈다 — 아래 [Windows](#windows).
-- gitch 버전은 Gitrochi 릴리스 버전과 같다(현재 `0.3.11`). 예전 CLI 전용 `3.x` 번호는 더 쓰지 않는다.
+- gitch 버전은 Gitrochi 릴리스 버전과 같다(현재 `0.3.12`). 예전 CLI 전용 `3.x` 번호는 더 쓰지 않는다.
 
 ## 설치
 
@@ -259,7 +259,7 @@ JSON (노드 · 연결이 한 줄에 하나):
 ```json
 {
   "tool": "gitch graph",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "relation": "files",
   "directed": true,
   "repo": "app",
@@ -310,7 +310,7 @@ gitch schema error             # 기계 출력 요청 중 치명적 오류의 �
 
 `languages`의 `fileDetection`은 파일 인식, `staticImports`는 정적으로 읽는 import/include, `heuristic`은 타입 이름 추정 지원을 뜻한다. `manifests`와 `ecosystem`은 모듈 분석 범위다. `preciseBackend`는 제공된 인덱스를 읽는 선택적 통로다. SCIP는 해당 언어의 별도 인덱서가 만든 인덱스가 있어야 하며, SwiftIndex는 Xcode 인덱스 도우미가 있어야 한다. 이 목록이 모든 언어의 컴파일러·클래스 분석기가 기본 내장됐다는 뜻은 아니다.
 
-[공개 스키마 파일](schema/gitch-v1.schema.json)은 CLI에 내장된 스키마와 동일하다. 스키마 이름은 `graph`, `error`, `languages`, `status`, `ck`, `preflight`, `rules`, `version`, `list`, `doctor`, `scan`, `audit`, `report`, `pr`, `view`, `watch`, `index`, `account`, `login`이고 기본 `public`은 이 모두를 허용한다. `view`는 저장·내보낸 화면 설정, `watch`는 감시 서버 설명과 상태 응답, `index`는 인덱서 생성 안내, `account`는 앱 계정 설정 결과, `login`은 브라우저 인증 세션이다. 객체 출력에는 `schemaVersion: 1`을 더하고 기존 필드를 유지한다. `report --json`의 기존 배열은 그대로 유지하며 문서의 스키마 버전으로 검증한다. 새 필드는 추가할 수 있으므로 읽는 쪽은 모르는 필드를 무시한다. 필드 제거·의미 변경은 스키마 버전을 올려 구별한다. 제품 버전 `0.3.11`과 스키마 버전은 별개다.
+[공개 스키마 파일](schema/gitch-v1.schema.json)은 CLI에 내장된 스키마와 동일하다. 스키마 이름은 `graph`, `error`, `languages`, `status`, `ck`, `preflight`, `rules`, `version`, `list`, `doctor`, `scan`, `audit`, `report`, `pr`, `view`, `watch`, `index`, `account`, `login`이고 기본 `public`은 이 모두를 허용한다. `view`는 저장·내보낸 화면 설정, `watch`는 감시 서버 설명과 상태 응답, `index`는 인덱서 생성 안내, `account`는 앱 계정 설정 결과, `login`은 브라우저 인증 세션이다. 객체 출력에는 `schemaVersion: 1`을 더하고 기존 필드를 유지한다. `report --json`의 기존 배열은 그대로 유지하며 문서의 스키마 버전으로 검증한다. 새 필드는 추가할 수 있으므로 읽는 쪽은 모르는 필드를 무시한다. 필드 제거·의미 변경은 스키마 버전을 올려 구별한다. 제품 버전 `0.3.12`과 스키마 버전은 별개다.
 
 `--json` 또는 `--format json`을 명시했을 때 인자·사전조건의 치명적 오류는 결과를 표준출력에 쓰지 않고 표준오류에 `{"schemaVersion":1,"error":{"code":"GITCH_ERROR","message":"…","exitCode":1}}`을 쓴다. 비대화형 확인 필요는 `GITCH_CONFIRMATION_REQUIRED`와 종료 코드 2다. `preflight`의 STOP·규칙 위반·doctor의 문제 발견처럼 분석을 마친 결과는 기존 결과 객체를 표준출력에 쓰고 종료 코드로 실패를 알린다.
 

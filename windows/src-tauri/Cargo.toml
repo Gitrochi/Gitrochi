@@ -1,6 +1,6 @@
 [package]
 name = "gitrochi"
-version = "0.3.11"
+version = "0.3.12"
 description = "Gitrochi — Git client with a commit graph, worktrees, PRs, Claude Code agents and a terminal"
 authors = ["조문성 (ChoMnSeong)", "jjunhaa0211"]
 license = "MIT"
