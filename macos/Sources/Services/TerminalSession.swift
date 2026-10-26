@@ -26,6 +26,7 @@ final class TerminalSession: Identifiable {
         self.directory = directory
         self.title = URL(fileURLWithPath: directory).lastPathComponent
         view = ShellView(frame: NSRect(x: 0, y: 0, width: 640, height: 260))
+        _ = ShellView.controlReturnMonitor
         let relay = Relay(owner: self)
         self.relay = relay
         view.processDelegate = relay
@@ -201,6 +202,16 @@ private final class Relay: NSObject, LocalProcessTerminalViewDelegate {
 /// 출력이 올 때 알려 주는 터미널 뷰
 final class ShellView: LocalProcessTerminalView {
     var onOutput: (() -> Void)?
+
+    /// macOS treats Control-Return as "open the context menu", so the graph would take it as a key equivalent
+    /// before the terminal sees it. While a terminal has focus, hand it straight to the terminal
+    /// (Claude Code reads it as "send now" through the kitty keyboard protocol).
+    static let controlReturnMonitor: Any? = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        guard event.keyCode == 36 || event.keyCode == 76, event.modifierFlags.contains(.control),
+              !event.modifierFlags.contains(.command), let view = event.window?.firstResponder as? ShellView else { return event }
+        view.keyDown(with: event)
+        return nil
+    }
 
     override func dataReceived(slice: ArraySlice<UInt8>) {
         super.dataReceived(slice: slice)
