@@ -48,6 +48,7 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
   }, [compact]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); focusSearch(); }
       if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "b") { event.preventDefault(); onToggle?.(); }
       if (event.key === "Escape") { setCustomizing(false); setPreview(null); }

@@ -18,7 +18,7 @@ This change brings the pending Gitrochi work onto `main` in one pull request. It
 | Compact sidebar and shared heights, formerly PR #61 | The newer navigation keeps compact previews, keyboard access and fair list sizing. Fractional layout measurements are stabilized, while lazy file-row rendering is preserved. |
 | English documentation and contribution rules, formerly PR #62 | Concise English README, Korean/Japanese READMEs, agent/contribution/security/release guidance and required commit areas. |
 
-The shared-core PR #55 originally targeted another feature branch. Its code is now included in this `main`-based integration, together with the graph work it depended on. License PRs #63/#64 and release PR #42 are already in the base and are preserved.
+The shared-core PR #55 originally targeted another feature branch. Its code is now included in this `main`-based integration, together with the graph work it depended on. License PRs #63/#64 and release PR #42 are already in the base and are preserved. During final verification, PRs #61, #62 and #65 also landed on main; the integration was refreshed onto that base, retaining their sidebar sections, translations and uncaught-error self-test reporting. Duplicate shared exports and shortcut handling from the overlap were reconciled.
 
 ## Integration choices
 

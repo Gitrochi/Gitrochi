@@ -3,13 +3,12 @@ import AppKit
 
 struct PullRequestSection: View {
     @Environment(RepoStore.self) private var store
-    @AppStorage(SidebarSections.key) private var collapsed = ""
     @Environment(\.openSettings) private var openSettings
     @ViewState private var search = ""
     let target: RepoTarget
 
     var body: some View {
-        Section(isExpanded: SidebarSections.binding($collapsed, "pullRequests")) {
+        SidebarSection("pullRequests") {
             Picker("Request filter", selection: Binding(get: { store.collaboration.query.scope }, set: { scope in Task { await store.filterPullRequests(scope: scope, search: search) } })) {
                 Text("Open").tag("open"); Text("Closed").tag("closed"); Text("Merged").tag("merged"); Text("Created by me").tag("mine"); Text("Review requested").tag("reviewRequested")
             }.labelsHidden()
@@ -49,6 +48,7 @@ struct PullRequestSection: View {
                         Text("\(pr.source) → \(pr.target)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
+                .sidebarRow()
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
                 .contextMenu {

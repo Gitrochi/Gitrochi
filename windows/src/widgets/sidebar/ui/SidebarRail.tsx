@@ -6,12 +6,12 @@ import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { IconButton, tip } from "@/shared/ui";
-import { Sidebar } from "./Sidebar";
+import { Sidebar, type SidebarSectionID } from "./Sidebar";
 
 /** The sidebar folded away: one icon per section with its count; hovering one opens that section beside it, like GitKraken (macOS: SidebarRail.swift) */
 export function SidebarRail({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
-  const items: { id: string; icon: ReactNode; title: string; count: number | null }[] = [];
+  const items: { id: Exclude<SidebarSectionID, "repository">; icon: ReactNode; title: string; count: number | null }[] = [];
   if (store.target) {
     items.push({
       id: "prs",

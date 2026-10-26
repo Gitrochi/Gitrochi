@@ -3,6 +3,7 @@ import { isMac, settings } from "@/shared/config";
 
 /** 앱 단축키(Windows: Ctrl, 맥: ⌘). 터미널에 포커스가 있으면 터미널이 넘겨준 조합만 온다. */
 export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
+  if (e.defaultPrevented) return;
   if (document.querySelector(".modal-backdrop")) return; // 대화상자가 떠 있으면 대화상자가 처리
   const s = workspace.active;
   if (!s) return;

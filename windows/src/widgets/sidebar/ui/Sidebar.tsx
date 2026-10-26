@@ -15,7 +15,9 @@ import { Section, SectionFlyout } from "./Section";
 import { WorktreeSection } from "./WorktreeSection";
 import "./sidebar.css";
 
-export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: "repository" | "local" | "prs" | "worktrees" }) {
+export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs";
+
+export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: SidebarSectionID }) {
   useObserve(store);
   useObserve(settings);
   useObserve(agents);
