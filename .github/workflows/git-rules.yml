@@ -1,7 +1,7 @@
 name: Git 규칙
 
 # 커밋 메시지(영어)·올린 파일(비밀값·개인 경로·빌드 결과·큰 파일·줄 끝 공백)을 검사한다(1분 안쪽).
-# 같은 검사를 로컬 훅(.githooks)으로도 돌릴 수 있다 — CONTRIBUTING.md 「Git 규칙」
+# 같은 검사를 로컬 훅(.githooks)으로도 돌릴 수 있다 — docs/git-workflow.md
 on:
   push:
     branches: [main]

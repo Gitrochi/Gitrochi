@@ -1,17 +1,17 @@
-## 무엇을 · 왜
+## What and why
 
-<!-- 바꾼 내용과 이유. 관련 이슈가 있으면: Closes #123 -->
+<!-- What changed and why. Related issue: Closes #123 -->
 
-## 화면
+## Screenshots
 
-<!-- 화면이 바뀌었다면 라이트·다크 스크린샷(데모 저장소 docs/make-demo-repo.sh 로). 회사·개인 정보는 가려 주세요. -->
+<!-- If a screen changed: light and dark screenshots (demo repository: docs/make-demo-repo.sh). Hide company and personal details. -->
 
-## 확인
+## Checklist
 
-- [ ] 맥: `macos/build.sh` 가 오류·경고 없이 빌드됨
-- [ ] Windows: `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` 통과
-- [ ] 두 플랫폼에 함께 넣었음(한쪽만이면 이유: )
-- [ ] 새 동작은 단위 테스트나 `windows/src/app/selftest.ts` 점검 항목을 더했음
-- [ ] 라이트·다크 테마에서 모두 확인
-- [ ] 토큰·회사 정보가 코드·로그·스크린샷에 없음
-- [ ] [기여 안내](../CONTRIBUTING.md)의 규칙(주석·화면 글)과 Git 규칙(브랜치 이름·영어 커밋 메시지·한 커밋 한 주제)을 따름
+- [ ] macOS: `macos/build.sh` builds with no errors or warnings
+- [ ] Windows: `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` pass
+- [ ] Both platforms (if one only, why: )
+- [ ] New behaviour has a unit test or a `windows/src/app/selftest.ts` step
+- [ ] Checked in the light and the dark theme
+- [ ] No tokens or company details in code, logs or screenshots
+- [ ] Follows the [code style](../docs/code-style.md) and the [Git workflow](../docs/git-workflow.md) (branch name, `Area: Summary` commit messages in English, one topic per commit)

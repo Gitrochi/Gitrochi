@@ -106,7 +106,7 @@ jobs:
           (cd "$out" && sha256sum "$setup" "$zip" | sed 's/ \*/  /' > "Gitrochi_${ver}_windows.sha256")
           if [ -f "$nsis/$setup.sig" ]; then
             cp "$nsis/$setup.sig" "$out/"
-            # notes 는 비워서 만든다 — 관리자가 게시하기 전에 넣는다(CONTRIBUTING.md 「릴리스」)
+            # notes 는 비워서 만든다 — 관리자가 게시하기 전에 넣는다(docs/release.md)
             node scripts/latest-json.mjs "$ver" "$setup" "$nsis/$setup.sig" > "$out/latest.json"
           elif [ "$GITHUB_REF_TYPE" = tag ]; then
             echo "::error::업데이트 서명($setup.sig)이 없습니다. release 환경의 TAURI_SIGNING_PRIVATE_KEY 를 확인하세요."
