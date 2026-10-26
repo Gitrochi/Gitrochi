@@ -63,6 +63,7 @@ pub fn run() {
             process::run_process,
             process::run_process_bytes,
             system::fs_read_base64,
+            system::fs_write_temp,
             process::which,
             pty::pty_spawn,
             pty::pty_write,

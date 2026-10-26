@@ -6,6 +6,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import { theme as appTheme } from "@/shared/ui";
+import { pastedImageName, shellPath } from "../lib/paths";
 
 export interface TerminalSpec {
   directory: string;
@@ -91,6 +92,42 @@ export class TerminalSession extends Observable {
     });
     this.term.attachCustomKeyEventHandler((e) => this.keyFilter(e));
     this.unsubscribeTheme = appTheme.subscribe(() => (this.term.options.theme = termTheme()));
+    // Dropped files and pasted images go in as paths, like Windows Terminal. The webview hands over contents, not paths,
+    // so each one is saved under the temp folder first (macOS: ShellView pastes the original path).
+    this.host.addEventListener(
+      "paste",
+      (e) => {
+        const files = Array.from(e.clipboardData?.files ?? []);
+        if (!files.length) return;
+        e.preventDefault();
+        e.stopPropagation();
+        void this.pasteFiles(files);
+      },
+      true,
+    );
+    this.host.addEventListener("dragover", (e) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    this.host.addEventListener("drop", (e) => {
+      const files = Array.from(e.dataTransfer?.files ?? []);
+      if (!files.length) return;
+      e.preventDefault();
+      void this.pasteFiles(files).then(() => this.focus());
+    });
+  }
+
+  /** Saves the files under the temp folder and types their paths, each followed by a space */
+  async pasteFiles(files: File[]) {
+    const at = new Date();
+    const paths: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const name = pastedImageName(files[i], at, files.length > 1 ? `-${i + 1}` : "");
+      paths.push(await ipc.writeTemp(name, new Uint8Array(await files[i].arrayBuffer())));
+    }
+    const wsl = !this.spec.program && (tools.path("shell") ?? "").startsWith("wsl:");
+    this.term.paste(paths.map((p) => shellPath(p, wsl)).join(" ") + " ");
   }
 
   /** 앱 단축키는 터미널이 먹지 않게 넘기고, Windows 터미널처럼 Ctrl+C(선택 있을 때)·Ctrl+V 로 복사·붙여넣기 */
