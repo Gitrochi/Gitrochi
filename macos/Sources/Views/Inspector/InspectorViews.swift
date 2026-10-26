@@ -12,7 +12,7 @@ struct WorkingChangesView: View {
                 .padding(.vertical, 10)
             Divider()
             if store.repoState != .clean { OperationBanner() }
-            ScrollView {
+            SharedStack {
                 VStack(alignment: .leading, spacing: 12) {
                     if !store.status.conflicted.isEmpty {
                         FileSection(title: String(localized: "Conflict"), color: .red, count: store.status.conflicted.count,
@@ -136,7 +136,9 @@ private struct FileSection<Content: View>: View {
                     Button(actionTitle, action: action).buttonStyle(.link).font(.caption)
                 }
                 .padding(.bottom, 4)
-                content
+                SharedPane(id: title) {
+                    VStack(alignment: .leading, spacing: 4) { content }
+                }
             }
         }
     }

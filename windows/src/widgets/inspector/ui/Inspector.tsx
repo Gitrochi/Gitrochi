@@ -8,7 +8,7 @@ import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, Markdown, type MenuItem, Spinner, tip } from "@/shared/ui";
+import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, Markdown, type MenuItem, SharedPane, SharedStack, Spinner, tip } from "@/shared/ui";
 import { ChangeList, FileViewToggle } from "./FileList";
 import { GitchBar } from "./GitchBar";
 import { WorktreeChanges } from "./WorktreeChanges";
@@ -81,7 +81,7 @@ function WorkingChanges({ store }: { store: RepoStore }) {
           </div>
         </div>
       )}
-      <div className="panel-scroll">
+      <SharedStack className="panel-scroll" bodyClassName="panel-body">
         <FileSection title={t("Conflict")} color="var(--red)" count={st.conflicted.length} actionTitle={t("Mark all as resolved")} onAction={() => void store.stage(st.conflicted)}>
           <ChangeList
             folderMenu={(p) => folderMenu(store, p)}
@@ -126,7 +126,7 @@ function WorkingChanges({ store }: { store: RepoStore }) {
             <span className="muted">{t("Modified files appear here.")}</span>
           </Card>
         )}
-      </div>
+      </SharedStack>
       <CommitComposer store={store} />
     </div>
   );
@@ -145,7 +145,9 @@ function FileSection({ title, color, count, actionTitle, onAction, children }: {
           {actionTitle}
         </button>
       </div>
-      {children}
+      <SharedPane id={title} gap={4}>
+        {children}
+      </SharedPane>
     </Card>
   );
 }

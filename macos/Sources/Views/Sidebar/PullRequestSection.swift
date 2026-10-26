@@ -3,12 +3,11 @@ import AppKit
 
 struct PullRequestSection: View {
     @Environment(RepoStore.self) private var store
-    @AppStorage(SidebarSections.key) private var collapsed = ""
     @Environment(\.openSettings) private var openSettings
     let target: RepoTarget
 
     var body: some View {
-        Section(isExpanded: SidebarSections.binding($collapsed, "pullRequests")) {
+        SidebarSection("pullRequests") {
             switch store.prState {
             case .needsAccount:
                 let others = AccountStore.shared.accounts(for: target.provider)
@@ -43,6 +42,7 @@ struct PullRequestSection: View {
                         Text("\(pr.source) → \(pr.target)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
+                .sidebarRow()
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
                 .contextMenu {

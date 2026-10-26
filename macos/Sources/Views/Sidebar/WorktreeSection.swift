@@ -3,10 +3,9 @@ import AppKit
 
 struct WorktreeSection: View {
     @Environment(RepoStore.self) private var store
-    @AppStorage(SidebarSections.key) private var collapsed = ""
 
     var body: some View {
-        Section(isExpanded: SidebarSections.binding($collapsed, "worktrees")) {
+        SidebarSection("worktrees") {
             ForEach(store.worktrees) { w in
                 let current = w.path == store.url?.path
                 HStack(spacing: 6) {
@@ -35,6 +34,7 @@ struct WorktreeSection: View {
                         Image(systemName: "lock").foregroundStyle(.secondary).help("Locked worktree")
                     }
                 }
+                .sidebarRow()
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) { open(w) }
                 .contextMenu {

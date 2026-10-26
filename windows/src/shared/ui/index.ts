@@ -2,5 +2,6 @@
 export { Frame, Row } from "./Frame";
 export { LoadingView } from "./LoadingView";
 export { Markdown } from "./Markdown";
+export { SharedPane, SharedStack } from "./SharedStack";
 export { theme, themeModes } from "./theme";
 export { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, MenuHost, type MenuItem, Modal, Segmented, showContextMenu, showMenuBelow, Spinner, tip, TooltipHost } from "./ui";
