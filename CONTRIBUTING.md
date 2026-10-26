@@ -9,7 +9,34 @@ The rules live in `docs/`. Coding agents read the same rules from [AGENTS.md](AG
 - [ChoMnSeong](https://github.com/ChoMnSeong)
 - [jjunhaa0211](https://github.com/jjunhaa0211) — gitch CLI, multi-language structure analysis, app integration and verification
 
-The copyright holders are named in the [MIT license](LICENSE).
+The existing copyright notices are preserved in [LICENSE](LICENSE) and in the [original MIT text](LICENSE-MIT). The licensing contacts on record are ChoMnSeong <chemins60217@gmail.com> and jjunhaa0211 <goodjunha@gmail.com>. A contact having been provided does not by itself confirm the rights to every contribution or consent to a license change.
+
+## Use, distribution and the official contribution path
+
+**Current status: Gitrochi Community Use License v1.0 and CLA v1.0 are proposals and are not yet in effect.** Until the rights holders, consents and scope in the [licensing review](docs/licensing-review.md) (Korean) are confirmed and the adoption record is complete, the existing MIT permissions stay as they are. The policy and the CLA process below are a proposal for material confirmed as covered after that adoption. Past contributors are not treated as having agreed automatically.
+
+- Individuals and businesses may install, run and use Gitrochi for internal business free of charge. The Gitrochi license does not spread to the ordinary results of commercial work done with it.
+- You may modify and build Gitrochi privately, for yourself or inside your organization. Using it or modifying it privately does not oblige you to publish code or to open a pull request.
+- Under the new policy, unauthorized resale or paid repackaging of Gitrochi itself and the outside distribution of independent derivative projects are restricted. That includes free derivative distribution; rights separately granted by the existing MIT license, third-party licenses, the law and GitHub's terms are kept.
+- Sharing an unchanged official release for free follows the notice-preservation conditions in LICENSE. The new policy is a **source-available** policy, not an OSI-approved open-source license.
+- Code and documentation for the project are submitted only through [pull requests to the official repository](https://github.com/Gitrochi/Gitrochi/pulls). Contribution forks and branches, and patches for review, are allowed; they are not a permission to distribute an independent product. The right to view and fork under GitHub's terms stays whether or not a pull request follows.
+- Exceptions for resale or outside distribution are requested through the two licensing contacts. They need written approval from the rights holders over the material in question; silence or repository maintenance access does not count as approval.
+
+The exact scope and conditions are those of [LICENSE](LICENSE). Bug reports, feature requests and security reports use the existing issue and [security](SECURITY.md) channels and need no CLA; submitting a code or documentation patch follows the process for covered contributions.
+
+## Contributor CLA assent
+
+[CLA.md](CLA.md) is a proposal under which contributors keep ownership and grant the official Gitrochi project a non-exclusive permission to use the identified original contribution under the v1.0 terms. It is not a blanket consent to every future license and not a copyright assignment. **Until the legal identity and authority of the CLA grantees and the private verification procedure are settled, no assent is collected or treated as a valid agreement.**
+
+After adoption, a maintainer checks the following by hand before merging. There is no automated CLA bot or required check today.
+
+1. Each contributing rights holder, or their authorized representative, reads the approved full text of CLA v1.0, through the permanent link that contains the approved document's commit SHA.
+2. They post the [assent statement from CLA.md](CLA.md#5-express-assent-and-records) **as a comment on the pull request from their own account**, naming the pull request URL and the full commit SHA or explicit SHA range of their contribution. Opening the pull request, a checkbox or a commit sign-off is not taken as CLA assent.
+3. With co-authors, each rights holder's assent is checked. If an employer or another entity holds the rights, a representative whose authority has been confirmed must assent. Third-party code is identified in the pull request with its origin, license and whether it was modified; its notices are kept, and the CLA does not cover it.
+4. The maintainer records in the pull request the permanent link to the assent comment, the CLA version and its permanent link, the covered SHAs and the verification result per rights holder. Unverified contributions are not merged.
+5. When commits, authors or the terms change, assent is obtained again for the affected scope. Do not put sensitive identity or employment documents in a public pull request; ask the licensing contacts about the agreed private procedure.
+
+Never write or tick CLA assent on someone else's behalf. The checklist in the proposal pull request itself is not a substitute for the existing rights holders' adoption approval or for a CLA signature.
 
 ## Getting started
 
