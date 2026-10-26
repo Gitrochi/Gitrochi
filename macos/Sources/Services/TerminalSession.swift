@@ -291,7 +291,8 @@ extension RepoStore {
 
     /// 프로그램이 돌고 있으면 한 번 묻고 닫는다
     func requestCloseTerminal(_ s: TerminalSession) {
-        if let program = s.foregroundProgram {
+        // an agent tab runs its program in place of the shell, so ask while it runs too
+        if let program = s.foregroundProgram ?? (s.running ? s.command?.title : nil) {
             confirm = ConfirmRequest(title: String(localized: "Close the terminal?"),
                                      message: String(localized: "'\(program)' is still running. Closing it will stop it."),
                                      actionTitle: String(localized: "Close")) { [weak self] in self?.closeTerminal(s) }
