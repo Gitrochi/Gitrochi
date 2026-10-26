@@ -35,7 +35,7 @@ jobs:
       - name: Rust 공통 코어 검사
         run: cargo test --locked --manifest-path crates/Cargo.toml
 
-      # 흐름 엔진(tools/gitch-flow)을 앱에 넣으려고
+      # To put the flow engine (tools/gitch-flow) into the app
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: "tools/gitch-flow -> target"
@@ -43,7 +43,7 @@ jobs:
       - name: 빌드
         run: macos/build.sh
 
-      - name: 앱에 든 흐름 엔진 확인
+      - name: Check the flow engine in the app
         run: |
           app=macos/build/Gitrochi.app/Contents
           "$app/Resources/gitch-flow" version --json
@@ -93,8 +93,8 @@ jobs:
       - name: 읽기 전용 MCP 계약 테스트
         run: node --test tools/gitrochi-mcp/server.test.mjs
 
-      # 흐름 화면이 읽는 엔진 JSON(앱에 넣은 엔진으로): list · plan · 분리 실행 · 이벤트 · 기록 · init · gate · 오류
-      - name: 흐름 화면 계약 테스트
+      # The engine JSON the Flows screen reads (with the engine in the app): list, plan, detached run, events, records, init, gate, errors
+      - name: Flows screen contract test
         run: bash macos/Tools/test-flow.sh
 
       - name: Keychain 저장 · 갱신 · 삭제 테스트
@@ -209,7 +209,7 @@ jobs:
             cp "tools/gitch/$file" "macos/dist/$file"
             (cd macos/dist && shasum -a 256 "$file" > "$file.sha256")
           done
-          # 흐름 엔진(앱에 넣은 유니버설 실행 파일과 같은 것)
+          # The flow engine (the same universal binary as in the app)
           cp macos/build/Gitrochi.app/Contents/MacOS/gitch-flow macos/dist/gitch-flow-macos
           (cd macos/dist && shasum -a 256 gitch-flow-macos > gitch-flow-macos.sha256)
 

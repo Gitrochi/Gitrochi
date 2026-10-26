@@ -109,7 +109,7 @@ jobs:
           done
           cp ../crates/target/release/gitch-core.exe "$stage/gitch-core.exe"
           cp ../tools/gitrochi-mcp/server.mjs "$stage/gitrochi-mcp.mjs"
-          # 흐름 엔진(beforeBuildCommand 가 만든 것): 포터블 zip 에는 gitch 옆에, CLI 만 쓰는 사람용으로는 따로(install.sh · self-update)
+          # The flow engine (built by beforeBuildCommand): next to gitch in the portable zip, and on its own for CLI-only users (install.sh, self-update)
           engine=../tools/gitch-flow/target/release/gitch-flow.exe
           cp "$engine" "$stage/gitch-flow.exe"
           cp "$engine" "$out/gitch-flow-windows-x64.exe"

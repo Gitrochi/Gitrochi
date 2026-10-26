@@ -1,5 +1,5 @@
-# Gitrochi 자신의 흐름 — gitch flow run <흐름> · gitch test · 앱의 흐름 탭(문서: docs/flow/README.md).
-# 처음 한 번 사람이 터미널에서 gitch flow trust 로 명령을 보고 승인한다. push 전에 확인하려면 gitch flow gate on.
+# Gitrochi's own flows: gitch flow run <flow>, gitch test, or the app's Flows tab (docs: docs/flow/README.md).
+# The first time, a person reviews and approves the commands in a terminal with gitch flow trust. To check before every push: gitch flow gate on.
 version: 1
 project: { name: gitrochi }
 defaults:
