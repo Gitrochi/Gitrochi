@@ -1032,5 +1032,6 @@
  "Started with all permission checks skipped": "Iniciada omitiendo todas las comprobaciones de permisos",
  "Write": "Escribir",
  "Preview": "Vista previa",
- "Nothing to preview": "Nada que previsualizar"
+ "Nothing to preview": "Nada que previsualizar",
+ "Open in new tab": "Abrir en una pestaña nueva"
 }

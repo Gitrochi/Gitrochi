@@ -1055,5 +1055,6 @@
  "Started with all permission checks skipped": "すべての権限確認をスキップして開始したセッション",
  "Write": "書く",
  "Preview": "プレビュー",
- "Nothing to preview": "プレビューする内容がありません"
+ "Nothing to preview": "プレビューする内容がありません",
+ "Open in new tab": "新しいタブで開く"
 }

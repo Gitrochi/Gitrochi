@@ -38,7 +38,11 @@ struct WorktreeSection: View {
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) { open(w) }
                 .contextMenu {
-                    Button("Open in Gitrochi") { open(w) }.disabled(current)
+                    Button("Open worktree") { open(w) }.disabled(current)
+                    Button("Open in new tab") {
+                        Task { await store.openOrReport(URL(fileURLWithPath: w.path, isDirectory: true)) }
+                    }
+                    .disabled(current)
                     Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: w.path)]) }
                     Button("Open in the terminal below") { store.newTerminal(in: w.path) }
                     Button("Open in Terminal") { Launcher.openTerminal(at: w.path) }
@@ -65,7 +69,7 @@ struct WorktreeSection: View {
     }
 
     private func open(_ w: Worktree) {
-        Task { await store.openOrReport(URL(fileURLWithPath: w.path, isDirectory: true)) }
+        Task { await store.switchWorktree(to: w.path) }
     }
 
     private func isTemporary(_ path: String) -> Bool {

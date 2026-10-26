@@ -1037,5 +1037,6 @@
  "Started with all permission checks skipped": "Uruchomiono z pominięciem wszystkich sprawdzeń uprawnień",
  "Write": "Pisz",
  "Preview": "Podgląd",
- "Nothing to preview": "Brak treści do podglądu"
+ "Nothing to preview": "Brak treści do podglądu",
+ "Open in new tab": "Otwórz w nowej karcie"
 }

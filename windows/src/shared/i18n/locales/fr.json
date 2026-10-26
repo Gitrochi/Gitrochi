@@ -1028,5 +1028,6 @@
  "Started with all permission checks skipped": "Démarrée en ignorant toutes les vérifications d’autorisation",
  "Write": "Écrire",
  "Preview": "Aperçu",
- "Nothing to preview": "Rien à prévisualiser"
+ "Nothing to preview": "Rien à prévisualiser",
+ "Open in new tab": "Ouvrir dans un nouvel onglet"
 }

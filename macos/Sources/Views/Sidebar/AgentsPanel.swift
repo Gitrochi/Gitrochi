@@ -130,11 +130,13 @@ private struct WorktreeCard: View {
         .onHover { hover = $0 }
         .onTapGesture(count: 2) {
             guard !isCurrent else { return }
-            Task { await store.openOrReport(URL(fileURLWithPath: worktree.path, isDirectory: true)) }
+            Task { await store.switchWorktree(to: worktree.path) }
         }
         .contextMenu {
             Button("Start agent session…") { store.sheet = .startAgent(path: worktree.path) }
-            Button("Open in Gitrochi") {
+            Button("Open worktree") { Task { await store.switchWorktree(to: worktree.path) } }
+                .disabled(isCurrent)
+            Button("Open in new tab") {
                 Task { await store.openOrReport(URL(fileURLWithPath: worktree.path, isDirectory: true)) }
             }
             .disabled(isCurrent)

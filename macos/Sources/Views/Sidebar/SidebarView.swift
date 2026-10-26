@@ -202,7 +202,7 @@ struct SidebarView: View {
         Button("Check out in a new worktree…") { store.sheet = .addWorktree(branch: b.name, start: nil) }
             .disabled(b.isCurrent || store.worktree(using: b.name) != nil)
         if let w = store.worktree(using: b.name) {
-            Button("Open this branch's worktree") { Task { await store.openOrReport(URL(fileURLWithPath: w.path, isDirectory: true)) } }
+            Button("Open this branch's worktree") { Task { await store.switchWorktree(to: w.path) } }
             Button("Run an agent in a worktree") { store.startAgent(in: w.path) }
         }
         Button("Push") { Task { await store.pushBranch(b) } }

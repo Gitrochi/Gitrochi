@@ -37,6 +37,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract newTerminal(path?: string, spec?: Partial<TerminalSpec>): TerminalSession;
   abstract focusTerminal(s: TerminalSession): void;
   abstract closeAllTerminals(): void;
+  abstract switchWorktree(path: string): Promise<void>;
   abstract run(label: string, args: string[], o?: { network?: boolean; input?: string }): Promise<boolean>;
   abstract refreshGitch(fetch?: boolean): Promise<void>;
 
@@ -168,6 +169,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   openRepo: ((path: string) => void) | null = null;
   /** 이 탭을 앞으로(에이전트 세션으로 이동할 때) */
   activateTab: (() => void) | null = null;
+  /** Brings forward another tab already showing path; false if there is none */
+  showTab: ((path: string) => boolean) | null = null;
 
   protected reloadGeneration = 0;
   protected watchIds: string[] = [];
@@ -241,7 +244,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
     }
   }
 
-  async open(folder: string): Promise<{ kind: "opened" } | { kind: "notRepository"; path: string } | { kind: "failed"; message: string }> {
+  /** quick: switching worktrees, so skip the minimum loading animation */
+  async open(folder: string, quick = false): Promise<{ kind: "opened" } | { kind: "notRepository"; path: string } | { kind: "failed"; message: string }> {
     const started = Date.now();
     this.loading = { title: t("Opening {0}", basename(folder)), step: t("Checking repository…") };
     this.emit();
@@ -293,14 +297,14 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.selectDefault();
     // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
     const shown = Date.now() - started;
-    if (shown < 900) await new Promise((res) => setTimeout(res, 900 - shown));
+    if (!quick && shown < 900) await new Promise((res) => setTimeout(res, 900 - shown));
     this.loading = null;
     this.emit();
     return { kind: "opened" };
   }
 
-  async openInPlace(folder: string) {
-    const r = await this.open(folder);
+  async openInPlace(folder: string, quick = false) {
+    const r = await this.open(folder, quick);
     if (r.kind === "notRepository") this.notRepoPrompt = r.path;
     else if (r.kind === "failed" && r.message) this.errorMessage = r.message;
     this.booted = true;
