@@ -73,7 +73,8 @@ export function SharedStack({
     <ReportCtx.Provider value={report}>
       <SharesCtx.Provider value={shares}>
         <div ref={outer} className={`shared-stack ${className}`} style={style}>
-          <div ref={body} className={bodyClassName}>
+          {/* Keep section margins inside the measured body instead of collapsing through it. */}
+          <div ref={body} className={bodyClassName} style={{ display: "flex", flexDirection: "column" }}>
             {children}
           </div>
         </div>
