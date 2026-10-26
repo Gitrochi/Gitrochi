@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
+import { Inspector } from "@/widgets/inspector";
+import { RepoStore } from "@/entities/repo";
+import { emptyStatus } from "@/entities/git";
 import { SharedPane, SharedStack } from "@/shared/ui";
 
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 30));
@@ -45,6 +48,56 @@ export async function sharedStackSelfTest(): Promise<[boolean, string]> {
       await pause();
       if (Math.abs(stack()!.getBoundingClientRect().height - outer) > 1) return [false, `Pane height kept growing: ${JSON.stringify(samples)}`];
     }
-    return [true, JSON.stringify(samples)];
+    const [working, detail] = await workingChangesTransitions(host, root);
+    return [working, JSON.stringify({ margins: samples, working: detail })];
   } finally { root.unmount(); host.remove(); }
+}
+
+/** Exercise pane cleanup alongside the real composer, impact card and empty state. */
+async function workingChangesTransitions(host: HTMLElement, root: Root): Promise<[boolean, unknown]> {
+  const store = new RepoStore();
+  store.selection = { kind: "wip" };
+  store.headBranch = "fixture";
+  const changes = (staged: boolean, count: number) => Array.from({ length: count }, (_, i) => ({ path: `src/fixture-${i}.ts`, oldPath: null, kind: "modified" as const, staged }));
+  const staged = { ...emptyStatus(), staged: changes(true, 1) };
+  const both = { ...emptyStatus(), staged: changes(true, 20), unstaged: changes(false, 20) };
+  const states = [staged, emptyStatus(), both, emptyStatus(), staged, emptyStatus()];
+  let transitions = 0;
+  for (const width of [280, 330, 420]) for (const height of [480, 720.5]) for (const mode of ["bounded", "natural", "bounded"]) {
+    root.render(<div className={`workspace-changes-list shared-stack-regression ${mode}`} style={{ width, minWidth: 0, maxWidth: "none", height, display: "flex", flexDirection: "column", overflow: "auto" }}>
+      <style>{`
+        .shared-stack-regression.bounded > .col { height:100%!important; flex:1!important; min-height:0!important; }
+        .shared-stack-regression.bounded .panel-scroll { flex:1!important; overflow:auto!important; }
+        .shared-stack-regression.natural > .col { height:auto!important; flex:none!important; min-height:100%!important; }
+        .shared-stack-regression.natural .panel-scroll { flex:none!important; overflow:visible!important; }
+      `}</style>
+      <Inspector store={store} />
+    </div>);
+    await pause();
+    for (const status of states) {
+      store.status = status;
+      store.busy = status.staged.length ? "Fixture commit" : null;
+      store.summary = status.staged.length ? "Fixture summary" : "";
+      store.changed();
+      const expected = Number(status.staged.length > 0) + Number(status.unstaged.length > 0);
+      const panes = () => [...host.querySelectorAll<HTMLElement>(".shared-pane")];
+      if (!await until(() => panes().length === expected && !!host.querySelector(".panel-scroll")))
+        return [false, `Working Changes did not survive ${mode} ${width}×${height}, panes=${expected}`];
+      await pause();
+      const measured = host.querySelector<HTMLElement>(".panel-scroll")!;
+      const before = measured.getBoundingClientRect().height;
+      const heights = panes().map((pane) => pane.clientHeight);
+      if (expected === 2 && heights.some((value) => value < 96)) return [false, `Pane floors were lost: ${heights}`];
+      if (mode === "bounded" && expected === 2 && Math.abs(heights[0] - heights[1]) > 1)
+        return [false, `Bounded panes did not share the column: ${heights}`];
+      if (mode === "natural" && panes().some((pane) => pane.scrollHeight > pane.clientHeight + 1))
+        return [false, `Natural panes were constrained: ${heights}`];
+      if (!expected && !host.querySelector(".card")) return [false, "The clean working tree card did not render"];
+      await pause();
+      if (!measured.isConnected || Math.abs(measured.getBoundingClientRect().height - before) > 1)
+        return [false, `Working Changes height did not settle: ${mode} ${width}×${height}, panes=${expected}`];
+      transitions++;
+    }
+  }
+  return [true, { transitions, widths: [280, 330, 420], heights: [480, 720.5], modes: ["bounded", "natural", "bounded"], emptyStates: true, multiplePanes: true }];
 }

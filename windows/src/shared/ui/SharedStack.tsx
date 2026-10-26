@@ -24,7 +24,8 @@ export function SharedStack({
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
-  const [available, setAvailable] = useState(0);
+  const [available, setAvailable] = useState<number | null>(0);
+  const measuredAvailable = useRef<number | null>(0);
   const [naturals, setNaturals] = useState(() => new Map<string, number>());
   const report = useCallback((id: string, natural: number | null) => {
     setNaturals((m) => {
@@ -36,6 +37,7 @@ export function SharedStack({
     });
   }, []);
   const shares = useMemo(() => {
+    if (available === null) return new Map<string, number>();
     const ids = [...naturals.keys()];
     const h = shareHeights(
       ids.map((id) => naturals.get(id)!),
@@ -50,15 +52,26 @@ export function SharedStack({
     const o = outer.current;
     const b = body.current;
     if (!o || !b) return;
+    const cs = getComputedStyle(o);
+    // The responsive layout scrolls the whole column; its content height is not a constraint.
+    if (cs.overflowY === "visible") {
+      if (measuredAvailable.current !== null) {
+        measuredAvailable.current = null;
+        setAvailable(null);
+      }
+      return;
+    }
     let panes = 0;
     b.querySelectorAll<HTMLElement>(".shared-pane").forEach((p) => {
       if (p.parentElement?.closest(".shared-stack") === o) panes += p.getBoundingClientRect().height;
     });
-    const cs = getComputedStyle(o);
     const fixed = b.getBoundingClientRect().height - panes;
     const next = Math.max(0, Math.floor(o.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - fixed));
+    // Skip dispatch itself: pane cleanup can replay same-value updaters from every layout effect.
     // Fractional flex heights must not alternate the rounded measurement on every layout effect.
-    setAvailable((previous) => Math.abs(previous - next) <= 1 ? previous : next);
+    if (measuredAvailable.current !== null && Math.abs(measuredAvailable.current - next) <= 1) return;
+    measuredAvailable.current = next;
+    setAvailable(next);
   }, []);
   useLayoutEffect(measure); // after every render: the fixed parts may have changed
   useLayoutEffect(() => {
