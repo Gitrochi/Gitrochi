@@ -48,7 +48,7 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 4. **Work with branches** — drag a branch label onto another commit or branch for the merge · rebase · fast-forward menu. Right-click a commit for cherry-pick · revert · reset · tag.
 5. **Push and pull requests** — review the account, destination and outgoing changes before confirming Push, then create a PR/MR from the requests view. A required Push during PR creation uses the same review. Connect GitHub or self-hosted GitLab from the account controls or Settings (⌘,) › Accounts.
 6. **CI/CD** — in the sidebar's **CI/CD** tab, expand a pipeline and run a manual job with ▶, or press **Run…** for a new pipeline or workflow.
-7. **Flows** — in the sidebar's **Flows** tab, press **Set up flows…** to have the tests found and a `.gitch/flow.yml` proposed, approve its commands once, then run a flow with ▶ and follow it node by node. Details: [flow/README.md](flow/README.md).
+7. **Flows** — open **Flows** under Workspace tools in the sidebar, press **Set up flows…** to have the tests found and a `.gitch/flow.yml` proposed, approve its commands once, then run a flow with ▶ and follow it node by node. Details: [flow/README.md](flow/README.md).
 
 | Action | macOS | Windows |
 |---|---|---|
@@ -127,7 +127,7 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 
 - **Flows** (`.gitch/flow.yml`): a repository's tests, checks, services, remote CI and deployment steps assembled as blocks into a graph (`needs`), with composite blocks, sub-flows and `matrix`. The flow engine `gitch-flow` makes every verdict; the apps and gitch send the actions you take and show the results. `gitch flow init` proposes a flow file from the test tools, package managers and runtime versions it finds by reading the files only
 - **No false passes**: a test node passes only with a report written by this run, at least one executed test and an exit code that agrees with the report; a verdict that cannot be made counts as a failure
-- **Same everywhere**: the sidebar's **Flows** tab, `gitch flow run` and `gitch test` in a terminal, the pre-push gate (`gitch flow gate on`, off by default) and CI (`gitch flow run <flow> --ci`, with CI files from `gitch flow export github|gitlab|jenkins`)
+- **Same everywhere**: the **Flows** page (Workspace tools), `gitch flow run` and `gitch test` in a terminal, the pre-push gate (`gitch flow gate on`, off by default) and CI (`gitch flow run <flow> --ci`, with CI files from `gitch flow export github|gitlab|jenkins`)
 - **Efficient**: only the tests a change affects (`--affected`), cached results for unchanged inputs, installs skipped while the lock file is unchanged, parallel nodes, a one-line summary for AI agents (`--summary`)
 - **Docker and remote CI**: run nodes in containers (`executor: docker:<image>`), service containers and compose, fake HTTP servers with fault switches (`mock.http`); drive GitLab pipelines and manual jobs, GitHub Actions workflows, Jenkins jobs and plain HTTP CI without ever resending a trigger whose response was lost
 - **Rollback and safety**: undo steps are registered before anything changes and run in reverse on failure or cancel; a failed rollback puts the environment on hold until a person releases it. A flow file runs only after a person approves its commands (AI agents cannot), records are signed, and secrets are masked

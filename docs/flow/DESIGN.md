@@ -6,7 +6,7 @@
 
 ```
  Apps (macOS SwiftUI · Windows Tauri)     gitch (bash front door)            CI runner
-   Flows tab · trust prompt · run view    gitch flow · gitch test            gitch flow run <flow> --ci
+   Flows page · trust prompt · run view   gitch flow · gitch test            gitch flow run <flow> --ci
    turn on the pre-push check             pre-push hook · FLOW line in preflight
         │  CLI + JSON / NDJSON                │ exec                              │
         └──────────────► gitch-flow (Rust executable, tools/gitch-flow) ◄─────────┘

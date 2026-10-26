@@ -383,7 +383,7 @@ allow   src/ui/debug -> src/db          # 위반의 예외
 
 ## Flows and tests (`gitch flow` · `gitch test`)
 
-Hands the flows in `.gitch/flow.yml`, which assemble a repository's tests, checks, services, remote CI and deployment steps, to the flow engine `gitch-flow` (bundled with the apps and the installer). The apps' Flows tab, the pre-push gate and CI use the same flows and the same verdicts. Details: [docs/flow/README.md](../../docs/flow/README.md).
+Hands the flows in `.gitch/flow.yml`, which assemble a repository's tests, checks, services, remote CI and deployment steps, to the flow engine `gitch-flow` (bundled with the apps and the installer). The apps' Flows page, the pre-push gate and CI use the same flows and the same verdicts. Details: [docs/flow/README.md](../../docs/flow/README.md).
 
 ```bash
 gitch flow init [--yes]          # read the files only and propose a flow file from the test tools, package managers and runtimes found (--yes writes it, never overwrites)

@@ -1,6 +1,6 @@
 # Flows (gitch flow)
 
-A flow assembles a repository's **tests, checks, services, remote CI and deployment steps like blocks**, and runs them **the same way** from the app's Flows tab, from `gitch flow`, before a push and in CI. The flow engine (`gitch-flow`, Rust) always makes the verdict; the apps and gitch only send the actions a person takes and show the results.
+A flow assembles a repository's **tests, checks, services, remote CI and deployment steps like blocks**, and runs them **the same way** from the app's Flows page, from `gitch flow`, before a push and in CI. The flow engine (`gitch-flow`, Rust) always makes the verdict; the apps and gitch only send the actions a person takes and show the results.
 
 - **Composable**: nodes (commands, blocks, suites, sub-flows) form a graph joined by `needs`. Composite blocks (`.gitch/blocks/*.yml`), sub-flows and `matrix` combinations build on each other.
 - **No false passes**: exit code 0 alone is not trusted. A report must exist (T2), tests must actually have run (T3, zero is a failure), and the exit code must agree with the report (X1). A verdict that cannot be made counts as a failure.
@@ -23,7 +23,7 @@ gitch flow gate on         # check the pre-push flow before every push (no rerun
 gitch flow export github   # propose a workflow that runs the same flow in CI
 ```
 
-In the app it is the sidebar's **Flows** tab: the flows, ▶ to run, live progress, failure locations (file:line), rollback, copying a summary and turning on the pre-push check. Without a flow file, **Set up flows…** shows the proposal and creates the file.
+In the app it is **Flows** under Workspace tools in the sidebar (⌘K / Ctrl+K finds it too): the flows, ▶ to run, live progress, failure locations (file:line), rollback, copying a summary and turning on the pre-push check. Without a flow file, **Set up flows…** shows the proposal and creates the file.
 
 ## The flow file
 

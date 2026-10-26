@@ -1,4 +1,4 @@
-# Gitrochi's own flows: gitch flow run <flow>, gitch test, or the app's Flows tab (docs: docs/flow/README.md).
+# Gitrochi's own flows: gitch flow run <flow>, gitch test, or the app's Flows page (docs: docs/flow/README.md).
 # The first time, a person reviews and approves the commands in a terminal with gitch flow trust. To check before every push: gitch flow gate on.
 version: 1
 project: { name: gitrochi }
