@@ -115,7 +115,7 @@ function Inline({ node: n, gate, inLink }: { node: MdInline; gate: ImageGate; in
         </Link>
       );
     case "image":
-      return <Image src={n.src} alt={n.alt} gate={gate} inLink={inLink} />;
+      return <Image key={n.src} src={n.src} alt={n.alt} gate={gate} inLink={inLink} />;
   }
 }
 
@@ -137,7 +137,10 @@ function Link({ href, children }: { href: string; children: ReactNode }) {
 
 function Image({ src, alt, gate, inLink }: { src: string; alt: string; gate: ImageGate; inLink: boolean }) {
   const [failed, setFailed] = useState(false);
-  if (!failed && gate?.(src)) return <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+  if (!failed && gate?.(src)) {
+    const picture = <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+    return inLink ? picture : <Link href={src}>{picture}</Link>;
+  }
   const label = (
     <span className="md-image-alt">
       <ImageIcon size={12} />

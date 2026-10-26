@@ -37,7 +37,7 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     ipc.http = async () => { unexpected.push("network"); throw new Error("Fixture blocked network"); };
     store.path = "C:/gitrochi-pr-conversation-fixture"; store.headHash = head; store.headBranch = "topic";
     store.target = { provider: "github", host: "github.example.invalid", path: "fixture/review", remote: "origin" };
-    const pr = { number: 7, title: "Fixture review", author: "fixture", source: "topic", target: "main", url: "https://github.example.invalid/fixture/review/pull/7", isDraft: false, updated: null, body: "Fixture only", headSHA: head, fromFork: false };
+    const pr = { number: 7, title: "Fixture review", author: "fixture", source: "topic", target: "main", url: "https://github.example.invalid/fixture/review/pull/7", isDraft: false, updated: null, body: "## Fixture description\n\n| Preview |\n| --- |\n| ![Screenshot](docs/preview.png) |", headSHA: head, fromFork: false };
     store.pullRequests = [pr, { ...pr, number: 8 }]; store.prState = { kind: "loaded" };
     const review: PullRequestReview = { number: 7, repositoryKey: reviewRepositoryKey(store.target), headSHA: head, baseSHA: base, startSHA: base, files: [{ path: "source.ts", oldPath: null, kind: "modified", additions: 1, deletions: 1, patch: "@@ -1 +1 @@\n-before\n+after" }], comments: [], warnings: [], state: { approvedBy: [], changesRequestedBy: [], approvalsLeft: null, approvedByMe: false } };
     store.review = review; store.reviewDrafts = [];
@@ -48,6 +48,8 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     store.selection = { kind: "pullRequest", number: 7 }; store.navigate("pullRequests", false);
     root.render(<RepoPage store={store} openSettings={() => { unexpected.push("settings"); }} />);
     if (!await until(() => !!composer() && !!button("Edit request…"))) return [false, "PR conversation did not mount"];
+    const image = host.querySelector<HTMLImageElement>(".request-description .md table img");
+    if (!image || !image.src.includes(`/raw/${head}/docs/preview.png`) || !host.querySelector(".request-checks") || !host.querySelector(".pr-list-controls")) return [false, "PR screenshots, checks or list controls did not render"];
     const originalComposer = composer()!;
     enter(originalComposer, "Fixture unsent review comment");
     button("Edit request…")!.click();
@@ -63,7 +65,7 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     }
     store.select({ kind: "pullRequest", number: 8 });
     if (!await until(() => composer()?.value === "" && !titleInput())) return [false, "Draft state leaked to another pull request"];
-    return [unexpected.length === 0, JSON.stringify({ reviewRoundTrips: 2, commentRetained: true, metadataRetained: true, otherRequestReset: true, unexpected })];
+    return [unexpected.length === 0, JSON.stringify({ screenshotsRendered: true, checksRendered: true, reviewRoundTrips: 2, commentRetained: true, metadataRetained: true, otherRequestReset: true, unexpected })];
   } finally {
     root.unmount(); await pause(25); host.remove();
     settings.get = original.get; settings.set = original.set; accounts.accounts = original.accounts;

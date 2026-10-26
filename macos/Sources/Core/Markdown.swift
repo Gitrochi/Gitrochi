@@ -40,20 +40,95 @@ enum Markdown {
         let user: (String) -> String
     }
 
-    static func parse(_ text: String, refs: Refs? = nil) -> [Block] {
+    static func parse(_ text: String, refs: Refs? = nil, baseURL: URL? = nil, imageBaseURL: URL? = nil) -> [Block] {
         let lines = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
             .components(separatedBy: "\n")
             .map { line -> String in
                 let tabs = line.prefix { $0 == "\t" }.count
                 return String(repeating: " ", count: tabs * 4) + line.dropFirst(tabs)
             }
-        return blocks(lines, refs)
+        return blocks(lines, Context(refs: refs, baseURL: baseURL, imageBaseURL: imageBaseURL))
     }
 
     static func safeURL(_ href: String) -> String? {
-        let h = href.trimmed
-        let l = h.lowercased()
-        return l.hasPrefix("http://") || l.hasPrefix("https://") || l.hasPrefix("mailto:") ? h : nil
+        resolvedURL(href, baseURL: nil, allowMail: true)?.absoluteString
+    }
+}
+
+/// URL resolution is shared by all inline contexts, including nested links and table cells.
+extension Markdown {
+    struct Context {
+        var refs: Refs? = nil
+        var baseURL: URL? = nil
+        var imageBaseURL: URL? = nil
+
+        func link(_ href: String) -> String? {
+            resolvedURL(href, baseURL: baseURL, allowMail: true)?.absoluteString
+        }
+
+        func markerImage(_ href: String) -> String? {
+            guard let url = URL(string: href),
+                  ["png", "jpg", "jpeg", "gif", "webp", "avif", "heic", "tif", "tiff", "bmp", "svg"].contains(url.pathExtension.lowercased()) else { return nil }
+            return image(href)
+        }
+
+        func image(_ href: String) -> String? {
+            guard let url = URL(string: href.trimmed) else { return nil }
+            var resolutionBase = baseURL
+            let value = url.relativeString
+            if url.scheme == nil, let imageBaseURL {
+                if value.hasPrefix("/uploads/") || value.hasPrefix("uploads/"),
+                   let range = imageBaseURL.absoluteString.range(of: "/-/raw/") {
+                    let project = URL(string: String(imageBaseURL.absoluteString[..<range.lowerBound]) + "/")
+                    let relative = value.hasPrefix("/") ? String(value.dropFirst()) : value
+                    return resolvedURL(relative, baseURL: project, allowMail: false)?.absoluteString
+                }
+                if !value.hasPrefix("/"), !value.contains("blob/"), !value.contains("raw/") {
+                    resolutionBase = imageBaseURL
+                }
+            }
+            guard let safe = resolvedURL(value, baseURL: resolutionBase, allowMail: false),
+                  var components = URLComponents(url: safe, resolvingAgainstBaseURL: true) else { return nil }
+            if components.percentEncodedPath.contains("/-/blob/") {
+                components.percentEncodedPath = components.percentEncodedPath.replacingOccurrences(of: "/-/blob/", with: "/-/raw/")
+            } else if safe.host == "github.com" || safe.host == baseURL?.host && baseURL?.path.contains("/pull/") == true {
+                let parts = components.percentEncodedPath.split(separator: "/")
+                if parts.count >= 4, parts[2] == "blob" {
+                    components.percentEncodedPath = "/" + (parts.prefix(2) + ["raw"] + parts.dropFirst(3)).joined(separator: "/")
+                }
+            }
+            return components.url?.absoluteString
+        }
+    }
+
+    static func resolvedURL(_ href: String, baseURL: URL?, allowMail: Bool) -> URL? {
+        guard let url = URL(string: href.trimmed),
+              let resolved = (url.scheme == nil ? URL(string: url.relativeString, relativeTo: baseURL) : url)?.absoluteURL,
+              let scheme = resolved.scheme?.lowercased() else { return nil }
+        if scheme == "http" || scheme == "https" {
+            return resolved.host?.isEmpty == false && resolved.user == nil && resolved.password == nil ? resolved : nil
+        }
+        return allowMail && scheme == "mailto" ? resolved : nil
+    }
+
+    /// Relative images point at the reviewed head, while page links retain their PR/MR location.
+    static func repositoryImageBaseURL(webURL: URL?, revision: String?) -> URL? {
+        guard let webURL, let revision, !revision.isEmpty,
+              var components = URLComponents(url: webURL, resolvingAgainstBaseURL: true),
+              resolvedURL(webURL.absoluteString, baseURL: nil, allowMail: false) != nil else { return nil }
+        let parts = components.percentEncodedPath.split(separator: "/").map(String.init)
+        let prefix: [String]
+        let marker: [String]
+        if let index = parts.firstIndex(of: "-"), parts.dropFirst(index + 1).first == "merge_requests" {
+            prefix = Array(parts[..<index]); marker = ["-", "raw"]
+        } else if let index = parts.firstIndex(of: "pull"), index == 2 {
+            prefix = Array(parts[..<index]); marker = ["raw"]
+        } else { return nil }
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+        let ref = revision.addingPercentEncoding(withAllowedCharacters: allowed) ?? revision
+        components.percentEncodedPath = "/" + (prefix + marker).joined(separator: "/") + "/" + ref + "/"
+        components.query = nil; components.fragment = nil
+        return components.url
     }
 }
 
@@ -208,7 +283,7 @@ private extension Markdown {
         lines[i].contains("|") && i + 1 < lines.count && isDelimRow(lines[i + 1]) && cells(lines[i]).count == cells(lines[i + 1]).count
     }
 
-    static func blocks(_ source: [String], _ refs: Refs?) -> [Block] {
+    static func blocks(_ source: [String], _ context: Context) -> [Block] {
         var lines = source
         var out: [Block] = []
         var i = 0
@@ -256,11 +331,11 @@ private extension Markdown {
                 continue
             }
             if opensDetails(line) {
-                i = details(lines, i, &out, refs)
+                i = details(lines, i, &out, context)
                 continue
             }
             if let h = heading(line) {
-                out.append(.heading(level: h.0, inlines(h.1, refs)))
+                out.append(.heading(level: h.0, inlines(h.1, context)))
                 i += 1
                 continue
             }
@@ -282,23 +357,23 @@ private extension Markdown {
                     }
                     i += 1
                 }
-                out.append(.quote(blocks(body, refs)))
+                out.append(.quote(blocks(body, context)))
                 continue
             }
             if let first = marker(line) {
-                i = list(lines, i, first, &out, refs)
+                i = list(lines, i, first, &out, context)
                 continue
             }
             if startsTable(lines, i) {
                 let align = cells(lines[i + 1]).map { d -> Align? in
                     d.hasPrefix(":") ? (d.hasSuffix(":") ? .center : .left) : (d.hasSuffix(":") ? .right : nil)
                 }
-                let head = cells(lines[i]).map { inlines($0, refs) }
+                let head = cells(lines[i]).map { inlines($0, context) }
                 var rows: [[[Inline]]] = []
                 i += 2
                 while i < lines.count && !isBlank(lines[i]) && !startsBlock(lines[i]) {
                     let row = cells(lines[i])
-                    rows.append(align.indices.map { c in c < row.count ? inlines(row[c], refs) : [] })
+                    rows.append(align.indices.map { c in c < row.count ? inlines(row[c], context) : [] })
                     i += 1
                 }
                 out.append(.table(align: align, head: head, rows: rows))
@@ -319,7 +394,7 @@ private extension Markdown {
                 para.append(l.trimmed)
                 i += 1
             }
-            let content = trimBreaks(inlines(para.joined(separator: "\n"), refs))
+            let content = trimBreaks(inlines(para.joined(separator: "\n"), context))
             if level > 0 {
                 out.append(.heading(level: level, content))
             } else if !content.isEmpty {
@@ -329,7 +404,7 @@ private extension Markdown {
         return out
     }
 
-    static func list(_ lines: [String], _ start: Int, _ first: Marker, _ out: inout [Block], _ refs: Refs?) -> Int {
+    static func list(_ lines: [String], _ start: Int, _ first: Marker, _ out: inout [Block], _ context: Context) -> Int {
         var i = start
         var items: [ListItem] = []
         while i < lines.count {
@@ -363,13 +438,13 @@ private extension Markdown {
                     body[0] = String(after.drop { $0 == " " || $0 == "\t" })
                 }
             }
-            items.append(ListItem(task: task, blocks: blocks(body, refs)))
+            items.append(ListItem(task: task, blocks: blocks(body, context)))
         }
         out.append(.list(ordered: first.ordered, start: first.start, items: items))
         return i
     }
 
-    static func details(_ lines: [String], _ start: Int, _ out: inout [Block], _ refs: Refs?) -> Int {
+    static func details(_ lines: [String], _ start: Int, _ out: inout [Block], _ context: Context) -> Int {
         var depth = 0
         var j = start
         while j < lines.count {
@@ -386,10 +461,10 @@ private extension Markdown {
         if let open = tags(in: body, "summary", closing: false).first, open.lowerBound == lead.endIndex,
            let close = tags(in: String(body[open.upperBound...]), "summary", closing: true).first {
             let rest = String(body[open.upperBound...])
-            summary = inlines(String(rest[..<close.lowerBound]).trimmed, refs)
+            summary = inlines(String(rest[..<close.lowerBound]).trimmed, context)
             body = String(rest[close.upperBound...])
         }
-        out.append(.details(summary: summary, blocks: blocks(body.components(separatedBy: "\n"), refs)))
+        out.append(.details(summary: summary, blocks: blocks(body.components(separatedBy: "\n"), context)))
         return j + 1
     }
 

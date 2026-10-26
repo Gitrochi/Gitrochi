@@ -140,8 +140,16 @@ struct HostingHubPanel: View {
         case .gists:
             ForEach(d.files) { file in VStack(alignment: .leading, spacing: 8) { Text(file.name).font(.headline); if file.truncated { Text("The server truncated this file. Editing is disabled to avoid data loss.").font(.caption).foregroundStyle(.orange) }; Text(file.content).font(.system(.callout, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(12).background(Color.secondary.opacity(0.08)) } }
         case .organizations:
-            HStack { Button("Repositories") { Task { await store.selectHostingHubItem(d.item, tab: "repositories") } }; Button("Members") { Task { await store.selectHostingHubItem(d.item, tab: "members") } } }.disabled(locked)
-            ForEach(d.members) { member in HStack { Image(systemName: "person"); Text(member.name); Text(member.role).foregroundStyle(.secondary) }.padding(.vertical, 6) }
+            Picker("Organization view", selection: Binding(get: { store.hostingHub.tab }, set: { tab in Task { await store.selectHostingHubItem(d.item, tab: tab) } })) {
+                Text("Repositories").tag("repositories")
+                Text("Members").tag("members")
+            }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 280).disabled(locked)
+            if store.hostingHub.tab == "members" {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 230), alignment: .leading)], alignment: .leading, spacing: 12) {
+                    ForEach(d.members) { member in memberCard(member) }
+                }
+                if d.members.isEmpty && !store.hostingHub.detailLoading { Text("No members visible to this account.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 16) }
+            }
             ForEach(d.repositories) { repository in VStack(alignment: .leading, spacing: 10) { VStack(alignment: .leading, spacing: 5) { Text(repository.name).fontWeight(.medium); Text(repository.description).font(.caption).foregroundStyle(.secondary) }; Button(onClone == nil ? String(localized: "Copy clone URL") : String(localized: "Clone")) { if let onClone { onClone(repository.cloneURL) } else { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(repository.cloneURL, forType: .string) } }.disabled(locked || safeURL(repository.cloneURL) == nil) }.padding(.vertical, 8); Divider() }
         case .projects:
             projectWorkspace(d)
@@ -149,6 +157,25 @@ struct HostingHubPanel: View {
         }
         if d.more { Button("Load more") { Task { await store.selectHostingHubItem(d.item, append: true) } }.disabled(locked) }
         if store.hostingHub.detailLoading { ProgressView() }
+    }
+    private func memberCard(_ member: HubMember) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            HostingAvatar(name: member.name, username: member.username, avatarURL: member.avatarURL, size: 42)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(member.name).font(.callout.weight(.semibold)).lineLimit(1).help(member.name)
+                if !member.username.isEmpty { Text(verbatim: "@" + member.username).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+                Text(member.role).font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+                    .padding(.horizontal, 7).padding(.vertical, 3).background(Capsule().fill(Color.secondary.opacity(0.09)))
+            }
+            Spacer(minLength: 0)
+            if let url = member.profileURL {
+                Link(destination: url) { Image(systemName: "arrow.up.right").font(.caption.weight(.semibold)).frame(width: 24, height: 24).contentShape(Rectangle()) }
+                    .buttonStyle(.plain).foregroundStyle(.secondary).help("Open profile").accessibilityLabel("Open profile")
+            }
+        }
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .controlBackgroundColor)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.15)))
     }
     private func groupingField(_ detail: HubDetail) -> HubProjectField? {
         detail.fields.first { $0.id == projectFieldID } ?? detail.fields.first { ["status", "상태"].contains($0.name.lowercased()) } ?? detail.fields.first

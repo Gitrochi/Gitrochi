@@ -2119,3 +2119,37 @@
 "Proposed .gitch/flow.yml" = "제안하는 .gitch/flow.yml";
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "흐름 파일이 이미 있어 쓰지 않습니다. 제안을 직접 합치세요.";
 "Create flow file" = "흐름 파일 만들기";
+
+/* Organization profiles and pull request review */
+"Organization view" = "조직 보기";
+"Open profile" = "프로필 보기";
+"No members visible to this account." = "이 계정으로 볼 수 있는 구성원이 없습니다.";
+"Minimal access" = "최소 접근";
+"Guest" = "게스트";
+"Planner" = "기획자";
+"Reporter" = "리포터";
+"Developer" = "개발자";
+"Maintainer" = "관리자";
+"Owner" = "소유자";
+"Open requests" = "열린 요청";
+"New request" = "새 요청";
+"Connect an account" = "계정 연결";
+"Connect an account to load requests, comments and checks." = "계정을 연결하면 요청과 댓글, 검사 결과를 확인할 수 있습니다.";
+"Use @%@" = "@%1$@ 계정 사용";
+"Could not load requests" = "요청을 불러올 수 없습니다";
+"No matching requests" = "조건에 맞는 요청이 없습니다";
+"Try another filter or search." = "필터나 검색어를 바꿔 보세요.";
+"Checks" = "검사";
+"Refresh checks" = "검사 새로고침";
+"No checks reported for this commit." = "이 커밋에 보고된 검사가 없습니다.";
+"Open check result" = "검사 결과 열기";
+"No log output yet." = "아직 로그가 없습니다.";
+"Log truncated. Open the job in the browser for the full output." = "로그 일부를 표시했습니다. 전체 로그는 브라우저에서 확인하세요.";
+"Refresh log" = "로그 새로고침";
+"Connect an account to load checks." = "검사 결과를 보려면 계정을 연결하세요.";
+"No comments yet." = "아직 댓글이 없습니다.";
+"Check runs could not be loaded." = "검사 실행을 불러올 수 없습니다.";
+"Commit statuses could not be loaded." = "커밋 상태를 불러올 수 없습니다.";
+"Pipeline jobs could not be loaded." = "파이프라인 작업을 불러올 수 없습니다.";
+"Conversation" = "대화";
+"Pipeline #%lld" = "파이프라인 #%1$lld";

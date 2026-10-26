@@ -183,6 +183,25 @@ describe("markdown inlines", () => {
 });
 
 describe("markdown links for a repository", () => {
+  it("renders linked and HTML screenshots in tables using the selected request commit", () => {
+    const refs = markdownRefs({ provider: "github", remote: "origin", host: "github.com", path: "team/repo" }, "review-head");
+    const tree = parseMarkdown('| Markdown | HTML |\n| --- | --- |\n| [![Preview](docs/preview.png)](https://example.com/full) | <img src="https://github.com/team/repo/blob/main/docs/full.png" alt="Large > preview"> |', refs);
+    expect(urls(tree)).toEqual([
+      "https://example.com/full",
+      "https://raw.githubusercontent.com/team/repo/review-head/docs/preview.png",
+      "https://raw.githubusercontent.com/team/repo/main/docs/full.png",
+    ]);
+    expect(JSON.stringify(tree)).toContain("Large > preview");
+  });
+
+  it("resolves GitLab uploads separately from repository files and rejects unsafe images", () => {
+    const refs = markdownRefs({ provider: "gitlab", remote: "origin", host: "gitlab.example.com:8443", path: "team/repo" }, "review-head");
+    expect(urls(parseMarkdown('![upload](uploads/asset/image.png) ![file](docs/image.png) <img src="javascript:alert(1)"> ![escape](../../private.png) ![credentials](https://secret@example.com/image.png)', refs))).toEqual([
+      "https://gitlab.example.com:8443/team/repo/uploads/asset/image.png",
+      "https://gitlab.example.com:8443/team/repo/-/raw/review-head/docs/image.png",
+    ]);
+  });
+
   it("loads images only over https from the repository's own server", () => {
     const gh = { provider: "github" as const, remote: "origin", host: "github.com", path: "o/r" };
     expect(canLoadImage(gh, "https://github.com/user-attachments/assets/x")).toBe(true);

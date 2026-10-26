@@ -44,6 +44,36 @@ enum Hosting {
         precondition(HostingHubAPI.safeURL(gh, "https://evil.test/x") == nil)
         precondition(HostingHubAPI.safeURL(gh, "https://github.com/team/repo") != nil)
         precondition(HostingHubAPI.safeURL(gh, "https://user:pass@github.com/x") == nil)
+        let gitlabMember = HostingHubAPI.member(gl, ["id": 7, "username": "alex", "name": "Alex Kim", "access_level": 40, "avatar_url": "/uploads/alex.png", "web_url": "https://gitlab.test/alex"])
+        precondition(gitlabMember.id == "7" && gitlabMember.name == "Alex Kim" && gitlabMember.username == "alex" && gitlabMember.role == "Maintainer")
+        precondition(gitlabMember.avatarURL?.absoluteString == "https://gitlab.test/uploads/alex.png" && gitlabMember.profileURL?.absoluteString == "https://gitlab.test/alex")
+        let memberFallback = HostingHubAPI.member(gl, ["id": 8, "username": "sam", "name": " ", "avatar_url": "https://untrusted.test/photo.png", "web_url": "javascript:alert(1)"])
+        precondition(memberFallback.name == "sam" && memberFallback.role == "Member" && memberFallback.avatarURL == nil && memberFallback.profileURL?.absoluteString == "https://gitlab.test/sam")
+        let roleLabels = [5: "Minimal access", 10: "Guest", 15: "Planner", 20: "Reporter", 30: "Developer", 40: "Maintainer", 50: "Owner"]
+        for (level, label) in roleLabels { precondition(HostingHubAPI.member(gl, ["username": "sam", "access_level": level]).role == label) }
+        precondition(HostingHubAPI.safeAvatarURL(provider: .github, host: "github.com", "https://avatars.githubusercontent.com/u/7") != nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .github, host: "github.com", "https://avatars.githubusercontent.com.evil.test/u/7") == nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .gitlab, host: "gitlab.test", "https://user:pass@gitlab.test/alex.png") == nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .gitlab, host: "gitlab.test", "http://gitlab.test/alex.png") == nil)
+        var profileCalls = 0
+        Hosting.handler = { request in
+            profileCalls += 1
+            precondition(request.url?.absoluteString == "https://api.github.com/graphql")
+            let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any]
+            precondition(variables.count == 2 && variables["login0"] as? String == "alex" && variables["login1"] as? String == "sam")
+            precondition((body["query"] as! String).contains("member0:user(login:$login0)"))
+            return try json(["data": ["member0": ["name": "Alex Kim", "avatarUrl": "https://untrusted.test/photo.png", "url": "https://untrusted.test/alex"], "member1": NSNull()], "errors": [["message": "One public profile is unavailable"]]])
+        }
+        let profiles = try await HostingHubAPI.members(gh, rows: [["id": 7, "login": "alex", "avatar_url": "https://avatars.githubusercontent.com/u/7", "html_url": "https://github.com/alex"], ["id": 8, "login": "sam"]])
+        precondition(profileCalls == 1 && profiles.count == 2 && profiles[0].name == "Alex Kim" && profiles[1].name == "sam")
+        precondition(profiles[0].avatarURL?.host == "avatars.githubusercontent.com" && profiles[0].profileURL?.host == "github.com")
+        Hosting.handler = { _ in throw HostingError(status: 403) }
+        let unavailableProfiles = try await HostingHubAPI.members(gh, rows: [["id": 7, "login": "alex"]])
+        precondition(unavailableProfiles.first?.name == "alex" && unavailableProfiles.first?.profileURL?.absoluteString == "https://github.com/alex")
+        var profilesCurrent = true, staleProfiles = gh
+        staleProfiles.isCurrent = { profilesCurrent }
+        Hosting.handler = { _ in profilesCurrent = false; return try json(["data": ["member0": ["name": "Stale profile"]]]) }
+        do { _ = try await HostingHubAPI.members(staleProfiles, rows: [["id": 7, "login": "alex"]]); fatalError("Stale profiles accepted") } catch {}
         Hosting.handler = { r in calls.append(r); if r.url!.path.hasSuffix("/star") { throw HostingError(status: 404) }; return try json(["id": "g1", "description": "Example", "owner": ["login": "me"], "updated_at": "a", "files": ["a.txt": ["content": "first", "truncated": false]]]) }
         let detail = try await HostingHubAPI.detail(gh, section: .gists, item: HubItem(id: "g1", title: "Example"))
         precondition(detail.files.first?.content == "first" && detail.item.editable && detail.starred == false)
@@ -80,7 +110,7 @@ enum Hosting {
         catch { precondition(error.localizedDescription.contains("Projects could not be loaded") && !error.localizedDescription.contains("internal exception")) }
         let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
         precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
-        print("Hosting hub: pagination, stale context, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
+        print("Hosting hub: pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
     }
 }
 SWIFT

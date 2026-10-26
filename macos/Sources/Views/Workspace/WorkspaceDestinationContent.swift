@@ -106,8 +106,8 @@ private struct PullRequestsWorkspace: View {
     @Environment(\.openSettings) private var openSettings
     var body: some View {
         if let target = store.target {
-            AdaptiveWorkbenchSplit(listWidth: 290) {
-                List { PullRequestSection(target: target) }.listStyle(.sidebar)
+            AdaptiveWorkbenchSplit(listWidth: 320) {
+                PullRequestBrowser(target: target)
             } detail: {
                 Group {
                     if case .pullRequest(let number)? = store.selection {
@@ -126,7 +126,19 @@ private struct PullRequestsWorkspace: View {
                             }
                         }
                     } else {
-                        ContentUnavailableView("Select a pull request", systemImage: "arrow.triangle.pull", description: Text("Search the list, then review the conversation, files and merge checks here."))
+                        VStack(spacing: 18) {
+                            Image(systemName: "arrow.triangle.pull").font(.system(size: 32, weight: .light))
+                                .foregroundStyle(Color.accentColor).frame(width: 76, height: 76)
+                                .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 22))
+                            Text("Select a pull request").font(.title2.weight(.semibold))
+                            Text("Search the list, then review the conversation, files and merge checks here.")
+                                .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 390)
+                            WorkbenchFlow(spacing: 16) {
+                                Label("Conversation", systemImage: "bubble.left.and.bubble.right")
+                                Label("Changed files", systemImage: "doc.on.doc")
+                                Label("Checks", systemImage: "checkmark.circle")
+                            }.font(.caption).foregroundStyle(.secondary)
+                        }.padding(32).frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }.task { await store.loadPullRequests() }
