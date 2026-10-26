@@ -11,6 +11,7 @@ pub mod connect;
 pub mod detect;
 pub mod docker;
 pub mod doctor;
+pub mod executor;
 pub mod expr;
 pub mod gate_check;
 pub mod git;

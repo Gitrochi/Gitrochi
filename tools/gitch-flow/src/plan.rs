@@ -53,6 +53,8 @@ pub struct PNode {
     pub selection: Option<Vec<String>>,
     pub selection_reason: Option<String>,
     pub cache_key: Option<String>,
+    /// 셸 명령을 돌리는 곳(노드 → 환경 → local).
+    pub executor: crate::executor::Executor,
     pub src: Src,
 }
 
@@ -353,6 +355,7 @@ impl Ex<'_> {
             selection: None,
             selection_reason: None,
             cache_key: None,
+            executor: crate::executor::Executor::Local,
             src: n.src.clone(),
         });
     }
@@ -426,6 +429,37 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
         n.needs = needs;
     }
     let mut warnings = Vec::new();
+    // 실행 위치: 노드가 정한 것 → 환경이 정한 것 → local. 셸 명령을 돌리는 블록(cmd · test.*)만 따른다.
+    let env_exec = spec.environment(&env_name).and_then(|e| e.executor.clone());
+    for n in nodes.iter_mut() {
+        let raw = n.def.executor.clone().or_else(|| env_exec.clone());
+        let Some(raw) = raw else { continue };
+        let Ok(ex) = crate::executor::Executor::parse(&raw) else {
+            continue;
+        };
+        if ex.is_docker() {
+            if n.block == "cmd" || n.block.starts_with("test.") {
+                if !n.capabilities.iter().any(|c| c == "docker") {
+                    n.capabilities.push("docker".into());
+                }
+            } else if n.def.executor.is_some() {
+                warnings.push(tr(
+                    &format!(
+                        "{}: {} 블록은 엔진 안에서 돌아 executor 를 따르지 않습니다.",
+                        n.id, n.block
+                    ),
+                    &format!(
+                        "{}: {} runs inside the engine and ignores executor.",
+                        n.id, n.block
+                    ),
+                ));
+                continue;
+            } else {
+                continue;
+            }
+        }
+        n.executor = ex;
+    }
     // --only: 고른 노드와 그 노드가 기대는 노드만.
     if !opts.only.is_empty() {
         let mut keep: BTreeSet<String> = BTreeSet::new();
@@ -565,12 +599,13 @@ pub fn build(spec: &Spec, opts: &PlanOptions) -> Result<Plan, Vec<PlanError>> {
     ));
     for n in &nodes {
         hasher.push_str(&format!(
-            "{}|{}|{}|{}|{}\n",
+            "{}|{}|{}|{}|{}|{}\n",
             n.id,
             n.block,
             n.with,
             n.needs.join(","),
-            n.decision.as_str()
+            n.decision.as_str(),
+            n.executor.as_str()
         ));
     }
     let hash = util::sha256_hex(hasher.as_bytes())[..24].to_string();
@@ -647,6 +682,7 @@ impl Plan {
                 "selection": n.selection,
                 "selectionReason": n.selection_reason,
                 "cacheKey": n.cache_key,
+                "executor": n.executor.as_str(),
                 "src": n.src.show(),
             })).collect::<Vec<_>>(),
         })

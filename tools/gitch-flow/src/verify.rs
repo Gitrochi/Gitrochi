@@ -35,7 +35,7 @@ pub struct Verdict {
 }
 
 impl Verdict {
-    fn new(
+    pub fn new(
         rule: &'static str,
         title: String,
         observed: String,

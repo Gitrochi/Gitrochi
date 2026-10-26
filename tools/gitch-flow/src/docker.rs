@@ -188,11 +188,7 @@ pub fn start_service(
     let started = run(&arg_refs, 600_000);
     if started.code != Some(0) {
         let e = started.stderr.trim().to_string();
-        let code = if e.contains("pull") || e.contains("manifest") || e.contains("not found") {
-            "DOCKER-02"
-        } else {
-            "DOCKER-03"
-        };
+        let code = crate::blocks::container::docker_error_code(&e);
         remove_container(&name);
         return Err((code, cx.masker.mask(&e)));
     }

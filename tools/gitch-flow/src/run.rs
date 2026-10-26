@@ -343,6 +343,8 @@ struct Shared<'a> {
     base_env: Vec<(String, String)>,
     changed: Option<Vec<String>>,
     today: String,
+    /// Docker 데몬에 닿는지(처음 물을 때 한 번만 본다).
+    docker_ok: std::sync::OnceLock<Result<String, String>>,
 }
 
 fn roots(
@@ -439,6 +441,15 @@ fn run_node(
         out.code = Some("SPEC-04".into());
         return out;
     };
+    // Docker 에서 도는 노드: 데몬이 꺼져 있으면 이 노드만 거부하고 나머지는 계획대로.
+    if n.executor.is_docker() {
+        if let Err(e) = sh.docker_ok.get_or_init(crate::docker::available) {
+            out.state = NState::Rejected;
+            out.code = Some("DOCKER-01".into());
+            out.detail = Some(e.clone());
+            return out;
+        }
+    }
     // 비밀값: secrets: 와 env 의 ${{ secrets.X }} 를 풀고 마스킹 사전에 넣는다.
     let mut secret_vals = Map::new();
     let mut missing = Vec::new();
@@ -470,12 +481,19 @@ fn run_node(
         ));
         return out;
     }
+    // 컨테이너 안에서 도는 노드는 서비스를 네트워크 별칭 · host.docker.internal 로 본다.
+    let docker_exec = n.executor.is_docker();
+    let (svc_view, gateway) = if docker_exec || n.block == "docker.run" {
+        crate::executor::services_inside(services)
+    } else {
+        (services.clone(), false)
+    };
     let plain = Xc {
-        roots: roots(sh, n, services, outs, &out_dir, None),
+        roots: roots(sh, n, &svc_view, outs, &out_dir, None),
         root: &sh.spec.root,
     };
     let with_secret = Xc {
-        roots: roots(sh, n, services, outs, &out_dir, Some(&secret_vals)),
+        roots: roots(sh, n, &svc_view, outs, &out_dir, Some(&secret_vals)),
         root: &sh.spec.root,
     };
     let shell = n
@@ -510,11 +528,17 @@ fn run_node(
         }
     }
     let mut env = sh.base_env.clone();
+    // 흐름이 정한 환경 이름(컨테이너로 넘기는 것).
+    let mut flow_keys: Vec<String> = sh.spec.defaults.env.clone();
+    flow_keys.extend(["CI", "LANG", "LC_ALL", "TZ"].iter().map(|s| s.to_string()));
     if let Some(e) = sh.spec.environment(&sh.plan.env) {
         for (k, v) in &e.vars {
             set_env(&mut env, k, v);
+            flow_keys.push(k.clone());
         }
     }
+    flow_keys.extend(n.def.env.iter().map(|(k, _)| k.clone()));
+    flow_keys.extend(n.def.secrets.iter().map(|(k, _)| k.clone()));
     for (k, v) in &n.def.env {
         match expr::render(v, &with_secret, expr::Quote::None) {
             Ok(x) => set_env(&mut env, k, &x),
@@ -542,7 +566,10 @@ fn run_node(
         ("GITCH_FLOW_OUT", out_dir.to_string_lossy().to_string()),
     ] {
         set_env(&mut env, k, &v);
+        flow_keys.push(k.to_string());
     }
+    let present: HashSet<&str> = env.iter().map(|(k, _)| k.as_str()).collect();
+    flow_keys.retain(|k| present.contains(k.as_str()));
     let cwd = n
         .def
         .cwd
@@ -587,6 +614,29 @@ fn run_node(
         log_file: log_path.clone(),
         undo: Vec::new(),
         undo_log: sh.run_dir.join("undo.ndjson"),
+        exec: if docker_exec {
+            let common = crate::git::common_dir(&sh.spec.root).unwrap_or_default();
+            blocks::ExecCx {
+                executor: n.executor.clone(),
+                mounts: crate::executor::mounts(&[
+                    sh.spec.root.clone(),
+                    sh.run_dir.clone(),
+                    common,
+                ]),
+                repo_id: crate::trust::repo_id(&sh.spec.root),
+                network: services.as_object().and_then(|o| {
+                    o.values()
+                        .find_map(|v| v["network"].as_str().map(|x| x.to_string()))
+                }),
+                host_gateway: gateway,
+                forward: flow_keys,
+                explicit_shell: n.def.shell.is_some() || sh.spec.defaults.shell.is_some(),
+                seq: 0,
+            }
+        } else {
+            blocks::ExecCx::default()
+        },
+        project: sh.spec.project_name.clone(),
     };
     let result: NodeResult = block.run(&mut cx);
     out.undo = std::mem::take(&mut cx.undo);
@@ -774,6 +824,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
         base_env: base_env(spec, opts.ci),
         changed,
         today: util::rfc3339(util::now_ms())[..10].to_string(),
+        docker_ok: std::sync::OnceLock::new(),
     };
     let _ = &sh.today;
     let mut outs: BTreeMap<String, NodeOut> = BTreeMap::new();
@@ -1454,12 +1505,18 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
             );
             services::stop(r, &run_dir);
         }
+        let used_docker = plan.nodes.iter().any(|n| {
+            n.executor.is_docker()
+                || n.block.starts_with("docker.")
+                    && outs.get(&n.id).map(|o| o.started_ms > 0).unwrap_or(false)
+        });
         if !opts.keep_services
-            && plan.services.iter().any(|s| {
-                spec.service(s)
-                    .map(|d| d.uses != "process.service")
-                    .unwrap_or(false)
-            })
+            && (used_docker
+                || plan.services.iter().any(|s| {
+                    spec.service(s)
+                        .map(|d| d.uses != "process.service")
+                        .unwrap_or(false)
+                }))
         {
             crate::docker::cleanup_run(&run_id);
         }

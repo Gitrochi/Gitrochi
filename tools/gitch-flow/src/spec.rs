@@ -897,6 +897,11 @@ fn parse_node(v: &mut V, id: &str, val: &Value, path: &str, depth: usize) -> Opt
     let executor = m
         .get("executor")
         .and_then(|x| v.text(x, &join(path, "executor")));
+    if let Some(e) = &executor {
+        if let Err(msg) = crate::executor::Executor::parse(e) {
+            v.err("SPEC-03", &join(path, "executor"), msg);
+        }
+    }
     let timeout_ms = m
         .get("timeout")
         .and_then(|x| v.duration(x, &join(path, "timeout")));
@@ -1281,7 +1286,14 @@ fn parse_env(v: &mut V, name: &str, val: &Value, path: &str) -> Option<Environme
         class,
         executor: m
             .get("executor")
-            .and_then(|x| v.text(x, &join(path, "executor"))),
+            .and_then(|x| v.text(x, &join(path, "executor")))
+            .filter(|e| match crate::executor::Executor::parse(e) {
+                Ok(_) => true,
+                Err(msg) => {
+                    v.err("SPEC-03", &join(path, "executor"), msg);
+                    false
+                }
+            }),
         connection: m
             .get("connection")
             .and_then(|x| v.text(x, &join(path, "connection"))),

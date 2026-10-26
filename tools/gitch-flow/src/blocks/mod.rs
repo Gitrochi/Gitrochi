@@ -4,6 +4,7 @@
 pub mod check;
 pub mod ci;
 pub mod cmd;
+pub mod container;
 pub mod gate;
 pub mod test;
 
@@ -170,6 +171,38 @@ pub struct NodeCx<'a> {
     pub undo: Vec<UndoStep>,
     /// 실행 폴더의 `undo.ndjson`(엔진이 멈췄을 때 남은 변경을 알아보는 기록).
     pub undo_log: PathBuf,
+    /// 셸 명령을 돌리는 곳(local · docker:<이미지>).
+    pub exec: ExecCx,
+    pub project: Option<String>,
+}
+
+/// 셸 명령을 컨테이너에서 돌릴 때 필요한 것.
+#[derive(Debug, Clone)]
+pub struct ExecCx {
+    pub executor: crate::executor::Executor,
+    pub mounts: Vec<PathBuf>,
+    pub repo_id: String,
+    pub network: Option<String>,
+    pub host_gateway: bool,
+    /// 컨테이너로 넘길 환경 이름(흐름이 정한 것 · 허용 목록).
+    pub forward: Vec<String>,
+    pub explicit_shell: bool,
+    pub seq: u32,
+}
+
+impl Default for ExecCx {
+    fn default() -> Self {
+        ExecCx {
+            executor: crate::executor::Executor::Local,
+            mounts: Vec::new(),
+            repo_id: String::new(),
+            network: None,
+            host_gateway: false,
+            forward: Vec::new(),
+            explicit_shell: false,
+            seq: 0,
+        }
+    }
 }
 
 /// 명령 실행 결과와 출력.
@@ -207,11 +240,14 @@ impl NodeCx<'_> {
         );
     }
 
-    /// 셸 스크립트를 돌리고 출력을 로그 · 이벤트로 흘려 보낸다.
+    /// 셸 스크립트를 돌리고 출력을 로그 · 이벤트로 흘려 보낸다(실행 위치가 docker 면 컨테이너 안에서).
     pub fn run_script(&mut self, script: &str, extra_env: &[(String, String)]) -> Captured {
-        let (program, args) = process::shell_command(&self.shell, script);
         let mut env = self.env.clone();
         env.extend(extra_env.iter().cloned());
+        if let crate::executor::Executor::Docker { image } = self.exec.executor.clone() {
+            return self.run_in_container(&image, script, env, extra_env);
+        }
+        let (program, args) = process::shell_command(&self.shell, script);
         let spec = ProcSpec {
             program,
             args,
@@ -222,6 +258,65 @@ impl NodeCx<'_> {
             settle_ms: 5000,
         };
         self.run_proc(&spec)
+    }
+
+    fn run_in_container(
+        &mut self,
+        image: &str,
+        script: &str,
+        mut env: Vec<(String, String)>,
+        extra_env: &[(String, String)],
+    ) -> Captured {
+        use crate::executor;
+        self.exec.seq += 1;
+        let name = format!(
+            "gitch-flow-{}-{}-{}",
+            crate::store::safe(&self.run_id),
+            crate::store::safe(&self.id),
+            self.exec.seq
+        )
+        .to_ascii_lowercase();
+        let mounts = self.exec.mounts.clone();
+        for (_, v) in env.iter_mut() {
+            *v = executor::rewrite_paths(v, &mounts);
+        }
+        env.push((
+            "GITCH_FLOW_SCRIPT".into(),
+            executor::rewrite_paths(script, &mounts),
+        ));
+        let mut forward = self.exec.forward.clone();
+        forward.extend(extra_env.iter().map(|(k, _)| k.clone()));
+        forward.push("GITCH_FLOW_SCRIPT".into());
+        let args = executor::docker_args(&executor::RunArgs {
+            image,
+            name: &name,
+            run_id: &self.run_id,
+            node: &self.id,
+            repo_id: &self.exec.repo_id,
+            mounts: &mounts,
+            workdir: &self.cwd,
+            forward,
+            network: self.exec.network.clone(),
+            host_gateway: self.exec.host_gateway,
+            pull: "missing",
+            command: executor::shell_command(&self.shell, self.exec.explicit_shell),
+        });
+        self.note(&format!("docker {image} ({name})"));
+        let spec = ProcSpec {
+            program: crate::docker::bin(),
+            args,
+            cwd: self.cwd.clone(),
+            env,
+            clear_env: true,
+            timeout_ms: self.timeout_ms,
+            settle_ms: 5000,
+        };
+        let c = self.run_proc(&spec);
+        if c.outcome.cancelled || c.outcome.timed_out || c.outcome.hung {
+            // docker CLI 를 끝내도 컨테이너는 남을 수 있다.
+            crate::docker::remove_container(&name);
+        }
+        c
     }
 
     pub fn run_proc(&mut self, spec: &ProcSpec) -> Captured {
@@ -345,10 +440,22 @@ static GATE: gate::Manual = gate::Manual;
 static HTTP: check::Http = check::Http;
 static PORT: check::Port = check::Port;
 static VERSION: check::Version = check::Version;
+static DOCKER_RUN: container::Run = container::Run;
+static DOCKER_BUILD: container::Build = container::Build;
+static DOCKER_PUSH: container::Push = container::Push;
 
 /// 내장 블록 전체.
 pub fn all() -> Vec<&'static dyn Block> {
-    let mut v: Vec<&'static dyn Block> = vec![&CMD, &GATE, &HTTP, &PORT, &VERSION];
+    let mut v: Vec<&'static dyn Block> = vec![
+        &CMD,
+        &GATE,
+        &HTTP,
+        &PORT,
+        &VERSION,
+        &DOCKER_RUN,
+        &DOCKER_BUILD,
+        &DOCKER_PUSH,
+    ];
     for t in test::RUNNERS {
         v.push(t);
     }
