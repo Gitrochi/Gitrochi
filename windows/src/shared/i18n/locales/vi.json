@@ -488,7 +488,6 @@
  "No new commits to merge.": "Không có commit mới để merge.",
  "No newline at end of file": "Không có ký tự xuống dòng ở cuối tệp",
  "No one has approved yet.": "Chưa có ai phê duyệt.",
- "No open {0}": "Không có {0} đang mở",
  "No permission (403): {0}": "Không có quyền (403): {0}",
  "No remote repository.": "Không có kho lưu trữ từ xa.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Không có kho lưu trữ từ xa. Hãy thêm trước trong terminal bằng `git remote add origin <URL>`.",
@@ -1130,5 +1129,18 @@
  "Choose the account for this repository": "Chọn tài khoản cho kho lưu trữ này",
  "Filter branches and tags": "Lọc nhánh và thẻ",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Dùng nhánh, thẻ hoặc ID commit, hoặc chọn một nhánh ở bên trái.",
- "No matching branches": "Không có nhánh phù hợp"
+ "No matching branches": "Không có nhánh phù hợp",
+ "Search pull requests": "Tìm pull request",
+ "Search merge requests": "Tìm merge request",
+ "Clear search": "Xóa tìm kiếm",
+ "Filter": "Bộ lọc",
+ "No pull requests match this filter.": "Không có pull request nào khớp với bộ lọc này.",
+ "No merge requests match this filter.": "Không có merge request nào khớp với bộ lọc này.",
+ "Open in Pull requests": "Mở trong Pull request",
+ "Open in Merge requests": "Mở trong Merge request",
+ "Closed": "Đã đóng",
+ "Merged": "Đã hợp nhất",
+ "Created by me": "Do tôi tạo",
+ "Review requested": "Được yêu cầu xem xét",
+ "Pull requests": "Pull request"
 }

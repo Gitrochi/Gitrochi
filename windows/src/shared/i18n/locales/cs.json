@@ -499,7 +499,6 @@
  "No new commits to merge.": "Žádné nové commity ke sloučení.",
  "No newline at end of file": "Na konci souboru chybí nový řádek",
  "No one has approved yet.": "Zatím nikdo neschválil.",
- "No open {0}": "Žádné otevřené {0}",
  "No permission (403): {0}": "Chybí oprávnění (403): {0}",
  "No remote repository.": "Žádný vzdálený repozitář.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Žádný vzdálený repozitář. Nejprve ho přidejte v terminálu příkazem `git remote add origin <URL>`.",
@@ -1156,5 +1155,18 @@
  "Choose the account for this repository": "Vyberte účet pro tento repozitář",
  "Filter branches and tags": "Filtrovat větve a tagy",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Použijte větve, tagy nebo ID commitů, nebo vyberte větev vlevo.",
- "No matching branches": "Žádné odpovídající větve"
+ "No matching branches": "Žádné odpovídající větve",
+ "Search pull requests": "Hledat pull requesty",
+ "Search merge requests": "Hledat merge requesty",
+ "Clear search": "Vymazat hledání",
+ "Filter": "Filtr",
+ "No pull requests match this filter.": "Tomuto filtru neodpovídají žádné pull requesty.",
+ "No merge requests match this filter.": "Tomuto filtru neodpovídají žádné merge requesty.",
+ "Open in Pull requests": "Otevřít v Pull requestech",
+ "Open in Merge requests": "Otevřít v Merge requestech",
+ "Closed": "Uzavřené",
+ "Merged": "Sloučené",
+ "Created by me": "Vytvořené mnou",
+ "Review requested": "Vyžádána revize",
+ "Pull requests": "Pull requesty"
 }

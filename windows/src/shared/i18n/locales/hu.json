@@ -501,7 +501,6 @@
  "No new commits to merge.": "Nincs egyesítendő új commit.",
  "No newline at end of file": "Nincs újsor a fájl végén",
  "No one has approved yet.": "Még senki sem hagyta jóvá.",
- "No open {0}": "Nincs nyitott {0}",
  "No permission (403): {0}": "Nincs jogosultság (403): {0}",
  "No remote repository.": "Nincs távoli tároló.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Nincs távoli tároló. Előbb adjon hozzá egyet egy terminálban: `git remote add origin <URL>`.",
@@ -1158,5 +1157,18 @@
  "Choose the account for this repository": "Válassza ki a tárolóhoz használt fiókot",
  "Filter branches and tags": "Ágak és címkék szűrése",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Használjon ágakat, címkéket vagy commit-azonosítókat, vagy válasszon egy ágat a bal oldalon.",
- "No matching branches": "Nincs egyező ág"
+ "No matching branches": "Nincs egyező ág",
+ "Search pull requests": "Pull requestek keresése",
+ "Search merge requests": "Merge requestek keresése",
+ "Clear search": "Keresés törlése",
+ "Filter": "Szűrő",
+ "No pull requests match this filter.": "Egy pull request sem felel meg ennek a szűrőnek.",
+ "No merge requests match this filter.": "Egy merge request sem felel meg ennek a szűrőnek.",
+ "Open in Pull requests": "Megnyitás a Pull requestekben",
+ "Open in Merge requests": "Megnyitás a Merge requestekben",
+ "Closed": "Lezárt",
+ "Merged": "Egyesített",
+ "Created by me": "Általam létrehozott",
+ "Review requested": "Felülvizsgálat kérve",
+ "Pull requests": "Pull requestek"
 }

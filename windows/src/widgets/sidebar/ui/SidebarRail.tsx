@@ -1,6 +1,5 @@
 import { Archive, Cloud, Folder, GitBranch, GitPullRequest, PanelLeftOpen, Pin, Tag as TagIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { providerInfo } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -16,7 +15,7 @@ export function SidebarRail({ store, openSettings }: { store: RepoStore; openSet
     items.push({
       id: "prs",
       icon: <GitPullRequest size={16} />,
-      title: providerInfo[store.target.provider].requestsTitle,
+      title: t(store.target.provider === "gitlab" ? "Merge requests" : "Pull requests"),
       count: store.prState.kind === "loaded" ? store.pullRequests.length : null,
     });
   }

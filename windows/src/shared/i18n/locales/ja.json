@@ -511,7 +511,6 @@
  "No new commits to merge.": "マージする新しいコミットはありません。",
  "No newline at end of file": "ファイル末尾に改行がありません",
  "No one has approved yet.": "まだ誰も承認していません。",
- "No open {0}": "開いている {0} はありません",
  "No permission (403): {0}": "権限がありません (403): {0}",
  "No remote repository.": "リモートリポジトリがありません。",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "リモートリポジトリがありません。先にターミナルで `git remote add origin <URL>` を実行して追加してください。",
@@ -1175,5 +1174,18 @@
  "Choose the account for this repository": "このリポジトリで使うアカウントを選択",
  "Filter branches and tags": "ブランチとタグを絞り込む",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "ブランチ、タグ、コミット ID を入力するか、左のブランチを選んでください。",
- "No matching branches": "一致するブランチはありません"
+ "No matching branches": "一致するブランチはありません",
+ "Search pull requests": "プルリクエストを検索",
+ "Search merge requests": "マージリクエストを検索",
+ "Clear search": "検索をクリア",
+ "Filter": "フィルター",
+ "No pull requests match this filter.": "このフィルターに一致するプルリクエストはありません。",
+ "No merge requests match this filter.": "このフィルターに一致するマージリクエストはありません。",
+ "Open in Pull requests": "プルリクエストで開く",
+ "Open in Merge requests": "マージリクエストで開く",
+ "Closed": "クローズ",
+ "Merged": "マージ済み",
+ "Created by me": "自分が作成",
+ "Review requested": "レビュー依頼",
+ "Pull requests": "プルリクエスト"
 }

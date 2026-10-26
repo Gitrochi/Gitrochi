@@ -37,7 +37,7 @@ function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; open
   const selected = store.selection?.kind === "pullRequest";
   const diff = selected && store.diffSource?.kind === "review";
   return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><PullRequestSection store={store} target={target} openSettings={openSettings} /></div>
+    <div className="workspace-pr-list"><PullRequestSection store={store} target={target} openSettings={openSettings} onPage /></div>
     <div className="workspace-pr-detail col">
       {!selected ? <Empty title={t("Select a pull request")} detail={t("Search the list, then review the conversation, files and merge checks here.")} /> : <>
         {/* 파일을 확인하는 동안에도 대화를 유지해 작성 중인 댓글을 보존한다. */}

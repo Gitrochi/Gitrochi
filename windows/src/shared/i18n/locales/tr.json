@@ -501,7 +501,6 @@
  "No new commits to merge.": "Birleştirilecek yeni commit yok.",
  "No newline at end of file": "Dosya sonunda yeni satır yok",
  "No one has approved yet.": "Henüz kimse onaylamadı.",
- "No open {0}": "Açık {0} yok",
  "No permission (403): {0}": "İzin yok (403): {0}",
  "No remote repository.": "Uzak depo yok.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Uzak depo yok. Önce terminalde `git remote add origin <URL>` ile bir tane ekleyin.",
@@ -1163,5 +1162,18 @@
  "Choose the account for this repository": "Bu depo için hesabı seçin",
  "Filter branches and tags": "Dalları ve etiketleri süz",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Dal, etiket veya commit kimliği kullanın ya da soldan bir dal seçin.",
- "No matching branches": "Eşleşen dal yok"
+ "No matching branches": "Eşleşen dal yok",
+ "Search pull requests": "Pull request'lerde ara",
+ "Search merge requests": "Merge request'lerde ara",
+ "Clear search": "Aramayı temizle",
+ "Filter": "Süzgeç",
+ "No pull requests match this filter.": "Bu süzgece uyan pull request yok.",
+ "No merge requests match this filter.": "Bu süzgece uyan merge request yok.",
+ "Open in Pull requests": "Pull request'lerde aç",
+ "Open in Merge requests": "Merge request'lerde aç",
+ "Closed": "Kapalı",
+ "Merged": "Birleştirilmiş",
+ "Created by me": "Benim oluşturduklarım",
+ "Review requested": "İnceleme istendi",
+ "Pull requests": "Pull request'ler"
 }

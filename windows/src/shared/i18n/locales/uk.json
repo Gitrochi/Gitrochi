@@ -510,7 +510,6 @@
  "No new commits to merge.": "Немає нових комітів для злиття.",
  "No newline at end of file": "Немає символу нового рядка в кінці файлу",
  "No one has approved yet.": "Ще ніхто не схвалив.",
- "No open {0}": "Відкритих {0} немає",
  "No permission (403): {0}": "Немає дозволу (403): {0}",
  "No remote repository.": "Немає віддаленого репозиторію.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Немає віддаленого репозиторію. Спершу додайте його в терміналі командою `git remote add origin <URL>`.",
@@ -1174,5 +1173,18 @@
  "Choose the account for this repository": "Виберіть обліковий запис для цього репозиторію",
  "Filter branches and tags": "Фільтр гілок і тегів",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Використовуйте гілки, теги або ID комітів, або виберіть гілку ліворуч.",
- "No matching branches": "Немає відповідних гілок"
+ "No matching branches": "Немає відповідних гілок",
+ "Search pull requests": "Пошук pull-запитів",
+ "Search merge requests": "Пошук merge-запитів",
+ "Clear search": "Очистити пошук",
+ "Filter": "Фільтр",
+ "No pull requests match this filter.": "Немає pull-запитів, що відповідають цьому фільтру.",
+ "No merge requests match this filter.": "Немає merge-запитів, що відповідають цьому фільтру.",
+ "Open in Pull requests": "Відкрити в Pull-запитах",
+ "Open in Merge requests": "Відкрити в Merge-запитах",
+ "Closed": "Закриті",
+ "Merged": "Злиті",
+ "Created by me": "Створені мною",
+ "Review requested": "Запитано рецензію",
+ "Pull requests": "Pull-запити"
 }

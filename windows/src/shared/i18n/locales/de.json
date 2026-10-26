@@ -499,7 +499,6 @@
  "No new commits to merge.": "Keine neuen Commits zum Mergen.",
  "No newline at end of file": "Kein Zeilenumbruch am Dateiende",
  "No one has approved yet.": "Noch keine Genehmigungen.",
- "No open {0}": "Keine offenen {0}",
  "No permission (403): {0}": "Keine Berechtigung (403): {0}",
  "No remote repository.": "Kein Remote-Repository vorhanden.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Kein Remote-Repository vorhanden. Fügen Sie zuerst in einem Terminal mit `git remote add origin <URL>` eines hinzu.",
@@ -1151,5 +1150,18 @@
  "Choose the account for this repository": "Konto für dieses Repository auswählen",
  "Filter branches and tags": "Branches und Tags filtern",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Verwenden Sie Branches, Tags oder Commit-IDs, oder wählen Sie links einen Branch.",
- "No matching branches": "Keine passenden Branches"
+ "No matching branches": "Keine passenden Branches",
+ "Search pull requests": "Pull Requests durchsuchen",
+ "Search merge requests": "Merge Requests durchsuchen",
+ "Clear search": "Suche löschen",
+ "Filter": "Filter",
+ "No pull requests match this filter.": "Keine Pull Requests passen zu diesem Filter.",
+ "No merge requests match this filter.": "Keine Merge Requests passen zu diesem Filter.",
+ "Open in Pull requests": "In Pull Requests öffnen",
+ "Open in Merge requests": "In Merge Requests öffnen",
+ "Closed": "Geschlossen",
+ "Merged": "Zusammengeführt",
+ "Created by me": "Von mir erstellt",
+ "Review requested": "Review angefordert",
+ "Pull requests": "Pull Requests"
 }

@@ -482,7 +482,6 @@
  "No new commits to merge.": "Tidak ada commit baru untuk di-merge.",
  "No newline at end of file": "Tidak ada baris baru di akhir file",
  "No one has approved yet.": "Belum ada yang menyetujui.",
- "No open {0}": "Tidak ada {0} yang terbuka",
  "No permission (403): {0}": "Tidak ada izin (403): {0}",
  "No remote repository.": "Tidak ada repositori remote.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Tidak ada repositori remote. Tambahkan dulu di terminal dengan `git remote add origin <URL>`.",
@@ -1126,5 +1125,18 @@
  "Choose the account for this repository": "Pilih akun untuk repositori ini",
  "Filter branches and tags": "Saring cabang dan tag",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Gunakan cabang, tag, atau ID commit, atau pilih cabang di sebelah kiri.",
- "No matching branches": "Tidak ada cabang yang cocok"
+ "No matching branches": "Tidak ada cabang yang cocok",
+ "Search pull requests": "Cari pull request",
+ "Search merge requests": "Cari merge request",
+ "Clear search": "Hapus pencarian",
+ "Filter": "Filter",
+ "No pull requests match this filter.": "Tidak ada pull request yang cocok dengan filter ini.",
+ "No merge requests match this filter.": "Tidak ada merge request yang cocok dengan filter ini.",
+ "Open in Pull requests": "Buka di Pull request",
+ "Open in Merge requests": "Buka di Merge request",
+ "Closed": "Ditutup",
+ "Merged": "Digabungkan",
+ "Created by me": "Dibuat oleh saya",
+ "Review requested": "Tinjauan diminta",
+ "Pull requests": "Pull request"
 }

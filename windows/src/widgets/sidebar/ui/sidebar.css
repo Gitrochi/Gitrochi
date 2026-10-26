@@ -140,3 +140,75 @@
 .rail-item:hover .rail-flyout {
   display: flex;
 }
+
+/* A list's search field and filter icon (pull requests, issues) */
+.list-search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.list-search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 4px 0 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--input);
+}
+
+.list-search-field:focus-within {
+  border-color: var(--accent);
+}
+
+.list-search-field > svg {
+  flex: none;
+}
+
+.list-search-field > input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.list-search-clear,
+.list-filter-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.list-search-clear {
+  width: 18px;
+  height: 18px;
+}
+
+.list-filter-button {
+  width: 26px;
+  height: 26px;
+}
+
+.list-search-clear:hover,
+.list-filter-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.list-filter-button.on {
+  color: var(--accent);
+}

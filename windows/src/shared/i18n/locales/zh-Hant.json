@@ -511,7 +511,6 @@
  "No new commits to merge.": "沒有可合併的新提交。",
  "No newline at end of file": "檔案結尾沒有換行字元",
  "No one has approved yet.": "尚無人核准。",
- "No open {0}": "沒有開啟中的 {0}",
  "No permission (403): {0}": "沒有權限 (403)：{0}",
  "No remote repository.": "沒有遠端存放庫。",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "沒有遠端存放庫。請先在終端機中以 `git remote add origin <URL>` 新增。",
@@ -1176,5 +1175,18 @@
  "Choose the account for this repository": "選擇此存放庫使用的帳號",
  "Filter branches and tags": "篩選分支和標籤",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "使用分支、標籤或提交 ID，或在左側選擇一個分支。",
- "No matching branches": "沒有符合的分支"
+ "No matching branches": "沒有符合的分支",
+ "Search pull requests": "搜尋拉取請求",
+ "Search merge requests": "搜尋合併請求",
+ "Clear search": "清除搜尋",
+ "Filter": "篩選",
+ "No pull requests match this filter.": "沒有符合此篩選條件的拉取請求。",
+ "No merge requests match this filter.": "沒有符合此篩選條件的合併請求。",
+ "Open in Pull requests": "在拉取請求中開啟",
+ "Open in Merge requests": "在合併請求中開啟",
+ "Closed": "已關閉",
+ "Merged": "已合併",
+ "Created by me": "我建立的",
+ "Review requested": "請求審查",
+ "Pull requests": "拉取請求"
 }

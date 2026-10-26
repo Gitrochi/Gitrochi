@@ -1,30 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RequestScope } from "@/entities/hosting";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { accountHost, providerInfo, type RepoTarget } from "@/entities/git";
 import { accounts } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
+import { IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
+import { ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
 
-export function PullRequestSection({ store, target, openSettings }: { store: RepoStore; target: RepoTarget; openSettings: () => void }) {
+/**
+ * The repository's pull/merge requests: in the repository sidebar, and as the list of the Pull requests page (onPage).
+ * (macOS: PullRequestSection.swift)
+ */
+export function PullRequestSection({ store, target, openSettings, onPage = false }: { store: RepoStore; target: RepoTarget; openSettings: () => void; onPage?: boolean }) {
   useObserve(accounts);
   useObserve(store.ci);
   const info = providerInfo[target.provider];
+  const gitlab = target.provider === "gitlab";
+  const openPage = t(gitlab ? "Open in Merge requests" : "Open in Pull requests");
   // An account on this very host cannot be an alias for it, so only other servers are worth a try.
   const other = accounts.accountsFor(target.provider).find((a) => accountHost(a) !== target.host);
   const st = store.prState;
-  const [search, setSearch] = useState("");
+  const scope = store.requestQuery.scope;
+  const [search, setSearch] = useState(store.requestQuery.search);
+  useEffect(() => setSearch(store.requestQuery.search), [store.requestQuery.search]);
+  const filters: { value: RequestScope; title: string }[] = [
+    { value: "open", title: t("Open") }, { value: "closed", title: t("Closed") }, { value: "merged", title: t("Merged") },
+    { value: "mine", title: t("Created by me") }, { value: "reviewRequested", title: t("Review requested") },
+  ];
   return (
     <Section
       id="prs"
-      title={t(target.provider === "gitlab" ? "Merge requests" : "Pull requests")}
+      title={t(gitlab ? "Merge requests" : "Pull requests")}
       count={st.kind === "loaded" ? store.pullRequests.length : undefined}
+      collapsible={!onPage}
       actions={
         <>
+          {st.kind === "loading" && store.pullRequests.length > 0 && <Spinner size={11} />}
+          {!onPage && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("pullRequests")} />}
           <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
           <IconButton
             small
@@ -39,14 +55,18 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
         </>
       }
     >
-      <form className="col" style={{ padding: "4px 6px", gap: 4 }} onSubmit={(e) => { e.preventDefault(); void store.filterPullRequests(store.requestQuery.scope, search); }}>
-        <select aria-label={t("Request filter")} value={store.requestQuery.scope} onChange={(e) => void store.filterPullRequests(e.target.value as RequestScope, search)}>
-          {(["open", "closed", "merged", "mine", "reviewRequested"] as const).map((scope) => <option key={scope} value={scope}>{t(scope === "reviewRequested" ? "Review requested" : scope === "mine" ? "Created by me" : scope === "open" ? "Open" : scope === "closed" ? "Closed" : "Merged")}</option>)}
-        </select>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("Search requests (Enter)")} aria-label={t("Search requests")} />
-        {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
-      </form>
+      <ListSearchRow
+        prompt={t(gitlab ? "Search merge requests" : "Search pull requests")}
+        text={search}
+        onText={setSearch}
+        filters={filters}
+        selection={scope}
+        defaultFilter="open"
+        onSearch={(text) => void store.filterPullRequests(scope, text)}
+        onFilter={(value) => void store.filterPullRequests(value, search)}
+      />
       <div style={{ padding: "0 6px" }}>
+        {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
         {st.kind === "needsAccount" && (
           <div className="col" style={{ gap: 4, alignItems: "flex-start", padding: "2px 0 4px" }}>
             {other && (
@@ -54,7 +74,7 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
                 {t("Try with the connected account (@{0})", other.username)}</button>
             )}
             <button className="link" onClick={openSettings}>
-              {target.provider === "gitlab" ? t("Connect a self-hosted GitLab ({0}) account…", target.host) : t("Connect a GitHub account…")}
+              {gitlab ? t("Connect a self-hosted GitLab ({0}) account…", target.host) : t("Connect a GitHub account…")}
             </button>
           </div>
         )}
@@ -64,16 +84,18 @@ export function PullRequestSection({ store, target, openSettings }: { store: Rep
           </div>
         )}
         {st.kind === "loading" && !store.pullRequests.length && <Spinner size={12} />}
-        {st.kind === "loaded" && !store.pullRequests.length && <div className="muted">{t("No open {0}", info.requestShort)}</div>}
+        {st.kind === "loaded" && !store.pullRequests.length && <div className="muted">{t(gitlab ? "No merge requests match this filter." : "No pull requests match this filter.")}</div>}
       </div>
       {store.pullRequests.map((pr) => (
         <div
           key={pr.number}
           className="side-row"
+          data-request={pr.number}
           style={{ alignItems: "flex-start", background: store.selection?.kind === "pullRequest" && store.selection.number === pr.number ? "var(--select)" : undefined }}
           onClick={() => store.select({ kind: "pullRequest", number: pr.number })}
           onContextMenu={(e) =>
             showContextMenu(e, [
+              ...(onPage ? [] : [{ label: openPage, onClick: () => { store.navigate("pullRequests"); store.select({ kind: "pullRequest", number: pr.number }); } }, "divider"] as MenuItem[]),
               { label: t("Check out branch"), onClick: () => void store.checkoutPullRequest(pr) },
               { label: t("Open in browser"), onClick: () => store.openUrl(pr.url) },
               { label: t("Copy link"), onClick: () => store.copy(pr.url) },

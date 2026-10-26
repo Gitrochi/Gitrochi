@@ -505,7 +505,6 @@
  "No new commits to merge.": "ไม่มีคอมมิตใหม่ให้เมิร์จ",
  "No newline at end of file": "ไม่มีบรรทัดใหม่ท้ายไฟล์",
  "No one has approved yet.": "ยังไม่มีใครอนุมัติ",
- "No open {0}": "ไม่มี {0} ที่เปิดอยู่",
  "No permission (403): {0}": "ไม่มีสิทธิ์ (403): {0}",
  "No remote repository.": "ไม่มีรีโพสิทอรีรีโมต",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "ไม่มีรีโพสิทอรีรีโมต เพิ่มรีโมตก่อนในเทอร์มินัลด้วย `git remote add origin <URL>`",
@@ -1170,5 +1169,18 @@
  "Choose the account for this repository": "เลือกบัญชีสำหรับรีโพสิทอรีนี้",
  "Filter branches and tags": "กรองสาขาและแท็ก",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "ใช้สาขา แท็ก หรือรหัสคอมมิต หรือเลือกสาขาทางซ้าย",
- "No matching branches": "ไม่มีสาขาที่ตรงกัน"
+ "No matching branches": "ไม่มีสาขาที่ตรงกัน",
+ "Search pull requests": "ค้นหา pull request",
+ "Search merge requests": "ค้นหา merge request",
+ "Clear search": "ล้างการค้นหา",
+ "Filter": "ตัวกรอง",
+ "No pull requests match this filter.": "ไม่มี pull request ที่ตรงกับตัวกรองนี้",
+ "No merge requests match this filter.": "ไม่มี merge request ที่ตรงกับตัวกรองนี้",
+ "Open in Pull requests": "เปิดใน Pull requests",
+ "Open in Merge requests": "เปิดใน Merge requests",
+ "Closed": "ปิดแล้ว",
+ "Merged": "รวมแล้ว",
+ "Created by me": "ที่ฉันสร้าง",
+ "Review requested": "ขอให้รีวิว",
+ "Pull requests": "Pull requests"
 }

@@ -484,7 +484,6 @@
  "No new commits to merge.": "Geen nieuwe commits om te mergen.",
  "No newline at end of file": "Geen nieuwe regel aan het einde van het bestand",
  "No one has approved yet.": "Nog niemand heeft goedgekeurd.",
- "No open {0}": "Geen open {0}",
  "No permission (403): {0}": "Geen toestemming (403): {0}",
  "No remote repository.": "Geen remote repository.",
  "No remote repository. Add one first in a terminal with `git remote add origin <URL>`.": "Geen remote repository. Voeg er eerst een toe in een terminal met `git remote add origin <URL>`.",
@@ -1125,5 +1124,18 @@
  "Choose the account for this repository": "Kies het account voor deze repository",
  "Filter branches and tags": "Branches en tags filteren",
  "Use branches, tags or commit IDs, or pick a branch on the left.": "Gebruik branches, tags of commit-ID's, of kies links een branch.",
- "No matching branches": "Geen overeenkomende branches"
+ "No matching branches": "Geen overeenkomende branches",
+ "Search pull requests": "Pull requests zoeken",
+ "Search merge requests": "Merge requests zoeken",
+ "Clear search": "Zoekopdracht wissen",
+ "Filter": "Filter",
+ "No pull requests match this filter.": "Geen pull requests komen overeen met dit filter.",
+ "No merge requests match this filter.": "Geen merge requests komen overeen met dit filter.",
+ "Open in Pull requests": "Openen in Pull requests",
+ "Open in Merge requests": "Openen in Merge requests",
+ "Closed": "Gesloten",
+ "Merged": "Samengevoegd",
+ "Created by me": "Door mij gemaakt",
+ "Review requested": "Review gevraagd",
+ "Pull requests": "Pull requests"
 }
