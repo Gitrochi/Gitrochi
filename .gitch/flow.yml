@@ -1,0 +1,53 @@
+# Gitrochi 자신의 흐름 — gitch flow run <흐름> · gitch test · 앱의 흐름 탭(문서: docs/flow/README.md).
+# 처음 한 번 사람이 터미널에서 gitch flow trust 로 명령을 보고 승인한다. push 전에 확인하려면 gitch flow gate on.
+version: 1
+project: { name: gitrochi }
+defaults:
+  timeout: 30m
+
+suites:
+  engine:
+    use: test.cargo
+    with: { cwd: tools/gitch-flow, args: ["--locked"] }
+    select: { affected: true }
+    paths: ["tools/gitch-flow/**"]
+    tags: [unit, engine]
+  windows:
+    use: test.vitest
+    with: { cwd: windows }
+    select: { affected: true }
+    paths: ["windows/**"]
+    tags: [unit, windows]
+
+flows:
+  pre-push:
+    description: Quick checks before a push, only for what the branch touched
+    trigger: [manual, pre-push]
+    failFast: true
+    nodes:
+      rules: sh .githooks/rules.sh range origin/main HEAD
+      versions: bash tools/check-versions.sh
+      engine-lint:
+        run: cargo fmt --check && cargo clippy --all-targets --locked -- -D warnings
+        cwd: tools/gitch-flow
+        if: "changed('tools/gitch-flow/**')"
+      engine: { needs: [engine-lint], suite: engine }
+      windows-deps: { use: setup.node, cwd: windows, if: "changed('windows/**')" }
+      windows-types: { needs: [windows-deps], run: npx --no-install tsc --noEmit, cwd: windows, if: "changed('windows/**')" }
+      windows: { needs: [windows-deps], suite: windows }
+
+  engine:
+    description: Flow engine — format, lint, unit and integration tests, app contract
+    nodes:
+      lint: { run: cargo fmt --check && cargo clippy --all-targets --locked -- -D warnings, cwd: tools/gitch-flow }
+      tests: { needs: [lint], suite: engine }
+      contract:
+        needs: [tests]
+        description: The macOS app's models read every engine output (needs swiftc)
+        run: cargo build --locked --manifest-path tools/gitch-flow/Cargo.toml && bash macos/Tools/test-flow.sh tools/gitch-flow/target/debug/gitch-flow
+
+  gitch:
+    description: Every gitch CLI test (several minutes)
+    nodes:
+      engine: { run: cargo build --locked, cwd: tools/gitch-flow }
+      tests: { needs: [engine], run: bash tools/gitch/tests/run.sh, timeout: 40m }

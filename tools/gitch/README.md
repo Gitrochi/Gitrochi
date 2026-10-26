@@ -381,6 +381,23 @@ allow   src/ui/debug -> src/db          # 위반의 예외
 - 정확한 연결과 모듈 · 패키지로 확인한 추정(`checked`)은 위반, 이름만으로 한 추정은 경고(실패 아님)다. 틀린 규칙 줄은 줄 번호와 까닭을 알리고 멈춘다.
 - 규칙 파일이 있으면 `gitch graph` 의 html 분석 창에 「규칙 위반」이 같이 나온다. JSON: `{"ok", "violations": [{"relation", "severity", "line", "rule", "kind", "source", "target" | "nodes", "existing"}]}`.
 
+## 흐름 · 테스트 (`gitch flow` · `gitch test`)
+
+저장소의 테스트 · 점검 · 서비스 · 원격 CI · 배포 단계를 조립한 흐름(`.gitch/flow.yml`)을 흐름 엔진 `gitch-flow`(앱 · 설치기에 함께 들어 있음)에 넘겨 돌린다. 앱의 흐름 탭 · push 전 게이트 · CI 가 같은 흐름 · 같은 판정을 쓴다. 자세히: [docs/flow/README.md](../../docs/flow/README.md).
+
+```bash
+gitch flow init [--yes]          # 파일만 읽어 테스트 도구 · 패키지 관리자 · 런타임을 찾아 흐름 파일 제안(--yes 면 씀, 덮어쓰지 않음)
+gitch flow trust                 # 흐름 파일의 명령을 보고 승인(사람만, 파일이 바뀌면 다시)
+gitch flow run pre-push [--affected] [--jobs N] [--summary]
+gitch test [스위트|태그 …] [--affected] [--watch]   # 즉석 흐름(스위트만)
+gitch flow gate on [--flow 흐름] # push 전에 그 흐름 확인(같은 커밋에서 통과한 서명 기록이 있으면 다시 안 돎). 끄기: gate off
+gitch flow export github|gitlab|jenkins   # CI 에서 같은 흐름을 도는 파일 제안
+gitch ci status|logs|report      # 이 저장소의 원격 CI
+```
+
+- `gitch preflight` 에 게이트를 켠 저장소만 `FLOW=OK|WARN|STOP` 줄이 붙는다(기존 `PREFLIGHT=` 는 그대로). pre-push 훅이 게이트를 돌리고, 사람이 넘기려면 `GITSW_SKIP=flow`(기록이 남음).
+- 엔진 위치: `GITCH_FLOW` → gitch 옆(앱 Resources · `~/.local/share/gitch`) → PATH. 없으면 `gitch flow` 가 "엔진을 찾지 못함"으로 끝나고 나머지 gitch 는 그대로 쓴다.
+
 ## 검사 훅이 막는 것
 
 | 언제 | 무엇을 | 사람이 꼭 넘겨야 할 때 |
@@ -410,6 +427,7 @@ allow   src/ui/debug -> src/db          # 위반의 예외
 - `~/.claude/settings.json`
   - PreToolUse 훅 `gitch guard --claude`: Bash 명령과 Edit/Write 대상 파일을 검사
     - 거부: `--no-verify`, `git push --force/+refspec`, `GITSW_*`/`GIT_AUTHOR_*`/`GIT_SSH_COMMAND` 환경변수, `git -c user.*|core.hooksPath|hook.*|url.*`, 전역 git 설정 쓰기, 작성자/원격 설정 쓰기, `~/.ssh`·`~/.gitconfig`·`~/.config/gitsw`·`.git/hooks` 수정, 관리 서버 저장소의 `git clone`(→ `gitch clone`), `gitch add/remove/setup/sign on|off/import`
+    - 흐름: `gitch flow trust`(`--show`·`--revoke` 빼고) · `hold release` · `gate on|off` 와 흐름의 설정 위치 · CI 여부를 바꾸는 환경변수(`HOME` · `XDG_*` · `CI`, `GITCH_FLOW*`)는 거부, `connect add/remove` · `init/export/import --force` · `run/rerun/watch/test --yes` · 원격 CI 실행은 확인 창
     - 확인 창: push·PR 생성(아래 push 정책), 원격 브랜치 삭제, `reset --hard`, `clean -f`, `checkout -- 파일`, `restore`, `branch -D`, `stash drop`, `remote add/set-url`, `gitch unlock`, 잠긴 저장소를 다른 계정으로 `gitch use`, `gitch undo/amend/fix --yes/abort/rescue --restore`, gitch 설정 변경
   - 자동 허용: 읽기 명령(`gitch ck/status/preflight/l/d/doctor/...`, `git status/diff/log/show/...`)과 일상 명령(`git add`, `gitch c/cp/p/pl/up/b/wt/clone/pr`, `git commit/push/pull/branch/switch/checkout/restore/stash/remote`).
     위험한 옵션은 위의 훅이 먼저 거부하거나 확인을 받으므로, 자동 허용이어도 그대로 지켜진다.
@@ -485,6 +503,7 @@ tools/gitch/tests/run.sh             # 전체 (실제 ~/.gitconfig, ~/.ssh, ~/.c
 tools/gitch/tests/run.sh -k guard    # 이름에 guard 가 들어간 테스트만
 shellcheck -s bash -S warning tools/gitch/gitch tools/gitch/install.sh
 tools/gitch-swift-index/tests/run.sh # Xcode 인덱스 도우미: 예제를 swift build 해서 쌍 · gitch graph files 확인 (30초쯤)
+(cd tools/gitch-flow && cargo build) # 흐름 시험(test_flow.sh · 설치기의 엔진 시험)은 빌드한 엔진이 있어야 돈다(없으면 건너뜀)
 ```
 
 GitHub Actions 「macOS」의 gitch 테스트가 `tools/gitch/**` 를 바꾼 PR 마다 macOS 기본 bash 3.2 로, 「Windows」가 Git Bash 로 돈다(Windows 전용은 `tests/test_windows.sh`, 가짜 PowerShell 로 실제 사용자 PATH 는 건드리지 않음).
