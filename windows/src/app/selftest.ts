@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, toWslPath } from "@/shared/config";
+import { dirname, env, joinPath, samePath, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -36,6 +36,7 @@ import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
+import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -164,15 +165,11 @@ export async function runSelfTest(): Promise<boolean> {
   const repo = env.selftest;
   if (!repo) return false;
   const checks: Check[] = [];
-  const out = joinPath(dirname(repo), "selftest-result.json");
-  // a render error unmounts the whole React tree (blank window) — record it so the result says what broke
-  const uncaught: string[] = [];
-  window.addEventListener("error", (e) => uncaught.push(`${e.message} @ ${e.filename?.split("/").pop()}:${e.lineno}`));
-  window.addEventListener("unhandledrejection", (e) => uncaught.push(`unhandled: ${String(e.reason).slice(0, 200)}`));
   const check = (name: string, ok: boolean, detail?: unknown) => {
     checks.push({ name, ok, detail: detail === undefined ? undefined : String(detail).slice(0, 500) });
   };
   const step = async (name: string, f: () => Promise<boolean | [boolean, unknown]>) => {
+    await selfTestProgress(name, checks);
     try {
       const r = await f();
       if (Array.isArray(r)) check(name, r[0], r[1]);
@@ -180,6 +177,7 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
+    await selfTestProgress(`${name}: finished`, checks);
   };
 
   workspace.restoring = false;
@@ -966,14 +964,14 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("No uncaught errors and the app still renders", async () => {
     const alive = !!document.querySelector(".repo");
+    const uncaught = selfTestRecorder()?.errors ?? [];
     return [uncaught.length === 0 && alive, `alive=${alive} ${uncaught.slice(0, 3).join(" | ")}`];
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다
   s.navigate("commits");
   s.select({ kind: "commit", sha: s.headHash! });
-  const result = { ok: checks.every((c) => c.ok), os: env.os, windows: isWindows(), checks };
-  await ipc.writeText(out, JSON.stringify(result, null, 2));
+  await selfTestRecorder()?.finish(checks);
   if (env.selftestOpen) window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: env.selftestOpen }));
   return true;
 }

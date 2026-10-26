@@ -25,6 +25,8 @@ let repo = "";
 beforeEach(async () => {
   fixture = mkdtempSync(join(tmpdir(), "gitrochi-local-tools-")); writeFileSync(join(fixture, "empty-config"), "");
   await git(["init", "-q", "repo"], fixture); repo = join(fixture, "repo");
+  // Git for Windows initializes repositories with symlink checkout disabled.
+  await git(["config", "core.symlinks", "true"], repo);
   await git(["config", "user.name", "Fixture"], repo); await git(["config", "user.email", "fixture@example.com"], repo);
 });
 afterEach(() => { vi.restoreAllMocks(); rmSync(fixture, { recursive: true, force: true }); });
@@ -35,6 +37,7 @@ describe("로컬 안전 사본", () => {
     writeFileSync(join(repo, "file.txt"), "base\n"); await git(["add", "-A"], repo); await git(["commit", "-qm", "Base"], repo);
     writeFileSync(join(repo, "file.txt"), "staged\n"); await git(["add", "file.txt"], repo); writeFileSync(join(repo, "file.txt"), "unstaged\n");
     const binary = Buffer.from([0, 255, 42, 10]); writeFileSync(join(repo, "new.bin"), binary); symlinkSync("file.txt", join(repo, "link"));
+    expect(lstatSync(join(repo, "link")).isSymbolicLink()).toBe(true);
     const before = (await git(["status", "--porcelain=v2", "-z"], repo)).stdout;
     const store = makeStore(); expect(await store.preserveDiscardedChanges(["file.txt"])).toBe(true);
     expect((await git(["log", "--all", "--oneline"], repo)).stdout).toContain("Base");

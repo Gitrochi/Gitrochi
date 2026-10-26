@@ -16,8 +16,8 @@ export let env: EnvInfo = {
   resourceDir: "",
 };
 
-export async function initEnv() {
-  env = await ipc.envInfo();
+export async function initEnv(info?: EnvInfo) {
+  env = info ?? await ipc.envInfo();
 }
 
 export const isWindows = () => env.os === "windows";
