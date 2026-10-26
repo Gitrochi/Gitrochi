@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// 실행 하나: 노드 상태(실시간) · 고른 노드의 로그 끝 · 실패 위치 · 되돌림. 판정은 엔진이 한 그대로 보여 준다.
+/// One run: live node states, the end of the chosen node's log, failure locations and rollback. Verdicts are shown exactly as the engine made them.
 struct FlowRunSheet: View {
     let flows: FlowStore
     let runId: String
@@ -86,7 +86,7 @@ struct FlowRunSheet: View {
         }
         .listStyle(.sidebar)
         .onChange(of: nodes.map(\.state)) { _, _ in
-            // 따로 고르지 않았으면 지금 도는(없으면 처음 실패한) 노드를 보여 준다.
+            // Without a choice, show the node that is running (or else the first that failed).
             if selected == nil || nodes.first(where: { $0.id == selected })?.state == .passed {
                 selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? selected
             }
@@ -102,7 +102,7 @@ struct FlowRunSheet: View {
         }
     }
 
-    /// 기록(run.json)의 그 노드
+    /// That node in the record (run.json)
     private func recordNode(_ id: String) -> FlowJSON? {
         record?["nodes"].array.first { $0["id"].string == id }
     }
@@ -250,14 +250,14 @@ struct FlowRunSheet: View {
         .padding(12)
     }
 
-    /// 실패 위치 열기: 저장소 안의 파일을 기본 편집기로(줄 번호는 편집기마다 달라 파일만)
+    /// Opens a failure location: the file in the repository, in the default editor (the file only, since editors take line numbers differently)
     private func openFile(_ rel: String, line: Int?) {
         let url = flows.repo.appendingPathComponent(rel)
         if FileManager.default.fileExists(atPath: url.path) { NSWorkspace.shared.open(url) }
     }
 }
 
-/// 흐름 파일 신뢰: 흐름 파일은 코드라서 사람이 무엇이 돌지 보고 승인해야 비대화형으로 돈다.
+/// Trusting a flow file: it is code, so it runs unattended only after a person has seen what will run and approved it.
 struct FlowTrustSheet: View {
     let plan: FlowPlan
     let actionTitle: String
@@ -330,7 +330,7 @@ struct FlowTrustSheet: View {
     }
 }
 
-/// 흐름 파일 만들기: 엔진이 저장소 파일만 읽어 테스트 · 도구를 찾아 제안한다(아무것도 돌리지 않는다).
+/// Creating a flow file: the engine reads only the repository's files to find tests and tools and proposes one (nothing runs).
 struct FlowSetupSheet: View {
     let flows: FlowStore
     @Environment(\.dismiss) private var dismiss

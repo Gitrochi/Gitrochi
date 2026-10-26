@@ -1,6 +1,6 @@
 import type { FlowEvent } from "./types";
 
-/** 노드 상태(엔진의 상태 표와 같은 이름) */
+/** Node state (the same names as the engine's state table) */
 export type FlowNodeState = "PENDING" | "RUNNING" | "PASSED" | "FAILED" | "INDETERMINATE" | "SKIPPED" | "CACHED" | "REJECTED" | "CANCELLED";
 
 export const isBadState = (s: string | null | undefined) => s === "FAILED" || s === "INDETERMINATE" || s === "REJECTED" || s === "CANCELLED";
@@ -28,7 +28,7 @@ export interface RunStep {
   state: string;
 }
 
-/** 실행 하나의 화면 상태: 이벤트를 차례로 넣으면 노드 상태 · 로그 끝부분 · 되돌림이 쌓인다(seq 가 같거나 작은 줄은 버린다). */
+/** The screen state of one run: feeding events in order builds up node states, log tails and rollback steps (lines with an equal or smaller seq are dropped). */
 export interface RunView {
   runId: string;
   flow: string;
@@ -37,7 +37,7 @@ export interface RunView {
   exitCode: number | null;
   lastSeq: number;
   nodes: RunNode[];
-  /** 서비스 · 되돌림처럼 노드 밖에서 일어난 일 */
+  /** Things that happen outside nodes, like services and rollback */
   steps: RunStep[];
   done: boolean;
 }
@@ -127,7 +127,7 @@ export function applyEvent(v: RunView, e: FlowEvent): void {
   }
 }
 
-/** NDJSON 조각: 끝까지 쓴 줄만 읽고 남은 반쪽 줄을 돌려준다(다음 조각 앞에 붙인다). */
+/** An NDJSON chunk: reads only complete lines and returns the leftover half line (to put before the next chunk). */
 export function consumeEvents(v: RunView, text: string): string {
   const cut = text.lastIndexOf("\n");
   if (cut < 0) return text;
@@ -137,7 +137,7 @@ export function consumeEvents(v: RunView, text: string): string {
     try {
       applyEvent(v, JSON.parse(s) as FlowEvent);
     } catch {
-      // 깨진 줄은 건너뛴다
+      // skip broken lines
     }
   }
   return text.slice(cut + 1);

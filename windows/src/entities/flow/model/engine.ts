@@ -5,17 +5,17 @@ import { language, t } from "@/shared/i18n";
 import { type FlowDetached, type FlowGate, type FlowInitProposal, type FlowList, type FlowPlan, type FlowRunRow, parseEngineError } from "./types";
 
 /**
- * 흐름 엔진(gitch-flow, tools/gitch-flow) 부르기(맥 FlowEngine.swift 와 같다). 앱 설치 폴더의 gitch-flow.exe 를 먼저 쓰고,
- * 없으면 셸 명령 gitch 옆(~/.local/share/gitch)의 것을 쓴다.
- * 앱이 보내는 것은 사람이 누른 동작뿐이라 실행 주체를 gitrochi-app 으로 밝힌다 — 엔진의 신뢰 · 확인 규칙은 그대로다
- * (AI 가 부르는 gitch flow 는 신뢰 승인 · 게이트 · 잠금 해제를 할 수 없다).
+ * Calls the flow engine (gitch-flow, tools/gitch-flow), like the macOS FlowEngine.swift. The app's gitch-flow.exe comes first,
+ * then the one next to the shell's gitch (~/.local/share/gitch).
+ * The app sends only actions a person clicked, so it identifies itself as gitrochi-app; the engine's trust and confirmation rules still apply
+ * (gitch flow called by an AI agent can never approve trust, switch the gate or release a hold).
  */
 export class FlowEngineError extends Error {
   constructor(
     message: string,
-    /** 엔진의 실패 코드(TRUST-01 · SPEC-02 …) */
+    /** The engine's failure code (TRUST-01, SPEC-02 …) */
     public code: string | null = null,
-    /** 엔진이 알려 준 조치 */
+    /** What the engine says to do */
     public action: string | null = null,
   ) {
     super(message);
@@ -27,7 +27,7 @@ const exe = isWindows() ? "gitch-flow.exe" : "gitch-flow";
 class FlowEngineService {
   private found: string | null | undefined;
 
-  /** 쓸 엔진 경로(없으면 null). 한 번 찾으면 앱이 켜진 동안 그대로 쓴다. */
+  /** The engine to use (null when there is none). Once found, it is kept while the app runs. */
   async executable(): Promise<string | null> {
     if (this.found !== undefined) return this.found;
     const dir = env.resourceDir.replace(/^\\\\\?\\/, "");
@@ -40,7 +40,7 @@ class FlowEngineService {
 
   private async environment(): Promise<Record<string, string>> {
     const e: Record<string, string> = { GITSW_ACTOR: "gitrochi-app", GITCH_FLOW_LANG: language === "ko" ? "ko" : "en" };
-    // 엔진이 영향 그래프 · gitch 블록에서 gitch 를 되부를 때
+    // For when the engine calls gitch back (the affected graph, gitch blocks)
     const g = gitch.bundled;
     if (g && (await ipc.exists(g))) e.GITCH_PATH = g;
     const bash = await gitch.bash();
@@ -54,14 +54,14 @@ class FlowEngineService {
     return ipc.run(path, args, { cwd: repo, env: await this.environment(), timeoutMs });
   }
 
-  /** JSON 을 내는 명령. 실패하면 엔진의 오류 봉투로 던진다. */
+  /** A command that prints JSON. On failure it throws the engine's error envelope. */
   async json<T>(args: string[], repo: string, ok: number[] = [0], timeoutMs = 120_000): Promise<T> {
     const r = await this.run([...args, "--json"], repo, timeoutMs);
     if (ok.includes(r.status)) {
       try {
         return JSON.parse(r.stdout) as T;
       } catch {
-        // 아래에서 오류로
+        // handled as an error below
       }
     }
     throw this.failure(r);
@@ -92,12 +92,12 @@ class FlowEngineService {
     return this.json<FlowPlan>(["plan", flow, ...(affected ? ["--affected=worktree"] : [])], repo);
   }
 
-  /** 사람이 신뢰 확인 화면에서 승인했을 때만 부른다. */
+  /** Called only after a person approved in the trust dialog. */
   async trust(repo: string) {
     await this.plainOk(["trust", "--yes", "--json"], repo);
   }
 
-  /** 분리 실행: 엔진이 뒤에서 돌고 앱은 이벤트를 따라 읽는다(앱을 닫아도 실행은 끝까지 간다). */
+  /** Detached run: the engine runs in the background and the app follows its events (the run finishes even if the app quits). */
   start(flow: string, repo: string, affected: boolean, yes: boolean) {
     return this.json<FlowDetached>(["run", flow, "--detach", "--trigger", "app", ...(affected ? ["--affected=worktree"] : []), ...(yes ? ["--yes"] : [])], repo);
   }
@@ -110,18 +110,18 @@ class FlowEngineService {
     return (await this.json<{ runs: FlowRunRow[] }>(["status", "--all"], repo)).runs;
   }
 
-  /** 끝난 실행의 기록 전체(run.json — 노드별 판정 · 실패 위치 · 되돌림) */
+  /** The full record of a finished run (run.json: verdict per node, failure locations, rollback) */
   record(runId: string, repo: string) {
     return this.json<Record<string, unknown>>(["status", runId], repo, [0, 1]);
   }
 
-  /** seq 다음부터의 이벤트(NDJSON 글) */
+  /** Events after seq (NDJSON text) */
   async events(runId: string, since: number, repo: string): Promise<string> {
     const r = await this.run(["events", runId, "--since", String(since)], repo, 30_000);
     return r.status === 0 ? r.stdout : "";
   }
 
-  /** 사람 · AI 에게 붙여 넣기 좋은 Markdown 요약 */
+  /** A Markdown summary that is easy to paste for people or AI agents */
   markdown(runId: string, repo: string) {
     return this.plainOk(["report", runId, "--format", "md"], repo);
   }

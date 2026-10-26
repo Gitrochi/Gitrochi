@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// 저장소마다 하나: 흐름 목록 · 최근 실행 · 지금 따라 읽는 실행. 저장소 화면(RepoStore)과 따로 두어
-/// 탭을 닫았다 열어도 돌던 실행을 계속 따라 읽는다.
+/// One per repository: the flows, recent runs and the run being followed. Kept apart from the repository screen (RepoStore)
+/// so a run keeps being followed after its tab is closed and reopened.
 @MainActor
 final class FlowCenter {
     static let shared = FlowCenter()
@@ -20,16 +20,16 @@ final class FlowCenter {
 @MainActor @Observable
 final class FlowStore {
     let repo: URL
-    /// nil: 아직 읽지 않았거나 흐름 파일이 없음
+    /// nil: not read yet, or no flow file
     private(set) var list: FlowList?
     private(set) var hasFlowFile = false
     private(set) var loadError: FlowEngine.Failure?
     private(set) var loading = false
     private(set) var runs: [FlowRunRow] = []
     private(set) var gate: FlowGate?
-    /// 실행 ID → 화면 상태(따라 읽는 중이거나 마지막에 본 것)
+    /// Run ID → screen state (being followed, or as last seen)
     private(set) var views: [String: FlowRunView] = [:]
-    /// 끝난 실행의 기록(run.json)
+    /// Records of finished runs (run.json)
     private(set) var records: [String: FlowJSON] = [:]
     private var tails: [String: Task<Void, Never>] = [:]
 
@@ -58,7 +58,7 @@ final class FlowStore {
         }
         runs = (try? await FlowEngine.runs(in: repo)) ?? []
         gate = try? await FlowEngine.gate(in: repo)
-        // 앱을 다시 열었을 때도 돌고 있는 실행을 이어서 따라 읽는다.
+        // After the app reopens, keep following runs that are still going.
         for r in runs where r.running == true && tails[r.runId] == nil {
             if let rec = try? await FlowEngine.record(r.runId, in: repo), let path = rec["eventsPath"].string {
                 follow(runId: r.runId, eventsPath: path)
@@ -66,7 +66,7 @@ final class FlowStore {
         }
     }
 
-    /// 실행을 시작하고 이벤트를 따라 읽는다. 실행 ID 를 돌려준다.
+    /// Starts a run and follows its events. Returns the run ID.
     func start(_ flow: String, affected: Bool, yes: Bool) async throws -> String {
         let d = try await FlowEngine.start(flow, in: repo, affected: affected, yes: yes)
         follow(runId: d.runId, eventsPath: d.eventsPath)
@@ -92,7 +92,7 @@ final class FlowStore {
 
     func record(_ runId: String) -> FlowJSON? { records[runId] }
 
-    /// 끝난 실행을 열면 기록에서 노드 상태를 채운다(따라 읽지 않은 실행).
+    /// Opening a finished run fills the node states from its record (for runs that were not followed).
     func open(_ runId: String) async {
         if views[runId] == nil || records[runId] == nil, let rec = try? await FlowEngine.record(runId, in: repo) {
             records[runId] = rec
@@ -125,7 +125,7 @@ final class FlowStore {
                     if v.done { break }
                 } else {
                     quiet += 1
-                    // 오래 조용하면 엔진이 살아 있는지 본다(강제 종료 · 전원 꺼짐이면 run.done 없이 멈춘다).
+                    // After a long silence, check that the engine is alive (a killed engine or a power cut stops without run.done).
                     if quiet % 20 == 0, let row = (try? await FlowEngine.runs(in: self.repo))?.first(where: { $0.runId == runId }), row.running != true {
                         var v = self.views[runId] ?? FlowRunView(runId: runId)
                         v.state = row.state
@@ -144,7 +144,7 @@ final class FlowStore {
         }
     }
 
-    /// 이벤트 파일의 offset 부터 끝까지(없으면 nil)
+    /// The events file from offset to the end (nil when missing)
     nonisolated static func read(_ path: String, from offset: UInt64) -> Data? {
         guard let h = FileHandle(forReadingAtPath: path) else { return nil }
         defer { try? h.close() }

@@ -1,7 +1,7 @@
 import Foundation
 
-/// 흐름 엔진(gitch-flow)이 내는 JSON 의 앱 쪽 모양(tools/gitch-flow/schema/flow-*-v1.schema.json).
-/// 앱은 엔진이 낸 것을 읽기만 하고 판정하지 않는다 — 판정 · 서명 · 되돌림은 언제나 엔진이 한다.
+/// The app-side shape of the JSON the flow engine (gitch-flow) writes (tools/gitch-flow/schema/flow-*-v1.schema.json).
+/// The app only reads what the engine wrote and never judges: verdicts, signatures and rollback always belong to the engine.
 
 /// `gitch-flow list --json`
 struct FlowList: Decodable, Equatable {
@@ -32,7 +32,7 @@ struct FlowList: Decodable, Equatable {
     let suites: [Suite]
 }
 
-/// `gitch-flow plan <흐름> --json` 중 앱이 쓰는 것
+/// What the app uses from `gitch-flow plan <flow> --json`
 struct FlowPlan: Decodable, Equatable {
     struct Trust: Decodable, Equatable {
         let trusted: Bool
@@ -70,11 +70,11 @@ struct FlowPlan: Decodable, Equatable {
     let estimateMs: Int?
     let nodes: [Node]
 
-    /// 사람이 확인해야 하는 바깥 동작(원격 CI · 배포 · 알림) 또는 되돌리기 어려운 블록이 있는지
+    /// Whether a person must confirm an outward action (remote CI, deploy, notification) or a block that is hard to undo
     var needsConfirmation: Bool { !outward.isEmpty || nodes.contains { $0.destructive == true && $0.decision == "run" } }
 }
 
-/// `run --detach --json` 의 답
+/// The answer to `run --detach --json`
 struct FlowDetached: Decodable, Equatable {
     let runId: String
     let pid: Int?
@@ -82,7 +82,7 @@ struct FlowDetached: Decodable, Equatable {
     let eventsPath: String
 }
 
-/// `status --all --json` 의 한 줄
+/// One line of `status --all --json`
 struct FlowRunRow: Decodable, Identifiable, Equatable, Hashable {
     let runId: String
     let flow: String
@@ -96,7 +96,7 @@ struct FlowRunRow: Decodable, Identifiable, Equatable, Hashable {
     var id: String { runId }
 }
 
-/// `init --dry-run --json`: 엔진이 저장소 파일만 읽어 만든 흐름 파일 제안
+/// `init --dry-run --json`: the flow file the engine proposes from reading the repository's files only
 struct FlowInitProposal: Decodable, Equatable {
     struct Finding: Decodable, Equatable, Hashable {
         let kind: String
@@ -117,7 +117,7 @@ struct FlowGate: Decodable, Equatable {
     let flow: String?
 }
 
-/// 엔진 오류 봉투(`{"schemaVersion":1,"error":{…}}`, 표준오류)
+/// The engine's error envelope (`{"schemaVersion":1,"error":{…}}`, on stderr)
 struct FlowErrorEnvelope: Decodable {
     struct Body: Decodable {
         let code: String
@@ -129,7 +129,7 @@ struct FlowErrorEnvelope: Decodable {
     let error: Body
 }
 
-/// events.ndjson 한 줄
+/// One line of events.ndjson
 struct FlowEvent: Decodable {
     let seq: Int
     let at: String
@@ -138,7 +138,7 @@ struct FlowEvent: Decodable {
     let data: FlowJSON
 }
 
-/// 이벤트 data 처럼 모양이 여러 가지인 JSON
+/// JSON whose shape varies, like event data
 enum FlowJSON: Decodable, Equatable, Hashable {
     case null, bool(Bool), number(Double), string(String), array([FlowJSON]), object([String: FlowJSON])
 
@@ -159,7 +159,7 @@ enum FlowJSON: Decodable, Equatable, Hashable {
     var array: [FlowJSON] { if case .array(let a) = self { return a }; return [] }
 }
 
-/// 노드 상태(엔진의 상태 표와 같은 이름)
+/// Node state (the same names as the engine's state table)
 enum FlowNodeState: String, Equatable {
     case pending = "PENDING", running = "RUNNING", passed = "PASSED", failed = "FAILED", indeterminate = "INDETERMINATE"
     case skipped = "SKIPPED", cached = "CACHED", rejected = "REJECTED", cancelled = "CANCELLED"
@@ -168,7 +168,7 @@ enum FlowNodeState: String, Equatable {
     var isDone: Bool { self != .pending && self != .running }
 }
 
-/// 실행 하나의 화면 상태: 이벤트를 차례로 넣으면 노드 상태 · 로그 끝부분 · 되돌림이 쌓인다(seq 가 같거나 작은 줄은 버린다).
+/// The screen state of one run: feeding events in order builds up node states, log tails and rollback steps (lines with an equal or smaller seq are dropped).
 struct FlowRunView: Equatable {
     struct Node: Identifiable, Equatable {
         let id: String
@@ -199,7 +199,7 @@ struct FlowRunView: Equatable {
     var exitCode: Int?
     var lastSeq = 0
     var nodes: [Node] = []
-    /// 서비스 · 되돌림 · 엔진 알림처럼 노드 밖에서 일어난 일
+    /// Things that happen outside nodes, like services, rollback and engine notices
     var steps: [Step] = []
     var done = false
 
@@ -248,7 +248,7 @@ struct FlowRunView: Equatable {
         }
     }
 
-    /// 새로 쓰인 NDJSON 조각을 읽는다(끝에 덜 쓴 줄은 다음 번에). 돌려준 값만큼 읽은 자리를 옮긴다.
+    /// Reads a newly written NDJSON chunk (an unfinished last line waits for next time). The read position moves by the returned count.
     mutating func consume(_ chunk: Data) -> Int {
         guard let lastNewline = chunk.lastIndex(of: UInt8(ascii: "\n")) else { return 0 }
         let complete = chunk[chunk.startIndex...lastNewline]

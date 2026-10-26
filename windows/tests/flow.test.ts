@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { consumeEvents, needsConfirmation, newRunView, parseEngineError, runCounts, type FlowPlan } from "@/entities/flow";
 
-// 엔진이 쓰는 이벤트 모양(tools/gitch-flow/schema/flow-event-v1.schema.json) 그대로
+// The event shape the engine writes (tools/gitch-flow/schema/flow-event-v1.schema.json), as is
 const ev = (seq: number, type: string, data: Record<string, unknown>, node?: string) =>
   JSON.stringify({ schemaVersion: 1, runId: "r1", seq, at: "2026-10-26T00:00:00.000Z", type, ...(node ? { node } : {}), data }) + "\n";
 
@@ -19,8 +19,8 @@ const events = [
   ev(11, "run.done", { state: "ROLLED_BACK", code: "TEST-01", exitCode: 1 }),
 ].join("");
 
-describe("흐름 실행 화면 상태", () => {
-  it("이벤트를 차례로 넣으면 노드 상태 · 로그 끝 · 되돌림이 쌓인다", () => {
+describe("flow run screen state", () => {
+  it("builds node states, log tails and rollback steps from events in order", () => {
     const v = newRunView("r1");
     expect(consumeEvents(v, events)).toBe("");
     expect(v.flow).toBe("bad");
@@ -36,11 +36,11 @@ describe("흐름 실행 화면 상태", () => {
     expect([unit.testsPassed, unit.testsExecuted]).toEqual([2, 3]);
     expect(dump.reason).toBe("condition is false");
     expect(v.steps).toEqual([{ id: 10, node: "deploy", text: "echo undone", state: "UNDONE" }]);
-    // 실패 갈래는 세지 않는다
+    // failure branches are not counted
     expect(runCounts(v)).toEqual({ passed: 1, failed: 1, running: 0, total: 2 });
   });
 
-  it("줄 중간에서 끊겨 와도(따라 읽기) 같은 결과, 이미 본 seq 는 버린다", () => {
+  it("gives the same result when fed mid-line chunks, and drops seqs already seen", () => {
     const v = newRunView("r1");
     let rest = "";
     for (let i = 0; i < events.length; i += 37) rest = consumeEvents(v, rest + events.slice(i, i + 37));
@@ -51,13 +51,13 @@ describe("흐름 실행 화면 상태", () => {
     expect(v.nodes[0].tail.length).toBe(tail);
   });
 
-  it("엔진 오류 봉투(표준오류의 마지막 JSON 줄)", () => {
+  it("reads the engine error envelope (the last JSON line on stderr)", () => {
     const stderr = 'warning: something\n{"schemaVersion":1,"error":{"code":"GITCH_CONFIRMATION_REQUIRED","flowCode":"TRUST-01","message":"the flow file is not trusted","exitCode":2,"action":"Approve it"}}\n';
     expect(parseEngineError(stderr)).toEqual({ message: "the flow file is not trusted", code: "TRUST-01", action: "Approve it" });
     expect(parseEngineError("plain failure")).toBeNull();
   });
 
-  it("바깥 동작 · 되돌리기 어려운 블록 · 사람 확인이 있으면 한 번 더 묻는다", () => {
+  it("asks once more for outward actions, blocks that are hard to undo and manual approvals", () => {
     const base: FlowPlan = { flow: "x", env: "local", trust: { trusted: true }, outward: [], gates: [], services: [], warnings: [], nodes: [{ id: "a", block: "cmd", needs: [], decision: "run" }] };
     expect(needsConfirmation(base)).toBe(false);
     expect(needsConfirmation({ ...base, outward: ["deploy (ci.gitlab.pipeline)"] })).toBe(true);

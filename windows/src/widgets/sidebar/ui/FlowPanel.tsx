@@ -9,8 +9,8 @@ import { shortDate, useObserve } from "@/shared/lib";
 import { Button, IconButton, Modal, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
 
 /**
- * 사이드바 '흐름' 탭: 이 저장소의 테스트 · 점검 · 배포 단계를 조립한 흐름(.gitch/flow.yml)과 최근 실행(맥 FlowPanel.swift 와 같다).
- * 실행 · 판정 · 되돌림은 흐름 엔진(gitch-flow)이 하고, 이 화면은 사람이 누른 동작을 보내고 결과를 보여 준다.
+ * The sidebar's Flows tab: the flows (.gitch/flow.yml) that assemble this repository's tests, checks and deploy steps, and the recent runs (like the macOS FlowPanel.swift).
+ * The flow engine (gitch-flow) runs, judges and rolls back; this screen sends the actions a person clicks and shows the results.
  */
 export function FlowPanel({ store }: { store: RepoStore }) {
   useObserve(store);
@@ -29,7 +29,7 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
   const [starting, setStarting] = useState<string | null>(null);
   const affected = settings.get<boolean>("flowAffectedOnly", false);
 
-  // 처음 읽고, 도는 실행이 있으면 3초 · 없으면 30초마다 다시(다른 곳에서 돌린 실행 · 파일 변경도 보이게)
+  // Reads once, then again every 3 seconds while a run is going and every 30 seconds otherwise (so runs started elsewhere and file changes show up)
   useEffect(() => {
     let stop = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -48,7 +48,7 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
 
   const fail = (e: unknown) => setDialog({ kind: "error", message: e instanceof Error ? e.message : String(e) });
 
-  /** 실행 전: 계획을 읽어 신뢰 · 확인이 필요한지 본다. */
+  /** Before a run: read the plan to see whether trust or confirmation is needed. */
   const prepare = async (flow: string) => {
     setStarting(flow);
     try {
@@ -322,7 +322,7 @@ export function stateTitle(s: string | null | undefined): string {
   }
 }
 
-/** 실행 · 노드 상태 아이콘(도는 중이면 도는 표시) */
+/** Run and node state icon (spinning while running) */
 export function FlowStateIcon({ state, size = 14 }: { state: string | null; size?: number }) {
   const title = stateTitle(state);
   if (state === "RUNNING" || state === "PREFLIGHT") {
@@ -360,7 +360,7 @@ type Json = Record<string, unknown>;
 const arr = (v: unknown) => (Array.isArray(v) ? (v as Json[]) : []);
 const str = (v: unknown) => (typeof v === "string" ? v : null);
 
-/** 실행 하나: 노드 상태(실시간) · 고른 노드의 로그 끝 · 실패 위치 · 되돌림. 판정은 엔진이 한 그대로 보여 준다. */
+/** One run: live node states, the end of the chosen node's log, failure locations and rollback. Verdicts are shown exactly as the engine made them. */
 function FlowRunDialog({ flows, runId, onClose }: { flows: FlowStore; runId: string; onClose: () => void }) {
   useObserve(flows);
   const [selected, setSelected] = useState<string | null>(null);
@@ -373,7 +373,7 @@ function FlowRunDialog({ flows, runId, onClose }: { flows: FlowStore; runId: str
   const record = flows.records.get(runId);
   const running = !!view && !view.done;
   const nodes = view?.nodes ?? [];
-  // 따로 고르지 않았으면 지금 도는(없으면 처음 실패한) 노드
+  // Without a choice, the node that is running (or else the first that failed)
   const shown = useMemo(() => {
     const pick = nodes.find((n) => n.id === selected);
     if (pick && !(pick.state === "PASSED" && !selected)) return pick;
@@ -545,7 +545,7 @@ function RollbackNote({ record, empty }: { record: Json | undefined; empty: bool
   );
 }
 
-/** 흐름 파일 신뢰: 흐름 파일은 코드라서 사람이 무엇이 돌지 보고 승인해야 비대화형으로 돈다. */
+/** Trusting a flow file: it is code, so it runs unattended only after a person has seen what will run and approved it. */
 function FlowTrustDialog({ plan, action, onApprove, onClose }: { plan: FlowPlan; action: string; onApprove: () => void; onClose: () => void }) {
   return (
     <Modal
@@ -609,7 +609,7 @@ function TrustNode({ n }: { n: FlowPlanNode }) {
   );
 }
 
-/** 흐름 파일 만들기: 엔진이 저장소 파일만 읽어 테스트 · 도구를 찾아 제안한다(아무것도 돌리지 않는다). */
+/** Creating a flow file: the engine reads only the repository's files to find tests and tools and proposes one (nothing runs). */
 function FlowSetupDialog({ flows, onClose }: { flows: FlowStore; onClose: () => void }) {
   const [proposal, setProposal] = useState<FlowInitProposal | null>(null);
   const [error, setError] = useState<string | null>(null);

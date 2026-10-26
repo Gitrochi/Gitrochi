@@ -933,8 +933,8 @@ export async function runSelfTest(): Promise<boolean> {
     return [switched && back && row && diff, detail];
   });
 
-  // 흐름: 앱에 든 엔진으로 제안 · 신뢰 · 분리 실행 · 이벤트 따라 읽기, 그리고 사이드바 흐름 탭(이 저장소는 흐름 파일이 없어 설정 안내)
-  await step("흐름 엔진 · 신뢰 · 분리 실행 · 흐름 탭", async () => {
+  // Flows: proposal, trust, a detached run and following its events with the engine in the app, then the sidebar's Flows tab (this repository has no flow file, so it shows the setup hint)
+  await step("Flow engine, trust, a detached run and the Flows tab", async () => {
     const v = await flowEngine.version();
     if (!v || v.flowApi !== 1) return [false, `engine=${JSON.stringify(v)} path=${await flowEngine.executable()}`];
     const dir = joinPath(env.temp, `gitrochi-flow-selftest-${Date.now()}`);

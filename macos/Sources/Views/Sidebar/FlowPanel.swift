@@ -1,8 +1,8 @@
 import SwiftUI
 import AppKit
 
-/// 흐름(.gitch/flow.yml): 이 저장소의 테스트 · 점검 · 배포 단계를 조립한 흐름 목록과 최근 실행.
-/// 실행 · 판정 · 되돌림은 흐름 엔진(gitch-flow)이 하고, 이 화면은 사람이 누른 동작을 보내고 결과를 보여 준다.
+/// Flows (.gitch/flow.yml): the flows that assemble this repository's tests, checks and deploy steps, and the recent runs.
+/// The flow engine (gitch-flow) runs, judges and rolls back; this screen sends the actions a person clicks and shows the results.
 struct FlowPanel: View {
     @Environment(RepoStore.self) private var store
 
@@ -79,7 +79,7 @@ private struct FlowPanelBody: View {
         }
     }
 
-    /// 처음 읽고, 도는 실행이 있으면 3초 · 없으면 30초마다 다시(다른 곳에서 돌린 실행 · 파일 변경도 보이게)
+    /// Reads once, then again every 3 seconds while a run is going and every 30 seconds otherwise (so runs started elsewhere and file changes show up)
     private func poll() async {
         await flows.refresh()
         while !Task.isCancelled {
@@ -257,7 +257,7 @@ private struct FlowPanelBody: View {
         .accessibilityAction { sheet = .run(r.runId) }
     }
 
-    /// 실행 전: 계획을 읽어 신뢰 · 확인이 필요한지 본다.
+    /// Before a run: read the plan to see whether trust or confirmation is needed.
     private func prepare(_ flow: String) async {
         starting = flow
         defer { starting = nil }
@@ -297,7 +297,7 @@ private struct FlowPanelBody: View {
     }
 }
 
-/// 실행 · 노드 상태 아이콘
+/// Run and node state icons
 struct FlowStateIcon: View {
     let state: String?
     var size: CGFloat = 12
@@ -357,7 +357,7 @@ enum FlowFormat {
 }
 
 extension ISO8601DateFormatter {
-    /// 엔진의 시각(2026-10-26T05:23:20.616Z)
+    /// The engine's timestamps (2026-10-26T05:23:20.616Z)
     static let flow: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

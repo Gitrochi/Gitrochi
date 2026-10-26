@@ -1,6 +1,6 @@
 /**
- * 흐름 엔진(gitch-flow)이 내는 JSON 의 앱 쪽 모양(tools/gitch-flow/schema/flow-*-v1.schema.json · 맥 FlowModels.swift 와 같다).
- * 앱은 엔진이 낸 것을 읽기만 하고 판정하지 않는다 — 판정 · 서명 · 되돌림은 언제나 엔진이 한다.
+ * The app-side shape of the JSON the flow engine (gitch-flow) writes (tools/gitch-flow/schema/flow-*-v1.schema.json, like the macOS FlowModels.swift).
+ * The app only reads what the engine wrote and never judges: verdicts, signatures and rollback always belong to the engine.
  */
 
 /** `list --json` */
@@ -37,7 +37,7 @@ export interface FlowPlanNode {
   src?: string | null;
 }
 
-/** `plan <흐름> --json` 중 앱이 쓰는 것 */
+/** What the app uses from `plan <flow> --json` */
 export interface FlowPlan {
   flow: string;
   env: string;
@@ -51,7 +51,7 @@ export interface FlowPlan {
   nodes: FlowPlanNode[];
 }
 
-/** 사람이 한 번 더 확인해야 하는지(바깥 동작 · 되돌리기 어려운 블록 · 사람 확인 단계) */
+/** Whether a person must confirm once more (an outward action, a block that is hard to undo, a manual approval step) */
 export const needsConfirmation = (p: FlowPlan) => p.outward.length > 0 || p.gates.length > 0 || p.nodes.some((n) => n.destructive && n.decision === "run");
 
 /** `run --detach --json` */
@@ -62,7 +62,7 @@ export interface FlowDetached {
   eventsPath: string;
 }
 
-/** `status --all --json` 의 한 줄 */
+/** One line of `status --all --json` */
 export interface FlowRunRow {
   runId: string;
   flow: string;
@@ -89,7 +89,7 @@ export interface FlowGate {
   flow?: string | null;
 }
 
-/** events.ndjson 한 줄 */
+/** One line of events.ndjson */
 export interface FlowEvent {
   seq: number;
   at: string;
@@ -98,7 +98,7 @@ export interface FlowEvent {
   data: Record<string, unknown>;
 }
 
-/** 엔진 오류 봉투(`{"schemaVersion":1,"error":{…}}`, 표준오류의 마지막 JSON 줄) */
+/** The engine's error envelope (`{"schemaVersion":1,"error":{…}}`, the last JSON line on stderr) */
 export function parseEngineError(stderr: string): { message: string; code: string | null; action: string | null } | null {
   for (const line of stderr.split("\n").reverse()) {
     const s = line.trim();
@@ -107,7 +107,7 @@ export function parseEngineError(stderr: string): { message: string; code: strin
       const o = JSON.parse(s) as { error?: { code?: string; flowCode?: string; message?: string; action?: string } };
       if (o.error?.message) return { message: o.error.message, code: o.error.flowCode ?? o.error.code ?? null, action: o.error.action ?? null };
     } catch {
-      // 다음 줄
+      // try the next line
     }
   }
   return null;

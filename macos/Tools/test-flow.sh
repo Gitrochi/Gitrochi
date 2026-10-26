@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# 흐름 화면이 읽는 엔진 JSON 계약: 실제 gitch-flow 를 임시 저장소 · 임시 HOME 에서 돌려
-# list · plan · run(분리) · events · status · init · gate · 오류 봉투를 앱의 Swift 모델(FlowModels.swift)로 읽어 본다.
-#   macos/Tools/test-flow.sh [gitch-flow 경로]   (없으면 앱 번들 → tools/gitch-flow/target 순서로 찾는다)
+# The engine JSON contract the Flows screen reads: runs the real gitch-flow in a temporary repository and HOME,
+# and reads list, plan, run (detached), events, status, init, gate and the error envelope with the app's Swift models (FlowModels.swift).
+#   macos/Tools/test-flow.sh [path to gitch-flow]   (default: the app bundle, then tools/gitch-flow/target)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(cd "$ROOT/.." && pwd)"
@@ -11,14 +11,14 @@ if [[ -z "$ENGINE" ]]; then
         [[ -x "$e" ]] && { ENGINE="$e"; break; }
     done
 fi
-[[ -x "$ENGINE" ]] || { echo "gitch-flow 를 찾지 못했습니다(macos/build.sh 또는 cd tools/gitch-flow && cargo build)" >&2; exit 1; }
+[[ -x "$ENGINE" ]] || { echo "gitch-flow not found (run macos/build.sh, or cd tools/gitch-flow && cargo build)" >&2; exit 1; }
 ENGINE="$(cd "$(dirname "$ENGINE")" && pwd)/$(basename "$ENGINE")"
 
 T="$(mktemp -d)"
 trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/home" "$T/repo/.gitch" "$T/repo/tests" "$T/empty"
 printf '[user]\n\tname = Flow Test\n\temail = flow-test@example.invalid\n[init]\n\tdefaultBranch = main\n' > "$T/home/gitconfig"
-# 사용자 설정 · 키체인을 건드리지 않고, 앱처럼 사람이 누른 동작으로 부른다.
+# Leaves user settings and the keychain alone, and calls the engine the way the app does, for actions a person clicked.
 export HOME="$T/home" XDG_CONFIG_HOME="$T/home/.config" XDG_STATE_HOME="$T/home/.local/state" XDG_CACHE_HOME="$T/home/.cache"
 export GIT_CONFIG_GLOBAL="$T/home/gitconfig" GIT_CONFIG_NOSYSTEM=1 GITCH_FLOW_NO_KEYSTORE=1 GITSW_ACTOR=gitrochi-app GITCH_FLOW_LANG=en
 unset CLAUDECODE CODEX_SANDBOX CODEX_THREAD_ID CODEX_CI CURSOR_AGENT GEMINI_CLI AI_AGENT || true
@@ -56,9 +56,9 @@ cd "$T/repo"
 "$ENGINE" trust --yes --json > /dev/null
 "$ENGINE" gate status --json > "$T/gate.json"
 "$ENGINE" plan nope --json 2> "$T/error.json" > /dev/null || true
-wait_done() {   # $1 events 파일 — run.done 이 나올 때까지(최대 60초)
+wait_done() {   # $1 events file; waits for run.done (at most 60 seconds)
     for _ in $(seq 1 240); do grep -q '"type":"run.done"' "$1" 2>/dev/null && return 0; sleep 0.25; done
-    echo "run.done 이 나오지 않았습니다: $1" >&2; return 1
+    echo "no run.done in $1" >&2; return 1
 }
 "$ENGINE" run ok --detach --json > "$T/detached-ok.json"
 events_ok=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["eventsPath"])' "$T/detached-ok.json")
@@ -95,7 +95,7 @@ import Foundation
         let d = try dec.decode(FlowDetached.self, from: data("detached-ok.json"))
         precondition(!d.runId.isEmpty && d.eventsPath.hasSuffix("events.ndjson"))
         var ok = FlowRunView(runId: d.runId)
-        // 줄 중간에서 끊어 넣어도(따라 읽을 때처럼) 같은 결과여야 한다.
+        // Feeding it cut mid-line (as when following a run) must give the same result.
         let all = try data("events-ok.ndjson")
         let cut = all.count / 2
         let used = ok.consume(all.prefix(cut))

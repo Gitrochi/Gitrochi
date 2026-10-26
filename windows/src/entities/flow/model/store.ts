@@ -7,8 +7,8 @@ import type { FlowGate, FlowList, FlowRunRow } from "./types";
 const activeStates = new Set(["RUNNING", "PENDING", "PREFLIGHT", "ROLLING_BACK"]);
 
 /**
- * 저장소마다 하나: 흐름 목록 · 최근 실행 · 따라 읽는 실행(맥 FlowStore.swift 와 같다).
- * 저장소 탭(RepoStore)과 따로 두어 탭을 닫았다 열어도 돌던 실행을 계속 따라 읽는다.
+ * One per repository: the flows, recent runs and the run being followed (like the macOS FlowStore.swift).
+ * Kept apart from the repository tab (RepoStore) so a run keeps being followed after its tab is closed and reopened.
  */
 export class FlowStore extends Observable {
   list: FlowList | null = null;
@@ -18,9 +18,9 @@ export class FlowStore extends Observable {
   loading = false;
   runs: FlowRunRow[] = [];
   gate: FlowGate | null = null;
-  /** 실행 ID → 화면 상태(따라 읽는 중이거나 마지막에 본 것) */
+  /** Run ID → screen state (being followed, or as last seen) */
   views = new Map<string, RunView>();
-  /** 끝난 실행의 기록(run.json) */
+  /** Records of finished runs (run.json) */
   records = new Map<string, Record<string, unknown>>();
   private tails = new Set<string>();
 
@@ -53,7 +53,7 @@ export class FlowStore extends Observable {
       }
       this.runs = await flowEngine.runs(this.repo).catch(() => []);
       this.gate = await flowEngine.gate(this.repo).catch(() => null);
-      // 앱을 다시 열었을 때도 돌고 있는 실행을 이어서 따라 읽는다.
+      // After the app reopens, keep following runs that are still going.
       for (const r of this.runs) if (r.running && !this.tails.has(r.runId)) this.follow(r.runId);
     } finally {
       this.loading = false;
@@ -61,7 +61,7 @@ export class FlowStore extends Observable {
     }
   }
 
-  /** 실행을 시작하고 이벤트를 따라 읽는다. 실행 ID 를 돌려준다. */
+  /** Starts a run and follows its events. Returns the run ID. */
   async start(flow: string, affected: boolean, yes: boolean): Promise<string> {
     const d = await flowEngine.start(flow, this.repo, affected, yes);
     this.follow(d.runId);
@@ -84,7 +84,7 @@ export class FlowStore extends Observable {
     this.changed();
   }
 
-  /** 실행을 열 때: 기록을 읽고, 아직 돌면 따라 읽고, 끝났으면 이벤트 전체로 화면 상태를 만든다. */
+  /** Opening a run: read its record, follow it while it runs, or build the screen state from all its events once it has finished. */
   async open(runId: string) {
     const rec = await flowEngine.record(runId, this.repo).catch(() => null);
     if (rec) this.records.set(runId, rec);
@@ -113,7 +113,7 @@ export class FlowStore extends Observable {
         quiet = 0;
         this.changed();
       } else quiet++;
-      // 오래 조용하면 엔진이 살아 있는지 본다(강제 종료 · 전원 꺼짐이면 run.done 없이 멈춘다).
+      // After a long silence, check that the engine is alive (a killed engine or a power cut stops without run.done).
       if (!v.done && quiet > 0 && quiet % 15 === 0) {
         const row = (await flowEngine.runs(this.repo).catch(() => [])).find((r) => r.runId === runId);
         if (row && !row.running) {
@@ -137,7 +137,7 @@ export class FlowStore extends Observable {
 
 const stores = new Map<string, FlowStore>();
 
-/** 저장소 경로 → 그 저장소의 흐름 상태(같은 저장소는 같은 객체) */
+/** Repository path → that repository's flow state (the same object for the same repository) */
 export function flowStoreFor(repo: string): FlowStore {
   const key = samePathKey(repo);
   let s = stores.get(key);
