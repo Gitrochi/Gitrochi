@@ -2050,7 +2050,7 @@
 "Navigation preview" = "탐색 미리보기";
 "Open page" = "화면 열기";
 
-/* 흐름(.gitch/flow.yml, 흐름 엔진 gitch-flow) */
+/* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "흐름";
 "Flow" = "흐름";
 "Open a repository to use flows." = "흐름을 쓰려면 저장소를 여세요.";
