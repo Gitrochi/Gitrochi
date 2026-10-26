@@ -131,6 +131,9 @@ struct RepoView: View {
             .hoverTip(String(localized: "Repository"), String(localized: "Open or clone another repository, recent repositories, structure graph, close tabs"))
         }
 
+        // flexible space: the title and repository menu stay leading, the actions move to the trailing edge
+        ToolbarItem(placement: .primaryAction) { Spacer() }
+
         ToolbarItemGroup(placement: .primaryAction) {
             Button { store.confirmUndo() } label: {
                 ToolLabel(title: String(localized: "Undo"), icon: "arrow.uturn.backward")
