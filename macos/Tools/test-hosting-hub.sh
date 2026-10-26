@@ -29,6 +29,50 @@ enum Hosting {
         Hosting.handler = { r in calls.append(r); return try json((0..<30).map { ["id": $0, "tag_name": "v\($0)", "name": "Release \($0)"] }) }
         let releases = try await HostingHubAPI.page(gh, section: .releases, page: 2)
         precondition(releases.items.count == 30 && releases.more && calls[0].url!.query!.contains("page=2"))
+        let githubOrganization: [String: Any] = ["id": 77, "login": "octo", "description": "Team", "avatar_url": "https://avatars.githubusercontent.com/u/77?v=4"]
+        var organizationPaths = [String]()
+        Hosting.handler = { request in
+            organizationPaths.append(request.url!.path)
+            if request.url!.path == "/user/orgs" { return try json([githubOrganization]) }
+            if request.url!.path == "/orgs/octo" {
+                var detail = githubOrganization; detail["name"] = "Octo team"; detail["html_url"] = "https://github.com/octo"; detail["avatar_url"] = "https://avatars.githubusercontent.com/u/77?v=5"
+                return try json(detail)
+            }
+            precondition(request.url!.path == "/orgs/octo/repos")
+            return try json([])
+        }
+        let githubOrganizations = try await HostingHubAPI.page(gh, section: .organizations)
+        let githubOrganizationItem = githubOrganizations.items[0]
+        precondition(githubOrganizationItem.id == "octo" && githubOrganizationItem.title == "octo" && githubOrganizationItem.subtitle == "octo" && githubOrganizationItem.url == "https://github.com/octo")
+        precondition(githubOrganizationItem.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=4" && !githubOrganizations.more)
+        let githubOrganizationDetail = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationItem)
+        precondition(githubOrganizationDetail.item.title == "Octo team" && githubOrganizationDetail.item.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=5")
+        precondition(organizationPaths == ["/user/orgs", "/orgs/octo", "/orgs/octo/repos"])
+        Hosting.handler = { request in try json(request.url!.path == "/orgs/octo" ? ["description": "Updated team"] : [] as [Any]) }
+        let sparseGithubOrganization = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationDetail.item)
+        precondition(sparseGithubOrganization.item.id == "octo" && sparseGithubOrganization.item.title == "Octo team" && sparseGithubOrganization.item.subtitle == "octo")
+        precondition(sparseGithubOrganization.item.url == "https://github.com/octo" && sparseGithubOrganization.item.body == "Updated team")
+        precondition(sparseGithubOrganization.item.avatarURL == githubOrganizationDetail.item.avatarURL)
+        let gitlabOrganization: [String: Any] = ["id": 9, "name": "Design", "full_path": "team/design", "avatar_url": "/uploads/groups/9/avatar.png", "web_url": "https://gitlab.test/team/design"]
+        Hosting.handler = { request in
+            if request.url!.path == "/api/v4/groups" { return try json([gitlabOrganization]) }
+            if request.url!.path == "/api/v4/groups/9" { return try json(gitlabOrganization) }
+            precondition(request.url!.path == "/api/v4/groups/9/projects")
+            return try json([])
+        }
+        let gitlabOrganizations = try await HostingHubAPI.page(gl, section: .organizations)
+        let gitlabOrganizationItem = gitlabOrganizations.items[0]
+        precondition(gitlabOrganizationItem.id == "9" && gitlabOrganizationItem.title == "Design" && gitlabOrganizationItem.subtitle == "team/design")
+        precondition(gitlabOrganizationItem.avatarURL?.absoluteString == "https://gitlab.test/uploads/groups/9/avatar.png")
+        let gitlabOrganizationDetail = try await HostingHubAPI.detail(gl, section: .organizations, item: gitlabOrganizationItem)
+        precondition(gitlabOrganizationDetail.item.avatarURL == gitlabOrganizationItem.avatarURL)
+        Hosting.handler = { request in try json(request.url!.path == "/api/v4/groups/9" ? ["avatar_url": NSNull(), "web_url": ""] : [] as [Any]) }
+        let clearedGitlabOrganization = try await HostingHubAPI.detail(gl, section: .organizations, item: gitlabOrganizationItem)
+        precondition(clearedGitlabOrganization.item.id == "9" && clearedGitlabOrganization.item.title == "Design" && clearedGitlabOrganization.item.subtitle == "team/design")
+        precondition(clearedGitlabOrganization.item.url == gitlabOrganizationItem.url && clearedGitlabOrganization.item.avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gl, ["id": 10, "full_name": "Team / Fallback", "avatar_url": NSNull()]).avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gh, ["login": "unsafe", "avatar_url": "https://untrusted.test/logo.png"]).avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gl, ["id": 11, "avatar_url": "//untrusted.test/logo.png"]).avatarURL == nil)
         Hosting.handler = { r in
             let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any]
             precondition((body["query"] as! String).contains("user(login:$owner)") && variables["owner"] as? String == "me")
@@ -110,7 +154,7 @@ enum Hosting {
         catch { precondition(error.localizedDescription.contains("Projects could not be loaded") && !error.localizedDescription.contains("internal exception")) }
         let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
         precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
-        print("Hosting hub: pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
+        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
     }
 }
 SWIFT
