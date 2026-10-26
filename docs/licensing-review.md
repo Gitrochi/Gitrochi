@@ -7,7 +7,7 @@
 ## 확인된 정보
 
 - 공식 저장소: <https://github.com/Gitrochi/Gitrochi>.
-- 검토 기준: `a95665f1006a3741ed4dd11bccc62e2ac7782cde` (`main`, 이 제안 전). 기준 파일의 MIT 전문은 [LICENSE-MIT](../LICENSE-MIT)에 그대로 보존합니다.
+- 검토 기준: `a95665f1006a3741ed4dd11bccc62e2ac7782cde` (최초 제안 전). 당시의 [LICENSE](https://github.com/Gitrochi/Gitrochi/blob/a95665f1006a3741ed4dd11bccc62e2ac7782cde/LICENSE)는 변경되지 않는 이력으로 확인할 수 있습니다. 별도 프로젝트 MIT 파일은 제거하고, 그 자료에 필요한 원래 고지는 [통합 고지문](../THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material)에 범위를 명시해 기록합니다.
 - 기존 저작권 표기: `Copyright (c) 2026 조문성 (ChoMnSeong)` 및 `Copyright (c) 2026 jjunhaa0211`. 이 목록이 모든 코드의 단독·전체 권리자를 증명하지는 않습니다.
 - 요청자가 공개 문의용으로 제공한 연락처: 조문성(ChoMnSeong) — <mailto:chemins60217@gmail.com>, jjunhaa0211 — <mailto:goodjunha@gmail.com>.
 - 요청한 정책: 개인·기업 무료 사용과 내부 업무 사용, 비공개 수정 허용; 무단 재판매와 독립 파생 프로젝트 배포 제한; 프로젝트에 제출하는 코드 기여는 공식 저장소 PR로 접수.
@@ -38,7 +38,7 @@ MIT로 적법하게 공개된 코드에는 판매·수정·배포·재허락 권
 | 관할·특허·효력 | 준거법/법원 선택 여부, 명시적 특허 허락 여부, 책임 제한 및 동의 절차의 유효성 | 미확정; 관할을 임의 지정하지 않았고 명시적 특허 허락 없음 |
 | 배포물 감사 | 플랫폼별 실제 포함 의존성, 라이선스/NOTICE와 필요한 소스 제공 확인 | 일부 확인; 전체 완료 아님 |
 
-완료 후 권한 있는 검토자가 채택 승인·증빙을 기록하고, 적용 경계와 제외 자료를 확정하며, LICENSE와 CLA.md의 제안 상태를 명시적으로 변경하는 후속 커밋을 작성합니다. 그때 Cargo의 `license = "MIT"`를 실제 적용 범위에 맞는 `license-file` 등의 표현으로 바꾸고, Tauri의 `bundle.license`·`licenseFile`, 앱 저작권 표시와 README 배지도 함께 맞춥니다. 현재 설치 화면은 미발효 제안에 동의시키지 않도록 `LICENSE-MIT`를 표시합니다. 이 PR을 병합하는 것만으로 위 기록을 완료한 것으로 간주하지 않습니다. 승인 후의 새로운 PR부터 확정된 CLA 동의 절차를 사용합니다. 기존 권리를 삭제하거나 기록을 소급 작성하지 않습니다.
+완료 후 권한 있는 검토자가 채택 승인·증빙을 기록하고, 적용 경계와 제외 자료를 확정하며, LICENSE와 CLA.md의 제안 상태를 명시적으로 변경하는 후속 커밋을 작성합니다. 2026-10-26 후속 변경에서는 별도 프로젝트 MIT 파일, MIT 배지·앱 표시 및 배포 사본을 제거했습니다. 채택 전까지 Cargo와 Tauri의 라이선스 식별자·설치 동의문 설정은 생략하며, 루트 LICENSE와 통합 고지문을 배포물에 포함합니다. 채택 시 실제 적용 범위에 맞는 Cargo `license-file`, Tauri `bundle.license`·`licenseFile`, 앱 표시와 README 배지를 함께 확정합니다. 이 PR을 병합하는 것만으로 위 기록을 완료한 것으로 간주하지 않습니다. 승인 후의 새로운 PR부터 확정된 CLA 동의 절차를 사용합니다. 기존 권리를 삭제하거나 기록을 소급 작성하지 않습니다.
 
 ## 의존성 및 배포 검토
 

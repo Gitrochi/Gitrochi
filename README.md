@@ -14,7 +14,7 @@
   <a href="https://github.com/Gitrochi/Gitrochi/releases"><img src="https://img.shields.io/github/downloads/Gitrochi/Gitrochi/total?label=%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C&color=2a9a55" alt="다운로드"></a>
   <img src="https://img.shields.io/badge/macOS-15%2B-111?logo=apple&logoColor=white" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078d4?logo=windows&logoColor=white" alt="Windows 10 · 11">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Community%20Use%20v1.0%20proposed-6b6b72" alt="MIT; Community Use v1.0 proposed"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Community%20Use%20v1.0%20proposed-6b6b72" alt="Community Use v1.0 proposed"></a>
 </p>
 
 <p align="center">
@@ -245,7 +245,7 @@ npx vitest run       # 파서·그래프·CI 단위 테스트
 
 [Gitrochi Community Use License v1.0 제안](LICENSE) — **아직 시행되지 않은 검토안**입니다. 개인·기업의 무료 사용, 무단 재판매·독립 파생 프로젝트 배포 금지, 공식 저장소 PR 기여를 제안합니다. 시행에 필요한 저작권자 권한·동의와 법적 세부사항은 [전환 검토 기록](docs/licensing-review.md)에 정리합니다.
 
-현재 적용되는 [MIT 원문](LICENSE-MIT)은 함께 보존합니다. 이미 MIT로 제공된 코드에 대한 권리는 이 제안으로 철회되지 않습니다. © 2026 조문성 (ChoMnSeong), [jjunhaa0211](https://github.com/jjunhaa0211). 제안이 채택되더라도 사용·배포 제한이 있는 source-available 정책이므로 오픈소스 라이선스로 표시하지 않습니다.
+© 2026 조문성 (ChoMnSeong), [jjunhaa0211](https://github.com/jjunhaa0211). 별도 프로젝트 MIT 라이선스 파일과 MIT 표시는 제거했습니다. 이미 MIT로 제공된 코드의 권리와 필요한 [과거 자료 고지](THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material)는 유지됩니다. 제안이 채택되더라도 사용·배포 제한이 있는 source-available 정책이므로 오픈소스 라이선스로 표시하지 않습니다.
 
 포함된 서드파티 코드: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) v1.20.0 — MIT ([macos/Vendor/SwiftTerm/LICENSE](macos/Vendor/SwiftTerm/LICENSE)).
 Windows 앱이 쓰는 오픈소스: [Tauri](https://tauri.app)(MIT/Apache-2.0), [React](https://react.dev)(MIT), [xterm.js](https://xtermjs.org)(MIT), [portable-pty](https://github.com/wezterm/wezterm)(MIT), [Lucide](https://lucide.dev) 아이콘(ISC) 등 — 각 패키지의 라이선스를 따릅니다. 제안 라이선스는 이들 서드파티 코드의 권리를 제한하지 않습니다. [서드파티 고지와 의존성 검토 범위](THIRD_PARTY_NOTICES.md)를 확인하세요. Rust 의존성의 배포 대상별 전체 고지 검토는 아직 완료되지 않았습니다.

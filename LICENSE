@@ -3,9 +3,9 @@ Gitrochi Community Use License v1.0
 STATUS: PROPOSED; NOT YET IN EFFECT.
 Adoption requires the authorization and scope record described in
 docs/licensing-review.md. This proposal does not establish a cutover date or
-withdraw any existing MIT permission. Previously MIT-released material remains
-available under LICENSE-MIT. Do not describe this proposal as an effective
-replacement for those grants.
+withdraw any existing MIT permission. Notices for previously MIT-covered material
+are recorded in THIRD_PARTY_NOTICES.md. Do not describe removal of a standalone
+license file as an effective withdrawal of those grants.
 
 Existing copyright notices, preserved without asserting sole ownership:
 Copyright (c) 2026 조문성 (ChoMnSeong)
@@ -31,7 +31,8 @@ relicense a contribution. Material without the necessary authorization retains
 its applicable prior license and is not made exclusively subject to this one.
 
 Gitrochi was previously released under the MIT License. The original notice and
-permission text is preserved in LICENSE-MIT. Existing MIT permissions, including
+permission text for that material is recorded in THIRD_PARTY_NOTICES.md, with
+its historical source revision. Existing MIT permissions, including
 permission to sell, modify, distribute and sublicense MIT-covered material,
 remain available under their terms, including for lawful downstream recipients.
 This license does not retroactively restrict prior versions or material also
@@ -102,8 +103,8 @@ MIT rights, third-party rights, or permissions preserved in section 1.
 
 5. Attribution and names
 
-Keep this license, the existing copyright notices, LICENSE-MIT where applicable,
-and required third-party notices in permitted copies. Preserve existing credits
+Keep this license, the existing copyright notices, and all applicable third-party
+and historical license notices in permitted copies. Preserve existing credits
 and references to the Official Repository. Identify modifications in contribution
 branches so they are not mistaken for official releases.
 

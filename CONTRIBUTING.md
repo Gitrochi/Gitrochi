@@ -9,7 +9,7 @@ Gitrochi 에 관심 가져 주셔서 고맙습니다. 버그 제보·기능 요�
 - [조문성 (ChoMnSeong)](https://github.com/ChoMnSeong)
 - [jjunhaa0211](https://github.com/jjunhaa0211) — gitch CLI, 다중 언어 구조 분석, 앱 연동 및 검증 개선
 
-기존 저작권자 표기는 [LICENSE](LICENSE)와 [기존 MIT 전문](LICENSE-MIT)에 보존합니다. 확인된 라이선스 문의 연락처는 조문성(ChoMnSeong) <mailto:chemins60217@gmail.com>, jjunhaa0211 <mailto:goodjunha@gmail.com>입니다. 연락처가 제공되었다는 사실만으로 모든 기여물의 권리나 라이선스 변경 동의가 확인된 것은 아닙니다.
+기존 저작권자 표기는 [LICENSE](LICENSE)에 보존합니다. 과거 코드에 적용되는 고지는 [통합 고지문](THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material)을 확인하세요. 확인된 라이선스 문의 연락처는 조문성(ChoMnSeong) <mailto:chemins60217@gmail.com>, jjunhaa0211 <mailto:goodjunha@gmail.com>입니다. 연락처가 제공되었다는 사실만으로 모든 기여물의 권리나 라이선스 변경 동의가 확인된 것은 아닙니다.
 
 ## 사용·배포와 공식 기여 경로
 
