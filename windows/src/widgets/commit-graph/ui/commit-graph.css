@@ -82,21 +82,31 @@
   right: 0;
 }
 
-.commit-row:hover {
+/* Hover, selection and search hits tint only the message, at the band's height (rows stay apart) */
+.commit-row:hover .msg {
   background: var(--hover);
 }
 
-.commit-row.selected {
+.commit-row.selected .msg,
+.commit-row.selected.hit .msg {
   background: var(--select);
+}
+
+.commit-row.hit .msg {
+  background: var(--hit);
 }
 
 .commit-row.hit {
-  background: var(--hit);
   box-shadow: inset 3px 0 0 var(--hit-bar);
 }
 
-.commit-row.selected.hit {
-  background: var(--select);
+/* Lane-colored band from the node to the message (GitKraken style) */
+.lane-band {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  height: 24px;
+  transform: translateY(-50%);
 }
 
 .commit-row.miss {
@@ -176,18 +186,19 @@
 .commit-row .msg {
   flex: 1;
   min-width: 0;
+  height: 24px;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-left: 10px;
+  /* the bar meets the band: cancel the row's gap */
+  margin-left: -8px;
   overflow: hidden;
 }
 
 /* 메시지 앞 레인 색 막대 */
 .commit-row .msg-bar {
   width: 3px;
-  height: 16px;
-  border-radius: 2px;
+  height: 100%;
   flex: none;
   margin-right: 4px;
 }

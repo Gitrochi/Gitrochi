@@ -76,7 +76,7 @@ export const CommitRow = memo(function CommitRow({
       }}
     >
       {/* 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수)와 그래프까지 이어지는 선 */}
-      <div className="ref-col" style={{ width: cols.ref, background: groups.length ? `color-mix(in srgb, ${tint} 10%, transparent)` : undefined }}>
+      <div className="ref-col" style={{ width: cols.ref }}>
         {groups.length > 0 && (
           <>
             <RefPill store={store} group={groups[0]} tint={tint} />
@@ -99,10 +99,9 @@ export const CommitRow = memo(function CommitRow({
           </>
         )}
       </div>
-      <div
-        className={cols.graph < gw ? "graph-clipped" : undefined}
-        style={{ background: `color-mix(in srgb, ${tint} ${groups.length ? 10 : 4}%, transparent)`, display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
-      >
+      <div className={cols.graph < gw ? "graph-clipped" : undefined} style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}>
+        {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
+        <span className="lane-band" style={{ left: LEFT_PAD + LANE_W * (entry.row.column + 0.5), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
         <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
       </div>
       {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면. */}
