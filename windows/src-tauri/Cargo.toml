@@ -3,6 +3,7 @@ name = "gitrochi"
 version = "0.3.12"
 description = "Gitrochi — Git client with a commit graph, worktrees, PRs, Claude Code agents and a terminal"
 authors = ["조문성 (ChoMnSeong)", "jjunhaa0211"]
+# Community Use 제안이 채택되기 전까지 현재 MIT 메타데이터를 유지한다.
 license = "MIT"
 edition = "2021"
 
