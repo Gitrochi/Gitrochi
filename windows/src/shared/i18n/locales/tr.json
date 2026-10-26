@@ -1040,5 +1040,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Ajan, önce sormadan komut çalıştırır ve dosyaları değiştirir. Yalnızca güvendiğiniz görevlerde, tercihen ayrı bir worktree'de kullanın.",
  "I understand the risk": "Riski anlıyorum",
  "Skips permissions": "İzin denetimi yok",
- "Started with all permission checks skipped": "Tüm izin denetimleri atlanarak başlatıldı"
+ "Started with all permission checks skipped": "Tüm izin denetimleri atlanarak başlatıldı",
+ "Write": "Yaz",
+ "Preview": "Önizleme",
+ "Nothing to preview": "Önizlenecek bir şey yok"
 }

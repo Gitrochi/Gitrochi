@@ -1039,3 +1039,6 @@
 "I understand the risk" = "Я розумію ризик";
 "Skips permissions" = "Без перевірки дозволів";
 "Started with all permission checks skipped" = "Запущено з пропуском усіх перевірок дозволів";
+"Write" = "Написати";
+"Preview" = "Попередній перегляд";
+"Nothing to preview" = "Немає що переглядати";

@@ -995,3 +995,6 @@
 "I understand the risk" = "Tôi hiểu rủi ro";
 "Skips permissions" = "Bỏ qua kiểm tra quyền";
 "Started with all permission checks skipped" = "Đã bắt đầu và bỏ qua mọi kiểm tra quyền";
+"Write" = "Viết";
+"Preview" = "Xem trước";
+"Nothing to preview" = "Không có gì để xem trước";

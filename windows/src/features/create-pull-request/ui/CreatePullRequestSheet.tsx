@@ -1,10 +1,10 @@
 import { Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
-import { providerInfo } from "@/entities/git";
+import { markdownLinks, providerInfo } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { Button, Checkbox, Frame, Spinner } from "@/shared/ui";
+import { Button, Checkbox, Frame, Markdown, Segmented, Spinner } from "@/shared/ui";
 
 export function CreatePullRequestSheet({ store, close }: { store: RepoStore; close: () => void }) {
   const provider = store.target?.provider ?? "github";
@@ -17,6 +17,8 @@ export function CreatePullRequestSheet({ store, close }: { store: RepoStore; clo
   const [bases] = useState(() => store.pullRequestBaseCandidates());
   const [draft, setDraft] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [tab, setTab] = useState<"write" | "preview">("write");
+  const links = useMemo(() => markdownLinks(store.target), [store.target]);
   useEffect(() => {
     void store.defaultBaseBranch().then((b) => b && setBase((cur) => cur || b));
   }, [store]);
@@ -43,7 +45,21 @@ export function CreatePullRequestSheet({ store, close }: { store: RepoStore; clo
         </select>
       </div>
       <input className="input" placeholder={t("Title")} value={title} onChange={(e) => setTitle(e.target.value)} />
-      <textarea className="textarea" style={{ height: 220 }} value={body} placeholder={t("Description (Markdown)")} onChange={(e) => setBody(e.target.value)} />
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: "write", label: t("Write") },
+          { value: "preview", label: t("Preview") },
+        ]}
+      />
+      {tab === "write" ? (
+        <textarea className="textarea" style={{ height: 220 }} value={body} placeholder={t("Description (Markdown)")} onChange={(e) => setBody(e.target.value)} />
+      ) : (
+        <div style={{ height: 220, overflow: "auto", padding: 10, border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
+          {body.trim() ? <Markdown text={body} {...links} /> : <span className="muted">{t("Nothing to preview")}</span>}
+        </div>
+      )}
       <div className="row">
         <Checkbox checked={draft} onChange={setDraft} label={t("Draft")} />
         <span className="spacer" />

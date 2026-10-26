@@ -1051,5 +1051,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Агент выполняет команды и изменяет файлы, не спрашивая. Используйте только для задач, которым доверяете, лучше в отдельном рабочем дереве.",
  "I understand the risk": "Я понимаю риск",
  "Skips permissions": "Без проверки разрешений",
- "Started with all permission checks skipped": "Запущен с пропуском всех проверок разрешений"
+ "Started with all permission checks skipped": "Запущен с пропуском всех проверок разрешений",
+ "Write": "Написать",
+ "Preview": "Предпросмотр",
+ "Nothing to preview": "Нечего показывать"
 }

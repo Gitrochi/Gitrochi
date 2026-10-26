@@ -990,3 +990,6 @@
 "I understand the risk" = "Saya memahami risikonya";
 "Skips permissions" = "Tanpa pemeriksaan izin";
 "Started with all permission checks skipped" = "Dimulai dengan melewati semua pemeriksaan izin";
+"Write" = "Tulis";
+"Preview" = "Pratinjau";
+"Nothing to preview" = "Tidak ada yang bisa dipratinjau";

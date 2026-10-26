@@ -1052,5 +1052,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "エージェントは確認せずにコマンドを実行し、ファイルを変更します。信頼できる作業にだけ、できれば別のワークツリーで使ってください。",
  "I understand the risk": "リスクを理解しました",
  "Skips permissions": "権限確認なし",
- "Started with all permission checks skipped": "すべての権限確認をスキップして開始したセッション"
+ "Started with all permission checks skipped": "すべての権限確認をスキップして開始したセッション",
+ "Write": "書く",
+ "Preview": "プレビュー",
+ "Nothing to preview": "プレビューする内容がありません"
 }

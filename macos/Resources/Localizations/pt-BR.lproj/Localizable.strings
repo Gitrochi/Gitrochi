@@ -1003,3 +1003,6 @@
 "I understand the risk" = "Entendo o risco";
 "Skips permissions" = "Sem verificar permissões";
 "Started with all permission checks skipped" = "Iniciada pulando todas as verificações de permissão";
+"Write" = "Escrever";
+"Preview" = "Visualizar";
+"Nothing to preview" = "Nada para visualizar";

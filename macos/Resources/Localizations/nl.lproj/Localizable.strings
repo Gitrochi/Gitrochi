@@ -983,3 +983,6 @@
 "I understand the risk" = "Ik begrijp het risico";
 "Skips permissions" = "Zonder toestemmingscontrole";
 "Started with all permission checks skipped" = "Gestart zonder toestemmingscontroles";
+"Write" = "Schrijven";
+"Preview" = "Voorbeeld";
+"Nothing to preview" = "Niets om te bekijken";

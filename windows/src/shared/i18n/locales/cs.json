@@ -1033,5 +1033,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Agent spouští příkazy a mění soubory, aniž by se předem zeptal. Používejte to jen pro úkoly, kterým důvěřujete, nejlépe v samostatném worktree.",
  "I understand the risk": "Rozumím riziku",
  "Skips permissions": "Bez kontroly oprávnění",
- "Started with all permission checks skipped": "Spuštěno s přeskočením všech kontrol oprávnění"
+ "Started with all permission checks skipped": "Spuštěno s přeskočením všech kontrol oprávnění",
+ "Write": "Psát",
+ "Preview": "Náhled",
+ "Nothing to preview": "Není co zobrazit"
 }

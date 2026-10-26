@@ -1027,3 +1027,6 @@
 "I understand the risk" = "Riski anlıyorum";
 "Skips permissions" = "İzin denetimi yok";
 "Started with all permission checks skipped" = "Tüm izin denetimleri atlanarak başlatıldı";
+"Write" = "Yaz";
+"Preview" = "Önizleme";
+"Nothing to preview" = "Önizlenecek bir şey yok";

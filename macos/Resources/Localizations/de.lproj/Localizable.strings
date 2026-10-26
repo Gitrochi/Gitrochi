@@ -1006,3 +1006,6 @@
 "I understand the risk" = "Ich verstehe das Risiko";
 "Skips permissions" = "Ohne Berechtigungsabfragen";
 "Started with all permission checks skipped" = "Mit übersprungenen Berechtigungsabfragen gestartet";
+"Write" = "Schreiben";
+"Preview" = "Vorschau";
+"Nothing to preview" = "Nichts für die Vorschau";

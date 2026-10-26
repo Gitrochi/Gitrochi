@@ -1029,5 +1029,8 @@
  "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "El agente ejecuta comandos y modifica archivos sin preguntar antes. Úsalo solo para tareas de confianza, preferiblemente en un worktree aparte.",
  "I understand the risk": "Entiendo el riesgo",
  "Skips permissions": "Sin comprobar permisos",
- "Started with all permission checks skipped": "Iniciada omitiendo todas las comprobaciones de permisos"
+ "Started with all permission checks skipped": "Iniciada omitiendo todas las comprobaciones de permisos",
+ "Write": "Escribir",
+ "Preview": "Vista previa",
+ "Nothing to preview": "Nada que previsualizar"
 }

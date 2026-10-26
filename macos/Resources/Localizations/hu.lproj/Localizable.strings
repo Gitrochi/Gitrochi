@@ -1022,3 +1022,6 @@
 "I understand the risk" = "Értem a kockázatot";
 "Skips permissions" = "Jogosultság-ellenőrzés nélkül";
 "Started with all permission checks skipped" = "Minden jogosultság-ellenőrzés kihagyásával indítva";
+"Write" = "Írás";
+"Preview" = "Előnézet";
+"Nothing to preview" = "Nincs mit megjeleníteni";
