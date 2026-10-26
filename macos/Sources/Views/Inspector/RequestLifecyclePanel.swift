@@ -33,7 +33,7 @@ struct RequestLifecyclePanel: View {
         .padding(9)
         .background(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.secondary.opacity(0.25)))
         .controlSize(.small)
-        .task(id: number) { editing = false; await store.loadRequestLifecycle(number); method = state.lifecycle?.methods.first ?? "merge" }
+        .task(id: "\(state.contextID):\(number)") { editing = false; await store.loadRequestLifecycle(number); method = state.lifecycle?.methods.first ?? "merge" }
     }
     private func actionButtons(_ r: RequestLifecycle) -> some View {
         VStack(alignment: .leading, spacing: 6) {

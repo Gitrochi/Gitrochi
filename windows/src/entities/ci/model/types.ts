@@ -87,6 +87,8 @@ export const isFinishedCI = (s: CIStatus) => s === "success" || s === "failed" |
 
 export interface CIPipeline {
   id: number;
+  /** GitLab head pipelines may belong to a fork project. */
+  projectID?: number;
   /** GitLab iid / GitHub run_number */
   number: number;
   /** GitHub 워크플로 이름, GitLab 파이프라인 이름(있으면) */
@@ -111,6 +113,14 @@ export interface CIJob {
   url: string;
   allowFailure: boolean;
   duration: number | null;
+}
+
+export interface CIRequestCheck {
+  id: string;
+  name: string;
+  status: CIStatus;
+  url: string;
+  summary: string;
 }
 
 /** GitLab 수동 작업(when: manual)·지연 작업(when: delayed)은 바로 실행할 수 있다 */

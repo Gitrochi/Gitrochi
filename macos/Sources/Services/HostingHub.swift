@@ -7,7 +7,14 @@ enum HostingHubSection: String, CaseIterable, Identifiable {
 }
 struct HubItem: Identifiable { var id: String; var title: String; var subtitle = ""; var body = ""; var url = ""; var editable = false; var data: [String: Any] = [:] }
 struct HubFile: Identifiable { var id: String { name }; var name: String; var content: String; var truncated = false }
-struct HubMember: Identifiable { var id: String; var name: String; var role: String }
+struct HubMember: Identifiable {
+    var id: String
+    var name: String
+    var role: String
+    var username = ""
+    var avatarURL: URL?
+    var profileURL: URL?
+}
 struct HubRepository: Identifiable { var id: String; var name: String; var description: String; var cloneURL: String; var url: String }
 struct HubAsset: Identifiable { var id: String; var name: String; var size: Int?; var downloads: Int?; var url: String }
 struct HubProjectOption: Identifiable { var id: String; var name: String }
@@ -86,6 +93,59 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         var allowed = [host.lowercased()]; if provider == .github { allowed += ["github.com", "gist.github.com"]; if asset { allowed += ["objects.githubusercontent.com", "release-assets.githubusercontent.com", "github-releases.githubusercontent.com"] } }
         return allowed.contains(h) ? u : nil
     }
+    /// Profile photos are fetched without account credentials, only from the connected host or known avatar CDNs.
+    static func safeAvatarURL(provider: Provider, host: String, _ value: String) -> URL? {
+        guard let u = URL(string: value), u.scheme == "https", u.user == nil, u.password == nil,
+              let avatarHost = u.host?.lowercased() else { return nil }
+        let allowed = [host.lowercased(), "gravatar.com", "www.gravatar.com", "secure.gravatar.com"]
+            + (provider == .github ? ["avatars.githubusercontent.com", "github.com"] : [])
+        return allowed.contains(avatarHost) ? u : nil
+    }
+    static func member(_ c: HubAccess, _ x: J) -> HubMember {
+        let username = s(x, c.target.provider == .github ? "login" : "username").trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = s(x, "name").trimmingCharacters(in: .whitespacesAndNewlines)
+        let server = c.target.provider == .gitlab && c.apiBase.hasSuffix("/api/v4") ? String(c.apiBase.dropLast("/api/v4".count)) : "https://" + c.target.host
+        let rawProfile = s(x, c.target.provider == .github ? "html_url" : "web_url")
+        let profile = safeURL(c, rawProfile) ?? (username.isEmpty ? nil : safeURL(c, server + "/" + enc(username)))
+        let rawAvatar = s(x, "avatar_url")
+        let avatar = rawAvatar.hasPrefix("/") && !rawAvatar.hasPrefix("//") ? URL(string: rawAvatar, relativeTo: URL(string: server))?.absoluteURL.absoluteString ?? "" : rawAvatar
+        let role: String
+        if c.target.provider == .gitlab {
+            switch Int(id(x, "access_level")) {
+            case 5: role = String(localized: "Minimal access")
+            case 10: role = String(localized: "Guest")
+            case 15: role = String(localized: "Planner")
+            case 20: role = String(localized: "Reporter")
+            case 30: role = String(localized: "Developer")
+            case 40: role = String(localized: "Maintainer")
+            case 50: role = String(localized: "Owner")
+            default: role = String(localized: "Member")
+            }
+        } else { role = String(localized: "Member") }
+        return HubMember(id: id(x).isEmpty ? username : id(x), name: name.isEmpty ? username : name, role: role, username: username,
+                         avatarURL: safeAvatarURL(provider: c.target.provider, host: c.target.host, avatar), profileURL: profile)
+    }
+    static func members(_ c: HubAccess, rows: [J]) async throws -> [HubMember] {
+        var result = rows.map { member(c, $0) }
+        guard c.target.provider == .github, !result.isEmpty else { return result }
+        // REST organization members omit display names. Enrich the page in one optional public-profile lookup.
+        let indices = result.indices.filter { !result[$0].username.isEmpty }.prefix(30)
+        guard !indices.isEmpty else { return result }
+        let definitions = indices.map { "$login\($0):String!" }.joined(separator: ",")
+        let fields = indices.map { "member\($0):user(login:$login\($0)){name avatarUrl url}" }.joined(separator: " ")
+        let variables = Dictionary(uniqueKeysWithValues: indices.map { ("login\($0)", result[$0].username) })
+        do {
+            let response = try await object(c, c.apiBase + "/graphql", method: "POST", body: ["query": "query(\(definitions)){\(fields)}", "variables": variables])
+            let profiles = obj(response, "data")
+            for index in indices {
+                let profile = obj(profiles, "member\(index)"), name = s(profile, "name").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !name.isEmpty { result[index].name = name }
+                if let avatar = safeAvatarURL(provider: c.target.provider, host: c.target.host, s(profile, "avatarUrl")) { result[index].avatarURL = avatar }
+                if let url = safeURL(c, s(profile, "url")) { result[index].profileURL = url }
+            }
+        } catch { try check(c) } // An unavailable profile must not hide the organization's members.
+        return result
+    }
     static func error(_ e: Error, token: String? = nil) -> String { var text = e.localizedDescription; if let token, !token.isEmpty { text = text.replacingOccurrences(of: token, with: "[redacted]") }; for pattern in ["\\b(?:gh[pousr]_[\\w]+|github_pat_[\\w]+|glpat-[\\w-]+)\\b", "(?i)[?&](?:access_token|private_token|token|api_key)=[^&\\s]+"] { if let regex = try? NSRegularExpression(pattern: pattern) { text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "[redacted]") } }; return String(text.prefix(1200)) }
     static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool) -> RepoTarget {
         if !personal, let repository { return repository }
@@ -138,7 +198,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             let route = tab == "members" ? p == .github ? "/members" : "/members/all" : p == .github ? "/repos" : "/projects"
             let extra = tab == "repositories" ? p == .github ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""
             let rows = try await list(c, base + route + "?" + qs + extra)
-            if tab == "members" { d.members = rows.map { HubMember(id: id($0), name: s($0, p == .github ? "login" : "username"), role: id($0, "access_level").isEmpty ? String(localized: "Member") : id($0, "access_level")) }; if p == .github { d.notice = String(localized: "Only members visible to this account are returned by the server.") } }
+            if tab == "members" { d.members = try await members(c, rows: rows); if p == .github { d.notice = String(localized: "Only members visible to this account are returned by the server.") } }
             else { d.repositories = rows.map { HubRepository(id: id($0), name: s($0, p == .github ? "full_name" : "path_with_namespace"), description: s($0, "description"), cloneURL: s($0, p == .github ? "clone_url" : "http_url_to_repo"), url: s($0, p == .github ? "html_url" : "web_url")) } }; d.more = rows.count == 30; return d
         case .gists:
             let base = c.apiBase + (p == .github ? "/gists/" : "/snippets/") + enc(item.id), x = try await object(c, base); var d = HubDetail(item: gistItem(c, x))

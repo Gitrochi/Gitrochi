@@ -2,7 +2,6 @@ import { ArrowDownToLine, ArrowLeft, CircleCheck, CircleDot, CircleMinus, Circle
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";
-import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { type FileChange, markdownLinks, providerInfo, RefBadge, sameDiffSource, short, StatusBadge, statusCount, statusIsEmpty } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
@@ -15,6 +14,7 @@ import { GitchBar } from "./GitchBar";
 import { WorktreeChanges } from "./WorktreeChanges";
 import { ReviewDraftPanel, ReviewThreadActions } from "./ReviewPanels";
 import { RequestLifecyclePanel } from "./RequestLifecyclePanel";
+import { RequestChecksPanel } from "./RequestChecksPanel";
 import "./inspector.css";
 
 /** 오른쪽 열: 작업 영역 또는 커밋 상세 */
@@ -380,13 +380,12 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
     setDraft("");
     void store.loadReview(number);
   }, [store, number]);
-  const md = useMemo(() => markdownLinks(store.target), [store.target]);
   const pr = store.pullRequests.find((p) => p.number === number);
   const target = store.target;
+  const md = useMemo(() => markdownLinks(target, pr?.headSHA ?? pr?.source ?? "HEAD"), [target, pr?.headSHA, pr?.source]);
   if (!pr || !target) return <Empty icon={<GitPullRequest size={30} />} title={t("{0} not in the list", target ? providerInfo[target.provider].requestShort : "PR")} detail={t("It was closed or hasn't been loaded yet.")} />;
   const r = store.review?.number === number ? store.review : null;
   const s = r?.state;
-  const ci = pr.headSHA ? store.ci.bySha.get(pr.headSHA) : undefined;
   const text = draft.trim();
   const pending = store.reviewDraftsFor(number).length;
   const after = (ok: boolean) => {
@@ -405,46 +404,16 @@ function PullRequestDetail({ store, number }: { store: RepoStore; number: number
         {store.reviewLoading && <Spinner size={12} />}
         <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh conversation and approvals")} onClick={() => void store.loadReview(number)} />
       </div>
-      <div className="panel-scroll" key={number}>
-        <div className="selectable" style={{ fontSize: 16, fontWeight: 600 }}>
-          {pr.title}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 10px" }}>
-          <span className="muted">{t("Author")}</span>
-          <span>@{pr.author}</span>
-          <span className="muted">{t("Branch")}</span>
-          <span className="selectable">
-            {pr.source} → {pr.target}
-            {pr.fromFork ? t("  (fork)") : ""}
-          </span>
-          {pr.updated && (
-            <>
-              <span className="muted">{t("Update")}</span>
-              <span>{longDate(pr.updated)}</span>
-            </>
-          )}
-          {ci && (
-            <>
-              <span className="muted">CI</span>
-              <span className="row" style={{ gap: 4 }}>
-                <CIStatusIcon status={ci.status} size={12} />
-                {statusInfo[ci.status].title} · #{ci.number}
-                <button className="link" onClick={() => store.openUrl(ci.url)}>
-                  {t("Open")}</button>
-              </span>
-            </>
-          )}
-        </div>
-        <div className="row" style={{ flexWrap: "wrap" }}>
-          <Button kind="primary" onClick={() => void store.checkoutPullRequest(pr)}>
-            <ArrowDownToLine size={14} /> {" "}{t("Check out branch")}</Button>
-          <Button onClick={() => store.openUrl(pr.url)}>
-            <ExternalLink size={14} /> {" "}{t("Browser")}</Button>
-          {pr.headSHA && store.commitIndex.has(pr.headSHA) && <Button onClick={() => store.reveal(pr.headSHA!)}>{t("Show in graph")}</Button>}
-        </div>
-        <div style={{ height: 1, background: "var(--border)" }} />
+      <div className="panel-scroll request-detail-scroll" key={number}>
+        <header className="request-summary">
+          <h1 className="selectable">{pr.title}</h1>
+          <div className="request-meta"><span>@{pr.author}</span>{pr.updated && <span>{t("Update")} {longDate(pr.updated)}</span>}</div>
+          <div className="request-branches selectable"><GitBranch size={13}/><code>{pr.source}</code><span>→</span><code>{pr.target}</code>{pr.fromFork && <span className="muted">{t("fork")}</span>}</div>
+          <div className="request-actions"><Button kind="primary" onClick={() => void store.checkoutPullRequest(pr)}><ArrowDownToLine size={14}/>{t("Check out branch")}</Button><Button onClick={() => store.openUrl(pr.url)}><ExternalLink size={14}/>{t("Browser")}</Button>{pr.headSHA && store.commitIndex.has(pr.headSHA) && <Button onClick={() => store.reveal(pr.headSHA!)}>{t("Show in graph")}</Button>}</div>
+        </header>
+        <section className="request-description"><strong className="request-section-label">{t("Description")}</strong>{pr.body.trim() ? <Markdown text={pr.body} {...md} /> : <span className="muted">{t("No description")}</span>}</section>
+        <RequestChecksPanel store={store} number={number} sha={pr.headSHA} url={pr.url}/>
         <RequestLifecyclePanel store={store} number={number} />
-        {pr.body.trim() ? <Markdown text={pr.body} {...md} /> : <span className="muted">{t("No description")}</span>}
         {store.reviewError && (
           <span className="error-text" style={{ fontSize: 11.5, whiteSpace: "pre-wrap" }}>
             {store.reviewError}

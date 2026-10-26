@@ -6,6 +6,31 @@ export function safeUrl(href: string): string | null {
   return /^(https?:\/\/|mailto:)/i.test(h) ? h : null;
 }
 
+/** Resolve repository screenshots at the request's selected commit. */
+export function markdownImageURL(value: string, repositoryURL: string, ref = "HEAD", provider?: "github" | "gitlab"): string | null {
+  if (!value || /[\u0000-\u0020\u007f]/.test(value)) return null;
+  try {
+    const repository = new URL(repositoryURL);
+    const github = provider ? provider === "github" : repository.hostname === "github.com";
+    let url = new URL(value, repository);
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return null;
+    const relative = !/^(?:[a-z][a-z\d+.-]*:|\/)/i.test(value);
+    if (relative && (github || !value.startsWith("uploads/"))) {
+      const root = repository.hostname === "github.com"
+        ? `https://raw.githubusercontent.com${repository.pathname.replace(/\/$/, "")}/${encodeURIComponent(ref)}/`
+        : `${repository.href.replace(/\/$/, "")}/${github ? "" : "-/"}raw/${encodeURIComponent(ref)}/`;
+      url = new URL(value, root);
+      if (!url.href.startsWith(root)) return null;
+    }
+    if (url.hostname === "github.com" && /^\/[^/]+\/[^/]+\/blob\//.test(url.pathname)) {
+      url.hostname = "raw.githubusercontent.com";
+      url.pathname = url.pathname.replace(/^(\/[^/]+\/[^/]+)\/blob\//, "$1/");
+      url.searchParams.delete("raw");
+    } else if (url.pathname.includes("/-/blob/")) url.pathname = url.pathname.replace("/-/blob/", "/-/raw/");
+    return url.href;
+  } catch { return null; }
+}
+
 const punctRe = /[!-/:-@[-`{-~]/;
 const wordRe = /[\p{L}\p{N}_]/u;
 const entities: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0" };
@@ -142,7 +167,7 @@ export function inlines(s: string, refs: MdRefs | undefined, inLink = false): Md
     if (c === "!" && s[i + 1] === "[") {
       const l = linkAt(scan, i + 1);
       if (l) {
-        const src = safeUrl(l.href);
+        const src = refs?.image ? refs.image(l.href) : safeUrl(l.href);
         const alt = plain(inlines(l.text, undefined, true));
         if (src) push({ kind: "image", src, alt });
         else if (alt) push({ kind: "text", text: alt });
@@ -192,9 +217,10 @@ export function inlines(s: string, refs: MdRefs | undefined, inLink = false): Md
         i += br[0].length;
         continue;
       }
-      const img = /^<img\b([^>]*)>/i.exec(rest);
+      const img = /^<img\b((?:"[^"]*"|'[^']*'|[^'">])*)>/i.exec(rest);
       if (img) {
-        const src = safeUrl(attr(img[1], "src") ?? "");
+        const address = decode(attr(img[1], "src") ?? "");
+        const src = refs?.image ? refs.image(address) : safeUrl(address);
         const alt = decode(attr(img[1], "alt") ?? "");
         if (src) push({ kind: "image", src, alt });
         else if (alt) push({ kind: "text", text: alt });

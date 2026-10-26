@@ -224,7 +224,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
   await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
-  await step("PR 대화·파일 검토 전환에서 미전송 초안 유지", prConversationSelfTest);
+  await step("PR screenshots, checks and retained conversation drafts", prConversationSelfTest);
   await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);
   await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
