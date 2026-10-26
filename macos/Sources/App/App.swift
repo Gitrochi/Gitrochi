@@ -285,6 +285,7 @@ struct RepoContainer: View {
             case .interactiveRebase: InteractiveRebaseSheet()
             case .graphDiff: GraphDiffSheet()
             case .graphCheck: GraphCheckSheet()
+            case .issueEditor(let number, let title, let body): IssueEditorSheet(number: number, title: title, body: body)
             }
         }
         .alert("Couldn't complete the operation",

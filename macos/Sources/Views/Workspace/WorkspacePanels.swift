@@ -167,177 +167,32 @@ struct RepositoryMyWorkPanel: View {
         if let url = URL(string: string) { NSWorkspace.shared.open(url) }
     }
 }
+/// Issues: the shared issue list on the left, the selected issue on the right, like the Pull requests page
 struct IssuesWorkspacePanel: View {
     @Environment(RepoStore.self) private var store
-    @ViewState private var model = WorkspaceIssueModel()
-    @ViewState private var scope = "open"
-    @ViewState private var query = ""
-    @ViewState private var editor = false
-    @ViewState private var editingNumber: Int?
-    @ViewState private var editingOrigin = ""
-    @ViewState private var title = ""
-    @ViewState private var description = ""
-    @ViewState private var comment = ""
-    private var key: String {
-        "\(store.url?.path ?? "")|\(store.collaboration.contextID)|\(AccountStore.shared.revision)|\(store.hostingAccount?.id ?? "")|\(scope)"
-    }
-    private var disabled: Bool { model.busy || model.mutating || store.collaboration.inboxBusy }
+    @Environment(\.openSettings) private var openSettings
     var body: some View {
-        WorkspacePage(title: "Issues", subtitle: store.target.map { "\($0.host)/\($0.path)" }) {
-            WorkspaceAccountNotice()
-            VStack(alignment: .leading, spacing: 10) {
-                Picker("Issue state", selection: $scope) {
-                    Text("Open").tag("open")
-                    Text("Closed").tag("closed")
-                    Text("All").tag("all")
-                }.frame(maxWidth: 170)
-                HStack {
-                    TextField("Search issues", text: $query).onSubmit { Task { await load() } }
-                    Button("Search") { Task { await load() } }
-                    Button("New issue") {
-                        editingNumber = nil
-                        editingOrigin = key
-                        title = ""
-                        description = ""
-                        editor = true
+        if store.target != nil {
+            AdaptiveWorkbenchSplit(listWidth: 290) {
+                ScrollView { IssueListSection(onPage: true).padding(.vertical, 6) }
+                    .environment(\.sidebarFlyout, true)
+                    .background(Color(nsColor: .windowBackgroundColor))
+            } detail: {
+                Group {
+                    if let detail = store.collaboration.inboxDetail, detail.item.kind == "issue" {
+                        IssueDetailView(detail: detail)
+                    } else {
+                        ContentUnavailableView("Select an issue", systemImage: "circle.dotted",
+                                               description: Text("Search the list, then read the conversation and reply here."))
                     }
-                    if model.busy { ProgressView().controlSize(.small) }
-                }
-            }.disabled(disabled || store.collaborationAccess == nil)
-            if let error = model.error ?? store.collaboration.inboxError {
-                Text(error).foregroundStyle(.red).textSelection(.enabled)
+                }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            if editor { editorPanel }
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 18) {
-                    issueList.frame(minWidth: 180, maxWidth: 300)
-                    issueDetail.frame(minWidth: 280, maxWidth: .infinity)
-                }
-                VStack(alignment: .leading, spacing: 18) { issueList; issueDetail }
-            }
-        }.task(id: key) {
-            model.reset()
-            editor = false
-            store.collaboration.inboxDetail = nil
-            await load()
-        }.onDisappear { model.reset() }.onChange(of: store.collaboration.inboxDetail?.item.id) {
-            _, _ in
-            comment = ""
+        } else {
+            VStack(spacing: 14) {
+                ContentUnavailableView("No hosting remote", systemImage: "circle.dotted", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
+                Button("Connect account…") { openSettings() }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-    }
-    private var issueList: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(model.items) { item in
-                Button {
-                    Task { await store.openInboxItem(item) }
-                } label: {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("#\(item.number) \(item.title)").font(.callout.weight(.medium))
-                        Text("\(item.state) · @\(item.author)").font(.caption)
-                            .foregroundStyle(.secondary)
-                    }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            store.collaboration.inboxDetail?.item.id == item.id
-                                ? Color.accentColor.opacity(0.15) : .clear,
-                            in: RoundedRectangle(cornerRadius: 7))
-                }.buttonStyle(.plain)
-            }
-            if model.more {
-                Button("Load more") { Task { await load(append: true) } }.disabled(disabled)
-            }
-            if model.items.isEmpty, !model.busy {
-                Text("No items in this page.").foregroundStyle(.secondary)
-            }
-        }
-    }
-    private var issueDetail: some View {
-        WorkspaceCard {
-            if let detail = store.collaboration.inboxDetail, detail.item.kind == "issue" {
-                detailPanel(detail)
-            } else {
-                Text("Select an item to read its conversation.").foregroundStyle(.secondary)
-            }
-        }
-    }
-    private var editorPanel: some View {
-        WorkspaceCard {
-            Text(editingNumber == nil ? "New issue" : "Edit issue").font(.headline)
-            TextField("Title", text: $title)
-            TextEditor(text: $description).frame(height: 130).accessibilityLabel("Description")
-            HStack {
-                Button("Cancel") { editor = false }
-                Button("Save") { Task { await save() } }.buttonStyle(.borderedProminent).disabled(
-                    title.trimmed.isEmpty)
-            }
-        }.disabled(disabled)
-    }
-    private func detailPanel(_ detail: CollaborationInboxDetail) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("#\(detail.item.number) \(detail.item.title)").font(.title3.bold())
-            WorkbenchFlow {
-                Text(detail.item.state).font(.caption)
-                Button("Edit issue") {
-                    editingNumber = detail.item.number
-                    editingOrigin = key
-                    title = detail.item.title
-                    description = detail.item.body
-                    editor = true
-                }
-                Button(
-                    ["open", "opened"].contains(detail.item.state)
-                        ? String(localized: "Close issue…") : String(localized: "Reopen…")
-                ) { store.confirmIssueState(detail.item) }
-                Button("Browser") {
-                    if let url = URL(string: detail.item.url) { NSWorkspace.shared.open(url) }
-                }
-            }.controlSize(.small).disabled(disabled)
-            Text(detail.item.body.isEmpty ? String(localized: "No description") : detail.item.body)
-                .textSelection(.enabled)
-            ForEach(detail.comments) { c in
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("@\(c.author)").bold()
-                    Text(c.body).textSelection(.enabled)
-                }.font(.callout).padding(.vertical, 7)
-            }
-            if detail.more {
-                Button("Load more comments") {
-                    Task { await store.openInboxItem(detail.item, append: true) }
-                }.disabled(disabled || store.collaboration.inboxLoading)
-            }
-            TextEditor(text: $comment).frame(height: 90).accessibilityLabel("Comment")
-            Button("Comment") {
-                let sent = comment
-                Task {
-                    if await store.inboxAction(detail.item, action: "comment", body: sent),
-                        store.collaboration.inboxDetail?.item.id == detail.item.id, comment == sent
-                    {
-                        comment = ""
-                    }
-                }
-            }.disabled(disabled || comment.trimmed.isEmpty || store.collaboration.inboxLoading)
-        }
-    }
-    private func load(append: Bool = false) async {
-        guard let c = workspaceAccess(store) else { return }
-        await model.load(c, scope: scope, search: query, append: append)
-    }
-    private func save() async {
-        guard !model.mutating, editingOrigin == key, let c = workspaceAccess(store) else { return }
-        let id = model.generation
-        let number = editingNumber
-        let sentTitle = title
-        let sentBody = description
-        model.mutating = true
-        model.error = nil
-        defer { model.mutating = false }
-        do {
-            let item = try await WorkspaceOperations.saveIssue(
-                c, title: sentTitle, body: sentBody, number: number)
-            guard model.generation == id, c.isCurrent?() != false else { return }
-            if title == sentTitle, description == sentBody { editor = false }
-            await load()
-            await store.openInboxItem(item)
-        } catch { if model.generation == id { model.error = error.localizedDescription } }
     }
 }
 private struct WorkspaceJobLogPanel: View {

@@ -546,6 +546,8 @@ enum SheetKind: Identifiable {
     case graphDiff
     /// 의존 규칙 검사 결과(gitch graph check)
     case graphCheck
+    /// New issue (number nil) or an edit of one
+    case issueEditor(number: Int?, title: String, body: String)
 
     var id: String {
         switch self {
@@ -570,6 +572,7 @@ enum SheetKind: Identifiable {
         case .interactiveRebase: return "interactiveRebase"
         case .graphDiff: return "graphDiff"
         case .graphCheck: return "graphCheck"
+        case .issueEditor(let n, _, _): return "issue:" + (n.map(String.init) ?? "new")
         }
     }
 }

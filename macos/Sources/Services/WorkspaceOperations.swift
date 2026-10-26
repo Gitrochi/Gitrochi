@@ -124,6 +124,11 @@ import Observation
 
 @MainActor @Observable final class WorkspaceIssueModel {
     var items: [CollaborationInboxItem] = []
+    /// open, closed or all
+    var scope = "open"
+    var search = ""
+    /// Repository, account and filter the list was loaded for; a different key starts over
+    var contextKey = ""
     var page = 0
     var more = false
     var busy = false

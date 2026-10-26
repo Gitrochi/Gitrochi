@@ -73,6 +73,9 @@ struct SidebarView: View {
         if show("pullRequests"), let target = store.target {
             PullRequestSection(target: target)
         }
+        if show("issues"), store.target != nil {
+            IssueListSection()
+        }
 
         let pinned = store.localBranches.filter { store.isPinned($0) }
         if show("pinned"), !pinned.isEmpty {

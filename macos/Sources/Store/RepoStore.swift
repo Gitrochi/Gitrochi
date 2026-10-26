@@ -85,6 +85,8 @@ final class RepoStore: Identifiable {
     var changeQuestionSession: ChangeQuestionSession?
     var historyTools = HistoryToolsState()
     var collaboration = CollaborationState()
+    /// The repository's issues, shared by the sidebar section and the Issues page
+    let issueList = WorkspaceIssueModel()
     var localWorkflows = LocalWorkflowState()
     var repositoryAssistant = RepositoryAssistantState()
     var hostingHub = HostingHubState()
@@ -445,6 +447,7 @@ final class RepoStore: Identifiable {
         cancelChangeQuestion()
         historyTools.reset()
         collaboration.reset()
+        issueList.reset(); issueList.contextKey = ""
         localWorkflows.reset()
         repositoryAssistant.reset()
         hostingHub = .init()
