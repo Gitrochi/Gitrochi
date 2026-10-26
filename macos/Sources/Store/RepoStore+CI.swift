@@ -15,6 +15,7 @@ extension RepoStore {
     }
 
     func resetCI() {
+        ciFocus = nil
         ciPipelines = []
         ciJobs = [:]
         ciDeployments = [:]
@@ -92,6 +93,16 @@ extension RepoStore {
             guard target == t else { return }
             // 자동 새로 고침이 한 번 실패한 것으로 목록을 지우지 않는다
             if !silent || ciPipelines.isEmpty { ciState = .failed(describe(error)) }
+        }
+    }
+
+    /// Opens the Actions page on this pipeline, from a commit's CI icon
+    func openCI(_ pipeline: CIPipeline) {
+        guard navigate(.actions) else { return }
+        ciFocus = pipeline.id
+        if !ciPipelines.contains(where: { $0.id == pipeline.id }) {
+            // the badge came from the commit's SHA; the list may be filtered to another branch
+            if ciCurrentBranchOnly, pipeline.ref != ciCurrentRef { ciCurrentBranchOnly = false } else { Task { await loadCI() } }
         }
     }
 

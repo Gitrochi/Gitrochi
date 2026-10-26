@@ -184,7 +184,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Přenese nové commity (%1$lld) ze vzdáleného repozitáře do aktuální větve.";
 "Browser" = "Prohlížeč";
 "By branch" = "Podle větví";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — kliknutím otevřete v prohlížeči";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — kliknutím otevřete v Actions";
 "Calls Chat Completions with an OpenAI API key." = "Volá Chat Completions s klíčem API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Volá Gemini s klíčem API z Google AI Studio.";
 "Can't open this image" = "Tento obrázek nelze otevřít";

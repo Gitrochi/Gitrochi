@@ -183,7 +183,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Đưa %1$lld commit mới từ remote vào nhánh hiện tại.";
 "Browser" = "Trình duyệt";
 "By branch" = "Theo nhánh";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — nhấp để mở trong trình duyệt";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — nhấp để mở trong Actions";
 "Calls Chat Completions with an OpenAI API key." = "Gọi Chat Completions bằng khóa API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Gọi Gemini bằng khóa API Google AI Studio.";
 "Can't open this image" = "Không thể mở hình ảnh này";

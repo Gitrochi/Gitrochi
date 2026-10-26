@@ -189,7 +189,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Переносит новые коммиты из удалённого репозитория в текущую ветку. Новых коммитов: %1$lld.";
 "Browser" = "Браузер";
 "By branch" = "По веткам";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — нажмите, чтобы открыть в браузере";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — нажмите, чтобы открыть в Actions";
 "Calls Chat Completions with an OpenAI API key." = "Вызывает Chat Completions с ключом API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Вызывает Gemini с ключом API Google AI Studio.";
 "Can't open this image" = "Не удаётся открыть изображение";

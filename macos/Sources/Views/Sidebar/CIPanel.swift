@@ -9,6 +9,7 @@ struct CIPanel: View {
     /// 보기: 시간순 목록 / 브랜치별(접은 브랜치는 이 창에서만 기억)
     @AppStorage("ciGroupByBranch") private var byBranch = false
     @ViewState private var collapsedRefs: Set<String> = []
+    @ViewState private var scrollTarget: Int?
 
     var body: some View {
         if let target = store.target {
@@ -19,6 +20,8 @@ struct CIPanel: View {
             }
             .task(id: "\(target.host)/\(target.path)/\(store.ciCurrentBranchOnly)") { await poll() }
             .onChange(of: AccountStore.shared.revision) { _, _ in Task { await store.loadCI() } }
+            .onChange(of: store.ciFocus, initial: true) { _, _ in reveal() }
+            .onChange(of: store.ciPipelines) { _, _ in reveal() }
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "bolt.horizontal.circle").font(.largeTitle).foregroundStyle(.tertiary)
@@ -112,6 +115,7 @@ struct CIPanel: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         default:
+            ScrollViewReader { proxy in
             List {
                 if byBranch {
                     ForEach(CIBranchGroup.group(store.ciPipelines)) { g in
@@ -132,7 +136,23 @@ struct CIPanel: View {
                 }
             }
             .listStyle(.sidebar)
+            .onChange(of: scrollTarget, initial: true) { _, id in
+                guard let id else { return }
+                withAnimation { proxy.scrollTo(id, anchor: .top) }
+                scrollTarget = nil
+            }
+            }
         }
+    }
+
+    /// A commit's CI icon asked for this pipeline: open its branch group and the run, then bring it into view
+    private func reveal() {
+        guard let id = store.ciFocus, let p = store.ciPipelines.first(where: { $0.id == id }) else { return }
+        collapsedRefs.remove(p.ref)
+        expanded.insert(id)
+        Task { await store.loadJobs(p) }
+        scrollTarget = id
+        store.ciFocus = nil
     }
 
     private func pipelineItem(_ p: CIPipeline, target: RepoTarget, showRef: Bool) -> some View {
@@ -141,6 +161,7 @@ struct CIPanel: View {
         } label: {
             PipelineRow(pipeline: p, provider: target.provider, showRef: showRef) { expanded.insert(p.id); Task { await store.loadJobs(p) } }
         }
+        .id(p.id)
     }
 
     private func branchExpansion(_ ref: String) -> Binding<Bool> {

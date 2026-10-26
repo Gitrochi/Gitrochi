@@ -188,7 +188,7 @@
 "Brings %lld new commits from the remote into the current branch." = "ดึงคอมมิตใหม่ %1$lld รายการจากรีโมตเข้ามาในแบรนช์ปัจจุบัน";
 "Browser" = "เบราว์เซอร์";
 "By branch" = "ตามแบรนช์";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — คลิกเพื่อเปิดในเบราว์เซอร์";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — คลิกเพื่อเปิดใน Actions";
 "Calls Chat Completions with an OpenAI API key." = "เรียก Chat Completions ด้วยคีย์ API ของ OpenAI";
 "Calls Gemini with a Google AI Studio API key." = "เรียก Gemini ด้วยคีย์ API ของ Google AI Studio";
 "Can't open this image" = "ไม่สามารถเปิดรูปภาพนี้ได้";

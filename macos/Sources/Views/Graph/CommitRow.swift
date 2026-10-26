@@ -80,8 +80,8 @@ struct CommitRow: View {
                             .foregroundStyle(c.isMerge ? .secondary : .primary)
                         if let ci {
                             CIStatusIcon(status: ci.status, size: 11)
-                                .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in the browser")
-                                .onTapGesture { if let u = URL(string: ci.url) { NSWorkspace.shared.open(u) } }
+                                .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in Actions")
+                                .onTapGesture { store.openCI(ci) }
                         }
                         if !c.body.isEmpty {
                             Text(c.body)

@@ -190,7 +190,7 @@
 "Browser" = "浏览器";
 "By branch" = "按分支";
 "CI: %@ · #%lld" = "CI：%1$@ · #%2$lld";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI：%1$@ · %2$@#%3$lld — 点击在浏览器中打开";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI：%1$@ · %2$@#%3$lld — 点击在 Actions 中打开";
 "Calls Chat Completions with an OpenAI API key." = "使用 OpenAI API 密钥调用 Chat Completions。";
 "Calls Gemini with a Google AI Studio API key." = "使用 Google AI Studio API 密钥调用 Gemini。";
 "Can't open this image" = "无法打开此图像";

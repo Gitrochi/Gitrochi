@@ -189,7 +189,7 @@
 "Brings %lld new commits from the remote into the current branch." = "リモートの新しいコミット %1$lld 件を現在のブランチに取り込みます。";
 "Browser" = "ブラウザー";
 "By branch" = "ブランチ別";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — クリックしてブラウザーで開く";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — クリックして Actions で開く";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI の API キーで Chat Completions を呼び出します。";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio の API キーで Gemini を呼び出します。";
 "Can't open this image" = "この画像を開けません";

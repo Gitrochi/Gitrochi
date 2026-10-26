@@ -179,7 +179,7 @@
 "Gitrochi update" = "Pembaruan Gitrochi";
 "Brings %lld new commits from the remote into the current branch." = "Mengambil %1$lld commit baru dari remote ke branch saat ini.";
 "By branch" = "Per branch";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — klik untuk membuka di browser";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — klik untuk membuka di Actions";
 "Calls Chat Completions with an OpenAI API key." = "Memanggil Chat Completions dengan kunci API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Memanggil Gemini dengan kunci API Google AI Studio.";
 "Can't open this image" = "Gambar ini tidak dapat dibuka";

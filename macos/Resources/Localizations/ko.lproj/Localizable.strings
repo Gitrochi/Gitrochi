@@ -315,7 +315,7 @@
 "Brings %lld new commits from the remote into the current branch." = "원격의 새 커밋 %1$lld개를 현재 브랜치로 가져옵니다.";
 "Browser" = "브라우저";
 "By branch" = "브랜치별";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — 눌러서 브라우저로";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — 눌러서 Actions 페이지로";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI API 키로 Chat Completions 를 부릅니다.";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio API 키로 Gemini 를 부릅니다.";
 "Can't open this image" = "열 수 없는 이미지";

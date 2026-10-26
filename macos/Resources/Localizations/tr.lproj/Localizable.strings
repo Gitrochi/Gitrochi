@@ -184,7 +184,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Uzak depodaki %1$lld yeni commit'i geçerli dala çeker.";
 "Browser" = "Tarayıcı";
 "By branch" = "Dala göre";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — tarayıcıda açmak için tıklayın";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — Actions sayfasında açmak için tıklayın";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI API anahtarıyla Chat Completions'ı çağırır.";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio API anahtarıyla Gemini'yi çağırır.";
 "Can't open this image" = "Bu görüntü açılamıyor";

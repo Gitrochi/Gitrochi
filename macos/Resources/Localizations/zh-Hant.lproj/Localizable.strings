@@ -189,7 +189,7 @@
 "Brings %lld new commits from the remote into the current branch." = "將遠端的 %1$lld 個新提交帶入目前分支。";
 "Browser" = "瀏覽器";
 "By branch" = "依分支";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — 按一下以在瀏覽器中開啟";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — 點一下在 Actions 中開啟";
 "Calls Chat Completions with an OpenAI API key." = "使用 OpenAI API 金鑰呼叫 Chat Completions。";
 "Calls Gemini with a Google AI Studio API key." = "使用 Google AI Studio API 金鑰呼叫 Gemini。";
 "Can't open this image" = "無法開啟此影像";

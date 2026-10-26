@@ -181,7 +181,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Traz para o branch atual os novos commits do remoto (%1$lld).";
 "Browser" = "Navegador";
 "By branch" = "Por branch";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — clique para abrir no navegador";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — clique para abrir em Actions";
 "Calls Chat Completions with an OpenAI API key." = "Chama a API Chat Completions com uma chave de API da OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Chama o Gemini com uma chave de API do Google AI Studio.";
 "Can't open this image" = "Não é possível abrir esta imagem";

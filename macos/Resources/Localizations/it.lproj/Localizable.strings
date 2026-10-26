@@ -180,7 +180,7 @@
 "Gitrochi update" = "Aggiornamento di Gitrochi";
 "Brings %lld new commits from the remote into the current branch." = "Porta nel branch corrente i nuovi commit dal remoto (%1$lld).";
 "By branch" = "Per branch";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — fai clic per aprire nel browser";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — clic per aprire in Actions";
 "Calls Chat Completions with an OpenAI API key." = "Chiama Chat Completions con una chiave API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Chiama Gemini con una chiave API di Google AI Studio.";
 "Can't open this image" = "Impossibile aprire questa immagine";

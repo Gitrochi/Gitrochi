@@ -186,7 +186,7 @@
 "Brings %lld new commits from the remote into the current branch." = "Lehúzza a távoli tároló új commitjait (%1$lld) az aktuális ágba.";
 "Browser" = "Böngésző";
 "By branch" = "Áganként";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — kattintással megnyitható a böngészőben";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — kattints a megnyitáshoz az Actions oldalon";
 "Calls Chat Completions with an OpenAI API key." = "A Chat Completions API-t hívja OpenAI API-kulccsal.";
 "Calls Gemini with a Google AI Studio API key." = "A Geminit hívja Google AI Studio API-kulccsal.";
 "Can't open this image" = "Ez a kép nem nyitható meg";

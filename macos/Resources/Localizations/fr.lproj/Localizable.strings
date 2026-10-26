@@ -182,7 +182,7 @@
 "Browser" = "Navigateur";
 "By branch" = "Par branche";
 "CI: %@ · #%lld" = "CI : %1$@ · #%2$lld";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI : %1$@ · %2$@#%3$lld — cliquer pour ouvrir dans le navigateur";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI : %1$@ · %2$@#%3$lld — cliquer pour ouvrir dans Actions";
 "Calls Chat Completions with an OpenAI API key." = "Appelle Chat Completions avec une clé API OpenAI.";
 "Calls Gemini with a Google AI Studio API key." = "Appelle Gemini avec une clé API Google AI Studio.";
 "Can't open this image" = "Impossible d’ouvrir cette image";
