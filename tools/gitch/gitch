@@ -9507,10 +9507,65 @@ body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
   #tools button:nth-child(n) { margin-left:0; }
   #top .ctrls { grid-template-columns:auto 1fr; }
 }
+
+/* Named entry points keep layout and architecture tools discoverable. */
+:root { --work-top:152px; }
+#quickViews { position:fixed; top:90px; left:16px; right:16px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:7px 9px; z-index:4; }
+#quickViews button { border:1px solid var(--border); border-radius:7px; background:var(--hover); color:var(--text-2); padding:7px 11px; cursor:pointer; font-size:12px; font-weight:600; }
+#quickViews button[aria-pressed=true] { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
+#quickViews button:disabled { opacity:.4; cursor:default; }
+#activeLayout { margin-left:auto; color:var(--muted); font-size:11px; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#top, #rightDock, .splitter { top:var(--work-top); }
+#dockTabs button { min-height:44px; height:auto; }
+#dockTabs .dock-label { min-width:0; overflow-wrap:normal; word-break:keep-all; }
+#layout { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:row; grid-auto-columns:auto; gap:6px; padding:0; background:transparent; width:100%; }
+#layout button { min-height:42px; padding:8px; border:1px solid var(--border); border-radius:7px; background:var(--hover); text-align:left; white-space:normal; font-size:12px; }
+#layout button.on { border-color:var(--accent); background:var(--accent-soft); color:var(--text); }
+#layoutDescription { color:var(--muted); font-size:11px; line-height:1.6; margin:7px 0 0; }
+#architecture { min-height:0; flex:1; display:flex; flex-direction:column; overflow:hidden; }
+#architectureHeader { flex:none; padding:14px; border-bottom:1px solid var(--border); }
+#architectureHeader h2 { margin:0 0 6px; font-size:15px; }
+#architectureScope { color:var(--muted); font-size:11px; overflow-wrap:anywhere; margin-bottom:10px; }
+.architecture-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; font-size:11px; }
+.architecture-controls select, #architectureSearch { border:1px solid var(--border); background:var(--hover); color:var(--text); padding:5px 7px; border-radius:6px; min-width:0; }
+#architectureSearch { width:100%; box-sizing:border-box; margin-top:8px; }
+#architectureBody { min-height:0; flex:1; overflow:auto; padding:14px; }
+.architecture-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.architecture-summary div { padding:10px; border-radius:8px; background:var(--hover); }
+.architecture-summary b { display:block; font-size:20px; color:var(--text); }
+.architecture-summary span { display:block; margin-top:4px; font-size:10px; line-height:1.5; color:var(--muted); }
+.architecture-note { color:var(--muted); font-size:11px; line-height:1.6; margin:8px 0 12px; }
+#architectureBody h3 { font-size:13px; margin:20px 0 8px; }
+#architectureBody h3 small { color:var(--muted); margin-left:5px; font-weight:400; }
+.architecture-group { display:block; width:100%; padding:11px; margin:0 0 8px; border:1px solid var(--border); border-radius:8px; background:var(--hover); color:var(--text); text-align:left; cursor:pointer; }
+.architecture-group:hover, .architecture-group.selected { border-color:var(--accent); background:var(--accent-soft); }
+.architecture-path { display:block; font-size:12px; font-weight:650; overflow-wrap:anywhere; }
+.architecture-counts { display:block; font-size:10px; color:var(--muted); line-height:1.6; margin-top:6px; }
+.architecture-ratio { display:flex; justify-content:space-between; gap:8px; font-size:11px; margin-top:9px; color:var(--text-2); }
+.architecture-bar { display:block; height:4px; margin-top:5px; border-radius:3px; background:var(--border); overflow:hidden; }
+.architecture-bar i { display:block; height:100%; background:var(--accent); }
+.cycle-tag { display:inline-block; margin-left:6px; color:var(--warn); font-size:10px; }
+.architecture-pair { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; margin:0 0 5px; padding:9px; text-align:left; border:1px solid var(--border); border-radius:6px; background:var(--hover); color:var(--text-2); cursor:pointer; font-size:11px; }
+.architecture-pair span { min-width:0; overflow-wrap:anywhere; }
+.architecture-pair b { flex:none; color:var(--text); }
+.architecture-formulas { margin-top:20px; font-size:11px; line-height:1.7; color:var(--muted); }
+.architecture-formulas summary { color:var(--text-2); cursor:pointer; }
+#architectureMoreAnalysis, #architectureMorePairs { border:1px solid var(--border); border-radius:6px; padding:7px 9px; color:var(--text-2); background:var(--hover); cursor:pointer; font-size:11px; }
+@media(max-width:1100px) { #activeLayout { display:none; } }
+@media(max-width:900px) {
+ #quickViews { left:12px; right:12px; gap:5px; }
+ #quickViews button { font-size:11px; padding:7px 9px; }
+ #top,#rightDock { top:auto; height:min(52vh,480px,max(160px,calc(100vh - var(--work-top) - 260px))); }
+ #architecture { overflow:auto; }
+ #architectureBody { flex:none; overflow:visible; }
+ #legend { top:var(--work-top); }
+ #banner { top:calc(var(--work-top) + 48px); }
+}
 </style>
 </head>
 <body>
 <header class="hud" id="masthead"><span id="brand"></span><div id="context"></div><span id="phase" role="status">Building graph…</span><button id="leftToggle" aria-controls="top" aria-expanded="true" aria-label="Collapse or expand explorer">Explore</button><button id="rightToggle" aria-controls="rightDock" aria-expanded="true" aria-label="Collapse or expand graph tools">Tools</button></header>
+<nav class="hud" id="quickViews" aria-label="Graph views"><button id="quickStars" type="button" aria-pressed="false">✦ <span>Constellation</span></button><button id="quickFolders" type="button" aria-pressed="false">▤ <span>Folder tree</span></button><button id="quickArchitecture" type="button" aria-controls="architecture" aria-pressed="false">↔ <span>Coupling &amp; cohesion</span></button><button id="quickLayouts" type="button" aria-controls="layout">▦ <span>Layouts</span></button><button id="quickNextStars" type="button" aria-label="Next constellation" title="Next constellation" hidden>↻</button><output id="activeLayout"></output></nav>
 <button class="splitter" id="leftSizer" aria-label="Resize explorer" title="Drag or use Left and Right arrows to resize"></button><button class="splitter" id="rightSizer" aria-label="Resize details panel" title="Drag or use Left and Right arrows to resize"></button>
 <canvas id="c" tabindex="0" aria-label="Structure graph — use the list button at the bottom right for a table"></canvas>
 <div class="hud" id="top">
@@ -9553,7 +9608,7 @@ body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
 </div>
 <div class="hud" id="banner" hidden><span class="dot"></span><span id="bannerText"></span><button id="bannerClear" type="button">Clear</button></div>
 <aside class="hud" id="rightDock" aria-label="Graph tools">
-  <div id="dockTabs" role="tablist" aria-label="Graph tools"><button id="gear" type="button" role="tab" title="Graph settings" aria-label="Graph settings" aria-controls="panel" aria-selected="true" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Graph settings</button><button id="reviewTab" type="button" role="tab" aria-controls="reviewPane" aria-selected="false">Change review<span id="reviewCount"></span></button><button id="infoTab" type="button" role="tab" aria-controls="info" aria-selected="false" disabled>Selection details</button></div>
+  <div id="dockTabs" role="tablist" aria-label="Graph tools"><button id="gear" type="button" role="tab" title="Graph settings" aria-label="Graph settings" aria-controls="panel" aria-selected="true" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="dock-label">Graph settings</span></button><button id="reviewTab" type="button" role="tab" aria-controls="reviewPane" aria-selected="false"><span class="dock-label">Change review</span><span id="reviewCount"></span></button><button id="infoTab" type="button" role="tab" aria-controls="info" aria-selected="false" disabled><span class="dock-label">Selection details</span></button><button id="architectureTab" type="button" role="tab" aria-controls="architecture" aria-selected="false"><span class="dock-label">Architecture</span></button></div>
   <div id="dockBody">
 <aside id="panel" role="tabpanel" aria-labelledby="gear">
   <details open id="displaySettings"><summary>Display / layout</summary><div class="sec">
@@ -9561,7 +9616,7 @@ body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
     <span id="unitLab">Unit</span><div class="line" id="unitLine"><div class="seg" id="unit"></div><select id="depth" aria-label="Folder depth" title="How many folder levels to show"></select></div>
     <span id="styleLab">Shape</span><div class="line" id="styleLine"><div class="seg" id="style"></div></div>
     </div>
-    <div class="row col"><span class="lab">Layout</span><div class="seg" id="layout"></div></div>
+    <div class="row col"><span class="lab">Layout</span><div class="seg" id="layout"></div><p id="layoutDescription"></p></div>
     <div class="row col"><span class="lab">Color</span><div class="seg" id="colorBy"></div></div>
     <div class="row col"><span class="lab">Size</span><div class="seg" id="sizeBy"></div></div>
     <div class="quick-toggles"><label class="row" id="arrowRow">Arrows<input class="switch" type="checkbox" id="arrows"></label>
@@ -9606,6 +9661,7 @@ body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
   <details id="edgeLegend"><summary>Edge and color key</summary><div class="sec">Source → target: the source references the target<br>Solid: declaration / index · Long dash: module checked<br>Short dash: inferred from names only<br>Silver ring: selected · Green: added · Red: removed<br>Yellow: rule violation · Direct edges are bright; indirect edges use medium emphasis</div></details>
 </aside>
 <div id="reviewPane" role="tabpanel" aria-labelledby="reviewTab" hidden><section id="reviewDetail" class="review" aria-live="polite"></section><div id="reviewExport"><span>Review report</span><button id="reportMd">Save Markdown</button><button id="reportHtml">Save HTML</button></div></div>
+<section id="architecture" role="tabpanel" aria-labelledby="architectureTab" hidden><div id="architectureHeader"><h2>Coupling &amp; cohesion</h2><div id="architectureScope"></div><div class="architecture-controls"><label>Folder depth <select id="architectureDepth"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label><select id="architectureSort" aria-label="Sort folders"><option value="coupling">Most coupled first</option><option value="share">Lowest internal share first</option><option value="files">Most files first</option><option value="name">By path</option></select><label><input id="architectureInferred" type="checkbox">Include inferred dependencies</label></div><input id="architectureSearch" type="search" placeholder="Filter folders" aria-label="Filter folders"><button id="architectureMoreAnalysis" type="button">More graph analysis</button></div><div id="architectureBody"></div></section>
 <aside id="info" role="tabpanel" aria-labelledby="infoTab" aria-live="polite" hidden></aside>
 <aside class="hud drawer" id="table" hidden>
   <div class="head">List <span id="tableNote"></span><button class="icon-btn" id="tableClose" type="button" title="Close" aria-label="Close list"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -10428,7 +10484,71 @@ HTMLEOF
     "No tracked file was found for the Rust mod declaration.": "No tracked file was found for the Rust mod declaration.",
     "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.",
     "Symlink or submodule entries were excluded from the staged source snapshot.": "Symlink or submodule entries were excluded from the staged source snapshot.",
-    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "Changed file is listed, but its dependency syntax is not supported by this analysis."
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "Changed file is listed, but its dependency syntax is not supported by this analysis.",
+    "Architecture": "Architecture",
+    "Coupling & cohesion": "Coupling & cohesion",
+    "Group by": "Group by",
+    "Manifest modules": "Manifest modules",
+    "Internal dependencies": "Internal dependencies",
+    "Incoming dependencies": "Incoming dependencies",
+    "Outgoing dependencies": "Outgoing dependencies",
+    "Incoming groups (Ca)": "Incoming groups (Ca)",
+    "Outgoing groups (Ce)": "Outgoing groups (Ce)",
+    "Internal dependency share": "Internal dependency share",
+    "Internal density": "Internal density",
+    "Structural cohesion proxy": "Structural cohesion proxy",
+    "Boundary dependencies": "Boundary dependencies",
+    "Group cycles": "Group cycles",
+    "No group cycles in this scope.": "No group cycles in this scope.",
+    "No file dependencies in this scope.": "No file dependencies in this scope.",
+    "N/A": "N/A",
+    "Internal share = internal / (internal + outgoing). Density = internal / [files × (files − 1)]. These describe dependency structure, not semantic or class cohesion.": "Internal share = internal / (internal + outgoing). Density = internal / [files × (files − 1)]. These describe dependency structure, not semantic or class cohesion.",
+    "Instability = outgoing groups / (incoming groups + outgoing groups). N/A means the ratio is undefined.": "Instability = outgoing groups / (incoming groups + outgoing groups). N/A means the ratio is undefined.",
+    "Folder scope and filters limit both endpoints; dependencies outside the scope are not counted.": "Folder scope and filters limit both endpoints; dependencies outside the scope are not counted.",
+    "Module ownership is estimated from manifest paths; ambiguous or unassigned files stay in folder groups.": "Module ownership is estimated from manifest paths; ambiguous or unassigned files stay in folder groups.",
+    "Click a row to highlight this group and its boundary dependencies.": "Click a row to highlight this group and its boundary dependencies.",
+    "{0} files · {1} internal · {2} incoming · {3} outgoing": "{0} files · {1} internal · {2} incoming · {3} outgoing",
+    "{0} groups · {1} boundary dependencies · {2} cycles": "{0} groups · {1} boundary dependencies · {2} cycles",
+    "Includes {0} inferred dependencies.": "Includes {0} inferred dependencies.",
+    "File metrics omit package-only nodes such as Go packages.": "File metrics omit package-only nodes such as Go packages.",
+    "Based on filtered files and deduplicated directed dependencies. External packages, files outside the analysis scope, folder containment and co-change links are excluded.": "Based on filtered files and deduplicated directed dependencies. External packages, files outside the analysis scope, folder containment and co-change links are excluded.",
+    "Applies the selected language, test-file, inference and folder-scope filters to the file dependency graph. Canvas layout, hidden color groups and search do not change these metrics.": "Applies the selected language, test-file, inference and folder-scope filters to the file dependency graph. Canvas layout, hidden color groups and search do not change these metrics.",
+    "Folder groups": "Folder groups",
+    "Layouts": "Layouts",
+    "Folder tree": "Folder tree",
+    "Layout: {0}": "Layout: {0}",
+    "Next constellation": "Next constellation",
+    "Graph views": "Graph views",
+    "Folder lanes": "Folder lanes",
+    "Dependency rings": "Dependency rings",
+    "Let related nodes settle naturally.": "Let related nodes settle naturally.",
+    "Explore nested folders by zooming into circles.": "Explore nested folders by zooming into circles.",
+    "Keep files in the same folder together and compare connections across folders.": "Keep files in the same folder together and compare connections across folders.",
+    "Follow dependency levels from top to bottom.": "Follow dependency levels from top to bottom.",
+    "Place dependency levels on rings; cyclic dependencies stay on the same level.": "Place dependency levels on rings; cyclic dependencies stay on the same level.",
+    "Place closely connected files near the center and farther connections on outer rings.": "Place closely connected files near the center and farther connections on outer rings.",
+    "Follow a readable tree; dependency views use a spanning forest.": "Follow a readable tree; dependency views use a spanning forest.",
+    "Spread a hierarchy outward from its roots.": "Spread a hierarchy outward from its roots.",
+    "Architecture: {0}": "Architecture: {0}",
+    "Scope: {0}": "Scope: {0}",
+    "Repository": "Repository",
+    "Folder coupling": "Folder coupling",
+    "No folders match this filter.": "No folders match this filter.",
+    "Cross-folder dependencies": "Cross-folder dependencies",
+    "No cross-folder dependencies in this scope.": "No cross-folder dependencies in this scope.",
+    "Show fewer pairs": "Show fewer pairs",
+    "Show all {0} pairs": "Show all {0} pairs",
+    "How these metrics are calculated": "How these metrics are calculated",
+    "Filter folders": "Filter folders",
+    "Most coupled first": "Most coupled first",
+    "Lowest internal share first": "Lowest internal share first",
+    "Most files first": "Most files first",
+    "By path": "By path",
+    "Include inferred dependencies": "Include inferred dependencies",
+    "More graph analysis": "More graph analysis",
+    "Current file dependency snapshot": "Current file dependency snapshot",
+    "Sort folders": "Sort folders",
+    "Cycle": "Cycle"
   },
   "ko": {
     "Select a file first.": "먼저 파일을 선택하세요.",
@@ -11216,7 +11336,71 @@ HTMLEOF
     "No tracked file was found for the Rust mod declaration.": "Rust mod 선언의 추적 파일을 찾지 못했습니다.",
     "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "제어 문자나 심볼릭 링크가 있는 경로는 파일명 경계와 저장소 범위를 유지하기 위해 소스 파일을 읽기 전에 제외했습니다.",
     "Symlink or submodule entries were excluded from the staged source snapshot.": "스테이지 소스 스냅샷에서 심볼릭 링크와 하위 모듈 항목을 제외했습니다.",
-    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "변경 파일은 목록에 있지만 이 분석은 해당 의존성 문법을 지원하지 않습니다."
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "변경 파일은 목록에 있지만 이 분석은 해당 의존성 문법을 지원하지 않습니다.",
+    "Architecture": "구조 분석",
+    "Coupling & cohesion": "결합도 · 응집도",
+    "Group by": "묶는 기준",
+    "Manifest modules": "매니페스트 모듈",
+    "Internal dependencies": "내부 의존 연결",
+    "Incoming dependencies": "외부에서 들어오는 의존 연결",
+    "Outgoing dependencies": "외부로 나가는 의존 연결",
+    "Incoming groups (Ca)": "이 그룹을 참조하는 그룹 (Ca)",
+    "Outgoing groups (Ce)": "이 그룹이 참조하는 그룹 (Ce)",
+    "Internal dependency share": "내부 의존 비율",
+    "Internal density": "내부 연결 밀도",
+    "Structural cohesion proxy": "구조로 추정한 응집도",
+    "Boundary dependencies": "그룹 경계를 넘는 의존 연결",
+    "Group cycles": "그룹 사이 순환",
+    "No group cycles in this scope.": "현재 범위에는 그룹 사이 순환이 없습니다.",
+    "No file dependencies in this scope.": "현재 범위에는 파일 사이 의존 연결이 없습니다.",
+    "N/A": "해당 없음",
+    "Internal share = internal / (internal + outgoing). Density = internal / [files × (files − 1)]. These describe dependency structure, not semantic or class cohesion.": "내부 의존 비율 = 내부 연결 / (내부 + 외부로 나가는 연결). 밀도 = 내부 연결 / [파일 수 × (파일 수 − 1)]. 의미적·클래스 응집도가 아닌 의존 구조의 지표입니다.",
+    "Instability = outgoing groups / (incoming groups + outgoing groups). N/A means the ratio is undefined.": "불안정도 = 참조하는 그룹 수 / (참조받는 그룹 수 + 참조하는 그룹 수). 계산할 수 없는 비율은 해당 없음으로 표시합니다.",
+    "Folder scope and filters limit both endpoints; dependencies outside the scope are not counted.": "폴더 범위와 필터를 양쪽 파일에 적용하므로 범위 밖으로 이어지는 의존 연결은 계산하지 않습니다.",
+    "Module ownership is estimated from manifest paths; ambiguous or unassigned files stay in folder groups.": "모듈 소속은 매니페스트 경로로 추정합니다. 소속이 불명확하거나 없는 파일은 폴더로 묶습니다.",
+    "Click a row to highlight this group and its boundary dependencies.": "행을 누르면 해당 그룹과 경계를 넘는 의존 연결을 강조합니다.",
+    "{0} files · {1} internal · {2} incoming · {3} outgoing": "파일 {0}개 · 내부 {1} · 들어옴 {2} · 나감 {3}",
+    "{0} groups · {1} boundary dependencies · {2} cycles": "그룹 {0}개 · 경계 연결 {1}개 · 순환 {2}개",
+    "Includes {0} inferred dependencies.": "추정한 의존 연결 {0}개를 포함합니다.",
+    "File metrics omit package-only nodes such as Go packages.": "Go 패키지처럼 파일이 아닌 패키지 단위 노드는 파일 지표에서 제외합니다.",
+    "Based on filtered files and deduplicated directed dependencies. External packages, files outside the analysis scope, folder containment and co-change links are excluded.": "필터를 적용한 파일과 중복을 제거한 방향성 의존 연결을 기준으로 계산합니다. 외부 패키지, 분석 범위 밖 파일, 폴더 포함 관계, 함께 변경된 연결은 제외합니다.",
+    "Applies the selected language, test-file, inference and folder-scope filters to the file dependency graph. Canvas layout, hidden color groups and search do not change these metrics.": "파일 의존 그래프에 선택한 언어, 테스트 파일, 추정 연결, 폴더 범위 필터를 적용합니다. 그래프 배치, 숨긴 색상 그룹, 검색은 이 지표에 영향을 주지 않습니다.",
+    "Folder groups": "폴더 그룹",
+    "Layouts": "배치 선택",
+    "Folder tree": "폴더 구조",
+    "Layout: {0}": "배치: {0}",
+    "Next constellation": "다음 별자리",
+    "Graph views": "그래프 보기",
+    "Folder lanes": "폴더별 행",
+    "Dependency rings": "의존성 링",
+    "Let related nodes settle naturally.": "연결된 노드가 자연스럽게 모이도록 배치합니다.",
+    "Explore nested folders by zooming into circles.": "원을 확대해 폴더 안의 구조를 탐색합니다.",
+    "Keep files in the same folder together and compare connections across folders.": "같은 폴더의 파일을 행으로 모아 폴더 사이 연결을 비교합니다.",
+    "Follow dependency levels from top to bottom.": "의존 단계에 따라 위에서 아래로 배치합니다.",
+    "Place dependency levels on rings; cyclic dependencies stay on the same level.": "의존 단계별로 고리에 배치하며 순환 의존은 같은 단계에 모읍니다.",
+    "Place closely connected files near the center and farther connections on outer rings.": "가까운 연결을 중심에, 먼 연결을 바깥 고리에 배치합니다.",
+    "Follow a readable tree; dependency views use a spanning forest.": "나무 형태로 탐색합니다. 의존 그래프에서는 대표 부모 연결을 기준으로 배치합니다.",
+    "Spread a hierarchy outward from its roots.": "루트에서 바깥쪽으로 계층을 펼칩니다.",
+    "Architecture: {0}": "구조 분석: {0}",
+    "Scope: {0}": "범위: {0}",
+    "Repository": "저장소",
+    "Folder coupling": "폴더별 결합도",
+    "No folders match this filter.": "조건에 맞는 폴더가 없습니다.",
+    "Cross-folder dependencies": "폴더 사이 의존 연결",
+    "No cross-folder dependencies in this scope.": "현재 범위에는 폴더 사이 의존 연결이 없습니다.",
+    "Show fewer pairs": "일부 쌍만 보기",
+    "Show all {0} pairs": "{0}개 쌍 모두 보기",
+    "How these metrics are calculated": "지표의 계산 기준",
+    "Filter folders": "폴더 찾기",
+    "Most coupled first": "외부 연결 많은 순",
+    "Lowest internal share first": "내부 비율 낮은 순",
+    "Most files first": "파일 많은 순",
+    "By path": "경로 순",
+    "Include inferred dependencies": "추정 연결 포함",
+    "More graph analysis": "순환 · 핫스팟 등 더 보기",
+    "Current file dependency snapshot": "현재 파일 의존 구조",
+    "Sort folders": "폴더 정렬",
+    "Cycle": "순환"
   },
   "ja": {
     "Select a file first.": "先にファイルを選択してください。",
@@ -12004,7 +12188,71 @@ HTMLEOF
     "No tracked file was found for the Rust mod declaration.": "Rustのmod宣言に対応する追跡ファイルが見つかりませんでした。",
     "Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment.": "ファイル名の境界とリポジトリの範囲を維持するため、制御文字やシンボリックリンクを含むパスはソースの読み取り前に除外しました。",
     "Symlink or submodule entries were excluded from the staged source snapshot.": "ステージ済みソースのスナップショットからシンボリックリンクとサブモジュールの項目を除外しました。",
-    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "変更ファイルは一覧にありますが、この解析はその依存関係の構文に対応していません。"
+    "Changed file is listed, but its dependency syntax is not supported by this analysis.": "変更ファイルは一覧にありますが、この解析はその依存関係の構文に対応していません。",
+    "Architecture": "構造分析",
+    "Coupling & cohesion": "結合度・凝集度",
+    "Group by": "グループの基準",
+    "Manifest modules": "マニフェストのモジュール",
+    "Internal dependencies": "内部の依存関係",
+    "Incoming dependencies": "外部からの依存関係",
+    "Outgoing dependencies": "外部への依存関係",
+    "Incoming groups (Ca)": "このグループを参照するグループ（Ca）",
+    "Outgoing groups (Ce)": "このグループが参照するグループ（Ce）",
+    "Internal dependency share": "内部依存の割合",
+    "Internal density": "内部の接続密度",
+    "Structural cohesion proxy": "構造による凝集度の目安",
+    "Boundary dependencies": "グループ間の依存関係",
+    "Group cycles": "グループ間の循環",
+    "No group cycles in this scope.": "この範囲にはグループ間の循環がありません。",
+    "No file dependencies in this scope.": "この範囲にはファイル間の依存関係がありません。",
+    "N/A": "該当なし",
+    "Internal share = internal / (internal + outgoing). Density = internal / [files × (files − 1)]. These describe dependency structure, not semantic or class cohesion.": "内部依存の割合 = 内部接続 /（内部 + 外部への接続）。密度 = 内部接続 / [ファイル数 ×（ファイル数 − 1）]。意味的・クラスの凝集度ではなく、依存構造の指標です。",
+    "Instability = outgoing groups / (incoming groups + outgoing groups). N/A means the ratio is undefined.": "不安定度 = 参照先グループ数 /（参照元グループ数 + 参照先グループ数）。比率を定義できない場合は該当なしと表示します。",
+    "Folder scope and filters limit both endpoints; dependencies outside the scope are not counted.": "フォルダー範囲とフィルターを接続の両端に適用するため、範囲外への依存関係は集計しません。",
+    "Module ownership is estimated from manifest paths; ambiguous or unassigned files stay in folder groups.": "モジュールの所属はマニフェストのパスから推定します。所属が曖昧または未設定のファイルはフォルダーにまとめます。",
+    "Click a row to highlight this group and its boundary dependencies.": "行を選択すると、そのグループとグループ間の依存関係を強調します。",
+    "{0} files · {1} internal · {2} incoming · {3} outgoing": "ファイル{0}件・内部{1}・流入{2}・流出{3}",
+    "{0} groups · {1} boundary dependencies · {2} cycles": "グループ{0}個・グループ間の依存関係{1}件・循環{2}件",
+    "Includes {0} inferred dependencies.": "推定した依存関係{0}件を含みます。",
+    "File metrics omit package-only nodes such as Go packages.": "Goパッケージなど、ファイルではなくパッケージ単位のノードはファイル指標に含めません。",
+    "Based on filtered files and deduplicated directed dependencies. External packages, files outside the analysis scope, folder containment and co-change links are excluded.": "フィルター適用後のファイルと重複を除いた有向の依存関係から計算します。外部パッケージ、分析範囲外のファイル、フォルダーの包含関係、同時変更の接続は除外します。",
+    "Applies the selected language, test-file, inference and folder-scope filters to the file dependency graph. Canvas layout, hidden color groups and search do not change these metrics.": "ファイルの依存グラフに選択した言語、テストファイル、推定接続、フォルダー範囲のフィルターを適用します。グラフの配置、非表示の色グループ、検索はこの指標に影響しません。",
+    "Folder groups": "フォルダーグループ",
+    "Layouts": "レイアウト",
+    "Folder tree": "フォルダーツリー",
+    "Layout: {0}": "レイアウト：{0}",
+    "Next constellation": "次の星座",
+    "Graph views": "グラフ表示",
+    "Folder lanes": "フォルダー別レーン",
+    "Dependency rings": "依存関係リング",
+    "Let related nodes settle naturally.": "関連するノードを自然にまとめます。",
+    "Explore nested folders by zooming into circles.": "円を拡大してフォルダー内の構造を探索します。",
+    "Keep files in the same folder together and compare connections across folders.": "同じフォルダーのファイルを行にまとめ、フォルダー間の接続を比較します。",
+    "Follow dependency levels from top to bottom.": "依存関係の階層に沿って上から下へ配置します。",
+    "Place dependency levels on rings; cyclic dependencies stay on the same level.": "依存階層をリング状に配置し、循環する依存関係は同じ階層にまとめます。",
+    "Place closely connected files near the center and farther connections on outer rings.": "近い接続を中心に、遠い接続を外側のリングに配置します。",
+    "Follow a readable tree; dependency views use a spanning forest.": "読みやすいツリーで探索します。依存関係では代表的な親接続を使います。",
+    "Spread a hierarchy outward from its roots.": "ルートから外側へ階層を広げます。",
+    "Architecture: {0}": "構造分析：{0}",
+    "Scope: {0}": "範囲：{0}",
+    "Repository": "リポジトリ",
+    "Folder coupling": "フォルダー別の結合度",
+    "No folders match this filter.": "条件に一致するフォルダーはありません。",
+    "Cross-folder dependencies": "フォルダー間の依存関係",
+    "No cross-folder dependencies in this scope.": "この範囲にはフォルダー間の依存関係がありません。",
+    "Show fewer pairs": "表示する組を減らす",
+    "Show all {0} pairs": "全{0}組を表示",
+    "How these metrics are calculated": "指標の計算方法",
+    "Filter folders": "フォルダーを絞り込む",
+    "Most coupled first": "外部接続が多い順",
+    "Lowest internal share first": "内部依存の割合が低い順",
+    "Most files first": "ファイルが多い順",
+    "By path": "パス順",
+    "Include inferred dependencies": "推定した依存関係を含む",
+    "More graph analysis": "循環・ホットスポットなどを表示",
+    "Current file dependency snapshot": "現在のファイル依存構造",
+    "Sort folders": "フォルダーの並べ替え",
+    "Cycle": "循環"
   }
 }
 </script>
@@ -12191,7 +12439,7 @@ HTMLEOF
   const C = {};
   const VS = {};
   let vs = null, m = null, view = { x: 0, y: 0, k: 1 };
-  const LAYOUTS = { files: [["force", tr("Force")], ["pack", tr("Folder circles")], ["layers", tr("Layers")], ["stars", tr("Constellation")]], modules: [["layers", tr("Layers")], ["force", tr("Force")]], changes: [["force", tr("Force")], ["pack", tr("Folder circles")], ["layers", tr("Layers")], ["stars", tr("Constellation")]], tree: [["tidy", tr("Tree")], ["pack", tr("Folder circles")], ["radial", tr("Radial")], ["layers", tr("Layers")], ["force", tr("Force")]] };
+  const LAYOUTS = { files: [["force", tr("Force")], ["pack", tr("Folder circles")], ["lanes", tr("Folder lanes")], ["layers", tr("Layers")], ["rings", tr("Dependency rings")], ["tidy", tr("Tree")], ["radial", tr("Radial")], ["stars", tr("Constellation")]], modules: [["layers", tr("Layers")], ["lanes", tr("Folder lanes")], ["rings", tr("Dependency rings")], ["tidy", tr("Tree")], ["radial", tr("Radial")], ["force", tr("Force")], ["stars", tr("Constellation")]], changes: [["force", tr("Force")], ["pack", tr("Folder circles")], ["lanes", tr("Folder lanes")], ["layers", tr("Layers")], ["rings", tr("Dependency rings")], ["tidy", tr("Tree")], ["radial", tr("Radial")], ["stars", tr("Constellation")]], tree: [["tidy", tr("Tree")], ["pack", tr("Folder circles")], ["lanes", tr("Folder lanes")], ["radial", tr("Radial")], ["layers", tr("Layers")], ["force", tr("Force")], ["stars", tr("Constellation")]] };
   const BIG = 600;   // 노드가 이보다 많으면 파일 · 같이 바뀜 탭은 폴더 원으로 시작한다(멀리서 접히고 가까이서 펼쳐진다)
   function stateFor(rel) {
     if (VS[rel]) return VS[rel];
@@ -12494,6 +12742,7 @@ HTMLEOF
   function request() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
   function resize() {
     dpr = window.devicePixelRatio || 1; W = innerWidth; H = innerHeight; canvas.width = Math.max(1, Math.round(W * dpr)); canvas.height = Math.max(1, Math.round(H * dpr));
+    updateWorkspaceTop();
     updatePanelToggles();
     if (sel) placeInfo();
     if (m && !m.userMoved && !running) { const f = fitView(); if (f) Object.assign(view, f); }   // 손대지 않은 보기는 새 크기에 다시 맞춘다
@@ -12506,7 +12755,7 @@ HTMLEOF
   }
   function margins() {   // Fit the graph to the visible space after panels collapse or switch.
     const visibleRect=id=>{const e=$(id);return e && e.getClientRects().length ? e.getBoundingClientRect() : null;};
-    const left=visibleRect('top'), right=visibleRect('rightDock'), head=visibleRect('masthead'), legend=visibleRect('legend');
+    const left=visibleRect('top'), right=visibleRect('rightDock'), head=visibleRect('quickViews'), legend=visibleRect('legend');
     const t=Math.max(head?.bottom||0, W<=900 ? legend?.bottom||0 : 0)+20;
     if(W<=900)return {l:24,r:24,t,b:H-Math.min(left?.top??H-60,right?.top??H-60)+16};
     return {l:(left?.right||8)+24,r:W-(right?.left??W-8)+24,t,b:84};
@@ -12762,17 +13011,28 @@ HTMLEOF
     for (const r of roots) total += leaves.get(r);
     for (const n of order) maxD = Math.max(maxD, depth.get(n) + off);
     // 고리 반지름: 그 고리의 노드가 자기 몫의 호 안에 들어갈 만큼(점은 노드 크기, 상자는 대각선) — 이름은 겹치면 그리지 않는다
-    const span = (n) => (2 * Math.PI * leaves.get(n)) / total, size = (n) => (isBox ? Math.hypot(n.w, n.h) + 14 : n.r * 2 + 10), ring = [0];
-    for (let d = 1; d <= maxD; d++) {
-      let need = ring[d - 1] + (isBox ? 90 : 70);
-      for (const n of order) if (depth.get(n) + off === d) need = Math.max(need, size(n) / span(n));
-      ring[d] = need;
+    const span = (n) => (2 * Math.PI * leaves.get(n)) / total, size = (n) => (isBox ? Math.hypot(n.w, n.h) + 14 : n.r * 2 + 10), ring = [0], minimum = [];
+    for (const n of order) {
+      const d = depth.get(n) + off;
+      minimum[d] = Math.max(minimum[d] || 0, size(n) / span(n));
     }
-    const place = (n, start, sp) => {
-      const a = start + sp / 2, r = ring[depth.get(n) + off];
-      T.set(n, [Math.cos(a) * r, Math.sin(a) * r]);
-      let s = start;
-      for (const c of children.get(n)) { const csp = (sp * leaves.get(c)) / leaves.get(n); place(c, s, csp); s += csp; }
+    for (let d = 1; d <= maxD; d++) {
+      ring[d] = Math.max(ring[d - 1] + (isBox ? 90 : 70), minimum[d] || 0);
+    }
+    const place = (root, start, sp) => {
+      // Preserve depth-first angles without using the call stack for long chains.
+      const stack = [[root, start, sp, 0, start]];
+      while (stack.length) {
+        const frame = stack[stack.length - 1], n = frame[0], ch = children.get(n);
+        if (frame[3] === 0) {
+          const a = frame[1] + frame[2] / 2, r = ring[depth.get(n) + off];
+          T.set(n, [Math.cos(a) * r, Math.sin(a) * r]);
+        }
+        if (frame[3] >= ch.length) { stack.pop(); continue; }
+        const c = ch[frame[3]++], csp = (frame[2] * leaves.get(c)) / leaves.get(n), cursor = frame[4];
+        frame[4] += csp;
+        stack.push([c, cursor, csp, 0, cursor]);
+      }
     };
     let s = -Math.PI / 2;
     for (const r of roots) { const sp = span(r); place(r, s, sp); s += sp; }
@@ -12793,13 +13053,16 @@ HTMLEOF
     for (let d = 1; d < L.length; d++) colX[d] = colX[d - 1] + R[d - 1] + (isBox ? 60 : 28) + L[d];
     let rowH = isBox ? 0 : 20, row = 0;
     for (const n of order) rowH = Math.max(rowH, isBox ? n.h + 12 : n.r * 2 + 6);
-    const place = (n) => {
-      const ch = children.get(n);
-      let y;
-      if (!ch.length) y = row++ * rowH;
-      else { const ys = ch.map(place); y = (ys[0] + ys[ys.length - 1]) / 2; }
-      T.set(n, [colX[depth.get(n)], y]);
-      return y;
+    const place = (root) => {
+      // An explicit postorder traversal keeps leaf order and avoids recursion limits.
+      const stack = [[root, 0]];
+      while (stack.length) {
+        const frame = stack[stack.length - 1], n = frame[0], ch = children.get(n);
+        if (frame[1] < ch.length) { stack.push([ch[frame[1]++], 0]); continue; }
+        const y = ch.length ? (T.get(ch[0])[1] + T.get(ch[ch.length - 1])[1]) / 2 : row++ * rowH;
+        T.set(n, [colX[depth.get(n)], y]);
+        stack.pop();
+      }
     };
     for (const r of roots) { place(r); row += 0.6; }
     return T;
@@ -12818,7 +13081,7 @@ HTMLEOF
       for (const [n, [x1, y1]] of T) { const [x0, y0] = from.get(n) || [x1, y1]; n.x = x0 + (x1 - x0) * e; n.y = y0 + (y1 - y0) * e; n.vx = n.vy = 0; }
       if (p >= 1) morph = null;
     };
-    if (fit) animateTo(fitView([...T].map(([n, [x, y]]) => ({ x, y, hw: halfW(n), hh: halfH(n) }))), dur);
+    if (fit) animateTo(fitView([...T].map(([n, [x, y]]) => ({ x, y, hw: halfW(n), hh: halfH(n) })).concat((T.groups||[]).map(g=>({x:g.x+g.w/2,y:g.y+g.h/2,hw:g.w/2,hh:g.h/2})))), dur);
     request();
   }
   // ----- 별자리: 그래프 전체를 실제 별자리(전갈자리 · 오리온자리 · 북두칠성 …) 하나의 모양 위에 놓는다.
@@ -13001,14 +13264,94 @@ HTMLEOF
     }
     return T;
   }
-  const targets = () => separate(vs.layout === "layers" ? layersTargets() : vs.layout === "tidy" ? treeTargets() : vs.layout === "stars" ? starTargets() : radialTargets());
+  // Keep each relative folder in a continuous lane so cross-folder edges remain visible.
+  function folderLanesTargets() {
+    const T = new Map(), groups = new Map(), isBox = box();
+    const folderOf = (n) => {
+      if (n.fam === "ext" || n.kind === "package") return "\u0000external";
+      const path = String(n.d.path || n.id || ".").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
+      if (n.kind === "module") return path || ".";
+      const at = path.lastIndexOf("/");
+      return at < 0 ? "." : path.slice(0, at) || ".";
+    };
+    for (const n of visNodes) {
+      const key = folderOf(n);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(n);
+    }
+    const lanes = [...groups].sort(([a], [b]) => a === "\u0000external" ? 1 : b === "\u0000external" ? -1 : a < b ? -1 : a > b ? 1 : 0);
+    let largest = 0;
+    for (const [, nodes] of lanes) { nodes.sort(byId); largest = Math.max(largest, nodes.length); }
+    const columns = Math.min(isBox ? 6 : 8, Math.max(1, Math.ceil(Math.sqrt(largest * 1.5))));
+    const widths = new Array(columns).fill(0), gapX = isBox ? 36 : 30, gapY = isBox ? 26 : 32;
+    for (const [, nodes] of lanes) nodes.forEach((n, i) => {
+      const width = isBox ? n.w : Math.max(n.r * 2, Math.min(n.lw || 0, 260));
+      widths[i % columns] = Math.max(widths[i % columns], width);
+    });
+    const xAt = [], contentWidth = widths.reduce((s, width) => s + width, 0) + gapX * Math.max(0, columns - 1);
+    const total = lanes.reduce((width,[key])=>Math.max(width,Math.min(460,Math.max(220,key.length*7+32))),contentWidth);
+    let x = -contentWidth / 2;
+    for (const width of widths) { xAt.push(x + width / 2); x += width + gapX; }
+    let y = 0;
+    T.groups = [];
+    for (const [key, nodes] of lanes) {
+      const top = y;
+      y += 34;
+      for (let at = 0; at < nodes.length; at += columns) {
+        const row = nodes.slice(at, at + columns);
+        const height = row.reduce((h, n) => Math.max(h, isBox ? n.h : n.r * 2 + 20), 0);
+        row.forEach((n, i) => T.set(n, [xAt[i], y + height / 2]));
+        y += height + gapY;
+      }
+      T.groups.push({ key, label: key === "\u0000external" ? tr("External packages / modules") : key,
+        x: -total / 2 - 18, y: top, w: total + 36, h: y - top - gapY + 16, nodes });
+      y += 30;
+    }
+    return T;
+  }
+
+  // Full dependency ranks preserve multi-parent paths; cycles occupy the same ring.
+  function dependencyRingsTargets() {
+    const T = new Map(), rings = new Map(), { rank } = analyze(), isBox = box();
+    for (const n of visNodes) {
+      const depth = rank.get(n) || 0;
+      if (!rings.has(depth)) rings.set(depth, []);
+      rings.get(depth).push(n);
+    }
+    const extent = (n) => isBox ? Math.hypot(n.w, n.h) / 2 : n.r;
+    const gap = isBox ? 24 : 18, ringGap = isBox ? 100 : 72;
+    let previousRadius = 0, previousExtent = 0, first = true;
+    for (const [, nodes] of [...rings].sort(([a], [b]) => a - b)) {
+      nodes.sort((a, b) => {
+        const ap = String(a.d.path || a.id), bp = String(b.d.path || b.id);
+        return ap < bp ? -1 : ap > bp ? 1 : byId(a, b);
+      });
+      const weights = nodes.map((n) => extent(n) * 2 + gap), total = weights.reduce((s, w) => s + w, 0);
+      let maxExtent = 0;
+      for (const n of nodes) maxExtent = Math.max(maxExtent, extent(n));
+      // A quarter of the circumference sum bounds disk collisions even with unequal nodes.
+      const radius = first && nodes.length === 1 ? 0 : Math.max(total / 4,
+        first ? ringGap : previousRadius + previousExtent + maxExtent + ringGap);
+      let arc = 0;
+      nodes.forEach((n, i) => {
+        const angle = -Math.PI / 2 + (arc + weights[i] / 2) / total * Math.PI * 2;
+        T.set(n, [Math.cos(angle) * radius, Math.sin(angle) * radius]);
+        arc += weights[i];
+      });
+      previousRadius = radius; previousExtent = maxExtent; first = false;
+    }
+    return T;
+  }
+
+  const targets = () => { const T=separate(vs.layout === "lanes" ? folderLanesTargets() : vs.layout === "rings" ? dependencyRingsTargets() : vs.layout === "layers" ? layersTargets() : vs.layout === "tidy" ? treeTargets() : vs.layout === "stars" ? starTargets() : radialTargets()); m.layoutGroups=T.groups||[];return T; };
   function applyLayout(reset) {
     if(replay.active){pauseReplay();running=false;morph=null;tween=null;request();return;}
+    if(vs.layout!=="lanes")m.layoutGroups=[];
     if (vs.layout !== "stars") m.starSig = null;   // 다른 배치로 바꾸면 별자리 지문을 지워, 나중에 돌아올 때 다시 잡게
     $("forces").style.opacity = vs.layout === "force" ? "" : ".45";
     if (vs.layout === "pack") { running = false; morph = null; buildPack(); if (!m.userMoved || reset) animateTo(fitView(), 420); request(); return; }
     if (vs.layout === "force") { startForce(reset, reset ? 1 : 0.35); return; }
-    morphTo(targets(), !m.userMoved || reset);
+    morphTo(targets(), !m.userMoved || reset);renderQuickViews();
   }
   function firstLayout() {   // 모델을 처음 보일 때: 힘은 나선에서 움직이고, 층 · 방사형은 바로 그 자리에
     seed();
@@ -13557,6 +13900,22 @@ HTMLEOF
     ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * view.x, dpr * view.y);
     const vx0 = -view.x / k, vy0 = -view.y / k, vx1 = vx0 + W / k, vy1 = vy0 + H / k;
     const seen = (n, mg) => n.x + halfW(n) + mg > vx0 && n.x - halfW(n) - mg < vx1 && n.y + halfH(n) + mg > vy0 && n.y - halfH(n) - mg < vy1;
+    if(vs.layout === "lanes" && m.layoutGroups?.length) {
+      ctx.save();ctx.textAlign="left";ctx.textBaseline="top";
+      for(const group of m.layoutGroups) {
+        const [x0,y0,x1,y1]=bounds(group.nodes), x=Math.min(group.x,x0-18), y=y0-34, width=Math.max(group.x+group.w,x1+18)-x, height=y1-y0+52;
+        if(y+height<vy0||y>vy1||x+width<vx0||x>vx1)continue;
+        ctx.globalAlpha=.045;ctx.fillStyle=C.muted;ctx.fillRect(x,y,width,height);
+        ctx.globalAlpha=.22;ctx.strokeStyle=C.muted;ctx.lineWidth=1/k;ctx.strokeRect(x,y,width,height);
+        if(height*k<24)continue;
+        ctx.globalAlpha=.8;ctx.fillStyle=C["text-2"];ctx.font=`600 ${Math.min(14,Math.max(10,14*k))/k}px ${FONT}`;
+        let label=group.key==='.'?tr("Repository root"):group.label;
+        const maxWidth=Math.max(0,width-20/k);
+        if(ctx.measureText(label).width>maxWidth){while(label.length&&ctx.measureText(label+'…').width>maxWidth)label=label.slice(0,-1);label+='…';}
+        ctx.fillText(label,x+10/k,y+8/k);
+      }
+      ctx.restore();
+    }
     const hot = f ? (e) => e.s === f || e.t === f : HL ? (HL.edges ? (e) => HL.edges.has(e) : (e) => HL.nodes.has(e.s) && HL.nodes.has(e.t)) : () => false;
     const showArrows = m.directed && (P.arrows || isBox);
     // 연결: 보통은 한 번에(많을수록 옅게), 강조된 것은 흰 빛
@@ -13739,7 +14098,7 @@ HTMLEOF
         let a;
         if (lit) a = 1;
         else if (lit0) a = 0;
-        else a = P.names || vs.layout === "tidy" || vs.layout === "layers" || (m.rel === "tree" && n.d.depth <= 1) ? 1 : clamp((k * (0.55 + n.r / 9) - m.fade) / 0.45, 0, 1);   // 나무 · 층은 이름이 곧 내용 — 겹치지 않는 만큼 늘 보인다
+        else a = P.names || vs.layout === "tidy" || vs.layout === "layers" || vs.layout === "lanes" || (m.rel === "tree" && n.d.depth <= 1) ? 1 : clamp((k * (0.55 + n.r / 9) - m.fade) / 0.45, 0, 1);   // 나무 · 층은 이름이 곧 내용 — 겹치지 않는 만큼 늘 보인다
         a *= lit ? 1 : n.fade;
         if (a < 0.04 || !seen(n, 60 / k)) continue;
         const rr0 = Math.max(n.r, 1.8 / k), side = sideways ? n.side || 1 : 0, tw = Math.min(n.lw, 260) + 6;
@@ -13941,6 +14300,237 @@ HTMLEOF
     for (const tr of $("tbody").querySelectorAll("tr")) tr.onclick = () => { const o = m.nodes[+tr.dataset.i]; select(o); centerOn(o, Math.max(view.k, 1.2)); };
   }
 
+  // BEGIN architecture metrics
+  // File-level dependencies measure structure, not class-level semantic cohesion.
+  function architectureMetrics(options = {}) {
+    const { nodes = [], edges = [], mode = "folders", modules = [], includeInferred = true,
+      visibleIds = null, includeNode = null, includeEdge = null } = options;
+    const depth = Math.max(1, Math.min(99, Math.floor(Number(options.depth) || 2)));
+    const pathOf = value => {
+      const path = String(value || "").replace(/^\.\//, "").replace(/\/+$/, "");
+      if (path === ".") return "";
+      if (path.startsWith("/") || /^[A-Za-z]:/.test(path) || path.split("/").includes("..")) return null;
+      return path;
+    };
+    const normalizedScope = pathOf(options.scope || ""), invalidScope = normalizedScope == null;
+    const scope = normalizedScope || "";
+    const selected = visibleIds == null ? null : visibleIds instanceof Set ? visibleIds : new Set(visibleIds);
+    const rawOf = value => value?.d || value;
+    const idOf = value => typeof value === "string" ? value : value?.id;
+    const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+    const inferred = edge => !!(edge.heuristic || edge.h || edge.confidence === "heuristic" || edge.d?.heuristic || edge.d?.confidence === "heuristic");
+    const fileById = new Map(), groupByFile = new Map(), groupMap = new Map();
+    const excluded = { nonFiles: 0, filteredFiles: 0, duplicateFiles: 0, ambiguousFiles: 0, unassignedFiles: 0 };
+    const moduleRoot = { children: new Map(), modules: [] };
+    if (mode === "modules") for (const entry of modules) {
+      const data = rawOf(entry);
+      if (data?.kind !== "module" || !data.id || data.local === false || data.path == null) continue;
+      const path = pathOf(data.path);
+      if (path == null) continue;
+      let node = moduleRoot;
+      for (const part of path.split("/").filter(Boolean)) {
+        if (!node.children.has(part)) node.children.set(part, { children: new Map(), modules: [] });
+        node = node.children.get(part);
+      }
+      if (!node.modules.some(m => m.id === data.id)) node.modules.push(data);
+    }
+    const owner = path => {
+      let node = moduleRoot, found = node.modules;
+      const parts = path.split("/"); parts.pop();
+      for (const part of parts) {
+        node = node.children.get(part); if (!node) break;
+        if (node.modules.length) found = node.modules;
+      }
+      return found;
+    };
+    for (const original of nodes) {
+      const data = rawOf(original), id = idOf(data);
+      if (!data || data.kind !== "file" || data.local === false || data.outside === true || !id) { excluded.nonFiles++; continue; }
+      const path = pathOf(data.path || id);
+      if (invalidScope || path == null || !path || (scope && path !== scope && !path.startsWith(scope + "/")) ||
+        (selected && !selected.has(id)) || (includeNode && !includeNode(original))) { excluded.filteredFiles++; continue; }
+      if (fileById.has(id)) { excluded.duplicateFiles++; continue; }
+      const parts = path.split("/"); parts.pop();
+      const folder = parts.slice(0, depth).join("/") || ".";
+      let groupId = folder, groupPath = folder, label = folder, kind = "folder";
+      if (mode === "modules") {
+        const owners = owner(path);
+        if (owners.length === 1) {
+          const module = owners[0]; groupId = "module:" + module.id; groupPath = pathOf(module.path) || ".";
+          label = module.label || module.id; kind = "module";
+        } else {
+          groupId = "folder:" + folder;
+          if (owners.length > 1) excluded.ambiguousFiles++; else excluded.unassignedFiles++;
+        }
+      }
+      if (!groupMap.has(groupId)) groupMap.set(groupId, { id: groupId, path: groupPath, label, kind, members: [],
+        internalEdges: [], incomingEdges: [], outgoingEdges: [], incomingGroups: new Set(), outgoingGroups: new Set() });
+      fileById.set(id, original); groupByFile.set(id, groupId); groupMap.get(groupId).members.push(original);
+    }
+    const dependencies = new Map();
+    for (const original of edges) {
+      const data = rawOf(original), source = idOf(original.s || data.source), target = idOf(original.t || data.target);
+      const kind = original.kind || data.kind || "import";
+      if (!fileById.has(source) || !fileById.has(target) || source === target ||
+        kind === "contains" || kind === "cochange" || (!includeInferred && inferred(original)) ||
+        (includeEdge && !includeEdge(original))) continue;
+      const key = JSON.stringify([source, target]);
+      const existing = dependencies.get(key);
+      if (existing) { existing.inferred = existing.inferred && inferred(original); existing.originals.push(original); }
+      else dependencies.set(key, { source, target, inferred: inferred(original), originals: [original] });
+    }
+    const pairs = new Map();
+    let internal = 0, boundary = 0, inferredCount = 0;
+    for (const edge of dependencies.values()) {
+      const source = groupMap.get(groupByFile.get(edge.source)), target = groupMap.get(groupByFile.get(edge.target));
+      if (edge.inferred) inferredCount++;
+      if (source === target) { source.internalEdges.push(edge); internal++; continue; }
+      boundary++; source.outgoingEdges.push(edge); target.incomingEdges.push(edge);
+      source.outgoingGroups.add(target.id); target.incomingGroups.add(source.id);
+      const key = JSON.stringify([source.id, target.id]);
+      if (!pairs.has(key)) pairs.set(key, { source: source.id, target: target.id, count: 0, edges: [] });
+      const pair = pairs.get(key); pair.count++; pair.edges.push(edge);
+    }
+    const groups = [...groupMap.values()].sort((a, b) => cmp(a.id, b.id));
+    for (const group of groups) {
+      group.fileCount = group.members.length;
+      group.internalCount = group.internalEdges.length;
+      group.incomingCount = group.incomingEdges.length; group.outgoingCount = group.outgoingEdges.length;
+      group.incomingGroups = [...group.incomingGroups].sort(cmp); group.outgoingGroups = [...group.outgoingGroups].sort(cmp);
+      group.afferent = group.incomingGroups.length; group.efferent = group.outgoingGroups.length;
+      const boundaryGroups = group.afferent + group.efferent, outgoing = group.internalCount + group.outgoingCount;
+      group.instability = boundaryGroups ? group.efferent / boundaryGroups : null;
+      group.internalShare = outgoing ? group.internalCount / outgoing : null;
+      group.density = group.fileCount > 1 ? group.internalCount / (group.fileCount * (group.fileCount - 1)) : null;
+      group.cycleIndex = null;
+    }
+    // Iterative SCC traversal avoids recursion limits in deep repository graphs.
+    const finished = [], visited = new Set();
+    for (const group of groups) {
+      if (visited.has(group.id)) continue;
+      visited.add(group.id); const stack = [[group, 0]];
+      while (stack.length) {
+        const frame = stack[stack.length - 1], current = frame[0];
+        if (frame[1] < current.outgoingGroups.length) {
+          const next = current.outgoingGroups[frame[1]++];
+          if (!visited.has(next)) { visited.add(next); stack.push([groupMap.get(next), 0]); }
+        } else { finished.push(current.id); stack.pop(); }
+      }
+    }
+    const cycles = []; visited.clear();
+    for (let index = finished.length - 1; index >= 0; index--) {
+      const id = finished[index]; if (visited.has(id)) continue;
+      const members = [], stack = [id]; visited.add(id);
+      while (stack.length) {
+        const current = stack.pop(); members.push(current);
+        for (const next of groupMap.get(current).incomingGroups) if (!visited.has(next)) { visited.add(next); stack.push(next); }
+      }
+      if (members.length > 1) cycles.push(members.sort(cmp));
+    }
+    cycles.sort((a, b) => b.length - a.length || cmp(a[0], b[0]));
+    cycles.forEach((cycle, index) => { for (const id of cycle) groupMap.get(id).cycleIndex = index; });
+    return { mode, depth, scope, includeInferred, groups, groupMap, groupByFile, fileById,
+      edges: [...dependencies.values()],
+      boundaryPairs: [...pairs.values()].sort((a, b) => b.count - a.count || cmp(a.source, b.source) || cmp(a.target, b.target)), cycles,
+      totals: { files: fileById.size, groups: groups.length, dependencies: dependencies.size, internal, boundary, inferred: inferredCount }, excluded };
+  }
+  // END architecture metrics
+
+  const ARCH = { depth:2, search:'', sort:'coupling', selected:null, allPairs:false, signature:null, result:null };
+  const LAYOUT_HELP = {
+    force:'Let related nodes settle naturally.', pack:'Explore nested folders by zooming into circles.',
+    lanes:'Keep files in the same folder together and compare connections across folders.',
+    layers:'Follow dependency levels from top to bottom.',
+    rings:'Place dependency levels on rings; cyclic dependencies stay on the same level.',
+    tidy:'Follow a readable tree; dependency views use a spanning forest.',
+    radial:'Spread a hierarchy outward from its roots.',
+    stars:'Blue lines are constellation guides, not dependency edges. Click again for another constellation.'
+  };
+  function updateWorkspaceTop() {
+    const header=$('masthead').getBoundingClientRect(), quick=$('quickViews');
+    quick.style.top=(header.bottom+10)+'px';
+    root.style.setProperty('--work-top',(quick.getBoundingClientRect().bottom+12)+'px');
+  }
+  function renderQuickViews() {
+    if(!vs)return;
+    $('quickStars').setAttribute('aria-pressed',String(vs.layout==='stars'));
+    $('quickFolders').setAttribute('aria-pressed',String(REL==='tree'&&vs.layout==='tidy'));
+    $('quickArchitecture').setAttribute('aria-pressed',String(dockView==='architecture'));
+    $('quickFolders').disabled=!VIEWS.tree&&!VIEWS.files;
+    $('quickNextStars').hidden=vs.layout!=='stars';
+    const label=LAYOUTS[REL].find(([id])=>id===vs.layout)?.[1]||vs.layout;
+    $('activeLayout').textContent=tr('Layout: {0}',label)+(vs.layout==='stars'&&m?.starLabels?.length?' · '+m.starLabels[0].name:'');
+    $('layoutDescription').textContent=tr(vs.layout==='rings'&&REL==='changes'?'Place closely connected files near the center and farther connections on outer rings.':LAYOUT_HELP[vs.layout]||'');
+    for(const b of $('layout').querySelectorAll('button')) {
+      b.setAttribute('aria-pressed',String(b.dataset.v===vs.layout));
+      b.title=tr(LAYOUT_HELP[b.dataset.v]||'');
+    }
+    updateWorkspaceTop();
+  }
+  function chooseLayout(value) {
+    if(!LAYOUTS[REL].some(([id])=>id===value))return;
+    stopReplay(false);
+    if(value==='stars'&&vs.layout==='stars')vs.starPick=(vs.starPick||0)+1;
+    vs.layout=value;
+    if(value==='pack'&&vs.unit!=='file'){vs.unit='file';switchModel();}
+    renderControls();m.userMoved=false;applyLayout(true);renderQuickViews();
+  }
+  function computeArchitecture() {
+    const G=REVIEW?.current||VIEWS.files||{nodes:[],edges:[]};
+    const signature=JSON.stringify([ARCH.depth,P.lang,P.tests,P.heur,folderQuery]);
+    if(ARCH.result&&ARCH.signature===signature)return ARCH.result;
+    const ids=new Set(G.nodes.filter(d=>d.kind==='file'&&!d.outside&&!d.deleted&&d.status!=='removed'
+      &&(P.lang==='all'||langsOf(d,'files').includes(P.lang))&&(P.tests||!TEST_PATH.test(d.path||d.id))).map(d=>d.id));
+    ARCH.result=architectureMetrics({nodes:G.nodes,edges:G.edges.filter(e=>e.status!=='removed'&&!e.impactFromBase),depth:ARCH.depth,
+      scope:folderQuery,visibleIds:ids,includeInferred:P.heur});
+    ARCH.signature=signature;return ARCH.result;
+  }
+  function focusArchitecture(groups,pair) {
+    const coreIds=new Set(pair?pair.edges.flatMap(e=>[e.source,e.target]):groups.flatMap(g=>g.members.map(n=>n.id))),ids=new Set(coreIds), dependencies=pair?pair.edges:groups.flatMap(g=>[...g.internalEdges,...g.incomingEdges,...g.outgoingEdges]);
+    for(const edge of dependencies){ids.add(edge.source);ids.add(edge.target);}
+    if(REL!=='files'&&VIEWS.files)show('files');
+    if(vs.unit!=='file')setUnit('file');
+    const nodes=m.nodes.filter(n=>ids.has(n.id)), keys=new Set(dependencies.map(e=>JSON.stringify([e.source,e.target])));
+    const edges=m.edges.filter(e=>keys.has(JSON.stringify([e.s.id,e.t.id])));
+    highlight(nodes,edges,tr('Architecture: {0}',groups.map(g=>g.label).join(' ↔ ')),nodes.filter(n=>coreIds.has(n.id)));
+    switchDockView('architecture');
+  }
+  function renderArchitecture() {
+    if(dockView!=='architecture')return;
+    const data=computeArchitecture(), body=$('architectureBody'), scroll=body.scrollTop;
+    const active=document.activeElement, focusKey=body.contains(active)?['data-architecture-group','data-architecture-pair','data-architecture-cycle','id'].map(key=>[key,active.getAttribute(key)]).find(([,value])=>value!==null):null;
+    $('architectureDepth').value=String(ARCH.depth);$('architectureInferred').checked=P.heur;
+    $('architectureSearch').value=ARCH.search;$('architectureSort').value=ARCH.sort;
+    $('architectureScope').textContent=tr('Scope: {0}',folderQuery||tr('Repository'))+' · '+(P.lang==='all'?tr('All languages'):LANGNAME[P.lang]||P.lang);
+    const pct=value=>value==null?'—':Math.round(value*100)+'%', count=(value,label)=>`<div><b>${value}</b><span>${esc(tr(label))}</span></div>`;
+    let html='<div class="architecture-summary">'+count(data.totals.groups,'Folder groups')+count(data.totals.internal,'Internal dependencies')+count(data.totals.boundary,'Boundary dependencies')+count(data.cycles.length,'Group cycles')+'</div>';
+    html+='<p class="architecture-note">'+esc(tr('Includes {0} inferred dependencies.',data.totals.inferred))+'</p>';
+    const term=ARCH.search.trim().toLowerCase(), groups=data.groups.filter(g=>g.label.toLowerCase().includes(term));
+    const byName=(a,b)=>a.path.localeCompare(b.path);
+    groups.sort(ARCH.sort==='name'?byName:ARCH.sort==='files'?(a,b)=>b.fileCount-a.fileCount||byName(a,b):ARCH.sort==='share'?(a,b)=>(a.internalShare??2)-(b.internalShare??2)||byName(a,b):(a,b)=>(b.incomingCount+b.outgoingCount)-(a.incomingCount+a.outgoingCount)||byName(a,b));
+    html+='<h3>'+esc(tr('Folder coupling'))+' <small>'+groups.length+'/'+data.groups.length+'</small></h3><p class="architecture-note">'+esc(tr('Click a row to highlight this group and its boundary dependencies.'))+'</p><div id="architectureGroups">';
+    for(const group of groups) {
+      html+=`<button type="button" class="architecture-group${ARCH.selected===group.id?' selected':''}" data-architecture-group="${esc(group.id)}" aria-pressed="${ARCH.selected===group.id}"><span class="architecture-path">${esc(group.path==='.'?tr('Repository root'):group.label)}${group.cycleIndex==null?'':`<small class="cycle-tag">${esc(tr('Cycle'))}</small>`}</span><span class="architecture-counts">${esc(tr('{0} files · {1} internal · {2} incoming · {3} outgoing',group.fileCount,group.internalCount,group.incomingCount,group.outgoingCount))}</span><span class="architecture-ratio"><span>${esc(tr('Internal dependency share'))}</span><b>${pct(group.internalShare)}</b></span>${group.internalShare==null?'':`<span class="architecture-bar"><i style="width:${group.internalShare*100}%"></i></span>`}<span class="architecture-counts">Ca ${group.afferent} · Ce ${group.efferent} · ${esc(tr('Instability'))} ${pct(group.instability)} · ${esc(tr('Internal density'))} ${pct(group.density)}</span></button>`;
+    }
+    html+='</div>';
+    if(!groups.length)html+='<p>'+esc(tr('No folders match this filter.'))+'</p>';
+    html+='<h3>'+esc(tr('Cross-folder dependencies'))+'</h3>';
+    const pairs=ARCH.allPairs?data.boundaryPairs:data.boundaryPairs.slice(0,12);
+    for(const pair of pairs)html+=`<button class="architecture-pair" type="button" data-architecture-pair="${esc(JSON.stringify([pair.source,pair.target]))}"><span>${esc(data.groupMap.get(pair.source).label)} → ${esc(data.groupMap.get(pair.target).label)}</span><b>${pair.count}</b></button>`;
+    if(!pairs.length)html+='<p class="architecture-note">'+esc(tr('No cross-folder dependencies in this scope.'))+'</p>';
+    if(data.boundaryPairs.length>12)html+='<button id="architectureMorePairs" type="button">'+esc(ARCH.allPairs?tr('Show fewer pairs'):tr('Show all {0} pairs',data.boundaryPairs.length))+'</button>';
+    html+='<h3>'+esc(tr('Group cycles'))+'</h3>';
+    if(!data.cycles.length)html+='<p class="architecture-note">'+esc(tr('No group cycles in this scope.'))+'</p>';
+    data.cycles.forEach((cycle,index)=>{html+=`<button class="architecture-pair" type="button" data-architecture-cycle="${index}"><span>${esc(cycle.map(id=>data.groupMap.get(id).label).join(' ⇄ '))}</span><b>${cycle.length}</b></button>`;});
+    html+='<details class="architecture-formulas"><summary>'+esc(tr('How these metrics are calculated'))+'</summary><p>'+esc(tr('Structural cohesion proxy'))+'</p><p>'+esc(tr('Internal share = internal / (internal + outgoing). Density = internal / [files × (files − 1)]. These describe dependency structure, not semantic or class cohesion.'))+'</p><p>'+esc(tr('Instability = outgoing groups / (incoming groups + outgoing groups). N/A means the ratio is undefined.'))+'</p><p>'+esc(tr('Folder scope and filters limit both endpoints; dependencies outside the scope are not counted.'))+'</p><p>'+esc(tr('Applies the selected language, test-file, inference and folder-scope filters to the file dependency graph. Canvas layout, hidden color groups and search do not change these metrics.'))+'</p><p>'+esc(tr('File metrics omit package-only nodes such as Go packages.'))+'</p></details>';
+    body.innerHTML=html;body.scrollTop=scroll;
+    for(const button of body.querySelectorAll('[data-architecture-group]'))button.onclick=()=>{ARCH.selected=button.dataset.architectureGroup;focusArchitecture([data.groupMap.get(ARCH.selected)]);};
+    for(const button of body.querySelectorAll('[data-architecture-pair]'))button.onclick=()=>{const [s,t]=JSON.parse(button.dataset.architecturePair),pair=data.boundaryPairs.find(p=>p.source===s&&p.target===t);focusArchitecture([data.groupMap.get(s),data.groupMap.get(t)],pair);};
+    for(const button of body.querySelectorAll('[data-architecture-cycle]'))button.onclick=()=>focusArchitecture(data.cycles[+button.dataset.architectureCycle].map(id=>data.groupMap.get(id)));
+    const more=$('architectureMorePairs');if(more)more.onclick=()=>{ARCH.allPairs=!ARCH.allPairs;renderArchitecture();};
+    if(focusKey){const target=[...body.querySelectorAll('button')].find(button=>button.getAttribute(focusKey[0])===focusKey[1]);target?.focus({preventScroll:true});}
+  }
+
   // ----- 분석 창 -----
   function renderAna() {
     const body = $("anaBody"), a = analyze(), deps = m.directed && m.rel !== "tree";
@@ -14079,7 +14669,7 @@ HTMLEOF
     if (hover && !hover.vis) hover = null;
     renderInfo(); setQuery($("q").value);
     if (!$("ana").hidden) renderAna();
-    applyLayout(false);
+    applyLayout(false);renderArchitecture();
   }
 
   // ----- 탭 · 단위 · 언어 · 그리기 · 색 · 크기 -----
@@ -14089,6 +14679,7 @@ HTMLEOF
   }
   function renderControls() {
     renderReplayControls();
+    renderQuickViews();
     seg($("tabs"), ORDER.map((v) => [v, TABNAME[v]]), REL, (v) => { if (v !== REL) show(v); });
     for (const b of $("tabs").querySelectorAll("button")) { b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(b.dataset.v === REL)); b.title = tr("{0} · Nodes {1}", RELNAME[b.dataset.v], VIEWS[b.dataset.v].nodes.length); }
     const packed = vs.layout === "pack", unitOk = (REL === "files" || REL === "changes") && !packed;
@@ -14100,13 +14691,7 @@ HTMLEOF
     $("depth").hidden = vs.unit !== "folder";
     $("depth").value = String(vs.depth);
     seg($("style"), [["dot", tr("Dots")], ["box", tr("Boxes")]], vs.style, (v) => { vs.style = v; if (v === "box" && vs.layout === "radial") vs.layout = "tidy"; renderControls(); sizeNodes(); m.userMoved = false; applyLayout(true); });
-    seg($("layout"), LAYOUTS[REL], vs.layout, (v) => {
-      stopReplay(false);
-      if (v === "stars" && vs.layout === "stars") vs.starPick = (vs.starPick || 0) + 1;   // 별자리를 다시 누르면 다음 별자리
-      vs.layout = v;
-      if (v === "pack" && vs.unit !== "file") { vs.unit = "file"; switchModel(); }   // 폴더 원은 파일 단위로 — 접고 펼치기가 폴더 묶음을 대신한다
-      renderControls(); m.userMoved = false; applyLayout(true);
-    });
+    seg($("layout"), LAYOUTS[REL], vs.layout, chooseLayout);
     const starBtn = $("layout").querySelector('button[data-v="stars"]');
     if (starBtn) starBtn.title = tr("Blue lines are constellation guides, not dependency edges. Click again for another constellation.");
     const colors = [["family", tr("Language")], ...(REL === "modules" ? [["role", tr("Kind")]] : []), ...(heatOk() ? [["heat", tr("Change count")]] : [])];
@@ -14132,6 +14717,7 @@ HTMLEOF
     $("notes").innerHTML = notes.map((t) => `<p>${esc(trAnalysis(t))}</p>`).join("") + diagnostics.map((d) => `<p>${d.file && META.repoPath ? `<a href="${esc(appLink(d.file, d.line))}">${esc(d.file)}${d.line ? ":" + d.line : ""}</a> · ` : ""}${esc(d.code)}: ${esc(trAnalysis(d.message))}</p>`).join("");
     $("noteBtn").hidden = !notes.length && !diagnostics.length;
     if (!notes.length && !diagnostics.length) $("notes").hidden = true;
+    renderQuickViews();renderArchitecture();
   }
   function setUnit(u) { if (u === vs.unit) return; stopReplay(false); vs.unit = u; switchModel(); }
   function switchModel() {
@@ -14291,8 +14877,8 @@ HTMLEOF
     for(const [id,panel] of [['leftToggle','top'],['rightToggle','rightDock']])$(id).setAttribute('aria-expanded',String(!!$(panel).getClientRects().length));
   }
   function syncDockView() {
-    for(const [name,id] of [['settings','panel'],['review','reviewPane'],['info','info'],['table','table'],['ana','ana']])$(id).hidden=dockView!==name;
-    for(const [name,id] of [['settings','gear'],['review','reviewTab'],['info','infoTab']]) {
+    for(const [name,id] of [['settings','panel'],['review','reviewPane'],['info','info'],['architecture','architecture'],['table','table'],['ana','ana']])$(id).hidden=dockView!==name;
+    for(const [name,id] of [['settings','gear'],['review','reviewTab'],['info','infoTab'],['architecture','architectureTab']]) {
       const active=dockView===name;
       $(id).setAttribute('aria-selected',String(active));$(id).tabIndex=active||(['table','ana'].includes(dockView)&&dockReturn===name)?0:-1;
     }
@@ -14303,10 +14889,11 @@ HTMLEOF
   }
   function switchDockView(name,open=true) {
     if(name==='info'&&!sel)return;
-    if(['settings','review','info'].includes(name))dockReturn=name;
+    if(['settings','review','info','architecture'].includes(name))dockReturn=name;
     dockView=name;
     if(open){document.body.classList.remove('rightClosed','narrowExplore');}
     syncDockView();
+    if(name==='architecture')renderArchitecture();renderQuickViews();
     if(open)resize();
   }
   function togglePanel(open) { switchDockView(open?'settings':'review'); }
@@ -14316,6 +14903,17 @@ HTMLEOF
     if (id === "table") renderTable(); else renderAna();
   }
   $("gear").onclick = () => togglePanel(true);
+  $('architectureTab').onclick=()=>switchDockView('architecture');
+  $('quickStars').onclick=()=>chooseLayout('stars');
+  $('quickNextStars').onclick=()=>chooseLayout('stars');
+  $('quickFolders').onclick=()=>{if(VIEWS.tree)show('tree');else if(VIEWS.files){show('files');setUnit('folder');}P.names=true;$('names').checked=true;chooseLayout('tidy');};
+  $('quickArchitecture').onclick=()=>switchDockView('architecture');
+  $('quickLayouts').onclick=()=>{switchDockView('settings');$('displaySettings').open=true;$('layout').scrollIntoView({block:'nearest'});$('layout').querySelector('button.on')?.focus({preventScroll:true});};
+  $('architectureMoreAnalysis').onclick=()=>toggleDrawer('ana',true);
+  $('architectureDepth').onchange=()=>{ARCH.depth=+$('architectureDepth').value;renderArchitecture();};
+  $('architectureSearch').oninput=()=>{ARCH.search=$('architectureSearch').value;renderArchitecture();};
+  $('architectureSort').onchange=()=>{ARCH.sort=$('architectureSort').value;renderArchitecture();};
+  $('architectureInferred').onchange=()=>{P.heur=$('architectureInferred').checked;$('heur').checked=P.heur;filtersChanged();};
   $('reviewTab').onclick=()=>switchDockView('review');$('infoTab').onclick=()=>switchDockView('info');
   $('dockTabs').onkeydown=ev=>{
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
@@ -14384,8 +14982,8 @@ HTMLEOF
   const snapshotKey = JSON.stringify([META.commit, META.generated, META.diff?.base, RAW.review?.baseSha]);
   const lastKey = viewKey + ":" + analysisKey + ":last:" + (RAW.initial || META.relation) + (META.diff ? ":diff" : META.stats?.affected ? ":affected" : META.stats?.precise ? ":precise" : "");
   function captureView() {
-    return { schemaVersion: 1, tool: "gitch graph view", repo: META.repo, snapshot: snapshotKey, analysis: analysisKey, review: {chosen:[...chosen],depth:reviewDepth,folder:folderQuery}, panels:{navigatorMode,folderFilter,expandedFolders:[...expandedFolders],changesExpanded:$("top").classList.contains("changesExpanded"),dock:["settings","review","info"].includes(dockView)?dockView:dockReturn,narrowExplore:document.body.classList.contains("narrowExplore"),leftClosed:document.body.classList.contains("leftClosed"),rightClosed:document.body.classList.contains("rightClosed"),left:getComputedStyle(root).getPropertyValue("--left-w"),right:getComputedStyle(root).getPropertyValue("--right-w")}, relation: REL, filters: { ...P },
-      display: Object.fromEntries(ORDER.map((r) => { const s = stateFor(r); return [r, { unit: s.unit, depth: s.depth, style: s.style, layout: s.layout, colorBy: s.colorBy, sizeBy: s.sizeBy }]; })),
+    return { schemaVersion: 1, tool: "gitch graph view", repo: META.repo, snapshot: snapshotKey, analysis: analysisKey, review: {chosen:[...chosen],depth:reviewDepth,folder:folderQuery}, panels:{navigatorMode,folderFilter,expandedFolders:[...expandedFolders],changesExpanded:$("top").classList.contains("changesExpanded"),architecture:{depth:ARCH.depth,search:ARCH.search,sort:ARCH.sort,allPairs:ARCH.allPairs},dock:["settings","review","info","architecture"].includes(dockView)?dockView:dockReturn,narrowExplore:document.body.classList.contains("narrowExplore"),leftClosed:document.body.classList.contains("leftClosed"),rightClosed:document.body.classList.contains("rightClosed"),left:getComputedStyle(root).getPropertyValue("--left-w"),right:getComputedStyle(root).getPropertyValue("--right-w")}, relation: REL, filters: { ...P },
+      display: Object.fromEntries(ORDER.map((r) => { const s = stateFor(r); return [r, { unit: s.unit, depth: s.depth, style: s.style, layout: s.layout, starPick: s.starPick || 0, colorBy: s.colorBy, sizeBy: s.sizeBy }]; })),
       hidden: [...hidden], query: q.value, selected: sel?.id || null, camera: { ...view }, theme: root.dataset.theme,
       positions: m.nodes.slice(0, 10000).map((n) => [n.id, n.x, n.y, n.fx, n.fy]) };
   }
@@ -14405,6 +15003,7 @@ HTMLEOF
       for (const [key, allowed] of Object.entries({ unit: ["file", "folder"], style: ["dot", "box"], colorBy: ["family", "role", "heat"], sizeBy: ["auto", "deg", "lines", "changes"] })) if (allowed.includes(d[key])) s[key] = d[key];
       if (LAYOUTS[r].some(([id]) => id === d.layout)) s.layout = d.layout;
       if (Number.isInteger(d.depth)) s.depth = clamp(d.depth, 1, 8);
+      if (Number.isInteger(d.starPick)) s.starPick = clamp(d.starPick, 0, 1000000);
     }
     hidden.clear(); if (Array.isArray(data.hidden)) for (const k of data.hidden.slice(0, 100)) if (typeof k === "string" && /^[fr]:/.test(k)) hidden.add(k);
     q.value = typeof data.query === "string" ? data.query.slice(0, 1000) : "";
@@ -14433,7 +15032,8 @@ HTMLEOF
       document.body.classList.toggle(side+'Closed',!!data.panels?.[side+'Closed']);
       const w=data.panels?.[side];if(typeof w==='string' && /^\d+(\.\d+)?px$/.test(w) && parseFloat(w)>=220 && parseFloat(w)<=460)root.style.setProperty('--'+side+'-w',w);
     }
-    dockView=['settings','review','info'].includes(data.panels?.dock)?data.panels.dock:sel?'info':'settings';
+    dockView=['settings','review','info','architecture'].includes(data.panels?.dock)?data.panels.dock:sel?'info':'settings';
+    const ar=data.panels?.architecture||{};ARCH.depth=Number.isInteger(ar.depth)?clamp(ar.depth,1,8):2;ARCH.search=typeof ar.search==='string'?ar.search.slice(0,200):'';ARCH.sort=['coupling','share','files','name'].includes(ar.sort)?ar.sort:'coupling';ARCH.allPairs=!!ar.allPairs;
     if(dockView==='info'&&!sel)dockView='review';dockReturn=dockView;
     document.body.classList.toggle('narrowExplore',!!data.panels?.narrowExplore);
     setChangesExpanded(!!data.panels?.changesExpanded);changeAnchor=null;
@@ -14549,7 +15149,7 @@ HTMLEOF
   }
   function setFolderScope(path) {
     folderQuery=folderIndex.has(path)?path:'';changeAnchor=null;
-    setNavigatorMode('changes');renderReview();renderFolderScope();renderFolderTree();$('changeList').scrollTop=0;
+    setNavigatorMode('changes');renderReview();renderFolderScope();renderFolderTree();renderArchitecture();$('changeList').scrollTop=0;
   }
   function renderFolderTree() {
     const container=$('folders'), scroll=container.scrollTop, term=folderFilter.toLowerCase();
@@ -14899,6 +15499,8 @@ HTMLEOF
     review: () => ({seeds:reviewSeeds(),direct:reviewImpact().direct,indirect:reviewImpact().indirect,priorities:reviewPriorities(),tests:reviewTests(reviewImpact()),withoutGuesses:{direct:reviewImpact(false).direct,indirect:reviewImpact(false).indirect},depth:reviewDepth}),
     benchmarkReview: () => {reviewGraphCache.clear();reviewCycleCache.clear();reviewOwnerCache.clear();const cold=performance.now();renderReview();const coldMs=performance.now()-cold,warm=[];for(let i=0;i<5;i++){const t=performance.now();renderReview();warm.push(performance.now()-t);}return {coldMs,warmMs:warm};},
     metrics: () => ({...reviewMetrics,nodes:m.nodes.length,edges:m.edges.length,htmlBytes:new Blob([document.documentElement.outerHTML]).size}),
+    architecture: computeArchitecture,
+    highlight:()=>({nodes:[...(HL?.nodes||[])].map(n=>n.id),edges:HL?.edges?.size||0}),
     report: reviewReport, markdown: reportMarkdown, reportHtml,
     capture: captureView, restore: restoreView,
     overlaps: () => {   // 겹친 쌍의 수(폴더 원은 형제 원끼리 · 부모 밖으로 나간 원)

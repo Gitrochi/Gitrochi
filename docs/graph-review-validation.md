@@ -134,3 +134,28 @@ Graph UI strings use English keys with embedded Korean and Japanese resources. A
 The locale browser regression covers explicit and regional app overrides, Korean/English/Japanese browser preferences, system fallback and unsupported-language fallback. It exercises static labels, dynamic details/review, path actions and copy feedback, and Markdown/HTML report localization without network requests. A long Unicode filename containing translation keys remains unchanged. Native app tests verify actual process environment propagation and watcher output separation.
 
 Windows flow-engine CI also exposed two environment restrictions: isolated test children need `SystemRoot` for Winsock, a managed Windows job may deny the breakaway flag for detached processes, and detached workers must not inherit the launcher's captured standard pipes. The existing mock-service and process-tree cancellation tests cover these cases, including a prompt-return deadline and a written cancellation request. Detachment retries without breakaway only after Windows access-denied error 5; standard-handle inheritance flags are restored after spawning.
+
+## Constellation, layouts and folder architecture (2026-10-26)
+
+The persistent graph toolbar exposes Constellation, Folder tree, Coupling & cohesion and Layouts. Constellation is available in all four relations; its adjacent Next constellation action changes the shape, and saved views retain the chosen shape. Blue constellation guides describe the visual shape and are distinct from repository dependencies. Layout cards wrap in two columns and explain their purpose. Folder lanes group files under readable directory headings; dependency rings use full dependency ranks, keeping strongly connected components together. Tree and radial views use a spanning forest when a dependency graph has multiple parents.
+
+The Architecture tab groups the current file dependency snapshot by a chosen directory depth. A group row highlights its files and incoming/outgoing dependencies; a directed folder-pair row highlights only the endpoints and edges crossing that boundary. Cycles highlight the participating groups. Search, path/coupling/size/internal-share sorting, inference selection and saved analysis settings support repeated comparisons. Keyboard selection retains focus. At narrow widths the whole analysis pane scrolls, so controls cannot squeeze results into an unusable strip.
+
+The metrics count unique directed file pairs, rather than reference occurrences or edge weights. Duplicate evidence and dependency kinds for the same pair count once; verified evidence takes precedence over inferred evidence. External nodes, package-only nodes, self-links, containment and co-change relationships do not contribute. Package-based analysis such as Go may therefore have no file-level architecture result. Removed files and base-only review edges are excluded.
+
+| Display | Definition |
+| --- | --- |
+| Internal dependencies | File pairs with both endpoints in the group |
+| Incoming / outgoing | File pairs entering / leaving the group |
+| Ca / Ce | Distinct other groups entering / leaving the group |
+| Internal dependency share | Internal pairs / (internal pairs + outgoing pairs) |
+| Internal density | Internal pairs / [file count × (file count − 1)] |
+| Instability | Ce / (Ca + Ce) |
+
+The internal share and density are structural cohesion proxies, not semantic cohesion, class cohesion or an overall quality score. Undefined ratios appear as an em dash. Directory depth changes the unit being compared. [Lattix's coupling and instability definitions](https://docs.lattix.com/lattix/userGuide/Metrics.html) and the [directed density definition](https://networkx.org/documentation/stable/reference/generated/networkx.classes.function.density.html) explain the established formulas; the internal share is explicitly defined above as an explorer-specific ratio.
+
+Language, test-file, inference and folder-scope filters apply to both endpoints. A scoped analysis describes the induced graph inside that scope; references outside it are omitted, so it does not measure the scope's coupling to the rest of the repository. Canvas layout, hidden color groups and the general graph search do not alter architecture metrics. The pane repeats this scope information and the formulas. Static-analysis coverage and unresolved imports still limit what can be inferred.
+
+Regression coverage extracts the actual embedded metric/layout functions, checks directed-pair counting and formulas against hand-calculated examples, and exercises long dependency chains. Real Chrome coverage verifies constellation access in all relations, saved shapes, new layouts in dot/box and folder modes, empty/singleton graphs, known architecture values, pair/group highlighting, keyboard focus, sorting/filtering, saved analysis settings, all three display languages, short/narrow windows and offline operation. Screenshots use only synthetic repository fixtures.
+
+Current synthetic screenshots: [constellation and layout cards](screenshots/graph-structure/stars-dark-1366.png), [light folder lanes](screenshots/graph-structure/lanes-light-1366.png), [dark architecture](screenshots/graph-structure/architecture-dark-1366.png), [light architecture](screenshots/graph-structure/architecture-light-1366.png), and [390 × 600 architecture](screenshots/graph-structure/architecture-dark-390x600.png).
