@@ -1179,7 +1179,6 @@
  "Open in Pull requests": "เปิดใน Pull requests",
  "Open in Merge requests": "เปิดใน Merge requests",
  "Closed": "ปิดแล้ว",
- "Merged": "รวมแล้ว",
  "Created by me": "ที่ฉันสร้าง",
  "Review requested": "ขอให้รีวิว",
  "Pull requests": "Pull requests",
@@ -1206,5 +1205,8 @@
  "Change issue state?": "เปลี่ยนสถานะของ issue หรือไม่",
  "Close issue": "ปิด issue",
  "Reopen": "เปิดอีกครั้ง",
- "Connect an account to load this workspace.": "เชื่อมต่อบัญชีเพื่อโหลดหน้านี้"
+ "Connect an account to load this workspace.": "เชื่อมต่อบัญชีเพื่อโหลดหน้านี้",
+ "open": "เปิดอยู่",
+ "closed": "ปิดแล้ว",
+ "merged": "รวมแล้ว"
 }

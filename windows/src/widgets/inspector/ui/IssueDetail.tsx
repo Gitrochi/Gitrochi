@@ -1,7 +1,7 @@
 import { CircleCheck, CircleDot, ExternalLink, Pencil, RefreshCw, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { markdownLinks } from "@/entities/git";
-import type { InboxDetail } from "@/entities/hosting";
+import { type InboxDetail, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -44,7 +44,7 @@ export function IssueDetail({ store, detail }: { store: RepoStore; detail: Inbox
           <span className="muted">{t("Author")}</span>
           <span>@{item.author}</span>
           <span className="muted">{t("State")}</span>
-          <span>{open ? t("Open") : t("Closed")}</span>
+          <span>{workStateTitle(item.state)}</span>
         </div>
         <div className="row" style={{ flexWrap: "wrap" }}>
           <Button disabled={busy} onClick={() => store.openSheet({ kind: "issueEditor", number: item.number, title: item.title, body: item.body })}>

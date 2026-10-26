@@ -1167,7 +1167,6 @@
  "Open in Pull requests": "Megnyitás a Pull requestekben",
  "Open in Merge requests": "Megnyitás a Merge requestekben",
  "Closed": "Lezárt",
- "Merged": "Egyesített",
  "Created by me": "Általam létrehozott",
  "Review requested": "Felülvizsgálat kérve",
  "Pull requests": "Pull requestek",
@@ -1194,5 +1193,8 @@
  "Change issue state?": "Módosítja az issue állapotát?",
  "Close issue": "Issue lezárása",
  "Reopen": "Újranyitás",
- "Connect an account to load this workspace.": "Az oldal betöltéséhez csatlakoztasson egy fiókot."
+ "Connect an account to load this workspace.": "Az oldal betöltéséhez csatlakoztasson egy fiókot.",
+ "open": "nyitott",
+ "closed": "lezárt",
+ "merged": "egyesített"
 }

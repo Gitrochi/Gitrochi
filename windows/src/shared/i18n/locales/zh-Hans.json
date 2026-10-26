@@ -1185,7 +1185,6 @@
  "Open in Pull requests": "在拉取请求中打开",
  "Open in Merge requests": "在合并请求中打开",
  "Closed": "已关闭",
- "Merged": "已合并",
  "Created by me": "我创建的",
  "Review requested": "请求审查",
  "Pull requests": "拉取请求",
@@ -1212,5 +1211,8 @@
  "Change issue state?": "更改议题状态？",
  "Close issue": "关闭议题",
  "Reopen": "重新打开",
- "Connect an account to load this workspace.": "连接账户以加载此页面。"
+ "Connect an account to load this workspace.": "连接账户以加载此页面。",
+ "open": "开放",
+ "closed": "已关闭",
+ "merged": "已合并"
 }

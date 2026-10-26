@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import type { RepoTarget } from "@/entities/git";
-import type { RequestScope } from "@/entities/hosting";
+import { type RequestScope, workStateTitle } from "@/entities/hosting";
 import { RepoStore } from "@/entities/repo";
 import { PullRequestSection } from "@/widgets/sidebar";
 import { t } from "@/shared/i18n";
@@ -34,7 +34,7 @@ export async function listSectionsSelfTest(): Promise<[boolean, string]> {
     const filter = host.querySelector<HTMLButtonElement>(".list-filter-button")!;
     ensure(!filter.classList.contains("on"), "The filter icon must stay plain on Open");
     filter.click(); await pause();
-    const merged = [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === t("Merged"));
+    const merged = [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === workStateTitle("merged"));
     ensure(merged && document.querySelectorAll(".menu .menu-item").length === 5, "The filter menu must offer five choices");
     merged!.click(); await pause();
     ensure(searches.at(-1)?.join() === "merged," && filter.classList.contains("on"), "Choosing a filter did not search or fill the icon");

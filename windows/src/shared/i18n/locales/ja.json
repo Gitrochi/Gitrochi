@@ -1184,7 +1184,6 @@
  "Open in Pull requests": "プルリクエストで開く",
  "Open in Merge requests": "マージリクエストで開く",
  "Closed": "クローズ",
- "Merged": "マージ済み",
  "Created by me": "自分が作成",
  "Review requested": "レビュー依頼",
  "Pull requests": "プルリクエスト",
@@ -1211,5 +1210,8 @@
  "Change issue state?": "イシューの状態を変更しますか？",
  "Close issue": "イシューをクローズ",
  "Reopen": "再オープン",
- "Connect an account to load this workspace.": "このページを読み込むにはアカウントを接続してください。"
+ "Connect an account to load this workspace.": "このページを読み込むにはアカウントを接続してください。",
+ "open": "オープン",
+ "closed": "クローズ",
+ "merged": "マージ済み"
 }

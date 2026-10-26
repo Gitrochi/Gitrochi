@@ -3,7 +3,7 @@ import type { RequestScope } from "@/entities/hosting";
 import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { accountHost, providerInfo, type RepoTarget } from "@/entities/git";
-import { accounts } from "@/entities/hosting";
+import { accounts, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -28,7 +28,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
   const [search, setSearch] = useState(store.requestQuery.search);
   useEffect(() => setSearch(store.requestQuery.search), [store.requestQuery.search]);
   const filters: { value: RequestScope; title: string }[] = [
-    { value: "open", title: t("Open") }, { value: "closed", title: t("Closed") }, { value: "merged", title: t("Merged") },
+    { value: "open", title: workStateTitle("open") }, { value: "closed", title: workStateTitle("closed") }, { value: "merged", title: workStateTitle("merged") },
     { value: "mine", title: t("Created by me") }, { value: "reviewRequested", title: t("Review requested") },
   ];
   return (

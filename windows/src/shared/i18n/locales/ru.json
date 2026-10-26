@@ -1183,7 +1183,6 @@
  "Open in Pull requests": "Открыть в Pull-реквестах",
  "Open in Merge requests": "Открыть в Merge-реквестах",
  "Closed": "Закрытые",
- "Merged": "Слитые",
  "Created by me": "Созданные мной",
  "Review requested": "Запрошено ревью",
  "Pull requests": "Pull-реквесты",
@@ -1210,5 +1209,8 @@
  "Change issue state?": "Изменить состояние задачи?",
  "Close issue": "Закрыть задачу",
  "Reopen": "Открыть снова",
- "Connect an account to load this workspace.": "Подключите аккаунт, чтобы загрузить эту страницу."
+ "Connect an account to load this workspace.": "Подключите аккаунт, чтобы загрузить эту страницу.",
+ "open": "открыто",
+ "closed": "закрыто",
+ "merged": "слито"
 }

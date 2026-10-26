@@ -1183,7 +1183,6 @@
  "Open in Pull requests": "Відкрити в Pull-запитах",
  "Open in Merge requests": "Відкрити в Merge-запитах",
  "Closed": "Закриті",
- "Merged": "Злиті",
  "Created by me": "Створені мною",
  "Review requested": "Запитано рецензію",
  "Pull requests": "Pull-запити",
@@ -1210,5 +1209,8 @@
  "Change issue state?": "Змінити стан задачі?",
  "Close issue": "Закрити задачу",
  "Reopen": "Відкрити знову",
- "Connect an account to load this workspace.": "Підключіть обліковий запис, щоб завантажити цю сторінку."
+ "Connect an account to load this workspace.": "Підключіть обліковий запис, щоб завантажити цю сторінку.",
+ "open": "відкрито",
+ "closed": "закрито",
+ "merged": "злито"
 }

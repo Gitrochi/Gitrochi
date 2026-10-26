@@ -1165,7 +1165,6 @@
  "Open in Pull requests": "Otevřít v Pull requestech",
  "Open in Merge requests": "Otevřít v Merge requestech",
  "Closed": "Uzavřené",
- "Merged": "Sloučené",
  "Created by me": "Vytvořené mnou",
  "Review requested": "Vyžádána revize",
  "Pull requests": "Pull requesty",
@@ -1192,5 +1191,8 @@
  "Change issue state?": "Změnit stav issue?",
  "Close issue": "Uzavřít issue",
  "Reopen": "Znovu otevřít",
- "Connect an account to load this workspace.": "Pro načtení této stránky připojte účet."
+ "Connect an account to load this workspace.": "Pro načtení této stránky připojte účet.",
+ "open": "otevřené",
+ "closed": "uzavřené",
+ "merged": "sloučené"
 }

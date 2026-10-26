@@ -1135,7 +1135,6 @@
  "Open in Pull requests": "Buka di Pull request",
  "Open in Merge requests": "Buka di Merge request",
  "Closed": "Ditutup",
- "Merged": "Digabungkan",
  "Created by me": "Dibuat oleh saya",
  "Review requested": "Tinjauan diminta",
  "Pull requests": "Pull request",
@@ -1163,5 +1162,8 @@
  "Change issue state?": "Ubah status issue?",
  "Close issue": "Tutup issue",
  "Reopen": "Buka kembali",
- "Connect an account to load this workspace.": "Hubungkan akun untuk memuat halaman ini."
+ "Connect an account to load this workspace.": "Hubungkan akun untuk memuat halaman ini.",
+ "open": "terbuka",
+ "closed": "ditutup",
+ "merged": "digabungkan"
 }

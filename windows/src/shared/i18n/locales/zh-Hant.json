@@ -1185,7 +1185,6 @@
  "Open in Pull requests": "在拉取請求中開啟",
  "Open in Merge requests": "在合併請求中開啟",
  "Closed": "已關閉",
- "Merged": "已合併",
  "Created by me": "我建立的",
  "Review requested": "請求審查",
  "Pull requests": "拉取請求",
@@ -1212,5 +1211,8 @@
  "Change issue state?": "變更議題狀態？",
  "Close issue": "關閉議題",
  "Reopen": "重新開啟",
- "Connect an account to load this workspace.": "連結帳戶以載入此頁面。"
+ "Connect an account to load this workspace.": "連結帳戶以載入此頁面。",
+ "open": "開放",
+ "closed": "已關閉",
+ "merged": "已合併"
 }

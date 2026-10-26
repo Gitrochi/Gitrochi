@@ -1172,7 +1172,6 @@
  "Open in Pull requests": "Pull request'lerde aç",
  "Open in Merge requests": "Merge request'lerde aç",
  "Closed": "Kapalı",
- "Merged": "Birleştirilmiş",
  "Created by me": "Benim oluşturduklarım",
  "Review requested": "İnceleme istendi",
  "Pull requests": "Pull request'ler",
@@ -1199,5 +1198,8 @@
  "Change issue state?": "Issue durumu değiştirilsin mi?",
  "Close issue": "Issue'yu kapat",
  "Reopen": "Yeniden aç",
- "Connect an account to load this workspace.": "Bu sayfayı yüklemek için bir hesap bağlayın."
+ "Connect an account to load this workspace.": "Bu sayfayı yüklemek için bir hesap bağlayın.",
+ "open": "açık",
+ "closed": "kapalı",
+ "merged": "birleştirildi"
 }

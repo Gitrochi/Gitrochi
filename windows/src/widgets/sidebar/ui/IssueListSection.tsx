@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
-import { accounts, type IssueScope } from "@/entities/hosting";
+import { accounts, type IssueScope, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
 import { ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
-
-const stateTitle = (state: string) => (["open", "opened"].includes(state) ? t("Open") : state === "closed" ? t("Closed") : state);
 
 /**
  * The repository's issues: in the repository sidebar (a row opens the Issues page), and as the list of the
@@ -20,7 +18,7 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
   const key = store.issueContextKey;
   useEffect(() => { void store.prepareIssues(); }, [store, key]);
   const st = store.issueState;
-  const filters: { value: IssueScope; title: string }[] = [{ value: "open", title: t("Open") }, { value: "closed", title: t("Closed") }, { value: "all", title: t("All") }];
+  const filters: { value: IssueScope; title: string }[] = [{ value: "open", title: workStateTitle("open") }, { value: "closed", title: workStateTitle("closed") }, { value: "all", title: t("All") }];
   const openPage = t("Open in Issues");
   const selected = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail.item.id : null;
   return (
@@ -73,7 +71,7 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
               <span className="muted" style={{ fontVariantNumeric: "tabular-nums" }}>#{issue.number}</span>
               <span className="ellipsis">{issue.title}</span>
             </span>
-            <span className="side-sub ellipsis">{stateTitle(issue.state)} · @{issue.author}</span>
+            <span className="side-sub ellipsis">{workStateTitle(issue.state)} · @{issue.author}</span>
           </span>
         </div>
       ))}

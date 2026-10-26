@@ -2052,7 +2052,6 @@
   "No merge requests match this filter.": "이 필터에 맞는 머지 리퀘스트가 없습니다.",
   "Open in Pull requests": "풀 리퀘스트 화면에서 열기",
   "Open in Merge requests": "머지 리퀘스트 화면에서 열기",
-  "Merged": "병합됨",
   "Open in Issues": "이슈 화면에서 열기",
   "No issues match this filter.": "이 필터에 맞는 이슈가 없습니다.",
   "Issue #{0}": "이슈 #{0}",

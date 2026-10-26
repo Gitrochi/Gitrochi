@@ -9,3 +9,4 @@ export { issuePage, saveWorkspaceIssue, searchWorkspaceRepositories, workspaceJo
 export { hubProjectTarget, hubProjectColumns, HubProjectPermissionError, HubUncertainWriteError, hubBoardIssueQuery, type HostingHubSection, type HubAccess, type HubItem, type HubPage, type HubMember, type HubRepository, type HubProjectField, type HubProjectRow, type HubDetail, type HubReleaseInput, ensureHubCurrent, hubPage, hubDetail, hubSafeURL, hubError, saveHubRelease, deleteHubItem, moveHubProjectItem, addHubProjectIssue } from "./api/hub";
 export { HostingHubStore, type HubSource } from "./model/hub";
 export { accountWorkPage, accountWorkOrigin, markAccountWorkRead, type AccountWorkKind, type AccountWorkItem } from "./api/account-work";
+export { workStateTitle } from "./lib/work-state";

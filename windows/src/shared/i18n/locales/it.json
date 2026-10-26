@@ -1158,7 +1158,6 @@
  "Open in Pull requests": "Apri in Pull request",
  "Open in Merge requests": "Apri in Merge request",
  "Closed": "Chiuse",
- "Merged": "Unite",
  "Created by me": "Create da me",
  "Review requested": "Revisione richiesta",
  "Pull requests": "Pull request",
@@ -1186,5 +1185,8 @@
  "Change issue state?": "Cambiare lo stato della issue?",
  "Close issue": "Chiudi issue",
  "Reopen": "Riapri",
- "Connect an account to load this workspace.": "Collega un account per caricare questa pagina."
+ "Connect an account to load this workspace.": "Collega un account per caricare questa pagina.",
+ "open": "aperto",
+ "closed": "chiuso",
+ "merged": "unito"
 }

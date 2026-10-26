@@ -1139,7 +1139,6 @@
  "Open in Pull requests": "Mở trong Pull request",
  "Open in Merge requests": "Mở trong Merge request",
  "Closed": "Đã đóng",
- "Merged": "Đã hợp nhất",
  "Created by me": "Do tôi tạo",
  "Review requested": "Được yêu cầu xem xét",
  "Pull requests": "Pull request",
@@ -1166,5 +1165,8 @@
  "Change issue state?": "Thay đổi trạng thái issue?",
  "Close issue": "Đóng issue",
  "Reopen": "Mở lại",
- "Connect an account to load this workspace.": "Kết nối tài khoản để tải trang này."
+ "Connect an account to load this workspace.": "Kết nối tài khoản để tải trang này.",
+ "open": "đang mở",
+ "closed": "đã đóng",
+ "merged": "đã hợp nhất"
 }
