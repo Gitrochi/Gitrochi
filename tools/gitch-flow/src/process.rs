@@ -392,6 +392,7 @@ pub fn bash_path() -> String {
 mod tests {
     use super::*;
 
+    #[cfg(unix)]
     fn sh(script: &str, timeout_ms: Option<u64>) -> (Outcome, Vec<String>) {
         let (program, args) = shell_command("sh", script);
         let spec = ProcSpec {
