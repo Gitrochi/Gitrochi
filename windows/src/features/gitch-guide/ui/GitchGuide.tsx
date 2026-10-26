@@ -89,7 +89,7 @@ const commands = [
     "pr · ci",
     "Everyday work",
     "Create or inspect a pull request and check its builds.",
-    "PR and CI/CD tabs; connect a hosting account in Settings > Accounts",
+    "Pull requests and Actions pages; connect a hosting account in Settings > Accounts",
   ],
   [
     "continue · abort",
