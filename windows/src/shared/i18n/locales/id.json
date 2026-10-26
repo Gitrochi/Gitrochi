@@ -539,7 +539,6 @@
  "Pin to top": "Sematkan di atas",
  "Pinned": "Disematkan",
  "Pipelines": "Pipeline",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline · Actions|Jalankan job manual, jalankan ulang, batalkan, setujui deployment",
  "Plan only": "Hanya rencana",
  "Plan only (read-only)": "Hanya rencana (baca-saja)",
  "Pop (apply the latest stash)": "Pop (terapkan stash terakhir)",
@@ -1114,5 +1113,6 @@
   "Open a repository to get started": "Buka repositori untuk memulai",
   "Open a repository to use this page.": "Buka repositori untuk menggunakan halaman ini.",
   "Merge requests": "Merge request",
-  "Setup diagnosis": "Diagnosis penyiapan"
+  "Setup diagnosis": "Diagnosis penyiapan",
+  "Branches": "Cabang"
 }

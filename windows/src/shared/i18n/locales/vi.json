@@ -545,7 +545,6 @@
  "Pin to top": "Ghim lên đầu",
  "Pinned": "Đã ghim",
  "Pipelines": "Pipeline",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline · Actions|Chạy job thủ công, chạy lại, hủy, phê duyệt triển khai",
  "Plan only": "Chỉ lập kế hoạch",
  "Plan only (read-only)": "Chỉ lập kế hoạch (chỉ đọc)",
  "Pop (apply the latest stash)": "Pop (áp dụng stash mới nhất)",
@@ -1118,5 +1117,6 @@
   "Open a repository to get started": "Mở kho lưu trữ để bắt đầu",
   "Open a repository to use this page.": "Mở kho lưu trữ để sử dụng trang này.",
   "Merge requests": "Merge request",
-  "Setup diagnosis": "Chẩn đoán thiết lập"
+  "Setup diagnosis": "Chẩn đoán thiết lập",
+  "Branches": "Nhánh"
 }

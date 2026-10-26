@@ -551,7 +551,6 @@
  "Pick": "Manter",
  "Pin to top": "Fixar no topo",
  "Pinned": "Fixado",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipelines · Actions|Executar jobs manuais, reexecutar, cancelar, aprovar deploys",
  "Plan only": "Só planejar",
  "Plan only (read-only)": "Só planejar (somente leitura)",
  "Pop (apply the latest stash)": "Pop (aplicar o stash mais recente)",
@@ -1131,5 +1130,6 @@
   "Open a repository to get started": "Abra um repositório para começar",
   "Open a repository to use this page.": "Abra um repositório para usar esta página.",
   "Merge requests": "Merge requests",
-  "Setup diagnosis": "Diagnóstico da configuração"
+  "Setup diagnosis": "Diagnóstico da configuração",
+  "Branches": "Branches"
 }

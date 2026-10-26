@@ -559,7 +559,6 @@
  "Pin to top": "Rögzítés felülre",
  "Pinned": "Rögzítve",
  "Pipelines": "Pipeline-ok",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline-ok · Actions|Kézi jobok futtatása, újrafuttatás, megszakítás, üzembe helyezések jóváhagyása",
  "Plan only": "Csak tervezés",
  "Plan only (read-only)": "Csak tervezés (csak olvasás)",
  "Pop (apply the latest stash)": "Pop (a legutóbbi stash alkalmazása)",
@@ -1146,5 +1145,6 @@
   "Open a repository to get started": "A kezdéshez nyisson meg egy tárolót",
   "Open a repository to use this page.": "Az oldal használatához nyisson meg egy tárolót.",
   "Merge requests": "Merge requestek",
-  "Setup diagnosis": "Beállítás-diagnosztika"
+  "Setup diagnosis": "Beállítás-diagnosztika",
+  "Branches": "Ágak"
 }

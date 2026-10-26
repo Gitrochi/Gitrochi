@@ -744,7 +744,6 @@
   "Pin to top": "맨 위에 고정",
   "Pinned": "고정",
   "Pipelines": "파이프라인",
-  "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "파이프라인·Actions|수동 작업 실행, 다시 실행, 취소, 배포 승인",
   "Plan only": "계획만 세우기",
   "Plan only (read-only)": "계획만 세우기(읽기 전용)",
   "Pop": "꺼내기",
@@ -1972,5 +1971,6 @@
   "Workspace": "작업 공간",
   "Connect a GitHub or GitLab account to search its repositories.": "GitHub 또는 GitLab 계정을 연결하면 그 계정의 저장소를 검색할 수 있습니다.",
   "An empty search lists repositories you belong to.": "검색어를 비워 두면 내가 속한 저장소를 모두 보여 줍니다.",
-  "Creates a new branch at the current position. From ▾: new worktree, compare revisions, run an agent (Claude Code, Codex, Gemini).": "현재 위치에서 새 브랜치를 만듭니다. ▾ 에서: 새 워크트리, 두 시점 비교, 에이전트 실행(Claude Code, Codex, Gemini)."
+  "Creates a new branch at the current position. From ▾: new worktree, compare revisions, run an agent (Claude Code, Codex, Gemini).": "현재 위치에서 새 브랜치를 만듭니다. ▾ 에서: 새 워크트리, 두 시점 비교, 에이전트 실행(Claude Code, Codex, Gemini).",
+  "Branches": "브랜치"
 }

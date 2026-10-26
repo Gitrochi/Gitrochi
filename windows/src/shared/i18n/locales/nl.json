@@ -541,7 +541,6 @@
  "Pick": "Behouden",
  "Pin to top": "Bovenaan vastzetten",
  "Pinned": "Vastgezet",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipelines · Actions|Handmatige jobs uitvoeren, opnieuw uitvoeren, annuleren, deployments goedkeuren",
  "Plan only": "Alleen plannen",
  "Plan only (read-only)": "Alleen plannen (alleen-lezen)",
  "Pop (apply the latest stash)": "Pop (laatste stash toepassen)",
@@ -1113,5 +1112,6 @@
   "Open a repository to get started": "Open een repository om te beginnen",
   "Open a repository to use this page.": "Open een repository om deze pagina te gebruiken.",
   "Merge requests": "Merge requests",
-  "Setup diagnosis": "Installatiediagnose"
+  "Setup diagnosis": "Installatiediagnose",
+  "Branches": "Branches"
 }

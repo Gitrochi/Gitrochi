@@ -560,7 +560,6 @@
  "Pin to top": "En üste sabitle",
  "Pinned": "Sabitlenmiş",
  "Pipelines": "Pipeline'lar",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline'lar · Actions|Manuel işleri çalıştırın, yeniden çalıştırın, iptal edin, dağıtımları onaylayın",
  "Plan only": "Yalnızca plan",
  "Plan only (read-only)": "Yalnızca plan (salt okunur)",
  "Pop (apply the latest stash)": "Pop (en son stash'i uygula)",
@@ -1151,5 +1150,6 @@
   "Open a repository to get started": "Başlamak için bir depo açın",
   "Open a repository to use this page.": "Bu sayfayı kullanmak için bir depo açın.",
   "Merge requests": "Merge request'ler",
-  "Setup diagnosis": "Kurulum tanılaması"
+  "Setup diagnosis": "Kurulum tanılaması",
+  "Branches": "Dallar"
 }

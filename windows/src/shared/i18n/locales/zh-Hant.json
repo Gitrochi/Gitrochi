@@ -570,7 +570,6 @@
  "Pin to top": "釘選到最上方",
  "Pinned": "已釘選",
  "Pipelines": "管線",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "管線 · Actions|執行手動作業、重新執行、取消、核准部署",
  "Plan only": "僅規劃",
  "Plan only (read-only)": "僅規劃（唯讀）",
  "Pop": "取回 (Pop)",
@@ -1164,5 +1163,6 @@
   "Open a repository to get started": "開啟儲存庫以開始",
   "Open a repository to use this page.": "開啟儲存庫以使用此頁面。",
   "Merge requests": "合併請求",
-  "Setup diagnosis": "設定診斷"
+  "Setup diagnosis": "設定診斷",
+  "Branches": "分支"
 }

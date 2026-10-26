@@ -568,7 +568,6 @@
  "Pin to top": "Закріпити вгорі",
  "Pinned": "Закріплені",
  "Pipelines": "Конвеєри",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Конвеєри · Actions|Запуск ручних завдань, повторний запуск, скасування, схвалення розгортань",
  "Plan only": "Лише план",
  "Plan only (read-only)": "Лише план (тільки читання)",
  "Pop": "Дістати",
@@ -1162,5 +1161,6 @@
   "Open a repository to get started": "Відкрийте репозиторій, щоб почати",
   "Open a repository to use this page.": "Відкрийте репозиторій, щоб користуватися цією сторінкою.",
   "Merge requests": "Merge-запити",
-  "Setup diagnosis": "Діагностика налаштування"
+  "Setup diagnosis": "Діагностика налаштування",
+  "Branches": "Гілки"
 }

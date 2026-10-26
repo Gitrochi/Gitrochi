@@ -9,7 +9,6 @@ import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
 import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
-import { CIPanel } from "./CIPanel";
 import { PullRequestSection } from "./PullRequestSection";
 import { Section, SectionFlyout } from "./Section";
 import { WorktreeSection } from "./WorktreeSection";
@@ -21,7 +20,8 @@ export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; ope
   useObserve(store);
   useObserve(settings);
   useObserve(agents);
-  const mode = settings.get<"list" | "agents" | "ci">("sidebarMode", "list");
+  // CI moved to the Actions page; a saved "ci" mode falls through to the branch list (macOS: SidebarView.swift)
+  const mode = settings.get<string>("sidebarMode", "list") === "agents" ? "agents" : "list";
   const active = agents.sessions.filter((s) => isActiveStatus(s.status) && store.worktrees.some((w) => samePath(w.path, s.path))).length;
   if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} openSettings={openSettings} only={flyout === "repository" ? undefined : flyout} /></SectionFlyout.Provider>;
   return (
@@ -33,15 +33,14 @@ export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; ope
             value={mode}
             onChange={(v) => settings.set("sidebarMode", v)}
             options={[
-              { value: "list", label: t("List") },
+              { value: "list", label: t("Branches") },
               { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
-              { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
             ]}
           />
         </div>
         <IconButton small icon={<PanelLeftClose size={15} />} tip={tip(t("Hide sidebar"), t("The sections stay at hand as a rail of icons; hover one to open it."))} onClick={() => settings.set("sidebarCollapsed", true)} />
       </div>
-      {mode === "agents" ? <AgentsPanel store={store} /> : mode === "ci" ? <CIPanel store={store} openSettings={openSettings} /> : <BranchList store={store} openSettings={openSettings} />}
+      {mode === "agents" ? <AgentsPanel store={store} /> : <BranchList store={store} openSettings={openSettings} />}
     </>
   );
 }

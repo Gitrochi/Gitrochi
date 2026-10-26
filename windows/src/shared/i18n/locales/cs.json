@@ -557,7 +557,6 @@
  "Pin to top": "Připnout nahoru",
  "Pinned": "Připnuto",
  "Pipelines": "Pipeline",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline · Actions|Spouštění ručních úloh, opakované spuštění, zrušení, schvalování nasazení",
  "Plan only": "Jen plánovat",
  "Plan only (read-only)": "Jen plánovat (jen pro čtení)",
  "Pop (apply the latest stash)": "Pop (použít poslední stash)",
@@ -1144,5 +1143,6 @@
   "Open a repository to get started": "Začněte otevřením repozitáře",
   "Open a repository to use this page.": "Pro použití této stránky otevřete repozitář.",
   "Merge requests": "Merge requesty",
-  "Setup diagnosis": "Diagnostika nastavení"
+  "Setup diagnosis": "Diagnostika nastavení",
+  "Branches": "Větve"
 }

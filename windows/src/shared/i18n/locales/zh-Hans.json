@@ -570,7 +570,6 @@
  "Pin to top": "置顶",
  "Pinned": "已置顶",
  "Pipelines": "流水线",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "流水线 · Actions|运行手动作业、重新运行、取消、批准部署",
  "Plan only": "仅规划",
  "Plan only (read-only)": "仅规划（只读）",
  "Pop": "弹出",
@@ -1164,5 +1163,6 @@
   "Open a repository to get started": "打开仓库以开始",
   "Open a repository to use this page.": "打开仓库以使用此页面。",
   "Merge requests": "合并请求",
-  "Setup diagnosis": "设置诊断"
+  "Setup diagnosis": "设置诊断",
+  "Branches": "分支"
 }

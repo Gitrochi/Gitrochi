@@ -564,7 +564,6 @@
  "Pin to top": "ปักหมุดไว้ด้านบน",
  "Pinned": "ปักหมุดแล้ว",
  "Pipelines": "ไปป์ไลน์",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "ไปป์ไลน์ · Actions|รันจ็อบแบบแมนนวล, รันซ้ำ, ยกเลิก, อนุมัติการดีพลอย",
  "Plan only": "วางแผนเท่านั้น",
  "Plan only (read-only)": "วางแผนเท่านั้น (อ่านอย่างเดียว)",
  "Pop": "ป๊อป",
@@ -1158,5 +1157,6 @@
   "Open a repository to get started": "เปิดที่เก็บเพื่อเริ่มต้น",
   "Open a repository to use this page.": "เปิดที่เก็บเพื่อใช้หน้านี้",
   "Merge requests": "Merge requests",
-  "Setup diagnosis": "การวินิจฉัยการตั้งค่า"
+  "Setup diagnosis": "การวินิจฉัยการตั้งค่า",
+  "Branches": "สาขา"
 }

@@ -557,7 +557,6 @@
  "Pin to top": "Przypnij na górze",
  "Pinned": "Przypięte",
  "Pipelines": "Pipeline'y",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Pipeline'y · Actions|Uruchamiaj zadania ręczne, ponawiaj, anuluj, akceptuj wdrożenia",
  "Plan only": "Tylko plan",
  "Plan only (read-only)": "Tylko plan (tylko do odczytu)",
  "Pop (apply the latest stash)": "Pop (zastosuj ostatni stash)",
@@ -1145,5 +1144,6 @@
   "Open a repository to get started": "Otwórz repozytorium, aby zacząć",
   "Open a repository to use this page.": "Otwórz repozytorium, aby użyć tej strony.",
   "Merge requests": "Merge requesty",
-  "Setup diagnosis": "Diagnostyka konfiguracji"
+  "Setup diagnosis": "Diagnostyka konfiguracji",
+  "Branches": "Gałęzie"
 }

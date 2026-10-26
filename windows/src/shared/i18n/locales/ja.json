@@ -569,7 +569,6 @@
  "Pin to top": "上部に固定",
  "Pinned": "固定済み",
  "Pipelines": "パイプライン",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "パイプライン · Actions|手動ジョブの実行、再実行、キャンセル、デプロイの承認",
  "Plan only": "計画のみ",
  "Plan only (read-only)": "計画のみ (読み取り専用)",
  "Pop": "ポップ",
@@ -1163,5 +1162,6 @@
   "Open a repository to get started": "リポジトリを開いて始めましょう",
   "Open a repository to use this page.": "このページを使うにはリポジトリを開いてください。",
   "Merge requests": "マージリクエスト",
-  "Setup diagnosis": "設定の診断"
+  "Setup diagnosis": "設定の診断",
+  "Branches": "ブランチ"
 }

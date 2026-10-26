@@ -568,7 +568,6 @@
  "Pin to top": "Закрепить вверху",
  "Pinned": "Закреплённые",
  "Pipelines": "Конвейеры",
- "Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments": "Конвейеры · Actions|Запуск ручных заданий, перезапуск, отмена, одобрение развёртываний",
  "Plan only": "Только план",
  "Plan only (read-only)": "Только план (только чтение)",
  "Pop": "Достать",
@@ -1162,5 +1161,6 @@
   "Open a repository to get started": "Откройте репозиторий, чтобы начать",
   "Open a repository to use this page.": "Откройте репозиторий, чтобы использовать эту страницу.",
   "Merge requests": "Merge-реквесты",
-  "Setup diagnosis": "Диагностика настройки"
+  "Setup diagnosis": "Диагностика настройки",
+  "Branches": "Ветки"
 }
