@@ -6,12 +6,22 @@ struct ToolsSettings: View {
     private let tools = ToolStore.shared
     @ViewState private var error: String?
     @ViewState private var busy: ToolID?
+    @AppStorage(AgentCenter.Place.key) private var agentPlace = AgentCenter.Place.app
 
     var body: some View {
         Form {
             Section {
                 Text("Install locations differ from person to person. If a tool isn't found automatically, use **Locate** to choose the executable yourself. The chosen path is saved and used next time.")
                     .font(.callout).foregroundStyle(.secondary)
+            }
+            Section {
+                Picker("Run coding agents in", selection: $agentPlace) {
+                    Text("Gitrochi terminal").tag(AgentCenter.Place.app)
+                    Text("Terminal app").tag(AgentCenter.Place.terminal)
+                }
+            } footer: {
+                Text("In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             ForEach(ToolID.allCases) { id in
                 let st = tools.state(id)

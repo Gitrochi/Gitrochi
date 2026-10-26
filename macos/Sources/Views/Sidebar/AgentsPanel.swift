@@ -52,7 +52,9 @@ struct AgentsPanel: View {
                     }
                 }
 
-                Text("Only sessions started here show their status. Click a session to go to its Terminal window.")
+                Text(AgentCenter.Place.current == .app
+                     ? "Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal."
+                     : "Only sessions started here show their status. Click a session to go to its Terminal window.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.top, 4)
@@ -153,6 +155,7 @@ private struct SessionRow: View {
 
     var body: some View {
         let agents = AgentCenter.shared
+        let inApp = agents.runsInApp(session)
         HStack(alignment: .top, spacing: 6) {
             StatusDot(status: session.status)
                 .padding(.top, 5)
@@ -185,9 +188,9 @@ private struct SessionRow: View {
         .font(.callout)
         .contentShape(Rectangle())
         .onTapGesture { agents.focus(session) }
-        .help(session.status == .ended ? "Ended sessions" : "Click to go to the Terminal window")
+        .help(session.status == .ended ? "Ended sessions" : inApp ? "Click to go to that terminal" : "Click to go to the Terminal window")
         .contextMenu {
-            Button("Go to Terminal window") { agents.focus(session) }
+            Button(inApp ? "Go to terminal" : "Go to Terminal window") { agents.focus(session) }
                 .disabled(session.status == .ended)
             Button("New session in the same place") { store.startAgent(in: session.path, kind: session.kind) }
             Divider()
@@ -282,7 +285,9 @@ struct StartAgentSheet: View {
             }
             .formStyle(.grouped)
             HStack {
-                Text("Runs in a new Terminal window; its status is shown in the Agents tab.")
+                Text(AgentCenter.Place.current == .app
+                     ? "Runs in a new tab of the terminal below; its status is shown in the Agents tab."
+                     : "Runs in a new Terminal window; its status is shown in the Agents tab.")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }

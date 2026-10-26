@@ -22,8 +22,21 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var shellTitle: String?
     @ObservationIgnored private var refreshScheduled = false
 
-    init(directory: String) {
+    /// A program run instead of the login shell (agent sessions)
+    struct Command {
+        let program: String
+        let args: [String]
+        var env: [String: String] = [:]
+        let title: String
+        /// Gets the program's pid each time it starts
+        var pidFile: String?
+    }
+
+    let command: Command?
+
+    init(directory: String, command: Command? = nil) {
         self.directory = directory
+        self.command = command
         self.title = URL(fileURLWithPath: directory).lastPathComponent
         view = ShellView(frame: NSRect(x: 0, y: 0, width: 640, height: 260))
         _ = ShellView.controlReturnMonitor
@@ -34,15 +47,26 @@ final class TerminalSession: Identifiable {
         view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         view.optionAsMetaKey = false        // ⌥ 로 특수문자·한글 입력이 되도록
         applyColors(for: NSApp.effectiveAppearance)
+        if let command { title = command.title }
     }
 
     func start() {
         exitCode = nil
         running = true
         let shell = ToolPaths.shared.get(.shell) ?? Self.loginShell
-        view.startProcess(executable: shell, args: [], environment: Self.environment(),
-                          execName: "-" + URL(fileURLWithPath: shell).lastPathComponent,
-                          currentDirectory: directory)
+        let execName = "-" + URL(fileURLWithPath: shell).lastPathComponent
+        if let command {
+            // An interactive login shell sets up PATH like Terminal does (Homebrew, nvm …); exec leaves the program with the shell's pid
+            let line = (["exec", Launcher.quote(command.program)] + command.args.map(Launcher.quote)).joined(separator: " ")
+            view.startProcess(executable: shell, args: ["-i", "-c", line],
+                              environment: Self.environment() + command.env.map { "\($0.key)=\($0.value)" },
+                              execName: execName, currentDirectory: directory)
+            if let pidFile = command.pidFile, let pid = view.process?.shellPid, pid > 0 {
+                try? String(pid).write(toFile: pidFile, atomically: true, encoding: .utf8)
+            }
+        } else {
+            view.startProcess(executable: shell, args: [], environment: Self.environment(), execName: execName, currentDirectory: directory)
+        }
         refreshInfo()
     }
 
@@ -130,7 +154,7 @@ final class TerminalSession: Identifiable {
     private func refreshInfo() {
         guard let p = view.process, p.shellPid > 0 else { return }
         if let cwd = Self.currentDirectory(p.shellPid), cwd != directory { directory = cwd }
-        let name = shellTitle ?? foregroundProgram ?? URL(fileURLWithPath: directory).lastPathComponent
+        let name = shellTitle ?? foregroundProgram ?? command?.title ?? URL(fileURLWithPath: directory).lastPathComponent
         if name != title { title = name }
     }
 
@@ -237,13 +261,16 @@ extension RepoStore {
         }
     }
 
-    func newTerminal(in path: String? = nil) {
-        guard let dir = path ?? url?.path else { return }
-        let s = TerminalSession(directory: dir)
+    /// A shell in path (default: the repository), or the given program in its place
+    @discardableResult
+    func newTerminal(in path: String? = nil, command: TerminalSession.Command? = nil) -> TerminalSession? {
+        guard let dir = path ?? url?.path else { return nil }
+        let s = TerminalSession(directory: dir, command: command)
         terminals.append(s)
         activeTerminalID = s.id
         showTerminal = true
         s.start()
+        return s
     }
 
     func selectTerminal(_ s: TerminalSession) {
@@ -251,9 +278,21 @@ extension RepoStore {
         s.unseenOutput = false
     }
 
+    /// Brings this tab forward with the terminal shown, selected and focused
+    func focusTerminal(_ s: TerminalSession) {
+        guard terminals.contains(where: { $0.id == s.id }) else { return }
+        selectTerminal(s)
+        showTerminal = true
+        window?.tabGroup?.selectedWindow = window
+        window?.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        DispatchQueue.main.async { s.focus() }
+    }
+
     /// 프로그램이 돌고 있으면 한 번 묻고 닫는다
     func requestCloseTerminal(_ s: TerminalSession) {
-        if let program = s.foregroundProgram {
+        // an agent tab runs its program in place of the shell, so ask while it runs too
+        if let program = s.foregroundProgram ?? (s.running ? s.command?.title : nil) {
             confirm = ConfirmRequest(title: String(localized: "Close the terminal?"),
                                      message: String(localized: "'\(program)' is still running. Closing it will stop it."),
                                      actionTitle: String(localized: "Close")) { [weak self] in self?.closeTerminal(s) }

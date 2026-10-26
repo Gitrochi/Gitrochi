@@ -1038,3 +1038,13 @@
 "Write" = "เขียน";
 "Preview" = "แสดงตัวอย่าง";
 "Nothing to preview" = "ไม่มีเนื้อหาให้แสดงตัวอย่าง";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "เซสชันที่เริ่มจากที่นี่จะรันในแท็บของเทอร์มินัลด้านล่าง และแสดงสถานะที่นี่ คลิกเซสชันเพื่อไปยังเทอร์มินัลของเซสชันนั้น";
+"Click to go to that terminal" = "คลิกเพื่อไปยังเทอร์มินัลนั้น";
+"Go to terminal" = "ไปที่เทอร์มินัล";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "รันในแท็บใหม่ของเทอร์มินัลด้านล่าง สถานะจะแสดงในแท็บเอเจนต์";
+"The process exited" = "โปรเซสสิ้นสุดแล้ว";
+"The process exited (code %lld)" = "โปรเซสสิ้นสุดแล้ว (โค้ด %1$lld)";
+"Run coding agents in" = "เรียกใช้เอเจนต์เขียนโค้ดใน";
+"Gitrochi terminal" = "เทอร์มินัลของ Gitrochi";
+"Terminal app" = "แอปเทอร์มินัล";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "ใน Gitrochi เซสชันจะทำงานในแท็บใหม่ของเทอร์มินัลใต้กราฟ และจะสิ้นสุดเมื่อออกจากแอป เลือกแอปเทอร์มินัลหากต้องการให้เซสชันทำงานต่อโดยไม่ต้องเปิด Gitrochi";

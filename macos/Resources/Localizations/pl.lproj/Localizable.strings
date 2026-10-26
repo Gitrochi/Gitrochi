@@ -1025,3 +1025,13 @@
 "Write" = "Pisz";
 "Preview" = "Podgląd";
 "Nothing to preview" = "Brak treści do podglądu";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Sesje uruchomione tutaj działają w kartach terminala na dole, a ich status jest widoczny tutaj. Kliknij sesję, aby przejść do jej terminala.";
+"Click to go to that terminal" = "Kliknij, aby przejść do tego terminala";
+"Go to terminal" = "Przejdź do terminala";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Działa w nowej karcie terminala na dole; status jest widoczny na karcie Agenci.";
+"The process exited" = "Proces zakończył działanie";
+"The process exited (code %lld)" = "Proces zakończył działanie (kod %1$lld)";
+"Run coding agents in" = "Uruchamiaj agentów kodujących w";
+"Gitrochi terminal" = "Terminal Gitrochi";
+"Terminal app" = "Aplikacja Terminal";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "W Gitrochi sesja działa w nowej karcie terminala pod wykresem i kończy się po zamknięciu aplikacji. Wybierz aplikację Terminal, aby sesje działały bez Gitrochi.";

@@ -998,3 +998,13 @@
 "Write" = "Viết";
 "Preview" = "Xem trước";
 "Nothing to preview" = "Không có gì để xem trước";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Các phiên bắt đầu từ đây chạy trong các tab của terminal bên dưới, và trạng thái được hiển thị tại đây. Nhấp vào một phiên để chuyển đến terminal của phiên đó.";
+"Click to go to that terminal" = "Nhấp để chuyển đến terminal đó";
+"Go to terminal" = "Chuyển đến terminal";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Chạy trong tab mới của terminal bên dưới; trạng thái hiển thị trong tab Agent.";
+"The process exited" = "Tiến trình đã thoát";
+"The process exited (code %lld)" = "Tiến trình đã thoát (mã %1$lld)";
+"Run coding agents in" = "Chạy agent lập trình trong";
+"Gitrochi terminal" = "Terminal của Gitrochi";
+"Terminal app" = "Ứng dụng Terminal";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "Trong Gitrochi, phiên chạy trong một tab mới của terminal bên dưới biểu đồ và kết thúc khi bạn thoát ứng dụng. Chọn ứng dụng Terminal để phiên tiếp tục chạy mà không cần Gitrochi.";

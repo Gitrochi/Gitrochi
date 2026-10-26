@@ -1045,3 +1045,13 @@
 "Write" = "编写";
 "Preview" = "预览";
 "Nothing to preview" = "没有可预览的内容";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "在此处启动的会话在下方终端的标签页中运行，其状态显示在这里。点击会话可转到其终端。";
+"Click to go to that terminal" = "点击转到该终端";
+"Go to terminal" = "转到终端";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "在下方终端的新标签页中运行；其状态显示在“代理”标签页中。";
+"The process exited" = "进程已退出";
+"The process exited (code %lld)" = "进程已退出（代码 %1$lld）";
+"Run coding agents in" = "编码代理运行位置";
+"Gitrochi terminal" = "Gitrochi 终端";
+"Terminal app" = "“终端”App";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "在 Gitrochi 中，会话在图表下方终端的新标签页中运行，退出应用时会话也会结束。若要在没有 Gitrochi 时保持会话运行，请选择“终端”App。";

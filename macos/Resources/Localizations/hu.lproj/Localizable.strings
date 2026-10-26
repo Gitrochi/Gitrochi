@@ -1025,3 +1025,13 @@
 "Write" = "Írás";
 "Preview" = "Előnézet";
 "Nothing to preview" = "Nincs mit megjeleníteni";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Az itt indított munkamenetek az alsó terminál lapjain futnak, és az állapotuk itt látható. Egy munkamenetre kattintva a termináljára ugrik.";
+"Click to go to that terminal" = "Kattintással az adott terminálra ugorhat";
+"Go to terminal" = "Ugrás a terminálra";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Az alsó terminál új lapján fut; az állapota az Ügynökök lapon látható.";
+"The process exited" = "A folyamat kilépett";
+"The process exited (code %lld)" = "A folyamat kilépett (kód: %1$lld)";
+"Run coding agents in" = "Kódoló ügynökök futtatása itt";
+"Gitrochi terminal" = "Gitrochi terminál";
+"Terminal app" = "Terminál app";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "A Gitrochiban a munkamenet a grafikon alatti terminál új lapján fut, és az alkalmazásból kilépve véget ér. Válassza a Terminál appot, ha a munkamenetek Gitrochi nélkül is fussanak.";

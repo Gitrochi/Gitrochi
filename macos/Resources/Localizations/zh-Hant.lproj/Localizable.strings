@@ -1044,3 +1044,13 @@
 "Write" = "撰寫";
 "Preview" = "預覽";
 "Nothing to preview" = "沒有可預覽的內容";
+"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "在這裡啟動的工作階段會在下方終端機的分頁中執行，狀態會顯示在這裡。按一下工作階段即可前往其終端機。";
+"Click to go to that terminal" = "按一下以前往該終端機";
+"Go to terminal" = "前往終端機";
+"Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "在下方終端機的新分頁中執行，狀態會顯示在「代理程式」分頁。";
+"The process exited" = "處理程序已結束";
+"The process exited (code %lld)" = "處理程序已結束（代碼 %1$lld）";
+"Run coding agents in" = "程式碼代理程式執行位置";
+"Gitrochi terminal" = "Gitrochi 終端機";
+"Terminal app" = "「終端機」App";
+"In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi." = "在 Gitrochi 中，工作階段會在圖表下方終端機的新分頁中執行，結束 App 時工作階段也會結束。若要在沒有 Gitrochi 時讓工作階段繼續執行，請選擇「終端機」App。";
