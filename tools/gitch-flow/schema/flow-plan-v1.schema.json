@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-plan-v1.schema.json",
+  "title": "gitch flow plan version 1 (plan --json, plan.json)",
+  "type": "object",
+  "required": ["schemaVersion", "flow", "env", "hash", "nodes", "trust"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "flow": {"type": "string"},
+    "env": {"type": "string"},
+    "envClass": {"type": "string"},
+    "hash": {"type": "string"},
+    "trust": {"type": "object", "required": ["trusted"], "properties": {"trusted": {"type": "boolean"}, "changed": {"type": "array", "items": {"type": "string"}}}},
+    "outward": {"type": "array", "items": {"type": "string"}},
+    "gates": {"type": "array", "items": {"type": "string"}},
+    "services": {"type": "array", "items": {"type": "string"}},
+    "estimateMs": {"type": "integer"},
+    "affected": {"type": ["object", "null"]},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "block", "needs", "decision"],
+        "properties": {
+          "id": {"type": "string"},
+          "block": {"type": "string"},
+          "needs": {"type": "array", "items": {"type": "string"}},
+          "decision": {"enum": ["run", "skip", "rejected"]},
+          "reason": {"type": ["object", "null"]},
+          "branchOf": {"type": ["string", "null"]},
+          "group": {"type": ["string", "null"]},
+          "selection": {"type": ["array", "null"]},
+          "selectionReason": {"type": ["string", "null"]},
+          "cacheKey": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

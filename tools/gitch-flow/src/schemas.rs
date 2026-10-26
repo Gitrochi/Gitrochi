@@ -1,0 +1,34 @@
+//! 공개 JSON Schema(Draft 2020-12). `gitch schema flow*` 는 여기로 위임한다(gitch-v1 의 20개 이름은 그대로).
+
+pub const NAMES: &[&str] = &[
+    "flow",
+    "flow-plan",
+    "flow-run",
+    "flow-event",
+    "flow-report",
+    "flow-error",
+];
+
+pub fn get(name: &str) -> Option<&'static str> {
+    Some(match name {
+        "flow" | "spec" => include_str!("../schema/flow-v1.schema.json"),
+        "flow-plan" | "plan" => include_str!("../schema/flow-plan-v1.schema.json"),
+        "flow-run" | "run" => include_str!("../schema/flow-run-v1.schema.json"),
+        "flow-event" | "event" => include_str!("../schema/flow-event-v1.schema.json"),
+        "flow-report" | "report" => include_str!("../schema/flow-report-v1.schema.json"),
+        "flow-error" | "error" => include_str!("../schema/flow-error-v1.schema.json"),
+        _ => return None,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn schemas_are_json() {
+        for n in super::NAMES {
+            let v: serde_json::Value =
+                serde_json::from_str(super::get(n).unwrap()).unwrap_or_else(|e| panic!("{n}: {e}"));
+            assert_eq!(v["$schema"], "https://json-schema.org/draft/2020-12/schema");
+        }
+    }
+}

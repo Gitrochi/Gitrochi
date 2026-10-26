@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-report-v1.schema.json",
+  "title": "gitch flow normalized test report version 1 (reports/<node>.json)",
+  "type": "object",
+  "required": ["schemaVersion", "suite", "format", "executed", "passed", "failed", "skipped", "flaky", "cases"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "suite": {"type": "string"},
+    "format": {"type": "string"},
+    "executed": {"type": "integer"},
+    "passed": {"type": "integer"},
+    "failed": {"type": "integer"},
+    "skipped": {"type": "integer"},
+    "flaky": {"type": "integer"},
+    "durationMs": {"type": "integer"},
+    "failuresTotal": {"type": "integer"},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "problems": {"type": "array", "items": {"type": "string"}},
+    "failures": {"type": "array"},
+    "cases": {"type": "array", "items": {"type": "object", "required": ["id", "name", "status"], "properties": {"status": {"enum": ["passed", "failed", "skipped", "flaky"]}, "file": {"type": ["string", "null"]}, "line": {"type": ["integer", "null"]}}}}
+  }
+}

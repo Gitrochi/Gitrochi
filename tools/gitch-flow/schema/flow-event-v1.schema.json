@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-event-v1.schema.json",
+  "title": "gitch flow event (one line of events.ndjson, run --events, events --follow)",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "seq", "at", "type", "data"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string"},
+    "seq": {"type": "integer", "minimum": 1, "description": "Strictly increasing within a run. Readers drop duplicates by seq."},
+    "at": {"type": "string"},
+    "type": {"enum": ["run.planned", "run.state", "run.cancelling", "node.state", "node.verdict", "log", "service.state", "artifact", "engine.violation", "run.done"]},
+    "node": {"type": "string"},
+    "data": {"type": "object"}
+  }
+}
