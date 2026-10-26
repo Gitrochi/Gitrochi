@@ -1,0 +1,32 @@
+name: 🛠 Task
+description: A piece of work a pull request will do — every pull request belongs to an issue
+title: "[Task] "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers, contributors and coding agents: open a task before (or as) you open the pull request, and link the pull request to it with `Closes #<number>`. The issue says **what and why**; the pull request says **how**. One topic per task.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+      description: The change to make and the problem it solves, as the user would see it
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: platform
+    attributes:
+      label: Platforms
+      options:
+        - label: macOS
+        - label: Windows
+        - label: Docs · CI · tooling only
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How to tell the task is finished (what to click, what to see, which test to run)

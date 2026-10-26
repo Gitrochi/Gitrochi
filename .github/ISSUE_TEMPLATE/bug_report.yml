@@ -1,39 +1,39 @@
-name: 🐞 버그 제보
-description: 잘못 동작하거나, 멈추거나, 화면이 깨지는 것을 알려 주세요
-title: "[버그] "
+name: 🐞 Bug report
+description: Something misbehaves, hangs or renders wrong
+title: "[Bug] "
 labels: ["bug", "triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        제보해 주셔서 고맙습니다. 먼저 [최신 버전](https://github.com/Gitrochi/Gitrochi/releases/latest)인지, [비슷한 이슈](https://github.com/Gitrochi/Gitrochi/issues?q=is%3Aissue)가 있는지 확인해 주세요.
-        **토큰·비밀번호·회사 저장소 주소나 이름은 지우거나 가려 주세요.** 보안 문제는 이슈 대신 [비공개로 알려 주세요](https://github.com/Gitrochi/Gitrochi/security/advisories/new).
+        Thanks for the report. First check that you are on the [latest release](https://github.com/Gitrochi/Gitrochi/releases/latest) and that there is no [similar issue](https://github.com/Gitrochi/Gitrochi/issues?q=is%3Aissue).
+        **Remove or blur tokens, passwords and company repository addresses or names.** Report security problems [privately](https://github.com/Gitrochi/Gitrochi/security/advisories/new), not in an issue.
 
   - type: dropdown
     id: platform
     attributes:
-      label: 플랫폼
+      label: Platform
       options:
         - macOS
         - Windows
-        - 둘 다
+        - Both
     validations:
       required: true
 
   - type: input
     id: version
     attributes:
-      label: Gitrochi 버전
-      description: 설정 > 업데이트(Windows 는 업데이트 탭)에 나옵니다
-      placeholder: "0.3.2"
+      label: Gitrochi version
+      description: Settings › Updates (the Updates tab on Windows)
+      placeholder: "0.3.12"
     validations:
       required: true
 
   - type: input
     id: environment
     attributes:
-      label: OS · git 버전
-      description: "`git --version` 결과도 함께 적어 주세요. WSL 을 쓰면 배포판도."
+      label: OS and git version
+      description: "Include the output of `git --version`. On WSL, the distribution too."
       placeholder: "macOS 15.5 · git 2.47.1 / Windows 11 24H2 · git 2.47.1.windows.1"
     validations:
       required: true
@@ -41,61 +41,61 @@ body:
   - type: textarea
     id: what
     attributes:
-      label: 무슨 일이 있었나요?
-      description: 무엇을 하려다가 어떻게 됐는지, 나온 오류 메시지는 그대로 붙여 주세요.
+      label: What happened?
+      description: What you were trying to do, what happened instead, and any error message pasted as it appeared.
     validations:
       required: true
 
   - type: textarea
     id: steps
     attributes:
-      label: 다시 일어나게 하는 순서
+      label: Steps to reproduce
       placeholder: |
-        1. 저장소를 연다
-        2. 브랜치 'feature/x' 를 main 위로 끌어다 놓는다
-        3. '리베이스'를 누르면 …
+        1. Open a repository
+        2. Drag the branch 'feature/x' onto main
+        3. Press 'Rebase' …
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: 기대한 동작
+      label: What you expected
 
   - type: dropdown
     id: area
     attributes:
-      label: 관련된 곳
+      label: Area
       multiple: true
       options:
-        - 커밋 그래프 · 브랜치
-        - 스테이지 · 커밋 · diff
-        - GitHub · GitLab(PR/MR · 계정)
+        - Commit graph · branches
+        - Stage · commit · diff
+        - GitHub · GitLab (PR/MR · accounts)
         - CI/CD
-        - AI(커밋 메시지 · 규칙 · 나눠서 커밋)
-        - 에이전트 · 워크트리
-        - 터미널
-        - 자동 업데이트 · 설치
-        - 성능(느림 · 멈춤)
-        - 그 밖에
+        - AI (commit messages · rules · split commits)
+        - Agents · worktrees
+        - Terminal
+        - Updates · install
+        - Performance (slow · hangs)
+        - Other
 
   - type: textarea
     id: attachments
     attributes:
-      label: 스크린샷 · 로그
+      label: Screenshots and logs
       description: |
-        화면이면 스크린샷을 끌어다 놓아 주세요. 느리거나 새로 고침이 이상하면
-        맥은 `GITROCHI_TRACE=1 /Applications/Gitrochi.app/Contents/MacOS/Gitrochi` 로 실행해 터미널 출력을,
-        Windows 는 개발자 도구(F12)에서 `localStorage.gitrochiTrace = "1"` 후 콘솔 내용을 붙여 주세요.
+        For anything visual, drop a screenshot here. For slowness or odd refreshes,
+        on macOS run `GITROCHI_TRACE=1 /Applications/Gitrochi.app/Contents/MacOS/Gitrochi` and paste the terminal output;
+        on Windows open the developer tools (F12), set `localStorage.gitrochiTrace = "1"` and paste the console.
 
   - type: checkboxes
     id: checks
     attributes:
-      label: 확인
+      label: Checks
       options:
-        - label: 최신 버전에서도 일어납니다
+        - label: It happens on the latest release
           required: true
-        - label: 비슷한 이슈가 없는지 찾아봤습니다
+        - label: I looked for a similar issue
           required: true
-        - label: 토큰·비밀번호·회사 정보를 지우거나 가렸습니다
+        - label: I removed or blurred tokens, passwords and company details
           required: true

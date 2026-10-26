@@ -1,6 +1,12 @@
+## Issue
+
+Closes #
+
+<!-- Every pull request belongs to an issue (bug, feature or task template). Open one first if none exists; the issue says what and why, this pull request says how. -->
+
 ## What and why
 
-<!-- What changed and why. Related issue: Closes #123 -->
+<!-- What changed and why, in a few lines. -->
 
 ## Screenshots
 
