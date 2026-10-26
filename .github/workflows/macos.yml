@@ -6,7 +6,7 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    paths: ["macos/**", "tools/gitch/**", "tools/gitch-swift-index/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
+    paths: ["crates/**", "tools/build-core*", "macos/**", "tools/gitch/**", "tools/gitrochi-mcp/**", "tools/gitch-swift-index/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
   workflow_dispatch:
 
 # 같은 PR 에 새로 푸시하면 돌던 실행은 취소
@@ -28,6 +28,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Rust 공통 코어 검사
+        run: cargo test --locked --manifest-path crates/Cargo.toml
+
       - name: 빌드
         run: macos/build.sh
 
@@ -44,14 +51,49 @@ jobs:
       - name: Git 파서 · 충돌 · 줄 단위 패치 회귀 테스트
         run: bash macos/Tools/test-git-core.sh
 
+      - name: Push 검토 · PR 리뷰 · AI 변경 질문 테스트
+        run: |
+          bash macos/Tools/test-push-review.sh
+          bash macos/Tools/test-pull-request-review.sh
+          bash macos/Tools/test-change-question.sh
+
+      - name: 비교 · 협업 · 로컬 복구 도구 테스트
+        run: |
+          bash macos/Tools/test-history-tools.sh
+          bash macos/Tools/test-collaboration.sh
+          bash macos/Tools/test-local-workflows.sh
+          bash macos/Tools/test-workspace-navigation.sh
+          bash macos/Tools/test-sidebar-visibility.sh
+          bash macos/Tools/test-window-content-layout.sh
+          bash macos/Tools/test-inspector-layout.sh
+          bash macos/Tools/test-adaptive-workbench-identity.sh
+          bash macos/Tools/test-large-changes.sh
+          bash macos/Tools/test-repository-browser.sh
+          bash macos/Tools/test-workbench-first-screen.sh
+          bash macos/Tools/test-hosting-target.sh
+          bash macos/Tools/test-hosting-hub.sh
+          bash macos/Tools/test-workspace-operations.sh
+          bash macos/Tools/test-confirmation-guard.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 읽기 전용 MCP 계약 테스트
+        run: node --test tools/gitrochi-mcp/server.test.mjs
+
       - name: Keychain 저장 · 갱신 · 삭제 테스트
-        run: bash macos/Tools/test-keychain.sh
+        run: |
+          bash macos/Tools/test-keychain.sh
+          bash macos/Tools/test-credential-access.sh
 
       - name: GitHub 공개키 등록 계약 테스트
         run: bash macos/Tools/test-github-key-registration.sh
 
       - name: GitHub 로그인 계정 일치 테스트
-        run: bash macos/Tools/test-github-login-identity.sh
+        run: |
+          bash macos/Tools/test-github-login-identity.sh
+          bash macos/Tools/test-browser-login-progress.sh
 
       - name: gitch-swift-index 테스트
         run: tools/gitch-swift-index/tests/run.sh macos/build/Gitrochi.app/Contents/Resources/gitch-swift-index
@@ -85,6 +127,13 @@ jobs:
 
       - name: 테스트
         run: tools/gitch/tests/run.sh
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust CLI 가속 경로 테스트
+        run: |
+          cargo build --locked --release --manifest-path crates/Cargo.toml --bin gitch-core
+          GITCH_CORE="$GITHUB_WORKSPACE/crates/target/release/gitch-core" bash tools/gitch/tests/run.sh -k graph
 
       - name: 정밀 참조 · 자동 갱신 테스트
         run: |
@@ -128,6 +177,10 @@ jobs:
             echo "::error::태그 $GITHUB_REF_NAME 와 Info.plist 버전 $app 이 다릅니다. 버전을 올린 커밋에 태그를 다세요."
             exit 1
           fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
 
       - name: 배포 파일 (유니버설 · 업데이트 서명)
         env:
