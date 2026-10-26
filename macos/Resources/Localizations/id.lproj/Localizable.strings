@@ -1099,3 +1099,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Menunggu persetujuan macOS Anda. Anda tetap dapat menggunakan alat Git lokal.";
 "Allow saved account access" = "Izinkan akses akun tersimpan";
 "Search filters loaded pages. Load more to search older items." = "Pencarian menyaring halaman yang sudah dimuat. Muat lebih banyak untuk mencari item yang lebih lama.";
+"Compare with the current branch" = "Bandingkan dengan cabang saat ini";
+"Filter branches and tags" = "Saring cabang dan tag";
+"Comparing…" = "Membandingkan…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Gunakan cabang, tag, atau ID commit, atau pilih cabang di sebelah kiri.";

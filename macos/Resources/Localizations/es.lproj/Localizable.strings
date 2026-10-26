@@ -1122,3 +1122,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Esperando tu aprobación en macOS. Puedes seguir usando las herramientas Git locales.";
 "Allow saved account access" = "Permitir acceso a la cuenta guardada";
 "Search filters loaded pages. Load more to search older items." = "La búsqueda filtra las páginas cargadas. Carga más para buscar elementos anteriores.";
+"Compare with the current branch" = "Comparar con la rama actual";
+"Filter branches and tags" = "Filtrar ramas y etiquetas";
+"Comparing…" = "Comparando…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Usa ramas, etiquetas o ID de commit, o elige una rama a la izquierda.";

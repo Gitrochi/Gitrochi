@@ -1136,3 +1136,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "macOS onayınız bekleniyor. Yerel Git araçlarını kullanmaya devam edebilirsiniz.";
 "Allow saved account access" = "Kayıtlı hesaba erişime izin ver";
 "Search filters loaded pages. Load more to search older items." = "Arama, yüklenen sayfaları süzer. Daha eski öğelerde aramak için daha fazlasını yükleyin.";
+"Compare with the current branch" = "Geçerli dalla karşılaştır";
+"Filter branches and tags" = "Dalları ve etiketleri filtrele";
+"Comparing…" = "Karşılaştırılıyor…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Dal, etiket veya commit kimliği kullanın ya da soldan bir dal seçin.";

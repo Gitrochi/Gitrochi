@@ -1,13 +1,135 @@
 import SwiftUI
 import AppKit
 
+/// The Compare page: revision pickers and a branch list on the left, the changed files and patch on the right
 struct RevisionComparisonPanel: View {
     @Environment(RepoStore.self) private var store
+    @ViewState private var filter = ""
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            WorkbenchHeading(title: "Compare revisions", detail: "Inspect the complete change between branches, tags or commits.")
-            CompareRevisionsSheet(store: store, embedded: true)
-        }.padding(22).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        @Bindable var state = store.historyTools
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Compare revisions").font(.title3.weight(.semibold))
+                RevisionPicker(title: String(localized: "From revision"), revision: $state.left, store: store)
+                HStack {
+                    Spacer()
+                    Button { let old = state.left; state.left = state.right; state.right = old } label: { Image(systemName: "arrow.up.arrow.down") }
+                        .buttonStyle(.borderless).help("Swap revisions")
+                    Spacer()
+                }
+                RevisionPicker(title: String(localized: "To revision"), revision: $state.right, store: store)
+                Toggle("Compare from the common ancestor (changes introduced by the right side)", isOn: $state.useMergeBase).font(.caption)
+                Button { Task { await store.loadRevisionComparison() } } label: { Text("Compare").frame(maxWidth: .infinity) }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(state.comparisonLoading || state.left.isEmpty || state.right.isEmpty)
+                Text("Uncommitted changes are excluded. Compare fixes both revisions to immutable commits.").font(.caption).foregroundStyle(.secondary)
+                Divider().padding(.vertical, 4)
+                Text("Compare with the current branch").font(.subheadline.weight(.semibold))
+                TextField("Filter branches and tags", text: $filter).textFieldStyle(.roundedBorder)
+                List {
+                    ForEach(references) { reference in
+                        referenceRow(reference, state: state)
+                            .listRowBackground(state.right == reference.name ? Color.accentColor.opacity(0.12) : Color.clear)
+                    }
+                }
+                .listStyle(.plain).scrollContentBackground(.hidden)
+                .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
+            }
+            .padding(16).frame(width: 330)
+            Divider()
+            results(state)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onDisappear { store.cancelHistoryTools() }
+    }
+
+    private struct Reference: Identifiable {
+        let name: String
+        let icon: String
+        let isCurrent: Bool
+        var id: String { icon + name }
+    }
+
+    /// Local branches with the current one first, then remote branches and tags; filtered by the search field
+    private var references: [Reference] {
+        let locals = store.localBranches.sorted { a, b in a.isCurrent != b.isCurrent ? a.isCurrent : a.name.localizedStandardCompare(b.name) == .orderedAscending }
+        let all = locals.map { Reference(name: $0.name, icon: "arrow.triangle.branch", isCurrent: $0.isCurrent) }
+            + store.remoteBranches.map { Reference(name: $0.name, icon: "cloud", isCurrent: false) }
+            + store.tags.map { Reference(name: $0.name, icon: "tag", isCurrent: false) }
+        return filter.isEmpty ? all : all.filter { $0.name.localizedCaseInsensitiveContains(filter) }
+    }
+
+    private func referenceRow(_ reference: Reference, state: HistoryToolsState) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: reference.icon).foregroundStyle(.secondary).frame(width: 16)
+            Text(reference.name).lineLimit(1).truncationMode(.middle).help(reference.name)
+            Spacer(minLength: 4)
+            if reference.isCurrent {
+                Text("Current").font(.caption).foregroundStyle(.secondary)
+            } else {
+                Button("Compare") {
+                    state.left = store.headBranch ?? "HEAD"
+                    state.right = reference.name
+                    Task { await store.loadRevisionComparison() }
+                }
+                .controlSize(.small).disabled(state.comparisonLoading)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder private func results(_ state: HistoryToolsState) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if state.comparisonLoading {
+                HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Comparing…").font(.caption).foregroundStyle(.secondary) }.padding(12)
+            }
+            if let error = state.comparisonError {
+                Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled).padding(12)
+            }
+            if let result = state.comparison {
+                HStack {
+                    Text(summary(result)).font(.caption.monospaced()).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(1).truncationMode(.middle)
+                    Spacer()
+                    Text("\(result.files.count) files").font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                Divider()
+                AdaptiveWorkbenchSplit(listWidth: 270) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(result.files) { file in
+                                Button { Task { await store.selectComparisonFile(file) } } label: {
+                                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(file.path).font(.callout).lineLimit(2)
+                                            if let old = file.oldPath { Text(old + " → " + file.path).font(.caption).foregroundStyle(.secondary) }
+                                        }
+                                        Spacer(minLength: 4)
+                                        if let stat = result.stats[file.path] { LineStatText(added: stat.added ?? 0, deleted: stat.deleted ?? 0).font(.caption) }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(9)
+                                    .background(state.comparisonPath == file.path ? Color.accentColor.opacity(0.15) : Color.clear)
+                                }.buttonStyle(.plain)
+                            }
+                        }
+                    }
+                } detail: {
+                    HistoryPatchView(text: result.files.isEmpty ? String(localized: "No differences between these revisions.") : state.comparisonPatch)
+                }
+            } else if !state.comparisonLoading {
+                ContentUnavailableView("Choose two revisions to compare", systemImage: "arrow.left.arrow.right",
+                                       description: Text("Use branches, tags or commit IDs, or pick a branch on the left."))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func summary(_ result: RevisionComparison) -> String {
+        var text = String(result.left.prefix(12)) + " → " + String(result.right.prefix(12))
+        if result.mergeBase { text += " · " + String(localized: "Common ancestor") + ": " + String(result.base.prefix(12)) }
+        return text
     }
 }
 

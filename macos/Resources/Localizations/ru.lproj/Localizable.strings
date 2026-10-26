@@ -1148,3 +1148,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Ожидание вашего подтверждения в macOS. Локальные инструменты Git можно использовать и дальше.";
 "Allow saved account access" = "Разрешить доступ к сохранённой учётной записи";
 "Search filters loaded pages. Load more to search older items." = "Поиск фильтрует загруженные страницы. Загрузите ещё, чтобы искать среди более старых элементов.";
+"Compare with the current branch" = "Сравнить с текущей веткой";
+"Filter branches and tags" = "Фильтр веток и тегов";
+"Comparing…" = "Сравнение…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Укажите ветки, теги или ID коммитов либо выберите ветку слева.";

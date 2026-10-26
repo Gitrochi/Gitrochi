@@ -1144,3 +1144,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "กำลังรอการอนุมัติจาก macOS ของคุณ คุณยังใช้เครื่องมือ Git ในเครื่องต่อได้";
 "Allow saved account access" = "อนุญาตการเข้าถึงบัญชีที่บันทึกไว้";
 "Search filters loaded pages. Load more to search older items." = "การค้นหาจะกรองเฉพาะหน้าที่โหลดแล้ว โหลดเพิ่มเพื่อค้นหารายการเก่ากว่า";
+"Compare with the current branch" = "เปรียบเทียบกับสาขาปัจจุบัน";
+"Filter branches and tags" = "กรองสาขาและแท็ก";
+"Comparing…" = "กำลังเปรียบเทียบ…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "ใช้สาขา แท็ก หรือรหัสคอมมิต หรือเลือกสาขาจากด้านซ้าย";

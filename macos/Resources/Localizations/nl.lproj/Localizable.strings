@@ -1092,3 +1092,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Wachten op uw macOS-goedkeuring. U kunt lokale Git-tools blijven gebruiken.";
 "Allow saved account access" = "Toegang tot opgeslagen account toestaan";
 "Search filters loaded pages. Load more to search older items." = "Zoeken filtert de geladen pagina's. Laad meer om oudere items te doorzoeken.";
+"Compare with the current branch" = "Vergelijken met de huidige branch";
+"Filter branches and tags" = "Branches en tags filteren";
+"Comparing…" = "Vergelijken…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Gebruik branches, tags of commit-ID's, of kies links een branch.";

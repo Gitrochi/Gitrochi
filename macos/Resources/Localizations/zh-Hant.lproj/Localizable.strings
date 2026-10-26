@@ -1150,3 +1150,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "正在等待你的 macOS 核准。本機 Git 工具可以繼續使用。";
 "Allow saved account access" = "允許存取已儲存的帳號";
 "Search filters loaded pages. Load more to search older items." = "搜尋只篩選已載入的頁面。載入更多以搜尋較舊的項目。";
+"Compare with the current branch" = "與目前分支比較";
+"Filter branches and tags" = "篩選分支和標籤";
+"Comparing…" = "正在比較…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "輸入分支、標籤或提交 ID，或在左側選擇一個分支。";

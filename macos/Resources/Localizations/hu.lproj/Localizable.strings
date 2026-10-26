@@ -1131,3 +1131,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Várakozás a macOS jóváhagyására. A helyi Git-eszközöket közben használhatja.";
 "Allow saved account access" = "Mentett fiók elérésének engedélyezése";
 "Search filters loaded pages. Load more to search older items." = "A keresés a betöltött oldalakat szűri. Töltsön be többet a régebbi elemek kereséséhez.";
+"Compare with the current branch" = "Összehasonlítás a jelenlegi ággal";
+"Filter branches and tags" = "Ágak és címkék szűrése";
+"Comparing…" = "Összehasonlítás…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Használj ágakat, címkéket vagy commit-azonosítókat, vagy válassz egy ágat balra.";

@@ -1149,3 +1149,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "macOS の承認を待っています。ローカルの Git ツールは引き続き使えます。";
 "Allow saved account access" = "保存済みアカウントへのアクセスを許可";
 "Search filters loaded pages. Load more to search older items." = "検索は読み込んだページを絞り込みます。古い項目を探すにはさらに読み込んでください。";
+"Compare with the current branch" = "現在のブランチと比較";
+"Filter branches and tags" = "ブランチとタグを絞り込む";
+"Comparing…" = "比較中…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "ブランチ・タグ・コミット ID を入力するか、左の一覧からブランチを選びます。";

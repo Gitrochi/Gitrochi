@@ -1104,3 +1104,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Đang chờ bạn phê duyệt trên macOS. Bạn vẫn có thể dùng các công cụ Git cục bộ.";
 "Allow saved account access" = "Cho phép truy cập tài khoản đã lưu";
 "Search filters loaded pages. Load more to search older items." = "Tìm kiếm chỉ lọc các trang đã tải. Tải thêm để tìm các mục cũ hơn.";
+"Compare with the current branch" = "So sánh với nhánh hiện tại";
+"Filter branches and tags" = "Lọc nhánh và thẻ";
+"Comparing…" = "Đang so sánh…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Dùng nhánh, thẻ hoặc ID commit, hoặc chọn một nhánh ở bên trái.";

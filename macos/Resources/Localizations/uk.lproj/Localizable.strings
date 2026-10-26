@@ -1148,3 +1148,7 @@
 "Waiting for your macOS approval. You can continue using local Git tools." = "Очікування вашого підтвердження в macOS. Локальні інструменти Git можна використовувати далі.";
 "Allow saved account access" = "Дозволити доступ до збереженого облікового запису";
 "Search filters loaded pages. Load more to search older items." = "Пошук фільтрує завантажені сторінки. Завантажте більше, щоб шукати серед старіших елементів.";
+"Compare with the current branch" = "Порівняти з поточною гілкою";
+"Filter branches and tags" = "Фільтр гілок і тегів";
+"Comparing…" = "Порівняння…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "Вкажіть гілки, теги або ID комітів або виберіть гілку ліворуч.";

@@ -188,7 +188,7 @@ struct LineHistorySheet: View {
     }
 }
 
-private struct HistoryPatchView: View {
+struct HistoryPatchView: View {
     let text: String
     var body: some View {
         ScrollView([.vertical, .horizontal]) {

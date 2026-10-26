@@ -2037,3 +2037,7 @@
 "Show flows" = "플로 보기";
 "Show home" = "홈 보기";
 "(current)" = "(현재)";
+"Compare with the current branch" = "현재 브랜치와 비교";
+"Filter branches and tags" = "브랜치·태그 검색";
+"Comparing…" = "비교하는 중…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "브랜치·태그·커밋 ID를 입력하거나 왼쪽 목록에서 브랜치를 고르세요.";
