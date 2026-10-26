@@ -1,0 +1,141 @@
+name: Flow engine
+
+# The flow engine (tools/gitch-flow) and gitch's front door (gitch flow, gitch test, the pre-push gate).
+# Pull requests: format, static checks, unit and integration tests on three systems → gitch front-door tests → real Docker tests (Linux).
+# v* tags: upload the static Linux engine to that tag's release (a draft if there is none). The macOS and Windows engines are uploaded by each app's workflow.
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths: ["tools/gitch-flow/**", "tools/gitch/gitch", "tools/gitch/install.sh", "tools/gitch/tests/test_flow.sh", "tools/gitch/tests/test_standalone.sh", "tools/gitch/tests/test_guard.sh", "tools/gitch/tests/lib.sh", ".github/workflows/flow.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: flow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Engine tests (${{ matrix.os }})
+    if: github.ref_type != 'tag'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/gitch-flow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
+      - name: Format and static checks
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Unit and integration tests
+        run: cargo test --locked
+
+      # Through gitch's real front door (tools/gitch/gitch): engine hand-off, the FLOW line in preflight, the pre-push gate, guard rules
+      - name: gitch front-door tests
+        run: |
+          cargo build --locked
+          command -v jq >/dev/null || { if [ "$RUNNER_OS" = Windows ]; then choco install jq -y --no-progress; fi; }
+          # test_guard.sh is sourced for its guard helpers (expect, gd); only tests with flow in their name run.
+          bash ../gitch/tests/run.sh -k flow ../gitch/tests/test_guard.sh ../gitch/tests/test_flow.sh ../gitch/tests/test_standalone.sh
+
+  # Only on runners with a Docker daemon: the executor, docker.service and label cleanup with real containers
+  docker:
+    name: Real Docker tests
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/gitch-flow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
+      - name: Pull the images
+        run: docker pull -q alpine:3.20 && docker pull -q nginx:1.27-alpine
+
+      - name: Real Docker tests
+        env:
+          GITCH_FLOW_REAL_DOCKER: "1"
+        run: cargo test --locked --test real_docker -- --ignored --test-threads 1
+
+  # For Linux users of gitch without the app: install.sh and gitch self-update download it
+  release:
+    name: Linux engine release asset
+    if: github.ref_type == 'tag'
+    environment: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    # One at a time with the macOS and Windows upload jobs, so the same tag never gets two drafts
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Check the tag against the engine version
+        run: |
+          ver="$(sed -n 's/^version = "\([^"]*\)".*/\1/p' tools/gitch-flow/Cargo.toml | head -1)"
+          if [ "v$ver" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match gitch-flow version $ver."
+            exit 1
+          fi
+
+      - name: Build (statically linked)
+        run: |
+          sudo apt-get install -y -q musl-tools
+          mkdir -p dist
+          tools/gitch-flow/build.sh dist/gitch-flow-linux-x64 x86_64-unknown-linux-musl
+          (cd dist && sha256sum gitch-flow-linux-x64 > gitch-flow-linux-x64.sha256)
+          file dist/gitch-flow-linux-x64
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft --verify-tag --title "Gitrochi ${tag#v}" --notes ""
+          gh release upload "$tag" dist/* --clobber
+          {
+            echo "### Linux flow engine → $tag"
+            echo '```'
+            cat dist/*.sha256
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

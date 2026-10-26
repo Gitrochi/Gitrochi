@@ -137,7 +137,7 @@ struct WorkspaceCommandPalette: View {
 
     private var commands: [WorkspaceCommand] {
         let go = String(localized: "Go to")
-        let pages: [WorkspaceDestination] = [.home, .repositories, .repository, .changes, .commits, .branches, .compare, .rebase, .code, .inbox, .myWork, .pullRequests, .issues, .actions, .releases, .projects, .organizations, .gists, .assistant, .agents, .worktrees, .operations]
+        let pages: [WorkspaceDestination] = [.home, .repositories, .repository, .changes, .commits, .branches, .compare, .rebase, .code, .inbox, .myWork, .pullRequests, .issues, .actions, .releases, .projects, .organizations, .gists, .assistant, .agents, .flows, .worktrees, .operations]
         let shortcuts: [WorkspaceDestination: String] = [.home: "0", .changes: "1", .commits: "2", .branches: "3", .pullRequests: "4", .actions: "5", .agents: "6"]
         var result = pages.map { page in
             WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),

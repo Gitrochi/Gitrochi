@@ -381,6 +381,23 @@ allow   src/ui/debug -> src/db          # 위반의 예외
 - 정확한 연결과 모듈 · 패키지로 확인한 추정(`checked`)은 위반, 이름만으로 한 추정은 경고(실패 아님)다. 틀린 규칙 줄은 줄 번호와 까닭을 알리고 멈춘다.
 - 규칙 파일이 있으면 `gitch graph` 의 html 분석 창에 「규칙 위반」이 같이 나온다. JSON: `{"ok", "violations": [{"relation", "severity", "line", "rule", "kind", "source", "target" | "nodes", "existing"}]}`.
 
+## Flows and tests (`gitch flow` · `gitch test`)
+
+Hands the flows in `.gitch/flow.yml`, which assemble a repository's tests, checks, services, remote CI and deployment steps, to the flow engine `gitch-flow` (bundled with the apps and the installer). The apps' Flows page, the pre-push gate and CI use the same flows and the same verdicts. Details: [docs/flow/README.md](../../docs/flow/README.md).
+
+```bash
+gitch flow init [--yes]          # read the files only and propose a flow file from the test tools, package managers and runtimes found (--yes writes it, never overwrites)
+gitch flow trust                 # review the flow file's commands and approve them (people only; again when the file changes)
+gitch flow run pre-push [--affected] [--jobs N] [--summary]
+gitch test [suite|tag …] [--affected] [--watch]   # an ad-hoc flow (suites only)
+gitch flow gate on [--flow F]    # check that flow before a push (no rerun when a signed record passed for the same commit). Off: gate off
+gitch flow export github|gitlab|jenkins   # propose CI files that run the same flow
+gitch ci status|logs|report      # this repository's remote CI
+```
+
+- `gitch preflight` adds a `FLOW=OK|WARN|STOP` line only in repositories where the gate is on (the existing `PREFLIGHT=` line stays as it is). The pre-push hook runs the gate; a person can skip it with `GITSW_SKIP=flow` (recorded).
+- Where the engine is: `GITCH_FLOW` → next to gitch (the app's Resources, `~/.local/share/gitch`) → PATH. Without one, `gitch flow` stops with "engine not found" and the rest of gitch works as before.
+
 ## 검사 훅이 막는 것
 
 | 언제 | 무엇을 | 사람이 꼭 넘겨야 할 때 |
@@ -410,6 +427,7 @@ allow   src/ui/debug -> src/db          # 위반의 예외
 - `~/.claude/settings.json`
   - PreToolUse 훅 `gitch guard --claude`: Bash 명령과 Edit/Write 대상 파일을 검사
     - 거부: `--no-verify`, `git push --force/+refspec`, `GITSW_*`/`GIT_AUTHOR_*`/`GIT_SSH_COMMAND` 환경변수, `git -c user.*|core.hooksPath|hook.*|url.*`, 전역 git 설정 쓰기, 작성자/원격 설정 쓰기, `~/.ssh`·`~/.gitconfig`·`~/.config/gitsw`·`.git/hooks` 수정, 관리 서버 저장소의 `git clone`(→ `gitch clone`), `gitch add/remove/setup/sign on|off/import`
+    - Flows: refused are `gitch flow trust` (except `--show` and `--revoke`), `hold release`, `gate on|off`, and environment variables that move the flow settings or change whether it is CI (`HOME`, `XDG_*`, `CI`, `GITCH_FLOW*`); `connect add/remove`, `init/export/import --force`, `run/rerun/watch/test --yes` and remote CI runs ask first
     - 확인 창: push·PR 생성(아래 push 정책), 원격 브랜치 삭제, `reset --hard`, `clean -f`, `checkout -- 파일`, `restore`, `branch -D`, `stash drop`, `remote add/set-url`, `gitch unlock`, 잠긴 저장소를 다른 계정으로 `gitch use`, `gitch undo/amend/fix --yes/abort/rescue --restore`, gitch 설정 변경
   - 자동 허용: 읽기 명령(`gitch ck/status/preflight/l/d/doctor/...`, `git status/diff/log/show/...`)과 일상 명령(`git add`, `gitch c/cp/p/pl/up/b/wt/clone/pr`, `git commit/push/pull/branch/switch/checkout/restore/stash/remote`).
     위험한 옵션은 위의 훅이 먼저 거부하거나 확인을 받으므로, 자동 허용이어도 그대로 지켜진다.
@@ -485,6 +503,7 @@ tools/gitch/tests/run.sh             # 전체 (실제 ~/.gitconfig, ~/.ssh, ~/.c
 tools/gitch/tests/run.sh -k guard    # 이름에 guard 가 들어간 테스트만
 shellcheck -s bash -S warning tools/gitch/gitch tools/gitch/install.sh
 tools/gitch-swift-index/tests/run.sh # Xcode 인덱스 도우미: 예제를 swift build 해서 쌍 · gitch graph files 확인 (30초쯤)
+(cd tools/gitch-flow && cargo build) # the flow tests (test_flow.sh, the installer's engine tests) need a built engine (skipped without one)
 ```
 
 GitHub Actions 「macOS」의 gitch 테스트가 `tools/gitch/**` 를 바꾼 PR 마다 macOS 기본 bash 3.2 로, 「Windows」가 Git Bash 로 돈다(Windows 전용은 `tests/test_windows.sh`, 가짜 PowerShell 로 실제 사용자 PATH 는 건드리지 않음).

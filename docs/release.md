@@ -2,7 +2,7 @@
 
 Maintainers only. Only maintainers can create `v*` tags, and the update signing keys (`GITROCHI_UPDATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY`) live in the `release` environment, which only `v*` tags and `main` can use, so a pull request's workflow run cannot read them. Since `main` changes only through pull requests, the version bump is a pull request too, and the tag follows the merge.
 
-The version is set in `CFBundleShortVersionString` in `macos/Resources/Info.plist`, `GITSW_VERSION` in `tools/gitch/gitch`, and on Windows in `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and the gitrochi package in `Cargo.lock` — all together. `CFBundleVersion` is a separate build number. The CLI's `GITCH_VERSION_SCHEME="gitrochi"` marks the version as the app's rather than the old standalone one, and graph support is announced through `GITCH_GRAPH_API`. After changing the version, `bash tools/check-versions.sh` must pass.
+The version is set in `CFBundleShortVersionString` in `macos/Resources/Info.plist`, `GITSW_VERSION` in `tools/gitch/gitch`, and on Windows in `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and the gitrochi package in `Cargo.lock`, and for the flow engine in `tools/gitch-flow/Cargo.toml` and the gitch-flow package in its `Cargo.lock` — all together. `CFBundleVersion` is a separate build number. The CLI's `GITCH_VERSION_SCHEME="gitrochi"` marks the version as the app's rather than the old standalone one, and graph support is announced through `GITCH_GRAPH_API`. After changing the version, `bash tools/check-versions.sh` must pass.
 
 ```sh
 git switch -c release/0.3.12            # bump the version (Info.plist · tauri.conf.json · package.json …)
@@ -15,10 +15,11 @@ git tag v0.3.12 && git push origin v0.3.12   # the tag run uploads the signed fi
 
 Release builders also need the shared Rust core: the macOS workflow installs both Apple targets, and the Windows workflow installs `wasm32-unknown-unknown`. Native `gitch-core`, the local MCP entry point and required third-party notices are packaged with the app. Generated WASM and native binaries are built from the locked source; they are not committed. See [the core build notes](../crates/README.md).
 
-The tag run is two workflows, macOS (`.github/workflows/macos.yml`) and Windows (`.github/workflows/windows.yml`), and each stops if the tag does not match the app version (`Info.plist`, `tauri.conf.json`). Both upload to the release for that tag; whichever uploads first creates the draft. The two upload jobs share one `concurrency` group and run one at a time, so there is never a second draft.
+The tag run is three workflows, macOS (`.github/workflows/macos.yml`), Windows (`.github/workflows/windows.yml`) and Flow engine (`.github/workflows/flow.yml`, the Linux engine), and each stops if the tag does not match its version (`Info.plist`, `tauri.conf.json`, `tools/gitch-flow/Cargo.toml`). All three upload to the release for that tag; whichever uploads first creates the draft. The upload jobs share one `concurrency` group and run one at a time, so there is never a second draft.
 
-- macOS: `Gitrochi-0.3.12-macOS.dmg`, `.zip`, `.zip.sig`, `.sha256`, plus the standalone `gitch` and `gitch.sha256` (what `tools/gitch/install.sh` and `gitch self-update` download)
-- Windows (after the self-test passes): `Gitrochi_0.3.12_x64-setup.exe`, `.exe.sig`, `_x64_portable.zip` (`Gitrochi.exe`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.md`, bundled gitch helpers, `gitrochi-mcp.mjs` and `gitch-core.exe`), `_windows.sha256`, `latest.json`. The same files stay in that run's `gitrochi-windows` artifact.
+- macOS: `Gitrochi-0.3.12-macOS.dmg`, `.zip`, `.zip.sig`, `.sha256`, plus the standalone `gitch` and `gitch.sha256` (what `tools/gitch/install.sh` and `gitch self-update` download) and the universal flow engine `gitch-flow-macos` and `.sha256`
+- Windows (after the self-test passes): `Gitrochi_0.3.12_x64-setup.exe`, `.exe.sig`, `_x64_portable.zip` (`Gitrochi.exe`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.md`, bundled gitch helpers, `gitrochi-mcp.mjs`, `gitch-core.exe` and `gitch-flow.exe`), `_windows.sha256`, `latest.json`, and the flow engine `gitch-flow-windows-x64.exe` and `.sha256`. The same files stay in that run's `gitrochi-windows` artifact.
+- Linux (Flow engine workflow): the statically linked flow engine `gitch-flow-linux-x64` and `.sha256`, for CLI-only users
 
 The apps' update check ignores drafts, so before publishing:
 

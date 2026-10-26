@@ -3,10 +3,10 @@ import Foundation
 enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case home, repositories, repository, changes, commits, branches, compare, rebase, code
     case inbox, myWork, pullRequests, issues, actions, releases, projects, organizations, gists
-    case assistant, agents, worktrees, operations
+    case assistant, agents, flows, worktrees, operations
     var id: String { rawValue }
     var repositorySection: RepositorySection? { RepositorySection(rawValue: rawValue) }
-    var needsRepository: Bool { [.repository, .changes, .commits, .branches, .compare, .rebase, .code, .pullRequests, .actions, .assistant, .agents, .worktrees].contains(self) }
+    var needsRepository: Bool { [.repository, .changes, .commits, .branches, .compare, .rebase, .code, .pullRequests, .actions, .assistant, .agents, .flows, .worktrees].contains(self) }
     var title: String {
         switch self {
         case .home: return String(localized: "Home")
@@ -29,6 +29,7 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .gists: return "Gists"
         case .assistant: return String(localized: "Repository assistant")
         case .agents: return String(localized: "Agents")
+        case .flows: return String(localized: "Flows")
         case .worktrees: return String(localized: "Worktrees")
         case .operations: return String(localized: "Tools and diagnosis")
         }
@@ -67,6 +68,7 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .gists: return "curlybraces"
         case .assistant: return "sparkles"
         case .agents: return "person.2.wave.2"
+        case .flows: return "flowchart"
         case .worktrees: return "square.stack.3d.up"
         case .operations: return "wrench.and.screwdriver"
         }

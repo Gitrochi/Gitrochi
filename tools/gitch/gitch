@@ -14,6 +14,8 @@ GITCH_VERSION_SCHEME="gitrochi"
 GITCH_GRAPH_API="1"
 # shellcheck disable=SC2034  # 설치기/업데이터가 받은 파일을 실행하지 않고 배포 방식 표식을 읽는다.
 GITCH_HELPER_API="1"
+# shellcheck disable=SC2034  # a marker the app reads without running gitch: the flow engine (gitch-flow) contract version.
+GITCH_FLOW_API="1"
 # 파서가 옵션을 거부해도 기계 출력 요청은 먼저 알아야 한다. 사람용 색/도움말이 JSON 오류에 섞이지 않게.
 MACHINE_JSON=""
 _gitch_expect_format=""
@@ -1448,7 +1450,7 @@ hook_skip() { case ",${GITSW_SKIP:-}," in *",$1,"*|*",all,"*) return 0 ;; esac; 
 
 hook_footer() {
   if [ "$ACTOR" = human ]; then
-    err "  (정말 필요하면 터미널에서 직접: GITSW_SKIP=<identity|secrets|bigfile|force|protect|remote> git ...)"
+    err "  (정말 필요하면 터미널에서 직접: GITSW_SKIP=<identity|secrets|bigfile|force|protect|remote|flow> git ...)"
   else
     err "  → AI 는 이 검사를 우회하지 말고, 위 메시지를 사용자에게 그대로 보고하세요."
   fi
@@ -1666,6 +1668,8 @@ hook_pre_push() {   # $1 원격 이름 $2 주소, 표준입력: <local ref> <loc
   fi
   if [ -n "$managed" ] && ! hook_skip identity; then hook_check_target "$url" "$uh" "$ua" || rc=1; fi
   if [ -n "$refs" ]; then hook_check_refs "$remote" "$refs" "$managed" || rc=1; fi
+  # Flow gate (only in repositories that turned it on): without a signed passing record for the same commit, run the pre-push flow
+  if [ $rc -eq 0 ] && [ -n "$refs" ] && ! hook_skip flow; then hook_flow_gate || rc=1; fi
   # gitch p 로 한 push 는 결과를 보고 gitch 가 직접 기록하므로 여기서는 건너뜀 (중복 기록 방지)
   if [ $rc -eq 0 ]; then [ "${GITSW_NOLOG_PUSH:-}" = 1 ] || log_action push "remote=$remote" "url=$url" "account=${R_ACC:-}"
   else hook_footer; fi
@@ -1981,16 +1985,17 @@ pf_add() {
   case "$1" in STOP) PF_LEVEL=STOP ;; WARN) [ "$PF_LEVEL" = OK ] && PF_LEVEL=WARN ;; esac
 }
 pf_print() {
-  local it lv code msg icon first=1 cj=""
+  local it lv code msg icon first=1 cj="" fl=""
   if [ -n "$1" ]; then
     for it in "${PF_ITEMS[@]}"; do
       lv=${it%%|*}; code=${it#*|}; msg=${code#*|}; code=${code%%|*}
       [ -n "$first" ] || cj="$cj,"; first=""
       cj="$cj{\"level\":$(json_str "$lv"),\"code\":$(json_str "$code"),\"message\":$(json_str "$msg")}"
     done
-    printf '{"schemaVersion":1,"result":%s,"account":%s,"pushAccount":%s,"branch":%s,"ahead":%s,"behind":%s,"checks":[%s]}\n' \
+    fl=$(flow_preflight_line)
+    printf '{"schemaVersion":1,"result":%s,"account":%s,"pushAccount":%s,"branch":%s,"ahead":%s,"behind":%s,"checks":[%s],"flow":%s}\n' \
       "$(json_str "$PF_LEVEL")" "$(json_str "${PF_ACC:-}")" "$(json_str "${PF_PUSH:-unknown}")" "$(json_str "${PF_BR:-}")" \
-      "$(json_num "${PF_AHEAD:-0}")" "$(json_num "${PF_BEHIND:-0}")" "$cj"
+      "$(json_num "${PF_AHEAD:-0}")" "$(json_num "${PF_BEHIND:-0}")" "$cj" "$(if [ -n "$fl" ]; then json_str "$fl"; else printf null; fi)"
     return
   fi
   for it in "${PF_ITEMS[@]}"; do
@@ -2000,6 +2005,8 @@ pf_print() {
   done
   say "PREFLIGHT=$PF_LEVEL"
   say "REPO_ACCOUNT=${PF_ACC:-unknown} PUSH_ACCOUNT=${PF_PUSH:-unknown} BRANCH=${PF_BR:-none} AHEAD=${PF_AHEAD:-0} BEHIND=${PF_BEHIND:-0}"
+  fl=$(flow_preflight_line)
+  [ -z "$fl" ] || say "FLOW=$fl"
 }
 
 st_word() {
@@ -3971,6 +3978,7 @@ gen_ai_block() {
     *) echo "- push 와 PR 생성 전에는 사용자 확인 창이 뜬다." ;;
   esac
   echo "- PR(GitLab 은 MR): \`gitch pr --title \"...\" --body \"...\"\`, 상태 \`gitch pr status\`, CI \`gitch ci\`."
+  echo "- 테스트: 코드를 바꾼 뒤 \`gitch test --affected --summary\` 로 영향받은 테스트를 확인한다(흐름 파일 .gitch/flow.yml 이 있을 때). 없으면 \`gitch flow init --dry-run\` 결과를 보여 주고 만들지 사용자에게 묻는다. 0개 실행 · 판정 불가는 통과가 아니다."
   echo "- 저장소 받기는 \`git clone\` 대신 \`gitch clone [계정] <주소>\`, 포크 \`gitch fork [계정] <원본>\`, 포크 최신화 \`gitch sync\`."
   echo "- 원격이 없는 새 저장소를 처음 올릴 때는 \`gitch publish [이름]\` (기본 비공개, 사용자 확인 후)."
   echo "- 충돌·진행 중 작업은 \`gitch ck\` 로 보고 \`gitch continue\` 로 이어간다 (\`gitch abort\` 는 사용자 확인 후). 실수 복구 지점은 \`gitch rescue\`."
@@ -3983,6 +3991,7 @@ gen_ai_block() {
   echo "- ~/.gitconfig, ~/.ssh, ~/.config/gitsw 를 직접 수정하지 않는다. HTTPS 비밀번호/토큰 인증을 시도하지 않는다."
   echo "- 계정 추가, GitHub 브라우저 로그인, SSH 설정은 사용자가 Gitrochi 앱의 계정 설정 또는 터미널에서 직접 진행한다. AI는 사용자의 명시적인 요청 없이 계정·인증·SSH 키를 만들거나 변경하지 않는다."
   echo "- \`gitch remove\`·\`sign on|off\`·\`import\` 와 \`gh auth login\` 은 사용자가 터미널에서 직접 실행하도록 안내한다."
+  echo "- 흐름 파일을 고치면 신뢰가 풀려 사람이 다시 승인한다(\`gitch flow trust\` · \`gitch flow hold release\` 는 사람이 실행). 흐름 실행 기록(.git/gitch/flow)을 직접 만들거나 고치지 않고, \`--yes\` 로 확인을 건너뛰지 않는다."
   for id in "${ACC_IDS[@]}"; do acc_idx "$id"; [ "${ACC_TRAILER[$ACC_I]}" = strip ] && strip="$strip${strip:+, }$id"; done
   [ -n "$strip" ] && echo "- $strip 계정 저장소의 커밋 메시지에는 AI 표기(Co-Authored-By: Claude 등)를 넣지 않는다."
   echo "- git 계정 문제가 생기면 \`gitch doctor\` 결과를 사용자에게 보여준다."
@@ -4052,6 +4061,19 @@ gitch ci                                     # CI 결과
 - Claude Code 에서는 `gitsw.aiPush` 설정에 따라 확인 창이 뜬다. branch 면 작업 브랜치 push 는 바로 되고, main/보호 브랜치 push 와 PR 생성만 확인한다.
 - GitHub PR 은 gh 로그인이 필요하다. "gh 에 <계정> 로그인이 필요" 가 나오면 사용자가 Gitrochi 앱의 GitHub 로그인 또는 터미널의 `gh auth login` 으로 진행하도록 안내한다.
 - GitLab MR 은 push 옵션으로 만들어진다 (새 커밋이 있어야 함). 출력된 MR 주소를 사용자에게 알려준다.
+
+## 3-1. 테스트 · 흐름 (gitch flow)
+
+```bash
+gitch test --affected --summary              # 바꾼 코드에 영향받은 테스트만, 짧은 요약
+gitch flow plan pre-push --affected          # 무엇이 왜 돌고 건너뛰는지
+gitch flow run pre-push --summary            # 흐름 실행(병렬 · 캐시), 실패는 파일:줄로
+gitch flow report last                       # 마지막 실행 결과
+```
+
+- 흐름 파일이 없으면 `gitch flow init --dry-run` 결과를 사용자에게 보여 주고 만들지 묻는다.
+- 종료 코드 2 + TRUST-01 은 흐름 파일을 사람이 아직 승인하지 않은 것 → 사용자에게 `gitch flow trust` 를 부탁한다(직접 승인하지 않는다).
+- TEST-03(실행된 테스트 없음) · TEST-02/04(판정 불가)는 통과가 아니다. 실행기 설정을 확인한다.
 
 ## 4. [gitch] 거부 메시지별 대응
 
@@ -4141,7 +4163,7 @@ remove_legacy_skill() {   # 예전 이름(gitsw)으로 만든 스킬 — 이 도
 #  - 읽기 명령, 일상 명령(커밋/브랜치/pull/push)과 그에 해당하는 git 명령
 #  - 위험한 경우는 PreToolUse 훅(gitch guard)이 먼저 막거나(deny) 확인(ask)을 받으므로 여기서 허용해도 안전
 #    예: --no-verify·강제 push 거부, main/보호 브랜치 push·PR 생성 확인(aiPush=branch), reset --hard·branch -D 확인
-CLAUDE_ALLOW='["Bash(gitch ck:*)","Bash(gitch check:*)","Bash(gitch status:*)","Bash(gitch st:*)","Bash(gitch preflight:*)","Bash(gitch l:*)","Bash(gitch log:*)","Bash(gitch d:*)","Bash(gitch diff:*)","Bash(gitch doctor:*)","Bash(gitch list:*)","Bash(gitch report:*)","Bash(gitch audit:*)","Bash(gitch graph:*)","Bash(gitch help)","Bash(gitch version)","Bash(gitch ci)","Bash(gitch rescue)","Bash(gitch c:*)","Bash(gitch commit:*)","Bash(gitch cp:*)","Bash(gitch p:*)","Bash(gitch push:*)","Bash(gitch pl)","Bash(gitch pull)","Bash(gitch up)","Bash(gitch b:*)","Bash(gitch branch:*)","Bash(gitch wt:*)","Bash(gitch continue)","Bash(gitch sync)","Bash(gitch clone:*)","Bash(gitch pr:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git show:*)","Bash(git blame:*)","Bash(git grep:*)","Bash(git ls-files:*)","Bash(git rev-parse:*)","Bash(git fetch:*)","Bash(git add:*)","Bash(git commit:*)","Bash(git push:*)","Bash(git pull:*)","Bash(git branch:*)","Bash(git switch:*)","Bash(git checkout:*)","Bash(git restore:*)","Bash(git stash:*)","Bash(git remote:*)"]'
+CLAUDE_ALLOW='["Bash(gitch ck:*)","Bash(gitch check:*)","Bash(gitch status:*)","Bash(gitch st:*)","Bash(gitch preflight:*)","Bash(gitch l:*)","Bash(gitch log:*)","Bash(gitch d:*)","Bash(gitch diff:*)","Bash(gitch doctor:*)","Bash(gitch list:*)","Bash(gitch report:*)","Bash(gitch audit:*)","Bash(gitch graph:*)","Bash(gitch help)","Bash(gitch version)","Bash(gitch ci)","Bash(gitch ci:*)","Bash(gitch flow:*)","Bash(gitch test)","Bash(gitch test:*)","Bash(gitch rescue)","Bash(gitch c:*)","Bash(gitch commit:*)","Bash(gitch cp:*)","Bash(gitch p:*)","Bash(gitch push:*)","Bash(gitch pl)","Bash(gitch pull)","Bash(gitch up)","Bash(gitch b:*)","Bash(gitch branch:*)","Bash(gitch wt:*)","Bash(gitch continue)","Bash(gitch sync)","Bash(gitch clone:*)","Bash(gitch pr:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git show:*)","Bash(git blame:*)","Bash(git grep:*)","Bash(git ls-files:*)","Bash(git rev-parse:*)","Bash(git fetch:*)","Bash(git add:*)","Bash(git commit:*)","Bash(git push:*)","Bash(git pull:*)","Bash(git branch:*)","Bash(git switch:*)","Bash(git checkout:*)","Bash(git restore:*)","Bash(git stash:*)","Bash(git remote:*)"]'
 # 예전 버전이 넣었지만 지금은 쓰지 않는 것 (설치할 때 지움) — 위 항목과 겹치는 것, gitsw 시절의 'Bash(gitsw …)' 항목
 CLAUDE_ALLOW_OLD='["Bash(gitch ck)","Bash(gitch status)","Bash(gitch preflight)","Bash(gitch l)","Bash(gitch d)","Bash(gitch doctor)","Bash(gitch list)","Bash(gitch b)","Bash(gitch pr status:*)","Bash(gitsw ck)","Bash(gitsw status)","Bash(gitsw preflight)","Bash(gitsw l)","Bash(gitsw d)","Bash(gitsw doctor)","Bash(gitsw list)","Bash(gitsw b)","Bash(gitsw pr status:*)","Bash(gitsw ck:*)","Bash(gitsw check:*)","Bash(gitsw status:*)","Bash(gitsw st:*)","Bash(gitsw preflight:*)","Bash(gitsw l:*)","Bash(gitsw log:*)","Bash(gitsw d:*)","Bash(gitsw diff:*)","Bash(gitsw doctor:*)","Bash(gitsw list:*)","Bash(gitsw report:*)","Bash(gitsw audit:*)","Bash(gitsw help)","Bash(gitsw version)","Bash(gitsw ci)","Bash(gitsw rescue)","Bash(gitsw c:*)","Bash(gitsw commit:*)","Bash(gitsw cp:*)","Bash(gitsw p:*)","Bash(gitsw push:*)","Bash(gitsw pl)","Bash(gitsw pull)","Bash(gitsw up)","Bash(gitsw b:*)","Bash(gitsw branch:*)","Bash(gitsw wt:*)","Bash(gitsw continue)","Bash(gitsw sync)","Bash(gitsw clone:*)","Bash(gitsw pr:*)"]'
 JQ_CLAUDE_INSTALL='
@@ -4362,7 +4384,10 @@ g_pr_check() {   # PR/MR 생성: allow 가 아니면 확인
 
 guard_env() {   # NAME=값
   local name="${1%%=*}"
+  G_ENVS="$G_ENVS $name"
   case "$name" in
+    GITCH_FLOW|GITCH_FLOW_NO_KEYSTORE|GITCH_FLOW_CACHE|GITCH_FLOW_DETACHED|GITCH_FLOW_OUT_DIR|GITCH_FLOW_GIT|GITCH_PATH|GITCH_BASH|GITCH_DOCKER)
+      g_decide deny "흐름 엔진의 위치 · 동작을 바꾸는 환경변수($name)는 AI 가 쓸 수 없습니다. 필요하면 사용자에게 요청하세요." ;;
     GITSW_SKIP|GITSW_ALLOW_FORCE|GITSW_CONFIG|GITSW_ACTOR|GITSW_INTERNAL|GITSW_NOLOG_PUSH)
       g_decide deny "gitch 검사를 바꾸는 환경변수($name)는 AI 가 쓸 수 없습니다. 필요하면 사용자에게 요청하세요." ;;
     GIT_AUTHOR_NAME|GIT_AUTHOR_EMAIL|GIT_COMMITTER_NAME|GIT_COMMITTER_EMAIL|GIT_SSH|GIT_SSH_COMMAND|GIT_CONFIG|GIT_CONFIG_GLOBAL|GIT_CONFIG_SYSTEM|GIT_CONFIG_NOSYSTEM|GIT_CONFIG_COUNT|GIT_CONFIG_KEY_*|GIT_CONFIG_VALUE_*|GIT_CONFIG_PARAMETERS)
@@ -4611,6 +4636,21 @@ guard_gitsw() {
     scan) g_in_list --fix "${rest[@]}" && g_decide ask "여러 저장소의 계정 설정을 한 번에 고칩니다." ;;
     wt|worktree) [ "${rest[0]:-}" = rm ] && g_in_list --force "${rest[@]}" && g_decide ask "수정 중인 워크트리를 강제로 지웁니다." ;;
     add|remove|rm|setup|import) g_decide deny "'gitch $sub' 는 사용자가 터미널에서 직접 실행해야 합니다." ;;
+    flow|test)
+      case " $G_ENVS " in
+        *" HOME "*|*" XDG_CONFIG_HOME "*|*" XDG_STATE_HOME "*|*" CI "*)
+          g_decide deny "흐름 실행의 설정 위치 · CI 여부를 환경변수로 바꿀 수 없습니다(신뢰 · 서명 우회)." ;;
+      esac
+      case "$sub:${rest[0]:-}" in
+        flow:trust) g_in_list --show "${rest[@]}" || g_in_list --revoke "${rest[@]}" || g_decide deny "흐름 파일 신뢰는 사람이 터미널에서 'gitch flow trust' 로 승인합니다." ;;
+        flow:hold) [ "${rest[1]:-}" = release ] && g_decide deny "잠긴 환경(hold)은 사람이 상태를 확인한 뒤 직접 풉니다." ;;
+        flow:gate) case "${rest[1]:-status}" in on|off) g_decide deny "pre-push 게이트는 사람이 켜고 끕니다(앱의 흐름 화면 또는 터미널)." ;; esac ;;
+        flow:connect) case "${rest[1]:-list}" in list|ls|test) ;; *) g_decide ask "흐름 연결(CI 주소 · 인증)을 바꿉니다." ;; esac ;;
+        flow:init|flow:export|flow:import) g_in_list --force "${rest[@]}" && g_decide ask "이미 있는 흐름 · CI 파일을 덮어씁니다." ;;
+        flow:run|flow:rerun|flow:watch|test:*)
+          { g_in_list --yes "${rest[@]}" || g_in_list -y "${rest[@]}"; } && g_decide ask "흐름의 사람 확인 단계를 --yes 로 건너뜁니다. 사용자가 확인했을 때만 쓰세요." ;;
+      esac ;;
+    ci) case "${rest[0]:-}" in ""|status|logs|report) ;; *) g_decide ask "원격 CI 를 실행하거나 취소합니다." ;; esac ;;
     sign) case "${rest[0]:-}" in on|off) g_decide deny "'gitch sign ${rest[0]}' 은 사용자가 터미널에서 직접 실행해야 합니다." ;; esac ;;
     org) case "${rest[0]:-list}" in list|ls) ;; *) g_decide ask "gitch 조직 규칙을 바꿉니다." ;; esac ;;
     config) case "${rest[0]:-show}" in path|show|cat|get|check) ;; *) g_decide ask "gitch 설정을 바꿉니다." ;; esac ;;
@@ -4664,6 +4704,7 @@ guard_fileops() {   # $1 프로그램 $2 시작 위치
 
 guard_simple() {   # GW 배열(단순 명령 하나) 검사
   local n=${#GW[@]} i=0 w prog
+  G_ENVS=""
   for w in "${GW[@]}"; do
     case "$w" in
       $'\036'*) g_protected "${w#$'\036'}" && g_decide deny "$(tilde "$(g_path "${w#$'\036'}")") 는 gitch 가 관리하는 파일이라 직접 쓸 수 없습니다." ;;
@@ -5129,7 +5170,7 @@ report_cmd() {   # [--today | --days N | --since YYYY-MM-DD] [--json]
 
 version_cmd() {
   case "${1:-}" in
-    --json) printf '{"schemaVersion":1,"tool":"gitch","version":%s,"versionScheme":%s,"graphApi":%s}\n' "$(json_str "$GITSW_VERSION")" "$(json_str "$GITCH_VERSION_SCHEME")" "$GITCH_GRAPH_API"; return 0 ;;
+    --json) printf '{"schemaVersion":1,"tool":"gitch","version":%s,"versionScheme":%s,"graphApi":%s,"flowApi":%s}\n' "$(json_str "$GITSW_VERSION")" "$(json_str "$GITCH_VERSION_SCHEME")" "$GITCH_GRAPH_API" "$GITCH_FLOW_API"; return 0 ;;
     "") ;;
     *) die "사용법: gitch version [--json]" ;;
   esac
@@ -5193,6 +5234,30 @@ release_stage_helpers() {   # $1 staging directory $2 selected gitch URL $3 help
   done
   [ -z "$missing" ] || say "이전 릴리스에는 선택적 그래프 도우미가 없습니다. 기본 CLI는 설치하며 정밀 분석·자동 갱신은 도우미가 포함된 최신 Gitrochi 배포본에서 사용하세요."
 }
+# The flow engine is a native binary per OS. It comes from the same release directory, needs its own checksum,
+# must run, and is promoted together with the helpers (as gitch-flow or gitch-flow.exe beside gitch).
+flow_asset() {   # File name of this machine's flow engine release asset (empty on systems without one)
+  case "$(uname -s 2>/dev/null)" in
+    Darwin) printf 'gitch-flow-macos' ;;
+    Linux) case "$(uname -m 2>/dev/null)" in x86_64|amd64) printf 'gitch-flow-linux-x64' ;; esac ;;
+    MINGW*|MSYS*|CYGWIN*) printf 'gitch-flow-windows-x64.exe' ;;
+  esac
+}
+release_stage_engine() {   # $1 staging directory $2 selected gitch URL $3 flow API (empty = release without the engine)
+  local stage=$1 base=${2%/gitch} api=$3 asset name want have
+  [ -n "$api" ] || return 0
+  asset=$(flow_asset)
+  if [ -z "$asset" ]; then say "이 운영체제용 흐름 엔진은 배포하지 않습니다 — gitch flow · gitch test 는 직접 빌드한 gitch-flow 가 있어야 합니다."; return 0; fi
+  case "$asset" in *.exe) name=gitch-flow.exe ;; *) name=gitch-flow ;; esac
+  curl_get -o "$stage/$name" "$base/$asset" || die "흐름 엔진을 받지 못했습니다: $base/$asset (설치 파일은 바꾸지 않았습니다)"
+  curl_get -o "$stage/$asset.sha256" "$base/$asset.sha256" || die "흐름 엔진 체크섬을 받지 못했습니다: $asset.sha256 (설치 파일은 바꾸지 않았습니다)"
+  want=$(awk -v name="$asset" '$2 == name || $2 == "*" name { print $1; exit }' "$stage/$asset.sha256")
+  have=$(sha256_of "$stage/$name")
+  [ -n "$want" ] && [ "$want" = "$have" ] || die "SHA-256 이 $asset.sha256 과 맞지 않아 설치 파일을 바꾸지 않았습니다."
+  chmod 755 "$stage/$name" || die "실행 권한을 설정하지 못했습니다: $name"
+  "$stage/$name" version --json 2>/dev/null | grep -q '"flowApi"' || die "받은 흐름 엔진이 이 컴퓨터에서 돌지 않아 설치하지 않았습니다: $asset"
+  STAGED_HELPERS="$STAGED_HELPERS $name"
+}
 release_promote() {   # $1 staging directory $2 destination directory $3 CLI destination basename
   local stage=$1 dir=$2 cli=$3 name rollback_name promoted="" existed=""
   mkdir "$stage/rollback" || die "업데이트 복구 폴더를 만들지 못했습니다."
@@ -5246,6 +5311,7 @@ self_update_standalone() {   # $1 이 파일 — 릴리스의 gitch 를 gitch.sh
   fi
   helper_api=$(sed -n 's/^GITCH_HELPER_API="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)
   release_stage_helpers "$UPDATE_TMP" "$url" "$helper_api"
+  release_stage_engine "$UPDATE_TMP" "$url" "$(sed -n 's/^GITCH_FLOW_API="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)"
   if [ "$have" = "$(sha256_of "$self")" ]; then
     release_promote "$UPDATE_TMP" "$dir" "$(basename "$self")"
     ok "이미 최신입니다: gitch $GITSW_VERSION ($tag)"; return 0
@@ -12106,6 +12172,7 @@ HTMLEOF
 
 schema_cmd() {
   local kind=${1:-public}
+  case "$kind" in flow|flow-*) flow_cmd schema "$kind"; return $? ;; esac
   case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
   printf '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://github.com/Gitrochi/Gitrochi/blob/main/tools/gitch/schema/gitch-v1.schema.json","title":"gitch public JSON contract version 1","$ref":"#/$defs/%s",' "$kind"
   cat <<'SCHEMAEOF'
@@ -14116,13 +14183,13 @@ completion_repositories() {
   done
 }
 completion_commands() {
-  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci publish status use unlock ignore protect clone fork sync fix scan audit prune wt report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version self-update completion schema help
+  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version self-update completion schema help
 }
 completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 낱말들(마지막은 입력 중인 낱말)
   local empty_current=""
   [ "${1:-}" != --empty-current ] || { empty_current=1; shift; }
   [ "${1:-}" = -- ] && shift
-  local words=("$@") cur="" prev="" cmd="" n=0 stem="" candidate="" langs="" i
+  local words=("$@") cur="" prev="" cmd="" n=0 stem="" candidate="" langs="" i e=""
   [ -z "$empty_current" ] || words+=("")
   n=${#words[@]}
   [ "$n" -gt 0 ] && { cmd=${words[0]}; cur=${words[$((n - 1))]}; }
@@ -14166,6 +14233,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         add) printf '%s\n' --id --email --host --port --folder --no-folder --via --no-setup --json --yes ;;
         setup) printf '%s\n' --inspect --generate --check --json --yes ;;
         login) printf '%s\n' --start --status --cancel --json --yes ;;
+        flow|test) printf '%s\n' --json --affected --env --only --jobs --fail-fast --no-fail-fast --no-cache --keep-services --detach --events --summary --ci --yes --dry-run --follow --since --format --out --idempotency-key --watch --lang ;;
       esac
     else
       case "$cmd" in
@@ -14176,6 +14244,19 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
           completion_repositories
           compgen -d -- "$cur" ;;
         completion) printf '%s\n' bash zsh fish powershell ;;
+        flow)
+          if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run status events logs report rerun cancel trust hold watch blocks block explain gc export import connect gate schema version help
+          elif [ "$n" -eq 3 ]; then
+            case "${words[1]:-}" in
+              plan|run|watch) e=$(flow_engine) && "$e" _names flows 2>/dev/null ;;
+              export|import) printf '%s\n' github gitlab jenkins ;;
+              connect) printf '%s\n' list add test remove ;;
+              hold) printf '%s\n' list release ;;
+              gate) printf '%s\n' status prepush ;;
+              status|events|logs|report|rerun|cancel) printf '%s\n' last ;;
+            esac
+          fi ;;
+        test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
         schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;
         config) printf '%s\n' show path get set add unset edit ;;
@@ -14287,6 +14368,14 @@ PR / MR
   gitch pr status / gitch ci               PR 상태·리뷰 / CI 결과
   gitch publish [이름] [--public]          원격 저장소 새로 만들기 + 첫 push (기본 비공개)
 
+테스트 · 흐름 (gitch-flow, .gitch/flow.yml)
+  gitch flow init [--dry-run]              프로젝트를 읽고 흐름 파일 제안 · 만들기 (프로젝트 코드는 실행하지 않음)
+  gitch flow plan|run <흐름> [--affected]  계획 보기 / 실행 (영향받은 테스트만 · 병렬 · 캐시 · 서명된 결과)
+  gitch test [스위트|태그] [--affected]    테스트 스위트 바로 실행 (--summary: AI 용 짧은 요약)
+  gitch flow status|report|events [last]   결과 · 보고서 · 이벤트(NDJSON)
+  gitch flow trust                         흐름 파일 신뢰(사람이 확인) — 전체: gitch flow help
+  gitch ci status|logs|report              원격 CI(연결: gitch flow connect …)
+
 받기
   gitch clone [계정] <저장소|주소> [폴더]   계정으로 clone + 잠금 (규칙으로 계정 자동, 계정 폴더에 받음)
   gitch fork  [계정] <원본> [폴더]          포크 + clone + upstream 연결
@@ -14365,6 +14454,53 @@ menu_cmd() {
   esac
 }
 
+# ================= flow: composable test and CI flows (handed off to the gitch-flow engine) =================
+
+flow_engine() {   # Where the engine is: GITCH_FLOW → next to gitch (app Resources, ~/.local/share/gitch) → PATH
+  local d e
+  if [ -n "${GITCH_FLOW:-}" ]; then printf '%s' "$GITCH_FLOW"; return 0; fi
+  d=$(dirname "$(self_path)")
+  for e in "$d/gitch-flow" "$d/gitch-flow.exe" "${XDG_DATA_HOME:-$HOME/.local/share}/gitch/gitch-flow" "${XDG_DATA_HOME:-$HOME/.local/share}/gitch/gitch-flow.exe"; do
+    [ -x "$e" ] && { printf '%s' "$e"; return 0; }
+  done
+  e=$(command -v gitch-flow 2>/dev/null) && [ -n "$e" ] && { printf '%s' "$e"; return 0; }
+  return 1
+}
+
+flow_bash() {   # The bash the engine (a native executable) calls. On Windows, Git Bash is passed as a Windows path.
+  if [ -n "$IS_WINDOWS" ] && command -v cygpath >/dev/null 2>&1; then cygpath -w "${BASH:-/usr/bin/bash}"; else printf '%s' "${BASH:-bash}"; fi
+}
+
+flow_settings() { printf '%s/flow/settings.json' "$(dirname "$CFG")"; }
+
+flow_cmd() {   # gitch flow …, gitch test … and gitch ci <subcommand> → gitch-flow
+  local engine
+  if ! engine=$(flow_engine); then
+    if [ -n "$MACHINE_JSON" ]; then machine_error GITCH_ERROR 1 "흐름 엔진(gitch-flow)을 찾지 못했습니다. 앱을 업데이트하거나 gitch self-update 를 실행하세요."
+    else err "흐름 엔진(gitch-flow)을 찾지 못했습니다. 앱을 업데이트하거나 gitch self-update 를 실행하세요."; fi
+    return 1
+  fi
+  # The path the engine uses to call gitch back (the affected graph and the like).
+  GITCH_PATH=$(self_path) GITCH_BASH=$(flow_bash) exec "$engine" "$@"
+}
+
+hook_flow_gate() {   # pre-push: blocks on the flow result only when this repository turned the gate on
+  local engine settings
+  settings=$(flow_settings)
+  [ -f "$settings" ] && grep -q '"prePush"' "$settings" 2>/dev/null || return 0
+  engine=$(flow_engine) || return 0
+  GITCH_PATH=$(self_path) GITCH_BASH=$(flow_bash) "$engine" gate prepush 1>&2
+}
+
+flow_preflight_line() {   # The FLOW=… line added to preflight (only where the gate is on; the existing PREFLIGHT= line stays as it is)
+  local engine settings out
+  settings=$(flow_settings)
+  [ -f "$settings" ] && grep -q '"prePush"' "$settings" 2>/dev/null || return 0
+  engine=$(flow_engine) || return 0
+  out=$("$engine" gate status 2>/dev/null | head -1)
+  case "$out" in FLOW=*) printf '%s' "${out#FLOW=}" ;; esac
+}
+
 # ================= 명령줄 =================
 
 detect_actor
@@ -14378,6 +14514,8 @@ case "${1:-}" in
   schema) shift; schema_cmd "$@"; exit $? ;;
   login) shift; login_cmd "$@"; exit $? ;;
   _login-worker) shift; login_worker "$@"; exit $? ;;
+  flow) shift; flow_cmd "$@"; exit $? ;;
+  test) shift; flow_cmd test "$@"; exit $? ;;
   c|commit) shift; commit_cmd "$@"; rc=$?; [ $rc -eq 3 ] && rc=0; exit $rc ;;
   p|push) shift; push_cmd "$@"; exit $? ;;
   cp) shift; commit_push_cmd "$@"; exit $? ;;
@@ -14396,7 +14534,7 @@ case "${1:-}" in
   o|open) open_cmd; exit $? ;;
   app) shift; app_cmd "$@"; exit $? ;;
   pr|mr) shift; pr_cmd "$@"; exit $? ;;
-  ci) ci_cmd; exit $? ;;
+  ci) shift; if [ $# -gt 0 ]; then flow_cmd ci "$@"; else ci_cmd; fi; exit $? ;;
   publish) shift; publish_cmd "$@"; exit $? ;;
   status|st) shift; status_cmd "$@"; exit $? ;;
   use) use_cmd "${2:-}"; exit $? ;;

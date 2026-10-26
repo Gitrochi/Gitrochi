@@ -49,7 +49,7 @@ struct NavigationSidebar: View {
                         HStack { Text("Workspace tools").font(.system(size: 10, weight: .semibold)); Spacer(); Image(systemName: toolsExpanded ? "chevron.down" : "chevron.right").font(.caption2) }
                             .foregroundStyle(.secondary).padding(.horizontal, 12).padding(.top, 18).padding(.bottom, 5)
                     }.buttonStyle(.plain).accessibilityLabel("Workspace tools")
-                    if toolsExpanded || !query.isEmpty { rows([.assistant, .agents, .worktrees, .operations]) }
+                    if toolsExpanded || !query.isEmpty { rows([.assistant, .agents, .flows, .worktrees, .operations]) }
                 }.padding(.horizontal, 8).padding(.bottom, 12)
             }
             Divider()

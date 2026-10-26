@@ -27,7 +27,7 @@ afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).
 
 describe("workspace menu navigation", () => {
   it("recognizes every unique menu and rejects untrusted saved values", () => {
-    expect(workspaceDestinations).toHaveLength(22); expect(new Set(workspaceDestinations).size).toBe(22);
+    expect(workspaceDestinations).toHaveLength(23); expect(new Set(workspaceDestinations).size).toBe(23);
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);
     for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code"]) expect(isWorkspaceDestination(value)).toBe(false);
   });

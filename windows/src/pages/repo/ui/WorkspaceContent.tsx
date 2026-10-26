@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { GraphView } from "@/widgets/commit-graph";
 import { DiffView, FileInspectView } from "@/widgets/diff-viewer";
 import { Inspector } from "@/widgets/inspector";
-import { AgentsPanel, PullRequestSection, WorktreeSection } from "@/widgets/sidebar";
+import { AgentsPanel, FlowPanel, PullRequestSection, WorktreeSection } from "@/widgets/sidebar";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { LocalBranchesPanel, RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { WorkspaceHomePanel, RepositoryLibraryPanel, WorkInboxPanel, MyWorkPanel, IssuesWorkspacePanel, ActionsWorkspacePanel, OperationsWorkspacePanel } from "@/widgets/workspace-panels";
@@ -32,6 +32,7 @@ export function WorkspaceContent({ store, openSettings }: { store: RepoStore; op
     case "releases": case "projects": case "organizations": case "gists": return <HostingHubPanel store={store} section={page} onClone={(url) => store.openSheet({ kind: "clone", url })} />;
     case "assistant": return <RepositoryAssistantSheet store={store} embedded close={() => store.navigate("home")} />;
     case "agents": return <AgentsPanel store={store} />;
+    case "flows": return <FlowPanel store={store} />;
     case "worktrees": return <section className="workspace-worktrees col"><header className="row"><h1 className="grow">{t("Worktrees")}</h1><Button onClick={() => store.openSheet({ kind: "addWorktree", branch: null, start: null })}>{t("New worktree…")}</Button></header><WorktreeSection store={store} /></section>;
     default: return null;
   }

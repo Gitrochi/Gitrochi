@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-run-v1.schema.json",
+  "title": "gitch flow run summary version 1 (run.json, run --json, gitch-flow-result.json)",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "flow", "env", "state", "startedAt", "nodes", "git"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string"},
+    "flow": {"type": "string"},
+    "env": {"type": "string"},
+    "envClass": {"enum": ["dev", "sandbox", "staging", "prod"]},
+    "state": {"enum": ["PENDING", "PREFLIGHT", "RUNNING", "SUCCEEDED", "FAILED", "REJECTED", "CANCELLED", "ROLLING_BACK", "ROLLED_BACK", "ROLLBACK_FAILED"]},
+    "code": {"type": ["string", "null"]},
+    "failure": {"type": ["object", "null"]},
+    "startedAt": {"type": "string"},
+    "finishedAt": {"type": "string"},
+    "durationMs": {"type": "integer", "minimum": 0},
+    "actor": {"type": "string"},
+    "trigger": {"type": "string"},
+    "planHash": {"type": "string"},
+    "filesHash": {"type": "string"},
+    "git": {"type": "object", "required": ["sha", "branch", "clean"], "properties": {"sha": {"type": "string"}, "branch": {"type": "string"}, "clean": {"type": "boolean"}}},
+    "counts": {"type": "object"},
+    "exitCode": {"type": "integer", "enum": [0, 1, 2]},
+    "signature": {"type": ["string", "null"], "description": "HMAC-SHA256 by the engine. Gates trust only signed records."},
+    "orphan": {"type": "boolean", "description": "Closed by a later run because the engine stopped before finishing."},
+    "rollback": {
+      "type": ["object", "null"],
+      "properties": {
+        "needed": {"type": "boolean"},
+        "state": {"enum": ["ROLLED_BACK", "ROLLBACK_FAILED", "NOT_RUN"]},
+        "scope": {"enum": ["node", "flow"]},
+        "why": {"type": "string"},
+        "nodes": {"type": "array", "items": {"type": "string"}},
+        "kept": {"type": "array", "items": {"type": "string"}, "description": "Nodes that changed something that was left in place."},
+        "steps": {"type": "array", "items": {"type": "object", "properties": {"node": {"type": "string"}, "title": {"type": "string"}, "state": {"enum": ["UNDONE", "FAILED", "NOT_RUN"]}, "checked": {"type": "boolean"}, "error": {"type": "string"}}}},
+        "hold": {"type": ["string", "null"], "description": "Hold file written when the rollback failed."}
+      }
+    },
+    "notifications": {"type": ["array", "null"], "items": {"type": "object", "properties": {"to": {"enum": ["webhook", "desktop"]}, "target": {"type": "string"}, "ok": {"type": "boolean"}, "error": {"type": ["string", "null"]}}}},
+    "cleanup": {"type": ["array", "null"], "items": {"type": "object", "properties": {"node": {"type": "string"}, "title": {"type": "string"}, "state": {"enum": ["DONE", "FAILED"]}}}},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "block", "state"],
+        "properties": {
+          "id": {"type": "string"},
+          "title": {"type": "string"},
+          "block": {"type": "string"},
+          "state": {"enum": ["PENDING", "RUNNING", "PASSED", "FAILED", "INDETERMINATE", "SKIPPED", "CACHED", "REJECTED", "CANCELLED"]},
+          "code": {"type": ["string", "null"]},
+          "failure": {"type": ["object", "null"], "properties": {"code": {"type": "string"}, "description": {"type": "string"}, "action": {"type": "string"}, "detail": {"type": "string"}}},
+          "durationMs": {"type": "integer"},
+          "attempts": {"type": "integer"},
+          "tests": {"type": ["object", "null"], "properties": {"executed": {"type": "integer"}, "passed": {"type": "integer"}, "failed": {"type": "integer"}, "skipped": {"type": "integer"}, "flaky": {"type": "integer"}}},
+          "failures": {"type": "array"},
+          "verdicts": {"type": "array", "items": {"type": "object", "required": ["rule", "result"], "properties": {"rule": {"type": "string"}, "result": {"enum": ["PASS", "FAIL", "INDETERMINATE"]}, "code": {"type": ["string", "null"]}}}},
+          "observations": {"type": "object"},
+          "undo": {"type": "array", "items": {"type": "object", "properties": {"title": {"type": "string"}, "always": {"type": "boolean"}}}, "description": "Undo steps this node registered."},
+          "log": {"type": ["string", "null"]},
+          "report": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

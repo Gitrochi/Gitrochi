@@ -102,6 +102,24 @@ chmod 755 "$CONTENTS/Resources/gitch-graph-watch"
 # 실행 파일은 Apple 의 번들 배치대로 Contents/MacOS 에: Resources 의 Mach-O 는 데이터로 봉인돼 앱과 함께 중첩 코드로 검사받지 않는다
 "$REPO/tools/gitch-swift-index/build.sh" "$CONTENTS/MacOS/gitch-swift-index" "${ARCHS[@]}"
 ln -s ../MacOS/gitch-swift-index "$CONTENTS/Resources/gitch-swift-index"
+# gitch-flow: the flow engine (Rust, tools/gitch-flow), used by gitch flow, gitch test and the app's Flows screen; gitch looks for it next to itself.
+# Without cargo a development build goes without the engine (the Flows tab shows a hint); a release always includes it (universal: both targets needed).
+FLOW_TARGETS=()
+if [[ "$MODE" == "release" ]]; then
+    for arch in "${ARCHS[@]}"; do
+        case "$arch" in arm64) FLOW_TARGETS+=(aarch64-apple-darwin) ;; x86_64) FLOW_TARGETS+=(x86_64-apple-darwin) ;; esac
+    done
+fi
+flow_status=0
+"$REPO/tools/gitch-flow/build.sh" "$CONTENTS/MacOS/gitch-flow" ${FLOW_TARGETS[@]+"${FLOW_TARGETS[@]}"} || flow_status=$?
+if [[ $flow_status -eq 0 ]]; then
+    ln -s ../MacOS/gitch-flow "$CONTENTS/Resources/gitch-flow"
+elif [[ $flow_status -eq 3 && "$MODE" != "release" ]]; then
+    echo "⚠️  Building without the flow engine (install cargo to include it)."
+else
+    echo "❌ Could not build the flow engine (gitch-flow)." >&2
+    exit 1
+fi
 cp "$REPO/LICENSE" "$CONTENTS/Resources/LICENSE.txt"
 cp "$REPO/THIRD_PARTY_NOTICES.md" "$CONTENTS/Resources/THIRD_PARTY_NOTICES.md"
 cp "$ROOT/Vendor/SwiftTerm/LICENSE" "$CONTENTS/Resources/SwiftTerm-LICENSE.txt"
@@ -126,6 +144,7 @@ echo "▶ 서명: ${IDENTITY:-ad-hoc}"
 # 안에 든 실행 파일을 먼저(번들 서명은 그 서명까지 묶는다)
 sign "$CONTENTS/MacOS/gitch-core"
 sign "$CONTENTS/MacOS/gitch-swift-index"
+[[ -f "$CONTENTS/MacOS/gitch-flow" ]] && sign "$CONTENTS/MacOS/gitch-flow"
 sign "$BUNDLE"
 echo "✅ 빌드 완료: $BUNDLE ($(lipo -archs "$CONTENTS/MacOS/$BIN"))"
 

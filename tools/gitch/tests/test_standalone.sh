@@ -15,6 +15,16 @@ mk_release() {
     (cd "$dl" && { shasum -a 256 gitch 2>/dev/null || sha256sum gitch; } > gitch.sha256)
     [ "$opt" = badsum ] && printf '%064d  gitch\n' 0 > "$dl/gitch.sha256"
     case "$opt" in
+      engine|badengine|brokenengine)
+        for f in gitch-scip-index gitch-graph-watch; do
+          cp "$ROOT/$f" "$dl/$f"
+          (cd "$dl" && { shasum -a 256 "$f" 2>/dev/null || sha256sum "$f"; } > "$f.sha256")
+        done
+        f=$(flow_asset_name)
+        if [ "$opt" = brokenengine ]; then printf 'not an executable\n' > "$dl/$f"; else cp "$FLOW_ENGINE_BIN" "$dl/$f"; fi
+        (cd "$dl" && { shasum -a 256 "$f" 2>/dev/null || sha256sum "$f"; } > "$f.sha256")
+        [ "$opt" != badengine ] || printf '%064d  %s\n' 0 "$f" > "$dl/$f.sha256"
+        ;;
       helpers|corrupthelper|missinghelper|missingsum)
         for f in gitch-scip-index gitch-graph-watch; do
           [ "$opt:$f" = missinghelper:gitch-graph-watch ] && continue
@@ -56,11 +66,23 @@ EOF
 }
 
 gitch_ver() { sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$1" | head -1; }
-with_version() {   # $1 버전 $2 만들 파일 [$3 shared] [$4 bundle] — 기존 시험 릴리스에는 도우미 배포 표식이 없었다
+with_version() {   # $1 version $2 file to create [$3 shared] [$4 bundle] [$5 flow]; older test releases had no helper or engine markers
   if [ "${3:-}" = shared ]; then sed "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" "$GITSW_SRC"
   else sed -e "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" -e '/^GITCH_VERSION_SCHEME=/d' "$GITSW_SRC"; fi | \
-    { if [ "${4:-}" = bundle ]; then cat; else sed '/^GITCH_HELPER_API=/d'; fi; } > "$2"
+    { if [ "${4:-}" = bundle ]; then cat; else sed '/^GITCH_HELPER_API=/d'; fi; } | \
+    { if [ "${5:-}" = flow ]; then cat; else sed '/^GITCH_FLOW_API=/d'; fi; } > "$2"
 }
+
+flow_engine_bin() {   # The flow engine built for this machine (tests that need it are skipped without one)
+  local b
+  for b in "${GITCH_FLOW_TEST_BIN:-}" "$ROOT/../gitch-flow/target/debug/gitch-flow" "$ROOT/../gitch-flow/target/debug/gitch-flow.exe" \
+           "$ROOT/../gitch-flow/target/release/gitch-flow" "$ROOT/../gitch-flow/target/release/gitch-flow.exe"; do
+    [ -n "$b" ] && [ -x "$b" ] && { printf '%s' "$b"; return 0; }
+  done
+  return 1
+}
+flow_asset_name() { case "$(uname -s)" in Darwin) echo gitch-flow-macos ;; Linux) echo gitch-flow-linux-x64 ;; *) echo gitch-flow-windows-x64.exe ;; esac; }
+flow_installed_name() { case "$(flow_asset_name)" in *.exe) echo gitch-flow.exe ;; *) echo gitch-flow ;; esac; }
 only_gitch_in() { [ "$(ls -A "$1")" = gitch ] || fail "임시 파일이 남음: $(ls -A "$1" | tr '\n' ' ')"; }
 only_bundle_in() { [ "$(ls -A "$1" | LC_ALL=C sort | tr '\n' ' ')" = 'gitch gitch-graph-watch gitch-scip-index ' ] || fail "배포 파일 또는 임시 파일 불일치: $(ls -A "$1" | tr '\n' ' ')"; }
 
@@ -298,4 +320,39 @@ test_helper_missing_checksum_prevents_bundle_installation() {
   run bash "$ROOT/install.sh"; assert_fail; assert_out '도우미 체크섬'
   cmp -s "$d/gitch" "$T/old-cli" || fail 'installer ignored helper checksum'
   only_gitch_in "$d"
+}
+
+test_flow_engine_is_installed_and_updated_with_the_bundle() {
+  local d="$HOME/.local/share/gitch" name
+  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)"; return 0; }
+  name=$(flow_installed_name)
+  with_version 0.99.1 "$T/new" shared bundle flow
+  mk_release v0.99.1 "$T/new" engine
+  run bash "$ROOT/install.sh"; assert_ok
+  cmp -s "$d/$name" "$FLOW_ENGINE_BIN" || fail 'engine mismatch'
+  [ -x "$d/$name" ] || fail 'engine not executable'
+  grep -F "releases/download/v0.99.1/$(flow_asset_name).sha256" "$FAKE_WEB/log" >/dev/null || fail 'engine came from another release'
+  # gitch finds the engine it put next to itself.
+  run env -u GITCH_FLOW "$d/gitch" flow version; assert_ok; assert_out 'gitch-flow'
+  # With the same CLI but the engine gone, self-update verifies it and puts it back.
+  mklink_ "$d/gitch" "$HOME/bin/gitch"
+  rm "$d/$name"
+  run gitch self-update; assert_ok
+  cmp -s "$d/$name" "$FLOW_ENGINE_BIN" || fail 'same-version engine repair'
+}
+
+test_flow_engine_checksum_or_broken_binary_keeps_the_installed_bundle() {
+  local d="$HOME/.local/share/gitch"
+  FLOW_ENGINE_BIN=$(flow_engine_bin) || { echo "skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)"; return 0; }
+  standalone_copy
+  cp "$d/gitch" "$T/old-cli"
+  with_version 0.99.1 "$T/new" shared bundle flow
+  mk_release v0.99.1 "$T/new" badengine
+  run gitch self-update; assert_fail; assert_out 'SHA-256'
+  cmp -s "$d/gitch" "$T/old-cli" || fail 'CLI promoted before the engine was verified'
+  [ ! -e "$d/$(flow_installed_name)" ] || fail 'engine with a bad checksum installed'
+  with_version 0.99.2 "$T/broken" shared bundle flow
+  mk_release v0.99.2 "$T/broken" brokenengine
+  run bash "$ROOT/install.sh"; assert_fail; assert_out '흐름 엔진'
+  cmp -s "$d/gitch" "$T/old-cli" || fail 'installer promoted a bundle with a broken engine'
 }

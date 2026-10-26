@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-error-v1.schema.json",
+  "title": "gitch flow fatal error (stderr, with --json). Compatible with the gitch error envelope.",
+  "type": "object",
+  "required": ["schemaVersion", "error"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "exitCode"],
+      "properties": {
+        "code": {"enum": ["GITCH_ERROR", "GITCH_CONFIRMATION_REQUIRED"]},
+        "flowCode": {"type": "string"},
+        "message": {"type": "string"},
+        "exitCode": {"enum": [1, 2]},
+        "description": {"type": "string"},
+        "action": {"type": "string"},
+        "details": {}
+      }
+    }
+  }
+}

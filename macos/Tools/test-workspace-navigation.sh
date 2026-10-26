@@ -102,7 +102,7 @@ import SwiftUI
             }
         }
         precondition(GraphMetrics.width(lanes: 24, expanded: true) > GraphMetrics.width(lanes: 24))
-        precondition(WorkspaceDestination.allCases.count == 22)
+        precondition(WorkspaceDestination.allCases.count == 23)
         let nav = RepoStore()
         func navMatches(_ page: WorkspaceDestination) -> Bool {
             nav.destination == (page.repositorySection == nil ? page : .repository) && (page.repositorySection == nil || nav.repositorySection == page.repositorySection)
@@ -262,7 +262,7 @@ import SwiftUI
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; 22 route gates, six tools in one repository, pin persistence/shared windows, internal-section restore, background selection, explicit document/review navigation, history branching/limits and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; 23 route gates, six tools in one repository, pin persistence/shared windows, internal-section restore, background selection, explicit document/review navigation, history branching/limits and isolated per-repository restore")
     }
 }
 SWIFT

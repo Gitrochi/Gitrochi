@@ -6,7 +6,7 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    paths: ["crates/**", "tools/build-core*", "macos/**", "tools/gitch/**", "tools/gitrochi-mcp/**", "tools/gitch-swift-index/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
+    paths: ["crates/**", "tools/build-core*", "macos/**", "tools/gitch/**", "tools/gitrochi-mcp/**", "tools/gitch-swift-index/**", "tools/gitch-flow/**", "tools/check-versions.sh", "windows/package*.json", "windows/src-tauri/Cargo.*", "windows/src-tauri/tauri.conf.json", ".github/workflows/macos.yml"]
   workflow_dispatch:
 
 # 같은 PR 에 새로 푸시하면 돌던 실행은 취소
@@ -35,8 +35,19 @@ jobs:
       - name: Rust 공통 코어 검사
         run: cargo test --locked --manifest-path crates/Cargo.toml
 
+      # To put the flow engine (tools/gitch-flow) into the app
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
       - name: 빌드
         run: macos/build.sh
+
+      - name: Check the flow engine in the app
+        run: |
+          app=macos/build/Gitrochi.app/Contents
+          "$app/Resources/gitch-flow" version --json
+          GITCH_FLOW_NO_KEYSTORE=1 "$app/Resources/gitch" flow version
 
       - name: 앱 올리기
         uses: actions/upload-artifact@v4
@@ -81,6 +92,10 @@ jobs:
 
       - name: 읽기 전용 MCP 계약 테스트
         run: node --test tools/gitrochi-mcp/server.test.mjs
+
+      # The engine JSON the Flows screen reads (with the engine in the app): list, plan, detached run, events, records, init, gate, errors
+      - name: Flows screen contract test
+        run: bash macos/Tools/test-flow.sh
 
       - name: Keychain 저장 · 갱신 · 삭제 테스트
         run: |
@@ -149,7 +164,7 @@ jobs:
         run: |
           command -v shellcheck >/dev/null || brew install shellcheck
           shellcheck --version | sed -n 2p
-          shellcheck -S warning tools/check-versions.sh tools/gitch/gitch tools/gitch/install.sh tools/gitch/tests/*.sh tools/gitch-swift-index/build.sh tools/gitch-swift-index/tests/run.sh
+          shellcheck -S warning tools/check-versions.sh tools/gitch/gitch tools/gitch/install.sh tools/gitch/tests/*.sh tools/gitch-swift-index/build.sh tools/gitch-swift-index/tests/run.sh tools/gitch-flow/build.sh
 
   # 릴리스에 파일을 올려야 해서 쓰기 권한은 태그 실행에만 준다.
   # 앱의 업데이트 확인은 초안을 보지 않으므로, 관리자가 노트를 쓰고 '게시'해야 사용자에게 간다.
@@ -194,6 +209,9 @@ jobs:
             cp "tools/gitch/$file" "macos/dist/$file"
             (cd macos/dist && shasum -a 256 "$file" > "$file.sha256")
           done
+          # The flow engine (the same universal binary as in the app)
+          cp macos/build/Gitrochi.app/Contents/MacOS/gitch-flow macos/dist/gitch-flow-macos
+          (cd macos/dist && shasum -a 256 gitch-flow-macos > gitch-flow-macos.sha256)
 
       - name: 릴리스에 올리기
         env:

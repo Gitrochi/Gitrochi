@@ -47,6 +47,7 @@ Gitrochi is a native Git client for macOS and Windows. It draws your history as 
 - **Coding agents** — Claude Code, Codex and Gemini CLI sessions per worktree, running in the built-in terminal, with their state in the sidebar
 - **Terminal** — shells in the repository folder below the graph, in tabs and split panes; the graph refreshes as you run git commands
 - **gitch** — the bundled CLI keeps several Git accounts apart per repository and blocks the wrong author, secrets and force pushes in hooks
+- **Flows** — assemble a repository's tests, checks, services and deploy steps in `.gitch/flow.yml` and run them the same way from the app, `gitch flow`, before a push or in CI: on this machine, in Docker, or through GitLab CI, GitHub Actions and Jenkins, rolled back when a step fails
 
 - **Repository workspace** — changes, commits, branches, comparison, rebase and Code in one place; pin frequently used sections and keep icon navigation when the sidebar is collapsed
 - **Review and advanced Git tools** — review the account, destination and outgoing changes before pushing; draft line comments and batch reviews; compare revisions, select several commits, edit three-way conflicts, browse recovery history, LFS, submodules and bisect
