@@ -24,8 +24,8 @@
 2. 왼쪽에서 검색, 폴더, 언어로 시작할 변경을 좁히고 체크박스로 여러 파일을 고른다. 함수 본문만 바뀐 파일도 표시한다.
 3. 확인 깊이를 정하고 영향 보기로 이동한다. 오른쪽에서 중복을 제거한 직접·간접 확인 대상, 경로, 신규 문제에 따른 리뷰 순서와 테스트 후보를 확인한다.
 4. 파일을 누르면 원본·대상·관계 종류·발견 방법·확보된 파일과 행을 확인한다. 선택한 변경의 상세에서 `이 변경의 리뷰·테스트`로 돌아갈 수 있다.
-5. 추정 필터를 바꾸어 포함/제외 결과를 비교한다. 테스트 후보는 직접·전이 참조, 같은 모듈, 폴더·이름 관례를 구분한다. 경로를 복사해 사용자가 직접 실행한다.
-6. 왼쪽의 Markdown / 오프라인 HTML 저장으로 현재 선택·시작 파일 필터·깊이에 맞는 보고서를 만든다. 외부 업로드·PR 댓글·테스트 실행은 하지 않는다.
+5. Use the heuristic filter in the graph settings tab to compare included and excluded results. Test candidates distinguish direct/transitive references, shared modules and folder/name conventions; copy paths to run tests manually.
+6. Save Markdown or offline HTML from the bottom of the review tab for the current selection, source-file filters and depth. This does not upload data, post PR comments or run tests.
 
 검색·언어·폴더 필터는 시작 변경 파일을 고른다. 선택한 변경에서 연결된 다른 언어·폴더의 경로도 확인 대상으로 추적한다. 캔버스 표시용 필터는 보고서에 설정으로 기록한다. 오른쪽 순환·규칙 개요는 전체 스냅샷의 비교이며, 파일별 우선순위와 공유 보고서는 선택한 변경·확인 대상에 연결된 문제를 보여 준다.
 
@@ -101,3 +101,27 @@
 - 공유 HTML은 현재 선택에 대한 독립적인 정적 보고서다. 그래프 탐색기 전체를 복제하지 않는다. 외부 네트워크와 스크립트를 CSP로 차단한다.
 - 위 성능은 약 2천 노드 fixture와 이 저장소의 결과다. 수만 노드, 실시간 파일 변경 중의 일관된 스냅샷, 모든 언어 문법을 검증한 것은 아니다.
 - preflight는 원격 HTTPS 주소의 push 계정 불일치와 검사 훅 누락으로 `STOP`이었다. doctor로 확인했으며 계정·훅 설정을 변경하지 않았고 커밋·push하지 않았다. 작업 종료 시 `main`, STAGED=0 상태를 유지했다.
+
+
+## Explorer layout and path actions (2026-10-26)
+
+The right dock keeps graph settings, change review and selection details in separate tabs while preserving the original silver/orange/green palette, light/dark themes and all existing filters, grouping, display, force and saved-view controls. Report exports live with the review. Tabs support arrow keys, Home and End; temporary tables and analysis return to the previous tab when closed.
+
+The left explorer separates search and relation controls from the file/folder navigator. Changed files use large checkbox labels with separate detail buttons and path menus. Shift-click selects or clears a range in the visible order, Space operates the focused checkbox, and selection preserves focus and scroll position. Expand the list to give changes more room. Filenames and directory paths wrap, and files are grouped by directory.
+
+Folder navigation is a complete, collapsible hierarchy instead of a truncated flat list. It combines the folder snapshot with changed paths, including documents, images and deleted folders. Breadcrumbs narrow the selected folder independently of the search query and let the user return to an ancestor or the repository root. On windows up to 900px wide, exploration and graph tools share the available lower panel one at a time. The `/` shortcut opens and focuses search. Fit and zoom use the actual remaining graph space.
+
+File and folder `⋯` menus show full relative and absolute paths, copy either value, and link to Finder through `gitrochi://open?...&view=finder`. Native routing checks relative paths and symlink containment, rejects line/commit parameters for Finder, and uses the existing reveal helper. A deleted path reveals its nearest surviving parent. Finder support requires a newly built macOS app; validation does not install the app or change URL-handler registration.
+
+Browser coverage includes the existing eleven relation/layout/style combinations, language filters, evidence links, PNG and offline reports, saved views, dock tabs, narrow layouts, real pointer and keyboard selection, forward/reverse ranges, scroll retention and expansion. Folder/path checks cover 125 document-only directories, deleted folders, intermediate ancestors, saved unchanged-folder scope, `src`/`src2` boundaries, query retention, long names, clipboard values and Finder URL encoding. Native route tests cover Finder root/folder/file dispatch and invalid routes.
+
+The measurements and full-suite results earlier in this document describe the original 2026-10-25 validation. Current build and test results are recorded in the pull request.
+
+Screenshots use synthetic fixtures:
+
+- Graph settings: [dark](screenshots/graph-layout/graph-settings-dark-1366.png), [light](screenshots/graph-layout/graph-settings-light-1366.png).
+- Review and narrow exploration: [review](screenshots/graph-layout/graph-review-1366.png), [680px explorer](screenshots/graph-layout/graph-explore-680.png).
+- File selection: [dark](screenshots/graph-layout/graph-selection-panel-dark-1366.png), [light](screenshots/graph-layout/graph-selection-panel-light-1366.png).
+- Folder hierarchy: [dark](screenshots/graph-layout/graph-folders-dark-1366.png), [light](screenshots/graph-layout/graph-folders-light-1366.png), [680px light](screenshots/graph-layout/graph-folders-light-680.png).
+- Path actions: [dark](screenshots/graph-layout/graph-path-menu-dark-1366.png), [680px light](screenshots/graph-layout/graph-path-menu-light-680.png).
+- Long file paths: [680px light](screenshots/graph-layout/graph-readable-files-light-680.png).

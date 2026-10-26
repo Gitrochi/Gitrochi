@@ -915,6 +915,10 @@ test_graph_html_in_browser() {   # 헤드리스 Chrome 에서: 오류 없이 그
   echo 'struct Caller { let value: Value }' | gr_put swift/Caller.swift
   echo 'struct Value {}' | gr_put swift/Value.swift
   echo 'export const special=1;' | gr_put "한글 space ' <b>&.ts"
+  echo 'export const removed=1;' | gr_put removed/history/only.ts
+  echo 'export const readable=1;' | gr_put 'packages/a/src/nested/long file name that stays readable in the changed file list.ts'
+  echo 'export const sibling=1;' | gr_put packages/a/src2/sibling.ts
+  for i in $(seq -w 1 125); do printf 'folder fixture\n' | gr_put "archive/folder-$i/readme.txt"; done
   printf '[files]\nforbid packages/a/src/f1.ts -> packages/a/src/f2.ts\nforbid packages/a/src/f2.ts -> packages/a/src/f1.ts\n' | gr_put .gitch/graph.rules
   gr_commit one
   for i in 2 3; do echo "// $i" >> packages/a/src/f1.ts; echo "// $i" >> packages/a/src/f2.ts; gr_commit "c$i"; done   # 같이 바뀌는 쌍
@@ -924,6 +928,9 @@ test_graph_html_in_browser() {   # 헤드리스 Chrome 에서: 오류 없이 그
   echo '// pending' >> swift/Value.swift
   echo '// pending' >> dotnet/App.cs
   echo '// pending' >> "한글 space ' <b>&.ts"
+  echo '// pending' >> 'packages/a/src/nested/long file name that stays readable in the changed file list.ts'
+  echo '// pending' >> packages/a/src2/sibling.ts
+  git rm -q removed/history/only.ts
   git mv packages/a/src/legacy.js 'packages/a/src/legacy moved.js'
   run gitch graph files --out "$T/out/browser.html"; assert_ok
   run node "$ROOT/tests/graph_browser.mjs" "$chrome" "$T/out/browser.html" "$T"
