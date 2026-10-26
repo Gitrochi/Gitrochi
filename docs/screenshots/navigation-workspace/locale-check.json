@@ -1,0 +1,21 @@
+[
+  {
+    "name": "commits",
+    "theme": "dark",
+    "ok": true,
+    "text": {
+      "placeholder": "메시지·작성자·SHA·브랜치 검색 (Ctrl+F)",
+      "scope": "커밋"
+    },
+    "blocked": []
+  },
+  {
+    "name": "pullRequests",
+    "theme": "light",
+    "ok": true,
+    "text": {
+      "title": "풀 리퀘스트"
+    },
+    "blocked": []
+  }
+]

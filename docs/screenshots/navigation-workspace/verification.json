@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-26",
+  "windowsUnit": {
+    "files": 35,
+    "passed": 360
+  },
+  "reactInteractionSuites": 5,
+  "visualCases": 48,
+  "screenshots": 56,
+  "allExternalRequestsMocked": true,
+  "windowsDeviceTested": false,
+  "host": "macOS arm64",
+  "nativeStandaloneChecks": [
+    "repository-browser",
+    "hosting-hub",
+    "workspace-operations",
+    "confirmation-guard"
+  ],
+  "ciLogRedirectTests": 1,
+  "nativeWorkspaceNavigation": "passed",
+  "nativeCoreLinked": true,
+  "macosBuild": "passed (arm64, ad-hoc signed)",
+  "macosSignature": "verified",
+  "windowsFrontendBuild": "passed (shared WASM core included)",
+  "rustBackendHostCheck": "passed on macOS",
+  "gitPreflight": "OK"
+}

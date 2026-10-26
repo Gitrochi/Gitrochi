@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "name": "navigationSelfTest",
+      "ok": true,
+      "detail": "21 page buttons, current-page highlight, empty-repository access, page search shortcut/filter, settings footer and GitLab names"
+    },
+    {
+      "name": "localWorkbenchSelfTest",
+      "ok": true,
+      "detail": "Branches/remote/tags/stash actions, embedded comparison, folder/source/history/blame/change previews and rebase continue rendered"
+    },
+    {
+      "name": "hostingHubSelfTest",
+      "ok": true,
+      "detail": "release assets + edit confirmation; project status + add issue; organization repositories + members + clone; gist files + star + delete cancellation"
+    },
+    {
+      "name": "workspacePanelsSelfTest",
+      "ok": true,
+      "detail": "Home/repositories/remote clone, embedded mentions/read, my-work summaries, issue create/edit/conversation, CI bounded redacted log and Tools diagnosis/guide controls passed"
+    },
+    {
+      "name": "repositoryAssistantSelfTest",
+      "ok": true,
+      "detail": "Repository AI: preview without AI, question input, bounded read tool and answer/activity; MCP config/test; workspace selected repository summary refresh"
+    }
+  ],
+  "unexpected": []
+}

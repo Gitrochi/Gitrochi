@@ -108,7 +108,9 @@ gitch setup alice --check --json
 
 GitHub 브라우저 로그인은 공식 [GitHub CLI의 웹 인증](https://cli.github.com/manual/gh_auth_login)을 사용한다. 앱에서 로그인 버튼을 누르면 `gitch login github --start --json --yes`가 즉시 `pending` 세션을 반환한다. 앱은 응답의 `verificationURL`을 열고 `--status SESSION --json`으로 일회용 코드와 결과를 읽는다. `--cancel SESSION --json`은 해당 세션만 취소한다. 다른 계정의 인증을 종료하거나 로그아웃하지 않는다. 동시에 요청한 로그인은 GitHub CLI의 계정 저장이 충돌하지 않도록 순서대로 진행한다.
 
-응답은 `schemaVersion`, `tool`, `session`, `state`, `deviceCode`, `verificationURL`, `login`, `email`, `message`를 포함한다(`gitch schema login`). `state`는 `pending`, `complete`, `failed`, `cancelled` 중 하나다. 완료 전 `login`과 `email`, 코드 발급 전 `deviceCode`는 `null`이다. 공식 완료 로그의 계정 이름과 그 계정 전용 자격 증명의 API 응답이 일치해야 완료된다. 이메일은 검증된 기본 이메일만 사용하고 없으면 GitHub noreply 주소를 제공한다. 토큰·원본 인증 로그는 응답하지 않는다. 앱이 완료 계정과 일치하는 자격 증명을 가져온 뒤 사용자가 계정 등록·SSH 키 생성·공개키 업로드를 진행한다.
+프로젝트 조회·상태 변경이 필요한 경우에만 사용자가 프로젝트 화면에서 추가 접근 버튼을 눌러 `gitch login github --start --json --yes --capability projects --expected-login <계정>`을 시작한다. 이 흐름은 `project` 권한(프로젝트 읽기 포함)을 추가 요청하며 기본 로그인 권한은 바꾸지 않는다. 지정 계정이 없거나 승인한 계정이 다르면 완료·앱 가져오기를 거부한다. 권한·대상 계정은 시작 시에만 지정하며 상태 조회·취소는 기존 세션 API를 그대로 쓴다. 완료 후 앱은 같은 사용자 전용 자격 증명을 다시 읽고 기존 앱 계정의 비밀 저장소 항목을 갱신한다. 브라우저의 최종 승인은 사용자가 직접 진행한다.
+
+응답은 `schemaVersion`, `tool`, `session`, `state`, `deviceCode`, `verificationURL`, `login`, `email`, `message`를 포함한다(`gitch schema login`). `state`는 `pending`, `complete`, `failed`, `cancelled` 중 하나다. 대기 중에는 `phase`도 제공한다: 다른 로그인 대기 `queued`, 코드 발급 준비 `preparing`, 브라우저 승인 대기 `approval`. 전체 세션은 최대 15분이며, 순서가 되어 인증 요청을 시작한 뒤 60초 안에 코드를 받지 못하면 네트워크 확인 안내와 함께 실패한다. 완료 전 `login`과 `email`, 코드 발급 전 `deviceCode`는 `null`이다. GitHub CLI의 코드 출력과 클립보드 복사 안내를 모두 지원하며 사용자 클립보드 설정은 바꾸지 않는다. 공식 완료 로그의 계정 이름과 그 계정 전용 자격 증명의 API 응답이 일치해야 완료된다. 이메일은 검증된 기본 이메일만 사용하고 없으면 GitHub noreply 주소를 제공한다. 토큰·원본 인증 로그는 응답하지 않는다. 앱이 완료 계정과 일치하는 자격 증명을 가져온 뒤 사용자가 계정 등록·SSH 키 생성·공개키 업로드를 진행한다.
 
 로그인 세션은 사용자 전용 상태 폴더에 저장하며 15분 후 중단된다. 완료한 세션 중 하루 지난 항목을 다음 시작 때 최대 32개 검사해 정리한다. GitHub CLI가 없으면 설치 링크를 포함한 `GITHUB_CLI_MISSING` 오류를 반환한다. 앱의 도구 설정 경로는 `GITCH_GH`로 전달할 수 있고, 다음으로 `GH_PATH`, `PATH`의 `gh`를 사용한다. 이 API를 검증하는 테스트는 가짜 GitHub CLI와 임시 HOME만 사용한다.
 
@@ -253,6 +255,24 @@ HTML 언어 메뉴는 실제 인식한 언어를 각각 보여 준다(TypeScript
 | `html` 노드 | 누르면 들어옴 · 나감 · 불안정도 · 영향 범위(바꾸면 흔들리는 것 전부) · 전체 의존 · 순환과, 가져오는 것 · 가져다 쓰는 곳(폴더면 안의 파일) 목록. 단추로 영향 범위 보기 · 전체 의존 보기 · 경로 찾기(다음에 누른 노드까지 가장 짧은 길) · 주변만(로컬 그래프). 색은 언어 · 종류(모듈: 앱 · 라이브러리 · 테스트) · 바뀐 횟수, 크기는 연결 · 줄 · 바뀐 횟수. 언어 색은 노드가 많은 계열 셋에만 주고 나머지는 회색(언어 메뉴에서는 모두 각각 선택 가능) — 색 세 가지를 넘으면 서로 잘 구별되지 않는다 |
 | `svg` · `png` | graphviz 의 `dot` 으로 그린다(`brew install graphviz`, Windows 는 `winget install Graphviz.Graphviz`, 없으면 그렇게 알린다). `--format dot` 은 DOT 원문 |
 | 저장 | `--out 파일`(`-` 는 표준출력). 없으면 html · svg · png 는 `$TMPDIR/gitch-graph/<저장소>-<관계>.<형식>`. 파일로 쓰면 끝에 `GRAPH_FILE=… NODES=… EDGES=…` |
+
+### 커밋할 변경의 영향 보기
+
+macOS와 Windows의 커밋 화면에서 **스테이지 변경 검토 → 분석**을 누르면 현재 HEAD와 스테이지 내용을 비교한다. 작업 트리에만 남은 수정과 미추적 파일은 제외하고 변경 파일, 직접·간접 확인 대상, 관련 테스트 후보, 해석하지 못한 변경 파일 수를 보여 준다. 테스트 후보는 정적 의존 경로나 파일 이름으로 추정한 것이며 테스트 실행 결과가 아니다.
+
+```bash
+gitch g review --json
+gitch g review --stamp --json
+gitch g review --format html --out staged-review.html --no-open
+```
+
+`stamp`는 HEAD와 스테이지의 경로·파일 내용으로 만든 식별자다. 같은 경로를 다시 stage하거나 HEAD가 바뀌면 앱이 결과를 오래된 것으로 표시한다. 인덱스의 stat 정보 갱신이나 스테이지하지 않은 수정에는 바뀌지 않는다. 분석 시작·종료 시 식별자가 다르면 JSON의 `stale`이 참이다. 첫 커밋도 빈 기준 상태와 비교하며, 충돌 중인 인덱스는 분석하지 않는다. **스테이지 그래프 열기**도 같은 staged 범위를 사용한다.
+
+### 브랜치 구조 변화 재생
+
+`gitch g diff main --format html` 또는 앱의 **이 브랜치에서 바뀐 의존**으로 연 비교 페이지에서 **구조 변화 재생**을 누른다. 파일·모듈 그래프의 기준 상태에서 현재 상태로 노드와 연결이 등장하거나 사라지는 과정을 고정된 배치에서 확인한다. 이름 변경은 같은 노드의 이름 전환으로 표시한다.
+
+처음·끝, 위치 슬라이더, 재생·일시정지, 속도(0.5×·1×·2×), 반복을 제공하고 검색·언어 필터도 유지한다. 운영체제의 동작 줄이기가 켜져 있으면 슬라이더로 시점을 직접 고른다. 재생을 닫으면 이전 배치로 돌아간다. 두 분석 스냅샷 사이의 전환이며, 중간 커밋 이력을 재구성하는 기능은 아니다.
 
 JSON (노드 · 연결이 한 줄에 하나):
 

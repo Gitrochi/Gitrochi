@@ -266,6 +266,8 @@ struct DiffDocument {
     var hunks: [DiffHunk] = []
     /// 머지 커밋의 결합 diff(@@@)
     var combined = false
+    /// 여러 파일의 변경은 파일 하나의 줄 단위 패치로 만들 수 없다.
+    var multipleFiles = false
     /// 나란히 보기의 줄들(왼쪽 이전 · 오른쪽 이후)
     var splitRows: [DiffSplitRow] = []
     /// 새 파일·지운 파일·이름·권한(diff 머리에서 읽은 것)
@@ -515,10 +517,21 @@ enum LoadState: Hashable {
 
 enum SheetKind: Identifiable {
     case clone
+    case cloneURL(String)
     case stash
     case newBranch(start: String, label: String)
     case tag(sha: String)
     case createPullRequest
+    case pushReview(branch: String, force: Bool, remoteOverride: String?)
+    case changeQuestion
+    case compareRevisions
+    case batchCommits
+    case lineHistory
+    case localWorkflows
+    case workspaceOverview
+    case collaborationInbox
+    case repositoryAssistant
+    case mcpConnection
     /// 에이전트 세션 시작(path 가 있으면 그 워크트리를 미리 고름)
     case startAgent(path: String?)
     /// branch 가 있으면 기존 브랜치를, 없으면 start 에서 새 브랜치를 워크트리로 체크아웃
@@ -537,10 +550,21 @@ enum SheetKind: Identifiable {
     var id: String {
         switch self {
         case .clone: return "clone"
+        case .cloneURL(let url): return "clone:" + url
         case .stash: return "stash"
         case .newBranch(let s, _): return "branch:" + s
         case .tag(let s): return "tag:" + s
         case .createPullRequest: return "pr"
+        case .pushReview(let branch, let force, let remote): return "push:" + branch + ":" + String(force) + ":" + (remote ?? "")
+        case .changeQuestion: return "changeQuestion"
+        case .compareRevisions: return "compareRevisions"
+        case .batchCommits: return "batchCommits"
+        case .lineHistory: return "lineHistory"
+        case .localWorkflows: return "localWorkflows"
+        case .workspaceOverview: return "workspaceOverview"
+        case .collaborationInbox: return "collaborationInbox"
+        case .repositoryAssistant: return "repositoryAssistant"
+        case .mcpConnection: return "mcpConnection"
         case .startAgent(let p): return "agent:" + (p ?? "")
         case .addWorktree(let b, let s): return "wt:" + (b ?? "") + ":" + (s ?? "")
         case .splitCommits: return "split"
@@ -550,6 +574,15 @@ enum SheetKind: Identifiable {
         case .graphCheck: return "graphCheck"
         }
     }
+}
+
+/// Push 검토를 취소하거나 생성에 실패해도 사용자가 작성한 PR 초안은 다시 열 수 있게 보관한다.
+struct NewPullRequestDraft {
+    let branch: String
+    let title: String
+    let body: String
+    let base: String
+    let draft: Bool
 }
 
 struct ConfirmRequest: Identifiable {

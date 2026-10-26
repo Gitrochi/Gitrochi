@@ -239,10 +239,16 @@ gitsw_cmd_path() {   # 훅/설정에 적을 gitch 경로 (~/bin/gitch 가 이 �
 }
 
 json_esc() {   # 문자열 → JE (따옴표 포함 JSON 문자열) — 서브셸 없이
-  local s="$1"
+  local s="$1" code oct ch escaped
   s=${s//\\/\\\\}; s=${s//\"/\\\"}
   s=${s//$'\n'/\\n}; s=${s//$'\r'/\\r}; s=${s//$'\t'/\\t}
-  case "$s" in *[$'\001'-$'\037']*) s=$(printf '%s' "$s" | tr -d '\001-\037') ;; esac
+  case "$s" in *[$'\001'-$'\037']*)
+    for ((code=1; code<32; code++)); do
+      printf -v oct '%03o' "$code"; printf -v ch '%b' "\\$oct"
+      printf -v escaped '\\u%04x' "$code"
+      s=${s//"$ch"/"$escaped"}
+    done ;;
+  esac
   JE="\"$s\""
 }
 json_str() { json_esc "$1"; printf '%s' "$JE"; }
@@ -1571,10 +1577,10 @@ run_gitleaks() {   # gitleaks 가 설치돼 있으면 스테이지 내용을 한
 hook_check_secrets() {
   local out bad="" f gl
   out=$(git -c core.quotepath=off diff --cached --no-color --no-ext-diff --no-textconv -U0 --diff-filter=ACMR 2>/dev/null | GITSW_LOCKRE="$LOCKFILE_RE" awk "$SECRET_AWK")
-  while IFS= read -r f; do
+  while IFS= read -r -d '' f; do
     [ -z "$f" ] && continue
     sensitive_name "$f" && bad="$bad  $f  — $SN_REASON"$'\n'
-  done < <(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACR 2>/dev/null)
+  done < <(git diff --cached --name-only -z --diff-filter=ACR 2>/dev/null)
   gl=$(run_gitleaks)
   if [ -n "$out" ] || [ -n "$bad" ] || [ -n "$gl" ]; then
     err "✘ [gitch] 비밀값으로 보이는 내용이 있어 커밋을 막았습니다:"
@@ -2003,14 +2009,30 @@ st_word() {
   esac
 }
 
-json_files() {   # name-status 줄들 → [{"status":..,"path":..}]
-  local s f g out="" first=1
-  while IFS=$'\t' read -r s f g; do
-    [ -z "$s" ] && continue
-    [ -n "$first" ] || out="$out,"; first=""
-    out="$out{\"status\":$(json_str "$(st_word "$s")"),\"path\":$(json_str "${g:-$f}")}"
-  done <<< "$1"
-  printf '[%s]' "$out"
+check_diff_files() {   # diff -z → CF_JSON CF_TEXT CF_COUNT (경로의 탭·줄바꿈도 한 파일)
+  local s f display
+  CF_JSON=""; CF_TEXT=""; CF_COUNT=0
+  while IFS= read -r -d '' s && IFS= read -r -d '' f; do
+    case "$s" in R*|C*) IFS= read -r -d '' f || break ;; esac
+    [ "$CF_COUNT" -eq 0 ] || CF_JSON="$CF_JSON,"
+    CF_JSON="$CF_JSON{\"status\":$(json_str "$(st_word "$s")"),\"path\":$(json_str "$f")}"
+    printf -v display '%q' "$f"
+    CF_TEXT="$CF_TEXT$s"$'\t'"$display"$'\n'
+    CF_COUNT=$((CF_COUNT+1))
+  done < <(git diff "$@" --name-status -z 2>/dev/null)
+  CF_JSON="[$CF_JSON]"
+}
+check_path_files() {   # NUL 구분 경로 → CP_JSON CP_TEXT CP_COUNT
+  local f display
+  CP_JSON=""; CP_TEXT=""; CP_COUNT=0
+  while IFS= read -r -d '' f; do
+    [ "$CP_COUNT" -eq 0 ] || CP_JSON="$CP_JSON,"
+    CP_JSON="$CP_JSON$(json_str "$f")"
+    printf -v display '%q' "$f"
+    CP_TEXT="$CP_TEXT$display"$'\n'
+    CP_COUNT=$((CP_COUNT+1))
+  done
+  CP_JSON="[$CP_JSON]"
 }
 json_lines() {   # 줄들 → ["..",".."]
   local l out="" first=1
@@ -2025,20 +2047,23 @@ json_lines() {   # 줄들 → ["..",".."]
 check_cmd() {   # gitch ck
   require_repo
   local json="" fmode=auto a br acc lock staged unstaged untracked ahead=0 behind=0 stash fetched=1 n_s n_u n_n
+  local staged_json unstaged_json untracked_json conflicts_json
   for a in "$@"; do
     case "$a" in --json) json=1 ;; --fetch) fmode=force ;; --no-fetch) fmode=never ;; *) die "사용법: gitch ck [--json] [--fetch|--no-fetch]" ;; esac
   done
   load_config >/dev/null 2>&1
   br=$(cur_branch)
   maybe_fetch "$fmode"; case $? in 1) fetched=0 ;; 2) fetched=skip ;; esac
-  staged=$(git -c core.quotepath=off diff --cached --name-status 2>/dev/null)
-  unstaged=$(git -c core.quotepath=off diff --name-status 2>/dev/null)
-  untracked=$(git -c core.quotepath=off ls-files --others --exclude-standard)
-  n_s=$(printf '%s' "$staged" | grep -c .); n_u=$(printf '%s' "$unstaged" | grep -c .); n_n=$(printf '%s' "$untracked" | grep -c .)
+  check_diff_files --cached; staged=$CF_TEXT; staged_json=$CF_JSON; n_s=$CF_COUNT
+  check_diff_files; unstaged=$CF_TEXT; unstaged_json=$CF_JSON; n_u=$CF_COUNT
+  check_path_files < <(git ls-files --others --exclude-standard -z)
+  untracked=$CP_TEXT; untracked_json=$CP_JSON; n_n=$CP_COUNT
   stash=$(git stash list 2>/dev/null | grep -c .)
   resolve_repo .
   lock=$R_LOCK; acc=$R_ACC
   repo_state
+  check_path_files < <(git diff --name-only --diff-filter=U -z 2>/dev/null)
+  conflicts_json=$CP_JSON
   if has_upstream; then
     read -r behind ahead <<< "$(git rev-list --left-right --count '@{u}...HEAD' 2>/dev/null)"
     behind=${behind:-0}; ahead=${ahead:-0}
@@ -2050,9 +2075,9 @@ check_cmd() {   # gitch ck
     printf '{"schemaVersion":1,"repo":%s,"branch":%s,"account":%s,"locked":%s,"fetched":%s,"hasUpstream":%s,"ahead":%s,"behind":%s,"staged":%s,"unstaged":%s,"untracked":%s,"stash":%s,"inProgress":%s,"conflicts":%s}\n' \
       "$(json_str "$(basename "$(repo_top)")")" "$(json_str "$br")" "$(json_str "$acc")" "$(json_bool "$lock")" \
       "$( [ "$fetched" = 1 ] && echo true || echo false)" "$(has_upstream && echo true || echo false)" \
-      "$(json_num "$ahead")" "$(json_num "$behind")" "$(json_files "$staged")" "$(json_files "$unstaged")" \
-      "$(json_lines "$untracked")" "$(json_num "$stash")" \
-      "$( [ -n "$RS_OP" ] && json_str "$RS_OP" || echo null)" "$(json_lines "$RS_CONFLICT_FILES")"
+      "$(json_num "$ahead")" "$(json_num "$behind")" "$staged_json" "$unstaged_json" \
+      "$untracked_json" "$(json_num "$stash")" \
+      "$( [ -n "$RS_OP" ] && json_str "$RS_OP" || echo null)" "$conflicts_json"
     return 0
   fi
 
@@ -2116,6 +2141,8 @@ auto_msg() {   # 메시지를 안 줬을 때 (스테이지된 파일 기준)
 commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... [메시지...]
   require_repo
   local all=0 msgs=() words=() file="" trailers=() m t files
+  local merging=""
+  [ -f "$(git rev-parse --git-path MERGE_HEAD)" ] && merging=1
   while [ $# -gt 0 ]; do
     case "$1" in
       -a|--all) all=1 ;;
@@ -2139,7 +2166,7 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
   fi
   if [ "$all" = 1 ]; then
     git add -A || die "git add 실패"
-  elif git diff --cached --quiet 2>/dev/null; then
+  elif [ -z "$merging" ] && git diff --cached --quiet 2>/dev/null; then
     if [ -n "$(git status --porcelain)" ]; then
       if can_prompt; then
         dim "ℹ 스테이지된 파일이 없어 변경사항 전체를 올립니다 (git add -A)"
@@ -2151,7 +2178,7 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
       fi
     fi
   fi
-  if git diff --cached --quiet 2>/dev/null; then say "커밋할 변경사항이 없습니다."; return 3; fi
+  if [ -z "$merging" ] && git diff --cached --quiet 2>/dev/null; then say "커밋할 변경사항이 없습니다."; return 3; fi
   local args=(-q)
   if [ ${#msgs[@]} -gt 0 ]; then
     for m in "${msgs[@]}"; do args+=(-m "$m"); done
@@ -2159,6 +2186,8 @@ commit_cmd() {   # [-a] [-m 메시지]... [-F 파일] [--trailer "키: 값"]... 
     args+=(-F "$file")
   elif [ ${#words[@]} -gt 0 ]; then
     args+=(-m "${words[*]}")
+  elif [ -n "$merging" ]; then
+    args+=(--no-edit)
   else
     m=""
     can_prompt && read -r -p "커밋 메시지 (Enter = 자동 생성): " m
@@ -3271,21 +3300,33 @@ login_session() {
   LOGIN_ROOT="$STATE_DIR/logins"; LOGIN_DIR="$LOGIN_ROOT/$id"
   [ -d "$LOGIN_ROOT" ] && [ ! -L "$LOGIN_ROOT" ] && [ -d "$LOGIN_DIR" ] && [ ! -L "$LOGIN_DIR" ] && [ -O "$LOGIN_DIR" ] || { login_error LOGIN_SESSION_INVALID 1 "로그인 세션을 찾을 수 없습니다."; return 1; }
   local file
-  for file in created result.json auth.log cancel gh-path browser result.lock; do
+  for file in created auth-started result.json auth.log cancel gh-path browser result.lock capability expected-login; do
     [ ! -L "$LOGIN_DIR/$file" ] || { login_error LOGIN_SESSION_INVALID 1 "로그인 세션 파일이 올바르지 않습니다."; return 1; }
   done
 }
 login_code() {
-  LC_ALL=C sed -nE 's/.*[Oo]ne-time code: ([A-Z0-9]{4}-[A-Z0-9]{4})([^A-Z0-9-].*)?$/\1/p' "$LOGIN_DIR/auth.log" 2>/dev/null | head -1
+  # gh의 clipboard 설정이 켜져 있으면 같은 코드를 괄호 안에 출력한다.
+  # 두 공식 안내 문장만 읽어 다른 로그에 우연히 나온 문자열은 전달하지 않는다.
+  LC_ALL=C sed -nE \
+    -e 's/.*[Ff]irst copy your one-time code: ([A-Z0-9]{4}-[A-Z0-9]{4})[[:space:]]*$/\1/p' \
+    -e 's/.*[Oo]ne-time code \(([A-Z0-9]{4}-[A-Z0-9]{4})\) copied to clipboard[[:space:]]*$/\1/p' \
+    "$LOGIN_DIR/auth.log" 2>/dev/null | head -1
 }
 login_nullable() { if [ -n "$1" ]; then json_str "$1"; else printf null; fi; }
 login_email_valid() {
   case "$1" in ''|*[$'\001'-$'\040']*|*[[:space:]]*) return 1 ;; ?*@?*) return 0 ;; *) return 1 ;; esac
 }
 login_result() {
-  local session=$1 state=$2 code=${3:-} user=${4:-} email=${5:-} message=$6
-  printf '{"schemaVersion":1,"tool":"gitch login","session":%s,"state":%s,"deviceCode":%s,"verificationURL":"https://github.com/login/device","login":%s,"email":%s,"message":%s}\n' \
+  local session=$1 state=$2 code=${3:-} user=${4:-} email=${5:-} message=$6 phase=""
+  if [ "$state" = pending ]; then
+    if [ -n "$code" ]; then phase=approval; message="브라우저에서 GitHub 로그인을 계속하세요."
+    elif [ -f "$LOGIN_DIR/auth-started" ] || [ ! -d "$LOGIN_ROOT/active.lock" ]; then phase=preparing; message="GitHub 로그인 코드를 준비하고 있습니다."
+    else phase=queued; message="다른 GitHub 로그인 작업이 끝나기를 기다립니다."; fi
+  fi
+  printf '{"schemaVersion":1,"tool":"gitch login","session":%s,"state":%s,"deviceCode":%s,"verificationURL":"https://github.com/login/device","login":%s,"email":%s,"message":%s' \
     "$(json_str "$session")" "$(json_str "$state")" "$(login_nullable "$code")" "$(login_nullable "$user")" "$(login_nullable "$email")" "$(json_str "$message")"
+  [ -z "$phase" ] || printf ',"phase":%s' "$(json_str "$phase")"
+  printf '}\n'
 }
 login_finish() {
   local state=$1 user=${2:-} email=${3:-} message=$4
@@ -3363,7 +3404,7 @@ login_created() {
 }
 login_wait() {
   # 이 worker가 직접 만든 자식만 중단한다. 저장된 PID를 신뢰해 kill하지 않는다.
-  local child rc=0 started
+  local child rc=0 started auth_started code_expired
   [ ! -f "$LOGIN_DIR/cancel" ] || return 125
   login_created
   [ "$(( $(date +%s) - LOGIN_CREATED ))" -lt 900 ] || return 124
@@ -3372,12 +3413,20 @@ login_wait() {
   while kill -0 "$child" 2>/dev/null; do
     login_created
     started=$(date +%s)
-    if [ -f "$LOGIN_DIR/cancel" ] || [ "$((started - LOGIN_CREATED))" -ge 900 ]; then
+    code_expired=""
+    if [ -n "${LOGIN_WAIT_FOR_CODE:-}" ]; then
+      auth_started=$(cat "$LOGIN_DIR/auth-started" 2>/dev/null)
+      case "$auth_started" in ''|*[!0-9]*) auth_started=$started ;; esac
+      [ "${#auth_started}" -le 12 ] || auth_started=$started
+      if [ "$((started - auth_started))" -ge 60 ] && [ -z "$(login_code)" ]; then code_expired=1; fi
+    fi
+    if [ -f "$LOGIN_DIR/cancel" ] || [ "$((started - LOGIN_CREATED))" -ge 900 ] || [ -n "$code_expired" ]; then
       kill "$child" 2>/dev/null || :
       sleep 1
       kill -KILL "$child" 2>/dev/null || :
       wait "$child" 2>/dev/null || :
       [ ! -f "$LOGIN_DIR/cancel" ] || return 125
+      [ -z "$code_expired" ] || return 123
       return 124
     fi
     sleep 1
@@ -3391,7 +3440,17 @@ login_worker() (
   unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN GH_HOST
   login_browser_launcher || { login_finish failed "" "" "브라우저 로그인 도우미를 준비하지 못했습니다."; exit 0; }
   export GH_PROMPT_DISABLED=1 NO_COLOR=1 CLICOLOR=0 TERM=dumb
-  local gh user token actual email uid rc=0
+  local gh user token actual email uid rc=0 capability expected scopes
+  capability=$(cat "$LOGIN_DIR/capability" 2>/dev/null); capability=${capability:-standard}
+  expected=$(cat "$LOGIN_DIR/expected-login" 2>/dev/null)
+  scopes=read:user,user:email,repo,read:org,workflow,admin:public_key
+  case "$capability" in
+    standard) ;;
+    projects)
+      [[ "$expected" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]] || { login_finish failed "" "" "프로젝트 접근을 연결할 GitHub 계정이 올바르지 않습니다."; exit 0; }
+      scopes="$scopes,project" ;;
+    *) login_finish failed "" "" "지원하지 않는 GitHub 로그인 권한입니다."; exit 0 ;;
+  esac
   # GitHub CLI 계정 저장은 전역 파일을 공유하므로 서로 다른 세션의 저장을 순서대로 실행한다.
   login_active_lock || rc=$?
   case "$rc" in
@@ -3401,16 +3460,22 @@ login_worker() (
     *) login_finish failed "" "" "다른 로그인 작업의 상태를 확인할 수 없습니다. 다시 시작하세요."; exit 0 ;;
   esac
   gh=$(cat "$LOGIN_DIR/gh-path")
-  login_wait "$gh" auth login --web --hostname github.com --skip-ssh-key --scopes read:user,user:email,repo,read:org,workflow,admin:public_key > "$LOGIN_DIR/auth.log" 2>&1 || rc=$?
+  date +%s > "$LOGIN_DIR/auth-started"
+  LOGIN_WAIT_FOR_CODE=1 login_wait "$gh" auth login --web --hostname github.com --skip-ssh-key --scopes "$scopes" > "$LOGIN_DIR/auth.log" 2>&1 || rc=$?
   case "$rc" in
     125) login_finish cancelled "" "" "로그인을 취소했습니다."; exit 0 ;;
     124) login_finish failed "" "" "로그인 시간이 초과되었습니다. 다시 시작하세요."; exit 0 ;;
+    123) login_finish failed "" "" "GitHub 로그인 코드를 준비하지 못했습니다. 네트워크 연결을 확인하고 다시 시도하세요."; exit 0 ;;
     0) ;;
     *) login_finish failed "" "" "GitHub 로그인이 완료되지 않았습니다. 다시 시도하세요."; exit 0 ;;
   esac
   [ ! -f "$LOGIN_DIR/cancel" ] || { login_finish cancelled "" "" "로그인을 취소했습니다."; exit 0; }
   user=$(LC_ALL=C sed -nE 's/.*Logged in as ([A-Za-z0-9][A-Za-z0-9-]{0,38})[[:space:]]*$/\1/p' "$LOGIN_DIR/auth.log" | tail -1)
   [ -n "$user" ] || { login_finish failed "" "" "로그인한 GitHub 계정을 확인할 수 없습니다. GitHub CLI를 업데이트하고 다시 시도하세요."; exit 0; }
+  # 추가 권한은 사용자가 선택한 계정에만 가져온다. 다른 계정으로 승인해도 앱에 연결하지 않는다.
+  if [ -n "$expected" ] && [ "$(lower "$user")" != "$(lower "$expected")" ]; then
+    login_finish failed "" "" "선택한 GitHub 계정과 승인한 계정이 다릅니다. 선택한 계정으로 다시 승인하세요."; exit 0
+  fi
   # 기존 활성 계정과 섞이지 않도록 완료 로그에 나온 사용자 전용 자격 증명으로 조회한다.
   rc=0; token=$(login_wait "$gh" auth token --hostname github.com --user "$user" 2>/dev/null) || rc=$?
   if [ "$rc" -ne 0 ]; then
@@ -3452,7 +3517,7 @@ login_cleanup() {
   done
 }
 login_cmd() (
-  local mode="" session="" yes="" code="" self
+  local mode="" session="" yes="" code="" self capability=standard expected="" scoped="" identified=""
   [ "${1:-}" = github ] || { login_error LOGIN_ARGUMENT 1 "사용법: gitch login github --start|--status SESSION|--cancel SESSION --json"; return 1; }
   shift
   while [ $# -gt 0 ]; do
@@ -3460,11 +3525,17 @@ login_cmd() (
       --start) [ -z "$mode" ] || { login_error LOGIN_ARGUMENT 1 "로그인 작업을 하나만 선택하세요."; return 1; }; mode=start ;;
       --status|--cancel) [ -z "$mode" ] && [ $# -ge 2 ] || { login_error LOGIN_ARGUMENT 1 "세션 식별자가 필요합니다."; return 1; }; mode=${1#--}; session=$2; shift ;;
       --yes|-y) yes=1 ;;
+      --capability) [ $# -ge 2 ] && [ -z "$scoped" ] || { login_error LOGIN_ARGUMENT 1 "로그인 권한을 하나만 선택하세요."; return 1; }; capability=$2; scoped=1; shift ;;
+      --expected-login) [ $# -ge 2 ] && [ -z "$identified" ] || { login_error LOGIN_ARGUMENT 1 "연결할 GitHub 계정을 하나만 지정하세요."; return 1; }; expected=$2; identified=1; shift ;;
       --json) ;;
       *) login_error LOGIN_ARGUMENT 1 "알 수 없는 로그인 옵션입니다."; return 1 ;;
     esac
     shift
   done
+  case "$capability" in standard|projects) ;; *) login_error LOGIN_ARGUMENT 1 "지원하지 않는 GitHub 로그인 권한입니다."; return 1 ;; esac
+  if [ -n "$identified" ] && ! [[ "$expected" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]; then login_error LOGIN_ARGUMENT 1 "연결할 GitHub 계정이 올바르지 않습니다."; return 1; fi
+  if [ "$mode" != start ] && { [ -n "$scoped" ] || [ -n "$identified" ]; }; then login_error LOGIN_ARGUMENT 1 "로그인 권한과 계정은 시작할 때만 지정하세요."; return 1; fi
+  if [ "$capability" = projects ] && [ -z "$expected" ]; then login_error LOGIN_ARGUMENT 1 "프로젝트 접근을 연결할 GitHub 계정을 지정하세요."; return 1; fi
   case "$mode" in
     start)
       [ -n "$yes" ] || { login_error CONFIRMATION_REQUIRED 2 "GitHub 브라우저 로그인은 앱의 로그인 버튼이나 --yes 확인이 필요합니다."; return 2; }
@@ -3478,6 +3549,8 @@ login_cmd() (
       chmod 700 "$LOGIN_DIR"; session=${LOGIN_DIR##*/}
       date +%s > "$LOGIN_DIR/created"
       printf '%s\n' "$LOGIN_GH" > "$LOGIN_DIR/gh-path"
+      printf '%s\n' "$capability" > "$LOGIN_DIR/capability"
+      [ -z "$expected" ] || printf '%s\n' "$expected" > "$LOGIN_DIR/expected-login"
       printf '#!/bin/sh\nexit 0\n' > "$LOGIN_DIR/browser"; chmod 700 "$LOGIN_DIR/browser"
       : > "$LOGIN_DIR/auth.log"; : > "$LOGIN_DIR/worker.log"
       self=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")
@@ -5332,7 +5405,7 @@ app_cmd() {
 # 결과 레코드(0 통계·안내 / 1 노드 / 2 연결, 탭 구분)를 sort 로 순서를 고정한 뒤 json · dot 으로 바꾼다. html 은 json 을 품은 오프라인 한 페이지.
 
 GRAPH_USAGE='사용법: gitch graph [files|modules|changes|tree] [--format html|json|svg|png|dot] [--out 파일] [--open|--no-open] [폴더|저장소]
-       gitch graph diff [기준] …  ·  gitch graph check …   (각각 --help, graph 는 짧게 g)
+       gitch graph diff [기준] …  ·  gitch graph review …  ·  gitch graph check …   (각각 --help, graph 는 짧게 g)
   files    여러 언어의 소스 파일과 import/include (Swift · JVM 타입 이름 참조는 추정) — 기본
   modules  모듈/타깃 의존 (SwiftPM · Tuist · npm · Cargo · Go · Gradle · Maven · Python · .NET · Composer · Bundler · Pub · CMake)
   changes  자주 같이 커밋되는 파일 쌍과 바뀐 횟수(핫스팟)
@@ -5573,6 +5646,29 @@ graph_spm_describe() {   # $1 임시 폴더 $2 범위(접두사) $3 고른 언�
   wait
 }
 
+# 앱에 포함된 Rust 도우미. 단독 셸 설치는 기존 분석기를 계속 쓸 수 있다.
+graph_core() {
+  if [ -n "${GITCH_CORE+x}" ]; then [ -n "$GITCH_CORE" ] && [ -x "$GITCH_CORE" ] && printf '%s' "$GITCH_CORE"; return 0; fi
+  local dir
+  dir=$(dirname "$(self_path)")
+  if [ -x "$dir/gitch-core" ]; then printf '%s' "$dir/gitch-core"
+  elif [ -x "$dir/gitch-core.exe" ]; then printf '%s' "$dir/gitch-core.exe"
+  else command -v gitch-core 2>/dev/null || true; fi
+}
+
+# 기존 -v 메타데이터 계약을 유지해 diff·review·HTML도 같은 변환기를 쓴다.
+graph_json() {
+  local helper
+  helper=$(graph_core)
+  if [ -n "$helper" ]; then "$helper" graph-json "$@"; return $?; fi
+  local vars=() files=()
+  while [ $# -gt 0 ]; do
+    if [ "$1" = -v ]; then vars+=("$1" "$2"); shift 2
+    else files+=("$1"); shift; fi
+  done
+  awk ${vars[@]+"${vars[@]}"} "$(graph_awk_lib)$(graph_awk_json)" ${files[@]+"${files[@]}"}
+}
+
 # Swift 파일끼리의 정확한 참조는 Xcode 인덱스에 있다 — 그것을 읽는 도우미(앱이 gitch 옆에 둔다)의 경로, 없으면 빈 값
 # 약속: gitch-swift-index --repo <저장소> --covered <파일> → 표준출력 "원본<TAB>대상<TAB>심볼,…"(저장소 기준 경로), --covered 에는 인덱스에 든 추적 .swift 경로,
 # 종료 0 성공(표준오류 첫 줄은 오래된 인덱스 같은 경고) · 3 인덱스 없음 · 그 밖은 실패
@@ -5636,6 +5732,9 @@ graph_content_key() (   # tracked source bytes, index, HEAD and analyzer options
     printf 'gitch-graph-cache-3\n%s\n' "$GITSW_VERSION"
     printf '%s\0' "$@"
     git hash-object --no-filters -- "$(self_path)" || exit 1
+    local core
+    core=$(graph_core)
+    [ -z "$core" ] || git hash-object --no-filters -- "$core" || exit 1
     git rev-parse HEAD 2>/dev/null
     git ls-files -s -z
     cat "$tmp/files.z"
@@ -5764,6 +5863,12 @@ graph_affected_prepare() {   # entire repo dependency closure, including deleted
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" modules "" 1 "$repo" "" "$sha" > "$tmp/affected-modules-before" || return 1
   GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" files "" 1 "$repo" "" > "$tmp/affected-now" || return 1
   graph_side "$tmp" modules "" 1 "$repo" "" > "$tmp/affected-modules" || return 1
+  local core
+  core=$(graph_core)
+  if [ -n "$core" ]; then
+    "$core" graph-affected "$tmp" "$sha" > "$tmp/affected.ids" || return $?
+    return 0
+  fi
   awk -F'\t' -v seeds="$tmp/changed" -v now="$tmp/affected-now" -v before="$tmp/affected-before" -v beforemods="$tmp/affected-modules-before" -v mods="$tmp/affected-modules" -v untracked="$tmp/untracked" -v deleted="$tmp/deleted" -v base="$sha" "$(graph_awk_lib)"'
     FILENAME == seeds { if ($0 != "") { CH[$0]=1; A[$0]=1; Q[++nq]=$0 }; next }
     FILENAME == untracked { UT[$0]=1; next }
@@ -6008,7 +6113,12 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
 }
 
 graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … · check …
+  # BSD awk는 일부 UTF-8 로캘에서 서로 다른 한글 경로도 같다고 비교한다.
+  # 경로 키·구분자는 모든 분석 단계에서 같은 바이트 순서로 다룬다.
+  local LC_ALL=C
+  export LC_ALL
   case "${1:-}" in
+    review) shift; graph_review_cmd "$@"; return $? ;;
     watch) shift; graph_watch_cmd "$@"; return $? ;;
     affected) shift; graph_affected_cmd "$@"; return $? ;;
     index) shift; graph_index_cmd "$@"; return $? ;;
@@ -6116,20 +6226,25 @@ graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … 
     if [ -n "${GRAPH_AFFECTED:-}" ]; then graph_affected_mark "$tmp/affected.ids" "$tmp/raw.$a" > "$tmp/marked.$a"; mv "$tmp/marked.$a" "$tmp/raw.$a"; fi
     LC_ALL=C sort -u "$tmp/raw.$a" > "$tmp/rec.$a"
   done
+  if [ "$fmt" = html ] && git rev-parse --verify HEAD >/dev/null 2>&1; then
+    graph_default_base
+    graph_review_prepare "$tmp/review" "$GRAPH_BASE" "$GRAPH_BASE_NAME" true worktree "$prefix" "$langs" "$repo" "$noext" "${GRAPH_AFFECTED:+$tmp/untracked.z}" || die "변경 리뷰를 만들지 못했습니다."
+  fi
   cp "$tmp/rec.$rel" "$tmp/rec"
   read -r n_nodes n_edges n_heur <<< "$(awk -F'\t' '$1 == 1 { n++ } $1 == 2 { e++; if ($6 == "h") h++ } END { print n + 0, e + 0, h + 0 }' "$tmp/rec")"
   local nativeTop="$top"
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$top" 2>/dev/null || printf '%s' "$top")
-  meta=(-v rel="$rel" -v repo="$repo" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$langs")
+  meta=(-v rel="$rel" -v repo="$repo" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$langs")
   case "$fmt" in
-    json) awk "${meta[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec" > "$tmp/out" ;;
+    json) graph_json "${meta[@]}" "$tmp/rec" > "$tmp/out" ;;
     html)   # {"initial": 처음 탭, "views": {관계: 그 관계의 json, …}}
       { printf '{"initial":"%s","views":{' "$rel"; i=0
         for a in $rels; do
           [ $i -gt 0 ] && printf ','
-          printf '"%s":' "$a"; awk "${meta[@]}" -v rel="$a" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$a"; i=$((i + 1))
+          printf '"%s":' "$a"; graph_json "${meta[@]}" -v rel="$a" "$tmp/rec.$a"; i=$((i + 1))
         done
         printf '}'
+        [ ! -f "$tmp/review/review.json" ] || { printf ',"review":'; cat "$tmp/review/review.json"; }
         [ -f "$GRAPH_RULES_FILE" ] && { printf ',"rules":'; graph_rules_eval "$tmp" "$GRAPH_RULES_FILE"; }   # 분석 창의 「규칙 위반」
         printf '}\n'; } | graph_html > "$tmp/out" ;;
     dot) awk "${meta[@]}" "$(graph_awk_lib)$(graph_awk_dot)" "$tmp/rec" > "$tmp/out" ;;
@@ -6162,6 +6277,7 @@ graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … 
 
 GRAPH_DIFF_USAGE='사용법: gitch graph diff [기준] [files|modules|tree] [--format text|json|html] [--out 파일] [폴더|저장소]
   기준(커밋 · 브랜치)의 그래프와 지금 작업 트리의 그래프를 비교한다 — 더하거나 뺀 연결 · 파일, 새로 생긴 · 커지거나 줄어든 · 없어진 순환
+  --scope worktree|staged|committed (기본 worktree: 기준 → 현재 추적 파일, staged 포함, 미추적 제외)
   기준을 주지 않으면 기본 브랜치(upstream > origin)와 갈라진 곳(merge-base). 기준... (예: origin/main...) 은 그 기준과 갈라진 곳
   --format   기본: 사람이 보는 터미널이면 text(요약), 아니면 json(바뀐 것만). html 은 바뀐 것을 색으로 보여 주는 그래프
   --lang · --no-external 은 gitch graph 와 같다. 양쪽을 같은 방법으로 읽으려고 Package.swift 는 swift 없이 직접 읽고 Xcode 인덱스 도우미는 쓰지 않는다'
@@ -6197,6 +6313,7 @@ graph_default_base() {   # 기본 브랜치와 갈라진 곳(merge-base): upstre
 
 graph_base_extract() {   # $1 커밋 $2 폴더 → 그 커밋의 추적 파일을 $2/src 에 풀고 목록을 $2/files 에 (저장소는 건드리지 않는다)
   mkdir -p "$2/src" || return 1
+  if [ -z "$1" ]; then : > "$2/files.z"; : > "$2/files"; return 0; fi
   git archive --format=tar "$1" | tar -x -C "$2/src" 2>/dev/null || return 1
   git ls-tree -r --name-only -z "$1" > "$2/files.z" && graph_safe_file_list "$2/files.z" "$2/files" "$2/unsafe-paths.records" "$2/src"
 }
@@ -6218,13 +6335,276 @@ graph_side() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 저�
 graph_meta() {   # JSON 머리에 쓰는 awk 변수들 → GRAPH_META 배열
   local nativeTop="$PWD"
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$PWD" 2>/dev/null || printf '%s' "$PWD")
-  GRAPH_META=(-v rel="$1" -v repo="$2" -v repoPath="$nativeTop" -v scope="${3%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$4")
+  GRAPH_META=(-v rel="$1" -v repo="$2" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${3%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$4")
+}
+
+graph_review_progress() {   # Human stderr only; never pollute JSON/app stdout.
+  [ -t 2 ] && [ -z "$MACHINE_JSON" ] || return 0
+  printf '  변경 리뷰 · %s…\n' "$1" >&2
+}
+
+graph_review_tree() {   # safe file list, source root, prefix, repo, languages
+  local path bytes
+  while IFS= read -r path; do
+    [ -f "$2/$path" ] && [ ! -L "$2/$path" ] || continue
+    bytes=$(wc -c < "$2/$path" | tr -d ' ')
+    printf 'snapshot %s %s\n' "$bytes" "$path"
+  done < "$1" | awk -v scope="$3" -v repo="$4" -v langs="$5" -v rel=tree -v maxd=0 -v withfiles='' -v treeSnapshot=1 "$(graph_awk_lib)$(graph_awk_tree)"
+}
+
+# Review snapshots are read-only and use the same scanner on both sides. No compiler
+# index or manifest execution is used when comparing historical source bytes.
+graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs repo
+  local tmp=$1 base=$2 ref=$3 merge=$4 scope=$5 prefix=$6 langs=$7 repo=$8
+  local status path old rel side head="worktree" started=$SECONDS noext=${9:-} untracked=${10:-} untrackedPolicy=excluded
+  mkdir -p "$tmp/b" "$tmp/a"
+  graph_review_progress "기준 소스 읽기"
+  graph_base_extract "$base" "$tmp/b" || return 1
+  graph_review_progress "$scope 소스 읽기"
+  if [ "$scope" = committed ]; then
+    head=$(git rev-parse HEAD)
+    graph_base_extract "$head" "$tmp/a" || return 1
+    git diff --name-status -M -z "$base" HEAD -- > "$tmp/status.z" || return 1
+  elif [ "$scope" = staged ]; then
+    head=index
+    # Reading stage zero blobs does not write a tree or alter the real index.
+    git ls-files -u -z > "$tmp/conflicts.z"
+    [ ! -s "$tmp/conflicts.z" ] || { err '충돌 중인 인덱스는 staged 그래프로 분석할 수 없습니다.'; return 1; }
+    git ls-files -s -z > "$tmp/index.z"
+    : > "$tmp/a/files.z"
+    local entry header mode skipped=0
+    while IFS= read -r -d '' entry; do
+      header=${entry%%$'\t'*}; path=${entry#*$'\t'}; mode=${header%% *}
+      case "$mode" in 100644|100755) printf '%s\0' "$path" >> "$tmp/a/files.z" ;; *) skipped=$((skipped+1)) ;; esac
+    done < "$tmp/index.z"
+    mkdir -p "$tmp/a/src"
+    graph_safe_file_list "$tmp/a/files.z" "$tmp/a/files" "$tmp/a/unsafe-paths.records" "$tmp/a/src"
+    [ "$skipped" = 0 ] || printf '0\tdiagnostic\t{"code":"UNSUPPORTED_INDEX_MODE","severity":"warning","count":%s,"message":"Symlink or submodule entries were excluded from the staged source snapshot."}\n' "$skipped" >> "$tmp/a/unsafe-paths.records"
+    while IFS= read -r path; do
+      mkdir -p "$tmp/a/src/$(dirname "$path")" || return 1
+      git show ":$path" > "$tmp/a/src/$path" || return 1
+    done < "$tmp/a/files"
+    if [ -n "$base" ]; then git diff --cached --name-status -M -z "$base" -- > "$tmp/status.z"
+    else git diff --cached --name-status -M -z -- > "$tmp/status.z"; fi || return 1
+  else
+    git ls-files -z > "$tmp/a/files.z"
+    graph_safe_file_list "$tmp/a/files.z" "$tmp/a/files" "$tmp/a/unsafe-paths.records"
+    git diff --name-status -M -z "$base" -- > "$tmp/status.z" || return 1
+  fi
+  if [ "$scope" = worktree ] && [ -f "$untracked" ]; then
+    untrackedPolicy=included
+    cat "$untracked" >> "$tmp/a/files.z"
+    graph_safe_file_list "$tmp/a/files.z" "$tmp/a/files" "$tmp/a/unsafe-paths.records"
+    while IFS= read -r -d '' path; do printf 'U\0%s\0' "$path" >> "$tmp/status.z"; done < "$untracked"
+  fi
+  : > "$tmp/changes"
+  while IFS= read -r -d '' status && IFS= read -r -d '' path; do
+    old=""
+    case "$status" in R*|C*) old=$path; IFS= read -r -d '' path || return 1 ;; esac
+    # Keep the established LF/TAB record boundary safe; scanner diagnostics describe omissions.
+    case "$path$old" in *[$'\001'-$'\037'$'\177']*) continue ;; esac
+    [ -z "$prefix" ] || case "$path" in "$prefix"*) ;; *) case "$old" in "$prefix"*) ;; *) continue ;; esac ;; esac
+    printf '%s\t%s\t%s\n' "$status" "$path" "$old" >> "$tmp/changes"
+  done < "$tmp/status.z"
+  graph_meta files "$repo" "$prefix" "$langs"
+  for side in a b; do
+    for rel in files modules; do
+      graph_review_progress "$side · $(graph_rel_word "$rel") 해석"
+      if [ "$side" = a ] && [ "$scope" = worktree ]; then
+        GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/a" "$rel" "$prefix" "$noext" "$repo" "$langs" > "$tmp/$side/rec.$rel" || return 1
+      else
+        (cd "$tmp/$side/src" && GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/$side" "$rel" "$prefix" "$noext" "$repo" "$langs") > "$tmp/$side/rec.$rel" || return 1
+      fi
+      graph_json "${GRAPH_META[@]}" -v rel="$rel" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
+    done
+    if [ -f "$GRAPH_RULES_FILE" ]; then graph_rules_eval "$tmp/$side" "$GRAPH_RULES_FILE" > "$tmp/$side/rules.json"; else printf 'null' > "$tmp/$side/rules.json"; fi
+  done
+  graph_review_progress "변경 · 순환 · 규칙 근거 정리"
+  # Rename the old graph identities before SCC comparison: a move alone is not a new cycle.
+  awk -F'\t' -v changes="$tmp/changes" 'BEGIN { OFS="\t"; while((getline < changes)>0) if($1~/^R/) R[$3]=$2 }
+    $1==1 && ($2 in R) {$2=R[$2]} $1==2 {if($2 in R)$2=R[$2]; if($3 in R)$3=R[$3]} {print}' "$tmp/b/rec.files" > "$tmp/b/normalized"
+  awk -v rel=files "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/b/normalized" "$tmp/a/rec.files" > "$tmp/merged"
+  # Also mark content-only changes; dependency equality must not hide them in diff.
+  graph_review_mark "$tmp/changes" "$tmp/merged" > "$tmp/review.records"
+  graph_json "${GRAPH_META[@]}" -v diffbase="$base" -v diffname="$ref" "$tmp/review.records" > "$tmp/diff.json"
+  {
+    printf '{"schemaVersion":1,"scope":%s,"untracked":%s,"selectedRef":%s,"baseSha":%s,"headSha":%s,"snapshot":%s,"mergeBase":%s,"branch":%s,"seconds":%s,"changes":' "$(json_str "$scope")" "$(json_str "$untrackedPolicy")" "$(json_str "$ref")" "$(json_str "$base")" "$(json_str "$(git rev-parse --verify HEAD 2>/dev/null || true)")" "$(json_str "$head")" "$merge" "$(json_str "$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD)")" "$((SECONDS-started))"
+    awk -F'\t' "$(graph_awk_lib)"'BEGIN{printf "["} {printf "%s{\"status\":%s,\"path\":%s,\"oldPath\":%s}", (n++?",":""),jstr($1),jstr($2),($3!=""?jstr($3):"null")} END{printf "]"}' "$tmp/changes"
+    printf ',"before":'; cat "$tmp/b/files.json"
+    printf ',"current":'; cat "$tmp/a/files.json"
+    printf ',"modules":'; cat "$tmp/a/modules.json"
+    printf ',"beforeModules":'; cat "$tmp/b/modules.json"
+    printf ',"diff":'; cat "$tmp/diff.json"
+    printf ',"rules":'; cat "$tmp/a/rules.json"
+    printf ',"beforeRules":'; cat "$tmp/b/rules.json"
+    printf '}\n'
+  } > "$tmp/review.json"
+}
+
+# 스테이지 내용과 HEAD만 식별해 인덱스 stat 갱신이나 작업 트리 수정에는 바뀌지 않는다.
+graph_review_stamp() {
+  { printf '%s\0' "$(git rev-parse --verify HEAD 2>/dev/null || true)"; git ls-files --stage -z; } | git hash-object --stdin
+}
+
+graph_review_cmd() {
+  local fmt=json out="" opn=auto dir="" stampOnly="" langs="" a top repo tmp startStamp endStamp head branch
+  while [ $# -gt 0 ]; do
+    a=$1
+    case "$a" in
+      --json) fmt=json ;;
+      --stamp) stampOnly=1 ;;
+      --format|-f) shift; fmt=${1:-} ;;
+      --format=*) fmt=${a#*=} ;;
+      --out|-o) shift; out=${1:-}; [ -n "$out" ] || die "--out 뒤에 파일 이름이 필요합니다." ;;
+      --out=*) out=${a#*=} ;;
+      --open) opn=1 ;;
+      --no-open) opn=0 ;;
+      --lang|-l) shift; langs=${1:-}; [ -n "$langs" ] || die "--lang 뒤에 언어가 필요합니다." ;;
+      --lang=*) langs=${a#*=} ;;
+      --scope) shift; [ "${1:-}" = staged ] || die "커밋 영향 분석은 --scope staged 만 지원합니다." ;;
+      --scope=staged) ;;
+      -h|--help) say '사용법: gitch graph review [--json|--format html --out 파일] [--stamp --json] [폴더]
+  HEAD와 스테이지 내용을 비교해 변경 파일 · 직접/간접 확인 대상 · 테스트 후보를 읽기 전용으로 분석한다.
+  --stamp 는 HEAD와 스테이지 내용의 식별자만 반환한다. 작업 트리 수정과 인덱스 stat 갱신에는 바뀌지 않는다.
+  테스트 후보는 의존 경로나 파일 이름으로 추정하며 테스트를 실행하지 않는다.'; return 0 ;;
+      -*) die "알 수 없는 커밋 영향 분석 옵션: $a" ;;
+      *) [ -z "$dir" ] || die "폴더는 하나만 지정하세요."; dir=$a ;;
+    esac
+    shift
+  done
+  case "$fmt" in json|html) ;; *) die "--format 은 json 또는 html 입니다." ;; esac
+  [ -z "$stampOnly" ] || { [ "$fmt" = json ] && [ -z "$out" ]; } || die "--stamp 는 파일 출력 없이 JSON으로만 읽습니다."
+  graph_pick_dir "$dir"; top=$(git -C "$GRAPH_DIR" rev-parse --show-toplevel) || return 1
+  out=$(posix_path "$out")
+  case "$out" in ""|-|/*) ;; *) out="$PWD/$out" ;; esac
+  cd "$top" || return 1
+  head=$(git rev-parse --verify HEAD 2>/dev/null || true)
+  startStamp=$(graph_review_stamp) || die "스테이지 식별자를 읽지 못했습니다."
+  if [ -n "$stampOnly" ]; then
+    printf '{"schemaVersion":1,"scope":"staged","stamp":%s,"headSha":%s}\n' "$(json_str "$startStamp")" "$(json_str "$head")"
+    return 0
+  fi
+  if [ "$fmt" = html ]; then
+    local -a args=(files --scope staged --format html)
+    [ -z "$langs" ] || args+=(--lang "$langs")
+    [ -z "$out" ] || args+=(--out "$out")
+    case "$opn" in 0) args+=(--no-open) ;; 1) args+=(--open) ;; esac
+    if [ -n "$head" ]; then graph_diff_cmd --base HEAD "${args[@]}"
+    else GRAPH_REVIEW_EMPTY_BASE=1 graph_diff_cmd "${args[@]}"; fi
+    return $?
+  fi
+  if [ -n "$langs" ]; then langs=$(graph_langs "$langs") && [ -n "$langs" ] || die "알 수 없는 분석 언어입니다."; fi
+  repo=$(graph_repo_name "$top" "$top")
+  branch=$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/gitch-review.XXXXXX") || die "임시 폴더를 만들지 못했습니다."
+  GRAPH_TMP=$tmp; trap 'rm -rf "$GRAPH_TMP"' EXIT
+  graph_review_prepare "$tmp/review" "$head" HEAD false staged "" "$langs" "$repo" || die "커밋 영향 분석을 만들지 못했습니다."
+  endStamp=$(graph_review_stamp) || die "스테이지 식별자를 다시 읽지 못했습니다."
+  awk -F'\t' -v changes="$tmp/review/changes" -v current="$tmp/review/a/rec.files" -v before="$tmp/review/b/rec.files" \
+      -v stamp="$startStamp" -v stale="$([ "$startStamp" = "$endStamp" ] && echo false || echo true)" \
+      -v head="$head" -v branch="$branch" "$(graph_awk_lib)$(graph_awk_commit_impact)" \
+      "$tmp/review/changes" "$tmp/review/a/rec.files" "$tmp/review/b/rec.files" > "$tmp/out" || die "커밋 영향 분석을 정리하지 못했습니다."
+  graph_write "$tmp/out" "${out:--}" json "$opn" ""
+}
+
+graph_awk_commit_impact() {
+  cat <<'AWKEOF'
+function testpath(p, b) {
+  p=tolower(p); b=baseof(p)
+  return p ~ /(^|\/)(tests?|__tests__|specs?)(\/|$)/ || p ~ /[._](test|spec)\.[^\/]+$/ || b ~ /^test_/ || b ~ /tests?\.[^.]+$/
+}
+function teststem(p, s) {
+  s=tolower(stemof(p)); sub(/^test_/, "", s); sub(/([._-](test|spec)|tests?)$/, "", s); return s
+}
+function route(id, s, at, count) {
+  s=""; at=id; count=0
+  while (at!="" && count++<=nq) {s=s (s!=""?",":"") jstr(at); at=NEXT[at]}
+  return "[" s "]"
+}
+function impactrow(id) {
+  return "{\"path\":" jstr(id) ",\"depth\":" DEPTH[id] ",\"via\":" route(id) ",\"heuristic\":" (HEUR[id]?"true":"false") "}"
+}
+FILENAME==changes {
+  CH[$2]=$1; OLD[$2]=$3; ORDER[++nc]=$2
+  if ($1~/^R/ && $3!="") RENAME[$3]=$2
+  if ($1=="D") DELETED[$2]=1
+  next
+}
+$1==1 {
+  id=$2
+  if (FILENAME==before && id in RENAME) id=RENAME[id]
+  if (!(id in KIND)) NORDER[++nn]=id
+  if (FILENAME==current || !(id in KIND)) {
+    KIND[id]=$3
+    ANALYZED[id]=($3=="file" && $6 ~ /"analysis":"(static-import|compiler-index|name-heuristic|swift-index)"/)
+  }
+  if (FILENAME==current) CURRENT[id]=1
+  next
+}
+$1==2 {
+  s=$2; t=$3
+  if (FILENAME==before) {
+    if (!(s in DELETED) && !(t in DELETED) && !(s in RENAME) && !(t in RENAME)) next
+    if (s in RENAME) s=RENAME[s]
+    if (t in RENAME) t=RENAME[t]
+  }
+  if (!((s,t) in EDGE)) {EDGE[s,t]=1; REV[t,++NREV[t]]=s; EH[s,t]=($6=="h")}
+  else if ($6!="h") EH[s,t]=0
+  next
+}
+END {
+  for(i=1;i<=nc;i++) {
+    id=ORDER[i]; SEED[id]=1; DEPTH[id]=0; Q[++nq]=id; STEM[teststem(id)]=1
+    if(ANALYZED[id]) analyzed++
+  }
+  # 파일의 역방향 의존을 다중 시작점 BFS로 따라가며 순환과 중복을 한 번만 방문한다.
+  for(q=1;q<=nq;q++) {
+    t=Q[q]
+    for(i=1;i<=NREV[t];i++) {
+      s=REV[t,i]; if(s in DEPTH || KIND[s]!="file") continue
+      DEPTH[s]=DEPTH[t]+1; NEXT[s]=t; HEUR[s]=HEUR[t]||EH[s,t]; Q[++nq]=s
+    }
+  }
+  printf "{\"schemaVersion\":1,\"tool\":\"gitch graph review\",\"scope\":\"staged\",\"stamp\":%s,\"snapshot\":%s,\"headSha\":%s,\"branch\":%s,\"stale\":%s,\"changed\":[", jstr(stamp),jstr(stamp),jstr(head),jstr(branch),stale
+  for(i=1;i<=nc;i++) {
+    id=ORDER[i]
+    printf "%s{\"path\":%s,\"status\":%s,\"analyzed\":%s%s}",(i>1?",":""),jstr(id),jstr(CH[id]),(ANALYZED[id]?"true":"false"),(OLD[id]!=""?",\"oldPath\":" jstr(OLD[id]):"")
+  }
+  printf "],\"direct\":["; emitted=0
+  for(i=1;i<=nq;i++) if(DEPTH[Q[i]]==1) printf "%s%s",(emitted++?",":""),impactrow(Q[i])
+  printf "],\"indirect\":["; emitted=0
+  for(i=1;i<=nq;i++) if(DEPTH[Q[i]]>1) printf "%s%s",(emitted++?",":""),impactrow(Q[i])
+  printf "],\"tests\":["; emitted=0
+  for(i=1;i<=nn;i++) {
+    id=NORDER[i]; if(!CURRENT[id] || KIND[id]!="file" || !testpath(id)) continue
+    if (id in DEPTH) {kind="dependency"; depth=DEPTH[id]; h=HEUR[id]}
+    else if (nc && teststem(id) in STEM) {kind="name"; depth=0; h=1}
+    else continue
+    printf "%s{\"path\":%s,\"kind\":%s,\"depth\":%d,\"heuristic\":%s}",(emitted++?",":""),jstr(id),jstr(kind),depth,(h?"true":"false")
+  }
+  printf "],\"coverage\":{\"changed\":%d,\"analyzed\":%d,\"unsupported\":%d},\"limitations\":[",nc,analyzed,nc-analyzed
+  printf "%s,%s,%s]}\n",jstr("Static dependencies may omit dynamic references and unsupported syntax."),jstr("Test candidates are inferred from dependency paths or file names; tests have not been run."),jstr("Only staged files are selected; unstaged edits and untracked files are excluded.")
+}
+AWKEOF
+}
+
+graph_review_mark() {
+  awk -F'\t' -v changes="$1" "$(graph_awk_lib)"'BEGIN {OFS="\t"; while((getline < changes)>0) {CH[$2]=$1; OLD[$2]=$3}}
+    $1==1 {N[$2]=1}
+    $1==1 && ($2 in CH) { $6=$6 ($6!=""?",":"") "\"changed\":true,\"changeStatus\":" jstr(CH[$2]); if(OLD[$2]!="") $6=$6 ",\"oldPath\":" jstr(OLD[$2]); if($6!~/"status":/) $6=$6 ",\"status\":\"changed\"" } {print}
+    END {for(id in CH)if(!(id in N)) {
+      attrs="\"path\":" jstr(id) ",\"analysis\":\"unresolved\",\"changed\":true,\"changeStatus\":" jstr(CH[id]) ",\"status\":" jstr(CH[id]=="D"?"removed":"changed")
+      if(CH[id]=="D")attrs=attrs ",\"deleted\":true"
+      if(OLD[id]!="")attrs=attrs ",\"oldPath\":" jstr(OLD[id])
+      print "1",id,"file",baseof(id),"unknown",attrs
+      print "0","diagnostic","{\"code\":\"UNANALYZED_CHANGE\",\"severity\":\"warning\",\"file\":" jstr(id) ",\"message\":\"Changed file is listed, but its dependency syntax is not supported by this analysis.\"}"
+    }}' "$2"
 }
 
 graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
   local rel="" base="" fmt="" out="" opn=auto dir="" noext="" langs="" a bpend=""
   local -a pend=()
-  local top prefix repo tmp bsha bname fancy=""
+  local top prefix repo tmp bsha bname shortbase fancy="" analysisScope=worktree merge=false
   while [ $# -gt 0 ]; do
     a=$1
     case "$a" in
@@ -6232,6 +6612,8 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
       modules|module) rel=modules ;;
       tree) rel=tree ;;
       changes|change) die "changes 는 비교하지 않습니다 — files · modules · tree 중에서 고릅니다." ;;
+      --scope) shift; analysisScope=${1:-} ;;
+      --scope=*) analysisScope=${a#*=} ;;
       --base) shift; base=${1:-}; [ -n "$base" ] || die "--base 뒤에 커밋이나 브랜치가 필요합니다." ;;
       --base=*) base=${a#*=} ;;
       --format|-f) shift; fmt=${1:-} ;;
@@ -6261,6 +6643,7 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
   if [ -n "$langs" ]; then
     langs=$(graph_langs "$langs") && [ -n "$langs" ] || die "--lang 은 Java · TS · Python · C · C++ · C# · PHP · Ruby 등 언어 이름이나 확장자로 고릅니다 (쉼표로 여럿, graph --help)."
   fi
+  case "$analysisScope" in worktree|staged|committed) ;; *) die "--scope 은 worktree, staged, committed 중 하나입니다." ;; esac
   rel=${rel:-files}; graph_pick_dir "$dir"; dir=$GRAPH_DIR
   top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) && [ -n "$top" ] || die "git 저장소 안의 폴더가 아닙니다: $dir"
   prefix=$(git -C "$dir" rev-parse --show-prefix 2>/dev/null)
@@ -6278,38 +6661,74 @@ graph_diff_cmd() {   # [기준] [files|modules|tree] [옵션] [폴더]
   [ -z "$out" ] && case "$fmt" in html) out="${TMPDIR:-/tmp}"; out="${out%/}/gitch-graph/$repo-$rel-diff.html" ;; *) out=- ;; esac
 
   cd "$top" || die "저장소로 이동하지 못했습니다: $top"
-  if [ -z "$base" ]; then
+  if [ "${GRAPH_REVIEW_EMPTY_BASE:-}" = 1 ] && [ "$analysisScope" = staged ]; then
+    bsha=""; bname="Empty tree"
+  elif [ -z "$base" ]; then
     graph_default_base || die "비교할 기준을 정하지 못했습니다 — 커밋이나 브랜치를 주세요 (예: gitch graph diff main)."
-    base=$GRAPH_BASE; bname=$GRAPH_BASE_NAME
+    base=$GRAPH_BASE; bname=$GRAPH_BASE_NAME; merge=true
   elif [ "${base%...}" != "$base" ]; then   # 기준... — 그 기준과 이 브랜치가 갈라진 곳(merge-base). 기준이 그 뒤로 앞서 나가도 그 커밋이 뺀 것으로 보이지 않게, 이름은 기준 그대로
-    bname=${base%...}
+    bname=${base%...}; merge=true
     git rev-parse --verify --quiet "$bname^{commit}" >/dev/null 2>&1 || die "커밋이 아닙니다: $bname"
     base=$(git merge-base HEAD "$bname" 2>/dev/null) && [ -n "$base" ] || die "$bname 와(과) 이 브랜치에는 공통 커밋이 없습니다."
   else bname=$base; fi
-  bsha=$(git rev-parse --short "$base^{commit}" 2>/dev/null) || { [ -n "$bpend" ] && die "커밋도 폴더도 아닙니다: $base"$'\n'"$GRAPH_DIFF_USAGE"; die "커밋이 아닙니다: $base"; }
+  if [ "${GRAPH_REVIEW_EMPTY_BASE:-}" != 1 ]; then
+    bsha=$(git rev-parse --verify "$base^{commit}" 2>/dev/null) || { [ -n "$bpend" ] && die "커밋도 폴더도 아닙니다: $base"$'\n'"$GRAPH_DIFF_USAGE"; die "커밋이 아닙니다: $base"; }
+  fi
+  shortbase=$(git rev-parse --short "$bsha" 2>/dev/null) || shortbase=empty
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/gitch-graph.XXXXXX") || die "임시 폴더를 만들지 못했습니다."
   GRAPH_TMP=$tmp
   trap 'rm -rf "$GRAPH_TMP"' EXIT
   fancy_out && [ "$fmt" != json ] && fancy=1
   [ -n "$fancy" ] && printf '  %s' "${DIM}$(graph_rel_word "$rel") 비교하는 중 ($bname → 작업 트리)…${RESET}"
   git ls-files -z > "$tmp/files.z" && graph_safe_file_list "$tmp/files.z" "$tmp/files" "$tmp/unsafe-paths.records" || die "추적하는 파일 목록을 읽지 못했습니다 (git ls-files)."
-  mkdir -p "$tmp/b"
-  [ "$rel" = tree ] || graph_base_extract "$bsha" "$tmp/b" || die "기준 커밋의 파일을 풀지 못했습니다: $bsha"
-  # 양쪽을 같은 방법으로: swift package describe · Xcode 인덱스는 지금 쪽에만 있으니 끈다
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" "$rel" "$prefix" "$noext" "$repo" "$langs" > "$tmp/rec.a" || die "그래프를 만들지 못했습니다 (작업 트리)."
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp/b" "$rel" "$prefix" "$noext" "$repo" "$langs" "$bsha" > "$tmp/rec.b" || die "그래프를 만들지 못했습니다 ($bsha)."
-  awk -v rel="$rel" "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/rec.b" "$tmp/rec.a" | LC_ALL=C sort > "$tmp/rec"
+  graph_review_prepare "$tmp/review" "$bsha" "$bname" "$merge" "$analysisScope" "$prefix" "$langs" "$repo" "$noext" || die "변경 리뷰를 만들지 못했습니다."
+  if [ "$rel" = files ]; then
+    cp "$tmp/review/review.records" "$tmp/rec"
+  elif [ "$rel" = modules ]; then
+    awk -v rel=modules "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/review/b/rec.modules" "$tmp/review/a/rec.modules" | LC_ALL=C sort > "$tmp/rec"
+  else
+    local sourceRoot=$PWD
+    [ "$analysisScope" = worktree ] || sourceRoot="$tmp/review/a/src"
+    graph_review_tree "$tmp/review/a/files" "$sourceRoot" "$prefix" "$repo" "$langs" > "$tmp/rec.a"
+    graph_review_tree "$tmp/review/b/files" "$tmp/review/b/src" "$prefix" "$repo" "$langs" > "$tmp/rec.b"
+    awk -v rel=tree "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/rec.b" "$tmp/rec.a" | LC_ALL=C sort > "$tmp/rec"
+
+  fi
   [ -n "$fancy" ] && printf '\r\033[K'
   graph_meta "$rel" "$repo" "$prefix" "$langs"
   case "$fmt" in
     text) awk -F'\t' -v rel="$rel" -v relword="$(graph_rel_word "$rel")" -v base="$bname" -v bsha="$bsha" \
-            -v bold="$BOLD" -v green="$GREEN" -v red="$RED" -v yellow="$YELLOW" -v dim="$DIM" -v reset="$RESET" \
+            -v diffscope="$analysisScope" -v bold="$BOLD" -v green="$GREEN" -v red="$RED" -v yellow="$YELLOW" -v dim="$DIM" -v reset="$RESET" \
             "$(graph_awk_lib)$(graph_awk_difftext)" "$tmp/rec" > "$tmp/out" ;;
     json) awk -F'\t' "$(graph_awk_lib)$(graph_awk_diffonly)" "$tmp/rec" | \
-            awk "${GRAPH_META[@]}" -v diffbase="$bsha" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" > "$tmp/out" ;;
-    html) { printf '{"initial":"%s","views":{"%s":' "$rel" "$rel"
-            awk "${GRAPH_META[@]}" -v diffbase="$bsha" -v diffname="$bname" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec"
-            printf '}}\n'; } | graph_html > "$tmp/out" ;;
+            graph_json "${GRAPH_META[@]}" -v diffhead="$analysisScope" -v reviewfile="$tmp/review/review.json" -v diffbase="$shortbase" -v diffname="$bname" > "$tmp/out" ;;
+    html)
+      # Keep all existing navigation tabs in a diff report. Every structural view
+      # uses the same selected source snapshot; co-change remains observed HEAD history.
+      local r sourceRoot=$PWD
+      [ "$analysisScope" = worktree ] || sourceRoot="$tmp/review/a/src"
+      for r in files modules tree changes; do
+        if [ "$r" = "$rel" ]; then cp "$tmp/rec" "$tmp/view.$r"; continue; fi
+        case "$r" in
+          files) cp "$tmp/review/review.records" "$tmp/view.$r" ;;
+          modules) awk -v rel=modules "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/review/b/rec.modules" "$tmp/review/a/rec.modules" > "$tmp/view.$r" ;;
+          tree)
+            graph_review_tree "$tmp/review/a/files" "$sourceRoot" "$prefix" "$repo" "$langs" > "$tmp/tree.a"
+            graph_review_tree "$tmp/review/b/files" "$tmp/review/b/src" "$prefix" "$repo" "$langs" > "$tmp/tree.b"
+            awk -v rel=tree "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_merge)" "$tmp/tree.b" "$tmp/tree.a" > "$tmp/view.$r" ;;
+          changes) graph_collect "$tmp/review/a" changes "$prefix" "$noext" '' 1000 30 2 0 '' "$repo" "$langs" > "$tmp/view.$r" ;;
+        esac
+      done
+      { printf '{"initial":"%s","views":{' "$rel"; local count=0
+        for r in files modules changes tree; do
+          [ "$count" = 0 ] || printf ','
+          printf '"%s":' "$r"
+          if [ "$r" = changes ]; then graph_json "${GRAPH_META[@]}" -v rel="$r" "$tmp/view.$r"
+          else graph_json "${GRAPH_META[@]}" -v rel="$r" -v diffhead="$analysisScope" -v diffbase="$shortbase" -v diffname="$bname" "$tmp/view.$r"; fi
+          count=$((count+1))
+        done
+        printf '},"review":'; cat "$tmp/review/review.json"
+        printf '}\n'; } | graph_html > "$tmp/out" ;;
   esac
   graph_write "$tmp/out" "$out" "$fmt" "$opn" "$fancy" || return 1
   [ "$out" = - ] || { [ "$fmt" != json ] || [ -z "$MACHINE_JSON" ]; } || return 0
@@ -6458,7 +6877,7 @@ graph_check_cmd() {   # [--rules 파일] [--base 기준] [--format text|json|htm
         for rel in $rels; do
           [ $a -gt 0 ] && printf ','
           graph_meta "$rel" "$repo" "$prefix" ""
-          printf '"%s":' "$rel"; awk "${GRAPH_META[@]}" "$(graph_awk_lib)$(graph_awk_json)" "$tmp/rec.$rel"; a=$((a + 1))
+          printf '"%s":' "$rel"; graph_json "${GRAPH_META[@]}" "$tmp/rec.$rel"; a=$((a + 1))
         done
         printf '},"rules":'; graph_check_json "$tmp/v" "$shown" "$bsha" "$n_err"; printf '}\n'; } | graph_html > "$tmp/out" ;;
   esac
@@ -6531,8 +6950,8 @@ function jstr(s) {
 }
 function dirof(p) { return match(p, /\/[^\/]*$/) ? substr(p, 1, RSTART - 1) : "" }
 function baseof(p) { return match(p, /\/[^\/]*$/) ? substr(p, RSTART + 1) : p }
-function extof(p,   b) { b = baseof(p); return match(b, /.\.[^.]*$/) ? substr(b, RSTART + 2) : "" }
-function stemof(p,   b) { b = baseof(p); return match(b, /.\.[^.]*$/) ? substr(b, 1, RSTART) : b }
+function extof(p,   b) { b = baseof(p); return match(b, /\.[^.]*$/) && RSTART > 1 ? substr(b, RSTART + 1) : "" }
+function stemof(p,   b) { b = baseof(p); return match(b, /\.[^.]*$/) && RSTART > 1 ? substr(b, 1, RSTART - 1) : b }
 function joinp(d, f) { return d == "" ? f : (f == "" ? d : d "/" f) }
 function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
 function inscope(p) { return scope == "" || index(p, scope) == 1 }
@@ -8248,7 +8667,7 @@ END {
   }
   emit()
   printf "0\tfiles\t%d\n0\tbytes\t%d\n0\tmaxDepth\t%d\n", NFILES, TOTAL, maxd
-  print "0\tnote\t폴더마다 files = 아래 모든 파일 수, bytes = 그 크기 합(인덱스의 내용 기준), filesHere = 바로 아래 파일 수, exts = 많은 확장자 다섯 개."
+  print "0\tnote\t폴더마다 files = 아래 모든 파일 수, bytes = 그 크기 합(" (treeSnapshot ? "선택한 비교 범위의 내용 기준" : "인덱스의 내용 기준") "), filesHere = 바로 아래 파일 수, exts = 많은 확장자 다섯 개."
 }
 function tnode(id, label, depth, path) { if (id in TD) return; TD[id] = depth; TL[id] = label; TP[id] = (path == "") ? "." : path; NT++; TORD[NT] = id }
 function acc(id, sz, e) { TF[id]++; TB[id] += sz; if (!((id "\034" e) in TE)) TEL[id] = TEL[id] "\034" e; TE[id "\034" e]++ }
@@ -8290,13 +8709,15 @@ END {
   print "  \"directed\": " (rel == "changes" ? "false" : "true") ","
   print "  \"repo\": " jstr(repo) ","
   print "  \"repoPath\": " jstr(repoPath) ","
+  print "  \"branch\": " jstr(branch) ","
   print "  \"scope\": " jstr(scope) ","
   s = ""
   if (langs != "") { n = split(langs, LA, ","); for (i = 1; i <= n; i++) s = s (i > 1 ? "," : "") jstr(LA[i]) }
   print "  \"lang\": " (langs == "" ? "null" : "[" s "]") ","
   print "  \"commit\": " (commit == "" ? "null" : jstr(commit)) ","
   print "  \"generated\": " jstr(when) ","
-  if (diffbase != "") print "  \"diff\": {\"base\": " jstr(diffbase) ", \"baseName\": " jstr(diffname) ", \"head\": \"worktree\"},"
+  if (diffbase != "") print "  \"diff\": {\"base\": " jstr(diffbase) ", \"baseName\": " jstr(diffname) ", \"head\": " jstr(diffhead == "" ? "worktree" : diffhead) "},"
+  if (reviewfile != "") { printf "  \"review\": "; while ((getline rl < reviewfile)>0) print rl; close(reviewfile); print "," }
   s = "\"nodes\":" (NNODE + 0) ",\"edges\":" (NEDGE + 0) ",\"heuristicEdges\":" (NH + 0)
   for (i = 1; i <= NS; i++) s = s "," ST[i]
   print "  \"stats\": {" s "},"
@@ -8307,7 +8728,7 @@ END {
   for (i = 1; i <= ND; i++) s = s (i > 1 ? "," : "") DIAG[i]
   print "  \"diagnostics\": [" s "],"
   print "  \"analysisLevels\": {\"detection\":\"file-extension\",\"declared\":\"static-import-or-manifest\",\"heuristic\":\"name-only\",\"indexed\":\"compiler-index\"},"
-  if (diffbase != "") print "  \"cycles\": {\"new\": [" CY["new"] "], \"changed\": [" CY["changed"] "], \"gone\": [" CY["gone"] "]},"
+  if (diffbase != "") print "  \"cycles\": {\"new\": [" CY["new"] "], \"changed\": [" CY["changed"] "], \"gone\": [" CY["gone"] "],\"existing\":[" CY["existing"] "]},"
   print "  \"nodes\": ["
   for (i = 1; i <= NNODE; i++) print "    " NOD[i] (i < NNODE ? "," : "")
   print "  ],"
@@ -8399,7 +8820,7 @@ END {
   for (c = 1; c <= NC[2]; c++) if (CS[2, c] > 1) AK[ckey(2, c)] = c
   for (c = 1; c <= NC[1]; c++) if (CS[1, c] > 1) BK[ckey(1, c)] = c
   for (key in AK) {   # 같은 노드면 그대로, 둘 넘게 겹치는 기준 순환이 있으면 커지거나 줄어든 순환, 아니면 새 순환
-    if (key in BK) continue
+    if (key in BK) { print "3\texisting\t" (cyctrust(2, AK[key], 4) ? "" : "h") "\t" key; continue }
     best = ""; bo = 0
     for (k2 in BK) if (!(k2 in AK) && !(k2 in USED) && (o = common(key, k2)) > bo) { bo = o; best = k2 }
     if (bo >= 2) { USED[best] = 1; print "3\tchanged\t" (cyctrust(2, AK[key], 4) ? "" : "h") "\t" key "\t" best; CC++ }
@@ -8437,9 +8858,9 @@ AWKEOF
 graph_awk_difftext() {
   cat <<'AWKEOF'
 $1 == "0" { S[$2] = $3; next }
-$1 == "1" { L[$2] = $4; if (index($6, "\"status\":\"changed\"")) CHG[++NCH] = $2 "\t" jnum($6, "filesDelta") "\t" jnum($6, "bytesDelta"); next }
+$1 == "1" { L[$2] = $4; if (rel == "tree" && index($6, "\"status\":\"changed\"")) CHG[++NCH] = $2 "\t" jnum($6, "filesDelta") "\t" jnum($6, "bytesDelta"); next }
 $1 == "2" { if (index($7, "\"status\":\"added\"")) ADD[++NAE] = $0; else if (index($7, "\"status\":\"removed\"")) REM[++NRM] = $0; next }
-$1 == "3" { if ($2 == "new") CNEW[++NCN] = $0; else if ($2 == "changed") CCHG[++NCC] = $0; else CGONE[++NCG] = $0; next }
+$1 == "3" { if ($2 == "new") CNEW[++NCN] = $0; else if ($2 == "changed") CCHG[++NCC] = $0; else if ($2 == "gone") CGONE[++NCG] = $0; next }
 function nm(id) { return (rel == "modules" && (id in L)) ? L[id] : id }
 function jnum(a, key,   v) { if (!match(a, "\"" key "\":-?[0-9]+")) return 0; v = substr(a, RSTART, RLENGTH); sub(/^[^:]*:/, "", v); return v + 0 }
 function sz(b,   m) { m = b < 0 ? -b : b; return (b < 0 ? "−" : "+") (m >= 1048576 ? sprintf("%.1f MB", m / 1048576) : m >= 1024 ? sprintf("%d KB", m / 1024) : m " B") }
@@ -8458,7 +8879,7 @@ function cyc(rec, mark, col,   F, n, a, i, s) {
   printf "    %s%s %s%s %s(%d개%s)%s\n", col, mark, s, reset, dim, n, (F[3] == "h" ? ", 추정 연결 포함" : ""), reset
 }
 END {
-  printf "%s의존 비교 (%s)%s: %s(%s) → 지금 작업 트리\n", bold, relword, reset, base, bsha
+  printf "%s의존 비교 (%s)%s: %s(%s) → %s\n", bold, relword, reset, base, bsha, (diffscope == "staged" ? "스테이지" : diffscope == "committed" ? "커밋된 브랜치" : "지금 작업 트리")
   printf "  연결 %s+%d%s %s−%d%s", green, S["addedEdges"], reset, red, S["removedEdges"], reset
   if (S["addedGuesses"] + S["removedGuesses"]) printf " %s(그중 추정 +%d −%d)%s", dim, S["addedGuesses"], S["removedGuesses"], reset
   printf " · %s +%d −%d\n", (rel == "modules" ? "모듈" : rel == "tree" ? "폴더 · 파일" : "노드"), S["addedNodes"], S["removedNodes"]
@@ -8724,6 +9145,20 @@ select option { background: var(--panel-solid); color: var(--text); }
 .actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
 .actions button { padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--hover); color: var(--text); font-size: 12px; cursor: pointer; }
 .actions button:hover, .actions button.on { border-color: var(--leaf); color: var(--leaf); }
+#replay { margin:12px 0 4px; padding:10px; border:1px solid var(--border); border-radius:9px; }
+#replay h2 { margin:0 0 6px; font-size:12px; }
+#replay p { margin:6px 0 0; color:var(--muted); font-size:11px; }
+#replay .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+#replay button { min-height:30px; }
+#replay button:disabled { opacity:.45; cursor:default; }
+#replayRange { display:block; margin:10px 0 4px; }
+#replayStage { display:block; font-size:12px; font-variant-numeric:tabular-nums; }
+#replay .replay-options { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+#replay .replay-options label { display:flex; align-items:center; gap:5px; }
+#replay .replay-key { display:flex; flex-wrap:wrap; gap:5px 10px; }
+#replay .replay-key span::before { content:""; display:inline-block; width:12px; margin-right:4px; border-top:2px solid currentColor; vertical-align:middle; }
+#replay .replay-key .removed { color:var(--del); } #replay .replay-key .removed::before { border-top-style:dashed; }
+#replay .replay-key .added { color:var(--add); } #replay .replay-key .changed { color:var(--warn); }
 #info table { width: 100%; border-collapse: collapse; margin: 4px 0 6px; font-size: 12px; }
 #info th { padding: 2px 10px 2px 0; color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; vertical-align: top; }
 #info td { padding: 2px 0; color: var(--text-2); word-break: break-all; }
@@ -8819,9 +9254,71 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   #info { top: auto !important; bottom: 120px; max-height: 45vh !important; }
   #banner { top: auto; bottom: 120px; max-width: calc(100vw - 28px); }
 }
+/* Review workspace: reserved columns keep the graph usable at laptop sizes. */
+:root { --left-w: 286px; --right-w: 330px; }
+#masthead { position:fixed; top:12px; left:12px; right:12px; min-height:60px; padding:10px 14px; display:flex; align-items:center; gap:14px; z-index:4; }
+#masthead .mark { width:27px; height:27px; flex:none; }
+#context { flex:1; min-width:0; color:var(--text-2); font-size:12px; overflow-wrap:anywhere; }
+#context b { color:var(--text); font-size:15px; }
+#phase { color:var(--leaf); font-size:12px; }
+#masthead button, .review button, #empty button, .splitter { border:1px solid var(--border); border-radius:7px; background:var(--hover); color:var(--text-2); padding:5px 8px; cursor:pointer; }
+#top { top:84px; bottom:68px; left:12px; width:var(--left-w); overflow:auto; padding:12px; }
+#top .row1 { display:none; }
+#rightDock { position:fixed; top:84px; bottom:68px; right:12px; width:var(--right-w); z-index:2; overflow:auto; }
+#info { position:static; width:100%; overflow:visible; max-height:none !important; border:0; box-shadow:none; padding:14px; }
+#reviewDetail { padding:14px; }
+#gear { top:auto; bottom:14px; left:12px; width:36px; height:36px; }
+#panel, .drawer { top:84px; right:12px; bottom:68px; width:var(--right-w); max-height:none; z-index:4; }
+#banner { top:86px; left:calc(var(--left-w) + 24px); max-width:calc(100vw - var(--left-w) - var(--right-w) - 56px); z-index:3; }
+#legend { left:calc(var(--left-w) + 24px); bottom:68px; max-width:calc(100vw - var(--left-w) - var(--right-w) - 48px); box-shadow:none; }
+#legend .lg { font-size:11px; }
+#tools { right:12px; bottom:12px; }
+.review { overflow-wrap:anywhere; }
+.review h2 { font-size:15px; margin:10px 0 8px; }
+.review h3 { font-size:12px; margin:16px 0 6px; color:var(--text-2); }
+.review p { font-size:12px; color:var(--muted); margin:7px 0; }
+.review label { display:flex; gap:7px; align-items:flex-start; }
+.review input[type=checkbox] { accent-color:var(--leaf); flex:none; margin-top:4px; }
+.review .change { padding:8px 0; border-bottom:1px solid var(--border); }
+.review .change button { text-align:left; border:0; padding:0; background:none; overflow-wrap:anywhere; }
+.review .change small { display:block; color:var(--muted); font-size:11px; margin-top:3px; }
+.review .tag { color:var(--leaf); font-size:11px; }
+.review .reason { border-left:2px solid var(--leaf-soft); padding-left:9px; margin:8px 0; font-size:12px; }
+.review .route { display:block; color:var(--muted); font-size:11px; }
+.review .actions { gap:5px; }
+.review .actions button { font-size:11px; padding:5px 7px; }
+.review select { max-width:100%; }
+#searchResults button, #folders button { display:block; width:100%; text-align:left; border:0; background:none; color:var(--text-2); padding:5px 4px; overflow-wrap:anywhere; cursor:pointer; }
+#searchResults button:hover, #folders button:hover { background:var(--hover); }
+#searchResults small { display:block; color:var(--muted); }
+#searchResults:empty { display:none; }
+#edgeLegend { color:var(--muted); font-size:11px; margin-top:12px; }
+.splitter { position:fixed; top:86px; bottom:70px; width:7px; padding:0; z-index:3; cursor:col-resize; opacity:.35; }
+#leftSizer { left:calc(var(--left-w) + 14px); } #rightSizer { right:calc(var(--right-w) + 14px); }
+body.leftClosed #top, body.leftClosed #leftSizer, body.rightClosed #rightDock, body.rightClosed #rightSizer { display:none; }
+body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
+#empty { left:calc(var(--left-w) + 30px); right:calc(var(--right-w) + 30px); text-align:center; font-size:13px; padding:20px; }
+#empty button { pointer-events:auto; }
+@media(max-width:1000px) { :root { --left-w:244px; --right-w:290px; } #masthead { gap:7px; } #phase { display:none; } }
+@media(max-width:760px) {
+  :root { --left-w:220px; --right-w:0px; }
+  #rightDock, #rightSizer { display:none; } #top { bottom:180px; max-height:42vh; }
+  #panel, .drawer { top:auto; left:12px; right:12px; width:auto; height:170px; bottom:112px; }
+  #legend { left:12px; right:12px; max-width:none; bottom:66px; }
+  #banner { left:12px; max-width:calc(100vw - 24px); top:auto; bottom:138px; }
+  #masthead { min-height:60px; } #masthead button { font-size:11px; }
+  #rightToggle { display:block; }
+  #top { left:12px; right:12px; top:84px; width:auto; height:156px; bottom:auto; max-height:none; }
+  #rightDock { display:block; left:12px; right:12px; top:auto; bottom:112px; width:auto; height:170px; }
+  #rightSizer,#leftSizer { display:none; }
+  #tools { left:58px; right:12px; justify-content:flex-end; }
+
+}
 </style>
 </head>
 <body>
+<header class="hud" id="masthead"><span id="brand"></span><div id="context"></div><span id="phase" role="status">그래프 구성 중…</span><button id="leftToggle" aria-label="탐색 패널 접기 또는 펼치기">탐색</button><button id="rightToggle" aria-label="상세 패널 접기 또는 펼치기">상세</button></header>
+<button class="splitter" id="leftSizer" aria-label="탐색 패널 크기 조절" title="드래그 또는 좌우 화살표로 크기 조절"></button><button class="splitter" id="rightSizer" aria-label="상세 패널 크기 조절" title="드래그 또는 좌우 화살표로 크기 조절"></button>
 <canvas id="c" tabindex="0" aria-label="구조 그래프 — 표로 보기는 오른쪽 아래 목록 단추"></canvas>
 <div class="hud" id="top">
   <div class="row1"><span id="logo"></span><span id="repo">gitch graph</span>
@@ -8830,14 +9327,29 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   <div id="stats"></div>
   <div id="notes" hidden></div>
   <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="q" type="search" placeholder="찾기  /" autocomplete="off" spellcheck="false" aria-label="노드 찾기"><span id="hits"></span></label>
+  <div id="searchResults" class="review" aria-live="polite"></div>
+  <section id="replay" hidden aria-label="구조 변화 재생">
+    <h2>구조 변화 재생</h2>
+    <button class="btn" id="replayOpen" type="button">기준 → 현재 재생</button>
+    <div id="replayControls" hidden>
+      <output id="replayStage" for="replayRange"></output>
+      <input id="replayRange" type="range" min="0" max="1000" step="1" value="0" aria-label="기준에서 현재까지 전환 위치">
+      <div class="actions"><button id="replayStart" type="button">처음</button><button id="replayPlay" type="button">재생</button><button id="replayEnd" type="button">끝</button><button id="replayClose" type="button">비교 보기</button></div>
+      <div class="replay-options"><label>속도<select id="replaySpeed" aria-label="재생 속도"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><label><input id="replayLoop" type="checkbox">반복</label></div>
+    </div>
+    <p id="replaySummary"></p>
+    <p class="replay-key"><span class="removed">사라짐</span><span class="added">등장</span><span class="changed">수정·이름 변경</span></p>
+    <p id="replayNote">두 스냅샷 사이의 구조 전환입니다. 중간 단계는 커밋 이력이 아닙니다.</p>
+  </section>
   <div class="ctrls">
     <span id="unitLab">단위</span><div class="line" id="unitLine"><div class="seg" id="unit"></div><select id="depth" aria-label="폴더 깊이" title="폴더를 몇 단계까지 나눌지"></select></div>
     <span>언어</span><div class="line"><select id="lang" aria-label="언어"></select></div>
     <span id="styleLab">그리기</span><div class="line" id="styleLine"><div class="seg" id="style"></div></div>
   </div>
+  <section class="review" id="reviewNav"><h2>변경 파일</h2><div class="actions"><button id="reportMd">Markdown 저장</button><button id="reportHtml">오프라인 HTML 저장</button></div><div class="actions"><button id="selectChanges">모두 선택</button><button id="clearChanges">선택 해제</button></div><label class="row">확인 깊이<select id="impactDepth" aria-label="영향 탐색 깊이"><option value="1">직접 · 1단계</option><option value="2">2단계</option><option value="3" selected>3단계</option><option value="5">5단계</option><option value="10">10단계</option><option value="10000">끝까지</option></select></label><button class="btn" id="showImpact">선택 변경의 영향 보기</button><div id="changeList"></div><details><summary>폴더 탐색</summary><div id="folders"></div></details><div id="edgeLegend">원본 → 대상: 원본이 대상을 참조<br>실선: 선언·인덱스 · 긴 점선: 모듈 확인(checked)<br>짧은 점선: 이름만 추정<br>은색 고리: 선택 · 초록: 추가 · 빨강: 삭제<br>노랑: 규칙 위반 · 직접 연결은 밝게, 간접 연결은 중간 강도로 표시</div></section>
 </div>
 <div class="hud" id="banner" hidden><span class="dot"></span><span id="bannerText"></span><button id="bannerClear" type="button">풀기</button></div>
-<aside class="hud" id="info" aria-live="polite" hidden></aside>
+<aside class="hud" id="rightDock"><section id="reviewDetail" class="review" aria-live="polite"></section><aside id="info" aria-live="polite" hidden></aside></aside>
 <button class="hud icon-btn" id="gear" type="button" title="그래프 설정" aria-label="그래프 설정" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
 <aside class="hud" id="panel" hidden>
   <details open><summary>필터</summary><div class="sec">
@@ -8892,6 +9404,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 </aside>
 <div class="hud" id="legend"></div>
 <div class="hud" id="tools">
+  <button class="icon-btn" id="navBack" title="이전 선택" aria-label="이전 선택">←</button><button class="icon-btn" id="navForward" title="다음 선택" aria-label="다음 선택">→</button><button class="icon-btn" id="centerSelected" title="선택 항목으로 이동" aria-label="선택 항목으로 이동">◎</button>
   <button class="icon-btn" id="zin" type="button" title="가까이 (+)" aria-label="가까이"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
   <button class="icon-btn" id="zout" type="button" title="멀리 (-)" aria-label="멀리"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
   <button class="icon-btn" id="fit" type="button" title="전체 보기 (F)" aria-label="전체 보기"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -8901,7 +9414,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   <button class="icon-btn" id="theme" type="button" title="밝게 · 어둡게" aria-label="밝게 또는 어둡게"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
 </div>
 <div id="tip" hidden></div>
-<div id="empty" hidden><span id="emptyLogo"></span>그릴 것이 없습니다</div>
+<div id="empty" hidden><span id="emptyLogo"></span><span id="emptyText">그릴 것이 없습니다</span><button id="resetFilters">필터 초기화</button></div>
 <script id="graph-data" type="application/json">
 HTMLEOF
   sed 's/</\\u003c/g'
@@ -8914,6 +9427,16 @@ HTMLEOF
   "use strict";
   const RAW = JSON.parse(document.getElementById("graph-data").textContent);
   const VIEWS = RAW.views || { [RAW.relation || "files"]: RAW };
+  const embeddedReview = RAW.review || VIEWS[RAW.initial]?.review;
+  if (embeddedReview && VIEWS.files) {
+    const G=VIEWS.files, of=new Map(G.nodes.map(n=>[n.id,n])), changes=new Map(embeddedReview.changes.map(c=>[c.path,c]));
+    for(const n of embeddedReview.diff.nodes) if(!of.has(n.id) && (n.status==="removed" || n.changed)) {G.nodes.push(n);of.set(n.id,n);}
+    for(const n of G.nodes) {const c=changes.get(n.id);if(c)Object.assign(n,{changed:true,changeStatus:c.status,oldPath:c.oldPath,deleted:c.status==="D"});}
+    const seen=new Set(G.edges.map(e=>JSON.stringify([e.source,e.target,e.kind])));
+    for(const e of embeddedReview.before.edges) if(changes.get(e.source)?.status==="D"||changes.get(e.target)?.status==="D") {
+      const key=JSON.stringify([e.source,e.target,e.kind]);if(!seen.has(key)&&of.has(e.source)&&of.has(e.target)){G.edges.push({...e,impactFromBase:true,baseCommit:embeddedReview.baseSha,status:"removed"});seen.add(key);}
+    }
+  }
   const ORDER = ["files", "modules", "changes", "tree"].filter((v) => VIEWS[v]);
   let REL = RAW.initial && VIEWS[RAW.initial] ? RAW.initial : ORDER[0];
   const META = VIEWS[REL];
@@ -8941,7 +9464,8 @@ HTMLEOF
     return "gitrochi://open?" + q.toString();
   }
   function evidenceHtml(e) {
-    const d = e.d, rows = [];
+    const d = e.d, rows = [`<p>${esc(e.s.id)} → ${esc(e.t.id)}<br>종류: ${esc(EDGENAME[e.kind]||e.kind)} · ${d.heuristic ? (d.checked ? "이름 추정 · 모듈 확인(checked)" : "이름 기반 추정") : "선언 또는 인덱스에서 확인"}${d.impactFromBase?" · 기준 그래프":""}</p>`];
+    if (!(d.evidence||[]).length) rows.push("<p>원본 파일·줄 위치를 확보하지 못했습니다.</p>");
     for (const p of (d.evidence || [])) {
       const label = p.file ? p.file + (p.line ? ":" + p.line : " · 줄 위치 없음") : "선언 위치 정보 없음";
       const href = p.file ? appLink(p.file, p.line, d.impactFromBase ? d.baseCommit : null) : "";
@@ -9019,7 +9543,7 @@ HTMLEOF
   // ----- 설정: 필터 · 표시 · 힘은 모든 탭 공통, 단위 · 그리기 · 배치 · 색 · 크기는 탭마다 -----
   const RULES = RAW.rules || null;   // gitch graph check 결과(규칙 파일이 있을 때)
   let VIOL = null;                   // 지금 모델에서 규칙을 어긴 연결 → 위반
-  const P = { onlyDiff: true, onlyAffected: !!META.stats?.affected, rules: true, lang: "all", ext: true, heur: true, tests: true, orph: true, onlyFound: false, minDeg: 0, local: false, localDepth: 1, arrows: false, names: false, size: 1, width: 1, center: 0.4, repel: 10, link: 0.7, dist: 40 };
+  const P = { onlyDiff: false, onlyAffected: !!META.stats?.affected, rules: true, lang: "all", ext: true, heur: true, tests: true, orph: true, onlyFound: false, minDeg: 0, local: false, localDepth: 1, arrows: false, names: false, size: 1, width: 1, center: 0.4, repel: 10, link: 0.7, dist: 40 };
   const hidden = new Set();
   const C = {};
   const VS = {};
@@ -9072,7 +9596,7 @@ HTMLEOF
     let fam = famOf(d, rel);
     if (PRIORITY.includes(fam) && !colored.includes(fam)) fam = "lang";
     const test = d.kind !== "package" && (TEST_T.test(d.type || "") || TEST_PATH.test(d.path || d.id));
-    return { d, id: d.id, label: d.label || d.id, kind: d.kind, fam, langs: langsOf(d, rel), role: roleOf(d), test, x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, out: [], inc: [], deg: 0, r: 4, w: 60, h: 30, lw: 40, fade: 1, vis: true, key: ((d.label || "") + "\n" + d.id).toLowerCase() };
+    return { d, id: d.id, label: d.label || d.id, kind: d.kind, fam, langs: langsOf(d, rel), role: roleOf(d), test, x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, out: [], inc: [], deg: 0, r: 4, w: 60, h: 30, lw: 40, fade: 1, vis: true, key: ((d.label || "") + "\n" + d.id + "\n" + (d.oldPath || "")).toLowerCase() };
   }
   function link(s, t, d, kind, w, h) { const e = { s, t, d, kind, w, h, u: h && !d.checked, vis: true, len: 40, str: 1, bias: 0.5 }; s.out.push(e); t.inc.push(e); return e; }   // u: 이름만으로 한 추정(점선)
   function finish(md) {
@@ -9219,11 +9743,110 @@ HTMLEOF
     visEdges = m.edges.filter((e) => e.vis);
     m.ana = null;
     $("empty").hidden = visNodes.length > 0;
+    $("emptyText").textContent = m.nodes.length ? "필터로 모든 노드가 숨겨졌습니다." : (m.G.diagnostics?.length ? "분석할 수 있는 항목이 없습니다. 안내에서 누락 원인을 확인하세요." : "이 보기에 의존 관계 또는 인식된 파일이 없습니다.");
   }
 
   // ----- 화면 · 보기 -----
   let W = 0, H = 0, dpr = 1, sel = null, hover = null, query = "", matches = [], matchSet = null, matchIdx = -1;
   let pending = false, tween = null, morph = null, dimT = 0, HL = null, pathFrom = null;
+  const replay = { active:false, playing:false, progress:0, speed:1, loop:false, last:0, data:null, previous:null, cache:new Map(), reduced:window.matchMedia?.('(prefers-reduced-motion: reduce)') };
+  const replayEdgeKey = (source, target, kind) => JSON.stringify([source,target,kind]);
+  function replaySnapshots(rel) {
+    if (!embeddedReview || !['files','modules'].includes(rel)) return null;
+    if (replay.cache.has(rel)) return replay.cache.get(rel);
+    const before = rel === 'files' ? embeddedReview.before : embeddedReview.beforeModules;
+    const current = rel === 'files' ? embeddedReview.current : embeddedReview.modules;
+    if (!before?.nodes || !before?.edges || !current?.nodes || !current?.edges) return null;
+    const rename = new Map(rel === 'files' ? (embeddedReview.changes || []).filter(c=>/^R/.test(c.status) && c.oldPath).map(c=>[c.oldPath,c.path]) : []);
+    const identity = id => rename.get(id) || id;
+    const data = { before:new Map(before.nodes.map(n=>[identity(n.id),n])), current:new Map(current.nodes.map(n=>[n.id,n])),
+      beforeEdges:new Map(before.edges.map(e=>[replayEdgeKey(identity(e.source),identity(e.target),e.kind),e])),
+      currentEdges:new Map(current.edges.map(e=>[replayEdgeKey(e.source,e.target,e.kind),e])) };
+    replay.cache.set(rel,data); return data;
+  }
+  const replaySmooth = t => { t=clamp(t,0,1); return t*t*(3-2*t); };
+  function replayOpacity(before, current, edge=false) {
+    if (before && current) return 1;
+    if (current) return replaySmooth((replay.progress-(edge ? .35 : .2))/.65);
+    if (before) return 1-replaySmooth((replay.progress-(edge ? 0 : .15))/.65);
+    return 0;
+  }
+  function replayNodeOpacity(n) { return replay.active ? replayOpacity(replay.data.before.has(n.id),replay.data.current.has(n.id)) : 1; }
+  function replayEdgePresence(e) {
+    const key=replayEdgeKey(e.s.id,e.t.id,e.kind), b=replay.data.beforeEdges.get(key), a=replay.data.currentEdges.get(key);
+    return [!!b && (P.heur || !b.heuristic),!!a && (P.heur || !a.heuristic)];
+  }
+  function replayLabel(n) {
+    const b=replay.data.before.get(n.id), a=replay.data.current.get(n.id);
+    if (b && a && b.id!==a.id && replay.progress>0 && replay.progress<1) return `${b.label || b.id} → ${a.label || a.id}`;
+    const d=replay.progress<.5 ? b || a : a || b; return d?.label || d?.id || n.label;
+  }
+  function renderReplayControls() {
+    const available=!!(m?.G.diff && replaySnapshots(REL));
+    $('replay').hidden=!available;
+    if (!available) return;
+    $('replayOpen').hidden=replay.active; $('replayControls').hidden=!replay.active;
+    $('replayPlay').textContent=replay.playing?'일시정지':'재생';
+    $('replayPlay').disabled=!!replay.reduced?.matches;
+    $('replayPlay').setAttribute('aria-pressed',String(replay.playing));
+    $('replayRange').value=String(Math.round(replay.progress*1000));
+    const destination=embeddedReview.scope==='staged'?'스테이지':embeddedReview.scope==='committed'?'커밋된 브랜치':'작업 트리';
+    $('replayStage').textContent=replay.progress===0?'기준 · '+embeddedReview.baseSha.slice(0,12):replay.progress===1?'현재 · '+destination:`기준 → ${destination} · ${Math.round(replay.progress*100)}%`;
+    $('replayRange').setAttribute('aria-valuetext',$('replayStage').textContent);
+    $('replayNote').textContent=(replay.reduced?.matches?'동작 줄이기 설정 적용 · 슬라이더로 비교하세요. ':'')+'두 스냅샷의 전환이며 중간 단계는 커밋 이력이 아닙니다. 검색·필터·상세 분석은 전체 비교 기준입니다.';
+    const data=replay.active?replay.data:replaySnapshots(REL);
+    if(!replay.active) {
+      $('replaySummary').textContent=`전체 스냅샷 · 노드 ${data.before.size} → ${data.current.size} · 연결 ${data.beforeEdges.size} → ${data.currentEdges.size}`;
+      return;
+    }
+    const nodes=visNodes.filter(n=>data.before.has(n.id)||data.current.has(n.id));
+    let beforeEdges=0,currentEdges=0;
+    for (const e of m.edges) if(e.s.vis && e.t.vis) {
+      const key=replayEdgeKey(e.s.id,e.t.id,e.kind), b=data.beforeEdges.get(key), a=data.currentEdges.get(key);
+      if(b && (P.heur || !b.heuristic))beforeEdges++;
+      if(a && (P.heur || !a.heuristic))currentEdges++;
+    }
+    $('replaySummary').textContent=`필터 적용 · 노드 ${nodes.filter(n=>data.before.has(n.id)).length} → ${nodes.filter(n=>data.current.has(n.id)).length} · 연결 ${beforeEdges} → ${currentEdges}`;
+  }
+  function pauseReplay() { replay.playing=false; replay.last=0; renderReplayControls(); }
+  function seekReplay(progress) { replay.progress=clamp(progress,0,1); pauseReplay(); hover=null; tip.hidden=true; request(); }
+  function stopReplay(restore=true) {
+    if (!replay.active) return;
+    replay.active=false; replay.playing=false; replay.last=0;
+    if (restore && replay.previous) {
+      const previous=replay.previous;
+      vs.unit=previous.unit; vs.layout=previous.layout;
+      switchModel(); running=false; alpha=0; morph=null; tween=null;
+      if(m===previous.model)for(const [n,x,y,vx,vy,fx,fy] of previous.positions)Object.assign(n,{x,y,vx,vy,fx,fy});
+      Object.assign(view,previous.camera);m.userMoved=previous.userMoved;
+      sel=previous.selected?m.nodeOf.get(previous.selected)||null:null;
+      if(sel&&!sel.vis)sel=null;
+      renderInfo();
+    }
+    refreshVisible(); renderReplayControls(); request();
+  }
+  function openReplay() {
+    const data=replaySnapshots(REL); if(!m.G.diff || !data)return;
+    replay.previous={unit:vs.unit,layout:vs.layout,model:m,camera:{...view},selected:sel?.id,userMoved:m.userMoved,positions:m.nodes.map(n=>[n,n.x,n.y,n.vx,n.vy,n.fx,n.fy])};
+    vs.unit='file'; vs.layout='layers';
+    running=false; alpha=0; morph=null; tween=null;
+    switchModel();
+    running=false; morph=null; tween=null;
+    for(const [n,[x,y]] of targets()) {n.x=x;n.y=y;n.vx=n.vy=0;}
+    const f=fitView(); if(f)Object.assign(view,f);
+    m.userMoved=true; replay.data=data; replay.active=true; replay.progress=0; replay.last=0;
+    replay.playing=!replay.reduced?.matches;
+    renderReplayControls(); request();
+  }
+  function advanceReplay(now) {
+    if(!replay.playing)return;
+    if(replay.last)replay.progress+=Math.min(now-replay.last,100)*replay.speed/5000;
+    replay.last=now;
+    if(replay.progress>=1) {
+      if(replay.loop)replay.progress=0; else {replay.progress=1;replay.playing=false;replay.last=0;}
+    }
+    renderReplayControls();
+  }
   const clampK = (k) => clamp(k, 0.02, 10);
   function request() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
   function resize() {
@@ -9238,13 +9861,13 @@ HTMLEOF
     return [x0, y0, x1, y1];
   }
   function margins() {   // 그래프가 보일 빈 곳: 왼쪽 창과, 열려 있으면 오른쪽 창(목록 · 분석)을 피한다
-    const drawer = !$("ana").hidden || !$("table").hidden || !$("panel").hidden;
-    return { l: W > 900 && (sel || W > 1300) ? 400 : 20, r: drawer && W > 1100 ? Math.min(570, W * 0.42) : 40 };
+    const cs=getComputedStyle(document.body);
+    return { l: W>760 ? parseFloat(cs.getPropertyValue("--left-w"))+30 : 20, r: W>760 ? parseFloat(cs.getPropertyValue("--right-w"))+30 : 20 };
   }
   function fitView(list) {
     list = list || (vs.layout === "pack" && m.pk ? m.pk.roots.map((h) => ({ x: h.x, y: h.y, hw: h.r, hh: h.r })) : visNodes);
     if (!list.length || !W) return null;
-    const [x0, y0, x1, y1] = bounds(list), { l, r } = margins(), padY = 60;
+    const [x0, y0, x1, y1] = bounds(list), { l, r } = margins(), padY = W<=760 ? 280 : 96;
     const k = clampK(Math.min((W - l - r) / Math.max(x1 - x0, 1), (H - padY * 2) / Math.max(y1 - y0, 1), 2));
     return { k, x: l + (W - l - r) / 2 - ((x0 + x1) / 2) * k, y: H / 2 - ((y0 + y1) / 2) * k };
   }
@@ -9732,6 +10355,7 @@ HTMLEOF
   }
   const targets = () => separate(vs.layout === "layers" ? layersTargets() : vs.layout === "tidy" ? treeTargets() : vs.layout === "stars" ? starTargets() : radialTargets());
   function applyLayout(reset) {
+    if(replay.active){pauseReplay();running=false;morph=null;tween=null;request();return;}
     if (vs.layout !== "stars") m.starSig = null;   // 다른 배치로 바꾸면 별자리 지문을 지워, 나중에 돌아올 때 다시 잡게
     $("forces").style.opacity = vs.layout === "force" ? "" : ".45";
     if (vs.layout === "pack") { running = false; morph = null; buildPack(); if (!m.userMoved || reset) animateTo(fitView(), 420); request(); return; }
@@ -10197,6 +10821,11 @@ HTMLEOF
   // ----- 그리기 -----
   function frame(now) {
     pending = false;
+    if (replay.active) {
+      advanceReplay(now); if(tween)tween(now); drawReplay();
+      if(replay.playing || tween)request();
+      return;
+    }
     if (morph) morph(now);
     if (running) {
       const t0 = performance.now();
@@ -10208,6 +10837,7 @@ HTMLEOF
       if (!m.userMoved) { const f = fitView(); if (f) Object.assign(view, f); }
     }
     if (tween) tween(now);
+    $("phase").textContent=running?"레이아웃 계산 중…":"탐색 준비 완료";
     const busy = vs.layout === "pack" && m.pk ? drawPack() : draw();
     if (running || tween || morph || busy) request();
   }
@@ -10286,13 +10916,13 @@ HTMLEOF
     ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineCap = "round";
     // 별자리 배치: 연결은 옅게, 별자리 선과 겹치는 실제 연결(fig)만 밝게 — 별자리 모양이 연결에 묻히지 않게
     const fig = vs.layout === "stars" && m.starFig && m.starFig.size ? m.starFig : null;
-    const base = (isBox ? 0.9 : clamp(1.6 / Math.sqrt(visEdges.length / 400 + 0.01), 0.22, 1)) * (1 - dimT * 0.75) * (vs.layout === "stars" ? 0.3 : 1);
-    for (const dashed of [false, true]) {
+    const base = (isBox ? 0.9 : clamp(1.6 / Math.sqrt(visEdges.length / 400 + 0.01), 0.22, 1)) * (1 - dimT * 0.55) * (vs.layout === "stars" ? 0.3 : 1);
+    for (const dashed of [0, 1, 2]) {
       ctx.globalAlpha = Math.min(1, base);
-      ctx.setLineDash(dashed ? [4 / k, 3 / k] : []);
+      ctx.setLineDash(dashed===1 ? [4 / k, 3 / k] : dashed===2 ? [9 / k, 3 / k] : []);
       if (m.rel === "changes" || isBox) {
         for (const e of visEdges) {
-          if (e.u !== dashed || hot(e) || (fig && fig.has(e))) continue;
+          if ((e.u?1:e.h?2:0) !== dashed || hot(e) || (fig && fig.has(e))) continue;
           ctx.lineWidth = (P.width * (fig ? 0.7 : m.rel === "changes" ? 0.8 + Math.log2(Math.max(e.w, 1)) * 0.8 : 1.2)) / k;
           const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
           if (showArrows && (seen(e.t, 10) || seen(e.s, 10))) { ctx.beginPath(); arrowHead(g, 8 / k); ctx.fill(); }
@@ -10300,9 +10930,9 @@ HTMLEOF
       } else {
         ctx.lineWidth = P.width / k; ctx.beginPath();
         const curvy = vs.layout === "tidy" || vs.layout === "radial";
-        for (const e of visEdges) if (e.u === dashed && !hot(e) && !(fig && fig.has(e))) { if (curvy) strokeEdge(geom(e)); else { ctx.moveTo(e.s.x, e.s.y); ctx.lineTo(e.t.x, e.t.y); } }
+        for (const e of visEdges) if ((e.u?1:e.h?2:0) === dashed && !hot(e) && !(fig && fig.has(e))) { if (curvy) strokeEdge(geom(e)); else { ctx.moveTo(e.s.x, e.s.y); ctx.lineTo(e.t.x, e.t.y); } }
         ctx.stroke();
-        if (showArrows && visEdges.length < 6000) { ctx.beginPath(); for (const e of visEdges) if (e.u === dashed && !hot(e) && seen(e.t, 10)) arrowHead(geom(e), 6 / k); ctx.fill(); }
+        if (showArrows && visEdges.length < 6000) { ctx.beginPath(); for (const e of visEdges) if ((e.u?1:e.h?2:0) === dashed && !hot(e) && seen(e.t, 10)) arrowHead(geom(e), 6 / k); ctx.fill(); }
       }
     }
     ctx.setLineDash([]);
@@ -10325,7 +10955,7 @@ HTMLEOF
       ctx.globalAlpha = 0.85 * (1 - dimT * 0.75); ctx.strokeStyle = C["text-2"];
       for (const e of visEdges) {
         if (!fig.has(e) || hot(e)) continue;
-        ctx.lineWidth = (P.width * 1.5) / k; ctx.setLineDash(e.u ? [4 / k, 3 / k] : []);
+        ctx.lineWidth = (P.width * 1.5) / k; ctx.setLineDash(e.u ? [4 / k, 3 / k] : e.h ? [9 / k, 3 / k] : []);
         const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
         // 화살표: 점 그리기(파일 탭)는 위에서 연결 전체에 한 번에 그렸고, 연결을 하나씩 그리는 경우는 여기서
         if (showArrows && (m.rel === "changes" || isBox)) { ctx.setLineDash([]); ctx.fillStyle = C["text-2"]; ctx.beginPath(); arrowHead(g, 8 / k); ctx.fill(); }
@@ -10353,7 +10983,7 @@ HTMLEOF
         const st = m.G.diff ? e.d.status : "", bad = VIOL && P.rules ? VIOL.get(e) : null;
         if (!st && !bad) continue;
         ctx.globalAlpha = aD * (1 - dimT * 0.6);
-        ctx.strokeStyle = ctx.fillStyle = st === "added" ? C.add : st === "removed" ? C.del : st ? C.warn : C.del;
+        ctx.strokeStyle = ctx.fillStyle = st === "added" ? C.add : st === "removed" ? C.del : st ? C.warn : C.warn;
         ctx.setLineDash(st === "removed" || (!st && bad.severity !== "error") ? [5 / k, 4 / k] : []);
         ctx.lineWidth = ((nd > 200 ? 1.3 : 2) * P.width) / k;
         const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
@@ -10368,7 +10998,7 @@ HTMLEOF
       const wHL = hots.length > 150 ? 1.1 : hots.length > 40 ? 1.5 : HL && !f ? 2.4 : 1.8;   // 많이 강조할수록 가늘게
       for (const e of hots) {
         ctx.lineWidth = (P.width * (m.rel === "changes" ? 1.2 + Math.log2(Math.max(e.w, 1)) : wHL)) / k;
-        ctx.setLineDash(e.u ? [5 / k, 3 / k] : []);
+        ctx.setLineDash(e.u ? [5 / k, 3 / k] : e.h ? [9 / k, 3 / k] : []);
         const g = geom(e); ctx.beginPath(); strokeEdge(g); ctx.stroke();
         if (m.directed) { ctx.beginPath(); arrowHead(g, 9 / k); ctx.fill(); }
       }
@@ -10378,7 +11008,8 @@ HTMLEOF
     const dimField = vs.layout === "stars" && m.starMainSet && m.starMainSet.size > 0;
     for (const n of visNodes) {
       const lit = !lit0 || (F && F.has(n)) || (!F && matchSet && matchSet.has(n));
-      const want = lit ? 1 : 0.13;
+      const route=reviewResult?.routes.get(n.id);
+      const want = lit ? (HL && route?.depth>1 ? .65 : 1) : 0.3;
       n.fade += (want - n.fade) * 0.22;
       if (Math.abs(n.fade - want) > 0.01) busy = true;
       const fa = n.fade * (dimField && !m.starMainSet.has(n) ? 0.5 : 1);   // 별자리 배치의 잔별은 흐리게
@@ -10480,11 +11111,65 @@ HTMLEOF
     return busy;
   }
 
+  // 정확한 두 스냅샷을 합친 고정 위치에서 재생한다.
+  // 그래프 식별자·리뷰 근거·선택한 소스 스냅샷은 바꾸지 않는다.
+  function drawReplay() {
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    const k=view.k; ctx.setTransform(dpr*k,0,0,dpr*k,dpr*view.x,dpr*view.y);
+    const nodes=visNodes.filter(n=>replayNodeOpacity(n)>.001), F=focusSet();
+    const lit=n=>!F&&!matchSet || F?.has(n) || matchSet?.has(n);
+    const visible=n=>{const x=n.x*k+view.x,y=n.y*k+view.y;return x>-320&&x<W+320&&y>-50&&y<H+50;};
+    for(const e of m.edges) {
+      if(!e.s.vis || !e.t.vis)continue;
+      const [before,current]=replayEdgePresence(e);
+      const opacity=replayOpacity(before,current,true)*Math.min(replayNodeOpacity(e.s),replayNodeOpacity(e.t));
+      if(opacity<.001)continue;
+      const changed=before!==current;
+      ctx.globalAlpha=opacity*(lit(e.s)&&lit(e.t) ? (changed ? .9 : .4) : .12);
+      ctx.strokeStyle=ctx.fillStyle=before&&!current?C.del:current&&!before?C.add:C.ink;
+      ctx.lineWidth=(changed?2:1)*P.width/k;
+      ctx.setLineDash(before&&!current?[5/k,4/k]:e.u?[3/k,3/k]:[]);
+      const g=geom(e);ctx.beginPath();strokeEdge(g);ctx.stroke();
+      if(m.directed&&(P.arrows||box())){ctx.setLineDash([]);ctx.beginPath();arrowHead(g,7/k);ctx.fill();}
+    }
+    ctx.setLineDash([]);
+    const labelGrid=new Map(), labelFree=(x,y,w)=>{
+      const x0=Math.floor((x-w/2)/100),x1=Math.floor((x+w/2)/100),y0=Math.floor(y/18),y1=Math.floor((y+15)/18);
+      for(let gx=x0;gx<=x1;gx++)for(let gy=y0;gy<=y1;gy++)for(const r of labelGrid.get(gx+':'+gy)||[])if(r[0]<x+w/2&&r[2]>x-w/2&&r[1]<y+15&&r[3]>y)return false;
+      const r=[x-w/2,y,x+w/2,y+15];
+      for(let gx=x0;gx<=x1;gx++)for(let gy=y0;gy<=y1;gy++){const key=gx+':'+gy;if(!labelGrid.has(key))labelGrid.set(key,[]);labelGrid.get(key).push(r);}
+      return true;
+    };
+    let labels=0;
+    for(const n of nodes.slice().sort((a,b)=>(b===sel)-(a===sel)||Number(!!b.d.changed)-Number(!!a.d.changed)||byId(a,b))) {
+      if(!visible(n))continue;
+      const before=replay.data.before.has(n.id),current=replay.data.current.has(n.id);
+      const opacity=replayNodeOpacity(n)*(lit(n)?1:.25), changed=before&&current&&(n.d.changed||n.d.status==='changed');
+      const col=!before?C.add:!current?C.del:changed?C.warn:colorOf(n);
+      ctx.globalAlpha=opacity;ctx.fillStyle=box()?C.box:C.core;ctx.beginPath();shape(n,0);ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=(changed||before!==current?2.3:1.7)/k;
+      ctx.setLineDash(before&&!current?[4/k,3/k]:[]);ctx.stroke();ctx.setLineDash([]);
+      if(n===sel||n===hover){ctx.strokeStyle=C.hl;ctx.lineWidth=2/k;ctx.beginPath();shape(n,3/k);ctx.stroke();}
+      if(labels>=1500)continue;
+      const label=replayLabel(n);ctx.font=box()?`600 13px ${FONT}`:`${12/k}px ${FONT}`;
+      const labelY=box()?n.y:n.y+halfH(n)+4/k;
+      const textWidth=box()?n.w*k:ctx.measureText(label).width*k;
+      if(!box()&&!labelFree(n.x*k+view.x,labelY*k+view.y,textWidth))continue;
+      labels++;ctx.textAlign='center';ctx.textBaseline=box()?'middle':'top';ctx.fillStyle=C.text;
+      if(!box()){ctx.strokeStyle=C.halo;ctx.lineWidth=3/k;ctx.strokeText(label,n.x,labelY);}
+      if(box())ctx.fillText(label,n.x,labelY,n.w-10);else ctx.fillText(label,n.x,labelY);
+    }
+    ctx.globalAlpha=1;
+    $('empty').hidden=nodes.length>0;
+    if(!nodes.length)$('emptyText').textContent='이 시점에 검색·필터와 일치하는 노드가 없습니다.';
+  }
+
   // ----- 고르기 · 정보 · 목록 -----
   function nodeAt(px, py) {
     const x = (px - view.x) / view.k, y = (py - view.y) / view.k, pad = 6 / view.k;
     let best = null, bd = Infinity;
     for (const n of visNodes) {
+      if(replay.active && replayNodeOpacity(n)<.08)continue;
       const dx = n.x - x, dy = n.y - y, d = dx * dx + dy * dy;
       const hit = box() ? Math.abs(dx) <= n.w / 2 + pad && Math.abs(dy) <= n.h / 2 + pad : d < (n.r + pad) * (n.r + pad);
       if (hit && d < bd) { bd = d; best = n; }
@@ -10497,10 +11182,12 @@ HTMLEOF
   const dotHtml = (n) => `<span class="${dotClass(n)}" style="background:${colorOf(n)}"></span>`;
   const METRIC = () => (m.agg ? ["파일", (n) => (n.members ? n.members.length : 0)] : { files: ["줄", (n) => n.d.lines || 0], modules: ["연결", (n) => n.deg], changes: ["바뀐 횟수", (n) => n.d.changes || 0], tree: ["파일", (n) => n.d.files || 0] }[m.rel]);
   function select(n) {
+    if(replay.active)pauseReplay();
+    if(n && replay.active && replayNodeOpacity(n)<.08)seekReplay(replay.data.current.has(n.id)?1:0);
     const was = sel;
     sel = n && n.vis ? n : null;
     if (P.local && was !== sel) { refreshVisible(); sizeNodes(true); if (vs.layout === "force") startForce(false, 0.5); else applyLayout(false); }
-    renderInfo(); request();
+    renderInfo(); rememberNavigation(); request();
   }
   function edgeNote(e) {
     if (m.agg) return `${e.d.files}개${e.kind === "cochange" ? " · " + e.w + "번" : ""}`;
@@ -10520,15 +11207,10 @@ HTMLEOF
     const items = pairs.slice(0, 400).map(([e, o]) => `<li data-i="${o.i}" title="${esc(o.id)}">${dotHtml(o)}<span class="name">${esc(o.label)}${where(o)}</span><small>${esc(edgeNote(e))}</small>${evidenceHtml(e)}</li>`).join("");
     return `<h3 class="sec-title"><span class="arrow">${arrowCh}</span>${esc(title)} · ${pairs.length}</h3><ul class="rows">${items}</ul>`;
   }
-  function placeInfo() {
-    const info = $("info");
-    if (innerWidth <= 700) { info.style.top = ""; info.style.maxHeight = ""; return; }
-    const top = Math.round($("top").getBoundingClientRect().bottom + 10);
-    info.style.top = top + "px"; info.style.maxHeight = `calc(100vh - ${top + 74}px)`;
-  }
+  function placeInfo() { $("reviewDetail").hidden = !!sel; }
   function renderInfo() {
     const info = $("info");
-    if (!sel || !m) { info.hidden = true; info.innerHTML = ""; return; }
+    if (!sel || !m) { info.hidden = true; info.innerHTML = ""; $("reviewDetail").hidden=false; return; }
     const n = sel, a = analyze(), rows = [];
     for (const [k, v] of Object.entries(n.d)) {
       if (k === "id" || k === "label" || k === "kind" || k === "group" || k === "path" || !(k in KEYNAME)) continue;
@@ -10544,12 +11226,12 @@ HTMLEOF
     let html = `<div class="head">${dotHtml(n)}<h2>${esc(n.label)}</h2><button class="icon-btn" type="button" title="닫기 (Esc)" aria-label="닫기"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
     html += `<div class="sub">${esc(KINDNAME[n.kind] || n.kind)} · ${esc(famLabel(n))}${n.test ? " · 테스트" : ""}</div>`;
     if (n.d.path || n.id !== n.label) html += `<div class="path">${esc(n.d.path || n.id)}</div>`;
-    if (n.kind === "file" && META.repoPath) html += `<p><a class="source-link" href="${esc(appLink(n.d.path || n.id, 1, n.d.impactFromBase ? n.d.baseCommit : null))}">앱에서 ${n.d.impactFromBase ? "변경 전 " : ""}파일 열기 ↗</a></p>`;
+    if (n.kind === "file" && META.repoPath) html += `<p><a class="source-link" href="${esc(appLink(n.d.path || n.id, 1, (n.d.deleted || n.d.status==="removed") ? REVIEW?.baseSha : n.d.impactFromBase ? n.d.baseCommit : null))}">앱에서 ${n.d.impactFromBase ? "변경 전 " : ""}파일 열기 ↗</a></p>`;
     if (m.directed) {
       const inst = ca + ce ? (ce / (ca + ce)).toFixed(2) : "–";
       html += `<div class="metrics"><div title="이것을 쓰는 것(직접)"><b>${ca}</b><span>들어옴</span></div><div title="이것이 쓰는 것(직접)"><b>${ce}</b><span>나감</span></div><div title="나감 ÷ (들어옴 + 나감) — 1 에 가까울수록 남에게 기대고, 0 에 가까울수록 남이 기댄다"><b>${inst}</b><span>불안정도</span></div>`
         + `<div title="바꾸면 영향을 받는 것(전이)"><b>${imp}</b><span>영향 범위</span></div><div title="이것이 기대는 것 전체(전이)"><b>${all}</b><span>전체 의존</span></div><div class="${cyc > 1 ? "warn" : ""}" title="순환 의존 덩어리의 크기"><b>${cyc > 1 ? cyc : "없음"}</b><span>순환</span></div></div>`;
-      html += `<div class="actions"><button type="button" data-act="in">영향 범위 보기</button><button type="button" data-act="out">전체 의존 보기</button>${cyc > 1 ? '<button type="button" data-act="cyc">순환 보기</button>' : ""}<button type="button" data-act="path" class="${pathFrom === n ? "on" : ""}">경로 찾기</button><button type="button" data-act="local" class="${P.local ? "on" : ""}">주변만</button></div>`;
+      html += `<div class="actions">${REVIEW?.changes.some(c=>c.path===n.id)?'<button type="button" data-act="review">이 변경의 리뷰·테스트</button>':""}<button type="button" data-act="in">영향 범위 보기</button><button type="button" data-act="out">전체 의존 보기</button>${cyc > 1 ? '<button type="button" data-act="cyc">순환 보기</button>' : ""}<button type="button" data-act="path" class="${pathFrom === n ? "on" : ""}">경로 찾기</button><button type="button" data-act="local" class="${P.local ? "on" : ""}">주변만</button></div>`;
     } else html += `<div class="actions"><button type="button" data-act="path" class="${pathFrom === n ? "on" : ""}">경로 찾기</button><button type="button" data-act="local" class="${P.local ? "on" : ""}">주변만</button></div>`;
     if (rows.length) html += `<table>${rows.join("")}</table>`;
     if (!m.directed) html += list(outT, [...n.out.map((e) => [e, e.t]), ...n.inc.map((e) => [e, e.s])], "↔");
@@ -10565,7 +11247,8 @@ HTMLEOF
     for (const b of info.querySelectorAll("[data-act]")) b.onclick = () => act(b.dataset.act, n);
   }
   function act(what, n) {
-    if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, `${n.label} 을(를) 바꾸면 영향을 받는 것 ${s.size}개`, [n]); }
+    if (what === "review") { chosen.clear();chosen.add(n.id);select(null);renderReview();$("rightDock").scrollTop=0; }
+    else if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, `${n.label} 의 의존 경로상 확인 대상 ${s.size}개`, [n]); }
     else if (what === "out") { const s = reach(n, "out"); highlight([n, ...s], null, `${n.label} 이(가) 기대는 것 전체 ${s.size}개`, [n]); }
     else if (what === "cyc") { const a = analyze(), c = a.comps[a.comp.get(n)]; highlight(c, null, `순환 의존 ${c.length}개: ${c.slice(0, 4).map((x) => x.label).join(" ⇄ ")}${c.length > 4 ? " …" : ""}`); }
     else if (what === "path") { pathFrom = pathFrom === n ? null : n; canvas.classList.toggle("picking", !!pathFrom); if (pathFrom) banner(`경로 찾기: ${n.label} 에서 — 끝 노드를 누르세요 (Esc 취소)`); else clearHL(); renderInfo(); request(); }
@@ -10581,6 +11264,7 @@ HTMLEOF
   }
   function clearHL() { HL = null; pathFrom = null; canvas.classList.remove("picking"); $("banner").hidden = true; if (sel) renderInfo(); request(); }
   function setQuery(s) {
+    if(replay.active)pauseReplay();
     query = s.trim().toLowerCase();
     matchSet = null;
     if (P.onlyFound) { matchSet = query ? new Set(m.nodes.filter((n) => n.key.includes(query))) : null; refreshVisible(); sizeNodes(true); if (vs.layout === "force") startForce(false, 0.3); else applyLayout(false); }
@@ -10588,6 +11272,7 @@ HTMLEOF
     matchSet = query ? new Set(matches) : null; matchIdx = -1;
     $("hits").textContent = query ? `${matches.length}` : "";
     if (!$("table").hidden) renderTable();
+    renderSearchResults(); renderReview();
     request();
   }
   let sortKey = "deg", sortDir = -1;
@@ -10753,6 +11438,7 @@ HTMLEOF
     for (const b of el.querySelectorAll("button")) b.onclick = () => onPick(b.dataset.v);
   }
   function renderControls() {
+    renderReplayControls();
     seg($("tabs"), ORDER.map((v) => [v, TABNAME[v]]), REL, (v) => { if (v !== REL) show(v); });
     for (const b of $("tabs").querySelectorAll("button")) { b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(b.dataset.v === REL)); b.title = `${RELNAME[b.dataset.v]} · 노드 ${VIEWS[b.dataset.v].nodes.length}`; }
     const packed = vs.layout === "pack", unitOk = (REL === "files" || REL === "changes") && !packed;
@@ -10765,6 +11451,7 @@ HTMLEOF
     $("depth").value = String(vs.depth);
     seg($("style"), [["dot", "점"], ["box", "상자"]], vs.style, (v) => { vs.style = v; if (v === "box" && vs.layout === "radial") vs.layout = "tidy"; renderControls(); sizeNodes(); m.userMoved = false; applyLayout(true); });
     seg($("layout"), LAYOUTS[REL], vs.layout, (v) => {
+      stopReplay(false);
       if (v === "stars" && vs.layout === "stars") vs.starPick = (vs.starPick || 0) + 1;   // 별자리를 다시 누르면 다음 별자리
       vs.layout = v;
       if (v === "pack" && vs.unit !== "file") { vs.unit = "file"; switchModel(); }   // 폴더 원은 파일 단위로 — 접고 펼치기가 폴더 묶음을 대신한다
@@ -10783,18 +11470,20 @@ HTMLEOF
     renderGroups();
     const G = m.G, st = G.stats || {};
     const D = G.diff, nv = RULES ? RULES.violations.filter((v) => v.relation === REL && v.severity === "error" && !v.existing).length : 0;
-    $("stats").textContent = (D ? `비교 ${D.baseName}(${D.base}) → 작업 트리 · 연결 +${st.addedEdges || 0} −${st.removedEdges || 0}${st.newCycles ? ` · 새 순환 ${st.newCycles}` : ""}${st.changedCycles ? ` · 바뀐 순환 ${st.changedCycles}` : ""}`
+    $("stats").textContent = (D ? `비교 ${D.baseName}(${D.base}) → ${scopeLabel((RAW.review||META.review)?.scope||"worktree")} · 연결 +${st.addedEdges || 0} −${st.removedEdges || 0}${st.newCycles ? ` · 새 순환 ${st.newCycles}` : ""}${st.changedCycles ? ` · 바뀐 순환 ${st.changedCycles}` : ""}`
       : `${RELNAME[REL]}${m.agg ? ` · 폴더 ${m.depth}단계` : ""} · 노드 ${m.nodes.length} · 연결 ${m.edges.length}${st.heuristicEdges && !m.agg ? ` (추정 ${st.heuristicEdges})` : ""}${G.lang ? " · " + G.lang.join(",") : ""}`) + (nv ? ` · 규칙 위반 ${nv}` : "");
     $("stats").title = `${G.commit ? G.commit + " · " : ""}gitch ${G.version} · ${G.generated || ""}`;
+    if (vs.layout === "pack" && m.nodes.length > BIG) $("stats").textContent += " · 폴더 요약 (확대하여 파일 펼치기)";
     if (st.affected) $("stats").textContent += ` · 변경 ${st.affected.changedFiles.length}개 → 영향 파일 ${st.affected.files.length}개 · 모듈 ${st.affected.modules.length}개`;
     const notes = [...(G.notes || [])];
+    if (G.nodes.length && !G.edges.length) notes.unshift("이 보기에서 연결을 찾지 못했습니다. 정적 분석 누락·엔트리 포인트·동적 로딩이 있을 수 있으며 미사용 코드라는 뜻은 아닙니다.");
     if (st.historyFrom) notes.unshift(`실제 이력 ${st.historyFrom} ~ ${st.historyTo} · 사용 ${st.analyzedCommits || 0}/${st.commits || 0} 커밋 · 이름 변경 추적 ${st.followedRenames || 0}개${st.historyTruncated ? " · 커밋 수 제한으로 잘림" : ""}${st.shallowHistory ? " · shallow 저장소: 이전 이력 없음" : ""}`);
     const diagnostics = G.diagnostics || [];
     $("notes").innerHTML = notes.map((t) => `<p>${esc(t)}</p>`).join("") + diagnostics.map((d) => `<p>${d.file && META.repoPath ? `<a href="${esc(appLink(d.file, d.line))}">${esc(d.file)}${d.line ? ":" + d.line : ""}</a> · ` : ""}${esc(d.code)}: ${esc(d.message)}</p>`).join("");
     $("noteBtn").hidden = !notes.length && !diagnostics.length;
     if (!notes.length && !diagnostics.length) $("notes").hidden = true;
   }
-  function setUnit(u) { if (u === vs.unit) return; vs.unit = u; switchModel(); }
+  function setUnit(u) { if (u === vs.unit) return; stopReplay(false); vs.unit = u; switchModel(); }
   function switchModel() {
     sel = null; hover = null; morph = null; tween = null; running = false; HL = null; pathFrom = null;
     $("banner").hidden = true; canvas.classList.remove("picking");
@@ -10815,7 +11504,7 @@ HTMLEOF
     else request();
     if (!$("table").hidden) renderTable();
   }
-  function show(rel) { REL = rel; vs = stateFor(rel); switchModel(); }
+  function show(rel) { stopReplay(false); REL = rel; vs = stateFor(rel); switchModel(); rememberNavigation(); }
   function buildLang() {
     const langs = new Set();
     for (const v of ORDER) for (const d of VIEWS[v].nodes) for (const l of langsOf(d, v)) langs.add(l);
@@ -10936,7 +11625,7 @@ HTMLEOF
     $("hits").textContent = `${matchIdx + 1}/${matches.length}`;
   });
   document.addEventListener("keydown", (ev) => {
-    if (ev.target instanceof HTMLInputElement || ev.target instanceof HTMLSelectElement || (ev.target instanceof HTMLButtonElement && ev.key === "Enter")) return;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.isComposing || ev.target.closest?.("input,select,textarea,[contenteditable=true]") || (ev.target instanceof HTMLButtonElement && ["Enter"," "].includes(ev.key))) return;
     if (ev.key === "/") { ev.preventDefault(); q.focus(); q.select(); }
     else if (ev.key === "Escape") { if (pathFrom || HL) clearHL(); else if (!$("table").hidden) toggleDrawer("table", false); else if (!$("ana").hidden) toggleDrawer("ana", false); else select(null); }
     else if (ev.key === "f" || ev.key === "F") { m.userMoved = false; animateTo(fitView()); }
@@ -11007,12 +11696,14 @@ HTMLEOF
       request();
     };
   }
-  $("animate").onclick = () => { vs.layout = "force"; renderControls(); m.userMoved = false; startForce(true, 1); };
+  $("animate").onclick = () => { stopReplay(false); vs.layout = "force"; renderControls(); m.userMoved = false; startForce(true, 1); };
 
   const viewKey = "gitch-graph-views-v1:" + (META.repoPath || META.repo) + ":" + (META.scope || "");
-  const lastKey = viewKey + ":last:" + (RAW.initial || META.relation) + (META.diff ? ":diff" : META.stats?.affected ? ":affected" : META.stats?.precise ? ":precise" : "");
+  const analysisKey = (META.diff ? "diff" : META.stats?.affected ? "affected" : "graph") + ":" + (META.review?.scope || RAW.review?.scope || "worktree");
+  const snapshotKey = JSON.stringify([META.commit, META.generated, META.diff?.base, RAW.review?.baseSha]);
+  const lastKey = viewKey + ":" + analysisKey + ":last:" + (RAW.initial || META.relation) + (META.diff ? ":diff" : META.stats?.affected ? ":affected" : META.stats?.precise ? ":precise" : "");
   function captureView() {
-    return { schemaVersion: 1, tool: "gitch graph view", repo: META.repo, relation: REL, filters: { ...P },
+    return { schemaVersion: 1, tool: "gitch graph view", repo: META.repo, snapshot: snapshotKey, analysis: analysisKey, review: {chosen:[...chosen],depth:reviewDepth,folder:folderQuery}, panels:{leftClosed:document.body.classList.contains("leftClosed"),rightClosed:document.body.classList.contains("rightClosed"),left:getComputedStyle(root).getPropertyValue("--left-w"),right:getComputedStyle(root).getPropertyValue("--right-w")}, relation: REL, filters: { ...P },
       display: Object.fromEntries(ORDER.map((r) => { const s = stateFor(r); return [r, { unit: s.unit, depth: s.depth, style: s.style, layout: s.layout, colorBy: s.colorBy, sizeBy: s.sizeBy }]; })),
       hidden: [...hidden], query: q.value, selected: sel?.id || null, camera: { ...view }, theme: root.dataset.theme,
       positions: m.nodes.slice(0, 10000).map((n) => [n.id, n.x, n.y, n.fx, n.fy]) };
@@ -11039,19 +11730,30 @@ HTMLEOF
     $("lang").value = P.lang;
     show(data.relation);
     running = false; alpha = 0; morph = null; tween = null;
-    if (Array.isArray(data.positions)) for (const p of data.positions.slice(0, 10000)) {
+    const sameSnapshot = (!data.snapshot || data.snapshot === snapshotKey) && (!data.analysis || data.analysis === analysisKey);
+    if (sameSnapshot && Array.isArray(data.positions)) for (const p of data.positions.slice(0, 10000)) {
       if (!Array.isArray(p) || typeof p[0] !== "string") continue;
       const n = m.nodeOf.get(p[0]); if (!n || !p.slice(1, 3).every((v) => typeof v === "number" && Number.isFinite(v) && Math.abs(v) < 1e8)) continue;
       n.x = p[1]; n.y = p[2]; n.vx = n.vy = 0;
       n.fx = Number.isFinite(p[3]) ? clamp(p[3], -1e8, 1e8) : null; n.fy = Number.isFinite(p[4]) ? clamp(p[4], -1e8, 1e8) : null;
     }
     const c = data.camera;
-    if (c && [c.x, c.y, c.k].every((v) => typeof v === "number" && Number.isFinite(v))) { view.x = clamp(c.x, -1e8, 1e8); view.y = clamp(c.y, -1e8, 1e8); view.k = clamp(c.k, 0.01, 100); }
-    sel = typeof data.selected === "string" ? m.nodeOf.get(data.selected) || null : null;
+    if (sameSnapshot && c && [c.x, c.y, c.k].every((v) => typeof v === "number" && Number.isFinite(v))) { view.x = clamp(c.x, -1e8, 1e8); view.y = clamp(c.y, -1e8, 1e8); view.k = clamp(c.k, 0.01, 100); }
+    sel = sameSnapshot && typeof data.selected === "string" ? m.nodeOf.get(data.selected) || null : null;
     if (P.local && sel) refreshVisible();
     if (sel && !sel.vis) sel = null;
+    if(data.review && REVIEW) {
+      const valid=new Set(REVIEW.changes.map(c=>c.path));chosen.clear();
+      for(const id of (Array.isArray(data.review.chosen)?data.review.chosen:[]))if(valid.has(id))chosen.add(id);
+      reviewDepth=[1,2,3,5,10,10000].includes(data.review.depth)?data.review.depth:3;$('impactDepth').value=String(reviewDepth);
+      folderQuery=typeof data.review.folder==='string' && [...valid].some(id=>id.startsWith(data.review.folder))?data.review.folder:'';
+    }
+    for(const side of ['left','right']) {
+      document.body.classList.toggle(side+'Closed',!!data.panels?.[side+'Closed']);
+      const w=data.panels?.[side];if(typeof w==='string' && /^\d+(\.\d+)?px$/.test(w) && parseFloat(w)>=220 && parseFloat(w)<=460)root.style.setProperty('--'+side+'-w',w);
+    }
     setTheme(data.theme === "light" ? "light" : "dark", false);
-    renderControls(); renderInfo(); setQuery(q.value); m.userMoved = true; request();
+    renderControls(); renderInfo(); setQuery(q.value); m.userMoved = sameSnapshot; if(!sameSnapshot)applyLayout(true); request();
     return true;
   }
   function readViews() { try { const data = JSON.parse(localStorage.getItem(viewKey) || "{}"); return data && typeof data === "object" && !Array.isArray(data) ? data : {}; } catch { return {}; } }
@@ -11059,7 +11761,7 @@ HTMLEOF
     const data = readViews(), select = $("savedViews"); select.replaceChildren(new Option("저장한 보기 선택", ""));
     for (const name of Object.keys(data).sort().slice(0, 30)) select.add(new Option(name, name));
   }
-  function saveLast() { try { sessionStorage.setItem(lastKey, JSON.stringify(captureView())); } catch { /* private mode */ } }
+  function saveLast() { try { localStorage.setItem(lastKey, JSON.stringify(captureView())); } catch { /* private mode */ } }
   window.gitchGraphView = { capture: captureView, restore: restoreView, saveLast };
   window.addEventListener("beforeunload", saveLast);
   $("saveView").onclick = () => {
@@ -11082,6 +11784,275 @@ HTMLEOF
     $("viewFile").value = "";
   };
 
+  // Change review uses immutable before/current snapshots, never the filtered canvas.
+  const REVIEW = RAW.review || META.review || null;
+  const chosen = new Set(REVIEW?.changes.map(c => c.path) || []);
+  let reviewDepth = 3, reviewResult = null, folderQuery = "";
+  const graphBirth = performance.now(), reviewMetrics={lastMs:0,renders:0,readyMs:0};
+  const scopeLabel = s => ({worktree:"작업 트리 · 스테이지 포함", staged:"스테이지", committed:"커밋된 브랜치"}[s] || s);
+  const changeLabel = s => s?.startsWith("R") ? "이름 변경" : ({A:"추가",U:"미추적 추가",D:"삭제",M:"본문 또는 선언 변경",T:"파일 종류 변경"}[s] || s);
+  function reviewSeeds() { return (REVIEW?.changes || []).filter(c => chosen.has(c.path) && (!folderQuery || c.path.startsWith(folderQuery)) && (!query || c.path.toLowerCase().includes(query)) && (P.lang === "all" || pathLang(c.path) === P.lang) && (P.tests || !TEST_PATH.test(c.path))); }
+  function reviewGraph(heur) {
+    if(reviewGraphCache.has(heur))return reviewGraphCache.get(heur);
+    const nodes = new Map((REVIEW?.current.nodes || []).map(n => [n.id,n])), edges = [...(REVIEW?.current.edges || [])];
+    const deleted = new Set(REVIEW?.changes.filter(c=>c.status==="D").map(c=>c.path) || []);
+    const renamed = new Map(REVIEW?.changes.filter(c=>c.oldPath).map(c=>[c.oldPath,c.path]) || []);
+    for (const n of REVIEW?.before.nodes || []) if (deleted.has(n.id)) nodes.set(n.id,{...n,deleted:true});
+    for (const e of REVIEW?.before.edges || []) if (deleted.has(e.source)||deleted.has(e.target)||renamed.has(e.source)||renamed.has(e.target)) {
+      for (const id of [e.source,e.target]) if (!nodes.has(id)) { const n=REVIEW.before.nodes.find(n=>n.id===id); if(n) nodes.set(id,n); }
+      edges.push({...e,source:renamed.get(e.source)||e.source,target:renamed.get(e.target)||e.target,impactFromBase:true,baseCommit:REVIEW.baseSha});
+    }
+    for(const c of REVIEW?.changes||[])if(!nodes.has(c.path))nodes.set(c.path,{id:c.path,path:c.path,kind:'file',analysis:'unresolved',deleted:c.status==='D'});
+    const filtered=edges.filter(e=>heur || !e.heuristic), rev=new Map();
+    for(const e of filtered){if(!rev.has(e.target))rev.set(e.target,[]);rev.get(e.target).push(e);}
+    const result={nodes,edges:filtered,rev};reviewGraphCache.set(heur,result);return result;
+  }
+  function reviewImpact(heur=P.heur) {
+    const {nodes,edges,rev} = reviewGraph(heur), routes=new Map(), queue=[];
+    for(const c of reviewSeeds()) {routes.set(c.path,{id:c.path,depth:0,path:[c.path],base:c.status==="D"}); queue.push(c.path);}
+    for(let i=0;i<queue.length;i++) {const t=queue[i],r=routes.get(t); if(r.depth>=reviewDepth) continue;
+      for(const e of rev.get(t)||[]) if(!routes.has(e.source)) {routes.set(e.source,{id:e.source,depth:r.depth+1,path:[e.source,...r.path],base:r.base||!!e.impactFromBase,heuristic:!!e.heuristic||!!r.heuristic}); queue.push(e.source);}}
+    return {nodes,edges,routes,direct:[...routes.values()].filter(r=>r.depth===1),indirect:[...routes.values()].filter(r=>r.depth>1)};
+  }
+  function reviewPriorities() {
+    if(!REVIEW)return [];
+    const rename=new Map(REVIEW.changes.filter(c=>c.oldPath).map(c=>[c.oldPath,c.path]));
+    const key=v=>JSON.stringify([v.relation,v.rule,v.kind,v.nodes?.map(n=>rename.get(n)||n).sort()||[rename.get(v.source)||v.source,rename.get(v.target)||v.target]]);
+    const old=new Set((REVIEW.beforeRules?.violations||[]).map(key));
+    const violations=(REVIEW.rules?.violations||[]).map(v=>({...v,existing:old.has(key(v))}));
+    const cycles=reviewCycles(P.heur);
+    const rows=reviewSeeds().map(c=>{
+      const rules=violations.filter(v=>!v.existing && v.severity==="error" && (v.source===c.path || v.target===c.path || v.nodes?.includes(c.path)));
+      const cyc=[...cycles.new,...cycles.changed].filter(v=>v.nodes.includes(c.path));
+      const modules=new Set((REVIEW.current.edges||[]).filter(e=>e.target===c.path).map(e=>ownerModule(e.source)));
+      return {...c,rules:rules.length,cycles:cyc.length,modules:modules.size,reasons:[...(rules.length?[`새 규칙 위반 ${rules.length}`]:[]),...(cyc.length?[`새로 생기거나 바뀐 순환 ${cyc.length}`]:[]),...(modules.size>1?[`${modules.size}개 ${[...modules].every(m=>m.startsWith("folder:"))?"폴더":"모듈"}에서 참조`]:[])]};
+    }).sort((a,b)=>b.rules-a.rules||b.cycles-a.cycles||b.modules-a.modules||a.path.localeCompare(b.path));
+    return {rows,violations,cycles};
+  }
+  function ownerModule(path) {
+    if(reviewOwnerCache.has(path))return reviewOwnerCache.get(path);
+    const owners=(REVIEW?.modules.nodes||[]).filter(n=>n.kind==="module" && n.path && (n.path==="."||path.startsWith(n.path.replace(/\/$/,"")+"/"))).sort((a,b)=>b.path.length-a.path.length);
+    const owner=owners[0]?.id || "folder:"+(path.split("/").slice(0,-1).join("/") || "(root)");reviewOwnerCache.set(path,owner);return owner;
+  }
+  function openReviewFile(id) {
+    let n=m.nodeOf.get(id);
+    if(!n && VIEWS.files) {if(REL!=="files")show("files");if(vs.unit!=="file")setUnit("file");n=m.nodeOf.get(id);}
+    if(n && !n.vis) {P.onlyDiff=false;P.onlyAffected=false;P.local=false;hidden.clear();P.orph=true;P.minDeg=0;filtersChanged();n=m.nodeOf.get(id);}
+    if(n?.vis) {select(n);centerOn(n,Math.max(view.k,1.25));}
+    else banner('현재 그래프 필터에서 이 항목을 표시할 수 없습니다. 검색·언어·테스트 필터를 확인하세요.');
+  }
+  function renderReview() {
+    const t0=performance.now();
+    const list=$('changeList'), detail=$('reviewDetail');
+    if(!REVIEW) {list.innerHTML='<p>이 분석에는 변경 스냅샷이 없습니다. gitch g diff --format html로 비교할 수 있습니다.</p>'; detail.innerHTML='<h2>상세 · 분석 근거</h2><p>파일을 선택하거나 검색 결과에서 Enter를 누르세요.</p>';return;}
+    const all=REVIEW.changes.filter(c=>(!folderQuery||c.path.startsWith(folderQuery))&&(!query||c.path.toLowerCase().includes(query))&&(P.lang==="all"||pathLang(c.path)===P.lang));
+    list.innerHTML=all.slice(0,300).map(c=>`<div class="change"><label><input type="checkbox" data-change="${esc(c.path)}" ${chosen.has(c.path)?'checked':''}><span><button data-file="${esc(c.path)}">${esc(c.path)}</button><small>${esc(changeLabel(c.status))}${c.oldPath?` · ${esc(c.oldPath)} →`:''}</small></span></label></div>`).join('') || `<p>${REVIEW.changes.length?'현재 검색·폴더·언어 필터에 맞는 변경이 없습니다.':'비교 범위에 변경된 추적 파일이 없습니다.'}</p>`;
+    if(all.length>300)list.innerHTML+=`<p>${all.length-300}개 생략 · 검색이나 폴더로 좁혀 주세요.</p>`;
+    for(const e of list.querySelectorAll('[data-change]'))e.onchange=()=>{e.checked?chosen.add(e.dataset.change):chosen.delete(e.dataset.change);renderReview();};
+    for(const b of list.querySelectorAll('[data-file]'))b.onclick=()=>openReviewFile(b.dataset.file);
+    const r=reviewImpact(), priority=reviewPriorities(); reviewResult=r;
+    let html=`<h2>변경 리뷰</h2><p>${esc(scopeLabel(REVIEW.scope))} · 미추적 파일 ${REVIEW.untracked==="included"?"포함":"제외"}</p><div class="metrics"><div><b>${reviewSeeds().length}</b><span>선택 변경</span></div><div><b>${r.direct.length}</b><span>직접 확인 대상</span></div><div><b>${r.indirect.length}</b><span>간접 확인 대상</span></div></div><p>의존 경로를 통한 확인 대상입니다. 실제 동작 오류를 뜻하지 않습니다.</p>`;
+    html+=`<h3>리뷰 순서 · 근거</h3>`+priority.rows.slice(0,30).map(c=>`<div class="reason"><button data-file="${esc(c.path)}">${esc(c.path)}</button><span class="route">${esc(c.reasons.join(' · ')||'변경 내용 확인 · 분석 한계 함께 확인')}${c.status.startsWith('R')?' · 이름 변경 1건':''}</span></div>`).join('');
+    html+=`<h3>순환 비교</h3><p>신규 ${priority.cycles.new.length} · 구성 변경 ${priority.cycles.changed.length} · 기존 ${priority.cycles.existing.length} · 해소 ${priority.cycles.gone.length}</p>`;
+    html+=`<h3>규칙 비교</h3><p>${REVIEW.rules?`신규 ${priority.violations.filter(v=>!v.existing).length} · 기존 ${priority.violations.filter(v=>v.existing).length}`:'규칙 파일 없음 · 검사하지 않음'}</p>`;
+    detail.innerHTML=html;
+    for(const b of detail.querySelectorAll('[data-file]'))b.onclick=()=>openReviewFile(b.dataset.file);
+    if(typeof renderReviewEvidence==='function')renderReviewEvidence(r);
+    reviewMetrics.lastMs=performance.now()-t0;reviewMetrics.renders++;
+    request();
+  }
+  function renderSearchResults() {
+    const result=$('searchResults');
+    result.innerHTML=query ? matches.slice(0,40).map(n=>`<button data-file="${esc(n.id)}">${esc(n.label)}<small>${esc(n.id)}</small></button>`).join('') || '<p>검색 결과가 없습니다. 검색어를 지우거나 필터를 초기화하세요.</p>' : '';
+    for(const b of result.querySelectorAll('button'))b.onclick=()=>openReviewFile(b.dataset.file);
+    if(query&&matches.length>40)result.innerHTML+=`<p>${matches.length-40}개 생략 · 검색어를 좁혀 주세요.</p>`;
+  }
+  function initializeReview() {
+    $('brand').innerHTML=MARK;
+    $('context').innerHTML=`<b>${esc(META.repo)}</b> · ${esc(REVIEW?.branch||META.branch||META.commit||'분석')}<br>${esc(META.generated||'')} · ${REVIEW?`${esc(scopeLabel(REVIEW.scope))} · 기준 ${esc(REVIEW.selectedRef)} → ${esc(REVIEW.baseSha.slice(0,12))} · merge-base ${REVIEW.mergeBase?'적용':'미적용'}`:'선택한 노드의 연결을 탐색하세요.'}`;
+    $('context').title='기준 SHA: '+(REVIEW?.baseSha||'')+' · 현재 HEAD: '+(REVIEW?.headSha||META.commit||'');
+    $('impactDepth').onchange=()=>{reviewDepth=+$('impactDepth').value;renderReview();};
+    $('selectChanges').onclick=()=>{for(const c of REVIEW?.changes||[])chosen.add(c.path);renderReview();};
+    $('clearChanges').onclick=()=>{chosen.clear();renderReview();};
+    $('showImpact').onclick=()=>{const r=reviewImpact();if(VIEWS.files&&REL!=='files')show('files');P.onlyDiff=false;P.onlyAffected=false;filtersChanged();const ids=new Set(r.routes.keys());highlight(m.nodes.filter(n=>ids.has(n.id)||n.members?.some(o=>ids.has(o.id))),null,`선택한 변경의 확인 대상 · 직접 ${r.direct.length} · 간접 ${r.indirect.length}`);};
+    const dirs=new Map();for(const n of REVIEW?.current.nodes||VIEWS.files?.nodes||[])if(n.kind==='file'){const d=(n.path||n.id).split('/').slice(0,-1).join('/');dirs.set(d,(dirs.get(d)||0)+1);}
+    $('folders').innerHTML='<button data-folder="">전체 폴더</button>'+[...dirs].sort((a,b)=>a[0].localeCompare(b[0])).slice(0,120).map(([d,n])=>`<button data-folder="${esc(d?d+'/':'')}">${esc(d||'(root)')} · ${n}</button>`).join('');
+    if(dirs.size>120)$('folders').innerHTML+=`<p>폴더 ${dirs.size-120}개 생략 · 검색을 사용하세요.</p>`;
+    for(const b of $('folders').querySelectorAll('button'))b.onclick=()=>{folderQuery=b.dataset.folder;renderReview();setQuery(folderQuery);};
+    const toggle=(side)=>{document.body.classList.toggle(side+'Closed');resize();if(m)animateTo(fitView());};
+    $('leftToggle').onclick=()=>toggle('left');$('rightToggle').onclick=()=>toggle('right');
+    for(const [id,variable,sign] of [['leftSizer','--left-w',1],['rightSizer','--right-w',-1]]) {
+      const e=$(id);e.onpointerdown=ev=>{e.setPointerCapture(ev.pointerId);const start=ev.clientX,width=parseFloat(getComputedStyle(root).getPropertyValue(variable));e.onpointermove=move=>{root.style.setProperty(variable,clamp(width+(move.clientX-start)*sign,220,Math.min(460,innerWidth*.34))+'px');resize();};e.onpointerup=()=>{e.onpointermove=null;animateTo(fitView());};};
+      e.onkeydown=ev=>{if(ev.key==='ArrowLeft'||ev.key==='ArrowRight'){ev.preventDefault();const w=parseFloat(getComputedStyle(root).getPropertyValue(variable));root.style.setProperty(variable,clamp(w+(ev.key==='ArrowRight'?16:-16)*sign,220,460)+'px');resize();}};
+    }
+    $('resetFilters').onclick=()=>{hidden.clear();P.lang='all';P.ext=P.heur=P.tests=P.orph=true;P.onlyFound=P.local=P.onlyDiff=P.onlyAffected=false;P.minDeg=0;q.value='';folderQuery='';$('lang').value='all';filtersChanged();renderControls();renderReview();};
+    renderReview();reviewMetrics.readyMs=performance.now()-graphBirth;$('phase').textContent='탐색 준비 완료';
+  }
+
+  function initializeReplay() {
+    $('replayOpen').onclick=openReplay;
+    $('replayStart').onclick=()=>seekReplay(0);
+    $('replayEnd').onclick=()=>seekReplay(1);
+    $('replayClose').onclick=()=>stopReplay();
+    $('replayRange').oninput=()=>seekReplay(+$('replayRange').value/1000);
+    $('replayPlay').onclick=()=>{
+      if(replay.reduced?.matches)return;
+      if(replay.playing){pauseReplay();return;}
+      if(replay.progress>=1)replay.progress=0;
+      replay.playing=true;replay.last=0;renderReplayControls();request();
+    };
+    $('replaySpeed').onchange=()=>{replay.speed=+$('replaySpeed').value;replay.last=0;};
+    $('replayLoop').onchange=()=>{replay.loop=$('replayLoop').checked;};
+    replay.reduced?.addEventListener?.('change',()=>{if(replay.active)pauseReplay();else renderReplayControls();});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden&&replay.active)pauseReplay();});
+    renderReplayControls();
+  }
+
+  function reviewTests(r) {
+    if(!P.tests)return [];
+    const seeds=reviewSeeds(), stem=p=>p.split('/').pop().replace(/\.[^.]+$/,'').replace(/([._-](test|spec)|Tests?)$/i,'').replace(/^test_/, '').toLowerCase();
+    const modules=new Set(seeds.map(c=>ownerModule(c.path))), stems=new Set(seeds.map(c=>stem(c.path))), result=[];
+    for(const n of r.nodes.values()) {
+      if(n.deleted || !TEST_PATH.test(n.path||n.id))continue;
+      if(P.lang!=="all" && pathLang(n.id)!==P.lang)continue;
+      const route=r.routes.get(n.id), reasons=[];
+      if(route?.depth>0)reasons.push({kind:route.depth===1?'direct':'transitive',label:route.depth===1?'직접 참조':'전이 참조',path:route.path,heuristic:!!route.heuristic,base:route.base});
+      if(seeds.length && modules.has(ownerModule(n.id)))reasons.push({kind:'module',label:ownerModule(n.id).startsWith('folder:')?'같은 폴더 · 관례 후보':'같은 모듈 · 관례 후보'});
+      if(seeds.length && stems.has(stem(n.id)))reasons.push({kind:'convention',label:'파일 이름 관례 · 추정 후보'});
+      if(reasons.length)result.push({path:n.id,reasons,rank:route?.depth>0?route.depth:reasons.some(r=>r.kind==='convention')?100:101});
+    }
+    return result.sort((a,b)=>a.rank-b.rank||a.path.localeCompare(b.path));
+  }
+  function reviewLimitations(r) {
+    const diagnostics=[...(REVIEW?.current.diagnostics||[]),...(REVIEW?.before.diagnostics||[]),...(REVIEW?.diff.diagnostics||[]).filter(d=>d.code==='UNANALYZED_CHANGE')];
+    const unsupported=[...r.nodes.values()].filter(n=>n.kind==='file' && ['file-detection','unresolved'].includes(n.analysis));
+    return {diagnostics,unsupported,notes:[
+      '영향은 정적 의존 경로상 확인 대상이며 런타임 오류를 예측하지 않습니다.',
+      '참조가 없더라도 미사용 코드로 단정할 수 없습니다. 엔트리 포인트·동적 로딩·지원하지 않는 문법은 누락될 수 있습니다.',
+      '비교 양쪽은 같은 정적 분석기를 사용합니다. 외부 컴파일러 인덱스와 매니페스트 실행을 제외하여 노후 인덱스에 의존하지 않습니다.',
+      '검색·언어·폴더 필터는 시작 변경 파일을 고릅니다. 의존 경로는 연결된 다른 언어·폴더까지 추적합니다. 그래프 표시 전용 필터는 보고서에 설정으로 기록합니다.',
+      `미추적 파일 ${REVIEW?.untracked==="included"?"포함":"제외"} · 폴더 범위 ${META.scope||'전체'} · 언어 ${P.lang} · ${reviewDepth===10000?'끝까지':reviewDepth+'단계'} 탐색`,
+      ...(REVIEW?.current.notes||[])]};
+  }
+  async function copyReviewText(value) {
+    try {await navigator.clipboard.writeText(value);banner('경로를 복사했습니다.');}
+    catch {const input=document.createElement('textarea');input.value=value;document.body.appendChild(input);input.select();const ok=document.execCommand('copy');input.remove();banner(ok?'경로를 복사했습니다.':'복사할 경로: '+value);}
+  }
+  function renderReviewEvidence(r) {
+    const detail=$('reviewDetail'), trusted=reviewImpact(false), full=reviewImpact(true);
+    const delta=[...full.routes.keys()].filter(id=>!trusted.routes.has(id)).length;
+    let html=`<h3>관계의 신뢰도</h3><p>추정 포함 시 확인 대상 ${full.direct.length+full.indirect.length} · 제외 시 ${trusted.direct.length+trusted.indirect.length} · 추가 ${delta}개. 모듈로 확인된 이름 추정(checked)도 추정 제외 시 빠집니다.</p>`;
+    const routes=[...r.direct,...r.indirect];
+    html+='<h3>직접 · 간접 확인 경로</h3>'+(routes.length?routes.slice(0,100).map(v=>`<div class="reason"><button data-file="${esc(v.id)}">${esc(v.id)}</button><span class="route">${v.depth===1?'직접':'간접 '+v.depth+'단계'}${v.base?' · 기준 그래프':''}${v.heuristic?' · 추정 포함':''}<br>${esc(v.path.join(' → '))}</span></div>`).join(''):'<p>선택한 변경에서 이 깊이까지 참조 경로를 찾지 못했습니다.</p>');
+    if(routes.length>100)html+=`<p>경로 ${routes.length-100}개 화면에서 생략 · 보고서에는 전체 포함</p>`;
+    const tests=reviewTests(r);
+    html+='<h3>관련 테스트 후보</h3>'+(tests.length?tests.slice(0,60).map(t=>`<div class="reason"><button data-file="${esc(t.path)}">${esc(t.path)}</button> <button data-copy="${esc(t.path)}" aria-label="${esc(t.path)} 경로 복사">복사</button>${t.reasons.map(v=>`<span class="route">${esc(v.label)}${v.heuristic?' · 이름 추정 관계 포함':''}${v.base?' · 기준 그래프':''}${v.path?'<br>'+esc(v.path.join(' → ')):''}</span>`).join('')}</div>`).join(''):'<p>테스트 후보를 찾지 못했습니다. 테스트가 필요 없다는 뜻은 아닙니다.</p>');
+    if(tests.length>60)html+=`<p>후보 ${tests.length-60}개 화면에서 생략 · 보고서에는 전체 포함</p>`;
+    html+='<p>실행 명령은 프로젝트 설정과 실행 가능성을 확인하지 못하여 제안하지 않습니다. 경로를 복사해 직접 테스트를 실행하세요.</p>';
+    const limits=reviewLimitations(r);
+    html+=`<details><summary>분석 누락 · 한계 (${limits.diagnostics.length})</summary>${limits.notes.map(n=>`<p>${esc(n)}</p>`).join('')}<p>파일만 인식 · 해석 미지원 ${limits.unsupported.length}개</p>${limits.diagnostics.slice(0,80).map(d=>`<p>${esc(d.code)} · ${esc(d.file||'')}${d.line?':'+d.line:''}<br>${esc(d.message)}</p>`).join('')}${limits.diagnostics.length>80?`<p>${limits.diagnostics.length-80}건 생략</p>`:''}</details>`;
+    detail.insertAdjacentHTML('beforeend',html);
+    for(const b of detail.querySelectorAll('[data-file]'))b.onclick=()=>openReviewFile(b.dataset.file);
+    for(const b of detail.querySelectorAll('[data-copy]'))b.onclick=()=>copyReviewText(b.dataset.copy);
+  }
+
+  const reviewCycleCache=new Map(), reviewOwnerCache=new Map(), reviewGraphCache=new Map();
+  function reviewCycles(heur) {
+    if(reviewCycleCache.has(heur))return reviewCycleCache.get(heur);
+    const rename=new Map(REVIEW.changes.filter(c=>c.oldPath).map(c=>[c.oldPath,c.path]));
+    function components(graph,before) {
+      const adj=new Map(),rev=new Map(), seen=new Set(),order=[];
+      for(const e of graph.edges) {if(!heur&&e.heuristic)continue;const s=before?(rename.get(e.source)||e.source):e.source,t=before?(rename.get(e.target)||e.target):e.target;
+        if(!adj.has(s))adj.set(s,[]);if(!adj.has(t))adj.set(t,[]);adj.get(s).push(t);if(!rev.has(t))rev.set(t,[]);rev.get(t).push(s);}
+      for(const n of adj.keys()) {if(seen.has(n))continue;seen.add(n);const work=[[n,0]];while(work.length){const top=work[work.length-1],next=adj.get(top[0]);if(top[1]<next.length){const t=next[top[1]++];if(!seen.has(t)){seen.add(t);work.push([t,0]);}}else{order.push(top[0]);work.pop();}}}
+      seen.clear();const groups=[];for(let i=order.length-1;i>=0;i--){const n=order[i];if(seen.has(n))continue;const group=[],queue=[n];seen.add(n);for(let j=0;j<queue.length;j++){const t=queue[j];group.push(t);for(const s of rev.get(t)||[])if(!seen.has(s)){seen.add(s);queue.push(s);}}if(group.length>1 || adj.get(n)?.includes(n))groups.push(group.sort());}
+      return new Map(groups.map(nodes=>[JSON.stringify(nodes),{nodes,heuristic:heur && graph.edges.some(e=>e.heuristic&&nodes.includes(e.source)&&nodes.includes(e.target))}]));
+    }
+    const a=components(REVIEW.current,false),b=components(REVIEW.before,true),result={new:[],changed:[],gone:[],existing:[]},used=new Set();
+    for(const [key,c] of a) {if(b.has(key)){result.existing.push(c);continue;}let best=null,count=1;for(const [k,old] of b)if(!a.has(k)&&!used.has(k)){const n=old.nodes.filter(id=>c.nodes.includes(id)).length;if(n>count){count=n;best=k;}}if(best){used.add(best);result.changed.push({...c,before:b.get(best).nodes});}else result.new.push(c);}
+    for(const [key,c] of b)if(!a.has(key)&&!used.has(key))result.gone.push(c);
+    reviewCycleCache.set(heur,result);return result;
+  }
+
+  // Navigation records identities, not stale node objects or positions from other analyses.
+  const navHistory=[]; let navIndex=-1, navigating=false;
+  function rememberNavigation() {
+    if(navigating || !m)return;
+    const entry={relation:REL,id:sel?.id||null};
+    const last=navHistory[navIndex];if(last?.relation===entry.relation&&last?.id===entry.id)return;
+    navHistory.splice(navIndex+1);navHistory.push(entry);if(navHistory.length>80)navHistory.shift();navIndex=navHistory.length-1;updateNavigation();
+  }
+  function updateNavigation() {if(!$('navBack'))return;$('navBack').disabled=navIndex<=0;$('navForward').disabled=navIndex>=navHistory.length-1;}
+  function navigateReview(delta) {
+    const index=navIndex+delta;if(index<0||index>=navHistory.length)return;
+    navIndex=index;const entry=navHistory[index];navigating=true;
+    if(ORDER.includes(entry.relation))show(entry.relation);
+    if(entry.id)openReviewFile(entry.id);else select(null);
+    navigating=false;updateNavigation();
+  }
+  function reviewReport() {
+    const r=reviewImpact(), p=reviewPriorities(), ids=new Set(r.routes.keys()), relevant=v=>v.nodes?.some(n=>ids.has(n))||ids.has(v.source)||ids.has(v.target);
+    const lim=reviewLimitations(r);
+    return scrubReport({schemaVersion:1,tool:'gitch change review',repo:META.repo,branch:REVIEW?.branch||META.branch,generated:META.generated,
+      selectedRef:REVIEW?.selectedRef,baseSha:REVIEW?.baseSha,headSha:REVIEW?.headSha,snapshot:REVIEW?.snapshot,mergeBase:REVIEW?.mergeBase,scope:REVIEW?.scope,untracked:REVIEW?.untracked,
+      selection:reviewSeeds(),filters:{language:P.lang,query:q.value,folder:folderQuery,includeHeuristic:P.heur,includeTests:P.tests,depth:reviewDepth,hiddenGroups:[...hidden],canvas:{relation:REL,unit:vs.unit,onlyDiff:P.onlyDiff,onlyAffected:P.onlyAffected}},
+      priorities:p.rows,direct:r.direct,indirect:r.indirect,cycles:Object.fromEntries(Object.entries(p.cycles).map(([k,v])=>[k,v.filter(relevant)])),violations:p.violations.filter(relevant),
+      tests:reviewTests(r),heuristicComparison:{included:reviewImpact(true).routes.size,excluded:reviewImpact(false).routes.size},
+      limitations:lim.notes,diagnostics:lim.diagnostics,unsupported:lim.unsupported.map(n=>n.id)});
+  }
+  function scrubReport(value) {
+    if(typeof value==='string')return value.replace(/(?:[A-Za-z]:[\\/]|\/)(?:Users|home)[\\/][^\\/\s]+/g,'[local]');
+    if(Array.isArray(value))return value.map(scrubReport);
+    if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([k])=>!['repoPath','positions'].includes(k)).map(([k,v])=>[k,scrubReport(v)]));
+    return value;
+  }
+  function reportMarkdown() {
+    if(!REVIEW)return '# 변경 리뷰\n\n변경 스냅샷이 없는 분석입니다. gitch g diff --format html로 비교하세요.\n';
+    const d=reviewReport(), text=v=>String(v??'').replace(/[\r\n]/g,' ').replace(/[\\`*_[\]<>#|]/g,c=>'\\'+c);
+    const lines=['# '+text(d.repo)+' 변경 리뷰','',`- 브랜치: ${text(d.branch)}`,`- 생성: ${text(d.generated)}`,`- 범위: ${text(scopeLabel(d.scope))} · 미추적 파일 ${text(d.untracked)}`,`- 선택 ref: ${text(d.selectedRef)}`,`- 기준 SHA: ${text(d.baseSha)}`,`- 현재 HEAD: ${text(d.headSha)} · 스냅샷 ${text(d.snapshot)}`,`- merge-base: ${d.mergeBase?'적용':'미적용'}`,`- 필터: ${text(JSON.stringify(d.filters))}`,'','## 선택 변경과 리뷰 순서',''];
+    for(const c of d.priorities)lines.push(`- ${text(c.path)} · ${text(changeLabel(c.status))}${c.oldPath?' · 이전 '+text(c.oldPath):''} · ${text(c.reasons.join(' · ')||'변경 내용 확인')}`);
+    if(!d.selection.length)lines.push('선택한 변경이 없습니다.');
+    for(const [title,rows] of [['직접 확인 대상',d.direct],['간접 확인 대상',d.indirect]]) {lines.push('','## '+title+' · '+rows.length,'');for(const r of rows)lines.push(`- ${text(r.path.join(' → '))} · ${r.depth}단계${r.base?' · 기준 그래프':''}${r.heuristic?' · 추정 포함':''}`);if(!rows.length)lines.push('찾은 경로 없음.');}
+    lines.push('','## 순환과 규칙 비교','');
+    for(const [kind,rows] of Object.entries(d.cycles)) {lines.push(`- 순환 ${text({new:'신규',changed:'구성 변경',gone:'해소',existing:'기존'}[kind]||kind)}: ${rows.length}`);for(const c of rows)lines.push('  - '+text(c.nodes.join(' ⇄ '))+(c.heuristic?' · 추정 포함':''));}
+    for(const v of d.violations)lines.push(`- 규칙 ${v.existing?'기존':'신규'} · ${text(v.severity)} · ${text(v.rule)} · ${text(v.nodes?.join(' ⇄ ')||v.source+' → '+v.target)} · 규칙 ${v.line}행`);
+    if(!REVIEW.rules)lines.push('- 규칙 파일 없음 · 검사하지 않음.');
+    lines.push('','## 테스트 후보와 선정 근거','');for(const t of d.tests) {lines.push('- '+text(t.path));for(const r of t.reasons)lines.push('  - '+text(r.label)+(r.heuristic?' · 이름 추정 포함':'')+(r.path?' · '+text(r.path.join(' → ')):''));}
+    if(!d.tests.length)lines.push('테스트 후보를 찾지 못했습니다. 테스트가 필요 없다는 뜻은 아닙니다.');
+    lines.push('','실행 가능한 프로젝트 명령을 확인하지 못하여 실행 명령은 제안하지 않습니다. 경로를 사용해 직접 실행하세요.','','## 추정과 분석 한계','',`- 추정 포함/제외 시 변경과 확인 대상 합계: ${d.heuristicComparison.included}/${d.heuristicComparison.excluded}`,...d.limitations.map(n=>'- '+text(n)),`- 파일만 인식·미지원: ${d.unsupported.length}개`);
+    for(const f of d.unsupported)lines.push('  - '+text(f));for(const n of d.diagnostics)lines.push(`- ${text(n.code)} · ${text(n.file||'')}${n.line?':'+n.line:''} · ${text(n.message)}`);
+    return lines.join('\n')+'\n';
+  }
+  function reportHtml() {
+    if(!REVIEW)return '<!doctype html><meta charset="utf-8"><p>변경 스냅샷이 없는 분석입니다.</p>';
+    const d=reviewReport(), item=s=>'<li>'+esc(s)+'</li>', list=a=>'<ul>'+a.join('')+'</ul>';
+    const route=r=>item(r.path.join(' → ')+' · '+r.depth+'단계'+(r.base?' · 기준 그래프':'')+(r.heuristic?' · 추정 포함':''));
+    let content='<h1>'+esc(d.repo)+' 변경 리뷰</h1><p class="meta">'+esc(d.branch)+' · '+esc(d.generated)+'<br>'+esc(scopeLabel(d.scope))+' · 미추적 파일 '+(d.untracked==='included'?'포함':'제외')+'</p>';
+    content+='<dl><dt>선택 ref</dt><dd>'+esc(d.selectedRef)+'</dd><dt>기준 SHA</dt><dd>'+esc(d.baseSha)+'</dd><dt>현재 HEAD</dt><dd>'+esc(d.headSha)+'</dd><dt>스냅샷 / merge-base</dt><dd>'+esc(d.snapshot)+' / '+(d.mergeBase?'적용':'미적용')+'</dd></dl><p>필터: <code>'+esc(JSON.stringify(d.filters))+'</code></p>';
+    content+='<div class="counts"><b>변경 '+d.selection.length+'</b><b>직접 '+d.direct.length+'</b><b>간접 '+d.indirect.length+'</b></div><p>의존 경로상 확인 대상입니다. 실제 동작 오류를 뜻하지 않습니다.</p>';
+    content+='<h2>선택 변경과 리뷰 순서</h2>'+list(d.priorities.map(c=>item(c.path+' · '+changeLabel(c.status)+(c.oldPath?' · 이전 '+c.oldPath:'')+' · '+(c.reasons.join(' · ')||'변경 내용 확인'))));
+    if(!d.selection.length)content+='<p>선택한 변경이 없습니다.</p>';
+    content+='<h2>직접 확인 대상</h2>'+list(d.direct.map(route))+'<h2>간접 확인 대상</h2>'+list(d.indirect.map(route));
+    content+='<h2>순환 비교</h2>';for(const [k,rows] of Object.entries(d.cycles))content+='<h3>'+esc({new:'신규',changed:'구성 변경',gone:'해소',existing:'기존'}[k]||k)+' · '+rows.length+'</h3>'+list(rows.map(c=>item(c.nodes.join(' ⇄ ')+(c.heuristic?' · 추정 포함':''))));
+    content+='<h2>규칙 비교</h2>'+list(d.violations.map(v=>item((v.existing?'기존':'신규')+' · '+v.severity+' · '+v.rule+' · '+(v.nodes?.join(' ⇄ ')||v.source+' → '+v.target)+' · 규칙 '+v.line+'행')));
+    if(!REVIEW.rules)content+='<p>규칙 파일 없음 · 검사하지 않음.</p>';
+    content+='<h2>관련 테스트 후보</h2>';for(const t of d.tests)content+='<h3>'+esc(t.path)+'</h3>'+list(t.reasons.map(r=>item(r.label+(r.heuristic?' · 이름 추정 포함':'')+(r.path?' · '+r.path.join(' → '):''))));
+    if(!d.tests.length)content+='<p>테스트 후보를 찾지 못했습니다. 테스트가 필요 없다는 뜻은 아닙니다.</p>';
+    content+='<p>실행 가능한 프로젝트 명령을 확인하지 못하여 명령은 제안하지 않습니다. 경로를 사용해 직접 실행하세요.</p><h2>추정과 분석 누락</h2><p>추정 포함/제외 시 변경과 확인 대상 합계: '+d.heuristicComparison.included+'/'+d.heuristicComparison.excluded+'</p>'+list(d.limitations.map(item));
+    content+='<h3>파일만 인식·미지원 · '+d.unsupported.length+'</h3>'+list(d.unsupported.map(item))+list(d.diagnostics.map(n=>item(n.code+' · '+(n.file||'')+(n.line?':'+n.line:'')+' · '+n.message)));
+    return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><title>Gitrochi 변경 리뷰</title><style>:root{color-scheme:light dark}body{max-width:960px;margin:40px auto;padding:0 24px;font:14px/1.7 system-ui,sans-serif;overflow-wrap:anywhere}h1{border-bottom:2px solid #278b51;padding-bottom:12px}h2{margin-top:36px}h3{font-size:14px}dl{display:grid;grid-template-columns:160px 1fr;gap:6px}dd{margin:0;font-family:monospace}.counts{display:flex;gap:24px;padding:16px;border:1px solid #8886;border-radius:8px}.meta,footer{color:#888}li{margin:6px 0}@media print{body{margin:0}h2{break-after:avoid}}</style><main>'+content+'</main><footer>로컬에서 만든 독립 실행 보고서 · 외부 전송 없음</footer></html>';
+  }
+  function downloadReport(extension) {
+    const body=extension==='html'?reportHtml():reportMarkdown(), url=URL.createObjectURL(new Blob([body],{type:extension==='html'?'text/html;charset=utf-8':'text/markdown;charset=utf-8'}));
+    const a=document.createElement('a');a.href=url;a.download='gitch-change-review.'+extension;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }
+  function initializeSharing() {
+    $('reportMd').onclick=()=>downloadReport('md');$('reportHtml').onclick=()=>downloadReport('html');
+    $('navBack').onclick=()=>navigateReview(-1);$('navForward').onclick=()=>navigateReview(1);
+    $('centerSelected').onclick=()=>{if(sel)centerOn(sel,Math.max(view.k,1.25));else banner('먼저 파일을 선택하세요.');};
+    rememberNavigation();
+  }
+
   // ----- 시작 -----
   document.title = `${META.repo}${META.scope ? "/" + META.scope : ""} — gitch graph`;
   $("repo").textContent = META.repo + (META.scope ? " / " + META.scope : "");
@@ -11093,12 +12064,22 @@ HTMLEOF
   resize();
   buildLang();
   show(REL);
+  initializeReview();
+  initializeReplay();
+  initializeSharing();
   renderSavedViews();
-  try { const last = sessionStorage.getItem(lastKey); if (last && location.hash !== "#test") restoreView(JSON.parse(last)); } catch { /* other snapshots may omit this relation */ }
+  try { const last = localStorage.getItem(lastKey); if (last && location.hash !== "#test") restoreView(JSON.parse(last)); } catch { /* other snapshots may omit this relation */ }
   if (location.hash === "#test") window.gitchGraphTest = {
+    replay: () => ({active:replay.active,playing:replay.playing,progress:replay.progress,reduced:!!replay.reduced?.matches,
+      nodes:replay.active?visNodes.map(n=>({id:n.id,label:replayLabel(n),before:replay.data.before.has(n.id),current:replay.data.current.has(n.id),opacity:replayNodeOpacity(n),x:n.x,y:n.y})):[],
+      edges:replay.active?m.edges.filter(e=>e.s.vis&&e.t.vis).map(e=>{const [before,current]=replayEdgePresence(e);return {source:e.s.id,target:e.t.id,kind:e.kind,before,current,opacity:replayOpacity(before,current,true)*Math.min(replayNodeOpacity(e.s),replayNodeOpacity(e.t))};}):[]}),
     state: () => ({ rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig } : null }),
     visible: () => visNodes.map((n) => ({ id: n.id, langs: n.langs, kind: n.kind })),
-    select: (id) => { const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
+    select: (id) => { if(id===null){select(null);return true;} const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
+    review: () => ({seeds:reviewSeeds(),direct:reviewImpact().direct,indirect:reviewImpact().indirect,priorities:reviewPriorities(),tests:reviewTests(reviewImpact()),withoutGuesses:{direct:reviewImpact(false).direct,indirect:reviewImpact(false).indirect},depth:reviewDepth}),
+    benchmarkReview: () => {reviewGraphCache.clear();reviewCycleCache.clear();reviewOwnerCache.clear();const cold=performance.now();renderReview();const coldMs=performance.now()-cold,warm=[];for(let i=0;i<5;i++){const t=performance.now();renderReview();warm.push(performance.now()-t);}return {coldMs,warmMs:warm};},
+    metrics: () => ({...reviewMetrics,nodes:m.nodes.length,edges:m.edges.length,htmlBytes:new Blob([document.documentElement.outerHTML]).size}),
+    report: reviewReport, markdown: reportMarkdown, reportHtml,
     capture: captureView, restore: restoreView,
     overlaps: () => {   // 겹친 쌍의 수(폴더 원은 형제 원끼리 · 부모 밖으로 나간 원)
       let bad = 0;
@@ -11125,7 +12106,7 @@ HTMLEOF
 
 schema_cmd() {
   local kind=${1:-public}
-  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
+  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
   printf '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://github.com/Gitrochi/Gitrochi/blob/main/tools/gitch/schema/gitch-v1.schema.json","title":"gitch public JSON contract version 1","$ref":"#/$defs/%s",' "$kind"
   cat <<'SCHEMAEOF'
 "$defs": {
@@ -12283,8 +13264,245 @@ schema_cmd() {
       }
     }
   },
+  "review": {
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "tool",
+          "scope",
+          "stamp",
+          "snapshot",
+          "headSha",
+          "branch",
+          "stale",
+          "changed",
+          "direct",
+          "indirect",
+          "tests",
+          "coverage",
+          "limitations"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "scope": {
+            "const": "staged"
+          },
+          "stamp": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40,64}$"
+          },
+          "headSha": {
+            "type": "string",
+            "pattern": "^([0-9a-f]{40,64})?$"
+          },
+          "tool": {
+            "const": "gitch graph review"
+          },
+          "snapshot": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40,64}$"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "status",
+                "analyzed"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "string"
+                },
+                "oldPath": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "analyzed": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "direct": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "depth",
+                "via",
+                "heuristic"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "depth": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "via": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 2
+                },
+                "heuristic": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "indirect": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "depth",
+                "via",
+                "heuristic"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "depth": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "via": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 2
+                },
+                "heuristic": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "tests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "kind",
+                "depth",
+                "heuristic"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "enum": [
+                    "dependency",
+                    "name"
+                  ]
+                },
+                "depth": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "heuristic": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "coverage": {
+            "type": "object",
+            "required": [
+              "changed",
+              "analyzed",
+              "unsupported"
+            ],
+            "properties": {
+              "changed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "analyzed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unsupported": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "scope",
+          "stamp",
+          "headSha"
+        ],
+        "not": {
+          "required": [
+            "tool"
+          ]
+        },
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "scope": {
+            "const": "staged"
+          },
+          "stamp": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40,64}$"
+          },
+          "headSha": {
+            "type": "string",
+            "pattern": "^([0-9a-f]{40,64})?$"
+          }
+        }
+      }
+    ]
+  },
   "public": {
     "oneOf": [
+      {
+        "$ref": "#/$defs/review"
+      },
       {
         "$ref": "#/$defs/graph"
       },
@@ -12789,6 +14007,7 @@ schema_cmd() {
   },
   "login": {
     "type": "object",
+    "description": "GitHub device sign-in result. Project access is requested only by an explicit projects capability start with an expected account; response fields stay unchanged.",
     "required": [
       "schemaVersion",
       "tool",
@@ -12817,6 +14036,13 @@ schema_cmd() {
           "complete",
           "failed",
           "cancelled"
+        ]
+      },
+      "phase": {
+        "enum": [
+          "queued",
+          "preparing",
+          "approval"
         ]
       },
       "deviceCode": {
@@ -12945,12 +14171,12 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
       case "$cmd" in
         use|remove|rm|setup|clone|fork) load_config >/dev/null 2>&1; for i in "${ACC_IDS[@]}"; do printf '%s\n' "$i"; done ;;
         g|graph)
-          [ "$n" -eq 2 ] && printf '%s\n' files modules changes tree precise affected watch index diff check languages
+          [ "$n" -eq 2 ] && printf '%s\n' files modules changes tree precise affected watch index diff review check languages
           { [ "${words[1]:-}" = watch ] && [ "$n" -eq 3 ]; } && printf '%s\n' files modules changes tree precise affected
           completion_repositories
           compgen -d -- "$cur" ;;
         completion) printf '%s\n' bash zsh fish powershell ;;
-        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login ;;
+        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;
         config) printf '%s\n' show path get set add unset edit ;;
         wt|worktree) printf '%s\n' ls new rm ;;
@@ -13092,6 +14318,7 @@ PR / MR
   gitch add --id ID --email 메일 --host 서버 --no-setup --json --yes  앱 계정 설정: 등록만, SSH 키 생성 별도
   gitch setup ID --inspect|--generate|--check --json [--yes]  상태 · 키 생성 · 연결 점검 (생성은 명시적 확인 필요)
   gitch login github --start --json --yes   앱 브라우저 로그인 시작 (상태/취소: --status|--cancel SESSION --json)
+    추가 프로젝트 접근: --capability projects --expected-login <GitHub계정> (사용자 승인 필요)
   gitch org [add <서버/조직> <계정>|rm]     조직 → 계정 규칙
   gitch config [show|path|get|set|add|unset|edit]   설정 파일 ($(tilde "$CFG"))
   gitch setup [계정]                       SSH 키 생성·등록 (사용자만)

@@ -3,6 +3,7 @@ import { isMac, settings } from "@/shared/config";
 
 /** 앱 단축키(Windows: Ctrl, 맥: ⌘). 터미널에 포커스가 있으면 터미널이 넘겨준 조합만 온다. */
 export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
+  if (e.defaultPrevented) return;
   if (document.querySelector(".modal-backdrop")) return; // 대화상자가 떠 있으면 대화상자가 처리
   const s = workspace.active;
   if (!s) return;
@@ -39,7 +40,9 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
       case "g":
         return run(() => s.nextMatch());
       case "1":
-        return run(() => s.path && s.select({ kind: "wip" }));
+        return run(() => s.path && s.navigate("changes"));
+      case "2":
+        return run(() => s.path && s.navigate("commits"));
       case "z":
         // 입력 칸 밖에서만(입력 칸에서는 글자 되돌리기 — 위에서 걸러 짐)
         return run(() => s.path && s.confirmUndo());

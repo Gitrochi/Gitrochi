@@ -35,9 +35,18 @@ import Foundation
             }
             fatalError("credential import failure was swallowed")
         } catch ImportFailure.denied {}
-        print("GitHub login identity: exact/case-insensitive/new identity accepted, mismatch blocked before import, import failure propagated")
+        let keychain = AccountConnectionFailure.message(for: AccountConnectionFailure.credentialSave(status: -34018))
+        precondition(keychain.contains("Keychain"), "credential-save stage was hidden")
+        precondition(keychain.contains("-34018"), "Keychain failure status was discarded")
+        let forbidden = AccountConnectionFailure.message(for: AccountConnectionFailure.verification(status: 403))
+        precondition(forbidden.contains("403"), "account-verification status was hidden")
+        let denied = AccountConnectionFailure.message(for: GitHubLoginIdentity.Mismatch(expected: "octocat"))
+        precondition(denied.contains("octocat"), "identity mismatch guidance was hidden")
+        let unsafe = NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture-private-credential-output"])
+        precondition(!AccountConnectionFailure.message(for: unsafe).contains("fixture-private-credential-output"), "raw failure reached the login UI")
+        print("GitHub login identity: approved identity guard, import failure propagation, safe failure stage/status and private-output filtering passed")
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/GitHubLoginIdentity.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-login-identity"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/GitHubLoginIdentity.swift" "$ROOT/Sources/Services/AccountConnectionFailure.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-login-identity"
 "$TASK_TMP/test-login-identity"

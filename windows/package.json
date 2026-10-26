@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "core": "node ../tools/build-core.mjs",
+    "prepare": "npm run core",
+    "predev": "npm run core",
+    "prebuild": "npm run core",
+    "pretest": "npm run core"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.0",
@@ -19,6 +24,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.0",
+    "@types/node": "22.20.5",
     "@types/react": "18.3.23",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "4.4.1",

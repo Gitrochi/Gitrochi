@@ -59,10 +59,13 @@ enum Hosting {
         return ParsedRemote(host: host.lowercased(), path: path)
     }
 
-    static func target(remotes: [String], urls: [String: String], gitlabHosts: [String]) -> RepoTarget? {
+    static func target(remotes: [String], urls: [String: String], gitlabHosts: [String], sshAliases: [String: String] = [:]) -> RepoTarget? {
         let order = remotes.contains("origin") ? ["origin"] + remotes.filter { $0 != "origin" } : remotes
         for name in order {
-            guard let u = urls[name], let r = parseRemote(u) else { continue }
+            guard let u = urls[name], let parsed = parseRemote(u) else { continue }
+            // SSH 별칭은 연결된 계정의 gitch 별칭과 정확히 일치할 때만 API 서버로 바꾼다.
+            let ssh = !u.contains("://") || u.lowercased().hasPrefix("ssh://")
+            let r = ParsedRemote(host: ssh ? sshAliases[parsed.host] ?? parsed.host : parsed.host, path: parsed.path)
             if r.host == "github.com" {
                 return RepoTarget(provider: .github, remote: name, host: r.host, path: r.path)
             }

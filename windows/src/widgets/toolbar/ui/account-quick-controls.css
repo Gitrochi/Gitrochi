@@ -1,0 +1,54 @@
+.account-quick-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 1 184px;
+  min-width: 95px;
+  max-width: 190px;
+  margin-left: auto;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.account-quick-trigger:hover { background: var(--hover); }
+.account-quick-trigger > svg, .account-quick-trigger > .avatar { flex: none; }
+.account-quick-summary { display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left; }
+.account-quick-summary strong { font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-quick-summary small { display: flex; align-items: center; gap: 3px; color: var(--text-2); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-quick-popover {
+  position: fixed;
+  z-index: 150;
+  top: 89px;
+  right: 12px;
+  width: min(378px, calc(100vw - 24px));
+  max-height: calc(100dvh - 105px);
+  overflow: auto;
+  padding: 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 40px #0002;
+}
+.account-quick-heading { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+.account-quick-heading > svg { flex: none; }
+.account-quick-profile { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.account-quick-profile strong { font-size: 14px; }
+.account-quick-profile small { color: var(--text-2); }
+.account-quick-selector { display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: var(--text-2); }
+.account-quick-selector select { width: 100%; min-width: 0; }
+.account-quick-identity { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 15px 0; margin: 15px 0; }
+.account-quick-identity dl { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 7px 10px; margin: 12px 0; }
+.account-quick-identity dt { color: var(--text-2); font-size: 11.5px; }
+.account-quick-identity dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
+.account-quick-identity p { margin: 10px 0; }
+.account-quick-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.account-quick-actions button { text-align: left; justify-content: flex-start; white-space: normal; }
+@media (max-width: 1050px) {
+  .account-quick-trigger { min-width: 0; flex-basis: 145px; padding: 5px; }
+  .account-quick-trigger > .avatar { display: none; }
+}

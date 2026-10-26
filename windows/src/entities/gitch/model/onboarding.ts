@@ -1,3 +1,5 @@
+import { t } from "@/shared/i18n";
+
 /** 앱과 CLI의 계정 설정 계약. 비밀키는 이 응답으로 읽거나 전달하지 않는다. */
 export interface GitchAccountInput {
   id: string;
@@ -38,6 +40,18 @@ export interface GitchBrowserLogin {
   login: string | null;
   email: string | null;
   message: string;
+  phase?: "queued" | "preparing" | "approval";
+}
+
+export type GitHubLoginCapability = "standard" | "projects";
+
+/** 추가 프로젝트 권한은 선택한 계정에 대한 명시적 요청에만 붙인다. */
+export function browserLoginArguments(capability: GitHubLoginCapability = "standard", expectedLogin?: string): string[] {
+  const expected = expectedLogin?.trim();
+  if (capability !== "standard" && capability !== "projects") throw new Error(t("Unsupported GitHub sign-in permission."));
+  if (expected !== undefined && !/^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/.test(expected)) throw new Error(t("Select a valid GitHub account."));
+  if (capability === "projects" && !expected) throw new Error(t("Select the GitHub account to connect project access."));
+  return ["--start", "--yes", ...(capability === "projects" ? ["--capability", "projects"] : []), ...(expected ? ["--expected-login", expected] : [])];
 }
 
 export function parseBrowserLogin(output: string): GitchBrowserLogin | null {
@@ -48,8 +62,17 @@ export function parseBrowserLogin(output: string): GitchBrowserLogin | null {
     if (o.deviceCode !== null && (typeof o.deviceCode !== "string" || !/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(o.deviceCode))) return null;
     if (!(o.login === null || typeof o.login === "string") || !(o.email === null || typeof o.email === "string")) return null;
     if (o.state === "complete" && (!o.login || !o.email)) return null;
+    if (o.phase !== undefined && !["queued", "preparing", "approval"].includes(o.phase)) return null;
     return o;
   } catch { return null; }
+}
+
+/** CLI 응답이 끊겨도 코드 준비나 승인 대기가 끝없이 이어지지 않게 한다. */
+export function browserLoginTimeout(flow: GitchBrowserLogin, elapsedMs: number, preparingMs = elapsedMs): "code" | "approval" | null {
+  if (flow.state !== "pending") return null;
+  if (elapsedMs >= 900_000) return "approval";
+  if (!flow.deviceCode && flow.phase !== "queued" && preparingMs >= 60_000) return "code";
+  return null;
 }
 
 export function accountAddArguments(input: GitchAccountInput): string[] {

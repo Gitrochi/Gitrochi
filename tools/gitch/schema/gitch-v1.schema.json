@@ -1158,8 +1158,245 @@
         }
       }
     },
+    "review": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "tool",
+            "scope",
+            "stamp",
+            "snapshot",
+            "headSha",
+            "branch",
+            "stale",
+            "changed",
+            "direct",
+            "indirect",
+            "tests",
+            "coverage",
+            "limitations"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "scope": {
+              "const": "staged"
+            },
+            "stamp": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            "headSha": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40,64})?$"
+            },
+            "tool": {
+              "const": "gitch graph review"
+            },
+            "snapshot": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "stale": {
+              "type": "boolean"
+            },
+            "changed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "status",
+                  "analyzed"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "oldPath": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "analyzed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "direct": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "depth",
+                  "via",
+                  "heuristic"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "via": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 2
+                  },
+                  "heuristic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "indirect": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "depth",
+                  "via",
+                  "heuristic"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "via": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 2
+                  },
+                  "heuristic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "tests": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "kind",
+                  "depth",
+                  "heuristic"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "kind": {
+                    "enum": [
+                      "dependency",
+                      "name"
+                    ]
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "heuristic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "coverage": {
+              "type": "object",
+              "required": [
+                "changed",
+                "analyzed",
+                "unsupported"
+              ],
+              "properties": {
+                "changed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "analyzed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unsupported": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "scope",
+            "stamp",
+            "headSha"
+          ],
+          "not": {
+            "required": [
+              "tool"
+            ]
+          },
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "scope": {
+              "const": "staged"
+            },
+            "stamp": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            "headSha": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40,64})?$"
+            }
+          }
+        }
+      ]
+    },
     "public": {
       "oneOf": [
+        {
+          "$ref": "#/$defs/review"
+        },
         {
           "$ref": "#/$defs/graph"
         },
@@ -1664,6 +1901,7 @@
     },
     "login": {
       "type": "object",
+      "description": "GitHub device sign-in result. Project access is requested only by an explicit projects capability start with an expected account; response fields stay unchanged.",
       "required": [
         "schemaVersion",
         "tool",
@@ -1692,6 +1930,13 @@
             "complete",
             "failed",
             "cancelled"
+          ]
+        },
+        "phase": {
+          "enum": [
+            "queued",
+            "preparing",
+            "approval"
           ]
         },
         "deviceCode": {

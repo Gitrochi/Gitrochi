@@ -2,6 +2,7 @@
 
 .diff-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
@@ -9,6 +10,15 @@
   background: var(--bar);
   flex: none;
 }
+
+.diff-head > .col { flex: 1 1 180px; min-width: 140px; }
+.diff-head > button { flex-shrink: 0; }
+
+.diff-head { min-width: 0; }
+.diff-head > .row { flex-wrap: wrap; min-width: 0; }
+.diff-scroll { min-height: 0; min-width: 0; }
+.image-diff { min-width: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.image-pane { min-width: 0; }
 
 .diff-scroll {
   flex: 1;
@@ -236,3 +246,17 @@
 .blame-line.block-start {
   border-top: 1px solid var(--border);
 }
+.review-line-add {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+  font-weight: 700;
+}
+.review-line-add:disabled { opacity: 0.4; cursor: default; }
+.review-line-add:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }

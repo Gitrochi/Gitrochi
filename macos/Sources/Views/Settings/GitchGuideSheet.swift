@@ -5,6 +5,7 @@ import AppKit
 struct GitchGuideSheet: View {
     let repo: RepoStore?
     var checkOnOpen = false
+    var embedded = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
@@ -24,11 +25,11 @@ struct GitchGuideSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Get started with Git accounts").font(.title2.weight(.semibold))
-                    Text("Set up your account and connection here, then open a repository.").foregroundStyle(.secondary)
+                    Text(embedded ? "Tools" : "Get started with Git accounts").font(.title2.weight(.semibold))
+                    Text(embedded ? "Run diagnostics, explore code and find commands without opening Settings." : "Set up your account and connection here, then open a repository.").foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
+                if !embedded { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) }
             }.padding(20)
             Form {
                 Section {
@@ -36,15 +37,15 @@ struct GitchGuideSheet: View {
                     Text("No separate download is needed. Gitrochi can add Git accounts, connect with SSH, check your setup and draw code maps from the app. Terminal commands are optional.")
                         .font(.callout).foregroundStyle(.secondary)
                 }
-                accountStep
+                if !embedded { accountStep }
                 repositoryStep
-                terminalStep
+                if !embedded { terminalStep }
                 diagnosticsStep
                 if let result { Section { Text(result).font(.caption.monospaced()).textSelection(.enabled) } }
                 if let error { Section { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) } }
             }.formStyle(.grouped)
         }
-        .frame(width: 740, height: 680)
+        .frame(minWidth: embedded ? 300 : 740, idealWidth: 740, maxWidth: .infinity, minHeight: embedded ? 300 : 680, idealHeight: 680, maxHeight: .infinity)
         .interactiveDismissDisabled(busy)
         .task(id: checkOnOpen) { await refresh(); if checkOnOpen { await checkSetup() } }
         .sheet(isPresented: $addAccount) { GitchAccountSetupSheet(accountID: nil) { Task { await refresh() } } }

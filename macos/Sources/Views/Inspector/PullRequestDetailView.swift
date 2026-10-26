@@ -26,11 +26,12 @@ struct PullRequestDetailView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 Divider()
-                ScrollView {
+                InspectorScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         Text(pr.title).font(.title3.weight(.semibold)).textSelection(.enabled)
                         info(pr)
                         actions(pr)
+                        RequestLifecyclePanel(number: number)
                         Divider()
                         if pr.body.trimmed.isEmpty {
                             Text("No description").foregroundStyle(.secondary)
@@ -43,10 +44,10 @@ struct PullRequestDetailView: View {
                         if let r = store.review, r.number == number {
                             approval(r.state, provider: t.provider)
                             files(r)
+                            ReviewDraftPanel(number: number)
                             conversation(r)
                         }
                     }
-                    .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .id(number)
@@ -177,6 +178,7 @@ struct PullRequestDetailView: View {
                             MarkdownView(c.body, target: store.target)
                                 .font(.callout)
                         }
+                        ReviewThreadActions(number: number, comment: c)
                     }
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -190,9 +192,12 @@ struct PullRequestDetailView: View {
     private func composer(_ provider: Provider) -> some View {
         let s = store.review?.number == number ? store.review?.state : nil
         let text = draft.trimmed
+        let pending = store.reviewDraftsFor(number)
+        let canSubmit = !text.isEmpty || !pending.isEmpty
         return VStack(alignment: .leading, spacing: 6) {
             TextEditor(text: $draft)
                 .font(.callout)
+                .disabled(store.reviewBusy)
                 .frame(height: 56)
                 .scrollContentBackground(.hidden)
                 .padding(4)
@@ -207,7 +212,7 @@ struct PullRequestDetailView: View {
                 if store.reviewBusy { ProgressView().controlSize(.small) }
                 Spacer()
                 if provider == .github {
-                    Button("Request changes") { Task { if await store.requestChanges(number, body: text) { draft = "" } } }
+                    Button("Request changes") { Task { if await store.requestChanges(number, body: text), store.selection == .pullRequest(number), draft.trimmed == text { draft = "" } } }
                         .disabled(text.isEmpty || store.reviewBusy)
                         .help("Request changes with a comment (comment required)")
                 }
@@ -215,15 +220,15 @@ struct PullRequestDetailView: View {
                     Button("Revoke approval") { Task { await store.unapprovePullRequest(number) } }
                         .disabled(store.reviewBusy)
                 } else {
-                    Button { Task { if await store.approvePullRequest(number, body: text) { draft = "" } } } label: {
+                    Button { Task { if await store.approvePullRequest(number, body: text), store.selection == .pullRequest(number), draft.trimmed == text { draft = "" } } } label: {
                         Label("Approve", systemImage: "checkmark.seal")
                     }
                     .disabled(store.reviewBusy || s?.approvedByMe == true)
                     .help(text.isEmpty ? "Approves this request" : "Approve with a comment")
                 }
-                Button("Comment") { Task { if await store.postReviewComment(number, body: text) { draft = "" } } }
+                Button(pending.isEmpty ? String(localized: "Comment") : String(localized: "Submit review")) { Task { if await store.postReviewComment(number, body: text), store.selection == .pullRequest(number), draft.trimmed == text { draft = "" } } }
                     .buttonStyle(.borderedProminent)
-                    .disabled(text.isEmpty || store.reviewBusy)
+                    .disabled(!canSubmit || store.reviewBusy)
                     .keyboardShortcut(.return, modifiers: .command)
                     .help("Comment (⌘↩)")
             }

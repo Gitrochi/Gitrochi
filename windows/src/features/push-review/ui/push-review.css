@@ -1,0 +1,6 @@
+.push-review { gap: 12px; max-height: 68vh; overflow-y: auto; }
+.push-review .break { overflow-wrap: anywhere; }
+.push-review-warning, .push-review-checks { padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+.push-review-warning { color: var(--text); background: var(--bg); }
+.push-review-list { max-height: 180px; overflow-y: auto; font-size: 12px; }
+.push-review-list > div { padding: 5px 0; overflow-wrap: anywhere; }

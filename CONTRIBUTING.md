@@ -43,14 +43,22 @@ Never write or tick CLA assent on someone else's behalf. The checklist in the pr
 | | macOS | Windows |
 |---|---|---|
 | Where | `macos/` (SwiftUI, macOS 15+) | `windows/` (Tauri 2: Rust + React/TypeScript) |
-| Needs | Swift 6 or later (Xcode or Command Line Tools) | Node.js 22, Rust stable |
+| Needs | Swift 6 or later (Xcode or Command Line Tools), Rust 1.88+ | Node.js 22+, Rust 1.88+, the `wasm32-unknown-unknown` target |
 | Build | `macos/build.sh` | `cd windows && npm ci && npx tauri build` |
-| Check | builds with no errors or warnings | `npx tsc --noEmit -p .` · `npx vitest run` · `cargo check` |
+| Check | builds with no errors or warnings | `npm run build` · `npm test` · `cargo check --manifest-path src-tauri/Cargo.toml` |
 
 - After cloning, run `git config core.hooksPath .githooks` once: the hooks check the Git rules when you commit and push.
 - The Windows app runs on a Mac too: `npx tauri dev` (its data folder is separate, `Gitrochi (Tauri)`).
 - Changed a screen? Check it with the demo repository (`docs/make-demo-repo.sh <folder>`) and attach light and dark screenshots to the pull request.
 - The tests for the bundled helpers (gitch, gitch-swift-index) and the version check are in [docs/code-style.md](docs/code-style.md#tests-and-verification).
+
+## Shared core and verification
+
+Git parsing, diff and partial patches, conflict parsing, graph layout and CLI analysis share a [Rust core](crates/README.md). Install Rust through rustup; add `wasm32-unknown-unknown` before building Windows, and `aarch64-apple-darwin` plus `x86_64-apple-darwin` for a universal macOS release. Users of packaged releases do not need Rust.
+
+`npm ci` and `npm run build`, `npm test` or `npm run dev` in `windows/` generate the WASM core and native helper. Before running `tsc` or `vitest` directly, run `npm run core`. Keep Cargo lockfiles; do not commit `target/`, generated WASM or generated binaries. The macOS builder links and signs the native core; `GITROCHI_BUILD_DIR` and `GITROCHI_OBJECT_DIR` can separate concurrent builds, and `GITROCHI_CARGO` selects a Rust executable.
+
+Run the feature-specific checks listed in [code-style.md](docs/code-style.md#tests-and-verification). The [review](docs/review-workflows-validation.md), [extended workflows](docs/complete-workflows-validation.md) and [navigation](docs/navigation-workspace-validation.md) records (Korean) describe the implementation, fixtures and limits of earlier checks. They are not a claim that real-server writes or Windows device installation were verified in this change.
 
 ## Rules
 

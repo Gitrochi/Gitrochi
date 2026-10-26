@@ -1,7 +1,7 @@
 import Foundation
 
 /// Gitrochi was called Branchwork up to 0.3.5 (bundle ID com.ensnif.Branchwork).
-/// On first launch carry its settings and data folder over; keychain items move when first read (Keychain.get).
+/// On first launch carry its settings and data folder over; legacy keychain items remain readable without an automatic write.
 enum LegacyData {
     static let bundleID = "com.ensnif.Branchwork"
     static let keychainService = bundleID

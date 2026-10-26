@@ -1,0 +1,410 @@
+{
+  "actualViews": [
+    "RepoContainer",
+    "RepoView",
+    "NavigationSidebar",
+    "LoadingView"
+  ],
+  "checks": [
+    {
+      "contentFrames": {},
+      "contentLayoutRect": {
+        "height": 868,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "initial-loading",
+      "screenshot": "initial-loading.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 900,
+        "width": 1440,
+        "x": 288,
+        "y": 100
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 884,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "loaded-wide",
+      "screenshot": "loaded-wide.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 884,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "repository-loading-overlay",
+      "screenshot": "repository-loading-overlay.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 884,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "loading-overlay-dismissed",
+      "screenshot": "loading-overlay-dismissed.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "workspace-header": {
+          "height": 62,
+          "width": 1023,
+          "x": 57,
+          "y": 578
+        }
+      },
+      "contentLayoutRect": {
+        "height": 640,
+        "width": 1080,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "resize-1080-640",
+      "screenshot": "resize-1080-640.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 692,
+        "width": 1080,
+        "x": 288,
+        "y": 308
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 972,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1432,
+          "x": 248,
+          "y": 918
+        }
+      },
+      "contentLayoutRect": {
+        "height": 980,
+        "width": 1680,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "resize-1680-980",
+      "screenshot": "resize-1680-980.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 1032,
+        "width": 1680,
+        "x": 288,
+        "y": -32
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 892,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "resize-1440-900",
+      "screenshot": "resize-1440-900.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "workspace-header": {
+          "height": 62,
+          "width": 1383,
+          "x": 57,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "sidebar-toggled",
+      "screenshot": "sidebar-toggled.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 892,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "sidebar-restored",
+      "screenshot": "sidebar-restored.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 1024,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1480,
+          "x": 248,
+          "y": 970
+        }
+      },
+      "contentLayoutRect": {
+        "height": 1032,
+        "width": 1728,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "native-zoom",
+      "screenshot": "native-zoom.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 1084,
+        "width": 1728,
+        "x": 0,
+        "y": 0
+      },
+      "zoomed": true
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 892,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 838
+        }
+      },
+      "contentLayoutRect": {
+        "height": 900,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "native-zoom-restored",
+      "screenshot": "native-zoom-restored.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 952,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    },
+    {
+      "contentFrames": {
+        "sidebar": {
+          "height": 840,
+          "width": 240,
+          "x": 8,
+          "y": 8
+        },
+        "workspace-header": {
+          "height": 62,
+          "width": 1192,
+          "x": 248,
+          "y": 786
+        }
+      },
+      "contentLayoutRect": {
+        "height": 848,
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "fullscreen": false,
+      "nativeOverlayRectangles": [],
+      "scenario": "safe-area-ignoring-root-contained",
+      "screenshot": "safe-area-ignoring-root-contained.png",
+      "trafficLightButtons": [],
+      "trafficLightWindowOwnership": [],
+      "windowFrame": {
+        "height": 900,
+        "width": 1440,
+        "x": 288,
+        "y": 48
+      },
+      "zoomed": false
+    }
+  ],
+  "framePreserved": true,
+  "fullscreenRequested": false,
+  "inspectionRequested": false,
+  "ok": true,
+  "safeAreaIgnoringRootContained": true
+}

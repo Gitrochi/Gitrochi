@@ -1,0 +1,70 @@
+{
+  "result": "PASS",
+  "cases": 24,
+  "passed": 24,
+  "screenshotCount": 28,
+  "pages": [
+    "branches",
+    "code",
+    "home",
+    "operations",
+    "projects",
+    "releases"
+  ],
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 1080,
+      "height": 800
+    }
+  ],
+  "checks": {
+    "noDocumentHorizontalOverflow": true,
+    "noOverlappingOperationsTail": true,
+    "settingsFooterStableWhileSidebarScrolls": true,
+    "settingsCallbackWorks": true,
+    "noUnexpectedBackendCalls": true,
+    "noBrowserErrors": true,
+    "noExternalPageRequests": true
+  },
+  "fixtures": "Demo repositories, branches, source files, account and hosting responses only. All process, credential, HTTP and file calls were replaced or blocked. No real hosting writes or AI calls.",
+  "limitations": "React UI rendered in isolated headless Chrome on macOS. This does not verify Windows installers or a Windows device.",
+  "resultsFile": "visual-results.json",
+  "screenshots": [
+    "branches-dark-1080x800.png",
+    "branches-dark-1440x1000.png",
+    "branches-light-1080x800.png",
+    "branches-light-1440x1000.png",
+    "code-dark-1080x800.png",
+    "code-dark-1440x1000.png",
+    "code-light-1080x800.png",
+    "code-light-1440x1000.png",
+    "home-dark-1080x800.png",
+    "home-dark-1440x1000.png",
+    "home-light-1080x800.png",
+    "home-light-1440x1000.png",
+    "operations-bottom-dark-1080x800.png",
+    "operations-bottom-dark-1440x1000.png",
+    "operations-bottom-light-1080x800.png",
+    "operations-bottom-light-1440x1000.png",
+    "operations-dark-1080x800.png",
+    "operations-dark-1440x1000.png",
+    "operations-light-1080x800.png",
+    "operations-light-1440x1000.png",
+    "projects-dark-1080x800.png",
+    "projects-dark-1440x1000.png",
+    "projects-light-1080x800.png",
+    "projects-light-1440x1000.png",
+    "releases-dark-1080x800.png",
+    "releases-dark-1440x1000.png",
+    "releases-light-1080x800.png",
+    "releases-light-1440x1000.png"
+  ]
+}

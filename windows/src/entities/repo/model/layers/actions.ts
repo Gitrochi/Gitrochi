@@ -1,12 +1,13 @@
-import { type Branch, branchRemote, branchShort, changePaths, type ConfirmRequest, type FileChange, fileName, type PullMode, type RepoState, type ResetMode, short, type Stash, type Tag } from "@/entities/git";
+import { displayPushURL, type Branch, branchRemote, branchShort, changePaths, type ConfirmRequest, type FileChange, fileName, type PullMode, type RepoState, type ResetMode, short, type Stash, type Tag } from "@/entities/git";
 import { accounts } from "@/entities/hosting";
 import { samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { describe, git } from "@/shared/platform";
 import type { RefSnapshot } from "../../lib/undo-model";
-import { RepoFilters } from "./filters";
+import { RepoPushReview } from "./push-review";
 
 /** git 작업: 실행·Fetch·Pull·Push·브랜치·태그·스태시·스테이지·커밋·진행 중인 머지/리베이스 */
-export abstract class RepoActions extends RepoFilters {
+export abstract class RepoActions extends RepoPushReview {
   // 되돌리기(repo/undo.ts)
   protected abstract refSnapshot(): Promise<RefSnapshot | null>;
   protected abstract recordUndo(args: string[], input: string | undefined, before: RefSnapshot, after: RefSnapshot): void;
@@ -15,29 +16,34 @@ export abstract class RepoActions extends RepoFilters {
    * git 명령 하나를 실행하고 저장소를 다시 읽는다. 실패하면 git 의 메시지를 그대로 보여 준다.
    * 전후로 브랜치·태그·HEAD 를 기록해 두어 '되돌리기'로 되돌릴 수 있게 한다(머지·리베이스가 진행 중일 때는 빼고).
    */
-  async run(label: string, args: string[], o: { network?: boolean; input?: string } = {}): Promise<boolean> {
-    if (!this.path || this.busy != null) return false;
+  async run(label: string, args: string[], o: { network?: boolean; input?: string; env?: Record<string, string> } = {}): Promise<boolean> {
+    const repo = this.path;
+    if (!repo || this.busy != null) return false;
+    const generation = this.pushReviewGeneration;
+    const target = this.target;
+    const active = () => this.path === repo && this.pushReviewGeneration === generation;
     this.busy = label;
     this.emit();
-    const before = this.repoState === "clean" ? await this.refSnapshot() : null;
     try {
-      await this.g(args, {
-        input: o.input,
-        timeoutMs: o.network ? 900_000 : 300_000,
-        env: o.network ? await accounts.gitEnvironment(this.target, this.path) : {},
-      });
+      const before = this.repoState === "clean" ? await this.refSnapshot() : null;
+      if (!active()) return false;
+      const env = o.env ?? (o.network ? await accounts.gitEnvironment(target, repo) : {});
+      if (!active()) return false;
+      await git(args, repo, { input: o.input, timeoutMs: o.network ? 900_000 : 300_000, env });
+      if (!active()) return false;
       const after = before ? await this.refSnapshot() : null;
+      if (!active()) return false;
       if (before && after) this.recordUndo(args, o.input, before, after);
-      // 다 읽을 때까지 busy 로 두어 파일 감시가 같은 변경으로 또 읽지 않게 한다
       await this.reload();
-      return true;
+      return active();
     } catch (e) {
-      this.fail(e);
+      if (!active()) return false;
+      if (this.sheet?.kind === "pushReview") this.pushReviewError = displayPushURL(describe(e));
+      else this.fail(e);
       await this.reload(true);
       return false;
     } finally {
-      this.busy = null;
-      this.emit();
+      if (active()) { this.busy = null; this.emit(); }
     }
   }
 
@@ -60,41 +66,19 @@ export abstract class RepoActions extends RepoFilters {
     await this.run(t("Pulling…"), args, { network: true });
   }
 
-  async push(force = false) {
+  async push(force = false): Promise<boolean> {
     const branch = this.headBranch;
     if (!branch || !this.headHash) {
       this.errorMessage = t("There's no branch to push. HEAD is detached or there are no commits yet.");
       this.emit();
-      return;
+      return false;
     }
-    const args = ["push"];
-    if (force) args.push("--force-with-lease");
-    if (!this.status.upstream) {
-      const remote = this.defaultRemote;
-      if (!remote) {
-        this.errorMessage = t("No remote repository. Add one first in a terminal with `git remote add origin <URL>`.");
-        this.emit();
-        return;
-      }
-      args.push("-u", remote, branch);
-    }
-    if (await this.run(t("Pushing…"), args, { network: true })) {
-      await this.loadPullRequests();
-      // 올리자마자 파이프라인이 생기므로 조금 뒤에 읽는다
-      await new Promise((r) => setTimeout(r, 3000));
-      await this.ci.refreshBadges();
-    }
+    return this.requestPushReview(branch, force);
   }
 
-  async pushBranch(b: Branch) {
-    if (b.isCurrent) return this.push();
-    const remote = b.upstream ? b.upstream.split("/")[0] : this.defaultRemote;
-    if (!remote) {
-      this.errorMessage = t("No remote repository.");
-      this.emit();
-      return;
-    }
-    await this.run(t("Pushing…"), ["push", ...(b.upstream ? [] : ["-u"]), remote, b.name], { network: true });
+  async pushBranch(b: Branch): Promise<boolean> {
+    if (b.isRemote) return false;
+    return this.requestPushReview(b.name);
   }
 
   /** 지금 열린 곳이 아닌 다른 워크트리가 이 브랜치를 쓰고 있으면 그 워크트리 */
@@ -272,20 +256,26 @@ export abstract class RepoActions extends RepoFilters {
       title: t("Discard changes to '{0}'?", fileName(c.path)),
       message: c.kind === "untracked" ? t("Untracked new files will be deleted.") : t("Your edits in the working tree will be lost."),
       actionTitle: t("Discard changes"),
-      action: () =>
-        c.kind === "untracked"
+      action: async () => {
+        const repository = this.path;
+        if (!repository || !await this.preserveDiscardedChanges(changePaths(c)) || this.path !== repository) return;
+        return c.kind === "untracked"
           ? this.run(t("Discarding changes…"), ["clean", "-f", "-q", "--", c.path])
-          : this.run(t("Discarding changes…"), ["restore", "--worktree", "--", ...changePaths(c)]),
+          : this.run(t("Discarding changes…"), ["restore", "--worktree", "--", ...changePaths(c)]);
+      },
     });
   }
 
   confirmDiscardAll() {
     this.ask({
       title: t("Discard all changes?"),
-      message: t("Staged and unstaged changes and untracked new files will all be lost. This can't be undone."),
+      message: t("A local recovery copy is saved before discarding staged, unstaged and untracked changes."),
       actionTitle: t("Discard all"),
       action: async () => {
+        const repository = this.path;
+        if (!repository || !await this.preserveDiscardedChanges() || this.path !== repository) return;
         if (this.headHash && !(await this.run(t("Undoing…"), ["reset", "--hard", "-q"]))) return;
+        if (!this.headHash && !(await this.run(t("Undoing…"), ["read-tree", "--empty"]))) return;
         await this.run(t("Cleaning up…"), ["clean", "-fd", "-q"]);
       },
     });

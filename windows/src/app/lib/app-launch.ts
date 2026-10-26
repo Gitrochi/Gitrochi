@@ -37,6 +37,7 @@ export async function applyAppLaunch(route: AppLaunch) {
   } else if (route.view && route.view !== "graph" && route.view !== "diff") {
     await store.openStructureGraph(route.view);
   } else {
+    store.navigate("commits");
     store.closeFileInspect();
     store.closeDiff();
   }

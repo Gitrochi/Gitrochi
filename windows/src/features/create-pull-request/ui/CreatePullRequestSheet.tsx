@@ -9,13 +9,15 @@ import { Button, Checkbox, Frame, Markdown, Segmented, Spinner } from "@/shared/
 export function CreatePullRequestSheet({ store, close }: { store: RepoStore; close: () => void }) {
   const provider = store.target?.provider ?? "github";
   const [title, setTitle] = useState(() => {
+    if (store.newPullRequestDraft?.branch === store.headBranch) return store.newPullRequestDraft.title;
     const b = store.headBranch ?? "";
     return (b.split("/").pop() ?? b).replace(/-/g, " ");
   });
-  const [body, setBody] = useState("");
-  const [base, setBase] = useState("");
+  const saved = store.newPullRequestDraft?.branch === store.headBranch ? store.newPullRequestDraft : null;
+  const [body, setBody] = useState(saved?.body ?? "");
+  const [base, setBase] = useState(saved?.base ?? "");
   const [bases] = useState(() => store.pullRequestBaseCandidates());
-  const [draft, setDraft] = useState(false);
+  const [draft, setDraft] = useState(saved?.draft ?? false);
   const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
   const links = useMemo(() => markdownLinks(store.target), [store.target]);

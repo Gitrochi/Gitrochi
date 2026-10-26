@@ -78,6 +78,14 @@ export function GraphView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
       <SearchBar store={store} />
+      <div className="row" style={{ padding: "5px 10px", gap: 10, borderBottom: "1px solid var(--border)" }}>
+        <Button size="small" onClick={() => store.openRevisionComparison()}>{t("Compare revisions…")}</Button>
+        {!!store.historyTools.selected.length && <>
+          <span className="hint">{t("{0} selected", store.historyTools.selected.length)}</span>
+          <Button size="small" disabled={!!store.busy} onClick={() => void store.openBatchCommits()}>{t("Selected commits…")}</Button>
+          <Button size="small" onClick={() => store.clearGraphSelection()}>{t("Clear selection")}</Button>
+        </>}
+      </div>
       <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
         {cols.graph > 0 && <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>}
@@ -115,7 +123,7 @@ export function GraphView({ store }: { store: RepoStore }) {
                   gw={gw}
                   cols={cols}
                   refs={store.refsByCommit.get(e.commit.id)}
-                  selected={selected === e.commit.id}
+                  selected={selected === e.commit.id || store.historyTools.selected.includes(e.commit.id)}
                   isHead={e.commit.id === store.headHash}
                   wipCount={isWIP(e.commit) ? wipCount : worktreeRow(e.commit)?.count ?? 0}
                   wipLabel={worktreeRow(e.commit)?.label}

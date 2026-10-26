@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { gitch, type GitchAccount, type GitchDoctor } from "@/entities/gitch";
 import { displayPath, env, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { Button, Segmented, Spinner } from "@/shared/ui";
+import { Button, Spinner } from "@/shared/ui";
 import { GitchAccountSetup } from "./GitchAccountSetup";
 import { GitchGuide } from "./GitchGuide";
 
@@ -26,8 +26,8 @@ function tilde(p: string) {
  * 설정 > CLI 의 gitch(예전 이름 gitsw): 앱에 든 gitch 를 셸 명령으로 설치한다. (맥 버전 GitchSettings)
  * 계정과 SSH 설정은 앱에서 명시적으로 저장·생성·연결 확인한다.
  */
-export function CLISettings() {
-  const [panel, setPanel] = useState<"setup" | "guide">("setup");
+export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" | "guide" } = {}) {
+  const [panel, setPanel] = useState<"setup" | "guide">(initialMode);
   const [wizard, setWizard] = useState<{ account: GitchAccount | null } | null>(null);
   const [diagnosis, setDiagnosis] = useState<GitchDoctor | null>(null);
   const [info, setInfo] = useState<Info | null>(null);
@@ -97,7 +97,7 @@ export function CLISettings() {
   );
   return (
     <div className="col" style={{ gap: 10 }}>
-      <Segmented value={panel} onChange={setPanel} options={[{ value: "setup", label: t("Account setup") }, { value: "guide", label: t("Getting started and commands") }]} />
+      <span className="hint">{t("Command guides and diagnostics are available in Tools in the left sidebar.")}</span>
       {panel === "guide" ? <GitchGuide onAddAccount={() => { setPanel("setup"); setWizard({ account: null }); }} onDoctor={() => { setPanel("setup"); void run(async () => setDiagnosis(await gitch.doctor())); }} /> : <>
       <div className="form-section" style={{ gap: 8, padding: 12 }}>
         <div className="row">
@@ -145,9 +145,7 @@ export function CLISettings() {
           <Button kind="primary" disabled={!info.hasConfig || busy || !info.bundledVersion || !info.bash} onClick={() => setConfirmInstall(true)}>
             {info.installedIsBundled ? t("Reinstall terminal integration…") : t("Enable terminal command…")}
           </Button>
-          <Button disabled={!info.bash || (!info.installed && !info.bundledVersion)} onClick={() => void run(async () => setDiagnosis(await gitch.doctor()))}>
-            {t("Check setup")}
-          </Button>
+
           <span className="spacer" />
           {busy && <Spinner size={13} />}
         </div>

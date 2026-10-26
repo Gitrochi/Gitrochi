@@ -61,6 +61,10 @@ extension RepoStore {
         guard let doc = diff, canEditDiffLines else { return }
         let picked = Set(doc.lines.filter { $0.hunk == hunk && diffSelection.contains($0.id) }.map(\.id))
         guard let patch = DiffPatch.build(doc, hunks: [hunk], lines: picked.isEmpty ? nil : picked, reverse: action != .stage) else { return }
+        if action == .discard {
+            guard let repository = url, let source = diffSource,
+                  await preserveDiscardedChanges(paths: source.change.paths), url == repository else { return }
+        }
         var args = ["apply", "--recount", "--whitespace=nowarn"]
         switch action {
         case .stage: args.append("--cached")
@@ -77,7 +81,7 @@ extension RepoStore {
     func confirmDiscardLines(hunk: Int) {
         let n = selectedCount(inHunk: hunk)
         confirm = ConfirmRequest(title: n > 0 ? String(localized: "Discard changes in \(n) selected lines?") : String(localized: "Discard the changes in this hunk?"),
-                                 message: String(localized: "That part of the working tree returns to its committed (staged) state. This can't be undone."),
+                                 message: String(localized: "A local recovery copy of this file is saved before discarding the selected changes."),
                                  actionTitle: String(localized: "Discard")) { [weak self] in
             await self?.applyLines(.discard, hunk: hunk)
         }

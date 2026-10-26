@@ -11,7 +11,12 @@ case "$1 $2" in
   'auth login')
     [ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_HOST:-}" ] || exit 9
     "$LOGIN_TEST_PYTHON" -c 'import os,shlex,subprocess; subprocess.run(shlex.split(os.environ["GH_BROWSER"])+["https://github.com/login/device"],check=True)' || exit 10
-    echo '! First copy your one-time code: ABCD-1234' >&2
+    case "${LOGIN_TEST_CODE_MODE:-colon}" in
+      colon) echo '! First copy your one-time code: ABCD-1234' >&2 ;;
+      clipboard) echo '! One-time code (ABCD-1234) copied to clipboard' >&2 ;;
+      invalid) echo '! One-time code (SECRET_TOKEN_MUST_NOT_ESCAPE) copied to clipboard' >&2 ;;
+      none) ;;
+    esac
     echo "$$" > "$LOGIN_FIXTURE/child-${LOGIN_TEST_USER:-dave}"
     echo "$PPID" > "$LOGIN_FIXTURE/worker-${LOGIN_TEST_USER:-dave}"
     case "${LOGIN_TEST_MODE:-hold}" in
@@ -42,7 +47,7 @@ GH
   chmod +x "$GITCH_GH"
 }
 login_start() {
-  run gitch login github --start --json --yes
+  run gitch login github --start --json --yes "$@"
   assert_ok; assert_json "$OUT"
   LOGIN_TEST_SESSION=$(printf '%s' "$OUT" | jq -r .session)
   LOGIN_TEST_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitsw/logins/$LOGIN_TEST_SESSION"
@@ -98,12 +103,63 @@ test_login_start_returns_immediately_and_pending_code_is_narrow() {
   while [ "$attempts" -lt 20 ] && ! grep -q 'one-time code' "$LOGIN_TEST_DIR/auth.log"; do attempts=$((attempts+1)); sleep 0.1; done
   run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
   assert_eq "$(printf '%s' "$OUT" | jq -r .deviceCode)" ABCD-1234
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" approval
   if mac_only; then assert_eq "$(stat -f %Lp "$LOGIN_TEST_DIR")" 700; fi
   [ ! -e "$T/opened" ] || fail 'CLI opened browser without app'
   printf 'SECRET_TOKEN: ZXCV-9876\n' > "$LOGIN_TEST_DIR/auth.log"
   run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq -r .deviceCode)" null
   login_cancel_wait
+}
+
+test_login_clipboard_code_reaches_browser_approval_without_changing_gh_config() {
+  login_fake; export LOGIN_TEST_CODE_MODE=clipboard
+  mkdir -p "$HOME/.config/gh"
+  printf 'clipboard: enabled\n' > "$HOME/.config/gh/config.yml"
+  cp "$HOME/.config/gh/config.yml" "$T/original-gh-config"
+  login_start
+  local attempts=0
+  while [ "$attempts" -lt 30 ]; do
+    run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
+    [ "$(printf '%s' "$OUT" | jq -r .deviceCode)" != ABCD-1234 ] || break
+    attempts=$((attempts + 1)); sleep 0.1
+  done
+  assert_eq "$(printf '%s' "$OUT" | jq -r .deviceCode)" ABCD-1234
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" approval
+  cmp "$T/original-gh-config" "$HOME/.config/gh/config.yml" || fail 'changed user clipboard preferences'
+  printf '%s\n' "$(( $(date +%s) - 61 ))" > "$LOGIN_TEST_DIR/auth-started"
+  sleep 1.2
+  run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
+  assert_eq "$(printf '%s' "$OUT" | jq -r .state)" pending
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" approval
+  [ ! -e "$T/opened" ] || fail 'CLI opened browser without app'
+  login_cancel_wait
+}
+
+test_login_invalid_clipboard_code_is_never_returned() {
+  login_fake; export LOGIN_TEST_CODE_MODE=invalid
+  login_start
+  local attempts=0
+  while [ "$attempts" -lt 30 ] && [ ! -f "$LOGIN_FIXTURE/child-dave" ]; do attempts=$((attempts + 1)); sleep 0.1; done
+  run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
+  assert_eq "$(printf '%s' "$OUT" | jq -r .deviceCode)" null
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" preparing
+  login_cancel_wait
+}
+
+test_login_code_preparation_deadline_stops_only_the_owned_auth_process() {
+  login_fake; export LOGIN_TEST_CODE_MODE=none
+  login_start
+  local attempts=0 child
+  while [ "$attempts" -lt 30 ] && [ ! -f "$LOGIN_FIXTURE/child-dave" ]; do attempts=$((attempts + 1)); sleep 0.1; done
+  child=$(cat "$LOGIN_FIXTURE/child-dave")
+  run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" preparing
+  printf '%s\n' "$(( $(date +%s) - 61 ))" > "$LOGIN_TEST_DIR/auth-started"
+  login_poll failed; login_validate
+  assert_out '네트워크 연결'
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.phase // "absent"')" absent
+  ! kill -0 "$child" 2>/dev/null || fail 'code preparation timeout left auth child running'
 }
 
 test_login_success_resolves_named_identity_and_verified_email() {
@@ -115,10 +171,42 @@ test_login_success_resolves_named_identity_and_verified_email() {
   run gitch login github --cancel "$LOGIN_TEST_SESSION" --json; assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq -r .state)" complete 'completed session changed after cancellation'
   grep -F -- '--skip-ssh-key --scopes read:user,user:email,repo,read:org,workflow,admin:public_key' "$LOGIN_FIXTURE/args" >/dev/null || fail 'OAuth scopes/SSH skip missing'
+  ! grep -F -- ',project' "$LOGIN_FIXTURE/args" >/dev/null || fail 'standard login requested project permission'
   grep -F -- 'auth token --hostname github.com --user dave' "$LOGIN_FIXTURE/args" >/dev/null || fail 'selected active account instead of named account'
   [ ! -e "$LOGIN_TEST_DIR/token.tmp" ] || fail 'persisted token'
   [ ! -e "$HOME/.ssh/id_ed25519_dave" ] || fail 'OAuth login generated SSH key'
   [ ! -e "$HOME/.config/gitsw/config" ] || fail 'OAuth login registered account before confirmation'
+}
+
+test_login_projects_access_is_opt_in_and_keeps_the_selected_identity() {
+  login_fake; export LOGIN_TEST_MODE=success LOGIN_TEST_USER=dave
+  login_start --capability projects --expected-login DAVE
+  login_poll complete; login_validate
+  assert_eq "$(printf '%s' "$OUT" | jq -r .login)" dave
+  grep -F -- '--scopes read:user,user:email,repo,read:org,workflow,admin:public_key,project' "$LOGIN_FIXTURE/args" >/dev/null || fail 'project scope was not requested'
+  grep -F -- 'auth token --hostname github.com --user dave' "$LOGIN_FIXTURE/args" >/dev/null || fail 'project access imported an active credential'
+}
+
+test_login_projects_access_rejects_a_different_browser_account_before_import() {
+  login_fake; export LOGIN_TEST_MODE=success LOGIN_TEST_USER=other
+  login_start --capability projects --expected-login dave
+  login_poll failed; login_validate
+  assert_out '선택한 GitHub 계정'
+  assert_eq "$(printf '%s' "$OUT" | jq -r .login)" null
+  ! grep -F -- 'auth token' "$LOGIN_FIXTURE/args" >/dev/null || fail 'wrong account credential was imported'
+}
+
+test_login_permission_options_are_allowlisted_and_need_an_explicit_selected_account() {
+  login_fake
+  run gitch login github --start --json --yes --capability projects; assert_rc 1; assert_out LOGIN_ARGUMENT
+  run gitch login github --start --json --yes --capability arbitrary --expected-login dave; assert_rc 1; assert_out LOGIN_ARGUMENT
+  run gitch login github --start --json --yes --capability projects --expected-login '$(touch PWNED)'; assert_rc 1; assert_out LOGIN_ARGUMENT
+  run gitch login github --start --json --yes --expected-login ''; assert_rc 1; assert_out LOGIN_ARGUMENT
+  run gitch login github --start --json --yes --expected-login dave --expected-login other; assert_rc 1; assert_out LOGIN_ARGUMENT
+  run gitch login github --status github-1234567890 --json --capability projects --expected-login dave; assert_rc 1; assert_out LOGIN_ARGUMENT
+  [ ! -e "$LOGIN_FIXTURE/args" ] || fail 'invalid permission arguments started authentication'
+  [ ! -e PWNED ] || fail 'expected account executed shell text'
+  [ ! -e "$HOME/.local/state/gitsw/logins" ] || fail 'invalid permission arguments created a session'
 }
 
 test_login_session_paths_preserve_spaces_quotes_and_dollars() {
@@ -153,6 +241,11 @@ test_login_cancel_stops_only_its_own_child() {
   while [ "$attempts" -lt 20 ] && [ ! -f "$LOGIN_FIXTURE/child-dave" ]; do attempts=$((attempts+1)); sleep 0.1; done
   first_pid=$(cat "$LOGIN_FIXTURE/child-dave")
   [ ! -f "$LOGIN_FIXTURE/child-other" ] || fail 'parallel login mutated shared gh configuration'
+  printf '%s\n' "$(( $(date +%s) - 61 ))" > "$LOGIN_TEST_DIR/created"
+  run gitch login github --status "$LOGIN_TEST_SESSION" --json; assert_ok; login_validate
+  assert_eq "$(printf '%s' "$OUT" | jq -r .state)" pending
+  assert_eq "$(printf '%s' "$OUT" | jq -r .phase)" queued
+  assert_eq "$(printf '%s' "$OUT" | jq -r .deviceCode)" null
   run gitch login github --cancel "$first" --json; assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq -r .state)" cancelled
   attempts=0

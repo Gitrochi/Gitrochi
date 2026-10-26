@@ -8,7 +8,7 @@ struct FileInspectView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Button { store.closeFileInspect() } label: { Label("Graph", systemImage: "chevron.left") }
+                Button { store.closeFileInspect() } label: { Label(store.repositorySection == .changes ? "Changes" : "Graph", systemImage: "chevron.left") }
                     .keyboardShortcut(.escape, modifiers: [])
                     .help("Back to graph (Esc)")
                 Image(systemName: inspect.mode == .history ? "clock.arrow.circlepath" : "person.text.rectangle")
@@ -18,6 +18,12 @@ struct FileInspectView: View {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
+            }
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(.bar)
+            Divider()
+            WorkbenchFlow(spacing: 10) {
+                Button("Trace lines…") { store.openLineHistory(path: inspect.path, revision: inspect.rev, start: store.fileInspectLine ?? 1) }
                 if store.fileInspectLoading { ProgressView().controlSize(.small) }
                 Button { store.revealInFinder(path: inspect.path) } label: { Image(systemName: "folder") }
                     .buttonStyle(.borderless)

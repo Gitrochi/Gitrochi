@@ -56,6 +56,8 @@ struct RebasePlan {
     let original: [String]
     /// 이미 원격에 올린 커밋이 들어 있는지
     var pushed = false
+    /// 확인 화면 이후 HEAD가 바뀌었으면 실행하지 않는다.
+    var expectedHead: String?
 
     init(base: String?, items: [RebaseItem], pushed: Bool = false) {
         self.base = base
@@ -89,7 +91,7 @@ struct RebasePlan {
             case .reword:
                 out.append("pick \(item.sha)")
                 if item.newMessage != item.message {
-                    out.append("exec git commit --amend --no-verify --allow-empty -F \(Self.shellQuote(messageFile(item.sha)))")
+                    out.append("exec git commit --amend --allow-empty -F \(Self.shellQuote(messageFile(item.sha)))")
                 }
             case .squash: out.append("squash \(item.sha)")
             case .fixup: out.append("fixup \(item.sha)")

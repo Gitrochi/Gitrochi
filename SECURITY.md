@@ -52,7 +52,7 @@ Out of scope: problems that need a program already running as you, physical acce
 Gitrochi sends data only to services you connect or choose, and only what they need:
 
 - GitHub and GitLab, with your token, for pull requests, CI and reviews;
-- the AI provider you picked (Anthropic, OpenAI or Gemini), with your key, when you ask for a summary, a commit message or an explanation — the diff or text you asked about is what goes;
+- the AI provider you picked (Anthropic, OpenAI or Gemini), with your key, when you send a question, ask for a summary, commit message or explanation, or use repository assistance — the previewed snapshot and any permitted, bounded repository reads are sent;
 - author pictures from GitHub or GitLab for connected accounts, otherwise from Gravatar by a hash of the author's email;
 - GitHub Releases, without a token, to check for updates.
 

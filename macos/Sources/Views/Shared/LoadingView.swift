@@ -9,40 +9,43 @@ struct LoadingView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [Color(red: 0.07, green: 0.08, blue: 0.17), Color(red: 0.03, green: 0.04, blue: 0.08)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-            RadialGradient(colors: [Color(red: 0.24, green: 0.35, blue: 1).opacity(0.16), .clear], center: .center, startRadius: 10, endRadius: 340)
-
-            VStack(spacing: 22) {
-                Group {
-                    if reduceMotion {
-                        GitrochiMark(phase: 0)
-                    } else {
-                        TimelineView(.animation) { context in
-                            let t = context.date.timeIntervalSinceReferenceDate
-                            GitrochiMark(phase: t.truncatingRemainder(dividingBy: GitrochiMark.period) / GitrochiMark.period)
-                        }
+        VStack(spacing: 22) {
+            Group {
+                if reduceMotion {
+                    GitrochiMark(phase: 0)
+                } else {
+                    TimelineView(.animation) { context in
+                        let t = context.date.timeIntervalSinceReferenceDate
+                        GitrochiMark(phase: t.truncatingRemainder(dividingBy: GitrochiMark.period) / GitrochiMark.period)
                     }
                 }
-                .frame(width: 176, height: 176)
-
-                VStack(spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text(step ?? " ")
-                        .font(.callout)
-                        .foregroundStyle(.white.opacity(0.72))
-                        .id(step ?? "")
-                        .transition(.opacity)
-                }
-                .animation(.easeInOut(duration: 0.25), value: step)
             }
-            .padding(40)
+            .frame(width: 176, height: 176)
+
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(step ?? " ")
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.72))
+                    .id(step ?? "")
+                    .transition(.opacity)
+            }
+            .animation(.easeInOut(duration: 0.25), value: step)
         }
-        .ignoresSafeArea()
+        .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // 배경만 가장자리까지 칠하고 로고·진행 문구는 창의 안전 영역 안에 둔다.
+        .background {
+            ZStack {
+                LinearGradient(colors: [Color(red: 0.07, green: 0.08, blue: 0.17), Color(red: 0.03, green: 0.04, blue: 0.08)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                RadialGradient(colors: [Color(red: 0.24, green: 0.35, blue: 1).opacity(0.16), .clear], center: .center, startRadius: 10, endRadius: 340)
+            }
+            .ignoresSafeArea()
+        }
     }
 }
 
