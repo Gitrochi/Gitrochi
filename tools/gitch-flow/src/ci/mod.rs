@@ -50,6 +50,8 @@ pub struct CiErr {
     pub unknown_outcome: bool,
     /// 잠깐 뒤 다시 읽어도 되는 오류(GET 만).
     pub transient: bool,
+    /// 서버가 알려 준 기다릴 시간(`Retry-After` · `x-ratelimit-reset`).
+    pub retry_after_ms: Option<u64>,
 }
 
 impl CiErr {
@@ -69,7 +71,20 @@ impl CiErr {
             message: format!("HTTP {status}: {snippet}"),
             unknown_outcome: status >= 500,
             transient: status >= 500 || status == 429 || status == 408,
+            retry_after_ms: None,
         }
+    }
+    /// 응답에서: 상태 코드 + 속도 제한 헤더.
+    pub fn from_resp(r: &crate::http::Resp) -> CiErr {
+        let mut e = CiErr::from_status(r.status, &r.body);
+        if r.header("x-ratelimit-remaining") == Some("0") && matches!(r.status, 403 | 429) {
+            e.code = "CONN-06";
+            e.transient = true;
+        }
+        if e.code == "CONN-06" || r.status == 503 {
+            e.retry_after_ms = r.retry_after_ms();
+        }
+        e
     }
     pub fn transport(e: String) -> CiErr {
         CiErr {
@@ -78,6 +93,7 @@ impl CiErr {
             message: e,
             unknown_outcome: true,
             transient: true,
+            retry_after_ms: None,
         }
     }
 }
@@ -115,6 +131,10 @@ pub enum Triggered {
 
 pub trait Provider {
     fn label(&self) -> String;
+    /// 상관 ID 로 실행을 찾을 수 있는지. 못 찾는 곳(수동 작업 등)은 응답을 잃으면 바로 "결과 모름"으로 끝낸다.
+    fn searchable(&self) -> bool {
+        true
+    }
     fn find(&self, corr: &str, since_ms: u64) -> Result<Option<RemoteRun>, CiErr>;
     fn trigger(&self, corr: &str) -> Result<Triggered, CiErr>;
     /// Accepted 의 손잡이(큐 주소 등)로 실행을 알아낸다. 모르면 None.
@@ -186,7 +206,12 @@ pub fn with_retry<T>(cx: &NodeCx, mut f: impl FnMut() -> Result<T, CiErr>) -> Re
         match f() {
             Ok(v) => return Ok(v),
             Err(e) if e.transient && i < 4 => {
-                if !nap(cx, wait) {
+                // 서버가 기다릴 시간을 알려 주면 그만큼(최대 5분) 기다린다.
+                let ms = e
+                    .retry_after_ms
+                    .map(|r| r.clamp(1000, 300_000))
+                    .unwrap_or(wait);
+                if !nap(cx, ms) {
                     return Err(e);
                 }
                 wait = (wait * 2).min(15_000);
@@ -195,6 +220,38 @@ pub fn with_retry<T>(cx: &NodeCx, mut f: impl FnMut() -> Result<T, CiErr>) -> Re
         }
     }
     f()
+}
+
+/// 응답을 잃었거나 ID 없이 받아들여진 트리거: 다시 보내지 않고 상관 ID 로만 찾는다.
+fn search_after_trigger(
+    p: &dyn Provider,
+    cx: &NodeCx,
+    corr: &str,
+    sent_at: u64,
+    handle: Option<&Value>,
+    find_ms: u64,
+    poll_ms: u64,
+) -> Result<Option<RemoteRun>, CiErr> {
+    let until = Instant::now() + Duration::from_millis(find_ms);
+    loop {
+        if let Some(h) = handle {
+            match p.resolve_accepted(h) {
+                Ok(Some(r)) => return Ok(Some(r)),
+                Err(e) if !e.transient => return Err(e),
+                _ => {}
+            }
+        }
+        if p.searchable() {
+            if let Ok(Some(r)) = p.find(corr, sent_at.saturating_sub(10_000)) {
+                return Ok(Some(r));
+            }
+        } else if handle.is_none() {
+            return Ok(None);
+        }
+        if Instant::now() >= until || !nap(cx, poll_ms.clamp(200, 3000)) {
+            return Ok(None);
+        }
+    }
 }
 
 pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
@@ -242,7 +299,15 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
             match p.trigger(&corr) {
                 Err(e) if e.code == "CONN-06" && e.http == Some(429) && attempt < 3 => {
                     // 속도 제한은 처리되지 않은 요청이라 기다렸다가 다시 보낼 수 있다.
-                    if !nap(cx, 10_000) {
+                    let ms = e
+                        .retry_after_ms
+                        .map(|r| r.clamp(1000, 120_000))
+                        .unwrap_or(10_000);
+                    cx.note(&tr(
+                        &format!("속도 제한 — {}초 뒤 다시 보냅니다.", ms / 1000),
+                        &format!("rate limited — sending again in {}s.", ms / 1000),
+                    ));
+                    if !nap(cx, ms) {
                         break Err(e);
                     }
                 }
@@ -252,20 +317,19 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
         match outcome {
             Ok(Triggered::Created(r)) => d.run = Some(r),
             Ok(Triggered::Accepted(handle)) => {
-                let until = Instant::now() + Duration::from_millis(opts.find_ms);
-                while Instant::now() < until && d.run.is_none() {
-                    if let Some(h) = &handle {
-                        if let Ok(Some(r)) = p.resolve_accepted(h) {
-                            d.run = Some(r);
-                            break;
-                        }
-                    }
-                    if let Ok(Some(r)) = p.find(&corr, sent_at.saturating_sub(10_000)) {
-                        d.run = Some(r);
-                        break;
-                    }
-                    if !nap(cx, 3000) {
-                        break;
+                match search_after_trigger(
+                    p,
+                    cx,
+                    &corr,
+                    sent_at,
+                    handle.as_ref(),
+                    opts.find_ms,
+                    opts.poll_ms,
+                ) {
+                    Ok(r) => d.run = r,
+                    Err(e) => {
+                        d.error = Some(e);
+                        return d;
                     }
                 }
                 if d.run.is_none() {
@@ -278,6 +342,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
                         ),
                         unknown_outcome: true,
                         transient: false,
+                        retry_after_ms: None,
                     });
                     return d;
                 }
@@ -287,16 +352,9 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
                     "트리거 응답을 받지 못했습니다 — 다시 보내지 않고 상관 ID 로 찾습니다.",
                     "no answer to the trigger — searching by correlation id instead of re-sending.",
                 ));
-                let until = Instant::now() + Duration::from_millis(opts.find_ms);
-                while Instant::now() < until && d.run.is_none() {
-                    if let Ok(Some(r)) = p.find(&corr, sent_at.saturating_sub(10_000)) {
-                        d.run = Some(r);
-                        break;
-                    }
-                    if !nap(cx, 3000) {
-                        break;
-                    }
-                }
+                d.run =
+                    search_after_trigger(p, cx, &corr, sent_at, None, opts.find_ms, opts.poll_ms)
+                        .unwrap_or(None);
                 if d.run.is_none() {
                     d.error = Some(CiErr {
                         code: "CI-01",
@@ -304,6 +362,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
                         message: e.message,
                         unknown_outcome: true,
                         transient: false,
+                        retry_after_ms: None,
                     });
                     return d;
                 }
@@ -319,7 +378,9 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
     // 3) 기다린다(마감 · 취소 · 외부 취소).
     let deadline = Instant::now() + Duration::from_millis(opts.timeout_ms);
     let mut cursor = Value::Null;
-    let mut poll = opts.poll_ms.max(1000);
+    let base_poll = opts.poll_ms.max(200);
+    let mut poll = base_poll;
+    let mut told_waiting = false;
     loop {
         if cx.cancel.is_cancelled() || Instant::now() >= deadline {
             d.timed_out = !cx.cancel.is_cancelled();
@@ -343,6 +404,13 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
                         cx.log_line(&l);
                     }
                 }
+                if s.state == RState::Waiting && !told_waiting {
+                    told_waiting = true;
+                    cx.note(&tr(
+                        "원격 CI 가 사람의 동작(수동 작업 · 승인)을 기다립니다.",
+                        "the remote CI is waiting for a person (manual job or approval).",
+                    ));
+                }
                 d.status = Some(s);
                 if finished {
                     break;
@@ -356,7 +424,7 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
         if !nap(cx, poll) {
             continue;
         }
-        poll = (poll + 1000).min(15_000);
+        poll = (poll + base_poll / 5 + 200).min(15_000.max(base_poll));
     }
     // 4) 결과 계약과 보고서. 로그 표식은 마지막 줄이 이긴다.
     if let Ok(Some(c)) = p.contract(&run) {

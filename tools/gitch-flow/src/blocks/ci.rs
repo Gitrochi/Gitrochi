@@ -30,31 +30,31 @@ const CODES: &[&str] = &[
 
 fn inputs_gl_pipeline() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "project": {"type": "string"}, "ref": {"type": "string"}, "variables": {"type": "object"}, "timeout": {"type": "string", "default": "60m"}}),
+        json!({"connection": {"type": "string"}, "project": {"type": "string"}, "ref": {"type": "string"}, "variables": {"type": "object"}, "timeout": {"type": "string", "default": "60m"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["connection"],
     )
 }
 fn inputs_gl_job() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "project": {"type": "string"}, "ref": {"type": "string"}, "job": {"type": "string"}, "pipeline": {"type": "string"}, "variables": {"type": "object"}, "timeout": {"type": "string"}}),
+        json!({"connection": {"type": "string"}, "project": {"type": "string"}, "ref": {"type": "string"}, "job": {"type": "string"}, "pipeline": {"type": "string"}, "variables": {"type": "object"}, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["connection", "job"],
     )
 }
 fn inputs_gh() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "repo": {"type": "string"}, "workflow": {"type": "string"}, "ref": {"type": "string"}, "inputs": {"type": "object"}, "correlate": {"type": "boolean", "default": true}, "timeout": {"type": "string"}}),
+        json!({"connection": {"type": "string"}, "repo": {"type": "string"}, "workflow": {"type": "string"}, "ref": {"type": "string"}, "inputs": {"type": "object"}, "correlate": {"type": "boolean", "default": true}, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["connection", "workflow"],
     )
 }
 fn inputs_jenkins() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "job": {"type": "string"}, "parameters": {"type": "object"}, "correlate": {"type": "boolean", "default": true}, "timeout": {"type": "string"}}),
+        json!({"connection": {"type": "string"}, "job": {"type": "string"}, "parameters": {"type": "object"}, "correlate": {"type": "boolean", "default": true}, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["connection", "job"],
     )
 }
 fn inputs_http() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "trigger": {"type": "object"}, "id": {"type": "string"}, "status": {"type": "object"}, "logs": {"type": "object"}, "cancel": {"type": "object"}, "find": {"type": "object"}, "timeout": {"type": "string"}}),
+        json!({"connection": {"type": "string"}, "trigger": {"type": "object"}, "id": {"type": "string"}, "status": {"type": "object"}, "logs": {"type": "object"}, "cancel": {"type": "object"}, "find": {"type": "object"}, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["trigger", "status"],
     )
 }
@@ -268,10 +268,15 @@ impl Block for CiBlock {
             .input_str("timeout")
             .and_then(|t| crate::util::parse_duration(&t))
             .unwrap_or(60 * 60_000);
+        let dur = |k: &str, default: u64| {
+            cx.input_str(k)
+                .and_then(|t| crate::util::parse_duration(&t))
+                .unwrap_or(default)
+        };
         let opts = DriveOpts {
             timeout_ms: timeout,
-            find_ms: 120_000,
-            poll_ms: 5000,
+            find_ms: dur("findTimeout", 120_000),
+            poll_ms: dur("poll", 5000),
             require_contract: cx.expect.result.as_deref() == Some("required"),
         };
         let correlate = cx

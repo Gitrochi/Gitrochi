@@ -21,6 +21,7 @@ sha2 = "0.10"
 roxmltree = "0.20"
 regex = "1"
 ureq = "2"
+url = "2"
 getrandom = "0.2"
 keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
 

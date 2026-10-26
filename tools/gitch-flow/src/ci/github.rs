@@ -37,13 +37,7 @@ impl Api {
     }
     fn check(r: http::Resp) -> Result<http::Resp, CiErr> {
         if r.status >= 300 && r.status != 302 {
-            let limited = r.header("x-ratelimit-remaining") == Some("0");
-            let mut e = CiErr::from_status(r.status, &r.body);
-            if limited {
-                e.code = "CONN-06";
-                e.transient = true;
-            }
-            return Err(e);
+            return Err(CiErr::from_resp(&r));
         }
         Ok(r)
     }
@@ -71,6 +65,7 @@ impl Api {
             message: e.to_string(),
             unknown_outcome: false,
             transient: false,
+            retry_after_ms: None,
         })
     }
     pub fn post(&self, path: &str, body: &Value) -> Result<http::Resp, CiErr> {
@@ -89,37 +84,48 @@ impl Api {
         Self::check(r)
     }
     /// 작업 로그: 302 의 Location 을 인증 없이 받는다(토큰을 저장소 밖 호스트로 보내지 않게).
+    /// 따라가는 곳은 API 와 같은 호스트이거나 GitHub 로그 저장소 호스트만.
     pub fn job_log(&self, repo: &str, job: &str) -> Result<String, CiErr> {
         let r = self.get(&format!("/repos/{repo}/actions/jobs/{job}/logs"))?;
-        if r.status == 302 {
-            let loc = r.header("location").unwrap_or("").to_string();
-            let host_ok = loc.starts_with("https://")
-                && (loc.contains(".githubusercontent.com/")
-                    || loc.contains(".blob.core.windows.net/")
-                    || loc.contains("github.com/"));
-            if !host_ok {
-                return Err(CiErr {
-                    code: "CONN-05",
-                    http: Some(302),
-                    message: "unexpected log redirect host".into(),
-                    unknown_outcome: false,
-                    transient: false,
-                });
-            }
-            let r2 = http::send(&Req {
-                method: "GET",
-                url: &loc,
-                headers: vec![],
-                body: None,
-                timeout_ms: 30_000,
-                follow_redirects: true,
-            })
-            .map_err(CiErr::transport)?;
-            return Ok(r2.body);
+        if r.status != 302 {
+            return Ok(r.body);
         }
-        Ok(r.body)
+        let loc = r.header("location").unwrap_or("").to_string();
+        let api_host = http::host_of(&self.base).unwrap_or_default();
+        let host = http::host_of(&loc).unwrap_or_default();
+        let host_ok = !host.is_empty()
+            && (host == api_host
+                || (loc.starts_with("https://") && http::host_matches(&host, LOG_HOSTS)));
+        if !host_ok {
+            return Err(CiErr {
+                code: "CONN-05",
+                http: Some(302),
+                message: format!("unexpected log redirect host: {host}"),
+                unknown_outcome: false,
+                transient: false,
+                retry_after_ms: None,
+            });
+        }
+        let r2 = http::send(&Req {
+            method: "GET",
+            url: &loc,
+            headers: vec![],
+            body: None,
+            timeout_ms: 30_000,
+            follow_redirects: true,
+        })
+        .map_err(CiErr::transport)?;
+        Ok(r2.body)
     }
 }
+
+/// 작업 로그가 옮겨 가는 저장소 호스트.
+const LOG_HOSTS: &[&str] = &[
+    "github.com",
+    ".github.com",
+    ".githubusercontent.com",
+    ".blob.core.windows.net",
+];
 
 fn state_of(status: &str, conclusion: &str) -> RState {
     match status {

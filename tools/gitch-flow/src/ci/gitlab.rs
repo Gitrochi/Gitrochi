@@ -54,7 +54,7 @@ impl Api {
         })
         .map_err(CiErr::transport)?;
         if r.status >= 300 {
-            let mut e = CiErr::from_status(r.status, &r.body);
+            let mut e = CiErr::from_resp(&r);
             e.unknown_outcome = false;
             return Err(e);
         }
@@ -68,6 +68,7 @@ impl Api {
             message: e.to_string(),
             unknown_outcome: false,
             transient: false,
+            retry_after_ms: None,
         })
     }
     pub fn post(&self, path: &str, body: &Value) -> Result<Value, CiErr> {
@@ -84,7 +85,7 @@ impl Api {
         })
         .map_err(CiErr::transport)?;
         if r.status >= 300 {
-            return Err(CiErr::from_status(r.status, &r.body));
+            return Err(CiErr::from_resp(&r));
         }
         Ok(serde_json::from_str(&r.body).unwrap_or(Value::Null))
     }
@@ -101,7 +102,11 @@ fn state_of(s: &str) -> RState {
     }
 }
 
+/// 작업 로그 상한(작업당 끝부분).
+const TRACE_TAIL: usize = 1024 * 1024;
+
 /// 작업 로그를 이어 읽는다. cursor = {"<job id>": 읽은 바이트, "done": [끝난 작업]}.
+/// 아직 도는 작업은 마지막 줄바꿈까지만 읽어 줄이 반으로 잘리지 않게 한다.
 fn job_logs(api: &Api, project: &str, jobs: &[Value], cursor: &mut Value) -> Vec<String> {
     if !cursor.is_object() {
         *cursor = json!({"done": []});
@@ -126,15 +131,25 @@ fn job_logs(api: &Api, project: &str, jobs: &[Value], cursor: &mut Value) -> Vec
         let Ok(r) = api.get(&format!("/projects/{project}/jobs/{id}/trace")) else {
             continue;
         };
-        let from = cursor[&id].as_u64().unwrap_or(0) as usize;
+        let finished = matches!(status, "success" | "failed" | "canceled");
         let body = r.body;
-        if body.len() > from {
+        let mut from = cursor[&id].as_u64().unwrap_or(0) as usize;
+        let name = j["name"].as_str().unwrap_or("job");
+        if from == 0 && body.len() > TRACE_TAIL {
+            from = body.len() - TRACE_TAIL;
+            out.push(format!("[{name}] … ({} bytes skipped)", from));
+        }
+        let end = if finished {
+            body.len()
+        } else {
+            body.rfind('\n').map(|i| i + 1).unwrap_or(0)
+        };
+        if end > from {
             let mut start = from;
-            while start < body.len() && !body.is_char_boundary(start) {
+            while start < end && !body.is_char_boundary(start) {
                 start += 1;
             }
-            let name = j["name"].as_str().unwrap_or("job");
-            for l in body[start..].lines() {
+            for l in body[start..end].lines() {
                 // GitLab 의 접기 표식(section_start …) 같은 제어 글자를 걷어 낸다.
                 let clean: String = l
                     .chars()
@@ -142,9 +157,9 @@ fn job_logs(api: &Api, project: &str, jobs: &[Value], cursor: &mut Value) -> Vec
                     .collect();
                 out.push(format!("[{name}] {clean}"));
             }
-            cursor[&id] = json!(body.len());
+            cursor[&id] = json!(end);
         }
-        if matches!(status, "success" | "failed" | "canceled") {
+        if finished {
             if let Some(a) = cursor["done"].as_array_mut() {
                 a.push(json!(id));
             }
@@ -339,6 +354,10 @@ impl Provider for ManualJob {
         format!("GitLab job {} ({})", self.job, self.git_ref)
     }
 
+    fn searchable(&self) -> bool {
+        false
+    }
+
     fn find(&self, _corr: &str, _since: u64) -> Result<Option<RemoteRun>, CiErr> {
         // 수동 작업은 이미 돌고 있으면 다시 누를 수 없으니 찾기 대신 상태로 판단한다.
         Ok(None)
@@ -362,6 +381,7 @@ impl Provider for ManualJob {
                     ),
                     unknown_outcome: false,
                     transient: false,
+                    retry_after_ms: None,
                 })?
             }
         };
@@ -382,6 +402,7 @@ impl Provider for ManualJob {
                 ),
                 unknown_outcome: false,
                 transient: false,
+                retry_after_ms: None,
             })?;
         let jid = job["id"].as_u64().unwrap_or(0);
         if job["status"] != "manual" {
@@ -402,6 +423,7 @@ impl Provider for ManualJob {
                 ),
                 unknown_outcome: false,
                 transient: false,
+                retry_after_ms: None,
             });
         }
         let mut vars = vec![json!({"key": "GITCH_FLOW_CORR", "value": corr})];

@@ -14,6 +14,11 @@ fn fill(s: &str, id: &str, corr: &str) -> String {
     s.replace("{id}", id).replace("{corr}", corr)
 }
 
+/// 주소에 넣는 값은 인코딩한다(원격이 돌려준 ID 에 `/` · `?` 가 있어도 다른 경로가 되지 않게).
+fn fill_url(s: &str, id: &str, corr: &str) -> String {
+    fill(s, &super::gitlab::enc(id), &super::gitlab::enc(corr))
+}
+
 impl Http {
     fn headers(&self, extra: &Value) -> Vec<(String, String)> {
         let mut h: Vec<(String, String)> = extra
@@ -30,7 +35,7 @@ impl Http {
         h
     }
     fn call(&self, part: &Value, id: &str, corr: &str) -> Result<http::Resp, CiErr> {
-        let url = fill(part["url"].as_str().unwrap_or(""), id, corr);
+        let url = fill_url(part["url"].as_str().unwrap_or(""), id, corr);
         let method = part["method"]
             .as_str()
             .unwrap_or("GET")
@@ -64,7 +69,7 @@ impl Http {
         })
         .map_err(CiErr::transport)?;
         if r.status >= 300 {
-            return Err(CiErr::from_status(r.status, &r.body));
+            return Err(CiErr::from_resp(&r));
         }
         Ok(r)
     }
@@ -89,7 +94,7 @@ impl Provider for Http {
             .map(crate::expr::to_text)
             .filter(|s| !s.is_empty());
         Ok(id.map(|id| RemoteRun {
-            url: fill(self.with["status"]["url"].as_str().unwrap_or(""), &id, corr),
+            url: fill_url(self.with["status"]["url"].as_str().unwrap_or(""), &id, corr),
             id,
             extra: Value::Null,
         }))
@@ -106,7 +111,7 @@ impl Provider for Http {
             .filter(|s| !s.is_empty())
         {
             Some(id) => Ok(Triggered::Created(RemoteRun {
-                url: fill(self.with["status"]["url"].as_str().unwrap_or(""), &id, corr),
+                url: fill_url(self.with["status"]["url"].as_str().unwrap_or(""), &id, corr),
                 id,
                 extra: json!({"corr": corr}),
             })),

@@ -68,7 +68,7 @@ impl Job {
         })
         .map_err(CiErr::transport)?;
         if r.status >= 300 {
-            let mut e = CiErr::from_status(r.status, &r.body);
+            let mut e = CiErr::from_resp(&r);
             e.unknown_outcome = false;
             return Err(e);
         }
@@ -83,6 +83,7 @@ impl Job {
             message: e.to_string(),
             unknown_outcome: false,
             transient: false,
+            retry_after_ms: None,
         })
     }
 
@@ -119,15 +120,30 @@ impl Job {
         })
         .map_err(CiErr::transport)?;
         if r.status >= 400 {
-            return Err(CiErr::from_status(r.status, &r.body));
+            return Err(CiErr::from_resp(&r));
         }
         Ok(r)
+    }
+
+    /// Jenkins 가 돌려준 절대 주소를 연결에 적은 서버로 옮긴다. Jenkins 의 "루트 주소" 설정이 다른 호스트(내부 이름 등)여도
+    /// 인증을 그 호스트로 보내지 않는다.
+    fn rebase(&self, url: &str) -> String {
+        let (Ok(b), Ok(u)) = (url::Url::parse(&self.base), url::Url::parse(url)) else {
+            return url.to_string();
+        };
+        if b.origin() == u.origin() {
+            return url.to_string();
+        }
+        let mut out = b.clone();
+        out.set_path(u.path());
+        out.set_query(u.query());
+        out.to_string()
     }
 
     fn build_url(&self, run: &RemoteRun) -> String {
         let u = run.url.trim_end_matches('/');
         if u.starts_with("http") {
-            format!("{u}/")
+            format!("{}/", self.rebase(u).trim_end_matches('/'))
         } else {
             format!("{}/{}/{}/", self.base, self.path, run.id)
         }
@@ -219,6 +235,7 @@ impl Provider for Job {
         let Some(q) = handle["queue"].as_str() else {
             return Ok(None);
         };
+        let q = self.rebase(q);
         let v = self.get_json(&format!("{}/api/json", q.trim_end_matches('/')))?;
         if v["cancelled"] == true {
             return Err(CiErr {
@@ -227,6 +244,7 @@ impl Provider for Job {
                 message: "the queued build was cancelled".into(),
                 unknown_outcome: false,
                 transient: false,
+                retry_after_ms: None,
             });
         }
         Ok(v["executable"]["number"].as_u64().map(|n| RemoteRun {

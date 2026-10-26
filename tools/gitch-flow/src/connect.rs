@@ -122,7 +122,7 @@ pub fn secret(c: &Connection, ci: bool) -> Option<String> {
     crate::keystore::get(&format!("conn:{}", c.name))
 }
 
-/// 허용 목록에 있는 작업인지(비면 모두 허용하지 않고, 연결을 만들 때 넣은 패턴만).
+/// 허용 목록에 있는 작업인지. 목록이 비면 모두 허용한다(연결을 만들 때 --allow 로 좁힌다).
 pub fn allowed(c: &Connection, job: &str) -> bool {
     c.allow.is_empty() || c.allow.iter().any(|p| util::glob_match(p, job) || p == job)
 }

@@ -1,105 +1,11 @@
 //! 실행 파일을 임시 저장소 · 임시 HOME 에서 돌려 보는 통합 시험. 실제 사용자 설정은 건드리지 않는다.
 //! 실행 주체는 시험마다 정한다(사람 · 스크립트 · AI) — gitch 시험 도구(t_setup)와 같은 방식.
 
+mod common;
+
+use common::Fx;
 use serde_json::Value;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-
-struct Fx {
-    dir: PathBuf,
-}
-
-impl Fx {
-    fn new(files: &[(&str, &str)]) -> Fx {
-        let dir = std::env::temp_dir().join(format!("gf-cli-{}-{}", std::process::id(), rand()));
-        std::fs::create_dir_all(dir.join("home")).unwrap();
-        std::fs::create_dir_all(dir.join("repo")).unwrap();
-        let fx = Fx { dir };
-        let ok = Command::new("git")
-            .args(["init", "-q"])
-            .current_dir(fx.repo())
-            .status()
-            .unwrap();
-        assert!(ok.success());
-        for (p, c) in files {
-            fx.write(p, c);
-        }
-        fx
-    }
-    fn repo(&self) -> PathBuf {
-        self.dir.join("repo")
-    }
-    fn home(&self) -> PathBuf {
-        self.dir.join("home")
-    }
-    fn write(&self, p: &str, c: &str) {
-        let path = self.repo().join(p);
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(path, c).unwrap();
-    }
-    fn cmd(&self, actor: &str, args: &[&str]) -> Command {
-        let mut c = Command::new(env!("CARGO_BIN_EXE_gitch-flow"));
-        c.args(args).current_dir(self.repo()).env_clear();
-        c.env("PATH", std::env::var("PATH").unwrap_or_default());
-        c.env("HOME", self.home());
-        c.env("XDG_CONFIG_HOME", self.home().join(".config"));
-        c.env("XDG_STATE_HOME", self.home().join(".local/state"));
-        c.env("XDG_CACHE_HOME", self.home().join(".cache"));
-        c.env("TMPDIR", std::env::temp_dir());
-        c.env("LANG", "C");
-        c.env("GITCH_FLOW_NO_KEYSTORE", "1");
-        c.env("GIT_CONFIG_NOSYSTEM", "1");
-        c.env("GIT_CONFIG_GLOBAL", self.home().join("gitconfig"));
-        match actor {
-            "claude" => {
-                c.env("CLAUDECODE", "1");
-            }
-            other => {
-                c.env("GITSW_ACTOR", other);
-            }
-        }
-        c
-    }
-    fn run(&self, actor: &str, args: &[&str]) -> (i32, String, String) {
-        let o = self.cmd(actor, args).output().unwrap();
-        (
-            o.status.code().unwrap_or(-1),
-            String::from_utf8_lossy(&o.stdout).to_string(),
-            String::from_utf8_lossy(&o.stderr).to_string(),
-        )
-    }
-    fn json(&self, actor: &str, args: &[&str]) -> (i32, Value) {
-        let (c, out, err) = self.run(actor, args);
-        let v = serde_json::from_str(&out).unwrap_or_else(|_| {
-            serde_json::from_str(err.lines().last().unwrap_or("null")).unwrap_or(Value::Null)
-        });
-        (c, v)
-    }
-    fn trust(&self) {
-        let (c, _, e) = self.run("script", &["trust", "--yes"]);
-        assert_eq!(c, 0, "trust failed: {e}");
-    }
-}
-
-impl Drop for Fx {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.dir);
-    }
-}
-
-fn rand() -> String {
-    // 시험이 병렬로 돌아 같은 순간에 만들어도 폴더가 겹치지 않게 순번을 붙인다.
-    static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-    let n = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    format!(
-        "{:x}-{}",
-        n & 0xffff_ffff,
-        N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
-    )
-}
+use std::path::Path;
 
 const RUNNER: &str = r#"#!/bin/sh
 mode=${1:-pass}

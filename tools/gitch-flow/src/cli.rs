@@ -28,6 +28,16 @@ pub const VALUE_FLAGS: &[&str] = &[
     "--keep",
     "--flow",
     "--tag",
+    "--name",
+    "--url",
+    "--user",
+    "--project",
+    "--allow",
+    "--secret-from",
+    "--connection",
+    "--ref",
+    "--image",
+    "--runs-on",
 ];
 
 pub struct Args {

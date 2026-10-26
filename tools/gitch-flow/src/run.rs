@@ -1055,7 +1055,27 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                                 json!({"service": name, "state": "STARTING"}),
                             );
                             print_line(opts, &format!("▶ service {name}"));
+                            // 준비를 기다리는 동안에도 취소 요청 · Ctrl-C · 흐름 마감을 본다.
                             let cancel_svc = Cancel::new();
+                            let started = Cancel::new();
+                            {
+                                let (c, done, file) =
+                                    (cancel_svc.clone(), started.clone(), cancel_file.clone());
+                                scope.spawn(move || {
+                                    while !done.is_cancelled() {
+                                        if INTERRUPTED.load(Ordering::SeqCst)
+                                            || file.exists()
+                                            || deadline
+                                                .map(|d| Instant::now() >= d)
+                                                .unwrap_or(false)
+                                        {
+                                            c.cancel();
+                                            break;
+                                        }
+                                        std::thread::sleep(Duration::from_millis(100));
+                                    }
+                                });
+                            }
                             let cx = SvcCx {
                                 root: &spec.root,
                                 run_dir: &run_dir,
@@ -1064,7 +1084,22 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                                 masker: &masker,
                                 cancel: &cancel_svc,
                             };
-                            match services::start(def, &with, port, &cx) {
+                            let res = services::start(def, &with, port, &cx);
+                            started.cancel();
+                            if cancel_svc.is_cancelled() {
+                                if let Ok(r) = res {
+                                    services_up.push(r);
+                                }
+                                events.emit(
+                                    "service.state",
+                                    None,
+                                    json!({"service": name, "state": "CANCELLED"}),
+                                );
+                                svc_error =
+                                    Some(("EXEC-05".into(), tr("실행 취소", "run cancelled")));
+                                break;
+                            }
+                            match res {
                                 Ok(r) => {
                                     events.emit(
                                         "service.state",
@@ -1086,6 +1121,15 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
                         if svc_error.is_some() {
                             break;
                         }
+                    }
+                    if svc_error
+                        .as_ref()
+                        .map(|(c, _)| c == "EXEC-05")
+                        .unwrap_or(false)
+                    {
+                        // 서비스를 띄우는 중에 취소됨: 다음 바퀴에서 나머지 노드와 함께 취소로 정리한다.
+                        progressed = true;
+                        continue;
                     }
                     if let Some((code, msg)) = svc_error {
                         transition(&mut states, &n.id, NState::Rejected, &mut violations);
