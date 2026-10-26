@@ -1061,3 +1061,7 @@
 "Split down" = "Разделить вниз";
 "Opens another shell next to this one, in the same folder." = "Открывает ещё одну оболочку рядом с этой, в той же папке.";
 "Opens another shell below this one, in the same folder." = "Открывает ещё одну оболочку под этой, в той же папке.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Столбцы";
+"Time" = "Время";

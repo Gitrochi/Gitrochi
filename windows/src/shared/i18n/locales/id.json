@@ -1015,5 +1015,7 @@
  "Split right": "Bagi ke kanan",
  "Split down": "Bagi ke bawah",
  "Opens another shell next to this one, in the same folder.": "Membuka shell lain di samping yang ini, di folder yang sama.",
- "Opens another shell below this one, in the same folder.": "Membuka shell lain di bawah yang ini, di folder yang sama."
+ "Opens another shell below this one, in the same folder.": "Membuka shell lain di bawah yang ini, di folder yang sama.",
+ "Columns": "Kolom",
+ "Time": "Waktu"
 }

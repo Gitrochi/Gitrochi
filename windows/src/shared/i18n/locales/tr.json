@@ -1052,5 +1052,7 @@
  "Split right": "Sağa böl",
  "Split down": "Aşağı böl",
  "Opens another shell next to this one, in the same folder.": "Aynı klasörde bunun yanında başka bir kabuk açar.",
- "Opens another shell below this one, in the same folder.": "Aynı klasörde bunun altında başka bir kabuk açar."
+ "Opens another shell below this one, in the same folder.": "Aynı klasörde bunun altında başka bir kabuk açar.",
+ "Columns": "Sütunlar",
+ "Time": "Zaman"
 }

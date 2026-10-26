@@ -1062,3 +1062,7 @@
 "Split down" = "下に分割";
 "Opens another shell next to this one, in the same folder." = "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。";
 "Opens another shell below this one, in the same folder." = "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "列";
+"Time" = "時刻";

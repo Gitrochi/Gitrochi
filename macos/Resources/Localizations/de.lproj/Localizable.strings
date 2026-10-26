@@ -1028,3 +1028,7 @@
 "Split down" = "Unten teilen";
 "Opens another shell next to this one, in the same folder." = "Öffnet eine weitere Shell neben dieser im selben Ordner.";
 "Opens another shell below this one, in the same folder." = "Öffnet eine weitere Shell unter dieser im selben Ordner.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Spalten";
+"Time" = "Zeit";

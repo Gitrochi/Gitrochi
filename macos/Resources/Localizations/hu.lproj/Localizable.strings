@@ -1044,3 +1044,7 @@
 "Split down" = "Felosztás lefelé";
 "Opens another shell next to this one, in the same folder." = "Újabb shellt nyit emellett, ugyanabban a mappában.";
 "Opens another shell below this one, in the same folder." = "Újabb shellt nyit ez alatt, ugyanabban a mappában.";
+
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Oszlopok";
+"Time" = "Idő";

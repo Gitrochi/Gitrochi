@@ -1064,5 +1064,7 @@
  "Split right": "右に分割",
  "Split down": "下に分割",
  "Opens another shell next to this one, in the same folder.": "同じフォルダーで、このターミナルの横にシェルをもう 1 つ開きます。",
- "Opens another shell below this one, in the same folder.": "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。"
+ "Opens another shell below this one, in the same folder.": "同じフォルダーで、このターミナルの下にシェルをもう 1 つ開きます。",
+ "Columns": "列",
+ "Time": "時刻"
 }
