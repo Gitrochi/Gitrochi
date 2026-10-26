@@ -68,3 +68,10 @@
 .hub-member-identity > strong, .hub-member-identity > .muted { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hub-member-identity > .muted { font-size:12px; }
 .hub-member-role { align-self:flex-start; font-size:10px; color:var(--text-2); padding:2px 7px; border:1px solid var(--border); border-radius:20px; }
+
+.hub-list button.hub-organization-row { flex-direction:row; align-items:center; gap:12px; }
+.hub-organization-heading { display:flex; align-items:center; gap:16px; min-width:0; margin-bottom:16px; }
+.hub-organization-identity { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.hub-organization-heading h3 { margin:0; }
+.hub-organization-row > .avatar, .hub-organization-heading > .avatar { border-radius:22%; box-shadow:inset 0 0 0 1px var(--border); }
+.hub-organization-row > .avatar img, .hub-organization-heading > .avatar img { object-fit:cover; }

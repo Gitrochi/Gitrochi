@@ -34,11 +34,47 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
     }
 }()
 
-/// Actual PR browser/detail and organization member cards, isolated from accounts and network services.
+/// Deterministic stand-in that preserves the loaded-image and initials branches of HostingAvatar.
+struct RequestFixtureAvatarImage<Content: View>: View {
+    let url: URL?
+    let content: (AsyncImagePhase) -> Content
+
+    init(url: URL?, @ViewBuilder content: @escaping (AsyncImagePhase) -> Content) {
+        self.url = url; self.content = content
+    }
+
+    var body: some View {
+        if let url {
+            content(.success(Image(nsImage: url.lastPathComponent == "organization.png" ? requestFixtureOrganizationLogo : requestFixtureAvatar)))
+        } else {
+            content(.empty)
+        }
+    }
+}
+
+@MainActor let requestFixtureOrganizationLogo: NSImage = {
+    NSImage(size: NSSize(width: 128, height: 128), flipped: false) { bounds in
+        NSColor(calibratedRed: 0.39, green: 0.25, blue: 0.88, alpha: 1).setFill()
+        bounds.fill()
+        NSColor.white.setStroke()
+        let connections = NSBezierPath()
+        connections.lineWidth = 10
+        connections.move(to: NSPoint(x: 38, y: 30)); connections.line(to: NSPoint(x: 38, y: 94))
+        connections.move(to: NSPoint(x: 38, y: 62)); connections.curve(to: NSPoint(x: 91, y: 94), controlPoint1: NSPoint(x: 73, y: 62), controlPoint2: NSPoint(x: 91, y: 62))
+        connections.stroke()
+        NSColor.white.setFill()
+        for point in [NSPoint(x: 38, y: 30), NSPoint(x: 38, y: 94), NSPoint(x: 91, y: 94)] {
+            NSBezierPath(ovalIn: NSRect(x: point.x - 11, y: point.y - 11, width: 22, height: 22)).fill()
+        }
+        return true
+    }
+}()
+
+/// Actual PR browser/detail and organization lists, headers and member cards, isolated from accounts and network services.
 @main struct RequestLayoutFixture {
     @MainActor static func main() throws {
         NSApplication.shared.setActivationPolicy(.prohibited)
-        requestFixtureDefaults.set(false, forKey: "avatarFetch")
+        requestFixtureDefaults.set(true, forKey: "avatarFetch")
         defer { requestFixtureDefaults.removePersistentDomain(forName: requestFixtureSuite) }
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         let account = HostAccount(id: "fixture", provider: .github, server: "https://github.com", username: "alex", name: "Alex Kim", avatarURL: nil)
@@ -46,7 +82,14 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
         let target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/Gitrochi")
         let sha = String(repeating: "a", count: 40)
         var results: [[String: Any]] = []
-        for scenario in ["conversation", "checks", "members", "empty"] {
+        let allScenarios = ["conversation", "checks", "organizations", "members", "empty"]
+        let requestedScenarios = ProcessInfo.processInfo.environment["GITROCHI_REQUEST_LAYOUT_SCENARIOS"]
+            .map { Set($0.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) }
+        if let requestedScenarios {
+            precondition(!requestedScenarios.isEmpty && requestedScenarios.isSubset(of: Set(allScenarios)), "Unknown or empty fixture scenario filter")
+        }
+        let scenarios = allScenarios.filter { requestedScenarios?.contains($0) ?? true }
+        for scenario in scenarios {
             requestFixtureDetailTab = scenario == "checks" ? "checks" : "conversation"
             for width: CGFloat in [1080, 700] {
                 for dark in [false, true] {
@@ -65,16 +108,30 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
                         ReviewComment(id: "two", author: "morgan", body: "Please keep the fallback initials for missing avatars.", date: nil, path: "HostingHubPanel.swift", line: 154, threadID: "two", replyID: 2, resolvable: true),
                     ], state: ReviewState(approvedBy: ["sam"]))
                     store.collaboration.lifecycle = RequestLifecycle(number: 42, headSHA: sha, state: "open", title: "Review workspace refresh", body: "", base: "main", reviewers: ["sam", "morgan"], methods: ["squash", "merge"], blockers: ["One check still needs attention."], checks: "2 checks complete", policy: "The server enforces branch rules.", canEdit: true, canRebase: false)
-                    let organization = HubItem(id: "team", title: "Gitrochi team", subtitle: "team", body: "The people building Gitrochi.", url: "https://github.com/team")
+                    var organization = HubItem(id: "team", title: "Gitrochi team", subtitle: "team", body: "The people building Gitrochi.", url: "https://github.com/team")
+                    organization.avatarURL = URL(string: "https://example.invalid/organization.png")
                     store.hostingHub.section = .organizations; store.hostingHub.page = 1; store.hostingHub.selectedAccountID = account.id
-                    store.hostingHub.items = [organization, HubItem(id: "studio", title: "Studio", subtitle: "studio")]
-                    store.hostingHub.tab = "members"
+                    store.hostingHub.items = [
+                        organization,
+                        HubItem(id: "studio", title: "Studio", subtitle: "studio"),
+                        HubItem(id: "design", title: "Studio with a very long organization display name", subtitle: "studio-design"),
+                        HubItem(id: "orchard", title: "Orchard-Team", subtitle: "Orchard-Team"),
+                        HubItem(id: "daily", title: "DailyStudio", subtitle: "DailyStudio"),
+                        HubItem(id: "cloud", title: "CloudWorkshop", subtitle: "CloudWorkshop"),
+                        HubItem(id: "ios", title: "Demo-iOS", subtitle: "Demo-iOS"),
+                        HubItem(id: "canvas", title: "Canvas-Lab", subtitle: "Canvas-Lab"),
+                    ]
+                    store.hostingHub.tab = scenario == "members" ? "members" : "repositories"
                     store.hostingHub.detail = HubDetail(item: organization, members: [
                         HubMember(id: "alex", name: "Alex Kim", role: "Maintainer", username: "alex", avatarURL: URL(string: "https://avatars.githubusercontent.com/u/1"), profileURL: URL(string: "https://github.com/alex")),
                         HubMember(id: "sam", name: "Sam Lee", role: "Member", username: "sam", profileURL: URL(string: "https://github.com/sam")),
                         HubMember(id: "morgan", name: "Morgan Rivera with a long display name", role: "Developer", username: "morgan-rivera", profileURL: URL(string: "https://github.com/morgan-rivera")),
-                    ])
-                    let view = scenario == "members" ? AnyView(HostingHubPanel(store: store, section: .organizations)) : AnyView(WorkspaceDestinationContent())
+                    ], repositories: scenario == "organizations" ? [
+                        HubRepository(id: "gitrochi", name: "team/Gitrochi", description: "Desktop Git client for clear collaboration.", cloneURL: "https://github.com/team/Gitrochi.git", url: "https://github.com/team/Gitrochi"),
+                        HubRepository(id: "ios", name: "team/Gitrochi-iOS", description: "Companion app for iOS.", cloneURL: "https://github.com/team/Gitrochi-iOS.git", url: "https://github.com/team/Gitrochi-iOS"),
+                        HubRepository(id: "design", name: "team/Design", description: "Shared design resources.", cloneURL: "https://github.com/team/Design.git", url: "https://github.com/team/Design"),
+                    ] : [])
+                    let view = ["organizations", "members"].contains(scenario) ? AnyView(HostingHubPanel(store: store, section: .organizations)) : AnyView(WorkspaceDestinationContent())
                     let bounds = NSRect(x: 0, y: 0, width: width, height: 1200)
                     let host = NSHostingView(rootView: view.environment(store).defaultAppStorage(requestFixtureDefaults)
                         .frame(width: width, height: bounds.height).background(Color(nsColor: .windowBackgroundColor))
@@ -91,7 +148,7 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
                     let recognition = VNRecognizeTextRequest(); recognition.recognitionLevel = .accurate; recognition.recognitionLanguages = ["en-US"]
                     try VNImageRequestHandler(data: data).perform([recognition])
                     let text = (recognition.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-                    let expected = scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "empty" ? ["No matching requests", "Try another filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
+                    let expected = scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "empty" ? ["No matching requests", "Try another filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
                     try text.write(to: output.appendingPathComponent(name + ".txt"), atomically: true, encoding: .utf8)
                     for value in expected { precondition(text.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }
                     results.append(["scenario": scenario, "width": width, "theme": dark ? "dark" : "light", "screenshot": name, "expectedTextVisible": true])
@@ -100,6 +157,6 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
             }
         }
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys]).write(to: output.appendingPathComponent("result.json"))
-        print("PASS: actual PR conversations/checks/logs and organization cards at 1080/700 points, light/dark. \(output.path)")
+        print("PASS: \(scenarios.joined(separator: ", ")) at 1080/700 points, light/dark. \(output.path)")
     }
 }

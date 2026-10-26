@@ -55,7 +55,7 @@ struct HostingHubPanel: View {
                     ScrollView { LazyVStack(alignment: .leading, spacing: 5) {
                         ForEach(store.hostingHub.filteredItems) { item in
                             Button { editor = nil; Task { await store.selectHostingHubItem(item) } } label: {
-                                VStack(alignment: .leading, spacing: 5) { Text(item.title).font(.callout.weight(.semibold)); Text(item.subtitle).font(.caption).foregroundStyle(.secondary); if section == .projects && !item.body.isEmpty { Text(item.body).font(.caption).foregroundStyle(.secondary).lineLimit(2) } }.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())
+                                itemRow(item)
                             }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.16) : .clear)).disabled(store.hostingHub.busy)
                         }
                         if store.hostingHub.loading { ProgressView().padding() }
@@ -87,6 +87,18 @@ struct HostingHubPanel: View {
         }
         .onChange(of: store.hostingHub.uncertainWrite) { _, uncertain in if uncertain { editor = nil } }
         .task(id: section.rawValue + store.hubContextStamp) { editor = nil; issueURL = ""; await store.activateHostingHub(section) }
+    }
+    private func itemRow(_ item: HubItem) -> some View {
+        HStack(spacing: 10) {
+            if section == .organizations {
+                HostingAvatar(name: item.title, username: item.subtitle, avatarURL: item.avatarURL, size: 36, style: .organization)
+            }
+            VStack(alignment: .leading, spacing: 5) {
+                Text(item.title).font(.callout.weight(.semibold))
+                Text(item.subtitle).font(.caption).foregroundStyle(.secondary)
+                if section == .projects && !item.body.isEmpty { Text(item.body).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(12).contentShape(Rectangle())
     }
     private func noticeView(_ text: String) -> some View { Text(text).font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(10).background(Color.secondary.opacity(0.08)).textSelection(.enabled) }
     private func safeURL(_ url: String, asset: Bool = false) -> URL? { HostingHubAPI.safeURL(provider: store.hubProvider, host: store.hubAccount?.host ?? store.target?.host ?? "", url, asset: asset) }
@@ -123,7 +135,18 @@ struct HostingHubPanel: View {
         else { let input = gist, previous = editing ? store.hostingHub.detail : nil; confirm(editing ? String(localized: "Save gist changes?") : String(localized: "Create gist?"), input.description + "\n" + input.files.map(\.name).joined(separator: ", ") + "\n" + (input.isPublic ? String(localized: "Public: anyone can discover these files.") : String(localized: "Secret/private: anyone with a secret gist URL can read it; never include secrets.")), refreshList: true) { c in try await HostingHubAPI.saveGist(c, input, previous: previous); editor = nil } }
     }
     @ViewBuilder private func detailView(_ d: HubDetail) -> some View {
-        Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled); Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
+        if section == .organizations {
+            HStack(spacing: 14) {
+                HostingAvatar(name: d.item.title, username: d.item.subtitle, avatarURL: d.item.avatarURL, size: 56, style: .organization)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
+                    Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } else {
+            Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
+            Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
+        }
         WorkbenchFlow {
             if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
             if section == .releases || section == .gists && d.item.editable { Button("Edit") { startEditor(edit: true) }.disabled(section == .gists && (d.files.contains(where: \.truncated) || d.item.data["truncated"] as? Bool == true)) }
