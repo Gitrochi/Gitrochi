@@ -1,18 +1,19 @@
-import { ChevronDown, ChevronUp, CircleDashed, ListFilter, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleDashed, Columns3, ListFilter, Search, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { type Commit, emptyStatus, isWIP, type SearchScope, searchScopes, statusFiles, wipWorktree } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
-import { basename, samePath } from "@/shared/config";
+import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, showMenuBelow, Spinner } from "@/shared/ui";
-import { graphColumns, graphWidth, ROW_H } from "../lib/metrics";
+import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
+import { type GraphColumnId, graphColumns, graphWidth, ROW_H } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
 export function GraphView({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(store.ci);
+  useObserve(settings);
   const gw = graphWidth(store.maxLanes);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000 });
@@ -46,7 +47,20 @@ export function GraphView({ store }: { store: RepoStore }) {
   });
 
   // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
-  const cols = useMemo(() => graphColumns(viewport.width, gw), [viewport.width, gw]);
+  const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
+  const hiddenKey = hiddenColumns.join(",");
+  const cols = useMemo(() => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean))), [viewport.width, gw, hiddenKey]);
+  // the header's menu: which columns show (the message column always does)
+  const columnMenu = (): MenuItem[] => {
+    const toggle = (id: GraphColumnId) => settings.set("graphHiddenColumns", hiddenColumns.includes(id) ? hiddenColumns.filter((x) => x !== id) : [...hiddenColumns, id]);
+    return (
+      [
+        ["ref", t("Branch / Tag")],
+        ["graph", t("Graph")],
+        ["time", t("Time")],
+      ] as [GraphColumnId, string][]
+    ).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => toggle(id) }));
+  };
   const entries = store.entries;
   const first = Math.max(0, Math.floor(viewport.top / ROW_H) - 10);
   const last = Math.min(entries.length, Math.ceil((viewport.top + viewport.height) / ROW_H) + 10);
@@ -64,12 +78,13 @@ export function GraphView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
       <SearchBar store={store} />
-      <div className="graph-header">
-        <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>
-        <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>
+      <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
+        {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
+        {cols.graph > 0 && <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>}
         <span className="grow" style={{ paddingLeft: 20, flex: 1, minWidth: 0 }}>
           {t("Commit message")}
         </span>
+        <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
       </div>
       <div
         ref={scrollRef}

@@ -1048,5 +1048,7 @@
  "Opens another shell below this one, in the same folder.": "Otwiera kolejną powłokę pod tą, w tym samym folderze.",
  "Show sidebar": "Pokaż pasek boczny",
  "Hide sidebar": "Ukryj pasek boczny",
- "The sections stay at hand as a rail of icons; hover one to open it.": "Sekcje pozostają pod ręką jako pasek ikon; najedź na ikonę, aby otworzyć sekcję."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Sekcje pozostają pod ręką jako pasek ikon; najedź na ikonę, aby otworzyć sekcję.",
+ "Columns": "Kolumny",
+ "Time": "Czas"
 }

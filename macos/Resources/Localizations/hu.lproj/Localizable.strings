@@ -1046,3 +1046,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Oldalsáv megjelenítése";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Oszlopok";
+"Time" = "Idő";

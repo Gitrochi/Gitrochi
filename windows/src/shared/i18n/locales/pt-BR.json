@@ -1032,5 +1032,7 @@
  "Opens another shell below this one, in the same folder.": "Abre outro shell abaixo deste, na mesma pasta.",
  "Show sidebar": "Mostrar barra lateral",
  "Hide sidebar": "Ocultar barra lateral",
- "The sections stay at hand as a rail of icons; hover one to open it.": "As seções ficam à mão como uma barra de ícones; passe o mouse sobre um para abri-la."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "As seções ficam à mão como uma barra de ícones; passe o mouse sobre um para abri-la.",
+ "Columns": "Colunas",
+ "Time": "Hora"
 }

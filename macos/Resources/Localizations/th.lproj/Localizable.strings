@@ -1059,3 +1059,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "แสดงแถบด้านข้าง";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "คอลัมน์";
+"Time" = "เวลา";

@@ -1038,5 +1038,7 @@
  "Opens another shell below this one, in the same folder.": "Öffnet eine weitere Shell unter dieser im selben Ordner.",
  "Show sidebar": "Seitenleiste einblenden",
  "Hide sidebar": "Seitenleiste ausblenden",
- "The sections stay at hand as a rail of icons; hover one to open it.": "Die Bereiche bleiben als Symbolleiste erreichbar; zeigen Sie auf ein Symbol, um einen zu öffnen."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Die Bereiche bleiben als Symbolleiste erreichbar; zeigen Sie auf ein Symbol, um einen zu öffnen.",
+ "Columns": "Spalten",
+ "Time": "Zeit"
 }

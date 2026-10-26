@@ -1064,3 +1064,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "サイドバーを表示";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "列";
+"Time" = "時刻";

@@ -1189,3 +1189,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "사이드바 보이기";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "칸";
+"Time" = "시간";

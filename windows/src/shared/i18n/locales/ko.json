@@ -1211,5 +1211,7 @@
  "Opens another shell below this one, in the same folder.": "같은 폴더에서 이 터미널 아래에 셸을 하나 더 엽니다.",
  "Show sidebar": "사이드바 보이기",
  "Hide sidebar": "사이드바 숨기기",
- "The sections stay at hand as a rail of icons; hover one to open it.": "섹션은 아이콘 줄로 남고, 아이콘에 마우스를 올리면 열립니다."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "섹션은 아이콘 줄로 남고, 아이콘에 마우스를 올리면 열립니다.",
+ "Columns": "칸",
+ "Time": "시간"
 }

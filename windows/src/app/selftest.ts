@@ -295,6 +295,20 @@ export async function runSelfTest(): Promise<boolean> {
     const merged = await until(() => document.querySelectorAll(".term-pane").length === 1, 3000);
     return [ok && merged && s.activeTerminal === first, `panes=${document.querySelectorAll(".term-pane").length} active=${s.activeTerminal?.title}`];
   });
+  await step("Paste an image into the terminal as a file path", async () => {
+    const term = s.activeTerminal!;
+    const got: string[] = [];
+    const sub = term.term.onData((d) => got.push(d));
+    const dt = new DataTransfer();
+    dt.items.add(new File([new Uint8Array([137, 80, 78, 71])], "image.png", { type: "image/png" }));
+    term.host.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+    const pasted = await until(() => got.some((d) => /gitrochi-image-.*\.png/.test(d)), 5000);
+    sub.dispose();
+    const path = got.join("").match(/"?([^"\s]*gitrochi-image-[^"\s]*\.png)"?/)?.[1] ?? "";
+    const exists = !!path && (await ipc.exists(path));
+    if (path) await ipc.remove(path).catch(() => undefined);
+    return [pasted && exists, `pasted=${pasted} exists=${exists} path=${path}`];
+  });
   await step("GIT_ASKPASS 도우미", async () => {
     const r = await ipc.run(env.exe, ["Username for 'https://example.com': "], {
       env: { GITROCHI_ASKPASS: "1", GITROCHI_ASKPASS_COUNT: "1", GITROCHI_ASKPASS_HOST_1: "example.com", GITROCHI_ASKPASS_USER_1: "x-access-token", GITROCHI_ASKPASS_PASS_1: "secret" },

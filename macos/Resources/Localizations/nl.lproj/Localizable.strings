@@ -1007,3 +1007,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Zijbalk tonen";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolommen";
+"Time" = "Tijd";

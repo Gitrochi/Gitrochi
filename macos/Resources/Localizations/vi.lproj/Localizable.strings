@@ -1019,3 +1019,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Hiện thanh bên";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Cột";
+"Time" = "Thời gian";

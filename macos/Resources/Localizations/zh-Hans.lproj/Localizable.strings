@@ -1066,3 +1066,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "显示侧边栏";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "列";
+"Time" = "时间";

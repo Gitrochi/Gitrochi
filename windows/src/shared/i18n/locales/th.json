@@ -1061,5 +1061,7 @@
  "Opens another shell below this one, in the same folder.": "เปิดเชลล์อีกตัวใต้ตัวนี้ในโฟลเดอร์เดียวกัน",
  "Show sidebar": "แสดงแถบด้านข้าง",
  "Hide sidebar": "ซ่อนแถบด้านข้าง",
- "The sections stay at hand as a rail of icons; hover one to open it.": "ส่วนต่าง ๆ ยังอยู่ใกล้มือเป็นแถบไอคอน วางเมาส์บนไอคอนเพื่อเปิด"
+ "The sections stay at hand as a rail of icons; hover one to open it.": "ส่วนต่าง ๆ ยังอยู่ใกล้มือเป็นแถบไอคอน วางเมาส์บนไอคอนเพื่อเปิด",
+ "Columns": "คอลัมน์",
+ "Time": "เวลา"
 }

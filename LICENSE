@@ -1,22 +1,154 @@
-MIT License
+Gitrochi Community Use License v1.0
 
+STATUS: PROPOSED; NOT YET IN EFFECT.
+Adoption requires the authorization and scope record described in
+docs/licensing-review.md. This proposal does not establish a cutover date or
+withdraw any existing MIT permission. Notices for previously MIT-covered material
+are recorded in THIRD_PARTY_NOTICES.md. Do not describe removal of a standalone
+license file as an effective withdrawal of those grants.
+
+Existing copyright notices, preserved without asserting sole ownership:
 Copyright (c) 2026 조문성 (ChoMnSeong)
 Copyright (c) 2026 jjunhaa0211
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Official Repository: https://github.com/Gitrochi/Gitrochi
+Licensing contacts supplied by the project requester:
+  조문성 (ChoMnSeong): chemins60217@gmail.com
+  jjunhaa0211: goodjunha@gmail.com
+These contacts do not establish authority over another person's contributions.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Scope and prior rights
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+"Licensor" means each copyright holder who has authorized these terms for
+their material, only to the extent of that holder's rights. "Covered Material"
+means Gitrochi code and documentation expressly identified in the adoption
+record or a subsequent authorized contribution as licensed under these terms.
+"You" means the individual or legal entity exercising these permissions.
+
+This license applies only after adoption and only to Covered Material.
+Inclusion in this repository does not by itself establish the authority to
+relicense a contribution. Material without the necessary authorization retains
+its applicable prior license and is not made exclusively subject to this one.
+
+Gitrochi was previously released under the MIT License. The original notice and
+permission text for that material is recorded in THIRD_PARTY_NOTICES.md, with
+its historical source revision. Existing MIT permissions, including
+permission to sell, modify, distribute and sublicense MIT-covered material,
+remain available under their terms, including for lawful downstream recipients.
+This license does not retroactively restrict prior versions or material also
+available under MIT. The review baseline is recorded in docs/licensing-review.md;
+it is not a declaration that earlier contributors have agreed to relicense.
+
+Third-party code, libraries, fonts, icons and other separately licensed material
+are excluded. Their own licenses control their use, modification, redistribution
+and source availability. Nothing here limits rights separately granted by those
+licenses, applicable law, or GitHub's Terms of Service, including rights to view
+and fork a public repository using GitHub's functionality.
+
+2. Free personal and organizational use
+
+Subject to these terms, Licensor grants You a worldwide, non-exclusive,
+royalty-free permission to download, install, run, study, copy, build and privately
+modify Covered Material for Your personal use or Your organization's internal
+business operations, including commercial work. There is no license fee for
+individuals or businesses.
+
+An organization may provide internal copies to its employees and contractors
+solely to perform work on its behalf, under these same restrictions. Contractors
+receive no right to redistribute Gitrochi as their own product. You need not
+publish private changes or submit a PR merely to use Gitrochi.
+
+Your own repositories, commits, documents and other ordinary work output do not
+become Covered Material merely because You create or manage them using Gitrochi.
+You may use and deliver that work commercially under terms You choose, provided
+it does not incorporate Covered Material requiring separate permission.
+
+3. Sharing official releases and contributing changes
+
+You may share an unchanged official Gitrochi release without charging for it,
+provided You include its license and attribution notices, preserve all required
+third-party notices, identify the Official Repository as its source, and do not
+represent Yourself as the official publisher. Linking to official downloads is
+encouraged. A renamed, repackaged or modified product is not an unchanged release.
+
+You may create development branches and contribution forks, publish changes in
+them for review, and submit patches or code contributions by pull request to the
+Official Repository under CONTRIBUTING.md and the applicable contribution
+agreement. This permission includes collaboration and automated checks necessary
+for that official contribution process. A contribution fork does not authorize
+an independently released product, package feed, installer or derivative project.
+
+Rights separately granted by GitHub's Terms of Service remain unaffected whether
+or not a particular fork leads to a PR. Nothing here obliges You to contribute,
+or obliges maintainers to accept or merge a contribution.
+
+4. Restrictions on Covered Material
+
+Except as expressly permitted above or by separate written authorization from
+the relevant rights holders, You may not:
+
+  a. sell, resell, rent, lease, or charge a fee for copies of Gitrochi or access
+     to Gitrochi itself, including as a paid bundle or a rebranded product;
+  b. distribute, publish or release Covered Material or modified versions as an
+     independent project, forked product, library, package, installer or service
+     containing Covered Material, whether free or paid, outside the official
+     contribution process;
+  c. sublicense Covered Material, or grant others rights beyond this license;
+  d. remove or misrepresent copyright, authorship, license or origin notices.
+
+These restrictions concern Gitrochi itself; they do not prohibit being paid for
+ordinary work performed using Gitrochi as permitted by section 2. They also do
+not restrict independently authored work containing no Covered Material, prior
+MIT rights, third-party rights, or permissions preserved in section 1.
+
+5. Attribution and names
+
+Keep this license, the existing copyright notices, and all applicable third-party
+and historical license notices in permitted copies. Preserve existing credits
+and references to the Official Repository. Identify modifications in contribution
+branches so they are not mistaken for official releases.
+
+This license grants no trademark right or permission to imply endorsement. The
+Gitrochi name may be used truthfully to identify the project or a contribution.
+
+6. Contributions and exceptions
+
+Code and documentation contributions are accepted only through pull requests to
+the Official Repository, with the express, versioned assent process in
+CONTRIBUTING.md and CLA.md. Submission alone is not treated as a copyright
+assignment or as assent to a separate CLA. Existing contributors are not deemed
+to have agreed retroactively.
+
+Request exceptions through the licensing contacts above. Any exception must be
+written and issued by holders authorized over the affected material; repository
+maintenance access alone does not prove that authority. Silence is not consent.
+
+7. Termination
+
+Permissions for Covered Material terminate if You breach these conditions. They
+are reinstated if You remedy the breach within 30 days after first receiving
+notice of it, unless You previously used this cure for the same type of breach.
+This does not terminate separate MIT or third-party permissions. Provisions on
+prior rights, attribution, disclaimers and accrued obligations survive.
+
+8. Disclaimer and limitation of liability
+
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, COVERED MATERIAL IS PROVIDED "AS IS",
+WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS ARE NOT LIABLE FOR CLAIMS, DAMAGES OR OTHER LIABILITY ARISING FROM
+THE MATERIAL OR ITS USE, WHETHER IN CONTRACT, TORT OR OTHERWISE. NOTHING HERE
+EXCLUDES LIABILITY OR STATUTORY RIGHTS THAT CANNOT LAWFULLY BE EXCLUDED.
+
+9. Interpretation and version
+
+This is a custom source-available license with distribution restrictions, not an
+OSI-approved open-source license. No patent license is expressly granted by this
+document. No governing law or exclusive court is selected in this proposal;
+applicable mandatory law remains controlling. Legal review items are recorded
+in docs/licensing-review.md rather than filled with assumed identities or terms.
+
+The permission above is for version 1.0 only. A future license or CLA revision
+does not automatically replace permissions or assent given under this version.
+The English text of this LICENSE states the proposed terms; Korean summaries
+in other files are explanatory and do not expand these permissions.

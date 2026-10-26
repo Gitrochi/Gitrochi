@@ -1046,3 +1046,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Pokaż pasek boczny";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolumny";
+"Time" = "Czas";

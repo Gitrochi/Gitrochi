@@ -2,7 +2,7 @@
 
 여러 Git 계정(GitHub 개인 계정들 + 회사 GitLab)을 한 컴퓨터에서 섞이지 않게 쓰기 위한 도구.
 사람이 터미널에서 쓰는 것과 AI(Claude Code, Codex 등)가 쓰는 것을 모두 고려했다.
-Gitrochi 맥 앱(`Gitrochi.app/Contents/Resources/gitch`)과 Windows 앱(설치 폴더의 `gitch`, 보통 `%LOCALAPPDATA%\Gitrochi\gitch`)에 함께 들어 있다. MIT 라이선스(저장소 [LICENSE](../../LICENSE)) · © 2026 jjunhaa0211.
+Gitrochi 맥 앱(`Gitrochi.app/Contents/Resources/gitch`)과 Windows 앱(설치 폴더의 `gitch`, 보통 `%LOCALAPPDATA%\Gitrochi\gitch`)에 함께 들어 있다. © 2026 jjunhaa0211. [Community Use v1.0 제안](../../LICENSE)은 아직 시행되지 않았다. 별도 프로젝트 MIT 라이선스 파일은 제거했으며, 과거 자료의 권리와 필요한 고지는 [통합 고지문](../../THIRD_PARTY_NOTICES.md#prior-mit-covered-gitrochi-material)에 남긴다. 적용 범위와 전환 조건은 [전환 검토 기록](../../docs/licensing-review.md)을 따른다.
 
 - 저장소마다 계정을 **잠그고**, 커밋/push 할 때 작성자·push 주소를 검사한다.
 - 폴더 / GitHub 조직 / 주소로 **계정을 자동으로 고른다**.

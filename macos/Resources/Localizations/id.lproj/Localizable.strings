@@ -1014,3 +1014,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Tampilkan bilah samping";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Kolom";
+"Time" = "Waktu";

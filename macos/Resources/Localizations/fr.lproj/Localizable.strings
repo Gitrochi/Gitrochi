@@ -1036,3 +1036,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Afficher la barre latérale";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Colonnes";
+"Time" = "Heure";

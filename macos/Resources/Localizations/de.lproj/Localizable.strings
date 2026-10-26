@@ -1030,3 +1030,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Seitenleiste einblenden";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Spalten";
+"Time" = "Zeit";

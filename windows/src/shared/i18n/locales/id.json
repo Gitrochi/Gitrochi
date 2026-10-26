@@ -1017,5 +1017,7 @@
  "Opens another shell below this one, in the same folder.": "Membuka shell lain di bawah yang ini, di folder yang sama.",
  "Show sidebar": "Tampilkan bilah samping",
  "Hide sidebar": "Sembunyikan bilah samping",
- "The sections stay at hand as a rail of icons; hover one to open it.": "Bagian tetap tersedia sebagai deretan ikon; arahkan kursor ke salah satunya untuk membukanya."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Bagian tetap tersedia sebagai deretan ikon; arahkan kursor ke salah satunya untuk membukanya.",
+ "Columns": "Kolom",
+ "Time": "Waktu"
 }

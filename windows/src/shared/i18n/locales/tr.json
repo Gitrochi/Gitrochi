@@ -1054,5 +1054,7 @@
  "Opens another shell below this one, in the same folder.": "Aynı klasörde bunun altında başka bir kabuk açar.",
  "Show sidebar": "Kenar çubuğunu göster",
  "Hide sidebar": "Kenar çubuğunu gizle",
- "The sections stay at hand as a rail of icons; hover one to open it.": "Bölümler simge şeridi olarak elinizin altında kalır; açmak için birinin üzerine gelin."
+ "The sections stay at hand as a rail of icons; hover one to open it.": "Bölümler simge şeridi olarak elinizin altında kalır; açmak için birinin üzerine gelin.",
+ "Columns": "Sütunlar",
+ "Time": "Zaman"
 }

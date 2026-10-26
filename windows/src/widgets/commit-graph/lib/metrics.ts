@@ -25,13 +25,16 @@ const MESSAGE_MIN = 200;
 const REF_MIN = 110;
 const GRAPH_MIN = 66;
 
-/** 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다 */
-export function graphColumns(width: number, graph: number): GraphColumns {
-  const c: GraphColumns = { ref: REF_W, graph, time: true };
+/** The columns the user can turn off (settings graphHiddenColumns); the message column always shows */
+export type GraphColumnId = "ref" | "graph" | "time";
+
+/** 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다. A column turned off has width 0. */
+export function graphColumns(width: number, graph: number, hidden: ReadonlySet<string> = new Set()): GraphColumns {
+  const c: GraphColumns = { ref: hidden.has("ref") ? 0 : REF_W, graph: hidden.has("graph") ? 0 : graph, time: !hidden.has("time") };
   // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 시간 칸 90
   const short = () => MESSAGE_MIN - (width - (c.ref + c.graph + 32 + (c.time ? 90 : 0)));
   if (short() > 0) c.time = false;
-  if (short() > 0) c.ref = Math.max(REF_MIN, c.ref - short());
-  if (short() > 0) c.graph = Math.max(Math.min(graph, GRAPH_MIN), c.graph - short());
+  if (short() > 0 && c.ref > 0) c.ref = Math.max(REF_MIN, c.ref - short());
+  if (short() > 0 && c.graph > 0) c.graph = Math.max(Math.min(graph, GRAPH_MIN), c.graph - short());
   return c;
 }

@@ -33,10 +33,9 @@
       "nsis"
     ],
     "publisher": "ChoMnSeong",
-    "copyright": "© 2026 조문성 (ChoMnSeong), jjunhaa0211 · MIT License",
+    "copyright": "© 2026 조문성 (ChoMnSeong), jjunhaa0211 · Community Use v1.0 proposed (not in effect)",
     "category": "DeveloperTool",
     "shortDescription": "Git client with a commit graph, worktrees, PRs, Claude Code agents and a terminal",
-    "license": "MIT",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -60,6 +59,8 @@
     },
     "createUpdaterArtifacts": true,
     "resources": {
+      "../../LICENSE": "LICENSE.txt",
+      "../../THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
       "../../tools/gitch/gitch": "gitch",
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
       "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch"

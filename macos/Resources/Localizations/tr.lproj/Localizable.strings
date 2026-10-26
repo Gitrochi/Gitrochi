@@ -1051,3 +1051,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Kenar çubuğunu göster";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Sütunlar";
+"Time" = "Zaman";

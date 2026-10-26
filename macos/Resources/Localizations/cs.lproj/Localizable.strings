@@ -1043,3 +1043,6 @@
 
 /* The sidebar folded into a rail of icons */
 "Show sidebar" = "Zobrazit postranní panel";
+/* Graph columns the user can turn off (header menu) */
+"Columns" = "Sloupce";
+"Time" = "Čas";
