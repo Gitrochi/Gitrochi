@@ -67,6 +67,15 @@ not a complete software bill of materials or a completed release compliance audi
   release. Build dependencies and platform-specific packages can differ from
   redistributed runtime code. Rust license texts and all required notices have
   not been exhaustively collected here.
+- `tools/gitch-flow/Cargo.lock` covers the flow engine, which both apps bundle
+  and releases also publish on its own as `gitch-flow-macos`,
+  `gitch-flow-windows-x64.exe` and `gitch-flow-linux-x64`. It lists 124 registry
+  packages across platforms. Exact-version cached manifests were available for
+  103; 21, mostly Windows and Linux platform packages, were unavailable and remain
+  unreviewed. Available metadata includes MIT, Apache-2.0, BSD-3-Clause, ISC,
+  Zlib, Unicode-3.0, and CDLA-Permissive-2.0 terms; none declared MPL-2.0. The
+  standalone engine assets are published without these notices beside them, and
+  the engine's Rust license texts have not been collected here either.
 - The npm lockfile also includes development packages, including caniuse-lite
   under CC-BY-4.0. Development metadata alone does not show whether its data or
   notices are present in a shipped artifact. Inspect the final bundle if included.
