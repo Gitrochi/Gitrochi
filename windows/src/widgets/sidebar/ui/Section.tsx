@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { settings } from "@/shared/config";
 import { useObserve } from "@/shared/lib";
+import { SharedPane } from "@/shared/ui";
 
 export function Section({ id, title, count, actions, children, defaultOpen = true }: { id: string; title: string; count?: number; actions?: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   useObserve(settings);
@@ -18,7 +19,7 @@ export function Section({ id, title, count, actions, children, defaultOpen = tru
         </span>
         {actions}
       </div>
-      {!isCollapsed && children}
+      {!isCollapsed && <SharedPane id={id}>{children}</SharedPane>}
     </div>
   );
 }

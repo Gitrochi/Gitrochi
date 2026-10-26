@@ -19,6 +19,14 @@
   gap: 12px;
 }
 
+/* the working copy's cards inside a SharedStack: the body carries the column, the outer keeps the padding and scroll */
+.panel-scroll > .panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: none;
+}
+
 .file-row {
   display: flex;
   align-items: center;

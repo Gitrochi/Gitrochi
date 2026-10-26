@@ -7,7 +7,7 @@ import { branchPayload, type RepoStore } from "@/entities/repo";
 import { displayPath, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
-import { IconButton, Segmented, showContextMenu, tip } from "@/shared/ui";
+import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
 import { CIPanel } from "./CIPanel";
 import { PullRequestSection } from "./PullRequestSection";
@@ -101,7 +101,7 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
   );
 
   return (
-    <div className="side-scroll">
+    <SharedStack className="side-scroll">
       {store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
 
       {store.localBranches.some((b) => store.isPinned(b)) && (
@@ -215,7 +215,7 @@ function BranchList({ store, openSettings }: { store: RepoStore; openSettings: (
           ))}
         </Section>
       )}
-    </div>
+    </SharedStack>
   );
 }
 
