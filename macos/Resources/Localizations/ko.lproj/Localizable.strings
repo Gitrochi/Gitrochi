@@ -591,7 +591,6 @@
 "Force remove…" = "강제 제거…";
 "Found automatically" = "자동으로 찾음";
 "Friendly tone" = "부드러운 말투";
-"Fully automatic" = "모두 자동";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (Google 로그인 사용)";
 "Go to Terminal window" = "Terminal 창으로 이동";
 "Go to parent commit" = "부모 커밋으로 이동";
@@ -1161,3 +1160,8 @@
 "Files affected by changes" = "변경의 영향을 받는 파일";
 "Uses an existing index.scip or .gitch/index.scip for symbol references. Shows the analysis coverage when no current index is available." = "index.scip 또는 .gitch/index.scip 의 심볼 참조를 읽습니다. 최신 인덱스가 없으면 분석 범위를 표시합니다.";
 "Shows changed files and the files that depend on them, including uncommitted changes." = "커밋하지 않은 변경까지 포함해 수정한 파일과 그 파일을 참조하는 파일을 보여 줍니다.";
+"Skip all permission checks" = "모든 권한 확인 건너뛰기";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "에이전트가 묻지 않고 명령을 실행하고 파일을 바꿉니다. 믿을 수 있는 작업에만, 되도록 별도 워크트리에서 쓰세요.";
+"I understand the risk" = "위험을 이해했습니다";
+"Skips permissions" = "권한 확인 안 함";
+"Started with all permission checks skipped" = "모든 권한 확인을 건너뛰고 시작한 세션";

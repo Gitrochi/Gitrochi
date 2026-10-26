@@ -363,7 +363,6 @@
  "Force remove…": "Hapus paksa…",
  "Found automatically": "Ditemukan otomatis",
  "Friendly tone": "Nada ramah",
- "Fully automatic": "Sepenuhnya otomatis",
  "Gemini CLI (uses your Google login)": "Gemini CLI (memakai login Google Anda)",
  "Gemini blocked this request ({0}).": "Gemini memblokir permintaan ini ({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini tidak merespons karena kebijakan keamanannya.",
@@ -999,5 +998,10 @@
  "Couldn't check the rules": "Tidak dapat memeriksa aturan",
  "No dependency rules yet": "Belum ada aturan dependensi",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check membaca aturan dari .gitch/graph.rules di repositori ini. Buat file berisi contoh yang dijadikan komentar (gitch graph check --init) lalu buka?",
- "Create rules file": "Buat file aturan"
+ "Create rules file": "Buat file aturan",
+ "Skip all permission checks": "Lewati semua pemeriksaan izin",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Agen menjalankan perintah dan mengubah file tanpa bertanya terlebih dahulu. Gunakan hanya untuk tugas yang Anda percayai, sebaiknya di worktree terpisah.",
+ "I understand the risk": "Saya memahami risikonya",
+ "Skips permissions": "Tanpa pemeriksaan izin",
+ "Started with all permission checks skipped": "Dimulai dengan melewati semua pemeriksaan izin"
 }

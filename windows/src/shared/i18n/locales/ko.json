@@ -383,7 +383,6 @@
  "Force remove…": "강제 제거…",
  "Found automatically": "자동으로 찾음",
  "Friendly tone": "부드러운 말투",
- "Fully automatic": "모두 자동",
  "Gemini CLI (uses your Google login)": "Gemini CLI (Google 로그인 사용)",
  "Gemini blocked this request ({0}).": "Gemini 가 이 요청을 막았습니다({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini 가 안전 정책으로 응답하지 않았습니다.",
@@ -1193,5 +1192,10 @@
  "Working…": "진행 중…",
  "gitch is already included in this app. Add your Git identity below; no separate CLI download is needed.": "이 앱에는 gitch가 이미 포함돼 있습니다. 별도로 받지 않고 아래에서 Git 계정을 추가하면 됩니다.",
  "gitch is included in Gitrochi. You can add accounts and explore code here without a separate download or memorizing commands.": "gitch는 Gitrochi에 포함돼 있습니다. 별도 설치나 명령 암기 없이 앱에서 계정을 추가하고 코드 구조를 볼 수 있습니다.",
- "Connecting the approved account…": "승인한 계정 연결 중…"
+ "Connecting the approved account…": "승인한 계정 연결 중…",
+ "Skip all permission checks": "모든 권한 확인 건너뛰기",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "에이전트가 묻지 않고 명령을 실행하고 파일을 바꿉니다. 믿을 수 있는 작업에만, 되도록 별도 워크트리에서 쓰세요.",
+ "I understand the risk": "위험을 이해했습니다",
+ "Skips permissions": "권한 확인 안 함",
+ "Started with all permission checks skipped": "모든 권한 확인을 건너뛰고 시작한 세션"
 }

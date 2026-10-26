@@ -469,7 +469,6 @@
 "Force remove…" = "強制削除…";
 "Found automatically" = "自動で検出";
 "Friendly tone" = "やわらかい口調";
-"Fully automatic" = "すべて自動";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (Google のログインを使用)";
 "Go to Terminal window" = "ターミナルのウィンドウへ移動";
 "Go to parent commit" = "親コミットへ移動";
@@ -1036,3 +1035,8 @@
 "… The diff is too long; only the beginning is shown" = "… 差分が長すぎるため、先頭部分だけを表示しています";
 "… show %lld more lines" = "… さらに %1$lld 行を表示";
 "✅ Response: %@" = "✅ 応答: %1$@";
+"Skip all permission checks" = "すべての権限確認をスキップ";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "エージェントは確認せずにコマンドを実行し、ファイルを変更します。信頼できる作業にだけ、できれば別のワークツリーで使ってください。";
+"I understand the risk" = "リスクを理解しました";
+"Skips permissions" = "権限確認なし";
+"Started with all permission checks skipped" = "すべての権限確認をスキップして開始したセッション";

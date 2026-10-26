@@ -367,7 +367,6 @@
  "Force remove…": "Buộc gỡ bỏ…",
  "Found automatically": "Đã tự động tìm thấy",
  "Friendly tone": "Giọng văn thân thiện",
- "Fully automatic": "Hoàn toàn tự động",
  "Gemini CLI (uses your Google login)": "Gemini CLI (dùng tài khoản Google đã đăng nhập)",
  "Gemini blocked this request ({0}).": "Gemini đã chặn yêu cầu này ({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini không phản hồi do chính sách an toàn.",
@@ -1003,5 +1002,10 @@
  "Couldn't check the rules": "Không thể kiểm tra quy tắc",
  "No dependency rules yet": "Chưa có quy tắc phụ thuộc",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check đọc quy tắc từ .gitch/graph.rules trong kho lưu trữ này. Tạo tệp với các ví dụ ở dạng chú thích (gitch graph check --init) rồi mở nó?",
- "Create rules file": "Tạo tệp quy tắc"
+ "Create rules file": "Tạo tệp quy tắc",
+ "Skip all permission checks": "Bỏ qua mọi kiểm tra quyền",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Agent chạy lệnh và thay đổi tệp mà không hỏi trước. Chỉ dùng cho tác vụ bạn tin tưởng, tốt nhất trong một worktree riêng.",
+ "I understand the risk": "Tôi hiểu rủi ro",
+ "Skips permissions": "Bỏ qua kiểm tra quyền",
+ "Started with all permission checks skipped": "Đã bắt đầu và bỏ qua mọi kiểm tra quyền"
 }

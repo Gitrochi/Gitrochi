@@ -446,7 +446,6 @@
 "Force remove…" = "Buộc gỡ bỏ…";
 "Found automatically" = "Đã tự động tìm thấy";
 "Friendly tone" = "Giọng văn thân thiện";
-"Fully automatic" = "Hoàn toàn tự động";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (dùng tài khoản Google đã đăng nhập)";
 "Go to Terminal window" = "Chuyển đến cửa sổ Terminal";
 "Go to parent commit" = "Đến commit cha";
@@ -991,3 +990,8 @@
 "… The diff is too long; only the beginning is shown" = "… Diff quá dài; chỉ hiển thị phần đầu";
 "… show %lld more lines" = "… hiện thêm %1$lld dòng";
 "✅ Response: %@" = "✅ Phản hồi: %1$@";
+"Skip all permission checks" = "Bỏ qua mọi kiểm tra quyền";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "Agent chạy lệnh và thay đổi tệp mà không hỏi trước. Chỉ dùng cho tác vụ bạn tin tưởng, tốt nhất trong một worktree riêng.";
+"I understand the risk" = "Tôi hiểu rủi ro";
+"Skips permissions" = "Bỏ qua kiểm tra quyền";
+"Started with all permission checks skipped" = "Đã bắt đầu và bỏ qua mọi kiểm tra quyền";

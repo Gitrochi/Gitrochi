@@ -387,7 +387,6 @@
  "Force remove…": "強制削除…",
  "Found automatically": "自動で検出",
  "Friendly tone": "やわらかい口調",
- "Fully automatic": "すべて自動",
  "Gemini CLI (uses your Google login)": "Gemini CLI (Google のログインを使用)",
  "Gemini blocked this request ({0}).": "Gemini がこのリクエストをブロックしました ({0})。",
  "Gemini didn't respond because of its safety policy.": "Gemini は安全ポリシーにより応答しませんでした。",
@@ -1048,5 +1047,10 @@
  "Couldn't check the rules": "ルールをチェックできませんでした",
  "No dependency rules yet": "依存関係のルールがまだありません",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check はこのリポジトリの .gitch/graph.rules からルールを読みます。コメントアウトした例を入れたファイルを作成して (gitch graph check --init) 開きますか？",
- "Create rules file": "ルールファイルを作成"
+ "Create rules file": "ルールファイルを作成",
+ "Skip all permission checks": "すべての権限確認をスキップ",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "エージェントは確認せずにコマンドを実行し、ファイルを変更します。信頼できる作業にだけ、できれば別のワークツリーで使ってください。",
+ "I understand the risk": "リスクを理解しました",
+ "Skips permissions": "権限確認なし",
+ "Started with all permission checks skipped": "すべての権限確認をスキップして開始したセッション"
 }

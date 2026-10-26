@@ -454,7 +454,6 @@
 "Force remove…" = "Forcer la suppression…";
 "Found automatically" = "Détecté automatiquement";
 "Friendly tone" = "Ton convivial";
-"Fully automatic" = "Entièrement automatique";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (utilise votre connexion Google)";
 "Go to Terminal window" = "Aller à la fenêtre de Terminal";
 "Go to parent commit" = "Aller au commit parent";
@@ -1008,3 +1007,8 @@
 "… The diff is too long; only the beginning is shown" = "… Le diff est trop long ; seul le début est affiché";
 "… show %lld more lines" = "… afficher %1$lld ligne(s) de plus";
 "✅ Response: %@" = "✅ Réponse : %1$@";
+"Skip all permission checks" = "Ignorer toutes les vérifications d’autorisation";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "L’agent exécute des commandes et modifie des fichiers sans demander. À réserver aux tâches de confiance, de préférence dans un worktree séparé.";
+"I understand the risk" = "Je comprends le risque";
+"Skips permissions" = "Sans vérification d’autorisation";
+"Started with all permission checks skipped" = "Démarrée en ignorant toutes les vérifications d’autorisation";

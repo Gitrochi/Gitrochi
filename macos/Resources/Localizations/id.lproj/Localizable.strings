@@ -442,7 +442,6 @@
 "Force remove…" = "Hapus paksa…";
 "Found automatically" = "Ditemukan otomatis";
 "Friendly tone" = "Nada ramah";
-"Fully automatic" = "Sepenuhnya otomatis";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (memakai login Google Anda)";
 "Go to Terminal window" = "Buka jendela Terminal";
 "Go to parent commit" = "Ke commit induk";
@@ -986,3 +985,8 @@
 "… The diff is too long; only the beginning is shown" = "… Diff terlalu panjang; hanya bagian awal yang ditampilkan";
 "… show %lld more lines" = "… tampilkan %1$lld baris lagi";
 "✅ Response: %@" = "✅ Respons: %1$@";
+"Skip all permission checks" = "Lewati semua pemeriksaan izin";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "Agen menjalankan perintah dan mengubah file tanpa bertanya terlebih dahulu. Gunakan hanya untuk tugas yang Anda percayai, sebaiknya di worktree terpisah.";
+"I understand the risk" = "Saya memahami risikonya";
+"Skips permissions" = "Tanpa pemeriksaan izin";
+"Started with all permission checks skipped" = "Dimulai dengan melewati semua pemeriksaan izin";

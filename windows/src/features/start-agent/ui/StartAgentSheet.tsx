@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { agentKind, type AgentKind, agentKinds, agents } from "@/entities/agent";
+import { agentKind, type AgentKind, agentKinds, agents, skipsPermissions } from "@/entities/agent";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve, validBranchName } from "@/shared/lib";
 import { tools } from "@/shared/platform";
-import { Frame, Row, Segmented } from "@/shared/ui";
+import { Checkbox, Frame, Row, Segmented } from "@/shared/ui";
 
 export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore; close: () => void; presetPath: string | null }) {
   useObserve(tools);
@@ -16,6 +16,7 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
   const [newBranch, setNewBranch] = useState("");
   const [task, setTask] = useState("");
   const [mode, setMode] = useState("");
+  const [riskAccepted, setRiskAccepted] = useState(false);
   const [exists, setExists] = useState(false);
   const info = agentKind(kind);
   const found = tools.available(info.tool);
@@ -25,12 +26,13 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
   }, [wtPath]);
   useEffect(() => setMode(""), [kind]);
   const validBranch = validBranchName(newBranch) && !exists;
+  const bypass = skipsPermissions(kind, mode);
   return (
     <Frame
       title={t("Start agent session")}
       confirm={t("Start")}
       width={580}
-      canConfirm={found && (!!target || validBranch)}
+      canConfirm={found && (!!target || validBranch) && (!bypass || riskAccepted)}
       close={close}
       leftFooter={t("Runs in a new tab of the terminal below; its status is shown in the Agents tab.")}
       onConfirm={() =>
@@ -84,7 +86,14 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
         <textarea className="textarea" style={{ height: 80 }} value={task} placeholder={t("e.g. add a lockout after failed logins, including tests")} onChange={(e) => setTask(e.target.value)} />
       </Row>
       <Row label={t("Permission mode")}>
-        <select className="select" value={mode} onChange={(e) => setMode(e.target.value)}>
+        <select
+          className="select"
+          value={mode}
+          onChange={(e) => {
+            setMode(e.target.value);
+            setRiskAccepted(false);
+          }}
+        >
           {info.modes.map((m) => (
             <option key={m.value} value={m.value}>
               {m.label}
@@ -92,6 +101,12 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
           ))}
         </select>
       </Row>
+      {bypass && (
+        <>
+          <span className="error-text">{t("The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.")}</span>
+          <Checkbox checked={riskAccepted} onChange={setRiskAccepted} label={t("I understand the risk")} />
+        </>
+      )}
     </Frame>
   );
 }

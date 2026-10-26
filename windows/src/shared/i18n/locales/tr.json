@@ -379,7 +379,6 @@
  "Force remove…": "Zorla kaldır…",
  "Found automatically": "Otomatik bulundu",
  "Friendly tone": "Samimi ton",
- "Fully automatic": "Tamamen otomatik",
  "Gemini CLI (uses your Google login)": "Gemini CLI (Google oturumunuzu kullanır)",
  "Gemini blocked this request ({0}).": "Gemini bu isteği engelledi ({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini, güvenlik politikası nedeniyle yanıt vermedi.",
@@ -1036,5 +1035,10 @@
  "Couldn't check the rules": "Kurallar denetlenemedi",
  "No dependency rules yet": "Henüz bağımlılık kuralı yok",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check kuralları bu deponun .gitch/graph.rules dosyasından okur. Yorum satırı hâlinde örnekler içeren dosya oluşturulsun (gitch graph check --init) ve açılsın mı?",
- "Create rules file": "Kural dosyası oluştur"
+ "Create rules file": "Kural dosyası oluştur",
+ "Skip all permission checks": "Tüm izin denetimlerini atla",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Ajan, önce sormadan komut çalıştırır ve dosyaları değiştirir. Yalnızca güvendiğiniz görevlerde, tercihen ayrı bir worktree'de kullanın.",
+ "I understand the risk": "Riski anlıyorum",
+ "Skips permissions": "İzin denetimi yok",
+ "Started with all permission checks skipped": "Tüm izin denetimleri atlanarak başlatıldı"
 }

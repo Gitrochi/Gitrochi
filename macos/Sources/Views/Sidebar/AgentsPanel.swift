@@ -160,6 +160,13 @@ private struct SessionRow: View {
                 HStack(spacing: 4) {
                     Text(session.status.title).fontWeight(.medium)
                     Text(session.kind.title).font(.caption2).foregroundStyle(.tertiary)
+                    if session.kind.skipsPermissions(session.mode) {
+                        Label("Skips permissions", systemImage: "exclamationmark.shield.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                            .fixedSize()
+                            .help("Started with all permission checks skipped")
+                    }
                     if let d = session.detail, session.status != .ended {
                         Text("· \(d)").foregroundStyle(.secondary).lineLimit(1)
                     }
@@ -234,6 +241,7 @@ struct StartAgentSheet: View {
     @ViewState private var newBranch = ""
     @ViewState private var task = ""
     @ViewState private var mode = ""
+    @ViewState private var riskAccepted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -265,6 +273,12 @@ struct StartAgentSheet: View {
                 Picker("Permission mode", selection: $mode) {
                     ForEach(kind.modes, id: \.0) { m in Text(m.1).tag(m.0) }
                 }
+                if kind.skipsPermissions(mode) {
+                    Text("The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.")
+                        .font(.caption).foregroundStyle(.red)
+                    Toggle("I understand the risk", isOn: $riskAccepted)
+                        .toggleStyle(.checkbox)
+                }
             }
             .formStyle(.grouped)
             HStack {
@@ -275,7 +289,7 @@ struct StartAgentSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Button("Start") { start() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(tools.path(kind.tool) == nil || (target.isEmpty && !validBranch))
+                    .disabled(tools.path(kind.tool) == nil || (target.isEmpty && !validBranch) || (kind.skipsPermissions(mode) && !riskAccepted))
             }
             .padding([.horizontal, .bottom], 20)
         }
@@ -284,6 +298,7 @@ struct StartAgentSheet: View {
             target = presetPath ?? store.url?.path ?? store.worktrees.first?.path ?? ""
         }
         .onChange(of: kind) { _, _ in mode = "" }
+        .onChange(of: mode) { _, _ in riskAccepted = false }
     }
 
     private var validBranch: Bool {

@@ -459,7 +459,6 @@
 "Force remove…" = "Kényszerített eltávolítás…";
 "Found automatically" = "Automatikusan megtalálva";
 "Friendly tone" = "Barátságos hangnem";
-"Fully automatic" = "Teljesen automatikus";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (a Google-bejelentkezését használja)";
 "Go to Terminal window" = "Ugrás a Terminál-ablakra";
 "Go to parent commit" = "Ugrás a szülő commitra";
@@ -1018,3 +1017,8 @@
 "… The diff is too long; only the beginning is shown" = "… A diff túl hosszú; csak az eleje látható";
 "… show %lld more lines" = "… további %1$lld sor megjelenítése";
 "✅ Response: %@" = "✅ Válasz: %1$@";
+"Skip all permission checks" = "Minden jogosultság-ellenőrzés kihagyása";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "Az ügynök előzetes kérdés nélkül futtat parancsokat és módosít fájlokat. Csak megbízható feladatokhoz használja, lehetőleg külön worktree-ben.";
+"I understand the risk" = "Értem a kockázatot";
+"Skips permissions" = "Jogosultság-ellenőrzés nélkül";
+"Started with all permission checks skipped" = "Minden jogosultság-ellenőrzés kihagyásával indítva";

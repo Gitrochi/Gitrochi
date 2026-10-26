@@ -443,7 +443,6 @@
 "Force remove…" = "Geforceerd verwijderen…";
 "Found automatically" = "Automatisch gevonden";
 "Friendly tone" = "Vriendelijke toon";
-"Fully automatic" = "Volledig automatisch";
 "Gemini CLI (uses your Google login)" = "Gemini CLI (gebruikt je Google-login)";
 "Go to Terminal window" = "Naar Terminal-venster";
 "Go to parent commit" = "Naar bovenliggende commit";
@@ -979,3 +978,8 @@
 "… The diff is too long; only the beginning is shown" = "… De diff is te lang; alleen het begin wordt getoond";
 "… show %lld more lines" = "… nog %1$lld regel(s) tonen";
 "✅ Response: %@" = "✅ Antwoord: %1$@";
+"Skip all permission checks" = "Alle toestemmingscontroles overslaan";
+"The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree." = "De agent voert opdrachten uit en wijzigt bestanden zonder eerst te vragen. Gebruik dit alleen voor taken die je vertrouwt, bij voorkeur in een aparte worktree.";
+"I understand the risk" = "Ik begrijp het risico";
+"Skips permissions" = "Zonder toestemmingscontrole";
+"Started with all permission checks skipped" = "Gestart zonder toestemmingscontroles";

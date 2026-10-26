@@ -377,7 +377,6 @@
  "Force remove…": "Vynutit odebrání…",
  "Found automatically": "Nalezeno automaticky",
  "Friendly tone": "Přátelský tón",
- "Fully automatic": "Plně automaticky",
  "Gemini CLI (uses your Google login)": "Gemini CLI (používá vaše přihlášení Google)",
  "Gemini blocked this request ({0}).": "Gemini tento požadavek zablokoval ({0}).",
  "Gemini didn't respond because of its safety policy.": "Gemini neodpověděl kvůli svým bezpečnostním zásadám.",
@@ -1029,5 +1028,10 @@
  "Couldn't check the rules": "Pravidla se nepodařilo zkontrolovat",
  "No dependency rules yet": "Zatím žádná pravidla závislostí",
  "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?": "gitch graph check čte pravidla z .gitch/graph.rules v tomto repozitáři. Vytvořit soubor se zakomentovanými příklady (gitch graph check --init) a otevřít ho?",
- "Create rules file": "Vytvořit soubor pravidel"
+ "Create rules file": "Vytvořit soubor pravidel",
+ "Skip all permission checks": "Přeskočit všechny kontroly oprávnění",
+ "The agent runs commands and changes files without asking first. Use it only for tasks you trust, ideally in a separate worktree.": "Agent spouští příkazy a mění soubory, aniž by se předem zeptal. Používejte to jen pro úkoly, kterým důvěřujete, nejlépe v samostatném worktree.",
+ "I understand the risk": "Rozumím riziku",
+ "Skips permissions": "Bez kontroly oprávnění",
+ "Started with all permission checks skipped": "Spuštěno s přeskočením všech kontrol oprávnění"
 }
