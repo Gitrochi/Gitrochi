@@ -20,6 +20,8 @@ private final class WindowFixtureNetworkBlocker: URLProtocol {
     override func stopLoading() {}
 }
 
+func windowFixtureNetworkAttempts() -> Int { WindowFixtureNetworkBlocker.attempts }
+
 /// 실제 사이드바와 작업 영역 헤더의 임시 사본에만 붙이는 측정기.
 struct WindowContentProbe: NSViewRepresentable {
     let identifier: String
@@ -68,6 +70,10 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         defer {
             URLProtocol.unregisterClass(WindowFixtureNetworkBlocker.self)
             try? FileManager.default.removeItem(at: windowFixtureLocalStorageURL.deletingLastPathComponent())
+        }
+        if arguments.contains("--swiftui-releases") {
+            ReleaseChromeFixtureApp.main()
+            return
         }
         let app = NSApplication.shared
         let applicationDelegate = WindowContentFixtureDelegate()
@@ -255,6 +261,8 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                 if probe.identifierForFixture == "workspace-header" {
                     precondition(abs(frame.maxY - safe.maxY) <= 1,
                                  "Workspace header leaves an extra titlebar gap during \(scenario): \(frame), safe \(safe)")
+                    precondition(frame.minY >= safe.minY - 1 && frame.height <= safe.height + 1,
+                                 "Workspace content grows outside its finite viewport during \(scenario): \(frame), safe \(safe)")
                 }
                 // 다른 네이티브 창에 속한 전체화면 제목 막대는 시스템 오버레이로 별도 기록한다.
                 precondition(ownTraffic.allSatisfy { !$0.intersects(frame) }, "Content overlaps a traffic-light button during \(scenario)")
@@ -476,6 +484,68 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             precondition(equal(window.frame, tabbedFrame), "Changing tabs and appearance must preserve the outer frame")
         }
         for tab in fixtureWindows { tab.appearance = nil }
+
+        // Restore four real window tabs, then enter Releases from the compact repository rail.
+        // The selected GitHub account deliberately differs from the repository's GitLab provider.
+        let account = HostAccount(id: "window-fixture-account", provider: .github, server: "https://github.com", username: "demo-reader", name: nil, avatarURL: nil)
+        AccountStore.shared.windowFixtureSetAccounts([account])
+        var extraWindows: [NSWindow] = []
+        for index in 3...4 {
+            let peerStore = RepoStore()
+            peerStore.booted = true
+            let peerHost = NSHostingController(rootView: AnyView(RepoContainer().environment(peerStore).defaultAppStorage(windowFixtureDefaults)
+                .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height)))
+            let peer = NSWindow(contentRect: window.contentLayoutRect, styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+            peer.isReleasedWhenClosed = false
+            peer.title = "Synthetic repository \(index)"
+            peer.toolbarStyle = .unified
+            peer.contentViewController = peerHost
+            RepositoryWindowLayout.configure(peer)
+            peer.tabbingIdentifier = window.tabbingIdentifier
+            peer.tabbingMode = .preferred
+            peer.contentMinSize = nativeTabMinimum
+            fixtureWindows.append(peer)
+            extraWindows.append(peer)
+            peer.orderBack(nil)
+            settle(0.2)
+            peer.setFrame(window.frame, display: false)
+            window.addTabbedWindow(peer, ordered: .above)
+        }
+        window.tabGroup?.selectedWindow = window
+        store.windowFixtureSetURL(URL(fileURLWithPath: "/fixture/synthetic-repository", isDirectory: true))
+        store.target = RepoTarget(provider: .gitlab, remote: "origin", host: "gitlab.example.com", path: "demo/repository")
+        store.navigate(.repository, prepare: false)
+        settle(0.4)
+        store.hostingHub.selectedAccountID = account.id
+        store.navigate(.releases, prepare: false)
+        for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            for tab in fixtureWindows { tab.appearance = NSAppearance(named: appearance) }
+            settle(0.5)
+            precondition(window.tabGroup?.windows.count == 4, "Releases regression must retain four real native tabs")
+            FileHandle.standardError.write(Data("Release geometry: selected=\(window.tabGroup?.selectedWindow === window) window=\(window.windowNumber) frame=\(window.frame) hostWindow=\(host.view.window?.windowNumber ?? -1) host=\(host.view.frame) bounds=\(host.view.bounds) content=\(String(describing: window.contentView?.frame)) safe=\(window.contentLayoutRect)\n".utf8))
+            if let output, let captureView = window.contentView?.superview,
+               let bitmap = captureView.bitmapImageRepForCachingDisplay(in: captureView.bounds) {
+                captureView.cacheDisplay(in: captureView.bounds, to: bitmap)
+                try bitmap.representation(using: .png, properties: [:])?.write(to: output.appendingPathComponent("releases-diagnostic-\(name).png"))
+            }
+            let measured = probes(in: host.view)
+            for probe in measured {
+                FileHandle.standardError.write(Data("Release probe: \(probe.identifierForFixture) window=\(probe.window?.windowNumber ?? -1) frame=\(probe.convert(probe.bounds, to: nil)) visible=\(probe.visibleRect)\n".utf8))
+            }
+            for identifier in ["page-title:releases", "hub-title:releases", "rail-control"] {
+                guard let probe = measured.first(where: { $0.identifierForFixture == identifier }) else { fatalError("Missing actual Releases control: \(identifier)") }
+                let frame = probe.convert(probe.bounds, to: nil)
+                precondition(frame.height >= 15 && window.contentLayoutRect.insetBy(dx: -1, dy: -1).contains(frame),
+                             "Actual Releases control is clipped: \(identifier) frame=\(frame) safe=\(window.contentLayoutRect)")
+            }
+            try capture("releases-four-tabs-\(name)")
+        }
+        store.navigate(.home, prepare: false)
+        store.windowFixtureSetURL(nil); store.target = nil
+        AccountStore.shared.windowFixtureSetAccounts([])
+        for peer in extraWindows { peer.tabGroup?.removeWindow(peer); peer.orderOut(nil) }
+        fixtureWindows.removeAll { extraWindows.contains($0) }
+        settle(0.3)
 
         if fullscreen {
             window.collectionBehavior.insert(.fullScreenPrimary)
