@@ -3,7 +3,7 @@ import SwiftUI
 struct WorkspaceDestinationContent: View {
     @Environment(RepoStore.self) private var store
     /// Pages with the shared title row; Home has its own welcome and Repository is the work screen
-    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .account, .flows]
+    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +27,9 @@ struct WorkspaceDestinationContent: View {
             case .pullRequests: PullRequestsWorkspace()
             case .issues: IssuesWorkspacePanel()
             case .actions: ActionsWorkspacePanel()
+            // Releases and Projects keep pages of their own, apart from the account's lists
+            case .releases: HostingHubPanel(store: store, section: .releases, onClone: { store.sheet = .cloneURL($0) })
+            case .projects: HostingHubPanel(store: store, section: .projects, onClone: { store.sheet = .cloneURL($0) })
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
             }
@@ -43,7 +46,7 @@ struct PageHeader: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            if store.cameFromRepository, [.pullRequests, .issues].contains(page) {
+            if store.cameFromRepository, [.pullRequests, .issues, .releases].contains(page) {
                 Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
                     .buttonStyle(.borderless)
                     .keyboardShortcut("[", modifiers: .command)

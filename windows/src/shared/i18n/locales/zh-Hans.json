@@ -1250,5 +1250,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "日志预览最多显示 2 MB。请在浏览器中查看完整日志。",
  "Reset to default layout": "恢复默认布局",
  "Drag to resize the column": "拖动以调整列宽",
- "Date": "日期"
+ "Date": "日期",
+ "Open in Releases": "在发布中打开"
 }

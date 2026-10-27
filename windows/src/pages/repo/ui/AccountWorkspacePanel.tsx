@@ -8,11 +8,11 @@ import { useObserve } from "@/shared/lib";
 import { Segmented } from "@/shared/ui";
 
 type AccountSection = "inbox" | "myWork" | HostingHubSection;
-const sections: AccountSection[] = ["inbox", "myWork", "releases", "projects", "organizations"];
+const sections: AccountSection[] = ["inbox", "myWork", "organizations"];
 
 /**
  * Everything that belongs to the account rather than the repository, on one page: the inbox and work lists,
- * and the hub's releases, projects and organizations (macOS: AccountWorkspacePanel in AccountWorkPanel.swift)
+ * and the hub's organizations; Releases and Projects have pages of their own (macOS: AccountWorkspacePanel in AccountWorkPanel.swift)
  */
 export function AccountWorkspacePanel({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
@@ -20,7 +20,7 @@ export function AccountWorkspacePanel({ store, openSettings }: { store: RepoStor
   const saved = settings.get<string>("accountPageSection", "inbox");
   const section: AccountSection = (sections as string[]).includes(saved) ? (saved as AccountSection) : "inbox";
   const gitlab = store.target?.provider === "gitlab";
-  const label = (value: AccountSection) => t(value === "inbox" ? "Inbox" : value === "myWork" ? "My work" : value === "releases" ? "Releases" : value === "projects" ? "Projects" : gitlab ? "Groups" : "Organizations");
+  const label = (value: AccountSection) => t(value === "inbox" ? "Inbox" : value === "myWork" ? "My work" : gitlab ? "Groups" : "Organizations");
   return <section className="account-page" aria-label={t("Account")}>
     <div className="account-page-sections">
       <Segmented stretch value={section} onChange={(value) => settings.set("accountPageSection", value)} options={sections.map((value) => ({ value, label: label(value) }))} />

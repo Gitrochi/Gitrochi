@@ -184,19 +184,21 @@ private struct AccountWorkPanel: View {
 }
 
 /// Everything that belongs to the account rather than the repository, on one page: the inbox and work lists,
-/// and the hub's releases, projects and organizations
+/// and the hub's organizations. Releases and Projects have pages of their own.
 struct AccountWorkspacePanel: View {
     @Environment(RepoStore.self) private var store
     @AppStorage("accountPageSection") private var section = "inbox"
 
+    private static let sections = ["inbox", "myWork", "organizations"]
+
     var body: some View {
         let gitlab = store.target?.provider == .gitlab
+        // a section saved by an older version (Releases, Projects) opens the inbox
+        let current = Self.sections.contains(section) ? section : "inbox"
         VStack(spacing: 0) {
-            Picker("Section", selection: $section) {
+            Picker("Section", selection: Binding(get: { current }, set: { section = $0 })) {
                 Text("Inbox").tag("inbox")
                 Text("My work").tag("myWork")
-                Text("Releases").tag("releases")
-                Text("Projects").tag("projects")
                 Text(gitlab ? "Groups" : "Organizations").tag("organizations")
             }
             .pickerStyle(.segmented).labelsHidden()
@@ -204,10 +206,8 @@ struct AccountWorkspacePanel: View {
             .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 10)
             Divider()
             Group {
-                switch section {
+                switch current {
                 case "myWork": MyWorkPanel()
-                case "releases": HostingHubPanel(store: store, section: .releases, onClone: clone)
-                case "projects": HostingHubPanel(store: store, section: .projects, onClone: clone)
                 case "organizations": HostingHubPanel(store: store, section: .organizations, onClone: clone)
                 default: WorkInboxPanel()
                 }

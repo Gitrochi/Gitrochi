@@ -1249,5 +1249,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。",
  "Reset to default layout": "デフォルトのレイアウトに戻す",
  "Drag to resize the column": "ドラッグして列の幅を変更",
- "Date": "日付"
+ "Date": "日付",
+ "Open in Releases": "リリースで開く"
 }

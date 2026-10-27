@@ -1217,5 +1217,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "A prévia do log é limitada a 2 MB. Abra o navegador para ver o log completo.",
  "Reset to default layout": "Restaurar o layout padrão",
  "Drag to resize the column": "Arraste para redimensionar a coluna",
- "Date": "Data"
+ "Date": "Data",
+ "Open in Releases": "Abrir em Lançamentos"
 }

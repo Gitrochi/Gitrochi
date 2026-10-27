@@ -1,19 +1,19 @@
-import { CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListOrdered, PanelLeftClose, PanelLeftOpen, PlayCircle, Settings, UserRound, Waypoints } from "lucide-react";
+import { Blocks, CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListOrdered, PanelLeftClose, PanelLeftOpen, PlayCircle, Settings, Tag, UserRound, Waypoints } from "lucide-react";
 import { repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import "./navigation-sidebar.css";
 
-const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", account: "Account", flows: "Flows" };
+const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows" };
 /** The page name as shown in the sidebar; GitLab repositories use that server's words. (macOS: WorkspaceDestination.title(gitlab:)) */
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : titles[page]);
 /** Each page's icon, shared with the page title row */
-export const destinationIcons = { home: Home, repository: FolderGit2, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, account: UserRound, flows: Waypoints };
+export const destinationIcons = { home: Home, repository: FolderGit2, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, releases: Tag, projects: Blocks, account: UserRound, flows: Waypoints };
 const groups: { title: string | null; pages: WorkspaceDestination[] }[] = [
   { title: null, pages: ["home", "repository"] },
   { title: "Workspace", pages: ["compare", "rebase", "code"] },
-  { title: "GitHub", pages: ["pullRequests", "issues", "actions", "account"] },
+  { title: "GitHub", pages: ["pullRequests", "issues", "actions", "releases", "projects", "account"] },
   { title: "Tools", pages: ["flows"] },
 ];
 

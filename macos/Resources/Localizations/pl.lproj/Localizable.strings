@@ -1192,3 +1192,6 @@
 "Reset to default layout" = "Przywróć domyślny układ";
 "Drag to resize the column" = "Przeciągnij, aby zmienić szerokość kolumny";
 "Date" = "Data";
+"Releases" = "Wydania";
+"Projects" = "Projekty";
+"Open in Releases" = "Otwórz w Wydaniach";

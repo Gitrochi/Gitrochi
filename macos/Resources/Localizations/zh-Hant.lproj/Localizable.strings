@@ -1211,3 +1211,6 @@
 "Reset to default layout" = "還原預設版面";
 "Drag to resize the column" = "拖曳以調整欄寬";
 "Date" = "日期";
+"Releases" = "發行版本";
+"Projects" = "專案";
+"Open in Releases" = "在發行版本中開啟";

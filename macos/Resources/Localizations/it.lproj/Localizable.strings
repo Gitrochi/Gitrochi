@@ -1182,3 +1182,6 @@
 "Reset to default layout" = "Ripristina il layout predefinito";
 "Drag to resize the column" = "Trascina per ridimensionare la colonna";
 "Date" = "Data";
+"Releases" = "Release";
+"Projects" = "Progetti";
+"Open in Releases" = "Apri in Release";

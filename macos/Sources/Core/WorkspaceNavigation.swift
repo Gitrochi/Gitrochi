@@ -4,7 +4,7 @@ import Foundation
 /// the rest are full-width pages. (Windows: entities/git/model/workspace-navigation.ts)
 enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case home, repository, compare, rebase, code
-    case pullRequests, issues, actions, account
+    case pullRequests, issues, actions, releases, projects, account
     case flows
     var id: String { rawValue }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
@@ -18,6 +18,8 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .pullRequests: return String(localized: "Pull requests")
         case .issues: return String(localized: "Issues")
         case .actions: return String(localized: "Actions")
+        case .releases: return String(localized: "Releases")
+        case .projects: return String(localized: "Projects")
         case .account: return String(localized: "Account")
         case .flows: return String(localized: "Flows")
         }
@@ -42,6 +44,8 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .pullRequests: return "arrow.triangle.pull"
         case .issues: return "circle.dotted"
         case .actions: return "play.circle"
+        case .releases: return "tag"
+        case .projects: return "rectangle.3.group"
         case .account: return "person.crop.circle"
         case .flows: return "flowchart"
         }

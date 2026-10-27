@@ -23,7 +23,7 @@ struct NavigationSidebar: View {
                     groupTitle(String(localized: "Workspace"))
                     rows([.compare, .rebase, .code])
                     groupTitle(store.target?.provider == .gitlab ? "GitLab" : "GitHub")
-                    rows([.pullRequests, .issues, .actions, .account])
+                    rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     groupTitle(String(localized: "Tools"))
                     rows([.flows])
                 }.padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 12)

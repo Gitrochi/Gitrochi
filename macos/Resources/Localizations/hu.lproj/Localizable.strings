@@ -1192,3 +1192,6 @@
 "Reset to default layout" = "Alapértelmezett elrendezés visszaállítása";
 "Drag to resize the column" = "Húzza az oszlop szélességének módosításához";
 "Date" = "Dátum";
+"Releases" = "Kiadások";
+"Projects" = "Projektek";
+"Open in Releases" = "Megnyitás a kiadásokban";

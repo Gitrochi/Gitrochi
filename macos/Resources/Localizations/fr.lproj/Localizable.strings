@@ -1182,3 +1182,6 @@
 "Reset to default layout" = "Rétablir la disposition par défaut";
 "Drag to resize the column" = "Faites glisser pour redimensionner la colonne";
 "Date" = "Date";
+"Releases" = "Versions";
+"Projects" = "Projets";
+"Open in Releases" = "Ouvrir dans Versions";

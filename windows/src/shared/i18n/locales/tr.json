@@ -1237,5 +1237,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın.",
  "Reset to default layout": "Varsayılan düzene sıfırla",
  "Drag to resize the column": "Sütun genişliğini değiştirmek için sürükleyin",
- "Date": "Tarih"
+ "Date": "Tarih",
+ "Open in Releases": "Sürümlerde aç"
 }

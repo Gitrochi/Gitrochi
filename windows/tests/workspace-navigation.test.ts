@@ -25,12 +25,12 @@ beforeEach(() => {
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
 
 describe("workspace navigation", () => {
-  it("lists the ten pages in the sidebar's order and rejects untrusted saved values", () => {
-    expect([...workspaceDestinations]).toEqual(["home", "repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "account", "flows"]);
+  it("lists the twelve pages in the sidebar's order and rejects untrusted saved values", () => {
+    expect([...workspaceDestinations]).toEqual(["home", "repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"]);
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);
-    for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code", "changes", "commits", "branches", "repositories", "gists", "worktrees", "assistant", "operations", "inbox", "myWork", "releases"]) expect(isWorkspaceDestination(value)).toBe(false);
+    for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code", "changes", "commits", "branches", "repositories", "gists", "worktrees", "assistant", "operations", "inbox", "myWork"]) expect(isWorkspaceDestination(value)).toBe(false);
   });
-  it("needs a repository for every page except Home, Issues and Account", () => {
+  it("needs a repository for every page except Home, Issues, Releases, Projects and Account", () => {
     expect([...repositoryDestinations].sort()).toEqual(["actions", "code", "compare", "flows", "pullRequests", "rebase", "repository"]);
     for (const page of workspaceDestinations) {
       const store = new RepoStore();
@@ -60,7 +60,7 @@ describe("workspace navigation", () => {
     expect(memory.workspaceDestinations).toEqual({ "C:/fixture/first": "code", "C:/fixture/second": "issues" });
   });
   it("opens Home without a repository, even when a repository page was saved", () => {
-    expect(restoredDestination("code", false)).toBe("home"); expect(restoredDestination("issues", false)).toBe("issues"); expect(restoredDestination("account", false)).toBe("account");
+    expect(restoredDestination("code", false)).toBe("home"); expect(restoredDestination("issues", false)).toBe("issues"); expect(restoredDestination("account", false)).toBe("account"); expect(restoredDestination("projects", false)).toBe("projects"); expect(restoredDestination("releases", false)).toBe("releases");
     expect(restoredDestination(undefined, false)).toBe("home"); expect(restoredDestination(undefined, true)).toBe("repository"); expect(restoredDestination("flows", true)).toBe("flows"); expect(restoredDestination("nope", true)).toBe("repository");
     const store = new RepoStore(); memory.workspaceDestinations = { "": "code" }; internal(store).restoreWorkspaceDestination(); expect(store.destination).toBe("home");
   });

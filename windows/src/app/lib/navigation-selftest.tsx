@@ -21,10 +21,12 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
   function Fixture({ compact }: { compact: boolean }) { useObserve(store); return <div style={{ width: compact ? 56 : 250, height: 780 }}><NavigationSidebar store={store} openSettings={() => { opened++; }} compact={compact} onToggle={() => { toggles++; }} /></div>; }
   try {
     root.render(<Fixture compact={false} />); await pause();
-    ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,account,flows", `The sidebar must list the ten pages in order: ${rows().map((button) => button.dataset.page).join(",")}`);
+    ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows", `The sidebar must list the twelve pages in order: ${rows().map((button) => button.dataset.page).join(",")}`);
     ensure(!host.querySelector("input"), "The sidebar must not have a search box");
     for (const page of workspaceDestinations) ensure(row(page)?.disabled === repositoryDestinations.has(page), `Incorrect empty-repository access: ${page}`);
     row("issues")!.click(); await pause(); ensure(store.destination === "issues" && row("issues")?.getAttribute("aria-current") === "page", "Issues must open without a repository");
+    row("releases")!.click(); await pause(); ensure(store.destination === "releases", "Releases must open without a repository");
+    row("projects")!.click(); await pause(); ensure(store.destination === "projects", "Projects must open without a repository");
     row("account")!.click(); await pause(); ensure(store.destination === "account", "Account must open without a repository");
     store.path = "C:/fixture/navigation"; store.changed(); await pause();
     for (const page of workspaceDestinations) { row(page)!.click(); await pause(); ensure(store.destination === page && row(page)?.getAttribute("aria-current") === "page", `Navigation did not select ${page}`); }
@@ -41,7 +43,7 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     ensure(rows().every((button) => !!button.getAttribute("aria-label") && !!button.dataset.tip && button.querySelector("svg")!.getBoundingClientRect().width > 0), "Rail icons lost their labels, tooltips or visible symbols");
     ensure(row("flows")?.getAttribute("aria-current") === "page", "The rail lost the current page");
     row("home")!.click(); await pause(); ensure(store.destination === "home", "Rail icons did not route to their pages");
-    return [true, "Ten pages in order, no search box, Issues and Account without a repository, every page with one, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
+    return [true, "Twelve pages in order, no search box, Issues, Releases, Projects and Account without a repository, every page with one, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); settings.set("workspaceDestinations", savedDestinations); }
 }

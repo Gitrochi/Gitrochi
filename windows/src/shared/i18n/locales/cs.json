@@ -1230,5 +1230,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči.",
  "Reset to default layout": "Obnovit výchozí rozvržení",
  "Drag to resize the column": "Přetažením změníte šířku sloupce",
- "Date": "Datum"
+ "Date": "Datum",
+ "Open in Releases": "Otevřít ve vydáních"
 }

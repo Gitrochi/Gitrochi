@@ -3,6 +3,7 @@ import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector, IssueDetail } from "@/widgets/inspector";
 import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
+import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
@@ -13,7 +14,7 @@ import { PageHeader } from "./PageHeader";
 
 /** The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift) */
 // Pages with the shared title row; Home has its own welcome and the repository screen is the work screen
-const titled = new Set(["compare", "rebase", "code", "pullRequests", "issues", "actions", "account", "flows"]);
+const titled = new Set(["compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"]);
 
 export function WorkspaceContent({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
@@ -32,6 +33,8 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "pullRequests": return <PullRequestsWorkspace {...props} />;
     case "issues": return <IssuesWorkspace {...props} />;
     case "actions": return <ActionsWorkspacePanel {...props} />;
+    // Releases and Projects keep pages of their own, apart from the account's lists
+    case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
     default: return null;

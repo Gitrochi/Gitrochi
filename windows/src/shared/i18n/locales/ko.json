@@ -2079,5 +2079,6 @@
   "Reset to default layout": "기본 레이아웃으로 되돌리기",
   "Drag to resize the column": "끌어서 칸 너비 조정",
   "SHA": "SHA",
-  "Date": "날짜"
+  "Date": "날짜",
+  "Open in Releases": "릴리스 화면에서 열기"
 }

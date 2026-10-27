@@ -1205,3 +1205,6 @@
 "Reset to default layout" = "คืนค่าเลย์เอาต์เริ่มต้น";
 "Drag to resize the column" = "ลากเพื่อปรับความกว้างคอลัมน์";
 "Date" = "วันที่";
+"Releases" = "รีลีส";
+"Projects" = "โปรเจกต์";
+"Open in Releases" = "เปิดในรีลีส";

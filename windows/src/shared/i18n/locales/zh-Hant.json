@@ -1250,5 +1250,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。",
  "Reset to default layout": "還原預設版面",
  "Drag to resize the column": "拖曳以調整欄寬",
- "Date": "日期"
+ "Date": "日期",
+ "Open in Releases": "在發行版本中開啟"
 }

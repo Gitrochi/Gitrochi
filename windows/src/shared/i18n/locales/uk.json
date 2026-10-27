@@ -1248,5 +1248,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "Попередній перегляд журналу обмежено 2 МБ. Повний журнал відкрийте в браузері.",
  "Reset to default layout": "Відновити типовий макет",
  "Drag to resize the column": "Перетягніть, щоб змінити ширину стовпця",
- "Date": "Дата"
+ "Date": "Дата",
+ "Open in Releases": "Відкрити в релізах"
 }

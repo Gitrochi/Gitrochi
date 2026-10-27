@@ -1209,3 +1209,6 @@
 "Reset to default layout" = "Восстановить макет по умолчанию";
 "Drag to resize the column" = "Перетащите, чтобы изменить ширину столбца";
 "Date" = "Дата";
+"Releases" = "Релизы";
+"Projects" = "Проекты";
+"Open in Releases" = "Открыть в релизах";

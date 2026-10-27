@@ -1244,5 +1244,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด",
  "Reset to default layout": "คืนค่าเลย์เอาต์เริ่มต้น",
  "Drag to resize the column": "ลากเพื่อปรับความกว้างคอลัมน์",
- "Date": "วันที่"
+ "Date": "วันที่",
+ "Open in Releases": "เปิดในรีลีส"
 }

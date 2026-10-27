@@ -1176,3 +1176,6 @@
 "Reset to default layout" = "Standardlayout wiederherstellen";
 "Drag to resize the column" = "Ziehen, um die Spaltenbreite zu ändern";
 "Date" = "Datum";
+"Releases" = "Releases";
+"Projects" = "Projekte";
+"Open in Releases" = "In Releases öffnen";

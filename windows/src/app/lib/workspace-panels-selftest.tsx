@@ -5,6 +5,7 @@ import { RepoStore } from "@/entities/repo";
 import { accounts } from "@/entities/hosting";
 import { AccountWorkspacePanel, IssuesWorkspace } from "@/pages/repo";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
 import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
@@ -75,10 +76,11 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(store.sheet?.kind === "clone" && store.sheet.url === "https://github.com/fixture/remote.git", "Remote Clone did not preserve URL");
     store.sheet = null;
     reset();
-    // Account: Inbox, My work, Releases, Projects and Organizations on one page
+    // Account: Inbox, My work and Organizations on one page; Releases and Projects have pages of their own
     settings.set("accountPageSection", "inbox");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
-    check(host.querySelectorAll(".account-page-sections .segmented button").length === 5, "Account page must offer its five sections");
+    check(host.querySelectorAll(".account-page-sections .segmented button").length === 3, "Account page must offer its three sections");
+    check([...host.querySelectorAll(".account-page-sections button")].every((b) => b.textContent?.trim() !== t("Projects") && b.textContent?.trim() !== t("Releases")), "Releases and Projects must not be account sections");
     check(!host.querySelector("h1"), "Account sections must not show a large page title");
     check(mentions > 0 && host.textContent?.includes("Fixture mention"), "Inbox did not query mentions");
     check(!host.querySelector('[role="dialog"]'), "Inbox is still a modal");
@@ -89,10 +91,12 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     await click("My work");
     await pause();
     check(host.textContent?.includes("Fixture pull request") && host.textContent?.includes("Fixture issue"), "My work summaries missing");
-    await click("Releases");
-    check(await (async () => { for (let i = 0; i < 40 && !host.textContent?.includes("Fixture release"); i++) await pause(); return host.textContent?.includes("Fixture release"); })(), "Releases section did not load the hub");
-    check(releases > 0 && settings.get<string>("accountPageSection", "") === "releases", "The account section was not remembered");
+    check(settings.get<string>("accountPageSection", "") === "myWork", "The account section was not remembered");
     check([...host.querySelectorAll("button")].every((b) => b.textContent?.trim() !== t("Gists")), "Gists must be gone");
+    reset();
+    // the Releases page: the hub's release list for the repository
+    await mount(<HostingHubPanel store={store} section="releases" onClone={() => {}} />);
+    check(await (async () => { for (let i = 0; i < 40 && !host.textContent?.includes("Fixture release"); i++) await pause(); return host.textContent?.includes("Fixture release"); })() && releases > 0, "The Releases page did not load the hub");
     reset();
     const repositoryTarget = store.target;
     store.target = null;
@@ -166,7 +170,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
-    return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, releases section and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"];
+    return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {

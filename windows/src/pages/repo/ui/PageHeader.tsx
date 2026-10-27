@@ -12,7 +12,7 @@ export function PageHeader({ store }: { store: RepoStore }) {
   useObserve(store);
   const page = store.destination;
   const Icon = destinationIcons[page];
-  const back = store.cameFromRepository && (page === "pullRequests" || page === "issues");
+  const back = store.cameFromRepository && (page === "pullRequests" || page === "issues" || page === "releases");
   return (
     <header className="page-header">
       {back && (

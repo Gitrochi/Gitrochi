@@ -1204,5 +1204,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log.",
  "Reset to default layout": "Khôi phục bố cục mặc định",
  "Drag to resize the column": "Kéo để đổi độ rộng cột",
- "Date": "Ngày"
+ "Date": "Ngày",
+ "Open in Releases": "Mở trong Bản phát hành"
 }

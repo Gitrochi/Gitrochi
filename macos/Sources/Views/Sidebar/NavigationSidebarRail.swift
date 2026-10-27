@@ -21,7 +21,7 @@ struct NavigationSidebarRail: View {
                     separator
                     rows([.compare, .rebase, .code])
                     separator
-                    rows([.pullRequests, .issues, .actions, .account])
+                    rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     separator
                     rows([.flows])
                 }.padding(.horizontal, 8).padding(.bottom, 8)

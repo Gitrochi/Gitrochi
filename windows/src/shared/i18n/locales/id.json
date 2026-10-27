@@ -1201,5 +1201,6 @@
  "Log preview is limited to 2 MB. Open the browser for the complete log.": "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap.",
  "Reset to default layout": "Kembalikan tata letak bawaan",
  "Drag to resize the column": "Seret untuk mengubah lebar kolom",
- "Date": "Tanggal"
+ "Date": "Tanggal",
+ "Open in Releases": "Buka di Rilis"
 }

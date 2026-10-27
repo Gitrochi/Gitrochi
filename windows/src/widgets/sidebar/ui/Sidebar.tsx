@@ -1,4 +1,4 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
+import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, SquareArrowOutUpRight, Tag as TagIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
@@ -172,8 +172,15 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
 
       {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
 
-      {show("tags") && store.tags.length > 0 && (
-        <Section id="tags" title={t("Tags")} count={store.tags.length} defaultOpen={false}>
+      {/* with a hosting remote the section stays, even without tags, for its way to the Releases page */}
+      {show("tags") && (store.tags.length > 0 || !!store.target) && (
+        <Section
+          id="tags"
+          title={t("Tags")}
+          count={store.tags.length}
+          defaultOpen={false}
+          actions={store.target && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={t("Open in Releases")} aria-label={t("Open in Releases")} onClick={() => store.navigate("releases")} />}
+        >
           {store.tags.map((tag) => (
             <div
               key={tag.name}
@@ -183,6 +190,7 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 showContextMenu(e, [
                   { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
                   { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
+                  ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
                   "divider",
                   { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
                 ])

@@ -1210,3 +1210,6 @@
 "Reset to default layout" = "デフォルトのレイアウトに戻す";
 "Drag to resize the column" = "ドラッグして列の幅を変更";
 "Date" = "日付";
+"Releases" = "リリース";
+"Projects" = "プロジェクト";
+"Open in Releases" = "リリースで開く";

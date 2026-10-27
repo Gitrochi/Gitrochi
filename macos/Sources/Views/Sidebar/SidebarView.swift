@@ -134,7 +134,8 @@ struct SidebarView: View {
             IssueListSection()
         }
 
-        if show("tags"), !store.tags.isEmpty {
+        // with a hosting remote the section stays, even without tags, for its way to the Releases page
+        if show("tags"), !store.tags.isEmpty || store.target != nil {
             SidebarSection("tags") {
                 ForEach(store.tags) { t in
                     Label(t.name, systemImage: "tag")
@@ -145,12 +146,21 @@ struct SidebarView: View {
                         .contextMenu {
                             Button("Go to this tag") { store.reveal(t.target) }
                             Button("Push tag") { Task { await store.pushTag(t) } }
+                            if store.target != nil { Button("Open in Releases") { store.navigate(.releases) } }
                             Divider()
                             Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
                         }
                 }
             } header: {
-                Text("Tags \(store.tags.count)")
+                HStack {
+                    Text("Tags \(store.tags.count)")
+                    Spacer()
+                    if store.target != nil {
+                        Button { store.navigate(.releases) } label: { Image(systemName: "arrow.up.forward.square") }
+                            .buttonStyle(.borderless)
+                            .help("Open in Releases")
+                    }
+                }
             }
         }
 

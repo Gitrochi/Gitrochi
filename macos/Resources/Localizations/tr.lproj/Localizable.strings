@@ -1197,3 +1197,6 @@
 "Reset to default layout" = "Varsayılan düzene sıfırla";
 "Drag to resize the column" = "Sütun genişliğini değiştirmek için sürükleyin";
 "Date" = "Tarih";
+"Releases" = "Sürümler";
+"Projects" = "Projeler";
+"Open in Releases" = "Sürümlerde aç";

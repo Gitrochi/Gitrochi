@@ -102,12 +102,12 @@ import SwiftUI
             }
         }
         precondition(GraphMetrics.width(lanes: 24) == GraphMetrics.width(lanes: GraphMetrics.maxVisibleLanes), "Lanes past the visible limit do not widen the graph column")
-        precondition(WorkspaceDestination.allCases.count == 10)
+        precondition(WorkspaceDestination.allCases.count == 12)
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
             let previous = nav.destination
             let allowed = nav.navigate(page, prepare: false)
-            precondition(allowed == !page.needsRepository, "Repository pages need a repository; Home, Issues and Account stay available")
+            precondition(allowed == !page.needsRepository, "Repository pages need a repository; Home, Issues, Releases, Projects and Account stay available")
             precondition(nav.destination == (page.needsRepository ? previous : page))
         }
         let firstPath = NSTemporaryDirectory() + "gitrochi-navigation-first", secondPath = NSTemporaryDirectory() + "gitrochi-navigation-second"
@@ -251,7 +251,7 @@ import SwiftUI
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional, resizable columns; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional, resizable columns; 12 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
     }
 }
 SWIFT
