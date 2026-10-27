@@ -244,7 +244,11 @@ struct RepoView: View {
                                          : String(localized: "Opens a terminal in this repository's folder below the graph. The graph updates as soon as you run git commands."),
                       shortcut: "⌃`")
         }
-        // the hosting account and Git identity stay in the toolbar's trailing corner
+        // the hosting account and Git identity stay in the toolbar's trailing corner, in a capsule of their own:
+        // without the gap macOS draws the terminal button and the account in one shared capsule
+        if #available(macOS 26.0, *) {
+            ToolbarSpacer(.fixed, placement: .primaryAction)
+        }
         ToolbarItem(placement: .primaryAction) {
             AccountQuickControls()
         }

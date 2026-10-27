@@ -33,7 +33,12 @@ struct AccountQuickControls: View {
                     }.foregroundStyle(.secondary)
                 }
                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
-            }.frame(maxWidth: 180, alignment: .leading)
+            }
+            .frame(maxWidth: 190, alignment: .leading)
+            .padding(.leading, 4).padding(.trailing, 8)
+            .frame(height: 30)
+            // the whole capsule answers a click, not only the avatar and the text
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Accounts")
