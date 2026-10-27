@@ -14,11 +14,6 @@ struct NavigationSidebarRail: View {
             .help("Expand sidebar").accessibilityLabel("Expand sidebar")
             .accessibilityIdentifier("navigation-rail-expand")
             .padding(.top, 6)
-            Button { store.showCommandPalette = true } label: {
-                Image(systemName: "magnifyingglass").font(.system(size: 17)).frame(width: 40, height: 36)
-            }
-            .buttonStyle(.plain).foregroundStyle(.secondary)
-            .help("Quick navigation (⌘K)").accessibilityLabel("Quick navigation")
             Divider().padding(.horizontal, 10).padding(.vertical, 6)
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 4) {
