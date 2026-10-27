@@ -1,7 +1,7 @@
 // gitch graph html 을 헤드리스 Chrome 으로 열어 본다(외부 모듈 없이 CDP — Node 22 의 fetch · WebSocket).
 // 사용: node graph_browser.mjs <chrome> <html> <임시 폴더> → JSON 한 줄. 페이지 오류가 있거나 겹친 노드가 있으면 종료 코드 1
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const [chromePath, html, tmp] = process.argv.slice(2);
 const port = 9400 + Math.floor(Math.random() * 400);
@@ -80,6 +80,26 @@ try {
   const checks = [];
   for (const [tab, layout, style] of [["", "force", "dot"], ["", "force", "box"], ["", "pack", ""], ["", "layers", "box"], ["", "stars", "dot"], ["", "stars", "box"], ["2", "layers", "box"], ["2", "force", "box"], ["4", "tidy", "box"], ["4", "radial", "dot"], ["4", "pack", ""]])
     checks.push(await evaluate(settle(tab, layout, style)));
+  // Parent/child folders are already nested; selecting them must not draw containment chords.
+  const packSelection = await evaluate(`(() => {
+    const t=window.gitchGraphTest, click=selector=>document.querySelector(selector).click();
+    document.dispatchEvent(new KeyboardEvent("keydown", {key:"4"}));
+    click('#layout button[data-v="pack"]');
+    t.select("packages/a/");t.redraw(6);
+    const tree=t.state(), metrics=[...document.querySelectorAll('#info .metrics > div')].map(row=>({value:Number(row.querySelector('b').textContent),label:row.querySelector('span').textContent}));
+    const messages=JSON.parse(document.getElementById('graph-ui-messages').textContent),language=document.documentElement.lang;
+    const text=key=>messages[language]?.[key]??messages.en[key]??key;
+    const labels=['Parent folder','Direct subfolders','All subfolders'].map(text);
+    const treeInfo=metrics.length===3&&metrics.every((row,i)=>row.label===labels[i]&&row.value===[1,3,4][i]);
+    click('#info [data-act="out"]');t.redraw(6);
+    const descendants=t.state(),treeHighlight=t.highlight();
+    document.dispatchEvent(new KeyboardEvent("keydown", {key:"1"}));
+    click('#unit button[data-v="file"]');click('#layout button[data-v="pack"]');
+    t.zoom(8);t.select("packages/a/src/f1.ts");t.redraw(6);
+    const files=t.state(),dependencyInfo=[...document.querySelectorAll('#info .metrics span')].some(label=>label.textContent===text('Instability'));
+    return {ok:tree.rel==='tree'&&tree.pack.highlighted===0&&descendants.pack.highlighted===0&&treeInfo&&treeHighlight.nodes.includes('packages/a/src/')&&files.rel==='files'&&files.pack.highlighted>0&&dependencyInfo,
+      treeHighlighted:tree.pack.highlighted,descendantHighlighted:descendants.pack.highlighted,fileHighlighted:files.pack.highlighted,treeInfo,metrics,dependencyInfo};
+  })()`);
   // 별자리 → 힘 → 폴더 단위에서 별자리 → 파일 단위로 돌아오면 별자리를 지금 설정으로 다시 잡아야 한다(꼭짓점 별이 제자리, 벗어난 거리 0)
   const starTrip = await evaluate(`(async () => {
     const t = window.gitchGraphTest, wait = (ms) => new Promise((r) => setTimeout(r, ms)), click = (sel) => document.querySelector(sel).click();
@@ -320,12 +340,30 @@ try {
   })()`);
   await escapeDialog();
   await evaluate(`(() => {
+    const t=window.gitchGraphTest,s=t.capture();s.relation='tree';s.query='';s.filters.lang='all';s.filters.onlyDiff=false;s.filters.onlyAffected=false;s.filters.minDeg=0;s.review.folder='';s.panels.dock='info';s.panels.rightClosed=false;s.panels.narrowExplore=false;t.restore(s);t.select('packages/a/src/');
+  })()`);
+  const inspectorPathCases=[];
+  for(const [width,theme] of [[1280,'dark'],[1280,'light'],[680,'dark'],[680,'light']]) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height:800,deviceScaleFactor:1,mobile:false});
+    await evaluate(`document.documentElement.dataset.theme !== ${JSON.stringify(theme)} && document.getElementById('theme').click()`);
+    await clickElement('#info .path-action[data-path="packages/a/src"]');
+    await sleep(50);
+    inspectorPathCases.push(await evaluate(`(() => {
+      const menu=document.getElementById('pathMenu'),reveal=document.getElementById('revealPath'),r=menu.getBoundingClientRect(),link=new URL(reveal.href);
+      return {width:innerWidth,theme:document.documentElement.dataset.theme,open:!menu.hidden&&r.width>0&&r.height>0,inViewport:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,
+        reveal:!reveal.hidden&&link.protocol==='gitrochi:'&&link.searchParams.get('view')==='finder'&&link.searchParams.get('file')==='packages/a/src',selected:window.gitchGraphTest.capture().selected};
+    })()`));
+    await escapeDialog();
+  }
+  const inspectorPathMenu={ok:inspectorPathCases.every(result=>result.open&&result.inViewport&&result.reveal&&result.selected==='packages/a/src/'),cases:inspectorPathCases};
+  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:800,deviceScaleFactor:1,mobile:false});
+  await evaluate(`(() => {
     if(window.__gitchClipboardDescriptor)Object.defineProperty(navigator,'clipboard',window.__gitchClipboardDescriptor);else delete navigator.clipboard;
     delete window.__gitchClipboardDescriptor;delete window.__gitchClipboardWrites;
   })()`);
   const explorerUX={
-    ok:folderInitial.tabs&&folderInitial.selected&&folderInitial.visible&&folderInitial.siblings&&folderInitial.tree&&folderInitial.ancestors&&folderInitial.noTruncation&&completeFolders.count>=125&&completeFolders.last&&lastFolder&&unchangedFolderRestore&&folderToggle&&scopedSearch.folder==='packages/a/'&&scopedSearch.query==='f1'&&scopedSearch.input==='f1'&&scopedSearch.paths.length>0&&scopedSearch.paths.every(path=>path.startsWith('packages/a/')&&path.includes('f1'))&&scopedSearch.scope&&resetScope&&prefixScope&&deletedScope&&readableFiles.groups>0&&readableFiles.heading&&readableFiles.wrapping&&readableFiles.separate&&pathMenu.open&&pathMenu.relative===menuPath&&pathMenu.link&&pathMenu.absoluteMatches&&pathMenu.unchanged&&relativeCopy&&absoluteCopy&&menuClosed&&folderPathMenu,
-    initial:folderInitial,complete:completeFolders,lastFolder,unchangedFolderRestore,folderToggle,scopedSearch,resetScope,prefixScope,deletedScope,readableFiles,pathMenu,relativeCopy,absoluteCopy,menuClosed,folderPathMenu
+    ok:folderInitial.tabs&&folderInitial.selected&&folderInitial.visible&&folderInitial.siblings&&folderInitial.tree&&folderInitial.ancestors&&folderInitial.noTruncation&&completeFolders.count>=125&&completeFolders.last&&lastFolder&&unchangedFolderRestore&&folderToggle&&scopedSearch.folder==='packages/a/'&&scopedSearch.query==='f1'&&scopedSearch.input==='f1'&&scopedSearch.paths.length>0&&scopedSearch.paths.every(path=>path.startsWith('packages/a/')&&path.includes('f1'))&&scopedSearch.scope&&resetScope&&prefixScope&&deletedScope&&readableFiles.groups>0&&readableFiles.heading&&readableFiles.wrapping&&readableFiles.separate&&pathMenu.open&&pathMenu.relative===menuPath&&pathMenu.link&&pathMenu.absoluteMatches&&pathMenu.unchanged&&relativeCopy&&absoluteCopy&&menuClosed&&folderPathMenu&&inspectorPathMenu.ok,
+    initial:folderInitial,complete:completeFolders,lastFolder,unchangedFolderRestore,folderToggle,scopedSearch,resetScope,prefixScope,deletedScope,readableFiles,pathMenu,relativeCopy,absoluteCopy,menuClosed,folderPathMenu,inspectorPathMenu
   };
   await evaluate(`window.gitchGraphTest.restore(${JSON.stringify(explorerRestore)});document.getElementById('changesNav').click()`);
 
@@ -455,8 +493,26 @@ try {
   }
   await send('Page.navigate',{url:`file://${reportFile}`});await sleep(300);
   const offline=await evaluate(`document.querySelectorAll('script,[src]').length===0 && document.querySelector('h1')?.textContent.includes('변경 리뷰') && document.querySelector('main').textContent.includes('테스트 후보')`);
+  const nativePathMenus=[], sourceHtml=await readFile(html,'utf8');
+  for(const [index,repoPath] of ['C:/workspace/Graph repo',String.raw`\\server\share\Graph repo`].entries()) {
+    const nativeHtml=sourceHtml.replace(/(<script id="graph-data" type="application\/json">)([\s\S]*?)(<\/script>)/,(_all,start,json,end)=>{
+      const data=JSON.parse(json);for(const view of Object.values(data.views||{graph:data}))view.repoPath=repoPath;
+      return start+JSON.stringify(data).replace(/</g,'\\u003c')+end;
+    });
+    const fixture=`${tmp}/native-path-${index}.html`;await writeFile(fixture,nativeHtml);
+    await send('Page.navigate',{url:`file://${fixture}#test`});
+    for(let i=0;i<100;i++){await sleep(50);if(await evaluate('!!window.gitchGraphTest'))break;}
+    const result=await evaluate(`(() => {
+      const t=window.gitchGraphTest,s=t.capture();s.relation='tree';s.query='';s.filters.lang='all';s.filters.onlyDiff=false;s.filters.onlyAffected=false;s.filters.minDeg=0;s.panels.dock='info';s.panels.rightClosed=false;t.restore(s);t.select('packages/a/src/');
+      document.querySelector('#info .path-action').click();
+      const link=document.getElementById('revealPath'),url=new URL(link.href);
+      return {visible:!link.hidden&&!!link.getClientRects().length,repo:url.searchParams.get('repo'),file:url.searchParams.get('file'),view:url.searchParams.get('view')};
+    })()`);
+    nativePathMenus.push({...result,ok:result.visible&&result.repo===repoPath&&result.file==='packages/a/src'&&result.view==='finder'});
+  }
   const tripOk = starTrip.unit === "file" && starTrip.layout === "stars" && starTrip.drift === 0;
-  out = { ok: !errors.length && checks.every((c) => c.overlaps === 0) && tripOk && languages.ok && views.ok && review.ok && sharing.ok && selectionUX.ok && explorerUX.ok && dock.ok && offline && !externalRequests.length && png.type === "image/png", errors, checks, starTrip, languages, views, review, sharing, selectionUX, explorerUX, dock, offline, externalRequests, png };
+  out = { ok: !errors.length && checks.every((c) => c.overlaps === 0) && tripOk && packSelection.ok && languages.ok && views.ok && review.ok && sharing.ok && selectionUX.ok && explorerUX.ok && dock.ok && offline && !externalRequests.length && png.type === "image/png", errors, checks, packSelection, starTrip, languages, views, review, sharing, selectionUX, explorerUX, dock, offline, externalRequests, png };
+  out.nativePathMenus=nativePathMenus;out.ok=out.ok&&nativePathMenus.every(result=>result.ok);
 } catch (e) {
   out = { ok: false, errors: [...errors, String(e && e.message || e)] };
 } finally {

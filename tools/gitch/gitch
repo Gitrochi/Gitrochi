@@ -4373,7 +4373,7 @@ config_cmd() {   # path | show | get <키> | check | set|add|unset|unset-all <�
   case "$sub" in
     path) say "$CFG" ;;
     show|cat) [ -f "$CFG" ] || die "설정 파일이 없습니다: $(tilde "$CFG") → gitch migrate 또는 gitch add"; cat "$CFG" ;;
-    get) [ ${#args[@]} -ge 1 ] || die "사용법: gitch config get <키>"; git config -f "$CFG" --get-all "${args[0]}" ;;
+    get) [ ${#args[@]} -ge 1 ] || die "사용법: gitch config get <키>"; git --no-pager config -f "$CFG" --get-all "${args[0]}" ;;
     check)
       load_config || die "설정 파일이 없습니다: $CFG"
       if [ ${#CFG_ERRORS[@]} -gt 0 ]; then for a in "${CFG_ERRORS[@]}"; do err "- $a"; done; exit 1; fi
@@ -7102,8 +7102,8 @@ module_audit_cmd() (
         { extra="{\"code\":\"INPUT_CHANGED\",\"severity\":\"warning\",\"message\":\"Tracked files or repository state changed during analysis; rerun the audit.\"}"
           marker="\"diagnostics\":["; p=index($0, marker)+length(marker)
           if (p>length(marker)) $0=substr($0,1,p-1) extra (substr($0,p,1)=="]" ? "" : ",") substr($0,p)
-          sub(/\"incomplete\":false/, "\"incomplete\":true")
-          if (match($0,/\"warnings\":[0-9]+/)) { value=substr($0,RSTART,RLENGTH); sub(/.*:/,"",value); $0=substr($0,1,RSTART-1) "\"warnings\":" (value+1) substr($0,RSTART+RLENGTH) }
+          sub(/"incomplete":false/, "\"incomplete\":true")
+          if (match($0,/"warnings":[0-9]+/)) { value=substr($0,RSTART,RLENGTH); sub(/.*:/,"",value); $0=substr($0,1,RSTART-1) "\"warnings\":" (value+1) substr($0,RSTART+RLENGTH) }
           print
         }' "$tmp/result"
     else cat "$tmp/result"; say '경고 · INPUT_CHANGED: 분석 중 추적 파일 또는 저장소 상태가 바뀌었습니다. 다시 실행하세요.'; fi
@@ -11862,6 +11862,13 @@ HTMLEOF
     "Find folders": "Find folders",
     "Collapse all subfolders": "Collapse all subfolders",
     "Folder hierarchy": "Folder hierarchy",
+    "Direct subfolders": "Direct subfolders",
+    "All subfolders": "All subfolders",
+    "Nested circles show folders and their contents.": "Nested circles show folders and their contents.",
+    "Show containing folders": "Show containing folders",
+    "Show all subfolders": "Show all subfolders",
+    "{0} · {1} containing folders": "{0} · {1} containing folders",
+    "{0} · {1} subfolders": "{0} · {1} subfolders",
     "Graph tools": "Graph tools",
     "Graph settings": "Graph settings",
     "Folder depth": "Folder depth",
@@ -12714,6 +12721,13 @@ HTMLEOF
     "Find folders": "폴더 찾기",
     "Collapse all subfolders": "모든 하위 폴더 접기",
     "Folder hierarchy": "폴더 계층",
+    "Direct subfolders": "바로 아래 폴더",
+    "All subfolders": "전체 하위 폴더",
+    "Nested circles show folders and their contents.": "안쪽 원은 해당 폴더에 들어 있는 하위 폴더와 파일입니다.",
+    "Show containing folders": "상위 폴더 보기",
+    "Show all subfolders": "전체 하위 폴더 보기",
+    "{0} · {1} containing folders": "{0} · 상위 폴더 {1}개",
+    "{0} · {1} subfolders": "{0} · 하위 폴더 {1}개",
     "Graph tools": "그래프 도구",
     "Graph settings": "그래프 설정",
     "Folder depth": "폴더 깊이",
@@ -13566,6 +13580,13 @@ HTMLEOF
     "Find folders": "フォルダーを検索",
     "Collapse all subfolders": "すべてのサブフォルダーを折りたたむ",
     "Folder hierarchy": "フォルダー階層",
+    "Direct subfolders": "直下のサブフォルダー",
+    "All subfolders": "すべてのサブフォルダー",
+    "Nested circles show folders and their contents.": "内側の円は、そのフォルダーに含まれるサブフォルダーとファイルです。",
+    "Show containing folders": "上位フォルダーを表示",
+    "Show all subfolders": "すべてのサブフォルダーを表示",
+    "{0} · {1} containing folders": "{0}・上位フォルダー{1}件",
+    "{0} · {1} subfolders": "{0}・サブフォルダー{1}件",
     "Graph tools": "グラフツール",
     "Graph settings": "グラフ設定",
     "Folder depth": "フォルダーの深さ",
@@ -15247,6 +15268,8 @@ HTMLEOF
     ctx.quadraticCurveTo(cx, cy, b.x + (bx / lb) * b.r, b.y + (by / lb) * b.r);
   }
   function packHot() {   // 올린 · 고른 노드나 강조(분석 · 경로)의 연결을 지금 확대의 원끼리로
+    // Nested circles already show tree containment; drawing it again cuts across descendants.
+    if (m.rel === "tree") return [];
     const pk = m.pk, f = hover || (HL ? null : sel), key = (f ? "n" + f.i : HL ? "h" : hoverH ? "f" + hoverH.hid : "") + ":" + pk.sig;
     if (pk.hot && pk.hot.key === key && pk.hot.hl === HL) return pk.hot.list;
     const pairs = new Map(), add = (e) => {
@@ -15920,7 +15943,13 @@ HTMLEOF
     if (n.d.path || n.id !== n.label) html += `<div class="path">${esc(n.d.path || n.id)}</div>`;
     if(n.kind==='file'||n.kind==='folder')html+=tr("\u003cdiv class=\"actions\">\u003cbutton class=\"path-action\" type=\"button\" data-path=\"{0}\" aria-label=\"Path and Finder\">Path / Finder\u003c/button>\u003c/div>", esc(localPath(n.d.path||n.id)));
     if (n.kind === "file" && META.repoPath) html += tr("\u003cp>\u003ca class=\"source-link\" href=\"{0}\">Open {1}file in app ↗\u003c/a>\u003c/p>", esc(appLink(n.d.path || n.id, 1, (n.d.deleted || n.d.status==="removed") ? REVIEW?.baseSha : n.d.impactFromBase ? n.d.baseCommit : null)), n.d.impactFromBase ? tr("previous ") : "");
-    if (m.directed) {
+    if (m.rel === "tree") {
+      const children = n.out.filter(e => e.vis && e.t.kind === "folder").length;
+      const descendants = [...reach(n, "out")].filter(o => o.kind === "folder").length;
+      html += `<div class="metrics"><div><b>${ca}</b><span>${esc(tr("Parent folder"))}</span></div><div><b>${children}</b><span>${esc(tr("Direct subfolders"))}</span></div><div><b>${descendants}</b><span>${esc(tr("All subfolders"))}</span></div></div>`;
+      html += `<p class="hint">${esc(tr("Nested circles show folders and their contents."))}</p>`;
+      html += `<div class="actions"><button type="button" data-act="in">${esc(tr("Show containing folders"))}</button><button type="button" data-act="out">${esc(tr("Show all subfolders"))}</button><button type="button" data-act="path" class="${pathFrom === n ? "on" : ""}">${esc(tr("Find path"))}</button><button type="button" data-act="local" class="${P.local ? "on" : ""}">${esc(tr("Neighborhood only"))}</button></div>`;
+    } else if (m.directed) {
       const inst = ca + ce ? (ce / (ca + ce)).toFixed(2) : "–";
       html += tr("\u003cdiv class=\"metrics\">\u003cdiv title=\"Direct dependents\">\u003cb>{0}\u003c/b>\u003cspan>Incoming\u003c/span>\u003c/div>\u003cdiv title=\"Direct dependencies\">\u003cb>{1}\u003c/b>\u003cspan>Outgoing\u003c/span>\u003c/div>\u003cdiv title=\"Outgoing ÷ (incoming + outgoing) — near 1 depends on others; near 0 is depended on by others\">\u003cb>{2}\u003c/b>\u003cspan>Instability\u003c/span>\u003c/div>", ca, ce, inst)
         + tr("\u003cdiv title=\"Transitive dependents\">\u003cb>{0}\u003c/b>\u003cspan>Impact scope\u003c/span>\u003c/div>\u003cdiv title=\"All transitive dependencies\">\u003cb>{1}\u003c/b>\u003cspan>All dependencies\u003c/span>\u003c/div>\u003cdiv class=\"{2}\" title=\"Dependency cycle size\">\u003cb>{3}\u003c/b>\u003cspan>Cycles\u003c/span>\u003c/div>\u003c/div>", imp, all, cyc > 1 ? "warn" : "", cyc > 1 ? cyc : tr("None"));
@@ -15942,8 +15971,8 @@ HTMLEOF
   }
   function act(what, n) {
     if (what === "review") { chosen.clear();chosen.add(n.id);select(null);renderReview();switchDockView('review');$("reviewDetail").scrollTop=0; }
-    else if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, tr("{0} · {1} dependency review targets", n.label, s.size), [n]); }
-    else if (what === "out") { const s = reach(n, "out"); highlight([n, ...s], null, tr("{0} · {1} transitive dependencies", n.label, s.size), [n]); }
+    else if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, m.rel === "tree" ? tr("{0} · {1} containing folders", n.label, s.size) : tr("{0} · {1} dependency review targets", n.label, s.size), [n]); }
+    else if (what === "out") { const s = reach(n, "out"); if (m.rel === "tree") for (const o of s) if (o.kind !== "folder") s.delete(o); highlight([n, ...s], null, m.rel === "tree" ? tr("{0} · {1} subfolders", n.label, s.size) : tr("{0} · {1} transitive dependencies", n.label, s.size), [n]); }
     else if (what === "cyc") { const a = analyze(), c = a.comps[a.comp.get(n)]; highlight(c, null, tr("Cycle with {0} nodes: {1}{2}", c.length, c.slice(0, 4).map((x) => x.label).join(" ⇄ "), c.length > 4 ? " …" : "")); }
     else if (what === "path") { pathFrom = pathFrom === n ? null : n; canvas.classList.toggle("picking", !!pathFrom); if (pathFrom) banner(tr("Find path: {0} — choose an end node (Esc to cancel)", n.label)); else clearHL(); renderInfo(); request(); }
     else if (what === "local") { P.local = !P.local; $("local").checked = P.local; $("localRow").hidden = !P.local; m.userMoved = false; filtersChanged(); }
@@ -16804,7 +16833,8 @@ HTMLEOF
     $('relativePathValue').textContent=rel||'.';$('absolutePathValue').textContent=absolute||tr("This graph has no repository location.");
     $('copyAbsolutePath').disabled=!absolute;$('pathFeedback').textContent='';
     const reveal=$('revealPath'), safe=!rel.startsWith('/')&&!rel.includes('\\')&&!rel.includes(':')&&!rel.split('/').some(p=>p==='..'||p==='.');
-    reveal.hidden=!absolute||!String(META.repoPath).startsWith('/')||!safe;
+    const absoluteRepo=/^(?:\/|[A-Za-z]:[\\/]|\\\\)/.test(String(META.repoPath||''));
+    reveal.hidden=!absolute||!absoluteRepo||!safe;
     const params=new URLSearchParams({repo:META.repoPath||'',view:'finder'});if(rel)params.set('file',rel);
     reveal.href='gitrochi://open?'+params.toString();reveal.title=tr("Open this location in Finder through Gitrochi.");
     $('copyRelativePath').onclick=async()=>{const copied=await copyReviewText(rel||'.');$('pathFeedback').textContent=copied?tr("Relative path copied."):tr("Could not copy. Select the path above and copy it.");};
@@ -17178,7 +17208,7 @@ HTMLEOF
     replay: () => ({active:replay.active,playing:replay.playing,progress:replay.progress,reduced:!!replay.reduced?.matches,
       nodes:replay.active?visNodes.map(n=>({id:n.id,label:replayLabel(n),before:replay.data.before.has(n.id),current:replay.data.current.has(n.id),opacity:replayNodeOpacity(n),x:n.x,y:n.y})):[],
       edges:replay.active?m.edges.filter(e=>e.s.vis&&e.t.vis).map(e=>{const [before,current]=replayEdgePresence(e);return {source:e.s.id,target:e.t.id,kind:e.kind,before,current,opacity:replayOpacity(before,current,true)*Math.min(replayNodeOpacity(e.s),replayNodeOpacity(e.t))};}):[]}),
-    state: () => ({ viewport: (()=>{const p=margins();return {l:p.l,r:W-p.r,t:p.t,b:H-p.b};})(), rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig } : null }),
+    state: () => ({ viewport: (()=>{const p=margins();return {l:p.l,r:W-p.r,t:p.t,b:H-p.b};})(), rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig, highlighted: packHot().length } : null }),
     visible: () => visNodes.map((n) => ({ id: n.id, langs: n.langs, kind: n.kind })),
     select: (id) => { if(id===null){select(null);return true;} const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
     review: () => ({seeds:reviewSeeds(),direct:reviewImpact().direct,indirect:reviewImpact().indirect,priorities:reviewPriorities(),tests:reviewTests(reviewImpact()),withoutGuesses:{direct:reviewImpact(false).direct,indirect:reviewImpact(false).indirect},depth:reviewDepth}),

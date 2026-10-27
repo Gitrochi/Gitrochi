@@ -248,9 +248,19 @@ test_terminal_ui_raw_protocols_stay_clean_on_tty() {
   terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch config path
   assert_ok; terminal_ui_no_decoration
   assert_eq "$OUT" "$HOME/.config/gitsw/config"
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch config get account.alice.email
+  # Git may enable the config pager by default; raw values must bypass it even when explicitly enabled.
+  git config --global pager.config true
+  cat > "$T/ui-pager" <<'EOF'
+#!/bin/sh
+printf called > "$GITCH_TEST_PAGER_USED"
+printf '\033[?1h'
+cat
+EOF
+  chmod +x "$T/ui-pager"
+  terminal_ui_run 80 env GIT_PAGER="$T/ui-pager" GITCH_TEST_PAGER_USED="$T/pager-used" GITSW_COLOR=always GITSW_BANNER=always gitch config get account.alice.email
   assert_ok; terminal_ui_no_decoration
   assert_eq "$OUT" alice@example.com
+  [ ! -e "$T/pager-used" ] || fail 'raw config get must bypass the Git pager'
   terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch graph files --format dot --no-open
   assert_ok; terminal_ui_no_decoration
   assert_out 'digraph'

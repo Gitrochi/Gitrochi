@@ -24,7 +24,7 @@ export interface AppLaunch {
   repo: string;
   file: string | null;
   line: number | null;
-  view: "graph" | "files" | "modules" | "changes" | "tree" | "diff" | "affected" | "precise" | null;
+  view: "graph" | "files" | "modules" | "changes" | "tree" | "diff" | "affected" | "precise" | "finder" | null;
   commit: string | null;
 }
 
