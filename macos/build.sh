@@ -122,6 +122,7 @@ else
 fi
 cp "$REPO/LICENSE" "$CONTENTS/Resources/LICENSE.txt"
 cp "$REPO/THIRD_PARTY_NOTICES.md" "$CONTENTS/Resources/THIRD_PARTY_NOTICES.md"
+cp "$REPO/tools/gitch-flow/THIRD_PARTY_NOTICES.txt" "$CONTENTS/Resources/gitch-flow-THIRD-PARTY-NOTICES.txt"
 cp "$ROOT/Vendor/SwiftTerm/LICENSE" "$CONTENTS/Resources/SwiftTerm-LICENSE.txt"
 
 # 서명: 고정 인증서(Apple Development 등)가 있으면 그걸로 서명한다.

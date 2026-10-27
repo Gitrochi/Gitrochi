@@ -61,6 +61,7 @@
     "resources": {
       "../../LICENSE": "LICENSE.txt",
       "../../THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "../../tools/gitch-flow/THIRD_PARTY_NOTICES.txt": "gitch-flow-THIRD-PARTY-NOTICES.txt",
       "../../tools/gitch/gitch": "gitch",
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
       "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
