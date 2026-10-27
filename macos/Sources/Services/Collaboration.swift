@@ -87,23 +87,37 @@ struct CollaborationInboxDetail {
         guard number(p, "iid") > 0 else { throw fail(String(localized: "The server returned an unexpected response.")) }
         return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"))
     }
+    /// One page of the request list. GitHub's list endpoint carries everything the list shows, so no request is read on its own;
+    /// it has no author, reviewer or text filter, so those narrow each loaded page here (the search API is rate limited,
+    /// lags behind and is refused for some repositories). Windows: `requestPage` in collaboration.ts.
     static func requests(_ c: ReviewAccess, _ q: RequestQuery) async throws -> ([PullRequest], Bool, String?) {
+        let search = q.search.trimmed
         if c.target.provider == .github {
-            let scope: String
-            switch q.scope { case "mine": scope = "is:open author:\(c.me)"; case "reviewRequested": scope = "is:open review-requested:\(c.me)"; case "merged": scope = "is:merged"; case "closed": scope = "is:closed -is:merged"; default: scope = "is:open" }
-            let result = try await object(c, c.apiBase + "/search/issues?" + query(["q": "repo:\(c.target.path) is:pr \(scope)" + (q.search.trimmed.isEmpty ? "" : " \"" + q.search.replacingOccurrences(of: "\\", with: " ").replacingOccurrences(of: "\"", with: " ") + "\""), "sort": "updated", "order": "desc", "per_page": "30", "page": String(q.page)]))
-            var items: [PullRequest] = []
-            for item in array(result, "items") { items.append(try pull(c, await object(c, requestURL(c, number(item, "number"))))) }
-            let count = number(result, "total_count")
-            let warning = bool(result, "incomplete_results") || count > 1000 ? String(localized: "The server limited search results. Narrow the search to see more.") : nil
-            return (items, q.page * 30 < min(count, 1000), warning)
+            let closed = q.scope == "closed" || q.scope == "merged"
+            let filtered = closed || q.scope == "mine" || q.scope == "reviewRequested" || !search.isEmpty
+            let perPage = filtered ? 100 : 30
+            let page = try await list(c, repo(c) + "/pulls?" + query(["state": closed ? "closed" : "open", "sort": "updated", "direction": "desc", "per_page": String(perPage), "page": String(q.page)]))
+            let items = try page.filter { matches(c, $0, q.scope, search: search) }.map { try pull(c, $0) }
+            return (items, page.count == perPage, search.isEmpty ? nil : String(localized: "Search filters loaded pages. Load more to search older items."))
         }
         var params = ["state": q.scope == "closed" ? "closed" : q.scope == "merged" ? "merged" : "opened", "per_page": "30", "page": String(q.page), "order_by": "updated_at", "sort": "desc", "scope": "all"]
-        if !q.search.trimmed.isEmpty { params["search"] = q.search.trimmed }
+        if !search.isEmpty { params["search"] = search }
         if q.scope == "mine" { params["author_username"] = c.me }
         if q.scope == "reviewRequested" { params["reviewer_username"] = c.me }
         let items = try await list(c, repo(c) + "/merge_requests?" + query(params))
         return (try items.map { try pull(c, $0) }, items.count == 30, nil)
+    }
+    private static func matches(_ c: ReviewAccess, _ p: Object, _ scope: String, search: String) -> Bool {
+        let me = { (name: String) in name.caseInsensitiveCompare(c.me) == .orderedSame }
+        switch scope {
+        case "merged": guard p["merged_at"] is String else { return false }
+        case "closed": guard !(p["merged_at"] is String) else { return false }
+        case "mine": guard me(text(obj(p, "user"), "login")) else { return false }
+        case "reviewRequested": guard array(p, "requested_reviewers").contains(where: { me(text($0, "login")) }) else { return false }
+        default: break
+        }
+        guard !search.isEmpty else { return true }
+        return [text(p, "title"), "#" + String(number(p, "number")), text(obj(p, "user"), "login"), text(obj(p, "head"), "ref")].contains { $0.localizedCaseInsensitiveContains(search) }
     }
     static func lifecycle(_ c: ReviewAccess, _ n: Int) async throws -> RequestLifecycle {
         let p = try await object(c, requestURL(c, n) + (c.target.provider == .gitlab ? "?with_merge_status_recheck=true" : ""))

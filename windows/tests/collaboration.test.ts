@@ -9,10 +9,19 @@ const ghRepo = { state: "success", total_count: 0, check_runs: [], allow_merge_c
 const gl = { iid: 1, title: "Request", author: { username: "reviewer" }, source_branch: "work", target_branch: "main", sha: "head-a", web_url: "https://gitlab.example/x", state: "opened", detailed_merge_status: "mergeable", user: { can_merge: true }, head_pipeline: { status: "success" } };
 afterEach(() => vi.restoreAllMocks());
 describe("PR lifecycle", () => {
-  it("searches server-side with reviewer and page then loads complete pulls", async () => {
-    const c = access(), http = vi.spyOn(ipc, "http").mockImplementation(async (_m, url) => url.includes("/search/issues?") ? response({ items: [{ number: 1 }], total_count: 70 }) : response(gh()));
-    const r = await requestPage(c, { scope: "reviewRequested", search: "fix", page: 2 }); const q = new URL(http.mock.calls[0][1]).searchParams;
-    expect(q.get("q")).toContain("review-requested:reviewer"); expect(q.get("page")).toBe("2"); expect(r.items[0].headSHA).toBe("head-a"); expect(r.more).toBe(true);
+  it("lists GitHub pulls through the REST list and narrows reviewer and text on the loaded page", async () => {
+    const c = access(), http = vi.spyOn(ipc, "http").mockResolvedValue(response([{ ...gh(), requested_reviewers: [{ login: "Reviewer" }], title: "Fix things" }, { ...gh(), number: 2, title: "Other" }]));
+    const r = await requestPage(c, { scope: "reviewRequested", search: "fix", page: 2 }); const url = new URL(http.mock.calls[0][1]), q = url.searchParams;
+    expect(http).toHaveBeenCalledTimes(1); expect(url.pathname.endsWith("/repos/team/repo/pulls")).toBe(true); expect(q.get("state")).toBe("open"); expect(q.get("page")).toBe("2");
+    expect(r.items.map((p) => p.number)).toEqual([1]); expect(r.items[0].headSHA).toBe("head-a"); expect(r.more).toBe(false); expect(r.warning).toBeTruthy();
+  });
+  it("tells merged from closed GitHub pulls by merged_at and reads a bigger page when filtering", async () => {
+    const http = vi.spyOn(ipc, "http").mockResolvedValue(response([{ ...gh(), state: "closed", merged_at: "2026-01-01T00:00:00Z" }, { ...gh(), number: 2, state: "closed", merged_at: null }]));
+    const merged = await requestPage(access(), { scope: "merged", search: "", page: 1 }); const q = new URL(http.mock.calls[0][1]).searchParams;
+    expect(q.get("state")).toBe("closed"); expect(q.get("per_page")).toBe("100"); expect(merged.items.map((p) => p.number)).toEqual([1]); expect(merged.warning).toBeUndefined();
+    expect((await requestPage(access(), { scope: "closed", search: "", page: 1 })).items.map((p) => p.number)).toEqual([2]);
+    const open = await requestPage(access(), { scope: "open", search: "", page: 1 });
+    expect(new URL(http.mock.calls[2][1]).searchParams.get("per_page")).toBe("30"); expect(open.items.length).toBe(2);
   });
   it("filters merged GitLab requests on the server", async () => {
     const http = vi.spyOn(ipc, "http").mockResolvedValue(response([gl])); await requestPage(access("gitlab"), { scope: "merged", search: "fix", page: 3 });

@@ -1,12 +1,12 @@
 // entities/hosting 의 공개 API — 다른 조각은 이 파일로만 가져온다
-export { createPullRequest, date, defaultBranch, findTarget, HostingError, parseRemote, projectID, pullRequests, repositories, send, sendRaw } from "./api/hosting";
+export { createPullRequest, date, defaultBranch, findTarget, HostingError, parseRemote, projectID, repositories, send, sendRaw } from "./api/hosting";
 export { type PullRequestReview, type ReviewAccess, ReviewAPI, type ReviewComment, type ReviewDraftComment, type ReviewFile, type ReviewLineAnchor, type ReviewLineSide, type ReviewRefs, type ReviewVerdict, ReviewSubmissionError, reviewFileChange, reviewRepositoryKey, reviewDraftMatches } from "./api/review";
 export { accounts, AccountStore } from "./model/accounts";
 export { AccountConnectionFailure, accountConnectionMessage } from "./model/connection-failure";
 export { type RequestScope, type RequestQuery, type RequestLifecycle, type MergeMethod, type InboxItem, type InboxDetail, requestPage, requestLifecycle, mergeRequest, rebaseRequest, setRequestState, updateRequest, setReviewers, inboxPage, inboxDetail, postInboxComment, setIssueState, markInboxRead } from "./api/collaboration";
 
 export { issuePage, saveWorkspaceIssue, searchWorkspaceRepositories, workspaceJobLog, redactWorkspaceLog, type IssueScope } from "./api/workspace-operations";
-export { localHubAccess, hubProjectTarget, hubProjectColumns, HubProjectPermissionError, HubProjectActionDeniedError, HubUncertainWriteError, hubBoardIssueQuery, type HostingHubSection, type HubAccess, type HubItem, type HubPage, type HubFile, type HubMember, type HubRepository, type HubProjectFieldKind, type HubProjectOption, type HubProjectField, type HubProjectRow, type HubDetail, type HubReleaseInput, type HubGistInput, ensureHubCurrent, hubPage, hubDetail, hubSafeURL, hubError, hubSnippetRef, saveHubRelease, saveHubGist, deleteHubItem, starHubGist, moveHubProjectItem, addHubProjectIssue, saveHubProjectDraft, archiveHubProjectItem, deleteHubProjectItem, updateHubProjectField, moveHubProjectItemPosition, convertHubProjectDraftToIssue } from "./api/hub";
+export { localHubAccess, hubProjectTarget, hubProjectColumns, HubProjectPermissionError, HubProjectActionDeniedError, HubUncertainWriteError, hubBoardIssueQuery, type HostingHubSection, type HubAccess, type HubItem, type HubPage, type HubMember, type HubRepository, type HubProjectFieldKind, type HubProjectOption, type HubProjectField, type HubProjectRow, type HubDetail, type HubReleaseInput, ensureHubCurrent, hubPage, hubDetail, hubSafeURL, hubError, saveHubRelease, deleteHubItem, moveHubProjectItem, addHubProjectIssue, saveHubProjectDraft, archiveHubProjectItem, deleteHubProjectItem, updateHubProjectField, moveHubProjectItemPosition, convertHubProjectDraftToIssue } from "./api/hub";
 export { HostingHubStore, type HubSource } from "./model/hub";
 export { accountWorkPage, accountWorkOrigin, markAccountWorkRead, type AccountWorkKind, type AccountWorkItem } from "./api/account-work";
 export { rememberProjectBranch, projectTaskBranches } from "./model/project-tasks";
@@ -20,3 +20,4 @@ export { rescheduleHubProjectItem } from "./api/project-scheduling";
 
 export { readProjectScheduleSettings, saveProjectScheduleSettings } from "./model/project-schedule-preferences";
 export { createHubProjectTask } from "./api/project-task-creation";
+export { workStateTitle } from "./lib/work-state";

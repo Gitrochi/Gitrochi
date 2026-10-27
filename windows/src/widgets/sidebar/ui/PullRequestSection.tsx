@@ -1,84 +1,134 @@
 import { useEffect, useState } from "react";
 import type { RequestScope } from "@/entities/hosting";
-import { ChevronDown, GitBranch, GitPullRequest, Plus, RefreshCw, Search, TriangleAlert, UserRound, X } from "lucide-react";
+import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
-import { providerInfo, type RepoTarget } from "@/entities/git";
-import { accounts } from "@/entities/hosting";
+import { accountHost, providerInfo, type RepoTarget } from "@/entities/git";
+import { accounts, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { shortDate, useObserve } from "@/shared/lib";
-import { Button, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
+import { useObserve } from "@/shared/lib";
+import { IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
+import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
-import "./pull-requests.css";
 
-const scopeTitle = (scope: RequestScope) => t(scope === "reviewRequested" ? "Review requested" : scope === "mine" ? "Created by me" : scope === "open" ? "Open" : scope === "closed" ? "Closed" : "Merged");
-
-export function PullRequestSection({ store, target, openSettings }: { store: RepoStore; target: RepoTarget; openSettings: () => void }) {
+/**
+ * The repository's pull/merge requests: in the repository sidebar, and as the list of the Pull requests page (onPage).
+ * (macOS: PullRequestSection.swift)
+ */
+export function PullRequestSection({ store, target, openSettings, onPage = false }: { store: RepoStore; target: RepoTarget; openSettings: () => void; onPage?: boolean }) {
   useObserve(accounts);
   useObserve(store.ci);
   const info = providerInfo[target.provider];
-  const current = store.hostingAccount;
-  const candidates = accounts.candidates(target);
+  const gitlab = target.provider === "gitlab";
+  const openPage = t(gitlab ? "Open in Merge requests" : "Open in Pull requests");
+  // An account on this very host cannot be an alias for it, so only other servers are worth a try.
+  const other = accounts.accountsFor(target.provider).find((a) => accountHost(a) !== target.host);
   const st = store.prState;
+  const scope = store.requestQuery.scope;
   const [search, setSearch] = useState(store.requestQuery.search);
-  useEffect(() => setSearch(store.requestQuery.search), [target.host, target.path, store.requestQuery.search]);
-  const loading = st.kind === "loading";
+  useEffect(() => setSearch(store.requestQuery.search), [store.requestQuery.search]);
+  const filters: { value: RequestScope; title: string }[] = [
+    { value: "open", title: workStateTitle("open") }, { value: "closed", title: workStateTitle("closed") }, { value: "merged", title: workStateTitle("merged") },
+    { value: "mine", title: t("Created by me") }, { value: "reviewRequested", title: t("Review requested") },
+  ];
   return (
     <Section
       id="prs"
-      title={t(target.provider === "gitlab" ? "Merge requests" : "Pull requests")}
+      title={t(gitlab ? "Merge requests" : "Pull requests")}
       count={st.kind === "loaded" ? store.pullRequests.length : undefined}
-      actions={<>
-        <IconButton small disabled={loading} icon={<RefreshCw size={13} />} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
-        <IconButton small icon={<Plus size={14} />} tip={t("New {0} from the current branch", info.requestShort)} disabled={!store.headBranch} onClick={() => store.openSheet({ kind: "createPullRequest" })} />
-      </>}
+      collapsible={!onPage}
+      actions={
+        <>
+          {st.kind === "loading" && store.pullRequests.length > 0 && <Spinner size={11} />}
+          {/* the sidebar keeps two icons; refreshing and searching belong to the page */}
+          {onPage ? <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} aria-label={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
+            : <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("pullRequests")} />}
+          <IconButton
+            small
+            icon={<Plus size={13} />}
+            tip={t("New {0} from the current branch", info.requestShort)}
+            disabled={!store.headBranch}
+            onClick={() => {
+              store.sheet = { kind: "createPullRequest" };
+              store.changed();
+            }}
+          />
+        </>
+      }
     >
-      <div className="pr-list-controls">
-        <form className="pr-list-filter" onSubmit={(e) => { e.preventDefault(); void store.filterPullRequests(store.requestQuery.scope, search); }}>
-          <select className="select" aria-label={t("Request filter")} value={store.requestQuery.scope} onChange={(e) => void store.filterPullRequests(e.target.value as RequestScope, search)}>
-            {(["open", "closed", "merged", "mine", "reviewRequested"] as const).map((scope) => <option key={scope} value={scope}>{scopeTitle(scope)}</option>)}
-          </select>
-          <div className="pr-search-field">
-            <Search size={13} aria-hidden="true" />
-            <input className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("Search requests")} aria-label={t("Search requests")} />
-            {search && <IconButton small type="button" icon={<X size={12}/>} tip={t("Clear search")} onClick={() => { setSearch(""); void store.filterPullRequests(store.requestQuery.scope, ""); }} />}
-            <IconButton small type="submit" icon={<Search size={13}/>} tip={t("Search requests")} disabled={loading}/>
+      {onPage ? <ListSearchRow
+        prompt={t(gitlab ? "Search merge requests" : "Search pull requests")}
+        text={search}
+        onText={setSearch}
+        filters={filters}
+        selection={scope}
+        defaultFilter="open"
+        onSearch={(text) => void store.filterPullRequests(scope, text)}
+        onFilter={(value) => void store.filterPullRequests(value, search)}
+      /> : (scope !== "open" || store.requestQuery.search.trim()) && <ListFilterCaption
+        state={filters.find((f) => f.value === scope)?.title ?? scope}
+        search={store.requestQuery.search.trim()}
+        onClear={() => { setSearch(""); void store.filterPullRequests("open", ""); }}
+      />}
+      <div style={{ padding: "0 6px" }}>
+        {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
+        {st.kind === "needsAccount" && (
+          <div className="col" style={{ gap: 4, alignItems: "flex-start", padding: "2px 0 4px" }}>
+            {other && (
+              <button className="link" onClick={() => void store.tryExistingAccounts()} data-tip={t("If the same server is used under another address, an account you've already connected works there too")}>
+                {t("Try with the connected account (@{0})", other.username)}</button>
+            )}
+            <button className="link" onClick={openSettings}>
+              {gitlab ? t("Connect a self-hosted GitLab ({0}) account…", target.host) : t("Connect a GitHub account…")}
+            </button>
           </div>
-        </form>
-        {current && <button type="button" className="pr-account" title={t("Choose the account for this repository")} onClick={(e) => showMenuBelow(e.currentTarget, [
-          ...candidates.map((a): MenuItem => ({ label: `@${a.username}`, checked: a.id === current.id, onClick: () => store.useAccount(a) })),
-          "divider", { label: t("Add account…"), onClick: openSettings },
-        ])}><UserRound size={13}/><span className="ellipsis">@{current.username}</span><span className="pr-account-host ellipsis">{target.host}</span><ChevronDown size={11}/></button>}
-        {store.requestsWarning && <span className="pr-list-notice">{store.requestsWarning}</span>}
+        )}
+        {st.kind === "failed" && (
+          <div className="error-text" style={{ fontSize: 11.5 }}>
+            {st.message}
+          </div>
+        )}
+        {st.kind === "loading" && !store.pullRequests.length && <Spinner size={12} />}
+        {st.kind === "loaded" && !store.pullRequests.length && <div className="muted">{t(gitlab ? "No merge requests match this filter." : "No pull requests match this filter.")}</div>}
       </div>
-      {st.kind === "needsAccount" && <div className="pr-list-state">
-        <UserRound size={23}/><strong>{t("Connect account…")}</strong><p>{t("Connect an account to see the conversation and approvals.")}</p>
-        {accounts.accountsFor(target.provider)[0] && <Button size="small" block onClick={() => void store.tryExistingAccounts()}>{t("Try connected account")}</Button>}
-        <Button size="small" block kind="primary" onClick={openSettings}>{t("Connect {0} account", target.provider === "gitlab" ? "GitLab" : "GitHub")}</Button>
-      </div>}
-      {st.kind === "failed" && <div className="pr-list-state" role="alert"><TriangleAlert size={23}/><strong>{t("Unable to load requests")}</strong><p className="error-text">{st.message}</p><Button size="small" onClick={() => void store.loadPullRequests()}>{t("Retry")}</Button></div>}
-      {loading && !store.pullRequests.length && <div className="pr-list-state" role="status"><Spinner size={18}/><span>{t("Loading…")}</span></div>}
-      {st.kind === "loaded" && !store.pullRequests.length && <div className="pr-list-state"><GitPullRequest size={26}/><strong>{t("No requests found")}</strong><p>{store.requestQuery.search ? t("Try another search or filter.") : t("No requests in {0}.", scopeTitle(store.requestQuery.scope))}</p></div>}
-      <div className="pr-list-rows">
-        {store.pullRequests.map((pr) => {
-          const selected = store.selection?.kind === "pullRequest" && store.selection.number === pr.number;
-          const pipeline = pr.headSHA ? store.ci.bySha.get(pr.headSHA) : undefined;
-          return <button type="button" key={pr.number} className={`pr-list-row ${selected ? "selected" : ""}`} aria-pressed={selected} onClick={() => store.select({ kind: "pullRequest", number: pr.number })} onContextMenu={(e) => showContextMenu(e, [
-            { label: t("Check out branch"), onClick: () => void store.checkoutPullRequest(pr) },
-            { label: t("Open in browser"), onClick: () => store.openUrl(pr.url) },
-            { label: t("Copy link"), onClick: () => store.copy(pr.url) },
-          ])}>
-            <GitPullRequest size={16} className={pr.isDraft ? "muted" : "pr-list-icon"}/>
-            <span className="pr-list-row-body">
-              <span className="pr-list-row-top"><span>#{pr.number}</span>{pr.isDraft && <span className="pr-draft-badge">{t("Draft")}</span>}{pipeline && <span className="pr-row-ci" title={`CI: ${statusInfo[pipeline.status].title}`}><CIStatusIcon status={pipeline.status} size={12}/></span>}</span>
-              <strong className="pr-list-title">{pr.title}</strong>
-              <span className="pr-list-author"><span className="ellipsis">@{pr.author}</span>{pr.updated && <time>{shortDate(pr.updated)}</time>}</span>
-              <span className="pr-list-branch" title={`${pr.source} → ${pr.target}`}><GitBranch size={11}/><span className="ellipsis">{pr.source} → {pr.target}</span></span>
+      {store.pullRequests.map((pr) => (
+        <div
+          key={pr.number}
+          className="side-row"
+          data-request={pr.number}
+          style={{ alignItems: "flex-start", background: store.selection?.kind === "pullRequest" && store.selection.number === pr.number ? "var(--select)" : undefined }}
+          onClick={() => store.select({ kind: "pullRequest", number: pr.number })}
+          onContextMenu={(e) =>
+            showContextMenu(e, [
+              ...(onPage ? [] : [{ label: openPage, onClick: () => { store.navigate("pullRequests"); store.select({ kind: "pullRequest", number: pr.number }); } }, "divider"] as MenuItem[]),
+              { label: t("Check out branch"), onClick: () => void store.checkoutPullRequest(pr) },
+              { label: t("Open in browser"), onClick: () => store.openUrl(pr.url) },
+              { label: t("Copy link"), onClick: () => store.copy(pr.url) },
+            ])
+          }
+        >
+          <span className="col grow">
+            <span className="row">
+              <span className="muted" style={{ fontVariantNumeric: "tabular-nums" }}>
+                #{pr.number}
+              </span>
+              <span className="ellipsis">{pr.title}</span>
+              {pr.headSHA && store.ci.bySha.get(pr.headSHA) && (
+                <span className="ci-badge" data-tip={`CI: ${statusInfo[store.ci.bySha.get(pr.headSHA)!.status].title} · #${store.ci.bySha.get(pr.headSHA)!.number}`}>
+                  <CIStatusIcon status={store.ci.bySha.get(pr.headSHA)!.status} size={11} />
+                </span>
+              )}
             </span>
-          </button>;
-        })}
-      </div>
-      {store.requestsMore && <div className="pr-list-more"><Button size="small" block disabled={loading} onClick={() => void store.loadPullRequests(true)}>{loading ? <Spinner size={12}/> : t("Load more")}</Button></div>}
+            <span className="row side-sub">
+              {pr.isDraft && <span style={{ color: "var(--orange)", fontWeight: 600 }}>{t("Draft")}</span>}
+              <span className="ellipsis">
+                {pr.source} → {pr.target}
+              </span>
+            </span>
+          </span>
+        </div>
+      ))}
+      {store.requestsMore && <button className="link" disabled={st.kind === "loading"} onClick={() => void store.loadPullRequests(true)}>{t("Load more")}</button>}
     </Section>
   );
 }

@@ -46,6 +46,18 @@ jobs:
       - name: 빌드
         run: macos/build.sh
 
+      - name: Native window frame regression
+        run: bash macos/Tools/test-window-content-layout.sh --output "$RUNNER_TEMP/window-content-layout"
+
+      - name: Window frame failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: window-content-layout
+          path: ${{ runner.temp }}/window-content-layout
+          if-no-files-found: ignore
+          retention-days: 3
+
       - name: Check the flow engine in the app
         run: |
           app=macos/build/Gitrochi.app/Contents
@@ -80,7 +92,6 @@ jobs:
           bash macos/Tools/test-collaboration.sh
           bash macos/Tools/test-local-workflows.sh
           bash macos/Tools/test-workspace-navigation.sh
-          bash macos/Tools/test-window-content-layout.sh
           bash macos/Tools/test-inspector-layout.sh
           bash macos/Tools/test-adaptive-workbench-identity.sh
           bash macos/Tools/test-large-changes.sh

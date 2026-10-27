@@ -30,17 +30,15 @@ struct SidebarView: View {
             Picker("Repository tools", selection: $mode) {
                 Text("Branches").tag("list")
                 Text(activeAgents > 0 ? "Agents \(activeAgents)" : "Agents").tag("agents")
-                Text("CI/CD").tag("ci")
             }
             .pickerStyle(.segmented)
             .labelsHidden()
             .accessibilityLabel("Repository tools")
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
+            // a saved "ci" mode from before the Actions page falls through to the branch list
             if mode == "agents" {
                 AgentsPanel()
-            } else if mode == "ci" {
-                CIPanel()
             } else {
                 branchList
             }
@@ -71,10 +69,6 @@ struct SidebarView: View {
     @ViewBuilder
     private func sections(only: String?) -> some View {
         let show = { (id: String) in only == nil || only == id }
-
-        if show("pullRequests"), let target = store.target {
-            PullRequestSection(target: target)
-        }
 
         let pinned = store.localBranches.filter { store.isPinned($0) }
         if show("pinned"), !pinned.isEmpty {
@@ -132,7 +126,16 @@ struct SidebarView: View {
             }
         }
 
-        if show("tags"), !store.tags.isEmpty {
+        // the hosting lists sit between the branches and the tags
+        if show("pullRequests"), let target = store.target {
+            PullRequestSection(target: target)
+        }
+        if show("issues"), store.target != nil {
+            IssueListSection()
+        }
+
+        // with a hosting remote the section stays, even without tags, for its way to the Releases page
+        if show("tags"), !store.tags.isEmpty || store.target != nil {
             SidebarSection("tags") {
                 ForEach(store.tags) { t in
                     Label(t.name, systemImage: "tag")
@@ -143,12 +146,21 @@ struct SidebarView: View {
                         .contextMenu {
                             Button("Go to this tag") { store.reveal(t.target) }
                             Button("Push tag") { Task { await store.pushTag(t) } }
+                            if store.target != nil { Button("Open in Releases") { store.navigate(.releases) } }
                             Divider()
                             Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
                         }
                 }
             } header: {
-                Text("Tags \(store.tags.count)")
+                HStack {
+                    Text("Tags \(store.tags.count)")
+                    Spacer()
+                    if store.target != nil {
+                        Button { store.navigate(.releases) } label: { Image(systemName: "arrow.up.forward.square") }
+                            .buttonStyle(.borderless)
+                            .help("Open in Releases")
+                    }
+                }
             }
         }
 

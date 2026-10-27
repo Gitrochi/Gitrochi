@@ -83,7 +83,7 @@ export function planningFixture() {
             statuses: { STATUS: "DONE" },
           },
         ],
-        files: [],
+
         repositories: [],
         members: [],
         assets: [],
@@ -103,7 +103,7 @@ export function planningFixture() {
           sharedB,
           row("B2", "Polish the onboarding journey", 5, "designer", "ISSUE5"),
         ],
-        files: [],
+
         repositories: [],
         members: [],
         assets: [],

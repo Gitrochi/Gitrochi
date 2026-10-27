@@ -4,7 +4,7 @@ import { ipc } from "@/shared/api";
 
 const access = (): HubAccess => ({ target: { provider: "github", host: "github.com", path: "team/client", remote: "origin" }, token: "fixture-token", apiBase: "https://api.github.com", me: "reader" });
 const field: HubProjectField = { id: "STATUS", name: "Status", kind: "singleSelect", options: [{ id: "ACTIVE", name: "In progress" }] };
-const detail = (): HubDetail => ({ item: { id: "PROJECT", title: "Delivery", subtitle: "", body: "", url: "", data: {} }, fields: [field], rows: [{ id: "OLDER", title: "Same title", body: "", url: "", contentID: "DRAFT", statuses: {}, kind: "draft" }], files: [], members: [], repositories: [], assets: [], more: false });
+const detail = (): HubDetail => ({ item: { id: "PROJECT", title: "Delivery", subtitle: "", body: "", url: "", data: {} }, fields: [field], rows: [{ id: "OLDER", title: "Same title", body: "", url: "", contentID: "DRAFT", statuses: {}, kind: "draft" }], members: [], repositories: [], assets: [], more: false });
 const response = (value: unknown) => ({ status: 200, body: JSON.stringify({ data: value }) });
 const created = () => response({ addProjectV2DraftIssue: { projectItem: { id: "NEW-EXACT" } } });
 const request = (body: string | undefined) => JSON.parse(body ?? "{}") as { query: string; variables: { input: Record<string, unknown> } };

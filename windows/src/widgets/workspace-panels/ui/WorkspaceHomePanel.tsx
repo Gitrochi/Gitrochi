@@ -7,15 +7,19 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import { Button, showContextMenu } from "@/shared/ui";
-import "./welcome-page.css";
+import { WorkspacePlanningDashboard } from "./WorkspacePlanningDashboard";
+import { RemoteRepositorySearch } from "./RemoteRepositorySearch";
+import "./workspace-panels.css";
 
-/** 저장소를 열기 전 첫 화면: 열기·복제·새로 만들기 + 최근 저장소 */
-export function WelcomePage({ store }: { store: RepoStore; gitMissing?: boolean }) {
+/** Home: open, clone or create a repository, the recent list and a search of repositories on a server (macOS: WelcomeView) */
+export function WorkspaceHomePanel({ store, openSettings }: { store: RepoStore; openSettings?: () => void }) {
   useObserve(settings);
   useObserve(tools);
   const gitMissing = !tools.path("git");
   const list = recents();
   return (
+    <div className="workspace-home">
+      <WorkspacePlanningDashboard store={store} />
     <div className="welcome">
       <div className="welcome-main">
         <img src={icon} width={112} height={112} alt="" />
@@ -47,19 +51,12 @@ export function WelcomePage({ store }: { store: RepoStore; gitMissing?: boolean 
         <div className="card" style={{ maxWidth: 420, textAlign: "left", gap: 8 }}>
           <strong>{t("New here? Start with your Git account")}</strong>
           <span className="hint">{t("Gitrochi includes gitch for Git accounts and code graphs. Add your account, register an SSH key, and learn the app's tools step by step.")}</span>
-          <Button onClick={() => window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" }))}>{t("Set up Git accounts and learn gitch")}</Button>
+          <Button onClick={() => window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" }))}>{t("Get started with Git accounts…")}</Button>
         </div>
         <div className="col" style={{ gap: 8, marginTop: 8 }}>
           <Button kind="primary" size="large" style={{ width: 240 }} onClick={() => void store.pickAndOpen()}>
             <FolderOpen size={15} /> {" "}{t("Open repository…")}</Button>
-          <Button
-            size="large"
-            style={{ width: 240 }}
-            onClick={() => {
-              store.sheet = { kind: "clone" };
-              store.changed();
-            }}
-          >
+          <Button size="large" style={{ width: 240 }} onClick={() => store.openSheet({ kind: "clone" })}>
             <Download size={15} /> {" "}{t("Clone repository…")}</Button>
           <Button size="large" style={{ width: 240 }} onClick={() => void store.pickAndInit()}>
             <CopyPlus size={15} /> {" "}{t("Create new repository…")}</Button>
@@ -68,10 +65,10 @@ export function WelcomePage({ store }: { store: RepoStore; gitMissing?: boolean 
       <div className="welcome-recents">
         <div style={{ fontWeight: 600, padding: 16 }}>{t("Recent repositories")}</div>
         {list.length === 0 ? (
-          <div className="muted" style={{ padding: "0 16px" }}>
+          <div className="muted" style={{ padding: "0 16px 12px" }}>
             {t("No repositories opened yet")}</div>
         ) : (
-          <div className="col" style={{ overflow: "auto", gap: 2 }}>
+          <div className="col welcome-recent-list" style={{ gap: 2 }}>
             {list.map((p) => (
               <div
                 key={p}
@@ -92,7 +89,9 @@ export function WelcomePage({ store }: { store: RepoStore; gitMissing?: boolean 
             ))}
           </div>
         )}
+        <RemoteRepositorySearch store={store} openSettings={openSettings} />
       </div>
+    </div>
     </div>
   );
 }

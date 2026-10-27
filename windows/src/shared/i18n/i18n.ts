@@ -83,7 +83,7 @@ const native: Array<[RegExp, string]> = [
   [/^Couldn't connect to the server: (.*)$/s, "Couldn't connect to the server: {0}"],
   [/^Folder not found: (.*)$/s, "Folder not found: {0}"],
   [/^Couldn't run (.+?): (.*)$/s, "Couldn't run {0}: {1}"],
-  [/^(Only web addresses can be opened|Couldn't find PowerShell|No update was found\. Check again\.|No update was found|The terminal is already closed)$/, "{0}"],
+  [/^(Only web addresses can be opened|Couldn't find PowerShell|No update was found\. Check again\.|No update was found|The terminal is already closed|The app's window was not found\.|Windows did not bring the app to the front\.|Bringing another app forward is only available on Windows\.)$/, "{0}"],
 ];
 
 /** 백엔드 오류: 번역한 메시지와 원래 영어(native)를 함께 */

@@ -32,7 +32,7 @@ struct AccountsSettings: View {
             } header: {
                 Text("GitHub \(countText(.github))")
             } footer: {
-                Text("If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.")
+                Text("If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 

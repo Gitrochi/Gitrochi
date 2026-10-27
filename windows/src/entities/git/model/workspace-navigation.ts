@@ -1,11 +1,16 @@
-export const repositorySections = ["changes", "commits", "branches", "compare", "rebase", "code"] as const;
-export type RepositorySection = typeof repositorySections[number];
-export const workspaceDestinations = ["home", "repositories", "repository", ...repositorySections, "inbox", "myWork", "pullRequests", "issues", "actions", "releases", "projects", "organizations", "gists", "assistant", "agents", "flows", "worktrees", "operations"] as const;
-export type WorkspaceDestination = typeof workspaceDestinations[number];
-export interface WorkspaceLocation { destination: WorkspaceDestination; repositorySection: RepositorySection }
-export const repositoryDestinations = new Set<WorkspaceDestination>(["repository", ...repositorySections, "pullRequests", "actions", "assistant", "agents", "flows", "worktrees"]);
-export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination { return typeof value === "string" && (workspaceDestinations as readonly string[]).includes(value); }
-export function isRepositorySection(value: unknown): value is RepositorySection { return typeof value === "string" && (repositorySections as readonly string[]).includes(value); }
-export function workspaceLocation(destination: WorkspaceDestination, section: RepositorySection = "changes"): WorkspaceLocation {
-  return { destination: isRepositorySection(destination) ? "repository" : destination, repositorySection: isRepositorySection(destination) ? destination : section };
+/**
+ * The pages of a repository window. Repository is the three-column screen (branches | graph | inspector);
+ * the rest are full-width pages. (macOS: Core/WorkspaceNavigation.swift)
+ */
+export const workspaceDestinations = ["home", "repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"] as const;
+export type WorkspaceDestination = (typeof workspaceDestinations)[number];
+/** Pages that need an open repository. Home, Issues, Releases, Projects and Account work from an account alone. */
+export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
+export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination {
+  return typeof value === "string" && (workspaceDestinations as readonly string[]).includes(value);
+}
+/** The page a repository opens on: the saved one when it is valid, otherwise the repository screen (Home without a repository). */
+export function restoredDestination(saved: unknown, hasRepository: boolean): WorkspaceDestination {
+  const page = isWorkspaceDestination(saved) ? saved : hasRepository ? "repository" : "home";
+  return repositoryDestinations.has(page) && !hasRepository ? "home" : page;
 }

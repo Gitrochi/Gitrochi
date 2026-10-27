@@ -11,10 +11,17 @@ extension RepoStore {
     }
 
     func requestSearchFocus() {
-        navigate(.commits)
+        navigate(.repository)
         closeFileInspect()
         closeDiff()
+        showSearchBar = true
         searchFocusRequest += 1
+    }
+
+    /// Esc or the bar's close button: the search ends and the bar goes away
+    func closeSearchBar() {
+        clearSearch()
+        showSearchBar = false
     }
 
     func updateSearch() {
@@ -67,7 +74,7 @@ extension RepoStore {
         searchMatchSet = Set(ordered)
         searchUnloaded = found.subtracting(searchMatchSet).count
         // 지금 고른 커밋이 결과가 아니면 첫 결과로 이동
-        if jump, destination == .repository, repositorySection == .commits, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
+        if jump, destination == .repository, let first = ordered.first, !searchMatchSet.contains(selectedID ?? "") {
             select(.commit(first))
             scrollTarget = first
         }

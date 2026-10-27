@@ -18,6 +18,7 @@ import { LocalWorkflowsSheet } from "@/features/local-workflows";
 import { WorkspaceOverviewSheet } from "@/features/workspace-overview";
 import { CollaborationInboxSheet } from "@/features/collaboration-inbox";
 import { RepositoryAssistantSheet, MCPConnectionSheet } from "@/features/repository-assistant";
+import { IssueEditorSheet } from "@/features/edit-issue";
 import type { SheetKind } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 
@@ -74,5 +75,7 @@ function SheetSwitch({ store, sheet, close }: { store: RepoStore; sheet: SheetKi
       return <GraphDiffSheet store={store} close={close} />;
     case "graphCheck":
       return <GraphCheckSheet store={store} close={close} />;
+    case "issueEditor":
+      return <IssueEditorSheet store={store} close={close} number={sheet.number} title={sheet.title} body={sheet.body} />;
   }
 }

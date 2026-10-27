@@ -1,6 +1,5 @@
-import { Archive, Cloud, Folder, GitBranch, GitPullRequest, PanelLeftOpen, Pin, Tag as TagIcon } from "lucide-react";
+import { Archive, CircleDot, Cloud, Folder, GitBranch, GitPullRequest, PanelLeftOpen, Pin, Tag as TagIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { providerInfo } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -12,24 +11,25 @@ import { Sidebar, type SidebarSectionID } from "./Sidebar";
 export function SidebarRail({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
   const items: { id: Exclude<SidebarSectionID, "repository">; icon: ReactNode; title: string; count: number | null }[] = [];
-  if (store.target) {
-    items.push({
-      id: "prs",
-      icon: <GitPullRequest size={16} />,
-      title: providerInfo[store.target.provider].requestsTitle,
-      count: store.prState.kind === "loaded" ? store.pullRequests.length : null,
-    });
-  }
   const pinned = store.localBranches.filter((b) => store.isPinned(b)).length;
   if (pinned) items.push({ id: "pinned", icon: <Pin size={16} />, title: t("Pinned"), count: pinned });
   items.push({ id: "local", icon: <GitBranch size={16} />, title: t("Local branches"), count: store.localBranches.length });
   if (store.worktrees.length > 1) items.push({ id: "worktrees", icon: <Folder size={16} />, title: t("Worktrees"), count: store.worktrees.length });
   if (store.remoteBranches.length) items.push({ id: "remote", icon: <Cloud size={16} />, title: t("Remotes"), count: store.remoteBranches.length });
+  if (store.target) {
+    items.push({
+      id: "prs",
+      icon: <GitPullRequest size={16} />,
+      title: t(store.target.provider === "gitlab" ? "Merge requests" : "Pull requests"),
+      count: store.prState.kind === "loaded" ? store.pullRequests.length : null,
+    });
+    items.push({ id: "issues", icon: <CircleDot size={16} />, title: t("Issues"), count: store.issueState.kind === "loaded" ? store.issues.length : null });
+  }
   if (store.tags.length) items.push({ id: "tags", icon: <TagIcon size={16} />, title: t("Tags"), count: store.tags.length });
   if (store.stashes.length) items.push({ id: "stashes", icon: <Archive size={16} />, title: t("Stashes"), count: store.stashes.length });
   return (
     <div className="sidebar-rail">
-      <IconButton small icon={<PanelLeftOpen size={15} />} tip={tip(t("Show sidebar"), t("Local branches"), "Ctrl+B")} onClick={() => settings.set("sidebarCollapsed", false)} />
+      <IconButton small icon={<PanelLeftOpen size={15} />} tip={tip(t("Show sidebar"), t("Local branches"))} onClick={() => settings.set("sidebarCollapsed", false)} />
       {items.map((it) => (
         <div key={it.id} className="rail-item">
           <div className="rail-icon" aria-label={it.title}>

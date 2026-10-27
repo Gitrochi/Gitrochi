@@ -48,7 +48,7 @@ const detail: HubDetail = {
     url: "https://github.com/orgs/team/projects/4",
     data: { public: false },
   },
-  files: [],
+
   members: [],
   repositories: [],
   assets: [],

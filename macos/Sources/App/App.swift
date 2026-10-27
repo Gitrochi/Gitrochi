@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated { InstallerDisk.check() }
         // 보통은 첫 창이 붙을 때 그 자리에 뜬다. 혹시 늦으면 화면 가운데에라도 띄운다.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            MainActor.assumeIsolated { Splash.shared.show() }
+            MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
@@ -56,6 +56,9 @@ struct GitrochiApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1440, height: 900)   // 툴바 버튼이 이름까지 다 보이는 폭
         .restorationBehavior(.disabled)   // 탭 복원은 Workspace 가 한다(시스템 복원과 겹치면 빈 창·중복 창이 생김)
+        // Opened folders and gitrochi:// links go to AppDelegate → Workspace.receive; letting the window group take them
+        // as well makes SwiftUI replace the launch window, which then never starts and stays invisible
+        .handlesExternalEvents(matching: [])
         .commands { AppCommands() }
 
         Settings {
@@ -66,6 +69,9 @@ struct GitrochiApp: App {
             GitchGuideSheet(repo: nil)
         }
         .windowResizability(.contentSize)
+        // opened only from its menu item: not for opened folders or links, and not reopened at the next launch
+        .handlesExternalEvents(matching: [])
+        .restorationBehavior(.disabled)
     }
 }
 
@@ -197,23 +203,15 @@ struct AppCommands: Commands {
                 .keyboardShortcut("s", modifiers: [.command, .control])
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
-            Button("Go back") { store?.moveWorkspaceHistory(-1) }
-                .keyboardShortcut("[", modifiers: .command)
-                .disabled((store?.navigationPosition ?? 0) == 0)
-            Button("Go forward") { store?.moveWorkspaceHistory(1) }
-                .keyboardShortcut("]", modifiers: .command)
-                .disabled(store == nil || (store!.navigationPosition + 1 >= store!.navigationTrail.count))
-            Button("Toggle commit details") { store?.showHistoryInspector.toggle() }
-                .keyboardShortcut("i", modifiers: [.command, .option])
-            Button("Show overview") { store?.navigate(.home) }.keyboardShortcut("0")
-            Button("Show branches") { store?.navigate(.branches) }.keyboardShortcut("3")
+            Button("Show home") { store?.navigate(.home) }.keyboardShortcut("0")
+            Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
+                .keyboardShortcut("1")
+            Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
+                .keyboardShortcut("2")
+            Button("Show compare") { store?.navigate(.compare) }.keyboardShortcut("3")
             Button("Show pull requests") { store?.navigate(.pullRequests) }.keyboardShortcut("4")
             Button("Show CI/CD") { store?.navigate(.actions) }.keyboardShortcut("5")
-            Button("Show agents") { store?.navigate(.agents) }.keyboardShortcut("6")
-            Button("Show uncommitted changes") { store?.navigate(.changes) }
-                .keyboardShortcut("1")
-            Button("Show history") { store?.navigate(.commits) }
-                .keyboardShortcut("2")
+            Button("Show flows") { store?.navigate(.flows) }.keyboardShortcut("6")
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
@@ -284,8 +282,6 @@ struct RepoContainer: View {
             case .batchCommits: BatchCommitsSheet(store: store)
             case .lineHistory: LineHistorySheet(store: store)
             case .localWorkflows: LocalWorkflowsSheet()
-            case .workspaceOverview: WorkspaceOverviewSheet()
-            case .collaborationInbox: CollaborationInboxSheet()
             case .repositoryAssistant: RepositoryAssistantSheet()
             case .mcpConnection: MCPConnectionSheet()
             case .startAgent(let path): StartAgentSheet(presetPath: path)
@@ -295,6 +291,7 @@ struct RepoContainer: View {
             case .interactiveRebase: InteractiveRebaseSheet()
             case .graphDiff: GraphDiffSheet()
             case .graphCheck: GraphCheckSheet()
+            case .issueEditor(let number, let title, let body): IssueEditorSheet(number: number, title: title, body: body)
             }
         }
         .alert("Couldn't complete the operation",

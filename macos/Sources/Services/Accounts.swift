@@ -2,28 +2,42 @@ import Foundation
 import AppKit
 import Security
 import Observation
+import os
 
 /// 토큰·API 키를 macOS 키체인(일반 암호)에 보관한다.
 enum Keychain {
     private static let service = "com.ensnif.Gitrochi"
     private static let queue = DispatchQueue(label: "com.ensnif.Gitrochi.keychain", qos: .userInitiated)
+    private static let logger = Logger(subsystem: "com.ensnif.Gitrochi", category: "keychain")
 
     /// 모든 Keychain 호출은 같은 큐에서 실행해 UI 허용 정책과 사용자 승인이 경합하지 않게 한다.
+    /// With `allowInteraction` the system may ask the user to allow the read; a silent read fails with -25308 instead.
     static func read(_ account: String, allowInteraction: Bool = false) async -> CredentialReadResult {
         await withCheckedContinuation { continuation in
             queue.async {
                 let result = withInteraction(allowInteraction) {
                     let current = copy(service, account)
                     guard current.status == errSecItemNotFound else { return current }
-                    // 이전 서비스는 읽기만 한다. 자동 조회에서 이동·수정으로 승인창을 띄우지 않는다.
-                    return copy(LegacyData.keychainService, account)
+                    let legacy = copy(LegacyData.keychainService, account)
+                    // Migrate a legacy item only during an explicit approved read; automatic reads stay read-only.
+                    if allowInteraction, let value = legacy.value, store(value, for: account) == errSecSuccess { _ = delete(LegacyData.keychainService, account) }
+                    return legacy
+                }
+                if result.value == nil {
+                    // The status explains a missing token (-25308: the item does not trust this build yet); the item itself is never logged.
+                    if result.status == errSecItemNotFound {
+                        logger.info("No keychain item for \(account, privacy: .private)")
+                    } else {
+                        logger.error("Keychain read for \(account, privacy: .private) failed with OSStatus \(result.status, privacy: .public)")
+                    }
                 }
                 continuation.resume(returning: result)
             }
         }
     }
 
-    static func get(_ account: String) async -> String? { await read(account).value }
+    /// Keys are read when a feature is used, so the system may ask for access.
+    static func get(_ account: String) async -> String? { await read(account, allowInteraction: true).value }
 
     @discardableResult
     static func set(_ value: String?, for account: String) async -> Bool {
@@ -39,18 +53,21 @@ enum Keychain {
                         let current = delete(service, account), legacy = delete(LegacyData.keychainService, account)
                         return CredentialReadResult(value: nil, status: current == errSecSuccess ? legacy : current)
                     }
-                    let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
-                    let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: Data(value.utf8)] as CFDictionary)
-                    if update == errSecSuccess { _ = delete(LegacyData.keychainService, account); return CredentialReadResult(value: nil, status: errSecSuccess) }
-                    guard update == errSecItemNotFound else { return CredentialReadResult(value: nil, status: update) }
-                    var add = query; add[kSecValueData as String] = Data(value.utf8)
-                    let status = SecItemAdd(add as CFDictionary, nil)
+                    let status = store(value, for: account)
                     if status == errSecSuccess { _ = delete(LegacyData.keychainService, account) }
                     return CredentialReadResult(value: nil, status: status)
                 }
                 continuation.resume(returning: result.status)
             }
         }
+    }
+
+    private static func store(_ value: String, for account: String) -> OSStatus {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
+        let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: Data(value.utf8)] as CFDictionary)
+        guard update == errSecItemNotFound else { return update }
+        var add = query; add[kSecValueData as String] = Data(value.utf8)
+        return SecItemAdd(add as CFDictionary, nil)
     }
 
     // file-based 키체인은 LAContext의 무음 옵션을 따르지 않아 공식 legacy 정책을 큐 안에서 한정한다.
@@ -203,6 +220,18 @@ final class AccountStore {
 
     private func secret(_ name: String) -> String? {
         credentials.value(name)
+    }
+
+    /// Waits for a read in flight (the first one may be showing the system prompt), so a loader shows progress instead of "no account".
+    func loadToken(for a: HostAccount) async -> String? {
+        if let t = await credentials.awaitValue("acct:" + a.id) { return t }
+        guard a.id.hasPrefix("legacy-") else { return nil }
+        return await credentials.awaitValue(a.provider.rawValue)
+    }
+
+    /// True while the token is still being read or the user has to allow the read; false once it is readable or absent.
+    func awaitsAccess(_ account: HostAccount) -> Bool {
+        [.loading, .authorizationRequired].contains(credentialState(for: account))
     }
 
     func credentialState(for account: HostAccount) -> CredentialCache.State {

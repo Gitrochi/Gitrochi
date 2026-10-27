@@ -18,10 +18,6 @@ struct RebaseWorkbenchPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Rebase").font(.title2.weight(.semibold))
-                    Text("Move the current branch onto a new base, or review and reorder its commits.").font(.callout).foregroundStyle(.secondary)
-                }
                 WorkbenchFlow { Text("Current branch"); Text(store.headBranch ?? String(localized: "Detached HEAD")).fontWeight(.semibold).lineLimit(1).truncationMode(.middle) }
                 if store.repoState != .clean {
                     VStack(alignment: .leading, spacing: 10) {
@@ -58,7 +54,7 @@ struct RebaseWorkbenchPanel: View {
                     }.padding(16).background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 9))
                 }
                 if !store.status.isEmpty && store.repoState == .clean {
-                    WorkbenchFlow { Label("Commit or stash working changes before starting rebase.", systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.orange); Button("Open Changes") { store.navigate(.changes) } }
+                    WorkbenchFlow { Label("Commit or stash working changes before starting rebase.", systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.orange); Button("Open Changes") { store.navigate(.repository); store.showArea(.changes) } }
                 }
                 if planning { ProgressView().controlSize(.small) }
                 if let error { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) }

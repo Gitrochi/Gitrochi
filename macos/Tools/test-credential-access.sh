@@ -129,7 +129,9 @@ actor CacheFixture {
 
         let unavailableCount = await source.count
         for name in ["restored", "removed"] {
-            for _ in 0..<20 { cache.retry(name, minimumInterval: 0, now: .distantFuture) }
+            for _ in 0..<20 { cache.retry(name, minimumInterval: 0, now: .distantFuture); cache.prepare(name, now: .distantFuture) }
+            let absent = await cache.awaitValue(name)
+            precondition(absent == nil)
             precondition(cache.state(name) == .unavailable && cache.value(name) == nil, "Missing or explicitly removed credentials must not silently restore on app activation")
         }
         let afterUnavailableCount = await source.count, unavailablePending = await source.pending
@@ -164,7 +166,21 @@ actor CacheFixture {
         await retrySource.finish("device-restored-fixture")
         await until { retryCache.state("device-unavailable") == .ready }
         precondition(retryCache.value("device-unavailable") == "device-restored-fixture")
-        print("Credential policy, serialized background access, responsive MainActor, transient-session retention, throttled lifecycle retries, unavailable-session suppression, coalescing and stale-result guards passed (fake Security only)")
+        cache.retryInterval = 0
+        precondition(cache.value("denied") == nil && cache.state("denied") == .loading, "Denied access was not retried after the back-off")
+        await until { await source.pending }
+        let retried = await source.count
+        precondition(retried == finalCount + 1, "The retry did not read again")
+        await source.finish("approved-later")
+        await until { cache.value("denied") == "approved-later" }
+        precondition(cache.state("denied") == .ready)
+        cache.retryInterval = 30
+        let waited = Task { await cache.awaitValue("awaited") }
+        await until { await source.pending }
+        await source.finish("awaited-value")
+        let awaited = await waited.value
+        precondition(awaited == "awaited-value" && cache.value("awaited") == "awaited-value", "awaitValue did not wait for the read in flight")
+        print("Credential policy, transient-session retention, guarded prepare/retry back-off, awaited reads, coalescing and stale-result guards passed (fake Security only)")
     }
 }
 SWIFT

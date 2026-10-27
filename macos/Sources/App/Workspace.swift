@@ -36,11 +36,16 @@ final class Workspace {
     private var requestedRoutes = Set<String>()
     private var routingStores = Set<ObjectIdentifier>()
     private var requestedSelection: String?
+    /// Launched to open a folder or link: SwiftUI makes no window of its own then; the one ensureWindow opens a moment
+    /// later is shown right away instead of waiting invisibly behind a splash
+    private var openedByEvent = false
+    var launchedByEvent: Bool { openedByEvent }
     func setRouteOpener(_ open: @escaping (String) -> Void) { routeOpener = open }
 
     func receive(_ url: URL) {
         do {
-            let route = try AppRoute(url: url)
+            let route = try url.isFileURL ? AppRoute(opening: url) : AppRoute(url: url)
+            if RestoreState.shared.active, stores.isEmpty, hostWindow == nil { openedByEvent = true }
             requestedSelection = route.repo.path
             pendingRoutes.append(route)
             if let store = stores.compactMap(\.store).first(where: { $0.booted && $0.url?.resolvingSymlinksInPath().path == route.repo.path }) {
@@ -58,8 +63,11 @@ final class Workspace {
             }
             // 첫 창이 아직 준비 중이면 RepoWindow.setUp 이 대기 중인 URL 을 받는다.
         } catch {
-            let alert = NSAlert(error: error)
-            alert.runModal()
+            // During launch the windows are still invisible behind the splash; a modal alert then would leave them so
+            Task { @MainActor in
+                while RestoreState.shared.active { try? await Task.sleep(for: .milliseconds(200)) }
+                NSAlert(error: error).runModal()
+            }
         }
     }
 
@@ -84,7 +92,8 @@ final class Workspace {
             await store.applyAppRoute(route)
             applied = true
         }
-        if applied {
+        // During launch the windows are still hidden behind the splash; revealWindows shows this tab when it ends
+        if applied, !RestoreState.shared.active {
             store.window?.tabGroup?.selectedWindow = store.window
             store.window?.makeKeyAndOrderFront(nil)
             NSApp.activate()
@@ -119,7 +128,8 @@ final class Workspace {
         w.tabbingIdentifier = WindowTabbing.identifier
         w.tabbingMode = .preferred
         let launching = RestoreState.shared.active
-        if launching {
+        // after a launch by an opened folder or link the window is not hidden (see openedByEvent)
+        if launching, !openedByEvent {
             // 스플래시가 떠 있는 동안 저장소 창은 보이지 않게 준비만 한다
             w.alphaValue = 0
             w.animationBehavior = .none
@@ -127,7 +137,7 @@ final class Workspace {
         guard let host = hostWindow, host !== w else {
             hostWindow = w
             // 스플래시는 작업 창이 나타날 바로 그 자리 가운데에 띄운다(창 위치가 정해진 뒤)
-            if launching { DispatchQueue.main.async { Splash.shared.show(centeredOn: w.frame) } }
+            if launching, !openedByEvent { DispatchQueue.main.async { Splash.shared.show(centeredOn: w.frame) } }
             return
         }
         if awaitingWindows == 0 && Date().timeIntervalSince(launchedAt) < 1.5 && !restoreTaken {

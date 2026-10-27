@@ -30,7 +30,7 @@ def extract(marker):
     raise AssertionError('Production account method is unbalanced')
 method = extract('    func allowStoredAccess(for account: HostAccount) async throws {')
 assert 'Keychain.read' in method and 'Hosting.me' in method and 'credentials.isCurrent' in method
-methods = [method] + [extract(marker) for marker in ['    func token(for a: HostAccount)', '    private func secret(_ name: String)', '    func credentialState(for account: HostAccount)']]
+methods = [method] + [extract(marker) for marker in ['    func token(for a: HostAccount)', '    private func secret(_ name: String)', '    func credentialState(for account: HostAccount)', '    func loadToken(for a: HostAccount)', '    func awaitsAccess(_ account: HostAccount)']]
 Path(sys.argv[2]).write_text('''import Foundation
 import Security
 
@@ -91,6 +91,9 @@ struct FixtureUser { let username: String }
             precondition(model.credentials.value(name) == nil && model.credentials.state(name) == .unavailable, "Rejected credentials or wrong identity must not remain usable")
             precondition(Hosting.calls == 1); assertExplicitRead()
             for _ in 0..<20 { model.credentials.retry(name, minimumInterval: 0, now: .distantFuture) }
+            model.credentials.prepare(name, now: .distantFuture)
+            let rejectedLoad = await model.loadToken(for: account)
+            precondition(rejectedLoad == nil, "Awaited reads must not restore rejected credentials")
             precondition(model.credentials.value(name) == nil && model.credentials.state(name) == .unavailable, "Rejected credentials must not silently restore after the lifecycle retry date")
             precondition(Hosting.calls == 1); assertExplicitRead()
         }
@@ -122,7 +125,9 @@ struct FixtureUser { let username: String }
             do { try await legacy.allowStoredAccess(for: legacyAccount); fatalError("Rejected legacy identity reported success") } catch {}
             precondition(legacy.token(for: legacyAccount) == nil && legacy.credentialState(for: legacyAccount) == .unavailable, "Rejected provider fallback remained usable after legacy verification failed")
             precondition(legacy.credentials.value(legacyAccount.provider.rawValue) == nil && legacy.credentials.state(legacyAccount.provider.rawValue) == .unavailable)
-            for key in [legacyName, legacyAccount.provider.rawValue] { legacy.credentials.retry(key, minimumInterval: 0, now: .distantFuture) }
+            for key in [legacyName, legacyAccount.provider.rawValue] { legacy.credentials.retry(key, minimumInterval: 0, now: .distantFuture); legacy.credentials.prepare(key, now: .distantFuture) }
+            let legacyLoad = await legacy.loadToken(for: legacyAccount)
+            precondition(legacyLoad == nil)
             precondition(legacy.token(for: legacyAccount) == nil && legacy.credentialState(for: legacyAccount) == .unavailable)
             precondition(Keychain.reads.map { $0.0 } == [legacyName, legacyAccount.provider.rawValue] && Keychain.reads.allSatisfy { $0.1 } && Hosting.calls == 1, "Legacy recovery must only read the explicit synthetic primary and fallback once")
         }

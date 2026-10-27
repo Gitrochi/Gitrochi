@@ -247,7 +247,7 @@ function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
   const explanation = store.explanations[sha];
   return (
     <div className="col grow commit-detail" style={{ height: "100%" }}>
-      <div className="panel-head">
+      <div className="panel-head commit-head">
         <span className="muted" style={{ display: "inline-flex" }}>
           {d.parents.length > 1 ? <GitMerge size={15} /> : <CircleDot size={15} />}
         </span>

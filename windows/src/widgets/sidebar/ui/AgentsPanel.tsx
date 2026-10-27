@@ -1,10 +1,10 @@
-import { GitBranch, House, Pencil, Plus, ShieldOff, Sparkles, Zap } from "lucide-react";
+import { AppWindow, GitBranch, House, Pencil, Plus, ShieldOff, Sparkles, SquareArrowOutUpRight, Zap } from "lucide-react";
 import { useEffect } from "react";
-import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, skipsPermissions } from "@/entities/agent";
+import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, appDisplayName, containingRoot, type ExternalAgent, relativeFolder, skipsPermissions } from "@/entities/agent";
 import { statsClean, type Worktree, type WorktreeStats } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
-import { displayPath, samePath } from "@/shared/config";
+import { basename, displayPath, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { shortDate, useObserve } from "@/shared/lib";
 import { Button, IconButton, showContextMenu } from "@/shared/ui";
@@ -18,6 +18,15 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
     void store.refreshWorktreeStats();
   }, [store, paths]);
 
+  useEffect(() => {
+    // agents in other apps are looked up only while this panel shows in the front tab (at most every 5 s)
+    const tick = () => { if (store.isActive && document.visibilityState === "visible") void agents.refreshExternal(); };
+    tick();
+    const timer = setInterval(tick, 5000);
+    return () => clearInterval(timer);
+  }, [store]);
+  const roots = [...store.worktrees.map((w) => w.path), ...(store.path ? [store.path] : [])];
+  const elsewhere = agents.externalIn(roots);
   const others = agents.sessions.filter((s) => !store.worktrees.some((w) => samePath(w.path, s.path)) && s.status !== "ended");
   const sheet = (s: RepoStore["sheet"]) => {
     store.sheet = s;
@@ -45,6 +54,15 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
       {store.worktrees.map((w) => (
         <WorktreeCard key={w.path} store={store} worktree={w} stats={store.worktreeStats[w.path]} sessions={agents.sessionsIn(w.path)} isCurrent={samePath(w.path, store.path)} />
       ))}
+      {elsewhere.length > 0 && (
+        <>
+          <span className="muted" style={{ fontWeight: 600, marginTop: 6 }}>
+            {t("Running in other apps")}</span>
+          {elsewhere.map((a) => (
+            <ExternalAgentRow key={a.pid} store={store} agent={a} roots={roots} />
+          ))}
+        </>
+      )}
       {others.length > 0 && (
         <>
           <span className="muted" style={{ fontWeight: 600, marginTop: 6 }}>
@@ -146,6 +164,44 @@ function WorktreeCard({ store, worktree: w, stats, sessions, isCurrent }: { stor
           ))}
         </>
       )}
+    </div>
+  );
+}
+
+/** An agent running in another app; clicking brings that app to the front (macOS: ExternalAgentRow) */
+function ExternalAgentRow({ store, agent, roots }: { store: RepoStore; agent: ExternalAgent; roots: string[] }) {
+  const host = agent.hostExe ? appDisplayName(agent.hostExe) : t("Unknown app");
+  const root = containingRoot(agent.cwd, roots);
+  const worktree = root ? store.worktrees.find((w) => samePath(w.path, root)) : undefined;
+  // "branch · sub/folder · 12 minutes ago"
+  const place = [
+    root ? worktree?.branch ?? basename(root) : displayPath(agent.cwd),
+    root ? relativeFolder(agent.cwd, root) : "",
+    agent.started ? shortDate(agent.started) : "",
+  ].filter(Boolean).join(" · ");
+  const forward = () => void agents.bringForward(agent).catch((e: unknown) => store.fail(e));
+  return (
+    <div
+      className="session-row external-agent"
+      data-pid={agent.pid}
+      onClick={forward}
+      data-tip={t("Click to bring {0} to the front", host)}
+      onContextMenu={(e) =>
+        showContextMenu(e, [
+          { label: t("Bring {0} to the front", host), disabled: agent.hostPid === null, onClick: forward },
+          { label: t("Copy folder path"), onClick: () => store.copy(agent.cwd) },
+        ])
+      }
+    >
+      <span className="muted" style={{ display: "inline-flex", marginTop: 2 }}><AppWindow size={14} /></span>
+      <span className="col grow">
+        <span className="row">
+          <span style={{ fontWeight: 500 }}>{agentKind(agent.kind).title.split(" (")[0]}</span>
+          <span className="muted ellipsis">· {host}</span>
+        </span>
+        <span className="faint ellipsis" style={{ fontSize: 11 }}>{place}</span>
+      </span>
+      <span className="muted" style={{ display: "inline-flex", marginTop: 2 }}><SquareArrowOutUpRight size={12} /></span>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 실제 저장소 화면의 헤더가 macOS 제목 막대를 침범하지 않는지 검사한다.
+# Checks that the repository window's content stays below the macOS title bar.
 # --fullscreen 은 화면 전환을 수반하므로 명시적으로 요청할 때만 실행한다.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,6 +37,7 @@ root, target = map(Path, sys.argv[1:])
 for source in (root / 'Sources').rglob('*.swift'):
     relative = source.relative_to(root / 'Sources').as_posix()
     text = source.read_text().replace('UserDefaults.standard', 'windowFixtureDefaults')
+    text = text.replace('defaults: UserDefaults = .standard', 'defaults: UserDefaults = windowFixtureDefaults')
     if relative == 'App/App.swift':
         start = text.index('@main\nstruct GitrochiApp: App {')
         end = text.index('/// 창(탭) 하나 = 저장소 하나', start)
@@ -46,12 +47,19 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Sidebar measurement attachment changed'
         text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "sidebar"))')
     elif relative == 'Views/RepoView.swift':
-        needle = '.frame(height: 62)\n        .background(Color(nsColor: .windowBackgroundColor))'
-        assert text.count(needle) == 1, 'Workspace header measurement attachment changed'
-        text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "workspace-header"))')
+        needle = '                    WorkspaceDestinationContent()\n'
+        assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
+        text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
     elif relative == 'Services/Accounts.swift':
+        needle = 'private let credentials = CredentialCache { await Keychain.read($0) }'
+        assert text.count(needle) == 1, 'Isolated credential reader attachment changed'
+        text = text.replace(needle, 'private let credentials = CredentialCache { _ in CredentialReadResult(value: nil, status: -25300) }')
         # 실제 툴바를 렌더링해도 사용자 인증 도우미를 설치하지 않는다.
         text = text.replace('        Askpass.install()', '        // 렌더링 검사에서는 인증 도우미를 설치하지 않는다.')
+    elif relative == 'Services/LocalProjects.swift':
+        needle = 'static let shared = LocalProjectStore()'
+        assert text.count(needle) == 1, 'Isolated local project storage attachment changed'
+        text = text.replace(needle, 'static let shared = LocalProjectStore(storage: LocalProjectFileStorage(url: windowFixtureLocalStorageURL))')
     elif relative == 'Services/Tools.swift':
         # 도구 가용성에 따른 레이아웃은 유지하고 실행 파일 탐색과 버전 조회만 생략한다.
         start = text.index('    private init() {', text.index('final class ToolStore'))

@@ -1,6 +1,6 @@
 import { runCore, runCoreAsync } from "@/shared/core";
 import { t } from "@/shared/i18n";
-import type { BlameLine, Branch, Commit, CommitDetail, DiffDocument, FileChange, FileHistoryEntry, LineStat, Stash, Tag, WorkingStatus, Worktree } from "../model/types";
+import type { BlameLine, Branch, Commit, CommitDetail, DiffDocument, FileChange, FileHistoryEntry, Identity, LineStat, Stash, Tag, WorkingStatus, Worktree } from "../model/types";
 import { rememberDiff, type SplitRow } from "./diff";
 
 export const logFormat = "%H%x1f%P%x1f%an%x1f%ae%x1f%ct%x1f%s%x1f%b%x1e";
@@ -41,3 +41,9 @@ export const parseDiff = (text: string, maxLines = 20000): DiffDocument => hydra
 export const parseDiffAsync = async (text: string, maxLines = 20000, signal?: AbortSignal): Promise<DiffDocument> => hydrate(await runCoreAsync({ op: "diffBundle", text, maxLines }, signal));
 export const newFileDiff = (text: string, truncated: boolean, maxLines = 20000): DiffDocument => runCore({ op: "newFile", text, truncated, maxLines });
 export const newFileDiffAsync = (text: string, truncated: boolean, maxLines = 20000, signal?: AbortSignal): Promise<DiffDocument> => runCoreAsync({ op: "newFile", text, truncated, maxLines }, signal);
+
+/** user.name and user.email from `git config --get-regexp ^user\.(name|email)$`; null without a name */
+export function parseIdentityConfig(stdout: string): Identity | null {
+  const conf = Object.fromEntries(stdout.split(/\r?\n/).filter(Boolean).map((l) => [l.slice(0, l.indexOf(" ")), l.slice(l.indexOf(" ") + 1).trim()]));
+  return conf["user.name"] ? { name: conf["user.name"], email: conf["user.email"] ?? "" } : null;
+}

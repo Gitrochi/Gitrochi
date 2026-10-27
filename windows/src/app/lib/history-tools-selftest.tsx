@@ -23,7 +23,13 @@ export async function historyToolsSelfTest(): Promise<[boolean, string]> {
       s.comparisonPath = "source.ts"; s.comparisonPatch = "-before\n+after"; store.changed();
     };
     store.selectComparisonFile = async (file) => { selections++; s.comparisonPath = file.path; s.comparisonPatch = "+selected-test"; store.changed(); };
+    store.localBranches = [{ name: "topic", target: b, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false }];
     await mount(<CompareRevisionsSheet store={store} close={() => {}} />);
+    // the list beside the From field fills it and then shows its prompt again
+    const picker = host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Choose a branch or tag")}: ${t("From revision")}"]`);
+    ensure(picker && [...picker.options].some((option) => option.value === "topic"), "The From revision list does not offer the local branch");
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(picker, "topic"); picker!.dispatchEvent(new Event("change", { bubbles: true })); await pause(30);
+    ensure(s.left === "topic" && host.querySelector<HTMLInputElement>(`input[aria-label="${t("From revision")}"]`)?.value === "topic" && picker!.value === "", "Picking a branch did not fill the From revision field");
     ensure(comparisons === 0, "Comparison ran before the user requested it"); button("Compare")?.click(); await pause(30);
     ensure(comparisons === 1 && host.querySelector("pre")?.textContent?.includes("+after"), "Comparison did not render the frozen patch");
     const file = [...host.querySelectorAll<HTMLButtonElement>(".history-tools-file")].find((element) => element.textContent?.includes("test.ts")); file?.click(); await pause(30);

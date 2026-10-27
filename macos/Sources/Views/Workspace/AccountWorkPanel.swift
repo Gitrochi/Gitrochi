@@ -53,7 +53,6 @@ private struct AccountWorkPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(inbox ? "Inbox" : "My work").font(.largeTitle.bold())
                 Text(
                     "Account scope uses the explicitly selected server and account. Repository Git identity stays unchanged."
                 ).font(.callout).foregroundStyle(.secondary)
@@ -93,6 +92,7 @@ private struct AccountWorkPanel: View {
                 if AccountStore.shared.accounts.isEmpty {
                     Button("Connect account…") { openSettings() }
                 }
+                if let account, AccountStore.shared.awaitsAccess(account) { CredentialAccessNotice(account: account) }
                 if !inbox {
                     Picker("Work category", selection: $kind) {
                         Text("Authored requests").tag("mine")
@@ -181,4 +181,40 @@ private struct AccountWorkPanel: View {
             }
         } catch { if generation == id { self.error = error.localizedDescription } }
     }
+}
+
+/// Everything that belongs to the account rather than the repository, on one page: the inbox and work lists,
+/// and the hub's organizations. Releases and Projects have pages of their own.
+struct AccountWorkspacePanel: View {
+    @Environment(RepoStore.self) private var store
+    @AppStorage("accountPageSection") private var section = "inbox"
+
+    private static let sections = ["inbox", "myWork", "organizations"]
+
+    var body: some View {
+        let gitlab = store.target?.provider == .gitlab
+        // a section saved by an older version (Releases, Projects) opens the inbox
+        let current = Self.sections.contains(section) ? section : "inbox"
+        VStack(spacing: 0) {
+            Picker("Section", selection: Binding(get: { current }, set: { section = $0 })) {
+                Text("Inbox").tag("inbox")
+                Text("My work").tag("myWork")
+                Text(gitlab ? "Groups" : "Organizations").tag("organizations")
+            }
+            .pickerStyle(.segmented).labelsHidden()
+            .frame(maxWidth: 640)
+            .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 10)
+            Divider()
+            Group {
+                switch current {
+                case "myWork": MyWorkPanel()
+                case "organizations": HostingHubPanel(store: store, section: .organizations, onClone: clone)
+                default: WorkInboxPanel()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func clone(_ url: String) { store.sheet = .cloneURL(url) }
 }

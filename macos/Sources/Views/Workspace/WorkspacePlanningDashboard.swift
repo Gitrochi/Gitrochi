@@ -242,30 +242,37 @@ struct WorkspacePlanningDashboard: View {
                     ProgressView(value: Double(progress.completed), total: Double(max(1, entries.count))).tint(.accentColor)
                     Text(verbatim: String(localized: "{0} completed · {1} active").replacingOccurrences(of: "{0}", with: progress.completed.formatted()).replacingOccurrences(of: "{1}", with: progress.active.formatted())).font(.caption).foregroundStyle(.secondary)
                     if data.projectErrors[detail.item.id] != nil { Text("Refresh needed").font(.caption).foregroundStyle(.orange) }
-                    if detail.more { Button("Load more tasks") { Task { do { await data.loadMoreItems(try access(), context: context, projectID: detail.item.id) } catch { data.error = HostingHubAPI.error(error) } } }.disabled(data.loading) }
+                    if detail.more { Button("Load more tasks") { Task { do { await data.loadMoreItems(try await access(), context: context, projectID: detail.item.id) } catch is CancellationError {} catch { if !Task.isCancelled { data.error = HostingHubAPI.error(error) } } } }.disabled(data.loading) }
                     Button("Open project schedule") { open(detail.item) }.font(.caption).disabled(opening)
                 }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
     }
-    private func access() throws -> HubAccess {
-        let expected = context
+    private func access() async throws -> HubAccess {
+        let selected = selectionContext
         if isLocal {
+            let expected = context
             return HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "local", path: "local/workspace"), token: "", apiBase: "", me: "", isCurrent: { context == expected && store.destination == .home }, local: true)
         }
-        guard let account, let token = AccountStore.shared.token(for: account) else { throw HostingHubAPI.fail(String(localized: "Allow access to the saved account to use repository services.")) }
+        guard let account else { throw HostingHubAPI.fail(String(localized: "Allow access to the saved account to use repository services.")) }
+        let token = await AccountStore.shared.loadToken(for: account)
+        guard !Task.isCancelled, selectionContext == selected, store.destination == .home else { throw CancellationError() }
+        guard let token else { throw HostingHubAPI.fail(AccountStore.shared.savedAccessMessage(for: account)) }
+        let expected = context
         let target = HostingHubAPI.projectTarget(repositoryScope ? store.target : nil, provider: .github, host: account.host, username: account.username, personal: effectiveScope == "personal")
         return HubAccess(target: target, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { context == expected && store.destination == .home })
     }
     private func load(append: Bool = false) async {
         guard fixture == nil, isLocal || account != nil else { return }
-        do { await data.load(try access(), context: context, appendProjects: append) }
-        catch { data.error = HostingHubAPI.error(error) }
+        do { await data.load(try await access(), context: context, appendProjects: append) }
+        catch is CancellationError {}
+        catch { if !Task.isCancelled { data.error = HostingHubAPI.error(error) } }
     }
     private func refresh() async {
-        do { if data.projects.isEmpty { await load() } else { await data.refresh(try access(), context: context) } }
-        catch { data.error = HostingHubAPI.error(error) }
+        do { if data.projects.isEmpty { await load() } else { await data.refresh(try await access(), context: context) } }
+        catch is CancellationError {}
+        catch { if !Task.isCancelled { data.error = HostingHubAPI.error(error) } }
     }
     private func open(_ item: HubItem, rowID: String? = nil) {
         guard !opening, isLocal || account != nil else { return }

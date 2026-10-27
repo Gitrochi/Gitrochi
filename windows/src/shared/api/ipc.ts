@@ -66,6 +66,33 @@ export interface FileHead {
   size: number;
 }
 
+/** A process on the way from an agent up to the system (src-tauri/src/agents.rs) */
+export interface ProcessLink {
+  pid: number;
+  name: string;
+  /** Owns a visible app window */
+  window: boolean;
+}
+
+/** A process that may be an agent started outside Gitrochi */
+export interface AgentProcess {
+  pid: number;
+  name: string;
+  /** The first arguments of a script runtime (node, bun); empty otherwise */
+  args: string[];
+  cwd: string;
+  /** Seconds since 1970 */
+  started: number;
+  /** Parent first */
+  ancestors: ProcessLink[];
+}
+
+export interface AgentScan {
+  /** Gitrochi's own process id */
+  own: number;
+  processes: AgentProcess[];
+}
+
 export const ipc = {
   takeAppLaunches: () => invoke<({ Ok: AppLaunch } | { Err: string })[]>("take_app_launches"),
   onAppLaunch: (fn: () => void): Promise<UnlistenFn> => listen("app-launch", fn),
@@ -84,6 +111,10 @@ export const ipc = {
   /** 파일 전체를 base64 로(max 바이트보다 크면 null) */
   readBase64: (path: string, max = 20_000_000) => invoke<string | null>("fs_read_base64", { path, max }),
   which: (program: string) => invoke<string | null>("which", { program }),
+  /** Agent processes anywhere on the machine, with their folders and parent processes */
+  externalAgents: () => invoke<AgentScan>("external_agents"),
+  /** Brings a process's app window to the front (Windows) */
+  bringAppForward: (pid: number) => invoke<void>("bring_app_forward", { pid }),
 
   ptySpawn: (
     id: string,

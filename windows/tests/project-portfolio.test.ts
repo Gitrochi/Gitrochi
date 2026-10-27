@@ -4,7 +4,7 @@ import { ProjectPortfolioState, portfolioTasks, type ProjectPortfolioReader } fr
 
 const item = (id: string): HubItem => ({ id, title: `Project ${id}`, body: "", subtitle: "", url: "", data: {} });
 const row = (id: string, due = "", extra: Partial<HubProjectRow> = {}): HubProjectRow => ({ id, title: id, body: "", url: "", contentID: id, kind: "issue", statuses: {}, values: due ? { due } : {}, ...extra });
-const detail = (id: string, rows: HubProjectRow[] = [], more = false, cursor?: string): HubDetail => ({ item: item(id), fields: [{ id: "due", name: "Due date", kind: "date", options: [] }], rows, more, cursor, files: [], members: [], repositories: [], assets: [] });
+const detail = (id: string, rows: HubProjectRow[] = [], more = false, cursor?: string): HubDetail => ({ item: item(id), fields: [{ id: "due", name: "Due date", kind: "date", options: [] }], rows, more, cursor, members: [], repositories: [], assets: [] });
 const access: HubAccess = { target: { provider: "github", host: "github.com", path: "team/client", remote: "origin" }, token: "fixture-credential", apiBase: "https://api.github.com", me: "reviewer" };
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done; }); return { promise, resolve }; }
 

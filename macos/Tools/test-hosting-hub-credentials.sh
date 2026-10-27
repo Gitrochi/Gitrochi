@@ -30,9 +30,13 @@ enum AccountConnectionFailure {
     private var cache = CredentialCache { _ in fatalError("Unexpected credential reader") }
     private var approvals: [String: CheckedContinuation<Void, Error>] = [:]
     private(set) var approvedAccounts: [String] = []
+    var holdTokenLoads = false
+    private(set) var tokenLoadsCount = 0
+    private var tokenLoads: [String: CheckedContinuation<String?, Never>] = [:]
 
     func reset(_ accounts: [HostAccount]) {
-        precondition(approvals.isEmpty, "An approval fixture was left suspended")
+        precondition(approvals.isEmpty && tokenLoads.isEmpty, "An approval fixture was left suspended")
+        holdTokenLoads = false; tokenLoadsCount = 0
         self.accounts = accounts; revision = 0; approvedAccounts = []
         cache = CredentialCache { _ in fatalError("Unexpected credential reader") }
         cache.onChange = { [weak self] in self?.revision += 1 }
@@ -45,6 +49,18 @@ enum AccountConnectionFailure {
         cache.complete(account.id, attempt: attempt, result: CredentialReadResult(value: state == .ready ? "fixture-" + account.id : nil, status: status))
     }
     func token(for account: HostAccount) -> String? { cache.value(account.id) }
+    func loadToken(for account: HostAccount) async -> String? {
+        tokenLoadsCount += 1
+        if holdTokenLoads { return await withCheckedContinuation { tokenLoads[account.id] = $0 } }
+        return cache.value(account.id)
+    }
+    func awaitsAccess(_ account: HostAccount) -> Bool { [.loading, .authorizationRequired].contains(credentialState(for: account)) }
+    func pendingToken(_ account: HostAccount) -> Bool { tokenLoads[account.id] != nil }
+    func finishToken(_ account: HostAccount) {
+        guard let continuation = tokenLoads.removeValue(forKey: account.id) else { fatalError("No pending fixture token load") }
+        set(.ready, for: account)
+        continuation.resume(returning: "fixture-" + account.id)
+    }
     func credentialState(for account: HostAccount) -> CredentialCache.State { cache.state(account.id) }
     func savedAccessMessage(for account: HostAccount) -> String {
         switch credentialState(for: account) {
@@ -96,6 +112,12 @@ enum AccountConnectionFailure {
         let owner = (body["variables"] as! [String: Any])["owner"] as! String
         return try JSONSerialization.data(withJSONObject: ["data": ["user": ["projectsV2": ["nodes": [["id": owner, "title": "Fixture project"]], "pageInfo": ["hasNextPage": false]]]]])
     }
+}
+
+actor LocalHubMemory: LocalProjectPersistence {
+    var content: String?
+    func read() -> String? { content }
+    func write(expected: String?, content: String) throws { precondition(expected == self.content); self.content = content }
 }
 
 @main struct HostingHubCredentialTests {
@@ -226,7 +248,53 @@ enum AccountConnectionFailure {
             try await HostingHubAPI.saveProjectDraft(c, detail: guarded.hostingHub.detail!, title: "Confirmed after refresh", body: "")
         }
         precondition(verifiedCreation && mutations == 2 && !guarded.hostingHub.busy, "A refreshed project remained blocked")
-        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations and uncertain-write recovery passed (fake credentials and HTTP only)")
+        let delayed = fixture()
+        accounts.set(.ready, for: first); accounts.holdTokenLoads = true
+        let delayedRead = Task { await delayed.activateHostingHub(.projects) }
+        await until { accounts.pendingToken(first) }
+        let beforeRevision = accounts.revision
+        accounts.finishToken(first)
+        await delayedRead.value
+        precondition(accounts.revision > beforeRevision && Hosting.requests.count == 1 && delayed.hostingHub.items.first?.id == first.username,
+                     "A normal delayed credential read must accept its own completion revision")
+
+        for switchAccount in [false, true] {
+            let waiting = fixture()
+            accounts.set(.ready, for: first); accounts.holdTokenLoads = true
+            let read = Task { await waiting.activateHostingHub(.projects) }
+            await until { accounts.pendingToken(first) }
+            if switchAccount { waiting.hostingHub.selectedAccountID = second.id }
+            else { waiting.url = URL(fileURLWithPath: "/fixture/changed", isDirectory: true) }
+            accounts.finishToken(first)
+            await read.value
+            precondition(Hosting.requests.isEmpty, "A delayed token loaded a switched repository or hub account")
+        }
+        let changedProject = fixture()
+        accounts.set(.ready, for: first)
+        changedProject.hostingHub.section = .projects
+        changedProject.hostingHub.detail = HubDetail(item: projectA)
+        accounts.holdTokenLoads = true
+        var delayedWrites = 0
+        let delayedAction = Task { await changedProject.hostingHubAction(expected: changedProject.hubActionStamp) { _ in delayedWrites += 1 } }
+        await until { accounts.pendingToken(first) }
+        changedProject.hostingHub.detail = HubDetail(item: projectB)
+        changedProject.hostingHub.detailID = UUID()
+        accounts.finishToken(first)
+        let delayedSaved = await delayedAction.value
+        precondition(!delayedSaved && delayedWrites == 0 && Hosting.requests.isEmpty, "A changed project reached an action after waiting for credentials")
+        let localHub = fixture(), localStore = LocalProjectStore(storage: LocalHubMemory())
+        HostingHubAPI.localProjectStore = localStore
+        _ = try! await localStore.create(title: "Synthetic local plan")
+        localHub.hostingHub.section = .projects; localHub.hostingHub.projectSource = "local"
+        let localStamp = localHub.hubContextStamp, tokenCount = accounts.tokenLoadsCount
+        let localAccess = try! await localHub.hubAccess()
+        accounts.revision += 1
+        precondition(localHub.hubContextStamp == localStamp && localAccess.isCurrent?() == true, "Account revisions must not invalidate the credential-free local planner")
+        precondition(localHub.hubAccount == nil && localHub.hubCredentialState == nil && localHub.pendingHubCredentialAccount == nil)
+        await localHub.activateHostingHub(.projects)
+        precondition(localHub.hostingHub.items.count == 1 && localHub.hostingHub.items[0].title == "Synthetic local plan")
+        precondition(accounts.tokenLoadsCount == tokenCount && Hosting.requests.isEmpty, "Local hub planning accessed account credentials or HTTP")
+        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning and uncertain-write recovery passed (fake credentials and HTTP only)")
     }
 }
 SWIFT

@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "'%2$@' のコミット %1$lld 件 — 上が最新です。スカッシュすると、そのコミットをすぐ下 (古い方) のコミットにまとめます。";
 "%lld conflicts — %lld chosen" = "競合 %1$lld か所 — %2$lld か所を選択済み";
 "%lld files" = "%1$lld 個のファイル";
-"%lld jobs waiting to be run manually — expand to run" = "手動実行を待っているジョブが %1$lld 件あります — 展開して実行";
 "%lld modified files — stage and commit them." = "変更されたファイルが %1$lld 個あります — ステージしてコミットしてください。";
 "%lld more approvals needed." = "あと %1$lld 件の承認が必要です。";
 "'%@'  →  commit %@" = "'%1$@'  →  コミット %2$@";
@@ -102,7 +101,6 @@
 "Account for this repository" = "このリポジトリで使うアカウント";
 "Accounts" = "アカウント";
 "Add account" = "アカウントを追加";
-"Add account…" = "アカウントを追加…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "まずアカウントを追加してください。gitch add がアカウント名・メール・サーバーを尋ね、SSH キーを作成します。その後でインストールします。";
 "Add an account in Terminal…" = "ターミナルでアカウントを追加…";
 "Add variable" = "変数を追加";
@@ -189,7 +187,7 @@
 "Brings %lld new commits from the remote into the current branch." = "リモートの新しいコミット %1$lld 件を現在のブランチに取り込みます。";
 "Browser" = "ブラウザー";
 "By branch" = "ブランチ別";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — クリックしてブラウザーで開く";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — クリックして Actions で開く";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI の API キーで Chat Completions を呼び出します。";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio の API キーで Gemini を呼び出します。";
 "Can't open this image" = "この画像を開けません";
@@ -235,7 +233,6 @@
 "Choose again" = "選び直す";
 "Choose every conflict block before saving" = "保存する前に、すべての競合ブロックを選択してください";
 "Choose the %@ executable" = "%1$@ の実行ファイルを選択してください";
-"Choose the account for this repository" = "このリポジトリで使うアカウントを選択";
 "Chore: update" = "Chore: 更新";
 "Chosen: %@" = "選択済み: %1$@";
 "Claude Code (uses your login)" = "Claude Code (ログインを使用)";
@@ -482,7 +479,6 @@
 "History" = "履歴";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "リクエストが安全分類器にブロックされた場合、サーバーが推奨モデルで 1 回再試行します (fallbacks)。";
 "If the same server is used under another address, an account you've already connected works there too" = "同じサーバーが別のアドレスで使われている場合も、接続済みのアカウントがそのまま使えます";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "複数のアカウントを接続すると、同じサーバー上のリポジトリでは、PR 一覧の上で使用するアカウントを選べます。";
 "Ignore whitespace" = "空白を無視";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "空白を無視%1$@ — インデントや空白だけが変わった行は変更なしとみなします (オンの間は行単位のステージは使えません)";
 "Import gh CLI login" = "gh CLI のログインをインポート";
@@ -594,7 +590,6 @@
 "No new commits to merge." = "マージする新しいコミットはありません。";
 "No newline at end of file" = "ファイル末尾に改行がありません";
 "No one has approved yet." = "まだ誰も承認していません。";
-"No open %@" = "開いている %1$@ はありません";
 "No permission (403): %@" = "権限がありません (403): %1$@";
 "No remote repository." = "リモートリポジトリがありません。";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "リモートリポジトリがありません。先にターミナルで `git remote add origin <URL>` を実行して追加してください。";
@@ -1066,7 +1061,6 @@
 "Show sidebar" = "サイドバーを表示";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "列";
-"Time" = "時刻";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "フロー";
@@ -1242,7 +1236,7 @@
 "Unscheduled" = "日程未定";
 "Update project field?" = "プロジェクトフィールドを更新しますか？";
 "Use YYYY-MM-DD. Clear the value to remove this date." = "YYYY-MM-DD形式を使用してください。日付を削除するには値をクリアしてください。";
-"Waiting for your macOS approval. You can continue using local Git tools." = "macOSでの承認を待っています。ローカルのGitツールは引き続き使用できます。";
+"Waiting for your macOS approval. You can continue using local Git tools." = "macOS の承認を待っています。ローカルの Git ツールは引き続き使えます。";
 "Workspace account" = "ワークスペースのアカウント";
 "YYYY-MM-DD" = "YYYY-MM-DD";
 "Your next project starts here" = "次のプロジェクトを始めましょう";
@@ -1466,7 +1460,7 @@
 "The task could not be found in this project. Refresh and try again." = "このプロジェクトでタスクが見つかりませんでした。再読み込みしてから再度お試しください。";
 "Plan your day, then build what matters." = "一日を計画し、大切な作業に取り組みましょう。";
 "Check task dates" = "タスクの日付を確認";
-"Allow access to the saved account to use repository services." = "保存済みアカウントへのアクセスを許可すると、リポジトリサービスを利用できます。";
+"Allow access to the saved account to use repository services." = "リポジトリサービスを使うには、保存済みアカウントへのアクセスを許可してください。";
 "Calendar" = "カレンダー";
 "Overview" = "概要";
 
@@ -1695,3 +1689,78 @@
 
 "Comment posted" = "コメントを投稿しました";
 "Your saved session is restored. Verification could not be completed; check your connection and permissions, then refresh." = "保存済みのセッションを復元しました。確認を完了できませんでした。接続と権限を確認してから更新してください。";
+
+/* Shared workspace navigation and account messages. */
+"merged" = "マージ済み";
+"Show compare" = "比較を表示";
+"closed" = "クローズ";
+"Drag to resize the column" = "ドラッグして列の幅を変更";
+"Run #%lld" = "実行 #%1$lld";
+"Show home" = "ホームを表示";
+"Description (Markdown)" = "説明(Markdown)";
+"Copy folder path" = "フォルダのパスをコピー";
+"Comparing…" = "比較中…";
+"With text, each button's name sits to the right of its icon." = "テキストを表示すると、各ボタンの名前がアイコンの右に並びます。";
+"Running in other apps" = "ほかのアプリで実行中";
+"Checking saved account access…" = "保存済みアカウントへのアクセスを確認中…";
+"Copy redacted log" = "秘密情報を伏せたログをコピー";
+"Click to bring %@ to the front" = "クリックすると %1$@ を前面に表示します";
+"Show flows" = "フローを表示";
+"Couldn't open %@: it isn't inside a Git repository." = "%1$@ を開けませんでした: Git リポジトリの中にありません。";
+"Search pull requests" = "プルリクエストを検索";
+"Icons and text" = "アイコンとテキスト";
+"Merge request" = "マージリクエスト";
+"Connected accounts" = "接続済みのアカウント";
+"Filter" = "フィルター";
+"Pipeline #%lld" = "パイプライン #%1$lld";
+"Bring %@ to the front" = "%1$@ を前面に表示";
+"No issues match this filter." = "この条件に一致する Issue はありません。";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "ドラッグするか、グラフの上で横にスワイプすると横にスクロールします";
+"Releases" = "リリース";
+"Jobs" = "ジョブ";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "ブランチ・タグ・コミット ID を入力するか、左の一覧からブランチを選びます。";
+"Runs" = "実行一覧";
+"Choose a run to see its jobs and read their logs." = "実行を選ぶと、ジョブとログを確認できます。";
+"Open in Pull requests" = "プルリクエストで開く";
+"Reset to default layout" = "デフォルトのレイアウトに戻す";
+"open" = "オープン";
+"Open in Issues" = "Issue で開く";
+"Refresh conversation" = "会話を更新";
+"(current)" = "(現在)";
+"Write a comment (Markdown)" = "コメントを書く(Markdown)";
+"Edit issue #%lld" = "Issue #%1$lld を編集";
+"Toolbar" = "ツールバー";
+"Back to the repository screen" = "リポジトリ画面に戻る";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "複数のアカウントを接続した場合、リポジトリで使うアカウントはツールバー右端のアカウントボタンで選びます。";
+"Issues %lld" = "Issue %1$lld";
+"Connect a GitHub or GitLab account to search its repositories." = "GitHub または GitLab のアカウントを接続すると、そのリポジトリを検索できます。";
+"No merge requests match this filter." = "この条件に一致するマージリクエストはありません。";
+"Toolbar buttons" = "ツールバーのボタン";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。";
+"Filter branches and tags" = "ブランチとタグを絞り込む";
+"Section" = "セクション";
+"Search filters loaded pages. Load more to search older items." = "検索は読み込んだページを絞り込みます。古い項目を探すにはさらに読み込んでください。";
+"Search merge requests" = "マージリクエストを検索";
+"Close log" = "ログを閉じる";
+"Icons only" = "アイコンのみ";
+"Open in Releases" = "リリースで開く";
+"Select an issue" = "Issue を選択";
+"Job log" = "ジョブのログ";
+"Compare with the current branch" = "現在のブランチと比較";
+"Issue #%lld" = "Issue #%1$lld";
+"Reload log" = "ログを再読み込み";
+"Back to the repository screen (⌘[)" = "リポジトリ画面に戻る (⌘[)";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "GitHub または GitLab のリモートがあるリポジトリを開くと、使うアカウントを選べます。";
+"Close search" = "検索を閉じる";
+"Select a run" = "実行を選択";
+"Choose a job to read its log here." = "ジョブを選ぶと、ここにログが表示されます。";
+"Open in Merge requests" = "マージリクエストで開く";
+"Remote branches" = "リモートブランチ";
+"Filtered: %@" = "フィルター: %1$@";
+"%lld jobs waiting to be run manually" = "手動実行を待っているジョブが %1$lld 件あります";
+"Unknown app" = "不明なアプリ";
+"Connect an account for repository services." = "リポジトリのサービスに使うアカウントを接続してください。";
+"Close search (Esc)" = "検索を閉じる (Esc)";
+"No pull requests match this filter." = "この条件に一致するプルリクエストはありません。";
+"An empty search lists repositories you belong to." = "検索欄を空にすると、所属しているリポジトリを一覧します。";
+"Search the list, then read the conversation and reply here." = "一覧で探して、ここで会話を読み、返信します。";

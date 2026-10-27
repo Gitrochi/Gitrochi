@@ -490,8 +490,8 @@ private final class ProjectFixtureNetworkBlocker: URLProtocol {
                 let requested = currentDetail.rows[1]
                 let root: AnyView
                 if kind == "home" {
-                    store.navigate(.home, prepare: false, remember: false)
-                    root = AnyView(ScrollView { WorkspacePlanningDashboard().padding(24) }
+                    store.navigate(.home, prepare: false)
+                    root = AnyView(WorkspaceHomePanel()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color(nsColor: .windowBackgroundColor)).environment(store))
                 } else {
@@ -505,7 +505,7 @@ private final class ProjectFixtureNetworkBlocker: URLProtocol {
                     precondition(store.hostingHub.context == store.hubContextStamp && store.hubAccount == nil && store.hubCredentialState == nil, "Entering local projects from another section must keep its account-free context")
                     projectFixtureDefaults.set(kind, forKey: "projectWorkbench.local." + localItem.id + ".layout")
                     if kind == "overview" { store.hostingHub.requestedProjectRowID = requested.id }
-                    store.navigate(.projects, prepare: false, remember: false)
+                    store.navigate(.projects, prepare: false)
                     root = AnyView(ProjectWorkspace(store: store).environment(store))
                 }
                 let host = NSHostingController(rootView: root.tint(Color(red: 0.43, green: 0.33, blue: 0.89)).accentColor(Color(red: 0.43, green: 0.33, blue: 0.89))
@@ -569,7 +569,7 @@ private final class ProjectFixtureNetworkBlocker: URLProtocol {
                             await store.selectHostingHubItem(sparseItem)
                         }
                         projectFixtureDefaults.set(kind, forKey: "projectWorkbench.local." + sparseItem.id + ".layout")
-                        store.navigate(.projects, prepare: false, remember: false)
+                        store.navigate(.projects, prepare: false)
                         let host = NSHostingController(rootView: ProjectWorkspace(store: store).environment(store)
                             .tint(Color(red: 0.43, green: 0.33, blue: 0.89)).accentColor(Color(red: 0.43, green: 0.33, blue: 0.89))
                             .defaultAppStorage(projectFixtureDefaults).environment(\.locale, Locale(identifier: language))
@@ -774,7 +774,7 @@ private final class ProjectFixtureNetworkBlocker: URLProtocol {
             }
         }
         precondition(ProjectFixtureCredentialCounter.reads == localCredentialBaseline && ProjectFixtureNetworkBlocker.attempts == localNetworkBaseline, "Project interaction checks must stay isolated from real credentials and HTTP")
-        let result: [String: Any] = ["ok": true, "productionViews": ["ProjectWorkspace", "ProjectWorkspaceHeader", "ProjectTaskCard", "ProjectTaskTable", "ProjectRoadmap", "ProjectDashboard", "ProjectCalendar", "WorkspacePlanningDashboard", "ProjectFieldEditor", "ProjectActionReviewSheet"],
+        let result: [String: Any] = ["ok": true, "productionViews": ["ProjectWorkspace", "ProjectWorkspaceHeader", "ProjectTaskCard", "ProjectTaskTable", "ProjectRoadmap", "ProjectDashboard", "ProjectCalendar", "WorkspaceHomePanel", "WorkspacePlanningDashboard", "ProjectFieldEditor", "ProjectActionReviewSheet"],
                                      "syntheticAccount": true, "networkRequests": ProjectFixtureNetworkBlocker.attempts,
                                      "syntheticSharedViewReads": ProjectFixtureNetworkBlocker.viewReads,
                                      "localOnly": localOnly,

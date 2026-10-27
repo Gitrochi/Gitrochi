@@ -13,12 +13,15 @@ struct CredentialReadResult: Sendable {
 final class CredentialCache {
     enum State: Equatable { case loading, ready, authorizationRequired, unavailable }
     typealias Reader = @Sendable (String) async -> CredentialReadResult
+    /// A failed read is tried again this much later, so a denied system prompt does not come straight back.
+    @ObservationIgnored var retryInterval: TimeInterval = 30
     private var values: [String: String] = [:]
     private var states: [String: State] = [:]
     @ObservationIgnored private var reads: [String: Task<Void, Never>] = [:]
     @ObservationIgnored private var lastStatus: [String: Int32] = [:]
     @ObservationIgnored private var lastReads: [String: Date] = [:]
     @ObservationIgnored private var generations: [String: UUID] = [:]
+    @ObservationIgnored private var failures: [String: Date] = [:]
     @ObservationIgnored private let reader: Reader
     @ObservationIgnored var onChange: (() -> Void)?
 
@@ -32,8 +35,11 @@ final class CredentialCache {
         return nil
     }
 
-    func prepare(_ name: String) {
-        guard states[name] == nil else { return }
+    /// Starts a read unless the value is known, a read is in flight, or the last failure is still fresh.
+    /// Only temporary access failures retry; missing or rejected credentials require explicit recovery.
+    func prepare(_ name: String, now: Date = Date()) {
+        guard values[name] == nil, states[name] != .loading, reads[name] == nil, retryable(name) else { return }
+        if let failed = failures[name], now.timeIntervalSince(failed) < retryInterval { return }
         let attempt = begin(name)
         let reader = reader
         reads[name] = Task { [weak self] in
@@ -41,6 +47,14 @@ final class CredentialCache {
             guard !Task.isCancelled else { return }
             self?.complete(name, attempt: attempt, result: result)
         }
+    }
+
+    /// Waits for the read in flight, so a loader shows progress instead of "no account" while the system prompt is up.
+    func awaitValue(_ name: String) async -> String? {
+        if let value = values[name] { return value }
+        prepare(name)
+        while let read = reads[name] { await read.value }
+        return values[name]
     }
 
     /// 명시적 승인·새 토큰 저장·해제는 이전 자동 읽기의 결과를 무효화한다.
@@ -61,16 +75,19 @@ final class CredentialCache {
         let transient = result.requiresAuthorization || result.status == -25291
         if result.value != nil || !transient || values[name] == nil { values[name] = result.value }
         states[name] = values[name] == nil ? (result.requiresAuthorization ? .authorizationRequired : .unavailable) : .ready
+        failures[name] = values[name] == nil ? Date() : nil
         onChange?()
+    }
+
+    private func retryable(_ name: String) -> Bool {
+        states[name] == nil || states[name] == .authorizationRequired || lastStatus[name] == -25291
     }
 
     /// Lifecycle retries stay silent and coalesced; ready credentials never reread on navigation.
     func retry(_ name: String, minimumInterval: TimeInterval = 30, now: Date = Date()) {
-        guard values[name] == nil, reads[name] == nil, states[name] != .loading,
-              states[name] == nil || states[name] == .authorizationRequired || lastStatus[name] == -25291,
-              lastReads[name].map({ now.timeIntervalSince($0) >= minimumInterval }) ?? true else { return }
-        states[name] = nil
-        prepare(name)
+        guard values[name] == nil, reads[name] == nil, states[name] != .loading, retryable(name),
+              (failures[name] ?? lastReads[name]).map({ now.timeIntervalSince($0) >= minimumInterval }) ?? true else { return }
+        prepare(name, now: now)
     }
 
     func store(_ value: String?, for name: String) {

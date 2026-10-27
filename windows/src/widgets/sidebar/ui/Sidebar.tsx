@@ -1,4 +1,4 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, Pin, ShieldCheck, Tag as TagIcon } from "lucide-react";
+import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, SquareArrowOutUpRight, Tag as TagIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
@@ -9,36 +9,39 @@ import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
 import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
-import { CIPanel } from "./CIPanel";
+import { IssueListSection } from "./IssueListSection";
 import { PullRequestSection } from "./PullRequestSection";
 import { Section, SectionFlyout } from "./Section";
 import { WorktreeSection } from "./WorktreeSection";
 import "./sidebar.css";
 
-export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs";
+export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs" | "issues";
 
 export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: SidebarSectionID }) {
   useObserve(store);
   useObserve(settings);
   useObserve(agents);
-  const mode = settings.get<"list" | "agents" | "ci">("sidebarMode", "list");
+  // CI moved to the Actions page; a saved "ci" mode falls through to the branch list (macOS: SidebarView.swift)
+  const mode = settings.get<string>("sidebarMode", "list") === "agents" ? "agents" : "list";
   const active = agents.sessions.filter((s) => isActiveStatus(s.status) && store.worktrees.some((w) => samePath(w.path, s.path))).length;
   if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} openSettings={openSettings} only={flyout === "repository" ? undefined : flyout} /></SectionFlyout.Provider>;
   return (
     <>
-      <div style={{ padding: "8px 10px 4px" }}>
-        <Segmented
-          stretch
-          value={mode}
-          onChange={(v) => settings.set("sidebarMode", v)}
-          options={[
-            { value: "list", label: t("List") },
-            { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
-            { value: "ci", label: "CI/CD", tip: t("Pipelines · Actions|Run manual jobs, rerun, cancel, approve deployments") },
-          ]}
-        />
+      <div className="row" style={{ padding: "8px 6px 4px 10px", gap: 4 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Segmented
+            stretch
+            value={mode}
+            onChange={(v) => settings.set("sidebarMode", v)}
+            options={[
+              { value: "list", label: t("Branches") },
+              { value: "agents", label: active ? t("Agents {0}", active) : t("Agents") },
+            ]}
+          />
+        </div>
+        <IconButton small icon={<PanelLeftClose size={15} />} tip={tip(t("Hide sidebar"), t("The sections stay at hand as a rail of icons; hover one to open it."))} onClick={() => settings.set("sidebarCollapsed", true)} />
       </div>
-      {mode === "agents" ? <AgentsPanel store={store} /> : mode === "ci" ? <CIPanel store={store} openSettings={openSettings} /> : <BranchList store={store} openSettings={openSettings} />}
+      {mode === "agents" ? <AgentsPanel store={store} /> : <BranchList store={store} openSettings={openSettings} />}
     </>
   );
 }
@@ -106,8 +109,6 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
 
   return (
     <SharedStack className="side-scroll">
-      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
-
       {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
         <Section id="pinned" title={t("Pinned")}>
           {store.localBranches
@@ -166,8 +167,20 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
         </Section>
       )}
 
-      {show("tags") && store.tags.length > 0 && (
-        <Section id="tags" title={t("Tags")} count={store.tags.length} defaultOpen={false}>
+      {/* the hosting lists sit between the branches and the tags (macOS: SidebarView) */}
+      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
+
+      {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
+
+      {/* with a hosting remote the section stays, even without tags, for its way to the Releases page */}
+      {show("tags") && (store.tags.length > 0 || !!store.target) && (
+        <Section
+          id="tags"
+          title={t("Tags")}
+          count={store.tags.length}
+          defaultOpen={false}
+          actions={store.target && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={t("Open in Releases")} aria-label={t("Open in Releases")} onClick={() => store.navigate("releases")} />}
+        >
           {store.tags.map((tag) => (
             <div
               key={tag.name}
@@ -177,6 +190,7 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 showContextMenu(e, [
                   { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
                   { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
+                  ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
                   "divider",
                   { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
                 ])
