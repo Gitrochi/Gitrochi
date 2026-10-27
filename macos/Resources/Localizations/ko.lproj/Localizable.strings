@@ -912,6 +912,10 @@
 "Set manually" = "직접 지정";
 "Set up SSH key in Terminal…" = "Terminal 에서 SSH 키 만들기…";
 "Shell command" = "셸 명령";
+"CLI appearance" = "CLI 표시";
+"Show the small eye logo" = "작은 눈 로고 표시";
+"Show Gitrochi's small eye logo beside command titles. You can also use gitch logo off or gitch logo on in the terminal." = "명령 제목 옆에 Gitrochi의 작은 눈 로고를 표시합니다. 터미널에서도 gitch logo off 또는 gitch logo on으로 바꿀 수 있습니다.";
+"Couldn't read the CLI appearance setting. Update Gitrochi and try again." = "CLI 표시 설정을 읽지 못했습니다. Gitrochi를 업데이트한 뒤 다시 시도하세요.";
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "아래 터미널 패널에서 여는 셸(zsh·bash·fish 등)";
 "Show all" = "전체 보기";
 "Show all %lld hidden branches" = "숨긴 브랜치 %1$lld개 모두 보이기";

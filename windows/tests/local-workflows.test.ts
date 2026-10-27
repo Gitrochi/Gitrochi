@@ -34,6 +34,8 @@ const makeStore = () => { const store = new RepoStore(); store.path = repo; stor
 
 describe("로컬 안전 사본", () => {
   it("바이너리·새 파일·심볼릭 링크·별도 스테이지를 파일 이동 없이 보관하고 복원한다", async () => {
+    // Git for Windows otherwise checks symlinks out as regular files, even when creation is allowed.
+    await git(["config", "core.symlinks", "true"], repo);
     writeFileSync(join(repo, "file.txt"), "base\n"); await git(["add", "-A"], repo); await git(["commit", "-qm", "Base"], repo);
     writeFileSync(join(repo, "file.txt"), "staged\n"); await git(["add", "file.txt"], repo); writeFileSync(join(repo, "file.txt"), "unstaged\n");
     const binary = Buffer.from([0, 255, 42, 10]); writeFileSync(join(repo, "new.bin"), binary); symlinkSync("file.txt", join(repo, "link"));

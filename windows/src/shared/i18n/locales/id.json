@@ -1088,5 +1088,9 @@
  "Create flow file": "Buat file alur",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi membaca file repositori ini untuk menemukan tes dan alatnya. Tidak ada yang dijalankan, dan tidak ada yang ditulis sampai Anda membuat file.",
  "Proposed .gitch/flow.yml": "Usulan .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "File alur sudah ada, jadi tidak ada yang ditulis. Gabungkan usulan secara manual."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "File alur sudah ada, jadi tidak ada yang ditulis. Gabungkan usulan secara manual.",
+  "CLI appearance": "Tampilan CLI",
+  "Show the small eye logo in CLI output": "Tampilkan logo mata kecil pada keluaran CLI",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Anda juga dapat menggunakan gitch logo on atau gitch logo off di terminal.",
+  "Couldn't read the CLI logo setting.": "Pengaturan logo CLI tidak dapat dibaca."
 }

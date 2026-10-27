@@ -1337,5 +1337,9 @@
  "Pull requests": "プルリクエスト",
  "Project view": "プロジェクト表示",
  "Project board": "プロジェクトボード",
- "Overview": "概要"
+ "Overview": "概要",
+  "CLI appearance": "CLI の表示",
+  "Show the small eye logo in CLI output": "CLI 出力に小さな目のロゴを表示",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "ターミナルで gitch logo on または gitch logo off を実行しても変更できます。",
+  "Couldn't read the CLI logo setting.": "CLI のロゴ設定を読み取れませんでした。"
 }

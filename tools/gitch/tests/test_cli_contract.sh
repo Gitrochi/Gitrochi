@@ -23,9 +23,15 @@ test_cli_contract_schema_embedded_matches_standalone() {
   run gitch schema; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -S .)" "$(jq -S . "$ROOT/schema/gitch-v1.schema.json")"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$schema"')" https://json-schema.org/draft/2020-12/schema
-  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 20
+  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 24
   run gitch schema graph; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/graph'
+  run gitch schema overlap; assert_ok; assert_json "$OUT"
+  assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/overlap'
+  run gitch schema move; assert_ok; assert_json "$OUT"
+  assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/move'
+  run gitch schema module; assert_ok; assert_json "$OUT"
+  assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/module'
   run gitch schema unknown --json; assert_rc 1; assert_json "$OUT"
 }
 
@@ -42,6 +48,26 @@ test_cli_contract_staged_review_and_stamp() {
   contract_validate review
   contract_validate public
   run gitch graph review --scope worktree --json; assert_rc 1
+}
+
+test_cli_contract_move_plan_and_module_audit() {
+  contract_repo
+  run gitch move b.ts relocated.ts --plan --json; assert_ok
+  contract_validate move
+  contract_validate public
+  assert_eq "$(printf '%s' "$OUT" | jq -r .mode)" plan
+  printf '%s' "$OUT" | jq -e '.moves|any(.from=="b.ts" and .to=="relocated.ts")' >/dev/null || fail 'move path mapping contract'
+  [ -f b.ts ] && [ ! -e relocated.ts ] || fail 'move plan changed files'
+  printf '{"name":"contract-fixture","dependencies":{"declared":"^1.0.0"}}\n' > package.json
+  git add package.json
+  printf 'import unlisted from "unlisted";\nimport { b } from "./b";\n' > a.ts
+  run gitch module audit --json; assert_ok
+  contract_validate module
+  contract_validate public
+  assert_eq "$(printf '%s' "$OUT" | jq -r .scope)" tracked-working-tree
+  printf '%s' "$OUT" | jq -e '.findings|any(.code=="MISSING_DEPENDENCY" and .severity=="error" and .dependency=="unlisted")' >/dev/null || fail 'module missing declaration contract'
+  run gitch module audit --strict --json; assert_rc 1
+  contract_validate module
 }
 
 test_cli_contract_catalog_separates_analysis_depth() {
@@ -152,6 +178,19 @@ test_cli_completion_candidates_are_dynamic_and_preserve_words() {
   git branch feature/completion
   mkdir -p "$HOME/Develop/alice/Project with \$(touch SHOULD_NOT_EXIST)/.git"
   run gitch _complete -- com; assert_ok; assert_out completion
+  run gitch _complete -- over; assert_ok; assert_eq "$OUT" overlap
+  run gitch _complete -- overlap --; assert_ok; assert_out --watch; assert_out --json; assert_out --current; assert_out --interval; assert_out --no-deps; assert_out --fail-on-overlap
+  run gitch _complete -- overlap --cur; assert_ok; assert_eq "$OUT" --current
+  run gitch _complete -- schema over; assert_ok; assert_eq "$OUT" overlap
+  run gitch _complete -- mov; assert_ok; assert_eq "$OUT" move
+  run gitch _complete -- mod; assert_ok; assert_eq "$OUT" module
+  run gitch _complete -- move --; assert_ok; assert_out --plan; assert_out --json
+  run gitch _complete -- move --app; assert_ok; assert_eq "$OUT" '' 'move cannot apply changes'
+  run gitch _complete -- move a; assert_ok; assert_out a.ts
+  run gitch _complete -- module au; assert_ok; assert_eq "$OUT" audit
+  run gitch _complete -- module audit --str; assert_ok; assert_eq "$OUT" --strict
+  run gitch _complete -- schema mo; assert_ok; assert_out move; assert_out module
+
   run gitch _complete -- use a; assert_ok; assert_eq "$OUT" alice
   run gitch _complete -- b feature/; assert_ok; assert_eq "$OUT" feature/completion
   run gitch _complete -- g diff feature/; assert_ok; assert_eq "$OUT" feature/completion

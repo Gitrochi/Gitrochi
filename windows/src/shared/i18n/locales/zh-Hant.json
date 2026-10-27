@@ -1138,5 +1138,9 @@
  "Create flow file": "建立流程檔案",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi 讀取了此存放庫的檔案以找出其測試與工具。在你建立檔案之前，不會執行或寫入任何內容。",
  "Proposed .gitch/flow.yml": "建議的 .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "流程檔案已存在，因此不會寫入任何內容。請手動合併建議。"
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "流程檔案已存在，因此不會寫入任何內容。請手動合併建議。",
+  "CLI appearance": "CLI 外觀",
+  "Show the small eye logo in CLI output": "在 CLI 輸出中顯示小眼睛標誌",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "也可以在終端機中使用 gitch logo on 或 gitch logo off。",
+  "Couldn't read the CLI logo setting.": "無法讀取 CLI 標誌設定。"
 }
