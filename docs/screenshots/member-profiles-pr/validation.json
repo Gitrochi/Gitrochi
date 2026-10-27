@@ -1,0 +1,170 @@
+{
+  "assertions": "Vision OCR verifies expected labels in every render. Selected renders were also visually inspected for readable layout, loaded images, avatar/fallback states and CI log content.",
+  "assets": [
+    {
+      "bytes": 335176,
+      "file": "request-conversation-1080-light.png",
+      "pixelHeight": 2400,
+      "pixelWidth": 2160,
+      "sha256": "8079f7f5eb1842b4ba6aec462d6088ad6cdd61858e5220470d7a4f116bb65e32"
+    },
+    {
+      "bytes": 287323,
+      "file": "request-checks-700-dark.png",
+      "pixelHeight": 2400,
+      "pixelWidth": 1400,
+      "sha256": "471acb044022cd743d6cb26de86151d0999c308f7b1e9fd4654b5e5fa09937ae"
+    },
+    {
+      "bytes": 194755,
+      "file": "request-members-1080-light.png",
+      "pixelHeight": 2400,
+      "pixelWidth": 2160,
+      "sha256": "7eab40cc79a35578ccd059dc8766e41b9bc9480568eb01b53f77aa1a294c201e"
+    },
+    {
+      "bytes": 129669,
+      "file": "request-empty-700-dark.png",
+      "pixelHeight": 2400,
+      "pixelWidth": 1400,
+      "sha256": "fe409c9c2fb62513abdbb5833f9945bb42afd7e02170bafd809181344947cb3b"
+    }
+  ],
+  "command": "bash macos/Tools/test-request-layout.sh <output-directory>",
+  "date": "2026-10-26",
+  "fixture": "macos/Tools/fixtures/RequestLayout.swift",
+  "isolation": "Dedicated UserDefaults suite; fixture-only accounts and CI data; hosting requests disabled; Markdown images and one profile avatar replaced with synthetic local NSImages only in temporary source copies.",
+  "platform": "macOS arm64",
+  "renderCount": 16,
+  "renders": [
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": true,
+      "scenario": "conversation",
+      "screenshot": "request-conversation-1080-light.png",
+      "theme": "light",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "conversation",
+      "screenshot": "request-conversation-1080-dark.png",
+      "theme": "dark",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "conversation",
+      "screenshot": "request-conversation-700-light.png",
+      "theme": "light",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "conversation",
+      "screenshot": "request-conversation-700-dark.png",
+      "theme": "dark",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "checks",
+      "screenshot": "request-checks-1080-light.png",
+      "theme": "light",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "checks",
+      "screenshot": "request-checks-1080-dark.png",
+      "theme": "dark",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "checks",
+      "screenshot": "request-checks-700-light.png",
+      "theme": "light",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": true,
+      "scenario": "checks",
+      "screenshot": "request-checks-700-dark.png",
+      "theme": "dark",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": true,
+      "scenario": "members",
+      "screenshot": "request-members-1080-light.png",
+      "theme": "light",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "members",
+      "screenshot": "request-members-1080-dark.png",
+      "theme": "dark",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "members",
+      "screenshot": "request-members-700-light.png",
+      "theme": "light",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "members",
+      "screenshot": "request-members-700-dark.png",
+      "theme": "dark",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "empty",
+      "screenshot": "request-empty-1080-light.png",
+      "theme": "light",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "empty",
+      "screenshot": "request-empty-1080-dark.png",
+      "theme": "dark",
+      "width": 1080
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": false,
+      "scenario": "empty",
+      "screenshot": "request-empty-700-light.png",
+      "theme": "light",
+      "width": 700
+    },
+    {
+      "expectedTextVisible": true,
+      "includedInRepository": true,
+      "scenario": "empty",
+      "screenshot": "request-empty-700-dark.png",
+      "theme": "dark",
+      "width": 700
+    }
+  ],
+  "result": "passed"
+}

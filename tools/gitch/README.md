@@ -44,7 +44,7 @@ source ~/.zshrc
 gitch doctor
 ```
 
-터미널에서 `gitch install` 을 하면 맨 위에 로고(앱 아이콘의 두 눈)가 창 크기에 맞춰 크게·중간·작게(아주 좁으면 이름만) 나오고, 단계(명령 · 터미널 · 자동 규칙 · 검사 훅 · AI 도구)별로 설치한다. 로고는 사람이 보는 터미널에서만 나온다(`GITSW_BANNER=never` 로 끄고 `always` 로 켠다).
+터미널에서 `gitch install` 을 하면 맨 위에 작은 로고(앱 아이콘의 두 눈)가 나오고, 단계(명령 · 터미널 · 자동 규칙 · 검사 훅 · AI 도구)별로 설치한다. 로고와 출력 모양 설정은 아래 [터미널 출력](#터미널-출력)을 참고한다.
 
 새 컴퓨터: `gitch import <내보낸 설정>` → `gitch install` → `gitch setup` (SSH 키 생성·등록).
 
@@ -144,12 +144,60 @@ gitch rescue               # pl/up/sync/fix/undo/amend 전에 자동으로 남�
 gitch clone [계정] <주소>   # 계정 자동 선택 + 계정 폴더에 받기 + 잠금
 gitch publish [이름]       # 원격이 없는 새 저장소를 GitHub/GitLab 에 비공개로 만들고 첫 push
 gitch scan [--fix]         # ~/Develop 아래 저장소 전체 점검
+gitch overlap --watch      # 여러 워크트리의 같은 파일 · 연결된 코드 변경을 감시
+gitch move src/api src/network --plan  # 이동할 경로와 연결된 코드의 변경 계획
+gitch module audit --strict # npm 선언에 없는 정적 import가 있으면 실패
 gitch report --today       # 오늘 누가(사람/claude/codex) 어디에 무엇을 커밋/push 했나
 ```
 
-`gitch help` 에 전체 명령이 있다. `--json` 은 status / ck / preflight / scan / doctor / list / audit / report / graph 에 있다.
+`gitch help` 에 전체 명령이 있다. `--json` 은 status / ck / preflight / scan / doctor / list / audit / overlap / move / module audit / report / graph / logo 에 있다.
 
 종료코드: 0 정상, 1 문제/실패, 2 사용자 확인 필요(`--yes`), 3 커밋할 것 없음, 4 올릴 파일을 고르지 않음(비대화형).
+
+### 터미널 출력
+
+사람이 터미널에서 실행하는 명령은 **앱 아이콘의 작은 두 눈과 명령 이름**을 한 번 표시한다. 도움말·버전·오류에도 같은 작은 로고를 사용하며 애니메이션은 없다. `ck` · `status` · `preflight` · `overlap` · `move --plan` · `module audit`는 요약과 근거를 묶어서 보여 준다. 경로와 복사해서 쓸 명령은 자르지 않는다.
+
+작은 두 눈은 기본으로 켜져 있다. **앱 설정 > CLI** 또는 `gitch logo off`로 끄고 `gitch logo on`으로 다시 켠다. 앱과 CLI가 같은 `ui.logo` 설정을 사용하므로 다음 명령부터 함께 적용된다. 로고만 끄면 제목·색상·상태 기호·파일 목록의 레이아웃은 유지된다. Git 계정을 아직 추가하지 않았어도 이 설정을 바꿀 수 있다.
+
+- 파랑: 제목·강조, 초록 `✓`: 정상·완료, 노랑 `!`: 확인 필요, 빨강 `×`: 오류·중단, 흐린 `·`: 참고 정보.
+- `├─` · `└─` · `↳`로 파일·참조·다음 행동의 관계를 표시한다. 결과는 색 없이도 기호와 문장으로 구분된다.
+- 창이 좁으면 제목을 로고 아래로 옮긴다. 아주 좁은 창과 UTF-8이 아닌 로케일에서는 간단한 ASCII 헤더를 사용한다.
+- `NO_COLOR=1` 또는 `GITSW_COLOR=never`: 색을 끄고 두 눈과 관계 기호는 유지한다. `NO_COLOR`는 `GITSW_COLOR=always`보다 우선한다.
+- `GITCH_LOGO=off` 또는 `GITCH_LOGO=on`: 해당 실행에서만 로고를 숨기거나 표시한다. 저장한 설정은 바뀌지 않는다. `gitch logo on|off`는 저장할 값이 그 명령의 화면에도 바로 적용된다.
+- `GITCH_STYLE=plain`, `TERM=dumb`, `GITSW_BANNER=never`: 로고와 새 레이아웃을 끈다.
+- 파이프·파일로 보내는 출력은 기존 텍스트를 유지한다. `--json`·JSON 오류·스키마·자동완성·설정 경로·원시 그래프 출력에는 로고나 ANSI 색이 섞이지 않는다. `GITSW_BANNER=always`도 이 기계 출력 규칙을 바꾸지 않는다.
+
+```bash
+gitch ck                              # 작은 두 눈과 작업 상태 요약
+gitch logo off                        # 로고만 끄기 · 설정 저장
+gitch logo on                         # 로고 다시 켜기 · 설정 저장
+gitch logo                            # 저장한 로고 표시 설정 확인
+GITCH_LOGO=off gitch ck                # 이번 실행에서만 로고 숨기기
+NO_COLOR=1 gitch overlap --current     # 색 없이 같은 로고와 관계 표시
+GITCH_STYLE=plain gitch preflight      # 기존 텍스트와 PREFLIGHT= 표식
+gitch ck --json | jq .                 # 기존 JSON 계약 유지
+gitch logo --json                     # {"schemaVersion":1,"enabled":true}
+```
+
+`gitch logo --json`과 `gitch logo status --json`은 저장한 설정을 반환한다. `GITCH_LOGO`로 임시 표시 여부를 바꿔도 이 값은 유지된다. `gitch config set ui.logo false --yes`와 `gitch config get ui.logo`로도 같은 설정을 관리할 수 있다.
+
+아래는 임시 저장소에서 `gitch ck`를 실행한 결과 중 헤더와 변경 목록이다.
+
+```text
+  ⣼⣿⣦                gitch · 작업 상태
+  ⣿⣿⠃⢀⡄    ⣠⡔ ⢠⣿⣿⡶   terminal-ui · main
+  ⠈⠻⢦⡾⠃   ⠸⢿⣥⣴⣿⠿⠋    계정 alice · 잠금
+
+  변경 사항
+  ✓ 커밋 준비 · 2개
+    ├─ 수정 · src/api.ts
+    └─ 수정 · tests/api.test.ts
+  ! 작업 중 · 1개
+    └─ 수정 · src/app.ts
+
+  → 준비된 변경 커밋: gitch c -m "메시지"
+```
 
 ### 앱 열기 (`gitch app`)
 
@@ -170,6 +218,58 @@ macOS · Windows에서 동작한다. 앱에 동봉된 CLI는 그 앱을 열고, 
 `--file` 은 저장소 안의 상대 경로다. 파일만 지정하면 히스토리, `--line` 을 함께 지정하면 blame 의 실제 줄로 이동해 강조한다. 변경한 파일의 작업 diff 는 `--view diff` 로 연다. 이미 앱이 실행 중이면 같은 저장소의 탭을 재사용한다. `--view files|modules|changes|tree` 는 앱의 구조 그래프 메뉴와 같다. 정밀 분석에는 최신 `index.scip` 또는 `.gitch/index.scip` 이 필요하며, 없으면 분석 범위 안내와 기존 분석을 보여 준다.
 
 구조 그래프의 파일·근거 줄·근거 커밋 링크는 `gitrochi://open?repo=<절대경로>&file=<상대경로>&line=<양의정수>&commit=<전체해시>&view=<보기>` 를 사용한다. 쿼리 값은 UTF-8 퍼센트 인코딩한다. `repo` 는 필수이며 그 밖의 값은 선택이다. 저장소 밖 경로·중복 쿼리·잘못된 커밋 해시를 거부한다. Windows 의 브라우저 링크 등록은 설치 프로그램에 포함된다. CLI 의 앱 직접 실행은 설치 등록 없이도 전달된다.
+
+## 워크트리 충돌 예보 (`gitch overlap`)
+
+```bash
+gitch overlap                         # 같은 저장소의 로컬 워크트리를 쌍으로 비교
+gitch overlap --current               # 현재 워크트리와 다른 워크트리 사이만 비교
+gitch overlap --current --watch       # 현재 작업의 충돌 위험 감시
+gitch overlap --watch                 # 기본 2초 간격, 결과가 달라졌을 때만 출력
+gitch overlap --watch --interval 5     # 5초 간격
+gitch overlap --no-deps                # 의존 관계 분석을 빼고 같은 파일 변경만 확인
+gitch overlap --json                  # AI · 스크립트용 스냅샷
+gitch overlap --watch --json           # 바뀐 스냅샷마다 JSON 한 줄 (NDJSON)
+gitch overlap --fail-on-overlap        # 위험한 쌍이 있으면 종료 코드 1
+```
+
+기본값은 모든 로컬 워크트리 쌍을 비교한다. `--current`는 명령을 실행한 워크트리가 포함된 쌍만 비교하므로, 워크트리가 많을 때 현재 작업의 위험에 집중할 수 있다. JSON의 `worktrees`에는 전체 목록을 유지하며, `pairs`와 비교 통계에는 선택한 쌍만 반영한다.
+
+각 워크트리 쌍의 공통 조상부터 바뀐 파일을 비교한다. 커밋한 변경뿐 아니라 스테이지·미스테이지 변경과 무시하지 않은 새 파일도 포함하며, 이름 변경은 이전·새 경로를 모두 확인한다. 계정 설정 없이 쓸 수 있고 저장소·인덱스·브랜치를 바꾸지 않는다.
+
+같은 경로를 함께 바꾸면 `sameFiles`, 서로 바꾼 파일이 직접 의존하면 `dependencies`, 서로 다른 변경 파일이 같은 로컬 파일에 의존하면 `sharedDependencies`에 나온다. 의존 연결은 현재 워크트리와 공통 조상의 정적 파일 그래프에서 읽는다. 스테이지와 작업 파일이 다르면 스테이지된 소스도 임시 스냅샷으로 분석하므로, 스테이지한 import를 작업 파일에서 되돌려도 연결을 확인한다. 이 과정은 저장소와 인덱스를 바꾸거나 빌드 스크립트를 실행하지 않는다. Swift 등 이름으로 추정한 연결에는 `heuristic: true`를 붙인다. 두 브랜치가 같은 파일의 다른 줄을 고쳤어도 위험으로 표시하므로, 예보가 실제 텍스트 병합 충돌을 확정하지는 않는다. 다른 저장소 복사본이나 원격에서만 작업 중인 브랜치는 비교하지 않는다.
+
+`pairs`에는 위험이 발견된 쌍만 있으며 `left`·`right`는 `worktrees[].id`를 가리킨다. 각 쌍의 `base`는 공통 조상이다. `stats`는 검사한 워크트리·쌍·위험한 쌍과 표시한 파일·연결 수를 제공한다. 터미널에서는 각 쌍·종류별 10개까지 요약하며, JSON에는 같은 파일 전체와 직접·공통 의존 힌트를 각각 최대 100개 제공한다. 힌트를 제한하면 `truncated: true`와 진단을 남긴다.
+
+읽을 수 없는 워크트리, 제외한 경로, 해석하지 못한 참조와 분석 제한은 `diagnostics`로 알린다. 정적 분석의 미해석 참조는 경고이며, 위험 경고만 있으면 기본 종료 코드는 0이다. 워크트리를 읽지 못하거나 분석 중 HEAD·스테이지·소스·변경 경로가 바뀌는 등 검사를 완료하지 못하면 `incomplete: true`와 종료 코드 1을 반환한다. 감시 모드도 불완전한 결과를 출력한 뒤 종료한다. `--interval`은 1~86400 사이의 정수 초를 받는다. 출력 계약은 `gitch schema overlap`으로 확인한다.
+
+## 파일·폴더 이동 계획 (`gitch move`)
+
+```bash
+gitch move src/api.ts src/network/client.ts --plan
+gitch move src/legacy src/features/account --plan --json
+gitch move --plan -- "src/old folder" "src/new folder"
+```
+
+원본과 대상 경로를 모두 지정하고 `--plan`으로 이동 계획을 확인한다. 경로는 명령을 실행한 폴더를 기준으로 해석하며 같은 저장소 안의 절대 경로도 받는다. 파일·폴더를 실제로 이동하거나 import를 고치지 않는다. 기존 대상 덮어쓰기, 저장소 밖 경로, 심볼릭 링크, `.git`, 같은 경로로의 이동과 폴더를 자기 하위로 옮기는 계획은 거부한다.
+
+`moves`는 이전·새 파일 경로, `references`는 이동한 파일이 연결된 로컬 파일 의존과 근거, `affectedFiles`는 함께 확인할 파일, `tests`는 테스트 후보를 제공한다. 참조에는 이동 전후의 `source`·`target`과 `sourceAfter`·`targetAfter`가 들어간다. `suggestions`에는 실제 줄 번호와 문자열 근거를 확인한 JS/TS 상대 import 수정 후보를 제공한다. `file`·`fileAfter`는 수정할 파일의 이동 전후 경로, `line`은 현재 소스 줄, `from`·`to`는 바꿀 import 문자열이다. 다른 언어나 별칭 참조는 연결 목록에서 확인한다. 테스트는 정적 연결·파일 이름에 따른 후보이며 실행하지 않는다. `modules.before`·`modules.after`는 이동 전후 위치에 해당하는 모듈이다. 의존 정보가 실제 import 문자열을 자동으로 고칠 수 있다는 뜻은 아니며, 추정 연결은 `heuristic: true`로 구분한다.
+
+계획에는 추적 파일과 무시하지 않은 새 파일을 포함한다. 폴더 안에 무시한 파일이 있으면 제외한 범위를 진단하고 `incomplete: true`로 표시한다. 참조·테스트 후보는 현재 작업 파일을 기준으로 분석하며 스테이지에만 남은 소스는 포함하지 않는다. 정상 계획의 종료 코드는 0, 분석 생략·실패로 불완전하면 1이다. JSON 계약은 `gitch schema move`로 확인한다.
+
+## npm 모듈 선언 점검 (`gitch module audit`)
+
+```bash
+gitch module audit                    # npm 매니페스트와 정적 import 비교
+gitch module audit packages/api --json
+gitch module audit --strict           # 선언 누락 오류가 있으면 종료 코드 1
+```
+
+기본 선택 범위는 명령을 실행한 폴더이며 같은 저장소 안의 파일·폴더·절대 경로를 지정할 수 있다. 추적하는 `package.json`과 현재 작업 파일의 정적 import를 비교한다. 파일의 소유 모듈을 정할 때는 범위 밖 매니페스트도 확인한다. 각 파일에 해당하는 npm 모듈을 정해, 선언 없이 사용하는 패키지는 `MISSING_DEPENDENCY` 오류로 알린다. `dependencies`·`devDependencies`·`peerDependencies`·`optionalDependencies` 선언을 모두 인정하고 Node 내장 모듈은 제외한다. 선언했지만 정적 사용을 찾지 못한 패키지(`UNOBSERVED_DEPENDENCY`)는 소유 패키지 전체를 선택했을 때만 검토 후보로 제공한다. 모듈 사이 서로 다른 버전 명세(`VERSION_SPEC_MISMATCH`)도 검토 후보로 제공한다. 정적 사용이 안 보인다는 이유로 의존을 삭제하거나, 명세가 다르다는 이유로 버전이 호환되지 않는다고 판정하지 않는다.
+
+JSON의 `modules`는 이름·폴더·매니페스트, `findings`는 모듈·패키지·관련 파일과 선언 또는 import 근거를 담는다. `stats`는 모듈·발견 항목·오류·경고 수를 제공한다. `scope: "tracked-working-tree"`이며 미추적 파일과 작업 파일에 반영하지 않은 스테이지 소스는 분석하지 않는다. npm 패키지 설치나 빌드 스크립트 실행, 매니페스트 변경은 하지 않는다.
+
+기본 종료 코드는 0이고 `--strict`를 주면 오류 항목이 있을 때 1이다. 정보 항목은 `--strict`에서도 실패시키지 않는다. 잘못된 매니페스트나 해석하지 못한 별칭·경로 등 분석을 완료하지 못한 경우에는 `diagnostics`, `incomplete: true`와 종료 코드 1을 반환한다. 출력 계약은 `gitch schema module`로 확인한다.
 
 ## 구조 그래프 (`gitch graph`)
 
@@ -325,16 +425,28 @@ gitch g languages --json        # 73종 각각의 실제 분석 깊이
 gitch version --json            # 앱과 맞춘 제품 버전과 JSON/그래프 API 버전
 gitch schema                   # 전체 공개 JSON Schema (Draft 2020-12)
 gitch schema graph             # 그래프 출력에 적용할 자체 완결형 스키마
+gitch schema overlap           # 워크트리 충돌 예보 스냅샷 스키마
+gitch schema move              # 이동 계획과 참조 근거 스키마
+gitch schema module            # npm 모듈 선언 점검 스키마
+gitch schema logo              # 저장된 CLI 로고 표시 설정 스키마
 gitch schema error             # 기계 출력 요청 중 치명적 오류의 스키마
 ```
 
 `languages`의 `fileDetection`은 파일 인식, `staticImports`는 정적으로 읽는 import/include, `heuristic`은 타입 이름 추정 지원을 뜻한다. `manifests`와 `ecosystem`은 모듈 분석 범위다. `preciseBackend`는 제공된 인덱스를 읽는 선택적 통로다. SCIP는 해당 언어의 별도 인덱서가 만든 인덱스가 있어야 하며, SwiftIndex는 Xcode 인덱스 도우미가 있어야 한다. 이 목록이 모든 언어의 컴파일러·클래스 분석기가 기본 내장됐다는 뜻은 아니다.
 
-[공개 스키마 파일](schema/gitch-v1.schema.json)은 CLI에 내장된 스키마와 동일하다. 스키마 이름은 `graph`, `error`, `languages`, `status`, `ck`, `preflight`, `rules`, `version`, `list`, `doctor`, `scan`, `audit`, `report`, `pr`, `view`, `watch`, `index`, `account`, `login`이고 기본 `public`은 이 모두를 허용한다. `view`는 저장·내보낸 화면 설정, `watch`는 감시 서버 설명과 상태 응답, `index`는 인덱서 생성 안내, `account`는 앱 계정 설정 결과, `login`은 브라우저 인증 세션이다. 객체 출력에는 `schemaVersion: 1`을 더하고 기존 필드를 유지한다. `report --json`의 기존 배열은 그대로 유지하며 문서의 스키마 버전으로 검증한다. 새 필드는 추가할 수 있으므로 읽는 쪽은 모르는 필드를 무시한다. 필드 제거·의미 변경은 스키마 버전을 올려 구별한다. 제품 버전 `0.3.12`과 스키마 버전은 별개다.
+[공개 스키마 파일](schema/gitch-v1.schema.json)은 CLI에 내장된 스키마와 동일하다. 스키마 이름은 `graph`, `error`, `languages`, `status`, `ck`, `preflight`, `rules`, `version`, `list`, `doctor`, `scan`, `audit`, `report`, `pr`, `view`, `watch`, `index`, `account`, `login`, `overlap`, `move`, `module`, `logo`이고 기본 `public`은 이 모두를 허용한다. `view`는 저장·내보낸 화면 설정, `watch`는 감시 서버 설명과 상태 응답, `index`는 인덱서 생성 안내, `account`는 앱 계정 설정 결과, `login`은 브라우저 인증 세션, `overlap`은 워크트리 충돌 예보 스냅샷, `move`는 파일·폴더 이동 계획, `module`은 npm 모듈 선언 점검, `logo`는 저장된 CLI 로고 표시 설정이다. 객체 출력에는 `schemaVersion: 1`을 더하고 기존 필드를 유지한다. `report --json`의 기존 배열은 그대로 유지하며 문서의 스키마 버전으로 검증한다. 새 필드는 추가할 수 있으므로 읽는 쪽은 모르는 필드를 무시한다. 필드 제거·의미 변경은 스키마 버전을 올려 구별한다. 제품 버전 `0.3.12`과 스키마 버전은 별개다.
 
 `--json` 또는 `--format json`을 명시했을 때 인자·사전조건의 치명적 오류는 결과를 표준출력에 쓰지 않고 표준오류에 `{"schemaVersion":1,"error":{"code":"GITCH_ERROR","message":"…","exitCode":1}}`을 쓴다. 비대화형 확인 필요는 `GITCH_CONFIRMATION_REQUIRED`와 종료 코드 2다. `preflight`의 STOP·규칙 위반·doctor의 문제 발견처럼 분석을 마친 결과는 기존 결과 객체를 표준출력에 쓰고 종료 코드로 실패를 알린다.
 
 공개 종료 코드는 0(정상, `gitch c`의 변경 없음 포함), 1(문제·실패·규칙 위반), 2(사용자 확인 필요), 4(비대화형 커밋에서 올릴 파일을 고르지 않음)이다. 내부 커밋 함수의 3은 `gitch c`에서 0으로 바꾸므로 공개 계약으로 사용하지 않는다. 외부 Git·SSH 도구를 직접 실행하는 명령은 그 도구의 종료 코드와 진단을 전달할 수도 있다.
+
+### Offline graph display language
+
+The offline graph UI and its Markdown/HTML review reports support English, Korean and Japanese. When Gitrochi opens a graph, it passes the app's selected language, including the resolved system language when the app follows the system. Other app languages fall back to English.
+
+Graphs generated outside the app use the browser/system language. Set `GITCH_GRAPH_LANG=en`, `GITCH_GRAPH_LANG=ko` or `GITCH_GRAPH_LANG=ja` for an explicit display-language override; regional codes such as `ko-KR` and `ja-JP` also work. This does not change the source-language filter `--lang`, repository paths, filenames or analysis data. Translation resources are embedded, so graphs and exported reports work offline.
+
+Automatic-refresh pages and watcher identities include the display language so a previously opened page cannot overwrite a graph in another language.
 
 ### 비교 (`gitch graph diff`)
 
@@ -452,6 +564,8 @@ git config 형식이다. `gitch config set|add|unset <키> <값>` 으로 바꾸�
 	maxFileMB = 50
 	warnFileMB = 10
 	sshStrict = false       # true 면 별칭 없는 github.com 등은 SSH 키 인증 안 함 (공개 저장소 SSH clone 도 막힘)
+[ui]
+	logo = true             # CLI의 작은 두 눈. 생략하면 true; gitch logo on|off 또는 앱 설정 > CLI로 변경
 [account "alice"]
 	email = alice@example.com
 	host = github.com

@@ -21,6 +21,55 @@ pub fn hide_window(cmd: &mut Command) {
     let _ = cmd;
 }
 
+/// Keeps a detached worker from holding the launcher's captured pipes open.
+#[cfg(windows)]
+pub struct NoInheritedStdio(Vec<(windows_sys::Win32::Foundation::HANDLE, u32)>);
+
+#[cfg(windows)]
+impl NoInheritedStdio {
+    pub fn new() -> std::io::Result<Self> {
+        use windows_sys::Win32::Foundation::{
+            GetHandleInformation, SetHandleInformation, HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE,
+        };
+        use windows_sys::Win32::System::Console::{
+            GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
+        };
+        let mut guard = Self(Vec::new());
+        for id in [STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE] {
+            let handle = unsafe { GetStdHandle(id) };
+            if handle.is_null()
+                || handle == INVALID_HANDLE_VALUE
+                || guard.0.iter().any(|(saved, _)| *saved == handle)
+            {
+                continue;
+            }
+            let mut flags = 0;
+            if unsafe { GetHandleInformation(handle, &mut flags) } == 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            if flags & HANDLE_FLAG_INHERIT != 0 {
+                if unsafe { SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0) } == 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                guard.0.push((handle, flags));
+            }
+        }
+        Ok(guard)
+    }
+}
+
+#[cfg(windows)]
+impl Drop for NoInheritedStdio {
+    fn drop(&mut self) {
+        use windows_sys::Win32::Foundation::{SetHandleInformation, HANDLE_FLAG_INHERIT};
+        for (handle, flags) in &self.0 {
+            unsafe {
+                SetHandleInformation(*handle, HANDLE_FLAG_INHERIT, flags & HANDLE_FLAG_INHERIT)
+            };
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct Cancel(Arc<AtomicBool>);
 

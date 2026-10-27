@@ -1,6 +1,6 @@
 import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, slash } from "@/shared/config";
-import { t } from "@/shared/i18n";
+import { language, t } from "@/shared/i18n";
 import { git, tools } from "@/shared/platform";
 import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
 import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
@@ -278,6 +278,12 @@ function graphFailure(r: { status: number; stdout: string; stderr: string }) {
   return new GitchError(plain(r.stderr) || plain(r.stdout) || `exit ${r.status}`);
 }
 
+/** macOS: AppLanguage.graphCode(for:). Unsupported app languages use English. */
+export function graphLanguage(code = language): "en" | "ko" | "ja" {
+  const base = code.toLowerCase().replaceAll("_", "-").split("-")[0];
+  return base === "ko" || base === "ja" ? base : "en";
+}
+
 /**
  * 임시 폴더의 gitch-graph/(터미널의 gitch graph 가 쓰는 곳)에 <저장소 폴더>-<이름>-<경로 해시>.html(이름: 관계 · <관계>-diff · check).
  * 다시 그리면 덮어쓰고, 폴더 이름이 같은 다른 저장소 · 워크트리와는 해시로 갈린다.
@@ -286,7 +292,8 @@ async function graphFile(kind: string, repo: string): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(slash(repo))));
   const hash = [...digest.slice(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join("");
   const name = slash(repo).replace(/\/+$/, "").split("/").pop() || "repo";
-  return joinPath(env.temp, "gitch-graph", `${name}-${kind}-${hash}.html`);
+  // Separate watcher identities so an earlier language cannot overwrite this page.
+  return joinPath(env.temp, "gitch-graph", `${name}-${kind}-${graphLanguage()}-${hash}.html`);
 }
 
 class GitchService {
@@ -401,6 +408,22 @@ class GitchService {
     const out = await this.json(["list", "--json"], env.home);
     return out == null ? [] : parseAccounts(out);
   }
+
+  /** 로고 설정은 계정이나 터미널 명령 설치 없이 내장 CLI의 공용 설정을 읽고 쓴다. */
+  private async logoPreference(enabled?: boolean): Promise<boolean> {
+    const exe = this.bundled;
+    if (!exe || !(await ipc.exists(exe))) throw new GitchError(t("Couldn't find gitch inside Gitrochi."));
+    const r = await this.spawn(["logo", ...(enabled === undefined ? [] : [enabled ? "on" : "off"]), "--json"], env.home, 20_000, exe);
+    if (r.status !== 0) throw new GitchError(machineError(r.stderr.trim()) || machineError(r.stdout.trim()) || t("Couldn't read the CLI logo setting."));
+    try {
+      const result = JSON.parse(r.stdout) as { schemaVersion?: unknown; enabled?: unknown };
+      if (result.schemaVersion === 1 && typeof result.enabled === "boolean") return result.enabled;
+    } catch { /* 잘못된 응답을 꺼진 상태로 보이지 않는다. */ }
+    throw new GitchError(t("Couldn't read the CLI logo setting."));
+  }
+
+  logo() { return this.logoPreference(); }
+  setLogo(enabled: boolean) { return this.logoPreference(enabled); }
 
   /** gitch 명령을 실행하고, 실패하면 gitch 가 낸 문구로 던진다. 성공하면 출력 */
   async run(args: string[], repo: string, timeoutMs = 120_000): Promise<string> {
@@ -525,7 +548,7 @@ class GitchService {
   private async runGraph(args: string[], repo: string, ok = [0]) {
     const reason = await this.graphUnavailable();
     if (reason) throw new GitchError(reason);
-    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled);
+    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage() });
     if (!ok.includes(r.status)) throw graphFailure(r);
     return r;
   }

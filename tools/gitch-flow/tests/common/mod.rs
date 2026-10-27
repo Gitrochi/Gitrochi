@@ -67,6 +67,11 @@ impl Fx {
         let mut c = Command::new(env!("CARGO_BIN_EXE_gitch-flow"));
         c.args(args).current_dir(self.repo()).env_clear();
         c.env("PATH", std::env::var("PATH").unwrap_or_default());
+        // Winsock needs SystemRoot to load its providers in the isolated Windows process.
+        #[cfg(windows)]
+        if let Some(root) = std::env::var_os("SystemRoot") {
+            c.env("SystemRoot", root);
+        }
         c.env("HOME", self.home());
         c.env("XDG_CONFIG_HOME", self.home().join(".config"));
         c.env("XDG_STATE_HOME", self.home().join(".local/state"));

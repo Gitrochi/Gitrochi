@@ -1250,5 +1250,9 @@
  "Reset to default layout": "デフォルトのレイアウトに戻す",
  "Drag to resize the column": "ドラッグして列の幅を変更",
  "Date": "日付",
- "Open in Releases": "リリースで開く"
+ "Open in Releases": "リリースで開く",
+ "CLI appearance": "CLI の表示",
+ "Show the small eye logo in CLI output": "CLI 出力に小さな目のロゴを表示",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "ターミナルで gitch logo on または gitch logo off を実行しても変更できます。",
+ "Couldn't read the CLI logo setting.": "CLI のロゴ設定を読み取れませんでした。"
 }

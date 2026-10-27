@@ -1202,5 +1202,9 @@
  "Reset to default layout": "Standaardindeling herstellen",
  "Drag to resize the column": "Sleep om de kolombreedte te wijzigen",
  "Date": "Datum",
- "Open in Releases": "Openen in Releases"
+ "Open in Releases": "Openen in Releases",
+ "CLI appearance": "CLI-weergave",
+ "Show the small eye logo in CLI output": "Toon het kleine ogenlogo in de CLI-uitvoer",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "Je kunt ook gitch logo on of gitch logo off in een terminal gebruiken.",
+ "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen."
 }

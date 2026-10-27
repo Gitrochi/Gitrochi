@@ -1231,5 +1231,9 @@
  "Reset to default layout": "Obnovit výchozí rozvržení",
  "Drag to resize the column": "Přetažením změníte šířku sloupce",
  "Date": "Datum",
- "Open in Releases": "Otevřít ve vydáních"
+ "Open in Releases": "Otevřít ve vydáních",
+ "CLI appearance": "Vzhled CLI",
+ "Show the small eye logo in CLI output": "Zobrazovat malé logo očí ve výstupu CLI",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "V terminálu můžete také použít gitch logo on nebo gitch logo off.",
+ "Couldn't read the CLI logo setting.": "Nastavení loga CLI se nepodařilo přečíst."
 }

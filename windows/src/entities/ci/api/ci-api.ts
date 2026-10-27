@@ -2,9 +2,9 @@ import type { RepoTarget } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { dispatchInputs } from "../lib/yaml";
-import { type CIDeployment, type CIJob, type CIPipeline, type CIWorkflow, githubStatus, gitlabStatus } from "../model/types";
+import { type CIDeployment, type CIJob, type CIPipeline, type CIRequestCheck, type CIWorkflow, githubStatus, gitlabStatus } from "../model/types";
 
-interface GLPipeline { id: number; iid?: number; sha: string; ref: string; status: string; source?: string; created_at?: string; web_url: string; name?: string | null; user?: { username: string } | null }
+interface GLPipeline { id: number; project_id?: number; iid?: number; sha: string; ref: string; status: string; source?: string; created_at?: string; web_url: string; name?: string | null; user?: { username: string } | null }
 interface GLJob { id: number; name: string; stage: string; status: string; web_url: string; allow_failure?: boolean; duration?: number | null }
 interface GHRun {
   id: number; name?: string | null; display_title?: string | null; run_number: number; head_branch?: string | null; head_sha: string;
@@ -23,6 +23,7 @@ export interface CIAccess {
 const project = (c: CIAccess) => `${c.apiBase}/projects/${Hosting.projectID(c.target.path)}`;
 const repoBase = (c: CIAccess) => `${c.apiBase}/repos/${c.target.path}`;
 const q = encodeURIComponent;
+const glPipeline = (p: GLPipeline): CIPipeline => ({ id: p.id, projectID: p.project_id, number: p.iid ?? p.id, name: p.name ?? "", title: "", ref: p.ref, sha: p.sha, status: gitlabStatus(p.status), url: p.web_url, created: Hosting.date(p.created_at), event: p.source ?? "", actor: p.user?.username ?? null });
 
 /** base64(줄바꿈 포함) → UTF-8 글 */
 function decodeBase64(b64: string): string {
@@ -32,24 +33,12 @@ function decodeBase64(b64: string): string {
 
 export const CIAPI = {
   /** 최근 파이프라인·실행(ref 가 있으면 그 브랜치만) */
-  async pipelines(c: CIAccess, ref: string | null): Promise<CIPipeline[]> {
+  async pipelines(c: CIAccess, ref: string | null, sha?: string): Promise<CIPipeline[]> {
     if (c.target.provider === "gitlab") {
-      const list = await Hosting.send<GLPipeline[]>("gitlab", `${project(c)}/pipelines?per_page=30${ref ? `&ref=${q(ref)}` : ""}`, c.token);
-      return list.map((p) => ({
-        id: p.id,
-        number: p.iid ?? p.id,
-        name: p.name ?? "",
-        title: "",
-        ref: p.ref,
-        sha: p.sha,
-        status: gitlabStatus(p.status),
-        url: p.web_url,
-        created: Hosting.date(p.created_at),
-        event: p.source ?? "",
-        actor: p.user?.username ?? null,
-      }));
+      const list = await Hosting.send<GLPipeline[]>("gitlab", `${project(c)}/pipelines?per_page=30${ref ? `&ref=${q(ref)}` : ""}${sha ? `&sha=${q(sha)}` : ""}`, c.token);
+      return list.map(glPipeline);
     }
-    const r = await Hosting.send<{ workflow_runs: GHRun[] }>("github", `${repoBase(c)}/actions/runs?per_page=30${ref ? `&branch=${q(ref)}` : ""}`, c.token);
+    const r = await Hosting.send<{ workflow_runs: GHRun[] }>("github", `${repoBase(c)}/actions/runs?per_page=30${ref ? `&branch=${q(ref)}` : ""}${sha ? `&head_sha=${q(sha)}` : ""}`, c.token);
     return r.workflow_runs.map((p) => ({
       id: p.id,
       number: p.run_number,
@@ -65,9 +54,36 @@ export const CIAPI = {
     }));
   },
 
-  async jobs(c: CIAccess, pipeline: number): Promise<CIJob[]> {
+  /** Merged-result pipelines can have a different SHA from the request's source commit. */
+  async requestPipelines(c: CIAccess, number: number, sha: string): Promise<CIPipeline[]> {
+    if (c.target.provider === "github") return CIAPI.pipelines(c, null, sha);
+    const [list, request] = await Promise.all([
+      CIAPI.pipelines(c, null, sha),
+      Hosting.send<{ head_pipeline?: GLPipeline | null }>("gitlab", `${project(c)}/merge_requests/${number}`, c.token),
+    ]);
+    const head = request.head_pipeline ? glPipeline(request.head_pipeline) : null;
+    return head ? [head, ...list.filter(run => run.id !== head.id)] : list;
+  },
+
+  /** Include third-party checks and commit statuses, independently of Actions runs. */
+  async requestChecks(c: CIAccess, sha: string): Promise<{ checks: CIRequestCheck[]; truncated: boolean }> {
     if (c.target.provider === "gitlab") {
-      const list = await Hosting.send<GLJob[]>("gitlab", `${project(c)}/pipelines/${pipeline}/jobs?per_page=100`, c.token);
+      const statuses = await Hosting.send<{ id: number; name: string; status: string; target_url?: string; description?: string }[]>("gitlab", `${project(c)}/repository/commits/${q(sha)}/statuses?per_page=100`, c.token);
+      return { checks: statuses.map(s => ({ id: `status:${s.id}`, name: s.name, status: gitlabStatus(s.status), url: s.target_url ?? "", summary: s.description ?? "" })), truncated: statuses.length === 100 };
+    }
+    const [runs, statuses] = await Promise.all([
+      Hosting.send<{ total_count: number; check_runs: { id: number; name: string; status: string; conclusion?: string | null; html_url?: string; details_url?: string; output?: { title?: string; summary?: string } }[] }>("github", `${repoBase(c)}/commits/${q(sha)}/check-runs?filter=latest&per_page=100`, c.token),
+      Hosting.send<{ total_count: number; statuses: { id: number; context: string; state: string; target_url?: string; description?: string }[] }>("github", `${repoBase(c)}/commits/${q(sha)}/status?per_page=100`, c.token),
+    ]);
+    const checks: CIRequestCheck[] = runs.check_runs.map(r => ({ id: `check:${r.id}`, name: r.name, status: githubStatus(r.status, r.conclusion), url: r.details_url || r.html_url || "", summary: r.output?.title ?? "" }));
+    checks.push(...statuses.statuses.map(s => ({ id: `status:${s.id}`, name: s.context, status: s.state === "success" ? "success" as const : s.state === "pending" ? "pending" as const : s.state === "failure" || s.state === "error" ? "failed" as const : "unknown" as const, url: s.target_url ?? "", summary: s.description ?? "" })));
+    return { checks, truncated: runs.total_count > runs.check_runs.length || statuses.total_count > statuses.statuses.length };
+  },
+
+  async jobs(c: CIAccess, pipeline: number, projectID?: number): Promise<CIJob[]> {
+    if (c.target.provider === "gitlab") {
+      const base = projectID ? `${c.apiBase}/projects/${projectID}` : project(c);
+      const list = await Hosting.send<GLJob[]>("gitlab", `${base}/pipelines/${pipeline}/jobs?per_page=100`, c.token);
       // 단계 순서 = 먼저 만들어진 작업 순서
       return list
         .sort((a, b) => a.id - b.id)

@@ -4,6 +4,10 @@ extension RepoStore {
     /// 저장소를 연 뒤에만 탐색한다. 줄은 실제 blame 행으로 이동하고 화면에 강조한다.
     func applyAppRoute(_ route: AppRoute) async {
         guard url?.resolvingSymlinksInPath().path == route.repo.path else { return }
+        if route.view == "finder" {
+            revealInFinder(path: route.file ?? "")
+            return
+        }
         if let commit = route.commit {
             closeFileInspect()
             select(.commit(commit))

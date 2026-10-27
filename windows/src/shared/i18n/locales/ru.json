@@ -1249,5 +1249,9 @@
  "Reset to default layout": "Восстановить макет по умолчанию",
  "Drag to resize the column": "Перетащите, чтобы изменить ширину столбца",
  "Date": "Дата",
- "Open in Releases": "Открыть в релизах"
+ "Open in Releases": "Открыть в релизах",
+ "CLI appearance": "Внешний вид CLI",
+ "Show the small eye logo in CLI output": "Показывать маленький логотип с глазами в выводе CLI",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "Также можно использовать gitch logo on или gitch logo off в терминале.",
+ "Couldn't read the CLI logo setting.": "Не удалось прочитать настройку логотипа CLI."
 }

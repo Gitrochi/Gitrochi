@@ -3,10 +3,11 @@ import { RepoStore } from "@/entities/repo";
 import { Inspector } from "@/widgets/inspector";
 import { ipc } from "@/shared/api";
 import { settings } from "@/shared/config";
+import { authorFillsIdentityColumn } from "./inspector-layout-geometry";
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-/** 실제 상세 화면을 좁혀 긴 참조·작성자·부모 커밋이 열 밖으로 새지 않는지 확인한다. */
+/** Keep long references, author details and parents inside the actual compact inspector. */
 export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
   const original = { get: settings.get, set: settings.set, run: ipc.run, http: ipc.http };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["fileViewMode", "list"]]);
@@ -18,7 +19,7 @@ export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
   const branch = "codex/" + "long-unbroken-feature-name-".repeat(12);
   const author = "긴 작성자 이름 Alexander Repository Contributor", email = "very-long-author-".repeat(12) + "@example.invalid";
   const summary = "커밋 제목 첫 글자를 보존합니다 — " + "Long summary for compact inspector validation. ".repeat(5);
-  const widths: { width: number; bounded: boolean; authorWidth: number; scrollWidth: number; contentWidth: number }[] = [];
+  const widths: { width: number; bounded: boolean; authorWidth: number; authorFillsColumn: boolean; scrollbarWidth: number; scrollWidth: number; contentWidth: number }[] = [];
   try {
     settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;
     settings.set = (key, value) => { memory.set(key, value); };
@@ -42,7 +43,15 @@ export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
       const panel = host.querySelector<HTMLElement>(".panel-scroll")!, bounds = host.getBoundingClientRect();
       const controls = [...host.querySelectorAll<HTMLElement>(".ref-badge, .commit-author, .commit-author-date, .panel-scroll button, .file-row, .card > .selectable")];
       const bounded = controls.every((element) => { const rect = element.getBoundingClientRect(); return rect.width > 0 && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1; });
-      widths.push({ width, bounded, authorWidth: host.querySelector(".commit-author")!.getBoundingClientRect().width, scrollWidth: panel.scrollWidth, contentWidth: panel.clientWidth });
+      const identity = host.querySelector<HTMLElement>(".commit-identity")!, authorElement = host.querySelector<HTMLElement>(".commit-author")!;
+      const avatar = identity.querySelector<HTMLElement>(".avatar")!, card = identity.closest<HTMLElement>(".card")!;
+      const cardBounds = card.getBoundingClientRect(), cardStyle = getComputedStyle(card);
+      const content = {
+        left: cardBounds.left + Number.parseFloat(cardStyle.borderLeftWidth) + Number.parseFloat(cardStyle.paddingLeft),
+        right: cardBounds.right - Number.parseFloat(cardStyle.borderRightWidth) - Number.parseFloat(cardStyle.paddingRight),
+      };
+      const authorFillsColumn = authorFillsIdentityColumn(content, avatar.getBoundingClientRect(), authorElement.getBoundingClientRect(), Number.parseFloat(getComputedStyle(identity).columnGap));
+      widths.push({ width, bounded, authorWidth: authorElement.getBoundingClientRect().width, authorFillsColumn, scrollbarWidth: panel.offsetWidth - panel.clientWidth, scrollWidth: panel.scrollWidth, contentWidth: panel.clientWidth });
     }
     const refs = [...host.querySelectorAll<HTMLElement>(".ref-badge")];
     const refNames = [branch, "origin/" + branch];
@@ -50,7 +59,7 @@ export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
     const identityAvailable = host.querySelector<HTMLElement>(".commit-author > span:first-child")?.title === author && host.querySelector<HTMLElement>(".commit-author > span:last-child")?.title === email;
     const titleAvailable = host.querySelector(".card > .selectable")?.textContent === summary;
     const parentsAvailable = host.querySelectorAll(".pill").length === 5;
-    const ok = widths.every((item) => item.bounded && item.authorWidth >= item.width - 95 && item.scrollWidth <= item.contentWidth + 1) && fullNamesAvailable && identityAvailable && titleAvailable && parentsAvailable && unexpected.length === 0;
+    const ok = widths.every((item) => item.bounded && item.authorFillsColumn && item.scrollWidth <= item.contentWidth + 1) && fullNamesAvailable && identityAvailable && titleAvailable && parentsAvailable && unexpected.length === 0;
     return [ok, JSON.stringify({ widths, fullNamesAvailable, identityAvailable, titleAvailable, parentsAvailable, unexpected })];
   } finally {
     root.unmount(); await pause(20); host.remove();

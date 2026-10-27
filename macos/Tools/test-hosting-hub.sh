@@ -29,6 +29,50 @@ enum Hosting {
         Hosting.handler = { r in calls.append(r); return try json((0..<30).map { ["id": $0, "tag_name": "v\($0)", "name": "Release \($0)"] }) }
         let releases = try await HostingHubAPI.page(gh, section: .releases, page: 2)
         precondition(releases.items.count == 30 && releases.more && calls[0].url!.query!.contains("page=2"))
+        let githubOrganization: [String: Any] = ["id": 77, "login": "octo", "description": "Team", "avatar_url": "https://avatars.githubusercontent.com/u/77?v=4"]
+        var organizationPaths = [String]()
+        Hosting.handler = { request in
+            organizationPaths.append(request.url!.path)
+            if request.url!.path == "/user/orgs" { return try json([githubOrganization]) }
+            if request.url!.path == "/orgs/octo" {
+                var detail = githubOrganization; detail["name"] = "Octo team"; detail["html_url"] = "https://github.com/octo"; detail["avatar_url"] = "https://avatars.githubusercontent.com/u/77?v=5"
+                return try json(detail)
+            }
+            precondition(request.url!.path == "/orgs/octo/repos")
+            return try json([])
+        }
+        let githubOrganizations = try await HostingHubAPI.page(gh, section: .organizations)
+        let githubOrganizationItem = githubOrganizations.items[0]
+        precondition(githubOrganizationItem.id == "octo" && githubOrganizationItem.title == "octo" && githubOrganizationItem.subtitle == "octo" && githubOrganizationItem.url == "https://github.com/octo")
+        precondition(githubOrganizationItem.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=4" && !githubOrganizations.more)
+        let githubOrganizationDetail = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationItem)
+        precondition(githubOrganizationDetail.item.title == "Octo team" && githubOrganizationDetail.item.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=5")
+        precondition(organizationPaths == ["/user/orgs", "/orgs/octo", "/orgs/octo/repos"])
+        Hosting.handler = { request in try json(request.url!.path == "/orgs/octo" ? ["description": "Updated team"] : [] as [Any]) }
+        let sparseGithubOrganization = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationDetail.item)
+        precondition(sparseGithubOrganization.item.id == "octo" && sparseGithubOrganization.item.title == "Octo team" && sparseGithubOrganization.item.subtitle == "octo")
+        precondition(sparseGithubOrganization.item.url == "https://github.com/octo" && sparseGithubOrganization.item.body == "Updated team")
+        precondition(sparseGithubOrganization.item.avatarURL == githubOrganizationDetail.item.avatarURL)
+        let gitlabOrganization: [String: Any] = ["id": 9, "name": "Design", "full_path": "team/design", "avatar_url": "/uploads/groups/9/avatar.png", "web_url": "https://gitlab.test/team/design"]
+        Hosting.handler = { request in
+            if request.url!.path == "/api/v4/groups" { return try json([gitlabOrganization]) }
+            if request.url!.path == "/api/v4/groups/9" { return try json(gitlabOrganization) }
+            precondition(request.url!.path == "/api/v4/groups/9/projects")
+            return try json([])
+        }
+        let gitlabOrganizations = try await HostingHubAPI.page(gl, section: .organizations)
+        let gitlabOrganizationItem = gitlabOrganizations.items[0]
+        precondition(gitlabOrganizationItem.id == "9" && gitlabOrganizationItem.title == "Design" && gitlabOrganizationItem.subtitle == "team/design")
+        precondition(gitlabOrganizationItem.avatarURL?.absoluteString == "https://gitlab.test/uploads/groups/9/avatar.png")
+        let gitlabOrganizationDetail = try await HostingHubAPI.detail(gl, section: .organizations, item: gitlabOrganizationItem)
+        precondition(gitlabOrganizationDetail.item.avatarURL == gitlabOrganizationItem.avatarURL)
+        Hosting.handler = { request in try json(request.url!.path == "/api/v4/groups/9" ? ["avatar_url": NSNull(), "web_url": ""] : [] as [Any]) }
+        let clearedGitlabOrganization = try await HostingHubAPI.detail(gl, section: .organizations, item: gitlabOrganizationItem)
+        precondition(clearedGitlabOrganization.item.id == "9" && clearedGitlabOrganization.item.title == "Design" && clearedGitlabOrganization.item.subtitle == "team/design")
+        precondition(clearedGitlabOrganization.item.url == gitlabOrganizationItem.url && clearedGitlabOrganization.item.avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gl, ["id": 10, "full_name": "Team / Fallback", "avatar_url": NSNull()]).avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gh, ["login": "unsafe", "avatar_url": "https://untrusted.test/logo.png"]).avatarURL == nil)
+        precondition(HostingHubAPI.organizationItem(gl, ["id": 11, "avatar_url": "//untrusted.test/logo.png"]).avatarURL == nil)
         Hosting.handler = { r in
             let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any]
             precondition((body["query"] as! String).contains("user(login:$owner)") && variables["owner"] as? String == "me")
@@ -44,6 +88,36 @@ enum Hosting {
         precondition(HostingHubAPI.safeURL(gh, "https://evil.test/x") == nil)
         precondition(HostingHubAPI.safeURL(gh, "https://github.com/team/repo") != nil)
         precondition(HostingHubAPI.safeURL(gh, "https://user:pass@github.com/x") == nil)
+        let gitlabMember = HostingHubAPI.member(gl, ["id": 7, "username": "alex", "name": "Alex Kim", "access_level": 40, "avatar_url": "/uploads/alex.png", "web_url": "https://gitlab.test/alex"])
+        precondition(gitlabMember.id == "7" && gitlabMember.name == "Alex Kim" && gitlabMember.username == "alex" && gitlabMember.role == "Maintainer")
+        precondition(gitlabMember.avatarURL?.absoluteString == "https://gitlab.test/uploads/alex.png" && gitlabMember.profileURL?.absoluteString == "https://gitlab.test/alex")
+        let memberFallback = HostingHubAPI.member(gl, ["id": 8, "username": "sam", "name": " ", "avatar_url": "https://untrusted.test/photo.png", "web_url": "javascript:alert(1)"])
+        precondition(memberFallback.name == "sam" && memberFallback.role == "Member" && memberFallback.avatarURL == nil && memberFallback.profileURL?.absoluteString == "https://gitlab.test/sam")
+        let roleLabels = [5: "Minimal access", 10: "Guest", 15: "Planner", 20: "Reporter", 30: "Developer", 40: "Maintainer", 50: "Owner"]
+        for (level, label) in roleLabels { precondition(HostingHubAPI.member(gl, ["username": "sam", "access_level": level]).role == label) }
+        precondition(HostingHubAPI.safeAvatarURL(provider: .github, host: "github.com", "https://avatars.githubusercontent.com/u/7") != nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .github, host: "github.com", "https://avatars.githubusercontent.com.evil.test/u/7") == nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .gitlab, host: "gitlab.test", "https://user:pass@gitlab.test/alex.png") == nil)
+        precondition(HostingHubAPI.safeAvatarURL(provider: .gitlab, host: "gitlab.test", "http://gitlab.test/alex.png") == nil)
+        var profileCalls = 0
+        Hosting.handler = { request in
+            profileCalls += 1
+            precondition(request.url?.absoluteString == "https://api.github.com/graphql")
+            let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any]
+            precondition(variables.count == 2 && variables["login0"] as? String == "alex" && variables["login1"] as? String == "sam")
+            precondition((body["query"] as! String).contains("member0:user(login:$login0)"))
+            return try json(["data": ["member0": ["name": "Alex Kim", "avatarUrl": "https://untrusted.test/photo.png", "url": "https://untrusted.test/alex"], "member1": NSNull()], "errors": [["message": "One public profile is unavailable"]]])
+        }
+        let profiles = try await HostingHubAPI.members(gh, rows: [["id": 7, "login": "alex", "avatar_url": "https://avatars.githubusercontent.com/u/7", "html_url": "https://github.com/alex"], ["id": 8, "login": "sam"]])
+        precondition(profileCalls == 1 && profiles.count == 2 && profiles[0].name == "Alex Kim" && profiles[1].name == "sam")
+        precondition(profiles[0].avatarURL?.host == "avatars.githubusercontent.com" && profiles[0].profileURL?.host == "github.com")
+        Hosting.handler = { _ in throw HostingError(status: 403) }
+        let unavailableProfiles = try await HostingHubAPI.members(gh, rows: [["id": 7, "login": "alex"]])
+        precondition(unavailableProfiles.first?.name == "alex" && unavailableProfiles.first?.profileURL?.absoluteString == "https://github.com/alex")
+        var profilesCurrent = true, staleProfiles = gh
+        staleProfiles.isCurrent = { profilesCurrent }
+        Hosting.handler = { _ in profilesCurrent = false; return try json(["data": ["member0": ["name": "Stale profile"]]]) }
+        do { _ = try await HostingHubAPI.members(staleProfiles, rows: [["id": 7, "login": "alex"]]); fatalError("Stale profiles accepted") } catch {}
         Hosting.handler = { r in calls.append(r); if r.url!.path.hasSuffix("/star") { throw HostingError(status: 404) }; return try json(["id": "g1", "description": "Example", "owner": ["login": "me"], "updated_at": "a", "files": ["a.txt": ["content": "first", "truncated": false]]]) }
         let detail = try await HostingHubAPI.detail(gh, section: .gists, item: HubItem(id: "g1", title: "Example"))
         precondition(detail.files.first?.content == "first" && detail.item.editable && detail.starred == false)
@@ -80,7 +154,7 @@ enum Hosting {
         catch { precondition(error.localizedDescription.contains("Projects could not be loaded") && !error.localizedDescription.contains("internal exception")) }
         let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
         precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
-        print("Hosting hub: pagination, stale context, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
+        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
     }
 }
 SWIFT

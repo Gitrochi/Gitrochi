@@ -249,6 +249,10 @@ struct RepoView: View {
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.fixed, placement: .primaryAction)
         }
+        if #available(macOS 26.0, *) {
+            // Keep the account control separate from the terminal's shared glass background.
+            ToolbarSpacer(.fixed, placement: .primaryAction)
+        }
         ToolbarItem(placement: .primaryAction) {
             AccountQuickControls()
         }

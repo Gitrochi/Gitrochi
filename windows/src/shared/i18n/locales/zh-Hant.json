@@ -1251,5 +1251,9 @@
  "Reset to default layout": "還原預設版面",
  "Drag to resize the column": "拖曳以調整欄寬",
  "Date": "日期",
- "Open in Releases": "在發行版本中開啟"
+ "Open in Releases": "在發行版本中開啟",
+ "CLI appearance": "CLI 外觀",
+ "Show the small eye logo in CLI output": "在 CLI 輸出中顯示小眼睛標誌",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "也可以在終端機中使用 gitch logo on 或 gitch logo off。",
+ "Couldn't read the CLI logo setting.": "無法讀取 CLI 標誌設定。"
 }

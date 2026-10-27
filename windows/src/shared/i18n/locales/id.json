@@ -1202,5 +1202,9 @@
  "Reset to default layout": "Kembalikan tata letak bawaan",
  "Drag to resize the column": "Seret untuk mengubah lebar kolom",
  "Date": "Tanggal",
- "Open in Releases": "Buka di Rilis"
+ "Open in Releases": "Buka di Rilis",
+ "CLI appearance": "Tampilan CLI",
+ "Show the small eye logo in CLI output": "Tampilkan logo mata kecil pada keluaran CLI",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "Anda juga dapat menggunakan gitch logo on atau gitch logo off di terminal.",
+ "Couldn't read the CLI logo setting.": "Pengaturan logo CLI tidak dapat dibaca."
 }

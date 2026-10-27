@@ -1218,5 +1218,9 @@
  "Reset to default layout": "Restaurar o layout padrão",
  "Drag to resize the column": "Arraste para redimensionar a coluna",
  "Date": "Data",
- "Open in Releases": "Abrir em Lançamentos"
+ "Open in Releases": "Abrir em Lançamentos",
+ "CLI appearance": "Aparência da CLI",
+ "Show the small eye logo in CLI output": "Mostrar o pequeno logotipo de olhos na saída da CLI",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "Você também pode usar gitch logo on ou gitch logo off em um terminal.",
+ "Couldn't read the CLI logo setting.": "Não foi possível ler a configuração do logotipo da CLI."
 }

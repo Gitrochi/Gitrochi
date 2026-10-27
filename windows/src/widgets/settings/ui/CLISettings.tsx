@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gitch, type GitchAccount, type GitchDoctor } from "@/entities/gitch";
 import { displayPath, env, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { Button, Segmented, Spinner } from "@/shared/ui";
+import { Button, Checkbox, Segmented, Spinner } from "@/shared/ui";
 import { GitchAccountSetup } from "./GitchAccountSetup";
 import { GitchGuide } from "./GitchGuide";
 
@@ -36,7 +36,45 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [logoEnabled, setLogoEnabled] = useState<boolean | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const logoRequest = useRef(0);
+  const logoSaving = useRef(false);
+
+  const loadLogo = useCallback(async () => {
+    if (logoSaving.current) return;
+    const request = ++logoRequest.current;
+    setLogoBusy(true);
+    try {
+      const enabled = await gitch.logo();
+      if (request === logoRequest.current) { setLogoEnabled(enabled); setLogoError(null); }
+    } catch (e) {
+      if (request === logoRequest.current) setLogoError(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (request === logoRequest.current) setLogoBusy(false);
+    }
+  }, []);
+
+  const setLogo = async (enabled: boolean) => {
+    if (logoSaving.current) return;
+    logoSaving.current = true;
+    const request = ++logoRequest.current;
+    setLogoBusy(true);
+    setLogoError(null);
+    try {
+      const saved = await gitch.setLogo(enabled);
+      if (request === logoRequest.current) setLogoEnabled(saved);
+    } catch (e) {
+      if (request === logoRequest.current) setLogoError(e instanceof Error ? e.message : String(e));
+    } finally {
+      logoSaving.current = false;
+      if (request === logoRequest.current) setLogoBusy(false);
+    }
+  };
+
   const load = useCallback(async () => {
+    void loadLogo();
     const bundled = gitch.bundled;
     const [bundledVersion, installed, installedIsBundled, hasConfig, bash, accounts] = await Promise.all([
       bundled ? gitch.version(bundled) : Promise.resolve(null),
@@ -47,7 +85,7 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
       gitch.accounts(),
     ]);
     setInfo({ bundledVersion, installed: installed && { ...installed, version: await gitch.version(installed.path) }, installedIsBundled, hasConfig, bash, accounts });
-  }, []);
+  }, [loadLogo]);
   // 다른 창에서 설정을 바꾸고 돌아왔을 때에도 다시 읽는다
   useEffect(() => {
     void load();
@@ -95,11 +133,24 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
   ) : (
     <span className="faint" style={{ fontSize: 11 }}>{t("Installed from another copy")}</span>
   );
+  const hasAccounts = info.hasConfig && info.accounts.length > 0;
   return (
     <div className="col" style={{ gap: 10 }}>
       {/* the guide and the read-only diagnosis live here, next to the account setup they explain */}
       <Segmented value={panel} onChange={setPanel} options={[{ value: "setup", label: t("Account setup") }, { value: "guide", label: t("Getting started and commands") }]} />
       {panel === "guide" ? <GitchGuide onAddAccount={() => { setPanel("setup"); setWizard({ account: null }); }} onDoctor={() => { setPanel("setup"); void run(async () => setDiagnosis(await gitch.doctor())); }} /> : <>
+      <div className="form-section" style={{ gap: 8, padding: 12 }}>
+        <span className="form-section-title">{t("CLI appearance")}</span>
+        <div className="row">
+          <Checkbox checked={logoEnabled ?? true} disabled={logoBusy || logoEnabled === null || !info.bash} onChange={(enabled) => void setLogo(enabled)} label={t("Show the small eye logo in CLI output")} />
+          {logoBusy && <Spinner size={13} />}
+        </div>
+        <span className="hint">{t("You can also use gitch logo on or gitch logo off in a terminal.")}</span>
+        {logoError && <div className="col" style={{ gap: 6 }}>
+          <span className="error-text selectable" role="alert" style={{ whiteSpace: "pre-wrap" }}>{logoError}</span>
+          <Button size="small" disabled={logoBusy || !info.bash} onClick={() => void loadLogo()}>{t("Retry")}</Button>
+        </div>}
+      </div>
       <div className="form-section" style={{ gap: 8, padding: 12 }}>
         <div className="row">
           <span style={{ fontWeight: 600 }}>gitch</span>
@@ -143,7 +194,7 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
           <Button disabled={!info.bash} onClick={() => setWizard({ account: null })}>
             {t("Add account")}
           </Button>
-          <Button kind="primary" disabled={!info.hasConfig || busy || !info.bundledVersion || !info.bash} onClick={() => setConfirmInstall(true)}>
+          <Button kind="primary" disabled={!hasAccounts || busy || !info.bundledVersion || !info.bash} onClick={() => setConfirmInstall(true)}>
             {info.installedIsBundled ? t("Reinstall terminal integration…") : t("Enable terminal command…")}
           </Button>
 
@@ -174,7 +225,7 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
         )}
         {error && <span className="error-text selectable" style={{ whiteSpace: "pre-wrap" }}>{error}</span>}
         <span className="hint">
-          {info.hasConfig
+          {hasAccounts
             ? t("Open a new terminal window to start using gitch.")
             : t("Start with Add account. You can complete SSH setup here, then optionally enable the terminal command.")}
         </span>

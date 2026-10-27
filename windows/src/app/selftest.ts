@@ -40,6 +40,8 @@ import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
 import { graphLanesSelfTest } from "./lib/graph-lanes-selftest";
 import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
+import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
+import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -168,15 +170,11 @@ export async function runSelfTest(): Promise<boolean> {
   const repo = env.selftest;
   if (!repo) return false;
   const checks: Check[] = [];
-  const out = joinPath(dirname(repo), "selftest-result.json");
-  // a render error unmounts the whole React tree (blank window) — record it so the result says what broke
-  const uncaught: string[] = [];
-  window.addEventListener("error", (e) => uncaught.push(`${e.message} @ ${e.filename?.split("/").pop()}:${e.lineno}`));
-  window.addEventListener("unhandledrejection", (e) => uncaught.push(`unhandled: ${String(e.reason).slice(0, 200)}`));
   const check = (name: string, ok: boolean, detail?: unknown) => {
     checks.push({ name, ok, detail: detail === undefined ? undefined : String(detail).slice(0, 500) });
   };
   const step = async (name: string, f: () => Promise<boolean | [boolean, unknown]>) => {
+    await selfTestProgress(name, checks);
     try {
       const r = await f();
       if (Array.isArray(r)) check(name, r[0], r[1]);
@@ -184,6 +182,7 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
+    await selfTestProgress(`${name}: finished`, checks);
   };
 
   workspace.restoring = false;
@@ -232,7 +231,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
   await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
-  await step("PR 대화·파일 검토 전환에서 미전송 초안 유지", prConversationSelfTest);
+  await step("PR screenshots, checks and retained conversation drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
@@ -246,6 +245,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
+  await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
@@ -725,7 +725,8 @@ export async function runSelfTest(): Promise<boolean> {
       !!el.querySelector("h2") &&
       el.querySelectorAll("li.task input:checked").length === 1 &&
       !el.querySelector("script, img, iframe") &&
-      links.join() === "https://github.com/o/r/issues/5" &&
+      links.join() === "https://raw.githubusercontent.com/o/r/HEAD/x,https://github.com/o/r/issues/5" &&
+      el.querySelectorAll(".md-image-alt").length === 1 &&
       !(window as { mdHacked?: number }).mdHacked;
     const detail = `links=${links} tags=${Array.from(el.querySelectorAll("*")).map((e) => e.tagName.toLowerCase()).join(",")}`;
     root.unmount();
@@ -996,14 +997,14 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("No uncaught errors and the app still renders", async () => {
     const alive = !!document.querySelector(".repo");
+    const uncaught = selfTestRecorder()?.errors ?? [];
     return [uncaught.length === 0 && alive, `alive=${alive} ${uncaught.slice(0, 3).join(" | ")}`];
   });
 
   // 화면 캡처용: 그래프 + 터미널이 보이는 상태로 둔다
   s.navigate("repository");
   s.select({ kind: "commit", sha: s.headHash! });
-  const result = { ok: checks.every((c) => c.ok), os: env.os, windows: isWindows(), checks };
-  await ipc.writeText(out, JSON.stringify(result, null, 2));
+  await selfTestRecorder()?.finish(checks);
   if (env.selftestOpen) window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: env.selftestOpen }));
   return true;
 }

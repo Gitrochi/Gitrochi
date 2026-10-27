@@ -9,6 +9,11 @@ export async function applyAppLaunch(route: AppLaunch) {
   const store = workspace.tabs.find((tab) => samePath(tab.path, route.repo));
   if (!store) throw new Error(t("Couldn't open the requested repository."));
   workspace.select(store.id);
+  // macOS: RepoStore.applyAppRoute sends this action directly to its file viewer.
+  if (route.view === "finder") {
+    await store.revealPath(route.file ?? "");
+    return;
+  }
   if (route.commit) {
     store.closeFileInspect();
     store.select({ kind: "commit", sha: route.commit });

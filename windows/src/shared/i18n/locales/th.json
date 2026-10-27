@@ -1245,5 +1245,9 @@
  "Reset to default layout": "คืนค่าเลย์เอาต์เริ่มต้น",
  "Drag to resize the column": "ลากเพื่อปรับความกว้างคอลัมน์",
  "Date": "วันที่",
- "Open in Releases": "เปิดในรีลีส"
+ "Open in Releases": "เปิดในรีลีส",
+ "CLI appearance": "รูปลักษณ์ CLI",
+ "Show the small eye logo in CLI output": "แสดงโลโก้ดวงตาขนาดเล็กในผลลัพธ์ CLI",
+ "You can also use gitch logo on or gitch logo off in a terminal.": "คุณยังสามารถใช้ gitch logo on หรือ gitch logo off ในเทอร์มินัลได้",
+ "Couldn't read the CLI logo setting.": "อ่านการตั้งค่าโลโก้ CLI ไม่ได้"
 }

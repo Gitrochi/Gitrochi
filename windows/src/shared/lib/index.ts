@@ -2,5 +2,6 @@
 export { drag } from "./drag";
 export { laneColor, longDate, shortDate, stableHash, validBranchName } from "./format";
 export { type MdBlock, type MdInline, type MdRefs, parseMarkdown } from "./markdown";
+export { markdownImageURL } from "./markdown-inline";
 export { Observable, useObserve } from "./observable";
 export { shareHeights } from "./share-heights";

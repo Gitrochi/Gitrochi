@@ -6,46 +6,60 @@ struct PullRequestDetailView: View {
     @Environment(RepoStore.self) private var store
     let number: Int
     @ViewState private var draft = ""
+    @ViewState private var tab = "conversation"
+
+    private var reviewContext: String { "\(store.collaboration.contextID):\(store.hostingAccount?.id ?? ""):\(number)" }
 
     var body: some View {
         if let pr = store.pullRequests.first(where: { $0.number == number }), let t = store.target {
             VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.pull").foregroundStyle(.secondary)
-                    Text("\(t.provider.requestShort) #\(pr.number)").font(.headline)
-                    if pr.isDraft {
-                        Text("Draft").font(.caption2.weight(.bold)).padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(Capsule().fill(Color.orange.opacity(0.2)))
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 8) {
+                        Label("\(t.provider.requestShort) #\(pr.number)", systemImage: "arrow.triangle.pull")
+                            .font(.callout.weight(.semibold)).foregroundStyle(.secondary)
+                        if pr.isDraft {
+                            Text("Draft").font(.caption2.weight(.semibold)).padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Color.secondary.opacity(0.12), in: Capsule())
+                        }
+                        Spacer()
+                        if store.reviewLoading { ProgressView().controlSize(.small) }
+                        Button { Task { await store.loadReview(number); await store.loadRequestLifecycle(number) } } label: { Image(systemName: "arrow.clockwise") }
+                            .buttonStyle(.borderless).help("Refresh conversation and approvals").accessibilityLabel("Refresh conversation and approvals")
                     }
-                    Spacer()
-                    if store.reviewLoading { ProgressView().controlSize(.small) }
-                    Button { Task { await store.loadReview(number) } } label: { Image(systemName: "arrow.clockwise") }
-                        .buttonStyle(.borderless)
-                        .help("Refresh conversation and approvals")
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                    Text(pr.title).font(.title2.weight(.semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                    info(pr)
+                    actions(pr)
+                }.padding(20)
+                WorkbenchFlow(spacing: 6) {
+                    tabButton("conversation", title: String(localized: "Conversation"), symbol: "bubble.left.and.bubble.right", count: store.review?.number == number ? store.review?.comments.filter { $0.kind != .system }.count : nil)
+                    tabButton("files", title: String(localized: "Changed files"), symbol: "doc.on.doc", count: store.review?.number == number ? store.review?.files.count : nil)
+                    tabButton("checks", title: String(localized: "Checks"), symbol: "checkmark.circle", count: nil)
+                }.padding(.horizontal, 16).padding(.bottom, 10)
                 Divider()
                 InspectorScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(pr.title).font(.title3.weight(.semibold)).textSelection(.enabled)
-                        info(pr)
-                        actions(pr)
-                        RequestLifecyclePanel(number: number)
-                        Divider()
-                        if pr.body.trimmed.isEmpty {
-                            Text("No description").foregroundStyle(.secondary)
-                        } else {
-                            MarkdownView(pr.body, target: t)
-                        }
+                    VStack(alignment: .leading, spacing: 16) {
                         if let e = store.reviewError {
-                            Text(e).font(.caption).foregroundStyle(.red).textSelection(.enabled)
+                            Label(e, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).textSelection(.enabled)
                         }
-                        if let r = store.review, r.number == number {
-                            approval(r.state, provider: t.provider)
-                            files(r)
-                            ReviewDraftPanel(number: number)
-                            conversation(r)
+                        if tab == "conversation" {
+                            Card {
+                                Text("Description").font(.subheadline.weight(.semibold))
+                                if pr.body.trimmed.isEmpty { Text("No description").foregroundStyle(.secondary) }
+                                else { MarkdownView(pr.body, target: t, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url)) }
+                            }
+                            if let r = store.review, r.number == number {
+                                Card { approval(r.state, provider: t.provider) }
+                                ReviewDraftPanel(number: number)
+                                conversation(r, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url))
+                            }
+                        } else if tab == "files" {
+                            if let r = store.review, r.number == number {
+                                Card { files(r) }
+                                ReviewDraftPanel(number: number)
+                            } else if store.reviewLoading { ProgressView().padding(20) }
+                        } else {
+                            if let sha = pr.headSHA, !sha.isEmpty { RequestChecksPanel(number: number, headSHA: sha) }
+                            RequestLifecyclePanel(number: number)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,39 +68,42 @@ struct PullRequestDetailView: View {
                 Divider()
                 composer(t.provider)
             }
-            .task(id: number) { draft = ""; await store.loadReview(number) }
+            .task(id: reviewContext) { await store.loadReview(number) }
+            .onChange(of: number) { _, _ in draft = ""; tab = "conversation" }
         } else {
             ContentUnavailableView("\(store.target?.provider.requestShort ?? "PR") not in the list", systemImage: "arrow.triangle.pull",
                                    description: Text("It was closed or hasn't been loaded yet."))
         }
     }
 
+    private func tabButton(_ value: String, title: String, symbol: String, count: Int?) -> some View {
+        Button { tab = value } label: {
+            HStack(spacing: 6) {
+                Image(systemName: symbol)
+                Text(title)
+                if let count { Text("\(count)").font(.caption2.monospacedDigit()).padding(.horizontal, 5).background(Color.secondary.opacity(0.12), in: Capsule()) }
+            }.font(.system(size: 12, weight: tab == value ? .semibold : .medium))
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .foregroundStyle(tab == value ? Color.accentColor : .secondary)
+                .background(tab == value ? Color.accentColor.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 7))
+        }.buttonStyle(.plain).accessibilityAddTraits(tab == value ? .isSelected : [])
+    }
+
     private func info(_ pr: PullRequest) -> some View {
-        Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 10, verticalSpacing: 6) {
-            GridRow { Text("Author").foregroundStyle(.secondary); Text("@\(pr.author)") }
-            GridRow {
-                Text("Branch").foregroundStyle(.secondary)
-                Text("\(pr.source) → \(pr.target)\(pr.fromFork ? String(localized: "  (fork)") : "")")
-            }
-            if let d = pr.updated {
-                GridRow { Text("Update").foregroundStyle(.secondary); Text(Fmt.long(d)) }
-            }
+        WorkbenchFlow(spacing: 10) {
+            Label("@\(pr.author)", systemImage: "person.crop.circle").font(.callout)
+            Text("\(pr.source) → \(pr.target)\(pr.fromFork ? String(localized: "  (fork)") : "")")
+                .font(.system(size: 11, design: .monospaced)).padding(.horizontal, 8).padding(.vertical, 4)
+                .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 5))
+            if let d = pr.updated { Text(Fmt.long(d)).font(.caption) }
             if let sha = pr.headSHA, let ci = store.ciBySha[sha] {
-                GridRow {
-                    Text("CI").foregroundStyle(.secondary)
-                    HStack(spacing: 4) {
-                        CIStatusIcon(status: ci.status, size: 11)
-                        Text("\(ci.status.title) · #\(ci.number)")
-                        Button("Open") { if let u = URL(string: ci.url) { NSWorkspace.shared.open(u) } }.buttonStyle(.link)
-                    }
-                }
+                Button { tab = "checks" } label: { HStack(spacing: 4) { CIStatusIcon(status: ci.status, size: 11); Text(ci.status.title).font(.caption) } }.buttonStyle(.plain).help("Checks")
             }
-        }
-        .font(.callout)
+        }.foregroundStyle(.secondary)
     }
 
     private func actions(_ pr: PullRequest) -> some View {
-        HStack {
+        WorkbenchFlow(spacing: 8) {
             Button { Task { await store.checkoutPullRequest(pr) } } label: {
                 Label("Check out branch", systemImage: "arrow.down.to.line")
             }
@@ -152,9 +169,10 @@ struct PullRequestDetailView: View {
     }
 
     /// 대화(일반 댓글·코드 줄 댓글·리뷰·시스템 기록)
-    private func conversation(_ r: PullRequestReview) -> some View {
+    private func conversation(_ r: PullRequestReview, revision: String?, baseURL: URL?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Conversation \(r.comments.filter { $0.kind != .system }.count)").font(.subheadline.weight(.semibold))
+            if r.comments.isEmpty { Text("No comments yet.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 8) }
             ForEach(r.comments) { c in
                 if c.kind == .system {
                     Text("@\(c.author) \(c.body)").font(.caption).foregroundStyle(.secondary)
@@ -174,10 +192,7 @@ struct PullRequestDetailView: View {
                             Text(path + (c.line.map { ":\($0)" } ?? ""))
                                 .font(.caption.monospaced()).foregroundStyle(.secondary)
                         }
-                        if !c.body.isEmpty {
-                            MarkdownView(c.body, target: store.target)
-                                .font(.callout)
-                        }
+                        if !c.body.isEmpty { MarkdownView(c.body, target: store.target, revision: revision, baseURL: baseURL).font(.callout) }
                         ReviewThreadActions(number: number, comment: c)
                     }
                     .padding(8)
@@ -208,9 +223,8 @@ struct PullRequestDetailView: View {
                         Text("Comment · review feedback").font(.callout).foregroundStyle(.tertiary).padding(8).allowsHitTesting(false)
                     }
                 }
-            HStack(spacing: 6) {
+            WorkbenchFlow(spacing: 8) {
                 if store.reviewBusy { ProgressView().controlSize(.small) }
-                Spacer()
                 if provider == .github {
                     Button("Request changes") { Task { if await store.requestChanges(number, body: text), store.selection == .pullRequest(number), draft.trimmed == text { draft = "" } } }
                         .disabled(text.isEmpty || store.reviewBusy)
@@ -234,6 +248,8 @@ struct PullRequestDetailView: View {
             }
             .controlSize(.small)
         }
-        .padding(10)
+        .padding(14)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
+
 }

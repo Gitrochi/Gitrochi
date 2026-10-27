@@ -1,0 +1,25 @@
+{
+  "fixture": "macos/Tools/test-request-layout.sh",
+  "scenarios": [
+    "conversation",
+    "checks",
+    "organizations",
+    "members",
+    "empty"
+  ],
+  "widths": [
+    1080,
+    700
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "renderedScreenshots": 20,
+  "expectedTextVisible": true,
+  "organizationAndMemberVisualInspection": "passed",
+  "representativeScreenshots": [
+    "request-organizations-1080-light.png",
+    "request-organizations-1080-dark.png"
+  ]
+}

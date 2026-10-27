@@ -2,8 +2,8 @@ import Foundation
 
 /// Inline half of the Markdown parser (Markdown.swift; Windows: shared/lib/markdown-inline.ts)
 extension Markdown {
-    static func inlines(_ s: String, _ refs: Refs?, inLink: Bool = false) -> [Inline] {
-        inlines(Array(s), refs, inLink: inLink)
+    static func inlines(_ s: String, _ context: Context, inLink: Bool = false) -> [Inline] {
+        inlines(Array(s), context, inLink: inLink)
     }
 
     /// Lines holding only tags (<p align="center">) leave nothing or stray line breaks behind
@@ -30,7 +30,7 @@ extension Markdown {
         }.joined()
     }
 
-    private static func inlines(_ s: [Character], _ refs: Refs?, inLink: Bool) -> [Inline] {
+    private static func inlines(_ s: [Character], _ context: Context, inLink: Bool) -> [Inline] {
         let scan = Scan(s)
         let n = s.count
         var out: [Inline] = []
@@ -82,8 +82,8 @@ extension Markdown {
                 continue
             }
             if c == "!" && i + 1 < n && s[i + 1] == "[", let l = linkAt(scan, i + 1) {
-                let alt = plain(inlines(Array(l.text), nil, inLink: true))
-                if let src = safeURL(l.href) {
+                let alt = plain(inlines(Array(l.text), Context(), inLink: true))
+                if let src = context.image(l.href) {
                     push(.image(src: src, alt: alt))
                 } else if !alt.isEmpty {
                     push(.text(alt))
@@ -92,9 +92,13 @@ extension Markdown {
                 continue
             }
             if c == "[" && !inLink, let l = linkAt(scan, i) {
-                let children = inlines(Array(l.text), refs, inLink: true)
-                if let href = safeURL(l.href) {
-                    push(.link(href: href, children: children))
+                let children = inlines(Array(l.text), context, inLink: true)
+                if let href = context.link(l.href) {
+                    if plain(children).trimmed.hasPrefix("🖼"), let image = context.markerImage(l.href) {
+                        push(.link(href: image, children: [.image(src: image, alt: plain(children))]))
+                    } else {
+                        push(.link(href: href, children: children))
+                    }
                 } else {
                     flush()
                     out += children
@@ -125,7 +129,7 @@ extension Markdown {
                     continue
                 }
                 if let img = imgAt(s, i, lim) {
-                    let src = safeURL(attr(img.attrs, "src") ?? "")
+                    let src = context.image(decode(attr(img.attrs, "src") ?? ""))
                     let alt = decode(attr(img.attrs, "alt") ?? "")
                     if let src {
                         push(.image(src: src, alt: alt))
@@ -141,7 +145,7 @@ extension Markdown {
                     continue
                 }
             }
-            if c == "*" || c == "_" || c == "~", let e = emphasisAt(scan, i, refs, inLink: inLink) {
+            if c == "*" || c == "_" || c == "~", let e = emphasisAt(scan, i, context, inLink: inLink) {
                 push(e.node)
                 i = e.end
                 continue
@@ -152,7 +156,7 @@ extension Markdown {
                 i += u.count
                 continue
             }
-            if let refs, !inLink, "#!@".contains(c), i == 0 || s[i - 1].isWhitespace || "([{,;:'\"".contains(s[i - 1]) {
+            if let refs = context.refs, !inLink, "#!@".contains(c), i == 0 || s[i - 1].isWhitespace || "([{,;:'\"".contains(s[i - 1]) {
                 let lim = min(n, i + 300)
                 if c != "@", c == "#" || refs.request != nil {
                     var k = i + 1
@@ -231,7 +235,7 @@ extension Markdown {
     }
 
     /// Same delimiter run on both sides: *em*, **strong**, ***both***, ~strike~, ~~strike~~
-    private static func emphasisAt(_ scan: Scan, _ i: Int, _ refs: Refs?, inLink: Bool) -> (node: Inline, end: Int)? {
+    private static func emphasisAt(_ scan: Scan, _ i: Int, _ context: Context, inLink: Bool) -> (node: Inline, end: Int)? {
         let s = scan.s
         let c = s[i]
         var run = 0
@@ -242,7 +246,7 @@ extension Markdown {
         for n in stride(from: c == "~" ? run : min(run, 3), through: 1, by: -1) {
             let end = scan.closingRun(i + n, c, n)
             if end < 0 { continue }
-            let inner = inlines(Array(s[(i + n)..<end]), refs, inLink: inLink)
+            let inner = inlines(Array(s[(i + n)..<end]), context, inLink: inLink)
             let node: Inline = c == "~" ? .strike(inner) : n == 3 ? .strong([.em(inner)]) : n == 2 ? .strong(inner) : .em(inner)
             return (node, end + n)
         }
@@ -267,8 +271,19 @@ extension Markdown {
     private static func imgAt(_ s: [Character], _ i: Int, _ lim: Int) -> (attrs: String, end: Int)? {
         guard hasPrefix(s, i, "<img"), !isASCIIWord(at: s, i + 4, lim) else { return nil }
         var k = i + 4
-        while k < lim && s[k] != ">" { k += 1 }
-        return k < lim ? (String(s[(i + 4)..<k]), k + 1) : nil
+        var quote: Character?
+        while k < lim {
+            let c = s[k]
+            if let current = quote {
+                if c == current { quote = nil }
+            } else if c == "\"" || c == "'" {
+                quote = c
+            } else if c == ">" {
+                return (String(s[(i + 4)..<k]), k + 1)
+            }
+            k += 1
+        }
+        return nil
     }
 
     private static func tagAt(_ s: [Character], _ i: Int, _ lim: Int) -> Int? {
