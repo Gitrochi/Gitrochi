@@ -1234,5 +1234,7 @@
  "Windows did not bring the app to the front.": "Windows 未将该应用置于前台。",
  "Bringing another app forward is only available on Windows.": "将其他应用置于前台仅适用于 Windows。",
  "Couldn't open {0}: it isn't inside a Git repository.": "无法打开 {0}：它不在 Git 仓库中。",
- "Back to the repository screen": "返回仓库界面"
+ "Back to the repository screen": "返回仓库界面",
+ "Graph lanes": "图形泳道",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖动，或在此横向滚动或按住 Shift 滚动滚轮，以查看更多泳道"
 }

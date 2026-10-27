@@ -57,9 +57,64 @@
   text-overflow: ellipsis;
 }
 
-/* 좁아서 그래프 칸이 잘렸으면 오른쪽 끝을 흐리게 */
-.graph-clipped {
+/* lanes that do not fit fade out at the edge where more of them are hidden */
+.graph-cell.fade-right {
   mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
+}
+
+.graph-cell.fade-left {
+  mask-image: linear-gradient(to right, transparent, #000 16px);
+}
+
+.graph-cell.fade-left.fade-right {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+
+.lane-shift {
+  display: flex;
+  flex: none;
+}
+
+/* the graph column's header: its label and, when lanes do not fit, a thin scrollbar along the bottom */
+.graph-header > .graph-head-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 6px;
+}
+
+.graph-head-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane-scrollbar {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 2px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  cursor: pointer;
+}
+
+.lane-scrollbar:hover {
+  height: 6px;
+}
+
+.lane-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 38%, transparent);
+  cursor: grab;
+}
+
+.lane-scrollbar-thumb:active {
+  cursor: grabbing;
 }
 
 .graph-scroll {

@@ -1209,5 +1209,7 @@
  "Bringing another app forward is only available on Windows.": "Portare in primo piano un'altra app è disponibile solo su Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Impossibile aprire {0}: non si trova in un repository Git.",
  "Repository": "Repository",
- "Back to the repository screen": "Torna alla schermata del repository"
+ "Back to the repository screen": "Torna alla schermata del repository",
+ "Graph lanes": "Corsie del grafo",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Trascina, o scorri lateralmente o con Maiusc+rotellina qui, per vedere altre corsie"
 }

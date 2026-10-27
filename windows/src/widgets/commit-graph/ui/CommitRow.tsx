@@ -15,6 +15,7 @@ export const CommitRow = memo(function CommitRow({
   entry,
   top,
   gw,
+  laneOffset,
   refs,
   selected,
   isHead,
@@ -27,7 +28,10 @@ export const CommitRow = memo(function CommitRow({
   store: RepoStore;
   entry: GraphEntry;
   top: number;
+  /** The width every lane needs; the graph column shows the part from laneOffset on */
   gw: number;
+  /** How far the lanes are scrolled sideways (shared by every row) */
+  laneOffset: number;
   /** 화면 너비에 맞춘 칸(좁으면 일부 칸을 숨기고 줄인다) */
   cols: GraphColumns;
   refs: RefLabel[] | undefined;
@@ -102,10 +106,16 @@ export const CommitRow = memo(function CommitRow({
         </div>
       )}
       {cols.graph > 0 && (
-        <div className={cols.graph < gw ? "graph-clipped" : undefined} style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}>
+        <div
+          className={`graph-cell${laneOffset > 0 ? " fade-left" : ""}${laneOffset < gw - cols.graph ? " fade-right" : ""}`}
+          style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
+        >
           {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
-          <span className="lane-band" style={{ left: LEFT_PAD + LANE_W * (entry.row.column + 0.5), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
-          <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
+          <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
+          {/* the lanes move together with the header's scrollbar; the line from the labels follows the node */}
+          <span className="lane-shift" style={{ marginLeft: -laneOffset }}>
+            <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
+          </span>
         </div>
       )}
       {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면. */}

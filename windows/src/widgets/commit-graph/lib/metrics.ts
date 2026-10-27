@@ -13,6 +13,31 @@ export const AVATAR = 20;
 
 export const graphWidth = (lanes: number) => Math.max(44, Math.min(lanes, MAX_LANES) * LANE_W + LEFT_PAD + RIGHT_PAD);
 
+/** The width every lane needs, without the visible-lane cap; what does not fit the column scrolls sideways */
+export const graphFullWidth = (lanes: number) => Math.max(44, lanes * LANE_W + LEFT_PAD + RIGHT_PAD);
+
+/** A lane scroll offset kept between 0 and the width that does not fit */
+export const clampLaneOffset = (offset: number, overflow: number) => Math.min(Math.max(0, Math.round(offset)), Math.max(0, Math.round(overflow)));
+
+/** The offset that brings a lane's node into a column of the given width, moving as little as possible */
+export function revealLaneOffset(offset: number, lane: number, visible: number, overflow: number): number {
+  const start = LANE_W * lane, end = LEFT_PAD * 2 + LANE_W * (lane + 1);
+  const next = start < offset ? start : end > offset + visible ? end - visible : offset;
+  return clampLaneOffset(next, overflow);
+}
+
+/** The lane scrollbar's thumb in a track: its length (visible/total, at least 24px) and where it starts */
+export function laneThumb(offset: number, visible: number, total: number, track: number): { size: number; start: number } {
+  const overflow = total - visible;
+  if (overflow <= 0 || track <= 0) return { size: Math.max(0, track), start: 0 };
+  const size = Math.min(track, Math.max(24, Math.round((track * visible) / total)));
+  return { size, start: track > size ? Math.round(((track - size) * clampLaneOffset(offset, overflow)) / overflow) : 0 };
+}
+
+/** The offset for a thumb moved to a start position in its track */
+export const laneOffsetForThumb = (start: number, track: number, size: number, overflow: number) =>
+  track > size ? clampLaneOffset((start / (track - size)) * overflow, overflow) : 0;
+
 /** 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간) */
 export interface GraphColumns {
   ref: number;

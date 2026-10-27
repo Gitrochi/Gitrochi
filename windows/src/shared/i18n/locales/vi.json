@@ -1188,5 +1188,7 @@
  "Windows did not bring the app to the front.": "Windows không đưa ứng dụng lên trước.",
  "Bringing another app forward is only available on Windows.": "Đưa ứng dụng khác lên trước chỉ khả dụng trên Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Không mở được {0}: không nằm trong kho Git nào.",
- "Back to the repository screen": "Quay lại màn hình kho lưu trữ"
+ "Back to the repository screen": "Quay lại màn hình kho lưu trữ",
+ "Graph lanes": "Làn của đồ thị",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Kéo, hoặc cuộn ngang hay dùng Shift+con lăn tại đây, để xem thêm làn"
 }

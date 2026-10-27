@@ -1185,5 +1185,7 @@
  "Windows did not bring the app to the front.": "Windows tidak membawa aplikasi ke depan.",
  "Bringing another app forward is only available on Windows.": "Membawa aplikasi lain ke depan hanya tersedia di Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Tidak dapat membuka {0}: tidak berada di dalam repositori Git.",
- "Back to the repository screen": "Kembali ke layar repositori"
+ "Back to the repository screen": "Kembali ke layar repositori",
+ "Graph lanes": "Jalur grafik",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Seret, atau gulir ke samping atau dengan Shift+roda di sini, untuk melihat jalur lain"
 }

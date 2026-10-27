@@ -1233,5 +1233,7 @@
  "Windows did not bring the app to the front.": "Windows がアプリを前面に表示しませんでした。",
  "Bringing another app forward is only available on Windows.": "他のアプリを前面に表示する機能は Windows でのみ使えます。",
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} を開けませんでした: Git リポジトリの中にありません。",
- "Back to the repository screen": "リポジトリ画面に戻る"
+ "Back to the repository screen": "リポジトリ画面に戻る",
+ "Graph lanes": "グラフのレーン",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ドラッグするか、ここで横スクロールまたは Shift+ホイールで他のレーンを表示します"
 }

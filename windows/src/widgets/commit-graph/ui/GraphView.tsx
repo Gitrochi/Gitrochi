@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { type GraphColumnId, graphColumns, graphWidth, ROW_H } from "../lib/metrics";
+import { clampLaneOffset, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, revealLaneOffset, ROW_H } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -50,6 +50,22 @@ export function GraphView({ store }: { store: RepoStore }) {
   const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
   const hiddenKey = hiddenColumns.join(",");
   const cols = useMemo(() => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean))), [viewport.width, gw, hiddenKey]);
+  // lanes beyond the column scroll sideways, all rows together, with one offset clamped to what does not fit
+  const fullWidth = graphFullWidth(store.maxLanes);
+  const laneOverflow = cols.graph > 0 ? Math.max(0, fullWidth - cols.graph) : 0;
+  const [laneOffsetState, setLaneOffset] = useState(0);
+  const laneOffset = clampLaneOffset(laneOffsetState, laneOverflow);
+  useEffect(() => { if (laneOffset !== laneOffsetState) setLaneOffset(laneOffset); }, [laneOffset, laneOffsetState]);
+  const laneOffsetRef = useRef(laneOffset);
+  laneOffsetRef.current = laneOffset;
+  // a newly selected commit whose node is outside the visible lanes scrolls them into view
+  useEffect(() => {
+    const id = store.selectedID, i = id ? store.commitIndex.get(id) : undefined, entry = i === undefined ? undefined : store.entries[i];
+    if (!entry || laneOverflow <= 0) return;
+    const next = revealLaneOffset(laneOffsetRef.current, entry.row.column, cols.graph, laneOverflow);
+    if (next !== laneOffsetRef.current) setLaneOffset(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.selectedID]);
   // the header's menu: which columns show (the message column always does)
   const columnMenu = (): MenuItem[] => {
     const toggle = (id: GraphColumnId) => settings.set("graphHiddenColumns", hiddenColumns.includes(id) ? hiddenColumns.filter((x) => x !== id) : [...hiddenColumns, id]);
@@ -80,7 +96,7 @@ export function GraphView({ store }: { store: RepoStore }) {
       {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
       <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
-        {cols.graph > 0 && <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>}
+        {cols.graph > 0 && <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))} />}
         <span className="grow" style={{ paddingLeft: 20, flex: 1, minWidth: 0 }}>
           {t("Commit message")}
         </span>
@@ -114,7 +130,8 @@ export function GraphView({ store }: { store: RepoStore }) {
                   store={store}
                   entry={e}
                   top={i * ROW_H}
-                  gw={gw}
+                  gw={fullWidth}
+                  laneOffset={laneOffset}
                   cols={cols}
                   refs={store.refsByCommit.get(e.commit.id)}
                   selected={selected === e.commit.id}
@@ -135,6 +152,72 @@ export function GraphView({ store }: { store: RepoStore }) {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * The graph column's header cell. When the lanes are wider than the column it carries a thin scrollbar
+ * (thumb sized visible/total); dragging it, or scrolling sideways or with Shift+wheel over the cell, moves every row's lanes.
+ */
+function LaneHeader({ width, total, offset, onOffset }: { width: number; total: number; offset: number; onOffset: (offset: number) => void }) {
+  const cell = useRef<HTMLSpanElement>(null);
+  const latest = useRef({ offset, onOffset });
+  latest.current = { offset, onOffset };
+  const overflow = Math.max(0, total - width);
+  // a native listener: React's wheel handlers are passive and could not keep the page from scrolling
+  useEffect(() => {
+    const el = cell.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
+      if (!delta) return;
+      e.preventDefault();
+      latest.current.onOffset(latest.current.offset + delta);
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  const track = Math.max(0, width - 12);
+  const thumb = laneThumb(offset, width, total, track);
+  const dragFrom = (e: React.PointerEvent<HTMLElement>, start: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget, x0 = e.clientX;
+    target.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => latest.current.onOffset(laneOffsetForThumb(start + ev.clientX - x0, track, thumb.size, overflow));
+    const up = () => {
+      target.removeEventListener("pointermove", move);
+      target.removeEventListener("pointerup", up);
+      target.removeEventListener("pointercancel", up);
+    };
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
+  };
+  return (
+    <span ref={cell} className="graph-head-cell" style={{ width }}>
+      <span className="graph-head-label">{t("Graph")}</span>
+      {overflow > 0 && (
+        <span
+          className="lane-scrollbar"
+          role="scrollbar"
+          aria-orientation="horizontal"
+          aria-label={t("Graph lanes")}
+          aria-valuemin={0}
+          aria-valuemax={overflow}
+          aria-valuenow={offset}
+          data-tip={t("Drag, or scroll sideways or with Shift+wheel here, to see more lanes")}
+          // a click on the track centres the thumb there and keeps dragging from that point
+          onPointerDown={(e) => {
+            const start = e.clientX - e.currentTarget.getBoundingClientRect().left - thumb.size / 2;
+            onOffset(laneOffsetForThumb(start, track, thumb.size, overflow));
+            dragFrom(e, Math.min(Math.max(0, start), track - thumb.size));
+          }}
+        >
+          <span className="lane-scrollbar-thumb" style={{ width: thumb.size, left: thumb.start }} onPointerDown={(e) => dragFrom(e, thumb.start)} />
+        </span>
+      )}
+    </span>
   );
 }
 

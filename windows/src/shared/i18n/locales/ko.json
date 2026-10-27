@@ -2069,5 +2069,7 @@
   "Windows did not bring the app to the front.": "Windows 가 그 앱을 앞으로 가져오지 않았습니다.",
   "Bringing another app forward is only available on Windows.": "다른 앱을 앞으로 가져오는 기능은 Windows 에서만 됩니다.",
   "Couldn't open {0}: it isn't inside a Git repository.": "{0}을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다.",
-  "Back to the repository screen": "저장소 화면으로 돌아가기"
+  "Back to the repository screen": "저장소 화면으로 돌아가기",
+  "Graph lanes": "그래프 레인",
+  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "끌거나, 여기서 옆으로 스크롤하거나 Shift+휠로 레인을 더 봅니다"
 }

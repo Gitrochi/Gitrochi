@@ -1232,5 +1232,7 @@
  "Windows did not bring the app to the front.": "Windows не вывел приложение на передний план.",
  "Bringing another app forward is only available on Windows.": "Выводить другое приложение на передний план можно только в Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Не удалось открыть {0}: это не внутри репозитория Git.",
- "Back to the repository screen": "Вернуться к экрану репозитория"
+ "Back to the repository screen": "Вернуться к экрану репозитория",
+ "Graph lanes": "Дорожки графа",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Перетащите или прокрутите здесь вбок или с Shift+колесом, чтобы увидеть другие дорожки"
 }

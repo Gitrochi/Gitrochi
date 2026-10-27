@@ -1215,5 +1215,7 @@
  "Windows did not bring the app to the front.": "System Windows nie przeniósł aplikacji na pierwszy plan.",
  "Bringing another app forward is only available on Windows.": "Przenoszenie innej aplikacji na pierwszy plan działa tylko w systemie Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Nie można otworzyć {0}: nie znajduje się w repozytorium Git.",
- "Back to the repository screen": "Wróć do ekranu repozytorium"
+ "Back to the repository screen": "Wróć do ekranu repozytorium",
+ "Graph lanes": "Tory grafu",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Przeciągnij albo przewiń tutaj w bok lub z Shift+kółkiem, aby zobaczyć więcej torów"
 }
