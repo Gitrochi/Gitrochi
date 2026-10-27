@@ -39,7 +39,9 @@ struct HostingHubPanel: View {
                     Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: store.hostingHub.projectPermissionRequired ? "lock.shield" : "exclamationmark.circle") }
                         .font(.callout).foregroundStyle(store.hostingHub.projectPermissionRequired ? Color.secondary : Color.red)
                     WorkbenchFlow(spacing: 8) {
-                        if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
+                        if let account = store.pendingHubCredentialAccount {
+                            CredentialAccessNotice(account: account)
+                        } else if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
                             Button("Connect project access") { projectAccessAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
                             Text("Approve the additional permission in GitHub, then projects will reload automatically.").font(.caption).foregroundStyle(.secondary)
                         } else {

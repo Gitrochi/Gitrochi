@@ -9,7 +9,9 @@ struct CommitRow: View {
     @ViewState private var dropTargeted = false
 
     let entry: GraphEntry
+    /// Every lane side by side; the column shows `columns.graph` of it, scrolled by laneOffset
     let graphWidth: CGFloat
+    var laneOffset: CGFloat = 0
     /// 화면 너비에 맞춘 칸(좁으면 일부 칸을 숨기고 줄인다)
     let columns: GraphMetrics.Columns
     let refs: [RefLabel]
@@ -27,7 +29,7 @@ struct CommitRow: View {
 
     var body: some View {
         let c = entry.commit
-        let tint = GraphStyle.lane(entry.row.color)
+        let tint = Palette.lane(entry.row.color)
         let groups = RefGroup.group(refs)
         HStack(spacing: 0) {
             // 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수), 그래프 동그라미까지 이어지는 선
@@ -39,13 +41,17 @@ struct CommitRow: View {
                 GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
                           hasRefs: !groups.isEmpty, author: c.author, email: c.email)
                     .frame(width: graphWidth, height: GraphMetrics.rowHeight)
-                    // 좁아서 그래프 칸이 잘리면 오른쪽 끝을 흐리게
+                    .offset(x: -laneOffset)
+                    // lanes hidden past an edge fade out on that side
                     .frame(width: columns.graph, alignment: .leading)
                     .clipped()
                     .mask {
-                        LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: columns.graph < graphWidth ? max(0, 1 - 16 / columns.graph) : 1),
-                                               .init(color: columns.graph < graphWidth ? .clear : .black, location: 1)],
+                        let fade = max(0, min(0.5, 16 / max(1, columns.graph)))
+                        let left = laneOffset > 0, right = laneOffset + columns.graph < graphWidth
+                        LinearGradient(stops: [.init(color: left ? .clear : .black, location: 0),
+                                               .init(color: .black, location: left ? fade : 0),
+                                               .init(color: .black, location: right ? 1 - fade : 1),
+                                               .init(color: right ? .clear : .black, location: 1)],
                                        startPoint: .leading, endPoint: .trailing)
                     }
                     .background(alignment: .leading) {
@@ -53,73 +59,66 @@ struct CommitRow: View {
                         Rectangle()
                             .fill(tint.opacity(selected ? 0.4 : 0.1))
                             .frame(height: Self.bandHeight)
-                            .padding(.leading, min(GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5), columns.graph))
+                            .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
             }
-            // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
-            HStack(spacing: 6) {
-                Rectangle()
-                    .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
-                    .frame(width: 3, height: Self.bandHeight)
-                    .padding(.trailing, 4)
-                if isHead {
-                    Text("HEAD").font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(.horizontal, 4).padding(.vertical, 2)
-                        .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 3))
-                }
-                if c.isPending {
-                    if c.wipWorktree != nil {
-                        Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
-                    } else {
-                        Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
-                    }
-                    Text("\(wipCount) files")
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 6).padding(.vertical, 1)
-                        .background(Capsule().fill(tint.opacity(0.18)))
-                } else {
-                    SubjectAndBody {
-                        Text(c.subject)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .foregroundStyle(c.isMerge ? .secondary : .primary)
-                        if let ci {
-                            CIStatusIcon(status: ci.status, size: 11)
-                                .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in the browser")
-                                .onTapGesture { if let u = URL(string: ci.url) { NSWorkspace.shared.open(u) } }
+            HStack(spacing: 0) {
+                // the message: lane-coloured bar, subject, first body line dimmed; author, date and SHA in the tip or their columns
+                HStack(spacing: 6) {
+                    Rectangle()
+                        .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
+                        .frame(width: 3, height: Self.bandHeight)
+                        .padding(.trailing, 4)
+                    if c.isPending {
+                        if c.wipWorktree != nil {
+                            Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
+                        } else {
+                            Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
                         }
-                        if !c.body.isEmpty {
-                            Text(c.body)
+                        Text("\(wipCount) files")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 6).padding(.vertical, 1)
+                            .background(Capsule().fill(tint.opacity(0.18)))
+                    } else {
+                        SubjectAndBody {
+                            Text(c.subject)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
-                                .foregroundStyle(.secondary)
-                                .layoutValue(key: IsCommitBody.self, value: true)
+                                .foregroundStyle(c.isMerge ? .secondary : .primary)
+                            if let ci {
+                                CIStatusIcon(status: ci.status, size: 11)
+                                    .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in Actions")
+                                    .onTapGesture { store.openCI(ci) }
+                            }
+                            if !c.body.isEmpty {
+                                Text(c.body)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .foregroundStyle(.secondary)
+                                    .layoutValue(key: IsCommitBody.self, value: true)
+                            }
                         }
                     }
+                    Spacer(minLength: 8)
                 }
-                Spacer(minLength: 8)
-                if columns.time && !c.isPending {
-                    Text(Fmt.short(c.date))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .fixedSize()
-                }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .clipped()
+                .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
+                if columns.author > 0 { cell(c.isPending ? "" : c.author, width: columns.author) }
+                if columns.time > 0 { cell(c.isPending ? "" : Fmt.short(c.date), width: columns.time) }
+                if columns.sha > 0 { cell(c.isPending ? "" : c.short, width: columns.sha).monospaced() }
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            // right-hand columns line up with their labels, which sit left of the header's menus
+            .padding(.trailing, 12 + (columns.trailing > 0 ? GraphMetrics.headerToolsWidth : 0))
             .frame(height: Self.bandHeight)
-            // selection and search hits tint only the message, at the band's height
+            // selection and search hits tint the message and the columns after it to the row's end, at the band's height
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
-            .clipped()
-            .help(c.isPending ? "" : "\(c.subject)\n\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
         }
         .font(.system(size: 12.5))
-        .padding(.trailing, 12)
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {
-            if selected || match == .hit { Rectangle().fill(Color.accentColor).frame(width: selected ? 3 : 2) }
+            if match == .hit { Rectangle().fill(Color.yellow).frame(width: 3) }
         }
         .overlay {
             if dropTargeted {
@@ -140,6 +139,16 @@ struct CommitRow: View {
             store.handleDrop(payload, onto: entry)
             return true
         } isTargeted: { dropTargeted = $0 && !c.isPending }
+    }
+}
+
+extension CommitRow {
+    /// An optional column's text, inset from the column's left edge like its label
+    fileprivate func cell(_ text: String, width: CGFloat) -> some View {
+        Text(verbatim: text)
+            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+            .padding(.leading, GraphMetrics.columnInset)
+            .frame(width: width, alignment: .leading)
     }
 }
 
@@ -204,15 +213,11 @@ private struct RefColumn: View {
             if let g = groups.first {
                 RefPill(group: g, tint: tint, store: store)
                 if groups.count > 1 {
-                    Menu {
-                        ForEach(groups.dropFirst()) { g in
-                            Menu(g.name) { ForEach(g.all) { r in RefMenu(ref: r) } }
-                        }
-                    } label: { Text("+\(groups.count - 1)") }
-                        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                    Text("+\(groups.count - 1)")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(tint)
                         .padding(.horizontal, 4)
+                        .background(Capsule().fill(tint.opacity(0.15)))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))
                         .contextMenu {
                             ForEach(groups.dropFirst()) { g in
@@ -220,8 +225,7 @@ private struct RefColumn: View {
                             }
                         }
                 }
-                Rectangle().fill(tint.opacity(GraphMetrics.refOpacity)).frame(minWidth: 8, maxWidth: 24).frame(height: GraphMetrics.refStroke)
-                Spacer(minLength: 0)
+                Rectangle().fill(tint).frame(height: 1.5)
             }
         }
         .padding(.leading, 6)
@@ -235,7 +239,7 @@ private struct RefPill: View {
 
     var body: some View {
         let solid = group.isCurrent
-        let color = group.isTag ? Color.secondary : tint
+        let color = group.isTag ? Color(nsColor: .systemGray) : (group.isHead ? Color(nsColor: .labelColor) : tint)
         HStack(spacing: 3) {
             if solid { Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy)) }
             if group.isTag { Image(systemName: "tag").font(.system(size: 9, weight: .semibold)) }
@@ -249,9 +253,9 @@ private struct RefPill: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .foregroundStyle(solid ? GraphStyle.currentRefText : color)
-        .background(RoundedRectangle(cornerRadius: 6).fill(solid ? color : color.opacity(0.09)))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color.opacity(solid ? 0 : 0.24), lineWidth: 0.75))
+        .foregroundStyle(solid ? Color.white : color)
+        .background(RoundedRectangle(cornerRadius: 4).fill(solid ? color : color.opacity(0.18)))
+        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(color.opacity(solid ? 0 : 0.5), lineWidth: 1))
         .layoutPriority(1)
         .contentShape(Rectangle())
         .help(helpText)
@@ -287,9 +291,6 @@ private struct BranchInteractions: ViewModifier {
         } else {
             let name = group.local ?? group.remotes.first ?? group.name
             content
-                .simultaneousGesture(TapGesture().onEnded {
-                    if let branch = store.branch(named: name) { store.selectedBranchID = branch.id }
-                })
                 .onTapGesture(count: 2) {
                     if let b = store.branch(named: name) { Task { await store.checkout(b) } }
                 }
@@ -315,7 +316,7 @@ struct GraphCell: View {
     }
 
     var body: some View {
-        let color = GraphStyle.lane(row.color)
+        let color = Palette.lane(row.color)
         let cx = x(Double(row.column))
         ZStack(alignment: .topLeading) {
             Canvas { ctx, size in
@@ -325,7 +326,7 @@ struct GraphCell: View {
                     var p = Path()
                     p.move(to: CGPoint(x: 0, y: h / 2))
                     p.addLine(to: CGPoint(x: cx, y: h / 2))
-                    ctx.stroke(p, with: .color(color.opacity(GraphMetrics.refOpacity)), lineWidth: GraphMetrics.refStroke)
+                    ctx.stroke(p, with: .color(color), lineWidth: 1.5)
                 }
                 for s in row.segments {
                     let a = CGPoint(x: x(s.x1), y: h * s.y1)
@@ -338,25 +339,30 @@ struct GraphCell: View {
                         let mid = (a.y + b.y) / 2
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
-                    ctx.stroke(p, with: .color(GraphStyle.lane(s.color)),
-                               style: StrokeStyle(lineWidth: GraphMetrics.laneStroke, lineCap: .round, lineJoin: .round, dash: s.dashed ? [3, 3] : []))
+                    ctx.stroke(p, with: .color(Palette.lane(s.color)),
+                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
                 func circle(_ r: CGFloat) -> Path { Circle().path(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)) }
                 if isWIP {
                     ctx.fill(circle(7), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: GraphMetrics.nodeStroke, dash: [2.5, 2]))
+                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: 2, dash: [2.5, 2]))
                 } else if isMerge {
                     // 머지 커밋은 작은 점
                     ctx.fill(circle(5.5), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.fill(circle(4), with: .color(color))
                 } else {
-                    ctx.fill(circle(4.5), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(4.5), with: .color(color), lineWidth: GraphMetrics.nodeStroke)
+                    // 프로필 테두리(레인 색)
+                    ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
                 }
                 if isHead {
-                    ctx.stroke(circle(8), with: .color(Color.accentColor), lineWidth: GraphMetrics.nodeStroke)
+                    ctx.stroke(circle(isMerge ? 8 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 1.5)
                 }
+            }
+            if !isWIP && !isMerge {
+                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar)
+                    .help(author)
+                    .position(x: cx, y: GraphMetrics.rowHeight / 2)
             }
         }
     }
@@ -396,9 +402,6 @@ struct CommitMenu: View {
                 Divider()
             }
             Button("Compare with HEAD…") { store.openRevisionComparison(left: commit.id, right: "HEAD") }
-            if !store.historyTools.selected.isEmpty {
-                Button("Selected commits…") { Task { await store.openBatchCommits() } }
-            }
             Button("New branch from here…") { store.requestNewBranch(from: commit.id, label: commit.short) }
             Button("Tag here…") { store.sheet = .tag(sha: commit.id) }
             Button("Create worktree from here…") { store.sheet = .addWorktree(branch: nil, start: commit.id) }

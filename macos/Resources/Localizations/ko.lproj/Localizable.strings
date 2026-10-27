@@ -202,7 +202,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "'%2$@'의 커밋 %1$lld개 — 위가 최신입니다. 합치기는 바로 아래(이전) 커밋에 합칩니다.";
 "%lld conflicts — %lld chosen" = "충돌 %1$lld곳 — %2$lld곳 골랐습니다";
 "%lld files" = "%1$lld개 파일";
-"%lld jobs waiting to be run manually — expand to run" = "수동 실행을 기다리는 작업 %1$lld개 — 펼쳐서 실행";
 "%lld modified files — stage and commit them." = "수정한 파일 %1$lld개 — 스테이지하고 커밋합니다.";
 "%lld more approvals needed." = "승인 %1$lld명이 더 필요합니다.";
 "'%@'  →  commit %@" = "'%1$@'  →  커밋 %2$@";
@@ -228,7 +227,6 @@
 "Account for this repository" = "이 저장소에서 사용할 계정";
 "Accounts" = "계정";
 "Add account" = "계정 추가";
-"Add account…" = "계정 추가…";
 "Add an account first: gitch add asks for the account's name, email and server and makes an SSH key for it. Then install." = "먼저 계정을 추가하세요. gitch add 가 계정 이름·이메일·서버를 묻고 SSH 키를 만듭니다. 그다음 설치합니다.";
 "Add an account in Terminal…" = "Terminal 에서 계정 추가…";
 "Add variable" = "변수 추가";
@@ -315,7 +313,7 @@
 "Brings %lld new commits from the remote into the current branch." = "원격의 새 커밋 %1$lld개를 현재 브랜치로 가져옵니다.";
 "Browser" = "브라우저";
 "By branch" = "브랜치별";
-"CI: %@ · %@#%lld — click to open in the browser" = "CI: %1$@ · %2$@#%3$lld — 눌러서 브라우저로";
+"CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — 눌러서 Actions 페이지로";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI API 키로 Chat Completions 를 부릅니다.";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio API 키로 Gemini 를 부릅니다.";
 "Can't open this image" = "열 수 없는 이미지";
@@ -360,7 +358,6 @@
 "Choose again" = "다시 고르기";
 "Choose every conflict block before saving" = "모든 충돌 블록을 골라야 저장할 수 있습니다";
 "Choose the %@ executable" = "%1$@ 실행 파일을 고르세요";
-"Choose the account for this repository" = "이 저장소에 쓸 계정 고르기";
 "Chore: update" = "Chore: 변경 사항";
 "Chosen: %@" = "고름: %1$@";
 "Claude Code (uses your login)" = "Claude Code (로그인 사용)";
@@ -604,7 +601,6 @@
 "History" = "히스토리";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "요청이 안전 분류기에 막히면 서버가 권장 모델로 한 번 더 시도하도록(fallbacks) 켜 두었습니다.";
 "If the same server is used under another address, an account you've already connected works there too" = "같은 서버가 다른 주소로 쓰이는 경우, 이미 연결한 계정이 그대로 통합니다";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "계정을 여러 개 연결하면, 같은 서버의 저장소에서는 왼쪽 PR 목록 위에서 쓸 계정을 고를 수 있습니다.";
 "Ignore whitespace" = "공백 무시";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "공백 무시%1$@ — 들여쓰기·공백만 바뀐 줄은 같은 것으로 봅니다(켜 두면 줄 단위 스테이지는 쓸 수 없습니다)";
 "Import gh CLI login" = "gh CLI 로그인 가져오기";
@@ -716,7 +712,6 @@
 "No new commits to merge." = "머지할 새 커밋이 없습니다.";
 "No newline at end of file" = "파일 끝에 줄바꿈 없음";
 "No one has approved yet." = "아직 승인한 사람이 없습니다.";
-"No open %@" = "열린 %1$@ 없음";
 "No permission (403): %@" = "권한이 없습니다(403): %1$@";
 "No remote repository." = "원격 저장소가 없습니다.";
 "No remote repository. Add one first in a terminal with `git remote add origin <URL>`." = "원격 저장소가 없습니다. 터미널에서 `git remote add origin <URL>` 로 먼저 추가하세요.";
@@ -912,10 +907,6 @@
 "Set manually" = "직접 지정";
 "Set up SSH key in Terminal…" = "Terminal 에서 SSH 키 만들기…";
 "Shell command" = "셸 명령";
-"CLI appearance" = "CLI 표시";
-"Show the small eye logo" = "작은 눈 로고 표시";
-"Show Gitrochi's small eye logo beside command titles. You can also use gitch logo off or gitch logo on in the terminal." = "명령 제목 옆에 Gitrochi의 작은 눈 로고를 표시합니다. 터미널에서도 gitch logo off 또는 gitch logo on으로 바꿀 수 있습니다.";
-"Couldn't read the CLI appearance setting. Update Gitrochi and try again." = "CLI 표시 설정을 읽지 못했습니다. Gitrochi를 업데이트한 뒤 다시 시도하세요.";
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "아래 터미널 패널에서 여는 셸(zsh·bash·fish 등)";
 "Show all" = "전체 보기";
 "Show all %lld hidden branches" = "숨긴 브랜치 %1$lld개 모두 보이기";
@@ -1193,7 +1184,6 @@
 
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "칸";
-"Time" = "시간";
 
 /* 목적별 작업 화면과 커밋 준비 */
 "Workspace" = "작업 화면";
@@ -1202,20 +1192,9 @@
 "Branches" = "브랜치";
 "Actions" = "작업";
 "Options" = "옵션";
-"No remote configured" = "원격 저장소 없음";
-"Push to publish this branch" = "Push로 이 브랜치를 원격에 게시하세요";
-"Up to date" = "최신 상태";
-"↑%lld to push · ↓%lld to pull" = "Push할 커밋 ↑%lld · Pull할 커밋 ↓%lld";
 "Dismiss notification" = "알림 닫기";
 "Operation completed" = "작업을 완료했습니다";
-"Push this branch first to set up remote tracking." = "먼저 이 브랜치를 Push해 원격 추적을 설정하세요.";
-"Bring remote commits into this branch. Choose a pull strategy from the menu. (⇧⌘L)" = "원격 커밋을 현재 브랜치에 반영합니다. 메뉴에서 Pull 방식을 선택할 수 있습니다. (⇧⌘L)";
-"Fetches new commits and branches from all remotes. Your branches aren't changed. (⇧⌘F)" = "모든 원격 저장소의 새 커밋과 브랜치를 가져옵니다. 현재 브랜치는 바뀌지 않습니다. (⇧⌘F)";
-"Pushes this branch to the remote; sets up tracking on the first push. (⇧⌘P)" = "현재 브랜치를 원격에 올립니다. 첫 Push에서는 원격 추적도 설정합니다. (⇧⌘P)";
-"Branches, worktrees, pull requests, stash and undo" = "브랜치, 워크트리, PR, 스태시 및 되돌리기";
-"Show or hide the terminal. Shells keep running when hidden. (⌃`)" = "터미널을 표시하거나 숨깁니다. 숨겨도 셸은 계속 실행됩니다. (⌃`)";
 "Select a file to review" = "확인할 파일을 선택하세요";
-"Review changes, then stage the files or lines you want to commit." = "변경 내용을 확인하고 커밋에 넣을 파일이나 줄을 스테이지하세요.";
 "Resolve conflicts before committing." = "충돌을 해결한 뒤 커밋하세요.";
 "Stage the files you want to include." = "커밋에 넣을 파일을 스테이지하세요.";
 "Write a summary to enable commit." = "요약을 입력하면 커밋할 수 있습니다.";
@@ -1230,12 +1209,9 @@
 "Close diff (Esc)" = "diff 닫기 (Esc)";
 "File actions" = "파일 작업";
 "File display" = "파일 표시 방식";
-"Open Changes to stage files and create your first commit." = "변경 사항 화면에서 파일을 스테이지하고 첫 커밋을 만드세요.";
-"Show all graph lanes" = "그래프의 모든 연결선 보기";
 
 "Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
 "Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";
-"Create a branch with a commit before pushing." = "커밋이 있는 브랜치를 만든 뒤 Push하세요.";
 
 "Resize file and detail columns" = "파일 목록과 상세 영역 너비 조절";
 
@@ -1336,8 +1312,6 @@
 "The push URL points to a different repository than this pull request. Check the remote configuration; your draft has been kept." = "Push 주소가 이 PR과 다른 저장소를 가리킵니다. 원격 설정을 확인하세요. 작성한 초안은 보관했습니다.";
 "Credential account" = "인증 계정";
 
-"%lld review requests loaded" = "리뷰 요청 %lld개 불러옴";
-"%lld selected" = "%lld개 선택";
 "A clean working tree is required. A conflict stops the sequence; use Continue or Abort in the operation banner. Completed operations can be undone." = "작업 트리에 변경이 없어야 합니다. 충돌이 나면 멈추며 진행 중 작업 배너에서 계속하거나 중단할 수 있습니다. 완료한 작업은 실행 취소할 수 있습니다.";
 "A function name replaces the line range. Git detects function boundaries using its language rules. Only committed content is traced, up to 200 commits." = "함수 이름을 입력하면 줄 범위 대신 사용합니다. Git의 언어 규칙으로 함수 범위를 판단합니다. 커밋된 내용만 최대 200개 커밋까지 추적합니다.";
 "A local recovery copy is saved before discarding staged, unstaged and untracked changes." = "스테이지·작업 파일·새 파일 변경을 버리기 전에 로컬 복구본을 보관합니다.";
@@ -1352,7 +1326,6 @@
 "Bisect" = "문제 커밋 찾기";
 "Block view" = "블록 보기";
 "Branch, tag or commit" = "브랜치·태그·커밋";
-"CI not loaded" = "CI를 아직 불러오지 않음";
 "Change issue state?" = "이슈 상태를 변경할까요?";
 "Changes were not discarded because a safety copy could not be saved.\n\n" = "안전 사본을 보관하지 못해 변경 사항을 버리지 않았습니다.\n\n";
 "Check local objects" = "로컬 객체 검사";
@@ -1365,7 +1338,6 @@
 "Choose a committed file." = "커밋된 파일을 선택하세요.";
 "Choose two revisions to compare" = "비교할 두 시점을 선택하세요";
 "Cleanup rewrites history on the current branch. Squash requires adjacent commits; a second plan shows every affected commit before starting." = "정리는 현재 브랜치 이력을 다시 씁니다. 합치려면 서로 붙어 있는 커밋을 선택하세요. 시작 전 다음 계획에서 영향받는 모든 커밋을 확인합니다.";
-"Clear selection" = "선택 해제";
 "Close issue" = "이슈 닫기";
 "Close issue…" = "이슈 닫기…";
 "Close request" = "요청 닫기";
@@ -1420,7 +1392,6 @@
 "Initialize or update this submodule?" = "이 하위 저장소를 초기화하거나 갱신할까요?";
 "Install Node.js 22 or later, then locate it in Settings > Tools." = "Node.js 22 이상을 설치한 뒤 설정 > 도구에서 위치를 지정하세요.";
 "Issues and mentions" = "이슈와 멘션";
-"Issues and mentions…" = "이슈와 멘션…";
 "Keep the working tree clean and refresh the current test commit before marking it." = "작업 변경을 정리하고 현재 테스트 커밋을 새로고침한 뒤 결과를 표시하세요.";
 "Known bad commit" = "문제가 있는 커밋";
 "Known good commit" = "정상인 커밋";
@@ -1432,7 +1403,6 @@
 "Load more" = "더 불러오기";
 "Load more comments" = "댓글 더 불러오기";
 "Load server locks" = "서버 잠금 불러오기";
-"Local status updates automatically for open repositories. Hosting summaries use the selected account for each repository and refresh only when requested." = "열린 저장소의 로컬 상태를 자동으로 갱신합니다. 서버 요약은 각 저장소에서 선택한 계정으로 요청할 때만 갱신합니다.";
 "Lock file" = "파일 잠그기";
 "Manual result editing is active. Use block choices to rebuild from the selections below." = "최종 결과를 직접 편집 중입니다. 아래 선택으로 다시 만들려면 블록 선택 적용을 누르세요.";
 "Mark as read" = "읽음으로 표시";
@@ -1458,7 +1428,6 @@
 "Not initialized" = "초기화 전";
 "Only the selected repository and connected account are queried." = "선택한 저장소와 연결된 계정만 조회합니다.";
 "Only validated HTTPS or SSH submodule URLs are allowed. Review .gitmodules first." = "확인 가능한 HTTPS 또는 SSH 하위 저장소 주소만 지원합니다. 먼저 .gitmodules를 확인하세요.";
-"Open repository" = "저장소 열기";
 "Output truncated. Narrow the selection." = "출력이 일부 생략되었습니다. 범위를 줄여 보세요.";
 "Preparing repository context…" = "저장소 자료를 준비하는 중…";
 "Preview changes" = "변경 미리보기";
@@ -1475,7 +1444,6 @@
 "Recovery" = "복구";
 "Recovery branch name" = "복구 브랜치 이름";
 "Reflog recovery" = "Reflog에서 복구";
-"Refresh hosting summaries" = "서버 요약 새로 고침";
 "Refresh the conversation before resolving this thread." = "스레드를 해결하기 전에 대화를 새로 고쳐 주세요.";
 "Reload" = "다시 불러오기";
 "Reopen" = "다시 열기";
@@ -1485,7 +1453,6 @@
 "Repository assistant" = "저장소 AI 도우미";
 "Repository assistant…" = "저장소 AI 도우미…";
 "Repository tools…" = "저장소 도구…";
-"Request filter" = "요청 필터";
 "Request management" = "요청 관리";
 "Requires Node.js 22 or later and Git. No server, account changes or network listener is created." = "Node.js 22 이상과 Git이 필요합니다. 서버나 네트워크 수신기를 만들거나 계정을 변경하지 않습니다.";
 "Reset bisect" = "탐색 종료 후 복귀";
@@ -1499,7 +1466,6 @@
 "Revert selected commits" = "선택한 커밋 되돌리기";
 "Review cleanup plan" = "정리 계획 검토";
 "Review requested" = "리뷰 요청";
-"Review requests not loaded" = "리뷰 요청을 아직 불러오지 않음";
 "Review selected commits" = "선택한 커밋 검토";
 "Reviewer not found: %@" = "리뷰어를 찾을 수 없습니다: %@";
 "Reviewer not found: {0}" = "리뷰어를 찾을 수 없습니다: {0}";
@@ -1512,11 +1478,9 @@
 "Save reviewers" = "리뷰어 저장";
 "Saved working trees" = "보관한 작업 파일";
 "Search requests" = "요청 검색";
-"Search requests (Enter)" = "요청 검색 (Enter)";
 "Select an item to read its conversation." = "대화를 보려면 항목을 선택해 주세요.";
 "Select at least one commit." = "커밋을 하나 이상 선택하세요.";
 "Select commits on the current branch." = "현재 브랜치의 커밋을 선택하세요.";
-"Selected commits…" = "선택한 커밋 작업…";
 "Sending a question lets AI read tracked files, status and history in this repository. Each read is shown below. Files are never changed." = "질문을 보내면 AI가 이 저장소의 추적 파일·상태·이력을 읽을 수 있습니다. 읽은 내용은 아래에 표시하며 파일을 수정하지 않습니다.";
 "Server locks" = "서버 파일 잠금";
 "Show common ancestor" = "공통 조상 보기";
@@ -1557,7 +1521,6 @@
 "The server did not change the thread state. Refresh and try again." = "서버가 스레드 상태를 변경하지 않았습니다. 새로 고친 뒤 다시 시도해 주세요.";
 "The server did not merge this request." = "서버에서 요청을 병합하지 않았습니다.";
 "The server does not expose GitHub review threads. Use the browser for resolution." = "서버에서 GitHub 리뷰 스레드를 제공하지 않습니다. 브라우저에서 대화를 해결해 주세요.";
-"The server limited search results. Narrow the search to see more." = "서버가 검색 결과를 제한했습니다. 검색 범위를 좁혀 주세요.";
 "The server lock will be removed. No force unlock is used." = "서버의 파일 잠금을 해제합니다. 강제 해제는 사용하지 않습니다.";
 "The server returned an unexpected response." = "서버가 예상하지 못한 응답을 반환했습니다.";
 "The submodule remote differs from the reviewed URL. Review its origin configuration first." = "하위 저장소의 원격 주소가 검토한 주소와 다릅니다. 먼저 origin 설정을 확인하세요.";
@@ -1576,13 +1539,9 @@
 "Update submodule" = "하위 저장소 갱신";
 "Updates use the exact commit recorded in this repository. Nested submodules and remote branch tips are not updated automatically. Review the server URL before connecting." = "이 저장소에 기록된 정확한 커밋으로 갱신합니다. 중첩 하위 저장소나 원격 브랜치 최신 커밋은 자동 갱신하지 않습니다. 연결 전에 서버 주소를 확인하세요.";
 "Updating LFS patterns…" = "LFS 패턴 갱신 중…";
-"Use as left revision" = "왼쪽 시점으로 사용";
-"Use as right revision" = "오른쪽 시점으로 사용";
 "Use block choices" = "블록 선택 적용";
 "Use branches, tags or commit IDs." = "브랜치·태그·커밋 ID를 입력하세요.";
 "Use the cleanup plan for squash or drop." = "합치기와 빼기는 정리 계획을 사용하세요.";
-"Workspace overview" = "통합 작업함";
-"Workspace overview…" = "통합 작업함…";
 "closed" = "닫힘";
 "merged" = "병합됨";
 "none" = "없음";
@@ -1590,7 +1549,6 @@
 "{0} review requests loaded" = "리뷰 요청 {0}개 불러옴";
 "{0} selected" = "{0}개 선택";
 "{0} unresolved blocks in the result" = "최종 결과에 미해결 블록 {0}개";
-"%lld modified files" = "변경된 파일 %lld개";
 "%lld unresolved blocks in the result" = "최종 결과에 미해결 블록 %lld개";
 "Action" = "동작";
 "File" = "파일";
@@ -1607,7 +1565,6 @@
 "A tag and release name are required." = "태그와 릴리스 이름을 입력하세요.";
 "A title is required." = "제목을 입력하세요.";
 "Account and server" = "계정과 서버";
-"Account not checked" = "계정 확인 전";
 "Account scope uses the explicitly selected server and account. Repository Git identity stays unchanged." = "직접 선택한 서버와 계정의 작업만 조회합니다. 저장소의 Git 계정은 변경하지 않습니다.";
 "Add file" = "파일 추가";
 "Add issue" = "이슈 추가";
@@ -1620,24 +1577,18 @@
 "Back to conversation" = "대화로 돌아가기";
 "Binary file. Text preview is unavailable." = "바이너리 파일은 텍스트로 미리 볼 수 없습니다.";
 "Board column" = "보드 열";
-"Browse committed files at a fixed branch, tag or commit. Your working files stay untouched." = "특정 브랜치·태그·커밋에 저장된 파일을 탐색합니다. 작업 중인 파일은 유지됩니다.";
 "Build cleanup plan" = "커밋 정리 계획 만들기";
 "Change branch base" = "브랜치 기준 변경";
 "Change project status?" = "프로젝트 상태를 변경할까요?";
 "Check out detached" = "분리된 HEAD로 체크아웃";
 "Choose a commit" = "커밋 선택";
 "Choose a file" = "파일 선택";
-"Choose a job" = "작업 선택";
 "Choose an account and server" = "계정과 서버 선택";
-"Choose an account and server, then search. An empty search lists repositories you belong to." = "계정과 서버를 선택한 뒤 검색하세요. 검색어를 비우면 참여 중인 저장소를 표시합니다.";
 "Choose the oldest commit to include. Review actions and execution order before starting." = "포함할 가장 오래된 커밋을 선택하세요. 시작 전 각 작업과 실행 순서를 검토합니다.";
 "Clean up commit history" = "커밋 이력 정리";
-"Clear search" = "검색 지우기";
 "Clone…" = "복제…";
 "Closed" = "닫힘";
 "Code" = "코드";
-"Command guides and diagnostics are available in Tools in the left sidebar." = "명령 안내와 진단은 왼쪽 메뉴의 도구에서 사용할 수 있습니다.";
-"Commits" = "커밋";
 "Commits from the current branch will be replayed onto '{0}'. Commit or stash your changes first. Review the result before pushing." = "현재 브랜치의 커밋을 '{0}' 위에 다시 적용합니다. 변경 내용을 먼저 커밋하거나 스태시에 보관하세요. Push 전 결과를 검토하세요.";
 "Compare branch with base" = "기준과 현재 브랜치 비교";
 "Confirm" = "확인";
@@ -1661,12 +1612,10 @@
 "Enter a full issue URL." = "이슈의 전체 주소를 입력하세요.";
 "Enter a valid branch, tag or commit." = "올바른 브랜치·태그·커밋을 입력하세요.";
 "Enter an issue URL from the connected server." = "연결된 서버의 이슈 주소를 입력하세요.";
-"Expand a run above to load its jobs, then choose a job. Logs stay on this device." = "위에서 실행 항목을 펼쳐 작업을 불러온 뒤 선택하세요. 로그는 이 기기에서만 확인합니다.";
 "External download blocked; inspect the release page." = "외부 다운로드가 차단되었습니다. 릴리스 페이지에서 확인하세요.";
 "File content" = "파일 내용";
 "File list truncated. Narrow the repository or use another tool for the remaining files." = "파일 목록이 표시 한도에 도달했습니다. 나머지 파일은 다른 도구로 확인하세요.";
 "File name" = "파일 이름";
-"Find a workspace page" = "작업 화면 검색";
 "First commit to include" = "포함할 첫 커밋";
 "Gists" = "Gist";
 "GitHub inbox shows notifications. My work searches open requests and issues across accessible repositories." = "GitHub 수신함은 알림을 표시합니다. 내 작업은 접근할 수 있는 저장소의 열린 요청과 이슈를 검색합니다.";
@@ -1677,7 +1626,6 @@
 "GitLab personal snippets correspond to gists. Stars are not supported by its snippets API." = "GitLab 개인 스니펫은 Gist에 해당합니다. GitLab 스니펫 API는 즐겨찾기를 지원하지 않습니다.";
 "GitLab releases are published immediately; GitHub-style drafts and prereleases are unavailable." = "GitLab 릴리스는 즉시 게시됩니다. GitHub 방식의 초안과 사전 릴리스는 지원하지 않습니다.";
 "GitLab snippets do not support stars." = "GitLab 스니펫은 즐겨찾기를 지원하지 않습니다.";
-"Go to a page…" = "화면으로 이동…";
 "Groups" = "그룹";
 "Home" = "홈";
 "Inbox" = "수신함";
@@ -1688,14 +1636,10 @@
 "Invalid notification." = "올바르지 않은 알림입니다.";
 "Issue URL" = "이슈 주소";
 "Issue boards" = "이슈 보드";
-"Issue state" = "이슈 상태";
 "Issues" = "이슈";
-"Job" = "작업";
 "Job log" = "작업 로그";
-"Load log" = "로그 불러오기";
 "Load revision" = "리비전 불러오기";
 "Local" = "로컬";
-"Local folders stay separate from repositories on a server." = "이 컴퓨터의 폴더와 서버의 저장소를 구분해서 보여줍니다.";
 "Locate Git…" = "Git 위치 지정…";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "로그 미리보기는 2 MB까지 표시합니다. 전체 로그는 브라우저에서 확인하세요.";
 "Manage local and remote branches, tags and stashes in one place." = "로컬·원격 브랜치, 태그, 스태시를 한곳에서 관리합니다.";
@@ -1705,14 +1649,12 @@
 "Merge requests" = "머지 리퀘스트";
 "Merged into HEAD" = "현재 HEAD에 병합됨";
 "Move issue to the Open column?" = "이슈를 열림 열로 옮길까요?";
-"Move the current branch onto a new base, or review and reorder its commits." = "현재 브랜치의 기준을 바꾸거나 커밋 내용을 검토하고 순서를 정리합니다.";
 "My pull requests" = "내 풀 리퀘스트";
 "My work" = "내 작업";
 "New" = "새로 만들기";
 "New base revision" = "새 기준 리비전";
 "New issue" = "새 이슈";
 "New tag" = "새 태그";
-"Next page" = "다음 화면";
 "No connected account" = "연결된 계정 없음";
 "No content to show." = "표시할 내용이 없습니다.";
 "No editable single-select fields. Add a Status field in the project to move items here." = "수정 가능한 단일 선택 필드가 없습니다. 프로젝트에 상태 필드를 추가하면 여기서 항목을 옮길 수 있습니다.";
@@ -1734,12 +1676,9 @@
 "Open a repository to use this page." = "이 화면을 사용하려면 리포지터리를 여세요.";
 "Open a repository with a GitHub or GitLab remote to use this workspace." = "이 작업 화면을 사용하려면 GitHub 또는 GitLab 원격이 있는 저장소를 여세요.";
 "Open details in browser" = "브라우저에서 상세 보기";
-"Open local repositories" = "열린 로컬 저장소";
-"Open repositories" = "열린 저장소";
 "Organizations" = "조직";
 "Parent folder" = "상위 폴더";
 "Prerelease" = "사전 릴리스";
-"Previous page" = "이전 화면";
 "Private" = "비공개";
 "Project is unavailable or this account cannot access it." = "프로젝트가 없거나 이 계정에 접근 권한이 없습니다.";
 "Projects" = "프로젝트";
@@ -1754,7 +1693,6 @@
 "Rebase" = "리베이스";
 "Rebase current onto" = "이 브랜치 위로 리베이스";
 "Rebase the current branch?" = "현재 브랜치를 리베이스할까요?";
-"Recent local repositories" = "최근 로컬 저장소";
 "Redacted project item" = "접근이 제한된 프로젝트 항목";
 "Reference type" = "참조 종류";
 "Refresh the board before adding an issue." = "이슈를 추가하기 전에 보드를 새로고침하세요.";
@@ -1770,7 +1708,6 @@
 "Repository files" = "저장소 파일";
 "Resolve conflicts in Changes, then continue. Abort returns to the state before the operation." = "변경 내용에서 충돌을 해결한 뒤 계속하세요. 중단하면 작업 이전 상태로 돌아갑니다.";
 "Review and save" = "검토 후 저장";
-"Review changes" = "변경 검토";
 "Run diagnostics, explore code and find commands without opening Settings." = "설정 창을 열지 않고 진단을 실행하고 코드와 명령을 살펴보세요.";
 "Save gist changes?" = "Gist 변경을 저장할까요?";
 "Save release draft?" = "릴리스 초안을 저장할까요?";
@@ -1822,7 +1759,6 @@
 "This reopens the issue and removes its board column labels." = "이슈를 다시 열고 해당 이슈의 보드 열 라벨을 제거합니다.";
 "This text file exceeds the 2 MB preview limit." = "이 텍스트 파일은 미리 보기 한도인 2MB를 초과합니다.";
 "Tool locations" = "실행 파일 위치";
-"Tools and diagnosis" = "도구 및 진단";
 "Unstar" = "즐겨찾기 해제";
 "Upstream removed" = "원격 추적 브랜치가 삭제됨";
 "View commits" = "커밋 보기";
@@ -1831,11 +1767,8 @@
 "Working changes" = "작업 중인 변경";
 "Workspace account" = "작업 공간 계정";
 "Workspace navigation" = "작업 공간 탐색";
-"Workspace tools" = "작업 도구";
-"Your repositories and the next useful steps." = "저장소 현황을 확인하고 다음 작업을 시작하세요.";
 "downloads" = "다운로드";
 
-"Recovery, LFS, submodules and bisect…" = "복구·LFS·하위 저장소·Bisect…";
 
 "Force push (with lease)…" = "안전 조건으로 강제 Push…";
 
@@ -1873,13 +1806,8 @@
 "GitHub didn't allow account verification (403). Check the login's permissions, then retry connecting." = "GitHub가 계정 확인을 허용하지 않았습니다(403). 로그인 권한을 확인한 뒤 계정 연결을 다시 시도하세요.";
 "GitHub account verification failed (HTTP %@). Retry connecting." = "GitHub 계정 확인에 실패했습니다(HTTP %@). 계정 연결을 다시 시도하세요.";
 "Keychain error %@." = "키체인 오류 %@.";
-"Repository library" = "저장소 목록";
 "Open a repository to get started" = "저장소를 열어 시작하세요";
-"Choose repository shortcuts" = "저장소 바로가기 선택";
 "Repository shortcuts" = "저장소 바로가기";
-"Keep your favorite tools in the sidebar. All tools stay available in Repository." = "자주 쓰는 도구를 왼쪽 메뉴에 고정하세요. 모든 도구는 저장소 화면에서도 사용할 수 있습니다.";
-"Remove shortcut" = "바로가기 제거";
-"Pin to sidebar" = "왼쪽 메뉴에 고정";
 
 "Connect project access for this GitHub account to load projects." = "프로젝트를 불러오려면 이 GitHub 계정에 프로젝트 접근 권한을 연결하세요.";
 "Connect project access" = "프로젝트 권한 연결";
@@ -1972,36 +1900,13 @@
 "Workflows, pipelines and deployments" = "워크플로, 파이프라인과 배포를 확인하세요";
 "Agent sessions across your worktrees" = "워크트리별 에이전트 세션을 확인하세요";
 "Browse branches. Double-click a branch to check it out." = "브랜치를 탐색합니다. 브랜치를 더블 클릭하면 체크아웃합니다.";
-"Show in history" = "히스토리에서 보기";
-"Manage branches" = "브랜치 관리";
 "Choose a request to review its discussion and changed files." = "요청을 선택하면 대화와 변경된 파일을 확인할 수 있습니다.";
 "Pull requests are available in repositories with a GitHub or GitLab remote." = "GitHub 또는 GitLab 원격 저장소가 있는 저장소에서 풀 리퀘스트를 확인할 수 있습니다.";
 "Repository overview" = "저장소 개요";
-"Browse commits" = "커밋 둘러보기";
-"No tracking branch" = "추적 브랜치 없음";
-"Resolve conflicts before committing" = "커밋하기 전에 충돌을 해결하세요";
-"Working tree clean" = "작업 폴더가 깨끗합니다";
-"Changes ready for review" = "확인할 변경 사항이 있습니다";
-"Open Changes to resolve the conflicted files and continue your Git operation." = "변경 사항에서 충돌 파일을 해결하고 Git 작업을 이어가세요.";
-"Open Changes to review the operation and its next step." = "변경 사항에서 진행 중인 작업과 다음 단계를 확인하세요.";
-"Your files match the latest commit. Browse history or choose another branch to continue." = "파일이 최신 커밋과 일치합니다. 히스토리를 둘러보거나 다른 브랜치를 선택하세요.";
-"Review your files, stage the changes you want, then write a commit message." = "파일을 확인하고 원하는 변경을 스테이지한 다음 커밋 메시지를 작성하세요.";
-"Review working changes" = "작업 중인 변경 확인";
-"Included in your next commit" = "다음 커밋에 포함될 파일";
-"Outgoing commits" = "보낼 커밋";
-"Incoming commits" = "받을 커밋";
-"Ready to push" = "푸시할 수 있습니다";
-"Available to pull" = "가져올 수 있습니다";
-"Recent commits" = "최근 커밋";
-"View history" = "히스토리 보기";
-"Your first commit will appear here." = "첫 커밋이 여기에 표시됩니다.";
 "Pull ↓%lld" = "풀 ↓%lld";
 "Push ↑%lld" = "푸시 ↑%lld";
-"Show overview" = "개요 보기";
-"Show branches" = "브랜치 보기";
 "Show pull requests" = "풀 리퀘스트 보기";
 "Show CI/CD" = "CI/CD 보기";
-"Show agents" = "에이전트 보기";
 "Branch details" = "브랜치 상세";
 "Pull request" = "풀 리퀘스트";
 "Back (Esc)" = "돌아가기 (Esc)";
@@ -2020,15 +1925,9 @@
 "Show or hide the terminal" = "터미널 표시 또는 숨기기";
 "Go to…" = "빠른 이동…";
 "Quick navigation (⌘K)" = "빠른 이동 (⌘K)";
-"Go back" = "뒤로 이동";
-"Go forward" = "앞으로 이동";
 "Previous view (⌘[)" = "이전 화면 (⌘[)";
 "Next view (⌘])" = "다음 화면 (⌘])";
-"Toggle commit details" = "커밋 상세 표시 전환";
 "Details" = "상세";
-"Show or hide commit details (⌥⌘I)" = "커밋 상세 표시 또는 숨기기 (⌥⌘I)";
-"Shown" = "표시됨";
-"Hidden" = "숨김";
 "%lld commits" = "커밋 %lld개";
 "%lld+ commits" = "커밋 %lld개 이상";
 "Open changes" = "변경 사항 열기";
@@ -2038,9 +1937,6 @@
 "Try another name or clear the search to show all branches, tags and stashes." = "다른 이름을 검색하거나 검색을 지워 모든 브랜치, 태그, 스태시를 표시하세요.";
 "Loading requests…" = "요청 불러오는 중…";
 "Show the conversation and changed files" = "대화와 변경된 파일 보기";
-"Make this branch the current branch" = "이 브랜치를 현재 브랜치로 전환";
-"Remote branch" = "원격 브랜치";
-"Branch actions" = "브랜치 작업";
 "Loading commit…" = "커밋 불러오는 중…";
 "More commit actions" = "커밋 작업 더 보기";
 "No files changed" = "변경된 파일 없음";
@@ -2049,10 +1945,6 @@
 "Back" = "뒤로";
 "HEAD" = "HEAD";
 "Toggle sidebar" = "사이드바 접기·펼치기";
-"Show preview" = "미리보기 표시";
-"Close preview" = "미리보기 닫기";
-"Navigation preview" = "탐색 미리보기";
-"Open page" = "화면 열기";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "흐름";
@@ -2124,7 +2016,77 @@
 "A flow file already exists, so nothing will be written. Merge the proposal by hand." = "흐름 파일이 이미 있어 쓰지 않습니다. 제안을 직접 합치세요.";
 "Create flow file" = "흐름 파일 만들기";
 
-/* Organization profiles and pull request review */
+"An empty search lists repositories you belong to." = "검색어를 비워 두면 내가 속한 저장소를 모두 보여 줍니다.";
+"Connect a GitHub or GitLab account to search its repositories." = "GitHub 또는 GitLab 계정을 연결하면 그 계정의 저장소를 검색할 수 있습니다.";
+"Remote branches" = "원격 브랜치";
+"Section" = "구분";
+"Show compare" = "비교 보기";
+"Show flows" = "플로 보기";
+"Show home" = "홈 보기";
+"(current)" = "(현재)";
+"Compare with the current branch" = "현재 브랜치와 비교";
+"Filter branches and tags" = "브랜치·태그 검색";
+"Comparing…" = "비교하는 중…";
+"Use branches, tags or commit IDs, or pick a branch on the left." = "브랜치·태그·커밋 ID를 입력하거나 왼쪽 목록에서 브랜치를 고르세요.";
+"Clear search" = "검색어 지우기";
+"Filter" = "필터";
+"Search pull requests" = "풀 리퀘스트 검색";
+"Search merge requests" = "머지 리퀘스트 검색";
+"No pull requests match this filter." = "이 조건에 맞는 풀 리퀘스트가 없습니다.";
+"No merge requests match this filter." = "이 조건에 맞는 머지 리퀘스트가 없습니다.";
+"No issues match this filter." = "이 조건에 맞는 이슈가 없습니다.";
+"Open in Pull requests" = "풀 리퀘스트 페이지에서 열기";
+"Open in Merge requests" = "머지 리퀘스트 페이지에서 열기";
+"Open in Issues" = "이슈 페이지에서 열기";
+"Merge request" = "머지 리퀘스트";
+"Issues %lld" = "이슈 %1$lld";
+"Issue #%lld" = "이슈 #%1$lld";
+"Edit issue #%lld" = "이슈 #%1$lld 편집";
+"State" = "상태";
+"Refresh conversation" = "대화 새로 고침";
+"Write a comment (Markdown)" = "댓글 쓰기 (마크다운)";
+"Description (Markdown)" = "설명 (마크다운)";
+"Select an issue" = "이슈를 선택하세요";
+"Search the list, then read the conversation and reply here." = "목록에서 찾은 뒤 여기에서 대화를 읽고 답하세요.";
+"Toolbar" = "툴바";
+"Toolbar buttons" = "툴바 버튼";
+"Icons only" = "아이콘만";
+"Icons and text" = "아이콘과 텍스트";
+"With text, each button's name sits to the right of its icon." = "텍스트를 켜면 각 버튼 이름이 아이콘 오른쪽에 표시됩니다.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "계정을 여러 개 연결하면, 저장소에서 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고릅니다.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "GitHub 또는 GitLab 원격이 있는 저장소를 열면 그 저장소에서 쓸 계정을 고를 수 있습니다.";
+"Filtered: %@" = "필터: %1$@";
+"Clear filter" = "필터 지우기";
+"Close search (Esc)" = "검색 닫기 (Esc)";
+"Close search" = "검색 닫기";
+"Running in other apps" = "다른 앱에서 실행 중";
+"Unknown app" = "알 수 없는 앱";
+"Click to bring %@ to the front" = "누르면 %1$@ 앱이 앞으로 옵니다";
+"Bring %@ to the front" = "%1$@ 앞으로 가져오기";
+"Copy folder path" = "폴더 경로 복사";
+"Couldn't open %@: it isn't inside a Git repository." = "%1$@을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다.";
+"Back to the repository screen (⌘[)" = "저장소 화면으로 돌아가기 (⌘[)";
+"Back to the repository screen" = "저장소 화면으로 돌아가기";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "끌거나 그래프 위에서 옆으로 밀면 그래프가 가로로 움직입니다";
+"Runs" = "실행 목록";
+"Jobs" = "작업";
+"Choose a job to read its log here." = "작업을 고르면 여기에서 로그를 볼 수 있습니다.";
+"Reload log" = "로그 다시 불러오기";
+"Close log" = "로그 닫기";
+"Select a run" = "실행을 선택하세요";
+"Choose a run to see its jobs and read their logs." = "실행을 고르면 작업과 로그를 볼 수 있습니다.";
+"Pipeline #%lld" = "파이프라인 #%1$lld";
+"Run #%lld" = "실행 #%1$lld";
+"%lld jobs waiting to be run manually" = "수동 실행을 기다리는 작업 %1$lld개";
+"Reset to default layout" = "기본 레이아웃으로 되돌리기";
+"Drag to resize the column" = "끌어서 칸 너비 조정";
+"SHA" = "SHA";
+"Date" = "날짜";
+"Open in Releases" = "릴리스 페이지에서 열기";
+"CLI appearance" = "CLI 표시";
+"Show the small eye logo" = "작은 눈 로고 표시";
+"Show Gitrochi's small eye logo beside command titles. You can also use gitch logo off or gitch logo on in the terminal." = "명령 제목 옆에 Gitrochi의 작은 눈 로고를 표시합니다. 터미널에서도 gitch logo off 또는 gitch logo on으로 바꿀 수 있습니다.";
+"Couldn't read the CLI appearance setting. Update Gitrochi and try again." = "CLI 표시 설정을 읽지 못했습니다. Gitrochi를 업데이트한 뒤 다시 시도하세요.";
 "Organization view" = "조직 보기";
 "Open profile" = "프로필 보기";
 "No members visible to this account." = "이 계정으로 볼 수 있는 구성원이 없습니다.";
@@ -2156,4 +2118,4 @@
 "Commit statuses could not be loaded." = "커밋 상태를 불러올 수 없습니다.";
 "Pipeline jobs could not be loaded." = "파이프라인 작업을 불러올 수 없습니다.";
 "Conversation" = "대화";
-"Pipeline #%lld" = "파이프라인 #%1$lld";
+"Load log" = "로그 불러오기";

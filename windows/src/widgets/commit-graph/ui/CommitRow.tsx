@@ -8,13 +8,14 @@ import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
-import { AVATAR, type GraphColumns, GRAPH_INK, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
+import { AVATAR, type GraphColumns, HEADER_TOOLS_W, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
 
 export const CommitRow = memo(function CommitRow({
   store,
   entry,
   top,
   gw,
+  laneOffset,
   refs,
   selected,
   isHead,
@@ -27,7 +28,10 @@ export const CommitRow = memo(function CommitRow({
   store: RepoStore;
   entry: GraphEntry;
   top: number;
+  /** The width every lane needs; the graph column shows the part from laneOffset on */
   gw: number;
+  /** How far the lanes are scrolled sideways (shared by every row) */
+  laneOffset: number;
   /** 화면 너비에 맞춘 칸(좁으면 일부 칸을 숨기고 줄인다) */
   cols: GraphColumns;
   refs: RefLabel[] | undefined;
@@ -50,7 +54,7 @@ export const CommitRow = memo(function CommitRow({
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
       style={{ top, gap: 0 }}
-      onMouseDown={(event) => { if (event.button === 2 && store.historyTools.selected.includes(c.id)) return; if (wip) store.select(rowSelection(c)); else store.selectGraphCommit(c.id, event.shiftKey, event.ctrlKey || event.metaKey); }}
+      onMouseDown={() => store.select(rowSelection(c))}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
       draggable={!wip}
@@ -96,50 +100,75 @@ export const CommitRow = memo(function CommitRow({
                   +{groups.length - 1}
                 </span>
               )}
-              <span className="ref-line" style={{ background: tint, height: GRAPH_INK.refStroke, opacity: GRAPH_INK.refOpacity }} />
+              <span className="ref-line" style={{ background: tint }} />
             </>
           )}
         </div>
       )}
       {cols.graph > 0 && (
-        <div className={cols.graph < gw ? "graph-clipped" : undefined} style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}>
+        <div
+          className={`graph-cell${laneOffset > 0 ? " fade-left" : ""}${laneOffset < gw - cols.graph ? " fade-right" : ""}`}
+          style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
+        >
           {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
-          <span className="lane-band" style={{ left: LEFT_PAD + LANE_W * (entry.row.column + 0.5), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
-          <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
+          <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
+          {/* the lanes move together with the header's scrollbar; the line from the labels follows the node */}
+          <span className="lane-shift" style={{ marginLeft: -laneOffset }}>
+            <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
+          </span>
         </div>
       )}
-      {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면. */}
-      <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
-        <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
-        {wip ? (
-          <>
-            <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
-            <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
-              {t("{0} files", wipCount)}
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="msg-subject" style={{ color: isMerge(c) ? "var(--text-2)" : undefined }}>
-              {c.subject}
-            </span>
-            {ci && (
-              <span
-                className="ci-badge"
-                data-tip={t("CI: {0} · {1}#{2} — click to open in the browser", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => store.openUrl(ci.url)}
-              >
-                <CIStatusIcon status={ci.status} size={12} />
+      {/* the message and the optional columns after it; selection and search hits tint all of it to the row's end.
+          The right-hand columns line up with their labels, which sit left of the header's menus. */}
+      <div className="row-tail" style={{ paddingRight: 12 + (cols.author + cols.time + cols.sha > 0 ? HEADER_TOOLS_W : 0) }}>
+        {/* the message: lane-coloured bar, subject, first body line dimmed; author, time and SHA in the tip or their columns */}
+        <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
+          <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
+          {wip ? (
+            <>
+              <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
+              <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
+                {t("{0} files", wipCount)}
               </span>
-            )}
-            {c.body && (
-              <span className="msg-body">
-                <span>{c.body}</span>
+            </>
+          ) : (
+            <>
+              <span className="msg-subject" style={{ color: isMerge(c) ? "var(--text-2)" : undefined }}>
+                {c.subject}
               </span>
-            )}
-            {cols.time && <span className="msg-time">{shortDate(c.date)}</span>}
-          </>
+              {ci && (
+                <span
+                  className="ci-badge"
+                  data-tip={t("CI: {0} · {1}#{2} — click to open in Actions", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={() => store.openCI(ci)}
+                >
+                  <CIStatusIcon status={ci.status} size={12} />
+                </span>
+              )}
+              {c.body && (
+                <span className="msg-body">
+                  <span>{c.body}</span>
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        {/* the optional columns at the right end, under their header labels */}
+        {cols.author > 0 && (
+          <span className="col-opt col-author" style={{ width: cols.author }} data-tip={wip ? undefined : `${c.author} <${c.email}>`}>
+            {wip ? "" : c.author}
+          </span>
+        )}
+        {cols.time > 0 && (
+          <span className="col-opt col-time" style={{ width: cols.time }} data-tip={wip ? undefined : longDate(c.date)}>
+            {wip ? "" : shortDate(c.date)}
+          </span>
+        )}
+        {cols.sha > 0 && (
+          <span className="col-opt col-sha mono" style={{ width: cols.sha }}>
+            {wip ? "" : short(c.id)}
+          </span>
         )}
       </div>
     </div>
@@ -286,7 +315,7 @@ const GraphCell = memo(function GraphCell({
   return (
     <span style={{ position: "relative", width, height: h, flex: "none", display: "block" }}>
       <svg width={width} height={h} style={{ display: "block", overflow: "hidden" }}>
-        {hasRefs && <line x1={0} y1={cy} x2={cx} y2={cy} stroke={color} strokeWidth={GRAPH_INK.refStroke} strokeOpacity={GRAPH_INK.refOpacity} />}
+        {hasRefs && <line x1={0} y1={cy} x2={cx} y2={cy} stroke={color} strokeWidth={1.5} />}
         {row.segments.map((s, i) => {
           const ax = x(s.x1),
             ay = h * s.y1,
@@ -294,10 +323,10 @@ const GraphCell = memo(function GraphCell({
             by = h * s.y2;
           const mid = (ay + by) / 2;
           const d = s.x1 === s.x2 ? `M${ax},${ay}L${bx},${by}` : `M${ax},${ay}C${ax},${mid} ${bx},${mid} ${bx},${by}`;
-          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={GRAPH_INK.laneStroke} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
+          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
         })}
         {isWIP ? (
-          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={GRAPH_INK.nodeStroke} strokeDasharray="2.5 2" />
+          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={2} strokeDasharray="2.5 2" />
         ) : isMerge ? (
           <>
             <circle cx={cx} cy={cy} r={5.5} fill="var(--surface)" />
@@ -306,7 +335,7 @@ const GraphCell = memo(function GraphCell({
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={GRAPH_INK.nodeStroke} />}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={1.5} />}
       </svg>
       {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
     </span>

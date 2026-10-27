@@ -137,8 +137,8 @@ struct WorkspaceCommandPalette: View {
 
     private var commands: [WorkspaceCommand] {
         let go = String(localized: "Go to")
-        let pages: [WorkspaceDestination] = [.home, .repositories, .repository, .changes, .commits, .branches, .compare, .rebase, .code, .inbox, .myWork, .pullRequests, .issues, .actions, .releases, .projects, .organizations, .gists, .assistant, .agents, .flows, .worktrees, .operations]
-        let shortcuts: [WorkspaceDestination: String] = [.home: "0", .changes: "1", .commits: "2", .branches: "3", .pullRequests: "4", .actions: "5", .agents: "6"]
+        let pages = WorkspaceDestination.allCases
+        let shortcuts: [WorkspaceDestination: String] = [.home: "0", .repository: "2", .compare: "3", .pullRequests: "4", .actions: "5", .flows: "6"]
         var result = pages.map { page in
             WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),
                              subtitle: page == .repository ? store.name : "", icon: page.symbol,
@@ -154,7 +154,7 @@ struct WorkspaceCommandPalette: View {
                                 : branch.isCurrent ? String(localized: "Current branch") : String(localized: "View branch in history"),
                              icon: branch.isRemote ? "cloud" : "arrow.triangle.branch", group: String(localized: "Branches"),
                              enabled: store.url != nil && (available || store.commitIndex[branch.target] != nil)) {
-                store.navigate(.commits)
+                store.navigate(.repository, prepare: false)
                 store.selectedBranchID = branch.id
                 store.closeFileInspect(); store.closeDiff(); store.reveal(branch.target)
             }

@@ -483,7 +483,9 @@ export type SheetKind =
   /** 이 브랜치에서 바뀐 의존(gitch graph diff)의 기준 고르기 */
   | { kind: "graphDiff" }
   /** 의존 규칙 검사 결과(gitch graph check) */
-  | { kind: "graphCheck" };
+  | { kind: "graphCheck" }
+  /** 새 이슈 또는 이슈 고치기(number 가 있으면) */
+  | { kind: "issueEditor"; number?: number; title: string; body: string };
 
 export interface ConfirmRequest {
   title: string;

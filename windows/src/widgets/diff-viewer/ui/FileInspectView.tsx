@@ -16,7 +16,6 @@ export function FileInspectView({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(avatars);
   const f = store.fileInspect!;
-  const backLabel = store.repositorySection === "changes" ? t("Changes") : t("Graph");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.querySelector(".modal-backdrop") && !(e.target as HTMLElement)?.closest?.(".xterm")) store.closeFileInspect();
@@ -29,8 +28,8 @@ export function FileInspectView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ minHeight: 0 }}>
       <div className="diff-head">
-        <Button size="small" onClick={() => store.closeFileInspect()} tip={`${backLabel} (Esc)`}>
-          <ChevronLeft size={14} /> {" "}{backLabel}</Button>
+        <Button size="small" onClick={() => store.closeFileInspect()} tip={t("Back to graph (Esc)")}>
+          <ChevronLeft size={14} /> {" "}{t("Graph")}</Button>
         <span className="muted" style={{ display: "inline-flex" }}>
           {f.mode === "history" ? <History size={16} /> : <ScanText size={16} />}
         </span>

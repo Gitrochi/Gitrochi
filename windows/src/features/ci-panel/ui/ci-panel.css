@@ -1,0 +1,151 @@
+/* features/ci-panel — the Actions page: runs on the left, the picked run on the right (macOS: CIPanel.swift, CIRunDetailView.swift) */
+
+.ci-run,
+.ci-job {
+  cursor: default;
+}
+
+.ci-run.selected,
+.ci-job.selected {
+  background: var(--select);
+}
+
+.ci-manual {
+  gap: 2px;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 11px;
+  flex: none;
+}
+
+.ci-run-detail {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.ci-run-head {
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.ci-run-summary {
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.ci-run-summary h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ci-run-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 10px;
+  margin: 0;
+}
+
+.ci-run-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ci-run-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ci-run-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ci-run-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.ci-run-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 280px;
+  min-width: 0;
+  overflow: auto;
+  padding: 8px;
+  border-right: 1px solid var(--border);
+  background: var(--sidebar);
+}
+
+.ci-jobs-head {
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.ci-stage {
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ci-run-log {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface);
+}
+
+.ci-log-head {
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+  min-width: 0;
+}
+
+.ci-log-message {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 11.5px;
+}
+
+.ci-log-text {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 6px 10px;
+  overflow: auto;
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ci-log-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 850px) {
+  .ci-run-body {
+    flex-direction: column;
+  }
+
+  .ci-run-jobs {
+    flex: 0 0 34%;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}

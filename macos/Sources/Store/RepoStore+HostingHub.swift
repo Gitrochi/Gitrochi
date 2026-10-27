@@ -21,14 +21,19 @@ extension RepoStore {
         if hostingHub.page == 0 && !hostingHub.loading { await loadHostingHub() }
     }
     func selectHubAccount(_ id: String) async { guard !hostingHub.busy else { return }; hostingHub.selectedAccountID = id; await activateHostingHub(hostingHub.section) }
-    private func hubAccess() throws -> HubAccess {
+    /// The hub account whose token is still being read or waits for the user to allow keychain access.
+    var pendingHubCredentialAccount: HostAccount? { hubAccount.flatMap { AccountStore.shared.awaitsAccess($0) ? $0 : nil } }
+    private func hubAccess() async throws -> HubAccess {
         guard let account = hubAccount else { throw HostingHubAPI.fail(String(localized: "Connect a GitHub or GitLab account to use this workspace.")) }
         let actual = target, candidates = actual.map { AccountStore.shared.candidates(for: $0) } ?? []
         if hostingHub.section == .releases && (actual == nil || !candidates.contains(where: { $0.id == account.id })) { throw HostingHubAPI.fail(String(localized: "Open a repository on the selected account's server to use releases and projects.")) }
         let selectedTarget: RepoTarget
         let matchingTarget = actual.flatMap { value in candidates.contains(where: { $0.id == account.id }) ? value : nil }
         selectedTarget = HostingHubAPI.projectTarget(matchingTarget, provider: account.provider, host: account.host, username: account.username, personal: hostingHub.section == .projects && account.provider == .github && hostingHub.projectScope == "personal")
-        guard let token = AccountStore.shared.token(for: account) else { throw HostingHubAPI.fail(String(localized: "The selected account has no token. Reconnect it from Settings → Accounts.")) }
+        guard let token = await AccountStore.shared.loadToken(for: account) else {
+            if AccountStore.shared.credentialState(for: account) == .authorizationRequired { throw HostingHubAPI.fail(String(localized: "Allow access to the saved account to use repository services.")) }
+            throw HostingHubAPI.fail(String(localized: "The selected account has no token. Reconnect it from Settings → Accounts."))
+        }
         let generation = hostingHub.generation, stamp = hubContextStamp
         return HubAccess(target: selectedTarget, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { [weak self] in guard let self else { return false }; return self.hostingHub.generation == generation && self.hubContextStamp == stamp })
     }
@@ -39,7 +44,7 @@ extension RepoStore {
         let current = { self.hostingHub.generation == generation && self.hostingHub.listID == loadID }
         defer { if current() { hostingHub.loading = false } }
         var access: HubAccess?
-        do { let c = try hubAccess(); access = c; let result = try await HostingHubAPI.page(c, section: hostingHub.section, page: append ? hostingHub.page + 1 : 1, cursor: append ? hostingHub.cursor : nil); guard current(), c.isCurrent?() != false else { return }; hostingHub.items = append ? hostingHub.items + result.items.filter { item in !hostingHub.items.contains(where: { $0.id == item.id }) } : result.items; hostingHub.page = append ? hostingHub.page + 1 : 1; hostingHub.more = result.more; hostingHub.cursor = result.cursor; hostingHub.notice = result.notice; hostingHub.uncertainWrite = false }
+        do { let c = try await hubAccess(); access = c; let result = try await HostingHubAPI.page(c, section: hostingHub.section, page: append ? hostingHub.page + 1 : 1, cursor: append ? hostingHub.cursor : nil); guard current(), c.isCurrent?() != false else { return }; hostingHub.items = append ? hostingHub.items + result.items.filter { item in !hostingHub.items.contains(where: { $0.id == item.id }) } : result.items; hostingHub.page = append ? hostingHub.page + 1 : 1; hostingHub.more = result.more; hostingHub.cursor = result.cursor; hostingHub.notice = result.notice; hostingHub.uncertainWrite = false }
         catch { if current() { hostingHub.error = HostingHubAPI.error(error, token: access?.token); hostingHub.projectPermissionRequired = error is HubProjectPermissionError } }
     }
     func selectHostingHubItem(_ item: HubItem, append: Bool = false, tab: String? = nil) async {
@@ -49,7 +54,7 @@ extension RepoStore {
         let current = { self.hostingHub.generation == generation && self.hostingHub.detailID == loadID }
         defer { if current() { hostingHub.detailLoading = false } }
         var access: HubAccess?
-        do { let c = try hubAccess(); access = c; var result = try await HostingHubAPI.detail(c, section: hostingHub.section, item: item, page: append ? hostingHub.detailPage + 1 : 1, cursor: append ? hostingHub.detailCursor : nil, tab: hostingHub.tab); guard current(), c.isCurrent?() != false else { return }; if append, let old = hostingHub.detail { result.rows = old.rows + result.rows.filter { row in !old.rows.contains(where: { $0.id == row.id }) }; result.repositories = old.repositories + result.repositories.filter { row in !old.repositories.contains(where: { $0.id == row.id }) }; result.members = old.members + result.members.filter { row in !old.members.contains(where: { $0.id == row.id }) } }; hostingHub.detail = result; hostingHub.detailPage = append ? hostingHub.detailPage + 1 : 1; hostingHub.detailCursor = result.cursor }
+        do { let c = try await hubAccess(); access = c; var result = try await HostingHubAPI.detail(c, section: hostingHub.section, item: item, page: append ? hostingHub.detailPage + 1 : 1, cursor: append ? hostingHub.detailCursor : nil, tab: hostingHub.tab); guard current(), c.isCurrent?() != false else { return }; if append, let old = hostingHub.detail { result.rows = old.rows + result.rows.filter { row in !old.rows.contains(where: { $0.id == row.id }) }; result.repositories = old.repositories + result.repositories.filter { row in !old.repositories.contains(where: { $0.id == row.id }) }; result.members = old.members + result.members.filter { row in !old.members.contains(where: { $0.id == row.id }) } }; hostingHub.detail = result; hostingHub.detailPage = append ? hostingHub.detailPage + 1 : 1; hostingHub.detailCursor = result.cursor }
         catch { if current() { hostingHub.error = HostingHubAPI.error(error, token: access?.token); hostingHub.projectPermissionRequired = error is HubProjectPermissionError } }
     }
     @discardableResult
@@ -58,7 +63,7 @@ extension RepoStore {
         let generation = hostingHub.generation, item = hostingHub.detail?.item
         hostingHub.busy = true; hostingHub.error = nil; hostingHub.projectPermissionRequired = false; var access: HubAccess?
         let current = { self.hostingHub.generation == generation && self.hubActionStamp == expected }
-        do { let c = try hubAccess(); access = c; try await action(c); guard current() else { return false }; hostingHub.busy = false; if let item, !refreshList { await selectHostingHubItem(item) } else { await loadHostingHub() }; return true }
+        do { let c = try await hubAccess(); access = c; try await action(c); guard current() else { return false }; hostingHub.busy = false; if let item, !refreshList { await selectHostingHubItem(item) } else { await loadHostingHub() }; return true }
         catch { if current() { hostingHub.busy = false; hostingHub.error = HostingHubAPI.error(error, token: access?.token); hostingHub.projectPermissionRequired = error is HubProjectPermissionError; hostingHub.uncertainWrite = error is HubUncertainWriteError }; return false }
     }
 }

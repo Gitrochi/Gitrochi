@@ -14,12 +14,11 @@ export function CompareRevisionsSheet({ store, close, embedded = false }: { stor
   const change = () => store.changed();
   const content = <div className="history-tools col">
       <div className="row">
-        <input aria-label={t("From revision")} className="input grow" placeholder={t("Branch, tag or commit")} value={s.left} onChange={(e) => { s.left = e.target.value; change(); }} list="revision-options" />
+        <RevisionPicker title={t("From revision")} value={s.left} store={store} onChange={(value) => { s.left = value; change(); }} />
         <Button tip={t("Swap revisions")} onClick={() => { [s.left, s.right] = [s.right, s.left]; change(); }}><ArrowLeftRight size={15} /></Button>
-        <input aria-label={t("To revision")} className="input grow" placeholder={t("Branch, tag or commit")} value={s.right} onChange={(e) => { s.right = e.target.value; change(); }} list="revision-options" />
+        <RevisionPicker title={t("To revision")} value={s.right} store={store} onChange={(value) => { s.right = value; change(); }} />
         <Button kind="primary" disabled={s.comparisonLoading} onClick={() => void store.loadRevisionComparison()}>{s.comparisonLoading ? <Spinner size={14} /> : t("Compare")}</Button>
       </div>
-      <datalist id="revision-options">{[...store.localBranches.map((b) => b.name), ...store.remoteBranches.map((b) => b.name), ...store.tags.map((tag) => tag.name)].map((name) => <option key={name} value={name} />)}</datalist>
       <label className="row hint"><input type="checkbox" checked={s.useMergeBase} onChange={(e) => { s.useMergeBase = e.target.checked; change(); }} />{t("Compare from the common ancestor (changes introduced by the right side)")}</label>
       <span className="hint">{t("Uncommitted changes are excluded. Compare fixes both revisions to immutable commits.")}</span>
       {s.comparisonError && <div role="alert" className="error-text">{s.comparisonError}</div>}
@@ -33,6 +32,22 @@ export function CompareRevisionsSheet({ store, close, embedded = false }: { stor
       {!result && !s.comparisonLoading && !s.comparisonError && <Empty title={t("Choose two revisions to compare")} detail={t("Use branches, tags or commit IDs.")} />}
     </div>;
   return embedded ? content : <Modal title={t("Compare revisions")} width={1100} onClose={() => closeTools(store, close)} footer={<Button onClick={() => closeTools(store, close)}>{t("Close")}</Button>}>{content}</Modal>;
+}
+/** A revision field: type a branch, tag or commit, or pick one from the list next to it (macOS: RevisionPicker) */
+export function RevisionPicker({ title, value, store, onChange }: { title: string; value: string; store: RepoStore; onChange: (value: string) => void }) {
+  const head = store.headBranch;
+  return <div className="row revision-picker">
+    <input aria-label={title} className="input grow" placeholder={t("Branch, tag or commit")} value={value} onChange={(e) => onChange(e.target.value)} />
+    {/* the list only fills the field, so it always shows its prompt again */}
+    <select className="select revision-picker-list" aria-label={`${t("Choose a branch or tag")}: ${title}`} value="" onChange={(e) => { if (e.target.value) onChange(e.target.value); }}>
+      <option value="">{t("Choose a branch or tag")}</option>
+      {head && <option value={head}>{t("{0} (current)", head)}</option>}
+      <option value="HEAD">HEAD</option>
+      {store.localBranches.length > 0 && <optgroup label={t("Local branches")}>{store.localBranches.map((b) => <option key={b.name} value={b.name}>{b.name}</option>)}</optgroup>}
+      {store.remoteBranches.length > 0 && <optgroup label={t("Remote branches")}>{store.remoteBranches.map((b) => <option key={b.name} value={b.name}>{b.name}</option>)}</optgroup>}
+      {store.tags.length > 0 && <optgroup label={t("Tags")}>{store.tags.map((tag) => <option key={tag.name} value={tag.name}>{tag.name}</option>)}</optgroup>}
+    </select>
+  </div>;
 }
 const actions: Array<[BatchCommitAction, string]> = [["cherry-pick", "Cherry-pick selected commits"], ["revert", "Revert selected commits"], ["squash", "Squash selected commits"], ["drop", "Drop selected commits"]];
 export function BatchCommitsSheet({ store, close }: { store: RepoStore; close: () => void }) {

@@ -15,11 +15,18 @@ export abstract class RepoSearch extends RepoSelection {
   }
 
   requestSearchFocus() {
-    this.navigate("commits");
+    this.navigate("repository");
     this.closeFileInspect();
     this.closeDiff();
+    this.showSearchBar = true;
     this.searchFocusRequest++;
     this.emit();
+  }
+
+  /** Esc or the bar's close button: the search ends and the bar goes away */
+  closeSearchBar() {
+    this.showSearchBar = false;
+    this.clearSearch();
   }
 
   setSearch(text: string, scope?: SearchScope) {
@@ -90,7 +97,7 @@ export abstract class RepoSearch extends RepoSelection {
     for (const id of found) if (!this.searchMatchSet.has(id)) unloaded++;
     this.searchUnloaded = unloaded;
     // 지금 고른 커밋이 결과가 아니면 첫 결과로 이동
-    if (jump && this.destination === "repository" && this.repositorySection === "commits" && ordered.length && !this.searchMatchSet.has(this.selectedID ?? "")) {
+    if (jump && this.destination === "repository" && ordered.length && !this.searchMatchSet.has(this.selectedID ?? "")) {
       this.select({ kind: "commit", sha: ordered[0] });
       this.scrollTarget = ordered[0];
     }

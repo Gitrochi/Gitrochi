@@ -59,13 +59,15 @@ export async function issuePage(
       more: n * 30 < Math.min(result.total_count, 1000),
     };
   }
+  // newest activity first; GitHub sorts with sort/direction, GitLab with order_by/sort (sort only takes asc or desc)
   const q = new URLSearchParams({
     state:
       c.target.provider === "gitlab" && scope === "open" ? "opened" : scope,
     per_page: "30",
     page: String(n),
-    sort: "updated",
-    order_by: "updated_at",
+    ...(c.target.provider === "gitlab"
+      ? { order_by: "updated_at", sort: "desc" }
+      : { sort: "updated", direction: "desc" }),
   });
   if (search.trim()) q.set("search", search.trim());
   const items = await send<IssueRecord[]>(

@@ -17,7 +17,8 @@ class AccountStore extends Observable {
 
   private preferred: Record<string, string> = {};
   private aliases: Record<string, string> = {};
-  private secrets = new Map<string, string | null>();
+  private secrets = new Map<string, string>();
+  private pendingSecrets = new Map<string, Promise<string | null>>();
 
   async load() {
     this.accounts = settings.get<HostAccount[]>("accounts", []);
@@ -91,11 +92,21 @@ class AccountStore extends Observable {
     return null;
   }
 
-  private async secret(name: string) {
-    if (this.secrets.has(name)) return this.secrets.get(name) ?? null;
-    const v = await ipc.secretGet(name).catch(() => null);
-    this.secrets.set(name, v);
-    return v;
+  /** A value is kept once read; a missing or failed read is tried again on the next access, and concurrent reads share one call (macOS: CredentialCache). */
+  private secret(name: string): Promise<string | null> {
+    const known = this.secrets.get(name);
+    if (known) return Promise.resolve(known);
+    const pending = this.pendingSecrets.get(name);
+    if (pending) return pending;
+    const read: Promise<string | null> = ipc.secretGet(name).catch(() => null).then((v) => {
+      // A connect or disconnect in the meantime wins over this late read.
+      if (this.pendingSecrets.get(name) !== read) return v;
+      this.pendingSecrets.delete(name);
+      if (v) this.secrets.set(name, v);
+      return v;
+    });
+    this.pendingSecrets.set(name, read);
+    return read;
   }
 
   token(a: HostAccount) {
@@ -146,6 +157,7 @@ class AccountStore extends Observable {
     };
     try { await ipc.secretSet("acct:" + acc.id, text); }
     catch { throw new AccountConnectionFailure("credential-save"); }
+    this.pendingSecrets.delete("acct:" + acc.id);
     this.secrets.set("acct:" + acc.id, text);
     this.accounts = [...this.accounts.filter((a) => a.id !== acc.id), acc];
     this.save();
@@ -202,6 +214,7 @@ class AccountStore extends Observable {
 
   async disconnect(a: HostAccount) {
     await ipc.secretSet("acct:" + a.id, null).catch(() => {});
+    this.pendingSecrets.delete("acct:" + a.id);
     this.secrets.delete("acct:" + a.id);
     this.accounts = this.accounts.filter((x) => x.id !== a.id);
     this.preferred = Object.fromEntries(Object.entries(this.preferred).filter(([, v]) => v !== a.id));

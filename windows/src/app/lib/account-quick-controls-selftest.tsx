@@ -5,6 +5,7 @@ import { type HostAccount } from "@/entities/git";
 import { gitch, type GitchBrowserLogin, type GitHubLoginCapability } from "@/entities/gitch";
 import { accounts } from "@/entities/hosting";
 import { RepoStore } from "@/entities/repo";
+import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -50,5 +51,46 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
     root.unmount(); await sleep(25); host.remove();
     accounts.accounts = original.accounts; accounts.accountFor = original.accountFor;
     gitch.startBrowserLogin = original.start; gitch.browserLoginStatus = original.status; gitch.cancelBrowserLogin = original.cancel;
+  }
+}
+
+/** Without a repository or a GitHub/GitLab remote the control shows the connected accounts and the global Git author. */
+export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[boolean, string]> {
+  const original = { accounts: accounts.accounts, run: ipc.run };
+  const host = document.createElement("div"); host.hidden = true; document.body.append(host);
+  const root = createRoot(host);
+  const alice: HostAccount = { id: "bare-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
+  const carol: HostAccount = { id: "bare-carol", provider: "gitlab", server: "https://gitlab.example.com", username: "carol", name: "Carol", avatarURL: null };
+  const commands: string[][] = [];
+  const button = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".account-quick-popover button")).find((item) => item.textContent?.trim() === t(label));
+  try {
+    accounts.accounts = [alice, carol];
+    // only the global identity read may run, and it answers from a fixture
+    ipc.run = async (_program, args) => {
+      commands.push(args);
+      if (args.includes("--global")) return { status: 0, stdout: "user.name Global Author\nuser.email global@example.invalid\n", stderr: "" };
+      throw new Error("Unexpected process in the account fixture");
+    };
+    root.render(createElement(AccountQuickControls, { store: new RepoStore() }));
+    if (!await until(() => host.textContent?.includes("@alice +1") === true && host.textContent.includes("Global Author"))) return [false, `Connected accounts or the global author are missing: ${host.textContent}`];
+    host.querySelector<HTMLButtonElement>("button")!.click();
+    if (!await until(() => !!document.querySelector(".account-quick-popover .account-quick-list"))) return [false, "The popover does not list connected accounts"];
+    const panel = document.querySelector(".account-quick-popover")!;
+    const listed = Array.from(panel.querySelectorAll(".account-quick-list li")).map((item) => item.textContent);
+    if (listed.join("|") !== "@alice · github.com|@carol · gitlab.example.com" || !panel.textContent?.includes(t("Connected accounts"))) return [false, `Connected account list: ${listed.join("|")}`];
+    if (panel.querySelector("select") || !button("Add or remove connected accounts…")) return [false, "Without a remote there must be no repository picker, but the account manager must stay"];
+    if (!panel.textContent?.includes("global@example.invalid") || panel.textContent.includes(t("Not configured"))) return [false, "The global Git author is not shown"];
+    if (!commands.length || !commands.every((args) => args.includes("config") && args.includes("--global"))) return [false, `Unexpected commands: ${JSON.stringify(commands)}`];
+    // a GitHub/GitLab remote without an account on its host still asks to connect one
+    const remote = new RepoStore(); remote.path = "/fixture/bare"; remote.target = { provider: "github", host: "github.example.com", path: "team/repo", remote: "origin" };
+    root.render(createElement(AccountQuickControls, { store: remote }));
+    if (!await until(() => host.textContent?.includes(t("Connect account")) === true)) return [false, "A remote without an account must still offer Connect account"];
+    accounts.accounts = [];
+    root.render(createElement(AccountQuickControls, { store: new RepoStore() }));
+    if (!await until(() => host.textContent?.includes(t("Connect account")) === true)) return [false, "Without accounts the control must offer Connect account"];
+    return [true, "Without a remote: first account with +N, every connected account listed, no repository picker, the global Git author; a remote without an account and no accounts at all both offer Connect account"];
+  } finally {
+    root.unmount(); await sleep(25); host.remove(); document.querySelector(".account-quick-popover")?.remove();
+    accounts.accounts = original.accounts; ipc.run = original.run;
   }
 }

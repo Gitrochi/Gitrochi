@@ -1,9 +1,9 @@
 // entities/git 의 공개 API — 다른 조각은 이 파일로만 가져온다
-export { workspaceDestinations, repositoryDestinations, repositorySections, isWorkspaceDestination, isRepositorySection, workspaceLocation, type WorkspaceDestination, type RepositorySection, type WorkspaceLocation } from "./model/workspace-navigation";
+export { workspaceDestinations, repositoryDestinations, isWorkspaceDestination, restoredDestination, type WorkspaceDestination } from "./model/workspace-navigation";
 export { choiceLines, choiceTitle, conflictProjection, type ConflictBlock, type ConflictChoice, type ConflictDocument, parseConflict, resolveConflict } from "./lib/conflict";
 export { buildPatch, canEditLines, diffSides, modeSummary, type SplitRow, splitRows } from "./lib/diff";
 export { layoutGraph, layoutGraphAsync } from "./lib/graph";
-export { detailFormat, fileHistoryFormat, logFormat, newFileDiff, newFileDiffAsync, parseBlame, parseBlameAsync, parseCommitDetail, parseDiff, parseDiffAsync, parseFileHistory, parseFileHistoryAsync, parseLog, parseLogAsync, parseNameStatus, parseNumstat, parseRefs, parseRemotes, parseStashes, parseStatus, parseWorktrees, refFormat, stashFormat } from "./lib/parsers";
+export { detailFormat, fileHistoryFormat, logFormat, newFileDiff, newFileDiffAsync, parseBlame, parseBlameAsync, parseCommitDetail, parseDiff, parseDiffAsync, parseFileHistory, parseFileHistoryAsync, parseIdentityConfig, parseLog, parseLogAsync, parseNameStatus, parseNumstat, parseRefs, parseRemotes, parseStashes, parseStatus, parseWorktrees, refFormat, stashFormat } from "./lib/parsers";
 export { makePlan, planChanged, planProblem, rebaseActions, rebaseItem, type RebaseItem, type RebasePlan, rebaseTodo, shellQuote } from "./lib/rebase";
 export { parseSplitPlan, type SplitGroup } from "./lib/split";
 export { CommitSearchQuery } from "./lib/search";

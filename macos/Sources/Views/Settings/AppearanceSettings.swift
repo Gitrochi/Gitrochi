@@ -5,6 +5,7 @@ import AppKit
 struct AppearanceSettings: View {
     @AppStorage(AppTheme.key) private var theme = AppTheme.system.rawValue
     @AppStorage(AppLanguage.key) private var language = AppLanguage.defaultCode
+    @AppStorage(ToolbarTitles.key) private var toolbarTitles = false
     @ViewState private var askRestart = false
 
     var body: some View {
@@ -24,6 +25,15 @@ struct AppearanceSettings: View {
                 }
                 .pickerStyle(.segmented)
                 Text("System follows your macOS setting (light, dark or auto). The graph and terminal change with it.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Toolbar") {
+                Picker("Toolbar buttons", selection: $toolbarTitles) {
+                    Text("Icons only").tag(false)
+                    Text("Icons and text").tag(true)
+                }
+                .pickerStyle(.segmented)
+                Text("With text, each button's name sits to the right of its icon.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

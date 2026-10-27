@@ -13,7 +13,7 @@ macos/Sources/
   Views/     Graph · Sidebar · Inspector · Settings · Sheets · Shared
 windows/src/            Feature-Sliced Design — a layer imports only the layers below it
   app/       start-up (main, start), tab shell, shortcuts, global styles, self-test
-  pages/     repo (repository screen) · welcome
+  pages/     repo (repository screen)
   widgets/   commit-graph · diff-viewer · inspector · sidebar · toolbar · tab-bar · terminal-panel · settings · dialog-host · update-dialog
   features/  one user action each: create-branch · create-tag · stash-changes · clone-repo · add-worktree · create-pull-request ·
              interactive-rebase · split-commits · resolve-conflict · run-pipeline · start-agent · git-menus (context menus)

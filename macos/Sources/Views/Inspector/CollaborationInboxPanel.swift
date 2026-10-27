@@ -26,7 +26,8 @@ struct CollaborationInboxPanel: View {
                     .tint(state.inboxKind == kind ? .accentColor : .secondary)
                 }
             }.disabled(disabled)
-            if let error = state.inboxError { Text(error).foregroundStyle(.red).font(.caption).textSelection(.enabled) }
+            if let account = store.pendingCredentialAccount { CredentialAccessNotice(account: account) }
+            else if let error = state.inboxError { Text(error).foregroundStyle(.red).font(.caption).textSelection(.enabled) }
             HSplitView {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {

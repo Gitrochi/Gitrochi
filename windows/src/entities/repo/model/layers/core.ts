@@ -1,8 +1,8 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
-import { isWorkspaceDestination, isRepositorySection, repositoryDestinations, repositorySections, workspaceLocation, type WorkspaceDestination, type RepositorySection, type WorkspaceLocation } from "@/entities/git";
+import { isWorkspaceDestination, repositoryDestinations, restoredDestination, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
-import { CIStore } from "@/entities/ci";
+import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
 import { type BlameLine, type Branch, type CommitDetail, type ConfirmRequest, type ConflictChoice, type ConflictDocument, type DiffDocument, type DiffSource, type DropRequest, emptyStatus, type FileChange, type FileHistoryEntry, type FileInspect, type GraphEntry, type Identity, layoutGraphAsync, type LineStat, type LoadingInfo, type LoadState, type PullRequest, type RebasePlan, type RefLabel, refOrder, type RepoState, type RepoTarget, sameTarget, type SearchScope, type Selection, selectionID, type SheetKind, short, type SplitGroup, type Stash, statusCount, statusIsEmpty, type Tag, wipCommit, type WorkingStatus, type Worktree, type WorktreeStats, worktreeWIPCommit } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
@@ -62,86 +62,56 @@ export abstract class RepoCore extends Observable implements AgentHost {
   // 저장소
   path: string | null = null;
   destination: WorkspaceDestination = "home";
-  repositorySection: RepositorySection = "changes";
-  navigationTrail: WorkspaceLocation[] = [workspaceLocation("home")];
-  private workspaceNavigationPreparing = false;
-  navigationPosition = 0;
+  /** The Pull requests, Issues or Releases page was opened from the repository screen, so it shows "‹ Repository" (macOS: cameFromRepository) */
+  cameFromRepository = false;
+  /** True while a reload reconciles the selection, so it never changes the page (macOS: workspaceNavigationPreparing) */
+  private reconcilingSelection = false;
   gitDir: string | null = null;
   get name() {
     return this.path ? basename(this.path) : "Gitrochi";
   }
 
-  get pinnedRepositoryPages(): RepositorySection[] {
-    const saved = settings.get<unknown>("pinnedRepositoryPages", []);
-    return repositorySections.filter((section) => Array.isArray(saved) && saved.includes(section));
-  }
-
-  isRepositoryPagePinned(section: RepositorySection) { return this.pinnedRepositoryPages.includes(section); }
-
-  toggleRepositoryPagePin(section: RepositorySection) {
-    if (!isRepositorySection(section)) return;
-    const pinned = new Set(this.pinnedRepositoryPages);
-    if (pinned.has(section)) pinned.delete(section); else pinned.add(section);
-    settings.set("pinnedRepositoryPages", repositorySections.filter((item) => pinned.has(item)));
-    this.emit();
-  }
-
-  selectRepositorySection(section: RepositorySection, prepare = true, remember = true) { return this.navigate(section, prepare, remember); }
-
-  /** 작업별 이전 주소는 통합 저장소 화면의 내부 탭으로 연결한다. */
-  navigate(page: WorkspaceDestination, prepare = true, remember = true) {
+  /** Shows a page; pages that need a repository are refused until one is open. The page is remembered per repository. */
+  navigate(page: WorkspaceDestination, prepare = true) {
     if (!isWorkspaceDestination(page) || (repositoryDestinations.has(page) && !this.path)) return false;
-    return this.navigateLocation(workspaceLocation(page, this.repositorySection), prepare, remember);
-  }
-
-  private navigateLocation(location: WorkspaceLocation, prepare: boolean, remember: boolean) {
-    if (repositoryDestinations.has(location.destination) && !this.path) return false;
-    const current = workspaceLocation(this.destination, this.repositorySection);
-    if (remember && (location.destination !== current.destination || location.repositorySection !== current.repositorySection)) {
-      this.navigationTrail = [...this.navigationTrail.slice(0, this.navigationPosition + 1), location].slice(-40);
-      this.navigationPosition = this.navigationTrail.length - 1;
-    }
-    this.destination = location.destination;
-    this.repositorySection = location.repositorySection;
-    if (this.path) {
-      settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: this.destination });
-      settings.set("workspaceRepositorySections", { ...settings.get<Record<string, string>>("workspaceRepositorySections", {}), [this.path]: this.repositorySection });
-    }
-    if (prepare) {
-      this.workspaceNavigationPreparing = true;
-      try {
-        if (this.destination === "repository") {
-          if (this.repositorySection === "changes") this.select({ kind: "wip" });
-          if (this.repositorySection === "commits" && this.selection?.kind !== "commit" && this.headHash) this.select({ kind: "commit", sha: this.headHash });
-        }
-        if (this.destination === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
-      } finally { this.workspaceNavigationPreparing = false; }
-    }
+    // the Pull requests and Issues pages offer a way back when the repository screen opened them
+    if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && (page === "pullRequests" || page === "issues" || page === "releases");
+    this.destination = page;
+    if (this.path) settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: page });
+    // the Pull requests page shows one request at a time; an unrelated diff or file view would hide its list
+    if (prepare && page === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
     this.emit(); return true;
   }
 
-  moveWorkspaceHistory(delta: number) {
-    const next = this.navigationPosition + delta;
-    if (next < 0 || next >= this.navigationTrail.length) return;
-    this.navigationPosition = next; this.navigateLocation(this.navigationTrail[next], true, false);
+  /** The run the Actions page should select and show next, set by a CI badge in the graph (macOS: ciFocus) */
+  ciFocus: number | null = null;
+  /** The run shown on the right of the Actions page (macOS: ciSelected) */
+  ciSelected: number | null = null;
+
+  /** Opens the Actions page on a run; the page selects it, loads its jobs and lets go of the focus */
+  openCI(pipeline: CIPipeline) {
+    if (!this.navigate("actions")) return;
+    this.ciFocus = pipeline.id;
+    this.emit();
   }
 
+  /** Shows the run on the right of the Actions page and reads its jobs */
+  selectRun(pipeline: CIPipeline) {
+    this.ciSelected = pipeline.id;
+    this.emit();
+    void this.ci.loadJobs(pipeline);
+  }
+
+  /** A graph selection made from the Pull requests page (keyboard, routes) belongs to the repository screen */
   syncWorkspaceSelection(selection: Selection | null) {
-    if (this.workspaceNavigationPreparing || !selection) return;
-    const inDocument = this.destination === "repository" && (this.repositorySection === "changes" || this.repositorySection === "commits");
-    if (!inDocument && this.destination !== "pullRequests") return;
-    const next = selection.kind === "wip" ? "changes" : selection.kind === "commit" || selection.kind === "worktree" ? "commits" : "pullRequests";
-    const location = workspaceLocation(next, this.repositorySection);
-    if (this.destination !== location.destination || this.repositorySection !== location.repositorySection) this.navigate(next, false);
+    if (this.reconcilingSelection || !selection || this.destination !== "pullRequests" || selection.kind === "pullRequest") return;
+    this.navigate("repository", false);
   }
 
+  /** The page a repository was on last time, or the repository screen; Home without a repository */
   private restoreWorkspaceDestination() {
     const saved = this.path ? settings.get<Record<string, unknown>>("workspaceDestinations", {})[this.path] : null;
-    const savedSection = this.path ? settings.get<Record<string, unknown>>("workspaceRepositorySections", {})[this.path] : null;
-    const section = isRepositorySection(savedSection) ? savedSection : this.selection?.kind === "commit" ? "commits" : "changes";
-    const initial = workspaceLocation(isWorkspaceDestination(saved) ? saved : "repository", section);
-    this.navigationTrail = [initial]; this.navigationPosition = 0;
-    this.navigateLocation(initial, true, false);
+    this.navigate(restoredDestination(saved, !!this.path));
   }
 
   // 데이터
@@ -205,6 +175,16 @@ export abstract class RepoCore extends Observable implements AgentHost {
   stagedStats: Record<string, LineStat> = {};
   unstagedStats: Record<string, LineStat> = {};
   me: Identity | null = null;
+  /** The global Git author (git config --global), shown while no repository is open */
+  globalIdentity: Identity | null = null;
+
+  /** Reads the global author through the system git; a repository's own identity is `me` */
+  async loadGlobalIdentity() {
+    const result = await gitRaw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], env.home || ".").catch(() => null);
+    const next = result && (result.status === 0 || result.status === 1) ? P.parseIdentityConfig(result.stdout) : this.globalIdentity;
+    if (JSON.stringify(next) === JSON.stringify(this.globalIdentity)) return;
+    this.globalIdentity = next; this.emit();
+  }
 
   // 검색
   searchText = "";
@@ -214,6 +194,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   searchUnloaded = 0;
   searching = false;
   searchFocusRequest = 0;
+  /** The graph's search bar stays hidden until Ctrl+F; it also shows while a search is active (macOS: showSearchBar) */
+  showSearchBar = false;
   protected searchGen = 0;
   protected searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -388,8 +370,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.g(["config", "--get-regexp", "^user\\.(name|email)$"], { ok: [0, 1] }).catch(() => null),
       this.g(["rev-parse", "--path-format=absolute", "--git-common-dir"]).catch(() => null),
     ]);
-    const conf = Object.fromEntries((cfg?.stdout ?? "").split(/\r?\n/).map((l) => [l.slice(0, l.indexOf(" ")), l.slice(l.indexOf(" ") + 1).trim()]));
-    if (conf["user.name"]) this.me = { name: conf["user.name"], email: conf["user.email"] ?? "" };
+    const identity = P.parseIdentityConfig(cfg?.stdout ?? "");
+    if (identity) this.me = identity;
     this.commonDir = common?.stdout.trim() || null;
     await this.startWatching();
     await this.reload();
@@ -488,7 +470,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   protected resetState() {
     this.confirmationGuard.invalidate();
-    this.destination = "home"; this.repositorySection = "changes"; this.navigationTrail = [workspaceLocation("home")]; this.navigationPosition = 0;
+    this.destination = "home";
+    this.cameFromRepository = false;
+    this.ciFocus = null;
+    this.ciSelected = null;
+    this.showSearchBar = false;
     this.cancelPushReview();
     this.cancelChangeQuestion();
     this.cancelRepositoryAssistant();
@@ -891,8 +877,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   protected fixSelection() {
     const sel = this.selection;
-    if (!sel) this.selectDefault();
-    else if (sel.kind === "commit" && !this.commitIndex.has(sel.sha) && !this.stashes.some((s) => s.hash === sel.sha)) this.selectDefault();
+    this.reconcilingSelection = true;
+    try {
+      if (!sel) this.selectDefault();
+      else if (sel.kind === "commit" && !this.commitIndex.has(sel.sha) && !this.stashes.some((s) => s.hash === sel.sha)) this.selectDefault();
+    } finally { this.reconcilingSelection = false; }
     const ds = this.diffSource;
     if (ds?.kind === "working") {
       const all = [...this.status.staged, ...this.status.unstaged, ...this.status.conflicted];

@@ -1,24 +1,26 @@
 import SwiftUI
 import AppKit
 
-/// GitLab 파이프라인·GitHub Actions 실행 목록. 수동 작업 ▶ 실행, 다시 실행, 취소, 배포 승인.
+/// The Actions page's run list: GitLab pipelines or GitHub Actions runs, newest first or grouped by branch.
+/// A row shows the run on the right (CIRunDetailView). (Windows: features/ci-panel/ui/CIPanel.tsx)
 struct CIPanel: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings
-    @ViewState private var expanded: Set<Int> = []
     /// 보기: 시간순 목록 / 브랜치별(접은 브랜치는 이 창에서만 기억)
     @AppStorage("ciGroupByBranch") private var byBranch = false
     @ViewState private var collapsedRefs: Set<String> = []
+    @ViewState private var scrollTarget: Int?
 
     var body: some View {
         if let target = store.target {
             VStack(spacing: 0) {
                 header(target)
-                Divider()
                 list(target)
             }
             .task(id: "\(target.host)/\(target.path)/\(store.ciCurrentBranchOnly)") { await poll() }
             .onChange(of: AccountStore.shared.revision) { _, _ in Task { await store.loadCI() } }
+            .onChange(of: store.ciFocus, initial: true) { _, _ in reveal() }
+            .onChange(of: store.ciPipelines) { _, _ in reveal() }
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "bolt.horizontal.circle").font(.largeTitle).foregroundStyle(.tertiary)
@@ -30,7 +32,7 @@ struct CIPanel: View {
         }
     }
 
-    /// 처음 읽고, 실행 중인 게 있으면 8초·없으면 45초마다 새로 고친다(펼친 파이프라인의 작업도)
+    /// 처음 읽고, 실행 중인 게 있으면 8초·없으면 45초마다 새로 고친다(고른 실행의 작업도)
     private func poll() async {
         await store.loadCI()
         while !Task.isCancelled {
@@ -38,16 +40,17 @@ struct CIPanel: View {
             try? await Task.sleep(for: .seconds(active ? 8 : 45))
             if Task.isCancelled { break }
             await store.loadCI(silent: true)
-            for p in store.ciPipelines where expanded.contains(p.id) && (p.status.isActive || store.ciJobs[p.id] == nil) {
+            if let p = store.ciPipelines.first(where: { $0.id == store.ciSelected }), p.status.isActive || store.ciJobs[p.id] == nil {
                 await store.loadJobs(p, silent: true)
             }
         }
     }
 
+    /// Styled like the Pull requests and Issues lists' section header
     private func header(_ target: RepoTarget) -> some View {
         HStack(spacing: 8) {
-            Text(target.provider == .gitlab ? "Pipelines" : "Actions")
-                .font(.subheadline.weight(.semibold))
+            Text(target.provider == .gitlab ? "Pipelines" : "Runs")
+            if !store.ciPipelines.isEmpty { Text(verbatim: "\(store.ciPipelines.count)") }
             if store.ciState == .loading { ProgressView().controlSize(.mini) }
             Spacer()
             Menu {
@@ -78,13 +81,23 @@ struct CIPanel: View {
                 .disabled(store.ciAccess == nil || store.ciBusy.contains("run"))
                 .help(target.provider == .gitlab ? "Run new pipeline (branch, variables)" : "Run workflow")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .font(.subheadline.weight(.semibold))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .padding(.horizontal, 10)
+        .frame(height: 26)
+        .padding(.top, 6)
     }
 
     @ViewBuilder
     private func list(_ target: RepoTarget) -> some View {
         switch store.ciState {
+        case .authorizationRequired:
+            if let account = store.pendingCredentialAccount {
+                CredentialAccessNotice(account: account)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
         case .needsAccount:
             VStack(alignment: .leading, spacing: 8) {
                 Text("Connect a \(target.provider == .gitlab ? String(localized: "Self-hosted GitLab (\(target.host))") : "GitHub") account to see pipelines.")
@@ -106,69 +119,77 @@ struct CIPanel: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         default:
-            List {
-                if byBranch {
-                    ForEach(CIBranchGroup.group(store.ciPipelines)) { g in
-                        Section(isExpanded: branchExpansion(g.ref)) {
-                            ForEach(g.pipelines) { p in pipelineItem(p, target: target, showRef: false) }
-                        } header: {
-                            HStack(spacing: 6) {
-                                CIStatusIcon(status: g.pipelines[0].status, size: 11)
-                                Text(g.ref).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
-                                Spacer()
-                                Text("\(g.pipelines.count)").font(.caption).foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        if byBranch {
+                            ForEach(CIBranchGroup.group(store.ciPipelines)) { g in
+                                branchHeader(g)
+                                if !collapsedRefs.contains(g.ref) {
+                                    ForEach(g.pipelines) { p in row(p, target: target, showRef: false).padding(.leading, 14) }
+                                }
                             }
-                            .help("\(g.ref) · \(g.pipelines[0].status.title)")
+                        } else {
+                            ForEach(store.ciPipelines) { p in row(p, target: target, showRef: true) }
                         }
                     }
-                } else {
-                    ForEach(store.ciPipelines) { p in pipelineItem(p, target: target, showRef: true) }
+                    .padding(.horizontal, 6)
+                    .padding(.bottom, 6)
+                }
+                .onChange(of: scrollTarget, initial: true) { _, id in
+                    guard let id else { return }
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    scrollTarget = nil
                 }
             }
-            .listStyle(.sidebar)
         }
     }
 
-    private func pipelineItem(_ p: CIPipeline, target: RepoTarget, showRef: Bool) -> some View {
-        DisclosureGroup(isExpanded: expansion(p)) {
-            PipelineJobs(pipeline: p)
-        } label: {
-            PipelineRow(pipeline: p, provider: target.provider, showRef: showRef) { expanded.insert(p.id); Task { await store.loadJobs(p) } }
+    private func row(_ p: CIPipeline, target: RepoTarget, showRef: Bool) -> some View {
+        PipelineRow(pipeline: p, provider: target.provider, showRef: showRef)
+            .sidebarRow()
+            .background(store.ciSelected == p.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+            .contentShape(Rectangle())
+            .onTapGesture { store.selectRun(p) }
+            .id(p.id)
+    }
+
+    private func branchHeader(_ g: CIBranchGroup) -> some View {
+        let open = !collapsedRefs.contains(g.ref)
+        return HStack(spacing: 6) {
+            Image(systemName: "chevron.down")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+                .rotationEffect(.degrees(open ? 0 : -90))
+                .frame(width: 10)
+            CIStatusIcon(status: g.pipelines[0].status, size: 11)
+            Text(g.ref).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
+            Spacer()
+            Text(verbatim: "\(g.pipelines.count)").font(.caption).foregroundStyle(.secondary)
         }
+        .sidebarRow()
+        .contentShape(Rectangle())
+        .onTapGesture { if open { collapsedRefs.insert(g.ref) } else { collapsedRefs.remove(g.ref) } }
+        .help("\(g.ref) · \(g.pipelines[0].status.title)")
     }
 
-    private func branchExpansion(_ ref: String) -> Binding<Bool> {
-        Binding(get: { !collapsedRefs.contains(ref) }, set: { open in
-            if open { collapsedRefs.remove(ref) } else { collapsedRefs.insert(ref) }
-        })
-    }
-
-    private func expansion(_ p: CIPipeline) -> Binding<Bool> {
-        Binding(get: { expanded.contains(p.id) }, set: { open in
-            if open {
-                expanded.insert(p.id)
-                Task { await store.loadJobs(p) }
-            } else {
-                expanded.remove(p.id)
-            }
-        })
+    /// A commit's CI icon asked for this pipeline: open its branch group, select the run and bring it into view
+    private func reveal() {
+        guard let id = store.ciFocus, let p = store.ciPipelines.first(where: { $0.id == id }) else { return }
+        collapsedRefs.remove(p.ref)
+        store.selectRun(p)
+        scrollTarget = id
+        store.ciFocus = nil
     }
 }
 
-/// 파이프라인 한 줄: 상태 · 제목 · 브랜치 · 시간, 오른쪽에 취소·다시 실행
+/// 파이프라인 한 줄: 상태 · 제목 · 브랜치 · 시간. 버튼은 오른쪽 상세와 우클릭 메뉴에 있다.
 private struct PipelineRow: View {
     @Environment(RepoStore.self) private var store
     let pipeline: CIPipeline
     let provider: Provider
     /// 브랜치별 보기에서는 묶음 머리에 브랜치가 있으니 줄마다 다시 적지 않는다
     var showRef = true
-    let expand: () -> Void
-
-    private var title: String {
-        if !pipeline.title.isEmpty { return pipeline.title }
-        if let i = store.commitIndex[pipeline.sha] { return store.entries[i].commit.subject }
-        return pipeline.name.isEmpty ? String(pipeline.sha.prefix(8)) : pipeline.name
-    }
 
     var body: some View {
         let p = pipeline
@@ -176,7 +197,7 @@ private struct PipelineRow: View {
         HStack(alignment: .center, spacing: 6) {
             CIStatusIcon(status: p.status)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).lineLimit(1)
+                Text(store.ciTitle(p)).lineLimit(1)
                 HStack(spacing: 4) {
                     if provider == .github, !p.name.isEmpty { Text(p.name).lineLimit(1) }
                     Text("#\(p.number)").monospacedDigit()
@@ -188,177 +209,43 @@ private struct PipelineRow: View {
             }
             Spacer(minLength: 0)
             if manual > 0 {
-                Button(action: expand) {
-                    HStack(spacing: 2) {
-                        Image(systemName: "play.fill")
-                        Text("\(manual)")
-                    }
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.orange)
+                HStack(spacing: 2) {
+                    Image(systemName: "play.fill")
+                    Text(verbatim: "\(manual)")
                 }
-                .buttonStyle(.borderless)
-                .help("\(manual) jobs waiting to be run manually — expand to run")
-            }
-            if store.ciBusy.contains("pipeline:\(p.id)") {
-                ProgressView().controlSize(.mini)
-            } else if p.status.isActive {
-                Button { store.cancelPipeline(p) } label: { Image(systemName: "stop.circle") }
-                    .buttonStyle(.borderless)
-                    .help("Cancel run")
-            } else if p.status == .failed || p.status == .canceled {
-                Button { Task { await store.retryPipeline(p, failedOnly: true) } } label: { Image(systemName: "arrow.clockwise.circle") }
-                    .buttonStyle(.borderless)
-                    .help(provider == .gitlab ? "Rerun failed and canceled jobs" : "Rerun failed jobs only")
-            }
-        }
-        .contextMenu {
-            Button("Open in browser") { open(p.url) }
-            Button("View commit") { store.reveal(p.sha) }
-            Divider()
-            if p.status.isActive {
-                Button("Cancel run") { store.cancelPipeline(p) }
-            } else if provider == .github {
-                Button("Rerun all jobs") { Task { await store.retryPipeline(p, failedOnly: false) } }
-                Button("Rerun failed jobs only") { Task { await store.retryPipeline(p, failedOnly: true) } }
-                    .disabled(p.status != .failed && p.status != .canceled)
-            } else {
-                Button("Rerun failed and canceled jobs") { Task { await store.retryPipeline(p, failedOnly: true) } }
-                    .disabled(p.status != .failed && p.status != .canceled)
-            }
-            Divider()
-            Button("Copy link") { store.copy(p.url) }
-        }
-    }
-}
-
-/// 펼친 파이프라인: 배포 승인 + 단계별 작업
-private struct PipelineJobs: View {
-    @Environment(RepoStore.self) private var store
-    let pipeline: CIPipeline
-
-    var body: some View {
-        if let jobs = store.ciJobs[pipeline.id] {
-            if let deps = store.ciDeployments[pipeline.id], !deps.isEmpty {
-                DeploymentApproval(pipeline: pipeline, deployments: deps)
-            }
-            if jobs.isEmpty {
-                Text("No jobs").font(.caption).foregroundStyle(.secondary)
-            }
-            ForEach(stages(jobs), id: \.0) { stage, list in
-                if !stage.isEmpty {
-                    Text(stage).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
-                        .padding(.top, 2)
-                }
-                ForEach(list) { j in JobRow(job: j, pipeline: pipeline) }
-            }
-        } else {
-            ProgressView().controlSize(.small)
-        }
-    }
-
-    private func stages(_ jobs: [CIJob]) -> [(String, [CIJob])] {
-        var order: [String] = []
-        var map: [String: [CIJob]] = [:]
-        for j in jobs {
-            if map[j.stage] == nil { order.append(j.stage) }
-            map[j.stage, default: []].append(j)
-        }
-        return order.map { ($0, map[$0]!) }
-    }
-}
-
-private struct JobRow: View {
-    @Environment(RepoStore.self) private var store
-    let job: CIJob
-    let pipeline: CIPipeline
-
-    private var provider: Provider { store.target?.provider ?? .gitlab }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            CIStatusIcon(status: job.status, size: 11)
-            Text(job.name).lineLimit(1).truncationMode(.middle)
-            if job.allowFailure, job.status == .failed {
-                Image(systemName: "exclamationmark.triangle").font(.caption2).foregroundStyle(.orange).help("Allowed to fail")
-            }
-            Spacer(minLength: 0)
-            if let d = job.duration, d > 0 {
-                Text(duration(d)).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-            }
-            actions
-        }
-        .font(.callout)
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) { open(job.url) }
-        .contextMenu {
-            Button("View log (browser)") { open(job.url) }
-            if job.canPlay, provider == .gitlab { Button("Run") { store.playJob(job, in: pipeline) } }
-            if canRetry { Button("Run again") { Task { await store.retryJob(job, in: pipeline) } } }
-            if job.status.isActive, provider == .gitlab { Button("Cancel") { Task { await store.cancelJob(job, in: pipeline) } } }
-            Divider()
-            Button("Copy link") { store.copy(job.url) }
-        }
-        .help(job.status.title)
-    }
-
-    private var canRetry: Bool {
-        switch provider {
-        case .gitlab: return [.failed, .canceled, .success].contains(job.status)
-        case .github: return job.status.isFinished && !pipeline.status.isActive
-        }
-    }
-
-    @ViewBuilder private var actions: some View {
-        if store.ciBusy.contains("job:\(job.id)") {
-            ProgressView().controlSize(.mini)
-        } else if job.canPlay, provider == .gitlab {
-            Button { store.playJob(job, in: pipeline) } label: { Image(systemName: "play.circle.fill") }
-                .buttonStyle(.borderless)
-                .foregroundStyle(Color.accentColor)
-                .help(job.status == .scheduled ? "Run now (don't wait for the schedule)" : "Run manual job")
-        } else if job.status.isActive, provider == .gitlab {
-            Button { Task { await store.cancelJob(job, in: pipeline) } } label: { Image(systemName: "stop.circle") }
-                .buttonStyle(.borderless)
-                .help("Cancel job")
-        } else if canRetry, job.status != .success {
-            Button { Task { await store.retryJob(job, in: pipeline) } } label: { Image(systemName: "arrow.clockwise") }
-                .buttonStyle(.borderless)
-                .help("Rerun job")
-        }
-    }
-
-    private func duration(_ s: Double) -> String {
-        let t = Int(s.rounded())
-        return t >= 60 ? String(localized: "\(t / 60)m \(t % 60)s") : String(localized: "\(t)s")
-    }
-}
-
-/// GitHub 환경 보호 규칙: 배포 승인 대기
-private struct DeploymentApproval: View {
-    @Environment(RepoStore.self) private var store
-    let pipeline: CIPipeline
-    let deployments: [CIDeployment]
-
-    var body: some View {
-        let mine = deployments.filter(\.canApprove)
-        VStack(alignment: .leading, spacing: 6) {
-            Label("Waiting for deployment approval: \(deployments.map(\.environment).joined(separator: ", "))", systemImage: "hand.raised.fill")
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.orange)
-            if mine.isEmpty {
-                Text("This account can't approve.").font(.caption).foregroundStyle(.secondary)
-            } else {
-                HStack {
-                    Button("Approve") { store.reviewDeployment(pipeline, mine, approve: true) }
-                        .buttonStyle(.borderedProminent).controlSize(.small)
-                    Button("Reject") { store.reviewDeployment(pipeline, mine, approve: false) }
-                        .controlSize(.small)
-                }
+                .help("\(manual) jobs waiting to be run manually")
             }
+            if store.ciBusy.contains("pipeline:\(p.id)") { ProgressView().controlSize(.mini) }
         }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.orange.opacity(0.08)))
+        .contextMenu { CIRunMenu(pipeline: p, provider: provider) }
+    }
+}
+
+/// The run's commands, for the list's context menu
+struct CIRunMenu: View {
+    @Environment(RepoStore.self) private var store
+    let pipeline: CIPipeline
+    let provider: Provider
+
+    var body: some View {
+        let p = pipeline
+        Button("Open in browser") { open(p.url) }
+        Button("View commit") { store.reveal(p.sha) }
+        Divider()
+        if p.status.isActive {
+            Button("Cancel run") { store.cancelPipeline(p) }
+        } else if provider == .github {
+            Button("Rerun all jobs") { Task { await store.retryPipeline(p, failedOnly: false) } }
+            Button("Rerun failed jobs only") { Task { await store.retryPipeline(p, failedOnly: true) } }
+                .disabled(p.status != .failed && p.status != .canceled)
+        } else {
+            Button("Rerun failed and canceled jobs") { Task { await store.retryPipeline(p, failedOnly: true) } }
+                .disabled(p.status != .failed && p.status != .canceled)
+        }
+        Divider()
+        Button("Copy link") { store.copy(p.url) }
     }
 }
 

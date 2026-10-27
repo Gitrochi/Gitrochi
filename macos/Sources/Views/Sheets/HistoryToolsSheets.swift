@@ -7,37 +7,17 @@ struct CompareRevisionsSheet: View {
     var body: some View {
         @Bindable var state = store.historyTools
         VStack(alignment: .leading, spacing: 12) {
-            Text("Compare revisions").font(.title3.weight(.semibold))
+            if !embedded { Text("Compare revisions").font(.title3.weight(.semibold)) }
             VStack(spacing: 8) {
                 HStack {
-                    TextField("From revision", text: $state.left).textFieldStyle(.roundedBorder)
+                    RevisionPicker(title: String(localized: "From revision"), revision: $state.left, store: store)
                     Button { let old = state.left; state.left = state.right; state.right = old } label: { Image(systemName: "arrow.left.arrow.right") }.help("Swap revisions")
                 }
                 HStack {
-                    TextField("To revision", text: $state.right).textFieldStyle(.roundedBorder)
-                    Button("Compare") { Task { await store.loadRevisionComparison() } }.disabled(state.comparisonLoading)
+                    RevisionPicker(title: String(localized: "To revision"), revision: $state.right, store: store)
+                    Button("Compare") { Task { await store.loadRevisionComparison() } }.disabled(state.comparisonLoading || state.left.isEmpty || state.right.isEmpty)
                 }
             }
-            Menu("Choose a branch or tag") {
-                ForEach(store.localBranches) { branch in
-                    Menu(branch.name) {
-                        Button("Use as left revision") { state.left = branch.name }
-                        Button("Use as right revision") { state.right = branch.name }
-                    }
-                }
-                ForEach(store.remoteBranches) { branch in
-                    Menu(branch.name) {
-                        Button("Use as left revision") { state.left = branch.name }
-                        Button("Use as right revision") { state.right = branch.name }
-                    }
-                }
-                ForEach(store.tags) { tag in
-                    Menu(tag.name) {
-                        Button("Use as left revision") { state.left = tag.name }
-                        Button("Use as right revision") { state.right = tag.name }
-                    }
-                }
-            }.menuStyle(.borderlessButton).fixedSize()
             Toggle("Compare from the common ancestor (changes introduced by the right side)", isOn: $state.useMergeBase)
             Text("Uncommitted changes are excluded. Compare fixes both revisions to immutable commits.").font(.caption).foregroundStyle(.secondary)
             if state.comparisonLoading { ProgressView().controlSize(.small) }
@@ -73,6 +53,41 @@ struct CompareRevisionsSheet: View {
         var text = String(result.left.prefix(12)) + " → " + String(result.right.prefix(12))
         if result.mergeBase { text += " · " + String(localized: "Common ancestor") + ": " + String(result.base.prefix(12)) }
         return text
+    }
+}
+
+/// A revision field: type a branch, tag or commit, or pick one from the list next to it
+struct RevisionPicker: View {
+    let title: String
+    @Binding var revision: String
+    let store: RepoStore
+
+    var body: some View {
+        HStack(spacing: 0) {
+            TextField(title, text: $revision)
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+                .accessibilityLabel(title)
+            Menu {
+                if let head = store.headBranch { Button(head + " " + String(localized: "(current)")) { revision = head } }
+                Button("HEAD") { revision = "HEAD" }
+                if !store.localBranches.isEmpty {
+                    Section("Local branches") { ForEach(store.localBranches) { branch in Button(branch.name) { revision = branch.name } } }
+                }
+                if !store.remoteBranches.isEmpty {
+                    Section("Remote branches") { ForEach(store.remoteBranches) { branch in Button(branch.name) { revision = branch.name } } }
+                }
+                if !store.tags.isEmpty {
+                    Section("Tags") { ForEach(store.tags) { tag in Button(tag.name) { revision = tag.name } } }
+                }
+            } label: {
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .semibold))
+            }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .frame(width: 24)
+            .help("Choose a branch or tag")
+            .accessibilityLabel(String(localized: "Choose a branch or tag") + ": " + title)
+        }
     }
 }
 
@@ -173,7 +188,7 @@ struct LineHistorySheet: View {
     }
 }
 
-private struct HistoryPatchView: View {
+struct HistoryPatchView: View {
     let text: String
     var body: some View {
         ScrollView([.vertical, .horizontal]) {

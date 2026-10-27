@@ -13,6 +13,10 @@
 .history-tools > * { flex-shrink: 0; min-width: 0; }
 .history-tools > .row { flex-wrap: wrap; }
 .history-tools > .row > .input.grow { flex: 1 1 160px; min-width: 0; }
+/* a revision field: the text input and the branch and tag list beside it */
+.history-tools > .row > .revision-picker { flex: 1 1 300px; min-width: 0; gap: 4px; }
+.revision-picker > .input { flex: 1 1 140px; min-width: 0; }
+.revision-picker > .revision-picker-list { flex: 0 1 180px; width: auto; min-width: 0; }
 .history-tools > .row > button { flex-shrink: 0; }
 .history-tools label.row { align-items: flex-start; line-height: 1.5; }
 .history-tools label.row > input[type="checkbox"] { flex-shrink: 0; margin-top: 3px; }

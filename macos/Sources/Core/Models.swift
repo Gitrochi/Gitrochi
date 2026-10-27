@@ -417,9 +417,9 @@ enum Provider: String, Codable, Hashable, CaseIterable, Identifiable {
     case github, gitlab
     var id: String { rawValue }
     var title: String { self == .github ? "GitHub" : "GitLab" }
-    var requestName: String { self == .github ? "Pull Request" : "Merge Request" }
+    var requestName: String { self == .github ? String(localized: "Pull request") : String(localized: "Merge request") }
     var requestShort: String { self == .github ? "PR" : "MR" }
-    var requestsTitle: String { self == .github ? "Pull Requests" : "Merge Requests" }
+    var requestsTitle: String { self == .github ? String(localized: "Pull requests") : String(localized: "Merge requests") }
 }
 
 struct HostAccount: Codable, Hashable, Identifiable {
@@ -510,6 +510,8 @@ struct RemoteRepo: Identifiable, Hashable {
 
 enum LoadState: Hashable {
     case idle, loading, loaded, needsAccount
+    /// The account is connected, but its token cannot be read until the user allows keychain access (macOS only).
+    case authorizationRequired
     case failed(String)
 }
 
@@ -528,8 +530,6 @@ enum SheetKind: Identifiable {
     case batchCommits
     case lineHistory
     case localWorkflows
-    case workspaceOverview
-    case collaborationInbox
     case repositoryAssistant
     case mcpConnection
     /// 에이전트 세션 시작(path 가 있으면 그 워크트리를 미리 고름)
@@ -546,6 +546,8 @@ enum SheetKind: Identifiable {
     case graphDiff
     /// 의존 규칙 검사 결과(gitch graph check)
     case graphCheck
+    /// New issue (number nil) or an edit of one
+    case issueEditor(number: Int?, title: String, body: String)
 
     var id: String {
         switch self {
@@ -561,8 +563,6 @@ enum SheetKind: Identifiable {
         case .batchCommits: return "batchCommits"
         case .lineHistory: return "lineHistory"
         case .localWorkflows: return "localWorkflows"
-        case .workspaceOverview: return "workspaceOverview"
-        case .collaborationInbox: return "collaborationInbox"
         case .repositoryAssistant: return "repositoryAssistant"
         case .mcpConnection: return "mcpConnection"
         case .startAgent(let p): return "agent:" + (p ?? "")
@@ -572,6 +572,7 @@ enum SheetKind: Identifiable {
         case .interactiveRebase: return "interactiveRebase"
         case .graphDiff: return "graphDiff"
         case .graphCheck: return "graphCheck"
+        case .issueEditor(let n, _, _): return "issue:" + (n.map(String.init) ?? "new")
         }
     }
 }
