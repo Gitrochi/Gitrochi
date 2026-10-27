@@ -78,6 +78,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     settings.set("accountPageSection", "inbox");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
     check(host.querySelectorAll(".account-page-sections .segmented button").length === 5, "Account page must offer its five sections");
+    check(!host.querySelector("h1"), "Account sections must not show a large page title");
     check(mentions > 0 && host.textContent?.includes("Fixture mention"), "Inbox did not query mentions");
     check(!host.querySelector('[role="dialog"]'), "Inbox is still a modal");
     host.querySelector<HTMLButtonElement>(".inbox-item")!.click();
@@ -145,6 +146,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.sheet = null; dialog.remove();
     reset();
     await mount(<ActionsWorkspacePanel store={store} />);
+    check(!host.querySelector("h1"), "Actions must not show a large page title");
     await change(host.querySelector('select[aria-label="' + t("Job") + '"]')!, "9");
     await click("Load log");
     check(host.querySelector("pre")?.textContent?.includes("build passed"), "Job log preview missing");

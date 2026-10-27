@@ -22,26 +22,11 @@ export interface WorkspacePanelProps {
   openSettings?: () => void;
 }
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-function Page({
-  title,
-  subtitle,
-  children,
-  actions,
-}: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  actions?: ReactNode;
-}) {
+/** A full-width page; like Pull requests and Issues it has no large title, only its actions on top */
+function Page({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
   return (
     <section className="workspace-page">
-      <header>
-        <div>
-          <h1>{t(title)}</h1>
-          {subtitle && <p className="muted">{subtitle}</p>}
-        </div>
-        <div className="row">{actions}</div>
-      </header>
+      {actions && <div className="workspace-page-actions">{actions}</div>}
       {children}
     </section>
   );
@@ -88,7 +73,7 @@ function AccountNeeded({ store, openSettings }: WorkspacePanelProps) {
 function RepositoryWorkInboxPanel(props: WorkspacePanelProps) {
   useObserve(props.store);
   return (
-    <Page title="Inbox">
+    <Page>
       <AccountNeeded {...props} />
       {props.store.target && (
         <CollaborationInboxSheet
@@ -172,12 +157,6 @@ function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
   }, [key]);
   return (
     <Page
-      title="My work"
-      subtitle={
-        store.target
-          ? `${store.target.host}/${store.target.path} · @${store.hostingAccount?.username ?? ""}`
-          : undefined
-      }
       actions={
         <Button disabled={state.busy} onClick={() => void load()}>
           {t("Refresh")}
@@ -347,12 +326,7 @@ export function ActionsWorkspacePanel({
   openSettings,
 }: WorkspacePanelProps) {
   return (
-    <Page
-      title={store.target?.provider === "gitlab" ? "Pipelines" : "Actions"}
-      subtitle={
-        store.target ? `${store.target.host}/${store.target.path}` : undefined
-      }
-    >
+    <Page>
       <div className="workspace-ci">
         <CIPanel
           store={store}
@@ -400,7 +374,7 @@ function ScopedWorkPanel({
         </label>
       </div>
       {effective === "account" ? (
-        <Page title={inbox ? "Inbox" : "My work"}>
+        <Page>
           <AccountWorkPanel inbox={inbox} />
         </Page>
       ) : inbox ? (
