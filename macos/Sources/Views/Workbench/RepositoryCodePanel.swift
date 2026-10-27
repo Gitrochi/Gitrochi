@@ -21,10 +21,6 @@ struct RepositoryCodePanel: View {
     private var folders: [String] { guard query.isEmpty else { return [] }; return Array(Set((tree?.entries ?? []).filter { $0.path.hasPrefix(prefix) && $0.path.dropFirst(prefix.count).contains("/") }.map { prefix + String($0.path.dropFirst(prefix.count).split(separator: "/")[0]) })).sorted() }
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Code").font(.title2.weight(.semibold))
-                Text("Browse committed files at a fixed branch, tag or commit. Your working files stay untouched.").font(.callout).foregroundStyle(.secondary)
-            }
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     TextField("Revision", text: $revisionInput).textFieldStyle(.roundedBorder).onSubmit { Task { await loadTree() } }

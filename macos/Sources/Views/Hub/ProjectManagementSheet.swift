@@ -190,7 +190,7 @@ struct ProjectManagementSheet: View {
         guard let detail, validContext, !reading else { return }
         reading = true; defer { reading = false }
         do {
-            let stamp = store.hubActionStamp, result = try await HostingHubAPI.projectViews(store.hubAccess(), detail: detail, cursor: append ? viewsCursor : nil)
+            let stamp = store.hubActionStamp, result = try await HostingHubAPI.projectViews(await store.hubAccess(), detail: detail, cursor: append ? viewsCursor : nil)
             guard stamp == store.hubActionStamp, !Task.isCancelled else { return }
             views = append ? views + result.views.filter { value in !views.contains { $0.id == value.id } } : result.views; viewsMore = result.more; viewsCursor = result.cursor
         } catch { self.error = HostingHubAPI.error(error) }

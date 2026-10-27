@@ -65,7 +65,7 @@ enum Gitch { enum GraphRelation: String { case graph, files, modules, changes, t
 struct RouteChange { let paths: [String] }
 enum RouteSelection: Equatable { case commit(String) }
 enum RouteDiff { case working(RouteChange), commit(sha: String, change: RouteChange, parent: String?) }
-enum RouteNavigation { case commits }
+enum RouteNavigation { case repository }
 @MainActor final class RepoStore {
     let url: URL?
     var finderPaths: [String] = []

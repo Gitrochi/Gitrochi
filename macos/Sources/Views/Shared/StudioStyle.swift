@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 탐색·편집·상세 패널이 같은 네이티브 표면과 선택 규칙을 쓰게 한다.
 enum StudioStyle {
-    static let accent = Color(nsColor: .systemIndigo)
+    static let accent = Color.accentColor
     static let canvas = neutralSurface(0.035)
     static let surface = Color(nsColor: .textBackgroundColor)
     static let sidebar = neutralSurface(0.015)

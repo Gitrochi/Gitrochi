@@ -122,7 +122,7 @@ struct ProjectTaskInspector: View {
                             if row.kind == .pullRequest, let number = row.number {
                                 Button { store.navigate(.pullRequests); store.select(.pullRequest(number)) } label: { Label("Review in Gitrochi", systemImage: "arrow.triangle.pull").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
                             }
-                            Button { store.navigate(.changes) } label: { Label("Open local changes", systemImage: "square.and.pencil") }
+                            Button { store.navigate(.repository); store.showArea(.changes) } label: { Label("Open local changes", systemImage: "square.and.pencil") }
                             Label(store.headBranch ?? String(localized: "Detached HEAD"), systemImage: "arrow.triangle.branch").font(.caption.monospaced()).foregroundStyle(.secondary).lineLimit(2)
                             ForEach(linkedBranches) { branch in
                                 Button { Task { await store.checkout(branch) } } label: { Label(branch.name, systemImage: branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch").font(.caption.monospaced()) }.disabled(branch.isCurrent || store.busy != nil)

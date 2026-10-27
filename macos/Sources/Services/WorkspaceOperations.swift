@@ -27,11 +27,17 @@ import Observation
                 n * 30 < min(1000, CollaborationAPI.number(r, "total_count"))
             )
         }
+        // newest activity first; GitHub sorts with sort/direction, GitLab with order_by/sort (sort only takes asc or desc)
         var query = [
             "state": c.target.provider == .gitlab && scope == "open" ? "opened" : scope,
             "per_page": "30",
-            "page": String(n), "sort": "updated", "order_by": "updated_at",
+            "page": String(n),
         ]
+        if c.target.provider == .gitlab {
+            query["order_by"] = "updated_at"; query["sort"] = "desc"
+        } else {
+            query["sort"] = "updated"; query["direction"] = "desc"
+        }
         if !search.trimmed.isEmpty { query["search"] = search.trimmed }
         let items = try await CollaborationAPI.list(
             c, CollaborationAPI.repo(c) + "/issues?" + CollaborationAPI.query(query))
@@ -124,6 +130,13 @@ import Observation
 
 @MainActor @Observable final class WorkspaceIssueModel {
     var items: [CollaborationInboxItem] = []
+    /// open, closed or all
+    var scope = "open"
+    var search = ""
+    /// The search the list was loaded with (the page's field may hold text not searched yet)
+    var loadedSearch = ""
+    /// Repository, account and filter the list was loaded for; a different key starts over
+    var contextKey = ""
     var page = 0
     var more = false
     var busy = false

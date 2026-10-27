@@ -140,3 +140,99 @@
 .rail-item:hover .rail-flyout {
   display: flex;
 }
+
+/* A list's search field and filter icon (pull requests, issues) */
+.list-search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.list-search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 4px 0 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--input);
+}
+
+.list-search-field:focus-within {
+  border-color: var(--accent);
+}
+
+.list-search-field > svg {
+  flex: none;
+}
+
+.list-search-field > input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.list-search-clear,
+.list-filter-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.list-search-clear {
+  width: 18px;
+  height: 18px;
+}
+
+.list-filter-button {
+  width: 26px;
+  height: 26px;
+}
+
+.list-search-clear:hover,
+.list-filter-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.list-filter-button.on {
+  color: var(--accent);
+}
+
+/* The repository sidebar shows how a shared list is filtered instead of a search row */
+.list-filter-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 2px 6px 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--accent);
+  font-size: 11.5px;
+}
+
+.list-filter-caption > svg,
+.list-filter-caption > button {
+  flex: none;
+}
+
+.list-filter-caption > span {
+  flex: 1;
+  color: var(--text);
+}

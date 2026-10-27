@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, CircleDashed, Columns3, ListFilter, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleDashed, ListFilter, Search, Settings as Gear, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { type Commit, emptyStatus, isWIP, type SearchScope, searchScopes, statusFiles, wipWorktree } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { type GraphColumnId, graphColumns, graphWidth, ROW_H } from "../lib/metrics";
+import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, DEFAULT_WIDTHS, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, OPTIONAL_COLUMNS, type OptionalColumnId, revealLaneOffset, ROW_H, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -16,12 +16,13 @@ export function GraphView({ store }: { store: RepoStore }) {
   useObserve(settings);
   const gw = graphWidth(store.maxLanes);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000 });
+  const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000, scrollbar: 0 });
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const update = () => setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth });
+    // the list's vertical scrollbar narrows the rows but not the header; the header pads by it so columns line up
+    const update = () => setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth, scrollbar: el.offsetWidth - el.clientWidth });
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -46,21 +47,86 @@ export function GraphView({ store }: { store: RepoStore }) {
     }
   });
 
-  // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
+  // the columns turned off, and the optional author, time and SHA turned on (a separate list, so they stay off by default);
+  // narrow windows drop SHA, time and author before the branch and graph columns shrink
   const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
-  const hiddenKey = hiddenColumns.join(",");
-  const cols = useMemo(() => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean))), [viewport.width, gw, hiddenKey]);
-  // the header's menu: which columns show (the message column always does)
-  const columnMenu = (): MenuItem[] => {
-    const toggle = (id: GraphColumnId) => settings.set("graphHiddenColumns", hiddenColumns.includes(id) ? hiddenColumns.filter((x) => x !== id) : [...hiddenColumns, id]);
-    return (
-      [
-        ["ref", t("Branch / Tag")],
-        ["graph", t("Graph")],
-        ["time", t("Time")],
-      ] as [GraphColumnId, string][]
-    ).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => toggle(id) }));
+  const shownColumns = settings.get<OptionalColumnId[]>("graphShownColumns", []);
+  const hiddenKey = hiddenColumns.join(","), shownKey = shownColumns.join(",");
+  // the widths the optional columns were dragged to; while a drag is on, its width shows before it is stored
+  const storedWidths = settings.get<Partial<ColumnWidths>>("graphColumnWidths", {});
+  const [dragWidth, setDragWidth] = useState<Partial<ColumnWidths> | null>(null);
+  const widths = columnWidths({ ...storedWidths, ...dragWidth });
+  const widthsKey = OPTIONAL_COLUMNS.map((id) => widths[id]).join(",");
+  const cols = useMemo(
+    () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths),
+    // the widths are read through their key, so a new object with the same widths leaves the rows alone
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [viewport.width, gw, hiddenKey, shownKey, widthsKey],
+  );
+  const resizeColumn = (id: OptionalColumnId, width: number, done: boolean) => {
+    if (!done) return setDragWidth({ [id]: width });
+    setDragWidth(null);
+    const next: Partial<ColumnWidths> = { ...columnWidths(storedWidths), [id]: width };
+    // only the widths that differ from the default are kept, so a reset or a new default reaches the rest
+    settings.set("graphColumnWidths", Object.fromEntries(OPTIONAL_COLUMNS.filter((key) => next[key] !== DEFAULT_WIDTHS[key]).map((key) => [key, next[key]])));
   };
+  // lanes beyond the column scroll sideways, all rows together, with one offset clamped to what does not fit
+  const fullWidth = graphFullWidth(store.maxLanes);
+  const laneOverflow = cols.graph > 0 ? Math.max(0, fullWidth - cols.graph) : 0;
+  const [laneOffsetState, setLaneOffset] = useState(0);
+  const laneOffset = clampLaneOffset(laneOffsetState, laneOverflow);
+  useEffect(() => { if (laneOffset !== laneOffsetState) setLaneOffset(laneOffset); }, [laneOffset, laneOffsetState]);
+  const laneOffsetRef = useRef(laneOffset);
+  laneOffsetRef.current = laneOffset;
+  const laneOverflowRef = useRef(laneOverflow);
+  laneOverflowRef.current = laneOverflow;
+  // A sideways trackpad swipe (or Shift+wheel) anywhere over the rows scrolls the lanes; vertical scrolling stays with the list.
+  // A native listener, because React's wheel handlers are passive and could not stop the list from taking the event.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (laneOverflowRef.current <= 0) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
+      if (!delta) return;
+      e.preventDefault();
+      setLaneOffset(clampLaneOffset(laneOffsetRef.current + delta, laneOverflowRef.current));
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  // a newly selected commit whose node is outside the visible lanes scrolls them into view
+  useEffect(() => {
+    const id = store.selectedID, i = id ? store.commitIndex.get(id) : undefined, entry = i === undefined ? undefined : store.entries[i];
+    if (!entry || laneOverflow <= 0) return;
+    const next = revealLaneOffset(laneOffsetRef.current, entry.row.column, cols.graph, laneOverflow);
+    if (next !== laneOffsetRef.current) setLaneOffset(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.selectedID]);
+  // the header's menu: which columns show (the message column always does), and a way back to the default layout
+  const changed = hiddenColumns.length > 0 || shownColumns.length > 0 || Object.keys(storedWidths).length > 0;
+  const columnMenu = (): MenuItem[] => [
+    ...([
+      ["ref", t("Branch / Tag")],
+      ["graph", t("Graph")],
+    ] as [GraphColumnId, string][]).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => settings.set("graphHiddenColumns", toggleColumn(hiddenColumns, id)) })),
+    ...([
+      ["author", t("Author")],
+      ["time", t("Date")],
+      ["sha", t("SHA")],
+    ] as [OptionalColumnId, string][]).map(([id, label]) => ({ label, checked: shownColumns.includes(id), onClick: () => settings.set("graphShownColumns", toggleColumn(shownColumns, id)) })),
+    "divider",
+    {
+      label: t("Reset to default layout"),
+      disabled: !changed,
+      onClick: () => {
+        settings.set("graphHiddenColumns", []);
+        settings.set("graphShownColumns", []);
+        settings.set("graphColumnWidths", {});
+      },
+    },
+  ];
+  const columnTitles: Record<OptionalColumnId, string> = { author: t("Author"), time: t("Date"), sha: t("SHA") };
   const entries = store.entries;
   const first = Math.max(0, Math.floor(viewport.top / ROW_H) - 10);
   const last = Math.min(entries.length, Math.ceil((viewport.top + viewport.height) / ROW_H) + 10);
@@ -77,22 +143,26 @@ export function GraphView({ store }: { store: RepoStore }) {
 
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
-      <SearchBar store={store} />
-      <div className="row" style={{ padding: "5px 10px", gap: 10, borderBottom: "1px solid var(--border)" }}>
-        <Button size="small" onClick={() => store.openRevisionComparison()}>{t("Compare revisions…")}</Button>
-        {!!store.historyTools.selected.length && <>
-          <span className="hint">{t("{0} selected", store.historyTools.selected.length)}</span>
-          <Button size="small" disabled={!!store.busy} onClick={() => void store.openBatchCommits()}>{t("Selected commits…")}</Button>
-          <Button size="small" onClick={() => store.clearGraphSelection()}>{t("Clear selection")}</Button>
-        </>}
-      </div>
-      <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
+      {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
+      <div className="graph-header" style={{ paddingRight: 12 + viewport.scrollbar }} onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
-        {cols.graph > 0 && <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>}
-        <span className="grow" style={{ paddingLeft: 20, flex: 1, minWidth: 0 }}>
-          {t("Commit message")}
+        {cols.graph > 0 && <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))} />}
+        <span className="graph-head-message">
+          <span className="graph-head-label">{t("Commit message")}</span>
         </span>
-        <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+        {OPTIONAL_COLUMNS.map((id) =>
+          cols[id] > 0 ? (
+            <span key={id} className={`head-opt head-${id}`} style={{ width: cols[id] }}>
+              <ColumnResizer id={id} width={cols[id]} onResize={(width, done) => resizeColumn(id, width, done)} />
+              <span className="head-opt-label">{columnTitles[id]}</span>
+            </span>
+          ) : null,
+        )}
+        {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
+        <span className="graph-head-tools" style={{ width: HEADER_TOOLS_W }}>
+          <GraphFilterButton store={store} />
+          <IconButton small icon={<Gear size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+        </span>
       </div>
       <div
         ref={scrollRef}
@@ -120,10 +190,11 @@ export function GraphView({ store }: { store: RepoStore }) {
                   store={store}
                   entry={e}
                   top={i * ROW_H}
-                  gw={gw}
+                  gw={fullWidth}
+                  laneOffset={laneOffset}
                   cols={cols}
                   refs={store.refsByCommit.get(e.commit.id)}
-                  selected={selected === e.commit.id || store.historyTools.selected.includes(e.commit.id)}
+                  selected={selected === e.commit.id}
                   isHead={e.commit.id === store.headHash}
                   wipCount={isWIP(e.commit) ? wipCount : worktreeRow(e.commit)?.count ?? 0}
                   wipLabel={worktreeRow(e.commit)?.label}
@@ -141,6 +212,72 @@ export function GraphView({ store }: { store: RepoStore }) {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * The graph column's header cell. When the lanes are wider than the column it carries a thin scrollbar
+ * (thumb sized visible/total); dragging it, or scrolling sideways or with Shift+wheel over the cell, moves every row's lanes.
+ */
+function LaneHeader({ width, total, offset, onOffset }: { width: number; total: number; offset: number; onOffset: (offset: number) => void }) {
+  const cell = useRef<HTMLSpanElement>(null);
+  const latest = useRef({ offset, onOffset });
+  latest.current = { offset, onOffset };
+  const overflow = Math.max(0, total - width);
+  // a native listener: React's wheel handlers are passive and could not keep the page from scrolling
+  useEffect(() => {
+    const el = cell.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
+      if (!delta) return;
+      e.preventDefault();
+      latest.current.onOffset(latest.current.offset + delta);
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  const track = Math.max(0, width - 12);
+  const thumb = laneThumb(offset, width, total, track);
+  const dragFrom = (e: React.PointerEvent<HTMLElement>, start: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget, x0 = e.clientX;
+    target.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => latest.current.onOffset(laneOffsetForThumb(start + ev.clientX - x0, track, thumb.size, overflow));
+    const up = () => {
+      target.removeEventListener("pointermove", move);
+      target.removeEventListener("pointerup", up);
+      target.removeEventListener("pointercancel", up);
+    };
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
+  };
+  return (
+    <span ref={cell} className="graph-head-cell" style={{ width }}>
+      <span className="graph-head-label">{t("Graph")}</span>
+      {overflow > 0 && (
+        <span
+          className="lane-scrollbar"
+          role="scrollbar"
+          aria-orientation="horizontal"
+          aria-label={t("Graph lanes")}
+          aria-valuemin={0}
+          aria-valuemax={overflow}
+          aria-valuenow={offset}
+          data-tip={t("Drag, or scroll sideways or with Shift+wheel here, to see more lanes")}
+          // a click on the track centres the thumb there and keeps dragging from that point
+          onPointerDown={(e) => {
+            const start = e.clientX - e.currentTarget.getBoundingClientRect().left - thumb.size / 2;
+            onOffset(laneOffsetForThumb(start, track, thumb.size, overflow));
+            dragFrom(e, Math.min(Math.max(0, start), track - thumb.size));
+          }}
+        >
+          <span className="lane-scrollbar-thumb" style={{ width: thumb.size, left: thumb.start }} onPointerDown={(e) => dragFrom(e, thumb.start)} />
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -176,14 +313,14 @@ function SearchBar({ store }: { store: RepoStore }) {
               if (e.shiftKey) store.previousMatch();
               else store.nextMatch();
             } else if (e.key === "Escape") {
-              store.clearSearch();
-              input.current?.blur();
+              e.preventDefault();
+              store.closeSearchBar();
             }
           }}
         />
         {store.searching && <Spinner size={12} />}
         {store.searchText && (
-          <button className="icon-btn small" data-tip={t("Clear search (Esc)")} onClick={() => store.clearSearch()}>
+          <button className="icon-btn small" aria-label={t("Clear search")} data-tip={t("Clear search")} onClick={() => store.clearSearch()}>
             <X size={13} />
           </button>
         )}
@@ -201,7 +338,6 @@ function SearchBar({ store }: { store: RepoStore }) {
           </option>
         ))}
       </select>
-      <GraphFilterButton store={store} />
       {store.isSearching && (
         <>
           <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
@@ -221,6 +357,8 @@ function SearchBar({ store }: { store: RepoStore }) {
           )}
         </>
       )}
+      <span className="spacer" />
+      <IconButton small icon={<X size={14} />} className="search-close" aria-label={t("Close search")} tip={t("Close search (Esc)")} onClick={() => store.closeSearchBar()} />
     </div>
   );
 }
@@ -230,12 +368,12 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
   const hidden = store.hiddenRefs.size;
   const active = store.graphCurrentOnly || hidden > 0;
   return (
-    <button
-      type="button"
-      className={`tool ${active ? "on" : ""}`}
-      style={{ gap: 4, color: active ? "var(--accent)" : undefined }}
+    <IconButton
+      small
+      className={`graph-filter ${active ? "on" : ""}`}
+      style={{ color: active ? "var(--accent)" : undefined }}
       aria-label={t("Filter graph")}
-      data-tip={t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
+      tip={store.graphCurrentOnly ? t("Current branch only") : hidden > 0 ? t("Hidden {0}", hidden) : t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
       onClick={(e) =>
         showMenuBelow(e.currentTarget, [
           { label: t("Show only the current branch"), checked: store.graphCurrentOnly, onClick: () => void store.setCurrentOnly(!store.graphCurrentOnly) },
@@ -243,9 +381,34 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
           { label: hidden ? t("Show all {0} hidden branches", hidden) : t("No hidden branches"), disabled: !hidden, onClick: () => void store.showAllBranches() },
         ])
       }
-    >
-      <ListFilter size={15} />
-      {store.graphCurrentOnly ? <span style={{ fontSize: 11.5 }}>{t("Current branch only")}</span> : hidden > 0 ? <span style={{ fontSize: 11.5 }}>{t("Hidden {0}", hidden)}</span> : null}
-    </button>
+      // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
+      icon={<ListFilter size={13} />}
+    />
+  );
+}
+
+/** The left edge of an optional column's label: drag it sideways to change the column's width (macOS: ColumnResizer) */
+function ColumnResizer({ id, width, onResize }: { id: OptionalColumnId; width: number; onResize: (width: number, done: boolean) => void }) {
+  return (
+    <span
+      className="col-resizer"
+      data-tip={t("Drag to resize the column")}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX;
+        // the handle is on the column's left, so dragging left widens it
+        const at = (x: number) => clampColumnWidth(id, width - (x - startX));
+        const move = (ev: PointerEvent) => onResize(at(ev.clientX), false);
+        const up = (ev: PointerEvent) => {
+          window.removeEventListener("pointermove", move);
+          window.removeEventListener("pointerup", up);
+          onResize(at(ev.clientX), true);
+        };
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", up);
+      }}
+    />
   );
 }

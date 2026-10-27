@@ -78,7 +78,6 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(40);
   };
   let releaseName = "Desktop 1.0",
-    starred = false,
     projectEmpty = false,
     projectName = "Roadmap",
     createdField = false,
@@ -101,17 +100,6 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
           "https://github.com/team/repo/releases/download/v1.0/Desktop.zip",
       },
     ],
-  });
-  const gist = () => ({
-    id: "gist1",
-    description: "Review sample",
-    owner: { login: "me" },
-    public: false,
-    updated_at: "stable",
-    html_url: "https://gist.github.com/me/gist1",
-    files: {
-      "sample.ts": { content: "export const answer = 42;", truncated: false },
-    },
   });
   const sharedView = () => ({
     id: "VIEW",
@@ -268,7 +256,6 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
         writes.push({ method, url, body: payload });
         if (method === "PATCH" && url.includes("/releases/1"))
           releaseName = String(payload.name);
-        if (url.endsWith("/star")) starred = method === "PUT";
       } else if (u.pathname.endsWith("/releases")) result = [release()];
       else if (u.pathname.endsWith("/releases/1")) result = release();
       else if (u.pathname === "/user/orgs")
@@ -291,11 +278,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
         ];
       else if (u.pathname.endsWith("/orgs/team/members"))
         result = [{ id: 7, login: "reviewer" }];
-      else if (u.pathname === "/gists") result = [gist()];
-      else if (u.pathname === "/gists/gist1") result = gist();
-      else if (u.pathname.endsWith("/star")) {
-        status = starred ? 204 : 404;
-      } else if (u.pathname.endsWith("/issues/2"))
+      else if (u.pathname.endsWith("/issues/2"))
         result = { node_id: "ISSUE" };
       else
         throw new Error(`Unexpected fixture request: ${method} ${u.pathname}`);
@@ -850,26 +833,17 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       "Organization members did not render",
     );
     details.push("organization icons + repositories + members + clone");
-    await mount(<HostingHubPanel store={source} section="gists" />);
-    ensure(
-      await until(() => !!host.querySelector("button.hub-item")),
-      "Gist list did not render",
-    );
+    await mount(<HostingHubPanel store={source} section="releases" />);
+    ensure(await until(() => !!host.querySelector("button.hub-item")), "Release list did not render again");
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
-    ensure(await until(() => !!button("Star")), "Gist detail did not render");
-    ensure(
-      host.textContent?.includes("export const answer = 42;") === true,
-      "Gist file content missing",
-    );
-    button("Star")!.click();
-    ensure(await until(() => !!button("Unstar")), "Gist star did not refresh");
+    ensure(await until(() => !!button("Delete")), "Release delete control missing");
     button("Delete")!.click();
     await pause(25);
     const before = writes.length;
     button("Cancel")!.click();
     await pause(25);
-    ensure(writes.length === before, "Cancel deleted gist");
-    details.push("gist files + star + delete cancellation");
+    ensure(writes.length === before, "Cancel deleted the release");
+    details.push("release delete cancellation");
     return [true, details.join("; ")];
   } catch (e) {
     return [

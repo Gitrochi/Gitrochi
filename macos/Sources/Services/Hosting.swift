@@ -187,17 +187,6 @@ enum Hosting {
         }
     }
 
-    static func pullRequests(_ t: RepoTarget, token: String, apiBase: String) async throws -> [PullRequest] {
-        switch t.provider {
-        case .github:
-            let req = try request(.github, apiBase + "/repos/\(t.path)/pulls?state=open&per_page=50&sort=updated&direction=desc", token: token)
-            return try await send([GHPull].self, req).map { pull($0, repoPath: t.path) }
-        case .gitlab:
-            let req = try request(.gitlab, apiBase + "/projects/\(projectID(t.path))/merge_requests?state=opened&per_page=50&order_by=updated_at", token: token)
-            return try await send([GLMergeRequest].self, req).map(merge)
-        }
-    }
-
     static func defaultBranch(_ t: RepoTarget, token: String, apiBase: String) async throws -> String? {
         switch t.provider {
         case .github:

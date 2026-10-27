@@ -414,9 +414,10 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         try capture("toolbar-style-reinstalled")
         precondition(equal(window.frame, beforeStyleRefresh), "A later toolbar style refresh must preserve the outer frame")
 
-        window.styleMask.insert(.fullSizeContentView)
         var explicitToolbarFrame = window.frame
         explicitToolbarFrame.size.width += 40
+        // Resize from the safe outer frame; the style mutation can temporarily shrink its height.
+        window.styleMask.insert(.fullSizeContentView)
         window.setFrame(explicitToolbarFrame, display: false)
         window.styleMask.insert(.fullSizeContentView)
         try capture("toolbar-style-before-explicit-resize")

@@ -28,7 +28,7 @@ struct GitchSection: View {
         Section {
             Text("gitch is already included in Gitrochi. No separate download is needed, and installing its terminal command is optional.")
                 .font(.callout).foregroundStyle(.secondary)
-            Text("Command guides and diagnostics are available in Tools in the left sidebar.").font(.caption).foregroundStyle(.secondary)
+            Button("Get started with Git accounts…") { guide = .guide }
             Text("gitch keeps several Git accounts apart: it locks each repository to an account, picks the account by folder or organization, and blocks wrong authors, secrets and force pushes in git hooks, in the terminal, for AI agents and in Gitrochi.")
                 .font(.callout).foregroundStyle(.secondary)
             LabeledContent("Version in Gitrochi") { Text(bundledVersion ?? "—").font(.callout.monospaced()) }
@@ -46,6 +46,7 @@ struct GitchSection: View {
                 Button("Add Git account…") { addAccount = true }
                 Button(Gitch.installedIsBundled ? "Reinstall…" : "Install…") { confirmInstall = true }
                     .disabled(!hasAccounts || busy || bundledVersion == nil)
+                Button("Check setup…") { guide = .diagnostics }.disabled(Gitch.executable == nil)
                 Spacer()
                 if busy { ProgressView().controlSize(.small) }
             }

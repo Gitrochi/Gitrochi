@@ -162,15 +162,6 @@ export async function me(p: Provider, token: string, apiBase: string): Promise<M
   return { username: u.username, name: u.name ?? null, avatarURL: u.avatar_url ?? null };
 }
 
-export async function pullRequests(target: RepoTarget, token: string, apiBase: string): Promise<PullRequest[]> {
-  if (target.provider === "github") {
-    const list = await send<GHPull[]>("github", `${apiBase}/repos/${target.path}/pulls?state=open&per_page=50&sort=updated&direction=desc`, token);
-    return list.map((p) => fromPull(p, target.path));
-  }
-  const list = await send<GLMergeRequest[]>("gitlab", `${apiBase}/projects/${projectID(target.path)}/merge_requests?state=opened&per_page=50&order_by=updated_at`, token);
-  return list.map(fromMerge);
-}
-
 export async function defaultBranch(target: RepoTarget, token: string, apiBase: string): Promise<string | null> {
   if (target.provider === "github") return (await send<GHRepo>("github", `${apiBase}/repos/${target.path}`, token)).default_branch ?? null;
   return (await send<GLProject>("gitlab", `${apiBase}/projects/${projectID(target.path)}`, token)).default_branch ?? null;

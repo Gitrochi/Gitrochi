@@ -39,7 +39,9 @@
 .graph-header {
   display: flex;
   align-items: center;
-  height: 26px;
+  /* the same height as the commit detail header (inspector .panel-head.commit-head) so the dividers line up */
+  height: 32px;
+  box-sizing: border-box;
   padding-right: 12px;
   font-size: 11.5px;
   font-weight: 600;
@@ -57,9 +59,64 @@
   text-overflow: ellipsis;
 }
 
-/* 좁아서 그래프 칸이 잘렸으면 오른쪽 끝을 흐리게 */
-.graph-clipped {
+/* lanes that do not fit fade out at the edge where more of them are hidden */
+.graph-cell.fade-right {
   mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent);
+}
+
+.graph-cell.fade-left {
+  mask-image: linear-gradient(to right, transparent, #000 16px);
+}
+
+.graph-cell.fade-left.fade-right {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+
+.lane-shift {
+  display: flex;
+  flex: none;
+}
+
+/* the graph column's header: its label and, when lanes do not fit, a thin scrollbar along the bottom */
+.graph-header > .graph-head-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 6px;
+}
+
+.graph-head-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane-scrollbar {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 2px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  cursor: pointer;
+}
+
+.lane-scrollbar:hover {
+  height: 6px;
+}
+
+.lane-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 38%, transparent);
+  cursor: grab;
+}
+
+.lane-scrollbar-thumb:active {
+  cursor: grabbing;
 }
 
 .graph-scroll {
@@ -74,7 +131,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-right: 12px;
   height: 28px;
   font-size: 12.5px;
   position: absolute;
@@ -82,17 +138,17 @@
   right: 0;
 }
 
-/* Hover, selection and search hits tint only the message, at the band's height (rows stay apart) */
-.commit-row:hover .msg {
+/* Hover, selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart) */
+.commit-row:hover .row-tail {
   background: var(--hover);
 }
 
-.commit-row.selected .msg,
-.commit-row.selected.hit .msg {
+.commit-row.selected .row-tail,
+.commit-row.selected.hit .row-tail {
   background: var(--select);
 }
 
-.commit-row.hit .msg {
+.commit-row.hit .row-tail {
   background: var(--hit);
 }
 
@@ -183,15 +239,24 @@
   object-fit: cover;
 }
 
-.commit-row .msg {
+.commit-row .row-tail {
   flex: 1;
   min-width: 0;
   height: 24px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  box-sizing: border-box;
   /* the bar meets the band: cancel the row's gap */
   margin-left: -8px;
+}
+
+.commit-row .msg {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
 }
 
@@ -233,12 +298,79 @@
   }
 }
 
-.commit-row .msg-time {
+/* the optional author, time and SHA columns at the row's right end, under their header labels;
+   the text starts 8px in from the column's left edge, where the header's resize handle is (macOS: GraphMetrics.columnInset) */
+.commit-row .col-opt,
+.graph-header > .head-opt {
   flex: none;
-  margin-left: auto;
+  box-sizing: border-box;
   padding-left: 8px;
+  white-space: nowrap;
+}
+
+.commit-row .col-opt {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11.5px;
   color: var(--text-2);
+}
+
+.graph-header > .head-opt {
+  position: relative;
+  overflow: visible;
+}
+
+.graph-header .head-opt-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* drag an optional column's left edge to change its width */
+.graph-header .col-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: col-resize;
+}
+
+.graph-header .col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 3.5px;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+/* the filter and column menus sit at the header's right end in a fixed-width box */
+.graph-header > .graph-head-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* the message header: its label, taking the room left over */
+.graph-header > .graph-head-message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  padding-left: 20px;
+}
+
+.graph-head-message > .graph-head-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.graph-head-message > .icon-btn {
+  flex: none;
 }
 
 .wip-chip {
@@ -246,4 +378,8 @@
   font-weight: 600;
   padding: 0 6px;
   border-radius: 999px;
+}
+
+.searchbar .search-close {
+  flex: none;
 }

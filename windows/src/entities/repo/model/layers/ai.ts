@@ -5,7 +5,7 @@ import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { describe, git } from "@/shared/platform";
-import { RepoHosting } from "./hosting";
+import { RepoIssues } from "./issues";
 
 export interface ChangeQuestionSession {
   readonly repository: string;
@@ -30,7 +30,7 @@ const changeQuestionConfiguration = () => {
 };
 
 /** AI: 커밋 메시지·설명·PR 글, 나눠서 커밋 */
-export abstract class RepoAI extends RepoHosting {
+export abstract class RepoAI extends RepoIssues {
   changeQuestionSession: ChangeQuestionSession | null = null;
 
   /** 보내기 전에는 AI를 호출하지 않고, 사용자가 확인할 로컬 스냅샷만 준비한다. */

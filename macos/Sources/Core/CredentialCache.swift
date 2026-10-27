@@ -13,10 +13,13 @@ struct CredentialReadResult: Sendable {
 final class CredentialCache {
     enum State: Equatable { case loading, ready, authorizationRequired, unavailable }
     typealias Reader = @Sendable (String) async -> CredentialReadResult
+    /// A failed read is tried again this much later, so a denied system prompt does not come straight back.
+    @ObservationIgnored var retryInterval: TimeInterval = 30
     private var values: [String: String] = [:]
     private var states: [String: State] = [:]
     @ObservationIgnored private var reads: [String: Task<Void, Never>] = [:]
     @ObservationIgnored private var generations: [String: UUID] = [:]
+    @ObservationIgnored private var failures: [String: Date] = [:]
     @ObservationIgnored private let reader: Reader
     @ObservationIgnored var onChange: (() -> Void)?
 
@@ -30,8 +33,11 @@ final class CredentialCache {
         return nil
     }
 
+    /// Starts a read unless the value is known, a read is in flight, or the last failure is still fresh.
+    /// A failure is never final: the next access after the back-off reads again.
     func prepare(_ name: String) {
-        guard states[name] == nil else { return }
+        guard values[name] == nil, states[name] != .loading, reads[name] == nil else { return }
+        if let failed = failures[name], Date().timeIntervalSince(failed) < retryInterval { return }
         let attempt = begin(name)
         let reader = reader
         reads[name] = Task { [weak self] in
@@ -39,6 +45,14 @@ final class CredentialCache {
             guard !Task.isCancelled else { return }
             self?.complete(name, attempt: attempt, result: result)
         }
+    }
+
+    /// Waits for the read in flight, so a loader shows progress instead of "no account" while the system prompt is up.
+    func awaitValue(_ name: String) async -> String? {
+        if let value = values[name] { return value }
+        prepare(name)
+        while let read = reads[name] { await read.value }
+        return values[name]
     }
 
     /// 명시적 승인·새 토큰 저장·해제는 이전 자동 읽기의 결과를 무효화한다.
@@ -56,6 +70,7 @@ final class CredentialCache {
         reads.removeValue(forKey: name)
         values[name] = result.value
         states[name] = result.value == nil ? (result.requiresAuthorization ? .authorizationRequired : .unavailable) : .ready
+        failures[name] = result.value == nil ? Date() : nil
         onChange?()
     }
 

@@ -15,6 +15,8 @@ extension RepoStore {
     }
 
     func resetCI() {
+        ciFocus = nil
+        ciSelected = nil
         ciPipelines = []
         ciJobs = [:]
         ciDeployments = [:]
@@ -58,13 +60,22 @@ extension RepoStore {
         if hostingAccount == nil, !accounts.accounts(for: t.provider).isEmpty {
             await accounts.discoverAlias(for: t, sameAddressOnly: true)
         }
-        guard let c = ciAccess else {
+        guard let a = hostingAccount else {
             if t.provider == .gitlab { accounts.suggestedGitLabServer = "https://\(t.host)" }
             ciPipelines = []
             ciState = .needsAccount
             return
         }
         if !silent || ciState != .loaded { ciState = .loading }
+        // The keychain may still be asking the user; that is loading, not a missing account.
+        let token = await accounts.loadToken(for: a)
+        guard target == t else { return }
+        guard let token else {
+            ciPipelines = []
+            ciState = credentialLoadState(for: a)
+            return
+        }
+        let c = CIAccess(target: t, token: token, apiBase: a.apiBase)
         do {
             let list = try await CIAPI.pipelines(t, token: c.token, apiBase: c.apiBase, ref: ciCurrentBranchOnly ? ciCurrentRef : nil)
             guard target == t else { return }
@@ -84,6 +95,29 @@ extension RepoStore {
             // 자동 새로 고침이 한 번 실패한 것으로 목록을 지우지 않는다
             if !silent || ciPipelines.isEmpty { ciState = .failed(describe(error)) }
         }
+    }
+
+    /// Opens the Actions page on this pipeline, from a commit's CI icon
+    func openCI(_ pipeline: CIPipeline) {
+        guard navigate(.actions) else { return }
+        ciFocus = pipeline.id
+        if !ciPipelines.contains(where: { $0.id == pipeline.id }) {
+            // the badge came from the commit's SHA; the list may be filtered to another branch
+            if ciCurrentBranchOnly, pipeline.ref != ciCurrentRef { ciCurrentBranchOnly = false } else { Task { await loadCI() } }
+        }
+    }
+
+    /// GitLab runs have no title; the local commit's subject stands in
+    func ciTitle(_ p: CIPipeline) -> String {
+        if !p.title.isEmpty { return p.title }
+        if let i = commitIndex[p.sha] { return entries[i].commit.subject }
+        return p.name.isEmpty ? String(p.sha.prefix(8)) : p.name
+    }
+
+    /// Shows the run on the right of the Actions page and reads its jobs
+    func selectRun(_ p: CIPipeline) {
+        ciSelected = p.id
+        Task { await loadJobs(p) }
     }
 
     func loadJobs(_ p: CIPipeline, silent: Bool = false) async {

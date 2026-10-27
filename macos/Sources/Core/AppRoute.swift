@@ -10,7 +10,34 @@ struct AppRoute: Equatable {
 
     enum Invalid: Error, LocalizedError {
         case link
-        var errorDescription: String? { String(localized: "Couldn't open the app link. Use an absolute repository path and a file inside that repository.") }
+        case notInRepository(String)
+        var errorDescription: String? {
+            switch self {
+            case .link: return String(localized: "Couldn't open the app link. Use an absolute repository path and a file inside that repository.")
+            case .notInRepository(let name): return String(localized: "Couldn't open \(name): it isn't inside a Git repository.")
+            }
+        }
+    }
+
+    /// A folder or file handed to the app (Finder's Open With, the Dock icon, `open -a`): open the repository that holds it.
+    /// (Windows: src-tauri/src/launch.rs, folder_route)
+    init(opening item: URL) throws {
+        let fm = FileManager.default
+        var folder = item.standardizedFileURL.resolvingSymlinksInPath()
+        var isDirectory: ObjCBool = false
+        guard fm.fileExists(atPath: folder.path, isDirectory: &isDirectory) else { throw Invalid.notInRepository(item.lastPathComponent) }
+        if !isDirectory.boolValue { folder.deleteLastPathComponent() }
+        var root = folder
+        // .git is a folder in a repository and a file in a linked worktree
+        while !fm.fileExists(atPath: root.appendingPathComponent(".git").path) {
+            guard root.path != "/" else { throw Invalid.notInRepository(item.lastPathComponent) }
+            root.deleteLastPathComponent()
+        }
+        repo = root
+        file = nil
+        line = nil
+        view = nil
+        commit = nil
     }
 
     init(url: URL) throws {

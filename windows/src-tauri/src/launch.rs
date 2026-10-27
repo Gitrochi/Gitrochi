@@ -74,13 +74,35 @@ pub fn parse(raw: &str) -> Result<Route, String> {
     Ok(Route { repo, file, line, view, commit })
 }
 
+/// A folder or file passed on the command line (Open with, a shortcut): open the repository that holds it.
+/// (macOS: AppRoute.init(opening:))
+pub fn folder_route(raw: &str) -> Option<Result<Route, String>> {
+    let path = Path::new(raw);
+    if !path.is_absolute() || !path.exists() { return None; }
+    let start = path.canonicalize().ok()?;
+    let mut root = if start.is_dir() { start } else { start.parent()?.to_path_buf() };
+    // .git is a folder in a repository and a file in a linked worktree
+    while !root.join(".git").exists() {
+        if !root.pop() {
+            let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| raw.to_string());
+            return Some(Err(format!("Couldn't open {name}: it isn't inside a Git repository.")));
+        }
+    }
+    let text = root.to_string_lossy().to_string();
+    let repo = if let Some(unc) = text.strip_prefix("\\\\?\\UNC\\") { format!("\\\\{unc}") }
+        else { text.strip_prefix("\\\\?\\").unwrap_or(&text).to_string() };
+    Some(Ok(Route { repo, file: None, line: None, view: None, commit: None }))
+}
+
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<Result<Route, String>>>);
 
 pub fn receive(app: &AppHandle, args: Vec<String>) {
     let state = app.state::<Pending>();
     if let Ok(mut queue) = state.0.lock() {
-        for arg in args.into_iter().filter(|s| s.starts_with("gitrochi:")) { queue.push(parse(&arg)); }
+        for arg in args {
+            if arg.starts_with("gitrochi:") { queue.push(parse(&arg)); } else if let Some(route) = folder_route(&arg) { queue.push(route); }
+        }
     }
     let _ = app.emit("app-launch", ());
 }
@@ -123,6 +145,23 @@ mod tests {
             bad.query_pairs_mut().append_pair(key, value);
             assert!(parse(bad.as_str()).is_err(), "{key}={value}");
         }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn folders_open_their_repository() {
+        let dir = std::env::temp_dir().join(format!("gitrochi-folder-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(".git")).unwrap();
+        std::fs::create_dir_all(dir.join("src/deep")).unwrap();
+        std::fs::write(dir.join("src/deep/a.txt"), "x").unwrap();
+        let root = dir.canonicalize().unwrap().to_string_lossy().to_string();
+        for item in [dir.clone(), dir.join("src/deep"), dir.join("src/deep/a.txt")] {
+            let route = folder_route(&item.to_string_lossy()).unwrap().unwrap();
+            assert_eq!(route.repo.trim_start_matches("\\\\?\\"), root.trim_start_matches("\\\\?\\"));
+            assert!(route.file.is_none());
+        }
+        assert!(folder_route("relative/path").is_none());
+        assert!(folder_route(&dir.join("missing").to_string_lossy()).is_none());
         std::fs::remove_dir_all(dir).unwrap();
     }
 }

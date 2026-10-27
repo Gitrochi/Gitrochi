@@ -1,1 +1,1 @@
-export { CompareRevisionsSheet, BatchCommitsSheet, LineHistorySheet } from "./ui/HistoryToolsSheets";
+export { CompareRevisionsSheet, BatchCommitsSheet, LineHistorySheet, RevisionPicker } from "./ui/HistoryToolsSheets";

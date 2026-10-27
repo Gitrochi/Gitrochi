@@ -1,6 +1,7 @@
 //! Gitrochi 백엔드: 화면(웹)은 여기 명령으로 git·셸·파일·네트워크·자격 증명을 다룬다.
 //! git 동작은 새로 구현하지 않고 시스템 git 을 그대로 실행한다.
 
+mod agents;
 pub mod helper;
 mod net;
 mod launch;
@@ -65,6 +66,8 @@ pub fn run() {
             system::fs_read_base64,
             system::fs_write_temp,
             process::which,
+            agents::external_agents,
+            agents::bring_app_forward,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,

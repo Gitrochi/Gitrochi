@@ -29,9 +29,12 @@ enum AccountConnectionFailure {
     private var cache = CredentialCache { _ in fatalError("Unexpected credential reader") }
     private var approvals: [String: CheckedContinuation<Void, Error>] = [:]
     private(set) var approvedAccounts: [String] = []
+    var holdTokenLoads = false
+    private var tokenLoads: [String: CheckedContinuation<String?, Never>] = [:]
 
     func reset(_ accounts: [HostAccount]) {
-        precondition(approvals.isEmpty, "An approval fixture was left suspended")
+        precondition(approvals.isEmpty && tokenLoads.isEmpty, "An approval fixture was left suspended")
+        holdTokenLoads = false
         self.accounts = accounts; revision = 0; approvedAccounts = []
         cache = CredentialCache { _ in fatalError("Unexpected credential reader") }
         cache.onChange = { [weak self] in self?.revision += 1 }
@@ -44,6 +47,17 @@ enum AccountConnectionFailure {
         cache.complete(account.id, attempt: attempt, result: CredentialReadResult(value: state == .ready ? "fixture-" + account.id : nil, status: status))
     }
     func token(for account: HostAccount) -> String? { cache.value(account.id) }
+    func loadToken(for account: HostAccount) async -> String? {
+        if holdTokenLoads { return await withCheckedContinuation { tokenLoads[account.id] = $0 } }
+        return cache.value(account.id)
+    }
+    func awaitsAccess(_ account: HostAccount) -> Bool { [.loading, .authorizationRequired].contains(credentialState(for: account)) }
+    func pendingToken(_ account: HostAccount) -> Bool { tokenLoads[account.id] != nil }
+    func finishToken(_ account: HostAccount) {
+        guard let continuation = tokenLoads.removeValue(forKey: account.id) else { fatalError("No pending fixture token load") }
+        set(.ready, for: account)
+        continuation.resume(returning: "fixture-" + account.id)
+    }
     func credentialState(for account: HostAccount) -> CredentialCache.State { cache.state(account.id) }
     func candidates(for target: RepoTarget) -> [HostAccount] { accounts.filter { $0.provider == target.provider && $0.host == target.host } }
     func allowStoredAccess(for account: HostAccount) async throws {
@@ -216,7 +230,41 @@ enum AccountConnectionFailure {
             try await HostingHubAPI.saveProjectDraft(c, detail: guarded.hostingHub.detail!, title: "Confirmed after refresh", body: "")
         }
         precondition(verifiedCreation && mutations == 2 && !guarded.hostingHub.busy, "A refreshed project remained blocked")
-        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations and uncertain-write recovery passed (fake credentials and HTTP only)")
+        let delayed = fixture()
+        accounts.set(.ready, for: first); accounts.holdTokenLoads = true
+        let delayedRead = Task { await delayed.activateHostingHub(.projects) }
+        await until { accounts.pendingToken(first) }
+        let beforeRevision = accounts.revision
+        accounts.finishToken(first)
+        await delayedRead.value
+        precondition(accounts.revision > beforeRevision && Hosting.requests.count == 1 && delayed.hostingHub.items.first?.id == first.username,
+                     "A normal delayed credential read must accept its own completion revision")
+
+        for switchAccount in [false, true] {
+            let waiting = fixture()
+            accounts.set(.ready, for: first); accounts.holdTokenLoads = true
+            let read = Task { await waiting.activateHostingHub(.projects) }
+            await until { accounts.pendingToken(first) }
+            if switchAccount { waiting.hostingHub.selectedAccountID = second.id }
+            else { waiting.url = URL(fileURLWithPath: "/fixture/changed", isDirectory: true) }
+            accounts.finishToken(first)
+            await read.value
+            precondition(Hosting.requests.isEmpty, "A delayed token loaded a switched repository or hub account")
+        }
+        let changedProject = fixture()
+        accounts.set(.ready, for: first)
+        changedProject.hostingHub.section = .projects
+        changedProject.hostingHub.detail = HubDetail(item: projectA)
+        accounts.holdTokenLoads = true
+        var delayedWrites = 0
+        let delayedAction = Task { await changedProject.hostingHubAction(expected: changedProject.hubActionStamp) { _ in delayedWrites += 1 } }
+        await until { accounts.pendingToken(first) }
+        changedProject.hostingHub.detail = HubDetail(item: projectB)
+        changedProject.hostingHub.detailID = UUID()
+        accounts.finishToken(first)
+        let delayedSaved = await delayedAction.value
+        precondition(!delayedSaved && delayedWrites == 0 && Hosting.requests.isEmpty, "A changed project reached an action after waiting for credentials")
+        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token context guards and uncertain-write recovery passed (fake credentials and HTTP only)")
     }
 }
 SWIFT

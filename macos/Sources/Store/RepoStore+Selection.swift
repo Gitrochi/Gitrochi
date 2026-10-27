@@ -96,7 +96,7 @@ extension RepoStore {
 
     /// 사이드바에서 브랜치·태그를 누르면 그래프에서 해당 커밋을 찾아 보여 준다.
     func reveal(_ sha: String) {
-        navigate(.commits, prepare: false)
+        navigate(.repository, prepare: false)
         if commitIndex[sha] != nil || stashes.contains(where: { $0.hash == sha }) {
             select(.commit(sha))
             scrollTarget = sha
@@ -140,10 +140,8 @@ extension RepoStore {
     // MARK: - Diff
 
     func openDiff(_ source: DiffSource, revealPage: Bool = true) {
-        let page: WorkspaceDestination
-        switch source { case .working: page = .changes; case .review: page = .pullRequests; default: page = .commits }
-        let currentPage = destination == .repository ? repositorySection.destination : destination
-        if revealPage, currentPage != page { navigate(page, prepare: page == .changes) }
+        let page: WorkspaceDestination = { if case .review = source { return .pullRequests } else { return .repository } }()
+        if revealPage, destination != page { navigate(page, prepare: false) }
         if case .working = source, area != .changes { showArea(.changes) }
         if fileInspect != nil { closeFileInspect() }
         guard source != diffSource else { return }

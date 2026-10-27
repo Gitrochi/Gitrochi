@@ -34,7 +34,7 @@ extension RepoStore {
         } else if let view = route.view, let relation = Gitch.GraphRelation(rawValue: view) {
             await openStructureGraph(relation)
         } else {
-            navigate(.commits)
+            navigate(.repository)
             closeFileInspect()
             closeDiff()
         }

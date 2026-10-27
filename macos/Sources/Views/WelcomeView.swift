@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// 저장소를 열기 전 첫 화면: 열기·복제·새로 만들기 + 최근 저장소
+/// Home: open, clone or create a repository, the recent list and a search of repositories on a server
 struct WelcomeView: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var dropping = false
@@ -68,8 +68,10 @@ struct WelcomeView: View {
                     }
                     .listStyle(.sidebar)
                 }
+                Divider()
+                RemoteRepositorySearch().frame(maxHeight: .infinity)
             }
-            .frame(width: 320)
+            .frame(width: 340)
         }
         .sheet(isPresented: $showGitSetup) { GitchGuideSheet(repo: store) }
         .dropDestination(for: URL.self) { urls, _ in

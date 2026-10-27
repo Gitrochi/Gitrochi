@@ -1,1 +1,2 @@
-export { WorkspaceHomePanel, RepositoryLibraryPanel, WorkInboxPanel, MyWorkPanel, IssuesWorkspacePanel, ActionsWorkspacePanel, OperationsWorkspacePanel, type WorkspacePanelProps } from "./ui/WorkspacePanels";
+export { WorkInboxPanel, MyWorkPanel, ActionsWorkspacePanel } from "./ui/WorkspacePanels";
+export { WorkspaceHomePanel } from "./ui/WorkspaceHomePanel";

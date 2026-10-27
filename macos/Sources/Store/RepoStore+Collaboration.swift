@@ -5,6 +5,15 @@ extension RepoStore {
         guard let target, let a = hostingAccount, let token = AccountStore.shared.token(for: a) else { return nil }
         return ReviewAccess(target: target, token: token, apiBase: a.apiBase, me: a.username)
     }
+    /// Waits while the keychain asks the user, so a slow approval is not reported as a missing account.
+    func resolveCollaborationAccess() async -> ReviewAccess? {
+        guard let target, let a = hostingAccount, let token = await AccountStore.shared.loadToken(for: a) else { return nil }
+        return ReviewAccess(target: target, token: token, apiBase: a.apiBase, me: a.username)
+    }
+    /// Why the inbox has no access: the saved account needs the user's approval, or no account is connected.
+    private var inboxAccessMessage: String {
+        pendingCredentialAccount == nil ? String(localized: "Connect an account to load your inbox.") : String(localized: "Allow access to the saved account to use repository services.")
+    }
     func filterPullRequests(scope: String, search: String) async {
         collaboration.query = RequestQuery(scope: scope, search: search, page: 1)
         await loadPullRequests()
@@ -82,7 +91,9 @@ extension RepoStore {
         state.inboxKind = kind; state.inboxLoading = true; state.inboxError = nil
         if !append { state.inbox = []; state.inboxDetail = nil; state.detailID = UUID() }
         defer { if current() { state.inboxLoading = false } }
-        guard let c = collaborationAccess else { state.inboxError = String(localized: "Connect an account to load your inbox."); return }
+        let access = await resolveCollaborationAccess()
+        guard current() else { return }
+        guard let c = access else { state.inboxError = inboxAccessMessage; return }
         do {
             let (items, more) = try await CollaborationAPI.inbox(c, kind: kind, page: page)
             guard current() else { return }
@@ -98,7 +109,9 @@ extension RepoStore {
         state.inboxDetail = previous ?? CollaborationInboxDetail(item: item, comments: [], page: 0)
         state.inboxLoading = true; state.inboxError = nil
         defer { if current() { state.inboxLoading = false } }
-        guard let c = collaborationAccess else { state.inboxError = String(localized: "Connect an account to load your inbox."); return }
+        let access = await resolveCollaborationAccess()
+        guard current() else { return }
+        guard let c = access else { state.inboxError = inboxAccessMessage; return }
         do {
             var detail = try await CollaborationAPI.detail(c, item: item, page: (previous?.page ?? 0) + 1)
             guard current() else { return }

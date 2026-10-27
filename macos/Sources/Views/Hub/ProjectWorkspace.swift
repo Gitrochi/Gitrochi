@@ -357,7 +357,7 @@ struct ProjectWorkspace: View {
         guard store.hubProvider == .github, let detail, store.hubCredentialState == .ready else { return }
         let read = UUID(), stamp = store.hubActionStamp; viewsRead = read
         do {
-            let result = try await HostingHubAPI.projectViews(store.hubAccess(), detail: detail)
+            let result = try await HostingHubAPI.projectViews(await store.hubAccess(), detail: detail)
             guard read == viewsRead, store.hubActionStamp == stamp, !Task.isCancelled else { return }
             sharedViews = result.views; viewsError = nil
         } catch { if read == viewsRead, store.hubActionStamp == stamp { viewsError = HostingHubAPI.error(error) } }

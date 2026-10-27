@@ -5,6 +5,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tempFile, type ToolId, tools, withWslEnv, wslArgs } from "@/shared/platform";
 import { agentArguments } from "../lib/arguments";
+import { containingRoot, type ExternalAgent, resolveExternalAgents } from "../lib/external-agents";
 
 /** 세션 상태: Claude Code 는 훅 이벤트로 자세히, 다른 에이전트는 실행 중/종료만 */
 export type AgentStatus = "starting" | "working" | "permission" | "waiting" | "running" | "ended";
@@ -277,6 +278,37 @@ class AgentCenter extends Observable {
 
   dispose() {
     if (this.timer) clearInterval(this.timer);
+  }
+
+  /** Agents running in other apps (Windows Terminal, VS Code …), from the last scan (macOS: AgentCenter.external) */
+  external: ExternalAgent[] = [];
+  private externalScanned = 0;
+  private externalScanning = false;
+
+  /** Scans the process table; several open Agents panels share one scan at most every 5 seconds */
+  async refreshExternal(now = Date.now()) {
+    if (this.externalScanning || now - this.externalScanned < 4500) return;
+    this.externalScanning = true;
+    try {
+      const list = resolveExternalAgents(await ipc.externalAgents());
+      this.externalScanned = Date.now();
+      if (JSON.stringify(list) !== JSON.stringify(this.external)) { this.external = list; this.emit(); }
+    } catch {
+      // a failed scan keeps the last list; the next refresh tries again
+    } finally {
+      this.externalScanning = false;
+    }
+  }
+
+  /** The external agents working in one of the folders (the repository and its worktrees) */
+  externalIn(roots: string[]) {
+    return this.external.filter((a) => containingRoot(a.cwd, roots) !== null);
+  }
+
+  /** Brings the app that runs the agent to the front */
+  async bringForward(agent: ExternalAgent) {
+    if (agent.hostPid === null) throw new Error(t("The app running this agent was not found."));
+    await ipc.bringAppForward(agent.hostPid);
   }
 }
 
