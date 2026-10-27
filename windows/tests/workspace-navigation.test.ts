@@ -108,6 +108,11 @@ describe("workspace navigation", () => {
   });
   it("opens commit search on the repository screen and clears documents hiding the graph", () => {
     const store = fixture(); store.navigate("code"); store.fileInspect = { mode: "history", path: file.path, rev: null }; store.diffSource = { kind: "working", change: file };
+    expect(store.showSearchBar).toBe(false);
     const request = store.searchFocusRequest; store.requestSearchFocus(); expect(store.destination).toBe("repository"); expect(store.fileInspect).toBeNull(); expect(store.diffSource).toBeNull(); expect(store.searchFocusRequest).toBe(request + 1);
+    // the bar shows only after the request, and closing it also ends the search
+    expect(store.showSearchBar).toBe(true);
+    store.searchText = "needle"; store.closeSearchBar(); expect(store.showSearchBar).toBe(false); expect(store.searchText).toBe("");
+    store.requestSearchFocus(); internal(store).resetState(); expect(store.showSearchBar).toBe(false);
   });
 });

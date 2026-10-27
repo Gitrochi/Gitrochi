@@ -210,7 +210,6 @@
   "Cleaning up commits…": "커밋 정리 중…",
   "Cleaning up…": "정리 중…",
   "Clear ended sessions": "종료된 세션 지우기",
-  "Clear search (Esc)": "검색 지우기 (Esc)",
   "Clears the path you chose and finds it automatically again": "직접 고른 경로를 지우고 다시 자동으로 찾습니다",
   "Clears the staging area, then stages and commits each group from the top. {0}": "스테이지 상태를 비우고 위에서부터 차례로 스테이지 → 커밋합니다. {0}",
   "Click to go to that terminal": "눌러서 그 터미널로 이동",
@@ -2062,5 +2061,7 @@
   "Edit issue #{0}": "이슈 #{0} 수정",
   "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "계정을 여러 개 연결했다면, 저장소가 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고르세요.",
   "Filtered: {0}": "필터: {0}",
-  "Clear filter": "필터 지우기"
+  "Clear filter": "필터 지우기",
+  "Close search": "검색 닫기",
+  "Close search (Esc)": "검색 닫기 (Esc)"
 }

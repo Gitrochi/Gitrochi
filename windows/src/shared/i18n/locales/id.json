@@ -151,7 +151,6 @@
  "Cleaning up commits…": "Merapikan commit…",
  "Cleaning up…": "Membersihkan…",
  "Clear ended sessions": "Hapus sesi yang telah berakhir",
- "Clear search (Esc)": "Hapus pencarian (Esc)",
  "Clears the path you chose and finds it automatically again": "Menghapus jalur yang Anda pilih dan mencarinya lagi secara otomatis",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Mengosongkan area staging, lalu melakukan stage dan commit untuk tiap grup mulai dari atas. {0}",
  "Click to go to that terminal": "Klik untuk membuka terminal tersebut",
@@ -1173,5 +1172,7 @@
  "Not configured": "Belum diatur",
  "Email": "Email",
  "Filtered: {0}": "Difilter: {0}",
- "Clear filter": "Hapus filter"
+ "Clear filter": "Hapus filter",
+ "Close search": "Tutup pencarian",
+ "Close search (Esc)": "Tutup pencarian (Esc)"
 }

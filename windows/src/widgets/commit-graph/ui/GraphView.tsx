@@ -77,13 +77,15 @@ export function GraphView({ store }: { store: RepoStore }) {
 
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
-      <SearchBar store={store} />
+      {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
       <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
         {cols.graph > 0 && <span style={{ width: cols.graph, paddingLeft: 6 }}>{t("Graph")}</span>}
         <span className="grow" style={{ paddingLeft: 20, flex: 1, minWidth: 0 }}>
           {t("Commit message")}
         </span>
+        {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
+        <GraphFilterButton store={store} />
         <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
       </div>
       <div
@@ -168,14 +170,14 @@ function SearchBar({ store }: { store: RepoStore }) {
               if (e.shiftKey) store.previousMatch();
               else store.nextMatch();
             } else if (e.key === "Escape") {
-              store.clearSearch();
-              input.current?.blur();
+              e.preventDefault();
+              store.closeSearchBar();
             }
           }}
         />
         {store.searching && <Spinner size={12} />}
         {store.searchText && (
-          <button className="icon-btn small" data-tip={t("Clear search (Esc)")} onClick={() => store.clearSearch()}>
+          <button className="icon-btn small" aria-label={t("Clear search")} data-tip={t("Clear search")} onClick={() => store.clearSearch()}>
             <X size={13} />
           </button>
         )}
@@ -193,7 +195,6 @@ function SearchBar({ store }: { store: RepoStore }) {
           </option>
         ))}
       </select>
-      <GraphFilterButton store={store} />
       {store.isSearching && (
         <>
           <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
@@ -213,6 +214,8 @@ function SearchBar({ store }: { store: RepoStore }) {
           )}
         </>
       )}
+      <span className="spacer" />
+      <IconButton small icon={<X size={14} />} className="search-close" aria-label={t("Close search")} tip={t("Close search (Esc)")} onClick={() => store.closeSearchBar()} />
     </div>
   );
 }
@@ -224,7 +227,7 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
   return (
     <button
       type="button"
-      className={`tool ${active ? "on" : ""}`}
+      className={`tool graph-filter ${active ? "on" : ""}`}
       style={{ gap: 4, color: active ? "var(--accent)" : undefined }}
       aria-label={t("Filter graph")}
       data-tip={t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
@@ -236,7 +239,7 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
         ])
       }
     >
-      <ListFilter size={15} />
+      <ListFilter size={13} />
       {store.graphCurrentOnly ? <span style={{ fontSize: 11.5 }}>{t("Current branch only")}</span> : hidden > 0 ? <span style={{ fontSize: 11.5 }}>{t("Hidden {0}", hidden)}</span> : null}
     </button>
   );

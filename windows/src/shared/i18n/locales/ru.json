@@ -159,7 +159,6 @@
  "Cleaning up commits…": "Упорядочивание коммитов…",
  "Cleaning up…": "Очистка…",
  "Clear ended sessions": "Убрать завершённые сеансы",
- "Clear search (Esc)": "Очистить поиск (Esc)",
  "Clears the path you chose and finds it automatically again": "Сбрасывает выбранный путь и снова ищет автоматически",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Очищает индекс, затем по порядку сверху индексирует и коммитит каждую группу. {0}",
  "Click to go to that terminal": "Нажмите, чтобы перейти к этому терминалу",
@@ -1220,5 +1219,7 @@
  "Not configured": "Не настроено",
  "Email": "Эл. почта",
  "Filtered: {0}": "Фильтр: {0}",
- "Clear filter": "Сбросить фильтр"
+ "Clear filter": "Сбросить фильтр",
+ "Close search": "Закрыть поиск",
+ "Close search (Esc)": "Закрыть поиск (Esc)"
 }

@@ -160,7 +160,6 @@
  "Cleaning up commits…": "正在整理提交…",
  "Cleaning up…": "正在整理…",
  "Clear ended sessions": "清除已結束的工作階段",
- "Clear search (Esc)": "清除搜尋 (Esc)",
  "Clears the path you chose and finds it automatically again": "清除你選擇的路徑，並重新自動尋找",
  "Clears the staging area, then stages and commits each group from the top. {0}": "清空暫存區，然後從最上方開始，依序暫存並提交每個群組。{0}",
  "Click to go to that terminal": "按一下以前往該終端機",
@@ -1222,5 +1221,7 @@
  "Not configured": "未設定",
  "Email": "電子郵件",
  "Filtered: {0}": "已篩選：{0}",
- "Clear filter": "清除篩選"
+ "Clear filter": "清除篩選",
+ "Close search": "關閉搜尋",
+ "Close search (Esc)": "關閉搜尋 (Esc)"
 }

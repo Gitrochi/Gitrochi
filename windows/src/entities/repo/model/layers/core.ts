@@ -181,6 +181,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   searchUnloaded = 0;
   searching = false;
   searchFocusRequest = 0;
+  /** The graph's search bar stays hidden until Ctrl+F; it also shows while a search is active (macOS: showSearchBar) */
+  showSearchBar = false;
   protected searchGen = 0;
   protected searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -457,6 +459,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.confirmationGuard.invalidate();
     this.destination = "home";
     this.ciFocus = null;
+    this.showSearchBar = false;
     this.cancelPushReview();
     this.cancelChangeQuestion();
     this.cancelRepositoryAssistant();

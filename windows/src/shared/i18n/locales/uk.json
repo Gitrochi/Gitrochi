@@ -159,7 +159,6 @@
  "Cleaning up commits…": "Упорядкування комітів…",
  "Cleaning up…": "Очищення…",
  "Clear ended sessions": "Прибрати завершені сеанси",
- "Clear search (Esc)": "Очистити пошук (Esc)",
  "Clears the path you chose and finds it automatically again": "Скидає вибраний шлях і знову шукає автоматично",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Очищає індекс, а потім по черзі згори індексує й комітить кожну групу. {0}",
  "Click to go to that terminal": "Клацніть, щоб перейти до цього термінала",
@@ -1220,5 +1219,7 @@
  "Not configured": "Не налаштовано",
  "Email": "Ел. пошта",
  "Filtered: {0}": "Фільтр: {0}",
- "Clear filter": "Скинути фільтр"
+ "Clear filter": "Скинути фільтр",
+ "Close search": "Закрити пошук",
+ "Close search (Esc)": "Закрити пошук (Esc)"
 }

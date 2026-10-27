@@ -160,7 +160,6 @@
  "Cleaning up commits…": "コミットを整理しています…",
  "Cleaning up…": "整理しています…",
  "Clear ended sessions": "終了したセッションを消去",
- "Clear search (Esc)": "検索をクリア (Esc)",
  "Clears the path you chose and finds it automatically again": "指定したパスをクリアして、もう一度自動で探します",
  "Clears the staging area, then stages and commits each group from the top. {0}": "ステージをいったん空にしてから、上のグループから順にステージしてコミットします。{0}",
  "Click to go to that terminal": "クリックしてそのターミナルへ移動",
@@ -1221,5 +1220,7 @@
  "Not configured": "未設定",
  "Email": "メール",
  "Filtered: {0}": "フィルター: {0}",
- "Clear filter": "フィルターをクリア"
+ "Clear filter": "フィルターをクリア",
+ "Close search": "検索を閉じる",
+ "Close search (Esc)": "検索を閉じる (Esc)"
 }

@@ -154,7 +154,6 @@
  "Cleaning up commits…": "Réorganisation des commits…",
  "Cleaning up…": "Réorganisation…",
  "Clear ended sessions": "Effacer les sessions terminées",
- "Clear search (Esc)": "Effacer la recherche (Esc)",
  "Clears the path you chose and finds it automatically again": "Efface le chemin choisi et le détecte de nouveau automatiquement",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Vide l’index, puis indexe et valide chaque groupe en partant du haut. {0}",
  "Click to go to that terminal": "Cliquer pour aller à ce terminal",
@@ -1198,5 +1197,7 @@
  "Not configured": "Non configuré",
  "Email": "E-mail",
  "Filtered: {0}": "Filtré : {0}",
- "Clear filter": "Effacer le filtre"
+ "Clear filter": "Effacer le filtre",
+ "Close search": "Fermer la recherche",
+ "Close search (Esc)": "Fermer la recherche (Échap)"
 }

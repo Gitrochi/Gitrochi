@@ -149,7 +149,6 @@
  "Cleaning up commits…": "Commits worden opgeschoond…",
  "Cleaning up…": "Bezig met opschonen…",
  "Clear ended sessions": "Beëindigde sessies wissen",
- "Clear search (Esc)": "Zoekopdracht wissen (Esc)",
  "Clears the path you chose and finds it automatically again": "Wist het gekozen pad en zoekt het weer automatisch",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Maakt de staging area leeg en voert daarna voor elke groep, van boven naar beneden, een stage en commit uit. {0}",
  "Click to go to that terminal": "Klik om naar die terminal te gaan",
@@ -1172,5 +1171,7 @@
  "Not configured": "Niet ingesteld",
  "Email": "E-mail",
  "Filtered: {0}": "Gefilterd: {0}",
- "Clear filter": "Filter wissen"
+ "Clear filter": "Filter wissen",
+ "Close search": "Zoeken sluiten",
+ "Close search (Esc)": "Zoeken sluiten (Esc)"
 }

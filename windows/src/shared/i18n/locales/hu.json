@@ -157,7 +157,6 @@
  "Cleaning up commits…": "Commitok rendezése…",
  "Cleaning up…": "Takarítás…",
  "Clear ended sessions": "Befejezett munkamenetek törlése",
- "Clear search (Esc)": "Keresés törlése (Esc)",
  "Clears the path you chose and finds it automatically again": "Törli a kiválasztott útvonalat, és újra automatikusan keresi meg",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Kiüríti az előkészítési területet, majd felülről kezdve csoportonként előkészíti és commitolja a fájlokat. {0}",
  "Click to go to that terminal": "Kattintással az adott terminálra ugorhat",
@@ -1204,5 +1203,7 @@
  "Not configured": "Nincs beállítva",
  "Email": "E-mail",
  "Filtered: {0}": "Szűrve: {0}",
- "Clear filter": "Szűrő törlése"
+ "Clear filter": "Szűrő törlése",
+ "Close search": "Keresés bezárása",
+ "Close search (Esc)": "Keresés bezárása (Esc)"
 }

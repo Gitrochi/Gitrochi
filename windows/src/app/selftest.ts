@@ -298,6 +298,17 @@ export async function runSelfTest(): Promise<boolean> {
     s.clearSearch();
     return [ok, n];
   });
+  await step("그래프 검색 줄: Ctrl+F 로만 열리고 Esc 로 닫힘, 거르기는 머리줄에", async () => {
+    s.closeSearchBar(); s.navigate("repository"); s.closeDiff(); s.closeFileInspect();
+    const hidden = await until(() => !!document.querySelector(".graph-header") && !document.querySelector(".searchbar"), 3000);
+    const filter = !!document.querySelector(".graph-header .graph-filter");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "f", ctrlKey: !isMacLike(), metaKey: isMacLike(), bubbles: true }));
+    const input = () => document.querySelector<HTMLInputElement>(".searchbar input");
+    const shown = await until(() => !!input() && document.activeElement === input(), 3000);
+    input()?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const closed = await until(() => !document.querySelector(".searchbar") && !s.showSearchBar, 3000);
+    return [hidden && filter && shown && closed, `hidden=${hidden} filterInHeader=${filter} shownAndFocused=${shown} closedByEsc=${closed}`];
+  });
   await step("Stash·Pop", async () => {
     await ipc.writeText(joinPath(repo, "README.md"), "changed by selftest\n");
     await until(() => !statusIsEmpty(s.status), 8000);

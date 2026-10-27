@@ -247,3 +247,16 @@
   padding: 0 6px;
   border-radius: 999px;
 }
+
+/* the graph filter sits in the column header row, so it stays reachable while the search bar is hidden */
+.graph-header .graph-filter {
+  height: 22px;
+  min-width: 0;
+  padding: 0 6px;
+  margin-right: 2px;
+  font-weight: 500;
+}
+
+.searchbar .search-close {
+  flex: none;
+}

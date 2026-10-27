@@ -155,7 +155,6 @@
  "Cleaning up commits…": "Đang dọn dẹp commit…",
  "Cleaning up…": "Đang dọn dẹp…",
  "Clear ended sessions": "Xóa các phiên đã kết thúc",
- "Clear search (Esc)": "Xóa tìm kiếm (Esc)",
  "Clears the path you chose and finds it automatically again": "Xóa đường dẫn bạn đã chọn và tự động tìm lại",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Làm trống vùng staging, rồi stage và commit từng nhóm từ trên xuống. {0}",
  "Click to go to that terminal": "Nhấp để chuyển đến terminal đó",
@@ -1176,5 +1175,7 @@
  "Not configured": "Chưa thiết lập",
  "Email": "Email",
  "Filtered: {0}": "Đã lọc: {0}",
- "Clear filter": "Xóa bộ lọc"
+ "Clear filter": "Xóa bộ lọc",
+ "Close search": "Đóng tìm kiếm",
+ "Close search (Esc)": "Đóng tìm kiếm (Esc)"
 }

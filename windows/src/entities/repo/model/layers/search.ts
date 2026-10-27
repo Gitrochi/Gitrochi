@@ -18,8 +18,15 @@ export abstract class RepoSearch extends RepoSelection {
     this.navigate("repository");
     this.closeFileInspect();
     this.closeDiff();
+    this.showSearchBar = true;
     this.searchFocusRequest++;
     this.emit();
+  }
+
+  /** Esc or the bar's close button: the search ends and the bar goes away */
+  closeSearchBar() {
+    this.showSearchBar = false;
+    this.clearSearch();
   }
 
   setSearch(text: string, scope?: SearchScope) {

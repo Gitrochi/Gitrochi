@@ -156,7 +156,6 @@
  "Cleaning up commits…": "Commit'ler düzenleniyor…",
  "Cleaning up…": "Temizleniyor…",
  "Clear ended sessions": "Biten oturumları temizle",
- "Clear search (Esc)": "Aramayı temizle (Esc)",
  "Clears the path you chose and finds it automatically again": "Seçtiğiniz yolu temizler ve yeniden otomatik olarak bulur",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Hazırlık alanını boşaltır, ardından her grubu yukarıdan başlayarak sırayla hazırlar ve commit eder. {0}",
  "Click to go to that terminal": "O terminale gitmek için tıklayın",
@@ -1209,5 +1208,7 @@
  "Not configured": "Yapılandırılmadı",
  "Email": "E-posta",
  "Filtered: {0}": "Süzüldü: {0}",
- "Clear filter": "Süzgeci temizle"
+ "Clear filter": "Süzgeci temizle",
+ "Close search": "Aramayı kapat",
+ "Close search (Esc)": "Aramayı kapat (Esc)"
 }

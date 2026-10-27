@@ -158,7 +158,6 @@
  "Cleaning up commits…": "กำลังจัดระเบียบคอมมิต…",
  "Cleaning up…": "กำลังจัดระเบียบ…",
  "Clear ended sessions": "ล้างเซสชันที่สิ้นสุดแล้ว",
- "Clear search (Esc)": "ล้างการค้นหา (Esc)",
  "Clears the path you chose and finds it automatically again": "ล้างพาธที่คุณเลือกเองและค้นหาอัตโนมัติอีกครั้ง",
  "Clears the staging area, then stages and commits each group from the top. {0}": "ล้างพื้นที่สเตจ แล้วสเตจและคอมมิตทีละกลุ่มจากด้านบน {0}",
  "Click to go to that terminal": "คลิกเพื่อไปยังเทอร์มินัลนั้น",
@@ -1216,5 +1215,7 @@
  "Not configured": "ยังไม่ได้ตั้งค่า",
  "Email": "อีเมล",
  "Filtered: {0}": "กรองแล้ว: {0}",
- "Clear filter": "ล้างตัวกรอง"
+ "Clear filter": "ล้างตัวกรอง",
+ "Close search": "ปิดการค้นหา",
+ "Close search (Esc)": "ปิดการค้นหา (Esc)"
 }

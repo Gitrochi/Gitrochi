@@ -156,7 +156,6 @@
  "Cleaning up commits…": "Uspořádávání commitů…",
  "Cleaning up…": "Úklid…",
  "Clear ended sessions": "Vymazat ukončené relace",
- "Clear search (Esc)": "Vymazat hledání (Esc)",
  "Clears the path you chose and finds it automatically again": "Zruší zvolenou cestu a znovu ji vyhledá automaticky",
  "Clears the staging area, then stages and commits each group from the top. {0}": "Vyprázdní oblast připravených změn a pak postupně shora připraví a commitne každou skupinu. {0}",
  "Click to go to that terminal": "Kliknutím přejdete do daného terminálu",
@@ -1202,5 +1201,7 @@
  "Not configured": "Nenastaveno",
  "Email": "E-mail",
  "Filtered: {0}": "Filtrováno: {0}",
- "Clear filter": "Zrušit filtr"
+ "Clear filter": "Zrušit filtr",
+ "Close search": "Zavřít hledání",
+ "Close search (Esc)": "Zavřít hledání (Esc)"
 }
