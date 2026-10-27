@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
+import { dirname, env, joinPath, samePath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
