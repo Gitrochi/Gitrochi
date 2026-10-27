@@ -2067,3 +2067,8 @@
 "Clear filter" = "필터 지우기";
 "Close search (Esc)" = "검색 닫기 (Esc)";
 "Close search" = "검색 닫기";
+"Running in other apps" = "다른 앱에서 실행 중";
+"Unknown app" = "알 수 없는 앱";
+"Click to bring %@ to the front" = "누르면 %1$@ 앱이 앞으로 옵니다";
+"Bring %@ to the front" = "%1$@ 앞으로 가져오기";
+"Copy folder path" = "폴더 경로 복사";

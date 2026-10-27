@@ -43,6 +43,12 @@ struct AgentsPanel: View {
                                  isCurrent: AgentCenter.normalize(w.path) == AgentCenter.normalize(store.url?.path ?? ""))
                 }
 
+                let elsewhere = agents.external(in: store.worktrees.map(\.path) + [store.url?.path].compactMap { $0 })
+                if !elsewhere.isEmpty {
+                    Text("Running in other apps").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 6)
+                    ForEach(elsewhere) { a in ExternalAgentRow(agent: a, root: root(for: a)) }
+                }
+
                 let known = Set(store.worktrees.map { AgentCenter.normalize($0.path) })
                 let others = agents.sessions.filter { !known.contains(AgentCenter.normalize($0.path)) && $0.status != .ended }
                 if !others.isEmpty {
@@ -65,6 +71,71 @@ struct AgentsPanel: View {
             // the store polls other worktrees while this tab is in front; count once right away
             await store.refreshWorktreeStats()
         }
+        .task {
+            // agents in other apps are looked up only while this tab is open
+            while !Task.isCancelled {
+                await agents.refreshExternal()
+                try? await Task.sleep(for: .seconds(5))
+            }
+        }
+    }
+
+    /// The worktree an agent works in, so the row can name it instead of the full path
+    private func root(for agent: ExternalAgent) -> Worktree? {
+        store.worktrees
+            .filter { ExternalAgents.isInside(agent.cwd, roots: [$0.path]) }
+            .max { $0.path.count < $1.path.count }
+    }
+}
+
+/// An agent running in another app; clicking brings that app (and in Terminal or iTerm its tab) to the front
+private struct ExternalAgentRow: View {
+    let agent: ExternalAgent
+    let root: Worktree?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 6) {
+            hostIcon.frame(width: 16, height: 16).padding(.top, 1)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(agent.kind.title).fontWeight(.medium)
+                    Text(verbatim: "· " + agent.hostName).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary).font(.caption)
+        }
+        .font(.callout)
+        .contentShape(Rectangle())
+        .onTapGesture { ExternalAgents.bringForward(agent) }
+        .help(String(localized: "Click to bring \(agent.hostName) to the front"))
+        .contextMenu {
+            Button("Bring \(agent.hostName) to the front") { ExternalAgents.bringForward(agent) }
+            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
+        }
+    }
+
+    @ViewBuilder private var hostIcon: some View {
+        if let pid = agent.hostPID, let icon = NSRunningApplication(processIdentifier: pid)?.icon {
+            Image(nsImage: icon).resizable().scaledToFit()
+        } else {
+            Image(systemName: "terminal").foregroundStyle(.secondary)
+        }
+    }
+
+    /// "branch · sub/folder · 12 min ago"
+    private var place: String {
+        var parts: [String] = []
+        if let root {
+            parts.append(root.branch ?? (root.path as NSString).lastPathComponent)
+            let rel = String(AgentCenter.normalize(agent.cwd).dropFirst(AgentCenter.normalize(root.path).count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            if !rel.isEmpty { parts.append(rel) }
+        } else {
+            parts.append((agent.cwd as NSString).abbreviatingWithTildeInPath)
+        }
+        if let started = agent.started { parts.append(Fmt.short(started)) }
+        return parts.joined(separator: " · ")
     }
 }
 

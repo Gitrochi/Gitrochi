@@ -1142,3 +1142,8 @@
 "Clear filter" = "Xóa bộ lọc";
 "Close search (Esc)" = "Đóng tìm kiếm (Esc)";
 "Close search" = "Đóng tìm kiếm";
+"Running in other apps" = "Đang chạy trong ứng dụng khác";
+"Unknown app" = "Ứng dụng không xác định";
+"Click to bring %@ to the front" = "Nhấp để đưa %1$@ lên trước";
+"Bring %@ to the front" = "Đưa %1$@ lên trước";
+"Copy folder path" = "Sao chép đường dẫn thư mục";

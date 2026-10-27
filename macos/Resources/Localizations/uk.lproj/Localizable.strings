@@ -1186,3 +1186,8 @@
 "Clear filter" = "Скинути фільтр";
 "Close search (Esc)" = "Закрити пошук (Esc)";
 "Close search" = "Закрити пошук";
+"Running in other apps" = "Запущені в інших програмах";
+"Unknown app" = "Невідома програма";
+"Click to bring %@ to the front" = "Натисніть, щоб вивести %1$@ на передній план";
+"Bring %@ to the front" = "Вивести %1$@ на передній план";
+"Copy folder path" = "Копіювати шлях до теки";

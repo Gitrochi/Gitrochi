@@ -1188,3 +1188,8 @@
 "Clear filter" = "清除篩選";
 "Close search (Esc)" = "關閉搜尋 (Esc)";
 "Close search" = "關閉搜尋";
+"Running in other apps" = "正在其他 App 中執行";
+"Unknown app" = "未知 App";
+"Click to bring %@ to the front" = "點一下將 %1$@ 帶到最前面";
+"Bring %@ to the front" = "將 %1$@ 帶到最前面";
+"Copy folder path" = "拷貝檔案夾路徑";

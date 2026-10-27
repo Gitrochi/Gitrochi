@@ -1169,3 +1169,8 @@
 "Clear filter" = "Wyczyść filtr";
 "Close search (Esc)" = "Zamknij wyszukiwanie (Esc)";
 "Close search" = "Zamknij wyszukiwanie";
+"Running in other apps" = "Działa w innych aplikacjach";
+"Unknown app" = "Nieznana aplikacja";
+"Click to bring %@ to the front" = "Kliknij, aby przenieść %1$@ na wierzch";
+"Bring %@ to the front" = "Przenieś %1$@ na wierzch";
+"Copy folder path" = "Kopiuj ścieżkę folderu";

@@ -1187,3 +1187,8 @@
 "Clear filter" = "フィルターを解除";
 "Close search (Esc)" = "検索を閉じる (Esc)";
 "Close search" = "検索を閉じる";
+"Running in other apps" = "ほかのアプリで実行中";
+"Unknown app" = "不明なアプリ";
+"Click to bring %@ to the front" = "クリックすると %1$@ を前面に表示します";
+"Bring %@ to the front" = "%1$@ を前面に表示";
+"Copy folder path" = "フォルダのパスをコピー";

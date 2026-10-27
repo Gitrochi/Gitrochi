@@ -1182,3 +1182,8 @@
 "Clear filter" = "ล้างตัวกรอง";
 "Close search (Esc)" = "ปิดการค้นหา (Esc)";
 "Close search" = "ปิดการค้นหา";
+"Running in other apps" = "กำลังทำงานในแอปอื่น";
+"Unknown app" = "แอปที่ไม่รู้จัก";
+"Click to bring %@ to the front" = "คลิกเพื่อนำ %1$@ ขึ้นมาด้านหน้า";
+"Bring %@ to the front" = "นำ %1$@ ขึ้นมาด้านหน้า";
+"Copy folder path" = "คัดลอกพาธโฟลเดอร์";

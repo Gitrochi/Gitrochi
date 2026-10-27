@@ -1174,3 +1174,8 @@
 "Clear filter" = "Filtreyi temizle";
 "Close search (Esc)" = "Aramayı kapat (Esc)";
 "Close search" = "Aramayı kapat";
+"Running in other apps" = "Diğer uygulamalarda çalışıyor";
+"Unknown app" = "Bilinmeyen uygulama";
+"Click to bring %@ to the front" = "%1$@ uygulamasını öne getirmek için tıklayın";
+"Bring %@ to the front" = "%1$@ uygulamasını öne getir";
+"Copy folder path" = "Klasör yolunu kopyala";

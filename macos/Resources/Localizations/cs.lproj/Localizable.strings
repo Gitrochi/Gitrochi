@@ -1166,3 +1166,8 @@
 "Clear filter" = "Zrušit filtr";
 "Close search (Esc)" = "Zavřít hledání (Esc)";
 "Close search" = "Zavřít hledání";
+"Running in other apps" = "Běží v jiných aplikacích";
+"Unknown app" = "Neznámá aplikace";
+"Click to bring %@ to the front" = "Kliknutím přenesete %1$@ do popředí";
+"Bring %@ to the front" = "Přenést %1$@ do popředí";
+"Copy folder path" = "Kopírovat cestu ke složce";

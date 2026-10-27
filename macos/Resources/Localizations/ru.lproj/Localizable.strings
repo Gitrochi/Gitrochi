@@ -1186,3 +1186,8 @@
 "Clear filter" = "Сбросить фильтр";
 "Close search (Esc)" = "Закрыть поиск (Esc)";
 "Close search" = "Закрыть поиск";
+"Running in other apps" = "Запущены в других приложениях";
+"Unknown app" = "Неизвестное приложение";
+"Click to bring %@ to the front" = "Нажмите, чтобы вывести %1$@ на передний план";
+"Bring %@ to the front" = "Вывести %1$@ на передний план";
+"Copy folder path" = "Копировать путь к папке";

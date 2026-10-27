@@ -102,6 +102,8 @@ final class AgentCenter {
     static let shared = AgentCenter()
 
     private(set) var sessions: [AgentSession] = []
+    /// Agents running in other apps (cmux, Terminal, editors), read while the Agents tab is open
+    private(set) var external: [ExternalAgent] = []
     let directory: URL
     private var watcher: FileWatcher?
     private var timer: Timer?
@@ -125,12 +127,24 @@ final class AgentCenter {
         }
     }
 
+    /// Re-reads the process table for agents Gitrochi did not start (off the main thread)
+    func refreshExternal() async {
+        let own = Set(sessions.compactMap(\.pid))
+        let raw = await Task.detached(priority: .utility) { ExternalAgents.scan() }.value
+        let list = raw.filter { !own.contains($0.pid) }.compactMap(ExternalAgents.resolve).sorted { ($0.started ?? .distantPast) > ($1.started ?? .distantPast) }
+        if list != external { external = list }
+    }
+
+    func external(in roots: [String]) -> [ExternalAgent] {
+        external.filter { ExternalAgents.isInside($0.cwd, roots: roots) }
+    }
+
     func sessions(in path: String) -> [AgentSession] {
         let key = Self.normalize(path)
         return sessions.filter { Self.normalize($0.path) == key }
     }
 
-    static func normalize(_ path: String) -> String {
+    nonisolated static func normalize(_ path: String) -> String {
         URL(fileURLWithPath: path).resolvingSymlinksInPath().standardizedFileURL.path
     }
 
