@@ -82,7 +82,7 @@ extension RepoStore {
         state.inboxKind = kind; state.inboxLoading = true; state.inboxError = nil
         if !append { state.inbox = []; state.inboxDetail = nil; state.detailID = UUID() }
         defer { if current() { state.inboxLoading = false } }
-        guard let c = collaborationAccess else { state.inboxError = String(localized: "Connect an account to load your inbox."); return }
+        guard let c = collaborationAccess else { state.inboxError = hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) } ?? String(localized: "Connect an account to load your inbox."); return }
         do {
             let (items, more) = try await CollaborationAPI.inbox(c, kind: kind, page: page)
             guard current() else { return }
@@ -98,7 +98,7 @@ extension RepoStore {
         state.inboxDetail = previous ?? CollaborationInboxDetail(item: item, comments: [], page: 0)
         state.inboxLoading = true; state.inboxError = nil
         defer { if current() { state.inboxLoading = false } }
-        guard let c = collaborationAccess else { state.inboxError = String(localized: "Connect an account to load your inbox."); return }
+        guard let c = collaborationAccess else { state.inboxError = hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) } ?? String(localized: "Connect an account to load your inbox."); return }
         do {
             var detail = try await CollaborationAPI.detail(c, item: item, page: (previous?.page ?? 0) + 1)
             guard current() else { return }

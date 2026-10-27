@@ -1,9 +1,10 @@
 import type { Provider, RepoTarget } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import * as H from "./hosting";
+import { localProjects, isLocalProject } from "../model/local-projects";
 
 export type HostingHubSection = "releases" | "projects" | "organizations" | "gists";
-export interface HubAccess { target: RepoTarget; token: string; apiBase: string; me: string; stillCurrent?: () => boolean }
+export interface HubAccess { target: RepoTarget; token: string; apiBase: string; me: string; stillCurrent?: () => boolean; local?: boolean }
 export interface HubItem { id: string; title: string; subtitle: string; body: string; url: string; avatarURL?: string | null; editable?: boolean; data: Record<string, unknown> }
 export interface HubPage { items: HubItem[]; more: boolean; cursor?: string; notice?: string }
 export interface HubFile { name: string; content: string; truncated: boolean }
@@ -12,7 +13,7 @@ export interface HubRepository { id: string; name: string; description: string; 
 export type HubProjectFieldKind = "singleSelect" | "text" | "number" | "date" | "iteration" | "unsupported";
 export interface HubProjectOption { id: string; name: string; startDate?: string; duration?: number }
 export interface HubProjectField { id: string; name: string; options: HubProjectOption[]; kind?: HubProjectFieldKind }
-export interface HubProjectRow { id: string; title: string; body: string; url: string; contentID: string; statuses: Record<string, string>; labels?: string[]; kind?: "issue" | "pullRequest" | "draft" | "redacted"; number?: number; repository?: string; state?: string; assignees?: string[]; updatedAt?: string; headRefName?: string; archived?: boolean; values?: Record<string, string> }
+export interface HubProjectRow { id: string; title: string; body: string; url: string; contentID: string; statuses: Record<string, string>; labels?: string[]; kind?: "issue" | "pullRequest" | "draft" | "redacted"; number?: number; repository?: string; state?: string; assignees?: string[]; updatedAt?: string; headRefName?: string; archived?: boolean; values?: Record<string, string>; author?: string; createdAt?: string }
 export interface HubDetail { item: HubItem; files: HubFile[]; members: HubMember[]; repositories: HubRepository[]; assets: { id: string; name: string; size?: number; downloads?: number; url: string }[]; fields: HubProjectField[]; rows: HubProjectRow[]; more: boolean; cursor?: string; notice?: string; starred?: boolean }
 export interface HubReleaseInput { tag: string; name: string; body: string; target: string; draft: boolean; prerelease: boolean }
 export interface HubGistInput { description: string; public: boolean; files: { name: string; content: string }[] }
@@ -20,8 +21,20 @@ type J = Record<string, any>;
 const pageSize = 30;
 const enc = encodeURIComponent;
 const repo = (c: HubAccess) => c.target.provider === "github" ? `${c.apiBase}/repos/${c.target.path.split("/").map(enc).join("/")}` : `${c.apiBase}/projects/${H.projectID(c.target.path)}`;
+/** Local namespaces cannot reach a remote account, even through a stale confirmation. */
+/** Credential-free context for the local planner. */
+export function localHubAccess(stillCurrent?: () => boolean): HubAccess {
+  return { local: true, target: { provider: "github", host: "local", path: "local/workspace", remote: "origin" }, token: "", apiBase: "", me: "", stillCurrent };
+}
+
+export function hubUsesLocal(c: HubAccess, item: HubItem): boolean {
+  ensureHubCurrent(c);
+  const local = isLocalProject(item) || item.id.startsWith("local:");
+  if (!!c.local !== local) throw new Error(t("Switch to the matching project workspace before saving."));
+  return local;
+}
 export function ensureHubCurrent(c: HubAccess) { if (c.stillCurrent?.() === false) throw new Error(t("The repository or account changed. Reopen this action.")); }
-function assertAPI(c: HubAccess, url: string) { const base = new URL(c.apiBase), u = new URL(url); if (u.origin !== base.origin || !u.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")) throw new Error(t("The server returned an unsafe address.")); }
+function assertAPI(c: HubAccess, url: string) { if(c.local)throw new Error(t("Local projects do not send requests to GitHub.")); const base = new URL(c.apiBase), u = new URL(url); if (u.origin !== base.origin || !u.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")) throw new Error(t("The server returned an unsafe address.")); }
 async function request<T>(c: HubAccess, url: string, method = "GET", body?: unknown): Promise<T> { ensureHubCurrent(c); assertAPI(c, url); const value = await H.send<T>(c.target.provider, url, c.token, method, body); ensureHubCurrent(c); return value; }
 async function raw(c: HubAccess, url: string, method: string, body?: unknown) { ensureHubCurrent(c); assertAPI(c, url); await H.sendRaw(c.target.provider, url, c.token, method, body); ensureHubCurrent(c); }
 export function hubProjectTarget(repository: RepoTarget | null, provider: Provider, host: string, username: string, personal: boolean): RepoTarget {
@@ -38,16 +51,20 @@ export function hubProjectColumns(detail: HubDetail, fieldID?: string): { id: st
 export class HubProjectPermissionError extends Error {
   constructor() { super(t("Connect project access for this GitHub account to load projects.")); this.name = "HubProjectPermissionError"; }
 }
+export class HubProjectActionDeniedError extends Error {
+  constructor(detail?: string) { super(`${t("GitHub denied this project action. Check the token's Projects access and the owner's policies. A paid plan does not grant these permissions.")}${detail ? `\n\n${detail}` : ""}`); this.name = "HubProjectActionDeniedError"; }
+}
 async function graphql<T>(c: HubAccess, query: string, variables: Record<string, unknown>): Promise<T> {
   const r = await request<{data?: T; errors?: {message: string; type?: string}[]}>(c, `${c.apiBase}/graphql`, "POST", {query, variables});
   if (r.errors?.some(error => error.type === "INSUFFICIENT_SCOPES" || /insufficient scope|required scopes|read:project/i.test(error.message))) throw new HubProjectPermissionError();
+  if (r.errors?.some(error => error.type === "FORBIDDEN" || error.type === "RESOURCE_NOT_ACCESSIBLE")) throw new HubProjectActionDeniedError();
   if (r.errors?.length || !r.data) throw new Error(t("Projects could not be loaded. Retry or open GitHub in your browser."));
   return r.data;
 }
-export { graphql as hubGraphql };
+export { graphql as hubGraphql, request as hubRequest };
 export function hubSafeURL(c: {target: Pick<RepoTarget, "provider" | "host">}, value: string, asset = false): string | null { try { const u = new URL(value); if (u.protocol !== "https:" || u.username || u.password) return null; const allowed = new Set([c.target.host.toLowerCase(), ...(c.target.provider === "github" ? ["github.com", "gist.github.com", ...(asset ? ["objects.githubusercontent.com", "release-assets.githubusercontent.com", "github-releases.githubusercontent.com"] : [])] : [])]); return allowed.has(u.hostname.toLowerCase()) ? u.href : null; } catch { return null; } }
 export function hubError(error: unknown, token?: string): string { let s = error instanceof Error ? error.message : String(error); if (token) s = s.split(token).join("[redacted]"); return s.replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[redacted]@").replace(/\b(?:gh[pousr]_[\w]+|github_pat_[\w]+|glpat-[\w-]+)\b/g, "[redacted]").replace(/([?&](?:access_token|private_token|token|api_key)=)[^&\s]+/gi, "$1[redacted]").slice(0, 1200); }
-export class HubUncertainWriteError extends Error {}
+export class HubUncertainWriteError extends Error { constructor(message: string, readonly createdProject?: HubItem) { super(message); } }
 async function create(c:HubAccess,url:string,body:unknown){try{await raw(c,url,"POST",body);}catch(e){if(e instanceof H.HostingError&&e.status>=400&&e.status<500)throw e;throw new HubUncertainWriteError(`${hubError(e,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}}
 export function hubBoardIssueQuery(board: J, page: number): string {
   const q=new URLSearchParams({state:board.hide_closed_list?"opened":"all",scope:"all",per_page:"30",page:String(Math.max(1,page)),order_by:"updated_at"});
@@ -101,9 +118,9 @@ const projectDetailQuery = `query($id:ID!,$cursor:String){node(id:$id){... on Pr
     ... on ProjectV2IterationField{id name configuration{iterations{id title startDate duration} completedIterations{id title startDate duration}}}
   } pageInfo{hasNextPage}}
   items(first:30,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
-    ... on Issue{id title body url number state updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
-    ... on PullRequest{id title body url number state updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
-    ... on DraftIssue{id title body updatedAt assignees(first:100){nodes{login}}}
+    ... on Issue{id title body url number state createdAt author{login} updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+    ... on PullRequest{id title body url number state createdAt author{login} updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+    ... on DraftIssue{id title body createdAt creator{login} updatedAt assignees(first:100){nodes{login}}}
   } fieldValues(first:100){nodes{
     ... on ProjectV2ItemFieldSingleSelectValue{optionId field{... on ProjectV2SingleSelectField{id}}}
     ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{id}}}
@@ -121,9 +138,10 @@ function projectRow(x: J): HubProjectRow {
   const content=x.content??{}, values:Record<string,string>={},statuses:Record<string,string>={};
   for(const field of x.fieldValues?.nodes??[]){if(!field.field?.id)continue;const value=field.optionId??field.iterationId??field.text??field.number??field.date;if(value!=null)values[field.field.id]=String(value);if(field.optionId!=null)statuses[field.field.id]=field.optionId;}
   const kind=content.__typename==="PullRequest"?"pullRequest":content.__typename==="DraftIssue"?"draft":content.__typename==="Issue"?"issue":x.type==="DRAFT_ISSUE"?"draft":x.type==="PULL_REQUEST"?"pullRequest":content.id?"issue":"redacted";
-  return {id:x.id,title:content.title??t("Redacted project item"),body:content.body??"",url:content.url??"",contentID:content.id??"",statuses,values,kind,number:content.number,repository:content.repository?.nameWithOwner??"",state:content.state??"",assignees:(content.assignees?.nodes??[]).map((a:J)=>a.login),labels:(content.labels?.nodes??[]).map((label:J)=>label.name),updatedAt:x.updatedAt??content.updatedAt??"",headRefName:content.headRefName??"",archived:!!x.isArchived};
+  return {id:x.id,title:content.title??t("Redacted project item"),body:content.body??"",url:content.url??"",contentID:content.id??"",statuses,values,kind,number:content.number,repository:content.repository?.nameWithOwner??"",state:content.state??"",assignees:(content.assignees?.nodes??[]).map((a:J)=>a.login),labels:(content.labels?.nodes??[]).map((label:J)=>label.name),updatedAt:x.updatedAt??content.updatedAt??"",headRefName:content.headRefName??"",archived:!!x.isArchived,author:(kind==="draft"?content.creator?.login:content.author?.login)||undefined,createdAt:content.createdAt||undefined};
 }
 export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1, cursor?: string): Promise<HubPage> {
+  if(c.local){ensureHubCurrent(c);if(section!=="projects")throw new Error(t("This action requires a GitHub project."));await localProjects.load();ensureHubCurrent(c);if(localProjects.error)throw new Error(localProjects.error);return{items:localProjects.projects,more:false,notice:t("Saved on this device. Local projects do not sync with GitHub.")};}
   const query = `per_page=${pageSize}&page=${Math.max(1, page)}`;
   if (section === "releases") { const list = await request<J[]>(c, `${repo(c)}/releases?${query}`); return {items: list.map(x => releaseItem(c.target.provider, x)), more: list.length === pageSize, notice: c.target.provider === "gitlab" ? t("GitLab releases are published immediately; GitHub-style drafts and prereleases are unavailable.") : undefined}; }
   if (section === "organizations") { const list = await request<J[]>(c, `${c.apiBase}/${c.target.provider === "github" ? "user/orgs" : "groups?all_available=false"}${c.target.provider === "github" ? "?" : "&"}${query}`); return {items: list.map(x => ({id: String(c.target.provider === "github" ? x.login : x.id), title: x.name || x.login || x.full_name, subtitle: x.full_path ?? x.login, body: x.description ?? "", url: x.html_url ?? x.web_url ?? `https://github.com/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x})), more: list.length === pageSize}; }
@@ -137,11 +155,12 @@ export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1
 }
 export function hubSnippetRef(rawURL: string, file: string): string { try { const path=decodeURIComponent(new URL(rawURL).pathname),start=path.indexOf("/raw/"); if(start>=0&&path.endsWith("/"+file)){const ref=path.slice(start+5,-file.length-1); if(ref)return ref;} } catch {} return "main"; }
 export async function hubDetail(c: HubAccess, section: HostingHubSection, item: HubItem, page = 1, cursor?: string, tab: "repositories" | "members" = "repositories"): Promise<HubDetail> {
+  if(hubUsesLocal(c,item)){if(section!=="projects")throw new Error(t("This action requires a GitHub project."));const result=await localProjects.detail(item.id);ensureHubCurrent(c);return result;}
   const p = c.target.provider, qs = `per_page=${pageSize}&page=${page}`;
   if (section === "releases") { const x = await request<J>(c, `${repo(c)}/releases/${enc(item.id)}`); const d = empty(releaseItem(p,x)); d.assets = p === "github" ? (x.assets ?? []).map((a: J) => ({id:String(a.id),name:a.name,size:a.size,downloads:a.download_count,url:a.browser_download_url})) : [...(x.assets?.links ?? []).map((a: J) => ({id:String(a.id),name:a.name,url:a.direct_asset_url ?? a.url})), ...(x.assets?.sources ?? []).map((a: J) => ({id:a.format,name:a.format,url:a.url}))]; return d; }
   if (section === "organizations") { const base = `${c.apiBase}/${p === "github" ? "orgs" : "groups"}/${enc(item.id)}`; const x = await request<J>(c, base); const d = empty({...item,title:x.name || item.title,body:x.description ?? "",url:x.html_url ?? x.web_url ?? item.url,avatarURL:x.avatar_url === undefined ? item.avatarURL : organizationAvatarURL(c, x.avatar_url),data:x}); const list = await request<J[]>(c, `${base}/${tab === "members" ? p === "github" ? "members" : "members/all" : p === "github" ? "repos" : "projects"}?${qs}${tab === "repositories" ? p === "github" ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""}`); if (tab === "members") d.members = list.map(a => member(c, a)); else d.repositories = list.map(a => ({id:String(a.id),name:a.full_name ?? a.path_with_namespace,description:a.description ?? "",cloneURL:a.clone_url ?? a.http_url_to_repo,url:a.html_url ?? a.web_url})); d.more = list.length === pageSize; d.notice = p === "github" && tab === "members" ? t("Only members visible to this account are returned by the server.") : undefined; return d; }
   if (section === "gists") { const base = `${c.apiBase}/${p === "github" ? "gists" : "snippets"}/${enc(item.id)}`; const x = await request<J>(c, base); const d = empty(gistItem(p,x,c.me)); if (p === "github") { d.files = Object.entries(x.files ?? {}).map(([name,v]) => { const a=v as J; return {name,content:a.content ?? "",truncated:!!a.truncated}; }); try { await raw(c,base+"/star","GET"); d.starred = true; } catch(e) { if (e instanceof H.HostingError && e.status === 404) d.starred=false; else d.notice = t("Star status could not be loaded: {0}",hubError(e,c.token)); } if (x.truncated) d.notice = t("The server truncated the file list. Open the gist in a browser before editing."); } else { const files = x.files ?? [{path:x.file_name}]; for (const f of files.slice(0,30)) { const content = await (async () => { ensureHubCurrent(c); const value = await H.sendRaw(p, `${base}/files/${enc(x.default_branch ?? hubSnippetRef(f.raw_url ?? "",f.path ?? f.file_name))}/${enc(f.path ?? f.file_name)}/raw`, c.token); ensureHubCurrent(c); return value; })(); d.files.push({name:f.path ?? f.file_name,content:content.slice(0,1_000_000),truncated:content.length>1_000_000}); } if(files.length>30) d.notice=t("The server returned more files. Open the snippet in a browser before editing."); } return d; }
-  if (p === "gitlab") { const board = await request<J>(c, `${repo(c)}/boards/${enc(item.id)}`); const lists = await request<J[]>(c, `${repo(c)}/boards/${enc(item.id)}/lists?per_page=100`); const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name})); const issues = await request<J[]>(c, `${repo(c)}/issues?${hubBoardIssueQuery(board,page)}`); const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}]; d.rows=issues.map(x=>({id:String(x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}})); d.more=issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d; }
+  if (p === "gitlab") { const board = await request<J>(c, `${repo(c)}/boards/${enc(item.id)}`); const lists = await request<J[]>(c, `${repo(c)}/boards/${enc(item.id)}/lists?per_page=100`); const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name})); const issues = await request<J[]>(c, `${repo(c)}/issues?${hubBoardIssueQuery(board,page)}`); const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}]; d.rows=issues.map(x=>({id:String(x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",author:x.author?.username||undefined,createdAt:x.created_at||undefined,labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}})); d.more=issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d; }
   const r = await graphql<{node:J}>(c, projectDetailQuery, {id:item.id,cursor:cursor??null});
   const x=r.node;if(!x?.id) throw new Error(t("Project is unavailable or this account cannot access it."));
   const d=empty({...item,title:x.title,body:x.shortDescription??"",url:x.url,data:{...item.data,...x}});
@@ -172,8 +191,9 @@ function loadedProjectRow(detail:HubDetail,row:HubProjectRow) {
   if(!detail.item.id||!loaded)throw new Error(t("Select a loaded project field and item."));
   return loaded;
 }
-function githubProject(c:HubAccess,detail:HubDetail){ensureHubCurrent(c);if(c.target.provider!=="github"||!detail.item.id)throw new Error(t("This action requires a GitHub project."));}
+function githubProject(c:HubAccess,detail:HubDetail){ensureHubCurrent(c);if(hubUsesLocal(c,detail.item)||c.target.provider!=="github"||!detail.item.id)throw new Error(t("This action requires a GitHub project."));}
 export async function updateHubProjectField(c:HubAccess,detail:HubDetail,row:HubProjectRow,field:HubProjectField,value:string|null|undefined) {
+  if(hubUsesLocal(c,detail.item)){await localProjects.updateField(detail,row,field,value);ensureHubCurrent(c);return;}
   githubProject(c,detail);const loaded=loadedProjectRow(detail,row),actual=detail.fields.find(candidate=>candidate.id===field.id);
   if(!actual)throw new Error(t("Select a loaded project field and item."));
   const kind=actual.kind??(actual.options.length?"singleSelect":"unsupported");
@@ -192,6 +212,7 @@ export async function updateHubProjectField(c:HubAccess,detail:HubDetail,row:Hub
   await graphql(c,"mutation($input:UpdateProjectV2ItemFieldValueInput!){updateProjectV2ItemFieldValue(input:$input){projectV2Item{id}}}",{input:{...input,value:fieldValue}});
 }
 export async function saveHubProjectDraft(c:HubAccess,detail:HubDetail,title:string,body:string,row?:HubProjectRow) {
+  if(hubUsesLocal(c,detail.item)){await localProjects.saveDraft(detail,title,body,row);ensureHubCurrent(c);return;}
   githubProject(c,detail);if(!title.trim())throw new Error(t("A draft title is required."));
   if(row){
     const loaded=loadedProjectRow(detail,row);if(loaded.kind!=="draft"||!loaded.contentID)throw new Error(t("Select a loaded draft item."));
@@ -199,18 +220,21 @@ export async function saveHubProjectDraft(c:HubAccess,detail:HubDetail,title:str
     if(fresh.node?.id!==loaded.contentID||(fresh.node.title??"")!==loaded.title||(fresh.node.body??"")!==loaded.body)throw new Error(t("This item changed on the server. Refresh before saving."));
     await graphql(c,"mutation($input:UpdateProjectV2DraftIssueInput!){updateProjectV2DraftIssue(input:$input){draftIssue{id}}}",{input:{draftIssueId:loaded.contentID,title:title.trim(),body}});
   }
-  else {try{await graphql(c,"mutation($input:AddProjectV2DraftIssueInput!){addProjectV2DraftIssue(input:$input){projectItem{id}}}",{input:{projectId:detail.item.id,title:title.trim(),body}});}catch(error){if(error instanceof H.HostingError&&error.status>=400&&error.status<500||error instanceof HubProjectPermissionError)throw error;throw new HubUncertainWriteError(`${hubError(error,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}}
+  else {try{await graphql(c,"mutation($input:AddProjectV2DraftIssueInput!){addProjectV2DraftIssue(input:$input){projectItem{id}}}",{input:{projectId:detail.item.id,title:title.trim(),body}});}catch(error){if(error instanceof H.HostingError&&error.status>=400&&error.status<500||error instanceof HubProjectPermissionError||error instanceof HubProjectActionDeniedError)throw error;throw new HubUncertainWriteError(`${hubError(error,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}}
 }
 export async function archiveHubProjectItem(c:HubAccess,detail:HubDetail,row:HubProjectRow,archived:boolean) {
+  if(hubUsesLocal(c,detail.item)){await localProjects.archive(detail,row,archived);ensureHubCurrent(c);return;}
   githubProject(c,detail);const loaded=loadedProjectRow(detail,row),operation=archived?"archiveProjectV2Item":"unarchiveProjectV2Item",inputType=archived?"ArchiveProjectV2ItemInput":"UnarchiveProjectV2ItemInput";
   await graphql(c,`mutation($input:${inputType}!){${operation}(input:$input){item{id}}}`,{input:{projectId:detail.item.id,itemId:loaded.id}});
 }
 export async function deleteHubProjectItem(c:HubAccess,detail:HubDetail,row:HubProjectRow) {
+  if(hubUsesLocal(c,detail.item)){await localProjects.removeItem(detail,row);ensureHubCurrent(c);return;}
   githubProject(c,detail);const loaded=loadedProjectRow(detail,row);
   await graphql(c,"mutation($input:DeleteProjectV2ItemInput!){deleteProjectV2Item(input:$input){deletedItemId}}",{input:{projectId:detail.item.id,itemId:loaded.id}});
 }
 /** Reorders a loaded project item; a null anchor moves it to the top. */
 export async function moveHubProjectItemPosition(c:HubAccess,detail:HubDetail,row:HubProjectRow,afterRow:HubProjectRow|null) {
+  if(hubUsesLocal(c,detail.item)){await localProjects.reorder(detail,row,afterRow);ensureHubCurrent(c);return;}
   githubProject(c,detail);const loaded=loadedProjectRow(detail,row),anchor=afterRow?loadedProjectRow(detail,afterRow):null;
   if(anchor?.id===loaded.id)throw new Error(t("Select a loaded project field and item."));
   await graphql(c,"mutation($input:UpdateProjectV2ItemPositionInput!){updateProjectV2ItemPosition(input:$input){items{nodes{id}}}}",{input:{projectId:detail.item.id,itemId:loaded.id,afterId:anchor?.id??null}});
@@ -224,7 +248,7 @@ export async function convertHubProjectDraftToIssue(c:HubAccess,detail:HubDetail
   const data=await graphql<{repository:J|null}>(c,"query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id nameWithOwner}}",{owner:parts[0],name:parts[1]});
   if(!data.repository?.id||String(data.repository.nameWithOwner).toLowerCase()!==path.toLowerCase())throw new Error(t("Repository is unavailable or this account cannot access it."));
   try{await graphql(c,"mutation($input:ConvertProjectV2DraftIssueItemToIssueInput!){convertProjectV2DraftIssueItemToIssue(input:$input){item{id}}}",{input:{itemId:loaded.id,repositoryId:data.repository.id}});}
-  catch(error){if(error instanceof H.HostingError&&error.status>=400&&error.status<500||error instanceof HubProjectPermissionError)throw error;throw new HubUncertainWriteError(`${hubError(error,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}
+  catch(error){if(error instanceof H.HostingError&&error.status>=400&&error.status<500||error instanceof HubProjectPermissionError||error instanceof HubProjectActionDeniedError)throw error;throw new HubUncertainWriteError(`${hubError(error,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}
 }
 export async function moveHubProjectItem(c:HubAccess,detail:HubDetail,row:HubProjectRow,field:HubProjectField,option:string){
   if(c.target.provider==="github"){await updateHubProjectField(c,detail,row,field,option);return;}

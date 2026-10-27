@@ -86,10 +86,10 @@ struct AccountQuickControls: View {
                     let status = accounts.credentialState(for: account)
                     if status != .ready {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(status == .loading && !allowingAccess ? String(localized: "Checking saved account access…") : String(localized: "Allow access to the saved account to use repository services."))
+                            Text(accounts.savedAccessMessage(for: account))
                                 .font(.caption).foregroundStyle(.secondary)
                             if allowingAccess { ProgressView().controlSize(.small); Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.caption).foregroundStyle(.secondary) }
-                            Button("Allow saved account access") { allowStoredAccess(account) }.disabled(allowingAccess)
+                            Button("Restore saved account access") { allowStoredAccess(account) }.disabled(allowingAccess || status == .loading)
                         }
                     }
                 }
@@ -126,7 +126,7 @@ struct AccountQuickControls: View {
         allowingAccess = true; credentialError = nil
         Task {
             do { try await accounts.allowStoredAccess(for: account) }
-            catch { credentialError = AccountConnectionFailure.message(for: error) }
+            catch { credentialError = accounts.savedAccessErrorMessage(for: account, error: error) }
             allowingAccess = false
         }
     }

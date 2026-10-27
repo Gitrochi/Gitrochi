@@ -1,3 +1,4 @@
+import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import {
@@ -21,13 +22,15 @@ export function ProjectFieldManager({
   locked: boolean;
   ask: ProjectAsk;
 }) {
+  const edit = useProjectEdit(ask);
+  locked ||= edit.busy;
   const [editing, setEditing] = useState<HubProjectField | null | undefined>(
       undefined,
     ),
     [name, setName] = useState(""),
     [kind, setKind] = useState<HubProjectFieldInput["kind"]>("text"),
     [options, setOptions] = useState<HubProjectFieldOptionInput[]>([]);
-  const edit = (field: HubProjectField | null) => {
+  const beginEdit = (field: HubProjectField | null) => {
     setEditing(field);
     setName(field?.name ?? "");
     setKind((field?.kind as HubProjectFieldInput["kind"]) ?? "text");
@@ -44,7 +47,7 @@ export function ProjectFieldManager({
       kind,
       ...(kind === "singleSelect" ? { options } : {}),
     };
-    ask(
+    edit.run(
       editing ? t("Save project field changes?") : t("Create project field?"),
       `${name}\n${t(kind === "singleSelect" ? "Single select" : kind === "text" ? "Text" : kind === "number" ? "Number" : "Date")}${kind === "singleSelect" ? `\n${options.map((option) => option.name).join(", ")}` : ""}`,
       async (access) => {
@@ -65,11 +68,12 @@ export function ProjectFieldManager({
           <h3>{t("Project fields")}</h3>
           <p>{t("Define the information your team uses to plan work.")}</p>
         </div>
-        <Button size="small" disabled={locked} onClick={() => edit(null)}>
+        <Button size="small" disabled={locked} onClick={() => beginEdit(null)}>
           <Plus size={13} />
           {t("New field")}
         </Button>
       </div>
+      {edit.error && <p className="error-text" role="alert">{edit.error}</p>}
       {editing !== undefined && (
         <div className="project-management-editor">
           <div className="row">
@@ -170,7 +174,7 @@ export function ProjectFieldManager({
               }
               onClick={save}
             >
-              {t("Review and save")}
+              {t("Save field")}
             </Button>
             <Button
               size="small"
@@ -214,7 +218,7 @@ export function ProjectFieldManager({
                 <Button
                   size="small"
                   disabled={locked}
-                  onClick={() => edit(field)}
+                  onClick={() => beginEdit(field)}
                 >
                   {t("Edit")}
                 </Button>

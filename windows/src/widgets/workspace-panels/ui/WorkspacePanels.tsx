@@ -30,6 +30,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Spinner } from "@/shared/ui";
 import "./workspace-panels.css";
+import { WorkspacePlanningDashboard } from "./WorkspacePlanningDashboard";
 
 export interface WorkspacePanelProps {
   store: RepoStore;
@@ -106,7 +107,7 @@ export function WorkspaceHomePanel({ store }: WorkspacePanelProps) {
   return (
     <Page
       title="Home"
-      subtitle={t("Your repositories and the next useful steps.")}
+      subtitle={t("Plan your day, then build what matters.")}
       actions={
         <>
           <Button onClick={() => void store.pickAndOpen()}>
@@ -130,6 +131,7 @@ export function WorkspaceHomePanel({ store }: WorkspacePanelProps) {
         </>
       }
     >
+      <WorkspacePlanningDashboard store={store} />
       {store.path && (
         <div className="workspace-card">
           <h2>{store.name}</h2>

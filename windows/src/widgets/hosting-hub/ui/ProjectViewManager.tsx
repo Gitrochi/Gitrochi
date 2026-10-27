@@ -1,3 +1,4 @@
+import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import {
@@ -31,6 +32,8 @@ export function ProjectViewManager({
   more: boolean;
   loadMore: () => Promise<void>;
 }) {
+  const edit = useProjectEdit(ask);
+  locked ||= edit.busy;
   const [editing, setEditing] = useState<HubProjectView | null | undefined>(
       undefined,
     ),
@@ -40,7 +43,7 @@ export function ProjectViewManager({
       filter: "",
       visibleFieldIDs: [],
     });
-  const edit = (view: HubProjectView | null) => {
+  const beginEdit = (view: HubProjectView | null) => {
     setEditing(view);
     setInput(
       view
@@ -65,7 +68,7 @@ export function ProjectViewManager({
           <h3>{t("Shared views")}</h3>
           <p>{t("Views are saved to GitHub and shared with your team.")}</p>
         </div>
-        <Button size="small" disabled={locked} onClick={() => edit(null)}>
+        <Button size="small" disabled={locked} onClick={() => beginEdit(null)}>
           <Plus size={13} />
           {t("New shared view")}
         </Button>
@@ -78,6 +81,7 @@ export function ProjectViewManager({
           </Button>
         </p>
       )}
+      {edit.error && <p className="error-text" role="alert">{edit.error}</p>}
       {editing !== undefined && (
         <div className="project-management-editor">
           <div className="row">
@@ -163,7 +167,7 @@ export function ProjectViewManager({
               size="small"
               disabled={locked || !input.name.trim()}
               onClick={() =>
-                ask(
+                edit.run(
                   editing
                     ? t("Save shared view changes?")
                     : t("Create shared view?"),
@@ -181,7 +185,7 @@ export function ProjectViewManager({
                 )
               }
             >
-              {t("Review and save")}
+              {t("Save view")}
             </Button>
             <Button
               size="small"
@@ -210,7 +214,7 @@ export function ProjectViewManager({
                 {view.filter ? ` · ${view.filter}` : ""}
               </small>
             </span>
-            <Button size="small" disabled={locked} onClick={() => edit(view)}>
+            <Button size="small" disabled={locked} onClick={() => beginEdit(view)}>
               {t("Edit")}
             </Button>
             <Button

@@ -1,6 +1,8 @@
+import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
 import { ExternalLink, Settings2, X } from "lucide-react";
 import {
+  localProjects,
   saveHubProjectSettings,
   type HubDetail,
   type HubProjectSettingsInput,
@@ -40,7 +42,12 @@ export function ProjectSettings({
   open: (url: string) => void;
   safe: (url: string) => boolean;
 }) {
-  const [tab, setTab] = useState<"project" | "fields" | "views">(initialTab),
+  const edit = useProjectEdit(ask);
+  locked ||= edit.busy;
+  const localProject = detail.item.data.localProject === true;
+  const [tab, setTab] = useState<"project" | "fields" | "views">(
+      localProject ? "project" : initialTab,
+    ),
     [input, setInput] = useState<HubProjectSettingsInput>({
       title: detail.item.title,
       shortDescription: detail.item.body,
@@ -56,12 +63,19 @@ export function ProjectSettings({
             <Settings2 size={15} />
             {t("Project settings")}
           </h3>
-          <p>{t("Changes are shared with everyone who uses this project.")}</p>
+          <p>
+            {t(
+              localProject
+                ? "This project is stored privately on this device."
+                : "Changes are shared with everyone who uses this project.",
+            )}
+          </p>
         </div>
         <Button
           size="small"
           tip={t("Close project settings")}
           aria-label={t("Close project settings")}
+          disabled={edit.busy}
           onClick={() => {
             ask.cancel?.();
             close();
@@ -75,7 +89,10 @@ export function ProjectSettings({
         role="group"
         aria-label={t("Project settings section")}
       >
-        {(["project", "fields", "views"] as const).map((value) => (
+        {(localProject
+          ? (["project"] as const)
+          : (["project", "fields", "views"] as const)
+        ).map((value) => (
           <Button
             key={value}
             size="small"
@@ -122,73 +139,81 @@ export function ProjectSettings({
               }
             />
           </label>
-          <label>
-            {t("Project readme")}
-            <textarea
-              className="textarea"
-              rows={5}
-              disabled={locked}
-              value={input.readme}
-              onChange={(event) =>
-                setInput((current) => ({
-                  ...current,
-                  readme: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="project-setting-check">
-            <input
-              type="checkbox"
-              disabled={locked}
-              checked={input.public}
-              onChange={(event) =>
-                setInput((current) => ({
-                  ...current,
-                  public: event.target.checked,
-                }))
-              }
-            />
-            <span>
-              <strong>{t("Public project")}</strong>
-              <small>
-                {t(
-                  "Anyone can view a public project. Private repository items keep their own access rules.",
-                )}
-              </small>
-            </span>
-          </label>
-          <label className="project-setting-check">
-            <input
-              type="checkbox"
-              disabled={locked}
-              checked={input.closed}
-              onChange={(event) =>
-                setInput((current) => ({
-                  ...current,
-                  closed: event.target.checked,
-                }))
-              }
-            />
-            <span>
-              <strong>{t("Close project")}</strong>
-              <small>
-                {t("Closed projects keep their items and can be reopened.")}
-              </small>
-            </span>
-          </label>
+          {!localProject && (
+            <>
+              {" "}
+              <label>
+                {t("Project readme")}
+                <textarea
+                  className="textarea"
+                  rows={5}
+                  disabled={locked}
+                  value={input.readme}
+                  onChange={(event) =>
+                    setInput((current) => ({
+                      ...current,
+                      readme: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label className="project-setting-check">
+                <input
+                  type="checkbox"
+                  disabled={locked}
+                  checked={input.public}
+                  onChange={(event) =>
+                    setInput((current) => ({
+                      ...current,
+                      public: event.target.checked,
+                    }))
+                  }
+                />
+                <span>
+                  <strong>{t("Public project")}</strong>
+                  <small>
+                    {t(
+                      "Anyone can view a public project. Private repository items keep their own access rules.",
+                    )}
+                  </small>
+                </span>
+              </label>
+              <label className="project-setting-check">
+                <input
+                  type="checkbox"
+                  disabled={locked}
+                  checked={input.closed}
+                  onChange={(event) =>
+                    setInput((current) => ({
+                      ...current,
+                      closed: event.target.checked,
+                    }))
+                  }
+                />
+                <span>
+                  <strong>{t("Close project")}</strong>
+                  <small>
+                    {t("Closed projects keep their items and can be reopened.")}
+                  </small>
+                </span>
+              </label>
+            </>
+          )}
+          {edit.error && <p className="error-text" role="alert">{edit.error}</p>}
           <Button
             kind="primary"
             disabled={locked || !input.title.trim()}
             onClick={() =>
-              ask(
+              edit.run(
                 t("Save project settings?"),
-                `${input.title}\n${input.public ? t("Public project") : t("Private project")}\n${input.closed ? t("Closed") : t("Open")}`,
+                localProject
+                  ? `${input.title}\n${t("Private on this device")}`
+                  : `${input.title}\n${input.public ? t("Public project") : t("Private project")}\n${input.closed ? t("Closed") : t("Open")}`,
                 (access) => saveHubProjectSettings(access, detail, input),
               )
             }
           >
-            {t("Review and save")}
+            {t("Save changes")}
           </Button>
         </div>
       ) : tab === "fields" ? (
@@ -206,10 +231,28 @@ export function ProjectSettings({
           loadMore={loadMoreViews}
         />
       )}
+      {localProject && (
+        <Button
+          kind="danger"
+          disabled={locked}
+          onClick={() =>
+            ask(
+              t("Delete local project?"),
+              `${detail.item.title}\n${t("This permanently deletes this project and all its local tasks.")}`,
+              () => localProjects.deleteProject(detail),
+              "list",
+            )
+          }
+        >
+          {t("Delete local project")}
+        </Button>
+      )}
       <div className="project-settings-browser">
         <span>
           {t(
-            "Manage workflows, access, insights, and advanced settings in GitHub.",
+            localProject
+              ? "Local projects include status, start date, due date, priority, and assignees. GitHub synchronization is not enabled."
+              : "Manage workflows, access, insights, and advanced settings in GitHub.",
           )}
         </span>
         {safe(detail.item.url) && (

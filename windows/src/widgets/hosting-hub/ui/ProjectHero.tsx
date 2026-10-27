@@ -1,8 +1,7 @@
-import { Plus, ExternalLink, Settings2 } from "lucide-react";
+import { Plus, ExternalLink, Settings2, Globe2, LockKeyhole } from "lucide-react";
 import type { HubDetail } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
-import { projectKind } from "../lib/project-workspace";
 export function ProjectHero({
   detail,
   gitlab,
@@ -11,6 +10,7 @@ export function ProjectHero({
   safe,
   add,
   settings,
+  localProject = false,
 }: {
   detail: HubDetail;
   gitlab: boolean;
@@ -19,75 +19,70 @@ export function ProjectHero({
   safe: (url: string) => boolean;
   add: () => void;
   settings: () => void;
+  planning?: boolean;
+  localProject?: boolean;
 }) {
-  const activeRows = detail.rows.filter((row) => !row.archived);
+  const rows = detail.rows.filter((row) => !row.archived),
+    completed = rows.filter(
+      (row) =>
+        /^(closed|merged)$/i.test(row.state ?? "") ||
+        (localProject && row.statuses["local-status"] === "local-done"),
+    ).length;
   return (
-    <div className="project-hero">
+    <header className="project-hero">
       <div className="project-hero-main">
-        <div className="project-eyebrow">
-          <span className="project-live-dot" />
-          {gitlab ? t("GitLab issue board") : t("GitHub Projects")}
+        <div className="project-title-line">
+          <h1>{detail.item.title}</h1>
+          <span className="project-source-badge">
+            {localProject
+              ? t("Local project")
+              : gitlab
+                ? t("GitLab issue board")
+                : t("GitHub Projects")}
+          </span>
+        </div>
+        {detail.item.body && <p>{detail.item.body}</p>}
+        <div className="project-title-meta">
+          <span>{t("{0} tasks", rows.length)}</span>
           <span>·</span>
-          {t("Work connected to your code")}
+          <span>{t("{0} completed", completed)}</span>
+          {detail.more && <span>· {t("Loaded items")}</span>}
+          {!gitlab && !localProject && typeof detail.item.data.public === "boolean" && <span className="project-visibility">
+            {detail.item.data.public ? <Globe2 size={11} /> : <LockKeyhole size={11} />}{t(detail.item.data.public ? "Public project" : "Private project")}
+          </span>}
+          {localProject && (
+            <span className="project-device-note">
+              {t("Private on this device")}
+            </span>
+          )}
         </div>
-        <h1>{detail.item.title}</h1>
-        <p>
-          {detail.item.body ||
-            t(
-              "From the next idea to the next release, keep the work and the code together.",
-            )}
-        </p>
-        <div className="project-hero-actions">
-          <Button kind="primary" disabled={locked} onClick={() => add()}>
-            <Plus size={15} />
-            {t("Add item")}
+      </div>
+      <div className="project-hero-actions">
+        <Button kind="primary" disabled={locked} onClick={add}>
+          <Plus size={15} />
+          {t(localProject ? "Add task" : "Add item")}
+        </Button>
+        {safe(detail.item.url) && (
+          <Button
+            size="small"
+            tip={t("Open in browser")}
+            aria-label={t("Open in browser")}
+            onClick={() => open(detail.item.url)}
+          >
+            <ExternalLink size={15} />
           </Button>
-          {safe(detail.item.url) && (
-            <Button size="small" onClick={() => open(detail.item.url)}>
-              <ExternalLink size={13} />
-              {t("Open in browser")}
-            </Button>
-          )}
-          {!gitlab && (
-            <Button size="small" onClick={settings}>
-              <Settings2 size={13} />
-              {t("Project settings")}
-            </Button>
-          )}
-        </div>
+        )}
+        {!gitlab && (
+          <Button
+            size="small"
+            tip={t("Project settings")}
+            aria-label={t("Project settings")}
+            onClick={settings}
+          >
+            <Settings2 size={15} />
+          </Button>
+        )}
       </div>
-      <div className="project-summary" aria-label={t("Loaded project summary")}>
-        <div>
-          <strong>{activeRows.length}</strong>
-          <span>{t("Active items")}</span>
-        </div>
-        <div>
-          <strong>
-            {activeRows.filter((row) => projectKind(row) === "issue").length}
-          </strong>
-          <span>{t("Issues")}</span>
-        </div>
-        <div>
-          <strong>
-            {
-              activeRows.filter((row) => projectKind(row) === "pullRequest")
-                .length
-            }
-          </strong>
-          <span>{t("Pull requests")}</span>
-        </div>
-        <div>
-          <strong>
-            {activeRows.filter((row) => projectKind(row) === "draft").length}
-          </strong>
-          <span>{t("Drafts")}</span>
-        </div>
-        <small>
-          {detail.more
-            ? t("More items are available. Metrics cover loaded pages.")
-            : t("Counts show active items from loaded pages.")}
-        </small>
-      </div>
-    </div>
+    </header>
   );
 }

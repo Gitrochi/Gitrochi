@@ -16,6 +16,8 @@ final class CredentialCache {
     private var values: [String: String] = [:]
     private var states: [String: State] = [:]
     @ObservationIgnored private var reads: [String: Task<Void, Never>] = [:]
+    @ObservationIgnored private var lastStatus: [String: Int32] = [:]
+    @ObservationIgnored private var lastReads: [String: Date] = [:]
     @ObservationIgnored private var generations: [String: UUID] = [:]
     @ObservationIgnored private let reader: Reader
     @ObservationIgnored var onChange: (() -> Void)?
@@ -44,7 +46,7 @@ final class CredentialCache {
     /// 명시적 승인·새 토큰 저장·해제는 이전 자동 읽기의 결과를 무효화한다.
     @discardableResult func begin(_ name: String) -> UUID {
         reads.removeValue(forKey: name)?.cancel()
-        let attempt = UUID(); generations[name] = attempt
+        let attempt = UUID(); generations[name] = attempt; lastReads[name] = Date()
         states[name] = .loading
         return attempt
     }
@@ -54,9 +56,21 @@ final class CredentialCache {
     func complete(_ name: String, attempt: UUID, result: CredentialReadResult) {
         guard isCurrent(name, attempt: attempt) else { return }
         reads.removeValue(forKey: name)
-        values[name] = result.value
-        states[name] = result.value == nil ? (result.requiresAuthorization ? .authorizationRequired : .unavailable) : .ready
+        lastStatus[name] = result.status
+        // A locked Keychain or a canceled read does not revoke an already restored session.
+        let transient = result.requiresAuthorization || result.status == -25291
+        if result.value != nil || !transient || values[name] == nil { values[name] = result.value }
+        states[name] = values[name] == nil ? (result.requiresAuthorization ? .authorizationRequired : .unavailable) : .ready
         onChange?()
+    }
+
+    /// Lifecycle retries stay silent and coalesced; ready credentials never reread on navigation.
+    func retry(_ name: String, minimumInterval: TimeInterval = 30, now: Date = Date()) {
+        guard values[name] == nil, reads[name] == nil, states[name] != .loading,
+              states[name] == nil || states[name] == .authorizationRequired || lastStatus[name] == -25291,
+              lastReads[name].map({ now.timeIntervalSince($0) >= minimumInterval }) ?? true else { return }
+        states[name] = nil
+        prepare(name)
     }
 
     func store(_ value: String?, for name: String) {

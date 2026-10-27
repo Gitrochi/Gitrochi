@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/Tools/project-backend-test-sources.sh"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
@@ -282,5 +283,5 @@ enum Hosting {
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hub"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hub"
 "$TASK_TMP/test-hub"

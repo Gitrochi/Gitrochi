@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/Tools/project-backend-test-sources.sh"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
@@ -27,7 +28,7 @@ enum Hosting {
         func input(_ request: URLRequest) throws -> J { try variables(request)["input"] as! J }
         func connection(_ nodes: [J], more: Bool = false) -> J { ["nodes": nodes, "pageInfo": ["hasNextPage": more]] }
         let c = HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/client"), token: "fixture-token", apiBase: "https://api.github.com", me: "reader")
-        let metadata: J = ["id": "P", "number": 1, "title": "Delivery", "shortDescription": "Team plan", "readme": "Guide", "public": false, "closed": false, "updatedAt": "2026-01-01"]
+        let metadata: J = ["id": "P", "number": 1, "title": "Delivery", "shortDescription": "Team plan", "readme": "Guide", "public": false, "closed": false, "updatedAt": "2026-01-01", "url": "https://github.com/orgs/team/projects/1"]
         let field = HubProjectField(id: "F", name: "Priority", options: [HubProjectOption(id: "A", name: "High"), HubProjectOption(id: "B", name: "Low")])
         let fieldNode: J = ["id": "F", "name": "Priority", "options": [["id": "A", "name": "High", "color": "RED", "description": "Urgent"], ["id": "B", "name": "Low", "color": "GRAY", "description": "Later"]]]
         let detail = HubDetail(item: HubItem(id: "P", title: "Delivery", body: "Team plan", data: metadata), fields: [field, HubProjectField(id: "N", name: "Points", options: [], kind: .number), HubProjectField(id: "TITLE", name: "Title", options: [], kind: .unsupported)])
@@ -129,6 +130,107 @@ enum Hosting {
             Hosting.handler = { request in calls.append(request); return try json(["data": ["node": ["id": "P", "views": connection([malformed])]]]) }
             do { _ = try await HostingHubAPI.projectViews(c, detail: commonDetail); fatalError("Incomplete shared view fields accepted") } catch { precondition(error.localizedDescription.contains("unexpected response")) }
         }
+        precondition(HostingHubAPI.projectPlanTier("free", ownerKind: .user) == .free)
+        precondition(HostingHubAPI.projectPlanTier("GitHub Pro", ownerKind: .user) == .pro)
+        precondition(HostingHubAPI.projectPlanTier("team", ownerKind: .organization) == .team)
+        precondition(HostingHubAPI.projectPlanTier("enterprise_cloud", ownerKind: .organization) == .enterprise)
+        for raw in [nil, "", "Medium", "business", "enterprise"] as [String?] { precondition(HostingHubAPI.projectPlanTier(raw, ownerKind: .user) == .unknown) }
+        precondition(HostingHubAPI.projectPlanTier("pro", ownerKind: .organization) == .unknown && HostingHubAPI.projectPlanTier("team", ownerKind: .user) == .unknown)
+        let personalAccess = HubAccess(target: personal, token: c.token, apiBase: c.apiBase, me: c.me)
+        for (raw, tier, maximum) in [("free", HubProjectPlanTier.free, 1), ("pro", .pro, 5)] {
+            Hosting.handler = { request in
+                calls.append(request)
+                if request.url!.path.hasSuffix("/user") { return try json(["login": "reader", "plan": ["name": raw]]) }
+                let query = try requestBody(request)["query"] as! String; precondition(!query.contains("viewerCanCreateProjects"))
+                return try json(["data": ["repositoryOwner": ["__typename": "User", "id": "USER", "login": "reader"]]])
+            }
+            let capabilities = try await HostingHubAPI.inspectProjectCreationCapabilities(personalAccess)
+            precondition(capabilities.viewerVerified && capabilities.viewerLogin == "reader" && capabilities.ownerID == "USER" && capabilities.ownerKind == .user)
+            precondition(capabilities.accountPlan.tier == tier && capabilities.ownerPlan.tier == tier && capabilities.ownerPlan.source == .authenticatedUser)
+            precondition(capabilities.canCreate == nil && capabilities.canPublish == nil && capabilities.limits.fields == 50 && capabilities.limits.autoAddWorkflows == maximum)
+        }
+        let organizationTiers: [(String?, HubProjectPlanTier, Int?)] = [("free", .free, 1), ("team", .team, 5), ("enterprise_cloud", .enterprise, 20), (nil, .unknown, nil)]
+        for (raw, tier, maximum) in organizationTiers {
+            Hosting.handler = { request in
+                calls.append(request)
+                if request.url!.path.hasSuffix("/user") { return try json(["login": "reader", "plan": ["name": "pro"]]) }
+                if request.url!.path.hasSuffix("/orgs/team") { var organization: J = ["login": "team"]; if let raw { organization["plan"] = ["name": raw] }; return try json(organization) }
+                return try json(["data": ["repositoryOwner": ["__typename": "Organization", "id": "ORG", "login": "team"]]])
+            }
+            let capabilities = try await HostingHubAPI.inspectProjectCreationCapabilities(c)
+            precondition(capabilities.accountPlan.tier == .pro && capabilities.ownerPlan.tier == tier && capabilities.limits.autoAddWorkflows == maximum)
+        }
+        for raw in [nil, "Medium"] as [String?] {
+            Hosting.handler = { request in
+                calls.append(request)
+                if request.url!.path.hasSuffix("/user") { var viewer: J = ["login": "reader"]; if let raw { viewer["plan"] = ["name": raw] }; return try json(viewer) }
+                return try json(["data": ["repositoryOwner": ["__typename": "User", "id": "USER", "login": "reader"]]])
+            }
+            let capabilities = try await HostingHubAPI.inspectProjectCreationCapabilities(personalAccess)
+            precondition(capabilities.viewerVerified && capabilities.ownerPlan.tier == .unknown && capabilities.ownerPlan.rawName == raw && capabilities.limits.autoAddWorkflows == nil)
+        }
+        Hosting.handler = { request in
+            calls.append(request)
+            if request.url!.path.hasSuffix("/user") { return try json(["login": "reader", "plan": ["name": "pro"]]) }
+            return try json(["data": ["repositoryOwner": ["__typename": "User", "id": "OTHER", "login": "maintainer"]]])
+        }
+        let beforeOther = calls.count, other = try await HostingHubAPI.inspectProjectCreationCapabilities(c)
+        precondition(other.accountPlan.tier == .pro && other.ownerPlan.tier == .unknown && calls.count == beforeOther + 2)
+        let enterpriseAccess = HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "enterprise.test", path: "team/client"), token: c.token, apiBase: "https://enterprise.test/api/v3", me: c.me)
+        Hosting.handler = { request in
+            calls.append(request)
+            if request.url!.path.hasSuffix("/user") { return try json(["login": "reader"]) }
+            if request.url!.path.hasSuffix("/orgs/team") { throw HostingError(status: 403) }
+            return try json(["data": ["repositoryOwner": ["__typename": "Organization", "id": "ORG", "login": "team"]]])
+        }
+        let enterprise = try await HostingHubAPI.inspectProjectCreationCapabilities(enterpriseAccess)
+        precondition(enterprise.accountPlan.tier == .unknown && enterprise.ownerPlan.tier == .unknown && enterprise.ownerID == "ORG" && enterprise.limits.autoAddWorkflows == nil)
+        var localAccess = c; localAccess.local = true; let beforeLocal = calls.count
+        do { _ = try await HostingHubAPI.inspectProjectCreationCapabilities(localAccess); fatalError("Local capability request accepted") } catch {}
+        do { _ = try await HostingHubAPI.createProject(localAccess, title: "Local"); fatalError("Local remote creation accepted") } catch {}
+        precondition(calls.count == beforeLocal)
+        Hosting.handler = { request in
+            calls.append(request)
+            if request.url!.path.hasSuffix("/user") { return try json(["login": "another-user", "plan": ["name": "pro"]]) }
+            return try json(["data": ["repositoryOwner": ["__typename": "User", "id": "USER", "login": "reader"]]])
+        }
+        let mismatched = try await HostingHubAPI.inspectProjectCreationCapabilities(personalAccess)
+        precondition(!mismatched.viewerVerified && mismatched.accountPlan.tier == .unknown)
+        var capabilityCurrent = true, capabilityAccess = c; capabilityAccess.isCurrent = { capabilityCurrent }; let beforeCapabilitySwitch = calls.count
+        Hosting.handler = { request in calls.append(request); capabilityCurrent = false; return try json(["login": "reader", "plan": ["name": "pro"]]) }
+        do { _ = try await HostingHubAPI.inspectProjectCreationCapabilities(capabilityAccess); fatalError("Stale capability response accepted") } catch { precondition(error.localizedDescription.contains("account changed")) }
+        precondition(calls.count == beforeCapabilitySwitch + 1)
+        var published = metadata; published["public"] = true
+        Hosting.handler = { request in
+            calls.append(request); let query = try requestBody(request)["query"] as! String
+            if query.hasPrefix("query") { return try json(["data": ["repository": ["id": "REPO", "owner": ["id": "OWNER"]]]]) }
+            if query.contains("createProjectV2") { return try json(["data": ["createProjectV2": ["projectV2": metadata]]]) }
+            return try json(["data": ["updateProjectV2": ["projectV2": published]]])
+        }
+        let beforePublish = calls.count, publicProject = try await HostingHubAPI.createProject(c, title: "Public", isPublic: true)
+        precondition(calls.count == beforePublish + 3 && publicProject.data["public"] as? Bool == true)
+        precondition(try! input(calls[calls.count - 2])["public"] == nil)
+        precondition(try! input(calls.last!)["public"] as? Bool == true)
+        Hosting.handler = { request in
+            calls.append(request); let query = try requestBody(request)["query"] as! String
+            if query.hasPrefix("query") { return try json(["data": ["repository": ["id": "REPO", "owner": ["id": "OWNER"]]]]) }
+            if query.contains("createProjectV2") { return try json(["data": ["createProjectV2": ["projectV2": metadata]]]) }
+            throw HostingError(status: 403)
+        }
+        let beforePublishFailure = calls.count
+        do { _ = try await HostingHubAPI.createProject(c, title: "Public", isPublic: true); fatalError("Failed publication accepted") }
+        catch let error as HubUncertainWriteError { precondition(error.createdProject?.id == "P" && error.createdProject?.url == "https://github.com/orgs/team/projects/1" && error.createdProject?.data["public"] as? Bool == false && error.localizedDescription.contains("private project was created")) }
+        precondition(calls.count == beforePublishFailure + 3)
+        for graphDenied in [false, true] {
+            Hosting.handler = { request in
+                calls.append(request); if (try requestBody(request)["query"] as! String).hasPrefix("query") { return try json(["data": ["repository": ["id": "REPO", "owner": ["id": "OWNER"]]]]) }
+                if graphDenied { return try json(["errors": [["type": "FORBIDDEN", "message": "restricted raw field"]]]) }; throw HostingError(status: 403)
+            }
+            let beforeDenied = calls.count
+            do { _ = try await HostingHubAPI.createProject(c, title: "Denied"); fatalError("Denied creation accepted") }
+            catch let error as HubProjectActionDeniedError { precondition(error.localizedDescription.contains("paid plan does not grant") && !error.localizedDescription.contains("restricted raw field")) }
+            precondition(calls.count == beforeDenied + 2)
+        }
         var current = true, guarded = c; guarded.isCurrent = { current }
         Hosting.handler = { request in calls.append(request); current = false; return try json(["data": ["repository": ["id": "R", "owner": ["id": "O"]]]]) }
         let beforeSwitch = calls.count
@@ -138,5 +240,5 @@ enum Hosting {
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$ROOT/Sources/Services/ProjectManagement.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-project-management"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" "$ROOT/Sources/Services/ProjectManagement.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-project-management"
 "$TASK_TMP/test-project-management"

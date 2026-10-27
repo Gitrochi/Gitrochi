@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   Archive,
   CheckCircle2,
@@ -15,6 +15,7 @@ import {
   type HubDetail,
   type HubProjectField,
   type HubProjectRow,
+  type ProjectScheduleFields,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
@@ -22,17 +23,13 @@ import {
   projectFieldValue,
   projectKind,
   projectRepository,
+  type ProjectAsk,
 } from "../lib/project-workspace";
+import { ProjectColumnComposer } from "./ProjectColumnComposer";
+import { ProjectCardMetadata, projectOptionTone } from "./ProjectCardMetadata";
 import { ProjectRoadmap } from "./ProjectRoadmap";
-const colors = [
-  "var(--text-3)",
-  "var(--accent)",
-  "var(--orange)",
-  "var(--green)",
-  "var(--red)",
-];
 const kindLabel = (row: HubProjectRow) =>
-  projectKind(row) === "pullRequest"
+  row.id.startsWith("local-task:") ? t("Task") : projectKind(row) === "pullRequest"
     ? t("Pull request")
     : projectKind(row) === "draft"
       ? t("Draft")
@@ -66,6 +63,10 @@ export function ProjectItems({
   selectedIDs = new Set(),
   toggleSelection,
   visibleFieldIDs,
+  scheduleFields,
+  assignDate,
+  ask,
+  completedIDs = new Set<string>(),
 }: {
   layout: "board" | "list" | "timeline";
   detail: HubDetail;
@@ -82,7 +83,14 @@ export function ProjectItems({
   selectedIDs?: Set<string>;
   toggleSelection?: (row: HubProjectRow) => void;
   visibleFieldIDs?: string[];
+  scheduleFields?: ProjectScheduleFields;
+  assignDate?: (row: HubProjectRow, date: string) => Promise<boolean>;
+  ask?: ProjectAsk;
+  completedIDs?: Set<string>;
 }) {
+  const [composingColumn, setComposingColumn] = useState<string | null>(null);
+  useEffect(() => setComposingColumn(null), [detail.item.id, field?.id, layout]);
+  const localProject = detail.item.data.localProject === true;
   const columns = hubProjectColumns({ ...detail, fields, rows }, field?.id);
   const tableFields: HubProjectField[] =
     visibleFieldIDs !== undefined
@@ -90,12 +98,15 @@ export function ProjectItems({
           const field = detail.fields.find((field) => field.id === id);
           return field && !/^title$/i.test(field.name) ? [field] : [];
         })
-      : [
+      : detail.item.data.localProject === true
+        ? ["local-status", "local-priority", "local-due", "local-assignees"]
+          .flatMap((id) => detail.fields.find((field) => field.id === id) ?? [])
+        : [
           ...(field ? [field] : []),
           { id: "__repository", name: t("Repository"), options: [] },
           { id: "__assignees", name: t("Assignees"), options: [] },
         ];
-  const fieldText = (row: HubProjectRow, value: HubProjectField) =>
+  const rawFieldText = (row: HubProjectRow, value: HubProjectField) =>
     /^repository$/i.test(value.name) || value.id === "__repository"
       ? projectRepository(row) || "—"
       : /^assignees$/i.test(value.name) || value.id === "__assignees"
@@ -104,6 +115,10 @@ export function ProjectItems({
             (option) => option.id === projectFieldValue(row, value),
           )?.name ??
           (projectFieldValue(row, value) || "—"));
+  const fieldText = (row: HubProjectRow, value: HubProjectField) => {
+    const text = rawFieldText(row, value);
+    return localProject && value.options.length ? t(text) : text;
+  };
   const tableStyle = {
     gridTemplateColumns: `minmax(240px,2fr) ${tableFields.length ? `repeat(${tableFields.length},minmax(120px,1fr))` : ""}`,
     minWidth: 240 + tableFields.length * 134,
@@ -136,78 +151,43 @@ export function ProjectItems({
       </span>
       <strong className="project-card-title">{row.title}</strong>
       {row.body && <span className="project-card-description">{row.body}</span>}
-      <span className="project-card-footer">
-        <span className="project-labels">
-          {(row.labels ?? []).slice(0, 2).map((label) => (
-            <span className="project-tag" key={label}>
-              {label}
-            </span>
-          ))}
-          {fields
-            .filter((value) => value.id !== field?.id && row.statuses[value.id])
-            .slice(0, 1)
-            .map((value) => (
-              <span className="project-tag" key={value.id}>
-                {
-                  value.options.find(
-                    (option) => option.id === row.statuses[value.id],
-                  )?.name
-                }
-              </span>
-            ))}
-        </span>
-        <span className="project-avatar-group">
-          {row.assignees?.slice(0, 3).map((name) => (
-            <span className="project-avatar" key={name} title={`@${name}`}>
-              {name.slice(0, 1).toUpperCase()}
-            </span>
-          ))}
-        </span>
-      </span>
+      <ProjectCardMetadata row={row} detail={detail} group={field} scheduleFields={scheduleFields} completed={completedIDs.has(row.id)} />
     </button>
   );
   return (
     <>
       {layout === "board" ? (
         <div className="project-board" aria-label={t("Project board")}>
-          {columns.map((column, index) => (
+          {columns.map((column) => (
             <section
               className="project-column"
               key={column.id}
               style={
                 {
-                  "--project-color": colors[index % colors.length],
+                  "--project-color": field ? `var(--${projectOptionTone(field, column.id) === "neutral" ? "text-3" : projectOptionTone(field, column.id)})` : "var(--text-3)",
                 } as CSSProperties
               }
             >
               <header>
                 <span className="project-status-dot" />
-                <strong>{column.title}</strong>
+                <strong>{localProject ? t(column.title) : column.title}</strong>
                 <span className="project-count">{column.rows.length}</span>
                 <Button
                   size="small"
-                  tip={t("Add item")}
+                  tip={t(ask ? "Add task" : "Add item")}
+                  aria-label={t(ask ? "Add task" : "Add item")}
                   disabled={locked}
-                  onClick={() => add()}
+                  onClick={() => ask ? setComposingColumn(column.id) : add()}
                 >
                   <Plus size={13} />
                 </Button>
               </header>
               <div className="project-column-cards">
                 {column.rows.map(card)}
-                {!column.rows.length && (
-                  <div className="project-column-empty">
-                    <div className="project-empty-lines">
-                      <i />
-                      <i />
-                      <i />
-                    </div>
-                    <span>{t("No items yet")}</span>
-                    <button disabled={locked} onClick={() => add()}>
-                      <Plus size={12} />
-                      {t("Add item")}
-                    </button>
-                  </div>
+                {!column.rows.length && <div className="project-column-empty">{t("No tasks yet")}</div>}
+                {ask ? <ProjectColumnComposer key={`${detail.item.id}:${field?.id ?? ""}:${column.id}`} detail={detail} field={field} option={column.id || undefined} ask={ask} locked={locked}
+                  active={composingColumn === column.id} start={() => setComposingColumn(column.id)} close={() => setComposingColumn(null)} /> : (
+                  <button className="project-column-add" disabled={locked} onClick={add}><Plus size={13} />{t("Add item")}</button>
                 )}
               </div>
             </section>
@@ -223,7 +203,7 @@ export function ProjectItems({
             <span role="columnheader">{t("Title")}</span>
             {tableFields.map((value) => (
               <span role="columnheader" key={value.id}>
-                {value.name}
+                {localProject ? t(value.name) : value.name}
               </span>
             ))}
           </div>
@@ -279,6 +259,9 @@ export function ProjectItems({
           select={activate}
           open={open}
           safe={safe}
+          scheduleFields={scheduleFields}
+          assignDate={assignDate}
+          locked={locked}
         />
       )}
     </>

@@ -2,6 +2,7 @@
 # Exercise the production hub store and cache without Keychain, accounts or network access.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/Tools/project-backend-test-sources.sh"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
@@ -45,6 +46,15 @@ enum AccountConnectionFailure {
     }
     func token(for account: HostAccount) -> String? { cache.value(account.id) }
     func credentialState(for account: HostAccount) -> CredentialCache.State { cache.state(account.id) }
+    func savedAccessMessage(for account: HostAccount) -> String {
+        switch credentialState(for: account) {
+        case .loading: return String(localized: "Restoring your saved account…")
+        case .authorizationRequired: return String(localized: "Your account is still connected. Allow access to its saved credentials to continue.")
+        case .unavailable: return String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings.")
+        case .ready: return String(localized: "Your account is connected.")
+        }
+    }
+    func savedAccessErrorMessage(for account: HostAccount, error: Error) -> String { AccountConnectionFailure.message(for: error) }
     func candidates(for target: RepoTarget) -> [HostAccount] { accounts.filter { $0.provider == target.provider && $0.host == target.host } }
     func allowStoredAccess(for account: HostAccount) async throws {
         approvedAccounts.append(account.id)
@@ -118,7 +128,7 @@ enum AccountConnectionFailure {
         accounts.set(.authorizationRequired, for: first)
         await denied.activateHostingHub(.projects)
         for _ in 0..<3 { await denied.loadHostingHub() }
-        precondition(denied.hubCredentialState == .authorizationRequired && denied.hostingHub.error == String(localized: "Allow access to the saved account to use repository services."), "Denied saved access was reported as a missing token")
+        precondition(denied.hubCredentialState == .authorizationRequired && denied.hostingHub.error == String(localized: "Your account is still connected. Allow access to its saved credentials to continue."), "Denied saved access was reported as a missing token")
         precondition(!denied.hostingHub.projectPermissionRequired, "Keychain access was confused with project OAuth scope")
         precondition(Hosting.requests.isEmpty && accounts.approvedAccounts.isEmpty, "Automatic retries prompted or sent HTTP with denied access")
         let approval = Task { await denied.allowHubStoredAccess() }
@@ -136,7 +146,7 @@ enum AccountConnectionFailure {
         let unavailable = fixture()
         accounts.set(.unavailable, for: first)
         await unavailable.activateHostingHub(.projects)
-        precondition(unavailable.hubCredentialState == .unavailable && unavailable.hostingHub.error == String(localized: "The selected account has no token. Reconnect it from Settings → Accounts."), "A genuinely missing credential lost its reconnect guidance")
+        precondition(unavailable.hubCredentialState == .unavailable && unavailable.hostingHub.error == String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings."), "A genuinely missing credential lost its reconnect guidance")
         precondition(Hosting.requests.isEmpty && accounts.approvedAccounts.isEmpty)
 
         let switchedAccount = fixture()
@@ -222,7 +232,7 @@ enum AccountConnectionFailure {
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Core/CredentialCache.swift" \
-    "$ROOT/Sources/Services/HostingHub.swift" \
+    "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" \
     "$ROOT/Sources/Store/RepoStore+HostingHub.swift" \
     "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hosting-hub-credentials"
 "$TASK_TMP/test-hosting-hub-credentials"

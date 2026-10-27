@@ -44,14 +44,13 @@ private struct WorkspaceAccountNotice: View {
     var body: some View {
         if store.collaborationAccess == nil {
             WorkspaceCard {
-                Text(
-                    store.target == nil
-                        ? "Open a repository with a GitHub or GitLab remote to use this workspace."
-                        : "Connect an account to load this workspace."
-                ).foregroundStyle(.secondary)
                 if store.target == nil {
+                    Text("Open a repository with a GitHub or GitLab remote to use this workspace.").foregroundStyle(.secondary)
                     Button("Open repository…") { store.presentOpenPanel() }
+                } else if let account = store.hostingAccount {
+                    SavedAccountAccessNotice(account: account) { Task { await store.loadInbox() } }
                 } else {
+                    Text("Connect an account to load this workspace.").foregroundStyle(.secondary)
                     Button("Connect account…") { openSettings() }
                 }
             }
@@ -65,8 +64,9 @@ struct WorkspaceHomePanel: View {
     var body: some View {
         WorkspacePage(
             title: "Home",
-            subtitle: String(localized: "Your repositories and the next useful steps.")
+            subtitle: String(localized: "Plan your day, then build what matters.")
         ) {
+            WorkspacePlanningDashboard()
             LazyVGrid(
                 columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)],
                 alignment: .leading, spacing: 8
@@ -90,7 +90,7 @@ struct WorkspaceHomePanel: View {
                     Button("Review changes") { store.navigate(.changes) }
                 }
             }
-            if store.url != nil { RepositoryOverview() }
+            if store.url != nil { DisclosureGroup("Repository overview") { RepositoryOverview() } }
             Text("Open repositories").font(.headline)
             ForEach(Workspace.shared.openRepositories) { repository in
                 localRow(repository.url, repository: repository)

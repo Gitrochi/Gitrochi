@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import Security
 import Observation
 
@@ -98,6 +99,7 @@ final class AccountStore {
     /// 같은 서버의 다른 주소: 저장소 원격 호스트 → 계정 ID (예: git.example.com → gitlab.example.com 계정, 같은 서버를 다른 도메인으로 쓸 때)
     private var aliases: [String: String]
     private let credentials = CredentialCache { await Keychain.read($0) }
+    @ObservationIgnored private var activationObserver: NSObjectProtocol?
     private var connectionAttempts: [String: UUID] = [:]
 
     private init() {
@@ -116,6 +118,9 @@ final class AccountStore {
         for account in accounts {
             credentials.prepare("acct:" + account.id)
             if account.id.hasPrefix("legacy-") { credentials.prepare(account.provider.rawValue) }
+        }
+        activationObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.retryStoredCredentials() }
         }
         Askpass.install()
     }
@@ -231,9 +236,40 @@ final class AccountStore {
             credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: value, status: errSecSuccess))
         } catch {
             guard credentials.isCurrent(name, attempt: attempt), accounts.contains(account) else { return }
-            credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: nil, status: errSecAuthFailed))
+            let status = (error as? HostingError)?.status
+            let mismatch: Bool
+            if let known = error as? AccountConnectionFailure, case .identityMismatch = known { mismatch = true } else { mismatch = false }
+            if mismatch || status == 401 {
+                credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: nil, status: errSecItemNotFound))
+                if account.id.hasPrefix("legacy-") { credentials.store(nil, for: account.provider.rawValue) }
+            } else {
+                // Reading a saved token succeeded. Offline, rate-limit and server errors are not logout.
+                credentials.complete(name, attempt: attempt, result: CredentialReadResult(value: value, status: errSecSuccess))
+            }
             if let known = error as? AccountConnectionFailure { throw known }
-            throw AccountConnectionFailure.verification(status: (error as? HostingError)?.status)
+            throw AccountConnectionFailure.verification(status: status)
+        }
+    }
+
+    /// App activation can restore an unlocked Keychain without opening a login or permission dialog.
+    func retryStoredCredentials() {
+        for account in accounts {
+            credentials.retry("acct:" + account.id)
+            if account.id.hasPrefix("legacy-") { credentials.retry(account.provider.rawValue) }
+        }
+    }
+    func savedAccessErrorMessage(for account: HostAccount, error: Error) -> String {
+        if credentialState(for: account) == .ready {
+            return String(localized: "Your saved session is restored. Verification could not be completed; check your connection and permissions, then refresh.")
+        }
+        return AccountConnectionFailure.message(for: error)
+    }
+    func savedAccessMessage(for account: HostAccount) -> String {
+        switch credentialState(for: account) {
+        case .loading: return String(localized: "Restoring your saved account…")
+        case .authorizationRequired: return String(localized: "Your account is still connected. Allow access to its saved credentials to continue.")
+        case .unavailable: return String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings.")
+        case .ready: return String(localized: "Your account is connected.")
         }
     }
 

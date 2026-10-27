@@ -18,7 +18,7 @@ struct CollaborationInboxItem: Identifiable {
     var state: String; var author: String; var unread = false; var readID: String?; var isRequest = false
 }
 struct CollaborationInboxComment: Identifiable {
-    var id: String; var author: String; var body: String
+    var id: String; var author: String; var body: String; var createdAt: String? = nil
 }
 struct CollaborationInboxDetail {
     var item: CollaborationInboxItem; var comments: [CollaborationInboxComment]; var page = 1; var more = false
@@ -208,7 +208,7 @@ struct CollaborationInboxDetail {
         let detail = try await object(c, item.isRequest && c.target.provider == .github ? requestURL(c, item.number) : base)
         let values = try await list(c, base + "/\(c.target.provider == .github ? "comments" : "notes")?per_page=30&page=\(page)")
         var item = item; item.title = text(detail, "title"); item.body = (detail["body"] as? String) ?? text(detail, "description"); item.state = text(detail, "state")
-        let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body")) }
+        let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body"), createdAt: $0["created_at"] as? String) }
         return CollaborationInboxDetail(item: item, comments: comments, page: page, more: values.count == 30)
     }
     static func inboxAction(_ c: ReviewAccess, item: CollaborationInboxItem, action: String, body: String) async throws {

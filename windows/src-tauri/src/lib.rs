@@ -4,6 +4,7 @@
 pub mod helper;
 mod net;
 mod launch;
+mod local_projects;
 mod process;
 mod pty;
 mod system;
@@ -95,6 +96,8 @@ pub fn run() {
             system::open_rules,
             system::app_ready,
             launch::take_app_launches,
+            local_projects::local_projects_read,
+            local_projects::local_projects_write,
             update::update_check,
             update::update_install,
             update::update_verify,

@@ -90,7 +90,14 @@ jobs:
           bash macos/Tools/test-hosting-hub.sh
           bash macos/Tools/test-hosting-hub-credentials.sh
           bash macos/Tools/test-project-workbench.sh
+          bash macos/Tools/test-project-schedule.sh
+          bash macos/Tools/test-project-scheduling.sh
+          bash macos/Tools/test-project-portfolio.sh
+          bash macos/Tools/test-local-projects.sh
           bash macos/Tools/test-project-management.sh
+          bash macos/Tools/test-project-creation-recovery.sh
+          bash macos/Tools/test-project-backend.sh
+          bash macos/Tools/test-project-task-creation.sh
           bash macos/Tools/test-workspace-operations.sh
           bash macos/Tools/test-confirmation-guard.sh
 
@@ -109,6 +116,7 @@ jobs:
         run: |
           bash macos/Tools/test-keychain.sh
           bash macos/Tools/test-credential-access.sh
+          bash macos/Tools/test-saved-account-verification.sh
 
       - name: GitHub 공개키 등록 계약 테스트
         run: bash macos/Tools/test-github-key-registration.sh

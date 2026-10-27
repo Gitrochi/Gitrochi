@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { AlertCircle, CalendarDays, Circle, ExternalLink } from "lucide-react";
-import type { HubDetail, HubProjectRow } from "@/entities/hosting";
-import { t } from "@/shared/i18n";
+import { localScheduleToday, parseScheduleDay } from "@/entities/hosting";
+import type {
+  HubDetail,
+  HubProjectRow,
+  ProjectScheduleFields,
+} from "@/entities/hosting";
+import { language, t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
 import { projectDateRange, projectRepository } from "../lib/project-workspace";
 
 const day = 86_400_000;
 const dateLabel = (value: number) =>
-  new Date(value).toLocaleDateString(undefined, {
+  new Date(value).toLocaleDateString(language, {
     month: "short",
     day: "numeric",
     timeZone: "UTC",
@@ -19,6 +24,9 @@ export function ProjectRoadmap({
   select,
   open,
   safe,
+  scheduleFields,
+  assignDate,
+  locked = false,
 }: {
   detail: HubDetail;
   rows: HubProjectRow[];
@@ -26,7 +34,14 @@ export function ProjectRoadmap({
   select: (row: HubProjectRow) => void;
   open: (url: string) => void;
   safe: (url: string) => boolean;
+  scheduleFields?: ProjectScheduleFields;
+  assignDate?: (row: HubProjectRow, date: string) => Promise<boolean>;
+  locked?: boolean;
 }) {
+  const [dates, setDates] = useState<Record<string, string>>({}),
+    [error, setError] = useState(""),
+    [schedulingID, setSchedulingID] = useState<string | null>(null),
+    [savingID, setSavingID] = useState<string | null>(null);
   const fields = detail.fields.filter((field) => field.kind === "date");
   const [startID, setStartID] = useState(
     fields.find((field) => /start|begin/i.test(field.name))?.id ??
@@ -41,10 +56,14 @@ export function ProjectRoadmap({
       fields[1]?.id ??
       "",
   );
-  const startField = fields.find((field) => field.id === startID) ?? fields[0],
-    endField = fields.find(
-      (field) => field.id === endID && field.id !== startField?.id,
-    );
+  const startField = scheduleFields
+      ? scheduleFields.start
+      : (fields.find((field) => field.id === startID) ?? fields[0]),
+    endField = scheduleFields
+      ? scheduleFields.due
+      : fields.find(
+          (field) => field.id === endID && field.id !== startField?.id,
+        );
   const scheduled = rows
     .map((row) => ({ row, range: projectDateRange(row, startField, endField) }))
     .filter(
@@ -73,7 +92,7 @@ export function ProjectRoadmap({
           <CalendarDays size={15} />
           <strong>{t("Timeline")}</strong>
         </span>
-        {fields.length > 0 && (
+        {fields.length > 0 && !scheduleFields && (
           <div>
             <label>
               {t("Start date")}
@@ -157,7 +176,14 @@ export function ProjectRoadmap({
                       <Circle size={13} />
                       <span>
                         <strong>{row.title}</strong>
-                        <small>{projectRepository(row) || t("Draft")}</small>
+                        <small>
+                          {projectRepository(row) ||
+                            t(
+                              detail.item.data.localProject === true
+                                ? "Task"
+                                : "Draft",
+                            )}
+                        </small>
                       </span>
                       {range.reversed && (
                         <AlertCircle
@@ -202,12 +228,43 @@ export function ProjectRoadmap({
                 <span>{unscheduled.length}</span>
                 <small>{t("Select a task to set its dates.")}</small>
               </div>
+              {error && (
+                <p role="alert" className="error-text">
+                  {error}
+                </p>
+              )}
               {unscheduled.map((row) => (
-                <button key={row.id} onClick={() => select(row)}>
-                  <Circle size={12} />
-                  <span>{row.title}</span>
-                  <span>{projectRepository(row) || t("Draft")}</span>
-                </button>
+                <div className="project-roadmap-unscheduled-row" key={row.id}>
+                  <button onClick={() => select(row)}>
+                    <Circle size={13} />
+                    <strong>{row.title}</strong>
+                  </button>
+                  <div>
+                    {schedulingID === row.id ? (
+                      <>
+                        <input className="input" type="date" aria-label={t("Date for {0}", row.title)}
+                          value={dates[row.id] ?? ""} disabled={locked || !!savingID}
+                          onChange={(event) => setDates((current) => ({ ...current, [row.id]: event.target.value }))} />
+                        <Button size="small" disabled={locked || !!savingID || !parseScheduleDay(dates[row.id] ?? "")}
+                          onClick={async () => {
+                            if (!assignDate || savingID) return;
+                            setError(""); setSavingID(row.id);
+                            try {
+                              if (await assignDate(row, dates[row.id])) setSchedulingID(null);
+                            } catch (caught) {
+                              setError(caught instanceof Error ? t(caught.message) : t("Could not schedule this task."));
+                            } finally { setSavingID(null); }
+                          }}>{t("Save date")}</Button>
+                        <Button size="small" disabled={!!savingID} onClick={() => setSchedulingID(null)}>{t("Cancel")}</Button>
+                      </>
+                    ) : (
+                      <Button size="small" disabled={locked || !assignDate || (!startField && !endField)} onClick={() => {
+                        setSchedulingID(row.id);
+                        setDates((current) => ({ ...current, [row.id]: current[row.id] ?? localScheduleToday() }));
+                      }}><CalendarDays size={13} />{t("Schedule")}</Button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}

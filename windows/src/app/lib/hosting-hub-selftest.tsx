@@ -48,7 +48,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
   };
   const button = (label: string) =>
     [...host.querySelectorAll<HTMLButtonElement>("button")].find(
-      (e) => e.textContent?.trim() === t(label),
+      (e) => e.textContent?.trim() === t(label) || e.getAttribute("aria-label") === t(label) || (label === "Confirm" && e.matches(".project-review-sheet footer > button:last-child, .project-create-review footer > button:last-child")),
     );
   const enter = (
     element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
@@ -82,7 +82,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     projectEmpty = false,
     projectName = "Roadmap",
     createdField = false,
-    sharedViewName = "Team table";
+    sharedViewName = "Team table",
+    failComment = false,
+    uncertainComment = false;
+  const comments = [{ id: 31, body: "The **release checklist** is ready.", user: { login: "reviewer" }, created_at: "2026-10-25T10:15:00Z" }];
   const release = () => ({
     id: 1,
     name: releaseName,
@@ -227,7 +230,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
                             labels: { nodes: [{ name: "release" }] },
                             id: "ISSUE",
                             title: "Ship the release",
-                            body: "Review release checklist",
+                            body: "Review **release checklist**",
+                            author: { login: "planner" }, createdAt: "2026-10-24T09:00:00Z",
                             url: "https://github.com/team/repo/issues/2",
                           },
                           fieldValues: {
@@ -269,6 +273,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
         if (method === "PATCH" && url.includes("/releases/1"))
           releaseName = String(payload.name);
         if (url.endsWith("/star")) starred = method === "PUT";
+        if (u.pathname.endsWith("/issues/2/comments")) {
+          if (uncertainComment) throw new Error("Synthetic lost comment response");
+          if (failComment) { status = 422; result = { message: "Synthetic comment rejection" }; }
+          else comments.push({ id: 32, body: String(payload.body), user: { login: "me" }, created_at: "2026-10-27T10:15:00Z" });
+        }
       } else if (u.pathname.endsWith("/releases")) result = [release()];
       else if (u.pathname.endsWith("/releases/1")) result = release();
       else if (u.pathname === "/user/orgs")
@@ -295,8 +304,9 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else if (u.pathname === "/gists/gist1") result = gist();
       else if (u.pathname.endsWith("/star")) {
         status = starred ? 204 : 404;
-      } else if (u.pathname.endsWith("/issues/2"))
-        result = { node_id: "ISSUE" };
+      } else if (u.pathname.endsWith("/issues/2/comments")) result = comments;
+      else if (u.pathname.endsWith("/issues/2"))
+        result = { node_id: "ISSUE", title: "Ship the release", body: "Review **release checklist**", state: "open" };
       else
         throw new Error(`Unexpected fixture request: ${method} ${u.pathname}`);
       return { status, body: status === 204 ? "" : JSON.stringify(result) };
@@ -403,9 +413,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       />,
     );
     ensure(
-      await until(() => !!host.querySelector(".project-card")),
-      "First project did not open automatically",
+      await until(() => !!host.querySelector(".project-overview")),
+      "First project did not open its schedule overview automatically",
     );
+    button("Board")!.click();
+    await pause(25);
     ensure(
       host.querySelectorAll(".project-column").length === 2,
       "Status board did not show its columns",
@@ -455,16 +467,42 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       startedTask === "Ship the release" && writes.length === beforeView,
       "Starting local work mutated GitHub",
     );
+    ensure(await until(() => host.querySelectorAll(".project-comment").length === 1), "Fetched issue comments did not render");
+    ensure(host.querySelector(".project-comment strong")?.textContent === "@reviewer" && !!host.querySelector(".project-comment .md strong"), "Comment author or Markdown was lost");
+    ensure(host.querySelector(".project-comment time")?.getAttribute("datetime") === "2026-10-25T10:15:00.000Z", "Comment timestamp lost its seconds-to-date conversion");
+    const commentInput = host.querySelector<HTMLTextAreaElement>(`textarea[aria-label="${t("Write a comment…")}"]`)!;
+    enter(commentInput, "Ready for the next review.");
+    await pause(25);
+    failComment = true;
+    button("Comment")!.click();
+    ensure(await until(() => !!host.querySelector(".project-comment-editor [role=alert]")), "Rejected comment lacked an inline error");
+    ensure(commentInput.value === "Ready for the next review.", "Rejected comment lost input");
+    failComment = false;
+    const commentWrites = writes.filter((write) => write.url.endsWith("/issues/2/comments")).length;
+    button("Comment")!.click(); button("Comment")!.click();
+    ensure(await until(() => host.querySelectorAll(".project-comment").length === 2 && commentInput.value === ""), "Posted comment did not refresh conversation");
+    ensure(host.querySelector(".project-comment-notice")?.textContent === t("Comment posted"), "Confirmed comment lacked its posted notice");
+    ensure(writes.filter((write) => write.url.endsWith("/issues/2/comments")).length === commentWrites + 1 && !host.querySelector(".hub-confirm"), "Comment posted twice or opened a second confirmation");
+    enter(commentInput, "Check the uncertain reply.");
+    await pause(25);
+    uncertainComment = true;
+    button("Comment")!.click();
+    ensure(await until(() => host.textContent?.includes(t("The comment may have been posted. Refresh the conversation before trying again.")) === true && button("Comment")?.disabled === true), "Unknown comment result did not lock repeat submission");
+    const uncertainWrites = writes.length;
+    await pause(25);
+    ensure(commentInput.value === "Check the uncertain reply." && writes.length === uncertainWrites, "Unknown comment was retried or lost input");
+    uncertainComment = false;
+    button("Retry")!.click();
+    ensure(await until(() => button("Comment")?.disabled === false), "Project refresh did not reconcile the unknown comment lock");
+    enter(commentInput, "");
+    await pause(25);
+    details.push("real issue comments + Markdown/author/time + retained rejected comment + guarded one-submit reply + unknown-result lock");
     const select = [...host.querySelectorAll(".project-inspector select")].find(
       (e) => (e as HTMLSelectElement).value === "TODO",
     ) as HTMLSelectElement;
     enter(select, "DONE");
     await pause(25);
-    ensure(
-      writes.length === beforeView,
-      "Project field changed before confirmation",
-    );
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "A field edit opened an extra review");
     ensure(
       await until(() =>
         writes.some((w) =>
@@ -479,6 +517,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       ),
       "Project did not refresh after a field edit",
     );
+    host.querySelector<HTMLDetailsElement>(".project-task-more")!.open = true;
+    host.querySelector<HTMLDetailsElement>(".project-order-menu")!.open = true;
     const position = host.querySelector<HTMLSelectElement>(
       `select[aria-label="${t("Move project item after")}"]`,
     )!;
@@ -487,11 +527,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     const beforeMove = writes.length;
     button("Move")!.click();
     await pause(25);
-    ensure(
-      writes.length === beforeMove,
-      "Project order changed before confirmation",
-    );
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "An item move opened an extra review");
+    ensure(writes.length === beforeMove + 1, "Item move did not submit once");
     ensure(
       await until(
         () =>
@@ -521,7 +558,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ].filter((e) => e.textContent?.trim() === t("Add item"));
     addButtons[0]!.click();
     await pause(25);
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "Adding an issue opened an extra review");
     ensure(
       await until(() =>
         writes.some((w) =>
@@ -546,18 +583,16 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     enter(draft, "Plan the release");
     await pause(25);
     const beforeDraft = writes.length;
+    host.querySelector<HTMLButtonElement>('.project-composer button[data-tip="' + t("Close") + '"]')!.click();
+    await pause(25);
+    ensure(writes.length === beforeDraft, "Closing the draft editor wrote a draft");
+    host.querySelector<HTMLButtonElement>(".project-hero-actions .btn.primary")!.click();
+    await pause(25);
+    enter(host.querySelector<HTMLInputElement>(`input[aria-label="${t("Draft title")}"]`)!, "Plan the release");
+    await pause(25);
     button("Create draft")!.click();
     await pause(25);
-    ensure(
-      writes.length === beforeDraft,
-      "Draft was created before confirmation",
-    );
-    button("Cancel")!.click();
-    await pause(25);
-    ensure(writes.length === beforeDraft, "Cancel created a draft");
-    button("Create draft")!.click();
-    await pause(25);
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "Draft creation opened an extra review");
     ensure(
       await until(() =>
         writes.some((w) =>
@@ -629,14 +664,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(25);
     const beforeSettings = writes.length;
     [...settings.querySelectorAll<HTMLButtonElement>("button")]
-      .find((button) => button.textContent?.trim() === t("Review and save"))!
+      .find((button) => button.textContent?.trim() === t("Save changes"))!
       .click();
     await pause(25);
-    ensure(
-      writes.length === beforeSettings,
-      "Project settings saved before confirmation",
-    );
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "Settings opened an extra review");
+    ensure(writes.length === beforeSettings + 1, "Settings did not submit once");
     ensure(
       await until(
         () =>
@@ -667,10 +699,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     enter(fieldType, "number");
     await pause(25);
     [...host.querySelectorAll<HTMLButtonElement>(".project-settings button")]
-      .find((button) => button.textContent?.trim() === t("Review and save"))!
+      .find((button) => button.textContent?.trim() === t("Save field"))!
       .click();
     await pause(25);
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "Field creation opened an extra review");
     ensure(
       await until(
         () =>
@@ -704,10 +736,12 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(25);
     ensure(writes.length === beforeProject, "Cancel created a project");
     details.push(
-      "shared view layout + filter boundary + confirmed bulk/settings/custom-field edits + project creation cancellation",
+      "shared view layout + filter boundary + reviewed bulk edits + direct settings/custom-field saves + project creation cancellation",
     );
     projectEmpty = true;
     await mount(<HostingHubPanel store={source} section="projects" />);
+    ensure(await until(() => !!host.querySelector(".project-overview")), "Empty project overview missing");
+    button("Board")!.click();
     ensure(
       await until(() => !!host.querySelector(".project-first-task")),
       "Empty project guidance missing",
@@ -718,7 +752,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     projectEmpty = false;
     details.push(
-      "project auto-selection + real empty columns + Board/List/Timeline + filters + inspector + local task handoff + confirmed fields/issues/drafts",
+      "project auto-selection + real empty columns + Board/List/Timeline + filters + inspector + local task handoff + single-submit fields/issues/drafts",
     );
     const githubAccounts = accounts.accounts,
       githubHTTP = ipc.http;
@@ -790,7 +824,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     )!;
     enter(gitlabColumn, "2");
     await pause(25);
-    button("Confirm")!.click();
+    ensure(!host.querySelector(".hub-confirm"), "GitLab field edit opened an extra review");
     ensure(
       await until(() =>
         writes.some(

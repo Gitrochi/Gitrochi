@@ -139,7 +139,14 @@ export type ProjectAsk = ((
   title: string,
   body: string,
   action: (access: HubAccess) => Promise<unknown>,
-) => void) & { cancel?: () => void };
+  refresh?: "list" | "detail",
+) => void) & {
+  cancel?: () => void;
+  save?: (
+    action: (access: HubAccess) => Promise<unknown>,
+    refresh?: "list" | "detail",
+  ) => Promise<boolean>;
+};
 export interface ProjectLocalActions {
   repository: string;
   host: string;
@@ -162,4 +169,17 @@ export async function runProjectBatch(
       `${hubError(error, access.token)}\n\n${t("Some selected items may have changed. Refresh the project before trying again.")}`,
     );
   }
+}
+
+/** Existing editors submit once; isolated callers may provide a review callback. */
+export async function saveProjectEdit(
+  ask: ProjectAsk,
+  title: string,
+  body: string,
+  action: (access: HubAccess) => Promise<unknown>,
+  refresh?: "list" | "detail",
+): Promise<boolean> {
+  if (ask.save) return ask.save(action, refresh);
+  ask(title, body, action, refresh);
+  return false;
 }
