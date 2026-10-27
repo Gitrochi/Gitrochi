@@ -9,9 +9,11 @@ import { useObserve } from "@/shared/lib";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 35));
 /** The page list and its icon rail, without a repository and with one, without external calls. */
 export async function navigationSelfTest(): Promise<[boolean, string]> {
+  const original = { get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion };
+  const memory = new Map<string, unknown>(), listeners = new Set<() => void>();
+  let version = 0;
   const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-10000px;top:0;width:850px;height:900px"; document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
-  const savedDestinations = settings.get("workspaceDestinations", {});
   let opened = 0, toggles = 0;
   const ensure = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
   // each page's data loading is checked by its own self-test
@@ -20,6 +22,11 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
   const rows = () => [...host.querySelectorAll<HTMLButtonElement>(".workspace-nav-scroll .workspace-nav-item")];
   function Fixture({ compact }: { compact: boolean }) { useObserve(store); return <div style={{ width: compact ? 56 : 250, height: 780 }}><NavigationSidebar store={store} openSettings={() => { opened++; }} compact={compact} onToggle={() => { toggles++; }} /></div>; }
   try {
+    // Navigation remembers pages even with data loading disabled; keep those writes out of the real settings timer.
+    settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;
+    settings.set = (key, value) => { memory.set(key, value); version++; listeners.forEach((listener) => listener()); };
+    settings.subscribe = (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
+    settings.getVersion = () => version;
     root.render(<Fixture compact={false} />); await pause();
     ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows", `The sidebar must list the twelve pages in order: ${rows().map((button) => button.dataset.page).join(",")}`);
     ensure(!host.querySelector("input"), "The sidebar must not have a search box");
@@ -45,5 +52,8 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     row("home")!.click(); await pause(); ensure(store.destination === "home", "Rail icons did not route to their pages");
     return [true, "Twelve pages in order, no search box, Issues, Releases, Projects and Account without a repository, every page with one, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
-  finally { root.unmount(); host.remove(); settings.set("workspaceDestinations", savedDestinations); }
+  finally {
+    root.unmount(); host.remove();
+    settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;
+  }
 }
