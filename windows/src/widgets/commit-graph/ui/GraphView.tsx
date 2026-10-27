@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { clampLaneOffset, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, revealLaneOffset, ROW_H } from "../lib/metrics";
+import { AUTHOR_W, clampLaneOffset, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, type OptionalColumnId, revealLaneOffset, ROW_H, TIME_W, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -16,12 +16,13 @@ export function GraphView({ store }: { store: RepoStore }) {
   useObserve(settings);
   const gw = graphWidth(store.maxLanes);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000 });
+  const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000, scrollbar: 0 });
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const update = () => setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth });
+    // the list's vertical scrollbar narrows the rows but not the header; the header pads by it so columns line up
+    const update = () => setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth, scrollbar: el.offsetWidth - el.clientWidth });
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -46,10 +47,15 @@ export function GraphView({ store }: { store: RepoStore }) {
     }
   });
 
-  // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
+  // the columns turned off, and the optional author and time turned on (a separate list, so both stay off by default);
+  // narrow windows drop time and author before the branch and graph columns shrink
   const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
-  const hiddenKey = hiddenColumns.join(",");
-  const cols = useMemo(() => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean))), [viewport.width, gw, hiddenKey]);
+  const shownColumns = settings.get<OptionalColumnId[]>("graphShownColumns", []);
+  const hiddenKey = hiddenColumns.join(","), shownKey = shownColumns.join(",");
+  const cols = useMemo(
+    () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean))),
+    [viewport.width, gw, hiddenKey, shownKey],
+  );
   // lanes beyond the column scroll sideways, all rows together, with one offset clamped to what does not fit
   const fullWidth = graphFullWidth(store.maxLanes);
   const laneOverflow = cols.graph > 0 ? Math.max(0, fullWidth - cols.graph) : 0;
@@ -67,16 +73,17 @@ export function GraphView({ store }: { store: RepoStore }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.selectedID]);
   // the header's menu: which columns show (the message column always does)
-  const columnMenu = (): MenuItem[] => {
-    const toggle = (id: GraphColumnId) => settings.set("graphHiddenColumns", hiddenColumns.includes(id) ? hiddenColumns.filter((x) => x !== id) : [...hiddenColumns, id]);
-    return (
-      [
-        ["ref", t("Branch / Tag")],
-        ["graph", t("Graph")],
-        ["time", t("Time")],
-      ] as [GraphColumnId, string][]
-    ).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => toggle(id) }));
-  };
+  const columnMenu = (): MenuItem[] => [
+    ...([
+      ["ref", t("Branch / Tag")],
+      ["graph", t("Graph")],
+    ] as [GraphColumnId, string][]).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => settings.set("graphHiddenColumns", toggleColumn(hiddenColumns, id)) })),
+    "divider",
+    ...([
+      ["author", t("Author")],
+      ["time", t("Time")],
+    ] as [OptionalColumnId, string][]).map(([id, label]) => ({ label, checked: shownColumns.includes(id), onClick: () => settings.set("graphShownColumns", toggleColumn(shownColumns, id)) })),
+  ];
   const entries = store.entries;
   const first = Math.max(0, Math.floor(viewport.top / ROW_H) - 10);
   const last = Math.min(entries.length, Math.ceil((viewport.top + viewport.height) / ROW_H) + 10);
@@ -94,15 +101,17 @@ export function GraphView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
       {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
-      <div className="graph-header" onContextMenu={(e) => showContextMenu(e, columnMenu())}>
+      <div className="graph-header" style={{ paddingRight: 12 + viewport.scrollbar }} onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
         {cols.graph > 0 && <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))} />}
-        <span className="grow" style={{ paddingLeft: 20, flex: 1, minWidth: 0 }}>
-          {t("Commit message")}
+        <span className="graph-head-message">
+          <span className="graph-head-label">{t("Commit message")}</span>
+          {/* the filter is not part of searching, so it stays here while the search bar is hidden; next to the label, it leaves the right end to the column labels */}
+          <GraphFilterButton store={store} />
+          <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
         </span>
-        {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
-        <GraphFilterButton store={store} />
-        <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+        {cols.author && <span className="head-author" style={{ width: AUTHOR_W }}>{t("Author")}</span>}
+        {cols.time && <span className="head-time" style={{ width: TIME_W }}>{t("Time")}</span>}
       </div>
       <div
         ref={scrollRef}

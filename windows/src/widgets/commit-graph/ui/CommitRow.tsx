@@ -8,7 +8,7 @@ import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
-import { AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
+import { AUTHOR_W, AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H, TIME_W } from "../lib/metrics";
 
 export const CommitRow = memo(function CommitRow({
   store,
@@ -118,7 +118,7 @@ export const CommitRow = memo(function CommitRow({
           </span>
         </div>
       )}
-      {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면. */}
+      {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게). 작성자·시간·SHA 는 마우스를 올리면. */}
       <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
         <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
         {wip ? (
@@ -148,10 +148,20 @@ export const CommitRow = memo(function CommitRow({
                 <span>{c.body}</span>
               </span>
             )}
-            {cols.time && <span className="msg-time">{shortDate(c.date)}</span>}
           </>
         )}
       </div>
+      {/* the optional fixed-width columns at the right end, under their header labels */}
+      {cols.author && (
+        <span className="col-author" style={{ width: AUTHOR_W }} data-tip={wip ? undefined : `${c.author} <${c.email}>`}>
+          {wip ? "" : c.author}
+        </span>
+      )}
+      {cols.time && (
+        <span className="col-time" style={{ width: TIME_W }} data-tip={wip ? undefined : longDate(c.date)}>
+          {wip ? "" : shortDate(c.date)}
+        </span>
+      )}
     </div>
   );
 });

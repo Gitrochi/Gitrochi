@@ -38,28 +38,42 @@ export function laneThumb(offset: number, visible: number, total: number, track:
 export const laneOffsetForThumb = (start: number, track: number, size: number, overflow: number) =>
   track > size ? clampLaneOffset((start / (track - size)) * overflow, overflow) : 0;
 
-/** 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간) */
+/** A graph row's columns: branches and tags, the graph, the message (subject + first body line), and the optional author and time at the right end */
 export interface GraphColumns {
   ref: number;
   graph: number;
-  /** 오른쪽 끝의 시간 */
+  author: boolean;
   time: boolean;
 }
 
 const MESSAGE_MIN = 200;
 const REF_MIN = 110;
 const GRAPH_MIN = 66;
+/** The optional columns' widths: the author is left-aligned, the time right-aligned (macOS: GraphMetrics.authorWidth, timeWidth) */
+export const AUTHOR_W = 120;
+export const TIME_W = 84;
+/** The row's gap before each optional column */
+export const COLUMN_GAP = 8;
 
 /** The columns the user can turn off (settings graphHiddenColumns); the message column always shows */
-export type GraphColumnId = "ref" | "graph" | "time";
+export type GraphColumnId = "ref" | "graph";
+/** The columns the user can turn on (settings graphShownColumns), so they stay off until chosen */
+export type OptionalColumnId = "author" | "time";
 
-/** 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다. A column turned off has width 0. */
-export function graphColumns(width: number, graph: number, hidden: ReadonlySet<string> = new Set()): GraphColumns {
-  const c: GraphColumns = { ref: hidden.has("ref") ? 0 : REF_W, graph: hidden.has("graph") ? 0 : graph, time: !hidden.has("time") };
-  // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 시간 칸 90
-  const short = () => MESSAGE_MIN - (width - (c.ref + c.graph + 32 + (c.time ? 90 : 0)));
+/**
+ * On narrow widths the time and then the author drop out, then the branch and graph columns shrink (the right lanes are cut off),
+ * so the message keeps its room. A column turned off has width 0; author and time show only when turned on.
+ */
+export function graphColumns(width: number, graph: number, hidden: ReadonlySet<string> = new Set(), shown: ReadonlySet<string> = new Set()): GraphColumns {
+  const c: GraphColumns = { ref: hidden.has("ref") ? 0 : REF_W, graph: hidden.has("graph") ? 0 : graph, author: shown.has("author"), time: shown.has("time") };
+  // 20 for the bar and space before the message, 12 at the row's right end, and each optional column with its gap
+  const short = () => MESSAGE_MIN - (width - (c.ref + c.graph + 32 + (c.author ? AUTHOR_W + COLUMN_GAP : 0) + (c.time ? TIME_W + COLUMN_GAP : 0)));
   if (short() > 0) c.time = false;
+  if (short() > 0) c.author = false;
   if (short() > 0 && c.ref > 0) c.ref = Math.max(REF_MIN, c.ref - short());
   if (short() > 0 && c.graph > 0) c.graph = Math.max(Math.min(graph, GRAPH_MIN), c.graph - short());
   return c;
 }
+
+/** A column list with one id added or removed, for the hidden and the shown column settings */
+export const toggleColumn = <T extends string>(list: readonly T[], id: T): T[] => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);

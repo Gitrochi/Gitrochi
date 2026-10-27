@@ -288,12 +288,51 @@
   }
 }
 
-.commit-row .msg-time {
+/* the optional author and time columns at the row's right end, under their header labels: author left, time right */
+.commit-row .col-author,
+.commit-row .col-time,
+.graph-header .head-author,
+.graph-header .head-time {
   flex: none;
-  margin-left: auto;
-  padding-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-row .col-time,
+.graph-header .head-time {
+  text-align: right;
+}
+
+.commit-row .col-author,
+.commit-row .col-time {
   font-size: 11.5px;
   color: var(--text-2);
+}
+
+/* the row spaces its columns with an 8px gap; the header has none */
+.graph-header .head-author,
+.graph-header .head-time {
+  margin-left: 8px;
+}
+
+/* the message header carries the filter and column menu right after its label */
+.graph-header > .graph-head-message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  padding-left: 20px;
+}
+
+.graph-head-message > .graph-head-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.graph-head-message > .icon-btn {
+  flex: none;
 }
 
 .wip-chip {
