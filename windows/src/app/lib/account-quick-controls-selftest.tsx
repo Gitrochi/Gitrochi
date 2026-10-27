@@ -76,7 +76,7 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
     host.querySelector<HTMLButtonElement>("button")!.click();
     if (!await until(() => !!document.querySelector(".account-quick-popover .account-quick-list"))) return [false, "The popover does not list connected accounts"];
     const panel = document.querySelector(".account-quick-popover")!;
-    const listed = Array.from(panel.querySelectorAll(".account-quick-list li")).map((item) => item.textContent);
+    const listed = Array.from(panel.querySelectorAll(".account-quick-list li > span:not(.avatar)")).map((item) => item.textContent);
     if (listed.join("|") !== "@alice · github.com|@carol · gitlab.example.com" || !panel.textContent?.includes(t("Connected accounts"))) return [false, `Connected account list: ${listed.join("|")}`];
     if (panel.querySelector("select") || !button("Add or remove connected accounts…")) return [false, "Without a remote there must be no repository picker, but the account manager must stay"];
     if (!panel.textContent?.includes("global@example.invalid") || panel.textContent.includes(t("Not configured"))) return [false, "The global Git author is not shown"];

@@ -97,12 +97,17 @@ pub fn folder_route(raw: &str) -> Option<Result<Route, String>> {
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<Result<Route, String>>>);
 
+/// Both startup and single-instance forwarding include the executable as argv[0].
+fn command_line_routes(args: Vec<String>) -> Vec<Result<Route, String>> {
+    args.into_iter().skip(1).filter_map(|arg| {
+        if arg.starts_with("gitrochi:") { Some(parse(&arg)) } else { folder_route(&arg) }
+    }).collect()
+}
+
 pub fn receive(app: &AppHandle, args: Vec<String>) {
     let state = app.state::<Pending>();
     if let Ok(mut queue) = state.0.lock() {
-        for arg in args {
-            if arg.starts_with("gitrochi:") { queue.push(parse(&arg)); } else if let Some(route) = folder_route(&arg) { queue.push(route); }
-        }
+        queue.extend(command_line_routes(args));
     }
     let _ = app.emit("app-launch", ());
 }
@@ -116,6 +121,29 @@ pub fn take_app_launches(pending: State<'_, Pending>) -> Vec<Result<Route, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn command_line_skips_executable_inside_repository() {
+        let dir = std::env::temp_dir().join(format!("gitrochi-command-line-{}", std::process::id()));
+        let checkout = dir.join("checkout");
+        let requested = dir.join("requested");
+        let executable = checkout.join("target/release/Gitrochi.exe");
+        std::fs::create_dir_all(checkout.join(".git")).unwrap();
+        std::fs::create_dir_all(executable.parent().unwrap()).unwrap();
+        std::fs::write(&executable, "fixture").unwrap();
+        std::fs::create_dir_all(requested.join(".git")).unwrap();
+        std::fs::write(requested.join("app.txt"), "one\ntwo\nthree\n").unwrap();
+        let mut url = url::Url::parse("gitrochi://open").unwrap();
+        url.query_pairs_mut().append_pair("repo", &requested.to_string_lossy()).append_pair("file", "app.txt").append_pair("line", "3");
+        let executable = executable.to_string_lossy().to_string();
+        // A development executable is itself a valid folder route; it must never become a requested tab.
+        assert!(folder_route(&executable).unwrap().is_ok());
+        assert!(command_line_routes(vec![executable.clone()]).is_empty());
+        assert_eq!(command_line_routes(vec![executable.clone(), url.to_string()]), vec![parse(url.as_str())]);
+        let folder = requested.to_string_lossy().to_string();
+        assert_eq!(command_line_routes(vec![executable, folder.clone()]), vec![folder_route(&folder).unwrap()]);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn routes_validate_and_preserve_encoded_paths() {
         let dir = std::env::temp_dir().join(format!("gitrochi-route-{}", std::process::id()));

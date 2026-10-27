@@ -4,6 +4,7 @@ import { type IssueScope, type RequestScope, workStateTitle } from "@/entities/h
 import { RepoStore } from "@/entities/repo";
 import { IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { t } from "@/shared/i18n";
+import { settings } from "@/shared/config";
 
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 40));
 
@@ -12,6 +13,9 @@ const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 40));
  * an active filter and two header icons. Server calls are replaced.
  */
 export async function listSectionsSelfTest(): Promise<[boolean, string]> {
+  const original = { get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion };
+  const memory = new Map<string, unknown>(), listeners = new Set<() => void>();
+  let version = 0;
   const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-10000px;top:0;width:320px;height:700px"; document.body.append(host);
   let root = createRoot(host);
   const store = new RepoStore(), target: RepoTarget = { provider: "github", host: "github.com", path: "fixture/repo", remote: "origin" };
@@ -22,6 +26,11 @@ export async function listSectionsSelfTest(): Promise<[boolean, string]> {
   const remount = async (node: React.ReactNode) => { root.unmount(); host.replaceChildren(); root = createRoot(host); root.render(node); await pause(); };
   const iconButton = (label: string) => host.querySelector<HTMLButtonElement>(`.side-head button[aria-label="${label}"]`);
   try {
+    // Page-link checks must not persist fixture repository paths or leave a deferred settings write.
+    settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;
+    settings.set = (key, value) => { memory.set(key, value); version++; listeners.forEach((listener) => listener()); };
+    settings.subscribe = (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
+    settings.getVersion = () => version;
     store.path = "C:/fixture/list-sections"; store.target = target; store.headBranch = "topic";
     store.pullRequests = [request]; store.prState = { kind: "loaded" };
     store.loadPullRequests = async () => {};
@@ -68,5 +77,8 @@ export async function listSectionsSelfTest(): Promise<[boolean, string]> {
     ensure(issueSearches.at(-1)?.join() === "open," && !host.querySelector(".list-filter-caption"), "Clearing the issue caption did not go back to open issues");
     return [true, "Page: one search row with clear, Enter and a five-choice filter menu, refresh and no self link; sidebar: no search row, a filter caption that clears back to open, only the page link and new buttons, for pull requests and issues"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
-  finally { root.unmount(); host.remove(); }
+  finally {
+    root.unmount(); host.remove();
+    settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;
+  }
 }

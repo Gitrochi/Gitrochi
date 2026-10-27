@@ -759,13 +759,13 @@ export async function runSelfTest(): Promise<boolean> {
       launches.push(...await ipc.takeAppLaunches());
       return launches.length > 0;
     }, 5000);
-    const good = launches.find((item) => "Ok" in item);
-    if (!good || !("Ok" in good)) return [false, JSON.stringify({ received, result, launches })];
-    await applyAppLaunch(good.Ok);
+    const good = launches.length === 1 && "Ok" in launches[0] ? launches[0].Ok : null;
+    if (result.status !== 0 || !good || !samePath(good.repo, repo) || good.file !== "app.txt" || good.line !== 3) return [false, JSON.stringify({ received, result, launches })];
+    await applyAppLaunch(good);
     const focused = await until(() => !!document.querySelector('.blame-line[data-line="3"][data-focused="true"]'), 8000);
     const ok = focused && workspace.tabs.length === before && workspace.active === s && s.fileInspectLine === 3;
     s.closeFileInspect();
-    return [ok, `received=${received} focused=${focused} tabs=${workspace.tabs.length}/${before}`];
+    return [ok, `received=${received} focused=${focused} tabs=${workspace.tabs.length}/${before} active=${workspace.active === s} requested=${good.repo} original=${s.path}`];
   });
 
   // 그래프 거르기: 브랜치 숨기기(그 브랜치만의 커밋이 빠짐), 모두 보이기, 현재 브랜치만, 고정
@@ -856,6 +856,9 @@ export async function runSelfTest(): Promise<boolean> {
 
   // 커밋 정리: 커밋 세 개를 만들고 가운데를 아래 커밋에 합치고 맨 위 메시지를 고친 뒤(실제 git rebase -i), 되돌리기
   await step("커밋 정리(인터랙티브 리베이스)", async () => {
+    // Each UI step targets its repository even if an earlier navigation check failed.
+    workspace.select(s.id);
+    s.navigate("repository");
     for (const n of [1, 2, 3]) {
       await ipc.writeText(joinPath(repo, `tidy-${n}.txt`), `${n}\n`);
       await until(() => s.status.unstaged.some((c) => c.path === `tidy-${n}.txt`), 8000);
@@ -865,7 +868,7 @@ export async function runSelfTest(): Promise<boolean> {
     }
     const first = s.entries.find((e) => e.commit.subject === "정리 1")?.commit.id ?? "";
     await s.startInteractiveRebase(first);
-    const opened = await until(() => document.querySelectorAll(".rebase-item").length === 3, 3000);
+    const opened = await until(() => document.querySelectorAll(".modal .rebase-item").length === 3, 3000);
     const plan = s.rebasePlan!;
     plan.items[0] = { ...plan.items[0], action: "reword", newMessage: "정리 3 고침 '따옴표'" };
     plan.items[1] = { ...plan.items[1], action: "squash" };
