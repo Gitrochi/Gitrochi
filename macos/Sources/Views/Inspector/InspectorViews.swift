@@ -185,7 +185,8 @@ struct CommitDetailView: View {
                     Text(Fmt.short(d.commitDate)).font(.callout).foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                // the same height as the graph's column header, so the two dividers line up
+                .frame(minHeight: GraphMetrics.headerHeight)
                 Divider()
                 InspectorScrollView {
                     VStack(alignment: .leading, spacing: 12) {

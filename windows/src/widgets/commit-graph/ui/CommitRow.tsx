@@ -8,7 +8,7 @@ import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
-import { AUTHOR_W, AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H, TIME_W } from "../lib/metrics";
+import { AUTHOR_W, AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H, TIME_W, HEADER_TOOLS_W } from "../lib/metrics";
 
 export const CommitRow = memo(function CommitRow({
   store,
@@ -53,7 +53,8 @@ export const CommitRow = memo(function CommitRow({
   return (
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
-      style={{ top, gap: 0 }}
+      // right-hand columns line up with their labels, which sit left of the header's menus
+      style={{ top, gap: 0, paddingRight: 12 + (cols.author || cols.time ? HEADER_TOOLS_W : 0) }}
       onMouseDown={() => store.select(rowSelection(c))}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}

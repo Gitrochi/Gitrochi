@@ -3,7 +3,9 @@ import { AUTHOR_W, clampLaneOffset, COLUMN_GAP, graphColumns, graphFullWidth, gr
 
 describe("graph lane scrolling", () => {
   it("measures every lane while the column stays capped", () => {
-    expect(graphFullWidth(10)).toBe(graphWidth(10));
+    // up to five lanes the column shows them all; past that it stays five lanes wide and scrolls
+    expect(graphFullWidth(5)).toBe(graphWidth(5));
+    expect(graphWidth(10)).toBe(graphWidth(5));
     expect(graphFullWidth(30)).toBe(30 * LANE_W + LEFT_PAD + 16);
     expect(graphFullWidth(30)).toBeGreaterThan(graphWidth(30));
     expect(graphFullWidth(0)).toBe(44);

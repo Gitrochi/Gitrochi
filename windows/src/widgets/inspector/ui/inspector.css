@@ -25,6 +25,8 @@
 .panel-scroll { min-height: 0; min-width: 0; }
 .panel-scroll > *, .composer > *, .panel-head > * { min-width: 0; }
 .panel-head { flex-wrap: wrap; }
+/* the commit detail header has the graph column header's height, so the two dividers line up */
+.panel-head.commit-head { height: 32px; padding: 0 12px; flex-wrap: nowrap; box-sizing: border-box; }
 .panel-scroll .row { flex-wrap: wrap; }
 .commit-detail .card { overflow-wrap: anywhere; }
 

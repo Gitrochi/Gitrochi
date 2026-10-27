@@ -6,7 +6,8 @@ enum GraphMetrics {
     static let leftPad: CGFloat = 6
     /// Room between the last lane's avatar and the message bar; the lane band runs through it
     static let rightPad: CGFloat = 16
-    static let maxVisibleLanes = 16
+    /// Five lanes wide at most; more lanes scroll sideways inside the column
+    static let maxVisibleLanes = 5
     /// 왼쪽 브랜치·태그 칸 너비
     static let refWidth: CGFloat = 190
     /// 커밋 동그라미(프로필) 지름
@@ -37,6 +38,10 @@ enum GraphMetrics {
 
     static let authorWidth: CGFloat = 120
     static let timeWidth: CGFloat = 84
+    /// The column header and the commit detail header share this height so their dividers line up
+    static let headerHeight: CGFloat = 32
+    /// The filter and column menus at the right end of the header; rows keep this much room when right-hand columns show
+    static let headerToolsWidth: CGFloat = 60
 
     /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간).
     /// 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다.
@@ -305,25 +310,25 @@ private struct GraphHeader: View {
                 }
                 .frame(width: columns.graph, alignment: .leading)
             }
+            Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            if columns.author { Text("Author").frame(width: GraphMetrics.authorWidth, alignment: .leading) }
+            if columns.time { Text("Time").frame(width: GraphMetrics.timeWidth, alignment: .trailing) }
+            // the graph filter lives here so it stays reachable while the search bar is hidden
             HStack(spacing: 6) {
-                Text("Commit message")
-                // the graph filter lives here so it stays reachable while the search bar is hidden
                 GraphFilterMenu()
                 Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
                     .menuStyle(.borderlessButton)
                     .fixedSize()
                     .help("Columns")
             }
-            .padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-            if columns.author { Text("Author").frame(width: GraphMetrics.authorWidth, alignment: .leading) }
-            if columns.time { Text("Time").frame(width: GraphMetrics.timeWidth, alignment: .trailing) }
+            .frame(width: GraphMetrics.headerToolsWidth, alignment: .trailing)
         }
         .contextMenu { toggles }
         .lineLimit(1)
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
         .padding(.trailing, 12)
-        .frame(height: scrolls ? 32 : 26)
+        .frame(height: GraphMetrics.headerHeight)
         .background(.bar)
     }
 
@@ -426,16 +431,15 @@ private struct GraphFilterMenu: View {
             Button(hidden > 0 ? "Show all \(hidden) hidden branches" : "No hidden branches") { Task { await store.showAllBranches() } }
                 .disabled(hidden == 0)
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                if store.graphCurrentOnly { Text("Current branch only").font(.caption) }
-                else if hidden > 0 { Text("Hidden \(hidden)").font(.caption) }
-            }
-            .foregroundStyle(active ? Color.accentColor : .secondary)
+            // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
+            Image(systemName: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                .foregroundStyle(active ? Color.accentColor : .secondary)
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .help("Filter graph — show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")
+        .help(store.graphCurrentOnly ? String(localized: "Current branch only") :
+              hidden > 0 ? String(localized: "Hidden \(hidden)") :
+              String(localized: "Filter graph — show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)"))
         .accessibilityLabel("Filter graph")
     }
 }

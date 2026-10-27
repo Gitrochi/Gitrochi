@@ -118,7 +118,8 @@ struct CommitRow: View {
             }
         }
         .font(.system(size: 12.5))
-        .padding(.trailing, 12)
+        // right-hand columns line up with their labels, which sit left of the header's menus
+        .padding(.trailing, 12 + (columns.author || columns.time ? GraphMetrics.headerToolsWidth : 0))
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {

@@ -5,7 +5,10 @@ export const ROW_H = 30;
 export const LEFT_PAD = 6;
 /** Room between the last lane's avatar and the message bar; the lane band runs through it */
 const RIGHT_PAD = 16;
-const MAX_LANES = 16;
+// Five lanes wide at most; more lanes scroll sideways inside the column (macOS: GraphMetrics.maxVisibleLanes)
+const MAX_LANES = 5;
+/** The filter and column menus at the header's right end; rows keep this much room when right-hand columns show (macOS: headerToolsWidth) */
+export const HEADER_TOOLS_W = 60;
 /** 왼쪽 브랜치·태그 칸 너비 */
 export const REF_W = 190;
 /** 커밋 동그라미(프로필) 지름 */

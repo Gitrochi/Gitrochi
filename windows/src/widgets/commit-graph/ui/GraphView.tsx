@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { AUTHOR_W, clampLaneOffset, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, type OptionalColumnId, revealLaneOffset, ROW_H, TIME_W, toggleColumn } from "../lib/metrics";
+import { AUTHOR_W, clampLaneOffset, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, type OptionalColumnId, revealLaneOffset, ROW_H, TIME_W, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -122,12 +122,14 @@ export function GraphView({ store }: { store: RepoStore }) {
         {cols.graph > 0 && <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))} />}
         <span className="graph-head-message">
           <span className="graph-head-label">{t("Commit message")}</span>
-          {/* the filter is not part of searching, so it stays here while the search bar is hidden; next to the label, it leaves the right end to the column labels */}
-          <GraphFilterButton store={store} />
-          <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
         </span>
         {cols.author && <span className="head-author" style={{ width: AUTHOR_W }}>{t("Author")}</span>}
         {cols.time && <span className="head-time" style={{ width: TIME_W }}>{t("Time")}</span>}
+        {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
+        <span className="graph-head-tools" style={{ width: HEADER_TOOLS_W }}>
+          <GraphFilterButton store={store} />
+          <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+        </span>
       </div>
       <div
         ref={scrollRef}
@@ -338,7 +340,7 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
       className={`tool graph-filter ${active ? "on" : ""}`}
       style={{ gap: 4, color: active ? "var(--accent)" : undefined }}
       aria-label={t("Filter graph")}
-      data-tip={t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
+      data-tip={store.graphCurrentOnly ? t("Current branch only") : hidden > 0 ? t("Hidden {0}", hidden) : t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
       onClick={(e) =>
         showMenuBelow(e.currentTarget, [
           { label: t("Show only the current branch"), checked: store.graphCurrentOnly, onClick: () => void store.setCurrentOnly(!store.graphCurrentOnly) },
@@ -347,8 +349,8 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
         ])
       }
     >
+      {/* icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu */}
       <ListFilter size={13} />
-      {store.graphCurrentOnly ? <span style={{ fontSize: 11.5 }}>{t("Current branch only")}</span> : hidden > 0 ? <span style={{ fontSize: 11.5 }}>{t("Hidden {0}", hidden)}</span> : null}
     </button>
   );
 }

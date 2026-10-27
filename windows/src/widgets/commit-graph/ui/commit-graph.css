@@ -39,7 +39,9 @@
 .graph-header {
   display: flex;
   align-items: center;
-  height: 26px;
+  /* the same height as the commit detail header (inspector .panel-head.commit-head) so the dividers line up */
+  height: 32px;
+  box-sizing: border-box;
   padding-right: 12px;
   font-size: 11.5px;
   font-weight: 600;
@@ -316,7 +318,15 @@
   margin-left: 8px;
 }
 
-/* the message header carries the filter and column menu right after its label */
+/* the filter and column menus sit at the header's right end in a fixed-width box */
+.graph-header > .graph-head-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* the message header: its label, taking the room left over */
 .graph-header > .graph-head-message {
   display: flex;
   align-items: center;
