@@ -184,6 +184,7 @@ struct IssuesWorkspacePanel: View {
                     } else {
                         ContentUnavailableView("Select an issue", systemImage: "circle.dotted",
                                                description: Text("Search the list, then read the conversation and reply here."))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }

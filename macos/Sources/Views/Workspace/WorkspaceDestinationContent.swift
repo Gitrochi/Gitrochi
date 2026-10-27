@@ -67,6 +67,7 @@ private struct PullRequestsWorkspace: View {
                         }
                     } else {
                         ContentUnavailableView("Select a pull request", systemImage: "arrow.triangle.pull", description: Text("Search the list, then review the conversation, files and merge checks here."))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }.task { await store.loadPullRequests() }
