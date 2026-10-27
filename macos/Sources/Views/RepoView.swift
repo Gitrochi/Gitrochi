@@ -214,6 +214,10 @@ struct RepoView: View {
             .help("Show or hide the terminal. Shells keep running when hidden. (⌃`)")
             .disabled(store.url == nil)
         }
+        if #available(macOS 26.0, *) {
+            // Keep the account control separate from the terminal's shared glass background.
+            ToolbarSpacer(.fixed, placement: .primaryAction)
+        }
         ToolbarItem(placement: .primaryAction) {
             AccountQuickControls()
         }
