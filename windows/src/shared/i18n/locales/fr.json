@@ -1199,5 +1199,14 @@
  "Filtered: {0}": "Filtré : {0}",
  "Clear filter": "Effacer le filtre",
  "Close search": "Fermer la recherche",
- "Close search (Esc)": "Fermer la recherche (Échap)"
+ "Close search (Esc)": "Fermer la recherche (Échap)",
+ "Running in other apps": "En cours dans d'autres apps",
+ "Unknown app": "App inconnue",
+ "Click to bring {0} to the front": "Cliquez pour mettre {0} au premier plan",
+ "Bring {0} to the front": "Mettre {0} au premier plan",
+ "Copy folder path": "Copier le chemin du dossier",
+ "The app running this agent was not found.": "L'app qui exécute cet agent est introuvable.",
+ "The app's window was not found.": "La fenêtre de l'app est introuvable.",
+ "Windows did not bring the app to the front.": "Windows n'a pas mis l'app au premier plan.",
+ "Bringing another app forward is only available on Windows.": "Mettre une autre app au premier plan n'est possible que sous Windows."
 }

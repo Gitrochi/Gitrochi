@@ -1221,5 +1221,14 @@
  "Filtered: {0}": "Фильтр: {0}",
  "Clear filter": "Сбросить фильтр",
  "Close search": "Закрыть поиск",
- "Close search (Esc)": "Закрыть поиск (Esc)"
+ "Close search (Esc)": "Закрыть поиск (Esc)",
+ "Running in other apps": "Запущены в других приложениях",
+ "Unknown app": "Неизвестное приложение",
+ "Click to bring {0} to the front": "Нажмите, чтобы вывести {0} на передний план",
+ "Bring {0} to the front": "Вывести {0} на передний план",
+ "Copy folder path": "Копировать путь к папке",
+ "The app running this agent was not found.": "Не найдено приложение, в котором работает этот агент.",
+ "The app's window was not found.": "Окно приложения не найдено.",
+ "Windows did not bring the app to the front.": "Windows не вывел приложение на передний план.",
+ "Bringing another app forward is only available on Windows.": "Выводить другое приложение на передний план можно только в Windows."
 }

@@ -5,3 +5,4 @@ export { NavigationSidebar, destinationTitle } from "./ui/NavigationSidebar";
 export { FlowPanel } from "./ui/FlowPanel";
 export { PullRequestSection } from "./ui/PullRequestSection";
 export { IssueListSection } from "./ui/IssueListSection";
+export { AgentsPanel } from "./ui/AgentsPanel";

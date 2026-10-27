@@ -1203,5 +1203,14 @@
  "Filtered: {0}": "Filtrováno: {0}",
  "Clear filter": "Zrušit filtr",
  "Close search": "Zavřít hledání",
- "Close search (Esc)": "Zavřít hledání (Esc)"
+ "Close search (Esc)": "Zavřít hledání (Esc)",
+ "Running in other apps": "Běží v jiných aplikacích",
+ "Unknown app": "Neznámá aplikace",
+ "Click to bring {0} to the front": "Kliknutím přenesete {0} do popředí",
+ "Bring {0} to the front": "Přenést {0} do popředí",
+ "Copy folder path": "Kopírovat cestu ke složce",
+ "The app running this agent was not found.": "Aplikace, ve které tento agent běží, nebyla nalezena.",
+ "The app's window was not found.": "Okno aplikace nebylo nalezeno.",
+ "Windows did not bring the app to the front.": "Windows aplikaci nepřenesl do popředí.",
+ "Bringing another app forward is only available on Windows.": "Přenesení jiné aplikace do popředí je dostupné jen ve Windows."
 }

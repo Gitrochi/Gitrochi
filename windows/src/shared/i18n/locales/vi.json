@@ -1177,5 +1177,14 @@
  "Filtered: {0}": "Đã lọc: {0}",
  "Clear filter": "Xóa bộ lọc",
  "Close search": "Đóng tìm kiếm",
- "Close search (Esc)": "Đóng tìm kiếm (Esc)"
+ "Close search (Esc)": "Đóng tìm kiếm (Esc)",
+ "Running in other apps": "Đang chạy trong ứng dụng khác",
+ "Unknown app": "Ứng dụng không xác định",
+ "Click to bring {0} to the front": "Nhấp để đưa {0} lên trước",
+ "Bring {0} to the front": "Đưa {0} lên trước",
+ "Copy folder path": "Sao chép đường dẫn thư mục",
+ "The app running this agent was not found.": "Không tìm thấy ứng dụng đang chạy tác nhân này.",
+ "The app's window was not found.": "Không tìm thấy cửa sổ của ứng dụng.",
+ "Windows did not bring the app to the front.": "Windows không đưa ứng dụng lên trước.",
+ "Bringing another app forward is only available on Windows.": "Đưa ứng dụng khác lên trước chỉ khả dụng trên Windows."
 }

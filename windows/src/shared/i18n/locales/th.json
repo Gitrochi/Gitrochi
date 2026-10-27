@@ -1217,5 +1217,14 @@
  "Filtered: {0}": "กรองแล้ว: {0}",
  "Clear filter": "ล้างตัวกรอง",
  "Close search": "ปิดการค้นหา",
- "Close search (Esc)": "ปิดการค้นหา (Esc)"
+ "Close search (Esc)": "ปิดการค้นหา (Esc)",
+ "Running in other apps": "กำลังทำงานในแอปอื่น",
+ "Unknown app": "แอปที่ไม่รู้จัก",
+ "Click to bring {0} to the front": "คลิกเพื่อนำ {0} มาไว้ด้านหน้า",
+ "Bring {0} to the front": "นำ {0} มาไว้ด้านหน้า",
+ "Copy folder path": "คัดลอกพาธโฟลเดอร์",
+ "The app running this agent was not found.": "ไม่พบแอปที่กำลังเรียกใช้เอเจนต์นี้",
+ "The app's window was not found.": "ไม่พบหน้าต่างของแอป",
+ "Windows did not bring the app to the front.": "Windows ไม่ได้นำแอปมาไว้ด้านหน้า",
+ "Bringing another app forward is only available on Windows.": "การนำแอปอื่นมาไว้ด้านหน้าใช้ได้เฉพาะบน Windows"
 }

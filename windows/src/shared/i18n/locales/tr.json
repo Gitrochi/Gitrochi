@@ -1210,5 +1210,14 @@
  "Filtered: {0}": "Süzüldü: {0}",
  "Clear filter": "Süzgeci temizle",
  "Close search": "Aramayı kapat",
- "Close search (Esc)": "Aramayı kapat (Esc)"
+ "Close search (Esc)": "Aramayı kapat (Esc)",
+ "Running in other apps": "Başka uygulamalarda çalışıyor",
+ "Unknown app": "Bilinmeyen uygulama",
+ "Click to bring {0} to the front": "{0} uygulamasını öne getirmek için tıklayın",
+ "Bring {0} to the front": "{0} uygulamasını öne getir",
+ "Copy folder path": "Klasör yolunu kopyala",
+ "The app running this agent was not found.": "Bu ajanı çalıştıran uygulama bulunamadı.",
+ "The app's window was not found.": "Uygulamanın penceresi bulunamadı.",
+ "Windows did not bring the app to the front.": "Windows uygulamayı öne getirmedi.",
+ "Bringing another app forward is only available on Windows.": "Başka bir uygulamayı öne getirmek yalnızca Windows'ta kullanılabilir."
 }

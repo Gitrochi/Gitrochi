@@ -1173,5 +1173,14 @@
  "Filtered: {0}": "Gefilterd: {0}",
  "Clear filter": "Filter wissen",
  "Close search": "Zoeken sluiten",
- "Close search (Esc)": "Zoeken sluiten (Esc)"
+ "Close search (Esc)": "Zoeken sluiten (Esc)",
+ "Running in other apps": "Actief in andere apps",
+ "Unknown app": "Onbekende app",
+ "Click to bring {0} to the front": "Klik om {0} naar voren te halen",
+ "Bring {0} to the front": "{0} naar voren halen",
+ "Copy folder path": "Mappad kopiëren",
+ "The app running this agent was not found.": "De app waarin deze agent draait, is niet gevonden.",
+ "The app's window was not found.": "Het venster van de app is niet gevonden.",
+ "Windows did not bring the app to the front.": "Windows heeft de app niet naar voren gehaald.",
+ "Bringing another app forward is only available on Windows.": "Een andere app naar voren halen kan alleen op Windows."
 }

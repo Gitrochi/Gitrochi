@@ -1199,5 +1199,14 @@
  "Filtered: {0}": "Gefiltert: {0}",
  "Clear filter": "Filter zurücksetzen",
  "Close search": "Suche schließen",
- "Close search (Esc)": "Suche schließen (Esc)"
+ "Close search (Esc)": "Suche schließen (Esc)",
+ "Running in other apps": "In anderen Apps aktiv",
+ "Unknown app": "Unbekannte App",
+ "Click to bring {0} to the front": "Klicken, um {0} nach vorne zu holen",
+ "Bring {0} to the front": "{0} nach vorne holen",
+ "Copy folder path": "Ordnerpfad kopieren",
+ "The app running this agent was not found.": "Die App, in der dieser Agent läuft, wurde nicht gefunden.",
+ "The app's window was not found.": "Das Fenster der App wurde nicht gefunden.",
+ "Windows did not bring the app to the front.": "Windows hat die App nicht nach vorne geholt.",
+ "Bringing another app forward is only available on Windows.": "Andere Apps nach vorne holen geht nur unter Windows."
 }

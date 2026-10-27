@@ -1223,5 +1223,14 @@
  "Filtered: {0}": "已篩選：{0}",
  "Clear filter": "清除篩選",
  "Close search": "關閉搜尋",
- "Close search (Esc)": "關閉搜尋 (Esc)"
+ "Close search (Esc)": "關閉搜尋 (Esc)",
+ "Running in other apps": "在其他應用程式中執行",
+ "Unknown app": "未知的應用程式",
+ "Click to bring {0} to the front": "點擊將 {0} 帶到前景",
+ "Bring {0} to the front": "將 {0} 帶到前景",
+ "Copy folder path": "複製資料夾路徑",
+ "The app running this agent was not found.": "找不到執行此代理的應用程式。",
+ "The app's window was not found.": "找不到該應用程式的視窗。",
+ "Windows did not bring the app to the front.": "Windows 未將該應用程式帶到前景。",
+ "Bringing another app forward is only available on Windows.": "將其他應用程式帶到前景僅適用於 Windows。"
 }

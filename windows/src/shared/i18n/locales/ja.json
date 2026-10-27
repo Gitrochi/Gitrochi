@@ -1222,5 +1222,14 @@
  "Filtered: {0}": "フィルター: {0}",
  "Clear filter": "フィルターをクリア",
  "Close search": "検索を閉じる",
- "Close search (Esc)": "検索を閉じる (Esc)"
+ "Close search (Esc)": "検索を閉じる (Esc)",
+ "Running in other apps": "他のアプリで実行中",
+ "Unknown app": "不明なアプリ",
+ "Click to bring {0} to the front": "クリックで {0} を前面に表示",
+ "Bring {0} to the front": "{0} を前面に表示",
+ "Copy folder path": "フォルダのパスをコピー",
+ "The app running this agent was not found.": "このエージェントを実行しているアプリが見つかりません。",
+ "The app's window was not found.": "アプリのウィンドウが見つかりません。",
+ "Windows did not bring the app to the front.": "Windows がアプリを前面に表示しませんでした。",
+ "Bringing another app forward is only available on Windows.": "他のアプリを前面に表示する機能は Windows でのみ使えます。"
 }

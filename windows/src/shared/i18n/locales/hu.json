@@ -1205,5 +1205,14 @@
  "Filtered: {0}": "Szűrve: {0}",
  "Clear filter": "Szűrő törlése",
  "Close search": "Keresés bezárása",
- "Close search (Esc)": "Keresés bezárása (Esc)"
+ "Close search (Esc)": "Keresés bezárása (Esc)",
+ "Running in other apps": "Más alkalmazásokban fut",
+ "Unknown app": "Ismeretlen alkalmazás",
+ "Click to bring {0} to the front": "Kattintson a(z) {0} előtérbe hozásához",
+ "Bring {0} to the front": "{0} előtérbe hozása",
+ "Copy folder path": "Mappa elérési útjának másolása",
+ "The app running this agent was not found.": "Nem található az ügynököt futtató alkalmazás.",
+ "The app's window was not found.": "Az alkalmazás ablaka nem található.",
+ "Windows did not bring the app to the front.": "A Windows nem hozta előtérbe az alkalmazást.",
+ "Bringing another app forward is only available on Windows.": "Más alkalmazás előtérbe hozása csak Windowson érhető el."
 }

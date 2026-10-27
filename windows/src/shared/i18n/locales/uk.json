@@ -1221,5 +1221,14 @@
  "Filtered: {0}": "Фільтр: {0}",
  "Clear filter": "Скинути фільтр",
  "Close search": "Закрити пошук",
- "Close search (Esc)": "Закрити пошук (Esc)"
+ "Close search (Esc)": "Закрити пошук (Esc)",
+ "Running in other apps": "Працюють в інших застосунках",
+ "Unknown app": "Невідомий застосунок",
+ "Click to bring {0} to the front": "Натисніть, щоб вивести {0} на передній план",
+ "Bring {0} to the front": "Вивести {0} на передній план",
+ "Copy folder path": "Копіювати шлях до теки",
+ "The app running this agent was not found.": "Не знайдено застосунок, у якому працює цей агент.",
+ "The app's window was not found.": "Вікно застосунку не знайдено.",
+ "Windows did not bring the app to the front.": "Windows не вивів застосунок на передній план.",
+ "Bringing another app forward is only available on Windows.": "Виводити інший застосунок на передній план можна лише в Windows."
 }

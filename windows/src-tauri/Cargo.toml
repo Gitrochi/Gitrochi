@@ -29,13 +29,15 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 dirs = "5"
 wait-timeout = "0.2"
 tokio = { version = "1", features = ["sync"] }
+# agent processes in other apps: process tree and working directories (MIT)
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = "0.39"
-windows = "0.62"
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
 
 [profile.release]
 codegen-units = 1

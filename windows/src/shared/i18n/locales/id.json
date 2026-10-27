@@ -1174,5 +1174,14 @@
  "Filtered: {0}": "Difilter: {0}",
  "Clear filter": "Hapus filter",
  "Close search": "Tutup pencarian",
- "Close search (Esc)": "Tutup pencarian (Esc)"
+ "Close search (Esc)": "Tutup pencarian (Esc)",
+ "Running in other apps": "Berjalan di aplikasi lain",
+ "Unknown app": "Aplikasi tidak dikenal",
+ "Click to bring {0} to the front": "Klik untuk membawa {0} ke depan",
+ "Bring {0} to the front": "Bawa {0} ke depan",
+ "Copy folder path": "Salin jalur folder",
+ "The app running this agent was not found.": "Aplikasi yang menjalankan agen ini tidak ditemukan.",
+ "The app's window was not found.": "Jendela aplikasi tidak ditemukan.",
+ "Windows did not bring the app to the front.": "Windows tidak membawa aplikasi ke depan.",
+ "Bringing another app forward is only available on Windows.": "Membawa aplikasi lain ke depan hanya tersedia di Windows."
 }
