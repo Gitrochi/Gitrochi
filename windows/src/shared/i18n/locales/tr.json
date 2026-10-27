@@ -1219,5 +1219,6 @@
  "The app running this agent was not found.": "Bu ajanı çalıştıran uygulama bulunamadı.",
  "The app's window was not found.": "Uygulamanın penceresi bulunamadı.",
  "Windows did not bring the app to the front.": "Windows uygulamayı öne getirmedi.",
- "Bringing another app forward is only available on Windows.": "Başka bir uygulamayı öne getirmek yalnızca Windows'ta kullanılabilir."
+ "Bringing another app forward is only available on Windows.": "Başka bir uygulamayı öne getirmek yalnızca Windows'ta kullanılabilir.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "{0} açılamadı: bir Git deposunun içinde değil."
 }

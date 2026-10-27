@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated { InstallerDisk.check() }
         // 보통은 첫 창이 붙을 때 그 자리에 뜬다. 혹시 늦으면 화면 가운데에라도 띄운다.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            MainActor.assumeIsolated { Splash.shared.show() }
+            MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
@@ -56,6 +56,9 @@ struct GitrochiApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1440, height: 900)   // 툴바 버튼이 이름까지 다 보이는 폭
         .restorationBehavior(.disabled)   // 탭 복원은 Workspace 가 한다(시스템 복원과 겹치면 빈 창·중복 창이 생김)
+        // Opened folders and gitrochi:// links go to AppDelegate → Workspace.receive; letting the window group take them
+        // as well makes SwiftUI replace the launch window, which then never starts and stays invisible
+        .handlesExternalEvents(matching: [])
         .commands { AppCommands() }
 
         Settings {
@@ -66,6 +69,9 @@ struct GitrochiApp: App {
             GitchGuideSheet(repo: nil)
         }
         .windowResizability(.contentSize)
+        // opened only from its menu item: not for opened folders or links, and not reopened at the next launch
+        .handlesExternalEvents(matching: [])
+        .restorationBehavior(.disabled)
     }
 }
 

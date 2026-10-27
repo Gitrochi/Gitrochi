@@ -1183,5 +1183,6 @@
  "The app running this agent was not found.": "Aplikasi yang menjalankan agen ini tidak ditemukan.",
  "The app's window was not found.": "Jendela aplikasi tidak ditemukan.",
  "Windows did not bring the app to the front.": "Windows tidak membawa aplikasi ke depan.",
- "Bringing another app forward is only available on Windows.": "Membawa aplikasi lain ke depan hanya tersedia di Windows."
+ "Bringing another app forward is only available on Windows.": "Membawa aplikasi lain ke depan hanya tersedia di Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "Tidak dapat membuka {0}: tidak berada di dalam repositori Git."
 }

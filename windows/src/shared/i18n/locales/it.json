@@ -1206,5 +1206,6 @@
  "The app running this agent was not found.": "Non è stata trovata l'app che esegue questo agente.",
  "The app's window was not found.": "La finestra dell'app non è stata trovata.",
  "Windows did not bring the app to the front.": "Windows non ha portato l'app in primo piano.",
- "Bringing another app forward is only available on Windows.": "Portare in primo piano un'altra app è disponibile solo su Windows."
+ "Bringing another app forward is only available on Windows.": "Portare in primo piano un'altra app è disponibile solo su Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "Impossibile aprire {0}: non si trova in un repository Git."
 }

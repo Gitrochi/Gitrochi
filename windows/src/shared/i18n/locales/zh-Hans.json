@@ -1232,5 +1232,6 @@
  "The app running this agent was not found.": "未找到运行此代理的应用。",
  "The app's window was not found.": "未找到该应用的窗口。",
  "Windows did not bring the app to the front.": "Windows 未将该应用置于前台。",
- "Bringing another app forward is only available on Windows.": "将其他应用置于前台仅适用于 Windows。"
+ "Bringing another app forward is only available on Windows.": "将其他应用置于前台仅适用于 Windows。",
+ "Couldn't open {0}: it isn't inside a Git repository.": "无法打开 {0}：它不在 Git 仓库中。"
 }

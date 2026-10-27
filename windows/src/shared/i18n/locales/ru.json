@@ -1230,5 +1230,6 @@
  "The app running this agent was not found.": "Не найдено приложение, в котором работает этот агент.",
  "The app's window was not found.": "Окно приложения не найдено.",
  "Windows did not bring the app to the front.": "Windows не вывел приложение на передний план.",
- "Bringing another app forward is only available on Windows.": "Выводить другое приложение на передний план можно только в Windows."
+ "Bringing another app forward is only available on Windows.": "Выводить другое приложение на передний план можно только в Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "Не удалось открыть {0}: это не внутри репозитория Git."
 }

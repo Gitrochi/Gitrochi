@@ -2042,7 +2042,6 @@
   "CI: {0} · {1}#{2} — click to open in Actions": "CI: {0} · {1}#{2} — 누르면 Actions 에서 엽니다",
   "Filter branches and tags": "브랜치·태그 검색",
   "Use branches, tags or commit IDs, or pick a branch on the left.": "브랜치·태그·커밋 ID를 입력하거나 왼쪽에서 브랜치를 고르세요.",
-  "No matching branches": "일치하는 브랜치가 없습니다",
   "Search pull requests": "풀 리퀘스트 검색",
   "Search merge requests": "머지 리퀘스트 검색",
   "Filter": "필터",
@@ -2072,5 +2071,6 @@
   "The app running this agent was not found.": "이 에이전트를 실행 중인 앱을 찾지 못했습니다.",
   "The app's window was not found.": "그 앱의 창을 찾지 못했습니다.",
   "Windows did not bring the app to the front.": "Windows 가 그 앱을 앞으로 가져오지 않았습니다.",
-  "Bringing another app forward is only available on Windows.": "다른 앱을 앞으로 가져오는 기능은 Windows 에서만 됩니다."
+  "Bringing another app forward is only available on Windows.": "다른 앱을 앞으로 가져오는 기능은 Windows 에서만 됩니다.",
+  "Couldn't open {0}: it isn't inside a Git repository.": "{0}을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다."
 }

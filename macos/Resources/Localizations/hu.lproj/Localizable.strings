@@ -1174,3 +1174,4 @@
 "Click to bring %@ to the front" = "Kattints, és a(z) %1$@ előtérbe kerül";
 "Bring %@ to the front" = "%1$@ előtérbe hozása";
 "Copy folder path" = "Mappa elérési útjának másolása";
+"Couldn't open %@: it isn't inside a Git repository." = "Nem sikerült megnyitni: %1$@ – nincs Git-tárolóban.";

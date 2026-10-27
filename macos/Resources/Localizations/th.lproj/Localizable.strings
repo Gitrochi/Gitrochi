@@ -1187,3 +1187,4 @@
 "Click to bring %@ to the front" = "คลิกเพื่อนำ %1$@ ขึ้นมาด้านหน้า";
 "Bring %@ to the front" = "นำ %1$@ ขึ้นมาด้านหน้า";
 "Copy folder path" = "คัดลอกพาธโฟลเดอร์";
+"Couldn't open %@: it isn't inside a Git repository." = "เปิด %1$@ ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git";

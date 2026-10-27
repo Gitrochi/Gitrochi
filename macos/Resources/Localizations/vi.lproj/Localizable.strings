@@ -1147,3 +1147,4 @@
 "Click to bring %@ to the front" = "Nhấp để đưa %1$@ lên trước";
 "Bring %@ to the front" = "Đưa %1$@ lên trước";
 "Copy folder path" = "Sao chép đường dẫn thư mục";
+"Couldn't open %@: it isn't inside a Git repository." = "Không mở được %1$@: không nằm trong kho Git nào.";

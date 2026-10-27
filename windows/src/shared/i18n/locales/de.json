@@ -1208,5 +1208,6 @@
  "The app running this agent was not found.": "Die App, in der dieser Agent läuft, wurde nicht gefunden.",
  "The app's window was not found.": "Das Fenster der App wurde nicht gefunden.",
  "Windows did not bring the app to the front.": "Windows hat die App nicht nach vorne geholt.",
- "Bringing another app forward is only available on Windows.": "Andere Apps nach vorne holen geht nur unter Windows."
+ "Bringing another app forward is only available on Windows.": "Andere Apps nach vorne holen geht nur unter Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "{0} konnte nicht geöffnet werden: Es liegt in keinem Git-Repository."
 }

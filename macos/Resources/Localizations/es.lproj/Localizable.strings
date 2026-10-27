@@ -1165,3 +1165,4 @@
 "Click to bring %@ to the front" = "Haz clic para traer %1$@ al frente";
 "Bring %@ to the front" = "Traer %1$@ al frente";
 "Copy folder path" = "Copiar ruta de la carpeta";
+"Couldn't open %@: it isn't inside a Git repository." = "No se pudo abrir %1$@: no está dentro de un repositorio Git.";

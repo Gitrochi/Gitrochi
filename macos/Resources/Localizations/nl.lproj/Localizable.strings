@@ -1135,3 +1135,4 @@
 "Click to bring %@ to the front" = "Klik om %1$@ naar voren te halen";
 "Bring %@ to the front" = "%1$@ naar voren halen";
 "Copy folder path" = "Mappad kopiëren";
+"Couldn't open %@: it isn't inside a Git repository." = "Kan %1$@ niet openen: het staat niet in een Git-repository.";

@@ -1214,5 +1214,6 @@
  "The app running this agent was not found.": "Nem található az ügynököt futtató alkalmazás.",
  "The app's window was not found.": "Az alkalmazás ablaka nem található.",
  "Windows did not bring the app to the front.": "A Windows nem hozta előtérbe az alkalmazást.",
- "Bringing another app forward is only available on Windows.": "Más alkalmazás előtérbe hozása csak Windowson érhető el."
+ "Bringing another app forward is only available on Windows.": "Más alkalmazás előtérbe hozása csak Windowson érhető el.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "Nem sikerült megnyitni: {0} – nincs Git-tárolóban."
 }

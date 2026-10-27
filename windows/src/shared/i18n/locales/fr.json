@@ -1208,5 +1208,6 @@
  "The app running this agent was not found.": "L'app qui exécute cet agent est introuvable.",
  "The app's window was not found.": "La fenêtre de l'app est introuvable.",
  "Windows did not bring the app to the front.": "Windows n'a pas mis l'app au premier plan.",
- "Bringing another app forward is only available on Windows.": "Mettre une autre app au premier plan n'est possible que sous Windows."
+ "Bringing another app forward is only available on Windows.": "Mettre une autre app au premier plan n'est possible que sous Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "Impossible d'ouvrir {0} : il ne se trouve dans aucun dépôt Git."
 }

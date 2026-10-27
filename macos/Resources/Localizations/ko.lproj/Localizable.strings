@@ -2072,3 +2072,4 @@
 "Click to bring %@ to the front" = "누르면 %1$@ 앱이 앞으로 옵니다";
 "Bring %@ to the front" = "%1$@ 앞으로 가져오기";
 "Copy folder path" = "폴더 경로 복사";
+"Couldn't open %@: it isn't inside a Git repository." = "%1$@을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다.";

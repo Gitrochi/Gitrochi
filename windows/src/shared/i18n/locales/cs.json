@@ -1212,5 +1212,6 @@
  "The app running this agent was not found.": "Aplikace, ve které tento agent běží, nebyla nalezena.",
  "The app's window was not found.": "Okno aplikace nebylo nalezeno.",
  "Windows did not bring the app to the front.": "Windows aplikaci nepřenesl do popředí.",
- "Bringing another app forward is only available on Windows.": "Přenesení jiné aplikace do popředí je dostupné jen ve Windows."
+ "Bringing another app forward is only available on Windows.": "Přenesení jiné aplikace do popředí je dostupné jen ve Windows.",
+ "Couldn't open {0}: it isn't inside a Git repository.": "{0} nelze otevřít: není uvnitř repozitáře Git."
 }

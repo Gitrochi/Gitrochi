@@ -1191,3 +1191,4 @@
 "Click to bring %@ to the front" = "Натисніть, щоб вивести %1$@ на передній план";
 "Bring %@ to the front" = "Вивести %1$@ на передній план";
 "Copy folder path" = "Копіювати шлях до теки";
+"Couldn't open %@: it isn't inside a Git repository." = "Не вдалося відкрити %1$@: це не всередині репозиторію Git.";

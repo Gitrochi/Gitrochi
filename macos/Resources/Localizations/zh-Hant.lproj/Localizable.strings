@@ -1193,3 +1193,4 @@
 "Click to bring %@ to the front" = "點一下將 %1$@ 帶到最前面";
 "Bring %@ to the front" = "將 %1$@ 帶到最前面";
 "Copy folder path" = "拷貝檔案夾路徑";
+"Couldn't open %@: it isn't inside a Git repository." = "無法開啟 %1$@：它不在 Git 儲存庫中。";

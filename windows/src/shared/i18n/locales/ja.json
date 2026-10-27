@@ -1231,5 +1231,6 @@
  "The app running this agent was not found.": "このエージェントを実行しているアプリが見つかりません。",
  "The app's window was not found.": "アプリのウィンドウが見つかりません。",
  "Windows did not bring the app to the front.": "Windows がアプリを前面に表示しませんでした。",
- "Bringing another app forward is only available on Windows.": "他のアプリを前面に表示する機能は Windows でのみ使えます。"
+ "Bringing another app forward is only available on Windows.": "他のアプリを前面に表示する機能は Windows でのみ使えます。",
+ "Couldn't open {0}: it isn't inside a Git repository.": "{0} を開けませんでした: Git リポジトリの中にありません。"
 }

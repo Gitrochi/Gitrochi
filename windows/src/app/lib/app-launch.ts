@@ -53,7 +53,10 @@ export async function startAppLaunches() {
           await applyAppLaunch(item.Ok);
         } catch (error) {
           const store = workspace.active ?? workspace.newTab();
-          store.fail(error instanceof Error ? t(error.message) : String(error));
+          const message = error instanceof Error ? error.message : String(error);
+          // a folder handed to the app that is not in a repository (src-tauri/src/launch.rs folder_route)
+          const outside = message.match(/^Couldn't open (.+): it isn't inside a Git repository\.$/);
+          store.fail(outside ? t("Couldn't open {0}: it isn't inside a Git repository.", outside[1]) : t(message));
         }
       }
     }).catch((error) => {
