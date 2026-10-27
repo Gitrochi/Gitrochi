@@ -25,6 +25,7 @@ enum RepositoryWindowLayout {
         private var scheduled = false
         private var frameBeforeStyleChange: NSRect?
         private var frameAfterStyleChange: NSRect?
+        private var restorationID = UUID()
 
         init(window: NSWindow) {
             self.window = window
@@ -38,6 +39,7 @@ enum RepositoryWindowLayout {
                 tokens.append(center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
                     MainActor.assumeIsolated {
                         self?.transitioning = true
+                        self?.restorationID = UUID()
                         self?.frameBeforeStyleChange = nil
                         self?.frameAfterStyleChange = nil
                     }
@@ -58,7 +60,10 @@ enum RepositoryWindowLayout {
         private func styleChanged(prior: Bool) {
             guard let window, !applying, !transitioning else { return }
             if prior {
-                if frameBeforeStyleChange == nil { frameBeforeStyleChange = window.frame }
+                if frameBeforeStyleChange == nil {
+                    restorationID = UUID()
+                    frameBeforeStyleChange = window.frame
+                }
                 return
             }
             guard !scheduled else { return }
@@ -78,12 +83,23 @@ enum RepositoryWindowLayout {
             guard let window, !applying, !transitioning, window.styleMask.contains(.fullSizeContentView) else { return }
             applying = true
             defer { applying = false }
+            restorationID = UUID()
             // Honor a subsequent restored frame or explicit resize before this turn runs.
             let frame = frameAfterStyleChange.map { $0 != window.frame } == true
                 ? window.frame : (frameBeforeStyleChange ?? window.frame)
             window.styleMask.remove(.fullSizeContentView)
             // Changing the style must not resize or reposition a restored window.
             if window.frame != frame { window.setFrame(frame, display: false) }
+            let pendingFrame = window.frame
+            guard pendingFrame != frame else { return }
+            let restoration = restorationID
+            // Constrained windows can reject this resize until AppKit finishes the style layout.
+            DispatchQueue.main.async { [weak self, weak window] in
+                guard let self, let window, self.restorationID == restoration,
+                      !self.applying, !self.transitioning, !window.styleMask.contains(.fullSizeContentView),
+                      window.frame == pendingFrame else { return }
+                window.setFrame(frame, display: false)
+            }
         }
     }
 }

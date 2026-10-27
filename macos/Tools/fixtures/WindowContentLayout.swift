@@ -25,6 +25,23 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
+/// Models AppKit rejecting the first frame restoration while a style change is still settling.
+private final class DeferredFrameFixtureWindow: NSWindow {
+    var frameToReject: NSRect?
+    var rejectedRestorations = 0
+    var afterRejection: (() -> Void)?
+
+    override func setFrame(_ frameRect: NSRect, display flag: Bool) {
+        if frameToReject == frameRect && !styleMask.contains(.fullSizeContentView) {
+            frameToReject = nil
+            rejectedRestorations += 1
+            afterRejection?()
+            return
+        }
+        super.setFrame(frameRect, display: flag)
+    }
+}
+
 @main struct WindowContentLayoutFixture {
     @MainActor static func main() throws {
         let arguments = Array(CommandLine.arguments.dropFirst())
@@ -114,6 +131,35 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
             ["x": frame.minX, "y": frame.minY, "width": frame.width, "height": frame.height]
         }
         var checks: [[String: Any]] = []
+        let deferredWindow = DeferredFrameFixtureWindow(contentRect: NSRect(x: 100, y: 100, width: 640, height: 420),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        deferredWindow.isReleasedWhenClosed = false
+        deferredWindow.contentView = NSView()
+        deferredWindow.toolbar = NSToolbar(identifier: "DeferredFrameFixture")
+        RepositoryWindowLayout.configure(deferredWindow)
+        deferredWindow.orderBack(nil)
+        settle(0.1)
+        let deferredBaseline = deferredWindow.frame
+        deferredWindow.styleMask.insert(.fullSizeContentView)
+        deferredWindow.setFrame(deferredBaseline, display: false)
+        deferredWindow.frameToReject = deferredBaseline
+        settle(0.2)
+        precondition(deferredWindow.rejectedRestorations == 1, "The deferred-frame regression must reject a real restoration attempt")
+        precondition(equal(deferredWindow.frame, deferredBaseline), "A frame rejected during style layout must restore on the next turn: expected=\(deferredBaseline) actual=\(deferredWindow.frame)")
+        checks.append(["scenario": "deferred-frame-restored", "windowFrame": rect(deferredWindow.frame), "rejectedRestorations": deferredWindow.rejectedRestorations])
+
+        let explicitFrame = NSRect(x: deferredBaseline.minX + 20, y: deferredBaseline.minY + 12,
+                                   width: deferredBaseline.width + 32, height: deferredBaseline.height + 18)
+        deferredWindow.styleMask.insert(.fullSizeContentView)
+        deferredWindow.setFrame(deferredBaseline, display: false)
+        deferredWindow.frameToReject = deferredBaseline
+        deferredWindow.afterRejection = { DispatchQueue.main.async { deferredWindow.setFrame(explicitFrame, display: false) } }
+        settle(0.2)
+        precondition(deferredWindow.rejectedRestorations == 2, "The explicit-resize regression must interrupt a pending restoration")
+        precondition(equal(deferredWindow.frame, explicitFrame), "An explicit resize must take precedence over deferred restoration: expected=\(explicitFrame) actual=\(deferredWindow.frame)")
+        checks.append(["scenario": "deferred-frame-explicit-resize", "windowFrame": rect(deferredWindow.frame), "rejectedRestorations": deferredWindow.rejectedRestorations])
+        deferredWindow.afterRejection = nil
+        deferredWindow.orderOut(nil)
         func capture(_ scenario: String, expectContent: Bool = true) throws {
             settle()
             precondition(!window.styleMask.contains(.fullSizeContentView), "Full-size content returned during \(scenario)")
@@ -177,8 +223,9 @@ private final class WindowContentFixtureDelegate: NSObject, NSApplicationDelegat
         // The lifetime attachment must contain it without another configure call.
         let beforeLateStyle = window.frame
         window.styleMask.insert(.fullSizeContentView)
+        waitForNativeFrame("late-toolbar-style-restored", expected: beforeLateStyle) { equal(window.frame, beforeLateStyle) && !window.styleMask.contains(.fullSizeContentView) }
         try capture("late-toolbar-style-restored")
-        precondition(equal(window.frame, beforeLateStyle), "Late toolbar changes must preserve the outer window frame")
+        precondition(equal(window.frame, beforeLateStyle), "Late toolbar changes must preserve the outer window frame: expected=\(beforeLateStyle) actual=\(window.frame) screen=\(window.screen?.visibleFrame ?? .zero)")
 
         store.loading = LoadingInfo(title: "Opening fixture", step: "Rendering the actual loading overlay")
         settle(0.6)
