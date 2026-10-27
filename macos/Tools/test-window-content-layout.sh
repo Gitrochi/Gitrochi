@@ -50,16 +50,40 @@ for source in (root / 'Sources').rglob('*.swift'):
         needle = '                    WorkspaceDestinationContent()\n'
         assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
         text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
+    elif relative == 'Views/Workspace/WorkspaceDestinationContent.swift':
+        needle = '.font(.title2.weight(.semibold))\n                .lineLimit(1)'
+        assert text.count(needle) == 1, 'Page title measurement attachment changed'
+        text = text.replace(needle, needle + '\n                .background(WindowContentProbe(identifier: "page-title:" + page.rawValue))')
+    elif relative == 'Views/Sidebar/NavigationSidebarRail.swift':
+        needle = '.accessibilityIdentifier("navigation-rail-expand")'
+        assert text.count(needle) == 1, 'Rail control measurement attachment changed'
+        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "rail-control"))')
+    elif relative == 'Views/Hub/HostingHubPanel.swift':
+        needle = 'Text(title).font(.title2.weight(.semibold))'
+        assert text.count(needle) == 1, 'Hosting heading measurement attachment changed'
+        text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-title:" + section.rawValue))')
+        needle = '}.padding(12).contentShape(Rectangle())'
+        assert text.count(needle) == 1, 'Hosting list item measurement attachment changed'
+        text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-item:" + item.id))')
+        needle = 'if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }'
+        assert text.count(needle) == 1, 'Hosting pagination measurement attachment changed'
+        text = text.replace(needle, needle[:-2] + '.background(WindowContentProbe(identifier: "hub-pagination")) }')
+        needle = '}.frame(maxWidth: .infinity, alignment: .leading).padding(22)'
+        assert text.count(needle) == 1, 'Hosting detail footer measurement attachment changed'
+        text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Services/Accounts.swift':
         needle = 'private let credentials = CredentialCache { await Keychain.read($0) }'
         assert text.count(needle) == 1, 'Isolated credential reader attachment changed'
         text = text.replace(needle, 'private let credentials = CredentialCache { _ in CredentialReadResult(value: nil, status: -25300) }')
         # 실제 툴바를 렌더링해도 사용자 인증 도우미를 설치하지 않는다.
         text = text.replace('        Askpass.install()', '        // 렌더링 검사에서는 인증 도우미를 설치하지 않는다.')
+        text += '\nextension AccountStore { func windowFixtureSetAccounts(_ values: [HostAccount]) { accounts = values; revision += 1 } }\n'
     elif relative == 'Services/LocalProjects.swift':
         needle = 'static let shared = LocalProjectStore()'
         assert text.count(needle) == 1, 'Isolated local project storage attachment changed'
         text = text.replace(needle, 'static let shared = LocalProjectStore(storage: LocalProjectFileStorage(url: windowFixtureLocalStorageURL))')
+    elif relative == 'Store/RepoStore.swift':
+        text += '\nextension RepoStore { func windowFixtureSetURL(_ value: URL?) { url = value } }\n'
     elif relative == 'Services/Tools.swift':
         # 도구 가용성에 따른 레이아웃은 유지하고 실행 파일 탐색과 버전 조회만 생략한다.
         start = text.index('    private init() {', text.index('final class ToolStore'))
@@ -77,6 +101,7 @@ while IFS= read -r -d '' file; do SOURCES+=("$file"); done < <(find "$TASK_TMP/S
 TASK_CORE="$(CARGO_NET_OFFLINE=true bash "$ROOT/../tools/build-core-native.sh" "$ARCH")"
 cp "$TASK_CORE" "$TASK_TMP/core.a"
 cp "$ROOT/Tools/fixtures/WindowContentLayout.swift" "$TASK_TMP/WindowContentLayout.swift"
+cp "$ROOT/Tools/fixtures/WindowReleaseChrome.swift" "$TASK_TMP/WindowReleaseChrome.swift"
 TASK_APP="${TASK_OUTPUT:-$TASK_TMP}/WindowContentLayoutFixture.app"
 mkdir -p "$TASK_APP/Contents/MacOS" "$TASK_APP/Contents/Resources"
 cat > "$TASK_APP/Contents/Info.plist" <<'PLIST'
@@ -96,7 +121,7 @@ PLIST
 if [[ -f "$ROOT/Resources/AppIcon.icns" ]]; then cp "$ROOT/Resources/AppIcon.icns" "$TASK_APP/Contents/Resources/"; fi
 xcrun swiftc -parse-as-library -swift-version 5 -whole-module-optimization -Onone -target "$ARCH-apple-macos15.0" \
     -I "$ST" -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
-    "${SOURCES[@]}" "$TASK_TMP/WindowContentLayout.swift" "$TASK_TMP/core.a" \
+    "${SOURCES[@]}" "$TASK_TMP/WindowContentLayout.swift" "$TASK_TMP/WindowReleaseChrome.swift" "$TASK_TMP/core.a" \
     -o "$TASK_APP/Contents/MacOS/WindowContentLayout"
 TASK_ARGS=()
 if [[ -n "$TASK_OUTPUT" ]]; then TASK_ARGS+=("$TASK_OUTPUT"); fi
@@ -106,4 +131,7 @@ if [[ "${#TASK_ARGS[@]}" -gt 0 ]]; then
     "$TASK_APP/Contents/MacOS/WindowContentLayout" "${TASK_ARGS[@]}"
 else
     "$TASK_APP/Contents/MacOS/WindowContentLayout"
+fi
+if [[ "$TASK_INSPECT" == 0 ]]; then
+    "$TASK_APP/Contents/MacOS/WindowContentLayout" ${TASK_OUTPUT:+"$TASK_OUTPUT"} --swiftui-releases
 fi
