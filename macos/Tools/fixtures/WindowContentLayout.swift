@@ -85,12 +85,15 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         RepositoryWindowLayout.configure(window)
         precondition(equal(window.frame, originalFrame), "Repeated attachment must preserve the outer window frame")
         window.orderBack(nil)
+        var fixtureWindows = [window]
 
         func settle(_ duration: TimeInterval = 0.2) {
             let end = Date().addingTimeInterval(duration)
             repeat {
-                host.view.layoutSubtreeIfNeeded()
-                window.displayIfNeeded()
+                for fixtureWindow in fixtureWindows {
+                    fixtureWindow.contentView?.layoutSubtreeIfNeeded()
+                    fixtureWindow.displayIfNeeded()
+                }
                 while let event = app.nextEvent(matching: .any, until: Date(), inMode: .default, dequeue: true) { app.sendEvent(event) }
                 app.updateWindows()
                 RunLoop.current.run(until: Date().addingTimeInterval(0.015))
@@ -119,11 +122,29 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         }
 
         func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
-        func probes() -> [WindowContentProbe.ProbeView] {
-            descendants(host.view).compactMap { $0 as? WindowContentProbe.ProbeView }
+        func navigationSplitController(in view: NSView) -> NSSplitViewController {
+            guard let split = descendants(view).compactMap({ $0 as? NSSplitView })
+                .first(where: { $0.isVertical && $0.arrangedSubviews.count == 2 }) else {
+                fatalError("Actual repository NavigationSplitView was not mounted")
+            }
+            var responder: NSResponder? = split
+            while let current = responder {
+                if let controller = current as? NSSplitViewController { return controller }
+                responder = current.nextResponder
+            }
+            fatalError("Actual navigation sidebar has no public split controller")
+        }
+        func sidebarItem(in controller: NSSplitViewController) -> NSSplitViewItem {
+            guard let item = controller.splitViewItems.first(where: { $0.behavior == .sidebar }) else {
+                fatalError("Actual navigation split controller must have a sidebar item")
+            }
+            return item
+        }
+        func probes(in view: NSView) -> [WindowContentProbe.ProbeView] {
+            descendants(view).compactMap { $0 as? WindowContentProbe.ProbeView }
                 .filter { !$0.isHiddenOrHasHiddenAncestor && $0.visibleRect.width > 1 && $0.visibleRect.height > 1 }
         }
-        func controls() -> [NSButton] {
+        func controls(for window: NSWindow) -> [NSButton] {
             [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].compactMap { window.standardWindowButton($0) }
                 .filter { !$0.isHiddenOrHasHiddenAncestor && $0.window?.isVisible == true }
         }
@@ -186,15 +207,18 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         checks.append(["scenario": "deferred-frame-explicit-resize", "windowFrame": rect(deferredWindow.frame), "rejectedRestorations": deferredWindow.rejectedRestorations])
         deferredWindow.afterRejection = nil
         deferredWindow.orderOut(nil)
-        func capture(_ scenario: String, expectContent: Bool = true) throws {
+        func capture(_ scenario: String, expectContent: Bool = true,
+                     targetWindow: NSWindow? = nil, targetHost: NSHostingController<AnyView>? = nil) throws {
             settle()
+            let window = targetWindow ?? fixtureWindows[0]
+            let measuredHost = targetHost ?? host
             precondition(!window.styleMask.contains(.fullSizeContentView), "Full-size content returned during \(scenario)")
             let safe = window.contentLayoutRect
-            let measured = probes()
+            let measured = probes(in: measuredHost.view)
             let header = measured.first { $0.identifierForFixture == "workspace-header" }
             precondition(!expectContent || header != nil, "Actual workspace header was not measured during \(scenario)")
             var measuredFrames: [String: Any] = [:]
-            let visibleControls = controls()
+            let visibleControls = controls(for: window)
             let traffic = visibleControls.map { button in
                 window.convertFromScreen(button.window!.convertToScreen(button.convert(button.bounds, to: nil)))
             }
@@ -223,9 +247,10 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             var check: [String: Any] = ["scenario": scenario, "contentLayoutRect": rect(safe), "windowFrame": rect(window.frame),
                                         "contentFrames": measuredFrames, "trafficLightButtons": traffic.map(rect),
                                         "trafficLightWindowOwnership": ownership, "nativeOverlayRectangles": nativeOverlays.map(rect),
-                                        "fullscreen": window.styleMask.contains(.fullScreen), "zoomed": window.isZoomed]
+                                        "fullscreen": window.styleMask.contains(.fullScreen), "zoomed": window.isZoomed,
+                                        "nativeTabCount": window.tabGroup?.windows.count ?? 1]
             if let output {
-                let captureView = window.contentView?.superview ?? host.view
+                let captureView = window.contentView?.superview ?? measuredHost.view
                 let bounds = captureView.bounds
                 guard let bitmap = captureView.bitmapImageRepForCachingDisplay(in: bounds),
                       let data = { () -> Data? in
@@ -265,21 +290,16 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             settle(0.4)
             try capture("resize-\(Int(size.width))-\(Int(size.height))")
         }
-        guard let split = descendants(host.view).compactMap({ $0 as? NSSplitView }).first(where: { $0.isVertical && $0.arrangedSubviews.count == 2 }) else {
-            fatalError("Actual repository NavigationSplitView was not mounted")
-        }
-        var responder: NSResponder? = split
-        var splitController: NSSplitViewController?
-        while let current = responder {
-            if let controller = current as? NSSplitViewController { splitController = controller; break }
-            responder = current.nextResponder
-        }
-        guard let splitController else { fatalError("Actual navigation sidebar has no public split controller") }
+        let splitController = navigationSplitController(in: host.view)
+        let sidebar = sidebarItem(in: splitController)
+        let initialCollapsed = sidebar.isCollapsed
         splitController.toggleSidebar(nil)
         settle(0.45)
+        precondition(sidebar.isCollapsed != initialCollapsed, "The native sidebar toggle must change its actual collapsed state")
         try capture("sidebar-toggled")
         splitController.toggleSidebar(nil)
         settle(0.45)
+        precondition(sidebar.isCollapsed == initialCollapsed, "The native sidebar toggle must restore its actual collapsed state")
         try capture("sidebar-restored")
 
         let fullFixtureFrame = window.frame, fullFixtureMinimum = window.contentMinSize
@@ -330,17 +350,22 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             precondition(zoomScreenFrame.contains(window.frame), "Native-tab baseline must fit the runner's screen")
         }
 
+        let secondStore = RepoStore()
+        secondStore.booted = true
+        let secondHost = NSHostingController(rootView: AnyView(RepoContainer().environment(secondStore)
+            .defaultAppStorage(windowFixtureDefaults).frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height)))
         let secondWindow = NSWindow(contentRect: window.contentLayoutRect,
-                                    styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+                                    styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                                     backing: .buffered, defer: false)
         secondWindow.isReleasedWhenClosed = false
-        secondWindow.title = "Second repository tab"
-        secondWindow.contentView = NSView()
+        secondWindow.toolbarStyle = .unified
+        secondWindow.contentViewController = secondHost
+        fixtureWindows.append(secondWindow)
         RepositoryWindowLayout.configure(secondWindow)
-        window.tabbingIdentifier = "GitrochiWindowLayoutFixture"
-        secondWindow.tabbingIdentifier = window.tabbingIdentifier
-        window.tabbingMode = .preferred
-        secondWindow.tabbingMode = .preferred
+        for tab in fixtureWindows {
+            tab.tabbingIdentifier = "GitrochiWindowLayoutFixture"
+            tab.tabbingMode = .preferred
+        }
         secondWindow.orderBack(nil)
         settle(0.2)
         secondWindow.setFrame(window.frame, display: false)
@@ -375,16 +400,66 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         let beforeRepair = window.frame
         window.styleMask.insert(.fullSizeContentView)
         RepositoryWindowLayout.configure(window)
-        precondition(equal(window.frame, beforeRepair), "Repairing an unsafe root must preserve the outer frame")
+        precondition(equal(window.frame, beforeRepair), "Repairing an unsafe root must preserve the outer frame: expected=\(beforeRepair) actual=\(window.frame)")
+        window.styleMask.insert(.fullSizeContentView)
         try capture("safe-area-ignoring-root-contained")
+        precondition(equal(window.frame, beforeRepair), "A repeated style refresh must preserve the directly configured frame")
         host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
             .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height))
         settle(0.5)
+
+        // SwiftUI can reinstall this option after the initial window attachment.
+        let beforeStyleRefresh = window.frame
+        window.styleMask.insert(.fullSizeContentView)
+        try capture("toolbar-style-reinstalled")
+        precondition(equal(window.frame, beforeStyleRefresh), "A later toolbar style refresh must preserve the outer frame")
+
+        window.styleMask.insert(.fullSizeContentView)
+        var explicitToolbarFrame = window.frame
+        explicitToolbarFrame.size.width += 40
+        window.setFrame(explicitToolbarFrame, display: false)
+        window.styleMask.insert(.fullSizeContentView)
+        try capture("toolbar-style-before-explicit-resize")
+        precondition(equal(window.frame, explicitToolbarFrame), "Content repair must honor a subsequent explicit resize")
+        window.setFrame(beforeStyleRefresh, display: false)
+
+        // Check both mounted repository views across the native tab bar, themes and sidebars.
+        precondition(window.tabGroup?.windows.count == 2 && secondWindow.tabGroup === window.tabGroup,
+                     "The header regression must use two real native window tabs")
+        let tabbedFrame = window.frame
+        for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            for tab in fixtureWindows { tab.appearance = NSAppearance(named: appearance) }
+            window.tabGroup?.selectedWindow = window
+            try capture("native-tabs-\(name)")
+            // The safe-area scenario replaced the root; locate the currently mounted controller.
+            let tabbedSplitController = navigationSplitController(in: host.view)
+            let tabbedSidebar = sidebarItem(in: tabbedSplitController)
+            let tabbedCollapsed = tabbedSidebar.isCollapsed
+            tabbedSplitController.toggleSidebar(nil)
+            settle(0.45)
+            precondition(tabbedSidebar.isCollapsed != tabbedCollapsed, "A tabbed sidebar must actually change its collapsed state")
+            try capture("native-tabs-sidebar-toggled-\(name)")
+            tabbedSplitController.toggleSidebar(nil)
+            settle(0.45)
+            precondition(tabbedSidebar.isCollapsed == tabbedCollapsed, "A tabbed sidebar must restore its original collapsed state")
+            try capture("native-tabs-sidebar-restored-\(name)")
+            window.tabGroup?.selectedWindow = secondWindow
+            try capture("native-tabs-selected-second-\(name)", targetWindow: secondWindow, targetHost: secondHost)
+            let secondFrame = secondWindow.frame
+            secondWindow.styleMask.insert(.fullSizeContentView)
+            try capture("native-tabs-style-reinstalled-\(name)", targetWindow: secondWindow, targetHost: secondHost)
+            precondition(equal(secondWindow.frame, secondFrame), "A tab's later toolbar refresh must preserve its frame")
+            window.tabGroup?.selectedWindow = window
+            try capture("native-tabs-selected-first-\(name)")
+            precondition(equal(window.frame, tabbedFrame), "Changing tabs and appearance must preserve the outer frame")
+        }
+        for tab in fixtureWindows { tab.appearance = nil }
 
         if fullscreen {
             window.collectionBehavior.insert(.fullScreenPrimary)
             window.center()
             window.makeKeyAndOrderFront(nil)
+            if window.tabGroup?.isTabBarVisible == false { window.toggleTabBar(nil) }
             app.activate(ignoringOtherApps: true)
             settle(0.3)
             let beforeFullscreen = window.frame
@@ -429,7 +504,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         }
         try capture("native-tabs-detached")
 
-        window.orderOut(nil)
+        for tab in fixtureWindows { tab.orderOut(nil) }
         let result: [String: Any] = ["ok": true, "actualViews": ["RepoContainer", "RepoView", "NavigationSidebar", "LoadingView"],
                                      "safeAreaIgnoringRootContained": true, "framePreserved": true,
                                      "lateToolbarStyleContained": true, "nativeTabsChecked": true,
@@ -439,9 +514,13 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         if let output { try data.write(to: output.appendingPathComponent("result.json")) }
         print(String(decoding: data, as: UTF8.self))
         if inspect {
-            // 화면에 표시한 실제 합성 결과는 컴퓨터 사용 도구로 확인한다.
+            // Keep the actual two-repository tab group available for manual inspection.
+            secondWindow.setFrame(window.frame, display: false)
+            window.addTabbedWindow(secondWindow, ordered: .above)
+            window.tabGroup?.selectedWindow = window
             window.center()
             window.makeKeyAndOrderFront(nil)
+            if window.tabGroup?.isTabBarVisible == false { window.toggleTabBar(nil) }
             app.activate(ignoringOtherApps: true)
             settle(0.3)
             windowFixtureDefaults.removePersistentDomain(forName: windowFixtureSuite)
