@@ -78,6 +78,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     settings.set("accountPageSection", "inbox");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
     check(host.querySelectorAll(".account-page-sections .segmented button").length === 5, "Account page must offer its five sections");
+    check(!host.querySelector("h1"), "Account sections must not show a large page title");
     check(mentions > 0 && host.textContent?.includes("Fixture mention"), "Inbox did not query mentions");
     check(!host.querySelector('[role="dialog"]'), "Inbox is still a modal");
     host.querySelector<HTMLButtonElement>(".inbox-item")!.click();
@@ -105,6 +106,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.target = repositoryTarget;
     store.path = "C:/fixture/repo";
     // the repository sidebar's issue list: a row opens the Issues page with that issue
+    store.navigate("repository");
     await mount(<IssueListSection store={store} openSettings={() => {}} />);
     check(host.querySelector('.side-row[data-issue="7"]')?.textContent?.includes("Fixture issue"), "The sidebar issue list did not load");
     host.querySelector<HTMLElement>('.side-row[data-issue="7"]')!.click(); await pause();
@@ -143,8 +145,16 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
     check(await editIn(sheet(), "Edited fixture issue") && writes === before + 3, "Editing an issue did not reach the fixture server");
     store.sheet = null; dialog.remove();
+    // opened from the repository screen, the page offers the way back; from another page it does not
+    const back = () => host.querySelector<HTMLButtonElement>(`.back-to-repository button[aria-label="${t("Back to the repository screen")}"]`);
+    check(back()?.textContent?.includes(t("Repository")), "The Issues page opened from the repository screen must offer the way back");
+    back()!.click(); await pause();
+    check(store.destination === "repository" && !back(), "The back button did not return to the repository screen");
+    store.navigate("compare"); store.navigate("issues"); await pause();
+    check(!back(), "The back button must not show when another page opened Issues");
     reset();
     await mount(<ActionsWorkspacePanel store={store} />);
+    check(!host.querySelector("h1"), "Actions must not show a large page title");
     await change(host.querySelector('select[aria-label="' + t("Job") + '"]')!, "9");
     await click("Load log");
     check(host.querySelector("pre")?.textContent?.includes("build passed"), "Job log preview missing");

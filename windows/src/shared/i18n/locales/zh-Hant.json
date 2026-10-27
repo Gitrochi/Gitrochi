@@ -1233,5 +1233,8 @@
  "The app's window was not found.": "找不到該應用程式的視窗。",
  "Windows did not bring the app to the front.": "Windows 未將該應用程式帶到前景。",
  "Bringing another app forward is only available on Windows.": "將其他應用程式帶到前景僅適用於 Windows。",
- "Couldn't open {0}: it isn't inside a Git repository.": "無法開啟 {0}：它不在 Git 儲存庫中。"
+ "Couldn't open {0}: it isn't inside a Git repository.": "無法開啟 {0}：它不在 Git 儲存庫中。",
+ "Back to the repository screen": "返回儲存庫畫面",
+ "Graph lanes": "圖形泳道",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖曳，或在此橫向捲動或按住 Shift 捲動滾輪，以查看更多泳道"
 }

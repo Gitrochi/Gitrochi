@@ -28,7 +28,6 @@ export function RevisionComparisonPanel({ store }: { store: RepoStore }) {
   return <section className="local-workbench compare-page">
     <aside className="compare-side">
       <div className="compare-form">
-        <div className="workbench-heading"><h2>{t("Compare revisions")}</h2><span className="hint">{t("Inspect the complete change between branches, tags or commits.")}</span></div>
         <RevisionPicker title={t("From revision")} value={s.left} store={store} onChange={(value) => { s.left = value; change(); }} />
         <Button className="compare-swap" tip={t("Swap revisions")} onClick={() => { [s.left, s.right] = [s.right, s.left]; change(); }}><ArrowLeftRight size={15} /></Button>
         <RevisionPicker title={t("To revision")} value={s.right} store={store} onChange={(value) => { s.right = value; change(); }} />

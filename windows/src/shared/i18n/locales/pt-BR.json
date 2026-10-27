@@ -1200,5 +1200,8 @@
  "The app's window was not found.": "A janela do app não foi encontrada.",
  "Windows did not bring the app to the front.": "O Windows não trouxe o app para a frente.",
  "Bringing another app forward is only available on Windows.": "Trazer outro app para a frente só está disponível no Windows.",
- "Couldn't open {0}: it isn't inside a Git repository.": "Não foi possível abrir {0}: não está dentro de um repositório Git."
+ "Couldn't open {0}: it isn't inside a Git repository.": "Não foi possível abrir {0}: não está dentro de um repositório Git.",
+ "Back to the repository screen": "Voltar à tela do repositório",
+ "Graph lanes": "Faixas do grafo",
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Arraste, ou role para o lado ou com Shift+roda aqui, para ver mais faixas"
 }

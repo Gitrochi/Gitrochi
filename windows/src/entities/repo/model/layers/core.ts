@@ -62,6 +62,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   // 저장소
   path: string | null = null;
   destination: WorkspaceDestination = "home";
+  /** The Pull requests or Issues page was opened from the repository screen, so it shows "‹ Repository" (macOS: cameFromRepository) */
+  cameFromRepository = false;
   /** True while a reload reconciles the selection, so it never changes the page (macOS: workspaceNavigationPreparing) */
   private reconcilingSelection = false;
   gitDir: string | null = null;
@@ -72,6 +74,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   /** Shows a page; pages that need a repository are refused until one is open. The page is remembered per repository. */
   navigate(page: WorkspaceDestination, prepare = true) {
     if (!isWorkspaceDestination(page) || (repositoryDestinations.has(page) && !this.path)) return false;
+    // the Pull requests and Issues pages offer a way back when the repository screen opened them
+    if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && (page === "pullRequests" || page === "issues");
     this.destination = page;
     if (this.path) settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: page });
     // the Pull requests page shows one request at a time; an unrelated diff or file view would hide its list
@@ -458,6 +462,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   protected resetState() {
     this.confirmationGuard.invalidate();
     this.destination = "home";
+    this.cameFromRepository = false;
     this.ciFocus = null;
     this.showSearchBar = false;
     this.cancelPushReview();

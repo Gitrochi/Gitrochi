@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector, IssueDetail } from "@/widgets/inspector";
-import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
+import { BackToRepositoryBar, FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
@@ -34,7 +34,7 @@ export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; ope
   if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={openSettings}>{t("Connect account…")}</Button></div>;
   const detail = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail : null;
   return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
+    <div className="workspace-pr-list"><BackToRepositoryBar store={store} /><IssueListSection store={store} openSettings={openSettings} onPage /></div>
     <div className="workspace-pr-detail col">
       {detail ? <IssueDetail store={store} detail={detail} /> : <Empty title={t("Select an issue")} detail={t("Search the list, then read the conversation and reply here.")} />}
     </div>
@@ -50,7 +50,7 @@ function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; open
   const selected = store.selection?.kind === "pullRequest";
   const diff = selected && store.diffSource?.kind === "review";
   return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><PullRequestSection store={store} target={target} openSettings={openSettings} onPage /></div>
+    <div className="workspace-pr-list"><BackToRepositoryBar store={store} /><PullRequestSection store={store} target={target} openSettings={openSettings} onPage /></div>
     <div className="workspace-pr-detail col">
       {!selected ? <Empty title={t("Select a pull request")} detail={t("Search the list, then review the conversation, files and merge checks here.")} /> : <>
         {/* 파일을 확인하는 동안에도 대화를 유지해 작성 중인 댓글을 보존한다. */}

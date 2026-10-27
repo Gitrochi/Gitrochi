@@ -77,6 +77,19 @@ describe("workspace navigation", () => {
     const store = fixture(); store.navigate("pullRequests"); store.select({ kind: "pullRequest", number: 7 }); expect(store.destination).toBe("pullRequests");
     store.select({ kind: "commit", sha: older }); expect(store.destination).toBe("repository"); expect(store.selection).toEqual({ kind: "commit", sha: older });
   });
+  it("offers the way back only when the repository screen opened Pull requests or Issues", () => {
+    const store = fixture(); store.navigate("repository");
+    store.navigate("pullRequests"); expect(store.cameFromRepository).toBe(true);
+    store.navigate("pullRequests"); expect(store.cameFromRepository).toBe(true);
+    store.navigate("issues"); expect(store.cameFromRepository).toBe(false);
+    store.navigate("repository"); expect(store.cameFromRepository).toBe(false);
+    store.openIssue({ id: "issue-3", kind: "issue", number: 3, title: "Three", url: "", body: "", state: "open", updated: null, author: "a", unread: false });
+    expect(store.destination).toBe("issues"); expect(store.cameFromRepository).toBe(true);
+    for (const page of ["compare", "pullRequests", "home", "issues"] as const) { store.navigate(page); expect(store.cameFromRepository).toBe(false); }
+    store.navigate("repository"); store.navigate("pullRequests"); store.select({ kind: "commit", sha: older });
+    expect(store.destination).toBe("repository"); expect(store.cameFromRepository).toBe(false);
+    store.navigate("issues"); internal(store).resetState(); expect(store.cameFromRepository).toBe(false);
+  });
   it("clears unrelated file and diff panels when entering Pull requests", () => {
     const store = fixture(); store.selection = { kind: "commit", sha: head }; store.diffSource = { kind: "working", change: file }; store.fileInspect = { mode: "history", path: file.path, rev: null };
     store.navigate("pullRequests"); expect(store.destination).toBe("pullRequests"); expect(store.diffSource).toBeNull(); expect(store.fileInspect).toBeNull();
