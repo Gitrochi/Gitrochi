@@ -212,3 +212,27 @@
 .list-filter-button.on {
   color: var(--accent);
 }
+
+/* The repository sidebar shows how a shared list is filtered instead of a search row */
+.list-filter-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 2px 6px 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--accent);
+  font-size: 11.5px;
+}
+
+.list-filter-caption > svg,
+.list-filter-caption > button {
+  flex: none;
+}
+
+.list-filter-caption > span {
+  flex: 1;
+  color: var(--text);
+}

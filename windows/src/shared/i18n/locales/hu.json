@@ -1202,5 +1202,7 @@
  "Add or remove connected accounts…": "Csatlakoztatott fiókok hozzáadása vagy eltávolítása…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Nincs beállítva",
- "Email": "E-mail"
+ "Email": "E-mail",
+ "Filtered: {0}": "Szűrve: {0}",
+ "Clear filter": "Szűrő törlése"
 }

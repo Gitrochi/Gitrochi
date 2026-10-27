@@ -1170,5 +1170,7 @@
  "Add or remove connected accounts…": "Gekoppelde accounts toevoegen of verwijderen…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Niet ingesteld",
- "Email": "E-mail"
+ "Email": "E-mail",
+ "Filtered: {0}": "Gefilterd: {0}",
+ "Clear filter": "Filter wissen"
 }

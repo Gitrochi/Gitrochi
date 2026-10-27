@@ -1207,5 +1207,7 @@
  "Add or remove connected accounts…": "Bağlı hesap ekle veya kaldır…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Yapılandırılmadı",
- "Email": "E-posta"
+ "Email": "E-posta",
+ "Filtered: {0}": "Süzüldü: {0}",
+ "Clear filter": "Süzgeci temizle"
 }

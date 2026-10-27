@@ -1214,5 +1214,7 @@
  "Add or remove connected accounts…": "เพิ่มหรือลบบัญชีที่เชื่อมต่อ…",
  "Git: {0}": "Git: {0}",
  "Not configured": "ยังไม่ได้ตั้งค่า",
- "Email": "อีเมล"
+ "Email": "อีเมล",
+ "Filtered: {0}": "กรองแล้ว: {0}",
+ "Clear filter": "ล้างตัวกรอง"
 }

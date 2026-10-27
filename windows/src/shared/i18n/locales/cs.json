@@ -1200,5 +1200,7 @@
  "Add or remove connected accounts…": "Přidat nebo odebrat připojené účty…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Nenastaveno",
- "Email": "E-mail"
+ "Email": "E-mail",
+ "Filtered: {0}": "Filtrováno: {0}",
+ "Clear filter": "Zrušit filtr"
 }

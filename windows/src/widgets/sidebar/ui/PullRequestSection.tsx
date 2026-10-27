@@ -8,7 +8,7 @@ import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
-import { ListSearchRow } from "./ListSearchRow";
+import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
 
 /**
@@ -40,8 +40,9 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
       actions={
         <>
           {st.kind === "loading" && store.pullRequests.length > 0 && <Spinner size={11} />}
-          {!onPage && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("pullRequests")} />}
-          <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
+          {/* the sidebar keeps two icons; refreshing and searching belong to the page */}
+          {onPage ? <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} aria-label={t("Refresh list")} onClick={() => void store.loadPullRequests()} />
+            : <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("pullRequests")} />}
           <IconButton
             small
             icon={<Plus size={13} />}
@@ -55,7 +56,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
         </>
       }
     >
-      <ListSearchRow
+      {onPage ? <ListSearchRow
         prompt={t(gitlab ? "Search merge requests" : "Search pull requests")}
         text={search}
         onText={setSearch}
@@ -64,7 +65,11 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
         defaultFilter="open"
         onSearch={(text) => void store.filterPullRequests(scope, text)}
         onFilter={(value) => void store.filterPullRequests(value, search)}
-      />
+      /> : (scope !== "open" || store.requestQuery.search.trim()) && <ListFilterCaption
+        state={filters.find((f) => f.value === scope)?.title ?? scope}
+        search={store.requestQuery.search.trim()}
+        onClear={() => { setSearch(""); void store.filterPullRequests("open", ""); }}
+      />}
       <div style={{ padding: "0 6px" }}>
         {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
         {st.kind === "needsAccount" && (

@@ -1218,5 +1218,7 @@
  "Add or remove connected accounts…": "Додати або видалити підключені облікові записи…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Не налаштовано",
- "Email": "Ел. пошта"
+ "Email": "Ел. пошта",
+ "Filtered: {0}": "Фільтр: {0}",
+ "Clear filter": "Скинути фільтр"
 }

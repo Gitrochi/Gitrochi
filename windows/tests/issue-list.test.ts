@@ -60,6 +60,8 @@ describe("shared issue list", () => {
     list = () => [issue(5, "closed")];
     await store.filterIssues("closed", "crash");
     expect(store.issueScope).toBe("closed"); expect(store.issueSearch).toBe("crash"); expect(store.issues.map((i) => i.number)).toEqual([5]); expect(store.issuePage).toBe(1);
+    // typing without searching does not change what the list was loaded with
+    store.issueSearch = "draft"; expect(store.issueLoadedSearch).toBe("crash"); store.issueSearch = "crash";
     const q = new URL(urls.filter((url) => url.includes("/search/issues?")).at(-1)!).searchParams.get("q") ?? "";
     expect(q).toContain("repo:team/repo"); expect(q).toContain("is:closed"); expect(q).toContain('"crash"');
     expect(store.inboxDetail?.item.number).toBe(1);
@@ -91,7 +93,7 @@ describe("shared issue list", () => {
     await store.prepareIssues();
     expect(store.issueState.kind).toBe("needsAccount"); expect(store.issues).toEqual([]);
     store.issueScope = "all"; store.issueSearch = "x"; internal(store).resetState();
-    expect(store.issueScope).toBe("open"); expect(store.issueSearch).toBe(""); expect(store.issueState.kind).toBe("idle");
+    expect(store.issueScope).toBe("open"); expect(store.issueSearch).toBe(""); expect(store.issueLoadedSearch).toBe(""); expect(store.issueState.kind).toBe("idle");
   });
   it("asks once before closing an issue, without treating it as destructive", async () => {
     const store = fixture(); await store.prepareIssues();

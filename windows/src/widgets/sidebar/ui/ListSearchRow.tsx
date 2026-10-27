@@ -3,6 +3,21 @@ import { t } from "@/shared/i18n";
 import { showMenuBelow } from "@/shared/ui";
 
 /**
+ * The repository sidebar's stand-in for the search row: one line saying how the shared list is filtered, with a
+ * button that goes back to open items and no search. Searching and filtering happen on the list's page.
+ */
+export function ListFilterCaption({ state, search, onClear }: { state: string; search: string; onClear: () => void }) {
+  const text = t("Filtered: {0}", state + (search ? ` · “${search}”` : ""));
+  return (
+    <div className="list-filter-caption" title={text}>
+      <Funnel size={12} fill="currentColor" />
+      <span className="ellipsis">{text}</span>
+      <button type="button" className="list-search-clear" aria-label={t("Clear filter")} data-tip={t("Clear filter")} onClick={onClear}><X size={12} /></button>
+    </div>
+  );
+}
+
+/**
  * A list's search field with a magnifier inside and a clear button, and a filter icon beside it that opens the
  * filter choices; the icon fills while a filter other than the default is on. Enter searches, clearing searches again.
  * (macOS: ListSearchRow in ListSearchField.swift)

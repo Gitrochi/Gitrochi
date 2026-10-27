@@ -1220,5 +1220,7 @@
  "Add or remove connected accounts…": "新增或移除已連結的帳戶…",
  "Git: {0}": "Git：{0}",
  "Not configured": "未設定",
- "Email": "電子郵件"
+ "Email": "電子郵件",
+ "Filtered: {0}": "已篩選：{0}",
+ "Clear filter": "清除篩選"
 }

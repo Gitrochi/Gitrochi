@@ -1171,5 +1171,7 @@
  "Add or remove connected accounts…": "Tambah atau hapus akun terhubung…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Belum diatur",
- "Email": "Email"
+ "Email": "Email",
+ "Filtered: {0}": "Difilter: {0}",
+ "Clear filter": "Hapus filter"
 }

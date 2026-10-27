@@ -1174,5 +1174,7 @@
  "Add or remove connected accounts…": "Thêm hoặc gỡ tài khoản đã kết nối…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Chưa thiết lập",
- "Email": "Email"
+ "Email": "Email",
+ "Filtered: {0}": "Đã lọc: {0}",
+ "Clear filter": "Xóa bộ lọc"
 }

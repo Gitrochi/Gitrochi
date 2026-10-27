@@ -1219,5 +1219,7 @@
  "Add or remove connected accounts…": "接続済みアカウントの追加・削除…",
  "Git: {0}": "Git: {0}",
  "Not configured": "未設定",
- "Email": "メール"
+ "Email": "メール",
+ "Filtered: {0}": "フィルター: {0}",
+ "Clear filter": "フィルターをクリア"
 }

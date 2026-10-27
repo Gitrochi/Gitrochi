@@ -1218,5 +1218,7 @@
  "Add or remove connected accounts…": "Добавить или удалить подключённые аккаунты…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Не настроено",
- "Email": "Эл. почта"
+ "Email": "Эл. почта",
+ "Filtered: {0}": "Фильтр: {0}",
+ "Clear filter": "Сбросить фильтр"
 }

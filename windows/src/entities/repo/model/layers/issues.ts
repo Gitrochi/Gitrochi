@@ -15,6 +15,8 @@ export abstract class RepoIssues extends RepoHosting {
   issueScope: IssueScope = "open";
   /** The text in the search field; a search runs on Enter */
   issueSearch = "";
+  /** The search the list was loaded with (the sidebar's filter caption shows it, not unsent typing) */
+  issueLoadedSearch = "";
   /** Pages loaded for the current context (0: not loaded yet) */
   issuePage = 0;
   issuesMore = false;
@@ -43,6 +45,7 @@ export abstract class RepoIssues extends RepoHosting {
     const current = () => token === this.issueListToken && key === this.issueContextKey;
     this.issueContext = key;
     if (!this.target) { this.clearIssueList(); this.emit(); return; }
+    if (!append) this.issueLoadedSearch = this.issueSearch;
     this.issueState = { kind: "loading" }; this.emit();
     const c = await this.workspaceAccess();
     if (!current()) return;
@@ -94,7 +97,7 @@ export abstract class RepoIssues extends RepoHosting {
 
   protected override resetState() {
     this.clearIssueList();
-    this.issueContext = ""; this.issueScope = "open"; this.issueSearch = "";
+    this.issueContext = ""; this.issueScope = "open"; this.issueSearch = ""; this.issueLoadedSearch = "";
     super.resetState();
   }
 }

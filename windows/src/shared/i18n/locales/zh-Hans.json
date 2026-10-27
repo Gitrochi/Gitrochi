@@ -1220,5 +1220,7 @@
  "Add or remove connected accounts…": "添加或移除已连接的账户…",
  "Git: {0}": "Git：{0}",
  "Not configured": "未设置",
- "Email": "邮箱"
+ "Email": "邮箱",
+ "Filtered: {0}": "已筛选：{0}",
+ "Clear filter": "清除筛选"
 }

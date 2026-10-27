@@ -1196,5 +1196,7 @@
  "Add or remove connected accounts…": "Verbundene Konten hinzufügen oder entfernen…",
  "Git: {0}": "Git: {0}",
  "Not configured": "Nicht eingerichtet",
- "Email": "E-Mail"
+ "Email": "E-Mail",
+ "Filtered: {0}": "Gefiltert: {0}",
+ "Clear filter": "Filter zurücksetzen"
 }

@@ -5,7 +5,7 @@ import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
-import { ListSearchRow } from "./ListSearchRow";
+import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
 
 /**
@@ -30,13 +30,14 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
       actions={
         <>
           {st.kind === "loading" && store.issues.length > 0 && <Spinner size={11} />}
-          {!onPage && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("issues")} />}
-          <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} onClick={() => void store.loadIssues()} />
+          {/* the sidebar keeps two icons; refreshing and searching belong to the page */}
+          {onPage ? <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} aria-label={t("Refresh list")} onClick={() => void store.loadIssues()} />
+            : <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("issues")} />}
           <IconButton small icon={<Plus size={13} />} tip={t("New issue")} aria-label={t("New issue")} disabled={!store.hostingAccount} onClick={() => store.openSheet({ kind: "issueEditor", title: "", body: "" })} />
         </>
       }
     >
-      <ListSearchRow
+      {onPage ? <ListSearchRow
         prompt={t("Search issues")}
         text={store.issueSearch}
         onText={(text) => { store.issueSearch = text; store.changed(); }}
@@ -45,7 +46,11 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
         defaultFilter="open"
         onSearch={(text) => void store.filterIssues(store.issueScope, text)}
         onFilter={(value) => void store.filterIssues(value)}
-      />
+      /> : (store.issueScope !== "open" || store.issueLoadedSearch.trim()) && <ListFilterCaption
+        state={filters.find((f) => f.value === store.issueScope)?.title ?? store.issueScope}
+        search={store.issueLoadedSearch.trim()}
+        onClear={() => void store.filterIssues("open", "")}
+      />}
       <div style={{ padding: "0 6px" }}>
         {st.kind === "needsAccount" && <button className="link" onClick={openSettings}>{t("Connect account…")}</button>}
         {st.kind === "failed" && <div className="error-text selectable" style={{ fontSize: 11.5 }}>{st.message}</div>}

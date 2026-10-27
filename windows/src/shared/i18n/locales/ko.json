@@ -2060,5 +2060,7 @@
   "Select an issue": "이슈를 선택하세요",
   "Search the list, then read the conversation and reply here.": "목록에서 찾은 뒤 여기서 대화를 읽고 답하세요.",
   "Edit issue #{0}": "이슈 #{0} 수정",
-  "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "계정을 여러 개 연결했다면, 저장소가 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고르세요."
+  "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "계정을 여러 개 연결했다면, 저장소가 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고르세요.",
+  "Filtered: {0}": "필터: {0}",
+  "Clear filter": "필터 지우기"
 }
