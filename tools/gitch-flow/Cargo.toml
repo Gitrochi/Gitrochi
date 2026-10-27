@@ -1,6 +1,6 @@
 [package]
 name = "gitch-flow"
-version = "0.3.12"
+version = "0.3.13"
 edition = "2021"
 # No license identifier until the Community Use proposal is adopted; the scope follows the root LICENSE and the combined notices.
 description = "Composable test and CI flow engine for gitch and Gitrochi"
