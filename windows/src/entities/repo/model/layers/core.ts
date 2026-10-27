@@ -162,6 +162,16 @@ export abstract class RepoCore extends Observable implements AgentHost {
   stagedStats: Record<string, LineStat> = {};
   unstagedStats: Record<string, LineStat> = {};
   me: Identity | null = null;
+  /** The global Git author (git config --global), shown while no repository is open */
+  globalIdentity: Identity | null = null;
+
+  /** Reads the global author through the system git; a repository's own identity is `me` */
+  async loadGlobalIdentity() {
+    const result = await gitRaw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], env.home || ".").catch(() => null);
+    const next = result && (result.status === 0 || result.status === 1) ? P.parseIdentityConfig(result.stdout) : this.globalIdentity;
+    if (JSON.stringify(next) === JSON.stringify(this.globalIdentity)) return;
+    this.globalIdentity = next; this.emit();
+  }
 
   // 검색
   searchText = "";
@@ -345,8 +355,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.g(["config", "--get-regexp", "^user\\.(name|email)$"], { ok: [0, 1] }).catch(() => null),
       this.g(["rev-parse", "--path-format=absolute", "--git-common-dir"]).catch(() => null),
     ]);
-    const conf = Object.fromEntries((cfg?.stdout ?? "").split(/\r?\n/).map((l) => [l.slice(0, l.indexOf(" ")), l.slice(l.indexOf(" ") + 1).trim()]));
-    if (conf["user.name"]) this.me = { name: conf["user.name"], email: conf["user.email"] ?? "" };
+    const identity = P.parseIdentityConfig(cfg?.stdout ?? "");
+    if (identity) this.me = identity;
     this.commonDir = common?.stdout.trim() || null;
     await this.startWatching();
     await this.reload();

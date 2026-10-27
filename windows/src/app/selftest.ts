@@ -34,7 +34,7 @@ import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
 import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
-import { accountQuickControlsSelfTest } from "./lib/account-quick-controls-selftest";
+import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
 import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 
@@ -227,6 +227,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("로그인 코드 준비·클립보드 코드 표시·조회 오류 중단과 재시작", browserLoginGuidanceSelfTest);
   await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
   await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
+  await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("PR 대화·파일 검토 전환에서 미전송 초안 유지", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);

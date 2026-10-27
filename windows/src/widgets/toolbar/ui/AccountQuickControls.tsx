@@ -22,8 +22,15 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
   const trigger = useRef<HTMLButtonElement>(null), popup = useRef<HTMLDivElement>(null);
   const account = store.hostingAccount;
   const candidates = store.target ? accounts.candidates(store.target) : [];
+  // without a GitHub/GitLab remote there is no repository account; show what is connected instead
+  const connectedOnly = !store.target ? accounts.accounts : [];
+  const shown = account ?? connectedOnly[0] ?? null;
+  const others = !account && connectedOnly.length > 1 ? ` +${connectedOnly.length - 1}` : "";
+  // a repository's own identity, or the global one while no repository is open
+  const identity = store.path ? store.me : store.globalIdentity;
   const locked = !!store.gitchStatus?.lockedAccount;
-  const gitAccount = store.gitchStatus?.lockedAccount || store.gitchStatus?.account || store.me?.name || t("Not configured");
+  const gitAccount = store.gitchStatus?.lockedAccount || store.gitchStatus?.account || identity?.name || t("Not configured");
+  useEffect(() => { if (!store.path) void store.loadGlobalIdentity(); }, [store, store.path, open]);
   useEffect(() => {
     if (!open) return;
     const positionPopup = () => {
@@ -50,22 +57,30 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
   };
   return <>
     <button ref={trigger} className="account-quick-trigger" aria-label={t("Accounts")} aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)} data-tip={t("View and manage the repository account and Git identity")}>
-      {account ? <Avatar name={account.name ?? account.username} email={account.username} url={account.avatarURL} size={26} /> : <UserRound size={24} />}
-      <span className="account-quick-summary"><strong>{account ? `@${account.username}` : t("Connect account")}</strong><small>{locked && <LockKeyhole size={10} />}{t("Git: {0}", gitAccount)}</small></span>
+      {shown ? <Avatar name={shown.name ?? shown.username} email={shown.username} url={shown.avatarURL} size={26} /> : <UserRound size={24} />}
+      <span className="account-quick-summary"><strong>{shown ? `@${shown.username}${others}` : t("Connect account")}</strong><small>{locked && <LockKeyhole size={10} />}{t("Git: {0}", gitAccount)}</small></span>
       <ChevronDown size={11} />
     </button>
     {open && createPortal(<div ref={popup} className="account-quick-popover" style={{ top: position.top, right: position.right, maxHeight: `calc(100dvh - ${position.top + 16}px)` }} role="dialog" aria-label={t("Accounts")}>
-      <div className="account-quick-heading">
+      {connectedOnly.length > 0 ? <>
+        <div className="account-quick-heading">
+          <div className="account-quick-profile"><strong>{t("Connected accounts")}</strong></div>
+          <button className="icon-btn" aria-label={t("Close")} onClick={() => { setOpen(false); trigger.current?.focus(); }}><X size={15} /></button>
+        </div>
+        <ul className="account-quick-list">
+          {connectedOnly.map((item) => <li key={item.id}><Avatar name={item.name ?? item.username} email={item.username} url={item.avatarURL} size={24} /><span>@{item.username} · {accountHost(item)}</span></li>)}
+        </ul>
+      </> : <div className="account-quick-heading">
         {account ? <Avatar name={account.name ?? account.username} email={account.username} url={account.avatarURL} size={40} /> : <UserRound size={36} />}
         <div className="account-quick-profile"><strong>{account?.name ?? account?.username ?? t("Repository account")}</strong>{account ? <><span>@{account.username} · {providerInfo[account.provider].title}</span><small>{accountHost(account)}</small></> : <span>{t("Connect an account for repository services.")}</span>}</div>
         <button className="icon-btn" aria-label={t("Close")} onClick={() => { setOpen(false); trigger.current?.focus(); }}><X size={15} /></button>
-      </div>
+      </div>}
       {candidates.length > 0 ? <label className="account-quick-selector"><span>{t("Account for this repository")}</span><select className="input" value={account?.id ?? ""} onChange={(event) => { const next = candidates.find((item) => item.id === event.target.value); if (next) store.useAccount(next); }}>{candidates.map((item) => <option key={item.id} value={item.id}>@{item.username} · {accountHost(item)}</option>)}</select></label> : store.target && <p className="hint">{t("Connect an account on {0} to use repository services.", store.target.host)}</p>}
       <section className="account-quick-identity">
         <div className="row"><strong>{t("Git identity")}</strong><span className="spacer" />{locked && <span className="row hint"><LockKeyhole size={12} />{t("Locked")}</span>}</div>
-        <dl><dt>{t("Git account")}</dt><dd>{gitAccount}</dd><dt>{t("Author")}</dt><dd>{store.me?.name || t("Not configured")}</dd><dt>{t("Email")}</dt><dd>{store.me?.email || t("Not configured")}</dd></dl>
+        <dl><dt>{t("Git account")}</dt><dd>{gitAccount}</dd><dt>{t("Author")}</dt><dd>{identity?.name || t("Not configured")}</dd><dt>{t("Email")}</dt><dd>{identity?.email || t("Not configured")}</dd></dl>
         <p className="hint">{t("Git author and SSH identity follow this repository's Git account rules.")}</p>
-        <Button size="small" disabled={store.gitchChecking} onClick={() => void store.refreshGitch()}>{t("Refresh account status")}</Button>
+        <Button size="small" disabled={store.gitchChecking} onClick={() => void (store.path ? store.refreshGitch() : store.loadGlobalIdentity())}>{t("Refresh account status")}</Button>
       </section>
       <div className="account-quick-actions">
         {account?.provider === "github" && accountHost(account) === "github.com" && <><Button onClick={() => present({ kind: "login", expectedLogin: account.username, capability: "standard" })}>{t("Renew browser connection…")}</Button><Button onClick={() => present({ kind: "login", expectedLogin: account.username, capability: "projects" })}>{t("Connect GitHub project access")}</Button></>}

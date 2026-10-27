@@ -394,7 +394,6 @@
  "History": "Historial",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Si el clasificador de seguridad bloquea una solicitud, el servidor la reintenta una vez con el modelo recomendado (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Si el mismo servidor se usa con otra dirección, la cuenta que ya conectaste también funciona ahí",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Si conectas varias cuentas, puedes elegir cuál usar encima de la lista de PR en los repositorios del mismo servidor.",
  "Ignore whitespace": "Ignorar espacios en blanco",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Ignorar espacios en blanco|Las líneas que solo cambiaron la sangría o los espacios se tratan como sin cambios (mientras está activado, no se pueden agregar líneas al stage)",
  "Import gh CLI login": "Importar el inicio de sesión de la CLI gh",
@@ -1191,5 +1190,12 @@
  "Connect an account to load this workspace.": "Conecta una cuenta para cargar esta página.",
  "open": "abierto",
  "closed": "cerrado",
- "merged": "fusionado"
+ "merged": "fusionado",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Si conectas varias cuentas, elige la que usa un repositorio con el botón de cuenta del extremo derecho de la barra de herramientas.",
+ "Connected accounts": "Cuentas conectadas",
+ "Connect account": "Conectar cuenta",
+ "Add or remove connected accounts…": "Añadir o quitar cuentas conectadas…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Sin configurar",
+ "Email": "Correo"
 }

@@ -395,7 +395,6 @@
  "History": "Geçmiş",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Bir istek güvenlik sınıflandırıcısı tarafından engellenirse sunucu, önerilen modelle bir kez yeniden dener (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Aynı sunucu başka bir adresle kullanılıyorsa, önceden bağladığınız hesap orada da çalışır",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Birden fazla hesap bağlarsanız, aynı sunucudaki depolar için hangisinin kullanılacağını PR listesinin üstünden seçebilirsiniz.",
  "Ignore whitespace": "Boşlukları yok say",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Boşlukları yok say|Yalnızca girintisi veya boşlukları değişen satırlar değişmemiş sayılır (açıkken satır hazırlama kullanılamaz)",
  "Import gh CLI login": "gh CLI oturumunu içe aktar",
@@ -1201,5 +1200,12 @@
  "Connect an account to load this workspace.": "Bu sayfayı yüklemek için bir hesap bağlayın.",
  "open": "açık",
  "closed": "kapalı",
- "merged": "birleştirildi"
+ "merged": "birleştirildi",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Birden çok hesap bağladıysanız, bir deponun kullanacağı hesabı araç çubuğunun sağ ucundaki hesap düğmesinden seçin.",
+ "Connected accounts": "Bağlı hesaplar",
+ "Connect account": "Hesap bağla",
+ "Add or remove connected accounts…": "Bağlı hesap ekle veya kaldır…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Yapılandırılmadı",
+ "Email": "E-posta"
 }

@@ -383,7 +383,6 @@
  "History": "Lịch sử",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Nếu yêu cầu bị bộ phân loại an toàn chặn, máy chủ sẽ thử lại một lần với mô hình được đề xuất (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Nếu cùng một máy chủ được dùng với địa chỉ khác, tài khoản bạn đã kết nối cũng dùng được ở đó",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Nếu kết nối nhiều tài khoản, bạn có thể chọn tài khoản sẽ dùng ở phía trên danh sách PR cho các kho lưu trữ trên cùng máy chủ.",
  "Ignore whitespace": "Bỏ qua khoảng trắng",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Bỏ qua khoảng trắng|Các dòng chỉ thay đổi thụt lề hoặc dấu cách được coi là không đổi (không thể stage theo dòng khi bật)",
  "Import gh CLI login": "Nhập thông tin đăng nhập gh CLI",
@@ -1168,5 +1167,12 @@
  "Connect an account to load this workspace.": "Kết nối tài khoản để tải trang này.",
  "open": "đang mở",
  "closed": "đã đóng",
- "merged": "đã hợp nhất"
+ "merged": "đã hợp nhất",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Nếu bạn kết nối nhiều tài khoản, hãy chọn tài khoản mà kho lưu trữ dùng từ nút tài khoản ở đầu bên phải thanh công cụ.",
+ "Connected accounts": "Tài khoản đã kết nối",
+ "Connect account": "Kết nối tài khoản",
+ "Add or remove connected accounts…": "Thêm hoặc gỡ tài khoản đã kết nối…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Chưa thiết lập",
+ "Email": "Email"
 }

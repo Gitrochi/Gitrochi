@@ -30,6 +30,17 @@ export function Toolbar({ store }: { store: RepoStore }) {
     </div>
   );
 
+  // without a repository only the account control is useful; the Home page has the open and clone actions
+  if (!store.path)
+    return (
+      <div className="toolbar no-repository">
+        <div className="title grow">
+          <span className="name ellipsis">Gitrochi</span>
+        </div>
+        <AccountQuickControls store={store} />
+      </div>
+    );
+
   return (
     <div className="toolbar">
       <div className="tool-group">

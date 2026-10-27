@@ -379,7 +379,6 @@
  "History": "Riwayat",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Jika permintaan diblokir oleh pengklasifikasi keamanan, server mencoba lagi sekali dengan model yang direkomendasikan (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Jika server yang sama dipakai dengan alamat lain, akun yang sudah Anda hubungkan juga berlaku di sana",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Jika Anda menghubungkan beberapa akun, Anda dapat memilih akun yang dipakai di atas daftar PR untuk repositori di server yang sama.",
  "Ignore whitespace": "Abaikan spasi",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Abaikan spasi|Baris yang hanya berubah indentasi atau spasinya dianggap tidak berubah (stage per baris tidak tersedia saat aktif)",
  "Import gh CLI login": "Impor login gh CLI",
@@ -1165,5 +1164,12 @@
  "Connect an account to load this workspace.": "Hubungkan akun untuk memuat halaman ini.",
  "open": "terbuka",
  "closed": "ditutup",
- "merged": "digabungkan"
+ "merged": "digabungkan",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Jika Anda menghubungkan beberapa akun, pilih akun yang dipakai repositori dari tombol akun di ujung kanan bilah alat.",
+ "Connected accounts": "Akun terhubung",
+ "Connect account": "Hubungkan akun",
+ "Add or remove connected accounts…": "Tambah atau hapus akun terhubung…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Belum diatur",
+ "Email": "Email"
 }

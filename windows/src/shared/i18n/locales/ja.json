@@ -404,7 +404,6 @@
  "History": "履歴",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "リクエストが安全分類器にブロックされた場合、サーバーが推奨モデルで 1 回再試行します (fallbacks)。",
  "If the same server is used under another address, an account you've already connected works there too": "同じサーバーが別のアドレスで使われている場合も、接続済みのアカウントがそのまま使えます",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "複数のアカウントを接続すると、同じサーバー上のリポジトリでは、PR 一覧の上で使用するアカウントを選べます。",
  "Ignore whitespace": "空白を無視",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "空白を無視|インデントや空白だけが変わった行は変更なしとみなします (オンの間は行単位のステージは使えません)",
  "Import gh CLI login": "gh CLI のログインをインポート",
@@ -1213,5 +1212,12 @@
  "Connect an account to load this workspace.": "このページを読み込むにはアカウントを接続してください。",
  "open": "オープン",
  "closed": "クローズ",
- "merged": "マージ済み"
+ "merged": "マージ済み",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "複数のアカウントを接続した場合、リポジトリで使うアカウントはツールバー右端のアカウントボタンで選びます。",
+ "Connected accounts": "接続済みのアカウント",
+ "Connect account": "アカウントを接続",
+ "Add or remove connected accounts…": "接続済みアカウントの追加・削除…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "未設定",
+ "Email": "メール"
 }

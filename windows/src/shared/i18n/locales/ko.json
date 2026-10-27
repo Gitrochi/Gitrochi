@@ -538,7 +538,6 @@
   "History": "히스토리",
   "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "요청이 안전 분류기에 막히면 서버가 권장 모델로 한 번 더 시도하도록(fallbacks) 켜 두었습니다.",
   "If the same server is used under another address, an account you've already connected works there too": "같은 서버가 다른 주소로 쓰이는 경우, 이미 연결한 계정이 그대로 통합니다",
-  "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "계정을 여러 개 연결하면, 같은 서버의 저장소에서는 왼쪽 PR 목록 위에서 쓸 계정을 고를 수 있습니다.",
   "Ignore whitespace": "공백 무시",
   "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "공백 무시|들여쓰기·공백만 바뀐 줄은 같은 것으로 봅니다(켜 두면 줄 단위 스테이지는 쓸 수 없습니다)",
   "Import gh CLI login": "gh CLI 로그인 가져오기",
@@ -2060,5 +2059,6 @@
   "Write a comment (Markdown)": "댓글 쓰기 (Markdown)",
   "Select an issue": "이슈를 선택하세요",
   "Search the list, then read the conversation and reply here.": "목록에서 찾은 뒤 여기서 대화를 읽고 답하세요.",
-  "Edit issue #{0}": "이슈 #{0} 수정"
+  "Edit issue #{0}": "이슈 #{0} 수정",
+  "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "계정을 여러 개 연결했다면, 저장소가 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고르세요."
 }

@@ -394,7 +394,6 @@
  "History": "Előzmények",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Ha a biztonsági osztályozó letilt egy kérést, a szerver egyszer újrapróbálja az ajánlott modellel (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Ha ugyanaz a szerver más címen is elérhető, a már csatlakoztatott fiók ott is működik",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Ha több fiókot csatlakoztat, az azonos szerveren lévő tárolóknál a PR-lista fölött választhatja ki, melyiket használja.",
  "Ignore whitespace": "Térközök figyelmen kívül hagyása",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Térközök figyelmen kívül hagyása|A csak behúzásban vagy szóközökben eltérő sorok változatlannak számítanak (bekapcsolt állapotban a soronkénti előkészítés nem érhető el)",
  "Import gh CLI login": "gh CLI-bejelentkezés importálása",
@@ -1196,5 +1195,12 @@
  "Connect an account to load this workspace.": "Az oldal betöltéséhez csatlakoztasson egy fiókot.",
  "open": "nyitott",
  "closed": "lezárt",
- "merged": "egyesített"
+ "merged": "egyesített",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Ha több fiókot csatlakoztat, a tároló fiókját az eszköztár jobb szélén lévő fiók gombbal választhatja ki.",
+ "Connected accounts": "Csatlakoztatott fiókok",
+ "Connect account": "Fiók csatlakoztatása",
+ "Add or remove connected accounts…": "Csatlakoztatott fiókok hozzáadása vagy eltávolítása…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Nincs beállítva",
+ "Email": "E-mail"
 }

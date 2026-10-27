@@ -36,7 +36,7 @@ export function RepoPage({ store, openSettings, gitMissing = false }: { store: R
 
   return (
     <div className="repo">
-      {store.path && <Toolbar store={store} />}
+      <Toolbar store={store} />
       <div className="main" data-navigation-mode={compact ? "compact" : "expanded"}>
         <div className={`navigation${compact ? " compact" : ""}`} style={{ width: compact ? 56 : navigationW }}>
           <NavigationSidebar store={store} openSettings={openSettings} compact={compact} onToggle={() => settings.set("navigationSidebarCollapsed", !compact)} />

@@ -68,7 +68,7 @@ export function AccountConnections() {
           <button className="link" onClick={() => void ipc.openUrl("https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")}>
             {t("Create token")}</button>
         </div>
-        <span className="hint">{t("If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.")}</span>
+        <span className="hint">{t("If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.")}</span>
       </div>
 
       <div className="form-section">

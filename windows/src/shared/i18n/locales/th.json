@@ -398,7 +398,6 @@
  "History": "ประวัติ",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "หากคำขอถูกตัวจำแนกความปลอดภัยบล็อก เซิร์ฟเวอร์จะลองใหม่อีกครั้งด้วยโมเดลที่แนะนำ (fallbacks)",
  "If the same server is used under another address, an account you've already connected works there too": "หากใช้เซิร์ฟเวอร์เดียวกันภายใต้ที่อยู่อื่น บัญชีที่เชื่อมต่อไว้แล้วจะใช้ได้ที่นั่นด้วย",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "หากเชื่อมต่อหลายบัญชี คุณสามารถเลือกบัญชีที่จะใช้ได้เหนือรายการ PR สำหรับรีโพสิทอรีบนเซิร์ฟเวอร์เดียวกัน",
  "Ignore whitespace": "ละเว้นช่องว่าง",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "ละเว้นช่องว่าง|บรรทัดที่เปลี่ยนเฉพาะการเยื้องหรือช่องว่างจะถือว่าไม่เปลี่ยน (สเตจรายบรรทัดไม่ได้ขณะเปิดอยู่)",
  "Import gh CLI login": "นำเข้าการเข้าสู่ระบบ gh CLI",
@@ -1208,5 +1207,12 @@
  "Connect an account to load this workspace.": "เชื่อมต่อบัญชีเพื่อโหลดหน้านี้",
  "open": "เปิดอยู่",
  "closed": "ปิดแล้ว",
- "merged": "รวมแล้ว"
+ "merged": "รวมแล้ว",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "หากเชื่อมต่อหลายบัญชี ให้เลือกบัญชีที่ที่เก็บใช้จากปุ่มบัญชีที่ปลายขวาของแถบเครื่องมือ",
+ "Connected accounts": "บัญชีที่เชื่อมต่อ",
+ "Connect account": "เชื่อมต่อบัญชี",
+ "Add or remove connected accounts…": "เพิ่มหรือลบบัญชีที่เชื่อมต่อ…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "ยังไม่ได้ตั้งค่า",
+ "Email": "อีเมล"
 }

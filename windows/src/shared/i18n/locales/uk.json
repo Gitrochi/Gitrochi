@@ -403,7 +403,6 @@
  "History": "Історія",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Якщо запит заблокує класифікатор безпеки, сервер один раз повторить спробу з рекомендованою моделлю (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Якщо той самий сервер доступний за іншою адресою, уже підключений обліковий запис працюватиме й там",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Якщо підключити кілька облікових записів, для репозиторіїв на тому самому сервері можна вибрати потрібний над списком PR.",
  "Ignore whitespace": "Ігнорувати пробіли",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Ігнорувати пробіли|Рядки, де змінилися лише відступи чи пробіли, вважаються незміненими (поки ввімкнено, індексування окремих рядків недоступне)",
  "Import gh CLI login": "Імпортувати вхід із gh CLI",
@@ -1212,5 +1211,12 @@
  "Connect an account to load this workspace.": "Підключіть обліковий запис, щоб завантажити цю сторінку.",
  "open": "відкрито",
  "closed": "закрито",
- "merged": "злито"
+ "merged": "злито",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Якщо підключено кілька облікових записів, виберіть обліковий запис репозиторію кнопкою облікового запису в правому кінці панелі інструментів.",
+ "Connected accounts": "Підключені облікові записи",
+ "Connect account": "Підключити обліковий запис",
+ "Add or remove connected accounts…": "Додати або видалити підключені облікові записи…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Не налаштовано",
+ "Email": "Ел. пошта"
 }

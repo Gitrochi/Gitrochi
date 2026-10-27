@@ -17,6 +17,8 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
   host.style.cssText = "position:fixed;left:-10000px;top:0;width:1440px;height:720px";
   document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
+  // the Home toolbar's account control reads the global Git author; this fixture runs no processes
+  store.loadGlobalIdentity = async () => {};
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const nav = () => host.querySelector<HTMLElement>(".workspace-navigation")!;
   const row = (page: string) => host.querySelector<HTMLButtonElement>(`.workspace-nav-item[data-page="${page}"]`);
@@ -34,7 +36,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     root.render(<RepoPage store={store} openSettings={() => { opened++; }} />);
     await settle();
     ensure(!isCompact() && toggle().getAttribute("aria-expanded") === "true", "Home must show the full page list");
-    ensure(!!host.querySelector(".welcome") && !host.querySelector(".toolbar"), "Home must show the welcome screen without a repository toolbar");
+    ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool"), "Home without a repository must show the welcome screen and only the account control in the toolbar");
     ensure(row("repository")?.disabled && !row("issues")?.disabled, "The page list must keep the empty-repository access rules");
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();
     ensure(isCompact() && nav().getBoundingClientRect().width === 56, "Opening the repository screen must fold the page list into a 56px rail");

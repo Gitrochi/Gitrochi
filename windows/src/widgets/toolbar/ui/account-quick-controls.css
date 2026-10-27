@@ -52,3 +52,8 @@
   .account-quick-trigger { min-width: 0; flex-basis: 145px; padding: 5px; }
   .account-quick-trigger > .avatar { display: none; }
 }
+/* without a GitHub/GitLab remote: every connected account, read-only */
+.account-quick-list { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.account-quick-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.account-quick-list li > .avatar { flex: none; }
+.account-quick-list li > span { min-width: 0; overflow-wrap: anywhere; }

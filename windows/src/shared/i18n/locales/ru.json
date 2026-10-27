@@ -403,7 +403,6 @@
  "History": "История",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Если запрос заблокирован классификатором безопасности, сервер один раз повторит его с рекомендуемой моделью (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Если тот же сервер доступен по другому адресу, уже подключённая учётная запись работает и там",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Если подключить несколько учётных записей, для репозиториев на одном сервере нужную можно выбрать над списком PR.",
  "Ignore whitespace": "Игнорировать пробелы",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Игнорировать пробелы|Строки, в которых изменились только отступы или пробелы, считаются неизменёнными (индексирование отдельных строк при этом недоступно)",
  "Import gh CLI login": "Импортировать вход из gh CLI",
@@ -1212,5 +1211,12 @@
  "Connect an account to load this workspace.": "Подключите аккаунт, чтобы загрузить эту страницу.",
  "open": "открыто",
  "closed": "закрыто",
- "merged": "слито"
+ "merged": "слито",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Если подключено несколько аккаунтов, выберите аккаунт репозитория кнопкой аккаунта в правом конце панели инструментов.",
+ "Connected accounts": "Подключённые аккаунты",
+ "Connect account": "Подключить аккаунт",
+ "Add or remove connected accounts…": "Добавить или удалить подключённые аккаунты…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Не настроено",
+ "Email": "Эл. почта"
 }

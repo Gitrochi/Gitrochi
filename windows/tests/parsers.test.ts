@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { layoutGraph } from "@/entities/git/lib/graph";
-import { parseDiff, parseLog, parseNameStatus, parseNumstat, parseRefs, parseStatus, parseTrack, parseWorktrees } from "@/entities/git/lib/parsers";
+import { parseDiff, parseIdentityConfig, parseLog, parseNameStatus, parseNumstat, parseRefs, parseStatus, parseTrack, parseWorktrees } from "@/entities/git/lib/parsers";
 
 const US = "\u001f",
   RS = "\u001e";
@@ -190,5 +190,14 @@ describe("파일 히스토리 · blame", () => {
       [3, "박서연", true, "line three"],
     ]);
     expect(l[0].email).toBe("h@example.com");
+  });
+});
+
+describe("identity config", () => {
+  it("reads the author from config --get-regexp output and needs a name", () => {
+    expect(parseIdentityConfig("user.name Ada Lovelace\nuser.email ada@example.com\n")).toEqual({ name: "Ada Lovelace", email: "ada@example.com" });
+    expect(parseIdentityConfig("user.name Only Name\r\n")).toEqual({ name: "Only Name", email: "" });
+    expect(parseIdentityConfig("user.email nobody@example.com\n")).toBeNull();
+    expect(parseIdentityConfig("")).toBeNull();
   });
 });

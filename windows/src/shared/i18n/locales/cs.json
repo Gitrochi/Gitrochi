@@ -393,7 +393,6 @@
  "History": "Historie",
  "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks).": "Pokud bezpečnostní klasifikátor požadavek zablokuje, server to jednou zkusí znovu s doporučeným modelem (fallbacks).",
  "If the same server is used under another address, an account you've already connected works there too": "Pokud je stejný server dostupný i pod jinou adresou, funguje tam i účet, který jste už připojili",
- "If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server.": "Pokud připojíte více účtů, můžete u repozitářů na stejném serveru zvolit nad seznamem PR, který z nich použít.",
  "Ignore whitespace": "Ignorovat mezery",
  "Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)": "Ignorovat mezery|Řádky, u kterých se změnilo jen odsazení nebo mezery, se považují za nezměněné (příprava po řádcích je při zapnutí nedostupná)",
  "Import gh CLI login": "Importovat přihlášení z gh CLI",
@@ -1194,5 +1193,12 @@
  "Connect an account to load this workspace.": "Pro načtení této stránky připojte účet.",
  "open": "otevřené",
  "closed": "uzavřené",
- "merged": "sloučené"
+ "merged": "sloučené",
+ "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.": "Pokud připojíte více účtů, vyberte účet pro repozitář tlačítkem účtu na pravém konci panelu nástrojů.",
+ "Connected accounts": "Připojené účty",
+ "Connect account": "Připojit účet",
+ "Add or remove connected accounts…": "Přidat nebo odebrat připojené účty…",
+ "Git: {0}": "Git: {0}",
+ "Not configured": "Nenastaveno",
+ "Email": "E-mail"
 }
