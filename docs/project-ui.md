@@ -2,6 +2,8 @@
 
 The project workspace uses a consistent hierarchy: source and account, project title and primary task action, view navigation, then search and filters. The branch remains in the repository chrome. Local projects show task counts without empty issue or pull-request metrics.
 
+Projects retains its own page in the three-column workspace. Home combines the planning dashboard with repository welcome actions, recent repositories and remote repository search. Opening local changes or a linked pull request uses the current repository and review routes. Local planning loads from device storage without waiting for saved account access.
+
 Table headers and rows start at the top of the work surface, even with one task. Local tables omit the repository column. Board columns use neutral backgrounds and a compact empty state; cards display actual status, priority, dates and assignees when available. The roadmap keeps date-field configuration in a settings menu and places Schedule beside each undated task.
 
 Normal task, date, field and project metadata edits save once. Editors show progress, prevent duplicate submissions and keep inputs when saving fails. Consequential operations retain a review with the captured project, affected items and an explicit action. Local task removal explains that the task is permanently deleted from the device. Public project creation reviews the destination and visibility inside the creation sheet.
@@ -51,13 +53,14 @@ These screenshots use isolated synthetic projects; they contain no user data.
 ## Verification
 
 - `npm run build` and `npm test` in `windows/`.
-- Four real browser selftests: hosting projects, scheduling, Home portfolio and local planning.
+- Five real Korean browser selftests: hosting projects, scheduling, Home portfolio, local planning and complete workspace pages. The workspace fixture distinguishes GraphQL reads from writes, returns REST pull-request collections, and checks navigation using the complete Issues page and its header.
+- `bash macos/Tools/test-window-content-layout.sh`: 37 normal-display and 37 constrained-display scenarios, including real repository tabs, sidebar changes and exact frame restoration.
 - `bash macos/Tools/test-project-workspace-layout.sh`: production workspace, sparse table/board/roadmap, date editor, review and account-free local navigation in both themes and English/Korean.
 - `bash macos/Tools/test-project-creation-layout.sh`: local, Free private, Pro public and unknown-plan creation forms/reviews in both themes, with remote writes blocked.
 - `bash macos/Tools/test-project-task-creation.sh`: canonical field validation, atomic local creation and remote partial-write handling.
 - `bash macos/Tools/test-credential-access.sh` and `bash macos/Tools/test-saved-account-verification.sh`: saved-access recovery, transient verification failures, token rotation and rejection/removal regressions.
 - `bash macos/build.sh` and a read-only smoke check of the built application.
 
-Native and browser fixtures use isolated preferences/storage and synthetic credentials. Conversations use synthetic read responses and injected write callbacks. The UI work does not touch Rust. The native build retains two existing Keychain deprecation warnings.
+Native and browser fixtures use isolated preferences/storage and synthetic credentials. The window fixture also isolates the real Home view's local-project storage and blocks network access. Conversations use synthetic read responses and injected write callbacks. There are no shared Rust core changes. The native build retains two existing Keychain deprecation warnings.
 
-The expanded conversation and quick-add suite passed 104 native workspace/editor scenarios. The creation suite passed 20 scenarios, including temporary Keychain denial and unavailable saved credentials in both themes. Windows passed 552 tests in 65 files and four real browser selftests. Authentication regressions also cover legacy fallback rejection, temporary Keychain failures, newer-token rotation and account removal. The final native build completed and was relaunched for a read-only Korean board/inspector and quick-add cancellation smoke check. No real project or comment writes were used for validation.
+The integrated workspace passed 104 native workspace/editor scenarios and 20 creation scenarios, including temporary Keychain denial and unavailable saved credentials in both themes. The window, workspace and creation fixtures compiled all 203 current Swift production sources, with source snapshots checked against the working files. Windows passed 584 tests in 70 files, five real Korean browser selftests and a locked Tauri check. Authentication regressions cover both automatic preparation and lifecycle retries, legacy fallback rejection, temporary Keychain failures, newer-token rotation and account removal. No real project or comment writes were used for validation.
