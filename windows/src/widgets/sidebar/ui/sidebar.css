@@ -236,25 +236,3 @@
   flex: 1;
   color: var(--text);
 }
-
-/* "‹ Repository" above a page's list when the repository screen opened it */
-.back-to-repository {
-  padding: 6px 6px 0;
-}
-
-.back-to-repository > button {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px 6px 3px 2px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--accent);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.back-to-repository > button:hover {
-  background: var(--hover);
-}

@@ -146,7 +146,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(await editIn(sheet(), "Edited fixture issue") && writes === before + 3, "Editing an issue did not reach the fixture server");
     store.sheet = null; dialog.remove();
     // opened from the repository screen, the page offers the way back; from another page it does not
-    const back = () => host.querySelector<HTMLButtonElement>(`.back-to-repository button[aria-label="${t("Back to the repository screen")}"]`);
+    const back = () => host.querySelector<HTMLButtonElement>(`.page-header button[aria-label="${t("Back to the repository screen")}"]`);
     check(back()?.textContent?.includes(t("Repository")), "The Issues page opened from the repository screen must offer the way back");
     back()!.click(); await pause();
     check(store.destination === "repository" && !back(), "The back button did not return to the repository screen");

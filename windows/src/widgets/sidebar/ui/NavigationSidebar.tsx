@@ -8,7 +8,8 @@ import "./navigation-sidebar.css";
 const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", account: "Account", flows: "Flows" };
 /** The page name as shown in the sidebar; GitLab repositories use that server's words. (macOS: WorkspaceDestination.title(gitlab:)) */
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : titles[page]);
-const icons = { home: Home, repository: FolderGit2, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, account: UserRound, flows: Waypoints };
+/** Each page's icon, shared with the page title row */
+export const destinationIcons = { home: Home, repository: FolderGit2, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, account: UserRound, flows: Waypoints };
 const groups: { title: string | null; pages: WorkspaceDestination[] }[] = [
   { title: null, pages: ["home", "repository"] },
   { title: "Workspace", pages: ["compare", "rebase", "code"] },
@@ -24,7 +25,7 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
   useObserve(store);
   const gitlab = store.target?.provider === "gitlab";
   const row = (page: WorkspaceDestination) => {
-    const Icon = icons[page], selected = store.destination === page, disabled = repositoryDestinations.has(page) && !store.path;
+    const Icon = destinationIcons[page], selected = store.destination === page, disabled = repositoryDestinations.has(page) && !store.path;
     const title = destinationTitle(page, gitlab);
     const count = page === "repository" ? store.wipCount : page === "pullRequests" ? store.pullRequests.length : 0;
     return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${page === "repository" ? " repository-entry" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined} disabled={disabled}

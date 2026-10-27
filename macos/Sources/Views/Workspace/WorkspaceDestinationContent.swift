@@ -2,7 +2,21 @@ import SwiftUI
 
 struct WorkspaceDestinationContent: View {
     @Environment(RepoStore.self) private var store
+    /// Pages with the shared title row; Home has its own welcome and Repository is the work screen
+    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .account, .flows]
+
     var body: some View {
+        VStack(spacing: 0) {
+            if Self.titled.contains(store.destination) {
+                PageHeader(page: store.destination)
+                Divider()
+            }
+            page
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    @ViewBuilder private var page: some View {
         Group {
             switch store.destination {
             case .home: WelcomeView()
@@ -18,6 +32,34 @@ struct WorkspaceDestinationContent: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+/// The title row every workspace page shares (Windows: pages/repo/ui/PageHeader.tsx). A page reached from the repository
+/// screen also offers the way back.
+struct PageHeader: View {
+    @Environment(RepoStore.self) private var store
+    let page: WorkspaceDestination
+
+    var body: some View {
+        HStack(spacing: 10) {
+            if store.cameFromRepository, [.pullRequests, .issues].contains(page) {
+                Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
+                    .buttonStyle(.borderless)
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back to the repository screen (⌘[)")
+                    .accessibilityLabel("Back to the repository screen")
+                Divider().frame(height: 20)
+            }
+            Image(systemName: page.symbol).font(.system(size: 18)).foregroundStyle(.secondary)
+            Text(page.title(gitlab: store.target?.provider == .gitlab))
+                .font(.title2.weight(.semibold))
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 18)
+        .frame(height: 50)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
 
@@ -45,12 +87,9 @@ private struct PullRequestsWorkspace: View {
     var body: some View {
         if let target = store.target {
             AdaptiveWorkbenchSplit(listWidth: 290) {
-                VStack(spacing: 0) {
-                    BackToRepositoryBar()
-                    ScrollView { PullRequestSection(target: target, onPage: true).padding(.vertical, 6) }
-                        .environment(\.sidebarFlyout, true)
-                }
-                .background(Color(nsColor: .windowBackgroundColor))
+                ScrollView { PullRequestSection(target: target, onPage: true).padding(.vertical, 6) }
+                    .environment(\.sidebarFlyout, true)
+                    .background(Color(nsColor: .windowBackgroundColor))
             } detail: {
                 Group {
                     if case .pullRequest(let number)? = store.selection {

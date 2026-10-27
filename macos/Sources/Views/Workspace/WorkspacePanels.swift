@@ -163,12 +163,9 @@ struct IssuesWorkspacePanel: View {
     var body: some View {
         if store.target != nil {
             AdaptiveWorkbenchSplit(listWidth: 290) {
-                VStack(spacing: 0) {
-                    BackToRepositoryBar()
-                    ScrollView { IssueListSection(onPage: true).padding(.vertical, 6) }
-                        .environment(\.sidebarFlyout, true)
-                }
-                .background(Color(nsColor: .windowBackgroundColor))
+                ScrollView { IssueListSection(onPage: true).padding(.vertical, 6) }
+                    .environment(\.sidebarFlyout, true)
+                    .background(Color(nsColor: .windowBackgroundColor))
             } detail: {
                 Group {
                     if let detail = store.collaboration.inboxDetail, detail.item.kind == "issue" {
