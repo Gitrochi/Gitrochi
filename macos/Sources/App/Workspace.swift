@@ -129,7 +129,7 @@ final class Workspace {
         w.tabbingMode = .preferred
         let launching = RestoreState.shared.active
         // after a launch by an opened folder or link the window is not hidden (see openedByEvent)
-        if launching, !openedByEvent, !w.isVisible {
+        if launching, !openedByEvent {
             // 스플래시가 떠 있는 동안 저장소 창은 보이지 않게 준비만 한다
             w.alphaValue = 0
             w.animationBehavior = .none
