@@ -1043,7 +1043,6 @@
 "Show sidebar" = "Oldalsáv megjelenítése";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Oszlopok";
-"Time" = "Idő";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Folyamatok";
@@ -1190,3 +1189,6 @@
 "Copy redacted log" = "Kitakart napló másolása";
 "Job log" = "Job naplója";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "A napló előnézete legfeljebb 2 MB. A teljes naplót a böngészőben nyissa meg.";
+"Reset to default layout" = "Alapértelmezett elrendezés visszaállítása";
+"Drag to resize the column" = "Húzza az oszlop szélességének módosításához";
+"Date" = "Dátum";

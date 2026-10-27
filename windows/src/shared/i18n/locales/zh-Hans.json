@@ -1063,7 +1063,6 @@
  "Hide sidebar": "隐藏侧边栏",
  "The sections stay at hand as a rail of icons; hover one to open it.": "各分区以图标栏的形式保留，悬停图标即可展开。",
  "Columns": "列",
- "Time": "时间",
  "Open a repository to use flows.": "打开一个仓库以使用流程。",
  "Flows": "流程",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "流程|将此仓库的测试、检查和 CI 步骤作为一个流程运行",
@@ -1248,5 +1247,8 @@
  "{0} jobs waiting to be run manually": "{0} 个作业等待手动运行",
  "Copy redacted log": "复制已脱敏的日志",
  "Job log": "作业日志",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "日志预览最多显示 2 MB。请在浏览器中查看完整日志。"
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "日志预览最多显示 2 MB。请在浏览器中查看完整日志。",
+ "Reset to default layout": "恢复默认布局",
+ "Drag to resize the column": "拖动以调整列宽",
+ "Date": "日期"
 }

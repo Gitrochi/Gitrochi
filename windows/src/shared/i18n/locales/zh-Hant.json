@@ -1063,7 +1063,6 @@
  "Hide sidebar": "隱藏側邊欄",
  "The sections stay at hand as a rail of icons; hover one to open it.": "各區段以圖示列保留，將滑鼠移到圖示上即可展開。",
  "Columns": "欄",
- "Time": "時間",
  "Open a repository to use flows.": "開啟存放庫以使用流程。",
  "Flows": "流程",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "流程|將此存放庫的測試、檢查與 CI 步驟作為一個流程執行",
@@ -1248,5 +1247,8 @@
  "{0} jobs waiting to be run manually": "{0} 個作業等待手動執行",
  "Copy redacted log": "複製已遮蔽敏感資訊的記錄",
  "Job log": "作業記錄",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。"
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。",
+ "Reset to default layout": "還原預設版面",
+ "Drag to resize the column": "拖曳以調整欄寬",
+ "Date": "日期"
 }

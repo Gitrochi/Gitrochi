@@ -1062,7 +1062,6 @@
  "Hide sidebar": "サイドバーを隠す",
  "The sections stay at hand as a rail of icons; hover one to open it.": "各セクションはアイコンの列として残り、マウスを乗せると開きます。",
  "Columns": "列",
- "Time": "時刻",
  "Open a repository to use flows.": "フローを使うにはリポジトリを開いてください。",
  "Flows": "フロー",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "フロー|このリポジトリのテスト・チェック・CI ステップを 1 つのフローとして実行",
@@ -1247,5 +1246,8 @@
  "{0} jobs waiting to be run manually": "手動実行を待っているジョブが {0} 件あります",
  "Copy redacted log": "秘密情報を伏せたログをコピー",
  "Job log": "ジョブのログ",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。"
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。",
+ "Reset to default layout": "デフォルトのレイアウトに戻す",
+ "Drag to resize the column": "ドラッグして列の幅を変更",
+ "Date": "日付"
 }

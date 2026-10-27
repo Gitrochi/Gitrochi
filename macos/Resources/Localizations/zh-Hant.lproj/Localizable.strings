@@ -1062,7 +1062,6 @@
 "Show sidebar" = "顯示側邊欄";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "欄";
-"Time" = "時間";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "流程";
@@ -1209,3 +1208,6 @@
 "Copy redacted log" = "複製已遮蔽敏感資訊的記錄";
 "Job log" = "作業記錄";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。";
+"Reset to default layout" = "還原預設版面";
+"Drag to resize the column" = "拖曳以調整欄寬";
+"Date" = "日期";

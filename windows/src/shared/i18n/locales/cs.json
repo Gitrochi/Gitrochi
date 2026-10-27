@@ -1043,7 +1043,6 @@
  "Hide sidebar": "Skrýt postranní panel",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Sekce zůstanou po ruce jako lišta ikon; najeďte na ikonu a sekce se otevře.",
  "Columns": "Sloupce",
- "Time": "Čas",
  "Open a repository to use flows.": "Pro použití toků otevřete repozitář.",
  "Flows": "Toky",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Toky|Spouštějte testy, kontroly a kroky CI tohoto repozitáře jako jeden tok",
@@ -1228,5 +1227,8 @@
  "{0} jobs waiting to be run manually": "Úlohy čekající na ruční spuštění: {0}",
  "Copy redacted log": "Kopírovat log se skrytými citlivými údaji",
  "Job log": "Log úlohy",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči.",
+ "Reset to default layout": "Obnovit výchozí rozvržení",
+ "Drag to resize the column": "Přetažením změníte šířku sloupce",
+ "Date": "Datum"
 }

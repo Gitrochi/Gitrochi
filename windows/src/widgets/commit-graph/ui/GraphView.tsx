@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, CircleDashed, Columns3, ListFilter, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleDashed, ListFilter, Search, Settings as Gear, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { type Commit, emptyStatus, isWIP, type SearchScope, searchScopes, statusFiles, wipWorktree } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { AUTHOR_W, clampLaneOffset, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, type OptionalColumnId, revealLaneOffset, ROW_H, TIME_W, toggleColumn } from "../lib/metrics";
+import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, DEFAULT_WIDTHS, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, OPTIONAL_COLUMNS, type OptionalColumnId, revealLaneOffset, ROW_H, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -47,15 +47,29 @@ export function GraphView({ store }: { store: RepoStore }) {
     }
   });
 
-  // the columns turned off, and the optional author and time turned on (a separate list, so both stay off by default);
-  // narrow windows drop time and author before the branch and graph columns shrink
+  // the columns turned off, and the optional author, time and SHA turned on (a separate list, so they stay off by default);
+  // narrow windows drop SHA, time and author before the branch and graph columns shrink
   const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
   const shownColumns = settings.get<OptionalColumnId[]>("graphShownColumns", []);
   const hiddenKey = hiddenColumns.join(","), shownKey = shownColumns.join(",");
+  // the widths the optional columns were dragged to; while a drag is on, its width shows before it is stored
+  const storedWidths = settings.get<Partial<ColumnWidths>>("graphColumnWidths", {});
+  const [dragWidth, setDragWidth] = useState<Partial<ColumnWidths> | null>(null);
+  const widths = columnWidths({ ...storedWidths, ...dragWidth });
+  const widthsKey = OPTIONAL_COLUMNS.map((id) => widths[id]).join(",");
   const cols = useMemo(
-    () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean))),
-    [viewport.width, gw, hiddenKey, shownKey],
+    () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths),
+    // the widths are read through their key, so a new object with the same widths leaves the rows alone
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [viewport.width, gw, hiddenKey, shownKey, widthsKey],
   );
+  const resizeColumn = (id: OptionalColumnId, width: number, done: boolean) => {
+    if (!done) return setDragWidth({ [id]: width });
+    setDragWidth(null);
+    const next: Partial<ColumnWidths> = { ...columnWidths(storedWidths), [id]: width };
+    // only the widths that differ from the default are kept, so a reset or a new default reaches the rest
+    settings.set("graphColumnWidths", Object.fromEntries(OPTIONAL_COLUMNS.filter((key) => next[key] !== DEFAULT_WIDTHS[key]).map((key) => [key, next[key]])));
+  };
   // lanes beyond the column scroll sideways, all rows together, with one offset clamped to what does not fit
   const fullWidth = graphFullWidth(store.maxLanes);
   const laneOverflow = cols.graph > 0 ? Math.max(0, fullWidth - cols.graph) : 0;
@@ -89,7 +103,8 @@ export function GraphView({ store }: { store: RepoStore }) {
     if (next !== laneOffsetRef.current) setLaneOffset(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.selectedID]);
-  // the header's menu: which columns show (the message column always does)
+  // the header's menu: which columns show (the message column always does), and a way back to the default layout
+  const changed = hiddenColumns.length > 0 || shownColumns.length > 0 || Object.keys(storedWidths).length > 0;
   const columnMenu = (): MenuItem[] => [
     ...([
       ["ref", t("Branch / Tag")],
@@ -97,9 +112,21 @@ export function GraphView({ store }: { store: RepoStore }) {
     ] as [GraphColumnId, string][]).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => settings.set("graphHiddenColumns", toggleColumn(hiddenColumns, id)) })),
     ...([
       ["author", t("Author")],
-      ["time", t("Time")],
+      ["time", t("Date")],
+      ["sha", t("SHA")],
     ] as [OptionalColumnId, string][]).map(([id, label]) => ({ label, checked: shownColumns.includes(id), onClick: () => settings.set("graphShownColumns", toggleColumn(shownColumns, id)) })),
+    "divider",
+    {
+      label: t("Reset to default layout"),
+      disabled: !changed,
+      onClick: () => {
+        settings.set("graphHiddenColumns", []);
+        settings.set("graphShownColumns", []);
+        settings.set("graphColumnWidths", {});
+      },
+    },
   ];
+  const columnTitles: Record<OptionalColumnId, string> = { author: t("Author"), time: t("Date"), sha: t("SHA") };
   const entries = store.entries;
   const first = Math.max(0, Math.floor(viewport.top / ROW_H) - 10);
   const last = Math.min(entries.length, Math.ceil((viewport.top + viewport.height) / ROW_H) + 10);
@@ -123,12 +150,18 @@ export function GraphView({ store }: { store: RepoStore }) {
         <span className="graph-head-message">
           <span className="graph-head-label">{t("Commit message")}</span>
         </span>
-        {cols.author && <span className="head-author" style={{ width: AUTHOR_W }}>{t("Author")}</span>}
-        {cols.time && <span className="head-time" style={{ width: TIME_W }}>{t("Time")}</span>}
+        {OPTIONAL_COLUMNS.map((id) =>
+          cols[id] > 0 ? (
+            <span key={id} className={`head-opt head-${id}`} style={{ width: cols[id] }}>
+              <ColumnResizer id={id} width={cols[id]} onResize={(width, done) => resizeColumn(id, width, done)} />
+              <span className="head-opt-label">{columnTitles[id]}</span>
+            </span>
+          ) : null,
+        )}
         {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
         <span className="graph-head-tools" style={{ width: HEADER_TOOLS_W }}>
           <GraphFilterButton store={store} />
-          <IconButton small icon={<Columns3 size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+          <IconButton small icon={<Gear size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
         </span>
       </div>
       <div
@@ -335,12 +368,12 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
   const hidden = store.hiddenRefs.size;
   const active = store.graphCurrentOnly || hidden > 0;
   return (
-    <button
-      type="button"
-      className={`tool graph-filter ${active ? "on" : ""}`}
-      style={{ gap: 4, color: active ? "var(--accent)" : undefined }}
+    <IconButton
+      small
+      className={`graph-filter ${active ? "on" : ""}`}
+      style={{ color: active ? "var(--accent)" : undefined }}
       aria-label={t("Filter graph")}
-      data-tip={store.graphCurrentOnly ? t("Current branch only") : hidden > 0 ? t("Hidden {0}", hidden) : t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
+      tip={store.graphCurrentOnly ? t("Current branch only") : hidden > 0 ? t("Hidden {0}", hidden) : t("Filter graph|Show only the current branch, show hidden branches again (hide them by right-clicking in the sidebar)")}
       onClick={(e) =>
         showMenuBelow(e.currentTarget, [
           { label: t("Show only the current branch"), checked: store.graphCurrentOnly, onClick: () => void store.setCurrentOnly(!store.graphCurrentOnly) },
@@ -348,9 +381,34 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
           { label: hidden ? t("Show all {0} hidden branches", hidden) : t("No hidden branches"), disabled: !hidden, onClick: () => void store.showAllBranches() },
         ])
       }
-    >
-      {/* icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu */}
-      <ListFilter size={13} />
-    </button>
+      // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
+      icon={<ListFilter size={13} />}
+    />
+  );
+}
+
+/** The left edge of an optional column's label: drag it sideways to change the column's width (macOS: ColumnResizer) */
+function ColumnResizer({ id, width, onResize }: { id: OptionalColumnId; width: number; onResize: (width: number, done: boolean) => void }) {
+  return (
+    <span
+      className="col-resizer"
+      data-tip={t("Drag to resize the column")}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX;
+        // the handle is on the column's left, so dragging left widens it
+        const at = (x: number) => clampColumnWidth(id, width - (x - startX));
+        const move = (ev: PointerEvent) => onResize(at(ev.clientX), false);
+        const up = (ev: PointerEvent) => {
+          window.removeEventListener("pointermove", move);
+          window.removeEventListener("pointerup", up);
+          onResize(at(ev.clientX), true);
+        };
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", up);
+      }}
+    />
   );
 }

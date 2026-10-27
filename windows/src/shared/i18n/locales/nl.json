@@ -1009,7 +1009,6 @@
  "Hide sidebar": "Zijbalk verbergen",
  "The sections stay at hand as a rail of icons; hover one to open it.": "De secties blijven bij de hand als een rij pictogrammen; wijs er een aan om hem te openen.",
  "Columns": "Kolommen",
- "Time": "Tijd",
  "Open a repository to use flows.": "Open een repository om flows te gebruiken.",
  "Flows": "Flows",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Flows|De tests, controles en CI-stappen van deze repository als één flow uitvoeren",
@@ -1199,5 +1198,8 @@
  "{0} jobs waiting to be run manually": "Jobs die wachten op handmatige uitvoering: {0}",
  "Copy redacted log": "Gemaskeerd log kopiëren",
  "Job log": "Joblog",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "De logvoorvertoning is beperkt tot 2 MB. Open de browser voor het volledige log."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "De logvoorvertoning is beperkt tot 2 MB. Open de browser voor het volledige log.",
+ "Reset to default layout": "Standaardindeling herstellen",
+ "Drag to resize the column": "Sleep om de kolombreedte te wijzigen",
+ "Date": "Datum"
 }

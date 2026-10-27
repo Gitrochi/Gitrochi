@@ -1045,7 +1045,6 @@
  "Hide sidebar": "Oldalsáv elrejtése",
  "The sections stay at hand as a rail of icons; hover one to open it.": "A szakaszok ikonsávként kéznél maradnak; vigye az egeret egy ikonra a megnyitáshoz.",
  "Columns": "Oszlopok",
- "Time": "Idő",
  "Open a repository to use flows.": "A folyamatok használatához nyisson meg egy tárolót.",
  "Flows": "Folyamatok",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Folyamatok|A tároló tesztjeinek, ellenőrzéseinek és CI-lépéseinek futtatása egyetlen folyamatként",
@@ -1230,5 +1229,8 @@
  "{0} jobs waiting to be run manually": "{0} job vár kézi futtatásra",
  "Copy redacted log": "Kitakart napló másolása",
  "Job log": "Job naplója",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "A napló előnézete legfeljebb 2 MB. A teljes naplót a böngészőben nyissa meg."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "A napló előnézete legfeljebb 2 MB. A teljes naplót a böngészőben nyissa meg.",
+ "Reset to default layout": "Alapértelmezett elrendezés visszaállítása",
+ "Drag to resize the column": "Húzza az oszlop szélességének módosításához",
+ "Date": "Dátum"
 }

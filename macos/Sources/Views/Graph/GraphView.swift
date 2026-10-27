@@ -6,8 +6,8 @@ enum GraphMetrics {
     static let leftPad: CGFloat = 6
     /// Room between the last lane's avatar and the message bar; the lane band runs through it
     static let rightPad: CGFloat = 16
-    /// Five lanes wide at most; more lanes scroll sideways inside the column
-    static let maxVisibleLanes = 5
+    /// Eight lanes wide at most; more lanes scroll sideways inside the column
+    static let maxVisibleLanes = 8
     /// 왼쪽 브랜치·태그 칸 너비
     static let refWidth: CGFloat = 190
     /// 커밋 동그라미(프로필) 지름
@@ -36,33 +36,62 @@ enum GraphMetrics {
         return clampOffset(offset, content: content, visible: visible)
     }
 
-    static let authorWidth: CGFloat = 120
-    static let timeWidth: CGFloat = 84
+    /// The optional columns after the message, in order; the user drags their header edges to change their widths
+    static let optionalColumns = ["author", "time", "sha"]
+    static let defaultWidths: [String: CGFloat] = ["author": 120, "time": 84, "sha": 72]
+    static func widthRange(_ id: String) -> ClosedRange<CGFloat> {
+        switch id {
+        case "author": return 60...320
+        case "time": return 60...220
+        default: return 50...140
+        }
+    }
+
+    /// Reads "author:140,sha:80" (what the header's drags store) into widths inside each column's range
+    static func widths(_ stored: String) -> [String: CGFloat] {
+        var widths = defaultWidths
+        for pair in stored.split(separator: ",") {
+            let parts = pair.split(separator: ":")
+            guard parts.count == 2, let id = parts.first.map(String.init), let value = Double(parts[1]), defaultWidths[id] != nil else { continue }
+            widths[id] = min(max(CGFloat(value), widthRange(id).lowerBound), widthRange(id).upperBound)
+        }
+        return widths
+    }
+
+    /// Room between an optional column's left edge, where its resize handle is, and its text
+    static let columnInset: CGFloat = 8
+
     /// The column header and the commit detail header share this height so their dividers line up
     static let headerHeight: CGFloat = 32
     /// The filter and column menus at the right end of the header; rows keep this much room when right-hand columns show
     static let headerToolsWidth: CGFloat = 60
 
-    /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간).
-    /// 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다.
+    /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지, 그리고 켠 경우 작성자·시간·SHA.
+    /// 좁으면 SHA·시간·작성자 순으로 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다.
     struct Columns: Equatable {
         var ref = GraphMetrics.refWidth
         var graph: CGFloat
-        var author = false
-        var time = false
+        /// The optional right-hand columns' widths; 0 when off or left out for room
+        var author: CGFloat = 0
+        var time: CGFloat = 0
+        var sha: CGFloat = 0
+        var trailing: CGFloat { author + time + sha }
     }
 
     private static let messageMin: CGFloat = 200
 
-    /// hidden: the columns the user turned off ("ref", "graph"); shown: the optional ones turned on ("author", "time"),
+    /// hidden: the columns the user turned off ("ref", "graph"); shown: the optional ones turned on ("author", "time", "sha"),
     /// which are off by default. The message column always shows.
-    static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = []) -> Columns {
-        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, author: shown.contains("author"), time: shown.contains("time"))
+    static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = [],
+                        widths: [String: CGFloat] = defaultWidths) -> Columns {
+        func optional(_ id: String) -> CGFloat { shown.contains(id) ? widths[id] ?? defaultWidths[id] ?? 0 : 0 }
+        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, author: optional("author"), time: optional("time"), sha: optional("sha"))
         if hidden.contains("ref") { c.ref = 0 }
-        // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 작성자·시간 칸
-        func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + (c.author ? authorWidth : 0) + (c.time ? timeWidth : 0))) }
-        if short() > 0 { c.time = false }
-        if short() > 0 { c.author = false }
+        // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 오른쪽 칸과 그 위 머리의 메뉴 자리
+        func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + c.trailing + (c.trailing > 0 ? headerToolsWidth : 0))) }
+        if short() > 0 { c.sha = 0 }
+        if short() > 0 { c.time = 0 }
+        if short() > 0 { c.author = 0 }
         if short() > 0, c.ref > 0 { c.ref = max(110, c.ref - short()) }
         if short() > 0, c.graph > 0 { c.graph = max(min(graph, 66), c.graph - short()) }
         return c
@@ -75,8 +104,10 @@ struct GraphView: View {
     @ViewState private var width: CGFloat = 1000
     /// Columns the user turned off, comma-separated ("ref,graph")
     @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
-    /// Optional columns the user turned on ("author,time"); off by default
+    /// Optional columns the user turned on ("author,time,sha"); off by default
     @AppStorage("graphShownColumns") private var shownColumns = ""
+    /// Widths the user dragged the optional columns to ("author:140,sha:80")
+    @AppStorage("graphColumnWidths") private var columnWidths = ""
     /// How far the lanes are scrolled sideways when there are more than fit
     @ViewState private var laneOffset: CGFloat = 0
 
@@ -85,14 +116,15 @@ struct GraphView: View {
         let contentWidth = GraphMetrics.contentWidth(lanes: store.maxLanes)
         // 좁은 화면에서는 작성자·시간 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
         let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)),
-                                           shown: Set(shownColumns.split(separator: ",").map(String.init)))
+                                           shown: Set(shownColumns.split(separator: ",").map(String.init)),
+                                           widths: GraphMetrics.widths(columnWidths))
         let offset = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
         VStack(spacing: 0) {
             if store.showSearchBar || store.isSearching {
                 SearchBar()
                 Divider()
             }
-            GraphHeader(columns: columns, hidden: $hiddenColumns, shown: $shownColumns,
+            GraphHeader(columns: columns, hidden: $hiddenColumns, shown: $shownColumns, widths: $columnWidths,
                         contentWidth: contentWidth, offset: offset) { laneOffset = GraphMetrics.clampOffset($0, content: contentWidth, visible: columns.graph) }
             Divider()
             ScrollViewReader { proxy in
@@ -292,6 +324,7 @@ private struct GraphHeader: View {
     let columns: GraphMetrics.Columns
     @Binding var hidden: String
     @Binding var shown: String
+    @Binding var widths: String
     let contentWidth: CGFloat
     let offset: CGFloat
     let onScroll: (CGFloat) -> Void
@@ -311,15 +344,18 @@ private struct GraphHeader: View {
                 .frame(width: columns.graph, alignment: .leading)
             }
             Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-            if columns.author { Text("Author").frame(width: GraphMetrics.authorWidth, alignment: .leading) }
-            if columns.time { Text("Time").frame(width: GraphMetrics.timeWidth, alignment: .trailing) }
+            if columns.author > 0 { label("Author", id: "author", width: columns.author) }
+            if columns.time > 0 { label("Date", id: "time", width: columns.time) }
+            if columns.sha > 0 { label("SHA", id: "sha", width: columns.sha) }
             // the graph filter lives here so it stays reachable while the search bar is hidden
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 GraphFilterMenu()
-                Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
+                Menu { toggles } label: { Image(systemName: "gearshape") }
                     .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
                     .fixedSize()
                     .help("Columns")
+                    .accessibilityLabel("Columns")
             }
             .frame(width: GraphMetrics.headerToolsWidth, alignment: .trailing)
         }
@@ -332,12 +368,39 @@ private struct GraphHeader: View {
         .background(.bar)
     }
 
+    /// An optional column's label; its left edge is a handle that widens or narrows the column
+    private func label(_ title: LocalizedStringKey, id: String, width: CGFloat) -> some View {
+        Text(title)
+            .padding(.leading, GraphMetrics.columnInset)
+            .frame(width: width, alignment: .leading)
+            .overlay(alignment: .leading) {
+                ColumnResizer(width: width, range: GraphMetrics.widthRange(id)) { resize(id, to: $0) }
+                    .offset(x: -4)
+            }
+    }
+
+    private func resize(_ id: String, to width: CGFloat) {
+        var current = GraphMetrics.widths(widths)
+        current[id] = width.rounded()
+        widths = GraphMetrics.optionalColumns.compactMap { key in
+            current[key].flatMap { $0 == GraphMetrics.defaultWidths[key] ? nil : "\(key):\(Int($0))" }
+        }.joined(separator: ",")
+    }
+
     /// Which columns show; the message column always does
     @ViewBuilder private var toggles: some View {
         Toggle("Branch / Tag", isOn: SidebarSections.binding($hidden, "ref"))
         Toggle("Graph", isOn: SidebarSections.binding($hidden, "graph"))
         Toggle("Author", isOn: optional("author"))
-        Toggle("Time", isOn: optional("time"))
+        Toggle("Date", isOn: optional("time"))
+        Toggle("SHA", isOn: optional("sha"))
+        Divider()
+        Button("Reset to default layout") {
+            hidden = ""
+            shown = ""
+            widths = ""
+        }
+        .disabled(hidden.isEmpty && shown.isEmpty && widths.isEmpty)
     }
 
     /// The optional columns are listed when shown, so they stay off until turned on
@@ -347,6 +410,30 @@ private struct GraphHeader: View {
             if on { set.append(id) }
             shown = set.joined(separator: ",")
         })
+    }
+}
+
+/// The left edge of an optional column's label: drag it sideways to change the column's width
+private struct ColumnResizer: View {
+    let width: CGFloat
+    let range: ClosedRange<CGFloat>
+    let onResize: (CGFloat) -> Void
+    @ViewState private var start: CGFloat?
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.secondary.opacity(0.3))
+            .frame(width: 1, height: 14)
+            .frame(width: 8, height: GraphMetrics.headerHeight)
+            .contentShape(Rectangle())
+            .pointerStyle(.columnResize)
+            .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global).onChanged { value in
+                let origin = start ?? width
+                if start == nil { start = origin }
+                // the handle is on the column's left, so dragging left widens it
+                onResize(min(max(origin - value.translation.width, range.lowerBound), range.upperBound))
+            }.onEnded { _ in start = nil })
+            .help("Drag to resize the column")
     }
 }
 
@@ -436,6 +523,7 @@ private struct GraphFilterMenu: View {
                 .foregroundStyle(active ? Color.accentColor : .secondary)
         }
         .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
         .fixedSize()
         .help(store.graphCurrentOnly ? String(localized: "Current branch only") :
               hidden > 0 ? String(localized: "Hidden \(hidden)") :

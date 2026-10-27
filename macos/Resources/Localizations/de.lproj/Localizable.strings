@@ -1027,7 +1027,6 @@
 "Show sidebar" = "Seitenleiste einblenden";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Spalten";
-"Time" = "Zeit";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Abläufe";
@@ -1174,3 +1173,6 @@
 "Copy redacted log" = "Bereinigtes Log kopieren";
 "Job log" = "Job-Log";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Die Log-Vorschau ist auf 2 MB begrenzt. Das vollständige Log finden Sie im Browser.";
+"Reset to default layout" = "Standardlayout wiederherstellen";
+"Drag to resize the column" = "Ziehen, um die Spaltenbreite zu ändern";
+"Date" = "Datum";

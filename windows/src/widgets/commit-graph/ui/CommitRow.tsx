@@ -8,7 +8,7 @@ import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
-import { AUTHOR_W, AVATAR, type GraphColumns, LANE_W, LEFT_PAD, ROW_H, TIME_W, HEADER_TOOLS_W } from "../lib/metrics";
+import { AVATAR, type GraphColumns, HEADER_TOOLS_W, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
 
 export const CommitRow = memo(function CommitRow({
   store,
@@ -53,8 +53,7 @@ export const CommitRow = memo(function CommitRow({
   return (
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
-      // right-hand columns line up with their labels, which sit left of the header's menus
-      style={{ top, gap: 0, paddingRight: 12 + (cols.author || cols.time ? HEADER_TOOLS_W : 0) }}
+      style={{ top, gap: 0 }}
       onMouseDown={() => store.select(rowSelection(c))}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
@@ -119,50 +118,59 @@ export const CommitRow = memo(function CommitRow({
           </span>
         </div>
       )}
-      {/* 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게). 작성자·시간·SHA 는 마우스를 올리면. */}
-      <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
-        <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
-        {wip ? (
-          <>
-            <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
-            <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
-              {t("{0} files", wipCount)}
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="msg-subject" style={{ color: isMerge(c) ? "var(--text-2)" : undefined }}>
-              {c.subject}
-            </span>
-            {ci && (
-              <span
-                className="ci-badge"
-                data-tip={t("CI: {0} · {1}#{2} — click to open in Actions", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => store.openCI(ci)}
-              >
-                <CIStatusIcon status={ci.status} size={12} />
+      {/* the message and the optional columns after it; selection and search hits tint all of it to the row's end.
+          The right-hand columns line up with their labels, which sit left of the header's menus. */}
+      <div className="row-tail" style={{ paddingRight: 12 + (cols.author + cols.time + cols.sha > 0 ? HEADER_TOOLS_W : 0) }}>
+        {/* the message: lane-coloured bar, subject, first body line dimmed; author, time and SHA in the tip or their columns */}
+        <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
+          <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
+          {wip ? (
+            <>
+              <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
+              <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
+                {t("{0} files", wipCount)}
               </span>
-            )}
-            {c.body && (
-              <span className="msg-body">
-                <span>{c.body}</span>
+            </>
+          ) : (
+            <>
+              <span className="msg-subject" style={{ color: isMerge(c) ? "var(--text-2)" : undefined }}>
+                {c.subject}
               </span>
-            )}
-          </>
+              {ci && (
+                <span
+                  className="ci-badge"
+                  data-tip={t("CI: {0} · {1}#{2} — click to open in Actions", statusInfo[ci.status].title, ci.name ? ci.name + " " : "", ci.number)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={() => store.openCI(ci)}
+                >
+                  <CIStatusIcon status={ci.status} size={12} />
+                </span>
+              )}
+              {c.body && (
+                <span className="msg-body">
+                  <span>{c.body}</span>
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        {/* the optional columns at the right end, under their header labels */}
+        {cols.author > 0 && (
+          <span className="col-opt col-author" style={{ width: cols.author }} data-tip={wip ? undefined : `${c.author} <${c.email}>`}>
+            {wip ? "" : c.author}
+          </span>
+        )}
+        {cols.time > 0 && (
+          <span className="col-opt col-time" style={{ width: cols.time }} data-tip={wip ? undefined : longDate(c.date)}>
+            {wip ? "" : shortDate(c.date)}
+          </span>
+        )}
+        {cols.sha > 0 && (
+          <span className="col-opt col-sha mono" style={{ width: cols.sha }}>
+            {wip ? "" : short(c.id)}
+          </span>
         )}
       </div>
-      {/* the optional fixed-width columns at the right end, under their header labels */}
-      {cols.author && (
-        <span className="col-author" style={{ width: AUTHOR_W }} data-tip={wip ? undefined : `${c.author} <${c.email}>`}>
-          {wip ? "" : c.author}
-        </span>
-      )}
-      {cols.time && (
-        <span className="col-time" style={{ width: TIME_W }} data-tip={wip ? undefined : longDate(c.date)}>
-          {wip ? "" : shortDate(c.date)}
-        </span>
-      )}
     </div>
   );
 });

@@ -1060,7 +1060,6 @@
 "Show sidebar" = "Показать боковую панель";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Столбцы";
-"Time" = "Время";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Потоки";
@@ -1207,3 +1206,6 @@
 "Copy redacted log" = "Копировать журнал со скрытыми секретами";
 "Job log" = "Журнал задания";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере.";
+"Reset to default layout" = "Восстановить макет по умолчанию";
+"Drag to resize the column" = "Перетащите, чтобы изменить ширину столбца";
+"Date" = "Дата";

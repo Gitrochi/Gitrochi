@@ -1050,7 +1050,6 @@
  "Hide sidebar": "Kenar çubuğunu gizle",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Bölümler simge şeridi olarak elinizin altında kalır; açmak için birinin üzerine gelin.",
  "Columns": "Sütunlar",
- "Time": "Zaman",
  "Open a repository to use flows.": "Akışları kullanmak için bir depo açın.",
  "Flows": "Akışlar",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Akışlar|Bu deponun testlerini, denetimlerini ve CI adımlarını tek bir akış olarak çalıştırın",
@@ -1235,5 +1234,8 @@
  "{0} jobs waiting to be run manually": "Elle çalıştırılmayı bekleyen {0} iş",
  "Copy redacted log": "Gizlenmiş günlüğü kopyala",
  "Job log": "İş günlüğü",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın.",
+ "Reset to default layout": "Varsayılan düzene sıfırla",
+ "Drag to resize the column": "Sütun genişliğini değiştirmek için sürükleyin",
+ "Date": "Tarih"
 }

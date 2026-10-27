@@ -1239,7 +1239,6 @@
   "Opens another shell next to this one, in the same folder.": "같은 폴더에서 이 터미널 옆에 셸을 하나 더 엽니다.",
   "Opens another shell below this one, in the same folder.": "같은 폴더에서 이 터미널 아래에 셸을 하나 더 엽니다.",
   "Columns": "칸",
-  "Time": "시간",
   "%lld modified files": "변경된 파일 %lld개",
   "%lld review requests loaded": "리뷰 요청 %lld개 불러옴",
   "%lld unresolved blocks in the result": "최종 결과에 미해결 블록 %lld개",
@@ -2076,5 +2075,9 @@
   "Choose a run to see its jobs and read their logs.": "실행을 고르면 작업과 로그를 볼 수 있습니다.",
   "Pipeline #{0}": "파이프라인 #{0}",
   "Run #{0}": "실행 #{0}",
-  "{0} jobs waiting to be run manually": "수동 실행을 기다리는 작업 {0}개"
+  "{0} jobs waiting to be run manually": "수동 실행을 기다리는 작업 {0}개",
+  "Reset to default layout": "기본 레이아웃으로 되돌리기",
+  "Drag to resize the column": "끌어서 칸 너비 조정",
+  "SHA": "SHA",
+  "Date": "날짜"
 }

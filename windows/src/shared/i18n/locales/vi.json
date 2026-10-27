@@ -1017,7 +1017,6 @@
  "Hide sidebar": "Ẩn thanh bên",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Các mục vẫn ở trong tầm tay dưới dạng dải biểu tượng; di chuột lên một biểu tượng để mở.",
  "Columns": "Cột",
- "Time": "Thời gian",
  "Open a repository to use flows.": "Mở một kho lưu trữ để dùng luồng.",
  "Flows": "Luồng",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Luồng|Chạy kiểm thử, kiểm tra và các bước CI của kho lưu trữ này thành một luồng",
@@ -1202,5 +1201,8 @@
  "{0} jobs waiting to be run manually": "{0} job đang chờ chạy thủ công",
  "Copy redacted log": "Sao chép log đã che thông tin nhạy cảm",
  "Job log": "Log của job",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log.",
+ "Reset to default layout": "Khôi phục bố cục mặc định",
+ "Drag to resize the column": "Kéo để đổi độ rộng cột",
+ "Date": "Ngày"
 }

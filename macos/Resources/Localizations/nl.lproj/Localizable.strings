@@ -1004,7 +1004,6 @@
 "Show sidebar" = "Zijbalk tonen";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Kolommen";
-"Time" = "Tijd";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Flows";
@@ -1151,3 +1150,6 @@
 "Copy redacted log" = "Gemaskeerd log kopiëren";
 "Job log" = "Joblog";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "De logvoorvertoning is beperkt tot 2 MB. Open de browser voor het volledige log.";
+"Reset to default layout" = "Standaardindeling herstellen";
+"Drag to resize the column" = "Sleep om de kolombreedte te wijzigen";
+"Date" = "Datum";

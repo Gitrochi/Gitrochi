@@ -1040,7 +1040,6 @@
 "Show sidebar" = "Zobrazit postranní panel";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Sloupce";
-"Time" = "Čas";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Toky";
@@ -1187,3 +1186,6 @@
 "Copy redacted log" = "Kopírovat log se skrytými citlivými údaji";
 "Job log" = "Log úlohy";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči.";
+"Reset to default layout" = "Obnovit výchozí rozvržení";
+"Drag to resize the column" = "Přetažením změníte šířku sloupce";
+"Date" = "Datum";

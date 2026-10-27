@@ -1034,7 +1034,6 @@
  "Hide sidebar": "Seitenleiste ausblenden",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Die Bereiche bleiben als Symbolleiste erreichbar; zeigen Sie auf ein Symbol, um einen zu öffnen.",
  "Columns": "Spalten",
- "Time": "Zeit",
  "Open a repository to use flows.": "Öffnen Sie ein Repository, um Abläufe zu nutzen.",
  "Flows": "Abläufe",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Abläufe|Tests, Prüfungen und CI-Schritte dieses Repositorys als einen Ablauf ausführen",
@@ -1225,5 +1224,8 @@
  "{0} jobs waiting to be run manually": "Jobs, die auf manuelle Ausführung warten: {0}",
  "Copy redacted log": "Bereinigtes Log kopieren",
  "Job log": "Job-Log",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Die Log-Vorschau ist auf 2 MB begrenzt. Das vollständige Log finden Sie im Browser."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Die Log-Vorschau ist auf 2 MB begrenzt. Das vollständige Log finden Sie im Browser.",
+ "Reset to default layout": "Standardlayout wiederherstellen",
+ "Drag to resize the column": "Ziehen, um die Spaltenbreite zu ändern",
+ "Date": "Datum"
 }

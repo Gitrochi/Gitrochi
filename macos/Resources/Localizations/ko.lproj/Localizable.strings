@@ -1184,7 +1184,6 @@
 
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "칸";
-"Time" = "시간";
 
 /* 목적별 작업 화면과 커밋 준비 */
 "Workspace" = "작업 화면";
@@ -2079,3 +2078,7 @@
 "Pipeline #%lld" = "파이프라인 #%1$lld";
 "Run #%lld" = "실행 #%1$lld";
 "%lld jobs waiting to be run manually" = "수동 실행을 기다리는 작업 %1$lld개";
+"Reset to default layout" = "기본 레이아웃으로 되돌리기";
+"Drag to resize the column" = "끌어서 칸 너비 조정";
+"SHA" = "SHA";
+"Date" = "날짜";

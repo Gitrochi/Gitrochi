@@ -1044,7 +1044,6 @@
  "Hide sidebar": "Ukryj pasek boczny",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Sekcje pozostają pod ręką jako pasek ikon; najedź na ikonę, aby otworzyć sekcję.",
  "Columns": "Kolumny",
- "Time": "Czas",
  "Open a repository to use flows.": "Otwórz repozytorium, aby używać przepływów.",
  "Flows": "Przepływy",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Przepływy|Uruchamiaj testy, kontrole i kroki CI tego repozytorium jako jeden przepływ",
@@ -1229,5 +1228,8 @@
  "{0} jobs waiting to be run manually": "Zadania oczekujące na ręczne uruchomienie: {0}",
  "Copy redacted log": "Kopiuj log z ukrytymi danymi",
  "Job log": "Log zadania",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Podgląd logu jest ograniczony do 2 MB. Pełny log otwórz w przeglądarce."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Podgląd logu jest ograniczony do 2 MB. Pełny log otwórz w przeglądarce.",
+ "Reset to default layout": "Przywróć domyślny układ",
+ "Drag to resize the column": "Przeciągnij, aby zmienić szerokość kolumny",
+ "Date": "Data"
 }

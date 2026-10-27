@@ -1061,7 +1061,6 @@
  "Hide sidebar": "Скрыть боковую панель",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Разделы остаются под рукой в виде панели значков; наведите на значок, чтобы открыть раздел.",
  "Columns": "Столбцы",
- "Time": "Время",
  "Open a repository to use flows.": "Откройте репозиторий, чтобы использовать потоки.",
  "Flows": "Потоки",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Потоки|Запускайте тесты, проверки и шаги CI этого репозитория как один поток",
@@ -1246,5 +1245,8 @@
  "{0} jobs waiting to be run manually": "Заданий, ожидающих ручного запуска: {0}",
  "Copy redacted log": "Копировать журнал со скрытыми секретами",
  "Job log": "Журнал задания",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере.",
+ "Reset to default layout": "Восстановить макет по умолчанию",
+ "Drag to resize the column": "Перетащите, чтобы изменить ширину столбца",
+ "Date": "Дата"
 }

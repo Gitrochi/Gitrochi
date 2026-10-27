@@ -1013,7 +1013,6 @@
  "Hide sidebar": "Sembunyikan bilah samping",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Bagian tetap tersedia sebagai deretan ikon; arahkan kursor ke salah satunya untuk membukanya.",
  "Columns": "Kolom",
- "Time": "Waktu",
  "Open a repository to use flows.": "Buka repositori untuk memakai alur.",
  "Flows": "Alur",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Alur|Jalankan tes, pemeriksaan, dan langkah CI repositori ini sebagai satu alur",
@@ -1199,5 +1198,8 @@
  "{0} jobs waiting to be run manually": "{0} job menunggu dijalankan manual",
  "Copy redacted log": "Salin log yang disamarkan",
  "Job log": "Log job",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap.",
+ "Reset to default layout": "Kembalikan tata letak bawaan",
+ "Drag to resize the column": "Seret untuk mengubah lebar kolom",
+ "Date": "Tanggal"
 }

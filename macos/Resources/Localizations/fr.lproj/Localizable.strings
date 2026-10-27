@@ -1033,7 +1033,6 @@
 "Show sidebar" = "Afficher la barre latérale";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Colonnes";
-"Time" = "Heure";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Flux";
@@ -1180,3 +1179,6 @@
 "Copy redacted log" = "Copier le journal masqué";
 "Job log" = "Journal du job";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "L’aperçu du journal est limité à 2 Mo. Ouvrez le navigateur pour le journal complet.";
+"Reset to default layout" = "Rétablir la disposition par défaut";
+"Drag to resize the column" = "Faites glisser pour redimensionner la colonne";
+"Date" = "Date";

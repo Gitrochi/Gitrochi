@@ -1061,7 +1061,6 @@
 "Show sidebar" = "サイドバーを表示";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "列";
-"Time" = "時刻";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "フロー";
@@ -1208,3 +1207,6 @@
 "Copy redacted log" = "秘密情報を伏せたログをコピー";
 "Job log" = "ジョブのログ";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。";
+"Reset to default layout" = "デフォルトのレイアウトに戻す";
+"Drag to resize the column" = "ドラッグして列の幅を変更";
+"Date" = "日付";

@@ -1048,7 +1048,6 @@
 "Show sidebar" = "Kenar çubuğunu göster";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Sütunlar";
-"Time" = "Zaman";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Akışlar";
@@ -1195,3 +1194,6 @@
 "Copy redacted log" = "Gizlenmiş günlüğü kopyala";
 "Job log" = "İş günlüğü";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın.";
+"Reset to default layout" = "Varsayılan düzene sıfırla";
+"Drag to resize the column" = "Sütun genişliğini değiştirmek için sürükleyin";
+"Date" = "Tarih";

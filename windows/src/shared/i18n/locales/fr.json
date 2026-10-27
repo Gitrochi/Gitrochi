@@ -1035,7 +1035,6 @@
  "Hide sidebar": "Masquer la barre latérale",
  "The sections stay at hand as a rail of icons; hover one to open it.": "Les sections restent à portée dans une barre d’icônes ; survolez-en une pour l’ouvrir.",
  "Columns": "Colonnes",
- "Time": "Heure",
  "Open a repository to use flows.": "Ouvrez un dépôt pour utiliser les flux.",
  "Flows": "Flux",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "Flux|Exécuter les tests, les vérifications et les étapes CI de ce dépôt en un seul flux",
@@ -1224,5 +1223,8 @@
  "{0} jobs waiting to be run manually": "Jobs en attente de lancement manuel : {0}",
  "Copy redacted log": "Copier le journal masqué",
  "Job log": "Journal du job",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "L’aperçu du journal est limité à 2 Mo. Ouvrez le navigateur pour le journal complet."
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "L’aperçu du journal est limité à 2 Mo. Ouvrez le navigateur pour le journal complet.",
+ "Reset to default layout": "Rétablir la disposition par défaut",
+ "Drag to resize the column": "Faites glisser pour redimensionner la colonne",
+ "Date": "Date"
 }

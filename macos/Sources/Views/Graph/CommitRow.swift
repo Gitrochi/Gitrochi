@@ -62,64 +62,59 @@ struct CommitRow: View {
                             .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
             }
-            // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
-            HStack(spacing: 6) {
-                Rectangle()
-                    .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
-                    .frame(width: 3, height: Self.bandHeight)
-                    .padding(.trailing, 4)
-                if c.isPending {
-                    if c.wipWorktree != nil {
-                        Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
-                    } else {
-                        Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
-                    }
-                    Text("\(wipCount) files")
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 6).padding(.vertical, 1)
-                        .background(Capsule().fill(tint.opacity(0.18)))
-                } else {
-                    SubjectAndBody {
-                        Text(c.subject)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .foregroundStyle(c.isMerge ? .secondary : .primary)
-                        if let ci {
-                            CIStatusIcon(status: ci.status, size: 11)
-                                .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in Actions")
-                                .onTapGesture { store.openCI(ci) }
+            HStack(spacing: 0) {
+                // the message: lane-coloured bar, subject, first body line dimmed; author, date and SHA in the tip or their columns
+                HStack(spacing: 6) {
+                    Rectangle()
+                        .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
+                        .frame(width: 3, height: Self.bandHeight)
+                        .padding(.trailing, 4)
+                    if c.isPending {
+                        if c.wipWorktree != nil {
+                            Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
+                        } else {
+                            Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
                         }
-                        if !c.body.isEmpty {
-                            Text(c.body)
+                        Text("\(wipCount) files")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 6).padding(.vertical, 1)
+                            .background(Capsule().fill(tint.opacity(0.18)))
+                    } else {
+                        SubjectAndBody {
+                            Text(c.subject)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
-                                .foregroundStyle(.secondary)
-                                .layoutValue(key: IsCommitBody.self, value: true)
+                                .foregroundStyle(c.isMerge ? .secondary : .primary)
+                            if let ci {
+                                CIStatusIcon(status: ci.status, size: 11)
+                                    .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in Actions")
+                                    .onTapGesture { store.openCI(ci) }
+                            }
+                            if !c.body.isEmpty {
+                                Text(c.body)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .foregroundStyle(.secondary)
+                                    .layoutValue(key: IsCommitBody.self, value: true)
+                            }
                         }
                     }
+                    Spacer(minLength: 8)
                 }
-                Spacer(minLength: 8)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .clipped()
+                .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
+                if columns.author > 0 { cell(c.isPending ? "" : c.author, width: columns.author) }
+                if columns.time > 0 { cell(c.isPending ? "" : Fmt.short(c.date), width: columns.time) }
+                if columns.sha > 0 { cell(c.isPending ? "" : c.short, width: columns.sha).monospaced() }
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            // right-hand columns line up with their labels, which sit left of the header's menus
+            .padding(.trailing, 12 + (columns.trailing > 0 ? GraphMetrics.headerToolsWidth : 0))
             .frame(height: Self.bandHeight)
-            // selection and search hits tint only the message, at the band's height
+            // selection and search hits tint the message and the columns after it to the row's end, at the band's height
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
-            .clipped()
-            .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
-            if columns.author {
-                Text(c.isPending ? "" : c.author)
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
-                    .frame(width: GraphMetrics.authorWidth, alignment: .leading)
-            }
-            if columns.time {
-                Text(c.isPending ? "" : Fmt.short(c.date))
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                    .frame(width: GraphMetrics.timeWidth, alignment: .trailing)
-            }
         }
         .font(.system(size: 12.5))
-        // right-hand columns line up with their labels, which sit left of the header's menus
-        .padding(.trailing, 12 + (columns.author || columns.time ? GraphMetrics.headerToolsWidth : 0))
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {
@@ -144,6 +139,16 @@ struct CommitRow: View {
             store.handleDrop(payload, onto: entry)
             return true
         } isTargeted: { dropTargeted = $0 && !c.isPending }
+    }
+}
+
+extension CommitRow {
+    /// An optional column's text, inset from the column's left edge like its label
+    fileprivate func cell(_ text: String, width: CGFloat) -> some View {
+        Text(verbatim: text)
+            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+            .padding(.leading, GraphMetrics.columnInset)
+            .frame(width: width, alignment: .leading)
     }
 }
 

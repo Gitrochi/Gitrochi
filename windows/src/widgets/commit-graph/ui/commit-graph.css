@@ -131,7 +131,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-right: 12px;
   height: 28px;
   font-size: 12.5px;
   position: absolute;
@@ -139,17 +138,17 @@
   right: 0;
 }
 
-/* Hover, selection and search hits tint only the message, at the band's height (rows stay apart) */
-.commit-row:hover .msg {
+/* Hover, selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart) */
+.commit-row:hover .row-tail {
   background: var(--hover);
 }
 
-.commit-row.selected .msg,
-.commit-row.selected.hit .msg {
+.commit-row.selected .row-tail,
+.commit-row.selected.hit .row-tail {
   background: var(--select);
 }
 
-.commit-row.hit .msg {
+.commit-row.hit .row-tail {
   background: var(--hit);
 }
 
@@ -240,15 +239,24 @@
   object-fit: cover;
 }
 
-.commit-row .msg {
+.commit-row .row-tail {
   flex: 1;
   min-width: 0;
   height: 24px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  box-sizing: border-box;
   /* the bar meets the band: cancel the row's gap */
   margin-left: -8px;
+}
+
+.commit-row .msg {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
 }
 
@@ -290,32 +298,52 @@
   }
 }
 
-/* the optional author and time columns at the row's right end, under their header labels: author left, time right */
-.commit-row .col-author,
-.commit-row .col-time,
-.graph-header .head-author,
-.graph-header .head-time {
+/* the optional author, time and SHA columns at the row's right end, under their header labels;
+   the text starts 8px in from the column's left edge, where the header's resize handle is (macOS: GraphMetrics.columnInset) */
+.commit-row .col-opt,
+.graph-header > .head-opt {
   flex: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  box-sizing: border-box;
+  padding-left: 8px;
   white-space: nowrap;
 }
 
-.commit-row .col-time,
-.graph-header .head-time {
-  text-align: right;
-}
-
-.commit-row .col-author,
-.commit-row .col-time {
+.commit-row .col-opt {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11.5px;
   color: var(--text-2);
 }
 
-/* the row spaces its columns with an 8px gap; the header has none */
-.graph-header .head-author,
-.graph-header .head-time {
-  margin-left: 8px;
+.graph-header > .head-opt {
+  position: relative;
+  overflow: visible;
+}
+
+.graph-header .head-opt-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* drag an optional column's left edge to change its width */
+.graph-header .col-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: col-resize;
+}
+
+.graph-header .col-resizer::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 3.5px;
+  width: 1px;
+  background: var(--border-strong);
 }
 
 /* the filter and column menus sit at the header's right end in a fixed-width box */
@@ -323,7 +351,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 8px;
 }
 
 /* the message header: its label, taking the room left over */
@@ -350,15 +378,6 @@
   font-weight: 600;
   padding: 0 6px;
   border-radius: 999px;
-}
-
-/* the graph filter sits in the column header row, so it stays reachable while the search bar is hidden */
-.graph-header .graph-filter {
-  height: 22px;
-  min-width: 0;
-  padding: 0 6px;
-  margin-right: 2px;
-  font-weight: 500;
 }
 
 .searchbar .search-close {

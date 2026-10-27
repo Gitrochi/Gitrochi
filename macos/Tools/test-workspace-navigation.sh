@@ -97,7 +97,7 @@ import SwiftUI
         for width: CGFloat in [410, 520, 780, 1200] {
             for lanes in [1, 6, 24] {
                 let columns = GraphMetrics.columns(width: width, graph: GraphMetrics.width(lanes: lanes))
-                let message = width - columns.ref - columns.graph - 32 - (columns.time ? 90 : 0)
+                let message = width - columns.ref - columns.graph - 32 - columns.trailing
                 precondition(message >= 199, "The commit message needs readable width")
             }
         }
@@ -238,18 +238,20 @@ import SwiftUI
         precondition(GraphMetrics.offset(revealing: 1, current: reveal, content: wide, visible: window) <= GraphMetrics.leftPad + GraphMetrics.laneWidth)
         precondition(GraphMetrics.offset(revealing: 3, current: 0, content: wide, visible: window) == 0, "A visible lane leaves the offset alone")
         let plain = GraphMetrics.columns(width: 1400, graph: 300)
-        precondition(!plain.author && !plain.time, "Author and time columns are off by default")
-        let both = GraphMetrics.columns(width: 1400, graph: 300, shown: ["author", "time"])
-        precondition(both.author && both.time)
-        let narrow = GraphMetrics.columns(width: 880, graph: 300, shown: ["author", "time"])
-        precondition(!narrow.time && narrow.author, "Narrow windows drop time before author")
+        precondition(plain.trailing == 0, "Author, time and SHA columns are off by default")
+        let all = GraphMetrics.columns(width: 1600, graph: 300, shown: ["author", "time", "sha"])
+        precondition(all.author == 120 && all.time == 84 && all.sha == 72)
+        let narrow = GraphMetrics.columns(width: 950, graph: 300, shown: ["author", "time", "sha"])
+        precondition(narrow.sha == 0 && narrow.time == 0 && narrow.author > 0, "Narrow windows drop SHA, then time, before author")
+        let dragged = GraphMetrics.columns(width: 1600, graph: 300, shown: ["author"], widths: GraphMetrics.widths("author:200,time:5,bogus:9"))
+        precondition(dragged.author == 200 && GraphMetrics.widths("time:5")["time"] == GraphMetrics.widthRange("time").lowerBound, "Dragged widths stay inside each column's range")
         let hiddenColumns = GraphMetrics.columns(width: 520, graph: 600, hidden: ["ref", "graph", "time"])
-        precondition(hiddenColumns.ref == 0 && hiddenColumns.graph == 0 && !hiddenColumns.time, "Latest-main graph column visibility must survive UI integration")
+        precondition(hiddenColumns.ref == 0 && hiddenColumns.graph == 0 && hiddenColumns.time == 0, "Latest-main graph column visibility must survive UI integration")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional columns; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional, resizable columns; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
     }
 }
 SWIFT

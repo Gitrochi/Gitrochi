@@ -1057,7 +1057,6 @@
  "Hide sidebar": "ซ่อนแถบด้านข้าง",
  "The sections stay at hand as a rail of icons; hover one to open it.": "ส่วนต่าง ๆ ยังอยู่ใกล้มือเป็นแถบไอคอน วางเมาส์บนไอคอนเพื่อเปิด",
  "Columns": "คอลัมน์",
- "Time": "เวลา",
  "Open a repository to use flows.": "เปิดรีโพสิทอรีเพื่อใช้โฟลว์",
  "Flows": "โฟลว์",
  "Flows|Run this repository's tests, checks and CI steps as one flow": "โฟลว์|รันการทดสอบ การตรวจ และขั้นตอน CI ของรีโพสิทอรีนี้เป็นโฟลว์เดียว",
@@ -1242,5 +1241,8 @@
  "{0} jobs waiting to be run manually": "{0} จ็อบรอการรันแบบแมนนวล",
  "Copy redacted log": "คัดลอกล็อกที่ปิดข้อมูลลับแล้ว",
  "Job log": "ล็อกของจ็อบ",
- "Log preview is limited to 2 MB. Open the browser for the complete log.": "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด"
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด",
+ "Reset to default layout": "คืนค่าเลย์เอาต์เริ่มต้น",
+ "Drag to resize the column": "ลากเพื่อปรับความกว้างคอลัมน์",
+ "Date": "วันที่"
 }

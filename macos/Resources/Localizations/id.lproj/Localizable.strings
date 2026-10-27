@@ -1011,7 +1011,6 @@
 "Show sidebar" = "Tampilkan bilah samping";
 /* Graph columns the user can turn off (header menu) */
 "Columns" = "Kolom";
-"Time" = "Waktu";
 
 /* Flows (.gitch/flow.yml, the gitch-flow engine) */
 "Flows" = "Alur";
@@ -1158,3 +1157,6 @@
 "Copy redacted log" = "Salin log yang disamarkan";
 "Job log" = "Log job";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap.";
+"Reset to default layout" = "Kembalikan tata letak bawaan";
+"Drag to resize the column" = "Seret untuk mengubah lebar kolom";
+"Date" = "Tanggal";
