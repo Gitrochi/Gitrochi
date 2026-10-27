@@ -1150,3 +1150,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "Không mở được %1$@: không nằm trong kho Git nào.";
 "Back to the repository screen (⌘[)" = "Quay lại màn hình kho lưu trữ (⌘[)";
 "Back to the repository screen" = "Quay lại màn hình kho lưu trữ";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "Kéo hoặc vuốt ngang trên đồ thị để cuộn ngang";

@@ -1182,3 +1182,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ açılamadı: bir Git deposunun içinde değil.";
 "Back to the repository screen (⌘[)" = "Depo ekranına dön (⌘[)";
 "Back to the repository screen" = "Depo ekranına dön";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "Grafiği yatay kaydırmak için sürükleyin veya üzerinde yana kaydırın";

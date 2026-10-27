@@ -1197,3 +1197,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "无法打开 %1$@：它不在 Git 仓库中。";
 "Back to the repository screen (⌘[)" = "返回仓库界面 (⌘[)";
 "Back to the repository screen" = "返回仓库界面";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "拖动或在图上左右轻扫可横向滚动";

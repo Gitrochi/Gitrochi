@@ -2073,3 +2073,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다.";
 "Back to the repository screen (⌘[)" = "저장소 화면으로 돌아가기 (⌘[)";
 "Back to the repository screen" = "저장소 화면으로 돌아가기";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "끌거나 그래프 위에서 옆으로 밀면 그래프가 가로로 움직입니다";

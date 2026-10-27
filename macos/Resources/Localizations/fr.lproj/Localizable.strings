@@ -1167,3 +1167,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "Impossible d'ouvrir %1$@ : il ne se trouve dans aucun dépôt Git.";
 "Back to the repository screen (⌘[)" = "Revenir à l'écran du dépôt (⌘[)";
 "Back to the repository screen" = "Revenir à l'écran du dépôt";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "Faites glisser ou balayez latéralement sur le graphe pour le faire défiler";

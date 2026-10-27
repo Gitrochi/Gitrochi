@@ -1177,3 +1177,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "Nie można otworzyć %1$@: nie znajduje się w repozytorium Git.";
 "Back to the repository screen (⌘[)" = "Wróć do ekranu repozytorium (⌘[)";
 "Back to the repository screen" = "Wróć do ekranu repozytorium";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "Przeciągnij lub przesuń w bok nad grafem, aby przewinąć go w poziomie";

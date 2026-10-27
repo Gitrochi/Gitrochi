@@ -64,6 +64,23 @@ export function GraphView({ store }: { store: RepoStore }) {
   useEffect(() => { if (laneOffset !== laneOffsetState) setLaneOffset(laneOffset); }, [laneOffset, laneOffsetState]);
   const laneOffsetRef = useRef(laneOffset);
   laneOffsetRef.current = laneOffset;
+  const laneOverflowRef = useRef(laneOverflow);
+  laneOverflowRef.current = laneOverflow;
+  // A sideways trackpad swipe (or Shift+wheel) anywhere over the rows scrolls the lanes; vertical scrolling stays with the list.
+  // A native listener, because React's wheel handlers are passive and could not stop the list from taking the event.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (laneOverflowRef.current <= 0) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
+      if (!delta) return;
+      e.preventDefault();
+      setLaneOffset(clampLaneOffset(laneOffsetRef.current + delta, laneOverflowRef.current));
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
   // a newly selected commit whose node is outside the visible lanes scrolls them into view
   useEffect(() => {
     const id = store.selectedID, i = id ? store.commitIndex.get(id) : undefined, entry = i === undefined ? undefined : store.entries[i];
@@ -78,7 +95,6 @@ export function GraphView({ store }: { store: RepoStore }) {
       ["ref", t("Branch / Tag")],
       ["graph", t("Graph")],
     ] as [GraphColumnId, string][]).map(([id, label]) => ({ label, checked: !hiddenColumns.includes(id), onClick: () => settings.set("graphHiddenColumns", toggleColumn(hiddenColumns, id)) })),
-    "divider",
     ...([
       ["author", t("Author")],
       ["time", t("Time")],

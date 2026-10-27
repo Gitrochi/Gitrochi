@@ -1177,3 +1177,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "Nem sikerült megnyitni: %1$@ – nincs Git-tárolóban.";
 "Back to the repository screen (⌘[)" = "Vissza a tároló képernyőjére (⌘[)";
 "Back to the repository screen" = "Vissza a tároló képernyőjére";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "Húzd, vagy söpörj oldalra a gráf fölött a vízszintes görgetéshez";

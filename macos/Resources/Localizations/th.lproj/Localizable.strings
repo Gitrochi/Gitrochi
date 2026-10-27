@@ -1190,3 +1190,4 @@
 "Couldn't open %@: it isn't inside a Git repository." = "เปิด %1$@ ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git";
 "Back to the repository screen (⌘[)" = "กลับไปที่หน้าจอที่เก็บ (⌘[)";
 "Back to the repository screen" = "กลับไปที่หน้าจอที่เก็บ";
+"Drag to scroll the graph sideways, or swipe sideways over the graph" = "ลากหรือปัดด้านข้างบนกราฟเพื่อเลื่อนในแนวนอน";

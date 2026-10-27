@@ -149,6 +149,11 @@ struct GraphView: View {
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+        .background(SideScrollMonitor(active: contentWidth > columns.graph) { delta in
+            // read the stored offset, not the one from the last render: several wheel events can arrive in between
+            let current = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
+            laneOffset = GraphMetrics.clampOffset(current - delta, content: contentWidth, visible: columns.graph)
+        })
         .overlay {
             if store.entries.isEmpty {
                 ContentUnavailableView("No commits yet", systemImage: "circle.dotted",
@@ -326,7 +331,6 @@ private struct GraphHeader: View {
     @ViewBuilder private var toggles: some View {
         Toggle("Branch / Tag", isOn: SidebarSections.binding($hidden, "ref"))
         Toggle("Graph", isOn: SidebarSections.binding($hidden, "graph"))
-        Divider()
         Toggle("Author", isOn: optional("author"))
         Toggle("Time", isOn: optional("time"))
     }
@@ -366,24 +370,45 @@ private struct LaneScroller: View {
                 if dragStart == nil { dragStart = start }
                 onScroll(start + value.translation.width * (content - visible) / travel)
             }.onEnded { _ in dragStart = nil })
-            .help("Scroll the graph sideways")
+            .help("Drag to scroll the graph sideways, or swipe sideways over the graph")
         }
         .frame(height: 8)
-        .background(SideScrollCatcher { delta in onScroll(offset - delta) })
     }
 }
 
-/// Sideways trackpad or Shift-wheel scrolling over the header; vertical wheel events pass on
-private struct SideScrollCatcher: NSViewRepresentable {
+/// Sideways trackpad swipes (and Shift with a mouse wheel) anywhere over the graph scroll its lanes. A local event
+/// monitor sees the wheel events before the list does: a mostly sideways one is taken, everything else passes on
+/// to the list's vertical scrolling.
+private struct SideScrollMonitor: NSViewRepresentable {
+    let active: Bool
     let onScroll: (CGFloat) -> Void
-    func makeNSView(context: Context) -> CatcherView { CatcherView() }
-    func updateNSView(_ view: CatcherView, context: Context) { view.onScroll = onScroll }
-    final class CatcherView: NSView {
+    func makeNSView(context: Context) -> MonitorView { MonitorView() }
+    func updateNSView(_ view: MonitorView, context: Context) { view.active = active; view.onScroll = onScroll }
+    static func dismantleNSView(_ view: MonitorView, coordinator: ()) { view.stop() }
+
+    final class MonitorView: NSView {
+        var active = false
         var onScroll: ((CGFloat) -> Void)?
-        override func scrollWheel(with event: NSEvent) {
-            let dx = event.modifierFlags.contains(.shift) && event.scrollingDeltaX == 0 ? event.scrollingDeltaY : event.scrollingDeltaX
-            guard abs(dx) > abs(event.scrollingDeltaY) || event.modifierFlags.contains(.shift) else { return super.scrollWheel(with: event) }
-            onScroll?(dx)
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            stop()
+            guard window != nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+                guard let self, self.active, event.window === self.window,
+                      self.bounds.contains(self.convert(event.locationInWindow, from: nil)) else { return event }
+                let shift = event.modifierFlags.contains(.shift)
+                let dx = shift && event.scrollingDeltaX == 0 ? event.scrollingDeltaY : event.scrollingDeltaX
+                guard dx != 0, shift || abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) else { return event }
+                self.onScroll?(dx)
+                return nil
+            }
+        }
+
+        func stop() {
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            monitor = nil
         }
     }
 }
