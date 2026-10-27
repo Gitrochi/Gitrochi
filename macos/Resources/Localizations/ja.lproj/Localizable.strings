@@ -1193,3 +1193,5 @@
 "Bring %@ to the front" = "%1$@ を前面に表示";
 "Copy folder path" = "フォルダのパスをコピー";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ を開けませんでした: Git リポジトリの中にありません。";
+"Back to the repository screen (⌘[)" = "リポジトリ画面に戻る (⌘[)";
+"Back to the repository screen" = "リポジトリ画面に戻る";

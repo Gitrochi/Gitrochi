@@ -1192,3 +1192,5 @@
 "Bring %@ to the front" = "Вывести %1$@ на передний план";
 "Copy folder path" = "Копировать путь к папке";
 "Couldn't open %@: it isn't inside a Git repository." = "Не удалось открыть %1$@: это не внутри репозитория Git.";
+"Back to the repository screen (⌘[)" = "Назад к экрану репозитория (⌘[)";
+"Back to the repository screen" = "Назад к экрану репозитория";

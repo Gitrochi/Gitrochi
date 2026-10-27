@@ -60,6 +60,27 @@ struct ListSearchRow<Value: Hashable>: View {
     }
 }
 
+/// "‹ Repository" at the top of the Pull requests and Issues pages when they were opened from the repository screen
+struct BackToRepositoryBar: View {
+    @Environment(RepoStore.self) private var store
+
+    var body: some View {
+        if store.cameFromRepository {
+            HStack {
+                Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
+                    .buttonStyle(.borderless)
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back to the repository screen (⌘[)")
+                    .accessibilityLabel("Back to the repository screen")
+                Spacer()
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+        }
+    }
+}
+
 /// In the repository sidebar a list carries no search row; when the page left a filter on, this one line says so and clears it
 struct ListFilterCaption: View {
     let filter: String

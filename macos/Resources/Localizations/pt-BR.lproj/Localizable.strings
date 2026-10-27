@@ -1156,3 +1156,5 @@
 "Bring %@ to the front" = "Trazer %1$@ para a frente";
 "Copy folder path" = "Copiar caminho da pasta";
 "Couldn't open %@: it isn't inside a Git repository." = "Não foi possível abrir %1$@: não está dentro de um repositório Git.";
+"Back to the repository screen (⌘[)" = "Voltar à tela do repositório (⌘[)";
+"Back to the repository screen" = "Voltar à tela do repositório";

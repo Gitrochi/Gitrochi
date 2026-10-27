@@ -45,9 +45,12 @@ private struct PullRequestsWorkspace: View {
     var body: some View {
         if let target = store.target {
             AdaptiveWorkbenchSplit(listWidth: 290) {
-                ScrollView { PullRequestSection(target: target, onPage: true).padding(.vertical, 6) }
-                    .environment(\.sidebarFlyout, true)
-                    .background(Color(nsColor: .windowBackgroundColor))
+                VStack(spacing: 0) {
+                    BackToRepositoryBar()
+                    ScrollView { PullRequestSection(target: target, onPage: true).padding(.vertical, 6) }
+                        .environment(\.sidebarFlyout, true)
+                }
+                .background(Color(nsColor: .windowBackgroundColor))
             } detail: {
                 Group {
                     if case .pullRequest(let number)? = store.selection {

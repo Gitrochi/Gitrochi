@@ -1136,3 +1136,5 @@
 "Bring %@ to the front" = "%1$@ naar voren halen";
 "Copy folder path" = "Mappad kopiëren";
 "Couldn't open %@: it isn't inside a Git repository." = "Kan %1$@ niet openen: het staat niet in een Git-repository.";
+"Back to the repository screen (⌘[)" = "Terug naar het repositoryscherm (⌘[)";
+"Back to the repository screen" = "Terug naar het repositoryscherm";

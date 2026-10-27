@@ -1159,3 +1159,5 @@
 "Bring %@ to the front" = "%1$@ nach vorne holen";
 "Copy folder path" = "Ordnerpfad kopieren";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ konnte nicht geöffnet werden: Es liegt in keinem Git-Repository.";
+"Back to the repository screen (⌘[)" = "Zurück zur Repository-Ansicht (⌘[)";
+"Back to the repository screen" = "Zurück zur Repository-Ansicht";

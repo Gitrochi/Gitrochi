@@ -1143,3 +1143,5 @@
 "Bring %@ to the front" = "Bawa %1$@ ke depan";
 "Copy folder path" = "Salin jalur folder";
 "Couldn't open %@: it isn't inside a Git repository." = "Tidak dapat membuka %1$@: tidak berada di dalam repositori Git.";
+"Back to the repository screen (⌘[)" = "Kembali ke layar repositori (⌘[)";
+"Back to the repository screen" = "Kembali ke layar repositori";

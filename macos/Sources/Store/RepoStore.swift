@@ -159,6 +159,8 @@ final class RepoStore: Identifiable {
     var searchFocusRequest = 0
     /// The commit search bar above the graph shows only after ⌘F (or while a search is active)
     var showSearchBar = false
+    /// The Pull requests or Issues page was opened from the repository screen; the page offers a way back
+    var cameFromRepository = false
     var searchTask: Task<Void, Never>?
 
     // MARK: 워크트리·호스팅·Claude

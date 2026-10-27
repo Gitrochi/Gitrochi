@@ -1175,3 +1175,5 @@
 "Bring %@ to the front" = "%1$@ előtérbe hozása";
 "Copy folder path" = "Mappa elérési útjának másolása";
 "Couldn't open %@: it isn't inside a Git repository." = "Nem sikerült megnyitni: %1$@ – nincs Git-tárolóban.";
+"Back to the repository screen (⌘[)" = "Vissza a tároló képernyőjére (⌘[)";
+"Back to the repository screen" = "Vissza a tároló képernyőjére";

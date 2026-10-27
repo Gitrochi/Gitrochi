@@ -1180,3 +1180,5 @@
 "Bring %@ to the front" = "%1$@ uygulamasını öne getir";
 "Copy folder path" = "Klasör yolunu kopyala";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ açılamadı: bir Git deposunun içinde değil.";
+"Back to the repository screen (⌘[)" = "Depo ekranına dön (⌘[)";
+"Back to the repository screen" = "Depo ekranına dön";

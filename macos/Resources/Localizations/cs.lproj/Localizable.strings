@@ -1172,3 +1172,5 @@
 "Bring %@ to the front" = "Přenést %1$@ do popředí";
 "Copy folder path" = "Kopírovat cestu ke složce";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ nelze otevřít: není uvnitř repozitáře Git.";
+"Back to the repository screen (⌘[)" = "Zpět na obrazovku repozitáře (⌘[)";
+"Back to the repository screen" = "Zpět na obrazovku repozitáře";

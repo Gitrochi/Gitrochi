@@ -4,6 +4,8 @@ extension RepoStore {
     /// Shows a page; pages that need a repository are refused until one is open. The page is remembered per repository.
     @discardableResult func navigate(_ page: WorkspaceDestination, prepare: Bool = true) -> Bool {
         guard !page.needsRepository || url != nil else { return false }
+        let from = destination
+        if from != page { cameFromRepository = from == .repository && [.pullRequests, .issues].contains(page) }
         destination = page
         if let url {
             var saved = UserDefaults.standard.dictionary(forKey: "workspaceDestinations") as? [String: String] ?? [:]
