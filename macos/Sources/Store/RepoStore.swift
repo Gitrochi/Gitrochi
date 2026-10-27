@@ -378,6 +378,20 @@ final class RepoStore: Identifiable {
         if !name.isEmpty { me = Identity(name: name, email: email) }
     }
 
+    /// Without a repository the window shows the global Git identity (Windows: entities/repo/model/layers/core.ts)
+    func loadGlobalIdentity() async {
+        guard url == nil else { return }
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        guard let result = try? await Git.raw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], in: home), url == nil else { return }
+        var name = "", email = ""
+        for line in result.output.split(separator: "\n") {
+            let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+            if parts[0] == "user.name" { name = parts[1] } else if parts[0] == "user.email" { email = parts[1] }
+        }
+        me = name.isEmpty ? nil : Identity(name: name, email: email)
+    }
+
     func close() {
         worktreePoll?.cancel()
         worktreePoll = nil

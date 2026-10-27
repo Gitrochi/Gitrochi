@@ -466,7 +466,6 @@
 "History" = "Historie";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Pokud bezpečnostní klasifikátor požadavek zablokuje, server to jednou zkusí znovu s doporučeným modelem (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Pokud je stejný server dostupný i pod jinou adresou, funguje tam i účet, který jste už připojili";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "Pokud připojíte více účtů, můžete u repozitářů na stejném serveru zvolit nad seznamem PR, který z nich použít.";
 "Ignore whitespace" = "Ignorovat mezery";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Ignorovat mezery%1$@ — řádky, u kterých se změnilo jen odsazení nebo mezery, se považují za nezměněné (příprava po řádcích je při zapnutí nedostupná)";
 "Import gh CLI login" = "Importovat přihlášení z gh CLI";
@@ -1159,3 +1158,7 @@
 "Icons only" = "Jen ikony";
 "Icons and text" = "Ikony a text";
 "With text, each button's name sits to the right of its icon." = "S textem je název každého tlačítka vpravo od ikony.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "Pokud připojíte více účtů, účet repozitáře vyberete tlačítkem účtu vpravo na panelu nástrojů.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Otevřete repozitář se vzdáleným GitHub nebo GitLab a vyberte účet, který používá.";
+"Connected accounts" = "Připojené účty";
+"Connect an account for repository services." = "Připojte účet pro služby repozitáře.";

@@ -8,15 +8,24 @@ struct AccountQuickControls: View {
     private let accounts = AccountStore.shared
 
     private var account: HostAccount? { store.hostingAccount }
+    /// Without a GitHub/GitLab remote there is no repository account; the control then shows the connected accounts
+    private var noTarget: Bool { store.target == nil }
+    /// In the order Settings lists them: GitHub first, then GitLab servers
+    private var connected: [HostAccount] { accounts.accounts(for: .github) + accounts.accounts(for: .gitlab) }
+    private var shown: HostAccount? { noTarget ? connected.first : account }
+    private var title: String {
+        guard let shown else { return String(localized: "Connect account") }
+        return "@" + shown.username + (noTarget && connected.count > 1 ? " +\(connected.count - 1)" : "")
+    }
     private var candidates: [HostAccount] { store.target.map { accounts.candidates(for: $0) } ?? [] }
     private var gitAccount: String { store.gitchStatus?.lockedAccount ?? store.gitchStatus?.account ?? store.me?.name ?? String(localized: "Not configured") }
 
     var body: some View {
         Button { showing.toggle() } label: {
             HStack(spacing: 7) {
-                profile(account, size: 26)
+                profile(shown, size: 26)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(account.map { "@" + $0.username } ?? String(localized: "Connect account"))
+                    Text(verbatim: title)
                         .font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     HStack(spacing: 3) {
                         if store.gitchStatus?.lockedAccount != nil { Image(systemName: "lock.fill").font(.system(size: 8)) }
@@ -31,6 +40,7 @@ struct AccountQuickControls: View {
         .help("View and manage the repository account and Git identity")
         .popover(isPresented: $showing, arrowEdge: .bottom) { popover }
         .onChange(of: store.url) { _, _ in showing = false; sheet = nil }
+        .task(id: store.url) { if store.url == nil { await store.loadGlobalIdentity() } }
         .sheet(item: $sheet) { request in
             switch request {
             case .connections:
@@ -56,6 +66,9 @@ struct AccountQuickControls: View {
     private var popover: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                if noTarget {
+                    connectedList
+                } else {
                 HStack(spacing: 11) {
                     profile(account, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
@@ -81,6 +94,7 @@ struct AccountQuickControls: View {
                     Text("Connect an account on \(target.host) to use repository services.").font(.caption).foregroundStyle(.secondary)
                 }
                 if let account { CredentialAccessNotice(account: account) }
+                }
                 Divider()
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -105,6 +119,27 @@ struct AccountQuickControls: View {
                 Button("Add or remove connected accounts…") { present(.connections) }
             }.padding(18).frame(width: 370, alignment: .leading)
         }.frame(maxHeight: 600)
+    }
+
+    /// No repository account to pick: every connected account, so the window agrees with Settings > Accounts
+    private var connectedList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Connected accounts").font(.headline)
+            if connected.isEmpty {
+                Text("Connect an account for repository services.").font(.callout).foregroundStyle(.secondary)
+            }
+            ForEach(connected) { a in
+                HStack(spacing: 9) {
+                    profile(a, size: 28)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(a.name ?? a.username).font(.callout.weight(.medium)).lineLimit(1)
+                        Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+            }
+            Text("Open a repository with a GitHub or GitLab remote to choose the account it uses.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 
     private func present(_ request: AccountQuickSheet) { showing = false; sheet = request }

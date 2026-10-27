@@ -481,7 +481,6 @@
 "History" = "历史";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "如果请求被安全分类器拦截，服务器会使用推荐的模型再重试一次（fallbacks）。";
 "If the same server is used under another address, an account you've already connected works there too" = "如果同一服务器通过其他地址访问，已连接的账户在那里同样可用";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "如果连接了多个账户，对于同一服务器上的仓库，可以在 PR 列表上方选择要使用的账户。";
 "Ignore whitespace" = "忽略空白";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "忽略空白%1$@ — 只改动了缩进或空格的行视为未更改（开启时无法按行暂存）";
 "Import gh CLI login" = "导入 gh CLI 登录信息";
@@ -1182,3 +1181,7 @@
 "Icons only" = "仅图标";
 "Icons and text" = "图标和文字";
 "With text, each button's name sits to the right of its icon." = "显示文字时，每个按钮的名称位于图标右侧。";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "连接多个账户时，请在工具栏最右侧的账户按钮中选择仓库使用的账户。";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "打开带有 GitHub 或 GitLab 远程的仓库即可选择它使用的账户。";
+"Connected accounts" = "已连接的账户";
+"Connect an account for repository services." = "请连接用于仓库服务的账户。";

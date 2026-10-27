@@ -454,7 +454,6 @@
 "History" = "Geschiedenis";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Als een verzoek door de veiligheidsclassificatie wordt geblokkeerd, probeert de server het één keer opnieuw met het aanbevolen model (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Als dezelfde server onder een ander adres wordt gebruikt, werkt een al gekoppeld account daar ook";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "Als je meerdere accounts koppelt, kun je boven de PR-lijst kiezen welk account je gebruikt voor repository's op dezelfde server.";
 "Ignore whitespace" = "Witruimte negeren";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Witruimte negeren%1$@ — regels waarin alleen inspringing of spaties zijn gewijzigd, gelden als ongewijzigd (regels stagen is dan niet beschikbaar)";
 "Import gh CLI login" = "Login van gh CLI importeren";
@@ -1123,3 +1122,7 @@
 "Icons only" = "Alleen symbolen";
 "Icons and text" = "Symbolen en tekst";
 "With text, each button's name sits to the right of its icon." = "Met tekst staat de naam van elke knop rechts van het symbool.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "Koppel je meerdere accounts, kies dan het account van een repository met de accountknop rechts in de werkbalk.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Open een repository met een GitHub- of GitLab-remote om het account te kiezen.";
+"Connected accounts" = "Gekoppelde accounts";
+"Connect an account for repository services." = "Koppel een account voor de repositorydiensten.";

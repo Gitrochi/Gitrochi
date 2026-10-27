@@ -479,7 +479,6 @@
 "History" = "История";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Если запрос заблокирован классификатором безопасности, сервер один раз повторит его с рекомендуемой моделью (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Если тот же сервер доступен по другому адресу, уже подключённая учётная запись работает и там";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "Если подключить несколько учётных записей, для репозиториев на одном сервере нужную можно выбрать над списком PR.";
 "Ignore whitespace" = "Игнорировать пробелы";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Игнорировать пробелы%1$@ — строки, в которых изменились только отступы или пробелы, считаются неизменёнными (индексирование отдельных строк при этом недоступно)";
 "Import gh CLI login" = "Импортировать вход из gh CLI";
@@ -1179,3 +1178,7 @@
 "Icons only" = "Только значки";
 "Icons and text" = "Значки и текст";
 "With text, each button's name sits to the right of its icon." = "С текстом название каждой кнопки стоит справа от значка.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "Если подключено несколько учётных записей, выберите учётную запись репозитория кнопкой справа на панели инструментов.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Откройте репозиторий с удалённым GitHub или GitLab, чтобы выбрать его учётную запись.";
+"Connected accounts" = "Подключённые учётные записи";
+"Connect an account for repository services." = "Подключите учётную запись для сервисов репозитория.";

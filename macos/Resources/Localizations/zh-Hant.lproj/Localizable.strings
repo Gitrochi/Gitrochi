@@ -480,7 +480,6 @@
 "History" = "歷程記錄";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "若要求遭安全分類器封鎖，伺服器會改用建議的模型重試一次 (fallbacks)。";
 "If the same server is used under another address, an account you've already connected works there too" = "若同一部伺服器以其他位址使用，已連結的帳號在該處同樣可用";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "若連結了多個帳號，同一伺服器上的存放庫可以在 PR 清單上方選擇要使用的帳號。";
 "Ignore whitespace" = "忽略空白字元";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "忽略空白字元%1$@ — 僅縮排或空格有變動的行會視為未變更（開啟時無法逐行暫存）";
 "Import gh CLI login" = "匯入 gh CLI 登入";
@@ -1181,3 +1180,7 @@
 "Icons only" = "僅圖示";
 "Icons and text" = "圖示和文字";
 "With text, each button's name sits to the right of its icon." = "顯示文字時，每個按鈕的名稱位於圖示右側。";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "連結多個帳號時，請在工具列最右側的帳號按鈕中選擇儲存庫使用的帳號。";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "開啟帶有 GitHub 或 GitLab 遠端的儲存庫即可選擇它使用的帳號。";
+"Connected accounts" = "已連結的帳號";
+"Connect an account for repository services." = "請連結用於儲存庫服務的帳號。";

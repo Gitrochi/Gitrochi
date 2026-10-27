@@ -467,7 +467,6 @@
 "History" = "Verlauf";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Wird eine Anfrage vom Sicherheitsklassifikator blockiert, versucht der Server es einmal mit dem empfohlenen Modell erneut (Fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Wird derselbe Server unter einer anderen Adresse genutzt, funktioniert ein bereits verbundenes Konto auch dort";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "Wenn Sie mehrere Konten verbinden, können Sie bei Repositorys auf demselben Server über der PR-Liste auswählen, welches verwendet wird.";
 "Ignore whitespace" = "Leerraum ignorieren";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Leerraum ignorieren%1$@ — Zeilen, in denen sich nur Einrückung oder Leerzeichen geändert haben, gelten als unverändert (zeilenweises Stagen ist dann nicht verfügbar)";
 "Import gh CLI login" = "gh-CLI-Anmeldung importieren";
@@ -1146,3 +1145,7 @@
 "Icons only" = "Nur Symbole";
 "Icons and text" = "Symbole und Text";
 "With text, each button's name sits to the right of its icon." = "Mit Text steht der Name jeder Taste rechts neben ihrem Symbol.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "Wenn Sie mehrere Konten verbinden, wählen Sie das Konto eines Repositorys über die Kontotaste rechts in der Symbolleiste.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Öffnen Sie ein Repository mit GitHub- oder GitLab-Remote, um dessen Konto zu wählen.";
+"Connected accounts" = "Verbundene Konten";
+"Connect an account for repository services." = "Verbinden Sie ein Konto für die Repository-Dienste.";

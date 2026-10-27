@@ -470,7 +470,6 @@
 "History" = "Előzmények";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Ha a biztonsági osztályozó letilt egy kérést, a szerver egyszer újrapróbálja az ajánlott modellel (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Ha ugyanaz a szerver más címen is elérhető, a már csatlakoztatott fiók ott is működik";
-"If you connect several accounts, you can choose which one to use above the PR list for repositories on the same server." = "Ha több fiókot csatlakoztat, az azonos szerveren lévő tárolóknál a PR-lista fölött választhatja ki, melyiket használja.";
 "Ignore whitespace" = "Térközök figyelmen kívül hagyása";
 "Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Térközök figyelmen kívül hagyása%1$@ — a csak behúzásban vagy szóközökben eltérő sorok változatlannak számítanak (bekapcsolt állapotban a soronkénti előkészítés nem érhető el)";
 "Import gh CLI login" = "gh CLI-bejelentkezés importálása";
@@ -1162,3 +1161,7 @@
 "Icons only" = "Csak ikonok";
 "Icons and text" = "Ikonok és szöveg";
 "With text, each button's name sits to the right of its icon." = "Szöveggel minden gomb neve az ikonja jobb oldalán jelenik meg.";
+"If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "Ha több fiókot kapcsolsz össze, a tároló fiókját az eszköztár jobb szélén lévő fiókgombbal választod ki.";
+"Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Nyiss meg egy GitHub vagy GitLab távolival rendelkező tárolót a fiók kiválasztásához.";
+"Connected accounts" = "Összekapcsolt fiókok";
+"Connect an account for repository services." = "Kapcsolj össze egy fiókot a tárolószolgáltatásokhoz.";
