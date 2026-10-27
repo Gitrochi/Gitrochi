@@ -230,13 +230,26 @@ import SwiftUI
         contexts.showCommandPalette = true; contexts.selectedBranchID = featureBranch.id
         contexts.resetNavigationFixture()
         precondition(!contexts.showCommandPalette && contexts.selectedBranchID == nil && contexts.destination == .home)
+        let wide = GraphMetrics.contentWidth(lanes: 40), window = GraphMetrics.width(lanes: 40)
+        precondition(wide > window, "Lanes past the visible limit scroll instead of widening the column")
+        precondition(GraphMetrics.clampOffset(-5, content: wide, visible: window) == 0 && GraphMetrics.clampOffset(10_000, content: wide, visible: window) == wide - window)
+        let reveal = GraphMetrics.offset(revealing: 30, current: 0, content: wide, visible: window)
+        precondition(reveal > 0 && GraphMetrics.leftPad + GraphMetrics.laneWidth * 31 <= reveal + window, "Selecting a commit on a hidden lane scrolls it into view")
+        precondition(GraphMetrics.offset(revealing: 1, current: reveal, content: wide, visible: window) <= GraphMetrics.leftPad + GraphMetrics.laneWidth)
+        precondition(GraphMetrics.offset(revealing: 3, current: 0, content: wide, visible: window) == 0, "A visible lane leaves the offset alone")
+        let plain = GraphMetrics.columns(width: 1400, graph: 300)
+        precondition(!plain.author && !plain.time, "Author and time columns are off by default")
+        let both = GraphMetrics.columns(width: 1400, graph: 300, shown: ["author", "time"])
+        precondition(both.author && both.time)
+        let narrow = GraphMetrics.columns(width: 880, graph: 300, shown: ["author", "time"])
+        precondition(!narrow.time && narrow.author, "Narrow windows drop time before author")
         let hiddenColumns = GraphMetrics.columns(width: 520, graph: 600, hidden: ["ref", "graph", "time"])
         precondition(hiddenColumns.ref == 0 && hiddenColumns.graph == 0 && !hiddenColumns.time, "Latest-main graph column visibility must survive UI integration")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional columns; 10 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
     }
 }
 SWIFT

@@ -16,23 +16,48 @@ enum GraphMetrics {
         max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
     }
 
+    /// Every lane side by side; past maxVisibleLanes the graph column scrolls sideways over this width
+    static func contentWidth(lanes: Int) -> CGFloat {
+        max(44, CGFloat(lanes) * laneWidth + leftPad + rightPad)
+    }
+
+    /// Keeps a sideways offset inside 0…(content − visible)
+    static func clampOffset(_ offset: CGFloat, content: CGFloat, visible: CGFloat) -> CGFloat {
+        min(max(0, offset), max(0, content - visible))
+    }
+
+    /// The offset that brings a lane into the visible window, or the current one when it is already there
+    static func offset(revealing lane: Int, current: CGFloat, content: CGFloat, visible: CGFloat) -> CGFloat {
+        let left = leftPad + laneWidth * CGFloat(lane), right = left + laneWidth
+        var offset = current
+        if left < offset { offset = left - leftPad }
+        if right > offset + visible - rightPad { offset = right + rightPad - visible }
+        return clampOffset(offset, content: content, visible: visible)
+    }
+
+    static let authorWidth: CGFloat = 120
+    static let timeWidth: CGFloat = 84
+
     /// 그래프 행의 칸: 브랜치·태그, 그래프, 커밋 메시지(제목 + 본문 첫 줄 + 오른쪽 끝에 시간).
     /// 좁으면 시간을 숨기고, 브랜치 칸, 그래프 칸(오른쪽 레인은 잘림) 순으로 줄여 메시지 칸을 지킨다.
     struct Columns: Equatable {
         var ref = GraphMetrics.refWidth
         var graph: CGFloat
-        var time = true
+        var author = false
+        var time = false
     }
 
     private static let messageMin: CGFloat = 200
 
-    /// hidden: the columns the user turned off ("ref", "graph", "time") — they get width 0; the message column always shows
-    static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = []) -> Columns {
-        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, time: !hidden.contains("time"))
+    /// hidden: the columns the user turned off ("ref", "graph"); shown: the optional ones turned on ("author", "time"),
+    /// which are off by default. The message column always shows.
+    static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = []) -> Columns {
+        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, author: shown.contains("author"), time: shown.contains("time"))
         if hidden.contains("ref") { c.ref = 0 }
-        // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 시간 칸 90
-        func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + (c.time ? 90 : 0))) }
+        // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 작성자·시간 칸
+        func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + (c.author ? authorWidth : 0) + (c.time ? timeWidth : 0))) }
         if short() > 0 { c.time = false }
+        if short() > 0 { c.author = false }
         if short() > 0, c.ref > 0 { c.ref = max(110, c.ref - short()) }
         if short() > 0, c.graph > 0 { c.graph = max(min(graph, 66), c.graph - short()) }
         return c
@@ -43,26 +68,35 @@ struct GraphView: View {
     @Environment(RepoStore.self) private var store
     @FocusState private var focused: Bool
     @ViewState private var width: CGFloat = 1000
-    /// Columns the user turned off, comma-separated ("ref,time")
+    /// Columns the user turned off, comma-separated ("ref,graph")
     @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
+    /// Optional columns the user turned on ("author,time"); off by default
+    @AppStorage("graphShownColumns") private var shownColumns = ""
+    /// How far the lanes are scrolled sideways when there are more than fit
+    @ViewState private var laneOffset: CGFloat = 0
 
     var body: some View {
         let graphWidth = GraphMetrics.width(lanes: store.maxLanes)
-        // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
-        let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)))
+        let contentWidth = GraphMetrics.contentWidth(lanes: store.maxLanes)
+        // 좁은 화면에서는 작성자·시간 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
+        let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)),
+                                           shown: Set(shownColumns.split(separator: ",").map(String.init)))
+        let offset = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
         VStack(spacing: 0) {
             if store.showSearchBar || store.isSearching {
                 SearchBar()
                 Divider()
             }
-            GraphHeader(columns: columns, hidden: $hiddenColumns)
+            GraphHeader(columns: columns, hidden: $hiddenColumns, shown: $shownColumns,
+                        contentWidth: contentWidth, offset: offset) { laneOffset = GraphMetrics.clampOffset($0, content: contentWidth, visible: columns.graph) }
             Divider()
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(store.entries) { entry in
                             CommitRow(entry: entry,
-                                      graphWidth: graphWidth,
+                                      graphWidth: contentWidth,
+                                      laneOffset: offset,
                                       columns: columns,
                                       refs: store.refsByCommit[entry.id] ?? [],
                                       selected: isSelected(entry),
@@ -101,6 +135,13 @@ struct GraphView: View {
                     guard let target else { return }
                     withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(target, anchor: .center) }
                     store.scrollTarget = nil
+                }
+                // a selected commit whose lane is scrolled out of the graph column brings that lane into view
+                .onChange(of: store.selection) { _, selection in
+                    guard contentWidth > columns.graph, case .commit(let sha)? = selection,
+                          let index = store.commitIndex[sha], store.entries.indices.contains(index) else { return }
+                    laneOffset = GraphMetrics.offset(revealing: store.entries[index].row.column, current: offset,
+                                                     content: contentWidth, visible: columns.graph)
                 }
                 .onAppear {
                     if let target = store.selectedID { proxy.scrollTo(target, anchor: .center) }
@@ -240,25 +281,44 @@ private struct SearchBar: View {
 private struct GraphHeader: View {
     let columns: GraphMetrics.Columns
     @Binding var hidden: String
+    @Binding var shown: String
+    let contentWidth: CGFloat
+    let offset: CGFloat
+    let onScroll: (CGFloat) -> Void
+    private var scrolls: Bool { columns.graph > 0 && contentWidth > columns.graph }
 
     var body: some View {
         HStack(spacing: 0) {
             if columns.ref > 0 { Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading) }
-            if columns.graph > 0 { Text("Graph").padding(.leading, 6).frame(width: columns.graph, alignment: .leading) }
-            Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-            // the graph filter lives here so it stays reachable while the search bar is hidden
-            GraphFilterMenu().padding(.trailing, 8)
-            Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
-                .help("Columns")
+            if columns.graph > 0 {
+                // with more lanes than fit, a scrollbar sits under the label
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Graph").padding(.leading, 6)
+                    if scrolls {
+                        LaneScroller(visible: columns.graph, content: contentWidth, offset: offset, onScroll: onScroll)
+                    }
+                }
+                .frame(width: columns.graph, alignment: .leading)
+            }
+            HStack(spacing: 6) {
+                Text("Commit message")
+                // the graph filter lives here so it stays reachable while the search bar is hidden
+                GraphFilterMenu()
+                Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                    .help("Columns")
+            }
+            .padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            if columns.author { Text("Author").frame(width: GraphMetrics.authorWidth, alignment: .leading) }
+            if columns.time { Text("Time").frame(width: GraphMetrics.timeWidth, alignment: .trailing) }
         }
         .contextMenu { toggles }
         .lineLimit(1)
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
         .padding(.trailing, 12)
-        .frame(height: 26)
+        .frame(height: scrolls ? 32 : 26)
         .background(.bar)
     }
 
@@ -266,7 +326,65 @@ private struct GraphHeader: View {
     @ViewBuilder private var toggles: some View {
         Toggle("Branch / Tag", isOn: SidebarSections.binding($hidden, "ref"))
         Toggle("Graph", isOn: SidebarSections.binding($hidden, "graph"))
-        Toggle("Time", isOn: SidebarSections.binding($hidden, "time"))
+        Divider()
+        Toggle("Author", isOn: optional("author"))
+        Toggle("Time", isOn: optional("time"))
+    }
+
+    /// The optional columns are listed when shown, so they stay off until turned on
+    private func optional(_ id: String) -> Binding<Bool> {
+        Binding(get: { shown.split(separator: ",").contains(Substring(id)) }, set: { on in
+            var set = shown.split(separator: ",").map(String.init).filter { $0 != id }
+            if on { set.append(id) }
+            shown = set.joined(separator: ",")
+        })
+    }
+}
+
+/// A thin scrollbar under the graph column header when there are more lanes than fit; drag it, or scroll sideways over it
+private struct LaneScroller: View {
+    let visible: CGFloat
+    let content: CGFloat
+    let offset: CGFloat
+    let onScroll: (CGFloat) -> Void
+    @ViewState private var dragStart: CGFloat?
+
+    var body: some View {
+        GeometryReader { geo in
+            let track = geo.size.width - 8
+            let thumb = max(24, track * visible / content)
+            let travel = max(1, track - thumb)
+            let x = 4 + travel * offset / max(1, content - visible)
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.secondary.opacity(0.15)).frame(width: track, height: 4).offset(x: 4)
+                Capsule().fill(Color.secondary.opacity(0.55)).frame(width: thumb, height: 4).offset(x: x)
+            }
+            .frame(height: 8)
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                let start = dragStart ?? offset
+                if dragStart == nil { dragStart = start }
+                onScroll(start + value.translation.width * (content - visible) / travel)
+            }.onEnded { _ in dragStart = nil })
+            .help("Scroll the graph sideways")
+        }
+        .frame(height: 8)
+        .background(SideScrollCatcher { delta in onScroll(offset - delta) })
+    }
+}
+
+/// Sideways trackpad or Shift-wheel scrolling over the header; vertical wheel events pass on
+private struct SideScrollCatcher: NSViewRepresentable {
+    let onScroll: (CGFloat) -> Void
+    func makeNSView(context: Context) -> CatcherView { CatcherView() }
+    func updateNSView(_ view: CatcherView, context: Context) { view.onScroll = onScroll }
+    final class CatcherView: NSView {
+        var onScroll: ((CGFloat) -> Void)?
+        override func scrollWheel(with event: NSEvent) {
+            let dx = event.modifierFlags.contains(.shift) && event.scrollingDeltaX == 0 ? event.scrollingDeltaY : event.scrollingDeltaX
+            guard abs(dx) > abs(event.scrollingDeltaY) || event.modifierFlags.contains(.shift) else { return super.scrollWheel(with: event) }
+            onScroll?(dx)
+        }
     }
 }
 

@@ -9,7 +9,9 @@ struct CommitRow: View {
     @ViewState private var dropTargeted = false
 
     let entry: GraphEntry
+    /// Every lane side by side; the column shows `columns.graph` of it, scrolled by laneOffset
     let graphWidth: CGFloat
+    var laneOffset: CGFloat = 0
     /// 화면 너비에 맞춘 칸(좁으면 일부 칸을 숨기고 줄인다)
     let columns: GraphMetrics.Columns
     let refs: [RefLabel]
@@ -39,13 +41,17 @@ struct CommitRow: View {
                 GraphCell(row: entry.row, isWIP: c.isPending, isHead: isHead, isMerge: c.isMerge,
                           hasRefs: !groups.isEmpty, author: c.author, email: c.email)
                     .frame(width: graphWidth, height: GraphMetrics.rowHeight)
-                    // 좁아서 그래프 칸이 잘리면 오른쪽 끝을 흐리게
+                    .offset(x: -laneOffset)
+                    // lanes hidden past an edge fade out on that side
                     .frame(width: columns.graph, alignment: .leading)
                     .clipped()
                     .mask {
-                        LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: columns.graph < graphWidth ? max(0, 1 - 16 / columns.graph) : 1),
-                                               .init(color: columns.graph < graphWidth ? .clear : .black, location: 1)],
+                        let fade = max(0, min(0.5, 16 / max(1, columns.graph)))
+                        let left = laneOffset > 0, right = laneOffset + columns.graph < graphWidth
+                        LinearGradient(stops: [.init(color: left ? .clear : .black, location: 0),
+                                               .init(color: .black, location: left ? fade : 0),
+                                               .init(color: .black, location: right ? 1 - fade : 1),
+                                               .init(color: right ? .clear : .black, location: 1)],
                                        startPoint: .leading, endPoint: .trailing)
                     }
                     .background(alignment: .leading) {
@@ -53,7 +59,7 @@ struct CommitRow: View {
                         Rectangle()
                             .fill(tint.opacity(selected ? 0.4 : 0.1))
                             .frame(height: Self.bandHeight)
-                            .padding(.leading, min(GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5), columns.graph))
+                            .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
             }
             // 커밋 메시지: 레인 색 막대 · 제목 · 본문 첫 줄(흐리게) · 오른쪽 끝에 시간. 작성자·SHA 는 마우스를 올리면.
@@ -93,13 +99,6 @@ struct CommitRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                if columns.time && !c.isPending {
-                    Text(Fmt.short(c.date))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .fixedSize()
-                }
             }
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             .frame(height: Self.bandHeight)
@@ -107,6 +106,16 @@ struct CommitRow: View {
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
             .clipped()
             .help(c.isPending ? "" : "\(c.author) <\(c.email)>\n\(Fmt.long(c.date)) · \(c.short)")
+            if columns.author {
+                Text(c.isPending ? "" : c.author)
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                    .frame(width: GraphMetrics.authorWidth, alignment: .leading)
+            }
+            if columns.time {
+                Text(c.isPending ? "" : Fmt.short(c.date))
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    .frame(width: GraphMetrics.timeWidth, alignment: .trailing)
+            }
         }
         .font(.system(size: 12.5))
         .padding(.trailing, 12)
