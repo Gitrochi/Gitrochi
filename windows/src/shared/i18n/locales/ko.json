@@ -2068,5 +2068,6 @@
   "The app's window was not found.": "그 앱의 창을 찾지 못했습니다.",
   "Windows did not bring the app to the front.": "Windows 가 그 앱을 앞으로 가져오지 않았습니다.",
   "Bringing another app forward is only available on Windows.": "다른 앱을 앞으로 가져오는 기능은 Windows 에서만 됩니다.",
-  "Couldn't open {0}: it isn't inside a Git repository.": "{0}을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다."
+  "Couldn't open {0}: it isn't inside a Git repository.": "{0}을(를) 열지 못했습니다: Git 저장소 안에 있지 않습니다.",
+  "Back to the repository screen": "저장소 화면으로 돌아가기"
 }

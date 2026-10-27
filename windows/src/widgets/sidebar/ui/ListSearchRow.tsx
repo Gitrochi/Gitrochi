@@ -1,6 +1,22 @@
-import { Funnel, Search, X } from "lucide-react";
+import { ChevronLeft, Funnel, Search, X } from "lucide-react";
+import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
+import { useObserve } from "@/shared/lib";
 import { showMenuBelow } from "@/shared/ui";
+
+/** "‹ Repository" at the top of the Pull requests and Issues lists when the repository screen opened the page (macOS: BackToRepositoryBar) */
+export function BackToRepositoryBar({ store }: { store: RepoStore }) {
+  useObserve(store);
+  if (!store.cameFromRepository) return null;
+  return (
+    <div className="back-to-repository">
+      <button type="button" aria-label={t("Back to the repository screen")} data-tip={t("Back to the repository screen")} onClick={() => store.navigate("repository")}>
+        <ChevronLeft size={14} />
+        {t("Repository")}
+      </button>
+    </div>
+  );
+}
 
 /**
  * The repository sidebar's stand-in for the search row: one line saying how the shared list is filtered, with a

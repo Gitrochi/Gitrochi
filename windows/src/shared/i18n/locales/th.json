@@ -1227,5 +1227,6 @@
  "The app's window was not found.": "ไม่พบหน้าต่างของแอป",
  "Windows did not bring the app to the front.": "Windows ไม่ได้นำแอปมาไว้ด้านหน้า",
  "Bringing another app forward is only available on Windows.": "การนำแอปอื่นมาไว้ด้านหน้าใช้ได้เฉพาะบน Windows",
- "Couldn't open {0}: it isn't inside a Git repository.": "เปิด {0} ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git"
+ "Couldn't open {0}: it isn't inside a Git repository.": "เปิด {0} ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git",
+ "Back to the repository screen": "กลับไปที่หน้าจอที่เก็บ"
 }

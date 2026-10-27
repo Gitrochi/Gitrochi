@@ -1187,5 +1187,6 @@
  "The app's window was not found.": "Không tìm thấy cửa sổ của ứng dụng.",
  "Windows did not bring the app to the front.": "Windows không đưa ứng dụng lên trước.",
  "Bringing another app forward is only available on Windows.": "Đưa ứng dụng khác lên trước chỉ khả dụng trên Windows.",
- "Couldn't open {0}: it isn't inside a Git repository.": "Không mở được {0}: không nằm trong kho Git nào."
+ "Couldn't open {0}: it isn't inside a Git repository.": "Không mở được {0}: không nằm trong kho Git nào.",
+ "Back to the repository screen": "Quay lại màn hình kho lưu trữ"
 }
