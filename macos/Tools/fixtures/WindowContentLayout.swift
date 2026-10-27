@@ -131,6 +131,32 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             ["x": frame.minX, "y": frame.minY, "width": frame.width, "height": frame.height]
         }
         var checks: [[String: Any]] = []
+        let constrainedBefore = NSRect(x: 0, y: 45, width: 1080, height: 692)
+        let constrainedAfter = NSRect(x: 0, y: 45, width: 1080, height: 640)
+        let constrainedReflow = NSRect(x: 0, y: -7, width: 1080, height: 692)
+        let constrainedMinimum = constrainedBefore.size
+        precondition(RepositoryWindowLayout.restorationFrame(before: constrainedBefore, after: constrainedAfter,
+            current: constrainedReflow, minimum: constrainedMinimum) == constrainedBefore,
+            "Minimum-size reflow must preserve the original origin instead of the temporary content top")
+        precondition(RepositoryWindowLayout.restorationFrame(before: constrainedBefore, after: constrainedAfter,
+            current: constrainedReflow, minimum: constrainedMinimum, inLiveResize: true) == constrainedReflow,
+            "A live resize must take precedence even when its geometry matches minimum-size reflow")
+        checks.append(["scenario": "minimum-size-origin-restored", "windowFrame": rect(constrainedBefore)])
+        let explicitMove = constrainedBefore.offsetBy(dx: 20, dy: 12)
+        precondition(RepositoryWindowLayout.restorationFrame(before: constrainedBefore, after: constrainedAfter,
+            current: explicitMove, minimum: constrainedMinimum) == explicitMove, "An explicit move must retain its chosen origin")
+        checks.append(["scenario": "explicit-move-preserved", "windowFrame": rect(explicitMove)])
+        let explicitResize = NSRect(x: 0, y: 45, width: 1200, height: 760)
+        precondition(RepositoryWindowLayout.restorationFrame(before: constrainedBefore, after: constrainedAfter,
+            current: explicitResize, minimum: constrainedMinimum) == explicitResize, "An explicit resize must retain its chosen frame")
+        checks.append(["scenario": "explicit-resize-preserved", "windowFrame": rect(explicitResize)])
+        let normalBefore = NSRect(x: 100, y: 100, width: 1440, height: 900)
+        let normalAfter = NSRect(x: 100, y: 100, width: 1440, height: 848)
+        let normalRestored = NSRect(x: 100, y: 48, width: 1440, height: 900)
+        precondition(RepositoryWindowLayout.restorationFrame(before: normalBefore, after: normalAfter,
+            current: normalRestored, minimum: constrainedMinimum) == normalRestored,
+            "A normal-size restored frame must not be classified as minimum-size reflow")
+        checks.append(["scenario": "normal-restored-frame-preserved", "windowFrame": rect(normalRestored)])
         let deferredWindow = DeferredFrameFixtureWindow(contentRect: NSRect(x: 100, y: 100, width: 640, height: 420),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         deferredWindow.isReleasedWhenClosed = false
@@ -290,6 +316,20 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         window.setFrame(fullFixtureFrame, display: true)
         waitForNativeFrame("full-fixture-restored", expected: fullFixtureFrame) { equal(window.frame, fullFixtureFrame) }
 
+        // AppKit fits an oversized tab group to the display, independently of content-style repair.
+        // Use a legal baseline for exact native-tab geometry checks on small runners.
+        let fittingNativeTabs = !zoomScreenFrame.contains(fullFixtureFrame)
+        let nativeTabMinimum = fittingNativeTabs ? zoomMinimum : fullFixtureMinimum
+        if fittingNativeTabs {
+            host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
+                .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height))
+            window.contentMinSize = nativeTabMinimum
+            settle()
+            window.setFrame(zoomBaseline, display: true)
+            waitForNativeFrame("native-tab-baseline", expected: zoomBaseline) { equal(window.frame, zoomBaseline) }
+            precondition(zoomScreenFrame.contains(window.frame), "Native-tab baseline must fit the runner's screen")
+        }
+
         let secondWindow = NSWindow(contentRect: window.contentLayoutRect,
                                     styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
                                     backing: .buffered, defer: false)
@@ -302,12 +342,15 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         window.tabbingMode = .preferred
         secondWindow.tabbingMode = .preferred
         secondWindow.orderBack(nil)
+        settle(0.2)
+        secondWindow.setFrame(window.frame, display: false)
+        settle(0.2)
         let beforeTabs = window.frame
         window.addTabbedWindow(secondWindow, ordered: .above)
         window.tabGroup?.selectedWindow = window
         settle(0.4)
         precondition(window.tabbedWindows?.count == 2, "Fixture must install a real AppKit tab bar")
-        precondition(equal(window.frame, beforeTabs), "Adding native tabs must preserve the outer frame")
+        precondition(equal(window.frame, beforeTabs), "Adding native tabs must preserve the outer frame: expected=\(beforeTabs) actual=\(window.frame) minimum=\(window.minSize) screen=\(window.screen?.visibleFrame ?? .zero)")
         try capture("native-tab-group")
         window.tabGroup?.selectedWindow = secondWindow
         settle(0.3)
@@ -328,14 +371,14 @@ private final class DeferredFrameFixtureWindow: NSWindow {
 
         // 루트 뷰가 안전 영역을 무시해도 네이티브 콘텐츠 경계가 헤더를 보호해야 한다.
         host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
-            .frame(minWidth: 1080, minHeight: 640).ignoresSafeArea())
+            .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height).ignoresSafeArea())
         let beforeRepair = window.frame
         window.styleMask.insert(.fullSizeContentView)
         RepositoryWindowLayout.configure(window)
         precondition(equal(window.frame, beforeRepair), "Repairing an unsafe root must preserve the outer frame")
         try capture("safe-area-ignoring-root-contained")
         host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
-            .frame(minWidth: 1080, minHeight: 640))
+            .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height))
         settle(0.5)
 
         if fullscreen {
@@ -369,12 +412,28 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         window.tabGroup?.removeWindow(secondWindow)
         secondWindow.orderOut(nil)
         settle(0.3)
+        if fittingNativeTabs {
+            host.rootView = AnyView(RepoContainer().environment(store).defaultAppStorage(windowFixtureDefaults)
+                .frame(minWidth: 1080, minHeight: 640))
+            window.contentMinSize = fullFixtureMinimum
+            settle()
+            let minimumFrame = NSRect(x: zoomScreenFrame.minX, y: zoomScreenFrame.maxY - window.minSize.height,
+                                      width: window.minSize.width, height: window.minSize.height)
+            precondition(equal(window.constrainFrameRect(minimumFrame, to: zoomScreen), minimumFrame), "The restored production minimum must be a legal native frame")
+            window.setFrame(minimumFrame, display: true)
+            waitForNativeFrame("production-minimum-restored-after-tabs", expected: minimumFrame) {
+                equal(window.frame, minimumFrame) && window.contentMinSize == fullFixtureMinimum
+            }
+            precondition(window.contentLayoutRect.width >= fullFixtureMinimum.width - 1 && window.contentLayoutRect.height >= fullFixtureMinimum.height - 1,
+                         "The final viewport must restore the full production content minimum")
+        }
         try capture("native-tabs-detached")
 
         window.orderOut(nil)
         let result: [String: Any] = ["ok": true, "actualViews": ["RepoContainer", "RepoView", "NavigationSidebar", "LoadingView"],
                                      "safeAreaIgnoringRootContained": true, "framePreserved": true,
                                      "lateToolbarStyleContained": true, "nativeTabsChecked": true,
+                                     "nativeTabsFittedToScreen": fittingNativeTabs,
                                      "fullscreenRequested": fullscreen, "inspectionRequested": inspect, "checks": checks]
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         if let output { try data.write(to: output.appendingPathComponent("result.json")) }

@@ -16,6 +16,17 @@ enum RepositoryWindowLayout {
         attachment.containContent()
     }
 
+    /// Distinguishes SwiftUI's minimum-size reflow from a later restored frame.
+    static func restorationFrame(before: NSRect?, after: NSRect?, current: NSRect, minimum: NSSize, inLiveResize: Bool = false) -> NSRect {
+        guard let before else { return current }
+        guard let after, after != current else { return before }
+        // Minimum-size reflow keeps the temporary content top after the toolbar shrinks the frame.
+        let reflowedMinimum = !inLiveResize && before.size == minimum && current.size == before.size
+            && before.origin == after.origin && before.width == after.width && after.height < before.height
+            && current.minX == before.minX && current.maxY == after.maxY
+        return reflowedMinimum ? before : current
+    }
+
     @MainActor private final class Attachment {
         private weak var window: NSWindow?
         private var styleObservation: NSKeyValueObservation?
@@ -85,8 +96,8 @@ enum RepositoryWindowLayout {
             defer { applying = false }
             restorationID = UUID()
             // Honor a subsequent restored frame or explicit resize before this turn runs.
-            let frame = frameAfterStyleChange.map { $0 != window.frame } == true
-                ? window.frame : (frameBeforeStyleChange ?? window.frame)
+            let frame = RepositoryWindowLayout.restorationFrame(before: frameBeforeStyleChange, after: frameAfterStyleChange,
+                current: window.frame, minimum: window.minSize, inLiveResize: window.inLiveResize)
             window.styleMask.remove(.fullSizeContentView)
             // Changing the style must not resize or reposition a restored window.
             if window.frame != frame { window.setFrame(frame, display: false) }
