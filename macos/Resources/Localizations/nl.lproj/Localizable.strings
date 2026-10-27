@@ -1128,3 +1128,5 @@
 "Connect an account for repository services." = "Koppel een account voor de repositorydiensten.";
 "Filtered: %@" = "Gefilterd: %1$@";
 "Clear filter" = "Filter wissen";
+"Close search (Esc)" = "Zoeken sluiten (Esc)";
+"Close search" = "Zoeken sluiten";

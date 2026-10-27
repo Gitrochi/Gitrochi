@@ -1187,3 +1187,5 @@
 "Connect an account for repository services." = "请连接用于仓库服务的账户。";
 "Filtered: %@" = "筛选：%1$@";
 "Clear filter" = "清除筛选";
+"Close search (Esc)" = "关闭搜索 (Esc)";
+"Close search" = "关闭搜索";

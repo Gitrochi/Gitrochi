@@ -1180,3 +1180,5 @@
 "Connect an account for repository services." = "เชื่อมต่อบัญชีสำหรับบริการของที่เก็บ";
 "Filtered: %@" = "กรอง: %1$@";
 "Clear filter" = "ล้างตัวกรอง";
+"Close search (Esc)" = "ปิดการค้นหา (Esc)";
+"Close search" = "ปิดการค้นหา";

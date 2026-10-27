@@ -1167,3 +1167,5 @@
 "Connect an account for repository services." = "Kapcsolj össze egy fiókot a tárolószolgáltatásokhoz.";
 "Filtered: %@" = "Szűrve: %1$@";
 "Clear filter" = "Szűrő törlése";
+"Close search (Esc)" = "Keresés bezárása (Esc)";
+"Close search" = "Keresés bezárása";

@@ -1164,3 +1164,5 @@
 "Connect an account for repository services." = "Připojte účet pro služby repozitáře.";
 "Filtered: %@" = "Filtr: %1$@";
 "Clear filter" = "Zrušit filtr";
+"Close search (Esc)" = "Zavřít hledání (Esc)";
+"Close search" = "Zavřít hledání";

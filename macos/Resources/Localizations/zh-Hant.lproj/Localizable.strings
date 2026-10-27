@@ -1186,3 +1186,5 @@
 "Connect an account for repository services." = "請連結用於儲存庫服務的帳號。";
 "Filtered: %@" = "篩選：%1$@";
 "Clear filter" = "清除篩選";
+"Close search (Esc)" = "關閉搜尋 (Esc)";
+"Close search" = "關閉搜尋";

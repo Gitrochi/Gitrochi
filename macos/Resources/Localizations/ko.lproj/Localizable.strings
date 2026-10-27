@@ -2065,3 +2065,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "GitHub 또는 GitLab 원격이 있는 저장소를 열면 그 저장소에서 쓸 계정을 고를 수 있습니다.";
 "Filtered: %@" = "필터: %1$@";
 "Clear filter" = "필터 지우기";
+"Close search (Esc)" = "검색 닫기 (Esc)";
+"Close search" = "검색 닫기";

@@ -14,7 +14,14 @@ extension RepoStore {
         navigate(.repository)
         closeFileInspect()
         closeDiff()
+        showSearchBar = true
         searchFocusRequest += 1
+    }
+
+    /// Esc or the bar's close button: the search ends and the bar goes away
+    func closeSearchBar() {
+        clearSearch()
+        showSearchBar = false
     }
 
     func updateSearch() {

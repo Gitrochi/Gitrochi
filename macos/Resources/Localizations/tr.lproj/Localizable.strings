@@ -1172,3 +1172,5 @@
 "Connect an account for repository services." = "Depo hizmetleri için bir hesap bağlayın.";
 "Filtered: %@" = "Filtre: %1$@";
 "Clear filter" = "Filtreyi temizle";
+"Close search (Esc)" = "Aramayı kapat (Esc)";
+"Close search" = "Aramayı kapat";

@@ -157,6 +157,8 @@ final class RepoStore: Identifiable {
     var searchUnloaded = 0
     var searching = false
     var searchFocusRequest = 0
+    /// The commit search bar above the graph shows only after ⌘F (or while a search is active)
+    var showSearchBar = false
     var searchTask: Task<Void, Never>?
 
     // MARK: 워크트리·호스팅·Claude

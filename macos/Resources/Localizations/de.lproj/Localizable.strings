@@ -1151,3 +1151,5 @@
 "Connect an account for repository services." = "Verbinden Sie ein Konto für die Repository-Dienste.";
 "Filtered: %@" = "Gefiltert: %1$@";
 "Clear filter" = "Filter entfernen";
+"Close search (Esc)" = "Suche schließen (Esc)";
+"Close search" = "Suche schließen";

@@ -1135,3 +1135,5 @@
 "Connect an account for repository services." = "Hubungkan akun untuk layanan repositori.";
 "Filtered: %@" = "Difilter: %1$@";
 "Clear filter" = "Hapus filter";
+"Close search (Esc)" = "Tutup pencarian (Esc)";
+"Close search" = "Tutup pencarian";

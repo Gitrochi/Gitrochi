@@ -1184,3 +1184,5 @@
 "Connect an account for repository services." = "Підключіть обліковий запис для сервісів репозиторію.";
 "Filtered: %@" = "Фільтр: %1$@";
 "Clear filter" = "Скинути фільтр";
+"Close search (Esc)" = "Закрити пошук (Esc)";
+"Close search" = "Закрити пошук";

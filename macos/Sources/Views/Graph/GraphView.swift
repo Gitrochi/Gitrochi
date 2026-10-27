@@ -51,8 +51,10 @@ struct GraphView: View {
         // 좁은 화면에서는 SHA·날짜·작성자 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
         let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)))
         VStack(spacing: 0) {
-            SearchBar()
-            Divider()
+            if store.showSearchBar || store.isSearching {
+                SearchBar()
+                Divider()
+            }
             GraphHeader(columns: columns, hidden: $hiddenColumns)
             Divider()
             ScrollViewReader { proxy in
@@ -168,7 +170,7 @@ private struct SearchBar: View {
                     .focused($focused)
                     .onSubmit { store.nextMatch() }
                     .onKeyPress(.escape) {
-                        store.clearSearch()
+                        store.closeSearchBar()
                         focused = false
                         return .handled
                     }
@@ -193,8 +195,6 @@ private struct SearchBar: View {
             .fixedSize()
             .help("Search in")
 
-            GraphFilterMenu()
-
             if store.isSearching {
                 Text(resultText)
                     .font(.caption.monospacedDigit())
@@ -213,12 +213,17 @@ private struct SearchBar: View {
                         .controlSize(.small)
                 }
             }
+            Button { store.closeSearchBar() } label: { Image(systemName: "xmark") }
+                .buttonStyle(.borderless).foregroundStyle(.secondary)
+                .help("Close search (Esc)").accessibilityLabel("Close search")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .onChange(of: store.searchText) { store.updateSearch() }
         .onChange(of: store.searchScope) { store.updateSearch() }
         .onChange(of: store.searchFocusRequest) { focused = true }
+        // the bar appears on ⌘F; take the keyboard as soon as it is on screen
+        .onAppear { DispatchQueue.main.async { focused = true } }
     }
 
     private var resultText: String {
@@ -241,6 +246,8 @@ private struct GraphHeader: View {
             if columns.ref > 0 { Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading) }
             if columns.graph > 0 { Text("Graph").padding(.leading, 6).frame(width: columns.graph, alignment: .leading) }
             Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            // the graph filter lives here so it stays reachable while the search bar is hidden
+            GraphFilterMenu().padding(.trailing, 8)
             Menu { toggles } label: { Image(systemName: "rectangle.split.3x1") }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
