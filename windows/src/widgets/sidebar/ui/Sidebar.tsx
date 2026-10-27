@@ -109,10 +109,6 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
 
   return (
     <SharedStack className="side-scroll">
-      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
-
-      {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
-
       {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
         <Section id="pinned" title={t("Pinned")}>
           {store.localBranches
@@ -170,6 +166,11 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
             })}
         </Section>
       )}
+
+      {/* the hosting lists sit between the branches and the tags (macOS: SidebarView) */}
+      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
+
+      {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
 
       {show("tags") && store.tags.length > 0 && (
         <Section id="tags" title={t("Tags")} count={store.tags.length} defaultOpen={false}>

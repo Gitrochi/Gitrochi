@@ -11,6 +11,11 @@ import { Sidebar, type SidebarSectionID } from "./Sidebar";
 export function SidebarRail({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
   const items: { id: Exclude<SidebarSectionID, "repository">; icon: ReactNode; title: string; count: number | null }[] = [];
+  const pinned = store.localBranches.filter((b) => store.isPinned(b)).length;
+  if (pinned) items.push({ id: "pinned", icon: <Pin size={16} />, title: t("Pinned"), count: pinned });
+  items.push({ id: "local", icon: <GitBranch size={16} />, title: t("Local branches"), count: store.localBranches.length });
+  if (store.worktrees.length > 1) items.push({ id: "worktrees", icon: <Folder size={16} />, title: t("Worktrees"), count: store.worktrees.length });
+  if (store.remoteBranches.length) items.push({ id: "remote", icon: <Cloud size={16} />, title: t("Remotes"), count: store.remoteBranches.length });
   if (store.target) {
     items.push({
       id: "prs",
@@ -20,11 +25,6 @@ export function SidebarRail({ store, openSettings }: { store: RepoStore; openSet
     });
     items.push({ id: "issues", icon: <CircleDot size={16} />, title: t("Issues"), count: store.issueState.kind === "loaded" ? store.issues.length : null });
   }
-  const pinned = store.localBranches.filter((b) => store.isPinned(b)).length;
-  if (pinned) items.push({ id: "pinned", icon: <Pin size={16} />, title: t("Pinned"), count: pinned });
-  items.push({ id: "local", icon: <GitBranch size={16} />, title: t("Local branches"), count: store.localBranches.length });
-  if (store.worktrees.length > 1) items.push({ id: "worktrees", icon: <Folder size={16} />, title: t("Worktrees"), count: store.worktrees.length });
-  if (store.remoteBranches.length) items.push({ id: "remote", icon: <Cloud size={16} />, title: t("Remotes"), count: store.remoteBranches.length });
   if (store.tags.length) items.push({ id: "tags", icon: <TagIcon size={16} />, title: t("Tags"), count: store.tags.length });
   if (store.stashes.length) items.push({ id: "stashes", icon: <Archive size={16} />, title: t("Stashes"), count: store.stashes.length });
   return (

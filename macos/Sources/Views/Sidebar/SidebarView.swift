@@ -70,13 +70,6 @@ struct SidebarView: View {
     private func sections(only: String?) -> some View {
         let show = { (id: String) in only == nil || only == id }
 
-        if show("pullRequests"), let target = store.target {
-            PullRequestSection(target: target)
-        }
-        if show("issues"), store.target != nil {
-            IssueListSection()
-        }
-
         let pinned = store.localBranches.filter { store.isPinned($0) }
         if show("pinned"), !pinned.isEmpty {
             SidebarSection("pinned") {
@@ -131,6 +124,14 @@ struct SidebarView: View {
             } header: {
                 Text("Remotes \(store.remoteBranches.count)")
             }
+        }
+
+        // the hosting lists sit between the branches and the tags
+        if show("pullRequests"), let target = store.target {
+            PullRequestSection(target: target)
+        }
+        if show("issues"), store.target != nil {
+            IssueListSection()
         }
 
         if show("tags"), !store.tags.isEmpty {
