@@ -2063,3 +2063,5 @@
 "With text, each button's name sits to the right of its icon." = "텍스트를 켜면 각 버튼 이름이 아이콘 오른쪽에 표시됩니다.";
 "If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar." = "계정을 여러 개 연결하면, 저장소에서 쓸 계정은 툴바 오른쪽 끝의 계정 버튼에서 고릅니다.";
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "GitHub 또는 GitLab 원격이 있는 저장소를 열면 그 저장소에서 쓸 계정을 고를 수 있습니다.";
+"Filtered: %@" = "필터: %1$@";
+"Clear filter" = "필터 지우기";

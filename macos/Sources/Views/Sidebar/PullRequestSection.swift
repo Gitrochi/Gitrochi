@@ -16,10 +16,21 @@ struct PullRequestSection: View {
 
     var body: some View {
         SidebarSection("pullRequests") {
+            if !onPage {
+                let query = store.collaboration.query
+                if query.scope != "open" || !query.search.isEmpty {
+                    ListFilterCaption(filter: filters.first { $0.value == query.scope }?.title ?? query.scope, search: query.search) {
+                        search = ""
+                        Task { await store.filterPullRequests(scope: "open", search: "") }
+                    }
+                }
+            } else {
             ListSearchRow(prompt: target.provider == .gitlab ? String(localized: "Search merge requests") : String(localized: "Search pull requests"),
                           text: $search, filters: filters, selection: store.collaboration.query.scope, defaultFilter: "open",
                           onSearch: { Task { await store.filterPullRequests(scope: store.collaboration.query.scope, search: search) } },
                           onFilter: { scope in Task { await store.filterPullRequests(scope: scope, search: search) } })
+                .onAppear { search = store.collaboration.query.search }
+            }
             if let warning = store.collaboration.warning { Text(warning).font(.caption).foregroundStyle(.secondary) }
             switch store.prState {
             case .authorizationRequired:
@@ -86,9 +97,11 @@ struct PullRequestSection: View {
                         .buttonStyle(.borderless)
                         .help(target.provider == .gitlab ? "Open in Merge requests" : "Open in Pull requests")
                 }
-                Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.borderless)
-                    .help("Refresh list")
+                if onPage {
+                    Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.borderless)
+                        .help("Refresh list")
+                }
                 Button { store.sheet = .createPullRequest } label: { Image(systemName: "plus") }
                     .buttonStyle(.borderless)
                     .disabled(store.headBranch == nil)

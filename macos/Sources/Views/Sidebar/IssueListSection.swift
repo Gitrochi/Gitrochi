@@ -15,10 +15,17 @@ struct IssueListSection: View {
     var body: some View {
         @Bindable var list = store.issueList
         SidebarSection("issues") {
-            ListSearchRow(prompt: String(localized: "Search issues"), text: $list.search, filters: filters,
-                          selection: list.scope, defaultFilter: "open",
-                          onSearch: { Task { await store.loadIssues() } },
-                          onFilter: { scope in Task { await store.filterIssues(scope: scope) } })
+            if onPage {
+                ListSearchRow(prompt: String(localized: "Search issues"), text: $list.search, filters: filters,
+                              selection: list.scope, defaultFilter: "open",
+                              onSearch: { Task { await store.loadIssues() } },
+                              onFilter: { scope in Task { await store.filterIssues(scope: scope) } })
+            } else if list.scope != "open" || !list.loadedSearch.isEmpty {
+                ListFilterCaption(filter: filters.first { $0.value == list.scope }?.title ?? list.scope, search: list.loadedSearch) {
+                    list.search = ""
+                    Task { await store.filterIssues(scope: "open") }
+                }
+            }
             if store.collaborationAccess == nil {
                 Button("Connect account…") { openSettings() }.buttonStyle(.link).sidebarRow()
             }
@@ -63,9 +70,11 @@ struct IssueListSection: View {
                         .buttonStyle(.borderless)
                         .help("Open in Issues")
                 }
-                Button { Task { await store.loadIssues() } } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.borderless)
-                    .help("Refresh list")
+                if onPage {
+                    Button { Task { await store.loadIssues() } } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.borderless)
+                        .help("Refresh list")
+                }
                 Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { Image(systemName: "plus") }
                     .buttonStyle(.borderless)
                     .disabled(store.collaborationAccess == nil)

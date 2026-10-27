@@ -1138,3 +1138,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Mở một kho lưu trữ có remote GitHub hoặc GitLab để chọn tài khoản nó dùng.";
 "Connected accounts" = "Tài khoản đã kết nối";
 "Connect an account for repository services." = "Hãy kết nối tài khoản cho các dịch vụ kho lưu trữ.";
+"Filtered: %@" = "Đã lọc: %1$@";
+"Clear filter" = "Xóa bộ lọc";

@@ -1184,3 +1184,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "開啟帶有 GitHub 或 GitLab 遠端的儲存庫即可選擇它使用的帳號。";
 "Connected accounts" = "已連結的帳號";
 "Connect an account for repository services." = "請連結用於儲存庫服務的帳號。";
+"Filtered: %@" = "篩選：%1$@";
+"Clear filter" = "清除篩選";

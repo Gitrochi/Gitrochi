@@ -133,6 +133,8 @@ import Observation
     /// open, closed or all
     var scope = "open"
     var search = ""
+    /// The search the list was loaded with (the page's field may hold text not searched yet)
+    var loadedSearch = ""
     /// Repository, account and filter the list was loaded for; a different key starts over
     var contextKey = ""
     var page = 0

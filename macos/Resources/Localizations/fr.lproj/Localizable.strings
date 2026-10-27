@@ -1155,3 +1155,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Ouvrez un dépôt avec un distant GitHub ou GitLab pour choisir le compte qu'il utilise.";
 "Connected accounts" = "Comptes connectés";
 "Connect an account for repository services." = "Connectez un compte pour les services du dépôt.";
+"Filtered: %@" = "Filtré : %1$@";
+"Clear filter" = "Effacer le filtre";

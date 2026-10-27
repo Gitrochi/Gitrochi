@@ -1165,3 +1165,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Nyiss meg egy GitHub vagy GitLab távolival rendelkező tárolót a fiók kiválasztásához.";
 "Connected accounts" = "Összekapcsolt fiókok";
 "Connect an account for repository services." = "Kapcsolj össze egy fiókot a tárolószolgáltatásokhoz.";
+"Filtered: %@" = "Szűrve: %1$@";
+"Clear filter" = "Szűrő törlése";

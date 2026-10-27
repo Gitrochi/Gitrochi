@@ -1133,3 +1133,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Buka repositori dengan remote GitHub atau GitLab untuk memilih akun yang dipakainya.";
 "Connected accounts" = "Akun terhubung";
 "Connect an account for repository services." = "Hubungkan akun untuk layanan repositori.";
+"Filtered: %@" = "Difilter: %1$@";
+"Clear filter" = "Hapus filter";

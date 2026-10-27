@@ -1126,3 +1126,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "Open een repository met een GitHub- of GitLab-remote om het account te kiezen.";
 "Connected accounts" = "Gekoppelde accounts";
 "Connect an account for repository services." = "Koppel een account voor de repositorydiensten.";
+"Filtered: %@" = "Gefilterd: %1$@";
+"Clear filter" = "Filter wissen";

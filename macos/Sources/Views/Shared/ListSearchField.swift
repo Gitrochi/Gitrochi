@@ -59,3 +59,26 @@ struct ListSearchRow<Value: Hashable>: View {
         .padding(.vertical, 4)
     }
 }
+
+/// In the repository sidebar a list carries no search row; when the page left a filter on, this one line says so and clears it
+struct ListFilterCaption: View {
+    let filter: String
+    let search: String
+    let onClear: () -> Void
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "line.3.horizontal.decrease.circle.fill").foregroundStyle(Color.accentColor)
+            Text("Filtered: \(search.isEmpty ? filter : filter + " · “" + search + "”")")
+                .lineLimit(1).truncationMode(.tail)
+            Spacer(minLength: 2)
+            Button(action: onClear) { Image(systemName: "xmark.circle.fill") }
+                .buttonStyle(.borderless).foregroundStyle(.secondary)
+                .help("Clear filter").accessibilityLabel("Clear filter")
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 3)
+    }
+}

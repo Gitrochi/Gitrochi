@@ -32,6 +32,7 @@ extension RepoStore {
     func loadIssues(append: Bool = false) async {
         guard let c = issueAccess else { return }
         issueList.contextKey = issueContextKey
+        issueList.loadedSearch = issueList.search
         await issueList.load(c, scope: issueList.scope, search: issueList.search, append: append)
     }
 

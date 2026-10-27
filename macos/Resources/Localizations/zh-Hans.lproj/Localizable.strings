@@ -1185,3 +1185,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "打开带有 GitHub 或 GitLab 远程的仓库即可选择它使用的账户。";
 "Connected accounts" = "已连接的账户";
 "Connect an account for repository services." = "请连接用于仓库服务的账户。";
+"Filtered: %@" = "筛选：%1$@";
+"Clear filter" = "清除筛选";

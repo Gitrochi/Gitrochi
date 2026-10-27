@@ -1178,3 +1178,5 @@
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "เปิดที่เก็บที่มีรีโมต GitHub หรือ GitLab เพื่อเลือกบัญชีที่ใช้";
 "Connected accounts" = "บัญชีที่เชื่อมต่อ";
 "Connect an account for repository services." = "เชื่อมต่อบัญชีสำหรับบริการของที่เก็บ";
+"Filtered: %@" = "กรอง: %1$@";
+"Clear filter" = "ล้างตัวกรอง";
