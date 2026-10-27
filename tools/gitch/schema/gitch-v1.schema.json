@@ -1453,6 +1453,18 @@
         },
         {
           "$ref": "#/$defs/login"
+        },
+        {
+          "$ref": "#/$defs/overlap"
+        },
+        {
+          "$ref": "#/$defs/move"
+        },
+        {
+          "$ref": "#/$defs/module"
+        },
+        {
+          "$ref": "#/$defs/logo"
         }
       ]
     },
@@ -1989,6 +2001,678 @@
           }
         }
       ]
+    },
+    "overlap": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "tool",
+        "repo",
+        "generated",
+        "scope",
+        "worktrees",
+        "pairs",
+        "diagnostics",
+        "stats",
+        "incomplete",
+        "notes"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "tool": {
+          "const": "gitch overlap"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "generated": {
+          "type": "string"
+        },
+        "scope": {
+          "const": "worktrees"
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "path",
+              "branch",
+              "head",
+              "detached",
+              "available"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "detached": {
+                "type": "boolean"
+              },
+              "available": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "left",
+              "right",
+              "base",
+              "sameFiles",
+              "dependencies",
+              "sharedDependencies",
+              "truncated"
+            ],
+            "properties": {
+              "left": {
+                "type": "string"
+              },
+              "right": {
+                "type": "string"
+              },
+              "base": {
+                "type": "string"
+              },
+              "sameFiles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "source",
+                    "target",
+                    "kind",
+                    "worktree",
+                    "heuristic"
+                  ],
+                  "properties": {
+                    "source": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "worktree": {
+                      "type": "string"
+                    },
+                    "heuristic": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "sharedDependencies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "target",
+                    "left",
+                    "right",
+                    "heuristic"
+                  ],
+                  "properties": {
+                    "target": {
+                      "type": "string"
+                    },
+                    "left": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "right": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "heuristic": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "truncated": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "severity": {
+                "const": "warning"
+              },
+              "message": {
+                "type": "string"
+              },
+              "worktree": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "stats": {
+          "type": "object",
+          "required": [
+            "worktrees",
+            "comparedPairs",
+            "overlappingPairs",
+            "sameFiles",
+            "dependencyLinks",
+            "sharedDependencies"
+          ],
+          "properties": {
+            "worktrees": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "comparedPairs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "overlappingPairs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sameFiles": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dependencyLinks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sharedDependencies": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "incomplete": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Overlap risks between local worktrees since each common ancestor. Same paths and static dependency relationships are warnings, not proof of a textual merge conflict. Watch JSON emits one such object per changed snapshot (NDJSON)."
+    },
+    "move": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "tool",
+        "mode",
+        "repo",
+        "source",
+        "destination",
+        "kind",
+        "moves",
+        "references",
+        "affectedFiles",
+        "tests",
+        "modules",
+        "diagnostics",
+        "incomplete",
+        "notes"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "tool": {
+          "const": "gitch move"
+        },
+        "mode": {
+          "const": "plan"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "file",
+            "directory"
+          ]
+        },
+        "moves": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "source",
+              "target",
+              "sourceAfter",
+              "targetAfter",
+              "kind",
+              "heuristic",
+              "evidence"
+            ],
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "sourceAfter": {
+                "type": "string"
+              },
+              "targetAfter": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "heuristic": {
+                "type": "boolean"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/evidence"
+                }
+              }
+            }
+          }
+        },
+        "affectedFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modules": {
+          "type": "object",
+          "required": [
+            "before",
+            "after"
+          ],
+          "properties": {
+            "before": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "after": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "severity": {
+                "const": "warning"
+              },
+              "message": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "incomplete": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "file",
+              "fileAfter",
+              "line",
+              "from",
+              "to"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "fileAfter": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "description": "Read-only file or directory move plan with remapped static references and evidence. Does not move files or guarantee textual import patches."
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "tool",
+        "repo",
+        "scope",
+        "path",
+        "ecosystem",
+        "modules",
+        "findings",
+        "diagnostics",
+        "stats",
+        "incomplete",
+        "notes"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "tool": {
+          "const": "gitch module audit"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "scope": {
+          "const": "tracked-working-tree"
+        },
+        "path": {
+          "type": "string"
+        },
+        "ecosystem": {
+          "const": "npm"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "path",
+              "manifest"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "manifest": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "module",
+              "manifest",
+              "dependency",
+              "message",
+              "files",
+              "evidence"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "module": {
+                "type": "string"
+              },
+              "manifest": {
+                "type": "string"
+              },
+              "dependency": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "file",
+                    "line",
+                    "method",
+                    "confidence"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "method": {
+                      "enum": [
+                        "static-import",
+                        "manifest"
+                      ]
+                    },
+                    "confidence": {
+                      "const": "declared"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "severity": {
+                "const": "warning"
+              },
+              "message": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "stats": {
+          "type": "object",
+          "required": [
+            "modules",
+            "findings",
+            "errors",
+            "warnings"
+          ],
+          "properties": {
+            "modules": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "findings": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "errors": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warnings": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "incomplete": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Static npm manifest and import audit of tracked working-tree files. Unobserved declarations and differing version specifications are review candidates, not automatic removal or compatibility decisions."
+    },
+    "logo": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "enabled"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Saved CLI trademark visibility. Defaults to true; environment overrides only affect rendering."
     }
   }
 }

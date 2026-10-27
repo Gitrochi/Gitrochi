@@ -1084,5 +1084,9 @@
  "Create flow file": "Flowbestand maken",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi heeft de bestanden van deze repository gelezen om de tests en tools te vinden. Er wordt niets uitgevoerd of geschreven totdat je het bestand maakt.",
  "Proposed .gitch/flow.yml": "Voorgestelde .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Er is al een flowbestand, dus er wordt niets geschreven. Voeg het voorstel handmatig samen."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Er is al een flowbestand, dus er wordt niets geschreven. Voeg het voorstel handmatig samen.",
+  "CLI appearance": "CLI-weergave",
+  "Show the small eye logo in CLI output": "Toon het kleine ogenlogo in de CLI-uitvoer",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Je kunt ook gitch logo on of gitch logo off in een terminal gebruiken.",
+  "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen."
 }

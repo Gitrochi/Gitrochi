@@ -73,7 +73,9 @@ test_flow_preflight_line_and_pre_push_gate() {
   git add -A && gitch c -m "Add flow" >/dev/null 2>&1 || fail commit
   run gitch flow trust --yes; assert_ok
   run gitch preflight; assert_no_out "FLOW="
+  # Let the engine write its native settings paths and repository ID on every platform.
   run gitch flow gate on --flow ok --json; assert_ok
+  assert_eq "$(printf '%s' "$OUT" | jq -r .gate)" "ON"
   run gitch preflight; assert_out "FLOW=WARN"
   run gitch preflight --json; assert_eq "$(printf '%s' "$OUT" | jq -r .flow)" "WARN"
   # When the gate runs the flow and it passes, the push goes through.

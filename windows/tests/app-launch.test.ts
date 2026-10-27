@@ -7,7 +7,7 @@ const state = vi.hoisted(() => {
     status: { unstaged: [{ path: "src/a.ts", oldPath: null }], staged: [] },
     detail: {}, detailFiles: [{ path: "src/a.ts", oldPath: null }],
     selection: { kind: "commit", sha: "a".repeat(40) },
-    openBlame: vi.fn(), openFileHistory: vi.fn(), openDiff: vi.fn(),
+    openBlame: vi.fn(), openFileHistory: vi.fn(), openDiff: vi.fn(), revealPath: vi.fn(),
     closeFileInspect: vi.fn(), closeDiff: vi.fn(), select: vi.fn(), reveal: vi.fn(),
     openStructureGraph: vi.fn(), openAffectedGraph: vi.fn(), fail: vi.fn(),
   };
@@ -32,6 +32,15 @@ beforeEach(() => {
 });
 
 describe("CLI 와 브라우저 앱 탐색", () => {
+  it("reveals repository, folder and file links without opening history", async () => {
+    for (const file of [null, "src/한글 & folder", "src/a.ts"]) {
+      await applyAppLaunch(route({ view: "finder", file }));
+    }
+    expect(state.store.revealPath.mock.calls).toEqual([[""], ["src/한글 & folder"], ["src/a.ts"]]);
+    expect(state.store.openFileHistory).not.toHaveBeenCalled();
+    expect(state.store.openStructureGraph).not.toHaveBeenCalled();
+    expect(state.store.openDiff).not.toHaveBeenCalled();
+  });
   it("기존 저장소 탭을 선택하고 요청한 파일의 실제 줄을 연다", async () => {
     await applyAppLaunch(route({ file: "src/a.ts", line: 27 }));
     expect(state.workspace.openInNewTab).toHaveBeenCalledWith("C:\\repo");

@@ -64,7 +64,8 @@ can_prompt() { [ -t 0 ] && [ -t 2 ]; }
 # ----- 출력 -----
 setup_colors() {
   local c="${GITSW_COLOR:-auto}"
-  if [ "$c" = always ] || { [ "$c" = auto ] && [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; }; then
+  if [ -z "${MACHINE_JSON:-}" ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ] && [ "${GITCH_STYLE:-auto}" != plain ] && \
+    { [ "$c" = always ] || { [ "$c" = auto ] && [ -t 1 ]; }; }; then
     GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
     # 앱 아이콘 색: 로고는 은색 → 파랑, 강조는 파랑, 점은 초록 노드. 24비트 색이 안 되면 256색 근사, 그것도 안 되면 기본색
     case "${COLORTERM:-}:${TERM:-}" in
@@ -82,10 +83,10 @@ setup_colors() {
   fi
 }
 say()  { printf '%s\n' "$*"; }
-ok()   { printf '%s\n' "${GREEN}✔${RESET} $*"; }
-warn() { printf '%s\n' "${YELLOW}⚠ $*${RESET}"; }
+ok()   { if ui_enabled; then ui_result ok "$*"; else printf '%s\n' "${GREEN}✔${RESET} $*"; fi; }
+warn() { if ui_enabled; then ui_result warn "$*"; else printf '%s\n' "${YELLOW}⚠ $*${RESET}"; fi; }
 dim()  { printf '%s\n' "${DIM}$*${RESET}"; }
-err()  { printf '%s\n' "${RED}$*${RESET}" >&2; }
+err()  { if ui_enabled; then ui_result error "$*" >&2; else printf '%s\n' "${RED}$*${RESET}" >&2; fi; }
 machine_error() {   # $1 안정적인 코드 $2 종료 코드 $3 메시지 — 오류는 표준오류, 결과는 표준출력
   printf '{"schemaVersion":1,"error":{"code":%s,"message":%s,"exitCode":%s}}\n' "$(json_str "$1")" "$(json_str "$3")" "$2" >&2
 }
@@ -139,6 +140,9 @@ fancy_out() {   # 사람이 보는 터미널이면 로고·진행 표시를 그�
 }
 
 banner() {   # 터미널 크기에 맞는 로고 + 이름: 넓고 높으면 큰 것, 낮으면 중간, 좁으면 작은 것, 아주 좁으면 글자만
+  [ "${UI_HEADER_SHOWN:-0}" != 1 ] || return 0
+  [ "${UI_LOGO:-1}" != 0 ] || return 0
+  [ "${GITCH_STYLE:-auto}" != plain ] && [ "${TERM:-}" != dumb ] || return 0
   local t1 t2 i n at=-9 below="" line
   local -a rows
   t1="${LEAF}●${RESET} ${BOLD}gitch${RESET} ${DIM}v$GITSW_VERSION${RESET}"
@@ -161,7 +165,207 @@ banner() {   # 터미널 크기에 맞는 로고 + 이름: 넓고 높으면 큰 
   return 0
 }
 
+# 명령이 출력을 리디렉션하기 전에 사람이 보는 표시 형식을 한 번 정합니다.
+# 기계·프로토콜 출력에는 적용하지 않으며 명령의 실행 결과를 바꾸지 않습니다.
+ui_enabled() { [ "${UI_ACTIVE:-0}" = 1 ]; }
+
+ui_init() {
+  UI_ACTIVE=0; UI_UTF8=0; UI_HEADER_SHOWN=0; UI_LOGO=1
+  ui_logo_enabled || UI_LOGO=0
+  if [ "${1:-}" = logo ]; then
+    case "${2:-}" in on) UI_LOGO=1 ;; off) UI_LOGO=0 ;; esac
+  fi
+  [ -t 1 ] && [ -z "${MACHINE_JSON:-}" ] && [ "${TERM:-}" != dumb ] \
+    && [ "${GITCH_STYLE:-auto}" != plain ] && [ "${GITSW_BANNER:-auto}" != never ] || return 0
+  local command=${1:-help} argument expect='' fmt='' output='' sub=${2:-} charmap help_requested=0
+  case "$command" in _*|guard|schema|completion|export) return 0 ;; esac
+  case "$command $sub" in 'config path'|'config get') return 0 ;; esac
+  for argument in "$@"; do
+    if [ -n "$expect" ]; then
+      case "$expect" in format) fmt=$argument ;; output) output=$argument ;; esac
+      expect=''
+      continue
+    fi
+    case "$argument" in
+      -h|--help) help_requested=1 ;;
+      --format|-f) expect=format ;;
+      --format=*) fmt=${argument#*=} ;;
+      --out|-o) expect=output ;;
+      --out=*) output=${argument#*=} ;;
+    esac
+  done
+  case "$fmt" in json|dot|svg|png) return 0 ;; esac
+  [ "$output" != - ] || return 0
+  case "$command" in
+    flow|test|ci)
+      # 흐름 엔진이 내보내는 계약·이벤트·보고서 원문에는 헤더를 섞지 않습니다.
+      case "$command $sub" in 'flow schema'|'flow events'|'flow _names'|'flow export') return 0 ;; esac
+      for argument in "$@"; do
+        case "$argument" in --events|--summary) return 0 ;; esac
+      done
+      case "$fmt" in junit|md|markdown|html) return 0 ;; esac ;;
+  esac
+  case "$command" in
+    g|graph)
+      # review는 터미널에서도 기본 JSON입니다. 다른 graph 명령의 기본 형식은
+      # fancy_out의 실행 주체·배너 규칙과 동일하게 판단해야 합니다.
+      if [ "$help_requested" = 0 ]; then
+        [ "$sub" != review ] || [ "$fmt" = html ] || return 0
+        if [ -z "$fmt" ] && ! fancy_out; then return 0; fi
+      fi ;;
+  esac
+  UI_ACTIVE=1
+  charmap=$(locale charmap 2>/dev/null)
+  case "$charmap" in *[Uu][Tt][Ff]*8*) UI_UTF8=1 ;; esac
+  return 0
+}
+
+ui_safe() {   # 문자열 → UI_TEXT; 터미널 제어 바이트를 보이는 데이터로 표시합니다.
+  local LC_ALL=C s=$1 code oct ch escaped
+  s=${s//$'\n'/\\n}; s=${s//$'\r'/\\r}; s=${s//$'\t'/\\t}
+  s=${s//$'\033'/\\e}; s=${s//$'\177'/\\x7f}
+  case "$s" in *[$'\001'-$'\037']*)
+    for ((code=1;code<32;code++)); do
+      printf -v oct '%03o' "$code"; printf -v ch '%b' "\\$oct"
+      printf -v escaped '\\x%02x' "$code"; s=${s//"$ch"/"$escaped"}
+    done ;;
+  esac
+  UI_TEXT=$s
+}
+
+ui_character() {   # 지정 위치의 UTF-8 문자를 UI_CHAR/UI_CHAR_BYTES/UI_CHAR_WIDTH로 반환합니다.
+  local LC_ALL=C s=$1 at=$2 b1 b2 b3 b4 cp
+  UI_CHAR_BYTES=1; UI_CHAR_WIDTH=1
+  # macOS Bash 3.2는 127보다 큰 바이트를 부호 있는 값으로 반환합니다.
+  printf -v b1 '%d' "'${s:at:1}"; b1=$((b1&255)); cp=$b1
+  if [ "$b1" -ge 194 ] && [ "$b1" -le 223 ] && [ $((at+1)) -lt ${#s} ]; then
+    printf -v b2 '%d' "'${s:at+1:1}"; b2=$((b2&255)); cp=$(((b1-192)*64+b2-128)); UI_CHAR_BYTES=2
+  elif [ "$b1" -ge 224 ] && [ "$b1" -le 239 ] && [ $((at+2)) -lt ${#s} ]; then
+    printf -v b2 '%d' "'${s:at+1:1}"; printf -v b3 '%d' "'${s:at+2:1}"
+    b2=$((b2&255)); b3=$((b3&255))
+    cp=$(((b1-224)*4096+(b2-128)*64+b3-128)); UI_CHAR_BYTES=3
+  elif [ "$b1" -ge 240 ] && [ "$b1" -le 244 ] && [ $((at+3)) -lt ${#s} ]; then
+    printf -v b2 '%d' "'${s:at+1:1}"; printf -v b3 '%d' "'${s:at+2:1}"; printf -v b4 '%d' "'${s:at+3:1}"
+    b2=$((b2&255)); b3=$((b3&255)); b4=$((b4&255))
+    cp=$(((b1-240)*262144+(b2-128)*4096+(b3-128)*64+b4-128)); UI_CHAR_BYTES=4
+  fi
+  if (( (cp>=768 && cp<=879) || cp==8205 || (cp>=65024 && cp<=65039) || (cp>=917760 && cp<=917999) )); then UI_CHAR_WIDTH=0
+  elif (( (cp>=4352 && cp<=4447) || (cp>=9001 && cp<=9002) || (cp>=11904 && cp<=42191 && cp!=12351) \
+    || (cp>=44032 && cp<=55203) || (cp>=63744 && cp<=64255) || (cp>=65040 && cp<=65049) \
+    || (cp>=65072 && cp<=65135) || (cp>=65280 && cp<=65376) || (cp>=65504 && cp<=65510) \
+    || (cp>=127744 && cp<=129791) || (cp>=131072 && cp<=262141) )); then UI_CHAR_WIDTH=2; fi
+  UI_CHAR=${s:at:UI_CHAR_BYTES}
+}
+
+ui_width() {   # 일반 문자열의 표시 폭 → UI_WIDTH (ANSI는 폭 계산 뒤에 더합니다.)
+  local LC_ALL=C s=$1 at=0
+  UI_WIDTH=0
+  while [ "$at" -lt ${#s} ]; do ui_character "$s" "$at"; UI_WIDTH=$((UI_WIDTH+UI_CHAR_WIDTH)); at=$((at+UI_CHAR_BYTES)); done
+}
+
+ui_fit() {   # 헤더 문자열·표시 폭 → UI_TEXT; 복사할 본문 경로는 줄이지 않습니다.
+  ui_safe "$1"
+  local LC_ALL=C s=$UI_TEXT limit=$2 at=0 used=0 result='' ellipsis='...'
+  [ "${UI_UTF8:-0}" != 1 ] || ellipsis='…'
+  ui_width "$s"
+  [ "$UI_WIDTH" -gt "$limit" ] || return 0
+  ui_width "$ellipsis"; limit=$((limit-UI_WIDTH)); [ "$limit" -ge 0 ] || limit=0
+  while [ "$at" -lt ${#s} ]; do
+    ui_character "$s" "$at"
+    [ $((used+UI_CHAR_WIDTH)) -le "$limit" ] || break
+    result="$result$UI_CHAR"; used=$((used+UI_CHAR_WIDTH)); at=$((at+UI_CHAR_BYTES))
+  done
+  UI_TEXT="$result$ellipsis"
+}
+
+ui_header() {   # 제목·메타데이터·계정 정보와 기존 트레이드마크를 표시합니다.
+  ui_enabled || return 0
+  local title=$1 meta=$2 context=$3 i max=0 padding room row
+  term_size
+  is_number "$TW" && [ "$TW" -ge 8 ] || TW=80
+  [ "$TW" -le 500 ] || TW=500
+  if [ "$UI_LOGO" = 1 ] && [ "$UI_UTF8" = 1 ] && [ "$TW" -ge 58 ]; then
+    for row in "${LOGO_S[@]}"; do ui_width "$row"; [ "$UI_WIDTH" -le "$max" ] || max=$UI_WIDTH; done
+    room=$((TW-max-5))
+    for ((i=0;i<3;i++)); do
+      row=${LOGO_S[$i]}; ui_width "$row"; padding=$((max-UI_WIDTH+3))
+      case "$i" in 0) ui_fit "$title" "$room" ;; 1) ui_fit "$meta" "$room" ;; *) ui_fit "$context" "$room" ;; esac
+      printf '  %s%s%s%*s%s%s%s\n' "$ACCENT" "$row" "$RESET" "$padding" '' \
+        "$([ "$i" -eq 0 ] && printf '%s' "$BOLD$ACCENT" || printf '%s' "$DIM")" "$UI_TEXT" "$RESET"
+    done
+  else
+    if [ "$UI_LOGO" = 1 ]; then
+      if [ "$UI_UTF8" = 1 ] && [ "$TW" -ge 30 ]; then
+        for row in "${LOGO_S[@]}"; do printf '  %s%s%s\n' "$ACCENT" "$row" "$RESET"; done
+      else title="o o  $title"; fi
+    fi
+    ui_fit "$title" "$((TW-2))"; printf '  %s%s%s\n' "$BOLD$ACCENT" "$UI_TEXT" "$RESET"
+    [ -z "$meta" ] || { ui_fit "$meta" "$((TW-2))"; printf '  %s%s%s\n' "$DIM" "$UI_TEXT" "$RESET"; }
+    [ -z "$context" ] || { ui_fit "$context" "$((TW-2))"; printf '  %s%s%s\n' "$DIM" "$UI_TEXT" "$RESET"; }
+  fi
+  printf '\n'
+  UI_HEADER_SHOWN=1
+}
+
+ui_start() {
+  ui_enabled || return 0
+  local command=${1:-help} title repo='' branch='' account='' meta='' context='' separator='·'
+  case "$command" in
+    ck|check) title='작업 상태' ;; status|st) title='계정 상태' ;; preflight|pf) title='커밋 · push 전 점검' ;;
+    overlap) title='충돌 예보' ;; move) title='이동 계획' ;; module) title='모듈 의존성 검사' ;;
+    help|-h|--help) title='도움말' ;; version|-v|--version) title='버전' ;; logo) title='CLI 로고 설정' ;;
+    c|commit|cp) title='커밋' ;; p|push) title='push' ;; pl|pull) title='pull' ;; b|branch) title='브랜치' ;;
+    pr|mr) title='PR · MR' ;; ci) title='CI' ;; g|graph) title='구조 그래프' ;; *) title=$command ;;
+  esac
+  if [ "$UI_UTF8" != 1 ]; then
+    separator='|'
+    case "$command" in
+      ck|check) title='working tree' ;; status|st) title='account status' ;; preflight|pf) title='preflight' ;;
+      overlap) title='overlap' ;; move) title='move plan' ;; module) title='module audit' ;;
+      help|-h|--help) title='help' ;; version|-v|--version) title='version' ;; logo) title='CLI logo' ;;
+      c|commit|cp) title='commit' ;; p|push) title='push' ;; pl|pull) title='pull' ;; b|branch) title='branches' ;;
+      pr|mr) title='PR / MR' ;; ci) title='CI' ;; g|graph) title='graph' ;; *) title=$command ;;
+    esac
+  fi
+  if in_repo; then
+    repo=$(basename "$(repo_top)"); branch=$(cur_branch)
+    [ -n "$branch" ] || branch='detached HEAD'
+    meta="$repo $separator $branch"
+    account=$(git config --get gitswitch.account 2>/dev/null)
+    if [ -n "$account" ]; then
+      if [ "$UI_UTF8" = 1 ]; then context="계정 $account · 잠금"; else context="account $account | locked"; fi
+    fi
+  else meta="Gitrochi CLI $separator v$GITSW_VERSION"; fi
+  ui_header "gitch $separator $title" "$meta" "$context"
+}
+
+ui_section() { ui_safe "$1"; printf '\n  %s%s%s\n' "$BOLD" "$UI_TEXT" "$RESET"; }
+ui_result() {   # 기존 메시지에는 내부 색상 변수가 이미 포함될 수 있습니다.
+  local text=$2 style
+  for style in "$GREEN" "$RED" "$YELLOW" "$BOLD" "$DIM" "$RESET" "$ACCENT" "$LEAF"; do
+    [ -z "$style" ] || text=${text//"$style"/}
+  done
+  ui_item "$1" "$text"
+}
+ui_item() {
+  local icon color=''
+  case "$1" in
+    ok) icon='✓'; color=$GREEN ;; warn) icon='!'; color=$YELLOW ;; error) icon='×'; color=$RED ;; *) icon='·'; color=$DIM ;;
+  esac
+  if [ "${UI_UTF8:-0}" != 1 ]; then case "$1" in ok) icon='+' ;; error) icon='x' ;; info) icon='-' ;; esac; fi
+  ui_safe "$2"; printf '  %s%s%s %s\n' "$color" "$icon" "$RESET" "$UI_TEXT"
+}
+ui_detail() { ui_safe "$1"; printf '    %s\n' "$UI_TEXT"; }
+ui_next() {
+  local arrow='→' command=$1 label=${2:-다음}
+  [ "${UI_UTF8:-0}" = 1 ] || arrow='->'
+  ui_safe "$label"; label=$UI_TEXT; ui_safe "$command"
+  printf '\n  %s%s%s %s: %s\n' "$ACCENT" "$arrow" "$RESET" "$label" "$UI_TEXT"
+}
+ui_summary() { printf '\n'; ui_item "$1" "$2"; }
+
 step() {   # 여러 단계 명령의 단계 제목: ◆ 제목  번호/전체
+  if ui_enabled; then ui_section "$2 · $1/$3"; return 0; fi
   printf '\n%s\n' "${ACCENT}◆${RESET} ${BOLD}$2${RESET}  ${DIM}$1/$3${RESET}"
 }
 
@@ -311,7 +515,7 @@ B_ACC=(); B_HOST=(); B_PORT=(); B_LOGIN=(); B_ALIAS=()
 F_RAW=(); F_REAL=(); F_ACC=()
 O_RAW=(); O_HOST=(); O_PATH=(); O_ACC=()
 AR_RAW=(); AR_REAL=(); AR_PAT=()
-CFG_SCAN_ROOT="~/Develop"; CFG_AI_PUSH="ask"; CFG_MAX_MB=50; CFG_WARN_MB=10; CFG_SSH_STRICT=""
+CFG_SCAN_ROOT="~/Develop"; CFG_AI_PUSH="ask"; CFG_MAX_MB=50; CFG_WARN_MB=10; CFG_SSH_STRICT=""; CFG_UI_LOGO=true
 CFG_ERRORS=()
 
 acc_idx() {   # 계정 → ACC_I
@@ -416,6 +620,7 @@ load_config() {
       gitsw.aipush) CFG_AI_PUSH="$val" ;;
       gitsw.maxfilemb) CFG_MAX_MB="$val" ;;
       gitsw.warnfilemb) CFG_WARN_MB="$val" ;;
+      ui.logo) CFG_UI_LOGO=$(lower "$val") ;;
       account.*.*)
         rest=${key#account.}; var=${rest##*.}; id=${rest%.*}
         if ! acc_idx "$id"; then
@@ -507,6 +712,7 @@ validate_config() {
   done
   case "$(lower "$CFG_AI_PUSH")" in ask|allow|branch) ;; *) CFG_ERRORS+=("gitsw.aiPush 는 ask, branch, allow 중 하나입니다 (지금: $CFG_AI_PUSH)") ;; esac
   case "$CFG_SSH_STRICT" in ""|true|false|yes|no|on|off|1|0) ;; *) CFG_ERRORS+=("gitsw.sshStrict 는 true 또는 false 입니다") ;; esac
+  case "$CFG_UI_LOGO" in ""|true|false|yes|no|on|off|1|0) ;; *) CFG_ERRORS+=("ui.logo 는 true 또는 false 입니다") ;; esac
   is_number "$CFG_MAX_MB" || CFG_ERRORS+=("gitsw.maxFileMB 는 숫자여야 합니다")
   is_number "$CFG_WARN_MB" || CFG_ERRORS+=("gitsw.warnFileMB 는 숫자여야 합니다")
 }
@@ -1830,9 +2036,19 @@ status_cmd() {
       folder_account . && printf '{"schemaVersion":1,"inRepo":false,"folderAccount":%s}\n' "$(json_str "$FA")" || printf '{"schemaVersion":1,"inRepo":false,"folderAccount":null}\n'
       return 0
     fi
-    say "${BOLD}[전역 작성자]${RESET} $(global_author_desc)"
-    say "  (git 저장소 밖입니다)"
-    folder_account . && say "  이 폴더의 기본 계정: $FA  (gitch clone <저장소> 로 계정 생략 가능)"
+    if ui_enabled; then
+      ui_section "계정 상태"
+      ui_item info "전역 작성자 · $(global_author_desc)"
+      ui_item info "git 저장소 밖입니다"
+      if folder_account .; then
+        ui_detail "이 폴더의 기본 계정 · $FA"
+        ui_next 'gitch clone <저장소>' '저장소 받기'
+      fi
+    else
+      say "${BOLD}[전역 작성자]${RESET} $(global_author_desc)"
+      say "  (git 저장소 밖입니다)"
+      folder_account . && say "  이 폴더의 기본 계정: $FA  (gitch clone <저장소> 로 계정 생략 가능)"
+    fi
     [ -n "$ssh" ] && status_ssh
     return 0
   fi
@@ -1867,6 +2083,35 @@ status_cmd() {
       "$(json_str "$R_DERIVED")" "$(json_str "$fold")" "$(json_str "${push_acc:-unknown}")" "$(json_str "$R_LOGIN")" \
       "$(json_num "$unpushed")" "$(json_bool "$signed")" "$(json_bool "$R_IGNORED")" "$wj"
   else
+    if ui_enabled; then
+      ui_section "계정 상태"
+      ui_detail "$(basename "$top") · ${R_ACC:-계정 미지정} · ${R_LOCK:+잠금 }${R_LOCK:-잠금 없음}"
+      ui_item info "커밋 작성자 · ${name:-없음} <${email:-없음}>"
+      ui_detail "전역 작성자 · $(global_author_desc)"
+      ui_detail "원격 · ${R_URL:-없음}"
+      [ -n "$PU_URL" ] && [ "$R_URL" != "$PU_URL" ] && ui_detail "push 주소 · $PU_URL"
+      [ -n "$up" ] && ui_detail "upstream · $up"
+      [ -n "$R_DERIVED" ] && ui_detail "계정 규칙 · $R_DERIVED ($R_DERIVED_NOTE)"
+      [ -n "$fold" ] && ui_detail "폴더 기본 · $fold"
+      [ -n "$signed" ] && ui_item ok "커밋 서명 켜짐"
+      [ -n "$R_IGNORED" ] && ui_item warn "관리 제외 · gitch ignore --off 로 되돌림"
+      if [ -n "$push_acc" ]; then
+        ui_item ok "push 계정 · $push_acc$( [ -n "$R_LOGIN" ] && [ "$R_LOGIN" != "$push_acc" ] && printf ' (로그인 %s)' "$R_LOGIN")"
+      elif [ -z "$PU_URL" ]; then
+        ui_item info "push 원격 없음${R_ACC:+ · 커밋 계정 $R_ACC}"
+      else
+        ui_item warn "push 계정이 정해지지 않았습니다"
+        ui_detail "사용자에게 계정을 확인한 뒤 gitch use <계정>"
+      fi
+      for w in "${warns[@]}"; do ui_item warn "$w"; done
+      if [ ${#warns[@]} -gt 0 ]; then
+        ui_summary warn "계정 관련 확인 ${#warns[@]}개 · 보낼 커밋 ${unpushed}개"
+      elif [ -n "$push_acc" ]; then
+        ui_summary ok "계정 확인 완료 · 보낼 커밋 ${unpushed}개"
+      else
+        ui_summary info "보낼 커밋 ${unpushed}개"
+      fi
+    else
     say "${BOLD}[전역 작성자]${RESET} $(global_author_desc)"
     say "${BOLD}[현재 저장소]${RESET} $(basename "$top")"
     say "  커밋 작성자 : ${name:-없음} <${email:-없음}>"
@@ -1886,6 +2131,7 @@ status_cmd() {
       say "  ${YELLOW}push 계정   : 정해지지 않음 → 사용자에게 계정을 확인한 뒤 'gitch use <계정>'${RESET}"
     fi
     for w in "${warns[@]}"; do say "  ${YELLOW}⚠ $w${RESET}"; done
+    fi
     say "PUSH_ACCOUNT=${push_acc:-unknown}"
     say "PUSH_LOGIN=${R_LOGIN:-none}"
     say "REPO_ACCOUNT=${R_ACC:-unknown}"
@@ -1985,7 +2231,7 @@ pf_add() {
   case "$1" in STOP) PF_LEVEL=STOP ;; WARN) [ "$PF_LEVEL" = OK ] && PF_LEVEL=WARN ;; esac
 }
 pf_print() {
-  local it lv code msg icon first=1 cj="" fl=""
+  local it lv code msg icon first=1 cj="" fl="" n_ok=0 n_warn=0 n_stop=0
   if [ -n "$1" ]; then
     for it in "${PF_ITEMS[@]}"; do
       lv=${it%%|*}; code=${it#*|}; msg=${code#*|}; code=${code%%|*}
@@ -1998,11 +2244,31 @@ pf_print() {
       "$(json_num "${PF_AHEAD:-0}")" "$(json_num "${PF_BEHIND:-0}")" "$cj" "$(if [ -n "$fl" ]; then json_str "$fl"; else printf null; fi)"
     return
   fi
-  for it in "${PF_ITEMS[@]}"; do
-    lv=${it%%|*}; code=${it#*|}; msg=${code#*|}
-    case "$lv" in OK) icon="${GREEN}✔${RESET}" ;; WARN) icon="${YELLOW}⚠${RESET}" ;; *) icon="${RED}✘${RESET}" ;; esac
-    say "  $icon $msg"
-  done
+  if ui_enabled; then
+    ui_section "커밋 · push 전 점검"
+    if [ -n "${PF_BR:-}${PF_ACC:-}" ]; then
+      ui_detail "${PF_BR:-브랜치 없음} · 계정 ${PF_ACC:-미지정} · ↑ ${PF_AHEAD:-0} · ↓ ${PF_BEHIND:-0}"
+    fi
+    for it in "${PF_ITEMS[@]}"; do
+      lv=${it%%|*}; code=${it#*|}; msg=${code#*|}
+      case "$lv" in
+        OK) ui_item ok "$msg"; n_ok=$((n_ok+1)) ;;
+        WARN) ui_item warn "$msg"; n_warn=$((n_warn+1)) ;;
+        *) ui_item error "$msg"; n_stop=$((n_stop+1)) ;;
+      esac
+    done
+    case "$PF_LEVEL" in
+      OK) ui_summary ok "점검 통과 · 정상 ${n_ok}개" ;;
+      WARN) ui_summary warn "확인 필요 · 주의 ${n_warn}개 · 정상 ${n_ok}개" ;;
+      *) ui_summary error "진행 중단 · 해결할 항목 ${n_stop}개 · 주의 ${n_warn}개" ;;
+    esac
+  else
+    for it in "${PF_ITEMS[@]}"; do
+      lv=${it%%|*}; code=${it#*|}; msg=${code#*|}
+      case "$lv" in OK) icon="${GREEN}✔${RESET}" ;; WARN) icon="${YELLOW}⚠${RESET}" ;; *) icon="${RED}✘${RESET}" ;; esac
+      say "  $icon $msg"
+    done
+  fi
   say "PREFLIGHT=$PF_LEVEL"
   say "REPO_ACCOUNT=${PF_ACC:-unknown} PUSH_ACCOUNT=${PF_PUSH:-unknown} BRANCH=${PF_BR:-none} AHEAD=${PF_AHEAD:-0} BEHIND=${PF_BEHIND:-0}"
   fl=$(flow_preflight_line)
@@ -2054,7 +2320,7 @@ json_lines() {   # 줄들 → ["..",".."]
 check_cmd() {   # gitch ck
   require_repo
   local json="" fmode=auto a br acc lock staged unstaged untracked ahead=0 behind=0 stash fetched=1 n_s n_u n_n
-  local staged_json unstaged_json untracked_json conflicts_json
+  local staged_json unstaged_json untracked_json conflicts_json conflicts_text
   for a in "$@"; do
     case "$a" in --json) json=1 ;; --fetch) fmode=force ;; --no-fetch) fmode=never ;; *) die "사용법: gitch ck [--json] [--fetch|--no-fetch]" ;; esac
   done
@@ -2070,7 +2336,7 @@ check_cmd() {   # gitch ck
   lock=$R_LOCK; acc=$R_ACC
   repo_state
   check_path_files < <(git diff --name-only --diff-filter=U -z 2>/dev/null)
-  conflicts_json=$CP_JSON
+  conflicts_json=$CP_JSON; conflicts_text=$CP_TEXT
   if has_upstream; then
     read -r behind ahead <<< "$(git rev-list --left-right --count '@{u}...HEAD' 2>/dev/null)"
     behind=${behind:-0}; ahead=${ahead:-0}
@@ -2085,6 +2351,87 @@ check_cmd() {   # gitch ck
       "$(json_num "$ahead")" "$(json_num "$behind")" "$staged_json" "$unstaged_json" \
       "$untracked_json" "$(json_num "$stash")" \
       "$( [ -n "$RS_OP" ] && json_str "$RS_OP" || echo null)" "$conflicts_json"
+    return 0
+  fi
+
+  if ui_enabled; then
+    local group list count level title line s f g shown remaining budget=12 limit prefix commits
+    ui_section "작업 상태"
+    ui_detail "$(basename "$(repo_top)") · ${br:-(detached HEAD)} · 계정 ${acc:-미지정}${lock:+ · 잠금}"
+    if [ -n "$RS_OP" ]; then
+      ui_item error "$(op_word "$RS_OP") 진행 중$( [ "$RS_CONFLICTS" -gt 0 ] && printf ' · 충돌 파일 %s개' "$RS_CONFLICTS")"
+      shown=0
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        [ "$shown" -lt 10 ] || break
+        shown=$((shown+1))
+        prefix='├─'; [ "$shown" -eq "$RS_CONFLICTS" ] && prefix='└─'
+        ui_detail "$prefix $line"
+      done <<< "$conflicts_text"
+      [ "$RS_CONFLICTS" -gt "$shown" ] && ui_detail "└─ … 외 $((RS_CONFLICTS-shown))개"
+      if [ "$RS_CONFLICTS" -gt 0 ]; then ui_detail "충돌 파일을 고친 뒤 git add <파일>"
+      fi
+      ui_next 'gitch continue' '진행 중인 작업 이어가기'
+    elif [ "$RS_CONFLICTS" -gt 0 ]; then
+      ui_item error "충돌 표시가 남은 파일 ${RS_CONFLICTS}개"
+    fi
+    if has_upstream; then
+      if [ "$ahead" = 0 ] && [ "$behind" = 0 ]; then ui_item ok "원격과 같음 · ↑ 0 · ↓ 0"
+      else ui_item warn "원격 · ↑ 보낼 커밋 ${ahead}개 · ↓ 받을 커밋 ${behind}개"; fi
+    elif has_head; then
+      ui_item info "원격 추적 브랜치 없음 · 보낼 커밋 ${ahead}개"
+    else
+      ui_item info "첫 커밋을 기다리는 저장소"
+    fi
+    [ "$fetched" = 0 ] && ui_item warn "원격 확인 실패 · 마지막으로 받은 정보 기준"
+    if [ "$ahead" != 0 ] && has_head; then
+      if has_upstream; then commits=$(git --no-pager log --max-count=5 --format='%h %s' '@{u}..HEAD')
+      else commits=$(git --no-pager log --max-count=5 --format='%h %s' HEAD --not --remotes); fi
+      ui_section "보낼 커밋 · ${ahead}개"
+      shown=0
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        shown=$((shown+1)); prefix='├─'
+        [ "$shown" -eq "$ahead" ] && prefix='└─'
+        ui_detail "$prefix $line"
+      done <<< "$commits"
+      [ "$ahead" -gt "$shown" ] && ui_detail "└─ … 외 $((ahead-shown))개"
+    fi
+    ui_section "변경 사항"
+    if [ $((n_s + n_u + n_n)) -eq 0 ]; then
+      ui_item ok "수정 없음 · 작업 폴더가 깨끗합니다"
+    else
+      for group in staged unstaged untracked; do
+        case "$group" in
+          staged) list=$staged; count=$n_s; level=ok; title='커밋 준비' ;;
+          unstaged) list=$unstaged; count=$n_u; level=warn; title='작업 중' ;;
+          untracked) list=$untracked; count=$n_n; level=info; title='새 파일' ;;
+        esac
+        [ "$count" -gt 0 ] || continue
+        ui_item "$level" "$title · ${count}개"
+        shown=0; limit=$count
+        [ "$limit" -le "$budget" ] || limit=$budget
+        while IFS= read -r line; do
+          [ -n "$line" ] || continue
+          [ "$shown" -lt "$limit" ] || break
+          if [ "$group" = untracked ]; then f=$line
+          else IFS=$'\t' read -r s f g <<< "$line"; f="$(st_word "$s") · ${g:-$f}"; fi
+          shown=$((shown+1)); prefix='├─'
+          [ "$shown" -eq "$count" ] && prefix='└─'
+          ui_detail "$prefix $f"
+        done <<< "$list"
+        remaining=$((count-shown)); budget=$((budget-shown))
+        [ "$remaining" -gt 0 ] && ui_detail "└─ … 외 ${remaining}개 · gitch ck --json 으로 전체 확인"
+      done
+    fi
+    [ "$stash" -gt 0 ] && ui_item info "임시저장(stash) · ${stash}개"
+    if [ -z "$RS_OP" ] && [ "$RS_CONFLICTS" = 0 ]; then
+      [ "$behind" != 0 ] && ui_next 'gitch pl' '원격 변경 받기'
+      [ "$n_s" -gt 0 ] && ui_next 'gitch c -m "메시지"' '준비된 변경 커밋'
+      [ "$n_s" = 0 ] && [ $((n_u+n_n)) -gt 0 ] && ui_next 'git add <파일>' '커밋할 파일 선택'
+      [ "$behind" = 0 ] && [ "$ahead" != 0 ] && ui_next 'gitch p' '커밋 보내기'
+    fi
+    say "CHANGES=$((n_s + n_u + n_n)) STAGED=$n_s UNSTAGED=$n_u UNTRACKED=$n_n AHEAD=$ahead BEHIND=$behind IN_PROGRESS=${RS_OP:-none} CONFLICTS=$RS_CONFLICTS ACCOUNT=${acc:-unknown}"
     return 0
   fi
 
@@ -2540,6 +2887,754 @@ wt_cmd() {   # 워크트리: ls | new <브랜치> [폴더] | rm <폴더> [--forc
     prune) git worktree prune && ok "사라진 워크트리 정보를 정리했습니다." ;;
     *) die "사용법: gitch wt [ls | new <브랜치> [폴더] | rm <폴더> [--force] | prune]" ;;
   esac
+}
+
+# ================= 워크트리 충돌 예보 =================
+
+overlap_cmd() {
+  local json="" watch="" interval=2 no_deps="" fail_overlap="" current_only="" a tmp scan_rc
+  while [ $# -gt 0 ]; do
+    a=$1
+    case "$a" in
+      --json) json=1 ;;
+      --watch) watch=1 ;;
+      --current) current_only=1 ;;
+      --no-deps) no_deps=1 ;;
+      --fail-on-overlap) fail_overlap=1 ;;
+      --interval) shift; interval=${1:-} ;;
+      --interval=*) interval=${a#*=} ;;
+      -h|--help)
+        say '사용법: gitch overlap [--json] [--watch] [--current] [--interval 초] [--no-deps] [--fail-on-overlap]
+  로컬 worktree 쌍의 공통 조상부터 커밋·스테이지·작업 파일·미추적 변경을 비교합니다.
+  같은 파일, 직접 의존, 공통 코드 의존을 구분한 충돌 가능성 안내이며 실제 merge 충돌 판정은 아닙니다.
+  --watch 는 바뀐 결과만 출력합니다 (--json 과 함께 쓰면 NDJSON). Ctrl-C 로 종료합니다.
+  --current 는 현재 worktree와 다른 worktree 사이만 비교합니다.
+  --interval 은 1 이상의 정수(기본 2초), --no-deps 는 파일 중복만 확인합니다.
+  기본 종료 코드: 정상 0 / 불완전한 점검 1. --fail-on-overlap 은 겹침이 있어도 1입니다.'
+        return 0 ;;
+      *) die "알 수 없는 overlap 옵션: $a (gitch overlap --help)" ;;
+    esac
+    shift
+  done
+  # 외부 입력으로 인한 8진수 계산·오버플로·과도한 대기 시간을 막습니다.
+  is_number "$interval" && [ ${#interval} -le 5 ] && [ "$interval" -ge 1 ] && [ "$interval" -le 86400 ] \
+    || die '--interval 은 1~86400 사이의 정수 초입니다.'
+  require_repo
+  export GIT_OPTIONAL_LOCKS=0
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/gitch-overlap.XXXXXX") || die '임시 폴더를 만들지 못했습니다.'
+  OVERLAP_TMP=$tmp
+  trap '[ -z "${OVERLAP_WAIT_PID:-}" ] || kill "$OVERLAP_WAIT_PID" 2>/dev/null; rm -rf "$OVERLAP_TMP"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  while :; do
+    rm -rf "$tmp/scan"
+    mkdir -p "$tmp/scan" || die '점검 폴더를 만들지 못했습니다.'
+    overlap_snapshot "$tmp/scan" "$no_deps" "$current_only"; scan_rc=$?
+    [ -f "$tmp/scan/result.json" ] || die 'worktree 충돌 가능성을 분석하지 못했습니다.'
+    if [ ! -f "$tmp/previous.json" ] || ! cmp -s "$tmp/previous.json" "$tmp/scan/result.json"; then
+      if [ -n "$json" ]; then
+        sed "s/\"generated\":\"\"/\"generated\":\"$(now_iso)\"/" "$tmp/scan/result.json"
+      else
+        [ -z "$watch" ] || printf '\n%s\n' "$(now_iso)"
+        cat "$tmp/scan/result.text"
+      fi
+      cp "$tmp/scan/result.json" "$tmp/previous.json"
+    fi
+    [ "$scan_rc" -eq 0 ] || return "$scan_rc"
+    if [ -n "$fail_overlap" ] && [ "$(cat "$tmp/scan/overlapping")" -gt 0 ]; then return 1; fi
+    [ -n "$watch" ] || return "$scan_rc"
+    sleep "$interval" &
+    OVERLAP_WAIT_PID=$!
+    wait "$OVERLAP_WAIT_PID" || return $?
+    OVERLAP_WAIT_PID=''
+  done
+}
+
+overlap_diagnostic() {   # 출력 폴더·코드·메시지·선택적 워크트리 ID/개수
+  {
+    printf '{"code":%s,"severity":"warning","message":%s' "$(json_str "$2")" "$(json_str "$3")"
+    [ -z "${4:-}" ] || printf ',"worktree":%s' "$(json_str "$4")"
+    [ -z "${5:-}" ] || printf ',"count":%s' "$5"
+    printf '}\n'
+  } >> "$1/diagnostics.jsonl"
+  if [ "${UI_ACTIVE:-0}" = 1 ]; then
+    printf '  %s!%s %s\n' "$YELLOW" "$RESET" "$3" >> "$1/warnings.text"
+  else
+    printf '  ⚠ %s\n' "$3" >> "$1/warnings.text"
+  fi
+}
+
+overlap_graph() (   # 워크트리 경로·임시 폴더; 빌드·인덱서·캐시 기록 없이 정적으로 분석합니다.
+  local root=$1 dest=$2 before after
+  cd "$root" || return 1
+  mkdir -p "$dest" || return 1
+  git ls-files -z > "$dest/files.z" && git ls-files --others --exclude-standard -z >> "$dest/files.z" || return 1
+  graph_safe_file_list "$dest/files.z" "$dest/files" "$dest/unsafe-paths.records" || return 1
+  # 과거 공통 기준을 포함한 모든 비교 대상에 동일한 정적 분석을 적용합니다.
+  local GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX=''
+  before=$(graph_content_key "$dest" files) || return 20
+  graph_collect "$dest" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/raw" || return 21
+  after=$(graph_content_key "$dest" files) || return 22
+  [ "$before" = "$after" ] || return 23
+  printf '%s\n' "$before" > "$dest/fingerprint"
+  LC_ALL=C sort -u "$dest/raw" > "$dest/records"
+)
+
+overlap_index_graph() (   # 워크트리 경로·스냅샷 폴더; 작업 파일이 되돌아가도 인덱스의 import는 보존합니다.
+  local dest=$2 entry header path mode stage rc skipped=0
+  cd "$1" || return 1
+  mkdir -p "$dest/src" || return 1
+  : > "$dest/records"; : > "$dest/unsafe-paths.records"
+  git diff --quiet --no-ext-diff --no-textconv --; rc=$?
+  [ "$rc" != 0 ] || return 0   # current tracked bytes already represent the index
+  [ "$rc" = 1 ] || return 1
+  git ls-files --stage -z > "$dest/index.z" || return 1
+  : > "$dest/files.z"
+  while IFS= read -r -d '' entry; do
+    header=${entry%%$'\t'*}; path=${entry#*$'\t'}
+    read -r mode entry stage <<< "$header"
+    [ "$stage" = 0 ] || return 1
+    case "$mode" in
+      100644|100755) printf '%s\0' "$path" >> "$dest/files.z" ;;
+      *) skipped=$((skipped+1)) ;;
+    esac
+  done < "$dest/index.z"
+  graph_safe_file_list "$dest/files.z" "$dest/files" "$dest/unsafe-paths.records" "$dest/src" || return 1
+  [ "$skipped" = 0 ] || printf '0\tignoredPaths\t%s\n' "$skipped" >> "$dest/unsafe-paths.records"
+  while IFS= read -r path; do
+    mkdir -p "$dest/src/$(dirname "$path")" && git show ":$path" > "$dest/src/$path" || return 1
+  done < "$dest/files"
+  cd "$dest/src" || return 1
+  GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+    graph_collect "$dest" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/records"
+)
+
+overlap_paths() (   # 워크트리·공통 조상·출력 접두사 (이름 변경은 이전·이후 경로를 모두 보존합니다.)
+  cd "$1" || return 1
+  git diff --no-ext-diff --no-textconv --name-only --no-renames -z "$2" -- > "$3.z" || return 1
+  # 작업 파일이 기준 내용으로 돌아왔더라도 스테이징된 변경은 유지합니다.
+  git diff --no-ext-diff --no-textconv --cached --name-only --no-renames -z "$2" -- >> "$3.z" || return 1
+  git ls-files --others --exclude-standard -z >> "$3.z" || return 1
+  graph_safe_file_list "$3.z" "$3" "$3.unsafe" || return 1
+  LC_ALL=C sort -u "$3" > "$3.sorted" && mv "$3.sorted" "$3"
+)
+
+overlap_graph_diagnostics() {   # 보고서 폴더·그래프 폴더·출처 이름; 정적 해석 제한은 실패로 처리하지 않습니다.
+  local ignored unresolved worktree=''
+  [ "$3" = base ] || worktree=$3
+  ignored=$(awk -F'\t' '$2=="ignoredPaths" {n+=$3} END{print n+0}' "$2/unsafe-paths.records")
+  if [ "$ignored" -gt 0 ]; then
+    overlap_diagnostic "$1" GRAPH_PATHS_OMITTED "$3: 의존 분석에서 제어 문자 또는 심볼릭 링크 경로 $ignored개를 제외했습니다." "$worktree" "$ignored"
+  fi
+  unresolved=$(awk -F'\t' '$1==0 && $2=="unresolved" {n+=$3} END{print n+0}' "$2/records")
+  if [ "$unresolved" -gt 0 ]; then
+    overlap_diagnostic "$1" GRAPH_UNRESOLVED_IMPORTS "$3: 정적 분석에서 참조 $unresolved개를 해석하지 못했습니다. 의존 힌트가 빠질 수 있습니다." "$worktree" "$unresolved"
+  fi
+  [ "$ignored" -eq 0 ]
+}
+
+overlap_pair() {   # 왼쪽 경로·오른쪽 경로·출처 접두사가 붙은 그래프 기록·출력 접두사
+  # 파일명의 따옴표와 역슬래시를 포함해 소스 기록은 데이터로만 취급합니다.
+  # 모든 파일 쌍을 만들지 않고 변경된 소스의 인접 목록만 결합합니다.
+  local left=$1 right=$2 edges=$3 output=$4
+  GITCH_RENDER_RICH="${UI_ACTIVE:-0}" GITCH_RENDER_UTF8="${UI_UTF8:-0}" \
+  GITCH_RENDER_ACCENT="$ACCENT" GITCH_RENDER_DIM="$DIM" GITCH_RENDER_RESET="$RESET" GITCH_RENDER_YELLOW="$YELLOW" \
+  OVERLAP_LEFT=$left OVERLAP_RIGHT=$right OVERLAP_EDGES=$edges OVERLAP_OUTPUT=$output \
+  awk -F'\t' "$(graph_awk_lib)"'
+    BEGIN {
+      left=ENVIRON["OVERLAP_LEFT"]; right=ENVIRON["OVERLAP_RIGHT"]; edges=ENVIRON["OVERLAP_EDGES"]; out=ENVIRON["OVERLAP_OUTPUT"]
+      rich=ENVIRON["GITCH_RENDER_RICH"]=="1"; utf8=ENVIRON["GITCH_RENDER_UTF8"]=="1"
+      accent=ENVIRON["GITCH_RENDER_ACCENT"]; dim=ENVIRON["GITCH_RENDER_DIM"]; reset=ENVIRON["GITCH_RENDER_RESET"]; yellow=ENVIRON["GITCH_RENDER_YELLOW"]
+      twig=utf8?"└─":"+-"; arrow=utf8?" → ":" -> "; bullet=utf8?"·":"."; ellipsis=utf8?"…":"..."
+    }
+    FILENAME==left { if ($0!="") L[$0]=1; next }
+    FILENAME==right { if ($0!="") R[$0]=1; next }
+    FILENAME==edges && $2==1 && $4=="file" { FILE[$3]=1; next }
+    FILENAME==edges && $2==2 {
+      if (!($3 in L) && !($3 in R)) next
+      k=$3 SUBSEP $4 SUBSEP $5
+      if (!(k in EDGE)) ORDER[++ne]=k
+      if (!(k in EDGE) || ($7!="h" && HEUR[k])) { EDGE[k]=1; HEUR[k]=($7=="h"); ORIGIN[k]=$1 }
+      next
+    }
+    END {
+      ns=0; nd=0; nt=0; capped=0
+      n=sortkeys(L,keys)
+      for(i=1;i<=n;i++) { f=keys[i]; if(f in R) {
+        same=same (ns++ ? "," : "") jstr(f)
+        if(rich) { if(ns==1) print "    " yellow "! 같은 파일 수정" reset > (out ".text"); if(ns<=10) print "      " dim twig reset " " f > (out ".text") }
+        else if(ns<=10) print "    ⚠ 같은 파일: " f > (out ".text")
+      } }
+      if(ns>10) print (rich?"      " ellipsis:"    …") " 같은 파일 " (ns-10) "개 더 있음 (--json 으로 전체 보기)" > (out ".text")
+      for(i=1;i<=ne;i++) {
+        k=ORDER[i]; split(k,p,SUBSEP); s=p[1]; t=p[2]; kind=p[3]
+        if (!(s in FILE) || !(t in FILE) || s==t) continue
+        if (((s in L) && (t in R)) || ((s in R) && (t in L))) {
+          if(nd<100) {
+            deps=deps (nd++ ? "," : "") "{\"source\":" jstr(s) ",\"target\":" jstr(t) ",\"kind\":" jstr(kind) ",\"worktree\":" jstr(ORIGIN[k]) ",\"heuristic\":" (HEUR[k]?"true":"false") "}"
+            if(rich) { if(nd==1) print "    " accent bullet " 직접 의존 " bullet " 함께 검토" reset > (out ".text"); if(nd<=10) print "      " dim twig reset " " s arrow t (HEUR[k]?" (추정)":"") > (out ".text") }
+            else if(nd<=10) print "    △ 직접 의존: " s " → " t (HEUR[k]?" (추정)":"") > (out ".text")
+          } else capped=1
+        }
+        if ((s in L) && !(s in R)) { LEFTSRC[t,s]=1; TARGET[t]=1; if(!HEUR[k]) EXACTL[t,s]=1 }
+        if ((s in R) && !(s in L)) { RIGHTSRC[t,s]=1; TARGET[t]=1; if(!HEUR[k]) EXACTR[t,s]=1 }
+      }
+      nlkeys=sortkeys(L,leftkeys); nrkeys=sortkeys(R,rightkeys)
+      n=sortkeys(TARGET,targets)
+      for(i=1;i<=n;i++) {
+        t=targets[i]; nl=0; nr=0; jl=""; jr=""; heur=0
+        for(j=1;j<=nlkeys;j++) { s=leftkeys[j]; if((t,s) in LEFTSRC) { jl=jl (nl++?",":"") jstr(s); if(!((t,s) in EXACTL)) heur=1 } }
+        for(j=1;j<=nrkeys;j++) { s=rightkeys[j]; if((t,s) in RIGHTSRC) { jr=jr (nr++?",":"") jstr(s); if(!((t,s) in EXACTR)) heur=1 } }
+        if(nl && nr) {
+          if(nt<100) {
+            shared=shared (nt++?",":"") "{\"target\":" jstr(t) ",\"left\":[" jl "],\"right\":[" jr "],\"heuristic\":" (heur?"true":"false") "}"
+            if(rich) { if(nt==1) print "    " accent bullet " 공통 의존 " bullet " 참고 정보" reset > (out ".text"); if(nt<=10) print "      " dim twig reset " " t (heur?" (추정)":"") > (out ".text") }
+            else if(nt<=10) print "    △ 공통 의존: " t (heur?" (추정)":"") > (out ".text")
+          } else capped=1
+        }
+      }
+      if(nd>10) print (rich?"      " ellipsis:"    …") " 직접 의존 " (nd-10) "개 더 있음 (--json 으로 보기)" > (out ".text")
+      if(nt>10) print (rich?"      " ellipsis:"    …") " 공통 의존 " (nt-10) "개 더 있음 (--json 으로 보기)" > (out ".text")
+      print "\"sameFiles\":[" same "],\"dependencies\":[" deps "],\"sharedDependencies\":[" shared "],\"truncated\":" (capped?"true":"false") > (out ".json")
+      print ns,nd,nt,capped > (out ".counts")
+    }' "$left" "$right" "$edges"
+}
+
+overlap_snapshot() (
+  local dest=$1 no_deps=$2 current_only=${3:-} current_id=0 entry current=0 i j n=0 top repo path branch head valid incomplete=0
+  local base pdir ignored code left_id right_id compared=0 overlapping=0 same=0 direct=0 shared=0 ns nd nt capped
+  local render_bullet='·' render_twig='└─' render_pair='↔' render_mark='◇' render_check='✓' warning_count
+  local -a paths heads branches available
+  if [ "${UI_UTF8:-0}" != 1 ]; then render_bullet='.'; render_twig='+-'; render_pair='<->'; render_mark='*'; render_check='OK'; fi
+  top=$(git rev-parse --show-toplevel) || return 1
+  repo=$(basename "$top")
+  : > "$dest/worktrees.jsonl"; : > "$dest/pairs.jsonl"; : > "$dest/diagnostics.jsonl"
+  : > "$dest/pairs.text"; : > "$dest/warnings.text"
+  git worktree list --porcelain -z > "$dest/worktrees.z" || return 1
+  # NUL 기록으로 워크트리 이름의 공백·따옴표·탭·줄바꿈을 보존합니다.
+  while IFS= read -r -d '' entry; do
+    case "$entry" in
+      'worktree '*) n=$((n+1)); current=$n; paths[$n]=${entry#worktree }; heads[$n]=''; branches[$n]=''; available[$n]=true ;;
+      'HEAD '*) head=${entry#HEAD }; case "$head" in *[!0]*) heads[$current]=$head ;; *) heads[$current]='' ;; esac ;;
+      'branch '*) branches[$current]=${entry#branch refs/heads/} ;;
+      bare) available[$current]=bare ;;
+      prunable*) available[$current]=false ;;
+    esac
+  done < "$dest/worktrees.z"
+  for ((i=1;i<=n;i++)); do
+    [ "${available[$i]}" != bare ] || continue
+    path=${paths[$i]}; branch=${branches[$i]}; head=${heads[$i]}; valid=${available[$i]}
+    [ "$path" != "$top" ] || current_id=$i
+    # 등록된 경로가 다른 체크아웃이나 빈 하위 폴더를 포함한 상위 저장소로
+    # 바뀌지 않고 여전히 같은 저장소인지 확인합니다.
+    if [ "$valid" = true ]; then
+      if [ ! -d "$path" ] || [ "$(git -C "$path" rev-parse --show-toplevel 2>/dev/null)" != "$path" ] \
+        || [ "$(git -C "$path" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" != "$(git rev-parse --path-format=absolute --git-common-dir)" ]; then valid=false; fi
+    fi
+    available[$i]=$valid
+    {
+      printf '{"id":"w%s","path":%s,"branch":%s,"head":%s,"detached":%s,"available":%s}\n' \
+        "$i" "$(json_str "$path")" "$([ -z "$branch" ] && printf null || json_str "$branch")" \
+        "$([ -z "$head" ] && printf null || json_str "$head")" "$([ -z "$branch" ] && printf true || printf false)" "$valid"
+    } >> "$dest/worktrees.jsonl"
+    if [ "$valid" != true ]; then
+      overlap_diagnostic "$dest" WORKTREE_UNAVAILABLE "worktree를 읽을 수 없습니다: $path" "w$i"
+      incomplete=1
+    fi
+  done
+  if [ -n "$current_only" ] && [ "$current_id" = 0 ]; then
+    overlap_diagnostic "$dest" CURRENT_WORKTREE_UNAVAILABLE '현재 worktree를 등록 목록에서 찾지 못했습니다.'
+    incomplete=1
+  fi
+  for ((i=1;i<=n;i++)); do
+    [ "${available[$i]}" = true ] || continue
+    for ((j=i+1;j<=n;j++)); do
+      [ "${available[$j]}" = true ] || continue
+      if [ -n "$current_only" ] && [ "$i" != "$current_id" ] && [ "$j" != "$current_id" ]; then continue; fi
+      left_id="w$i"; right_id="w$j"; pdir="$dest/pair-$i-$j"; mkdir -p "$pdir"
+      base=$(git merge-base --all "${heads[$i]}" "${heads[$j]}" 2>/dev/null)
+      case "$base" in
+        ''|*$'\n'*)
+          overlap_diagnostic "$dest" COMMON_BASE_UNAVAILABLE "$left_id ↔ $right_id: 공통 조상을 하나로 정할 수 없어 비교하지 못했습니다."
+          incomplete=1; continue ;;
+      esac
+      overlap_paths "${paths[$i]}" "$base" "$pdir/left" && overlap_paths "${paths[$j]}" "$base" "$pdir/right" || {
+        overlap_diagnostic "$dest" CHANGES_UNAVAILABLE "$left_id ↔ $right_id: 변경 파일을 읽지 못했습니다."
+        incomplete=1; continue;
+      }
+      for code in left right; do
+        ignored=$(awk -F'\t' '$2=="ignoredPaths" {n+=$3} END{print n+0}' "$pdir/$code.unsafe")
+        if [ "$ignored" -gt 0 ]; then
+          overlap_diagnostic "$dest" UNSUPPORTED_PATH "$left_id ↔ $right_id: 제어 문자 또는 심볼릭 링크가 든 변경 경로 $ignored개를 제외했습니다." '' "$ignored"
+          incomplete=1
+        fi
+      done
+      : > "$pdir/edges"
+      if [ -z "$no_deps" ] && [ -s "$pdir/left" ] && [ -s "$pdir/right" ]; then
+        for current in "$i" "$j"; do
+          if [ ! -f "$dest/graph-$current/records" ]; then
+            overlap_graph "${paths[$current]}" "$dest/graph-$current" || {
+              overlap_diagnostic "$dest" GRAPH_UNAVAILABLE "w$current: 코드 의존을 읽지 못했습니다." "w$current"
+              incomplete=1; rm -f "$dest/graph-$current/records";
+            }
+            if ! overlap_index_graph "${paths[$current]}" "$dest/index-$current"; then
+              overlap_diagnostic "$dest" INDEX_GRAPH_UNAVAILABLE "w$current: 스테이지의 코드 의존을 읽지 못했습니다 (미해결 충돌 또는 소스 변경)." "w$current"
+              incomplete=1; rm -f "$dest/index-$current/records"
+            fi
+          fi
+          [ ! -f "$dest/graph-$current/records" ] || awk -v origin="w$current" '{print origin "\t" $0}' "$dest/graph-$current/records" >> "$pdir/edges"
+          [ ! -f "$dest/index-$current/records" ] || awk -v origin="w$current" '{print origin "\t" $0}' "$dest/index-$current/records" >> "$pdir/edges"
+          if [ -f "$dest/graph-$current/unsafe-paths.records" ] && [ ! -f "$dest/graph-$current/warned" ]; then
+            [ ! -f "$dest/graph-$current/records" ] || overlap_graph_diagnostics "$dest" "$dest/graph-$current" "w$current" || incomplete=1
+            : > "$dest/graph-$current/warned"
+          fi
+          if [ -f "$dest/index-$current/records" ] && [ ! -f "$dest/index-$current/warned" ]; then
+            overlap_graph_diagnostics "$dest" "$dest/index-$current" "w$current" || incomplete=1
+            : > "$dest/index-$current/warned"
+          fi
+        done
+        if [ ! -f "$dest/base-$base/records" ]; then
+          mkdir -p "$dest/base-$base"
+          if graph_base_extract "$base" "$dest/base-$base" && \
+            ( cd "$dest/base-$base/src" && GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+              graph_collect "$dest/base-$base" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/base-$base/records" ); then :
+          else
+            overlap_diagnostic "$dest" BASE_GRAPH_UNAVAILABLE "$left_id ↔ $right_id: 공통 조상의 코드 의존을 읽지 못했습니다."
+            incomplete=1; rm -f "$dest/base-$base/records"
+          fi
+        fi
+        [ ! -f "$dest/base-$base/records" ] || awk '{print "base\t" $0}' "$dest/base-$base/records" >> "$pdir/edges"
+        if [ -f "$dest/base-$base/records" ] && [ ! -f "$dest/base-$base/warned" ]; then
+          overlap_graph_diagnostics "$dest" "$dest/base-$base" base || incomplete=1
+          : > "$dest/base-$base/warned"
+        fi
+      fi
+      # 수십만 관계도 처리할 수 있도록 awk의 작은 배열용 삽입 정렬 대신
+      # 외부 정렬기로 한 번 정렬합니다.
+      LC_ALL=C sort -u "$pdir/edges" > "$pdir/edges.sorted" && mv "$pdir/edges.sorted" "$pdir/edges" || return 1
+      overlap_pair "$pdir/left" "$pdir/right" "$pdir/edges" "$pdir/result" || return 1
+      compared=$((compared+1)); read -r ns nd nt capped < "$pdir/result.counts"
+      if [ "$((ns+nd+nt))" -gt 0 ]; then
+        overlapping=$((overlapping+1)); same=$((same+ns)); direct=$((direct+nd)); shared=$((shared+nt))
+        printf '{"left":"%s","right":"%s","base":%s,%s}\n' "$left_id" "$right_id" "$(json_str "$base")" "$(cat "$pdir/result.json")" >> "$dest/pairs.jsonl"
+        if [ "${UI_ACTIVE:-0}" = 1 ]; then
+          if [ "$overlapping" -le 10 ]; then
+            printf '\n  %s%s%s %s %s %s\n' "$ACCENT" "$render_mark" "$RESET" \
+              "${branches[$i]:-(detached)} ($left_id)" "$render_pair" "${branches[$j]:-(detached)} ($right_id)" >> "$dest/pairs.text"
+            cat "$pdir/result.text" >> "$dest/pairs.text"
+          fi
+        else
+          printf '\n  %s ↔ %s\n' "${branches[$i]:-(detached)} ($left_id)" "${branches[$j]:-(detached)} ($right_id)" >> "$dest/pairs.text"
+          cat "$pdir/result.text" >> "$dest/pairs.text"
+        fi
+      fi
+      if [ "$capped" -gt 0 ]; then
+        overlap_diagnostic "$dest" HINTS_TRUNCATED "$left_id ↔ $right_id: 의존 종류별 힌트를 최대 100개만 표시했습니다."
+        incomplete=1
+      fi
+    done
+  done
+  # 동시 커밋·스테이징으로 섞인 스냅샷을 완전한 결과로 오인하지 않도록
+  # 참조와 경로 집합을 다시 확인합니다.
+  git worktree list --porcelain -z > "$dest/worktrees-after.z" || return 1
+  if ! cmp -s "$dest/worktrees.z" "$dest/worktrees-after.z"; then
+    overlap_diagnostic "$dest" SNAPSHOT_CHANGED '분석 중 worktree 또는 HEAD가 바뀌었습니다. 다시 점검하세요.'
+    incomplete=1
+  fi
+  # 의존성 분석을 생략해도 경로 집합 변화는 중요하므로 성공한 비교 쌍을
+  # 처음 사용한 공통 조상 커밋으로 다시 확인합니다.
+  for ((i=1;i<=n;i++)); do
+    if [ -f "$dest/graph-$i/fingerprint" ]; then
+      if ! ( cd "${paths[$i]}" && GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+        graph_content_key "$dest/graph-$i" files ) > "$dest/graph-$i/fingerprint-after" \
+        || ! cmp -s "$dest/graph-$i/fingerprint" "$dest/graph-$i/fingerprint-after"; then
+        overlap_diagnostic "$dest" SNAPSHOT_CHANGED "w$i: 분석 중 소스 또는 스테이지가 바뀌었습니다. 다시 점검하세요." "w$i"
+        incomplete=1
+      fi
+    fi
+    for ((j=i+1;j<=n;j++)); do
+      pdir="$dest/pair-$i-$j"
+      [ -f "$pdir/result.counts" ] || continue
+      base=$(git merge-base --all "${heads[$i]}" "${heads[$j]}" 2>/dev/null)
+      if ! overlap_paths "${paths[$i]}" "$base" "$pdir/left-after" \
+        || ! overlap_paths "${paths[$j]}" "$base" "$pdir/right-after" \
+        || ! cmp -s "$pdir/left.z" "$pdir/left-after.z" \
+        || ! cmp -s "$pdir/right.z" "$pdir/right-after.z"; then
+        overlap_diagnostic "$dest" SNAPSHOT_CHANGED "w$i ↔ w$j: 분석 중 변경 경로가 바뀌었습니다. 다시 점검하세요."
+        incomplete=1
+      fi
+    done
+  done
+  {
+    printf '{"schemaVersion":1,"tool":"gitch overlap","repo":%s,"generated":"","scope":"worktrees","worktrees":[' "$(json_str "$repo")"
+    awk 'NR>1{printf ","}{printf "%s",$0}' "$dest/worktrees.jsonl"
+    printf '],"pairs":['; awk 'NR>1{printf ","}{printf "%s",$0}' "$dest/pairs.jsonl"
+    printf '],"diagnostics":['; awk 'NR>1{printf ","}{printf "%s",$0}' "$dest/diagnostics.jsonl"
+    printf '],"stats":{"worktrees":%s,"comparedPairs":%s,"overlappingPairs":%s,"sameFiles":%s,"dependencyLinks":%s,"sharedDependencies":%s},"incomplete":%s,"notes":[' \
+      "$(wc -l < "$dest/worktrees.jsonl" | tr -d ' ')" "$compared" "$overlapping" "$same" "$direct" "$shared" "$([ "$incomplete" -eq 0 ] && printf false || printf true)"
+    printf '%s,%s,%s]}\n' \
+      "$(json_str '같은 파일은 경로 중복이며 실제 merge 충돌을 뜻하지 않습니다. 의존 힌트는 정적 분석이며 동적 참조·지원하지 않는 언어의 영향을 모두 찾을 수는 없습니다.')" \
+      "$(json_str "$([ -n "$no_deps" ] && printf '파일 중복만 비교했습니다 (--no-deps).' || printf '각 worktree·스테이지·공통 조상의 직접 의존을 함께 읽습니다. 공통 의존은 함께 확인할 코드이며 충돌의 증거는 아닙니다.')")" \
+      "$(json_str "$([ -n "$current_only" ] && printf '현재 worktree(w%s)와 다른 worktree의 쌍만 비교했습니다 (--current).' "$current_id" || printf '등록된 모든 로컬 worktree 쌍을 비교했습니다.')")"
+  } > "$dest/result.json"
+  if [ "${UI_ACTIVE:-0}" = 1 ]; then
+    {
+      printf '  worktree %s개 %s 비교 %s쌍 %s 검토 %s쌍%s\n' "$(wc -l < "$dest/worktrees.jsonl" | tr -d ' ')" "$render_bullet" "$compared" "$render_bullet" "$overlapping" "${current_only:+ (현재 작업 기준)}"
+      printf '  %s같은 파일 %s개 %s 직접 의존 %s개 %s 공통 의존 %s개%s\n' "$DIM" "$same" "$render_bullet" "$direct" "$render_bullet" "$shared" "$RESET"
+      printf '\n  %s작업 위치%s\n' "$ACCENT" "$RESET"
+      current=0
+      for ((i=1;i<=n;i++)); do
+        [ "${available[$i]}" != bare ] || continue
+        current=$((current+1)); [ "$current" -le 10 ] || continue
+        printf '    %s%s%s w%s %s\n      %s%s%s\n' "$DIM" "$render_twig" "$RESET" "$i" "${branches[$i]:-(detached)}" "$DIM" "${paths[$i]}" "$RESET"
+      done
+      [ "$current" -le 10 ] || printf '    %s추가 worktree %s개 %s 전체: --json%s\n' "$DIM" "$((current-10))" "$render_bullet" "$RESET"
+      cat "$dest/pairs.text"
+      [ "$overlapping" -le 10 ] || printf '\n  %s추가 검토 쌍 %s개 %s 전체: --json%s\n' "$DIM" "$((overlapping-10))" "$render_bullet" "$RESET"
+      if [ "$overlapping" -eq 0 ] && [ "$incomplete" -eq 0 ]; then
+        printf '\n  %s%s%s 비교한 변경에서 겹침 가능성을 찾지 못했습니다.\n' "$GREEN" "$render_check" "$RESET"
+      fi
+      if [ -s "$dest/warnings.text" ]; then
+        printf '\n  %s! 분석 시 확인할 내용%s\n' "$YELLOW" "$RESET"
+        sed -n '1,10p' "$dest/warnings.text"
+        warning_count=$(wc -l < "$dest/warnings.text" | tr -d ' ')
+        [ "$warning_count" -le 10 ] || printf '    %s추가 분석 제한 %s개 %s 전체: --json%s\n' "$DIM" "$((warning_count-10))" "$render_bullet" "$RESET"
+      fi
+      [ "$incomplete" -eq 0 ] || printf '\n  %s! 일부 점검이 불완전합니다. 경고를 확인하고 다시 실행하세요.%s\n' "$YELLOW" "$RESET"
+      printf '\n  %s경로·정적 의존에 따른 예보입니다. 실제 merge 충돌 판정은 아닙니다.%s%s\n' "$DIM" "$([ -n "$no_deps" ] && printf ' (--no-deps: 파일 중복만 비교)')" "$RESET"
+    } > "$dest/result.text"
+  else
+  {
+    printf '충돌 예보%s · worktree %s개 · 비교 %s쌍\n' "${current_only:+ (현재 작업 기준)}" "$(wc -l < "$dest/worktrees.jsonl" | tr -d ' ')" "$compared"
+    # 분리된 HEAD와 중복 브랜치 이름을 구분할 수 있도록 경로를 포함합니다.
+    for ((i=1;i<=n;i++)); do [ "${available[$i]}" = bare ] || printf '  w%s %s · %s\n' "$i" "${branches[$i]:-(detached)}" "${paths[$i]}"; done
+    cat "$dest/pairs.text" "$dest/warnings.text"
+    if [ "$overlapping" -gt 0 ]; then printf '\n겹침 가능성 %s쌍 · 같은 파일 %s개 · 직접 의존 %s개 · 공통 의존 %s개\n' "$overlapping" "$same" "$direct" "$shared"
+    elif [ "$incomplete" -eq 0 ]; then printf '\n비교한 변경에서 겹침 가능성을 찾지 못했습니다.\n'; fi
+    [ "$incomplete" -eq 0 ] || printf '\n일부 점검이 불완전합니다. 경고를 확인하고 다시 실행하세요.\n'
+    printf '경로·정적 의존에 따른 예보이며 실제 merge 충돌 판정은 아닙니다.%s\n' "$([ -n "$no_deps" ] && printf ' (--no-deps: 파일 중복만 비교)')"
+  } > "$dest/result.text"
+  fi
+  printf '%s\n' "$overlapping" > "$dest/overlapping"
+  [ "$incomplete" -eq 0 ]
+)
+
+# ================= 파일 이동 영향 계획 =================
+
+move_normalize_path() {   # 저장소 루트·호출 경로·입력 → MOVE_PATH; 심볼릭 링크를 따라가지 않습니다.
+  local root=$1 prefix=$2 raw part probe='' LC_ALL=C
+  local -a parts stack
+  raw=$(posix_path "$3")
+  case "$raw" in
+    ''|*[$'\001'-$'\037'$'\177']*) die '이동 경로에 빈 값이나 제어 문자를 사용할 수 없습니다.' ;;
+    /*) case "$raw" in "$root"/*) raw=${raw#"$root"/} ;; *) die "저장소 밖 경로는 이동 계획에 사용할 수 없습니다: $raw" ;; esac ;;
+    *) raw="$prefix$raw" ;;
+  esac
+  IFS=/ read -r -a parts <<< "$raw"
+  stack=()
+  for part in "${parts[@]}"; do
+    case "$part" in
+      ''|.) continue ;;
+      ..)
+        [ ${#stack[@]} -gt 0 ] || die '이동 경로가 저장소 밖으로 나갑니다.'
+        unset "stack[$((${#stack[@]}-1))]" ;;
+      .[gG][iI][tT]) die '.git 관리 경로는 이동할 수 없습니다.' ;;
+      *)
+        stack+=("$part")
+        probe=$(IFS=/; printf '%s' "${stack[*]}")
+        [ ! -L "$root/$probe" ] || die "심볼릭 링크를 통과하는 경로는 이동 계획에 사용할 수 없습니다: $probe" ;;
+    esac
+  done
+  MOVE_PATH=$(IFS=/; printf '%s' "${stack[*]}")
+  [ -n "$MOVE_PATH" ] || die '저장소 루트 자체는 이동할 수 없습니다.'
+}
+
+move_cmd() {
+  local plan='' json='' endopts='' a source='' destination='' top prefix tmp kind path target count=0 ignored=0 omitted_dirs=0 stamp after incomplete=0 graph_rc=0
+  local -a args=()
+  while [ $# -gt 0 ]; do
+    a=$1
+    if [ -n "$endopts" ]; then args+=("$a")
+    else
+      case "$a" in
+        --) endopts=1 ;;
+        --plan) plan=1 ;;
+        --json) json=1 ;;
+        -h|--help)
+          say '사용법: gitch move <원본> <대상> --plan [--json]
+  파일·폴더 이동 전에 사용처, 이동 후 참조 경로, 영향 파일과 테스트 후보를 확인합니다.
+  경로는 현재 폴더 기준이며 대상은 정확한 새 경로입니다. 파일과 인덱스는 바꾸지 않습니다.
+  --plan 이 필요합니다. JS/TS 상대 import는 실제 근거가 있을 때 수정 후보도 제공합니다.'
+          return 0 ;;
+        -*) die "알 수 없는 move 옵션: $a (gitch move --help)" ;;
+        *) args+=("$a") ;;
+      esac
+    fi
+    shift
+  done
+  [ -n "$plan" ] || die '이동 점검은 --plan 으로 실행하세요. 실제 파일을 이동하지 않습니다.'
+  [ ${#args[@]} -eq 2 ] || die '사용법: gitch move <원본> <대상> --plan [--json]'
+  require_repo
+  export GIT_OPTIONAL_LOCKS=0
+  top=$(git rev-parse --show-toplevel) && prefix=$(git rev-parse --show-prefix) || die '저장소 경로를 읽지 못했습니다.'
+  # Compare paths in Bash's format even when native Git returns a Windows drive path.
+  top=$(real_dir "$top") || die '저장소 경로를 읽지 못했습니다.'
+  move_normalize_path "$top" "$prefix" "${args[0]}"; source=$MOVE_PATH
+  move_normalize_path "$top" "$prefix" "${args[1]}"; destination=$MOVE_PATH
+  [ "$source" != "$destination" ] || die '원본과 대상이 같습니다.'
+  [ -f "$top/$source" ] || [ -d "$top/$source" ] || die "이동할 파일·폴더가 없습니다: $source"
+  [ ! -e "$top/$destination" ] && [ ! -L "$top/$destination" ] || die "대상 경로가 이미 있습니다: $destination"
+  kind='file'
+  if [ -d "$top/$source" ]; then
+    kind=directory
+    case "$destination" in "$source"/*) die '폴더를 자기 안으로 옮길 수 없습니다.' ;; esac
+  fi
+  cd "$top" || die '저장소로 이동하지 못했습니다.'
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/gitch-move.XXXXXX") || die '임시 폴더를 만들지 못했습니다.'
+  MOVE_TMP=$tmp
+  trap 'rm -rf "$MOVE_TMP"' EXIT
+  mkdir -p "$tmp/graph"
+  overlap_graph "$top" "$tmp/graph" || graph_rc=$?
+  case "$graph_rc" in
+    0) ;;
+    20|22) die '분석할 파일의 내용을 읽지 못했습니다. 파일이 사라졌거나 읽기 권한이 바뀌었는지 확인하세요.' ;;
+    23) die '분석 중 파일 또는 스테이지가 바뀌었습니다. 다시 실행하세요.' ;;
+    *) die '파일 사용처를 분석하지 못했습니다.' ;;
+  esac
+  : > "$tmp/moves"
+  while IFS= read -r path; do
+    if [ "$path" = "$source" ] || { [ "$kind" = directory ] && [[ "$path" == "$source/"* ]]; }; then
+      if [ ! -f "$path" ]; then
+        [ ! -d "$path" ] || omitted_dirs=$((omitted_dirs+1))
+        continue
+      fi
+      target="$destination${path#"$source"}"
+      [ ! -e "$target" ] && [ ! -L "$target" ] || die "이동 후 대상이 이미 있습니다: $target"
+      printf '%s\t%s\n' "$path" "$target" >> "$tmp/moves"
+      count=$((count+1))
+    fi
+  done < "$tmp/graph/files"
+  [ "$count" -gt 0 ] || die '원본에 추적 파일이나 무시되지 않은 새 파일이 없습니다.'
+  git ls-files --others --ignored --exclude-standard -z -- "$source" > "$tmp/ignored.z" || die '무시된 파일 목록을 확인하지 못했습니다.'
+  while IFS= read -r -d '' path; do ignored=$((ignored+1)); done < "$tmp/ignored.z"
+  # 대상의 상위 경로가 없을 수는 있지만, 존재한다면 디렉터리여야 합니다.
+  path=${destination%/*}
+  [ "$path" != "$destination" ] || path=''
+  while [ -n "$path" ]; do
+    [ ! -e "$path" ] || [ -d "$path" ] || die "대상 상위 경로가 폴더가 아닙니다: $path"
+    case "$path" in */*) path=${path%/*} ;; *) path='' ;; esac
+  done
+  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_collect "$tmp/graph" modules '' 1 '' 1000 30 2 0 '' "$(basename "$top")" '' > "$tmp/modules" \
+    || die '파일의 소속 모듈을 읽지 못했습니다.'
+  GITCH_RENDER_RICH="${UI_ACTIVE:-0}" GITCH_RENDER_UTF8="${UI_UTF8:-0}" \
+  GITCH_RENDER_ACCENT="$ACCENT" GITCH_RENDER_DIM="$DIM" GITCH_RENDER_RESET="$RESET" GITCH_RENDER_YELLOW="$YELLOW" GITCH_RENDER_GREEN="$GREEN" \
+  MOVE_SOURCE=$source MOVE_DESTINATION=$destination MOVE_KIND=$kind MOVE_REPO=$(basename "$top") MOVE_IGNORED=$ignored MOVE_OMITTED_DIRECTORIES=$omitted_dirs \
+    MOVE_MAPPING="$tmp/moves" MOVE_FILES="$tmp/graph/records" MOVE_MODULES="$tmp/modules" \
+    MOVE_UNSAFE="$tmp/graph/unsafe-paths.records" MOVE_RESULT="$tmp/result" \
+    awk -F'\t' "$(graph_awk_lib)$(move_awk_plan)" \
+      "$tmp/moves" "$tmp/modules" "$tmp/graph/records" "$tmp/graph/unsafe-paths.records" \
+      || die '이동 영향 계획을 만들지 못했습니다.'
+  # 계획을 출력하기 전에 원본 내용·인덱스·미추적 경로를 다시 확인합니다.
+  stamp=$(cat "$tmp/graph/fingerprint")
+  after=$(GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' graph_content_key "$tmp/graph" files) || die '분석 후 파일 상태를 확인하지 못했습니다.'
+  git ls-files -z > "$tmp/files-after.z" && git ls-files --others --exclude-standard -z >> "$tmp/files-after.z" || die '분석 후 파일 목록을 확인하지 못했습니다.'
+  if [ "$stamp" != "$after" ] || ! cmp -s "$tmp/graph/files.z" "$tmp/files-after.z"; then
+    die '분석 중 소스·스테이지·파일 목록이 바뀌었습니다. 다시 실행하세요.'
+  fi
+  [ -n "$json" ] && cat "$tmp/result.json" || cat "$tmp/result.text"
+  read -r incomplete < "$tmp/result.status"
+  [ "$incomplete" = 0 ]
+}
+
+move_awk_plan() {
+  cat <<'AWKEOF'
+BEGIN {
+  mapping=ENVIRON["MOVE_MAPPING"]; files=ENVIRON["MOVE_FILES"]; mods=ENVIRON["MOVE_MODULES"]; unsafe=ENVIRON["MOVE_UNSAFE"]
+  source=ENVIRON["MOVE_SOURCE"]; destination=ENVIRON["MOVE_DESTINATION"]; kind=ENVIRON["MOVE_KIND"]; out=ENVIRON["MOVE_RESULT"]
+  rich=ENVIRON["GITCH_RENDER_RICH"]=="1"; utf8=ENVIRON["GITCH_RENDER_UTF8"]=="1"
+  accent=ENVIRON["GITCH_RENDER_ACCENT"]; dim=ENVIRON["GITCH_RENDER_DIM"]; reset=ENVIRON["GITCH_RENDER_RESET"]; yellow=ENVIRON["GITCH_RENDER_YELLOW"]; green=ENVIRON["GITCH_RENDER_GREEN"]
+  twig=utf8?"└─":"+-"; arrow=utf8?" → ":" -> "; bullet=utf8?"·":"."; ellipsis=utf8?"…":"..."
+}
+function moved(p) { return (p in MAP) ? MAP[p] : p }
+function movedir(p) { return kind=="directory" && (p==source || index(p,source "/")==1) ? destination substr(p,length(source)+1) : p }
+function under(p,d) { return d=="" || d=="." || p==d || index(p,d "/")==1 }
+function diagnostic(code,msg,file,partial) {
+  DIAG[++ndiag]="{\"code\":" jstr(code) ",\"severity\":\"warning\",\"message\":" jstr(msg) (file!=""?",\"file\":" jstr(file):"") "}"
+  if(!rich) print "  ⚠ " msg (file!=""?" · " file:"") > (out ".text")
+  if(partial) incomplete=1
+}
+function testpath(p) { p=tolower(p); return p ~ /(^|\/)(tests?|__tests__|specs?)(\/|$)/ || p ~ /[._](test|spec)\.[^\/]+$/ || baseof(p) ~ /^test_/ || baseof(p) ~ /tests?\.[^.]+$/ }
+function teststem(p) { p=tolower(stemof(p)); sub(/^test_/,"",p); sub(/([._-](test|spec)|tests?)$/,"",p); return p }
+# 필드를 JSON 데이터로 읽어 근거 문자열의 대괄호가 배열을 끝내지 못하게 합니다.
+function span(s,p, c,depth,q,esc,i,first) {
+  first=substr(s,p,1); depth=0; q=0; esc=0
+  for(i=p;i<=length(s);i++) {
+    c=substr(s,i,1)
+    if(q) { if(esc)esc=0; else if(c=="\\")esc=1; else if(c=="\""){q=0;if(first=="\"")return i-p+1}; continue }
+    if(c=="\""){q=1;continue}
+    if(c=="[" || c=="{") depth++
+    else if(c=="]" || c=="}"){depth--;if(depth==0)return i-p+1}
+    else if(depth==0 && c ~ /[, \t\r\n]/)return i-p
+  }
+  return length(s)-p+1
+}
+function field(s,key, p) { p=index(s,"\"" key "\":"); if(!p)return ""; p+=length(key)+3; while(substr(s,p,1) ~ /[ \t]/)p++; return substr(s,p,span(s,p)) }
+function decoded(s, r,i,c) {
+  r=""
+  if(substr(s,1,1)!="\"")return ""
+  for(i=2;i<length(s);i++) {
+    c=substr(s,i,1)
+    if(c=="\\"){c=substr(s,++i,1);if(c=="n"||c=="r"||c=="t"||c=="u")return "";if(c!="\""&&c!="\\"&&c!="/")return ""}
+    r=r c
+  }
+  return r
+}
+function relative(from,to, a,b,n,m,i,r,j) {
+  n=from==""?0:split(from,a,"/");m=split(to,b,"/");i=1
+  while(i<=n&&i<=m&&a[i]==b[i])i++
+  r="";for(j=i;j<=n;j++)r=r "../";for(j=i;j<=m;j++)r=r (j>i?"/":"") b[j]
+  if(r=="")return "./"
+  return r ~ /^\.\.\//?r:"./" r
+}
+function suggestion(s,t,sa,ta,ev, p,n,obj,line,spec,plain,suffix,base,goal,nextspec,key,ext,js) {
+  if(s !~ /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/ || s==sa && t==ta)return
+  # 파일명에 URL 구분자가 있으면 import 제안 전에 인코딩 지원이 필요합니다.
+  if(sa ~ /[%?#]/ || ta ~ /[%?#]/)return
+  p=2
+  while(p<length(ev)) {
+    while(substr(ev,p,1) ~ /[, \t\r\n]/)p++
+    if(substr(ev,p,1)!="{")break
+    n=span(ev,p);obj=substr(ev,p,n);p+=n
+    line=field(obj,"line");spec=decoded(field(obj,"declaration"))
+    if(line !~ /^[1-9][0-9]*$/ || spec !~ /^\.\.?\// || spec ~ /[\\"'\001-\037]/)continue
+    plain=spec;sub(/[?#].*$/,"",plain);suffix=substr(spec,length(plain)+1)
+    base=normp(joinp(dirof(s),plain));goal=ta
+    if(base==t) {}
+    else if(base==dirof(t) && baseof(t) ~ /^index\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/) {
+      if(baseof(ta) ~ /^index\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/)goal=dirof(ta)
+      else sub(/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/,"",goal)
+    }
+    else if(t==base ".ts" || t==base ".tsx" || t==base ".mts" || t==base ".cts" || t==base ".js" || t==base ".jsx" || t==base ".mjs" || t==base ".cjs") sub(/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/,"",goal)
+    else if(base ~ /\.(js|jsx|mjs|cjs)$/ && t ~ /\.(ts|tsx|mts|cts)$/) {
+      js=base;sub(/^.*\./,"",js);sub(/\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/,"",goal);goal=goal "." js
+    } else continue
+    nextspec=relative(dirof(sa),goal) suffix
+    if(nextspec==spec || nextspec ~ /[\\"'\001-\037]/)continue
+    key=s SUBSEP line SUBSEP spec SUBSEP nextspec
+    if(key in SUGGESTED)continue
+    SUGGESTED[key]=1
+    SUG[++nsuggest]="{\"file\":" jstr(s) ",\"fileAfter\":" jstr(sa) ",\"line\":" line ",\"from\":" jstr(spec) ",\"to\":" jstr(nextspec) "}"
+    if(rich && nsuggest<=10) SUGTEXT[nsuggest]="    " dim twig reset " " s ":" line (s!=sa?" (이동 후 " sa ")":"") "\n      " spec arrow accent nextspec reset
+    else if(!rich && nsuggest<=20)print "  " s ":" line "  " spec " → " nextspec > (out ".text")
+  }
+}
+function owners(p,after, k,a,id,d,eco,best,chosen,maxlen,n,i) {
+  # 생태계마다 가장 가까운 소유자를 찾고 같은 소스 폴더를 공유하는 대상은 모두 보존합니다.
+  for(k in MP) {
+    split(k,a,SUBSEP);id=a[1];d=a[2];if(after)d=movedir(d);eco=ECO[id]
+    if(under(p,d) && (!(eco in best) || length(d)>best[eco]))best[eco]=length(d)
+  }
+  for(k in MP) {
+    split(k,a,SUBSEP);id=a[1];d=a[2];if(after)d=movedir(d);eco=ECO[id]
+    if(under(p,d) && length(d)==best[eco]){if(after)AFTER[id]=1;else BEFORE[id]=1}
+  }
+}
+FILENAME==mapping { MAP[$1]=$2; MOVES[++nm]=$1; SEED[$1]=1; AFFECT[$1]=1; Q[++nq]=$1; STEM[teststem($1)]=1; next }
+FILENAME==mods {
+  if($1==1){ECO[$2]=$5}
+  if($1==4){p=$3;if(p==".")p="";MP[$2,p]=1}
+  next
+}
+FILENAME==unsafe && $2=="ignoredPaths" { skipped+=$3; next }
+FILENAME==files && $1==0 && $2=="diagnostic" { DIAG[++ndiag]=$3; incomplete=1; next }
+FILENAME==files && $1==1 {
+  if($3=="file"){FILE[$2]=1;ANALYZED[$2]=($6 ~ /"analysis":"(static-import|compiler-index)"/)}
+  next
+}
+FILENAME==files && $1==2 {
+  s=$2;t=$3;EDGE[++ne]=$0;ES[ne]=s;ET[ne]=t
+  REV[t,++NREV[t]]=s
+  next
+}
+END {
+  if(!rich) {
+    print "파일 이동 영향 계획 · " source " → " destination > (out ".text")
+    print "파일 " nm "개 · 현재 작업 파일 기준" > (out ".text")
+  }
+  ignored=ENVIRON["MOVE_IGNORED"]+0
+  if(ignored)diagnostic("IGNORED_FILES_OMITTED","원본에 무시된 파일 " ignored "개가 있어 목록에서 제외했습니다. 폴더 전체 이동 전 별도로 확인하세요.",source,1)
+  omitteddirs=ENVIRON["MOVE_OMITTED_DIRECTORIES"]+0
+  if(omitteddirs)diagnostic("DIRECTORIES_OMITTED","디렉터리로만 기록된 항목 " omitteddirs "개를 제외했습니다. 하위 저장소가 포함됐는지 확인하세요.",source,1)
+  if(skipped)diagnostic("UNSUPPORTED_PATH","의존 분석에서 제어 문자·심볼릭 링크 경로 " skipped "개를 제외했습니다.","",1)
+  for(i=1;i<=nm;i++){
+    s=MOVES[i];owners(s,0);owners(MAP[s],1)
+    if(!ANALYZED[s])diagnostic("UNANALYZED_MOVED_FILE","이 파일 형식의 참조를 정적으로 분석하지 못했습니다.",s,1)
+    if(baseof(s) ~ /^(package\.json|Package\.swift|Project\.swift|Cargo\.toml|go\.mod|build\.gradle(\.kts)?|pom\.xml)$/)diagnostic("MANIFEST_MOVE","모듈 설정 파일 이동은 빌드 설정과 소속 모듈을 별도로 확인해야 합니다.",s,1)
+  }
+  for(i=1;i<=ne;i++){
+    s=ES[i];t=ET[i];if(!(s in FILE)||!(t in FILE)||(!(s in MAP)&&!(t in MAP)))continue
+    split(EDGE[i],e,"\t");sa=moved(s);ta=moved(t);ev=field(e[7],"evidence");if(ev=="")ev="[]"
+    REFS[++nrefs]="{\"source\":" jstr(s) ",\"target\":" jstr(t) ",\"sourceAfter\":" jstr(sa) ",\"targetAfter\":" jstr(ta) ",\"kind\":" jstr(e[4]) ",\"heuristic\":" (e[6]=="h"?"true":"false") ",\"evidence\":" ev "}"
+    if(rich && nrefs<=10) {
+      proofline=""; obj=substr(ev,2,span(ev,2)); ln=field(obj,"line"); if(ln ~ /^[1-9][0-9]*$/)proofline=":" ln
+      REFTEXT[nrefs]="    " dim twig reset " " s proofline arrow t (e[6]=="h"?" (추정)":"")
+    } else if(!rich && nrefs<=20)print "  참조: " s " → " t (e[6]=="h"?" (추정)":"") > (out ".text")
+    if(e[6]!="h")suggestion(s,t,sa,ta,ev)
+  }
+  for(q=1;q<=nq;q++){t=Q[q];for(i=1;i<=NREV[t];i++){s=REV[t,i];if((s in FILE)&&!(s in AFFECT)){AFFECT[s]=1;Q[++nq]=s}}}
+  for(s in FILE)if(testpath(s) && ((s in AFFECT)||(teststem(s) in STEM)))TESTS[s]=1
+  if(rich) {
+    print "  파일 " nm "개 " bullet " 참조 " (nrefs+0) "곳 " bullet " 영향 파일 " nq "개" > (out ".text")
+    print "\n  " accent "이동 경로" reset > (out ".text")
+    for(i=1;i<=nm && i<=10;i++)print "    " dim twig reset " " MOVES[i] "\n       " arrow accent MAP[MOVES[i]] reset > (out ".text")
+    if(nm>10)print "    " dim ellipsis " 이동 경로 " (nm-10) "개 더 있음 (--json)" reset > (out ".text")
+    print "\n  " accent "소속 모듈 " bullet " 추정" reset > (out ".text")
+    n=sortkeys(BEFORE,keys); oldowners=""; for(i=1;i<=n;i++)oldowners=oldowners (i>1?", ":"") keys[i]
+    n=sortkeys(AFTER,keys); newowners=""; for(i=1;i<=n;i++)newowners=newowners (i>1?", ":"") keys[i]
+    print "    " dim twig reset " " (oldowners!=""?oldowners:"확인되지 않음") arrow (newowners!=""?newowners:"확인되지 않음") > (out ".text")
+    if(nrefs) {
+      print "\n  " accent "참조 근거 " bullet " " nrefs "곳" reset > (out ".text")
+      for(i=1;i<=nrefs && i<=10;i++)print REFTEXT[i] > (out ".text")
+      if(nrefs>10)print "    " dim ellipsis " 참조 " (nrefs-10) "개 더 있음 (--json)" reset > (out ".text")
+    }
+    print "\n  " accent "상대 import 수정 후보 " bullet " " (nsuggest+0) "개" reset > (out ".text")
+    for(i=1;i<=nsuggest && i<=10;i++)print SUGTEXT[i] > (out ".text")
+    if(nsuggest>10)print "    " dim ellipsis " 후보 " (nsuggest-10) "개 더 있음 (--json)" reset > (out ".text")
+    if(!nsuggest)print "    " dim twig " 근거가 있는 수정 후보를 찾지 못했습니다." reset > (out ".text")
+    n=sortkeys(TESTS,keys)
+    print "\n  " accent "확인할 테스트 " bullet " 후보 " n "개" reset > (out ".text")
+    for(i=1;i<=n && i<=10;i++)print "    " dim twig reset " " keys[i] > (out ".text")
+    if(n>10)print "    " dim ellipsis " 테스트 " (n-10) "개 더 있음 (--json)" reset > (out ".text")
+    if(!n)print "    " dim twig " 연결 관계와 이름에서 후보를 찾지 못했습니다." reset > (out ".text")
+    if(ndiag) {
+      print "\n  " yellow "! 분석 시 확인할 내용" reset > (out ".text")
+      for(i=1;i<=ndiag && i<=10;i++) {
+        msg=decoded(field(DIAG[i],"message")); p=decoded(field(DIAG[i],"file"))
+        print "    " yellow "!" reset " " msg (p!=""?"\n      " dim p reset:"") > (out ".text")
+      }
+      if(ndiag>10)print "    " dim ellipsis " 분석 제한 " (ndiag-10) "개 더 있음 (--json)" reset > (out ".text")
+    }
+    print "\n  " dim bullet " 검토용 계획입니다. 파일은 이동하지 않았습니다." reset > (out ".text")
+    print "  " dim "별칭·동적 참조·빌드/리소스 설정은 별도로 확인하세요. 테스트는 실행하지 않았습니다." reset > (out ".text")
+  } else {
+    if(nrefs>20)print "  … 참조 " (nrefs-20) "개 더 있음 (--json)" > (out ".text")
+    if(nsuggest>20)print "  … import 수정 후보 " (nsuggest-20) "개 더 있음 (--json)" > (out ".text")
+    print "영향 파일 " nq "개 · 상대 import 수정 후보 " (nsuggest+0) "개" > (out ".text")
+    print "경로 후보는 검토용입니다. 별칭·동적 참조·빌드/리소스 설정은 별도로 확인하세요." > (out ".text")
+  }
+  printf "{\"schemaVersion\":1,\"tool\":\"gitch move\",\"mode\":\"plan\",\"repo\":%s,\"source\":%s,\"destination\":%s,\"kind\":%s,\"moves\":[",jstr(ENVIRON["MOVE_REPO"]),jstr(source),jstr(destination),jstr(kind) > (out ".json")
+  for(i=1;i<=nm;i++)printf "%s{\"from\":%s,\"to\":%s}",(i>1?",":""),jstr(MOVES[i]),jstr(MAP[MOVES[i]]) > (out ".json")
+  printf "],\"references\":[" > (out ".json");for(i=1;i<=nrefs;i++)printf "%s%s",(i>1?",":""),REFS[i] > (out ".json")
+  printf "],\"suggestions\":[" > (out ".json");for(i=1;i<=nsuggest;i++)printf "%s%s",(i>1?",":""),SUG[i] > (out ".json")
+  printf "],\"affectedFiles\":[" > (out ".json");n=sortkeys(AFFECT,keys);for(i=1;i<=n;i++)printf "%s%s",(i>1?",":""),jstr(keys[i]) > (out ".json")
+  printf "],\"tests\":[" > (out ".json");n=sortkeys(TESTS,keys);for(i=1;i<=n;i++)printf "%s%s",(i>1?",":""),jstr(keys[i]) > (out ".json")
+  printf "],\"modules\":{\"before\":[" > (out ".json");n=sortkeys(BEFORE,keys);for(i=1;i<=n;i++)printf "%s%s",(i>1?",":""),jstr(keys[i]) > (out ".json")
+  printf "],\"after\":[" > (out ".json");n=sortkeys(AFTER,keys);for(i=1;i<=n;i++)printf "%s%s",(i>1?",":""),jstr(keys[i]) > (out ".json")
+  printf "]},\"diagnostics\":[" > (out ".json");for(i=1;i<=ndiag;i++)printf "%s%s",(i>1?",":""),DIAG[i] > (out ".json")
+  printf "],\"incomplete\":%s,\"notes\":[%s,%s,%s]}\n",(incomplete?"true":"false"),jstr("This is a read-only plan from tracked and nonignored untracked working-tree files; hidden staged bytes are not analyzed."),jstr("Reference evidence and JS/TS relative import suggestions are static candidates, not a complete refactoring patch."),jstr("Test candidates are inferred from dependency paths or file names; module ownership is inferred. No tests or build scripts were run.") > (out ".json")
+  print (incomplete?1:0) > (out ".status")
+}
+AWKEOF
 }
 
 # ================= PR / MR / CI =================
@@ -3144,6 +4239,8 @@ cfg_header() {
 #     scanRoot = ~/Develop          # gitch scan 기본 폴더
 #     aiPush = ask                  # Claude Code push 확인: ask 매번 | branch 기본/보호 브랜치와 PR 만 | allow 안 함
 #     maxFileMB = 50                # 이 크기 이상 파일은 커밋 막기
+# [ui]
+#     logo = true                   # CLI 작은 눈 로고 (gitch logo on|off)
 # [account "아이디"]
 #     email = 메일
 #     host = github.com             # 서버[:포트] — 여러 개 가능, 'host = github.com via 다른계정' 은 그 계정의 SSH 로그인을 빌려 씀
@@ -3161,7 +4258,7 @@ reset_config_state() {
   ACC_IDS=(); ACC_EMAIL=(); ACC_NAME=(); ACC_TRAILER=()
   B_ACC=(); B_HOST=(); B_PORT=(); B_LOGIN=(); B_ALIAS=()
   F_RAW=(); F_REAL=(); F_ACC=(); O_RAW=(); O_HOST=(); O_PATH=(); O_ACC=(); AR_RAW=(); AR_REAL=(); AR_PAT=()
-  CFG_SCAN_ROOT="~/Develop"; CFG_AI_PUSH="ask"; CFG_MAX_MB=50; CFG_WARN_MB=10; CFG_SSH_STRICT=""
+  CFG_SCAN_ROOT="~/Develop"; CFG_AI_PUSH="ask"; CFG_MAX_MB=50; CFG_WARN_MB=10; CFG_SSH_STRICT=""; CFG_UI_LOGO=true
   CFG_ERRORS=()
 }
 
@@ -3219,6 +4316,56 @@ after_config_change() {   # 계정/폴더/조직/push 정책이 바뀌면 규칙
   ok "자동 규칙과 AI 안내를 갱신했습니다."
 }
 
+logo_read() {   # 설정이나 계정 등록 없이 저장된 표시 설정만 읽습니다.
+  local value rc=0
+  LOGO_ENABLED=true
+  [ -f "$CFG" ] || return 0
+  value=$(git config -f "$CFG" --bool --get ui.logo 2>/dev/null) || rc=$?
+  case "$rc" in
+    0) LOGO_ENABLED=$value ;;
+    1) ;; # 미설정이면 기존 기본값에 따라 로고를 표시합니다.
+    *) return 1 ;;
+  esac
+}
+
+ui_logo_enabled() {   # 명령별 임시 설정은 저장된 표시 설정을 바꾸지 않습니다.
+  logo_read || LOGO_ENABLED=true
+  case "${GITCH_LOGO:-}" in on) return 0 ;; off) return 1 ;; esac
+  [ "$LOGO_ENABLED" = true ]
+}
+
+logo_cmd() {
+  local action=status argument help='' seen='' json=''
+  for argument in "$@"; do
+    case "$argument" in
+      --json) json=1 ;;
+      -h|--help) help=1 ;;
+      on|off|status)
+        [ -z "$seen" ] || die "사용법: gitch logo [on|off|status] [--json]"
+        action=$argument; seen=1 ;;
+      *) die "사용법: gitch logo [on|off|status] [--json]" ;;
+    esac
+  done
+  if [ -n "$help" ]; then
+    say '사용법: gitch logo [on|off|status] [--json]'
+    say '  on/off: 작은 눈 로고 표시 설정 저장 · status: 현재 저장된 설정'
+    say '  색상과 결과 레이아웃은 유지됩니다. 한 번만 변경: GITCH_LOGO=off gitch ck'
+    return 0
+  fi
+  case "$action" in
+    on) cfg_change set ui.logo true ;;
+    off) cfg_change set ui.logo false ;;
+  esac
+  logo_read || die 'CLI 로고 설정을 읽지 못했습니다. gitch config check 로 설정을 확인하세요.'
+  if [ -n "$json" ]; then
+    printf '{"schemaVersion":1,"enabled":%s}\n' "$LOGO_ENABLED"
+  elif [ "$LOGO_ENABLED" = true ]; then
+    ok 'CLI 작은 눈 로고: 켜짐 · 끄기: gitch logo off'
+  else
+    ok 'CLI 작은 눈 로고: 꺼짐 · 켜기: gitch logo on'
+  fi
+}
+
 config_cmd() {   # path | show | get <키> | check | set|add|unset|unset-all <키> [값] [--yes] | edit
   local sub="${1:-show}" yes="" args=() a
   [ $# -gt 0 ] && shift
@@ -3226,7 +4373,7 @@ config_cmd() {   # path | show | get <키> | check | set|add|unset|unset-all <�
   case "$sub" in
     path) say "$CFG" ;;
     show|cat) [ -f "$CFG" ] || die "설정 파일이 없습니다: $(tilde "$CFG") → gitch migrate 또는 gitch add"; cat "$CFG" ;;
-    get) [ ${#args[@]} -ge 1 ] || die "사용법: gitch config get <키>"; git config -f "$CFG" --get-all "${args[0]}" ;;
+    get) [ ${#args[@]} -ge 1 ] || die "사용법: gitch config get <키>"; git --no-pager config -f "$CFG" --get-all "${args[0]}" ;;
     check)
       load_config || die "설정 파일이 없습니다: $CFG"
       if [ ${#CFG_ERRORS[@]} -gt 0 ]; then for a in "${CFG_ERRORS[@]}"; do err "- $a"; done; exit 1; fi
@@ -4163,7 +5310,7 @@ remove_legacy_skill() {   # 예전 이름(gitsw)으로 만든 스킬 — 이 도
 #  - 읽기 명령, 일상 명령(커밋/브랜치/pull/push)과 그에 해당하는 git 명령
 #  - 위험한 경우는 PreToolUse 훅(gitch guard)이 먼저 막거나(deny) 확인(ask)을 받으므로 여기서 허용해도 안전
 #    예: --no-verify·강제 push 거부, main/보호 브랜치 push·PR 생성 확인(aiPush=branch), reset --hard·branch -D 확인
-CLAUDE_ALLOW='["Bash(gitch ck:*)","Bash(gitch check:*)","Bash(gitch status:*)","Bash(gitch st:*)","Bash(gitch preflight:*)","Bash(gitch l:*)","Bash(gitch log:*)","Bash(gitch d:*)","Bash(gitch diff:*)","Bash(gitch doctor:*)","Bash(gitch list:*)","Bash(gitch report:*)","Bash(gitch audit:*)","Bash(gitch graph:*)","Bash(gitch help)","Bash(gitch version)","Bash(gitch ci)","Bash(gitch ci:*)","Bash(gitch flow:*)","Bash(gitch test)","Bash(gitch test:*)","Bash(gitch rescue)","Bash(gitch c:*)","Bash(gitch commit:*)","Bash(gitch cp:*)","Bash(gitch p:*)","Bash(gitch push:*)","Bash(gitch pl)","Bash(gitch pull)","Bash(gitch up)","Bash(gitch b:*)","Bash(gitch branch:*)","Bash(gitch wt:*)","Bash(gitch continue)","Bash(gitch sync)","Bash(gitch clone:*)","Bash(gitch pr:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git show:*)","Bash(git blame:*)","Bash(git grep:*)","Bash(git ls-files:*)","Bash(git rev-parse:*)","Bash(git fetch:*)","Bash(git add:*)","Bash(git commit:*)","Bash(git push:*)","Bash(git pull:*)","Bash(git branch:*)","Bash(git switch:*)","Bash(git checkout:*)","Bash(git restore:*)","Bash(git stash:*)","Bash(git remote:*)"]'
+CLAUDE_ALLOW='["Bash(gitch ck:*)","Bash(gitch check:*)","Bash(gitch status:*)","Bash(gitch st:*)","Bash(gitch preflight:*)","Bash(gitch l:*)","Bash(gitch log:*)","Bash(gitch d:*)","Bash(gitch diff:*)","Bash(gitch doctor:*)","Bash(gitch list:*)","Bash(gitch report:*)","Bash(gitch audit:*)","Bash(gitch graph:*)","Bash(gitch overlap:*)","Bash(gitch move:*)","Bash(gitch module audit:*)","Bash(gitch help)","Bash(gitch version)","Bash(gitch ci)","Bash(gitch ci:*)","Bash(gitch flow:*)","Bash(gitch test)","Bash(gitch test:*)","Bash(gitch rescue)","Bash(gitch c:*)","Bash(gitch commit:*)","Bash(gitch cp:*)","Bash(gitch p:*)","Bash(gitch push:*)","Bash(gitch pl)","Bash(gitch pull)","Bash(gitch up)","Bash(gitch b:*)","Bash(gitch branch:*)","Bash(gitch wt:*)","Bash(gitch continue)","Bash(gitch sync)","Bash(gitch clone:*)","Bash(gitch pr:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git show:*)","Bash(git blame:*)","Bash(git grep:*)","Bash(git ls-files:*)","Bash(git rev-parse:*)","Bash(git fetch:*)","Bash(git add:*)","Bash(git commit:*)","Bash(git push:*)","Bash(git pull:*)","Bash(git branch:*)","Bash(git switch:*)","Bash(git checkout:*)","Bash(git restore:*)","Bash(git stash:*)","Bash(git remote:*)"]'
 # 예전 버전이 넣었지만 지금은 쓰지 않는 것 (설치할 때 지움) — 위 항목과 겹치는 것, gitsw 시절의 'Bash(gitsw …)' 항목
 CLAUDE_ALLOW_OLD='["Bash(gitch ck)","Bash(gitch status)","Bash(gitch preflight)","Bash(gitch l)","Bash(gitch d)","Bash(gitch doctor)","Bash(gitch list)","Bash(gitch b)","Bash(gitch pr status:*)","Bash(gitsw ck)","Bash(gitsw status)","Bash(gitsw preflight)","Bash(gitsw l)","Bash(gitsw d)","Bash(gitsw doctor)","Bash(gitsw list)","Bash(gitsw b)","Bash(gitsw pr status:*)","Bash(gitsw ck:*)","Bash(gitsw check:*)","Bash(gitsw status:*)","Bash(gitsw st:*)","Bash(gitsw preflight:*)","Bash(gitsw l:*)","Bash(gitsw log:*)","Bash(gitsw d:*)","Bash(gitsw diff:*)","Bash(gitsw doctor:*)","Bash(gitsw list:*)","Bash(gitsw report:*)","Bash(gitsw audit:*)","Bash(gitsw help)","Bash(gitsw version)","Bash(gitsw ci)","Bash(gitsw rescue)","Bash(gitsw c:*)","Bash(gitsw commit:*)","Bash(gitsw cp:*)","Bash(gitsw p:*)","Bash(gitsw push:*)","Bash(gitsw pl)","Bash(gitsw pull)","Bash(gitsw up)","Bash(gitsw b:*)","Bash(gitsw branch:*)","Bash(gitsw wt:*)","Bash(gitsw continue)","Bash(gitsw sync)","Bash(gitsw clone:*)","Bash(gitsw pr:*)"]'
 JQ_CLAUDE_INSTALL='
@@ -4616,6 +5763,24 @@ guard_gitsw() {
   local i=$1 sub="${GW[$1]:-}" rest=() lock acc k o
   rest=("${GW[@]:$((i+1))}")
   case "$sub" in
+    overlap) ;;   # 로컬 워크트리의 파일·의존 관계를 읽기만 한다
+    logo) ;;      # 표시 설정만 바꾸며 계정·Git 안전 규칙에는 영향이 없다
+    move)
+      local move_plan="" move_help=""
+      for o in "${rest[@]}"; do
+        case "$o" in
+          --) break ;;
+          --plan) move_plan=1 ;;
+          -h|--help) move_help=1 ;;
+          --apply|--apply=*) g_decide deny "gitch move 는 --plan 으로 이동 계획만 확인할 수 있습니다." ;;
+        esac
+      done
+      [ -n "$move_plan" ] || [ -n "$move_help" ] || g_decide deny "gitch move 는 명시적인 --plan 이 필요합니다. 파일을 바꾸지 않는 이동 계획만 허용합니다." ;;
+    module)
+      case "${rest[0]:-}" in
+        audit|-h|--help) ;;
+        *) g_decide deny "gitch module 은 읽기 전용 audit 명령만 허용합니다." ;;
+      esac ;;
     unlock) g_decide ask "저장소 계정 잠금을 풉니다. 사용자가 명시적으로 요청한 경우에만 하세요." ;;
     use)
       acc=${rest[0]:-}
@@ -4957,7 +6122,7 @@ install_cmd() {
   # 계정이 아직 없으면 명령 · 터미널만 — gitch g 처럼 계정이 필요 없는 명령은 바로 쓰고, 자동 규칙 · 검사 훅은 계정을 만든 뒤에
   # (계정 없이 useConfigOnly · 훅을 깔면 모든 저장소의 커밋이 막힌다)
   if load_config; then need_config; else noacc=1; total=2; fi
-  fancy_out && { fancy=1; banner; }
+  fancy_out && [ "${GITCH_STYLE:-auto}" != plain ] && [ "${TERM:-}" != dumb ] && { fancy=1; banner; }
   chmod +x "$self"
   step 1 "명령" "$total"
   mkdir -p "$HOME/bin"
@@ -5875,6 +7040,526 @@ graph_safe_file_list() {   # $1 original NUL list $2 safe LF list $3 diagnostics
     printf '0\tdiagnostic\t{"code":"UNSUPPORTED_PATH","severity":"warning","count":%d,"message":"Paths containing control characters or symbolic links were omitted before reading source files, preserving filename boundaries and repository containment."}\n' "$ignored" >> "$3"
     printf '0\tnote\t제어 문자 또는 심볼릭 링크가 든 파일 경로 %d개는 안전하게 제외했습니다.\n' "$ignored" >> "$3"
   fi
+}
+
+# npm 감사는 패키지 관리자를 실행하거나 의존성을 설치하지 않습니다.
+# 경로·매니페스트·소스 문자열은 데이터로만 읽고 셸 코드로 실행하지 않습니다.
+module_cmd() {
+  case "${1:-}" in
+    audit) shift; module_audit_cmd "$@" ;;
+    -h|--help|"") say 'gitch module audit [파일|폴더] [--json] [--strict] — 추적하는 현재 작업 파일의 npm 직접 의존 감사 (읽기 전용)' ;;
+    *) die "알 수 없는 module 명령: $1" ;;
+  esac
+}
+
+module_audit_cmd() (
+  local selection="." selected="" format=text strict=0 top absolute tmp rc before after
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --json) format=json ;;
+      --strict) strict=1 ;;
+      -h|--help) say 'gitch module audit [파일|폴더] [--json] [--strict]
+  npm/package.json과 npm workspaces만 지원합니다. 기본 범위는 현재 폴더입니다.
+  Git 추적 파일의 현재 작업 트리를 읽습니다. 미추적 파일과 인덱스에만 남은 내용은 제외합니다.
+  네 dependency 구역의 선언을 인정하며 관찰되지 않은 선언·버전 명세 차이는 검토 정보입니다.
+  --strict: 직접 의존 누락 시 종료 1. 불완전한 분석은 --strict 없이도 종료 1.'; return 0 ;;
+      --) shift; [ $# -eq 1 ] && [ -z "$selected" ] || die '범위는 하나의 파일 또는 폴더로 지정하세요.'; selection=$1; selected=1; break ;;
+      -*) die "알 수 없는 module audit 옵션: $1" ;;
+      *) [ -z "$selected" ] || die '범위는 한 번만 지정하세요.'; selection=$1; selected=1 ;;
+    esac
+    shift
+  done
+  require_repo
+  # Git for Windows returns a drive path; compare both sides in the shell's path format.
+  top=$(real_dir "$(repo_top)") || return 1
+  selection=$(expand_path "$selection")
+  [ ! -L "$selection" ] || die '심볼릭 링크를 감사 범위로 지정할 수 없습니다.'
+  if [ -d "$selection" ]; then absolute=$(real_dir "$selection")
+  elif [ -f "$selection" ]; then absolute="$(real_dir "$(dirname "$selection")")/$(basename "$selection")"
+  else die "감사할 파일 또는 폴더가 없습니다: $selection"; fi
+  case "$absolute" in "$top") selection="." ;; "$top"/*) selection=${absolute#"$top"/} ;; *) die '감사 범위는 현재 저장소 안이어야 합니다.' ;; esac
+  case "$selection" in *[$'\001'-$'\037'$'\177']*) die '제어 문자가 든 감사 범위는 지원하지 않습니다.' ;; esac
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/gitch-module-audit.XXXXXX") || return 1
+  trap 'rm -rf "$tmp"' EXIT
+  cd "$top" || return 1
+  git ls-files --cached -z -- > "$tmp/files.z" || return 1
+  graph_safe_file_list "$tmp/files.z" "$tmp/files.raw" "$tmp/diagnostics"
+  LC_ALL=C sort -u "$tmp/files.raw" > "$tmp/files"
+  graph_awk_lib > "$tmp/audit.awk"
+  module_audit_awk >> "$tmp/audit.awk"
+  before=$(module_audit_fingerprint "$tmp") || { err '감사 입력의 상태를 확인하지 못했습니다.'; return 1; }
+  GITCH_RENDER_RICH="${UI_ACTIVE:-0}" GITCH_RENDER_UTF8="${UI_UTF8:-0}" \
+  GITCH_RENDER_ACCENT="$ACCENT" GITCH_RENDER_DIM="$DIM" GITCH_RENDER_RESET="$RESET" GITCH_RENDER_YELLOW="$YELLOW" GITCH_RENDER_RED="$RED" GITCH_RENDER_GREEN="$GREEN" \
+  GITCH_MA_LIST="$tmp/files" GITCH_MA_DIAGNOSTICS="$tmp/diagnostics" GITCH_MA_REPO="${top##*/}" GITCH_MA_PATH="$selection" GITCH_MA_FORMAT="$format" GITCH_MA_STRICT="$strict" \
+    LC_ALL=C awk -f "$tmp/audit.awk" /dev/null > "$tmp/result"
+  rc=$?
+  after=$(module_audit_fingerprint "$tmp") || after='unreadable-after-analysis'
+  if [ "$before" != "$after" ]; then
+    if [ "$format" = json ]; then
+      # 고정된 구조 구분자만 바꿔 이스케이프된 소스 문자열이 필드를
+      # 흉내 내지 못하게 합니다. 분석 결과는 검토할 수 있도록 보존합니다.
+      awk '
+        { extra="{\"code\":\"INPUT_CHANGED\",\"severity\":\"warning\",\"message\":\"Tracked files or repository state changed during analysis; rerun the audit.\"}"
+          marker="\"diagnostics\":["; p=index($0, marker)+length(marker)
+          if (p>length(marker)) $0=substr($0,1,p-1) extra (substr($0,p,1)=="]" ? "" : ",") substr($0,p)
+          sub(/"incomplete":false/, "\"incomplete\":true")
+          if (match($0,/"warnings":[0-9]+/)) { value=substr($0,RSTART,RLENGTH); sub(/.*:/,"",value); $0=substr($0,1,RSTART-1) "\"warnings\":" (value+1) substr($0,RSTART+RLENGTH) }
+          print
+        }' "$tmp/result"
+    else cat "$tmp/result"; say '경고 · INPUT_CHANGED: 분석 중 추적 파일 또는 저장소 상태가 바뀌었습니다. 다시 실행하세요.'; fi
+    return 1
+  fi
+  cat "$tmp/result"
+  return "$rc"
+)
+
+module_audit_fingerprint() (
+  local tmp=$1 path
+  set -o pipefail
+  {
+    git ls-files --cached --stage -z -- || exit 1
+    cat "$tmp/files.z" "$tmp/files"
+    : > "$tmp/hash.paths"
+    while IFS= read -r path; do
+      if [ -f "$path" ] && [ ! -L "$path" ]; then printf '%s\0' "$path" >> "$tmp/hash.paths"
+      else printf 'missing-or-link:%s\0' "$path"; fi
+    done < "$tmp/files"
+    xargs -0 git hash-object --no-filters -- < "$tmp/hash.paths" || exit 1
+  } | git hash-object --stdin
+)
+
+module_audit_awk() {
+  cat <<'AWKEOF'
+# 그래프 라이브러리는 JSON 이스케이프·경로 정규화·글로브 일치를 제공합니다.
+# 그래프 스캔은 느슨하게 읽으므로 별도의 엄격한 JSON 리더를 사용합니다.
+function ma_diag(code, message, file,   k) {
+  k = code SUBSEP file
+  if (k in MA_DSEEN) { MA_DCOUNT[MA_DSEEN[k]]++; return }
+  MA_DSEEN[k] = MA_NDIAG + 1; MA_INCOMPLETE = 1
+  MA_DIAG[++MA_NDIAG] = "{\"code\":" jstr(code) ",\"severity\":\"warning\",\"message\":" jstr(message) (file == "" ? "" : ",\"file\":" jstr(file)) "}"
+  MA_DTEXT[MA_NDIAG] = "경고 · " code ": " message (file == "" ? "" : " [" file "]")
+}
+function ma_selected(p) { return MA_PATH == "." || p == MA_PATH || index(p, MA_PATH "/") == 1 }
+function ma_full(m) { return MA_PATH == "." || ma_selected(MA_DIR[m]) }
+function ma_owner(p,   d) {
+  d = dirof(p)
+  while (1) {
+    if (joinp(d, "package.json") in MA_MANIFEST) return joinp(d, "package.json")
+    if (d == "") return ""
+    d = dirof(d)
+  }
+}
+function ma_name(m) { return MA_NAME[m] != "" ? MA_NAME[m] : (MA_DIR[m] == "" ? "." : MA_DIR[m]) }
+function ma_space() {
+  while (MA_POS <= length(MA_TEXT)) {
+    if (substr(MA_TEXT, MA_POS, 1) ~ /[ \t\r\n]/) { if (substr(MA_TEXT, MA_POS, 1) == "\n") MA_LINE++; MA_POS++; continue }
+    if (MA_CONFIG && substr(MA_TEXT, MA_POS, 2) == "//") { while (MA_POS <= length(MA_TEXT) && substr(MA_TEXT, MA_POS, 1) != "\n") MA_POS++; continue }
+    if (MA_CONFIG && substr(MA_TEXT, MA_POS, 2) == "/*") {
+      MA_POS += 2
+      while (MA_POS <= length(MA_TEXT) && substr(MA_TEXT, MA_POS, 2) != "*/") { if (substr(MA_TEXT, MA_POS, 1) == "\n") MA_LINE++; MA_POS++ }
+      if (MA_POS > length(MA_TEXT)) { MA_BAD = 1; return }
+      MA_POS += 2; continue
+    }
+    break
+  }
+}
+function ma_hex(s,   i, c, n) {
+  n = 0
+  for (i = 1; i <= length(s); i++) { c = index("0123456789abcdef", tolower(substr(s, i, 1))) - 1; if (c < 0) return -1; n = n * 16 + c }
+  return n
+}
+function ma_utf(n) {
+  if (n < 128) return sprintf("%c", n)
+  if (n < 2048) return sprintf("%c%c", 192 + int(n / 64), 128 + n % 64)
+  if (n < 65536) return sprintf("%c%c%c", 224 + int(n / 4096), 128 + int(n / 64) % 64, 128 + n % 64)
+  return sprintf("%c%c%c%c", 240 + int(n / 262144), 128 + int(n / 4096) % 64, 128 + int(n / 64) % 64, 128 + n % 64)
+}
+function ma_string(   c, e, n, lo, out) {
+  out = ""; MA_POS++
+  while (MA_POS <= length(MA_TEXT)) {
+    c = substr(MA_TEXT, MA_POS++, 1)
+    if (c == "\"") { MA_VALUE = out; return }
+    if (c ~ /[\001-\037]/) { MA_BAD = 1; return }
+    if (c != "\\") { out = out c; continue }
+    e = substr(MA_TEXT, MA_POS++, 1)
+    if (e == "\"" || e == "\\" || e == "/") out = out e
+    else if (e == "b") out = out sprintf("%c", 8)
+    else if (e == "f") out = out sprintf("%c", 12)
+    else if (e == "n") out = out "\n"
+    else if (e == "r") out = out "\r"
+    else if (e == "t") out = out "\t"
+    else if (e == "u") {
+      if (length(substr(MA_TEXT, MA_POS, 4)) != 4 || (n = ma_hex(substr(MA_TEXT, MA_POS, 4))) < 0) { MA_BAD = 1; return }
+      MA_POS += 4
+      if (n >= 55296 && n <= 56319) {
+        if (substr(MA_TEXT, MA_POS, 2) != "\\u" || (lo = ma_hex(substr(MA_TEXT, MA_POS + 2, 4))) < 56320 || lo > 57343) { MA_BAD = 1; return }
+        MA_POS += 6; n = 65536 + (n - 55296) * 1024 + lo - 56320
+      } else if (n >= 56320 && n <= 57343) { MA_BAD = 1; return }
+      out = out ma_utf(n)
+    } else { MA_BAD = 1; return }
+  }
+  MA_BAD = 1
+}
+function ma_capture(path, type, value, line,   a, n, sec, dep) {
+  n = split(path, a, SUBSEP)
+  if (MA_CONFIG) {
+    if (path == "extends") MA_CUNKNOWN[MA_FILE] = 1
+    if (path == "compilerOptions" SUBSEP "baseUrl") { if (type == "string") MA_CBASE[MA_FILE] = normp(joinp(dirof(MA_FILE), value)); else MA_CUNKNOWN[MA_FILE] = 1 }
+    if (n == 4 && a[1] == "compilerOptions" && a[2] == "paths") {
+      if (type == "string") { MA_CPAT[MA_FILE, a[3]] = 1; MA_CTARGET[MA_FILE, a[3], ++MA_NCTARGET[MA_FILE, a[3]]] = value }
+      else MA_CUNKNOWN[MA_FILE] = 1
+    }
+    return
+  }
+  if (path == "name") { if (type != "string" || (value != "" && value !~ /^(@[A-Za-z0-9_.~-]+\/)?[A-Za-z0-9_.~-]+$/)) MA_BAD = 1; else MA_NAME[MA_FILE] = value }
+  if (n == 1 && a[1] ~ /^(dependencies|devDependencies|peerDependencies|optionalDependencies)$/ && type != "object") MA_BAD = 1
+  if (n == 2 && a[1] ~ /^(dependencies|devDependencies|peerDependencies|optionalDependencies)$/) {
+    dep = a[2]
+    if (type != "string" || value == "" || dep !~ /^(@[A-Za-z0-9_.~-]+\/)?[A-Za-z0-9_.~-]+$/ || value ~ /[\001-\037]/) { MA_BAD = 1; return }
+    MA_DEP[MA_FILE, dep] = 1; MA_SPEC[MA_FILE, dep, a[1]] = value; MA_DL[MA_FILE, dep] = line
+  }
+  if (path == "workspaces" && type != "array" && type != "object") MA_BAD = 1
+  if (path == "workspaces" && type == "object") MA_WSOBJECT[MA_FILE] = 1
+  if (path == "workspaces" SUBSEP "packages") { if (type != "array") MA_BAD = 1; else MA_WSPACKAGES[MA_FILE] = 1 }
+  if ((n == 2 && a[1] == "workspaces" && a[2] ~ /^[0-9]+$/) || (n == 3 && a[1] == "workspaces" && a[2] == "packages")) {
+    if (type != "string" || value == "" || value ~ /^[!\/]/ || value ~ /[\001-\037]/) { MA_BAD = 1; return }
+    MA_WS[MA_FILE, ++MA_NWS[MA_FILE]] = value
+  }
+  if (path == "imports") MA_PRIVATE[MA_FILE] = 1
+}
+function ma_json(path, depth,   c, type, value, key, child, line, idx, seenkey, number) {
+  if (MA_BAD || depth > 64) { MA_BAD = 1; return }
+  ma_space(); line = MA_LINE; c = substr(MA_TEXT, MA_POS, 1)
+  if (c == "{" || c == "[") {
+    type = c == "{" ? "object" : "array"; ma_capture(path, type, "", line); MA_POS++; ma_space()
+    if (substr(MA_TEXT, MA_POS, 1) == (type == "object" ? "}" : "]")) { MA_POS++; return }
+    idx = 0
+    while (!MA_BAD) {
+      if (type == "object") {
+        if (substr(MA_TEXT, MA_POS, 1) != "\"") { MA_BAD = 1; return }
+        ma_string(); key = MA_VALUE; ma_space()
+        if (substr(MA_TEXT, MA_POS++, 1) != ":" || index(key, SUBSEP)) { MA_BAD = 1; return }
+      } else key = idx++ ""
+      child = path == "" ? key : path SUBSEP key
+      seenkey = depth SUBSEP path SUBSEP key
+      if (type == "object" && (seenkey in MA_KEYS)) { MA_BAD = 1; return }
+      MA_KEYS[seenkey] = 1
+      ma_json(child, depth + 1); ma_space(); c = substr(MA_TEXT, MA_POS++, 1)
+      if (c == (type == "object" ? "}" : "]")) return
+      if (c != ",") { MA_BAD = 1; return }
+      ma_space()
+      if (MA_CONFIG && substr(MA_TEXT, MA_POS, 1) == (type == "object" ? "}" : "]")) { MA_POS++; return }
+    }
+    return
+  }
+  if (c == "\"") { ma_string(); ma_capture(path, "string", MA_VALUE, line); return }
+  value = substr(MA_TEXT, MA_POS)
+  if (match(value, /^(true|false|null)/)) { MA_POS += RLENGTH; ma_capture(path, "literal", substr(value, 1, RLENGTH), line); return }
+  if (match(value, /^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/)) { MA_POS += RLENGTH; ma_capture(path, "number", substr(value, 1, RLENGTH), line); return }
+  MA_BAD = 1
+}
+function ma_read_json(file, config, owner,   line, r, k) {
+  MA_TEXT = ""; MA_FILE = file; MA_CONFIG = config; MA_CONFIG_OWNER = owner; MA_POS = MA_LINE = 1; MA_BAD = 0
+  for (k in MA_KEYS) delete MA_KEYS[k]
+  while ((r = (getline line < file)) > 0) {
+    MA_TEXT = MA_TEXT line "\n"
+    if (length(MA_TEXT) > 2097152) { MA_BAD = 1; break }
+  }
+  close(file)
+  if (r < 0) MA_BAD = 1
+  ma_space()
+  if (substr(MA_TEXT, MA_POS, 1) != "{") MA_BAD = 1
+  ma_json("", 0); ma_space()
+  if (MA_POS <= length(MA_TEXT)) MA_BAD = 1
+  if (!config && MA_WSOBJECT[file] && !MA_WSPACKAGES[file]) MA_BAD = 1
+  return !MA_BAD
+}
+function ma_group(m,   parent, d, i, rel) {
+  if (m in MA_GROUP) return MA_GROUP[m]
+  d = MA_DIR[m]; parent = ma_owner(d)
+  if (parent != "" && parent != m && MA_VALID[parent]) {
+    rel = MA_DIR[parent] == "" ? d : substr(d, length(MA_DIR[parent]) + 2)
+    for (i = 1; i <= MA_NWS[parent]; i++) if (rel ~ globre(MA_WS[parent, i])) return MA_GROUP[m] = ma_group(parent)
+  }
+  return MA_GROUP[m] = m
+}
+function ma_builtin(dep) {
+  return dep ~ /^node:/ || (dep in MA_BUILTIN)
+}
+function ma_config_applies(file, cfg,   d) { d = dirof(cfg); return d == "" || index(file, d "/") == 1 }
+function ma_path_alias_matches(pattern, spec,   star, pre, suf) {
+  star = index(pattern, "*")
+  if (!star) return pattern == spec
+  pre = substr(pattern, 1, star - 1); suf = substr(pattern, star + 1)
+  return length(spec) >= length(pre) + length(suf) && substr(spec, 1, length(pre)) == pre && (suf == "" || substr(spec, length(spec) - length(suf) + 1) == suf)
+}
+function ma_alias_target(file, spec,   cfg, k, a, pat, star, pre, suf, cap, base, target, n, i, best, score, chosen, chosenpat, unknown) {
+  MA_ALIAS_STATUS = ""
+  best = -1
+  for (k in MA_CPAT) {
+    split(k, a, SUBSEP); cfg = a[1]; pat = a[2]
+    if (!ma_config_applies(file, cfg) || !ma_path_alias_matches(pat, spec)) continue
+    score = length(dirof(cfg)) * 10000 + length(pat)
+    if (score > best) { best = score; chosen = cfg; chosenpat = pat }
+  }
+  if (best >= 0) {
+    star = index(chosenpat, "*"); cap = ""
+    if (star) { pre = substr(chosenpat, 1, star - 1); suf = substr(chosenpat, star + 1); cap = substr(spec, length(pre) + 1, length(spec) - length(pre) - length(suf)) }
+    base = (chosen in MA_CBASE) ? MA_CBASE[chosen] : dirof(chosen)
+    n = MA_NCTARGET[chosen, chosenpat]
+    for (i = 1; i <= n; i++) {
+      target = MA_CTARGET[chosen, chosenpat, i]; star = index(target, "*")
+      if (star) target = substr(target, 1, star - 1) cap substr(target, star + 1)
+      target = ma_resolve(joinp(base, "__config__.ts"), target)
+      if (target != "") { MA_ALIAS_STATUS = "resolved"; return target }
+    }
+    MA_ALIAS_STATUS = "unresolved"; return ""
+  }
+  for (cfg in MA_CONFIGS) if (ma_config_applies(file, cfg)) {
+    if (MA_CUNKNOWN[cfg]) unknown = 1
+    if (cfg in MA_CBASE) { target = ma_resolve(joinp(MA_CBASE[cfg], "__config__.ts"), spec); if (target != "") { MA_ALIAS_STATUS = "resolved"; return target }; unknown = 1 }
+  }
+  if (unknown) MA_ALIAS_STATUS = "unknown"
+  return ""
+}
+function ma_token(value, type, line) { MA_T[++MA_NT] = value; MA_TY[MA_NT] = type; MA_TL[MA_NT] = line }
+# import 문법을 찾기 전에 문자열·주석·정규식을 구분합니다.
+# 템플릿 보간과 계산된 모듈 지정자는 분석에서 제외합니다.
+function ma_scan(file, owner,   data, line, r, p, c, e, q, s, ln, start, prev, i, j, dep, shadow, regexclass, jsxseen) {
+  data = ""; ln = 1
+  while ((r = (getline line < file)) > 0) { data = data line "\n"; if (length(data) > 2097152) break }
+  close(file)
+  if (r < 0 || length(data) > 2097152) { ma_diag("SOURCE_UNREADABLE", "Source could not be read within the 2 MiB limit.", file); return }
+  for (i in MA_T) delete MA_T[i]
+  for (i in MA_TY) delete MA_TY[i]
+  for (i in MA_TL) delete MA_TL[i]
+  MA_NT = 0; p = 1
+  while (p <= length(data)) {
+    c = substr(data, p, 1)
+    if (c ~ /[ \t\r\n]/) { if (c == "\n") ln++; p++; continue }
+    if (substr(data, p, 2) == "//") { while (p <= length(data) && substr(data, p, 1) != "\n") p++; continue }
+    if (substr(data, p, 2) == "/*") { p += 2; while (p <= length(data) && substr(data, p, 2) != "*/") { if (substr(data, p, 1) == "\n") ln++; p++ }; p += 2; continue }
+    if (c == "\"" || c == "\047" || c == "`") {
+      q = c; s = ""; start = ln; p++
+      while (p <= length(data)) {
+        c = substr(data, p++, 1)
+        if (c == q) break
+        if (c == "\n") ln++
+        if (c == "\\") {
+          e = substr(data, p++, 1)
+          if (e == "u" || e == "x") {
+            j = e == "u" ? 4 : 2; i = ma_hex(substr(data, p, j))
+            if (i >= 0) { s = s ma_utf(i); p += j } else s = s "\001"
+          } else if (e == "\n") ln++
+          else if (e == "n" || e == "r" || e == "t") s = s "\001"
+          else s = s e
+        } else s = s c
+      }
+      if (q == "`") { if (s ~ /\$\{.*(require|import)[ \t\r\n]*\(/) ma_diag("TEMPLATE_IMPORT_NOT_AUDITED", "Imports inside template interpolation were not audited.", file); ma_token("", "template", start) }
+      else ma_token(s, "string", start)
+      continue
+    }
+    prev = MA_T[MA_NT]
+    if (c == "/" && (MA_NT == 0 || prev ~ /^(=|\(|\[|,|:|!|\?|return|throw|yield|case|typeof|void|delete|=>)$/ || (prev == ">" && MA_T[MA_NT-1] == "="))) {
+      p++; regexclass = 0
+      while (p <= length(data)) { c = substr(data, p++, 1); if (c == "\\") p++; else if (c == "[") regexclass = 1; else if (c == "]") regexclass = 0; else if (c == "/" && !regexclass) break; else if (c == "\n") { ln++; break } }
+      ma_token("", "regex", ln); continue
+    }
+    if (c ~ /[A-Za-z_$]/) { s = ""; start = ln; while (substr(data, p, 1) ~ /[A-Za-z0-9_$]/ && p <= length(data)) s = s substr(data, p++, 1); ma_token(s, "word", start); continue }
+    ma_token(c, "punct", ln); p++
+  }
+  shadow = 0
+  for (i = 1; i <= MA_NT; i++) if (MA_T[i] == "require" && (MA_T[i-1] ~ /^(const|let|var|function)$/ || (MA_T[i-1] ~ /^(\(|,|\{)$/ && MA_T[i+1] ~ /^(\)|,|\}|as|:)$/))) shadow = 1
+  for (i = 1; i <= MA_NT; i++) {
+    if (file ~ /\.(jsx|tsx)$/ && MA_T[i] == "<" && (MA_TY[i+1] == "word" || MA_T[i+1] == ">")) jsxseen = 1
+    if (MA_TY[i] != "word" || MA_T[i-1] == ".") continue
+    if (jsxseen && MA_T[i] ~ /^(import|export)$/) { ma_diag("JSX_DECLARATION_NOT_AUDITED", "Import/export-like tokens after JSX markup were not classified as declarations.", file); continue }
+    dep = ""
+    if (MA_T[i] == "require" && MA_T[i+1] == "(") {
+      if (file ~ /\.(jsx|tsx)$/) { ma_diag("JSX_RUNTIME_IMPORT_NOT_AUDITED", "require() inside JSX/TSX was not classified; only static import/export declarations are audited there.", file); continue }
+      if (shadow) { ma_diag("SHADOWED_REQUIRE", "A local require binding prevents reliable require() auditing.", file); continue }
+      if (MA_TY[i+2] == "string" && MA_T[i+3] == ")") dep = MA_T[i+2]
+      else { ma_diag("DYNAMIC_IMPORT", "Computed require() specifiers are outside static audit coverage.", file); continue }
+    } else if (MA_T[i] == "import" && MA_T[i+1] == "(") {
+      if (file ~ /\.(jsx|tsx)$/) { ma_diag("JSX_RUNTIME_IMPORT_NOT_AUDITED", "import() inside JSX/TSX was not classified; only static import/export declarations are audited there.", file); continue }
+      if (MA_TY[i+2] == "string" && (MA_T[i+3] == ")" || MA_T[i+3] == ",")) dep = MA_T[i+2]
+      else { ma_diag("DYNAMIC_IMPORT", "Computed import() specifiers are outside static audit coverage.", file); continue }
+    } else if (MA_T[i] == "import" && MA_TY[i+1] == "string") dep = MA_T[i+1]
+    else if (MA_T[i] == "import" || (MA_T[i] == "export" && (MA_T[i+1] == "{" || MA_T[i+1] == "*" || MA_T[i+1] == "type"))) {
+      for (j = i + 1; j <= MA_NT && j < i + 300 && MA_T[j] != ";"; j++) {
+        if (j > i + 1 && MA_T[j] ~ /^(import|export)$/) break
+        if (MA_T[j] == "from" && MA_TY[j+1] == "string") { dep = MA_T[j+1]; break }
+      }
+    }
+    if (dep != "") ma_import(file, MA_TL[i], owner, dep)
+  }
+}
+function ma_resolve(file, spec,   p, i, n, a, b) {
+  p = normp(joinp(dirof(file), spec))
+  if (p in MA_FILES) return p
+  n = split(".ts .tsx .mts .cts .js .jsx .mjs .cjs .json /index.ts /index.tsx /index.js /index.mjs /index.cjs", a, " ")
+  for (i = 1; i <= n; i++) if ((p a[i]) in MA_FILES) return p a[i]
+  if (p ~ /\.(js|jsx|mjs|cjs)$/) { b = p; sub(/\.(js|jsx|mjs|cjs)$/, "", b); for (i = 1; i <= 4; i++) if ((b a[i]) in MA_FILES) return b a[i] }
+  return ""
+}
+function ma_import(file, line, m, spec,   dep, a, n, target, other, k, proof) {
+  if (spec ~ /^node:/) return
+  target = ""
+  if (spec !~ /^\./ && spec !~ /^#/) target = ma_alias_target(file, spec)
+  if (target != "" || spec ~ /^\./) {
+    if (target == "") target = ma_resolve(file, spec)
+    if (target == "") { ma_diag("UNRESOLVED_LOCAL_IMPORT", "A relative import could not be resolved against tracked working files: " spec, file); return }
+    other = ma_owner(target)
+    if (other == "" || other == m) return
+    if (!MA_VALID[other] || MA_NAME[other] == "") { ma_diag("UNRESOLVED_PACKAGE_BOUNDARY", "A relative import crosses a package without a usable unique name.", file); return }
+    dep = MA_NAME[other]
+  } else {
+    if (spec ~ /^#/ || spec ~ /[:!\\?]/ || spec ~ /^\//) { ma_diag("ALIAS_IMPORT_NOT_AUDITED", "A private alias or loader/protocol import was not treated as an npm dependency: " spec, file); return }
+    n = split(spec, a, "/"); dep = a[1]; if (substr(spec, 1, 1) == "@") dep = a[1] "/" a[2]
+    if (ma_builtin(dep) || dep == MA_NAME[m]) return
+    if (!((m, dep) in MA_DEP) && (MA_ALIAS_STATUS == "unresolved" || MA_ALIAS_STATUS == "unknown")) { ma_diag("UNRESOLVED_CONFIG_IMPORT", "tsconfig/jsconfig paths or extends could not be resolved for this undeclared import (example): " spec, file); return }
+    if (dep !~ /^(@[A-Za-z0-9_.~-]+\/)?[A-Za-z0-9_.~-]+$/) { ma_diag("IMPORT_SPECIFIER_NOT_AUDITED", "This module specifier is outside supported npm import syntax: " spec, file); return }
+  }
+  if ((ma_group(m), dep) in MA_AMBIG) { ma_diag("AMBIGUOUS_PACKAGE_IMPORT", "The workspace has duplicate package names; this import was not classified: " spec, file); return }
+  MA_OBSERVED[m, dep] = 1
+  if ((m, dep) in MA_DEP) return
+  k = m SUBSEP dep
+  if (!((k, file) in MA_PROOFFILE)) { MA_PROOFFILE[k, file] = 1; MA_PROOFFILES[k] = MA_PROOFFILES[k] (MA_PROOFFILES[k] == "" ? "" : ",") jstr(file) }
+  proof = "{\"file\":" jstr(file) ",\"line\":" line ",\"method\":\"static-import\",\"confidence\":\"declared\"}"
+  if (!((k, proof) in MA_PROOFSEEN)) { MA_PROOFSEEN[k, proof] = 1; MA_PROOF[k] = MA_PROOF[k] (MA_PROOF[k] == "" ? "" : ",") proof }
+  if (MA_NLOC[k] < 3) { MA_LOCATION[k] = MA_LOCATION[k] (MA_NLOC[k] ? ", " : "") file ":" line; MA_NLOC[k]++ }
+  MA_MISSING[k] = 1
+}
+function ma_finding(code, severity, m, dep, message, files, proof, location) {
+  MA_FIND[++MA_NFIND] = "{\"code\":" jstr(code) ",\"severity\":" jstr(severity) ",\"module\":" jstr(ma_name(m)) ",\"manifest\":" jstr(m) ",\"dependency\":" jstr(dep) ",\"message\":" jstr(message) ",\"files\":[" files "],\"evidence\":[" proof "]}"
+  MA_FCODE[MA_NFIND] = code
+  MA_FTEXT[MA_NFIND] = (severity == "error" ? "오류" : severity == "warning" ? "경고" : "정보") " · " code " · " ma_name(m) " → " dep "\n  " m (location == "" ? "" : "\n  " location)
+  MA_FSEVERITY[MA_NFIND] = severity; MA_FMODULE[MA_NFIND] = ma_name(m); MA_FMANIFEST[MA_NFIND] = m; MA_FDEP[MA_NFIND] = dep; MA_FLOCATION[MA_NFIND] = location
+  if (severity == "error") MA_ERRORS++
+  if (severity == "warning") MA_WARNINGS++
+}
+function ma_manifest_proof(m, dep) { return "{\"file\":" jstr(m) ",\"line\":" (MA_DL[m, dep] + 0) ",\"method\":\"manifest\",\"confidence\":\"declared\"}" }
+function ma_output(   i, sep, shown, info, details, mark, color, title) {
+  if (MA_FORMAT == "json") {
+    printf "{\"schemaVersion\":1,\"tool\":\"gitch module audit\",\"repo\":%s,\"scope\":\"tracked-working-tree\",\"path\":%s,\"ecosystem\":\"npm\",\"modules\":[", jstr(MA_REPO), jstr(MA_PATH)
+    sep = ""; for (i = 1; i <= MA_NMOD; i++) if (MA_OUT[MA_MOD[i]]) { printf "%s{\"name\":%s,\"path\":%s,\"manifest\":%s}", sep, jstr(ma_name(MA_MOD[i])), jstr(MA_DIR[MA_MOD[i]] == "" ? "." : MA_DIR[MA_MOD[i]]), jstr(MA_MOD[i]); sep = "," }
+    printf "],\"findings\":["; for (i = 1; i <= MA_NFIND; i++) printf "%s%s", (i > 1 ? "," : ""), MA_FIND[i]
+    printf "],\"diagnostics\":["; for (i = 1; i <= MA_NDIAG; i++) { d = MA_DIAG[i]; if (MA_DCOUNT[i]) { sub(/}$/, ",\"count\":" (MA_DCOUNT[i] + 1) "}", d) }; printf "%s%s", (i > 1 ? "," : ""), d }
+    printf "],\"stats\":{\"modules\":%d,\"findings\":%d,\"errors\":%d,\"warnings\":%d},\"incomplete\":%s,\"notes\":[%s,%s,%s]}\n", MA_NOUT, MA_NFIND, MA_ERRORS, MA_WARNINGS + MA_NDIAG, MA_INCOMPLETE ? "true" : "false", jstr("npm only. Reads current contents of Git-tracked files; untracked files and index-only contents are excluded."), jstr("Static JS/TS imports only. Dynamic resolution, bundler plugins and package installation are not evaluated; scripts are never executed."), jstr("Unobserved declarations are review candidates, not unused dependencies. Different version spec strings do not imply semver incompatibility.")
+  } else if (MA_RICH) {
+    printf "  npm 모듈 %d개 %s 직접 의존 누락 %d개 %s 검토 정보 %d개\n", MA_NOUT, MA_BULLET, MA_ERRORS, MA_BULLET, MA_NFIND - MA_ERRORS - MA_WARNINGS
+    printf "  %s범위: %s %s 현재 추적 파일 기준%s\n", MA_DIM, MA_PATH, MA_BULLET, MA_RESET
+    if (MA_ERRORS) printf "\n  %s%s 직접 의존 선언 누락%s\n", MA_RED, MA_CROSS, MA_RESET
+    for (i = 1; i <= MA_NFIND; i++) if (MA_FCODE[i] == "MISSING_DEPENDENCY") {
+      shown++
+      if (shown <= 10) {
+        printf "    %s%s%s %s%s%s\n", MA_RED, MA_CROSS, MA_RESET, MA_FMODULE[i], MA_ARROW, MA_FDEP[i]
+        printf "      선언할 파일  %s\n", MA_FMANIFEST[i]
+        if (MA_FLOCATION[i] != "") printf "      %s사용처  %s%s\n", MA_DIM, MA_FLOCATION[i], MA_RESET
+      }
+    }
+    if (shown > 10) printf "    %s%s 누락 %d개 더 있음 (--json)%s\n", MA_DIM, MA_ELLIPSIS, shown - 10, MA_RESET
+    shown = 0
+    for (i = 1; i <= MA_NFIND; i++) if (MA_FCODE[i] != "MISSING_DEPENDENCY" && MA_FCODE[i] != "UNOBSERVED_DEPENDENCY") {
+      shown++
+      if (shown == 1) printf "\n  %s%s 버전 명세 차이 %s 검토 정보%s\n", MA_ACCENT, MA_BULLET, MA_BULLET, MA_RESET
+      if (shown <= 10) printf "    %s%s%s %s%s%s\n      %s%s%s\n", MA_DIM, MA_TWIG, MA_RESET, MA_FMODULE[i], MA_ARROW, MA_FDEP[i], MA_DIM, MA_FLOCATION[i], MA_RESET
+    }
+    if (shown > 10) printf "    %s%s 검토 정보 %d개 더 있음 (--json)%s\n", MA_DIM, MA_ELLIPSIS, shown - 10, MA_RESET
+    for (i = 1; i <= MA_NFIND; i++) if (MA_FCODE[i] == "UNOBSERVED_DEPENDENCY") {
+      info++
+      if (info == 1) printf "\n  %s%s 정적 사용을 찾지 못한 선언 %s 검토 후보%s\n", MA_ACCENT, MA_BULLET, MA_BULLET, MA_RESET
+      if (info <= 10) printf "    %s%s%s %s %s %s\n      %s%s%s\n", MA_DIM, MA_TWIG, MA_RESET, MA_FMODULE[i], MA_BULLET, MA_FDEP[i], MA_DIM, MA_FLOCATION[i], MA_RESET
+    }
+    if (info > 10) printf "    %s%s 선언 %d개 더 있음 (--json)%s\n", MA_DIM, MA_ELLIPSIS, info - 10, MA_RESET
+    if (info) printf "    %s스크립트·도구·타입·런타임에서 사용하는지 확인하세요.%s\n", MA_DIM, MA_RESET
+    if (MA_NDIAG) printf "\n  %s! 분석 시 확인할 내용%s\n", MA_YELLOW, MA_RESET
+    for (i = 1; i <= MA_NDIAG && i <= 10; i++) printf "    %s!%s %s\n", MA_YELLOW, MA_RESET, MA_DTEXT[i]
+    if (MA_NDIAG > 10) printf "    %s%s 분석 제한 %d개 더 있음 (--json)%s\n", MA_DIM, MA_ELLIPSIS, MA_NDIAG - 10, MA_RESET
+    if (MA_INCOMPLETE) printf "\n  %s! 일부 분석이 불완전합니다. 위 내용을 확인하고 다시 실행하세요.%s\n", MA_YELLOW, MA_RESET
+    else if (ENVIRON["GITCH_MA_STRICT"] == "1" && MA_ERRORS > 0) printf "\n  %s%s 직접 의존 누락으로 검사 실패%s\n", MA_RED, MA_CROSS, MA_RESET
+    else if (!MA_ERRORS) printf "\n  %s%s 직접 의존 선언 누락을 찾지 못했습니다.%s\n", MA_GREEN, MA_CHECK, MA_RESET
+    printf "\n  %s미추적 파일은 제외합니다. 버전 명세 차이는 호환성 판정이 아닙니다.%s\n", MA_DIM, MA_RESET
+  } else {
+    printf "npm module audit · %s · %s\n%d modules · %d findings · %d missing dependencies%s\n", MA_REPO, MA_PATH, MA_NOUT, MA_NFIND, MA_ERRORS, MA_INCOMPLETE ? " · incomplete" : ""
+    for (i = 1; i <= MA_NFIND; i++) {
+      if (MA_FCODE[i] == "UNOBSERVED_DEPENDENCY") { info++; if (info <= 5) details = details "\n  " MA_FTEXT[i]; continue }
+      if (shown++ < 20) print MA_FTEXT[i]
+    }
+    if (shown > 20) print "추가 진단은 --json으로 확인하세요."
+    if (info) printf "관찰되지 않은 선언 %d개 · 스크립트/도구/타입/런타임 사용을 검토할 후보입니다.%s%s\n", info, details, (info > 5 ? "\n  전체 목록: --json" : "")
+    for (i = 1; i <= MA_NDIAG && i <= 10; i++) print MA_DTEXT[i]
+    if (MA_NDIAG > 10) print "추가 분석 제한은 --json으로 확인하세요."
+    print "현재 추적 파일만 읽었습니다. 미추적 파일은 제외합니다. 버전 명세 차이는 호환성 판정이 아닙니다."
+  }
+}
+BEGIN {
+  MA_PATH = ENVIRON["GITCH_MA_PATH"]; MA_REPO = ENVIRON["GITCH_MA_REPO"]; MA_FORMAT = ENVIRON["GITCH_MA_FORMAT"]
+  MA_RICH = ENVIRON["GITCH_RENDER_RICH"] == "1"; MA_UTF8 = ENVIRON["GITCH_RENDER_UTF8"] == "1"
+  MA_ACCENT = ENVIRON["GITCH_RENDER_ACCENT"]; MA_DIM = ENVIRON["GITCH_RENDER_DIM"]; MA_RESET = ENVIRON["GITCH_RENDER_RESET"]; MA_YELLOW = ENVIRON["GITCH_RENDER_YELLOW"]; MA_RED = ENVIRON["GITCH_RENDER_RED"]; MA_GREEN = ENVIRON["GITCH_RENDER_GREEN"]
+  MA_TWIG = MA_UTF8 ? "└─" : "+-"; MA_ARROW = MA_UTF8 ? " → " : " -> "; MA_BULLET = MA_UTF8 ? "·" : "."; MA_CROSS = MA_UTF8 ? "×" : "x"; MA_CHECK = MA_UTF8 ? "✓" : "OK"; MA_ELLIPSIS = MA_UTF8 ? "…" : "..."
+  n = split("_http_agent _http_client _http_common _http_incoming _http_outgoing _http_server _stream_duplex _stream_passthrough _stream_readable _stream_transform _stream_wrap _stream_writable _tls_common _tls_wrap assert async_hooks buffer child_process cluster console constants crypto dgram diagnostics_channel dns domain events fs http http2 https inspector module net os path perf_hooks process punycode querystring readline repl stream string_decoder sys timers tls trace_events tty url util v8 vm wasi worker_threads zlib", a, " ")
+  for (i = 1; i <= n; i++) MA_BUILTIN[a[i]] = 1
+  while ((getline p < ENVIRON["GITCH_MA_LIST"]) > 0) {
+    if (p ~ /(^|\/)node_modules\//) continue
+    MA_FILES[p] = 1; MA_LIST[++MA_NFILES] = p
+    if (baseof(p) == "package.json") { MA_MANIFEST[p] = 1; MA_DIR[p] = dirof(p); MA_MOD[++MA_NMOD] = p }
+  }
+  close(ENVIRON["GITCH_MA_LIST"])
+  while ((getline p < ENVIRON["GITCH_MA_DIAGNOSTICS"]) > 0) if (p ~ /^0\tdiagnostic\t/) { sub(/^0\tdiagnostic\t/, "", p); MA_DIAG[++MA_NDIAG] = p; MA_DTEXT[MA_NDIAG] = "경고 · UNSUPPORTED_PATH: 제어 문자 또는 심볼릭 링크가 든 경로는 제외했습니다."; MA_INCOMPLETE = 1 }
+  close(ENVIRON["GITCH_MA_DIAGNOSTICS"])
+  for (i = 1; i <= MA_NMOD; i++) {
+    m = MA_MOD[i]
+    if (ma_read_json(m, 0, "")) MA_VALID[m] = 1
+    else ma_diag("INVALID_MANIFEST", "package.json must be a valid JSON object with unique keys and string dependency specifications (maximum 2 MiB).", m)
+    if (ma_selected(m) || ma_selected(MA_DIR[m]) || ma_owner(MA_PATH "/__selection__") == m || (MA_PATH in MA_FILES) && ma_owner(MA_PATH) == m) { MA_OUT[m] = 1; MA_NOUT++ }
+  }
+  if (!MA_NOUT) ma_diag("NO_NPM_MANIFESTS", "No tracked npm package.json owns the selected path. This audit supports npm only.", "")
+  for (i = 1; i <= MA_NMOD; i++) {
+    m = MA_MOD[i]; if (!MA_VALID[m]) continue
+    group = ma_group(m); name = MA_NAME[m]
+    if (name != "") { if ((group, name) in MA_LOCAL) { ma_diag("DUPLICATE_PACKAGE_NAME", "Workspace package name is not unique: " name, m); MA_AMBIG[group, name] = 1 } else MA_LOCAL[group, name] = m }
+  }
+  for (i = 1; i <= MA_NFILES; i++) {
+    p = MA_LIST[i]; m = ma_owner(p)
+    if (m == "" || !MA_VALID[m]) continue
+    if (baseof(p) ~ /^(tsconfig|jsconfig)(\.[^\/]*)?\.json$/) {
+      MA_CONFIGS[p] = 1
+      if (!ma_read_json(p, 1, m)) { MA_CUNKNOWN[p] = 1; ma_diag("INVALID_RESOLUTION_CONFIG", "Could not read this JSON/JSONC resolution config; undeclared bare imports will not be guessed.", p) }
+    }
+  }
+  for (i = 1; i <= MA_NFILES; i++) {
+    p = MA_LIST[i]; if (!ma_selected(p)) continue
+    m = ma_owner(p); if (m == "" || !MA_VALID[m]) continue
+    if (p ~ /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/) ma_scan(p, m)
+    else if (p ~ /\.(vue|svelte|astro)$/) ma_diag("UNSUPPORTED_SOURCE", "Component source syntax is outside the initial JS/TS audit.", p)
+  }
+  n = sortkeys(MA_MISSING, keys)
+  for (i = 1; i <= n; i++) {
+    k = keys[i]; split(k, a, SUBSEP); m = a[1]; dep = a[2]
+    ma_finding("MISSING_DEPENDENCY", "error", m, dep, "Observed a static import without a direct declaration in this package. Parent/root declarations do not satisfy a workspace member.", MA_PROOFFILES[k], MA_PROOF[k], MA_LOCATION[k])
+  }
+  n = sortkeys(MA_DEP, keys)
+  for (i = 1; i <= n; i++) {
+    k = keys[i]; split(k, a, SUBSEP); m = a[1]; dep = a[2]
+    if (!MA_VALID[m] || !MA_OUT[m]) continue
+    if (ma_full(m) && !((m, dep) in MA_OBSERVED)) ma_finding("UNOBSERVED_DEPENDENCY", "info", m, dep, "No supported static import was observed. Review scripts, tooling, types and runtime loading before changing this declaration.", "", ma_manifest_proof(m, dep), m ":" MA_DL[m, dep])
+  }
+  n = sortkeys(MA_SPEC, keys)
+  for (i = 1; i <= n; i++) {
+    k = keys[i]; split(k, a, SUBSEP); m = a[1]; dep = a[2]; spec = MA_SPEC[k]
+    if (!MA_VALID[m]) continue
+    group = ma_group(m); gk = group SUBSEP dep
+    if (!((gk, spec) in MA_SPECS)) { MA_SPECS[gk, spec] = 1; MA_NSPECS[gk]++ }
+    if (!((gk, m) in MA_SM)) { MA_SM[gk, m] = 1; MA_NSM[gk]++; MA_SFILES[gk] = MA_SFILES[gk] (MA_SFILES[gk] == "" ? "" : ",") jstr(m); MA_SEVID[gk] = MA_SEVID[gk] (MA_SEVID[gk] == "" ? "" : ",") ma_manifest_proof(m, dep); MA_SLOCATION[gk] = MA_SLOCATION[gk] (MA_SLOCATION[gk] == "" ? "" : ", ") m ":" MA_DL[m, dep] }
+    if (MA_OUT[m]) MA_SOUT[gk] = m
+  }
+  n = sortkeys(MA_NSPECS, keys)
+  for (i = 1; i <= n; i++) { k = keys[i]; if (MA_NSPECS[k] > 1 && MA_NSM[k] > 1 && (k in MA_SOUT)) { split(k, a, SUBSEP); ma_finding("VERSION_SPEC_MISMATCH", "info", MA_SOUT[k], a[2], "Workspace manifests use different dependency specification strings. Semver compatibility and installed versions were not evaluated.", MA_SFILES[k], MA_SEVID[k], MA_SLOCATION[k]) } }
+  ma_output()
+  exit (MA_INCOMPLETE || (ENVIRON["GITCH_MA_STRICT"] == "1" && MA_ERRORS > 0)) ? 1 : 0
+}
+AWKEOF
 }
 
 graph_affected_cmd() {
@@ -10177,6 +11862,13 @@ HTMLEOF
     "Find folders": "Find folders",
     "Collapse all subfolders": "Collapse all subfolders",
     "Folder hierarchy": "Folder hierarchy",
+    "Direct subfolders": "Direct subfolders",
+    "All subfolders": "All subfolders",
+    "Nested circles show folders and their contents.": "Nested circles show folders and their contents.",
+    "Show containing folders": "Show containing folders",
+    "Show all subfolders": "Show all subfolders",
+    "{0} · {1} containing folders": "{0} · {1} containing folders",
+    "{0} · {1} subfolders": "{0} · {1} subfolders",
     "Graph tools": "Graph tools",
     "Graph settings": "Graph settings",
     "Folder depth": "Folder depth",
@@ -11029,6 +12721,13 @@ HTMLEOF
     "Find folders": "폴더 찾기",
     "Collapse all subfolders": "모든 하위 폴더 접기",
     "Folder hierarchy": "폴더 계층",
+    "Direct subfolders": "바로 아래 폴더",
+    "All subfolders": "전체 하위 폴더",
+    "Nested circles show folders and their contents.": "안쪽 원은 해당 폴더에 들어 있는 하위 폴더와 파일입니다.",
+    "Show containing folders": "상위 폴더 보기",
+    "Show all subfolders": "전체 하위 폴더 보기",
+    "{0} · {1} containing folders": "{0} · 상위 폴더 {1}개",
+    "{0} · {1} subfolders": "{0} · 하위 폴더 {1}개",
     "Graph tools": "그래프 도구",
     "Graph settings": "그래프 설정",
     "Folder depth": "폴더 깊이",
@@ -11881,6 +13580,13 @@ HTMLEOF
     "Find folders": "フォルダーを検索",
     "Collapse all subfolders": "すべてのサブフォルダーを折りたたむ",
     "Folder hierarchy": "フォルダー階層",
+    "Direct subfolders": "直下のサブフォルダー",
+    "All subfolders": "すべてのサブフォルダー",
+    "Nested circles show folders and their contents.": "内側の円は、そのフォルダーに含まれるサブフォルダーとファイルです。",
+    "Show containing folders": "上位フォルダーを表示",
+    "Show all subfolders": "すべてのサブフォルダーを表示",
+    "{0} · {1} containing folders": "{0}・上位フォルダー{1}件",
+    "{0} · {1} subfolders": "{0}・サブフォルダー{1}件",
     "Graph tools": "グラフツール",
     "Graph settings": "グラフ設定",
     "Folder depth": "フォルダーの深さ",
@@ -13562,6 +15268,8 @@ HTMLEOF
     ctx.quadraticCurveTo(cx, cy, b.x + (bx / lb) * b.r, b.y + (by / lb) * b.r);
   }
   function packHot() {   // 올린 · 고른 노드나 강조(분석 · 경로)의 연결을 지금 확대의 원끼리로
+    // Nested circles already show tree containment; drawing it again cuts across descendants.
+    if (m.rel === "tree") return [];
     const pk = m.pk, f = hover || (HL ? null : sel), key = (f ? "n" + f.i : HL ? "h" : hoverH ? "f" + hoverH.hid : "") + ":" + pk.sig;
     if (pk.hot && pk.hot.key === key && pk.hot.hl === HL) return pk.hot.list;
     const pairs = new Map(), add = (e) => {
@@ -14235,7 +15943,13 @@ HTMLEOF
     if (n.d.path || n.id !== n.label) html += `<div class="path">${esc(n.d.path || n.id)}</div>`;
     if(n.kind==='file'||n.kind==='folder')html+=tr("\u003cdiv class=\"actions\">\u003cbutton class=\"path-action\" type=\"button\" data-path=\"{0}\" aria-label=\"Path and Finder\">Path / Finder\u003c/button>\u003c/div>", esc(localPath(n.d.path||n.id)));
     if (n.kind === "file" && META.repoPath) html += tr("\u003cp>\u003ca class=\"source-link\" href=\"{0}\">Open {1}file in app ↗\u003c/a>\u003c/p>", esc(appLink(n.d.path || n.id, 1, (n.d.deleted || n.d.status==="removed") ? REVIEW?.baseSha : n.d.impactFromBase ? n.d.baseCommit : null)), n.d.impactFromBase ? tr("previous ") : "");
-    if (m.directed) {
+    if (m.rel === "tree") {
+      const children = n.out.filter(e => e.vis && e.t.kind === "folder").length;
+      const descendants = [...reach(n, "out")].filter(o => o.kind === "folder").length;
+      html += `<div class="metrics"><div><b>${ca}</b><span>${esc(tr("Parent folder"))}</span></div><div><b>${children}</b><span>${esc(tr("Direct subfolders"))}</span></div><div><b>${descendants}</b><span>${esc(tr("All subfolders"))}</span></div></div>`;
+      html += `<p class="hint">${esc(tr("Nested circles show folders and their contents."))}</p>`;
+      html += `<div class="actions"><button type="button" data-act="in">${esc(tr("Show containing folders"))}</button><button type="button" data-act="out">${esc(tr("Show all subfolders"))}</button><button type="button" data-act="path" class="${pathFrom === n ? "on" : ""}">${esc(tr("Find path"))}</button><button type="button" data-act="local" class="${P.local ? "on" : ""}">${esc(tr("Neighborhood only"))}</button></div>`;
+    } else if (m.directed) {
       const inst = ca + ce ? (ce / (ca + ce)).toFixed(2) : "–";
       html += tr("\u003cdiv class=\"metrics\">\u003cdiv title=\"Direct dependents\">\u003cb>{0}\u003c/b>\u003cspan>Incoming\u003c/span>\u003c/div>\u003cdiv title=\"Direct dependencies\">\u003cb>{1}\u003c/b>\u003cspan>Outgoing\u003c/span>\u003c/div>\u003cdiv title=\"Outgoing ÷ (incoming + outgoing) — near 1 depends on others; near 0 is depended on by others\">\u003cb>{2}\u003c/b>\u003cspan>Instability\u003c/span>\u003c/div>", ca, ce, inst)
         + tr("\u003cdiv title=\"Transitive dependents\">\u003cb>{0}\u003c/b>\u003cspan>Impact scope\u003c/span>\u003c/div>\u003cdiv title=\"All transitive dependencies\">\u003cb>{1}\u003c/b>\u003cspan>All dependencies\u003c/span>\u003c/div>\u003cdiv class=\"{2}\" title=\"Dependency cycle size\">\u003cb>{3}\u003c/b>\u003cspan>Cycles\u003c/span>\u003c/div>\u003c/div>", imp, all, cyc > 1 ? "warn" : "", cyc > 1 ? cyc : tr("None"));
@@ -14257,8 +15971,8 @@ HTMLEOF
   }
   function act(what, n) {
     if (what === "review") { chosen.clear();chosen.add(n.id);select(null);renderReview();switchDockView('review');$("reviewDetail").scrollTop=0; }
-    else if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, tr("{0} · {1} dependency review targets", n.label, s.size), [n]); }
-    else if (what === "out") { const s = reach(n, "out"); highlight([n, ...s], null, tr("{0} · {1} transitive dependencies", n.label, s.size), [n]); }
+    else if (what === "in") { const s = reach(n, "in"); highlight([n, ...s], null, m.rel === "tree" ? tr("{0} · {1} containing folders", n.label, s.size) : tr("{0} · {1} dependency review targets", n.label, s.size), [n]); }
+    else if (what === "out") { const s = reach(n, "out"); if (m.rel === "tree") for (const o of s) if (o.kind !== "folder") s.delete(o); highlight([n, ...s], null, m.rel === "tree" ? tr("{0} · {1} subfolders", n.label, s.size) : tr("{0} · {1} transitive dependencies", n.label, s.size), [n]); }
     else if (what === "cyc") { const a = analyze(), c = a.comps[a.comp.get(n)]; highlight(c, null, tr("Cycle with {0} nodes: {1}{2}", c.length, c.slice(0, 4).map((x) => x.label).join(" ⇄ "), c.length > 4 ? " …" : "")); }
     else if (what === "path") { pathFrom = pathFrom === n ? null : n; canvas.classList.toggle("picking", !!pathFrom); if (pathFrom) banner(tr("Find path: {0} — choose an end node (Esc to cancel)", n.label)); else clearHL(); renderInfo(); request(); }
     else if (what === "local") { P.local = !P.local; $("local").checked = P.local; $("localRow").hidden = !P.local; m.userMoved = false; filtersChanged(); }
@@ -15119,7 +16833,8 @@ HTMLEOF
     $('relativePathValue').textContent=rel||'.';$('absolutePathValue').textContent=absolute||tr("This graph has no repository location.");
     $('copyAbsolutePath').disabled=!absolute;$('pathFeedback').textContent='';
     const reveal=$('revealPath'), safe=!rel.startsWith('/')&&!rel.includes('\\')&&!rel.includes(':')&&!rel.split('/').some(p=>p==='..'||p==='.');
-    reveal.hidden=!absolute||!String(META.repoPath).startsWith('/')||!safe;
+    const absoluteRepo=/^(?:\/|[A-Za-z]:[\\/]|\\\\)/.test(String(META.repoPath||''));
+    reveal.hidden=!absolute||!absoluteRepo||!safe;
     const params=new URLSearchParams({repo:META.repoPath||'',view:'finder'});if(rel)params.set('file',rel);
     reveal.href='gitrochi://open?'+params.toString();reveal.title=tr("Open this location in Finder through Gitrochi.");
     $('copyRelativePath').onclick=async()=>{const copied=await copyReviewText(rel||'.');$('pathFeedback').textContent=copied?tr("Relative path copied."):tr("Could not copy. Select the path above and copy it.");};
@@ -15493,7 +17208,7 @@ HTMLEOF
     replay: () => ({active:replay.active,playing:replay.playing,progress:replay.progress,reduced:!!replay.reduced?.matches,
       nodes:replay.active?visNodes.map(n=>({id:n.id,label:replayLabel(n),before:replay.data.before.has(n.id),current:replay.data.current.has(n.id),opacity:replayNodeOpacity(n),x:n.x,y:n.y})):[],
       edges:replay.active?m.edges.filter(e=>e.s.vis&&e.t.vis).map(e=>{const [before,current]=replayEdgePresence(e);return {source:e.s.id,target:e.t.id,kind:e.kind,before,current,opacity:replayOpacity(before,current,true)*Math.min(replayNodeOpacity(e.s),replayNodeOpacity(e.t))};}):[]}),
-    state: () => ({ viewport: (()=>{const p=margins();return {l:p.l,r:W-p.r,t:p.t,b:H-p.b};})(), rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig } : null }),
+    state: () => ({ viewport: (()=>{const p=margins();return {l:p.l,r:W-p.r,t:p.t,b:H-p.b};})(), rel: REL, layout: vs.layout, style: vs.style, unit: vs.unit, k: view.k, running, alpha: +alpha.toFixed(4), nodes: visNodes.length, edges: visEdges.length, sky: vs.layout === "stars" && m.starLabels && m.starLabels[0] ? m.starLabels[0].name : null, pack: vs.layout === "pack" && m.pk ? { folders: m.pk.folders.length, agg: m.pk.agg.length, open: m.pk.sig, highlighted: packHot().length } : null }),
     visible: () => visNodes.map((n) => ({ id: n.id, langs: n.langs, kind: n.kind })),
     select: (id) => { if(id===null){select(null);return true;} const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
     review: () => ({seeds:reviewSeeds(),direct:reviewImpact().direct,indirect:reviewImpact().indirect,priorities:reviewPriorities(),tests:reviewTests(reviewImpact()),withoutGuesses:{direct:reviewImpact(false).direct,indirect:reviewImpact(false).indirect},depth:reviewDepth}),
@@ -15529,7 +17244,7 @@ HTMLEOF
 schema_cmd() {
   local kind=${1:-public}
   case "$kind" in flow|flow-*) flow_cmd schema "$kind"; return $? ;; esac
-  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
+  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
   printf '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://github.com/Gitrochi/Gitrochi/blob/main/tools/gitch/schema/gitch-v1.schema.json","title":"gitch public JSON contract version 1","$ref":"#/$defs/%s",' "$kind"
   cat <<'SCHEMAEOF'
 "$defs": {
@@ -16982,6 +18697,18 @@ schema_cmd() {
       },
       {
         "$ref": "#/$defs/login"
+      },
+      {
+        "$ref": "#/$defs/overlap"
+      },
+      {
+        "$ref": "#/$defs/move"
+      },
+      {
+        "$ref": "#/$defs/module"
+      },
+      {
+        "$ref": "#/$defs/logo"
       }
     ]
   },
@@ -17518,6 +19245,678 @@ schema_cmd() {
         }
       }
     ]
+  },
+  "overlap": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "tool",
+      "repo",
+      "generated",
+      "scope",
+      "worktrees",
+      "pairs",
+      "diagnostics",
+      "stats",
+      "incomplete",
+      "notes"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "tool": {
+        "const": "gitch overlap"
+      },
+      "repo": {
+        "type": "string"
+      },
+      "generated": {
+        "type": "string"
+      },
+      "scope": {
+        "const": "worktrees"
+      },
+      "worktrees": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "path",
+            "branch",
+            "head",
+            "detached",
+            "available"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "branch": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "head": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "detached": {
+              "type": "boolean"
+            },
+            "available": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "pairs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "left",
+            "right",
+            "base",
+            "sameFiles",
+            "dependencies",
+            "sharedDependencies",
+            "truncated"
+          ],
+          "properties": {
+            "left": {
+              "type": "string"
+            },
+            "right": {
+              "type": "string"
+            },
+            "base": {
+              "type": "string"
+            },
+            "sameFiles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "source",
+                  "target",
+                  "kind",
+                  "worktree",
+                  "heuristic"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "worktree": {
+                    "type": "string"
+                  },
+                  "heuristic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "sharedDependencies": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "target",
+                  "left",
+                  "right",
+                  "heuristic"
+                ],
+                "properties": {
+                  "target": {
+                    "type": "string"
+                  },
+                  "left": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "right": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "heuristic": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "truncated": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "diagnostics": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "severity",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "message": {
+              "type": "string"
+            },
+            "worktree": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "stats": {
+        "type": "object",
+        "required": [
+          "worktrees",
+          "comparedPairs",
+          "overlappingPairs",
+          "sameFiles",
+          "dependencyLinks",
+          "sharedDependencies"
+        ],
+        "properties": {
+          "worktrees": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "comparedPairs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overlappingPairs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sameFiles": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dependencyLinks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sharedDependencies": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "incomplete": {
+        "type": "boolean"
+      },
+      "notes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "description": "Overlap risks between local worktrees since each common ancestor. Same paths and static dependency relationships are warnings, not proof of a textual merge conflict. Watch JSON emits one such object per changed snapshot (NDJSON)."
+  },
+  "move": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "tool",
+      "mode",
+      "repo",
+      "source",
+      "destination",
+      "kind",
+      "moves",
+      "references",
+      "affectedFiles",
+      "tests",
+      "modules",
+      "diagnostics",
+      "incomplete",
+      "notes"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "tool": {
+        "const": "gitch move"
+      },
+      "mode": {
+        "const": "plan"
+      },
+      "repo": {
+        "type": "string"
+      },
+      "source": {
+        "type": "string"
+      },
+      "destination": {
+        "type": "string"
+      },
+      "kind": {
+        "enum": [
+          "file",
+          "directory"
+        ]
+      },
+      "moves": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "references": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "source",
+            "target",
+            "sourceAfter",
+            "targetAfter",
+            "kind",
+            "heuristic",
+            "evidence"
+          ],
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            },
+            "sourceAfter": {
+              "type": "string"
+            },
+            "targetAfter": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "heuristic": {
+              "type": "boolean"
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/evidence"
+              }
+            }
+          }
+        }
+      },
+      "affectedFiles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "tests": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "modules": {
+        "type": "object",
+        "required": [
+          "before",
+          "after"
+        ],
+        "properties": {
+          "before": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "after": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "diagnostics": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "severity",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "message": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "incomplete": {
+        "type": "boolean"
+      },
+      "notes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "suggestions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "file",
+            "fileAfter",
+            "line",
+            "from",
+            "to"
+          ],
+          "properties": {
+            "file": {
+              "type": "string"
+            },
+            "fileAfter": {
+              "type": "string"
+            },
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            },
+            "line": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "description": "Read-only file or directory move plan with remapped static references and evidence. Does not move files or guarantee textual import patches."
+  },
+  "module": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "tool",
+      "repo",
+      "scope",
+      "path",
+      "ecosystem",
+      "modules",
+      "findings",
+      "diagnostics",
+      "stats",
+      "incomplete",
+      "notes"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "tool": {
+        "const": "gitch module audit"
+      },
+      "repo": {
+        "type": "string"
+      },
+      "scope": {
+        "const": "tracked-working-tree"
+      },
+      "path": {
+        "type": "string"
+      },
+      "ecosystem": {
+        "const": "npm"
+      },
+      "modules": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "path",
+            "manifest"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "manifest": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "severity",
+            "module",
+            "manifest",
+            "dependency",
+            "message",
+            "files",
+            "evidence"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "severity": {
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ]
+            },
+            "module": {
+              "type": "string"
+            },
+            "manifest": {
+              "type": "string"
+            },
+            "dependency": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "line",
+                  "method",
+                  "confidence"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "method": {
+                    "enum": [
+                      "static-import",
+                      "manifest"
+                    ]
+                  },
+                  "confidence": {
+                    "const": "declared"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "diagnostics": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "severity",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "message": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "stats": {
+        "type": "object",
+        "required": [
+          "modules",
+          "findings",
+          "errors",
+          "warnings"
+        ],
+        "properties": {
+          "modules": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "findings": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "warnings": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "incomplete": {
+        "type": "boolean"
+      },
+      "notes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "description": "Static npm manifest and import audit of tracked working-tree files. Unobserved declarations and differing version specifications are review candidates, not automatic removal or compatibility decisions."
+  },
+  "logo": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "enabled"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Saved CLI trademark visibility. Defaults to true; environment overrides only affect rendering."
   }
 }
 }
@@ -17539,7 +19938,7 @@ completion_repositories() {
   done
 }
 completion_commands() {
-  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version self-update completion schema help
+  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt overlap move module report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version logo self-update completion schema help
 }
 completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 낱말들(마지막은 입력 중인 낱말)
   local empty_current=""
@@ -17574,6 +19973,9 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
           printf '%s\n' --help --json --format --out --open --no-open --lang --no-external --since --max-commits --max-files --min --depth --files --base --rules --init --precise --index --no-cache
           [ "${words[1]:-}" != watch ] || printf '%s\n' --detach --interval
           [ "${words[1]:-}" != index ] || printf '%s\n' --language --project-name ;;
+        overlap) printf '%s\n' --help --json --watch --current --interval --no-deps --fail-on-overlap ;;
+        move) printf '%s\n' --help --json --plan ;;
+        module) printf '%s\n' --help; [ "${words[1]:-}" != audit ] || printf '%s\n' --json --strict ;;
         ck|check) printf '%s\n' --json --fetch --no-fetch ;;
         status|st) printf '%s\n' --json --strict --ssh ;;
         preflight|pf) printf '%s\n' --json --no-fetch ;;
@@ -17585,7 +19987,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         scan) printf '%s\n' --json --fix ;;
         audit) printf '%s\n' --json --since ;;
         report) printf '%s\n' --json --today --days --since ;;
-        version) printf '%s\n' --json ;;
+        version|logo) printf '%s\n' --json; [ "$cmd" != logo ] || printf '%s\n' --help ;;
         add) printf '%s\n' --id --email --host --port --folder --no-folder --via --no-setup --json --yes ;;
         setup) printf '%s\n' --inspect --generate --check --json --yes ;;
         login) printf '%s\n' --start --status --cancel --json --yes ;;
@@ -17599,6 +20001,8 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
           { [ "${words[1]:-}" = watch ] && [ "$n" -eq 3 ]; } && printf '%s\n' files modules changes tree precise affected
           completion_repositories
           compgen -d -- "$cur" ;;
+        move) compgen -f -- "$cur" ;;
+        module) if [ "$n" -eq 2 ]; then printf '%s\n' audit; elif [ "${words[1]:-}" = audit ]; then compgen -d -- "$cur"; fi ;;
         completion) printf '%s\n' bash zsh fish powershell ;;
         flow)
           if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run status events logs report rerun cancel trust hold watch blocks block explain gc export import connect gate schema version help
@@ -17613,7 +20017,8 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
             esac
           fi ;;
         test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
-        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review ;;
+        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo ;;
+        logo) printf '%s\n' on off status ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;
         config) printf '%s\n' show path get set add unset edit ;;
         wt|worktree) printf '%s\n' ls new rm ;;
@@ -17747,6 +20152,10 @@ PR / MR
   gitch audit [폴더|.] [--since 날짜]       push 된 커밋 중 다른 내 계정으로 된 것 보고
   gitch prune [--gone] [--yes]             합쳐진 브랜치 정리
   gitch wt [ls|new 브랜치|rm 폴더]          워크트리
+  gitch overlap [--watch] [--json]         워크트리 사이 같은 파일 · 연결된 코드의 충돌 위험 예보
+    [--current] [--interval 초] [--no-deps] [--fail-on-overlap]  현재 작업만 · 기본 2초 감시 · 위험 시 선택적으로 종료 코드 1
+  gitch move <원본> <대상> --plan [--json] 파일·폴더 이동 계획: 참조 · 영향 파일 · 테스트 후보
+  gitch module audit [폴더] [--json] [--strict]  npm 선언과 정적 import 점검
   gitch report [--today|--days N]          gitch/AI 작업 기록
   gitch graph [files|modules|changes|tree] 구조 그래프: import / 모듈 의존 / 같이 바뀌는 파일 / 폴더 (짧게 g)
     [--format html|json|svg|png] [--out 파일] [--lang 언어] [폴더|저장소]  터미널은 html, 스크립트·AI 는 json (--help)
@@ -17775,6 +20184,7 @@ PR / MR
   gitch migrate / export / import          v1 에서 옮기기 / 설정 내보내기 / 가져오기
   gitch doctor [--json] [--no-net]         문제 진단
   gitch version [--json] / gitch self-update  버전 / 업데이트
+  gitch logo [on|off|status] [--json]      CLI 작은 눈 로고 표시 설정 (앱 설정 > CLI 에서도 변경)
 
 종료코드: 0 정상(커밋할 변경 없음 포함), 1 문제/실패, 2 사용자 확인 필요(--yes), 4 올릴 파일을 고르지 않음
 EOF
@@ -17860,11 +20270,14 @@ flow_preflight_line() {   # The FLOW=… line added to preflight (only where the
 # ================= 명령줄 =================
 
 detect_actor
+ui_init "$@"
 setup_colors
+ui_start "$@"
 
 case "${1:-}" in
   help|-h|--help) help_cmd; exit 0 ;;
   version|-v|--version) shift; version_cmd "$@"; exit 0 ;;
+  logo) shift; logo_cmd "$@"; exit $? ;;
   completion) shift; completion_cmd "$@"; exit $? ;;
   _complete) shift; completion_candidates "$@"; exit $? ;;
   schema) shift; schema_cmd "$@"; exit $? ;;
@@ -17905,6 +20318,9 @@ case "${1:-}" in
   audit) shift; audit_cmd "$@"; exit $? ;;
   prune) shift; prune_cmd "$@"; exit $? ;;
   wt|worktree) shift; wt_cmd "$@"; exit $? ;;
+  overlap) shift; overlap_cmd "$@"; exit $? ;;
+  move) shift; move_cmd "$@"; exit $? ;;
+  module) shift; module_cmd "$@"; exit $? ;;
   report) shift; report_cmd "$@"; exit $? ;;
   g|graph) shift; graph_cmd "$@"; exit $? ;;
   list|ls) shift; list_cmd "$@"; exit $? ;;

@@ -59,7 +59,9 @@ pub fn parse(raw: &str) -> Result<Route, String> {
     };
     let view = fields.remove("view");
     if let Some(ref v) = view {
-        if !["graph", "files", "modules", "changes", "tree", "diff", "affected", "precise"].contains(&v.as_str()) || v == "diff" && file.is_none() { return Err(INVALID.into()); }
+        if !["graph", "files", "modules", "changes", "tree", "diff", "affected", "precise", "finder"].contains(&v.as_str())
+            || v == "diff" && file.is_none()
+            || v == "finder" && (line.is_some() || fields.contains_key("commit")) { return Err(INVALID.into()); }
     }
     // Strip Windows canonicalize's extended-length prefix; the frontend uses normal native paths.
     let path = root.to_string_lossy().to_string();
@@ -105,6 +107,21 @@ mod tests {
             let mut bad = url::Url::parse("gitrochi://open").unwrap();
             bad.query_pairs_mut().append_pair("repo", &dir.to_string_lossy()).append_pair("file", file);
             assert!(parse(bad.as_str()).is_err(), "{file}");
+        }
+        let mut finder = url::Url::parse("gitrochi://open").unwrap();
+        finder.query_pairs_mut().append_pair("repo", &dir.to_string_lossy()).append_pair("view", "finder");
+        assert_eq!(parse(finder.as_str()).unwrap().view.as_deref(), Some("finder"));
+        assert_eq!(parse(finder.as_str()).unwrap().file, None);
+        for file in ["src/한글 & folder", "src/한글 space.ts"] {
+            let mut location = finder.clone();
+            location.query_pairs_mut().append_pair("file", file);
+            assert_eq!(parse(location.as_str()).unwrap().file.as_deref(), Some(file));
+        }
+        for (key, value) in [("line", "1"), ("commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), ("file", "../escape")] {
+            let mut bad = finder.clone();
+            if key != "file" { bad.query_pairs_mut().append_pair("file", "src/a.ts"); }
+            bad.query_pairs_mut().append_pair(key, value);
+            assert!(parse(bad.as_str()).is_err(), "{key}={value}");
         }
         std::fs::remove_dir_all(dir).unwrap();
     }

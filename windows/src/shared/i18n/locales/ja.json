@@ -1794,5 +1794,9 @@
   "Restore saved account access": "保存済みアカウントへのアクセスを復元",
   "Account settings…": "アカウント設定…",
   "Comment posted": "コメントを投稿しました",
-  "Your saved session is restored. Verification could not be completed; check your connection and permissions, then refresh.": "保存済みのセッションを復元しました。確認を完了できませんでした。接続と権限を確認してから更新してください。"
+  "Your saved session is restored. Verification could not be completed; check your connection and permissions, then refresh.": "保存済みのセッションを復元しました。確認を完了できませんでした。接続と権限を確認してから更新してください。",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "ターミナルで gitch logo on または gitch logo off を実行しても変更できます。",
+  "CLI appearance": "CLI の表示",
+  "Show the small eye logo in CLI output": "CLI 出力に小さな目のロゴを表示",
+  "Couldn't read the CLI logo setting.": "CLI のロゴ設定を読み取れませんでした。"
 }
