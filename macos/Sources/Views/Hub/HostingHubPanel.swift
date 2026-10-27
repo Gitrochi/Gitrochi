@@ -11,9 +11,14 @@ struct HostingHubPanel: View {
     @ViewState private var projectAccessAccount: HostAccount?
     @ViewState private var projectLayout = "board"
     @ViewState private var projectFieldID = ""
-    private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy }
+    private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy || store.hostingHub.allowingCredentialAccess || store.hubCredentialState == .loading }
+    private var accessRequired: Bool { store.hostingHub.projectPermissionRequired || store.hubCredentialState == .authorizationRequired }
     private var title: String { if store.hubProvider == .gitlab { switch section { case .gists: return String(localized: "Snippets"); case .organizations: return String(localized: "Groups"); case .projects: return String(localized: "Issue boards"); default: break } }; return section.title }
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if section == .projects { ProjectWorkspace(store: store) }
+        else { standardBody }
+    }
+    private var standardBody: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title).font(.title2.weight(.semibold))
@@ -33,11 +38,18 @@ struct HostingHubPanel: View {
                 }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
             Divider()
+            if store.hostingHub.allowingCredentialAccess {
+                HStack { ProgressView().controlSize(.small); Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.caption).foregroundStyle(.secondary) }
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            } else if store.hubCredentialState == .loading {
+                HStack { ProgressView().controlSize(.small); Text("Checking saved account access…").font(.caption).foregroundStyle(.secondary) }
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            }
             if let notice = store.hostingHub.notice { noticeView(notice) }
             if let error = store.hostingHub.error {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: store.hostingHub.projectPermissionRequired ? "lock.shield" : "exclamationmark.circle") }
-                        .font(.callout).foregroundStyle(store.hostingHub.projectPermissionRequired ? Color.secondary : Color.red)
+                    Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: accessRequired ? "lock.shield" : "exclamationmark.circle") }
+                        .font(.callout).foregroundStyle(accessRequired ? Color.secondary : Color.red)
                     WorkbenchFlow(spacing: 8) {
                         if let account = store.pendingHubCredentialAccount {
                             CredentialAccessNotice(account: account)
@@ -58,10 +70,10 @@ struct HostingHubPanel: View {
                         ForEach(store.hostingHub.filteredItems) { item in
                             Button { editor = nil; Task { await store.selectHostingHubItem(item) } } label: {
                                 itemRow(item)
-                            }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.16) : .clear)).disabled(store.hostingHub.busy)
+                            }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.16) : .clear)).disabled(locked)
                         }
                         if store.hostingHub.loading { ProgressView().padding() }
-                        if !store.hostingHub.loading && store.hostingHub.items.isEmpty && store.hostingHub.error == nil {
+                        if !locked && store.hostingHub.items.isEmpty && store.hostingHub.error == nil {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(section == .projects && store.hubProvider == .github ? String(localized: "No projects found for {0}.").replacingOccurrences(of: "{0}", with: store.hubProjectOwner) : section == .projects ? String(localized: "No projects found for this owner.") : section == .releases ? String(localized: "No releases found for this repository.") : String(localized: "No items returned by this account.")).font(.caption).foregroundStyle(.secondary)
                                 if section == .projects && store.hubProvider == .github && store.hubProjectEffectiveScope == "repository" { Button("Show my projects") { Task { await store.selectHubProjectScope("personal") } }.disabled(locked) }

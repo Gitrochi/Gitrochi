@@ -49,7 +49,7 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     root.render(<RepoPage store={store} openSettings={() => { unexpected.push("settings"); }} />);
     if (!await until(() => !!composer() && !!button("Edit request…"))) return [false, "PR conversation did not mount"];
     const image = host.querySelector<HTMLImageElement>(".request-description .md table img");
-    if (!image || !image.src.includes(`/raw/${head}/docs/preview.png`) || !host.querySelector(".request-checks") || !host.querySelector(".pr-list-controls")) return [false, "PR screenshots, checks or list controls did not render"];
+    if (!image || !image.src.includes(`/raw/${head}/docs/preview.png`) || !host.querySelector(".request-checks") || !host.querySelector(".workspace-pr-list .list-search-row") || !host.querySelector(".workspace-pr-list .list-filter-button")) return [false, `PR screenshots, checks or list controls did not render: image=${image?.getAttribute("src") ?? "missing"}; checks=${!!host.querySelector(".request-checks")}; oldControls=${!!host.querySelector(".workspace-pr-list .list-search-row") || !host.querySelector(".workspace-pr-list .list-filter-button")}; searchRow=${!!host.querySelector(".list-search-row")}`];
     const originalComposer = composer()!;
     enter(originalComposer, "Fixture unsent review comment");
     button("Edit request…")!.click();

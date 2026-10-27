@@ -17,6 +17,7 @@ describe("저장된 토큰 읽기", () => {
     const get = vi.spyOn(ipc, "secretGet").mockResolvedValueOnce(null).mockRejectedValueOnce(new Error("locked")).mockResolvedValue("fixture-token");
     const account = new AccountStore();
     const a = { id: "one", provider: "github" as const, server: "https://github.com", username: "octocat", name: null, avatarURL: null };
+    account.accounts = [a];
     expect(await account.token(a)).toBeNull();
     expect(await account.token(a)).toBeNull();
     expect(await Promise.all([account.token(a), account.token(a)])).toEqual(["fixture-token", "fixture-token"]);
@@ -26,15 +27,17 @@ describe("저장된 토큰 읽기", () => {
 
   it("연결 해제 뒤에 늦게 끝난 읽기는 토큰을 되살리지 않는다", async () => {
     let finish: (value: string | null) => void = () => {};
-    vi.spyOn(ipc, "secretGet").mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; })).mockResolvedValue(null);
+    const get = vi.spyOn(ipc, "secretGet").mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; })).mockResolvedValue(null);
     vi.spyOn(ipc, "secretSet").mockResolvedValue(undefined);
     const account = new AccountStore();
     const a = { id: "one", provider: "github" as const, server: "https://github.com", username: "octocat", name: null, avatarURL: null };
+    account.accounts = [a];
     const late = account.token(a);
     await account.disconnect(a);
     finish("stale-token");
-    expect(await late).toBe("stale-token");
+    expect(await late).toBeNull();
     expect(await account.token(a)).toBeNull();
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });
 

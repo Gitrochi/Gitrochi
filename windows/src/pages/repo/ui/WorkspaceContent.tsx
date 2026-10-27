@@ -3,7 +3,7 @@ import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector, IssueDetail } from "@/widgets/inspector";
 import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
-import { HostingHubPanel } from "@/widgets/hosting-hub";
+import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
@@ -34,7 +34,7 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "issues": return <IssuesWorkspace {...props} />;
     case "actions": return <ActionsWorkspacePanel {...props} />;
     // Releases and Projects keep pages of their own, apart from the account's lists
-    case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} />;
+    case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
     default: return null;

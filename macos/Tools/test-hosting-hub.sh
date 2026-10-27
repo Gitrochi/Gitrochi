@@ -133,6 +133,12 @@ enum Hosting {
         try await HostingHubAPI.move(gl, detail: HubDetail(item: HubItem(id: "1", title: "Board"), fields: [field], rows: [row]), row: row, field: field, option: "2")
         let scope = HostingHubAPI.boardIssueQuery(["hide_closed_list": true, "labels": [["name": "security"]], "assignee": ["id": 7], "milestone": ["title": "1.0"], "weight": 0], page: 2)
         precondition(scope.contains("assignee_id=7") && scope.contains("labels=security") && scope.contains("milestone=1.0") && scope.contains("weight=0") && scope.contains("state=opened"))
+        Hosting.handler = { r in
+            if r.url!.path.hasSuffix("/issues") { return try json([["id": 20, "iid": 2, "title": "Fix", "state": "opened", "web_url": "https://gitlab.test/team/repo/-/issues/2", "assignees": [["username": "alex"]], "labels": ["bug"], "updated_at": "today"]]) }
+            if r.url!.path.hasSuffix("/lists") { return try json([]) }; return try json(["id": 1, "name": "Board"])
+        }
+        let labProject = try await HostingHubAPI.detail(gl, section: .projects, item: HubItem(id: "1", title: "Board"))
+        precondition(labProject.rows[0].kind == .issue && labProject.rows[0].number == 2 && labProject.rows[0].repository == "team/repo" && labProject.rows[0].state == "OPEN" && labProject.rows[0].assignees == ["alex"] && labProject.rows[0].updatedAt == "today")
         var creations = 0
         Hosting.handler = { request in creations += 1; throw NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "connection lost"]) }
         do { try await HostingHubAPI.saveGist(gh, HubGistInput(description: "new", files: [HubFile(name: "a.txt", content: "text")])); fatalError("Uncertain creation accepted") } catch is HubUncertainWriteError {} catch { fatalError("Unexpected error type") }
@@ -144,6 +150,81 @@ enum Hosting {
         precondition(columns.map(\.id) == ["", "todo", "done"] && columns.map { $0.rows.count } == [2, 1, 0])
         precondition(columns.flatMap(\.rows).map(\.id).sorted() == ["1", "2", "3"])
         precondition(HostingHubAPI.projectColumns(board, fieldID: "priority").map(\.id) == ["", "high"])
+        let richFields: [[String: Any]] = [["id": "S", "name": "Status", "options": [["id": "done", "name": "Done"]]], ["id": "T", "name": "Notes", "dataType": "TEXT"], ["id": "N", "name": "Estimate", "dataType": "NUMBER"], ["id": "D", "name": "Due", "dataType": "DATE"], ["id": "I", "name": "Sprint", "configuration": ["iterations": [["id": "current", "title": "Sprint 2", "startDate": "2026-10-20", "duration": 14]], "completedIterations": [["id": "previous", "title": "Sprint 1"]]]], ["id": "L", "name": "Labels", "dataType": "LABELS"], ["id": "M", "name": "Teams", "dataType": "MULTI_SELECT"]]
+        let richRows: [[String: Any]] = [
+            ["id": "R", "type": "ISSUE", "isArchived": true, "updatedAt": "project-newer", "content": ["__typename": "Issue", "id": "C", "title": "Fix", "number": 12, "state": "OPEN", "repository": ["nameWithOwner": "team/repo"], "assignees": ["nodes": [["login": "alex"]]], "labels": ["nodes": [["name": "bug"]]], "updatedAt": "today"], "fieldValues": ["nodes": [["optionId": "done", "field": ["id": "S"]], ["text": "Note", "field": ["id": "T"]], ["number": 0, "field": ["id": "N"]], ["date": "2026-11-01", "field": ["id": "D"]], ["iterationId": "current", "field": ["id": "I"]]]]],
+            ["id": "PR", "content": ["__typename": "PullRequest", "id": "CPR", "title": "Feature", "headRefName": "feature/plan"]],
+            ["id": "draft", "content": ["__typename": "DraftIssue", "id": "draft-content", "title": "Draft"]], ["id": "redacted", "type": "REDACTED"]
+        ]
+        Hosting.handler = { r in
+            calls.append(r)
+            let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any]
+            precondition((body["query"] as! String).contains("completedIterations") && (body["query"] as! String).contains("ProjectV2ItemFieldDateValue") && (body["query"] as! String).contains("archivedStates:[ARCHIVED,NOT_ARCHIVED]") && (body["query"] as! String).contains("... on ProjectV2FieldCommon{id name dataType}"))
+            return try json(["data": ["node": ["id": "P", "title": "Plan", "readme": "Handbook", "public": true, "fields": ["nodes": richFields, "pageInfo": [:]], "items": ["nodes": richRows, "pageInfo": [:]]]]])
+        }
+        let project = try await HostingHubAPI.detail(gh, section: .projects, item: HubItem(id: "P", title: "Plan"))
+        precondition(project.fields.map(\.kind) == [.singleSelect, .text, .number, .date, .iteration, .unsupported, .unsupported])
+        precondition(project.fields[6].id == "M" && project.fields[6].name == "Teams")
+        precondition(project.fields[4].options.map(\.id) == ["current", "previous"] && project.fields[4].options[0].duration == 14)
+        precondition(project.rows.map(\.kind) == [.issue, .pullRequest, .draft, .redacted])
+        precondition(project.rows[0].number == 12 && project.rows[0].repository == "team/repo" && project.rows[0].assignees == ["alex"] && project.rows[0].labels == ["bug"] && project.rows[0].archived && project.rows[0].updatedAt == "project-newer" && project.rows[0].values == ["S": "done", "T": "Note", "N": "0", "D": "2026-11-01", "I": "current"])
+        precondition(project.rows[1].headRefName == "feature/plan" && project.item.data["readme"] as? String == "Handbook" && project.item.data["public"] as? Bool == true)
+        var payloads = [[String: Any]](), queries = [String]()
+        Hosting.handler = { r in calls.append(r); let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any]; let query = body["query"] as! String; queries.append(query); if query.hasPrefix("query") { return try json(["data": ["node": ["id": "draft-content", "title": "Draft", "body": ""]]]) }; payloads.append((body["variables"] as! [String: Any])["input"] as! [String: Any]); return try json(["data": [:]]) }
+        for (index, value) in ["done", "Notes", "2.5", "2026-11-01", "current"].enumerated() { try await HostingHubAPI.updateProjectField(gh, detail: project, row: project.rows[0], field: project.fields[index], value: value) }
+        precondition((payloads[0]["value"] as! [String: Any])["singleSelectOptionId"] as? String == "done")
+        precondition((payloads[1]["value"] as! [String: Any])["text"] as? String == "Notes")
+        precondition((payloads[2]["value"] as! [String: Any])["number"] as? Double == 2.5)
+        precondition((payloads[3]["value"] as! [String: Any])["date"] as? String == "2026-11-01")
+        precondition((payloads[4]["value"] as! [String: Any])["iterationId"] as? String == "current")
+        try await HostingHubAPI.updateProjectField(gh, detail: project, row: project.rows[0], field: project.fields[1], value: nil)
+        precondition(queries.last!.contains("clearProjectV2ItemFieldValue"))
+        let beforeInvalid = calls.count
+        for (index, value) in [(0, "unknown"), (2, ""), (2, "NaN"), (2, "Infinity"), (2, "0x10"), (3, "2026-02-30"), (3, "2026-1-1"), (4, "unknown"), (5, "x")] {
+            do { try await HostingHubAPI.updateProjectField(gh, detail: project, row: project.rows[0], field: project.fields[index], value: value); fatalError("Invalid field accepted") } catch {}
+        }
+        var forgedField = project.fields[0]; forgedField.options.append(HubProjectOption(id: "forged", name: "Forged"))
+        do { try await HostingHubAPI.updateProjectField(gh, detail: project, row: project.rows[0], field: forgedField, value: "forged"); fatalError("Forged option accepted") } catch {}
+        forgedField = project.fields[5]; forgedField.kind = .text
+        do { try await HostingHubAPI.updateProjectField(gh, detail: project, row: project.rows[0], field: forgedField, value: "forged"); fatalError("Forged field kind accepted") } catch {}
+        var forgedRow = project.rows[0]; forgedRow.id = "unknown"
+        do { try await HostingHubAPI.deleteProjectItem(gh, detail: project, row: forgedRow); fatalError("Unloaded deletion accepted") } catch {}
+        precondition(calls.count == beforeInvalid)
+        try await HostingHubAPI.saveProjectDraft(gh, detail: project, title: "  New draft  ", body: "Body")
+        precondition(payloads.last?["title"] as? String == "New draft" && payloads.last?["projectId"] as? String == "P")
+        var draftRow = project.rows[2]; draftRow.contentID = "forged"
+        try await HostingHubAPI.saveProjectDraft(gh, detail: project, title: "Edit", body: "Body", row: draftRow)
+        precondition(payloads.last?["draftIssueId"] as? String == "draft-content")
+        try await HostingHubAPI.archiveProjectItem(gh, detail: project, row: project.rows[0], archived: true)
+        precondition(queries.last!.contains("archiveProjectV2Item(input:"))
+        try await HostingHubAPI.archiveProjectItem(gh, detail: project, row: project.rows[0], archived: false)
+        precondition(queries.last!.contains("unarchiveProjectV2Item(input:"))
+        try await HostingHubAPI.deleteProjectItem(gh, detail: project, row: project.rows[0])
+        precondition(queries.last!.contains("deleteProjectV2Item") && payloads.last?["itemId"] as? String == "R")
+        let beforeDraftConflict = calls.count
+        Hosting.handler = { r in calls.append(r); return try json(["data": ["node": ["id": "draft-content", "title": "Draft", "body": "Collaborator edit"]]]) }
+        do { try await HostingHubAPI.saveProjectDraft(gh, detail: project, title: "Edit", body: "Updated", row: project.rows[2]); fatalError("Overwrote collaborator draft") } catch { precondition(error.localizedDescription.contains("changed on the server")) }
+        precondition(calls.count == beforeDraftConflict + 1)
+        var draftCurrent = true; var draftAccess = gh; draftAccess.isCurrent = { draftCurrent }
+        Hosting.handler = { r in calls.append(r); draftCurrent = false; return try json(["data": ["node": ["id": "draft-content", "title": "Draft", "body": ""]]]) }
+        do { try await HostingHubAPI.saveProjectDraft(draftAccess, detail: project, title: "Edit", body: "Updated", row: project.rows[2]); fatalError("Saved a switched-account draft") } catch { precondition(error.localizedDescription.contains("account changed")) }
+        precondition(calls.count == beforeDraftConflict + 2)
+        Hosting.handler = { r in
+            calls.append(r)
+            if r.httpMethod == "GET" { precondition(r.url!.path == "/repos/team/repo/pulls/42"); return try json(["node_id": "PR-CONTENT"]) }
+            let body = try JSONSerialization.jsonObject(with: r.httpBody!) as! [String: Any], input = (body["variables"] as! [String: Any])["input"] as! [String: Any]; precondition(input["contentId"] as? String == "PR-CONTENT"); return try json(["data": [:]])
+        }
+        try await HostingHubAPI.addIssue(gh, detail: project, issueURL: "https://github.com/team/repo/pull/42")
+        let beforeUnsafe = calls.count
+        let enterprise = HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "enterprise.test", path: "team/repo"), token: "fixture", apiBase: "https://enterprise.test/api", me: "me")
+        do { try await HostingHubAPI.addIssue(enterprise, detail: project, issueURL: "https://github.com/team/repo/issues/1"); fatalError("Cross-server item accepted") } catch {}
+        precondition(calls.count == beforeUnsafe)
+        creations = 0
+        Hosting.handler = { _ in creations += 1; throw NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "connection lost"]) }
+        do { try await HostingHubAPI.saveProjectDraft(gh, detail: project, title: "Draft", body: "Body"); fatalError("Uncertain draft accepted") } catch is HubUncertainWriteError {} catch { fatalError("Unexpected error type") }
+        precondition(creations == 1)
+        let iterationOnly = HubDetail(item: HubItem(id: "P", title: "Plan"), fields: [project.fields[3], project.fields[4]], rows: [project.rows[0]])
+        precondition(HostingHubAPI.projectColumns(iterationOnly).map(\.id) == ["current", "previous"])
         Hosting.handler = { _ in try json(["errors": [["type": "INSUFFICIENT_SCOPES", "message": "id requires read:project"], ["message": "title requires read:project"]]]) }
         do { _ = try await HostingHubAPI.page(gh, section: .projects); fatalError("Missing scope accepted") }
         catch let error as HubProjectPermissionError { precondition(error.localizedDescription.contains("Connect project access") && !error.localizedDescription.contains("id requires")) }
@@ -152,9 +233,52 @@ enum Hosting {
         do { _ = try await HostingHubAPI.page(gh, section: .projects); fatalError("GraphQL failure accepted") }
         catch is HubProjectPermissionError { fatalError("Unrelated error offered authorization") }
         catch { precondition(error.localizedDescription.contains("Projects could not be loaded") && !error.localizedDescription.contains("internal exception")) }
+        var actionInputs = [[String: Any]](), actionQueries = [String]()
+        Hosting.handler = { request in
+            calls.append(request); let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any], query = body["query"] as! String, variables = body["variables"] as! [String: Any]; actionQueries.append(query)
+            if query.hasPrefix("query") { precondition(variables["owner"] as? String == "team" && variables["name"] as? String == "repo"); return try json(["data": ["repository": ["id": "REPOSITORY", "nameWithOwner": "Team/Repo"]]]) }
+            actionInputs.append(variables["input"] as! [String: Any]); return try json(["data": [:]])
+        }
+        try await HostingHubAPI.moveProjectItem(gh, detail: project, row: project.rows[0], afterRow: project.rows[1])
+        precondition(actionInputs.last?["projectId"] as? String == "P" && actionInputs.last?["itemId"] as? String == "R" && actionInputs.last?["afterId"] as? String == "PR" && actionQueries.last!.contains("updateProjectV2ItemPosition"))
+        try await HostingHubAPI.moveProjectItem(gh, detail: project, row: project.rows[0], afterRow: nil)
+        precondition(actionInputs.last?["afterId"] is NSNull)
+        let beforeInvalidPosition = calls.count
+        do { try await HostingHubAPI.moveProjectItem(gh, detail: project, row: project.rows[0], afterRow: project.rows[0]); fatalError("Self anchor accepted") } catch {}
+        do { try await HostingHubAPI.moveProjectItem(gh, detail: project, row: project.rows[0], afterRow: forgedRow); fatalError("Foreign anchor accepted") } catch {}
+        do { try await HostingHubAPI.moveProjectItem(gh, detail: project, row: forgedRow, afterRow: nil); fatalError("Foreign item accepted") } catch {}
+        do { try await HostingHubAPI.moveProjectItem(gl, detail: project, row: project.rows[0], afterRow: nil); fatalError("GitLab position accepted") } catch {}
+        do { try await HostingHubAPI.moveProjectItem(stale, detail: project, row: project.rows[0], afterRow: nil); fatalError("Stale position accepted") } catch {}
+        precondition(calls.count == beforeInvalidPosition)
+        try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: project.rows[2], repository: "  team/repo  ")
+        precondition(actionQueries.last!.contains("convertProjectV2DraftIssueItemToIssue") && actionInputs.last?["itemId"] as? String == "draft" && actionInputs.last?["repositoryId"] as? String == "REPOSITORY" && actionInputs.last?["projectId"] == nil)
+        let beforeInvalidRepository = calls.count
+        for repository in ["", "repo", "team/repo/extra", "https://evil.test/team/repo", "team/..", "team/repo?token=x", "team/%2frepo"] {
+            do { try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: project.rows[2], repository: repository); fatalError("Malformed repository accepted") } catch { precondition(error.localizedDescription.contains("owner/name")) }
+        }
+        do { try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: project.rows[0], repository: "team/repo"); fatalError("Issue converted as draft") } catch {}
+        do { try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: forgedRow, repository: "team/repo"); fatalError("Foreign draft accepted") } catch {}
+        do { try await HostingHubAPI.convertProjectDraftToIssue(gl, detail: project, row: project.rows[2], repository: "team/repo"); fatalError("Cross-provider draft accepted") } catch {}
+        precondition(calls.count == beforeInvalidRepository)
+        for remote: Any in [NSNull(), ["id": "OTHER", "nameWithOwner": "other/repo"]] {
+            Hosting.handler = { request in calls.append(request); return try json(["data": ["repository": remote]]) }
+            do { try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: project.rows[2], repository: "team/repo"); fatalError("Unavailable repository accepted") } catch { precondition(error.localizedDescription.contains("unavailable")) }
+        }
+        var conversionCurrent = true; var conversionAccess = gh; conversionAccess.isCurrent = { conversionCurrent }
+        Hosting.handler = { request in calls.append(request); conversionCurrent = false; return try json(["data": ["repository": ["id": "REPOSITORY", "nameWithOwner": "team/repo"]]]) }
+        do { try await HostingHubAPI.convertProjectDraftToIssue(conversionAccess, detail: project, row: project.rows[2], repository: "team/repo"); fatalError("Switched conversion accepted") } catch { precondition(error.localizedDescription.contains("account changed")) }
+        precondition(calls.count == beforeInvalidRepository + 3)
+        var conversionRequests = 0
+        Hosting.handler = { request in
+            conversionRequests += 1
+            if conversionRequests == 1 { return try json(["data": ["repository": ["id": "REPOSITORY", "nameWithOwner": "team/repo"]]]) }
+            throw NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "connection lost"])
+        }
+        do { try await HostingHubAPI.convertProjectDraftToIssue(gh, detail: project, row: project.rows[2], repository: "team/repo"); fatalError("Uncertain conversion accepted") } catch is HubUncertainWriteError {} catch { fatalError("Unexpected conversion error") }
+        precondition(conversionRequests == 2)
         let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
         precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
-        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping and project scope recovery passed")
+        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping, project scope recovery, typed fields, rich project rows, drafts, item actions, manual position and draft conversion passed")
     }
 }
 SWIFT

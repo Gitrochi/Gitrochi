@@ -18,7 +18,7 @@ class AccountStore extends Observable {
   private preferred: Record<string, string> = {};
   private aliases: Record<string, string> = {};
   private secrets = new Map<string, string>();
-  private pendingSecrets = new Map<string, Promise<string | null>>();
+  private secretReads = new Map<string, Promise<string | null>>();
 
   async load() {
     this.accounts = settings.get<HostAccount[]>("accounts", []);
@@ -92,25 +92,38 @@ class AccountStore extends Observable {
     return null;
   }
 
-  /** A value is kept once read; a missing or failed read is tried again on the next access, and concurrent reads share one call (macOS: CredentialCache). */
-  private secret(name: string): Promise<string | null> {
-    const known = this.secrets.get(name);
-    if (known) return Promise.resolve(known);
-    const pending = this.pendingSecrets.get(name);
+  private async secret(name: string) {
+    const cached = this.secrets.get(name);
+    if (cached !== undefined) return cached;
+    const pending = this.secretReads.get(name);
     if (pending) return pending;
-    const read: Promise<string | null> = ipc.secretGet(name).catch(() => null).then((v) => {
-      // A connect or disconnect in the meantime wins over this late read.
-      if (this.pendingSecrets.get(name) !== read) return v;
-      this.pendingSecrets.delete(name);
-      if (v) this.secrets.set(name, v);
-      return v;
+    const read: Promise<string | null> = ipc.secretGet(name).then((value) => {
+      if (this.secretReads.get(name) !== read) return this.secrets.get(name) ?? null;
+      if (value) this.secrets.set(name, value);
+      return value || null;
+    }, () => {
+      if (this.secretReads.get(name) !== read) return this.secrets.get(name) ?? null;
+      throw new Error(t("Couldn't read the saved account credentials. Unlock your credentials, then retry."));
+    }).finally(() => {
+      if (this.secretReads.get(name) === read) this.secretReads.delete(name);
     });
-    this.pendingSecrets.set(name, read);
+    this.secretReads.set(name, read);
     return read;
   }
 
-  token(a: HostAccount) {
-    return this.secret("acct:" + a.id);
+  private storeSecret(name: string, value: string | null) {
+    // A late read must not replace a renewed credential or restore a disconnected account.
+    this.secretReads.delete(name);
+    if (value) this.secrets.set(name, value);
+    else this.secrets.delete(name);
+  }
+
+  /** reportReadFailure lets active UI distinguish a retryable read error from a missing credential. */
+  token(a: HostAccount, { reportReadFailure = false }: { reportReadFailure?: boolean } = {}) {
+    if (!this.accounts.some((account) => account.id === a.id)) return Promise.resolve(null);
+    const read = this.secret("acct:" + a.id);
+    // Background Git and avatar work can continue without an optional saved credential.
+    return reportReadFailure ? read : read.catch(() => null);
   }
 
   // MARK: 연결·해제
@@ -157,8 +170,7 @@ class AccountStore extends Observable {
     };
     try { await ipc.secretSet("acct:" + acc.id, text); }
     catch { throw new AccountConnectionFailure("credential-save"); }
-    this.pendingSecrets.delete("acct:" + acc.id);
-    this.secrets.set("acct:" + acc.id, text);
+    this.storeSecret("acct:" + acc.id, text);
     this.accounts = [...this.accounts.filter((a) => a.id !== acc.id), acc];
     this.save();
     return acc;
@@ -214,8 +226,7 @@ class AccountStore extends Observable {
 
   async disconnect(a: HostAccount) {
     await ipc.secretSet("acct:" + a.id, null).catch(() => {});
-    this.pendingSecrets.delete("acct:" + a.id);
-    this.secrets.delete("acct:" + a.id);
+    this.storeSecret("acct:" + a.id, null);
     this.accounts = this.accounts.filter((x) => x.id !== a.id);
     this.preferred = Object.fromEntries(Object.entries(this.preferred).filter(([, v]) => v !== a.id));
     this.aliases = Object.fromEntries(Object.entries(this.aliases).filter(([, v]) => v !== a.id));

@@ -30,7 +30,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(update::PendingUpdate::default())
         .setup(|app| {
-            launch::receive(app.handle(), std::env::args().skip(1).collect());
+            launch::receive(app.handle(), std::env::args().collect());
             // 배포본에서는 웹뷰의 브라우저 단축키(F5 새로 고침, Ctrl+F 찾기, Ctrl+P 인쇄 등)를 끈다 — 앱 단축키와 겹치지 않게
             #[cfg(all(windows, not(debug_assertions)))]
             if let Some(w) = app.get_webview_window("main") {

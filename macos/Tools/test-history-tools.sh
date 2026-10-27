@@ -37,6 +37,6 @@ import Foundation
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
   "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
-  "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/HistoryTools.swift" \
+  "$ROOT/Sources/Core/ProjectTaskReference.swift" "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/HistoryTools.swift" \
   "$ROOT/Sources/Core/RebasePlan.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-history-tools"
 "$TASK_TMP/test-history-tools"

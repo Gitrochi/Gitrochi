@@ -42,7 +42,7 @@ function SheetSwitch({ store, sheet, close }: { store: RepoStore; sheet: SheetKi
     case "stash":
       return <StashSheet store={store} close={close} />;
     case "newBranch":
-      return <NewBranchSheet store={store} close={close} start={sheet.start} label={sheet.label} />;
+      return <NewBranchSheet store={store} close={close} start={sheet.start} label={sheet.label} suggestedName={sheet.suggestedName} projectTask={sheet.projectTask} />;
     case "tag":
       return <TagSheet store={store} close={close} sha={sheet.sha} />;
     case "createPullRequest":

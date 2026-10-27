@@ -1,23 +1,451 @@
 import { useState } from "react";
-import { ExternalLink, Columns3, List, Circle, Plus } from "lucide-react";
-import { hubProjectColumns, moveHubProjectItem, addHubProjectIssue, type HubAccess, type HubDetail, type HubProjectRow } from "@/entities/hosting";
+import {
+  Archive,
+  ArrowRight,
+  CalendarDays,
+  Columns3,
+  CheckSquare,
+  GitBranch,
+  List,
+  Search,
+  Target,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  type HubAccess,
+  type HubDetail,
+  type HubProjectRow,
+  type HubProjectView,
+} from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
+import {
+  filterProjectRows,
+  emptyProjectFilters,
+  projectFilterCount,
+  type ProjectAsk,
+  type ProjectLocalActions,
+  projectRepository,
+  projectSelectFields,
+  type ProjectFilters,
+} from "../lib/project-workspace";
+import { ProjectInspector } from "./ProjectInspector";
+import { ProjectComposer, type ProjectIssueLoader } from "./ProjectComposer";
+import { ProjectItems } from "./ProjectItems";
+import { ProjectHero } from "./ProjectHero";
+import { ProjectSettings } from "./ProjectSettings";
+import { ProjectSavedViews } from "./ProjectSavedViews";
+import { ProjectBulkActions } from "./ProjectBulkActions";
+import { useProjectViews } from "../model/use-project-views";
+import "./project-workspace.css";
 
-type Ask = (title:string,body:string,action:(c:HubAccess)=>Promise<unknown>)=>void;
-export function ProjectWorkspace({detail,locked,gitlab,open,safe,ask}:{detail:HubDetail;locked:boolean;gitlab:boolean;open:(url:string)=>void;safe:(url:string)=>boolean;ask:Ask}) {
-  const [layout,setLayout]=useState<"board"|"list">("board"),[group,setGroup]=useState(""),[issueURL,setIssueURL]=useState("");
-  const field=detail.fields.find(value=>value.id===group)??detail.fields.find(value=>/^(status|상태)$/i.test(value.name))??detail.fields[0];
-  const columns=hubProjectColumns(detail,field?.id);
-  const card=(row:HubProjectRow)=><article className="project-card" key={row.id}>
-    <div className="project-card-title"><Circle size={13}/><strong>{row.title}</strong>{safe(row.url)&&<Button size="small" tip={t("Open in browser")} onClick={()=>open(row.url)}><ExternalLink size={12}/></Button>}</div>
-    {row.body&&<p className="project-card-description">{row.body.slice(0,1200)}</p>}
-    <div className="project-card-fields">{detail.fields.map(value=><label key={value.id}><span>{value.name}</span><select className="select" disabled={locked||!row.contentID} value={row.statuses[value.id]??""} onChange={event=>{const option=event.target.value;ask(t("Change project status?"),`${row.title}\n${value.name}: ${value.options.find(item=>item.id===option)?.name}`,c=>moveHubProjectItem(c,detail,row,value,option));}}><option value="" disabled>{t("Not set")}</option>{value.options.map(option=><option key={option.id} value={option.id}>{option.name}</option>)}</select></label>)}</div>
-  </article>;
-  return <div className="project-workspace"><div className="project-toolbar"><div className="project-view-switch" role="group" aria-label={t("Project view")}><Button size="small" kind={layout==="board"?"primary":undefined} onClick={()=>setLayout("board")}><Columns3 size={13}/>{t("Board")}</Button><Button size="small" kind={layout==="list"?"primary":undefined} onClick={()=>setLayout("list")}><List size={13}/>{t("List")}</Button></div><span className="hint">{t("{0} loaded items",detail.rows.length)}</span>{field&&<label className="project-group"><span>{t("Group by")}</span><select className="select" aria-label={t("Group by")} value={field.id} onChange={event=>setGroup(event.target.value)}>{detail.fields.map(value=><option key={value.id} value={value.id}>{value.name}</option>)}</select></label>}</div>
-    {!detail.fields.length&&<p className="hint">{t("No editable single-select fields. Add a Status field in the project to move items here.")}</p>}
-    {!detail.rows.length?<div className="project-empty"><Columns3 size={28}/><strong>{t("This project has no loaded items.")}</strong><span>{t("Add an existing issue below or manage the project in GitHub.")}</span></div>:layout==="board"?<div className="project-board" aria-label={t("Project board")}>{columns.map((column,index)=><section className="project-column" key={column.id} style={{"--project-color":["#7d6ce8","#5b8def","#df9b46","#47a68c","#c275b8","#5b9fae"][index%6]} as React.CSSProperties}><header><span className="project-status-dot"/><strong>{column.title}</strong><span className="project-count">{column.rows.length}</span></header><div className="project-column-cards">{column.rows.map(card)}{!column.rows.length&&<p className="project-column-empty">{t("No items")}</p>}</div></section>)}</div>:<div className="project-list">{detail.rows.map(card)}</div>}
-    {layout==="board"&&columns.length>1&&<span className="hint">{t("Scroll horizontally to see more columns.")}</span>}
-    <div className="project-add"><input className="input" aria-label={t("Issue URL")} placeholder={t("Issue URL")} disabled={locked} value={issueURL} onChange={event=>setIssueURL(event.target.value)}/><Button disabled={locked||!issueURL.trim()} onClick={()=>{const url=issueURL;ask(gitlab?t("Move issue to the Open column?"):t("Add issue to project?"),gitlab?`${url}\n${t("This reopens the issue and removes its board column labels.")}`:url,c=>addHubProjectIssue(c,detail,url));}}><Plus size={13}/>{t("Add issue")}</Button></div>
-  </div>;
+export function ProjectWorkspace({
+  detail,
+  locked,
+  gitlab,
+  open,
+  safe,
+  ask,
+  local,
+  loadIssues,
+  me,
+  readAccess,
+}: {
+  detail: HubDetail;
+  locked: boolean;
+  gitlab: boolean;
+  open: (url: string) => void;
+  safe: (url: string) => boolean;
+  ask: ProjectAsk;
+  local?: ProjectLocalActions;
+  loadIssues?: ProjectIssueLoader;
+  me?: string;
+  readAccess?: () => Promise<HubAccess>;
+}) {
+  const [layout, setLayout] = useState<"board" | "list" | "timeline">("board"),
+    [group, setGroup] = useState("");
+  const [filters, setFilters] = useState(emptyProjectFilters),
+    [selectedID, setSelectedID] = useState<string | null>(null),
+    [composing, setComposing] = useState(false);
+  const [settings, setSettings] = useState<
+      "project" | "fields" | "views" | null
+    >(null),
+    [viewID, setViewID] = useState(""),
+    [selecting, setSelecting] = useState(false),
+    [selectedIDs, setSelectedIDs] = useState<Set<string>>(new Set());
+  const shared = useProjectViews(detail, gitlab ? undefined : readAccess),
+    selectedView = shared.views.find((view) => view.id === viewID);
+  const chooseView = (view?: HubProjectView) => {
+    setViewID(view?.id ?? "");
+    if (view) {
+      setLayout(
+        view.layout === "TABLE_LAYOUT"
+          ? "list"
+          : view.layout === "ROADMAP_LAYOUT"
+            ? "timeline"
+            : "board",
+      );
+      setGroup(view.groupFieldIDs[0] ?? "");
+      setFilters(emptyProjectFilters);
+    }
+  };
+  const endSelection = () => {
+    setSelecting(false);
+    setSelectedIDs(new Set());
+  };
+  const fields = projectSelectFields(detail),
+    field =
+      fields.find((value) => value.id === group) ??
+      fields.find((value) => /^(status|상태)$/i.test(value.name)) ??
+      fields[0];
+  const rows = filterProjectRows(detail.rows, filters),
+    selected = detail.rows.find((row) => row.id === selectedID);
+  const repositories = [
+      ...new Set(detail.rows.map(projectRepository).filter(Boolean)),
+    ].sort(),
+    people = [
+      ...new Set(detail.rows.flatMap((row) => row.assignees ?? [])),
+    ].sort();
+  const activeRows = detail.rows.filter((row) => !row.archived),
+    assigned = me
+      ? activeRows.filter((row) =>
+          row.assignees?.some(
+            (name) => name.toLocaleLowerCase() === me.toLocaleLowerCase(),
+          ),
+        ).length
+      : 0;
+  const totalFilters = projectFilterCount(filters);
+  const updateFilter = <K extends keyof ProjectFilters>(
+    key: K,
+    value: ProjectFilters[K],
+  ) => setFilters((current) => ({ ...current, [key]: value }));
+  const select = (row: HubProjectRow) => {
+    setSelectedID(row.id);
+    setComposing(false);
+  };
+  return (
+    <div className="project-workspace">
+      <ProjectHero
+        detail={detail}
+        gitlab={gitlab}
+        locked={locked}
+        open={open}
+        safe={safe}
+        add={() => setComposing(true)}
+        settings={() => setSettings("project")}
+      />
+      <div className="project-focus">
+        <span>
+          <Target size={14} />
+          {t("Focus")}
+        </span>
+        <button
+          className={filters.assignee === me && !!me ? "active" : ""}
+          disabled={!me}
+          onClick={() =>
+            updateFilter("assignee", filters.assignee === me ? "" : (me ?? ""))
+          }
+        >
+          <Users size={13} />
+          {t("Assigned to me")}
+          <b>{assigned}</b>
+        </button>
+        {local?.repository && (
+          <button
+            className={filters.repository === local.repository ? "active" : ""}
+            onClick={() =>
+              updateFilter(
+                "repository",
+                filters.repository === local.repository ? "" : local.repository,
+              )
+            }
+          >
+            <GitBranch size={13} />
+            {local.repository}
+          </button>
+        )}
+        <span className="project-focus-hint">
+          {t("Select a task to inspect fields and start work.")}
+        </span>
+      </div>
+      {!gitlab && (
+        <ProjectSavedViews
+          views={shared.views}
+          loading={shared.loading}
+          error={shared.error}
+          selected={selectedView}
+          choose={chooseView}
+          manage={() => setSettings("views")}
+          open={open}
+          projectURL={detail.item.url}
+        />
+      )}
+      <div className="project-controls">
+        <div className="project-toolbar">
+          <div
+            className="project-view-switch"
+            role="group"
+            aria-label={t("Project view")}
+          >
+            <Button
+              size="small"
+              kind={layout === "board" ? "primary" : undefined}
+              onClick={() => setLayout("board")}
+            >
+              <Columns3 size={14} />
+              {t("Board")}
+            </Button>
+            <Button
+              size="small"
+              kind={layout === "list" ? "primary" : undefined}
+              onClick={() => setLayout("list")}
+            >
+              <List size={14} />
+              {t("List")}
+            </Button>
+            {!gitlab && (
+              <Button
+                size="small"
+                kind={layout === "timeline" ? "primary" : undefined}
+                onClick={() => setLayout("timeline")}
+              >
+                <CalendarDays size={14} />
+                {t("Timeline")}
+              </Button>
+            )}
+          </div>
+          <Button
+            size="small"
+            kind={selecting ? "primary" : undefined}
+            onClick={() => (selecting ? endSelection() : setSelecting(true))}
+          >
+            <CheckSquare size={13} />
+            {t("Select items")}
+          </Button>
+          <span className="project-visible-count">
+            {t("{0} of {1} loaded items", rows.length, detail.rows.length)}
+            {layout === "list" && !selectedView
+              ? ` · ${t("Project order")}`
+              : ""}
+          </span>
+          {layout !== "timeline" && !!fields.length && (
+            <label className="project-group">
+              <span>{t("Group by")}</span>
+              <select
+                className="select"
+                aria-label={t("Group by")}
+                value={field?.id}
+                onChange={(event) => setGroup(event.target.value)}
+              >
+                {fields.map((value) => (
+                  <option key={value.id} value={value.id}>
+                    {value.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        <div className="project-filters">
+          <label className="project-search">
+            <Search size={14} />
+            <input
+              aria-label={t("Search project items")}
+              placeholder={t("Search tasks, labels, or people…")}
+              value={filters.query}
+              onChange={(event) => updateFilter("query", event.target.value)}
+            />
+          </label>
+          {!gitlab && (
+            <select
+              className="select"
+              aria-label={t("Item type")}
+              value={filters.kind}
+              onChange={(event) => updateFilter("kind", event.target.value)}
+            >
+              <option value="">{t("All types")}</option>
+              <option value="issue">{t("Issues")}</option>
+              <option value="pullRequest">{t("Pull requests")}</option>
+              <option value="draft">{t("Drafts")}</option>
+            </select>
+          )}
+          {repositories.length > 0 && (
+            <select
+              className="select"
+              aria-label={t("Repository filter")}
+              value={filters.repository}
+              onChange={(event) =>
+                updateFilter("repository", event.target.value)
+              }
+            >
+              <option value="">{t("All repositories")}</option>
+              {[
+                ...new Set([
+                  ...repositories,
+                  ...(filters.repository ? [filters.repository] : []),
+                ]),
+              ].map((repository) => (
+                <option key={repository} value={repository}>
+                  {repository}
+                </option>
+              ))}
+            </select>
+          )}
+          {people.length > 0 && (
+            <select
+              className="select"
+              aria-label={t("Assignee filter")}
+              value={filters.assignee}
+              onChange={(event) => updateFilter("assignee", event.target.value)}
+            >
+              <option value="">{t("All assignees")}</option>
+              {[
+                ...new Set([
+                  ...people,
+                  ...(filters.assignee ? [filters.assignee] : []),
+                ]),
+              ].map((person) => (
+                <option key={person} value={person}>
+                  @{person}
+                </option>
+              ))}
+            </select>
+          )}
+          {!gitlab && (
+            <button
+              className={`project-filter-toggle ${filters.archived ? "active" : ""}`}
+              aria-pressed={filters.archived}
+              onClick={() => updateFilter("archived", !filters.archived)}
+            >
+              <Archive size={13} />
+              {t("Include archived")}
+            </button>
+          )}
+          {totalFilters > 0 && (
+            <Button
+              size="small"
+              tip={t("Clear filters")}
+              onClick={() => setFilters(emptyProjectFilters)}
+            >
+              <X size={13} />
+              {t("Clear")}
+            </Button>
+          )}
+        </div>
+      </div>
+      {selecting && (
+        <ProjectBulkActions
+          detail={detail}
+          rows={detail.rows.filter((row) => selectedIDs.has(row.id))}
+          visible={rows.length}
+          gitlab={gitlab}
+          locked={locked}
+          ask={ask}
+          selectAll={() => setSelectedIDs(new Set(rows.map((row) => row.id)))}
+          done={endSelection}
+        />
+      )}
+      {settings && (
+        <ProjectSettings
+          key={settings}
+          initialTab={settings}
+          detail={detail}
+          locked={locked}
+          ask={ask}
+          close={() => setSettings(null)}
+          views={shared.views}
+          viewLoading={shared.loading}
+          viewError={shared.error}
+          reloadViews={shared.reload}
+          moreViews={shared.more}
+          loadMoreViews={shared.loadMore}
+          open={open}
+          safe={safe}
+        />
+      )}
+      {detail.notice && (
+        <div className="project-inline-notice" role="status">
+          {detail.notice}
+        </div>
+      )}
+      {composing && (
+        <ProjectComposer
+          detail={detail}
+          locked={locked}
+          gitlab={gitlab}
+          ask={ask}
+          close={() => setComposing(false)}
+          loadIssues={loadIssues}
+        />
+      )}
+      <div className={`project-body ${selected ? "has-inspector" : ""}`}>
+        <div className="project-canvas">
+          <ProjectItems
+            layout={layout}
+            detail={detail}
+            fields={fields}
+            field={field}
+            rows={rows}
+            selectedID={selectedID}
+            select={select}
+            locked={locked}
+            add={() => setComposing(true)}
+            open={open}
+            safe={safe}
+            selecting={selecting}
+            selectedIDs={selectedIDs}
+            toggleSelection={(row) =>
+              setSelectedIDs((current) => {
+                const next = new Set(current);
+                if (next.has(row.id)) next.delete(row.id);
+                else next.add(row.id);
+                return next;
+              })
+            }
+            visibleFieldIDs={selectedView?.visibleFieldIDs}
+          />
+          {!detail.rows.length && layout === "board" && (
+            <div className="project-first-task">
+              <Target size={18} />
+              <div>
+                <strong>{t("Make room for your next idea")}</strong>
+                <span>
+                  {t(
+                    "Your real project columns are ready. Add a draft or choose a repository issue.",
+                  )}
+                </span>
+              </div>
+              <Button
+                size="small"
+                disabled={locked}
+                onClick={() => setComposing(true)}
+              >
+                {t("Add the first task")}
+                <ArrowRight size={13} />
+              </Button>
+            </div>
+          )}
+        </div>
+        {selected && (
+          <ProjectInspector
+            key={selected.id}
+            detail={detail}
+            row={selected}
+            locked={locked}
+            gitlab={gitlab}
+            open={open}
+            safe={safe}
+            ask={ask}
+            close={() => setSelectedID(null)}
+            local={local}
+            onMoved={() => {
+              setLayout("list");
+              setViewID("");
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
 }

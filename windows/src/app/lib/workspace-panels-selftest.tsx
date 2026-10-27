@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { SheetKind } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
 import { accounts } from "@/entities/hosting";
-import { AccountWorkspacePanel, IssuesWorkspace } from "@/pages/repo";
+import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
@@ -56,6 +56,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       if (method !== "GET") writes++;
       if (url.includes("/search/repositories?")) return { status: 200, body: JSON.stringify({ items: [{ full_name: "fixture/remote", clone_url: "https://github.com/fixture/remote.git", private: false }], total_count: 1 }) };
       if (url.includes("/search/issues?")) return { status: 200, body: JSON.stringify({ items: [{ id: 1, number: 1, title: "Fixture global work", html_url: "https://github.com/fixture/other/pull/1", repository_url: "https://api.github.com/repos/fixture/other", state: "open" }], total_count: 1 }) };
+      if (url.includes("/pulls?")) return { status: 200, body: JSON.stringify([{ number: 1, title: "Fixture pull request", body: "Details", user: { login: "fixture" }, requested_reviewers: [{ login: "fixture" }], head: { ref: "topic", sha: "a".repeat(40), repo: { full_name: "fixture/repo" } }, base: { ref: "main" }, html_url: "https://github.com/fixture/repo/pull/1", state: "open" }]) };
       if (url.endsWith("/pulls/1")) return { status: 200, body: JSON.stringify({ number: 1, title: "Fixture pull request", body: "Details", user: { login: "fixture" }, head: { ref: "topic", sha: "a".repeat(40), repo: { full_name: "fixture/repo" } }, base: { ref: "main" }, html_url: "https://github.com/fixture/repo/pull/1", state: "open" }) };
       if (url.includes("/notifications?")) { mentions++; return { status: 200, body: JSON.stringify([{ id: "44", reason: "mention", unread: true, subject: { title: "Fixture mention", url: "https://api.github.com/repos/fixture/repo/issues/7", type: "Issue" }, repository: { full_name: "fixture/repo" } }]) }; }
       if (url.includes("/releases?")) { releases++; return { status: 200, body: JSON.stringify([{ id: 3, name: "Fixture release", tag_name: "v1.0", body: "Notes", draft: false, html_url: "https://github.com/fixture/repo/releases/tag/v1.0", assets: [] }]) }; }
@@ -118,7 +119,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(store.destination === "issues" && store.inboxDetail?.item.number === 7, "A sidebar issue did not open on the Issues page");
     reset();
     // the page keeps the issue that was just opened and shows it like a pull request
-    await mount(<IssuesWorkspace store={store} openSettings={() => {}} />);
+    await mount(<WorkspaceContent store={store} openSettings={() => {}} />);
     check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
     check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
     const before = writes;

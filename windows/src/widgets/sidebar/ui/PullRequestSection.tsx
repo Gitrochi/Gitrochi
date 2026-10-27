@@ -16,6 +16,7 @@ import { Section } from "./Section";
  * (macOS: PullRequestSection.swift)
  */
 export function PullRequestSection({ store, target, openSettings, onPage = false }: { store: RepoStore; target: RepoTarget; openSettings: () => void; onPage?: boolean }) {
+  useObserve(store);
   useObserve(accounts);
   useObserve(store.ci);
   const info = providerInfo[target.provider];

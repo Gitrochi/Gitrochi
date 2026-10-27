@@ -124,7 +124,7 @@ SWIFT
 TASK_CORE="$(bash "$ROOT/../tools/build-core-native.sh")"
 swiftc -I "$ROOT/../crates/gitrochi-core/include" "$ROOT/Sources/Core/RustCore.swift" "$TASK_CORE" -parse-as-library -swift-version 5 \
   "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
-  "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/Parsers.swift" \
+  "$ROOT/Sources/Core/ProjectTaskReference.swift" "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/Parsers.swift" \
   "$ROOT/Sources/Core/DiffTools.swift" "$ROOT/Sources/Core/Conflict.swift" \
   "$ROOT/Sources/Core/CommitSearch.swift" \
   "$ROOT/Sources/Core/Git.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-git-core"

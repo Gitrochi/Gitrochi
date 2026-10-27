@@ -17,10 +17,12 @@ struct HubMember: Identifiable {
 }
 struct HubRepository: Identifiable { var id: String; var name: String; var description: String; var cloneURL: String; var url: String }
 struct HubAsset: Identifiable { var id: String; var name: String; var size: Int?; var downloads: Int?; var url: String }
-struct HubProjectOption: Identifiable { var id: String; var name: String }
-struct HubProjectField: Identifiable { var id: String; var name: String; var options: [HubProjectOption] }
+enum HubProjectFieldKind: String { case singleSelect, text, number, date, iteration, unsupported }
+struct HubProjectOption: Identifiable { var id: String; var name: String; var startDate: String?; var duration: Int? }
+struct HubProjectField: Identifiable { var id: String; var name: String; var options: [HubProjectOption]; var kind: HubProjectFieldKind = .singleSelect }
 struct HubProjectColumn: Identifiable { var id: String; var title: String; var rows: [HubProjectRow] }
-struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = [] }
+enum HubProjectRowKind: String { case issue, pullRequest, draft, redacted }
+struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = []; var kind: HubProjectRowKind = .issue; var number: Int?; var repository = ""; var state = ""; var assignees: [String] = []; var updatedAt = ""; var headRefName = ""; var archived = false; var values: [String: String] = [:] }
 struct HubDetail { var item: HubItem; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
 struct HubPage { var items: [HubItem]; var more: Bool; var cursor: String?; var notice: String? }
 struct HubReleaseInput { var tag = ""; var name = ""; var body = ""; var target = ""; var draft = true; var prerelease = false }
@@ -31,6 +33,7 @@ struct HostingHubState {
     var projectScope = "repository"
     var items: [HubItem] = []; var detail: HubDetail?
     var projectPermissionRequired = false
+    var allowingCredentialAccess = false
     var uncertainWrite = false; var loading = false; var detailLoading = false; var busy = false; var error: String?; var notice: String?
     var query = ""; var page = 0; var cursor: String?; var more = false; var detailPage = 1; var detailCursor: String?; var tab = "repositories"
     var generation = UUID(); var listID = UUID(); var detailID = UUID(); var context = ""
@@ -155,9 +158,10 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         return RepoTarget(provider: provider, remote: "origin", host: host, path: username + "/workspace")
     }
     static func projectColumns(_ detail: HubDetail, fieldID: String? = nil) -> [HubProjectColumn] {
-        guard let field = detail.fields.first(where: { $0.id == fieldID }) ?? detail.fields.first(where: { ["status", "상태"].contains($0.name.lowercased()) }) ?? detail.fields.first else { return [HubProjectColumn(id: "", title: String(localized: "Not set"), rows: detail.rows)] }
-        let options = Set(field.options.map(\.id)), unset = detail.rows.filter { !options.contains($0.statuses[field.id] ?? "") }
-        return (unset.isEmpty ? [] : [HubProjectColumn(id: "", title: String(localized: "Not set"), rows: unset)]) + field.options.map { option in HubProjectColumn(id: option.id, title: option.name, rows: detail.rows.filter { $0.statuses[field.id] == option.id }) }
+        let fields = detail.fields.filter { !$0.options.isEmpty }
+        guard let field = fields.first(where: { $0.id == fieldID }) ?? fields.first(where: { ["status", "상태"].contains($0.name.lowercased()) }) ?? fields.first else { return [HubProjectColumn(id: "", title: String(localized: "Not set"), rows: detail.rows)] }
+        let options = Set(field.options.map(\.id)), unset = detail.rows.filter { !options.contains(($0.values[field.id] ?? $0.statuses[field.id]) ?? "") }
+        return (unset.isEmpty ? [] : [HubProjectColumn(id: "", title: String(localized: "Not set"), rows: unset)]) + field.options.map { option in HubProjectColumn(id: option.id, title: option.name, rows: detail.rows.filter { ($0.values[field.id] ?? $0.statuses[field.id]) == option.id }) }
     }
     static func releaseItem(_ p: Provider, _ x: J) -> HubItem {
         let tag = s(x, "tag_name"), name = s(x, "name"), draft = x["draft"] as? Bool == true, prerelease = x["prerelease"] as? Bool == true
@@ -172,7 +176,45 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
                        url: github && url.isEmpty ? "https://" + c.target.host + "/" + enc(login) : url,
                        data: x, avatarURL: avatarURL(c, s(x, "avatar_url")))
     }
-    static let projectFields = "id number title shortDescription url closed"
+    static let projectFields = "id number title shortDescription url closed updatedAt"
+    // Windows: projectDetailQuery uses the same fields and bounded connections.
+    static let projectDetailQuery = """
+    query($id:ID!,$cursor:String){node(id:$id){... on ProjectV2{
+      id title shortDescription readme url closed public updatedAt
+      fields(first:100){nodes{
+        ... on ProjectV2FieldCommon{id name dataType}
+        ... on ProjectV2SingleSelectField{id name options{id name}}
+        ... on ProjectV2IterationField{id name configuration{iterations{id title startDate duration} completedIterations{id title startDate duration}}}
+      } pageInfo{hasNextPage}}
+      items(first:30,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
+        ... on Issue{id title body url number state updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+        ... on PullRequest{id title body url number state updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+        ... on DraftIssue{id title body updatedAt assignees(first:100){nodes{login}}}
+      } fieldValues(first:100){nodes{
+        ... on ProjectV2ItemFieldSingleSelectValue{optionId field{... on ProjectV2SingleSelectField{id}}}
+        ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{id}}}
+        ... on ProjectV2ItemFieldNumberValue{number field{... on ProjectV2Field{id}}}
+        ... on ProjectV2ItemFieldDateValue{date field{... on ProjectV2Field{id}}}
+        ... on ProjectV2ItemFieldIterationValue{iterationId field{... on ProjectV2IterationField{id}}}
+      } pageInfo{hasNextPage}}} pageInfo{hasNextPage endCursor}}
+    }}}
+    """
+    static func projectField(_ x: J) -> HubProjectField {
+        if x["options"] is [J] { return HubProjectField(id: id(x), name: s(x, "name"), options: arr(x, "options").map { HubProjectOption(id: id($0), name: s($0, "name")) }) }
+        if x["configuration"] != nil { let configuration = obj(x, "configuration"); return HubProjectField(id: id(x), name: s(x, "name"), options: (arr(configuration, "iterations") + arr(configuration, "completedIterations")).map { HubProjectOption(id: id($0), name: s($0, "title"), startDate: s($0, "startDate"), duration: $0["duration"] as? Int) }, kind: .iteration) }
+        let kind: HubProjectFieldKind = s(x, "dataType") == "TEXT" ? .text : s(x, "dataType") == "NUMBER" ? .number : s(x, "dataType") == "DATE" ? .date : .unsupported
+        return HubProjectField(id: id(x), name: s(x, "name"), options: [], kind: kind)
+    }
+    static func projectRow(_ x: J) -> HubProjectRow {
+        let content = obj(x, "content"); var values: [String: String] = [:], statuses: [String: String] = [:]
+        for field in arr(obj(x, "fieldValues"), "nodes") {
+            let fieldID = id(obj(field, "field")); guard !fieldID.isEmpty else { continue }
+            for key in ["optionId", "iterationId", "text", "number", "date"] where field[key] != nil && !(field[key] is NSNull) { values[fieldID] = id(field, key); break }
+            if let option = field["optionId"] as? String { statuses[fieldID] = option }
+        }
+        let type = s(content, "__typename"), kind: HubProjectRowKind = type == "PullRequest" ? .pullRequest : type == "DraftIssue" ? .draft : type == "Issue" ? .issue : s(x, "type") == "DRAFT_ISSUE" ? .draft : s(x, "type") == "PULL_REQUEST" ? .pullRequest : !id(content).isEmpty ? .issue : .redacted
+        return HubProjectRow(id: id(x), title: s(content, "title").isEmpty ? String(localized: "Redacted project item") : s(content, "title"), body: s(content, "body"), url: s(content, "url"), contentID: id(content), statuses: statuses, labels: arr(obj(content, "labels"), "nodes").map { s($0, "name") }, kind: kind, number: content["number"] as? Int, repository: s(obj(content, "repository"), "nameWithOwner"), state: s(content, "state"), assignees: arr(obj(content, "assignees"), "nodes").map { s($0, "login") }, updatedAt: s(x, "updatedAt").isEmpty ? s(content, "updatedAt") : s(x, "updatedAt"), headRefName: s(content, "headRefName"), archived: x["isArchived"] as? Bool == true, values: values)
+    }
     static func page(_ c: HubAccess, section: HostingHubSection, page: Int = 1, cursor: String? = nil) async throws -> HubPage {
         let p = c.target.provider, query = "per_page=30&page=\(max(1, page))"
         switch section {
@@ -222,13 +264,14 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             if p == .github { d.files = obj(x, "files").sorted { $0.key < $1.key }.map { key, value in let f = value as? J ?? [:]; return HubFile(name: key, content: s(f, "content"), truncated: f["truncated"] as? Bool == true) }; do { _ = try await value(c, base + "/star"); d.starred = true } catch let error as HostingError where error.status == 404 { d.starred = false } catch { d.notice = String(localized: "Star status could not be loaded: \(Self.error(error, token: c.token))") }; if x["truncated"] as? Bool == true { d.notice = String(localized: "The server truncated the file list. Open the gist in a browser before editing.") } }
             else { let files = arr(x, "files").isEmpty ? [["path": s(x, "file_name")]] : arr(x, "files"); for f in files.prefix(30) { let name = s(f, "path"), branch = snippetRef(rawURL: s(f, "raw_url"), file: name) ?? "main"; try check(c); let data = try await Hosting.data(Hosting.request(p, base + "/files/\(enc(branch))/\(enc(name))/raw", token: c.token)); try check(c); d.files.append(HubFile(name: name, content: String(decoding: data.prefix(1_000_000), as: UTF8.self), truncated: data.count > 1_000_000)) }; if files.count > 30 { d.notice = String(localized: "The server returned more files. Open the snippet in a browser before editing.") } }; return d
         case .projects:
-            if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
-            let query = "query($id:ID!,$cursor:String){node(id:$id){... on ProjectV2{id title shortDescription url fields(first:100){nodes{... on ProjectV2Field{id name} ... on ProjectV2SingleSelectField{id name options{id name}}} pageInfo{hasNextPage}} items(first:30,after:$cursor){nodes{id content{... on Issue{id title body url} ... on PullRequest{id title body url} ... on DraftIssue{id title body}} fieldValues(first:100){nodes{... on ProjectV2ItemFieldSingleSelectValue{optionId field{... on ProjectV2SingleSelectField{id}}}} pageInfo{hasNextPage}}} pageInfo{hasNextPage endCursor}}}}}"
-            let data = try await graph(c, query, ["id": item.id, "cursor": cursor as Any? ?? NSNull()]), x = obj(data, "node"); guard !id(x).isEmpty else { throw fail(String(localized: "Project is unavailable or this account cannot access it.")) }; var updated = item; updated.title = s(x, "title"); updated.body = s(x, "shortDescription"); updated.url = s(x, "url"); var d = HubDetail(item: updated)
-            d.fields = arr(obj(x, "fields"), "nodes").filter { !arr($0, "options").isEmpty }.map { HubProjectField(id: id($0), name: s($0, "name"), options: arr($0, "options").map { HubProjectOption(id: id($0), name: s($0, "name")) }) }
-            d.rows = arr(obj(x, "items"), "nodes").map { row in let content = obj(row, "content"); var values: [String: String] = [:]; for field in arr(obj(row, "fieldValues"), "nodes") { let fieldID = id(obj(field, "field")); if !fieldID.isEmpty { values[fieldID] = s(field, "optionId") } }; return HubProjectRow(id: id(row), title: s(content, "title").isEmpty ? String(localized: "Redacted project item") : s(content, "title"), body: s(content, "body"), url: s(content, "url"), contentID: id(content), statuses: values) }
+            if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: c.target.path, state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at")) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
+            let data = try await graph(c, projectDetailQuery, ["id": item.id, "cursor": cursor as Any? ?? NSNull()]), x = obj(data, "node")
+            guard !id(x).isEmpty else { throw fail(String(localized: "Project is unavailable or this account cannot access it.")) }
+            var updated = item; updated.title = s(x, "title"); updated.body = s(x, "shortDescription"); updated.url = s(x, "url"); updated.data.merge(x) { _, new in new }; var d = HubDetail(item: updated)
+            d.fields = arr(obj(x, "fields"), "nodes").filter { !id($0).isEmpty }.map(projectField)
+            d.rows = arr(obj(x, "items"), "nodes").map(projectRow)
             d.more = obj(obj(x, "items"), "pageInfo")["hasNextPage"] as? Bool == true; d.cursor = obj(obj(x, "items"), "pageInfo")["endCursor"] as? String
-            if obj(obj(x, "fields"), "pageInfo")["hasNextPage"] as? Bool == true || arr(obj(x, "items"), "nodes").contains(where: { obj(obj($0, "fieldValues"), "pageInfo")["hasNextPage"] as? Bool == true }) { d.notice = String(localized: "Some project fields were truncated by the server. Only loaded single-select fields can be edited.") }; return d
+            if obj(obj(x, "fields"), "pageInfo")["hasNextPage"] as? Bool == true || arr(obj(x, "items"), "nodes").contains(where: { obj(obj($0, "fieldValues"), "pageInfo")["hasNextPage"] as? Bool == true }) { d.notice = String(localized: "Some project fields were truncated by the server. Only loaded fields can be edited.") }; return d
         }
     }
     static func snippetRef(rawURL: String, file: String) -> String? { guard let u = URL(string: rawURL), let range = u.path.range(of: "/raw/"), u.path.hasSuffix("/" + file) else { return nil }; let value = String(u.path[range.upperBound...].dropLast(file.count + 1)); return value.isEmpty ? nil : value }
@@ -250,15 +293,95 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         let base = c.apiBase + (github ? "/gists" : "/snippets"); if let previous { _ = try await value(c, base + "/" + enc(previous.item.id), method: github ? "PATCH" : "PUT", body: body) } else { try await create(c, base, body: body) }
     }
     static func star(_ c: HubAccess, item: HubItem, starred: Bool) async throws { guard c.target.provider == .github else { throw fail(String(localized: "GitLab snippets do not support stars.")) }; _ = try await value(c, c.apiBase + "/gists/" + enc(item.id) + "/star", method: starred ? "PUT" : "DELETE") }
+    static func loadedProjectRow(_ detail: HubDetail, row: HubProjectRow) throws -> HubProjectRow {
+        guard !detail.item.id.isEmpty, let loaded = detail.rows.first(where: { $0.id == row.id }) else { throw fail(String(localized: "Select a loaded project field and item.")) }; return loaded
+    }
+    static func githubProject(_ c: HubAccess, detail: HubDetail) throws { try check(c); guard c.target.provider == .github, !detail.item.id.isEmpty else { throw fail(String(localized: "This action requires a GitHub project.")) } }
+    static func updateProjectField(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, field: HubProjectField, value: String?) async throws {
+        try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
+        guard let actual = detail.fields.first(where: { $0.id == field.id }) else { throw fail(String(localized: "Select a loaded project field and item.")) }
+        guard actual.kind != .unsupported else { throw fail(String(localized: "This project field is managed by its issue or pull request.")) }
+        var input: J = ["projectId": detail.item.id, "itemId": loaded.id, "fieldId": actual.id]
+        guard let value else { _ = try await graph(c, "mutation($input:ClearProjectV2ItemFieldValueInput!){clearProjectV2ItemFieldValue(input:$input){projectV2Item{id}}}", ["input": input]); return }
+        let fieldValue: J
+        switch actual.kind {
+        case .singleSelect, .iteration:
+            guard actual.options.contains(where: { $0.id == value }) else { throw fail(String(localized: "Select a loaded project field and item.")) }; fieldValue = [actual.kind == .iteration ? "iterationId" : "singleSelectOptionId": value]
+        case .number:
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.range(of: "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$", options: .regularExpression) != nil, let number = Double(trimmed), number.isFinite else { throw fail(String(localized: "Enter a valid number.")) }; fieldValue = ["number": number]
+        case .date:
+            let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX"); formatter.timeZone = TimeZone(secondsFromGMT: 0); formatter.dateFormat = "yyyy-MM-dd"; formatter.isLenient = false
+            guard value.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) != nil, let date = formatter.date(from: value), formatter.string(from: date) == value else { throw fail(String(localized: "Enter a date as YYYY-MM-DD.")) }; fieldValue = ["date": value]
+        case .text: fieldValue = ["text": value]
+        case .unsupported: throw fail(String(localized: "This project field is managed by its issue or pull request."))
+        }
+        input["value"] = fieldValue
+        _ = try await graph(c, "mutation($input:UpdateProjectV2ItemFieldValueInput!){updateProjectV2ItemFieldValue(input:$input){projectV2Item{id}}}", ["input": input])
+    }
+    static func saveProjectDraft(_ c: HubAccess, detail: HubDetail, title: String, body: String, row: HubProjectRow? = nil) async throws {
+        try githubProject(c, detail: detail); let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { throw fail(String(localized: "A draft title is required.")) }
+        if let row {
+            let loaded = try loadedProjectRow(detail, row: row)
+            guard loaded.kind == .draft, !loaded.contentID.isEmpty else { throw fail(String(localized: "Select a loaded draft item.")) }
+            let data = try await graph(c, "query($id:ID!){node(id:$id){... on DraftIssue{id title body}}}", ["id": loaded.contentID]), fresh = obj(data, "node")
+            guard id(fresh) == loaded.contentID, s(fresh, "title") == loaded.title, s(fresh, "body") == loaded.body else { throw fail(String(localized: "This item changed on the server. Refresh before saving.")) }
+            _ = try await graph(c, "mutation($input:UpdateProjectV2DraftIssueInput!){updateProjectV2DraftIssue(input:$input){draftIssue{id}}}", ["input": ["draftIssueId": loaded.contentID, "title": title, "body": body]])
+        }
+        else {
+            do { _ = try await graph(c, "mutation($input:AddProjectV2DraftIssueInput!){addProjectV2DraftIssue(input:$input){projectItem{id}}}", ["input": ["projectId": detail.item.id, "title": title, "body": body]]) }
+            catch let error as HostingError where (400..<500).contains(error.status) { throw error }
+            catch let error as HubProjectPermissionError { throw error }
+            catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
+        }
+    }
+    static func archiveProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, archived: Bool) async throws {
+        try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row), operation = archived ? "archiveProjectV2Item" : "unarchiveProjectV2Item", inputType = archived ? "ArchiveProjectV2ItemInput" : "UnarchiveProjectV2ItemInput"
+        _ = try await graph(c, "mutation($input:\(inputType)!){\(operation)(input:$input){item{id}}}", ["input": ["projectId": detail.item.id, "itemId": loaded.id]])
+    }
+    static func deleteProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow) async throws {
+        try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
+        _ = try await graph(c, "mutation($input:DeleteProjectV2ItemInput!){deleteProjectV2Item(input:$input){deletedItemId}}", ["input": ["projectId": detail.item.id, "itemId": loaded.id]])
+    }
+    static func moveProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, afterRow: HubProjectRow?) async throws {
+        try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
+        let anchor = try afterRow.map { try loadedProjectRow(detail, row: $0) }
+        guard anchor?.id != loaded.id else { throw fail(String(localized: "Select a loaded project field and item.")) }
+        _ = try await graph(c, "mutation($input:UpdateProjectV2ItemPositionInput!){updateProjectV2ItemPosition(input:$input){items{nodes{id}}}}", ["input": ["projectId": detail.item.id, "itemId": loaded.id, "afterId": anchor?.id as Any? ?? NSNull()]])
+    }
+    static func convertProjectDraftToIssue(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, repository: String) async throws {
+        try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
+        guard loaded.kind == .draft, !loaded.contentID.isEmpty else { throw fail(String(localized: "Select a loaded draft item.")) }
+        let repository = repository.trimmingCharacters(in: .whitespacesAndNewlines), parts = repository.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 2, parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." && $0.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil }) else { throw fail(String(localized: "Enter a repository as owner/name on the connected server.")) }
+        let data = try await graph(c, "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id nameWithOwner}}", ["owner": parts[0], "name": parts[1]]), remote = obj(data, "repository")
+        guard !id(remote).isEmpty, s(remote, "nameWithOwner").caseInsensitiveCompare(repository) == .orderedSame else { throw fail(String(localized: "Repository is unavailable or this account cannot access it.")) }
+        do { _ = try await graph(c, "mutation($input:ConvertProjectV2DraftIssueItemToIssueInput!){convertProjectV2DraftIssueItemToIssue(input:$input){item{id}}}", ["input": ["itemId": loaded.id, "repositoryId": id(remote)]]) }
+        catch let error as HostingError where (400..<500).contains(error.status) { throw error }
+        catch let error as HubProjectPermissionError { throw error }
+        catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
+    }
     static func move(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, field: HubProjectField, option: String) async throws {
-        guard field.options.contains(where: { $0.id == option }), detail.fields.contains(where: { $0.id == field.id }), detail.rows.contains(where: { $0.id == row.id }) else { throw fail(String(localized: "Select a loaded project field and item.")) }
-        if c.target.provider == .github { _ = try await graph(c, "mutation($input:UpdateProjectV2ItemFieldValueInput!){updateProjectV2ItemFieldValue(input:$input){projectV2Item{id}}}", ["input": ["projectId": detail.item.id, "itemId": row.id, "fieldId": field.id, "value": ["singleSelectOptionId": option]]]) }
-        else { let fresh = try await object(c, repo(c) + "/issues/" + enc(row.id)), labels = fresh["labels"] as? [String] ?? [], boardLabels = field.options.filter { !$0.id.hasPrefix("__") }.map(\.name), selectedLabel = field.options.first(where: { $0.id == option && !$0.id.hasPrefix("__") })?.name; var body: J = ["remove_labels": labels.filter { boardLabels.contains($0) && $0 != selectedLabel }.joined(separator: ","), "state_event": option == "__closed" ? "close" : "reopen"]; if let label = field.options.first(where: { $0.id == option && !$0.id.hasPrefix("__") }) { body["add_labels"] = label.name }; _ = try await value(c, repo(c) + "/issues/" + enc(row.id), method: "PUT", body: body) }
+        if c.target.provider == .github { try await updateProjectField(c, detail: detail, row: row, field: field, value: option); return }
+        let loaded = try loadedProjectRow(detail, row: row)
+        guard let actual = detail.fields.first(where: { $0.id == field.id }), actual.options.contains(where: { $0.id == option }) else { throw fail(String(localized: "Select a loaded project field and item.")) }
+        let fresh = try await object(c, repo(c) + "/issues/" + enc(loaded.id)), labels = fresh["labels"] as? [String] ?? [], boardLabels = actual.options.filter { !$0.id.hasPrefix("__") }.map(\.name), selectedLabel = actual.options.first(where: { $0.id == option && !$0.id.hasPrefix("__") })?.name
+        var body: J = ["remove_labels": labels.filter { boardLabels.contains($0) && $0 != selectedLabel }.joined(separator: ","), "state_event": option == "__closed" ? "close" : "reopen"]
+        if let selectedLabel { body["add_labels"] = selectedLabel }; _ = try await value(c, repo(c) + "/issues/" + enc(loaded.id), method: "PUT", body: body)
     }
     static func addIssue(_ c: HubAccess, detail: HubDetail, issueURL: String) async throws {
-        guard let url = safeURL(c, issueURL) else { throw fail(String(localized: "Enter an issue URL from the connected server.")) }
+        guard let url = safeURL(c, issueURL), url.host?.lowercased() == c.target.host.lowercased() else { throw fail(String(localized: "Enter an issue URL from the connected server.")) }
         let parts = url.path.split(separator: "/").map(String.init)
-        if c.target.provider == .github { guard parts.count == 4, parts[2] == "issues", Int(parts[3]) != nil else { throw fail(String(localized: "Enter a full issue URL.")) }; let issue = try await object(c, c.apiBase + "/repos/\(enc(parts[0]))/\(enc(parts[1]))/issues/\(parts[3])"); guard !s(issue, "node_id").isEmpty, issue["pull_request"] == nil else { throw fail(String(localized: "Select an issue rather than a pull request.")) }; _ = try await graph(c, "mutation($input:AddProjectV2ItemByIdInput!){addProjectV2ItemById(input:$input){item{id}}}", ["input": ["projectId": detail.item.id, "contentId": s(issue, "node_id")]]) }
-        else { guard let split = url.path.range(of: "/-/issues/"), String(url.path[..<split.lowerBound]).trimmingCharacters(in: CharacterSet(charactersIn: "/")) == c.target.path, let number = Int(url.path[split.upperBound...]), let field = detail.fields.first else { throw fail(String(localized: "Select an issue from this board's repository.")) }; let issue = try await object(c, repo(c) + "/issues/\(number)"); let row = HubProjectRow(id: id(issue, "iid"), title: s(issue, "title"), body: "", url: issueURL, contentID: id(issue), statuses: [:]); var copy = detail; copy.rows.append(row); try await move(c, detail: copy, row: row, field: field, option: "__open") }
+        if c.target.provider == .github {
+            try githubProject(c, detail: detail)
+            guard parts.count == 4, ["issues", "pull"].contains(parts[2]), let number = Int(parts[3]), number > 0 else { throw fail(String(localized: "Enter a full issue or pull request URL.")) }
+            let isPR = parts[2] == "pull", issue = try await object(c, c.apiBase + "/repos/\(enc(parts[0]))/\(enc(parts[1]))/\(isPR ? "pulls" : "issues")/\(number)")
+            guard !s(issue, "node_id").isEmpty, isPR || issue["pull_request"] == nil else { throw fail(String(localized: "Select an issue or pull request from this server.")) }
+            _ = try await graph(c, "mutation($input:AddProjectV2ItemByIdInput!){addProjectV2ItemById(input:$input){item{id}}}", ["input": ["projectId": detail.item.id, "contentId": s(issue, "node_id")]])
+        } else {
+            guard let split = url.path.range(of: "/-/issues/"), String(url.path[..<split.lowerBound]).trimmingCharacters(in: CharacterSet(charactersIn: "/")) == c.target.path, let number = Int(url.path[split.upperBound...]), number > 0, let field = detail.fields.first else { throw fail(String(localized: "Select an issue from this board's repository.")) }
+            let issue = try await object(c, repo(c) + "/issues/\(number)"), row = HubProjectRow(id: id(issue, "iid"), title: s(issue, "title"), body: "", url: issueURL, contentID: id(issue), statuses: [:]); var copy = detail; copy.rows.append(row); try await move(c, detail: copy, row: row, field: field, option: "__open")
+        }
     }
 }
