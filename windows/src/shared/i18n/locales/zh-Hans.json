@@ -905,7 +905,6 @@
  "{0} is splitting the changes by topic…": "{0} 正在按主题拆分更改…",
  "{0} is writing the commit message…": "{0} 正在编写提交信息…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} 在 {1} 中不是可执行文件（请检查 chmod +x）。",
- "{0} jobs waiting to be run manually — expand to run": "{0} 个作业等待手动运行 — 展开即可运行",
  "{0} modified files — stage and commit them.": "{0} 个已修改的文件 — 请暂存并提交。",
  "{0} more approvals needed.": "还需要 {0} 个批准。",
  "{0} not in the list": "不在列表中的 {0}",
@@ -1236,5 +1235,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "无法打开 {0}：它不在 Git 仓库中。",
  "Back to the repository screen": "返回仓库界面",
  "Graph lanes": "图形泳道",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖动，或在此横向滚动或按住 Shift 滚动滚轮，以查看更多泳道"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖动，或在此横向滚动或按住 Shift 滚动滚轮，以查看更多泳道",
+ "Runs": "运行记录",
+ "Jobs": "作业",
+ "Choose a job to read its log here.": "选择一个作业即可在此查看日志。",
+ "Reload log": "重新加载日志",
+ "Close log": "关闭日志",
+ "Select a run": "选择一次运行",
+ "Choose a run to see its jobs and read their logs.": "选择一次运行以查看其作业和日志。",
+ "Pipeline #{0}": "流水线 #{0}",
+ "Run #{0}": "运行 #{0}",
+ "{0} jobs waiting to be run manually": "{0} 个作业等待手动运行",
+ "Copy redacted log": "复制已脱敏的日志",
+ "Job log": "作业日志",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "日志预览最多显示 2 MB。请在浏览器中查看完整日志。"
 }

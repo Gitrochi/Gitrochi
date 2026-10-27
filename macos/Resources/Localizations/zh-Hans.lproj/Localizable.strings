@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "“%2$@”上的 %1$lld 个提交 — 最新的在最上方。压缩会将提交并入其正下方（更早）的提交。";
 "%lld conflicts — %lld chosen" = "%1$lld 处冲突 — 已选择 %2$lld 处";
 "%lld files" = "%1$lld 个文件";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld 个作业等待手动运行 — 展开即可运行";
 "%lld modified files — stage and commit them." = "%1$lld 个已修改的文件 — 请暂存并提交。";
 "%lld more approvals needed." = "还需要 %1$lld 个批准。";
 "'%@'  →  commit %@" = "“%1$@”  →  提交 %2$@";
@@ -1198,3 +1197,16 @@
 "Back to the repository screen (⌘[)" = "返回仓库界面 (⌘[)";
 "Back to the repository screen" = "返回仓库界面";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "拖动或在图上左右轻扫可横向滚动";
+"Runs" = "运行记录";
+"Jobs" = "作业";
+"Choose a job to read its log here." = "选择一个作业即可在此查看日志。";
+"Reload log" = "重新加载日志";
+"Close log" = "关闭日志";
+"Select a run" = "选择一次运行";
+"Choose a run to see its jobs and read their logs." = "选择一次运行以查看其作业和日志。";
+"Pipeline #%lld" = "流水线 #%1$lld";
+"Run #%lld" = "运行 #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld 个作业等待手动运行";
+"Copy redacted log" = "复制已脱敏的日志";
+"Job log" = "作业日志";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "日志预览最多显示 2 MB。请在浏览器中查看完整日志。";

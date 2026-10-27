@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "%1$lld คอมมิตบน '%2$@' — ใหม่สุดอยู่ด้านบน สควอชจะรวมคอมมิตเข้ากับคอมมิตที่อยู่ด้านล่างถัดไป (เก่ากว่า)";
 "%lld conflicts — %lld chosen" = "คอนฟลิกต์ %1$lld จุด — เลือกแล้ว %2$lld";
 "%lld files" = "%1$lld ไฟล์";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld จ็อบรอการรันแบบแมนนวล — ขยายเพื่อรัน";
 "%lld modified files — stage and commit them." = "ไฟล์ที่แก้ไข %1$lld ไฟล์ — สเตจและคอมมิตได้เลย";
 "%lld more approvals needed." = "ต้องได้รับการอนุมัติอีก %1$lld ครั้ง";
 "'%@'  →  commit %@" = "'%1$@'  →  คอมมิต %2$@";
@@ -1191,3 +1190,16 @@
 "Back to the repository screen (⌘[)" = "กลับไปที่หน้าจอที่เก็บ (⌘[)";
 "Back to the repository screen" = "กลับไปที่หน้าจอที่เก็บ";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "ลากหรือปัดด้านข้างบนกราฟเพื่อเลื่อนในแนวนอน";
+"Runs" = "รายการรัน";
+"Jobs" = "จ็อบ";
+"Choose a job to read its log here." = "เลือกจ็อบเพื่ออ่านล็อกที่นี่";
+"Reload log" = "โหลดล็อกใหม่";
+"Close log" = "ปิดล็อก";
+"Select a run" = "เลือกการรัน";
+"Choose a run to see its jobs and read their logs." = "เลือกการรันเพื่อดูจ็อบและอ่านล็อก";
+"Pipeline #%lld" = "ไปป์ไลน์ #%1$lld";
+"Run #%lld" = "การรัน #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld จ็อบรอการรันแบบแมนนวล";
+"Copy redacted log" = "คัดลอกล็อกที่ปิดข้อมูลลับแล้ว";
+"Job log" = "ล็อกของจ็อบ";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด";

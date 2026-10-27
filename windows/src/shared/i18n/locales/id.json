@@ -857,7 +857,6 @@
  "{0} is splitting the changes by topic…": "{0} sedang memecah perubahan berdasarkan topik…",
  "{0} is writing the commit message…": "{0} sedang menulis pesan commit…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} bukan file yang dapat dieksekusi di {1} (periksa chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "{0} job menunggu dijalankan manual — bentangkan untuk menjalankan",
  "{0} modified files — stage and commit them.": "{0} file diubah — lakukan stage dan commit.",
  "{0} more approvals needed.": "Perlu {0} persetujuan lagi.",
  "{0} not in the list": "{0} tidak ada di daftar",
@@ -1187,5 +1186,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Tidak dapat membuka {0}: tidak berada di dalam repositori Git.",
  "Back to the repository screen": "Kembali ke layar repositori",
  "Graph lanes": "Jalur grafik",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Seret, atau gulir ke samping atau dengan Shift+roda di sini, untuk melihat jalur lain"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Seret, atau gulir ke samping atau dengan Shift+roda di sini, untuk melihat jalur lain",
+ "Runs": "Run",
+ "Jobs": "Job",
+ "Choose a job to read its log here.": "Pilih job untuk membaca log-nya di sini.",
+ "Reload log": "Muat ulang log",
+ "Close log": "Tutup log",
+ "Select a run": "Pilih run",
+ "Choose a run to see its jobs and read their logs.": "Pilih run untuk melihat job dan log-nya.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Run #{0}",
+ "{0} jobs waiting to be run manually": "{0} job menunggu dijalankan manual",
+ "Copy redacted log": "Salin log yang disamarkan",
+ "Job log": "Log job",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap."
 }

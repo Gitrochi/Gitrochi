@@ -4,17 +4,16 @@ import {
   accounts,
   inboxPage,
   requestPage,
-  workspaceJobLog,
   type InboxItem,
   type ReviewAccess,
 } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { CollaborationInboxSheet } from "@/features/collaboration-inbox";
 import { AccountWorkPanel } from "@/features/account-work";
-import { CIPanel } from "@/features/ci-panel";
+import { CIPanel, CIRunDetail } from "@/features/ci-panel";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Spinner } from "@/shared/ui";
+import { Button, Empty, Spinner } from "@/shared/ui";
 import "./workspace-panels.css";
 
 export interface WorkspacePanelProps {
@@ -204,145 +203,57 @@ function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
     </Page>
   );
 }
-function JobLogPanel({ store }: WorkspacePanelProps) {
-  useObserve(store);
-  useObserve(store.ci);
-  useObserve(accounts);
-  const [job, setJob] = useState(0),
-    [body, setBody] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [truncated, setTruncated] = useState(false);
-  const generation = useRef(0),
-    key = identity(store);
-  const jobs = [
-    ...new Map(
-      [...store.ci.jobs.values()].flat().map((j) => [j.id, j]),
-    ).values(),
-  ];
-  useEffect(() => {
-    generation.current++;
-    setJob(0);
-    setBody("");
-    setError("");
-    setBusy(false);
-    setTruncated(false);
-    return () => {
-      generation.current++;
-    };
-  }, [key]);
-  const load = async () => {
-    const id = ++generation.current;
-    setBusy(true);
-    setError("");
-    setBody("");
-    try {
-      const c = await access(store),
-        result = await workspaceJobLog(c, job);
-      if (generation.current === id && c.stillCurrent?.()) {
-        setBody(result.body);
-        setTruncated(result.truncated);
-      }
-    } catch (e) {
-      if (generation.current === id) setError(message(e));
-    } finally {
-      if (generation.current === id) setBusy(false);
-    }
-  };
-  return (
-    <div className="workspace-card">
-      <h2>{t("Job log")}</h2>
-      <p className="muted">
-        {t(
-          "Expand a run above to load its jobs, then choose a job. Logs stay on this device.",
-        )}
-      </p>
-      <div className="row">
-        <select
-          aria-label={t("Job")}
-          value={job}
-          onChange={(e) => {
-            generation.current++;
-            setJob(Number(e.target.value));
-            setBody("");
-            setError("");
-            setBusy(false);
-            setTruncated(false);
-          }}
-        >
-          <option value={0}>{t("Choose a job")}</option>
-          {jobs.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.name} · #{j.id}
-            </option>
-          ))}
-        </select>
-        <Button disabled={!job || busy} onClick={() => void load()}>
-          {t("Load log")}
-        </Button>
-        {busy && <Spinner />}
-        <Button disabled={!body} onClick={() => store.copy(body)}>
-          {t("Copy redacted log")}
-        </Button>
-        {jobs.find((j) => j.id === job) && (
-          <Button
-            onClick={() => store.openUrl(jobs.find((j) => j.id === job)!.url)}
-          >
-            {t("Browser")}
-          </Button>
-        )}
-      </div>
-      {error && (
-        <p className="error-text" role="alert">
-          {error}
-        </p>
-      )}
-      {truncated && (
-        <p className="muted">
-          {t(
-            "Log preview is limited to 2 MB. Open the browser for the complete log.",
-          )}
-        </p>
-      )}
-      {body && (
-        <pre
-          className="selectable mono"
-          style={{
-            whiteSpace: "pre-wrap",
-            overflowWrap: "anywhere",
-            maxHeight: 440,
-            overflow: "auto",
-            fontSize: 12,
-          }}
-        >
-          {body}
-        </pre>
-      )}
-    </div>
-  );
-}
+/** Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page (macOS: ActionsWorkspacePanel) */
 export function ActionsWorkspacePanel({
   store,
   openSettings,
 }: WorkspacePanelProps) {
-  return (
-    <Page>
-      <div className="workspace-ci">
-        <CIPanel
-          store={store}
-          openSettings={
-            openSettings ??
-            (() =>
-              window.dispatchEvent(
-                new CustomEvent("gitrochi-open-settings", {
-                  detail: "accounts",
-                }),
-              ))
-          }
+  useObserve(store);
+  useObserve(store.ci);
+  const settingsOpener =
+    openSettings ??
+    (() =>
+      window.dispatchEvent(
+        new CustomEvent("gitrochi-open-settings", { detail: "accounts" }),
+      ));
+  // a CI badge may ask for a run in a repository without a remote; nothing can show it, so let go
+  useEffect(() => {
+    if (store.target || store.ciFocus === null) return;
+    store.ciFocus = null;
+    store.changed();
+  }, [store, store.target, store.ciFocus]);
+  if (!store.target)
+    return (
+      <div
+        className="col grow"
+        style={{ alignItems: "center", justifyContent: "center", gap: 12 }}
+      >
+        <Empty
+          title={t("No hosting remote")}
+          detail={t(
+            "Open a repository with a GitHub or GitLab remote to use this workspace.",
+          )}
         />
+        <Button onClick={settingsOpener}>{t("Connect account…")}</Button>
       </div>
-      <JobLogPanel store={store} />
-    </Page>
+    );
+  const run = store.ci.pipelines.find((p) => p.id === store.ciSelected);
+  return (
+    <div className="workspace-pr-page">
+      <div className="workspace-pr-list col">
+        <CIPanel store={store} openSettings={settingsOpener} />
+      </div>
+      <div className="workspace-pr-detail col">
+        {run ? (
+          <CIRunDetail store={store} pipeline={run} />
+        ) : (
+          <Empty
+            title={t("Select a run")}
+            detail={t("Choose a run to see its jobs and read their logs.")}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

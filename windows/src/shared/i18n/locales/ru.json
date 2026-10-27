@@ -903,7 +903,6 @@
  "{0} is splitting the changes by topic…": "{0} разбивает изменения по темам…",
  "{0} is writing the commit message…": "{0} пишет сообщение коммита…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} в {1} не является исполняемым файлом (проверьте chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Заданий, ожидающих ручного запуска: {0} — разверните, чтобы запустить",
  "{0} modified files — stage and commit them.": "Изменённых файлов: {0} — индексируйте и закоммитьте их.",
  "{0} more approvals needed.": "Требуется ещё одобрений: {0}.",
  "{0} not in the list": "{0} нет в списке",
@@ -1234,5 +1233,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Не удалось открыть {0}: это не внутри репозитория Git.",
  "Back to the repository screen": "Вернуться к экрану репозитория",
  "Graph lanes": "Дорожки графа",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Перетащите или прокрутите здесь вбок или с Shift+колесом, чтобы увидеть другие дорожки"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Перетащите или прокрутите здесь вбок или с Shift+колесом, чтобы увидеть другие дорожки",
+ "Runs": "Запуски",
+ "Jobs": "Задания",
+ "Choose a job to read its log here.": "Выберите задание, чтобы прочитать здесь его журнал.",
+ "Reload log": "Перезагрузить журнал",
+ "Close log": "Закрыть журнал",
+ "Select a run": "Выберите запуск",
+ "Choose a run to see its jobs and read their logs.": "Выберите запуск, чтобы увидеть его задания и журналы.",
+ "Pipeline #{0}": "Конвейер #{0}",
+ "Run #{0}": "Запуск #{0}",
+ "{0} jobs waiting to be run manually": "Заданий, ожидающих ручного запуска: {0}",
+ "Copy redacted log": "Копировать журнал со скрытыми секретами",
+ "Job log": "Журнал задания",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере."
 }

@@ -887,7 +887,6 @@
  "{0} is splitting the changes by topic…": "{0} rozděluje změny podle témat…",
  "{0} is writing the commit message…": "{0} píše zprávu commitu…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} není v distribuci {1} spustitelný soubor (zkontrolujte chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Úlohy čekající na ruční spuštění: {0} — rozbalením je spustíte",
  "{0} modified files — stage and commit them.": "Změněné soubory: {0} — připravte je a commitněte.",
  "{0} more approvals needed.": "Zbývající potřebná schválení: {0}.",
  "{0} not in the list": "{0} není v seznamu",
@@ -1216,5 +1215,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} nelze otevřít: není uvnitř repozitáře Git.",
  "Back to the repository screen": "Zpět na obrazovku repozitáře",
  "Graph lanes": "Pruhy grafu",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Přetažením nebo posunem do strany či Shift+kolečkem zde zobrazíte další pruhy"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Přetažením nebo posunem do strany či Shift+kolečkem zde zobrazíte další pruhy",
+ "Runs": "Běhy",
+ "Jobs": "Úlohy",
+ "Choose a job to read its log here.": "Vyberte úlohu a její log se zobrazí zde.",
+ "Reload log": "Znovu načíst log",
+ "Close log": "Zavřít log",
+ "Select a run": "Vyberte běh",
+ "Choose a run to see its jobs and read their logs.": "Vyberte běh a zobrazte jeho úlohy a logy.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Běh #{0}",
+ "{0} jobs waiting to be run manually": "Úlohy čekající na ruční spuštění: {0}",
+ "Copy redacted log": "Kopírovat log se skrytými citlivými údaji",
+ "Job log": "Log úlohy",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči."
 }

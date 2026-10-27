@@ -894,7 +894,6 @@
  "{0} is splitting the changes by topic…": "{0} değişiklikleri konulara göre bölüyor…",
  "{0} is writing the commit message…": "{0} commit mesajını yazıyor…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0}, {1} içinde çalıştırılabilir bir dosya değil (chmod +x durumunu kontrol edin).",
- "{0} jobs waiting to be run manually — expand to run": "Elle çalıştırılmayı bekleyen {0} iş — çalıştırmak için genişletin",
  "{0} modified files — stage and commit them.": "Değiştirilmiş {0} dosya var — hazırlayıp commit edin.",
  "{0} more approvals needed.": "{0} onay daha gerekiyor.",
  "{0} not in the list": "{0} listede yok",
@@ -1223,5 +1222,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} açılamadı: bir Git deposunun içinde değil.",
  "Back to the repository screen": "Depo ekranına dön",
  "Graph lanes": "Grafik şeritleri",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Daha fazla şerit görmek için sürükleyin ya da burada yana veya Shift+tekerlekle kaydırın"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Daha fazla şerit görmek için sürükleyin ya da burada yana veya Shift+tekerlekle kaydırın",
+ "Runs": "Çalıştırmalar",
+ "Jobs": "İşler",
+ "Choose a job to read its log here.": "Günlüğünü burada okumak için bir iş seçin.",
+ "Reload log": "Günlüğü yeniden yükle",
+ "Close log": "Günlüğü kapat",
+ "Select a run": "Bir çalıştırma seçin",
+ "Choose a run to see its jobs and read their logs.": "İşlerini görmek ve günlüklerini okumak için bir çalıştırma seçin.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Çalıştırma #{0}",
+ "{0} jobs waiting to be run manually": "Elle çalıştırılmayı bekleyen {0} iş",
+ "Copy redacted log": "Gizlenmiş günlüğü kopyala",
+ "Job log": "İş günlüğü",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın."
 }

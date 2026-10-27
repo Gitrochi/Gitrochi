@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "「%2$@」上的 %1$lld 個提交 — 最新的在最上方。壓縮會將提交併入其正下方（較舊）的提交。";
 "%lld conflicts — %lld chosen" = "%1$lld 處衝突 — 已選擇 %2$lld 處";
 "%lld files" = "%1$lld 個檔案";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld 個作業等待手動執行 — 展開以執行";
 "%lld modified files — stage and commit them." = "%1$lld 個已修改的檔案 — 暫存後即可提交。";
 "%lld more approvals needed." = "還需要 %1$lld 個核准。";
 "'%@'  →  commit %@" = "「%1$@」  →  提交 %2$@";
@@ -1197,3 +1196,16 @@
 "Back to the repository screen (⌘[)" = "返回儲存庫畫面 (⌘[)";
 "Back to the repository screen" = "返回儲存庫畫面";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "拖曳或在圖上左右滑動可橫向捲動";
+"Runs" = "執行記錄";
+"Jobs" = "作業";
+"Choose a job to read its log here." = "選擇一個作業即可在此檢視記錄。";
+"Reload log" = "重新載入記錄";
+"Close log" = "關閉記錄";
+"Select a run" = "選擇一次執行";
+"Choose a run to see its jobs and read their logs." = "選擇一次執行以檢視其作業與記錄。";
+"Pipeline #%lld" = "管線 #%1$lld";
+"Run #%lld" = "執行 #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld 個作業等待手動執行";
+"Copy redacted log" = "複製已遮蔽敏感資訊的記錄";
+"Job log" = "作業記錄";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。";

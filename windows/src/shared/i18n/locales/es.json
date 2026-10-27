@@ -883,7 +883,6 @@
  "{0} is splitting the changes by topic…": "{0} está dividiendo los cambios por tema…",
  "{0} is writing the commit message…": "{0} está redactando el mensaje de commit…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} no es un archivo ejecutable en {1} (comprueba chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Trabajos en espera de ejecución manual: {0} — expande para ejecutarlos",
  "{0} modified files — stage and commit them.": "Archivos modificados: {0} — agrégalos al stage y haz commit.",
  "{0} more approvals needed.": "Aprobaciones pendientes: {0}.",
  "{0} not in the list": "{0} no está en la lista",
@@ -1213,5 +1212,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "No se pudo abrir {0}: no está dentro de un repositorio Git.",
  "Back to the repository screen": "Volver a la pantalla del repositorio",
  "Graph lanes": "Carriles del grafo",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Arrastra o desplázate de lado o con Mayús+rueda aquí para ver más carriles"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Arrastra o desplázate de lado o con Mayús+rueda aquí para ver más carriles",
+ "Runs": "Ejecuciones",
+ "Jobs": "Trabajos",
+ "Choose a job to read its log here.": "Elige un trabajo para leer su registro aquí.",
+ "Reload log": "Volver a cargar el registro",
+ "Close log": "Cerrar registro",
+ "Select a run": "Selecciona una ejecución",
+ "Choose a run to see its jobs and read their logs.": "Elige una ejecución para ver sus trabajos y leer sus registros.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Ejecución #{0}",
+ "{0} jobs waiting to be run manually": "Trabajos en espera de ejecución manual: {0}",
+ "Copy redacted log": "Copiar registro sin datos sensibles",
+ "Job log": "Registro del trabajo",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "La vista previa del registro se limita a 2 MB. Abre el navegador para ver el registro completo."
 }

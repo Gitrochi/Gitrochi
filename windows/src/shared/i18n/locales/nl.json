@@ -853,7 +853,6 @@
  "{0} is splitting the changes by topic…": "{0} splitst de wijzigingen op per onderwerp…",
  "{0} is writing the commit message…": "{0} schrijft het commitbericht…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} is geen uitvoerbaar bestand in {1} (controleer chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Jobs die wachten op handmatige uitvoering: {0} — uitvouwen om uit te voeren",
  "{0} modified files — stage and commit them.": "Gewijzigde bestanden: {0} — stage en commit ze.",
  "{0} more approvals needed.": "Nog {0} goedkeuring(en) nodig.",
  "{0} not in the list": "{0} niet in de lijst",
@@ -1187,5 +1186,18 @@
  "Repository": "Repository",
  "Back to the repository screen": "Terug naar het repositoryscherm",
  "Graph lanes": "Grafiekbanen",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Sleep, of scrol hier zijwaarts of met Shift+scrollwiel, om meer banen te zien"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Sleep, of scrol hier zijwaarts of met Shift+scrollwiel, om meer banen te zien",
+ "Runs": "Runs",
+ "Jobs": "Jobs",
+ "Choose a job to read its log here.": "Kies een job om hier het log te lezen.",
+ "Reload log": "Log opnieuw laden",
+ "Close log": "Log sluiten",
+ "Select a run": "Selecteer een run",
+ "Choose a run to see its jobs and read their logs.": "Kies een run om de jobs te zien en de logs te lezen.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Run #{0}",
+ "{0} jobs waiting to be run manually": "Jobs die wachten op handmatige uitvoering: {0}",
+ "Copy redacted log": "Gemaskeerd log kopiëren",
+ "Job log": "Joblog",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "De logvoorvertoning is beperkt tot 2 MB. Open de browser voor het volledige log."
 }

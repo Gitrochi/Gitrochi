@@ -49,6 +49,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     Object.defineProperty(store, "hostingAccount", { get: () => profile });
     store.copy = (text) => { copies = text; };
     store.ci.load = async () => {};
+    store.ci.loadJobs = async () => {};
     store.ci.jobs.set(1, [{ id: 9, name: "fixture build", status: "success", stage: "", url: "https://github.com/fixture/repo/actions/jobs/9", allowFailure: false, duration: 1 }]);
     ipc.http = async (method, url) => {
       if (method !== "GET") writes++;
@@ -153,13 +154,18 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.navigate("compare"); store.navigate("issues"); await pause();
     check(!back(), "The back button must not show when another page opened Issues");
     reset();
+    store.ci.pipelines = [{ id: 1, number: 12, name: "CI", title: "Fixture run", ref: "topic", sha: "a".repeat(40), status: "success", url: "https://github.com/fixture/repo/actions/runs/1", created: null, event: "push", actor: "fixture" }];
     await mount(<ActionsWorkspacePanel store={store} />);
     check(!host.querySelector("h1"), "Actions must not show a large page title");
-    await change(host.querySelector('select[aria-label="' + t("Job") + '"]')!, "9");
-    await click("Load log");
-    check(host.querySelector("pre")?.textContent?.includes("build passed"), "Job log preview missing");
-    await click("Copy redacted log");
+    check(host.textContent?.includes(t("Select a run")), "Actions must ask for a run before showing one");
+    // a row selects the run; a job shows its log beside the jobs
+    host.querySelector<HTMLElement>('.ci-run[data-pipeline="1"]')!.click(); await pause(); await pause();
+    check(store.ciSelected === 1 && host.querySelector(".ci-run-detail")?.textContent?.includes("Fixture run"), "Selecting a run did not show it");
+    host.querySelector<HTMLElement>(".ci-job")!.click(); await pause(); await pause(); await pause();
+    check(host.querySelector(".ci-log-text")?.textContent?.includes("build passed"), "Job log preview missing");
+    host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
+    store.ciSelected = null;
     return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, releases section and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];

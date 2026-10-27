@@ -83,14 +83,6 @@
 .workspace-page label > .input {
   width: 100%;
 }
-.workspace-ci {
-  flex: 1;
-  min-height: 420px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-}
 .workspace-page .collaboration-inbox .inbox-columns {
   flex: 1;
   min-height: 380px;

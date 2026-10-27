@@ -16,6 +16,7 @@ extension RepoStore {
 
     func resetCI() {
         ciFocus = nil
+        ciSelected = nil
         ciPipelines = []
         ciJobs = [:]
         ciDeployments = [:]
@@ -104,6 +105,19 @@ extension RepoStore {
             // the badge came from the commit's SHA; the list may be filtered to another branch
             if ciCurrentBranchOnly, pipeline.ref != ciCurrentRef { ciCurrentBranchOnly = false } else { Task { await loadCI() } }
         }
+    }
+
+    /// GitLab runs have no title; the local commit's subject stands in
+    func ciTitle(_ p: CIPipeline) -> String {
+        if !p.title.isEmpty { return p.title }
+        if let i = commitIndex[p.sha] { return entries[i].commit.subject }
+        return p.name.isEmpty ? String(p.sha.prefix(8)) : p.name
+    }
+
+    /// Shows the run on the right of the Actions page and reads its jobs
+    func selectRun(_ p: CIPipeline) {
+        ciSelected = p.id
+        Task { await loadJobs(p) }
     }
 
     func loadJobs(_ p: CIPipeline, silent: Bool = false) async {

@@ -83,14 +83,23 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.emit(); return true;
   }
 
-  /** The run the Actions page should expand and show next, set by a CI badge in the graph (macOS: ciFocus) */
+  /** The run the Actions page should select and show next, set by a CI badge in the graph (macOS: ciFocus) */
   ciFocus: number | null = null;
+  /** The run shown on the right of the Actions page (macOS: ciSelected) */
+  ciSelected: number | null = null;
 
-  /** Opens the Actions page on a run; the page expands it, loads its jobs and lets go of the focus */
+  /** Opens the Actions page on a run; the page selects it, loads its jobs and lets go of the focus */
   openCI(pipeline: CIPipeline) {
     if (!this.navigate("actions")) return;
     this.ciFocus = pipeline.id;
     this.emit();
+  }
+
+  /** Shows the run on the right of the Actions page and reads its jobs */
+  selectRun(pipeline: CIPipeline) {
+    this.ciSelected = pipeline.id;
+    this.emit();
+    void this.ci.loadJobs(pipeline);
   }
 
   /** A graph selection made from the Pull requests page (keyboard, routes) belongs to the repository screen */
@@ -464,6 +473,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.destination = "home";
     this.cameFromRepository = false;
     this.ciFocus = null;
+    this.ciSelected = null;
     this.showSearchBar = false;
     this.cancelPushReview();
     this.cancelChangeQuestion();

@@ -888,7 +888,6 @@
  "{0} is splitting the changes by topic…": "{0} dzieli zmiany według tematu…",
  "{0} is writing the commit message…": "{0} pisze komunikat commita…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} nie jest plikiem wykonywalnym w {1} (sprawdź chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Zadania oczekujące na ręczne uruchomienie: {0} — rozwiń, aby uruchomić",
  "{0} modified files — stage and commit them.": "Zmodyfikowane pliki: {0} — przygotuj je i zatwierdź.",
  "{0} more approvals needed.": "Potrzebne kolejne akceptacje: {0}.",
  "{0} not in the list": "{0} nie ma na liście",
@@ -1217,5 +1216,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Nie można otworzyć {0}: nie znajduje się w repozytorium Git.",
  "Back to the repository screen": "Wróć do ekranu repozytorium",
  "Graph lanes": "Tory grafu",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Przeciągnij albo przewiń tutaj w bok lub z Shift+kółkiem, aby zobaczyć więcej torów"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Przeciągnij albo przewiń tutaj w bok lub z Shift+kółkiem, aby zobaczyć więcej torów",
+ "Runs": "Uruchomienia",
+ "Jobs": "Zadania",
+ "Choose a job to read its log here.": "Wybierz zadanie, aby przeczytać tu jego log.",
+ "Reload log": "Wczytaj log ponownie",
+ "Close log": "Zamknij log",
+ "Select a run": "Wybierz uruchomienie",
+ "Choose a run to see its jobs and read their logs.": "Wybierz uruchomienie, aby zobaczyć jego zadania i logi.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Uruchomienie #{0}",
+ "{0} jobs waiting to be run manually": "Zadania oczekujące na ręczne uruchomienie: {0}",
+ "Copy redacted log": "Kopiuj log z ukrytymi danymi",
+ "Job log": "Log zadania",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Podgląd logu jest ograniczony do 2 MB. Pełny log otwórz w przeglądarce."
 }

@@ -905,7 +905,6 @@
  "{0} is splitting the changes by topic…": "{0} 正在依主題拆分變更…",
  "{0} is writing the commit message…": "{0} 正在撰寫提交訊息…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} 在 {1} 中不是可執行檔（請檢查 chmod +x）。",
- "{0} jobs waiting to be run manually — expand to run": "{0} 個作業等待手動執行 — 展開以執行",
  "{0} modified files — stage and commit them.": "{0} 個已修改的檔案 — 暫存後即可提交。",
  "{0} more approvals needed.": "還需要 {0} 個核准。",
  "{0} not in the list": "不在清單中的 {0}",
@@ -1236,5 +1235,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "無法開啟 {0}：它不在 Git 儲存庫中。",
  "Back to the repository screen": "返回儲存庫畫面",
  "Graph lanes": "圖形泳道",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖曳，或在此橫向捲動或按住 Shift 捲動滾輪，以查看更多泳道"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "拖曳，或在此橫向捲動或按住 Shift 捲動滾輪，以查看更多泳道",
+ "Runs": "執行記錄",
+ "Jobs": "作業",
+ "Choose a job to read its log here.": "選擇一個作業即可在此檢視記錄。",
+ "Reload log": "重新載入記錄",
+ "Close log": "關閉記錄",
+ "Select a run": "選擇一次執行",
+ "Choose a run to see its jobs and read their logs.": "選擇一次執行以檢視其作業與記錄。",
+ "Pipeline #{0}": "管線 #{0}",
+ "Run #{0}": "執行 #{0}",
+ "{0} jobs waiting to be run manually": "{0} 個作業等待手動執行",
+ "Copy redacted log": "複製已遮蔽敏感資訊的記錄",
+ "Job log": "作業記錄",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "記錄預覽最多顯示 2 MB。請在瀏覽器中檢視完整記錄。"
 }

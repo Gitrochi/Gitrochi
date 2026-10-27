@@ -202,7 +202,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "'%2$@'의 커밋 %1$lld개 — 위가 최신입니다. 합치기는 바로 아래(이전) 커밋에 합칩니다.";
 "%lld conflicts — %lld chosen" = "충돌 %1$lld곳 — %2$lld곳 골랐습니다";
 "%lld files" = "%1$lld개 파일";
-"%lld jobs waiting to be run manually — expand to run" = "수동 실행을 기다리는 작업 %1$lld개 — 펼쳐서 실행";
 "%lld modified files — stage and commit them." = "수정한 파일 %1$lld개 — 스테이지하고 커밋합니다.";
 "%lld more approvals needed." = "승인 %1$lld명이 더 필요합니다.";
 "'%@'  →  commit %@" = "'%1$@'  →  커밋 %2$@";
@@ -1585,7 +1584,6 @@
 "Check out detached" = "분리된 HEAD로 체크아웃";
 "Choose a commit" = "커밋 선택";
 "Choose a file" = "파일 선택";
-"Choose a job" = "작업 선택";
 "Choose an account and server" = "계정과 서버 선택";
 "Choose the oldest commit to include. Review actions and execution order before starting." = "포함할 가장 오래된 커밋을 선택하세요. 시작 전 각 작업과 실행 순서를 검토합니다.";
 "Clean up commit history" = "커밋 이력 정리";
@@ -1615,7 +1613,6 @@
 "Enter a full issue URL." = "이슈의 전체 주소를 입력하세요.";
 "Enter a valid branch, tag or commit." = "올바른 브랜치·태그·커밋을 입력하세요.";
 "Enter an issue URL from the connected server." = "연결된 서버의 이슈 주소를 입력하세요.";
-"Expand a run above to load its jobs, then choose a job. Logs stay on this device." = "위에서 실행 항목을 펼쳐 작업을 불러온 뒤 선택하세요. 로그는 이 기기에서만 확인합니다.";
 "External download blocked; inspect the release page." = "외부 다운로드가 차단되었습니다. 릴리스 페이지에서 확인하세요.";
 "File content" = "파일 내용";
 "File list truncated. Narrow the repository or use another tool for the remaining files." = "파일 목록이 표시 한도에 도달했습니다. 나머지 파일은 다른 도구로 확인하세요.";
@@ -1641,9 +1638,7 @@
 "Issue URL" = "이슈 주소";
 "Issue boards" = "이슈 보드";
 "Issues" = "이슈";
-"Job" = "작업";
 "Job log" = "작업 로그";
-"Load log" = "로그 불러오기";
 "Load revision" = "리비전 불러오기";
 "Local" = "로컬";
 "Locate Git…" = "Git 위치 지정…";
@@ -2074,3 +2069,13 @@
 "Back to the repository screen (⌘[)" = "저장소 화면으로 돌아가기 (⌘[)";
 "Back to the repository screen" = "저장소 화면으로 돌아가기";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "끌거나 그래프 위에서 옆으로 밀면 그래프가 가로로 움직입니다";
+"Runs" = "실행 목록";
+"Jobs" = "작업";
+"Choose a job to read its log here." = "작업을 고르면 여기에서 로그를 볼 수 있습니다.";
+"Reload log" = "로그 다시 불러오기";
+"Close log" = "로그 닫기";
+"Select a run" = "실행을 선택하세요";
+"Choose a run to see its jobs and read their logs." = "실행을 고르면 작업과 로그를 볼 수 있습니다.";
+"Pipeline #%lld" = "파이프라인 #%1$lld";
+"Run #%lld" = "실행 #%1$lld";
+"%lld jobs waiting to be run manually" = "수동 실행을 기다리는 작업 %1$lld개";

@@ -21,7 +21,7 @@ private struct WorkspaceCard<Content: View>: View {
             RoundedRectangle(cornerRadius: 10).stroke(.quaternary))
     }
 }
-@MainActor private func workspaceAccess(_ store: RepoStore) -> ReviewAccess? {
+@MainActor func workspaceAccess(_ store: RepoStore) -> ReviewAccess? {
     guard var c = store.collaborationAccess else { return nil }
     let url = store.url
     let context = store.collaboration.contextID
@@ -185,96 +185,30 @@ struct IssuesWorkspacePanel: View {
         }
     }
 }
-private struct WorkspaceJobLogPanel: View {
-    @Environment(RepoStore.self) private var store
-    @ViewState private var job = 0
-    @ViewState private var bodyText = ""
-    @ViewState private var error: String?
-    @ViewState private var busy = false
-    @ViewState private var truncated = false
-    @ViewState private var generation = UUID()
-    private var jobs: [CIJob] {
-        Dictionary(
-            store.ciJobs.values.flatMap { $0 }.map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
-        ).values.sorted { $0.id > $1.id }
-    }
-    private var key: String {
-        "\(store.url?.path ?? "")|\(store.collaboration.contextID)|\(AccountStore.shared.revision)|\(store.hostingAccount?.id ?? "")"
-    }
-    var body: some View {
-        WorkspaceCard {
-            Text("Job log").font(.headline)
-            Text(
-                "Expand a run above to load its jobs, then choose a job. Logs stay on this device."
-            )
-            .font(.caption).foregroundStyle(.secondary)
-            HStack {
-                Picker("Job", selection: $job) {
-                    Text("Choose a job").tag(0)
-                    ForEach(jobs) { j in Text("\(j.name) · #\(j.id)").tag(j.id) }
-                }.frame(maxWidth: 350)
-                Button("Load log") { Task { await load() } }.disabled(job == 0 || busy)
-                if busy { ProgressView().controlSize(.small) }
-                Button("Copy redacted log") {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(bodyText, forType: .string)
-                }.disabled(bodyText.isEmpty)
-                if let selected = jobs.first(where: { $0.id == job }),
-                    let url = URL(string: selected.url)
-                {
-                    Link("Browser", destination: url)
-                }
-            }
-            if let error {
-                Text(error).foregroundStyle(.red).font(.caption).textSelection(.enabled)
-            }
-            if truncated {
-                Text("Log preview is limited to 2 MB. Open the browser for the complete log.").font(
-                    .caption
-                ).foregroundStyle(.secondary)
-            }
-            if !bodyText.isEmpty {
-                ScrollView([.vertical, .horizontal]) {
-                    Text(verbatim: bodyText).font(.caption.monospaced()).textSelection(.enabled)
-                        .frame(
-                            maxWidth: .infinity, alignment: .leading)
-                }.frame(minHeight: 180, maxHeight: 440)
-            }
-        }.onChange(of: job) { _, _ in reset() }.onChange(of: key) { _, _ in
-            job = 0
-            reset()
-        }.onDisappear { generation = UUID() }
-    }
-    private func reset() {
-        generation = UUID()
-        bodyText = ""
-        error = nil
-        busy = false
-        truncated = false
-    }
-    private func load() async {
-        guard let c = workspaceAccess(store) else { return }
-        let id = UUID()
-        generation = id
-        busy = true
-        bodyText = ""
-        error = nil
-        defer { if generation == id { busy = false } }
-        do {
-            let result = try await WorkspaceCILog.load(c, job: job)
-            guard generation == id, c.isCurrent?() != false else { return }
-            bodyText = result.body
-            truncated = result.truncated
-        } catch { if generation == id { self.error = error.localizedDescription } }
-    }
-}
+/// Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page
 struct ActionsWorkspacePanel: View {
     @Environment(RepoStore.self) private var store
+    @Environment(\.openSettings) private var openSettings
     var body: some View {
-        WorkspacePage {
-            CIPanel().frame(minHeight: 350, idealHeight: 450, maxHeight: 600)
-            WorkspaceJobLogPanel()
+        if store.target != nil {
+            AdaptiveWorkbenchSplit(listWidth: 300) {
+                CIPanel().background(Color(nsColor: .windowBackgroundColor))
+            } detail: {
+                Group {
+                    if let p = store.ciPipelines.first(where: { $0.id == store.ciSelected }) {
+                        CIRunDetailView(pipeline: p)
+                    } else {
+                        ContentUnavailableView("Select a run", systemImage: "bolt.horizontal.circle",
+                                               description: Text("Choose a run to see its jobs and read their logs."))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        } else {
+            VStack(spacing: 14) {
+                ContentUnavailableView("No hosting remote", systemImage: "bolt.horizontal.circle", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
+                Button("Connect account…") { openSettings() }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }

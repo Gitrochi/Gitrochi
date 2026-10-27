@@ -73,7 +73,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "Commity ve větvi '%2$@': %1$lld — nejnovější nahoře. Squash spojí commit s commitem přímo pod ním (starším).";
 "%lld conflicts — %lld chosen" = "Konflikty: %1$lld — vyřešeno: %2$lld";
 "%lld files" = "Soubory: %1$lld";
-"%lld jobs waiting to be run manually — expand to run" = "Úlohy čekající na ruční spuštění: %1$lld — rozbalením je spustíte";
 "%lld modified files — stage and commit them." = "Změněné soubory: %1$lld — připravte je a commitněte.";
 "%lld more approvals needed." = "Zbývající potřebná schválení: %1$lld.";
 "'%@' is already in '%@'" = "'%1$@' už je součástí '%2$@'";
@@ -1175,3 +1174,16 @@
 "Back to the repository screen (⌘[)" = "Zpět na obrazovku repozitáře (⌘[)";
 "Back to the repository screen" = "Zpět na obrazovku repozitáře";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Přetáhněte nebo přejeďte do strany nad grafem pro vodorovné posouvání";
+"Runs" = "Běhy";
+"Jobs" = "Úlohy";
+"Choose a job to read its log here." = "Vyberte úlohu a její log se zobrazí zde.";
+"Reload log" = "Znovu načíst log";
+"Close log" = "Zavřít log";
+"Select a run" = "Vyberte běh";
+"Choose a run to see its jobs and read their logs." = "Vyberte běh a zobrazte jeho úlohy a logy.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Běh #%1$lld";
+"%lld jobs waiting to be run manually" = "Úlohy čekající na ruční spuštění: %1$lld";
+"Copy redacted log" = "Kopírovat log se skrytými citlivými údaji";
+"Job log" = "Log úlohy";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Náhled logu je omezen na 2 MB. Úplný log otevřete v prohlížeči.";

@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "'%2$@' のコミット %1$lld 件 — 上が最新です。スカッシュすると、そのコミットをすぐ下 (古い方) のコミットにまとめます。";
 "%lld conflicts — %lld chosen" = "競合 %1$lld か所 — %2$lld か所を選択済み";
 "%lld files" = "%1$lld 個のファイル";
-"%lld jobs waiting to be run manually — expand to run" = "手動実行を待っているジョブが %1$lld 件あります — 展開して実行";
 "%lld modified files — stage and commit them." = "変更されたファイルが %1$lld 個あります — ステージしてコミットしてください。";
 "%lld more approvals needed." = "あと %1$lld 件の承認が必要です。";
 "'%@'  →  commit %@" = "'%1$@'  →  コミット %2$@";
@@ -1196,3 +1195,16 @@
 "Back to the repository screen (⌘[)" = "リポジトリ画面に戻る (⌘[)";
 "Back to the repository screen" = "リポジトリ画面に戻る";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "ドラッグするか、グラフの上で横にスワイプすると横にスクロールします";
+"Runs" = "実行一覧";
+"Jobs" = "ジョブ";
+"Choose a job to read its log here." = "ジョブを選ぶと、ここにログが表示されます。";
+"Reload log" = "ログを再読み込み";
+"Close log" = "ログを閉じる";
+"Select a run" = "実行を選択";
+"Choose a run to see its jobs and read their logs." = "実行を選ぶと、ジョブとログを確認できます。";
+"Pipeline #%lld" = "パイプライン #%1$lld";
+"Run #%lld" = "実行 #%1$lld";
+"%lld jobs waiting to be run manually" = "手動実行を待っているジョブが %1$lld 件あります";
+"Copy redacted log" = "秘密情報を伏せたログをコピー";
+"Job log" = "ジョブのログ";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。";

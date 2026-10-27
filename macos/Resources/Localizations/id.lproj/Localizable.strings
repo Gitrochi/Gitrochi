@@ -73,7 +73,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "%1$lld commit di '%2$@' — terbaru di atas. Squash menggabungkan commit ke commit tepat di bawahnya (lebih lama).";
 "%lld conflicts — %lld chosen" = "%1$lld konflik — %2$lld dipilih";
 "%lld files" = "%1$lld file";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld job menunggu dijalankan manual — bentangkan untuk menjalankan";
 "%lld modified files — stage and commit them." = "%1$lld file diubah — lakukan stage dan commit.";
 "%lld more approvals needed." = "Perlu %1$lld persetujuan lagi.";
 "'%@' is already in '%@'" = "'%1$@' sudah ada di '%2$@'";
@@ -1146,3 +1145,16 @@
 "Back to the repository screen (⌘[)" = "Kembali ke layar repositori (⌘[)";
 "Back to the repository screen" = "Kembali ke layar repositori";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Seret atau usap ke samping di atas grafik untuk menggulirnya ke samping";
+"Runs" = "Run";
+"Jobs" = "Job";
+"Choose a job to read its log here." = "Pilih job untuk membaca log-nya di sini.";
+"Reload log" = "Muat ulang log";
+"Close log" = "Tutup log";
+"Select a run" = "Pilih run";
+"Choose a run to see its jobs and read their logs." = "Pilih run untuk melihat job dan log-nya.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Run #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld job menunggu dijalankan manual";
+"Copy redacted log" = "Salin log yang disamarkan";
+"Job log" = "Log job";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Pratinjau log dibatasi 2 MB. Buka browser untuk log lengkap.";

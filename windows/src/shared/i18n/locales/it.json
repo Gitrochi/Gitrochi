@@ -880,7 +880,6 @@
  "{0} is splitting the changes by topic…": "{0} sta suddividendo le modifiche per argomento…",
  "{0} is writing the commit message…": "{0} sta scrivendo il messaggio di commit…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} non è un file eseguibile in {1} (controlla chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "Job in attesa di esecuzione manuale: {0} — espandi per eseguirli",
  "{0} modified files — stage and commit them.": "File modificati: {0} — mettili in stage ed esegui il commit.",
  "{0} more approvals needed.": "Approvazioni ancora necessarie: {0}.",
  "{0} not in the list": "{0} non presente nell'elenco",
@@ -1211,5 +1210,18 @@
  "Repository": "Repository",
  "Back to the repository screen": "Torna alla schermata del repository",
  "Graph lanes": "Corsie del grafo",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Trascina, o scorri lateralmente o con Maiusc+rotellina qui, per vedere altre corsie"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Trascina, o scorri lateralmente o con Maiusc+rotellina qui, per vedere altre corsie",
+ "Runs": "Esecuzioni",
+ "Jobs": "Job",
+ "Choose a job to read its log here.": "Scegli un job per leggerne il log qui.",
+ "Reload log": "Ricarica log",
+ "Close log": "Chiudi log",
+ "Select a run": "Seleziona un'esecuzione",
+ "Choose a run to see its jobs and read their logs.": "Scegli un'esecuzione per vederne i job e leggerne i log.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Esecuzione #{0}",
+ "{0} jobs waiting to be run manually": "Job in attesa di esecuzione manuale: {0}",
+ "Copy redacted log": "Copia log oscurato",
+ "Job log": "Log del job",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "L'anteprima del log è limitata a 2 MB. Apri il browser per il log completo."
 }

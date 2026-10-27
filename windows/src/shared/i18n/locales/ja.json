@@ -904,7 +904,6 @@
  "{0} is splitting the changes by topic…": "{0} が変更をトピックごとに分割しています…",
  "{0} is writing the commit message…": "{0} がコミットメッセージを作成しています…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} は {1} 内の実行可能ファイルではありません (chmod +x を確認してください)。",
- "{0} jobs waiting to be run manually — expand to run": "手動実行を待っているジョブが {0} 件あります — 展開して実行",
  "{0} modified files — stage and commit them.": "変更されたファイルが {0} 個あります — ステージしてコミットしてください。",
  "{0} more approvals needed.": "あと {0} 件の承認が必要です。",
  "{0} not in the list": "一覧にない {0}",
@@ -1235,5 +1234,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} を開けませんでした: Git リポジトリの中にありません。",
  "Back to the repository screen": "リポジトリ画面に戻る",
  "Graph lanes": "グラフのレーン",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ドラッグするか、ここで横スクロールまたは Shift+ホイールで他のレーンを表示します"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ドラッグするか、ここで横スクロールまたは Shift+ホイールで他のレーンを表示します",
+ "Runs": "実行一覧",
+ "Jobs": "ジョブ",
+ "Choose a job to read its log here.": "ジョブを選ぶと、ここにログが表示されます。",
+ "Reload log": "ログを再読み込み",
+ "Close log": "ログを閉じる",
+ "Select a run": "実行を選択",
+ "Choose a run to see its jobs and read their logs.": "実行を選ぶと、ジョブとログを確認できます。",
+ "Pipeline #{0}": "パイプライン #{0}",
+ "Run #{0}": "実行 #{0}",
+ "{0} jobs waiting to be run manually": "手動実行を待っているジョブが {0} 件あります",
+ "Copy redacted log": "秘密情報を伏せたログをコピー",
+ "Job log": "ジョブのログ",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。"
 }

@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "Коммитов в «%2$@»: %1$lld — новые сверху. «Объединить» присоединяет коммит к коммиту прямо под ним (более старому).";
 "%lld conflicts — %lld chosen" = "Конфликтов: %1$lld — выбрано: %2$lld";
 "%lld files" = "Файлов: %1$lld";
-"%lld jobs waiting to be run manually — expand to run" = "Заданий, ожидающих ручного запуска: %1$lld — разверните, чтобы запустить";
 "%lld modified files — stage and commit them." = "Изменённых файлов: %1$lld — индексируйте и закоммитьте их.";
 "%lld more approvals needed." = "Требуется ещё одобрений: %1$lld.";
 "'%@'  →  commit %@" = "«%1$@»  →  коммит %2$@";
@@ -1195,3 +1194,16 @@
 "Back to the repository screen (⌘[)" = "Назад к экрану репозитория (⌘[)";
 "Back to the repository screen" = "Назад к экрану репозитория";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Перетащите или проведите вбок над графом, чтобы прокрутить его по горизонтали";
+"Runs" = "Запуски";
+"Jobs" = "Задания";
+"Choose a job to read its log here." = "Выберите задание, чтобы прочитать здесь его журнал.";
+"Reload log" = "Перезагрузить журнал";
+"Close log" = "Закрыть журнал";
+"Select a run" = "Выберите запуск";
+"Choose a run to see its jobs and read their logs." = "Выберите запуск, чтобы увидеть его задания и журналы.";
+"Pipeline #%lld" = "Конвейер #%1$lld";
+"Run #%lld" = "Запуск #%1$lld";
+"%lld jobs waiting to be run manually" = "Заданий, ожидающих ручного запуска: %1$lld";
+"Copy redacted log" = "Копировать журнал со скрытыми секретами";
+"Job log" = "Журнал задания";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере.";

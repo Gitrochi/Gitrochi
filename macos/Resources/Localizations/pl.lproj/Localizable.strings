@@ -73,7 +73,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "Commity na '%2$@': %1$lld — najnowsze na górze. Połączenie (squash) dołącza commit do commita tuż pod nim (starszego).";
 "%lld conflicts — %lld chosen" = "Konflikty: %1$lld — wybrano: %2$lld";
 "%lld files" = "Pliki: %1$lld";
-"%lld jobs waiting to be run manually — expand to run" = "Zadania oczekujące na ręczne uruchomienie: %1$lld — rozwiń, aby uruchomić";
 "%lld modified files — stage and commit them." = "Zmodyfikowane pliki: %1$lld — przygotuj je i zatwierdź.";
 "%lld more approvals needed." = "Potrzebne kolejne akceptacje: %1$lld.";
 "'%@' is already in '%@'" = "'%1$@' jest już w '%2$@'";
@@ -1178,3 +1177,16 @@
 "Back to the repository screen (⌘[)" = "Wróć do ekranu repozytorium (⌘[)";
 "Back to the repository screen" = "Wróć do ekranu repozytorium";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Przeciągnij lub przesuń w bok nad grafem, aby przewinąć go w poziomie";
+"Runs" = "Uruchomienia";
+"Jobs" = "Zadania";
+"Choose a job to read its log here." = "Wybierz zadanie, aby przeczytać tu jego log.";
+"Reload log" = "Wczytaj log ponownie";
+"Close log" = "Zamknij log";
+"Select a run" = "Wybierz uruchomienie";
+"Choose a run to see its jobs and read their logs." = "Wybierz uruchomienie, aby zobaczyć jego zadania i logi.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Uruchomienie #%1$lld";
+"%lld jobs waiting to be run manually" = "Zadania oczekujące na ręczne uruchomienie: %1$lld";
+"Copy redacted log" = "Kopiuj log z ukrytymi danymi";
+"Job log" = "Log zadania";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Podgląd logu jest ograniczony do 2 MB. Pełny log otwórz w przeglądarce.";

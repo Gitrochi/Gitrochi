@@ -899,7 +899,6 @@
  "{0} is splitting the changes by topic…": "{0} กำลังแบ่งการเปลี่ยนแปลงตามหัวข้อ…",
  "{0} is writing the commit message…": "{0} กำลังเขียนข้อความคอมมิต…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} ไม่ใช่ไฟล์ปฏิบัติการใน {1} (ตรวจสอบ chmod +x)",
- "{0} jobs waiting to be run manually — expand to run": "{0} จ็อบรอการรันแบบแมนนวล — ขยายเพื่อรัน",
  "{0} modified files — stage and commit them.": "ไฟล์ที่แก้ไข {0} ไฟล์ — สเตจและคอมมิตได้เลย",
  "{0} more approvals needed.": "ต้องได้รับการอนุมัติอีก {0} ครั้ง",
  "{0} not in the list": "{0} ที่ไม่อยู่ในรายการ",
@@ -1230,5 +1229,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "เปิด {0} ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git",
  "Back to the repository screen": "กลับไปที่หน้าจอที่เก็บ",
  "Graph lanes": "เลนของกราฟ",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ลาก หรือเลื่อนด้านข้างหรือใช้ Shift+ล้อเมาส์ที่นี่ เพื่อดูเลนเพิ่มเติม"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ลาก หรือเลื่อนด้านข้างหรือใช้ Shift+ล้อเมาส์ที่นี่ เพื่อดูเลนเพิ่มเติม",
+ "Runs": "รายการรัน",
+ "Jobs": "จ็อบ",
+ "Choose a job to read its log here.": "เลือกจ็อบเพื่ออ่านล็อกที่นี่",
+ "Reload log": "โหลดล็อกใหม่",
+ "Close log": "ปิดล็อก",
+ "Select a run": "เลือกการรัน",
+ "Choose a run to see its jobs and read their logs.": "เลือกการรันเพื่อดูจ็อบและอ่านล็อก",
+ "Pipeline #{0}": "ไปป์ไลน์ #{0}",
+ "Run #{0}": "การรัน #{0}",
+ "{0} jobs waiting to be run manually": "{0} จ็อบรอการรันแบบแมนนวล",
+ "Copy redacted log": "คัดลอกล็อกที่ปิดข้อมูลลับแล้ว",
+ "Job log": "ล็อกของจ็อบ",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด"
 }

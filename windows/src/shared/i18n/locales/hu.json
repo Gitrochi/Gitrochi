@@ -888,7 +888,6 @@
  "{0} is splitting the changes by topic…": "{0} téma szerint bontja a módosításokat…",
  "{0} is writing the commit message…": "{0} írja a commitüzenetet…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} nem futtatható fájl itt: {1} (ellenőrizze: chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "{0} job vár kézi futtatásra — bontsa ki a futtatáshoz",
  "{0} modified files — stage and commit them.": "{0} módosított fájl — készítse elő és commitolja őket.",
  "{0} more approvals needed.": "Még {0} jóváhagyás szükséges.",
  "{0} not in the list": "Nincs a listában: {0}",
@@ -1218,5 +1217,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Nem sikerült megnyitni: {0} – nincs Git-tárolóban.",
  "Back to the repository screen": "Vissza a tároló képernyőre",
  "Graph lanes": "Gráf sávjai",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Húzza, vagy görgessen itt oldalra vagy Shift+görgővel a további sávokhoz"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Húzza, vagy görgessen itt oldalra vagy Shift+görgővel a további sávokhoz",
+ "Runs": "Futtatások",
+ "Jobs": "Jobok",
+ "Choose a job to read its log here.": "Válasszon egy jobot, hogy itt olvassa a naplóját.",
+ "Reload log": "Napló újratöltése",
+ "Close log": "Napló bezárása",
+ "Select a run": "Válasszon egy futtatást",
+ "Choose a run to see its jobs and read their logs.": "Válasszon egy futtatást a jobjai és naplói megtekintéséhez.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Futtatás #{0}",
+ "{0} jobs waiting to be run manually": "{0} job vár kézi futtatásra",
+ "Copy redacted log": "Kitakart napló másolása",
+ "Job log": "Job naplója",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "A napló előnézete legfeljebb 2 MB. A teljes naplót a böngészőben nyissa meg."
 }

@@ -76,7 +76,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "Коміти в '%2$@': %1$lld — найновіші вгорі. «Об’єднати» поєднує коміт із тим, що безпосередньо під ним (старішим).";
 "%lld conflicts — %lld chosen" = "Конфліктів: %1$lld — вибрано: %2$lld";
 "%lld files" = "Файлів: %1$lld";
-"%lld jobs waiting to be run manually — expand to run" = "Завдань, що очікують ручного запуску: %1$lld — розгорніть, щоб запустити";
 "%lld modified files — stage and commit them." = "Змінених файлів: %1$lld — індексуйте й закомітьте їх.";
 "%lld more approvals needed." = "Потрібно ще схвалень: %1$lld.";
 "'%@'  →  commit %@" = "'%1$@'  →  коміт %2$@";
@@ -1195,3 +1194,16 @@
 "Back to the repository screen (⌘[)" = "Назад до екрана репозиторію (⌘[)";
 "Back to the repository screen" = "Назад до екрана репозиторію";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Перетягніть або проведіть убік над графом, щоб прокрутити його по горизонталі";
+"Runs" = "Запуски";
+"Jobs" = "Завдання";
+"Choose a job to read its log here." = "Виберіть завдання, щоб прочитати тут його журнал.";
+"Reload log" = "Перезавантажити журнал";
+"Close log" = "Закрити журнал";
+"Select a run" = "Виберіть запуск";
+"Choose a run to see its jobs and read their logs." = "Виберіть запуск, щоб побачити його завдання й журнали.";
+"Pipeline #%lld" = "Конвеєр #%1$lld";
+"Run #%lld" = "Запуск #%1$lld";
+"%lld jobs waiting to be run manually" = "Завдань, що очікують ручного запуску: %1$lld";
+"Copy redacted log" = "Копіювати журнал із прихованими секретами";
+"Job log" = "Журнал завдання";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Попередній перегляд журналу обмежено 2 МБ. Повний журнал відкрийте в браузері.";

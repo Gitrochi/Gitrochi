@@ -73,7 +73,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "%1$lld commit trên '%2$@' — mới nhất ở trên cùng. Squash gộp một commit vào commit ngay bên dưới (cũ hơn).";
 "%lld conflicts — %lld chosen" = "%1$lld xung đột — đã chọn %2$lld";
 "%lld files" = "%1$lld tệp";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld job đang chờ chạy thủ công — mở rộng để chạy";
 "%lld modified files — stage and commit them." = "%1$lld tệp đã sửa đổi — hãy stage và commit.";
 "%lld more approvals needed." = "Cần thêm %1$lld phê duyệt.";
 "'%@' is already in '%@'" = "'%1$@' đã có trong '%2$@'";
@@ -1151,3 +1150,16 @@
 "Back to the repository screen (⌘[)" = "Quay lại màn hình kho lưu trữ (⌘[)";
 "Back to the repository screen" = "Quay lại màn hình kho lưu trữ";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Kéo hoặc vuốt ngang trên đồ thị để cuộn ngang";
+"Runs" = "Lượt chạy";
+"Jobs" = "Job";
+"Choose a job to read its log here." = "Chọn một job để đọc log tại đây.";
+"Reload log" = "Tải lại log";
+"Close log" = "Đóng log";
+"Select a run" = "Chọn một lượt chạy";
+"Choose a run to see its jobs and read their logs." = "Chọn một lượt chạy để xem các job và đọc log.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Lượt chạy #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld job đang chờ chạy thủ công";
+"Copy redacted log" = "Sao chép log đã che thông tin nhạy cảm";
+"Job log" = "Log của job";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log.";

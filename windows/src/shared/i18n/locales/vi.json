@@ -861,7 +861,6 @@
  "{0} is splitting the changes by topic…": "{0} đang chia thay đổi theo chủ đề…",
  "{0} is writing the commit message…": "{0} đang viết thông điệp commit…",
  "{0} isn't an executable file in {1} (check chmod +x).": "{0} không phải tệp thực thi trong {1} (hãy kiểm tra chmod +x).",
- "{0} jobs waiting to be run manually — expand to run": "{0} job đang chờ chạy thủ công — mở rộng để chạy",
  "{0} modified files — stage and commit them.": "{0} tệp đã sửa đổi — hãy stage và commit.",
  "{0} more approvals needed.": "Cần thêm {0} phê duyệt.",
  "{0} not in the list": "{0} không có trong danh sách",
@@ -1190,5 +1189,18 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Không mở được {0}: không nằm trong kho Git nào.",
  "Back to the repository screen": "Quay lại màn hình kho lưu trữ",
  "Graph lanes": "Làn của đồ thị",
- "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Kéo, hoặc cuộn ngang hay dùng Shift+con lăn tại đây, để xem thêm làn"
+ "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Kéo, hoặc cuộn ngang hay dùng Shift+con lăn tại đây, để xem thêm làn",
+ "Runs": "Lượt chạy",
+ "Jobs": "Job",
+ "Choose a job to read its log here.": "Chọn một job để đọc log tại đây.",
+ "Reload log": "Tải lại log",
+ "Close log": "Đóng log",
+ "Select a run": "Chọn một lượt chạy",
+ "Choose a run to see its jobs and read their logs.": "Chọn một lượt chạy để xem các job và đọc log.",
+ "Pipeline #{0}": "Pipeline #{0}",
+ "Run #{0}": "Lượt chạy #{0}",
+ "{0} jobs waiting to be run manually": "{0} job đang chờ chạy thủ công",
+ "Copy redacted log": "Sao chép log đã che thông tin nhạy cảm",
+ "Job log": "Log của job",
+ "Log preview is limited to 2 MB. Open the browser for the complete log.": "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log."
 }

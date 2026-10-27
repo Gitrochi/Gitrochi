@@ -73,7 +73,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "'%2$@' dalında %1$lld commit — en yenisi en üstte. Squash, bir commit'i hemen altındaki (daha eski) commit'e katar.";
 "%lld conflicts — %lld chosen" = "%1$lld çakışma — %2$lld tanesi seçildi";
 "%lld files" = "%1$lld dosya";
-"%lld jobs waiting to be run manually — expand to run" = "Elle çalıştırılmayı bekleyen %1$lld iş — çalıştırmak için genişletin";
 "%lld modified files — stage and commit them." = "Değiştirilmiş %1$lld dosya var — hazırlayıp commit edin.";
 "%lld more approvals needed." = "%1$lld onay daha gerekiyor.";
 "'%@' is already in '%@'" = "'%1$@' zaten '%2$@' içinde";
@@ -1183,3 +1182,16 @@
 "Back to the repository screen (⌘[)" = "Depo ekranına dön (⌘[)";
 "Back to the repository screen" = "Depo ekranına dön";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Grafiği yatay kaydırmak için sürükleyin veya üzerinde yana kaydırın";
+"Runs" = "Çalıştırmalar";
+"Jobs" = "İşler";
+"Choose a job to read its log here." = "Günlüğünü burada okumak için bir iş seçin.";
+"Reload log" = "Günlüğü yeniden yükle";
+"Close log" = "Günlüğü kapat";
+"Select a run" = "Bir çalıştırma seçin";
+"Choose a run to see its jobs and read their logs." = "İşlerini görmek ve günlüklerini okumak için bir çalıştırma seçin.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Çalıştırma #%1$lld";
+"%lld jobs waiting to be run manually" = "Elle çalıştırılmayı bekleyen %1$lld iş";
+"Copy redacted log" = "Gizlenmiş günlüğü kopyala";
+"Job log" = "İş günlüğü";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın.";

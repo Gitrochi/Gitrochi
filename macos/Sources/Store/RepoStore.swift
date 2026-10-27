@@ -234,8 +234,10 @@ final class RepoStore: Identifiable {
     var ciDeployments: [Int: [CIDeployment]] = [:]
     /// 진행 중인 버튼 동작(같은 버튼을 두 번 누르지 않게)
     var ciBusy: Set<String> = []
-    /// A pipeline the Actions page should expand and scroll to (set from a commit's CI icon)
+    /// A pipeline the Actions page should select and scroll to (set from a commit's CI icon)
     var ciFocus: Int?
+    /// The run shown on the right of the Actions page
+    var ciSelected: Int?
     var ciCurrentBranchOnly = UserDefaults.standard.bool(forKey: "ciCurrentBranchOnly") {
         didSet { UserDefaults.standard.set(ciCurrentBranchOnly, forKey: "ciCurrentBranchOnly") }
     }

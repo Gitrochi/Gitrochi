@@ -74,7 +74,6 @@
 "%lld commits on '%@' — newest at the top. Squash combines a commit into the one right below it (older)." = "%1$lld commit ezen az ágon: '%2$@' — a legújabb van felül. Az összevonás (squash) egy commitot a közvetlenül alatta lévő (régebbi) commitba olvaszt.";
 "%lld conflicts — %lld chosen" = "%1$lld ütközés — %2$lld kiválasztva";
 "%lld files" = "%1$lld fájl";
-"%lld jobs waiting to be run manually — expand to run" = "%1$lld job vár kézi futtatásra — bontsa ki a futtatáshoz";
 "%lld modified files — stage and commit them." = "%1$lld módosított fájl — készítse elő és commitolja őket.";
 "%lld more approvals needed." = "Még %1$lld jóváhagyás szükséges.";
 "'%@'  →  commit %@" = "'%1$@'  →  %2$@ commit";
@@ -1178,3 +1177,16 @@
 "Back to the repository screen (⌘[)" = "Vissza a tároló képernyőjére (⌘[)";
 "Back to the repository screen" = "Vissza a tároló képernyőjére";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "Húzd, vagy söpörj oldalra a gráf fölött a vízszintes görgetéshez";
+"Runs" = "Futtatások";
+"Jobs" = "Jobok";
+"Choose a job to read its log here." = "Válasszon egy jobot, hogy itt olvassa a naplóját.";
+"Reload log" = "Napló újratöltése";
+"Close log" = "Napló bezárása";
+"Select a run" = "Válasszon egy futtatást";
+"Choose a run to see its jobs and read their logs." = "Válasszon egy futtatást a jobjai és naplói megtekintéséhez.";
+"Pipeline #%lld" = "Pipeline #%1$lld";
+"Run #%lld" = "Futtatás #%1$lld";
+"%lld jobs waiting to be run manually" = "%1$lld job vár kézi futtatásra";
+"Copy redacted log" = "Kitakart napló másolása";
+"Job log" = "Job naplója";
+"Log preview is limited to 2 MB. Open the browser for the complete log." = "A napló előnézete legfeljebb 2 MB. A teljes naplót a böngészőben nyissa meg.";
