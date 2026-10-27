@@ -1,8 +1,19 @@
 import { t } from "@/shared/i18n";
 import { HostingError } from "./hosting";
-import { ensureHubCurrent, hubError, hubGraphql, HubProjectPermissionError, HubUncertainWriteError, type HubAccess, type HubDetail, type HubItem, type HubProjectField } from "./hub";
+import { localProjects } from "../model/local-projects";
+import { ensureHubCurrent, hubError, hubGraphql, hubRequest, hubUsesLocal, HubProjectActionDeniedError, HubProjectPermissionError, HubUncertainWriteError, type HubAccess, type HubDetail, type HubItem, type HubProjectField } from "./hub";
 
 /** Windows: mirrors the checked ProjectV2 management contract in ProjectManagement.swift. */
+export type HubProjectPlanTier = "free" | "pro" | "team" | "enterprise" | "unknown";
+export type HubProjectPlanSource = "authenticatedUser" | "organization" | "unavailable";
+export type HubProjectOwnerKind = "user" | "organization" | "unknown";
+export interface HubProjectPlan { tier: HubProjectPlanTier; rawName: string | null; source: HubProjectPlanSource }
+export interface HubProjectCreationCapabilities {
+  viewerLogin: string; viewerVerified: boolean; ownerLogin: string; ownerID: string; ownerKind: HubProjectOwnerKind;
+  accountPlan: HubProjectPlan; ownerPlan: HubProjectPlan; canCreate: boolean | null; canPublish: boolean | null;
+  limits: { fields: number; autoAddWorkflows: number | null }; notice: string | null;
+}
+
 export interface HubProjectSettingsInput { title: string; shortDescription: string; readme: string; public: boolean; closed: boolean }
 export type HubProjectOptionColor = "BLUE" | "GRAY" | "GREEN" | "ORANGE" | "PINK" | "PURPLE" | "RED" | "YELLOW";
 export interface HubProjectFieldOptionInput { id?: string; name: string; color?: HubProjectOptionColor; description?: string }
@@ -28,13 +39,15 @@ const kinds = { text: "TEXT", number: "NUMBER", date: "DATE", singleSelect: "SIN
 
 function github(c: HubAccess, detail?: HubDetail) {
   ensureHubCurrent(c);
-  if (c.target.provider !== "github" || detail && !detail.item.id) throw new Error(t("This action requires a GitHub project."));
+  if (detail && hubUsesLocal(c, detail.item)) throw new Error(t("This action requires a GitHub project."));
+  if (c.local || c.target.provider !== "github" || detail && !detail.item.id) throw new Error(t("This action requires a GitHub project."));
 }
 function name(value: string) { if (!value.trim()) throw invalid(); return value.trim(); }
 async function creation<T>(c: HubAccess, action: () => Promise<T>): Promise<T> {
   try { return await action(); }
   catch (error) {
-    if (error instanceof HostingError && error.status >= 400 && error.status < 500 || error instanceof HubProjectPermissionError || error instanceof HubUncertainWriteError) throw error;
+    if (error instanceof HostingError && error.status === 403) throw new HubProjectActionDeniedError(hubError(error, c.token));
+    if (error instanceof HostingError && error.status >= 400 && error.status < 500 || error instanceof HubProjectPermissionError || error instanceof HubProjectActionDeniedError || error instanceof HubUncertainWriteError) throw error;
     throw new HubUncertainWriteError(`${hubError(error, c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);
   }
 }
@@ -43,8 +56,40 @@ function item(value: ObjectValue): HubItem {
   return { id: text(value.id), title: text(value.title), subtitle: `#${value.number ?? ""}${value.closed ? " · closed" : ""}`, body: text(value.shortDescription), url: text(value.url), data: value };
 }
 
+/** Missing or legacy billing names remain unknown; membership and server host do not imply a paid plan. */
+export function hubProjectPlanTier(rawName: string | null, ownerKind: HubProjectOwnerKind): HubProjectPlanTier {
+  const value = (rawName ?? "").trim().toLowerCase().replace(/^github /, "").replace(/[- ]/g, "_");
+  if (value === "free") return "free";
+  if (ownerKind === "user" && value === "pro") return "pro";
+  if (ownerKind === "organization") { if (value === "team") return "team"; if (["enterprise", "enterprise_cloud", "enterprise_server"].includes(value)) return "enterprise"; }
+  return "unknown";
+}
+function plan(rawName: unknown, source: HubProjectPlanSource, ownerKind: HubProjectOwnerKind): HubProjectPlan {
+  const raw = text(rawName).trim(); return { tier: hubProjectPlanTier(raw || null, ownerKind), rawName: raw || null, source: raw ? source : "unavailable" };
+}
+/** Projects are available on Free; plan probes never pretend to prove Projects write permission. */
+export async function inspectHubProjectCreationCapabilities(c: HubAccess): Promise<HubProjectCreationCapabilities> {
+  github(c); const requestedOwner = c.target.path.split("/")[0] || c.me;
+  let viewer: ObjectValue = {}, owner: ObjectValue = {};
+  try { viewer = await hubRequest<ObjectValue>(c, `${c.apiBase}/user`); } catch { ensureHubCurrent(c); }
+  try { const data = await hubGraphql<ObjectValue>(c, "query($owner:String!){repositoryOwner(login:$owner){__typename id login}}", { owner: requestedOwner }); owner = object(data.repositoryOwner); } catch { ensureHubCurrent(c); }
+  const viewerLogin = text(viewer.login), viewerVerified = !!viewerLogin && viewerLogin.toLowerCase() === c.me.toLowerCase(), ownerLogin = text(owner.login) || requestedOwner;
+  const ownerKind: HubProjectOwnerKind = owner.__typename === "Organization" ? "organization" : owner.__typename === "User" ? "user" : "unknown";
+  const unknown: HubProjectPlan = { tier: "unknown", rawName: null, source: "unavailable" }, accountPlan = viewerVerified ? plan(object(viewer.plan).name, "authenticatedUser", "user") : unknown;
+  let ownerPlan = ownerKind === "user" && viewerVerified && ownerLogin.toLowerCase() === viewerLogin.toLowerCase() ? accountPlan : unknown;
+  if (ownerKind === "organization" && text(owner.id)) {
+    try { const organization = await hubRequest<ObjectValue>(c, `${c.apiBase}/orgs/${encodeURIComponent(ownerLogin)}`); if (text(organization.login).toLowerCase() === ownerLogin.toLowerCase()) ownerPlan = plan(object(organization.plan).name, "organization", "organization"); } catch { ensureHubCurrent(c); }
+  }
+  const autoAddWorkflows = ({ free: 1, pro: 5, team: 5, enterprise: 20, unknown: null } as const)[ownerPlan.tier];
+  let notice = t("Projects are available on GitHub Free. GitHub verifies creation and publishing permissions when you save.");
+  if (!viewerVerified) notice += `\n${t("The connected account could not be verified. Refresh account access before creating a GitHub project.")}`;
+  if (ownerPlan.tier === "unknown") notice += `\n${t("GitHub did not expose this owner's plan. Plan-dependent limits are unknown.")}`;
+  ensureHubCurrent(c);
+  return { viewerLogin: viewerLogin || c.me, viewerVerified, ownerLogin, ownerID: text(owner.id), ownerKind, accountPlan, ownerPlan, canCreate: null, canPublish: null, limits: { fields: 50, autoAddWorkflows }, notice };
+}
+
 /** Creates under the captured scope, resolving its owner and optional repository on the same API. */
-export async function createHubProject(c: HubAccess, title: string): Promise<HubItem> {
+export async function createHubProject(c: HubAccess, title: string, isPublic = false): Promise<HubItem> {
   github(c); const cleanTitle = name(title), [owner, repository] = c.target.path.split("/");
   const personal = repository === "workspace";
   const result = await hubGraphql<ObjectValue>(c, personal ? "query($owner:String!){repositoryOwner(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}", personal ? { owner } : { owner, name: repository });
@@ -52,12 +97,23 @@ export async function createHubProject(c: HubAccess, title: string): Promise<Hub
   if (!ownerID || !personal && !text(source.id)) throw new Error(t("Projects are unavailable for this repository owner."));
   return creation(c, async () => {
     const response = await hubGraphql<ObjectValue>(c, `mutation($input:CreateProjectV2Input!){createProjectV2(input:$input){projectV2{${projectFragment}}}}`, { input: { ownerId: ownerID, title: cleanTitle, ...(!personal ? { repositoryId: source.id } : {}) } });
-    return item(object(object(response.createProjectV2).projectV2));
+    const created = item(object(object(response.createProjectV2).projectV2));
+    if (created.data.public !== false) throw new HubUncertainWriteError(t("GitHub returned unexpected project visibility. Refresh and check the created project before continuing."), created);
+    if (!isPublic) return created;
+    try {
+      const published = await hubGraphql<ObjectValue>(c, `mutation($input:UpdateProjectV2Input!){updateProjectV2(input:$input){projectV2{${projectFragment}}}}`, { input: { projectId: created.id, public: true } });
+      const result = item(object(object(published.updateProjectV2).projectV2));
+      if (result.id !== created.id || result.data.public !== true) throw new Error(t("The server returned an unexpected response."));
+      return result;
+    } catch (error) {
+      throw new HubUncertainWriteError(`${t("The private project was created, but publishing was not confirmed. Refresh projects before trying again.")}\n\n${hubError(error, c.token)}`, created);
+    }
   });
 }
 
 /** Rejects stale metadata before changing the project's identity, visibility or lifecycle. */
 export async function saveHubProjectSettings(c: HubAccess, detail: HubDetail, input: HubProjectSettingsInput): Promise<void> {
+  if (hubUsesLocal(c, detail.item)) { await localProjects.saveProject(detail, input.title, input.shortDescription); ensureHubCurrent(c); return; }
   github(c, detail); const title = name(input.title);
   const response = await hubGraphql<ObjectValue>(c, `query($id:ID!){node(id:$id){... on ProjectV2{${projectFragment}}}}`, { id: detail.item.id });
   const fresh = object(response.node), previous = detail.item;

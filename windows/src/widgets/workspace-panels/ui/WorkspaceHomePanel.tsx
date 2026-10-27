@@ -7,6 +7,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import { Button, showContextMenu } from "@/shared/ui";
+import { WorkspacePlanningDashboard } from "./WorkspacePlanningDashboard";
 import { RemoteRepositorySearch } from "./RemoteRepositorySearch";
 import "./workspace-panels.css";
 
@@ -17,6 +18,8 @@ export function WorkspaceHomePanel({ store, openSettings }: { store: RepoStore; 
   const gitMissing = !tools.path("git");
   const list = recents();
   return (
+    <div className="workspace-home">
+      <WorkspacePlanningDashboard store={store} />
     <div className="welcome">
       <div className="welcome-main">
         <img src={icon} width={112} height={112} alt="" />
@@ -88,6 +91,7 @@ export function WorkspaceHomePanel({ store, openSettings }: { store: RepoStore; 
         )}
         <RemoteRepositorySearch store={store} openSettings={openSettings} />
       </div>
+    </div>
     </div>
   );
 }

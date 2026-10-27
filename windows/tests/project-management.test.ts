@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createHubProject, deleteHubProjectCustomField, deleteHubProjectView, hubProjectViews, HubUncertainWriteError, saveHubProjectCustomField, saveHubProjectSettings, saveHubProjectView, type HubAccess, type HubDetail, type HubProjectView } from "@/entities/hosting";
+import { inspectHubProjectCreationCapabilities, hubProjectPlanTier, HubProjectActionDeniedError, createHubProject, deleteHubProjectCustomField, deleteHubProjectView, hubProjectViews, HubUncertainWriteError, saveHubProjectCustomField, saveHubProjectSettings, saveHubProjectView, type HubAccess, type HubDetail, type HubProjectView } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
 
 const access = (): HubAccess => ({ target: { provider: "github", host: "github.com", path: "team/client", remote: "origin" }, token: "fixture-token", apiBase: "https://api.github.com", me: "reader" });
@@ -137,6 +137,73 @@ describe("ProjectV2 native management contract", () => {
       await expect(hubProjectViews(access(), detail())).rejects.toThrow("unexpected response");
     }
     expect(http).toHaveBeenCalledTimes(3);
+  });
+
+  it("maps only known billing names for the actual account kind", () => {
+    expect(hubProjectPlanTier("free", "user")).toBe("free"); expect(hubProjectPlanTier("GitHub Pro", "user")).toBe("pro");
+    expect(hubProjectPlanTier("team", "organization")).toBe("team"); expect(hubProjectPlanTier("enterprise_cloud", "organization")).toBe("enterprise");
+    for (const value of [null, "", "Medium", "business", "enterprise"]) expect(hubProjectPlanTier(value, "user")).toBe("unknown");
+    expect(hubProjectPlanTier("pro", "organization")).toBe("unknown"); expect(hubProjectPlanTier("team", "user")).toBe("unknown");
+  });
+  it("reports own Free and Pro plans without claiming token or owner-policy permission", async () => {
+    const c = access(); c.target.path = "reader/workspace"; const http = vi.spyOn(ipc, "http");
+    for (const [tier, max] of [["free", 1], ["pro", 5]] as const) {
+      http.mockImplementation(async (_method, url) => response(url.endsWith("/user") ? { login: "reader", plan: { name: tier } } : { data: { repositoryOwner: { __typename: "User", id: "USER", login: "reader" } } }));
+      expect(await inspectHubProjectCreationCapabilities(c)).toMatchObject({ viewerLogin: "reader", viewerVerified: true, ownerID: "USER", ownerKind: "user", accountPlan: { tier, source: "authenticatedUser" }, ownerPlan: { tier }, canCreate: null, canPublish: null, limits: { fields: 50, autoAddWorkflows: max } });
+    }
+    expect(http.mock.calls.some(call => call[1].includes("/users/"))).toBe(false);
+    expect(http.mock.calls.filter(call => call[3]).every(call => !requestBody(call[3]).query.includes("viewerCanCreateProjects"))).toBe(true);
+  });
+  it("uses owner organization plan limits rather than the viewer's personal Pro plan", async () => {
+    const http = vi.spyOn(ipc, "http");
+    for (const [tier, max] of [["free", 1], ["team", 5], ["enterprise_cloud", 20], [null, null]] as const) {
+      http.mockImplementation(async (_method, url) => response(url.endsWith("/user") ? { login: "reader", plan: { name: "pro" } } : url.endsWith("/orgs/team") ? { login: "team", ...(tier ? { plan: { name: tier } } : {}) } : { data: { repositoryOwner: { __typename: "Organization", id: "ORG", login: "team" } } }));
+      const capabilities = await inspectHubProjectCreationCapabilities(access());
+      expect(capabilities.accountPlan.tier).toBe("pro"); expect(capabilities.ownerPlan.tier).toBe(tier === "enterprise_cloud" ? "enterprise" : tier ?? "unknown"); expect(capabilities.limits.autoAddWorkflows).toBe(max);
+    }
+  });
+  it("does not infer plan data missing from the API, legacy billing names, other users or enterprise hosts", async () => {
+    const c = access(); c.target.path = "reader/workspace"; const http = vi.spyOn(ipc, "http");
+    for (const [name, expected] of [[null, null], ["Medium", "Medium"]] as const) {
+      http.mockImplementation(async (_method, url) => response(url.endsWith("/user") ? { login: "reader", ...(name ? { plan: { name } } : {}) } : { data: { repositoryOwner: { __typename: "User", id: "USER", login: "reader" } } }));
+      const capabilities = await inspectHubProjectCreationCapabilities(c); expect(capabilities.viewerVerified).toBe(true); expect(capabilities.ownerPlan).toMatchObject({ tier: "unknown", rawName: expected }); expect(capabilities.limits.autoAddWorkflows).toBeNull();
+    }
+    c.target.path = "maintainer/repository"; http.mockClear().mockImplementation(async (_method, url) => response(url.endsWith("/user") ? { login: "reader", plan: { name: "pro" } } : { data: { repositoryOwner: { __typename: "User", id: "OTHER", login: "maintainer" } } }));
+    const other = await inspectHubProjectCreationCapabilities(c); expect(other.accountPlan.tier).toBe("pro"); expect(other.ownerPlan.tier).toBe("unknown"); expect(http).toHaveBeenCalledTimes(2);
+    c.target.host = "enterprise.test"; c.apiBase = "https://enterprise.test/api/v3"; http.mockClear().mockImplementation(async (_method, url) => url.endsWith("/orgs/maintainer") ? response({ message: "plan hidden" }, 403) : response(url.endsWith("/user") ? { login: "reader" } : { data: { repositoryOwner: { __typename: "Organization", id: "ORG", login: "maintainer" } } }));
+    const enterprise = await inspectHubProjectCreationCapabilities(c); expect(enterprise.ownerPlan.tier).toBe("unknown"); expect(enterprise.accountPlan.tier).toBe("unknown"); expect(enterprise.ownerID).toBe("ORG"); expect(enterprise.limits.autoAddWorkflows).toBeNull(); expect(http).toHaveBeenCalledTimes(3);
+  });
+  it("rejects local or stale access and does not verify credentials for another username", async () => {
+    const http = vi.spyOn(ipc, "http"), local = { ...access(), local: true };
+    await expect(inspectHubProjectCreationCapabilities(local)).rejects.toThrow("GitHub project"); await expect(createHubProject(local, "Plan")).rejects.toThrow("GitHub project"); expect(http).not.toHaveBeenCalled();
+    http.mockImplementation(async (_method, url) => response(url.endsWith("/user") ? { login: "another-user", plan: { name: "pro" } } : { data: { repositoryOwner: { __typename: "User", id: "USER", login: "reader" } } }));
+    const mismatched = await inspectHubProjectCreationCapabilities(access()); expect(mismatched.viewerVerified).toBe(false); expect(mismatched.accountPlan.tier).toBe("unknown");
+    let current = true; http.mockClear().mockImplementation(async () => { current = false; return response({ login: "reader", plan: { name: "pro" } }); });
+    await expect(inspectHubProjectCreationCapabilities({ ...access(), stillCurrent: () => current })).rejects.toThrow("account changed"); expect(http).toHaveBeenCalledTimes(1);
+  });
+  it("defaults to private and publishes only through an explicit second mutation", async () => {
+    const http = vi.spyOn(ipc, "http").mockImplementation(async (_method, _url, _headers, body) => {
+      const query = requestBody(body).query;
+      return response({ data: query.startsWith("query") ? { repository: { id: "REPO", owner: { id: "OWNER" } } } : query.includes("createProjectV2") ? { createProjectV2: { projectV2: metadata } } : { updateProjectV2: { projectV2: { ...metadata, public: true, updatedAt: "published" } } } });
+    });
+    expect((await createHubProject(access(), "Private")).data.public).toBe(false); expect(http).toHaveBeenCalledTimes(2); http.mockClear();
+    expect((await createHubProject(access(), "Public", true)).data.public).toBe(true); expect(http).toHaveBeenCalledTimes(3); expect(requestBody(http.mock.calls[1][3]).variables.input).not.toHaveProperty("public"); expect(requestBody(http.mock.calls[2][3]).variables.input).toEqual({ projectId: "P", public: true });
+  });
+  it("carries the created private project through a denied publication without retrying creation", async () => {
+    const http = vi.spyOn(ipc, "http").mockImplementation(async (_method, _url, _headers, body) => {
+      const query = requestBody(body).query;
+      return query.includes("updateProjectV2") ? response({ message: "Organization policy" }, 403) : response({ data: query.startsWith("query") ? { repository: { id: "REPO", owner: { id: "OWNER" } } } : { createProjectV2: { projectV2: metadata } } });
+    });
+    try { await createHubProject(access(), "Public", true); throw new Error("accepted"); } catch (error) { expect(error).toBeInstanceOf(HubUncertainWriteError); expect((error as HubUncertainWriteError).createdProject).toMatchObject({ id: "P", url: metadata.url, data: { public: false } }); expect(String(error)).toContain("private project was created"); }
+    expect(http).toHaveBeenCalledTimes(3); expect(http.mock.calls.filter(call => requestBody(call[3]).query.includes("mutation($input:CreateProjectV2Input"))).toHaveLength(1);
+  });
+  it("distinguishes actual HTTP or GraphQL policy denial from billing and uncertain writes", async () => {
+    const http = vi.spyOn(ipc, "http");
+    for (const denied of [response({ message: "Organization policy" }, 403), response({ errors: [{ type: "FORBIDDEN", message: "restricted raw field" }] })]) {
+      http.mockClear().mockResolvedValueOnce(response({ data: { repository: { id: "REPO", owner: { id: "OWNER" } } } })).mockResolvedValueOnce(denied);
+      try { await createHubProject(access(), "Plan"); throw new Error("accepted"); } catch (error) { expect(error).toBeInstanceOf(HubProjectActionDeniedError); expect(error).not.toBeInstanceOf(HubUncertainWriteError); expect(String(error)).toContain("paid plan does not grant"); expect(String(error)).not.toContain("restricted raw field"); }
+      expect(http).toHaveBeenCalledTimes(2);
+    }
   });
 
 });

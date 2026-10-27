@@ -2,6 +2,7 @@
 # Exercise the production hub store and cache without Keychain, accounts or network access.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/Tools/project-backend-test-sources.sh"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
@@ -30,11 +31,12 @@ enum AccountConnectionFailure {
     private var approvals: [String: CheckedContinuation<Void, Error>] = [:]
     private(set) var approvedAccounts: [String] = []
     var holdTokenLoads = false
+    private(set) var tokenLoadsCount = 0
     private var tokenLoads: [String: CheckedContinuation<String?, Never>] = [:]
 
     func reset(_ accounts: [HostAccount]) {
         precondition(approvals.isEmpty && tokenLoads.isEmpty, "An approval fixture was left suspended")
-        holdTokenLoads = false
+        holdTokenLoads = false; tokenLoadsCount = 0
         self.accounts = accounts; revision = 0; approvedAccounts = []
         cache = CredentialCache { _ in fatalError("Unexpected credential reader") }
         cache.onChange = { [weak self] in self?.revision += 1 }
@@ -48,6 +50,7 @@ enum AccountConnectionFailure {
     }
     func token(for account: HostAccount) -> String? { cache.value(account.id) }
     func loadToken(for account: HostAccount) async -> String? {
+        tokenLoadsCount += 1
         if holdTokenLoads { return await withCheckedContinuation { tokenLoads[account.id] = $0 } }
         return cache.value(account.id)
     }
@@ -59,6 +62,15 @@ enum AccountConnectionFailure {
         continuation.resume(returning: "fixture-" + account.id)
     }
     func credentialState(for account: HostAccount) -> CredentialCache.State { cache.state(account.id) }
+    func savedAccessMessage(for account: HostAccount) -> String {
+        switch credentialState(for: account) {
+        case .loading: return String(localized: "Restoring your saved account…")
+        case .authorizationRequired: return String(localized: "Your account is still connected. Allow access to its saved credentials to continue.")
+        case .unavailable: return String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings.")
+        case .ready: return String(localized: "Your account is connected.")
+        }
+    }
+    func savedAccessErrorMessage(for account: HostAccount, error: Error) -> String { AccountConnectionFailure.message(for: error) }
     func candidates(for target: RepoTarget) -> [HostAccount] { accounts.filter { $0.provider == target.provider && $0.host == target.host } }
     func allowStoredAccess(for account: HostAccount) async throws {
         approvedAccounts.append(account.id)
@@ -102,6 +114,12 @@ enum AccountConnectionFailure {
     }
 }
 
+actor LocalHubMemory: LocalProjectPersistence {
+    var content: String?
+    func read() -> String? { content }
+    func write(expected: String?, content: String) throws { precondition(expected == self.content); self.content = content }
+}
+
 @main struct HostingHubCredentialTests {
     @MainActor static func until(_ check: () -> Bool) async {
         for _ in 0..<200 {
@@ -132,7 +150,7 @@ enum AccountConnectionFailure {
         accounts.set(.authorizationRequired, for: first)
         await denied.activateHostingHub(.projects)
         for _ in 0..<3 { await denied.loadHostingHub() }
-        precondition(denied.hubCredentialState == .authorizationRequired && denied.hostingHub.error == String(localized: "Allow access to the saved account to use repository services."), "Denied saved access was reported as a missing token")
+        precondition(denied.hubCredentialState == .authorizationRequired && denied.hostingHub.error == String(localized: "Your account is still connected. Allow access to its saved credentials to continue."), "Denied saved access was reported as a missing token")
         precondition(!denied.hostingHub.projectPermissionRequired, "Keychain access was confused with project OAuth scope")
         precondition(Hosting.requests.isEmpty && accounts.approvedAccounts.isEmpty, "Automatic retries prompted or sent HTTP with denied access")
         let approval = Task { await denied.allowHubStoredAccess() }
@@ -150,7 +168,7 @@ enum AccountConnectionFailure {
         let unavailable = fixture()
         accounts.set(.unavailable, for: first)
         await unavailable.activateHostingHub(.projects)
-        precondition(unavailable.hubCredentialState == .unavailable && unavailable.hostingHub.error == String(localized: "The selected account has no token. Reconnect it from Settings → Accounts."), "A genuinely missing credential lost its reconnect guidance")
+        precondition(unavailable.hubCredentialState == .unavailable && unavailable.hostingHub.error == String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings."), "A genuinely missing credential lost its reconnect guidance")
         precondition(Hosting.requests.isEmpty && accounts.approvedAccounts.isEmpty)
 
         let switchedAccount = fixture()
@@ -264,13 +282,25 @@ enum AccountConnectionFailure {
         accounts.finishToken(first)
         let delayedSaved = await delayedAction.value
         precondition(!delayedSaved && delayedWrites == 0 && Hosting.requests.isEmpty, "A changed project reached an action after waiting for credentials")
-        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token context guards and uncertain-write recovery passed (fake credentials and HTTP only)")
+        let localHub = fixture(), localStore = LocalProjectStore(storage: LocalHubMemory())
+        HostingHubAPI.localProjectStore = localStore
+        _ = try! await localStore.create(title: "Synthetic local plan")
+        localHub.hostingHub.section = .projects; localHub.hostingHub.projectSource = "local"
+        let localStamp = localHub.hubContextStamp, tokenCount = accounts.tokenLoadsCount
+        let localAccess = try! await localHub.hubAccess()
+        accounts.revision += 1
+        precondition(localHub.hubContextStamp == localStamp && localAccess.isCurrent?() == true, "Account revisions must not invalidate the credential-free local planner")
+        precondition(localHub.hubAccount == nil && localHub.hubCredentialState == nil && localHub.pendingHubCredentialAccount == nil)
+        await localHub.activateHostingHub(.projects)
+        precondition(localHub.hostingHub.items.count == 1 && localHub.hostingHub.items[0].title == "Synthetic local plan")
+        precondition(accounts.tokenLoadsCount == tokenCount && Hosting.requests.isEmpty, "Local hub planning accessed account credentials or HTTP")
+        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning and uncertain-write recovery passed (fake credentials and HTTP only)")
     }
 }
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Core/CredentialCache.swift" \
-    "$ROOT/Sources/Services/HostingHub.swift" \
+    "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" \
     "$ROOT/Sources/Store/RepoStore+HostingHub.swift" \
     "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hosting-hub-credentials"
 "$TASK_TMP/test-hosting-hub-credentials"

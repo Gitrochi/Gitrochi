@@ -11,6 +11,7 @@ import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { workspaceFixtureProjectQuery } from "./workspace-panels-fixture";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 60));
 /** Exercise actual page controls with fake servers, never real accounts or repository mutations. */
 export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
@@ -20,10 +21,17 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
   let root = createRoot(host);
   const store = new RepoStore(),
     original = { http: ipc.http, writeText: ipc.writeText, ciLog: ipc.ciLog, token: accounts.token, accounts: accounts.accounts, section: settings.get("accountPageSection", "inbox") };
-  let copies = "", writes = 0, mentions = 0, releases = 0;
+  const requests: { method: string; path: string }[] = [];
+  let copies = "", writes = 0, mentions = 0, releases = 0, projectReads = 0;
   const profile = { id: "workspace-fixture", provider: "github" as const, server: "https://github.com", username: "fixture", name: null, avatarURL: null };
   const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" } };
   const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
+  const until = async (test: () => boolean) => {
+    const deadline = Date.now() + 3500;
+    while (!test() && Date.now() < deadline) await pause();
+    return test();
+  };
+  const writeDetails = () => `writes=${writes}; requests=${JSON.stringify(requests.filter((request) => request.method !== "GET"))}; errors=${[...host.querySelectorAll('[role="alert"], .error-text')].map((element) => element.textContent).join(" | ")}`;
   // read through a function: buttons set the sheet behind TypeScript's narrowing
   const sheet = (): SheetKind | null => store.sheet;
   const click = async (label: string) => {
@@ -52,7 +60,14 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.ci.load = async () => {};
     store.ci.loadJobs = async () => {};
     store.ci.jobs.set(1, [{ id: 9, name: "fixture build", status: "success", stage: "", url: "https://github.com/fixture/repo/actions/jobs/9", allowFailure: false, duration: 1 }]);
-    ipc.http = async (method, url) => {
+    ipc.http = async (method, url, _headers, body) => {
+      requests.push({method, path: new URL(url).pathname});
+      const projectQuery = workspaceFixtureProjectQuery(method, url, body);
+      if (projectQuery) {
+        check(projectQuery.owner === profile.username, "Home project query used the wrong account");
+        projectReads++;
+        return {status: 200, body: JSON.stringify({data: {user: {projectsV2: {nodes: [], pageInfo: {hasNextPage: false, endCursor: null}}}}})};
+      }
       if (method !== "GET") writes++;
       if (url.includes("/search/repositories?")) return { status: 200, body: JSON.stringify({ items: [{ full_name: "fixture/remote", clone_url: "https://github.com/fixture/remote.git", private: false }], total_count: 1 }) };
       if (url.includes("/search/issues?")) return { status: 200, body: JSON.stringify({ items: [{ id: 1, number: 1, title: "Fixture global work", html_url: "https://github.com/fixture/other/pull/1", repository_url: "https://api.github.com/repos/fixture/other", state: "open" }], total_count: 1 }) };
@@ -67,6 +82,9 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     ipc.ciLog = async () => ({ body: "build passed\nAuthorization: Bearer private-secret\nfixture-token", truncated: false });
     // Home: the welcome actions, recents and the search of repositories on a server
     await mount(<WorkspaceHomePanel store={store} />);
+    check(await until(() => projectReads === 1 && [...host.querySelectorAll("button")].some((button) => button.textContent?.trim() === t("Open project workspace"))), "Home project catalog did not finish loading");
+    check(!host.querySelector(".planning-error"), "Home project catalog returned a hidden fixture error");
+    check(writes === 0, `Home performed an unexpected mutation: ${writeDetails()}`);
     check(host.querySelector(".welcome") && [...host.querySelectorAll("button")].some((b) => b.textContent?.trim() === t("Open repository…")), "Home missing the welcome actions");
     check(host.textContent?.includes(t("Recent repositories")) && host.textContent?.includes(t("Repositories on a server")), "Home missing recents or the server search");
     await change(host.querySelector(".remote-search select")!, profile.id);
@@ -89,9 +107,10 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     await pause();
     check(host.textContent?.includes("Fixture comment"), "Inbox conversation missing");
     await click("Mark as read");
+    check(await until(() => writes === 1 && !store.inboxBusy && store.inboxDetail?.item.unread === false), `Mark-read mutation did not finish: ${writeDetails()}`);
     await click("My work");
     await pause();
-    check(host.textContent?.includes("Fixture pull request") && host.textContent?.includes("Fixture issue"), "My work summaries missing");
+    check(await until(() => host.textContent?.includes("Fixture pull request") === true && host.textContent?.includes("Fixture issue") === true), `My work summaries missing: ${writeDetails()}`);
     check(settings.get<string>("accountPageSection", "") === "myWork", "The account section was not remembered");
     check([...host.querySelectorAll("button")].every((b) => b.textContent?.trim() !== t("Gists")), "Gists must be gone");
     reset();
@@ -122,11 +141,12 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     await mount(<WorkspaceContent store={store} openSettings={() => {}} />);
     check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
     check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    check(writes === 1, `Navigation performed an unexpected mutation: ${writeDetails()}`);
     const before = writes;
     const composer = host.querySelector<HTMLTextAreaElement>(`.issue-detail textarea[aria-label="${t("Comment")}"]`)!;
     await change(composer, "Fixture reply");
     await click("Comment");
-    check(writes === before + 1, "The comment composer did not post");
+    check(await until(() => writes === before + 1 && !store.inboxBusy), `The comment composer did not post: ${writeDetails()}`);
     await click("Close issue…");
     check(store.confirm?.destructive === false, "Closing an issue must ask first");
     store.confirm = null;
@@ -145,11 +165,11 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       editor.unmount(); editor = createRoot(dialog);
       return closed;
     };
-    check(await editIn(sheet(), "Created fixture issue") && writes === before + 2, "Creating an issue did not reach the fixture server");
+    check(await editIn(sheet(), "Created fixture issue") && await until(() => writes === before + 2), `Creating an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null;
     await click("Edit issue");
     check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
-    check(await editIn(sheet(), "Edited fixture issue") && writes === before + 3, "Editing an issue did not reach the fixture server");
+    check(await editIn(sheet(), "Edited fixture issue") && await until(() => writes === before + 3), `Editing an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null; dialog.remove();
     // opened from the repository screen, the page offers the way back; from another page it does not
     const back = () => host.querySelector<HTMLButtonElement>(`.page-header button[aria-label="${t("Back to the repository screen")}"]`);
@@ -171,7 +191,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
-    return [true, "Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"];
+    check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);
+    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {

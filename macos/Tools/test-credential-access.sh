@@ -117,6 +117,55 @@ actor CacheFixture {
         for _ in 0..<20 { _ = cache.value("denied") }
         let finalCount = await source.count
         precondition(finalCount == count, "Denied automatic access caused repeated prompts")
+        for status: Int32 in [errSecInteractionNotAllowed, errSecAuthFailed, errSecUserCanceled, errSecNotAvailable] {
+            cache.store("restored-fixture", for: "restored")
+            let attempt = cache.begin("restored")
+            cache.complete("restored", attempt: attempt, result: CredentialReadResult(value: nil, status: status))
+            precondition(cache.value("restored") == "restored-fixture" && cache.state("restored") == .ready, "Transient Keychain failures must retain an existing session")
+        }
+        let missingAttempt = cache.begin("restored")
+        cache.complete("restored", attempt: missingAttempt, result: CredentialReadResult(value: nil, status: errSecItemNotFound))
+        precondition(cache.value("restored") == nil && cache.state("restored") == .unavailable, "A missing credential must not retain stale cache data")
+
+        let unavailableCount = await source.count
+        for name in ["restored", "removed"] {
+            for _ in 0..<20 { cache.retry(name, minimumInterval: 0, now: .distantFuture); cache.prepare(name, now: .distantFuture) }
+            let absent = await cache.awaitValue(name)
+            precondition(absent == nil)
+            precondition(cache.state(name) == .unavailable && cache.value(name) == nil, "Missing or explicitly removed credentials must not silently restore on app activation")
+        }
+        let afterUnavailableCount = await source.count, unavailablePending = await source.pending
+        precondition(afterUnavailableCount == unavailableCount && !unavailablePending, "Lifecycle retry reread an unavailable credential after its future retry date")
+
+        let retrySource = CacheFixture(), retryCache = CredentialCache { _ in await retrySource.read() }
+        precondition(retryCache.value("unlocked") == nil)
+        await until { await retrySource.pending }
+        await retrySource.finish(nil, status: errSecInteractionNotAllowed)
+        await until { retryCache.state("unlocked") == .authorizationRequired }
+        let retryClock = Date()
+        for _ in 0..<20 { retryCache.retry("unlocked", minimumInterval: 300, now: retryClock.addingTimeInterval(30)) }
+        let throttledCount = await retrySource.count
+        precondition(throttledCount == 1 && retryCache.state("unlocked") == .authorizationRequired, "Lifecycle retry ignored its minimum interval")
+        for _ in 0..<20 { retryCache.retry("unlocked", minimumInterval: 300, now: retryClock.addingTimeInterval(301)) }
+        await until { await retrySource.pending }
+        let retryCount = await retrySource.count
+        precondition(retryCount == 2, "Lifecycle retries did not coalesce into one silent read")
+        await retrySource.finish("unlocked-fixture")
+        await until { retryCache.state("unlocked") == .ready }
+        precondition(retryCache.value("unlocked") == "unlocked-fixture")
+        for _ in 0..<20 { retryCache.retry("unlocked", minimumInterval: 0, now: retryClock.addingTimeInterval(1000)) }
+        let readyCount = await retrySource.count
+        precondition(readyCount == 2, "Ready credentials reread on application navigation")
+        let deviceAttempt = retryCache.begin("device-unavailable")
+        retryCache.complete("device-unavailable", attempt: deviceAttempt, result: CredentialReadResult(value: nil, status: errSecNotAvailable))
+        precondition(retryCache.state("device-unavailable") == .unavailable)
+        retryCache.retry("device-unavailable", minimumInterval: 0, now: .distantFuture)
+        await until { await retrySource.pending }
+        let deviceRetryCount = await retrySource.count
+        precondition(deviceRetryCount == 3, "A temporarily unavailable Keychain must still recover silently")
+        await retrySource.finish("device-restored-fixture")
+        await until { retryCache.state("device-unavailable") == .ready }
+        precondition(retryCache.value("device-unavailable") == "device-restored-fixture")
         cache.retryInterval = 0
         precondition(cache.value("denied") == nil && cache.state("denied") == .loading, "Denied access was not retried after the back-off")
         await until { await source.pending }
@@ -131,7 +180,7 @@ actor CacheFixture {
         await source.finish("awaited-value")
         let awaited = await waited.value
         precondition(awaited == "awaited-value" && cache.value("awaited") == "awaited-value", "awaitValue did not wait for the read in flight")
-        print("Credential policy, serialized background access, responsive MainActor, coalescing, stale-result guards, retry after back-off and awaited reads passed (fake Security only)")
+        print("Credential policy, transient-session retention, guarded prepare/retry back-off, awaited reads, coalescing and stale-result guards passed (fake Security only)")
     }
 }
 SWIFT

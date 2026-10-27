@@ -7,12 +7,15 @@ extension RepoStore {
     }
     /// Waits while the keychain asks the user, so a slow approval is not reported as a missing account.
     func resolveCollaborationAccess() async -> ReviewAccess? {
-        guard let target, let a = hostingAccount, let token = await AccountStore.shared.loadToken(for: a) else { return nil }
-        return ReviewAccess(target: target, token: token, apiBase: a.apiBase, me: a.username)
+        guard let target, let account = hostingAccount else { return nil }
+        let path = url?.path, context = collaboration.contextID
+        guard let token = await AccountStore.shared.loadToken(for: account), self.target == target, self.url?.path == path,
+              hostingAccount?.id == account.id, collaboration.contextID == context else { return nil }
+        return ReviewAccess(target: target, token: token, apiBase: account.apiBase, me: account.username)
     }
     /// Why the inbox has no access: the saved account needs the user's approval, or no account is connected.
     private var inboxAccessMessage: String {
-        pendingCredentialAccount == nil ? String(localized: "Connect an account to load your inbox.") : String(localized: "Allow access to the saved account to use repository services.")
+        hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) } ?? String(localized: "Connect an account to load your inbox.")
     }
     func filterPullRequests(scope: String, search: String) async {
         collaboration.query = RequestQuery(scope: scope, search: search, page: 1)

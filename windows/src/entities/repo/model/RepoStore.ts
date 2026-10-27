@@ -1,5 +1,6 @@
 import type { AgentHost } from "@/entities/agent";
 import { CIStore } from "@/entities/ci";
+import { HostingHubStore } from "@/entities/hosting";
 import { RepoAssistant } from "./layers/repository-assistant";
 
 /**
@@ -8,6 +9,8 @@ import { RepoAssistant } from "./layers/repository-assistant";
  * core → selection → search → filters → actions → undo → drop → worktrees → hosting → ai → terminal → gitch
  */
 export class RepoStore extends RepoAssistant implements AgentHost {
+  /** Home can open the exact project task before the project panel mounts. */
+  readonly hostingHub: HostingHubStore = new HostingHubStore(this);
   /** CI/CD 패널(파이프라인·Actions) */
   readonly ci: CIStore = new CIStore(this);
 }

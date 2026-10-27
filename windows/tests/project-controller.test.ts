@@ -26,6 +26,7 @@ const detail = (id = "PROJECT"): HubDetail => ({
   rows: [],
   fields: [],
   assets: [],
+
   members: [],
   repositories: [],
   more: false,

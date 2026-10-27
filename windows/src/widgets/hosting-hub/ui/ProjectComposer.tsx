@@ -1,3 +1,4 @@
+import { useProjectEdit } from "../model/use-project-edit";
 import { useEffect, useRef, useState } from "react";
 import { Circle, FilePlus2, Link, Plus, Search, X } from "lucide-react";
 import {
@@ -30,6 +31,9 @@ export function ProjectComposer({
   close: () => void;
   loadIssues?: ProjectIssueLoader;
 }) {
+  const edit = useProjectEdit(ask);
+  locked ||= edit.busy;
+  const localProject = detail.item.data.localProject === true;
   const [tab, setTab] = useState<"draft" | "existing" | "url">(
     gitlab ? (loadIssues ? "existing" : "url") : "draft",
   );
@@ -76,7 +80,7 @@ export function ProjectComposer({
     }
   };
   const add = (value: string, label = value) =>
-    ask(
+    edit.run(
       gitlab ? t("Move issue to the Open column?") : t("Add item to project?"),
       `${label}${gitlab ? `\n${t("This reopens the issue and removes its board column labels.")}` : ""}`,
       async (access) => {
@@ -89,11 +93,18 @@ export function ProjectComposer({
       <div className="project-composer-heading">
         <div>
           <h3>{t("Add to your project")}</h3>
-          <p>{t("Capture an idea or connect work that already exists.")}</p>
+          <p>
+            {t(
+              localProject
+                ? "Capture a task, then set its dates, priority, and assignees."
+                : "Capture an idea or connect work that already exists.",
+            )}
+          </p>
         </div>
         <Button
           size="small"
           tip={t("Close")}
+          disabled={edit.busy}
           onClick={() => {
             ask.cancel?.();
             close();
@@ -114,30 +125,35 @@ export function ProjectComposer({
             onClick={() => setTab("draft")}
           >
             <FilePlus2 size={13} />
-            {t("New draft")}
+            {t(localProject ? "New task" : "New draft")}
           </Button>
         )}
-        <Button
-          size="small"
-          kind={tab === "existing" ? "primary" : undefined}
-          disabled={!loadIssues}
-          onClick={() => {
-            setTab("existing");
-            if (!page) void load();
-          }}
-        >
-          <Circle size={13} />
-          {t("Repository issues")}
-        </Button>
-        <Button
-          size="small"
-          kind={tab === "url" ? "primary" : undefined}
-          onClick={() => setTab("url")}
-        >
-          <Link size={13} />
-          {t("Paste a link")}
-        </Button>
+        {!localProject && (
+          <>
+            <Button
+              size="small"
+              kind={tab === "existing" ? "primary" : undefined}
+              disabled={!loadIssues}
+              onClick={() => {
+                setTab("existing");
+                if (!page) void load();
+              }}
+            >
+              <Circle size={13} />
+              {t("Repository issues")}
+            </Button>
+            <Button
+              size="small"
+              kind={tab === "url" ? "primary" : undefined}
+              onClick={() => setTab("url")}
+            >
+              <Link size={13} />
+              {t("Paste a link")}
+            </Button>
+          </>
+        )}
       </div>
+      {edit.error && <p className="error-text" role="alert">{edit.error}</p>}
       {tab === "draft" ? (
         <div className="project-editor">
           <input
@@ -162,8 +178,10 @@ export function ProjectComposer({
             kind="primary"
             disabled={locked || !title.trim()}
             onClick={() =>
-              ask(
-                t("Create project draft?"),
+              edit.run(
+                t(
+                  localProject ? "Create local task?" : "Create project draft?",
+                ),
                 `${title}\n${body}`,
                 async (access) => {
                   await saveHubProjectDraft(access, detail, title, body);
@@ -173,7 +191,7 @@ export function ProjectComposer({
             }
           >
             <Plus size={14} />
-            {t("Create draft")}
+            {t(localProject ? "Create task" : "Create draft")}
           </Button>
         </div>
       ) : tab === "url" ? (

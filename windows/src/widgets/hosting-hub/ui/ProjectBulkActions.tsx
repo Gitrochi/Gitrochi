@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Archive, ArchiveRestore, CheckSquare, Trash2, X } from "lucide-react";
 import {
+  localProjects,
   archiveHubProjectItem,
   deleteHubProjectItem,
   moveHubProjectItem,
@@ -48,12 +49,14 @@ export function ProjectBulkActions({
   const act = (
     title: string,
     work: (access: HubAccess, row: HubProjectRow) => Promise<unknown>,
+    localWork: () => Promise<unknown>,
   ) =>
     ask(
       title,
-      `${t("{0} selected items", rows.length)}\n${rows.map((row) => row.title).join("\n")}`,
+      `${t("{0} selected items", rows.length)}\n${rows.map((row) => row.title).join("\n")}\n\n${title === t("Remove selected items from project?") ? t(detail.item.data.localProject === true ? "These tasks will be permanently removed from this device." : "The issues and pull requests stay in their repositories.") : t("Review the project and affected items before applying this change.")}`,
       async (access) => {
-        await runProjectBatch(access, rows, work);
+        if (access.local) await localWork();
+        else await runProjectBatch(access, rows, work);
         done();
       },
     );
@@ -102,7 +105,9 @@ export function ProjectBulkActions({
               <option value="" disabled>
                 {t("Choose a value")}
               </option>
-              {!gitlab && <option value="__clear">{t("Clear field")}</option>}
+              {!gitlab && detail.item.data.localProject !== true && (
+                <option value="__clear">{t("Clear field")}</option>
+              )}
               {field.options.map((value) => (
                 <option key={value.id} value={value.id}>
                   {value.name}
@@ -135,16 +140,25 @@ export function ProjectBulkActions({
               (field.kind === "number" && !Number.isFinite(Number(option)))
             }
             onClick={() =>
-              act(t("Update selected project items?"), (access, row) =>
-                gitlab
-                  ? moveHubProjectItem(access, detail, row, field, option)
-                  : updateHubProjectField(
-                      access,
-                      detail,
-                      row,
-                      field,
-                      option === "__clear" ? null : option,
-                    ),
+              act(
+                t("Update selected project items?"),
+                (access, row) =>
+                  gitlab
+                    ? moveHubProjectItem(access, detail, row, field, option)
+                    : updateHubProjectField(
+                        access,
+                        detail,
+                        row,
+                        field,
+                        option === "__clear" ? null : option,
+                      ),
+                () =>
+                  localProjects.updateFields(
+                    detail,
+                    rows,
+                    field,
+                    option === "__clear" ? null : option,
+                  ),
               )
             }
           >
@@ -155,8 +169,11 @@ export function ProjectBulkActions({
               size="small"
               disabled={locked || !rows.length}
               onClick={() =>
-                act(t("Update selected project items?"), (access, row) =>
-                  updateHubProjectField(access, detail, row, field, null),
+                act(
+                  t("Update selected project items?"),
+                  (access, row) =>
+                    updateHubProjectField(access, detail, row, field, null),
+                  () => localProjects.updateFields(detail, rows, field, null),
                 )
               }
             >
@@ -171,8 +188,11 @@ export function ProjectBulkActions({
             size="small"
             disabled={locked || !rows.length}
             onClick={() =>
-              act(t("Archive selected project items?"), (access, row) =>
-                archiveHubProjectItem(access, detail, row, true),
+              act(
+                t("Archive selected project items?"),
+                (access, row) =>
+                  archiveHubProjectItem(access, detail, row, true),
+                () => localProjects.archiveMany(detail, rows, true),
               )
             }
           >
@@ -183,8 +203,11 @@ export function ProjectBulkActions({
             size="small"
             disabled={locked || !rows.length}
             onClick={() =>
-              act(t("Restore selected project items?"), (access, row) =>
-                archiveHubProjectItem(access, detail, row, false),
+              act(
+                t("Restore selected project items?"),
+                (access, row) =>
+                  archiveHubProjectItem(access, detail, row, false),
+                () => localProjects.archiveMany(detail, rows, false),
               )
             }
           >
@@ -196,8 +219,10 @@ export function ProjectBulkActions({
             kind="danger"
             disabled={locked || !rows.length}
             onClick={() =>
-              act(t("Remove selected items from project?"), (access, row) =>
-                deleteHubProjectItem(access, detail, row),
+              act(
+                t("Remove selected items from project?"),
+                (access, row) => deleteHubProjectItem(access, detail, row),
+                () => localProjects.removeMany(detail, rows),
               )
             }
           >

@@ -1,3 +1,4 @@
+import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
 import {
   Check,
@@ -13,12 +14,14 @@ import {
   projectTaskBranches,
   saveHubProjectDraft,
   updateHubProjectField,
+  type HubAccess,
   type HubDetail,
-  type HubProjectField,
   type HubProjectRow,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
+import { ProjectFieldEditor } from "./ProjectFieldEditor";
+import { ProjectTaskConversation } from "./ProjectTaskConversation";
 import { ProjectTaskActions } from "./ProjectTaskActions";
 import {
   projectFieldValue,
@@ -39,6 +42,7 @@ export function ProjectInspector({
   close,
   local,
   onMoved,
+  readAccess,
 }: {
   detail: HubDetail;
   row: HubProjectRow;
@@ -50,10 +54,17 @@ export function ProjectInspector({
   close: () => void;
   local?: ProjectLocalActions;
   onMoved?: () => void;
+  readAccess?: () => Promise<HubAccess>;
 }) {
+  const edit = useProjectEdit(ask);
+  locked ||= edit.busy;
   const [editing, setEditing] = useState(false),
     [title, setTitle] = useState(row.title),
     [body, setBody] = useState(row.body);
+  const localProject = detail.item.data.localProject === true;
+  const editableFields = detail.fields.filter((field) => !/^(title|repository|labels|assignees)$/i.test(field.name) || field.id === "local-assignees");
+  const propertyRank = (id: string, name: string) => /status|state/i.test(id + name) ? 0 : /priority/i.test(id + name) ? 1 : /start/i.test(id + name) ? 2 : /due|target/i.test(id + name) ? 3 : 4;
+  editableFields.sort((a, b) => propertyRank(a.id, a.name) - propertyRank(b.id, b.name));
   const kind = projectKind(row),
     repository = projectRepository(row),
     matchesLocal =
@@ -87,6 +98,8 @@ export function ProjectInspector({
         <Button
           size="small"
           tip={t("Close task details")}
+          aria-label={t("Close task details")}
+          disabled={edit.busy}
           onClick={() => {
             ask.cancel?.();
             close();
@@ -96,6 +109,7 @@ export function ProjectInspector({
         </Button>
       </div>
       <div className="project-inspector-body">
+        {edit.error && <p className="error-text" role="alert">{edit.error}</p>}
         <div className="project-task-kind">
           {kind === "pullRequest" ? (
             <GitPullRequest size={15} />
@@ -108,13 +122,14 @@ export function ProjectInspector({
             {kind === "pullRequest"
               ? t("Pull request")
               : kind === "draft"
-                ? t("Draft")
+                ? t(detail.item.data.localProject === true ? "Task" : "Draft")
                 : kind === "redacted"
                   ? t("Restricted item")
                   : t("Issue")}
             {row.number ? ` #${row.number}` : ""}
           </span>
           {row.archived && <span className="project-tag">{t("Archived")}</span>}
+          {!localProject && /^(open|closed|merged)$/i.test(row.state ?? "") && <span className={`project-task-state ${/open/i.test(row.state ?? "") ? "open" : "closed"}`}>{t(/^merged$/i.test(row.state ?? "") ? "Merged" : /^closed$/i.test(row.state ?? "") ? "Closed" : "Open")}</span>}
         </div>
         {editing ? (
           <div className="project-editor">
@@ -143,17 +158,32 @@ export function ProjectInspector({
                 kind="primary"
                 disabled={locked || !title.trim()}
                 onClick={() =>
-                  ask(t("Save draft changes?"), title, async (access) => {
-                    await saveHubProjectDraft(access, detail, title, body, row);
-                    setEditing(false);
-                  })
+                  edit.run(
+                    t(
+                      detail.item.data.localProject === true
+                        ? "Save task changes?"
+                        : "Save draft changes?",
+                    ),
+                    title,
+                    async (access) => {
+                      await saveHubProjectDraft(
+                        access,
+                        detail,
+                        title,
+                        body,
+                        row,
+                      );
+                      setEditing(false);
+                    },
+                  )
                 }
               >
                 <Check size={13} />
-                {t("Review and save")}
+                {t("Save changes")}
               </Button>
               <Button
                 size="small"
+                disabled={edit.busy}
                 onClick={() => {
                   ask.cancel?.();
                   setEditing(false);
@@ -166,11 +196,6 @@ export function ProjectInspector({
         ) : (
           <>
             <h2>{row.title}</h2>
-            {row.body ? (
-              <div className="project-inspector-description">{row.body}</div>
-            ) : (
-              <p className="hint">{t("No description yet.")}</p>
-            )}
           </>
         )}
         {repository && (
@@ -179,7 +204,7 @@ export function ProjectInspector({
             <strong>{repository}</strong>
           </div>
         )}
-        {!!row.assignees?.length && (
+        {!!row.assignees?.length && !detail.fields.some((field) => field.id === "local-assignees") && (
           <div className="project-inspector-meta">
             <span>{t("Assignees")}</span>
             <div className="project-people">
@@ -232,7 +257,7 @@ export function ProjectInspector({
               {t("Review in Gitrochi")}
             </Button>
           )}
-          {safe(row.url) && (
+          {safe(row.url) && (localProject || !["issue", "pullRequest"].includes(kind)) && (
             <Button size="small" onClick={() => open(row.url)}>
               <ExternalLink size={13} />
               {t("Open in browser")}
@@ -240,16 +265,23 @@ export function ProjectInspector({
           )}
         </div>
         <div className="project-inspector-divider" />
-        <h3>{t("Project fields")}</h3>
-        {detail.fields.map((field) => (
+        <h3>{t("Properties")}</h3>
+        <div className="project-property-grid">
+        {editableFields.map((field) => (
           <ProjectFieldEditor
             key={`${row.id}:${field.id}:${projectFieldValue(row, field)}`}
             field={field}
             row={row}
-            clearable={!gitlab}
+            clearable={
+              !gitlab &&
+              !(
+                detail.item.data.localProject === true &&
+                ["local-status", "local-priority"].includes(field.id)
+              )
+            }
             locked={locked || !row.contentID || row.archived === true}
             save={(value) =>
-              ask(
+              edit.run(
                 t("Update project field?"),
                 `${row.title}\n${field.name}: ${value === null ? t("Not set") : (field.options.find((option) => option.id === value)?.name ?? value)}`,
                 (access) =>
@@ -266,7 +298,8 @@ export function ProjectInspector({
             }
           />
         ))}
-        {!detail.fields.length && (
+        </div>
+        {!editableFields.length && (
           <p className="hint">{t("No project fields are available.")}</p>
         )}
         <ProjectTaskActions
@@ -283,85 +316,8 @@ export function ProjectInspector({
             setEditing(true);
           }}
         />
+        {!editing && <ProjectTaskConversation row={row} localProject={localProject} locked={locked} open={open} safe={safe} readAccess={readAccess} ask={ask} />}
       </div>
     </aside>
-  );
-}
-function ProjectFieldEditor({
-  field,
-  row,
-  locked,
-  clearable,
-  save,
-}: {
-  field: HubProjectField;
-  row: HubProjectRow;
-  locked: boolean;
-  clearable: boolean;
-  save: (value: string | null) => void;
-}) {
-  const original = projectFieldValue(row, field),
-    [value, setValue] = useState(original);
-  const selectable =
-    field.kind === "singleSelect" ||
-    field.kind === "iteration" ||
-    (!field.kind && field.options.length > 0);
-  const supported =
-    selectable || ["text", "number", "date"].includes(field.kind ?? "");
-  return (
-    <label className="project-field-editor">
-      <span>{field.name}</span>
-      {selectable ? (
-        <select
-          className="select"
-          disabled={locked}
-          value={original}
-          onChange={(event) => save(event.target.value || null)}
-        >
-          <option value="" disabled={!clearable}>
-            {t("Not set")}
-          </option>
-          {field.options.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.name}
-            </option>
-          ))}
-        </select>
-      ) : supported ? (
-        <div className="project-field-input">
-          <input
-            className="input"
-            type={
-              field.kind === "number"
-                ? "number"
-                : field.kind === "date"
-                  ? "date"
-                  : "text"
-            }
-            value={value}
-            disabled={locked}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          <Button
-            size="small"
-            tip={t("Save field")}
-            disabled={
-              locked ||
-              value === original ||
-              (field.kind === "number" &&
-                value !== "" &&
-                !Number.isFinite(Number(value)))
-            }
-            onClick={() => save(value || null)}
-          >
-            <Check size={13} />
-          </Button>
-        </div>
-      ) : (
-        <span className="hint">
-          {original || t("Manage this field in GitHub")}
-        </span>
-      )}
-    </label>
   );
 }

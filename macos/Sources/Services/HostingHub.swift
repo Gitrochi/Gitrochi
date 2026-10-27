@@ -22,7 +22,7 @@ struct HubProjectOption: Identifiable { var id: String; var name: String; var st
 struct HubProjectField: Identifiable { var id: String; var name: String; var options: [HubProjectOption]; var kind: HubProjectFieldKind = .singleSelect }
 struct HubProjectColumn: Identifiable { var id: String; var title: String; var rows: [HubProjectRow] }
 enum HubProjectRowKind: String { case issue, pullRequest, draft, redacted }
-struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = []; var kind: HubProjectRowKind = .issue; var number: Int?; var repository = ""; var state = ""; var assignees: [String] = []; var updatedAt = ""; var headRefName = ""; var archived = false; var values: [String: String] = [:] }
+struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = []; var kind: HubProjectRowKind = .issue; var number: Int?; var repository = ""; var state = ""; var assignees: [String] = []; var updatedAt = ""; var headRefName = ""; var archived = false; var values: [String: String] = [:]; var author: String? = nil; var createdAt: String? = nil }
 struct HubDetail { var item: HubItem; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
 struct HubPage { var items: [HubItem]; var more: Bool; var cursor: String?; var notice: String? }
 struct HubReleaseInput { var tag = ""; var name = ""; var body = ""; var target = ""; var draft = true; var prerelease = false }
@@ -30,7 +30,9 @@ struct HubGistInput { var description = ""; var isPublic = false; var files = [H
 struct HostingHubState {
     var section: HostingHubSection = .releases
     var selectedAccountID: String?
+    var requestedProjectRowID: String?
     var projectScope = "repository"
+    var projectSource = "remote"
     var items: [HubItem] = []; var detail: HubDetail?
     var projectPermissionRequired = false
     var allowingCredentialAccess = false
@@ -39,13 +41,20 @@ struct HostingHubState {
     var generation = UUID(); var listID = UUID(); var detailID = UUID(); var context = ""
     var filteredItems: [HubItem] { let q = query.trimmingCharacters(in: .whitespacesAndNewlines); return q.isEmpty ? items : items.filter { ($0.title + " " + $0.subtitle + " " + $0.body).localizedCaseInsensitiveContains(q) } }
 }
-struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)? }
+struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)?; var local = false }
 
 struct HubProjectPermissionError: LocalizedError {
     var errorDescription: String? { String(localized: "Connect project access for this GitHub account to load projects.") }
 }
 
-struct HubUncertainWriteError: LocalizedError { let message: String; var errorDescription: String? { message } }
+struct HubProjectActionDeniedError: LocalizedError {
+    var detail: String? = nil
+    var errorDescription: String? {
+        String(localized: "GitHub denied this project action. Check the token's Projects access and the owner's policies. A paid plan does not grant these permissions.") + (detail.map { "\n\n" + $0 } ?? "")
+    }
+}
+
+struct HubUncertainWriteError: LocalizedError { let message: String; var createdProject: HubItem? = nil; var errorDescription: String? { message } }
 
 /// Every authenticated request remains on the selected account's API origin and checks the captured context.
 @MainActor enum HostingHubAPI {
@@ -60,6 +69,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
     static func repo(_ c: HubAccess) -> String { c.apiBase + (c.target.provider == .github ? "/repos/" + c.target.path.split(separator: "/").map { enc(String($0)) }.joined(separator: "/") : "/projects/" + enc(c.target.path)) }
     static func value(_ c: HubAccess, _ url: String, method: String = "GET", body: J? = nil) async throws -> Any {
         try check(c)
+        guard !c.local else { throw fail(String(localized: "Local projects do not send requests to GitHub.")) }
         guard let base = URL(string: c.apiBase), let u = URL(string: url), u.scheme == base.scheme, u.host == base.host, u.port == base.port, u.path.hasPrefix(base.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).isEmpty ? "/" : base.path + "/") else { throw fail(String(localized: "The server returned an unsafe address.")) }
         let data = try await Hosting.data(Hosting.request(c.target.provider, url, token: c.token, method: method, body: body)); try check(c)
         return data.isEmpty ? [:] : try JSONSerialization.jsonObject(with: data)
@@ -87,6 +97,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             let message = s(error, "message").lowercased()
             return s(error, "type") == "INSUFFICIENT_SCOPES" || message.contains("insufficient scope") || message.contains("required scopes") || message.contains("read:project")
         }) { throw HubProjectPermissionError() }
+        if errors.contains(where: { ["FORBIDDEN", "RESOURCE_NOT_ACCESSIBLE"].contains(s($0, "type")) }) { throw HubProjectActionDeniedError() }
         guard errors.isEmpty, let data = x["data"] as? J else { throw fail(String(localized: "Projects could not be loaded. Retry or open GitHub in your browser.")) }
         return data
     }
@@ -187,9 +198,9 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         ... on ProjectV2IterationField{id name configuration{iterations{id title startDate duration} completedIterations{id title startDate duration}}}
       } pageInfo{hasNextPage}}
       items(first:30,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
-        ... on Issue{id title body url number state updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
-        ... on PullRequest{id title body url number state updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
-        ... on DraftIssue{id title body updatedAt assignees(first:100){nodes{login}}}
+        ... on Issue{id title body url number state createdAt author{login} updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+        ... on PullRequest{id title body url number state createdAt author{login} updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
+        ... on DraftIssue{id title body createdAt creator{login} updatedAt assignees(first:100){nodes{login}}}
       } fieldValues(first:100){nodes{
         ... on ProjectV2ItemFieldSingleSelectValue{optionId field{... on ProjectV2SingleSelectField{id}}}
         ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{id}}}
@@ -213,9 +224,10 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             if let option = field["optionId"] as? String { statuses[fieldID] = option }
         }
         let type = s(content, "__typename"), kind: HubProjectRowKind = type == "PullRequest" ? .pullRequest : type == "DraftIssue" ? .draft : type == "Issue" ? .issue : s(x, "type") == "DRAFT_ISSUE" ? .draft : s(x, "type") == "PULL_REQUEST" ? .pullRequest : !id(content).isEmpty ? .issue : .redacted
-        return HubProjectRow(id: id(x), title: s(content, "title").isEmpty ? String(localized: "Redacted project item") : s(content, "title"), body: s(content, "body"), url: s(content, "url"), contentID: id(content), statuses: statuses, labels: arr(obj(content, "labels"), "nodes").map { s($0, "name") }, kind: kind, number: content["number"] as? Int, repository: s(obj(content, "repository"), "nameWithOwner"), state: s(content, "state"), assignees: arr(obj(content, "assignees"), "nodes").map { s($0, "login") }, updatedAt: s(x, "updatedAt").isEmpty ? s(content, "updatedAt") : s(x, "updatedAt"), headRefName: s(content, "headRefName"), archived: x["isArchived"] as? Bool == true, values: values)
+        return HubProjectRow(id: id(x), title: s(content, "title").isEmpty ? String(localized: "Redacted project item") : s(content, "title"), body: s(content, "body"), url: s(content, "url"), contentID: id(content), statuses: statuses, labels: arr(obj(content, "labels"), "nodes").map { s($0, "name") }, kind: kind, number: content["number"] as? Int, repository: s(obj(content, "repository"), "nameWithOwner"), state: s(content, "state"), assignees: arr(obj(content, "assignees"), "nodes").map { s($0, "login") }, updatedAt: s(x, "updatedAt").isEmpty ? s(content, "updatedAt") : s(x, "updatedAt"), headRefName: s(content, "headRefName"), archived: x["isArchived"] as? Bool == true, values: values, author: (obj(content, kind == .draft ? "creator" : "author")["login"] as? String).flatMap { $0.isEmpty ? nil : $0 }, createdAt: (content["createdAt"] as? String).flatMap { $0.isEmpty ? nil : $0 })
     }
     static func page(_ c: HubAccess, section: HostingHubSection, page: Int = 1, cursor: String? = nil) async throws -> HubPage {
+        if c.local { try check(c); guard section == .projects else { throw fail(String(localized: "This action requires a GitHub project.")) }; await localProjectStore.load(); try check(c); if let error = localProjectStore.error { throw fail(error) }; return HubPage(items: localProjectStore.projects, more: false, notice: String(localized: "Saved on this device. Local projects do not sync with GitHub.")) }
         let p = c.target.provider, query = "per_page=30&page=\(max(1, page))"
         switch section {
         case .releases:
@@ -239,6 +251,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         }
     }
     static func detail(_ c: HubAccess, section: HostingHubSection, item: HubItem, page: Int = 1, cursor: String? = nil, tab: String = "repositories") async throws -> HubDetail {
+        if try usesLocal(c, item: item) { guard section == .projects else { throw fail(String(localized: "This action requires a GitHub project.")) }; let result = try await localProjectStore.detail(projectID: item.id); try check(c); return result }
         let p = c.target.provider, qs = "per_page=30&page=\(page)"
         switch section {
         case .releases:
@@ -264,7 +277,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             if p == .github { d.files = obj(x, "files").sorted { $0.key < $1.key }.map { key, value in let f = value as? J ?? [:]; return HubFile(name: key, content: s(f, "content"), truncated: f["truncated"] as? Bool == true) }; do { _ = try await value(c, base + "/star"); d.starred = true } catch let error as HostingError where error.status == 404 { d.starred = false } catch { d.notice = String(localized: "Star status could not be loaded: \(Self.error(error, token: c.token))") }; if x["truncated"] as? Bool == true { d.notice = String(localized: "The server truncated the file list. Open the gist in a browser before editing.") } }
             else { let files = arr(x, "files").isEmpty ? [["path": s(x, "file_name")]] : arr(x, "files"); for f in files.prefix(30) { let name = s(f, "path"), branch = snippetRef(rawURL: s(f, "raw_url"), file: name) ?? "main"; try check(c); let data = try await Hosting.data(Hosting.request(p, base + "/files/\(enc(branch))/\(enc(name))/raw", token: c.token)); try check(c); d.files.append(HubFile(name: name, content: String(decoding: data.prefix(1_000_000), as: UTF8.self), truncated: data.count > 1_000_000)) }; if files.count > 30 { d.notice = String(localized: "The server returned more files. Open the snippet in a browser before editing.") } }; return d
         case .projects:
-            if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: c.target.path, state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at")) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
+            if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: c.target.path, state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at"), author: obj(x, "author")["username"] as? String, createdAt: x["created_at"] as? String) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
             let data = try await graph(c, projectDetailQuery, ["id": item.id, "cursor": cursor as Any? ?? NSNull()]), x = obj(data, "node")
             guard !id(x).isEmpty else { throw fail(String(localized: "Project is unavailable or this account cannot access it.")) }
             var updated = item; updated.title = s(x, "title"); updated.body = s(x, "shortDescription"); updated.url = s(x, "url"); updated.data.merge(x) { _, new in new }; var d = HubDetail(item: updated)
@@ -296,8 +309,9 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
     static func loadedProjectRow(_ detail: HubDetail, row: HubProjectRow) throws -> HubProjectRow {
         guard !detail.item.id.isEmpty, let loaded = detail.rows.first(where: { $0.id == row.id }) else { throw fail(String(localized: "Select a loaded project field and item.")) }; return loaded
     }
-    static func githubProject(_ c: HubAccess, detail: HubDetail) throws { try check(c); guard c.target.provider == .github, !detail.item.id.isEmpty else { throw fail(String(localized: "This action requires a GitHub project.")) } }
+    static func githubProject(_ c: HubAccess, detail: HubDetail) throws { try check(c); guard try !usesLocal(c, item: detail.item), c.target.provider == .github, !detail.item.id.isEmpty else { throw fail(String(localized: "This action requires a GitHub project.")) } }
     static func updateProjectField(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, field: HubProjectField, value: String?) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.updateField(detail: detail, row: row, field: field, value: value); try check(c); return }
         try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
         guard let actual = detail.fields.first(where: { $0.id == field.id }) else { throw fail(String(localized: "Select a loaded project field and item.")) }
         guard actual.kind != .unsupported else { throw fail(String(localized: "This project field is managed by its issue or pull request.")) }
@@ -320,6 +334,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         _ = try await graph(c, "mutation($input:UpdateProjectV2ItemFieldValueInput!){updateProjectV2ItemFieldValue(input:$input){projectV2Item{id}}}", ["input": input])
     }
     static func saveProjectDraft(_ c: HubAccess, detail: HubDetail, title: String, body: String, row: HubProjectRow? = nil) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.saveDraft(detail: detail, title: title, body: body, row: row); try check(c); return }
         try githubProject(c, detail: detail); let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { throw fail(String(localized: "A draft title is required.")) }
         if let row {
@@ -333,18 +348,22 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
             do { _ = try await graph(c, "mutation($input:AddProjectV2DraftIssueInput!){addProjectV2DraftIssue(input:$input){projectItem{id}}}", ["input": ["projectId": detail.item.id, "title": title, "body": body]]) }
             catch let error as HostingError where (400..<500).contains(error.status) { throw error }
             catch let error as HubProjectPermissionError { throw error }
+            catch let error as HubProjectActionDeniedError { throw error }
             catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
         }
     }
     static func archiveProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, archived: Bool) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.archive(detail: detail, row: row, archived: archived); try check(c); return }
         try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row), operation = archived ? "archiveProjectV2Item" : "unarchiveProjectV2Item", inputType = archived ? "ArchiveProjectV2ItemInput" : "UnarchiveProjectV2ItemInput"
         _ = try await graph(c, "mutation($input:\(inputType)!){\(operation)(input:$input){item{id}}}", ["input": ["projectId": detail.item.id, "itemId": loaded.id]])
     }
     static func deleteProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.removeItem(detail: detail, row: row); try check(c); return }
         try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
         _ = try await graph(c, "mutation($input:DeleteProjectV2ItemInput!){deleteProjectV2Item(input:$input){deletedItemId}}", ["input": ["projectId": detail.item.id, "itemId": loaded.id]])
     }
     static func moveProjectItem(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, afterRow: HubProjectRow?) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.reorder(detail: detail, row: row, afterRow: afterRow); try check(c); return }
         try githubProject(c, detail: detail); let loaded = try loadedProjectRow(detail, row: row)
         let anchor = try afterRow.map { try loadedProjectRow(detail, row: $0) }
         guard anchor?.id != loaded.id else { throw fail(String(localized: "Select a loaded project field and item.")) }
@@ -360,6 +379,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var errorDe
         do { _ = try await graph(c, "mutation($input:ConvertProjectV2DraftIssueItemToIssueInput!){convertProjectV2DraftIssueItemToIssue(input:$input){item{id}}}", ["input": ["itemId": loaded.id, "repositoryId": id(remote)]]) }
         catch let error as HostingError where (400..<500).contains(error.status) { throw error }
         catch let error as HubProjectPermissionError { throw error }
+            catch let error as HubProjectActionDeniedError { throw error }
         catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
     }
     static func move(_ c: HubAccess, detail: HubDetail, row: HubProjectRow, field: HubProjectField, option: String) async throws {

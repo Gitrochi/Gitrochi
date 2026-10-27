@@ -19,7 +19,7 @@ struct WorkspaceDestinationContent: View {
     @ViewBuilder private var page: some View {
         Group {
             switch store.destination {
-            case .home: WelcomeView()
+            case .home: WorkspaceHomePanel()
             case .repository: RepositoryScreen()
             case .compare: RevisionComparisonPanel()
             case .rebase: RebaseWorkbenchPanel()

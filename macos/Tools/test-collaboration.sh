@@ -68,11 +68,11 @@ enum Hosting {
         Hosting.handler = { r in
             if r.url!.path.hasSuffix("/todos") { return try json([["id": 9, "action_name": "mentioned", "target_type": "MergeRequest", "target_url": "https://gitlab.example/x", "body": "Mention", "project": ["path_with_namespace": "team/repo"], "target": ["iid": 7, "title": "Review"], "author": ["username": "other"]]]) }
             if r.httpMethod == "POST" { precondition(r.url!.path.hasSuffix("/merge_requests/7/notes")); return try json([:]) }
-            if r.url!.path.hasSuffix("/notes") { return try json([["id": 3, "body": "note", "author": ["username": "other"]]]) }
+            if r.url!.path.hasSuffix("/notes") { return try json([["id": 3, "body": "note", "author": ["username": "other"], "created_at": "2026-10-02T13:00:00Z"]]) }
             return try json(["title": "Review", "state": "opened", "description": "Body"])
         }
         let inbox = try await CollaborationAPI.inbox(gl, kind: "mention", page: 1); precondition(inbox.0.count == 1 && inbox.0[0].isRequest)
-        let detail = try await CollaborationAPI.detail(gl, item: inbox.0[0], page: 1); precondition(detail.item.isRequest && detail.comments.count == 1)
+        let detail = try await CollaborationAPI.detail(gl, item: inbox.0[0], page: 1); precondition(detail.item.isRequest && detail.comments.count == 1 && detail.comments[0].createdAt == "2026-10-02T13:00:00Z")
         try await CollaborationAPI.inboxAction(gl, item: detail.item, action: "comment", body: "Reply")
         let state = CollaborationState(); state.inbox = inbox.0; let context = state.contextID; state.reset(); precondition(state.inbox.isEmpty && context != state.contextID)
         print("Collaboration: REST list paging and page filters, merge SHA and context guards, request mention replies, state reset passed")

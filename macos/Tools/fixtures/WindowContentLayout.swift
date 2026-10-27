@@ -3,6 +3,22 @@ import SwiftUI
 
 let windowFixtureSuite = "dev.gitrochi.window-content-fixture." + UUID().uuidString
 let windowFixtureDefaults = UserDefaults(suiteName: windowFixtureSuite)!
+let windowFixtureLocalStorageURL = FileManager.default.temporaryDirectory
+    .appendingPathComponent("gitrochi-window-planner-" + UUID().uuidString + "/projects.json")
+
+/// A layout regression never contacts a provider, even if a new view starts a read.
+private final class WindowFixtureNetworkBlocker: URLProtocol {
+    private static let lock = NSLock()
+    private static var attempted = 0
+    static var attempts: Int { lock.lock(); defer { lock.unlock() }; return attempted }
+    override class func canInit(with request: URLRequest) -> Bool { ["http", "https"].contains(request.url?.scheme ?? "") }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        Self.lock.lock(); Self.attempted += 1; Self.lock.unlock()
+        client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+    }
+    override func stopLoading() {}
+}
 
 /// 실제 사이드바와 작업 영역 헤더의 임시 사본에만 붙이는 측정기.
 struct WindowContentProbe: NSViewRepresentable {
@@ -48,6 +64,11 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         let fullscreen = arguments.contains("--fullscreen")
         let inspect = arguments.contains("--inspect")
         let output = arguments.first(where: { !$0.hasPrefix("--") }).map { URL(fileURLWithPath: $0, isDirectory: true) }
+        _ = URLProtocol.registerClass(WindowFixtureNetworkBlocker.self)
+        defer {
+            URLProtocol.unregisterClass(WindowFixtureNetworkBlocker.self)
+            try? FileManager.default.removeItem(at: windowFixtureLocalStorageURL.deletingLastPathComponent())
+        }
         let app = NSApplication.shared
         let applicationDelegate = WindowContentFixtureDelegate()
         app.delegate = applicationDelegate
@@ -506,6 +527,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         try capture("native-tabs-detached")
 
         for tab in fixtureWindows { tab.orderOut(nil) }
+        precondition(WindowFixtureNetworkBlocker.attempts == 0, "Window layout must not request remote account or project data")
         let result: [String: Any] = ["ok": true, "actualViews": ["RepoContainer", "RepoView", "NavigationSidebar", "LoadingView"],
                                      "safeAreaIgnoringRootContained": true, "framePreserved": true,
                                      "lateToolbarStyleContained": true, "nativeTabsChecked": true,

@@ -2,6 +2,7 @@
 # Exercise production project filters and local task links without Git, credentials or persistent preferences.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/Tools/project-backend-test-sources.sh"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 cat > "$TASK_TMP/main.swift" <<'SWIFT'
@@ -110,5 +111,5 @@ final class MemoryDefaults: UserDefaults {
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$ROOT/Sources/Core/ProjectWorkbench.swift" "$ROOT/Sources/Core/ProjectTaskReference.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-project-workbench"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" "$ROOT/Sources/Core/ProjectWorkbench.swift" "$ROOT/Sources/Core/ProjectTaskReference.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-project-workbench"
 "$TASK_TMP/test-project-workbench"

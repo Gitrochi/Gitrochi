@@ -37,6 +37,7 @@ root, target = map(Path, sys.argv[1:])
 for source in (root / 'Sources').rglob('*.swift'):
     relative = source.relative_to(root / 'Sources').as_posix()
     text = source.read_text().replace('UserDefaults.standard', 'windowFixtureDefaults')
+    text = text.replace('defaults: UserDefaults = .standard', 'defaults: UserDefaults = windowFixtureDefaults')
     if relative == 'App/App.swift':
         start = text.index('@main\nstruct GitrochiApp: App {')
         end = text.index('/// 창(탭) 하나 = 저장소 하나', start)
@@ -50,8 +51,15 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
         text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
     elif relative == 'Services/Accounts.swift':
+        needle = 'private let credentials = CredentialCache { await Keychain.read($0) }'
+        assert text.count(needle) == 1, 'Isolated credential reader attachment changed'
+        text = text.replace(needle, 'private let credentials = CredentialCache { _ in CredentialReadResult(value: nil, status: -25300) }')
         # 실제 툴바를 렌더링해도 사용자 인증 도우미를 설치하지 않는다.
         text = text.replace('        Askpass.install()', '        // 렌더링 검사에서는 인증 도우미를 설치하지 않는다.')
+    elif relative == 'Services/LocalProjects.swift':
+        needle = 'static let shared = LocalProjectStore()'
+        assert text.count(needle) == 1, 'Isolated local project storage attachment changed'
+        text = text.replace(needle, 'static let shared = LocalProjectStore(storage: LocalProjectFileStorage(url: windowFixtureLocalStorageURL))')
     elif relative == 'Services/Tools.swift':
         # 도구 가용성에 따른 레이아웃은 유지하고 실행 파일 탐색과 버전 조회만 생략한다.
         start = text.index('    private init() {', text.index('final class ToolStore'))

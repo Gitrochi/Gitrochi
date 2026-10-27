@@ -1,27 +1,34 @@
 import Foundation
 
 extension RepoStore {
-    var hubAccount: HostAccount? { AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
-    private var hubSelectionStamp: String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount?.id ?? "", hostingHub.projectScope].joined(separator: "\0") }
-    var hubContextStamp: String { hubSelectionStamp + "\0" + String(AccountStore.shared.revision) }
+    var hubIsLocalProject: Bool { hostingHub.section == .projects && hostingHub.projectSource == "local" }
+    var hubAccount: HostAccount? { if hubIsLocalProject { return nil }; return AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
+    private var hubSelectionStamp: String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount?.id ?? "", hostingHub.projectScope, hostingHub.projectSource].joined(separator: "\0") }
+    var hubContextStamp: String { hubSelectionStamp + "\0" + String(hubIsLocalProject ? 0 : AccountStore.shared.revision) }
     var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString }
-    var hubProvider: Provider { hubAccount?.provider ?? target?.provider ?? .github }
+    var hubProvider: Provider { if hubIsLocalProject { return .github }; return hubAccount?.provider ?? target?.provider ?? .github }
     var hubCredentialState: CredentialCache.State? { hubAccount.map { AccountStore.shared.credentialState(for: $0) } }
-    /// The selected hub account whose saved credential is pending or requires approval.
     var pendingHubCredentialAccount: HostAccount? { hubAccount.flatMap { AccountStore.shared.awaitsAccess($0) ? $0 : nil } }
     var hubProjectRepositoryOwner: String? {
         guard let account = hubAccount, let target, AccountStore.shared.candidates(for: target).contains(where: { $0.id == account.id }) else { return nil }
         return target.path.split(separator: "/").first.map(String.init)
     }
     var hubProjectEffectiveScope: String { hubProjectRepositoryOwner == nil ? "personal" : hostingHub.projectScope }
-    var hubProjectOwner: String { hubProjectEffectiveScope == "personal" ? hubAccount?.username ?? "" : hubProjectRepositoryOwner ?? "" }
+    var hubProjectOwner: String { if hubIsLocalProject { return String(localized: "This device") }; return hubProjectEffectiveScope == "personal" ? hubAccount?.username ?? "" : hubProjectRepositoryOwner ?? "" }
     func selectHubProjectScope(_ scope: String) async {
         guard !hostingHub.busy, ["repository", "personal"].contains(scope) else { return }
         hostingHub.projectScope = scope; await activateHostingHub(hostingHub.section)
     }
+    func selectHubProjectSource(_ source: String) async {
+        guard !hostingHub.busy, ["local", "remote"].contains(source) else { return }
+        hostingHub.projectSource = source
+        await activateHostingHub(.projects)
+    }
     func activateHostingHub(_ section: HostingHubSection) async {
+        let sectionChanged = hostingHub.section != section
+        hostingHub.section = section
         let stamp = hubContextStamp
-        if hostingHub.section != section || hostingHub.context != stamp { let selected = hostingHub.selectedAccountID, projectScope = hostingHub.projectScope; hostingHub = HostingHubState(); hostingHub.selectedAccountID = selected; hostingHub.projectScope = projectScope; hostingHub.section = section; hostingHub.context = stamp }
+        if sectionChanged || hostingHub.context != stamp { let selected = hostingHub.selectedAccountID, projectScope = hostingHub.projectScope, projectSource = hostingHub.projectSource; hostingHub = HostingHubState(); hostingHub.selectedAccountID = selected; hostingHub.projectScope = projectScope; hostingHub.projectSource = projectSource; hostingHub.section = section; hostingHub.context = stamp }
         if hostingHub.page == 0 && !hostingHub.loading { await loadHostingHub() }
     }
     func selectHubAccount(_ id: String) async { guard !hostingHub.busy else { return }; hostingHub.selectedAccountID = id; await activateHostingHub(hostingHub.section) }
@@ -38,10 +45,14 @@ extension RepoStore {
             hostingHub.allowingCredentialAccess = false
             await activateHostingHub(hostingHub.section)
         } catch {
-            if current() { hostingHub.error = AccountConnectionFailure.message(for: error) }
+            if current() { hostingHub.error = AccountStore.shared.savedAccessErrorMessage(for: account, error: error) }
         }
     }
     func hubAccess() async throws -> HubAccess {
+        if hubIsLocalProject {
+            let stamp = hubContextStamp, generation = hostingHub.generation
+            return HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "local", path: "local/workspace"), token: "", apiBase: "", me: "", isCurrent: { self.hubContextStamp == stamp && self.hostingHub.generation == generation }, local: true)
+        }
         guard let account = hubAccount else { throw HostingHubAPI.fail(String(localized: "Connect a GitHub or GitLab account to use this workspace.")) }
         let generation = hostingHub.generation, selection = hubSelectionStamp, section = hostingHub.section
         let actual = target, candidates = actual.map { AccountStore.shared.candidates(for: $0) } ?? []
@@ -54,9 +65,7 @@ extension RepoStore {
             throw HostingHubAPI.fail(String(localized: "The repository or account changed. Reopen this action."))
         }
         guard let token else {
-            let message = hubCredentialState == .authorizationRequired
-                ? String(localized: "Allow access to the saved account to use repository services.")
-                : String(localized: "The selected account has no token. Reconnect it from Settings → Accounts.")
+            let message = AccountStore.shared.savedAccessMessage(for: account)
             throw HostingHubAPI.fail(message)
         }
         let stamp = hubContextStamp

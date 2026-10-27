@@ -128,3 +128,8 @@
   .workspace-list-row { flex-wrap: wrap; gap: 8px; }
   .workspace-list-row > div { flex-basis: 200px; }
 }
+
+/* Keep the planning portfolio and the repository welcome in the Home page scroll area. */
+.workspace-home { height: 100%; min-width: 0; overflow: auto; display: flex; flex-direction: column; gap: 24px; padding: 24px; }
+.workspace-home > .welcome { height: auto; min-height: 560px; flex: none; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+@media (max-width: 850px) { .workspace-home { padding: 12px; gap: 12px; } .workspace-home > .welcome { overflow: visible; } }

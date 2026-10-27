@@ -98,7 +98,7 @@ struct AccountQuickControls: View {
                 } else if let target = store.target {
                     Text("Connect an account on \(target.host) to use repository services.").font(.caption).foregroundStyle(.secondary)
                 }
-                if let account { CredentialAccessNotice(account: account) }
+                if let account, accounts.credentialState(for: account) != .ready { SavedAccountAccessNotice(account: account) }
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 8) {
@@ -141,6 +141,7 @@ struct AccountQuickControls: View {
                         Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
+                if accounts.credentialState(for: a) != .ready { SavedAccountAccessNotice(account: a) }
             }
             Text("Open a repository with a GitHub or GitLab remote to choose the account it uses.")
                 .font(.caption).foregroundStyle(.secondary)

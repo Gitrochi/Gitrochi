@@ -31,6 +31,9 @@ import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
+import { localPlannerSelfTest } from "./lib/local-planner-selftest";
+import { projectPlanningSelfTest } from "./lib/project-planning-selftest";
+import { projectScheduleSelfTest } from "./lib/project-schedule-selftest";
 import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
 import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
@@ -248,6 +251,9 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);
+  await step("Project scheduling overview, calendar, and confirmed rescheduling", projectScheduleSelfTest);
+  await step("Home portfolio scheduling and exact project task handoff", projectPlanningSelfTest);
+  await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");

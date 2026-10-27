@@ -41,14 +41,13 @@ private struct WorkspaceAccountNotice: View {
             WorkspaceCard { CredentialAccessNotice(account: account) }
         } else if store.collaborationAccess == nil {
             WorkspaceCard {
-                Text(
-                    store.target == nil
-                        ? "Open a repository with a GitHub or GitLab remote to use this workspace."
-                        : "Connect an account to load this workspace."
-                ).foregroundStyle(.secondary)
                 if store.target == nil {
+                    Text("Open a repository with a GitHub or GitLab remote to use this workspace.").foregroundStyle(.secondary)
                     Button("Open repository…") { store.presentOpenPanel() }
+                } else if let account = store.hostingAccount {
+                    SavedAccountAccessNotice(account: account) { Task { await store.loadInbox() } }
                 } else {
+                    Text("Connect an account to load this workspace.").foregroundStyle(.secondary)
                     Button("Connect account…") { openSettings() }
                 }
             }

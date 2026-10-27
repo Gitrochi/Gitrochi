@@ -1,6 +1,19 @@
 import Foundation
 
 /// Windows: mirrors the checked ProjectV2 management contract in project-management.ts.
+enum HubProjectPlanTier: String, CaseIterable { case free, pro, team, enterprise, unknown }
+enum HubProjectPlanSource: String { case authenticatedUser, organization, unavailable }
+enum HubProjectOwnerKind: String { case user, organization, unknown }
+struct HubProjectPlan: Equatable { var tier: HubProjectPlanTier; var rawName: String?; var source: HubProjectPlanSource }
+struct HubProjectCreationLimits: Equatable { var fields: Int; var autoAddWorkflows: Int? }
+struct HubProjectCreationCapabilities: Equatable {
+    var viewerLogin: String; var viewerVerified: Bool
+    var ownerLogin: String; var ownerID: String; var ownerKind: HubProjectOwnerKind
+    var accountPlan: HubProjectPlan; var ownerPlan: HubProjectPlan
+    var canCreate: Bool?; var canPublish: Bool?
+    var limits: HubProjectCreationLimits; var notice: String?
+}
+
 struct HubProjectSettingsInput { var title: String; var shortDescription: String; var readme: String; var isPublic: Bool; var closed: Bool }
 struct HubProjectFieldOptionInput { var id: String?; var name: String; var color: String?; var description: String? }
 struct HubProjectFieldInput { var name: String; var kind: HubProjectFieldKind; var options: [HubProjectFieldOptionInput] = [] }
@@ -30,7 +43,8 @@ extension HostingHubAPI {
     }
     private static func managementCheck(_ c: HubAccess, detail: HubDetail? = nil) throws {
         try check(c)
-        guard c.target.provider == .github, detail == nil || detail?.item.id.isEmpty == false else { throw fail(String(localized: "This action requires a GitHub project.")) }
+        if let detail, try usesLocal(c, item: detail.item) { throw fail(String(localized: "This action requires a GitHub project.")) }
+        guard !c.local, c.target.provider == .github, detail == nil || detail?.item.id.isEmpty == false else { throw fail(String(localized: "This action requires a GitHub project.")) }
     }
     private static func managementName(_ value: String) throws -> String {
         let clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -38,14 +52,57 @@ extension HostingHubAPI {
     }
     private static func managementCreation<T>(_ c: HubAccess, _ action: () async throws -> T) async throws -> T {
         do { return try await action() }
+        catch let error as HostingError where error.status == 403 { throw HubProjectActionDeniedError(detail: Self.error(error, token: c.token)) }
         catch let error as HostingError where (400..<500).contains(error.status) { throw error }
         catch let error as HubProjectPermissionError { throw error }
+        catch let error as HubProjectActionDeniedError { throw error }
         catch let error as HubUncertainWriteError { throw error }
         catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
     }
 
+    /// A missing or legacy billing name remains unknown; memberships and enterprise hosts never imply a paid plan.
+    static func projectPlanTier(_ rawName: String?, ownerKind: HubProjectOwnerKind) -> HubProjectPlanTier {
+        let name = (rawName ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased().replacingOccurrences(of: "github ", with: "").replacingOccurrences(of: "-", with: "_").replacingOccurrences(of: " ", with: "_")
+        if name == "free" { return .free }
+        if ownerKind == .user, name == "pro" { return .pro }
+        if ownerKind == .organization {
+            if name == "team" { return .team }
+            if ["enterprise", "enterprise_cloud", "enterprise_server"].contains(name) { return .enterprise }
+        }
+        return .unknown
+    }
+    private static func projectPlan(_ rawName: String?, source: HubProjectPlanSource, ownerKind: HubProjectOwnerKind) -> HubProjectPlan {
+        let raw = rawName?.trimmingCharacters(in: .whitespacesAndNewlines), available = raw?.isEmpty == false
+        return HubProjectPlan(tier: projectPlanTier(raw, ownerKind: ownerKind), rawName: available ? raw : nil, source: available ? source : .unavailable)
+    }
+    /// Projects exist on Free. Billing metadata is optional and does not prove token or owner-policy permission.
+    static func inspectProjectCreationCapabilities(_ c: HubAccess) async throws -> HubProjectCreationCapabilities {
+        try managementCheck(c)
+        let requestedOwner = c.target.path.split(separator: "/").first.map(String.init) ?? c.me
+        var viewer: J = [:], owner: J = [:]
+        do { viewer = try await object(c, c.apiBase + "/user") } catch { try check(c) }
+        do { let data = try await graph(c, "query($owner:String!){repositoryOwner(login:$owner){__typename id login}}", ["owner": requestedOwner]); owner = obj(data, "repositoryOwner") } catch { try check(c) }
+        let viewerLogin = s(viewer, "login"), verified = !viewerLogin.isEmpty && viewerLogin.caseInsensitiveCompare(c.me) == .orderedSame
+        let ownerLogin = s(owner, "login").isEmpty ? requestedOwner : s(owner, "login"), kind: HubProjectOwnerKind = s(owner, "__typename") == "Organization" ? .organization : s(owner, "__typename") == "User" ? .user : .unknown
+        let unknown = HubProjectPlan(tier: .unknown, rawName: nil, source: .unavailable)
+        let accountPlan = verified ? projectPlan(obj(viewer, "plan")["name"] as? String, source: .authenticatedUser, ownerKind: .user) : unknown
+        var ownerPlan = kind == .user && verified && ownerLogin.caseInsensitiveCompare(viewerLogin) == .orderedSame ? accountPlan : unknown
+        if kind == .organization, !id(owner).isEmpty {
+            do {
+                let organization = try await object(c, c.apiBase + "/orgs/" + enc(ownerLogin))
+                if s(organization, "login").caseInsensitiveCompare(ownerLogin) == .orderedSame { ownerPlan = projectPlan(obj(organization, "plan")["name"] as? String, source: .organization, ownerKind: .organization) }
+            } catch { try check(c) }
+        }
+        let autoAdd: Int? = switch ownerPlan.tier { case .free: 1; case .pro, .team: 5; case .enterprise: 20; case .unknown: nil }
+        var notice = String(localized: "Projects are available on GitHub Free. GitHub verifies creation and publishing permissions when you save.")
+        if !verified { notice += "\n" + String(localized: "The connected account could not be verified. Refresh account access before creating a GitHub project.") }
+        if ownerPlan.tier == .unknown { notice += "\n" + String(localized: "GitHub did not expose this owner's plan. Plan-dependent limits are unknown.") }
+        try check(c)
+        return HubProjectCreationCapabilities(viewerLogin: viewerLogin.isEmpty ? c.me : viewerLogin, viewerVerified: verified, ownerLogin: ownerLogin, ownerID: id(owner), ownerKind: kind, accountPlan: accountPlan, ownerPlan: ownerPlan, canCreate: nil, canPublish: nil, limits: HubProjectCreationLimits(fields: 50, autoAddWorkflows: autoAdd), notice: notice)
+    }
+
     /// Resolves the captured scope's owner and optional linked repository on the connected API.
-    static func createProject(_ c: HubAccess, title: String) async throws -> HubItem {
+    static func createProject(_ c: HubAccess, title: String, isPublic: Bool = false) async throws -> HubItem {
         try managementCheck(c); let cleanTitle = try managementName(title)
         let parts = c.target.path.split(separator: "/").map(String.init), owner = parts.first ?? c.me, repository = parts.last ?? "workspace", personal = repository == "workspace"
         let query = personal ? "query($owner:String!){repositoryOwner(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}"
@@ -56,12 +113,22 @@ extension HostingHubAPI {
         return try await managementCreation(c) {
             let data = try await graph(c, "mutation($input:CreateProjectV2Input!){createProjectV2(input:$input){projectV2{\(managementProjectFragment)}}}", ["input": input]), project = obj(obj(data, "createProjectV2"), "projectV2")
             guard !id(project).isEmpty else { throw fail(String(localized: "The server returned an unexpected response.")) }
-            return HubItem(id: id(project), title: s(project, "title"), subtitle: "#" + id(project, "number") + (project["closed"] as? Bool == true ? " · closed" : ""), body: s(project, "shortDescription"), url: s(project, "url"), data: project)
+            let created = HubItem(id: id(project), title: s(project, "title"), subtitle: "#" + id(project, "number") + (project["closed"] as? Bool == true ? " · closed" : ""), body: s(project, "shortDescription"), url: s(project, "url"), data: project)
+            guard project["public"] as? Bool == false else { throw HubUncertainWriteError(message: String(localized: "GitHub returned unexpected project visibility. Refresh and check the created project before continuing."), createdProject: created) }
+            guard isPublic else { return created }
+            do {
+                let publishedData = try await graph(c, "mutation($input:UpdateProjectV2Input!){updateProjectV2(input:$input){projectV2{\(managementProjectFragment)}}}", ["input": ["projectId": created.id, "public": true]]), published = obj(obj(publishedData, "updateProjectV2"), "projectV2")
+                guard id(published) == created.id, published["public"] as? Bool == true else { throw fail(String(localized: "The server returned an unexpected response.")) }
+                var result = created; result.data = published; result.title = s(published, "title"); result.body = s(published, "shortDescription"); result.url = s(published, "url"); return result
+            } catch {
+                throw HubUncertainWriteError(message: String(localized: "The private project was created, but publishing was not confirmed. Refresh projects before trying again.") + "\n\n" + Self.error(error, token: c.token), createdProject: created)
+            }
         }
     }
 
     /// Checks the captured metadata before changing identity, visibility or lifecycle.
     static func saveProjectSettings(_ c: HubAccess, detail: HubDetail, input: HubProjectSettingsInput) async throws {
+        if try usesLocal(c, item: detail.item) { _ = try await localProjectStore.saveProject(detail: detail, title: input.title, description: input.shortDescription); try check(c); return }
         try managementCheck(c, detail: detail); let title = try managementName(input.title)
         let response = try await graph(c, "query($id:ID!){node(id:$id){... on ProjectV2{\(managementProjectFragment)}}}", ["id": detail.item.id]), fresh = obj(response, "node"), previous = detail.item
         guard id(fresh) == previous.id, s(fresh, "title") == previous.title, s(fresh, "shortDescription") == previous.body else { throw managementConflict }
