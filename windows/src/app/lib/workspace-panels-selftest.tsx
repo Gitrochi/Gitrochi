@@ -14,6 +14,7 @@ import {
 } from "@/widgets/workspace-panels";
 import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
+import { workspaceFixtureProjectQuery } from "./workspace-panels-fixture";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 60));
 /** Exercise actual page controls with fake servers, never real accounts or repository mutations. */
 export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
@@ -30,10 +31,12 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       accounts: accounts.accounts,
       doctor: gitch.doctor,
     };
+  const requests: { method: string; path: string; page: string }[] = [];
   let copies = "",
     writes = 0,
     doctors = 0,
-    mentions = 0;
+    mentions = 0,
+    projectReads = 0;
   const profile = {
     id: "workspace-fixture",
     provider: "github" as const,
@@ -53,6 +56,12 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
   const check = (value: unknown, message: string) => {
     if (!value) throw new Error(message);
   };
+  const until = async (test: () => boolean) => {
+    const deadline = Date.now() + 3500;
+    while (!test() && Date.now() < deadline) await pause();
+    return test();
+  };
+  const writeDetails = () => `writes=${writes}; requests=${JSON.stringify(requests.filter((request) => request.method !== "GET"))}; errors=${[...host.querySelectorAll('[role="alert"], .error-text')].map((element) => element.textContent).join(" | ")}`;
   const click = async (label: string) => {
     const b = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
       (b) => b.textContent?.trim() === t(label) && !b.disabled,
@@ -120,7 +129,14 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
         duration: 1,
       },
     ]);
-    ipc.http = async (method, url) => {
+    ipc.http = async (method, url, _headers, body) => {
+      requests.push({ method, path: new URL(url).pathname, page: host.querySelector("h1")?.textContent ?? "" });
+      const projectQuery = workspaceFixtureProjectQuery(method, url, body);
+      if (projectQuery) {
+        check(projectQuery.owner === profile.username, "Home project query used the wrong account");
+        projectReads++;
+        return { status: 200, body: JSON.stringify({ data: { user: { projectsV2: { nodes: [], pageInfo: { hasNextPage: false, endCursor: null } } } } }) };
+      }
       if (method !== "GET") writes++;
       if (url.includes("/search/repositories?"))
         return {
@@ -214,6 +230,9 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       };
     };
     await mount(<WorkspaceHomePanel store={store} />);
+    check(await until(() => projectReads === 1 && [...host.querySelectorAll("button")].some((button) => button.textContent?.trim() === t("Open project workspace"))), "Home project catalog did not finish loading");
+    check(!host.querySelector(".planning-error"), "Home project catalog returned a hidden fixture error");
+    check(writes === 0, `Home performed an unexpected mutation: ${writeDetails()}`);
     check(
       host.textContent?.includes("C:/fixture/repo"),
       "Home missing local repository status",
@@ -254,6 +273,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       "Inbox conversation missing",
     );
     await click("Mark as read");
+    check(await until(() => writes === 1 && !store.inboxBusy && store.inboxDetail?.item.unread === false), `Mark-read mutation did not finish: ${writeDetails()}`);
     reset();
     await mount(<MyWorkPanel store={store} />);
     check(
@@ -312,8 +332,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     await change(title, "Created fixture issue");
     await click("Save");
     check(
-      writes === 2,
-      "Issue create or mark-read writes did not reach the fixture server",
+      await until(() => writes === 2 && host.textContent?.includes("Fixture comment") === true),
+      `Issue create or mark-read writes did not reach the fixture server: ${writeDetails()}`,
     );
     check(
       host.textContent?.includes("Fixture comment"),
@@ -323,7 +343,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     const edit = host.querySelector<HTMLInputElement>("label input")!;
     await change(edit, "Edited fixture issue");
     await click("Save");
-    check(writes === 3, "Issue edit did not reach the fixture server");
+    check(await until(() => writes === 3 && ![...host.querySelectorAll("button")].some((button) => button.textContent?.trim() === t("Save"))), `Issue edit did not finish: ${writeDetails()}`);
     reset();
     await mount(<ActionsWorkspacePanel store={store} />);
     await change(
@@ -355,7 +375,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     );
     return [
       true,
-      "Home/repositories/remote clone, embedded mentions/read, my-work summaries, issue create/edit/conversation, CI bounded redacted log and Tools diagnosis/guide controls passed",
+      `Home project catalog query=${projectReads} with zero mutations; Home/repositories/remote clone, embedded mentions/read, my-work summaries, exact create/read/edit mutations=${writes}, issue conversation, CI bounded redacted log and Tools diagnosis/guide controls passed`,
     ];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
