@@ -1125,5 +1125,9 @@
  "Create flow file": "Akış dosyası oluştur",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi, testlerini ve araçlarını bulmak için bu deponun dosyalarını okudu. Siz dosyayı oluşturana kadar hiçbir şey çalıştırılmaz ve yazılmaz.",
  "Proposed .gitch/flow.yml": "Önerilen .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Zaten bir akış dosyası var, bu yüzden hiçbir şey yazılmayacak. Öneriyi elle birleştirin."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Zaten bir akış dosyası var, bu yüzden hiçbir şey yazılmayacak. Öneriyi elle birleştirin.",
+  "CLI appearance": "CLI görünümü",
+  "Show the small eye logo in CLI output": "CLI çıktısında küçük göz logosunu göster",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Terminalde gitch logo on veya gitch logo off komutunu da kullanabilirsiniz.",
+  "Couldn't read the CLI logo setting.": "CLI logo ayarı okunamadı."
 }

@@ -1137,5 +1137,9 @@
  "Create flow file": "フローファイルを作成",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi はこのリポジトリのファイルを読んでテストとツールを見つけました。ファイルを作成するまで、何も実行も書き込みもしません。",
  "Proposed .gitch/flow.yml": "提案する .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "フローファイルがすでにあるため、何も書き込みません。提案は手動でマージしてください。"
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "フローファイルがすでにあるため、何も書き込みません。提案は手動でマージしてください。",
+  "CLI appearance": "CLI の表示",
+  "Show the small eye logo in CLI output": "CLI 出力に小さな目のロゴを表示",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "ターミナルで gitch logo on または gitch logo off を実行しても変更できます。",
+  "Couldn't read the CLI logo setting.": "CLI のロゴ設定を読み取れませんでした。"
 }

@@ -1092,5 +1092,9 @@
  "Create flow file": "Tạo tệp luồng",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi đã đọc các tệp của kho lưu trữ này để tìm kiểm thử và công cụ. Không có gì được chạy hay ghi cho đến khi bạn tạo tệp.",
  "Proposed .gitch/flow.yml": ".gitch/flow.yml đề xuất",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Đã có tệp luồng nên sẽ không ghi gì. Hãy gộp đề xuất theo cách thủ công."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Đã có tệp luồng nên sẽ không ghi gì. Hãy gộp đề xuất theo cách thủ công.",
+  "CLI appearance": "Giao diện CLI",
+  "Show the small eye logo in CLI output": "Hiện biểu tượng đôi mắt nhỏ trong đầu ra CLI",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "Bạn cũng có thể dùng gitch logo on hoặc gitch logo off trong terminal.",
+  "Couldn't read the CLI logo setting.": "Không thể đọc cài đặt biểu tượng CLI."
 }

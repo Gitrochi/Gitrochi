@@ -1118,5 +1118,9 @@
  "Create flow file": "Vytvořit soubor toku",
  "Gitrochi read this repository's files to find its tests and tools. Nothing runs, and nothing is written until you create the file.": "Gitrochi přečetl soubory tohoto repozitáře, aby našel jeho testy a nástroje. Nic se nespouští a nic se nezapíše, dokud soubor nevytvoříte.",
  "Proposed .gitch/flow.yml": "Navrhovaný .gitch/flow.yml",
- "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Soubor toku už existuje, takže se nic nezapíše. Návrh slučte ručně."
+ "A flow file already exists, so nothing will be written. Merge the proposal by hand.": "Soubor toku už existuje, takže se nic nezapíše. Návrh slučte ručně.",
+  "CLI appearance": "Vzhled CLI",
+  "Show the small eye logo in CLI output": "Zobrazovat malé logo očí ve výstupu CLI",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "V terminálu můžete také použít gitch logo on nebo gitch logo off.",
+  "Couldn't read the CLI logo setting.": "Nastavení loga CLI se nepodařilo přečíst."
 }

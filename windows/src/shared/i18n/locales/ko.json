@@ -2066,5 +2066,9 @@
   "Reporter": "리포터",
   "Try another search or filter.": "다른 검색어나 필터를 사용해 보세요.",
   "Try connected account": "연결된 계정으로 시도",
-  "Unable to load requests": "요청을 불러올 수 없습니다"
+  "Unable to load requests": "요청을 불러올 수 없습니다",
+  "CLI appearance": "CLI 표시",
+  "Show the small eye logo in CLI output": "CLI 출력에 작은 눈 로고 표시",
+  "You can also use gitch logo on or gitch logo off in a terminal.": "터미널에서 gitch logo on 또는 gitch logo off 명령으로도 바꿀 수 있습니다.",
+  "Couldn't read the CLI logo setting.": "CLI 로고 설정을 읽지 못했습니다."
 }

@@ -24,6 +24,7 @@ struct GitchSection: View {
         let _ = generation
         let installed = Gitch.installed
         let bundledVersion = Gitch.bundled.flatMap(Gitch.version(at:))
+        let hasAccounts = !accounts.isEmpty
         Section {
             Text("gitch is already included in Gitrochi. No separate download is needed, and installing its terminal command is optional.")
                 .font(.callout).foregroundStyle(.secondary)
@@ -44,7 +45,7 @@ struct GitchSection: View {
             HStack {
                 Button("Add Git account…") { addAccount = true }
                 Button(Gitch.installedIsBundled ? "Reinstall…" : "Install…") { confirmInstall = true }
-                    .disabled(!Gitch.hasConfig || busy || bundledVersion == nil)
+                    .disabled(!hasAccounts || busy || bundledVersion == nil)
                 Spacer()
                 if busy { ProgressView().controlSize(.small) }
             }
@@ -67,7 +68,7 @@ struct GitchSection: View {
                 }
             }
         } footer: {
-            Text(Gitch.hasConfig
+            Text(hasAccounts
                  ? String(localized: "Open a new terminal window to start using gitch.")
                  : String(localized: "Start with Add Git account. The app guides you through your name, email, server and SSH connection."))
                 .font(.caption).foregroundStyle(.secondary)

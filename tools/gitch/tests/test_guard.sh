@@ -245,6 +245,9 @@ test_branch_policy_rules_and_allow_list() {
 
 test_guard_graph_out_and_allowlist() {
   mk_config
+  expect none 'gitch overlap --json'
+  expect none 'gitch overlap --watch --interval 2 --fail-on-overlap'
+  expect deny 'gitch overlap --json > ~/.ssh/config'
   expect none 'gitch graph files --json'
   expect none 'gitch graph --out /tmp/g.html'
   expect deny 'gitch graph --out ~/.ssh/config'
@@ -258,5 +261,28 @@ test_guard_graph_out_and_allowlist() {
   expect deny 'gitch g --out ~/.ssh/config'
   expect deny 'gitch g check --init --rules ~/.gitconfig'
   install_quiet
+  jq -e '.permissions.allow | index("Bash(gitch overlap:*)")' "$HOME/.claude/settings.json" >/dev/null || fail "gitch overlap 가 읽기 명령 허용 목록에 없음"
   jq -e '.permissions.allow | index("Bash(gitch graph:*)")' "$HOME/.claude/settings.json" >/dev/null || fail "gitch graph 가 읽기 명령 허용 목록에 없음"
+}
+
+test_guard_move_plan_and_module_read_contract() {
+  mk_config
+  expect none 'gitch move src/a.ts src/b.ts --plan --json'
+  expect none 'gitch move --plan -- src/a.ts src/b.ts'
+  expect none 'gitch move --help'
+  expect deny 'gitch move src/a.ts src/b.ts'
+  expect deny 'gitch move -- src/a.ts --plan'
+  expect deny 'gitch move src/a.ts src/b.ts --plan --apply'
+  expect deny 'gitch move src/a.ts src/b.ts --apply=true --plan'
+  expect deny 'gitch move src/a.ts src/b.ts --plan > ~/.ssh/config'
+  expect none 'gitch module audit --json'
+  expect none 'gitch module audit packages/api --strict'
+  expect none 'gitch module --help'
+  expect deny 'gitch module remove api'
+  expect deny 'gitch module apply'
+  expect deny 'gitch module audit --json > ~/.gitconfig'
+  install_quiet
+  jq -e '.permissions.allow | index("Bash(gitch move:*)")' "$HOME/.claude/settings.json" >/dev/null || fail "move 계획 허용 목록 누락"
+  jq -e '.permissions.allow | index("Bash(gitch module audit:*)")' "$HOME/.claude/settings.json" >/dev/null || fail "module audit 허용 목록 누락"
+  jq -e '.permissions.allow | index("Bash(gitch module:*)") == null' "$HOME/.claude/settings.json" >/dev/null || fail "임의 module 하위 명령을 허용함"
 }
