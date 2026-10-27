@@ -18,10 +18,6 @@ struct RebaseWorkbenchPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Rebase").font(.title2.weight(.semibold))
-                    Text("Move the current branch onto a new base, or review and reorder its commits.").font(.callout).foregroundStyle(.secondary)
-                }
                 WorkbenchFlow { Text("Current branch"); Text(store.headBranch ?? String(localized: "Detached HEAD")).fontWeight(.semibold).lineLimit(1).truncationMode(.middle) }
                 if store.repoState != .clean {
                     VStack(alignment: .leading, spacing: 10) {

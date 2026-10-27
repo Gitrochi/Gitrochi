@@ -1579,7 +1579,6 @@
 "Back to conversation" = "대화로 돌아가기";
 "Binary file. Text preview is unavailable." = "바이너리 파일은 텍스트로 미리 볼 수 없습니다.";
 "Board column" = "보드 열";
-"Browse committed files at a fixed branch, tag or commit. Your working files stay untouched." = "특정 브랜치·태그·커밋에 저장된 파일을 탐색합니다. 작업 중인 파일은 유지됩니다.";
 "Build cleanup plan" = "커밋 정리 계획 만들기";
 "Change branch base" = "브랜치 기준 변경";
 "Change project status?" = "프로젝트 상태를 변경할까요?";
@@ -1656,7 +1655,6 @@
 "Merge requests" = "머지 리퀘스트";
 "Merged into HEAD" = "현재 HEAD에 병합됨";
 "Move issue to the Open column?" = "이슈를 열림 열로 옮길까요?";
-"Move the current branch onto a new base, or review and reorder its commits." = "현재 브랜치의 기준을 바꾸거나 커밋 내용을 검토하고 순서를 정리합니다.";
 "My pull requests" = "내 풀 리퀘스트";
 "My work" = "내 작업";
 "New" = "새로 만들기";

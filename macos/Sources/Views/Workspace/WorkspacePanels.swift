@@ -1,19 +1,14 @@
 import AppKit
 import SwiftUI
 
+/// A full-width page body; pages carry no big title (the page list and the rail already name the page)
 private struct WorkspacePage<Content: View>: View {
-    let title: LocalizedStringKey
-    var subtitle: String?
     @ViewBuilder let content: Content
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(title).font(.largeTitle.weight(.semibold))
-                    if let subtitle { Text(subtitle).font(.callout).foregroundStyle(.secondary) }
-                }
                 content
-            }.padding(28).frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -64,7 +59,6 @@ struct RepositoryWorkInboxPanel: View {
     @Environment(RepoStore.self) private var store
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Inbox").font(.largeTitle.bold())
             WorkspaceAccountNotice()
             if store.target != nil {
                 CollaborationInboxPanel(initialKind: "mention", embedded: true)
@@ -111,12 +105,7 @@ struct RepositoryMyWorkPanel: View {
         "\(store.url?.path ?? "")|\(store.collaboration.contextID)|\(AccountStore.shared.revision)|\(store.hostingAccount?.id ?? "")"
     }
     var body: some View {
-        WorkspacePage(
-            title: "My work",
-            subtitle: store.target.map {
-                "\($0.host)/\($0.path) · @\(store.hostingAccount?.username ?? "")"
-            }
-        ) {
+        WorkspacePage {
             WorkspaceAccountNotice()
             HStack {
                 Button("Refresh") { Task { await model.load(store) } }.disabled(model.busy)
@@ -283,10 +272,7 @@ private struct WorkspaceJobLogPanel: View {
 struct ActionsWorkspacePanel: View {
     @Environment(RepoStore.self) private var store
     var body: some View {
-        WorkspacePage(
-            title: store.target?.provider == .gitlab ? "Pipelines" : "Actions",
-            subtitle: store.target.map { "\($0.host)/\($0.path)" }
-        ) {
+        WorkspacePage {
             CIPanel().frame(minHeight: 350, idealHeight: 450, maxHeight: 600)
             WorkspaceJobLogPanel()
         }

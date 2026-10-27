@@ -53,7 +53,6 @@ private struct AccountWorkPanel: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(inbox ? "Inbox" : "My work").font(.largeTitle.bold())
                 Text(
                     "Account scope uses the explicitly selected server and account. Repository Git identity stays unchanged."
                 ).font(.callout).foregroundStyle(.secondary)

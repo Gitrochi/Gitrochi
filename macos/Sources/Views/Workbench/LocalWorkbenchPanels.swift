@@ -10,7 +10,6 @@ struct RevisionComparisonPanel: View {
         @Bindable var state = store.historyTools
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Compare revisions").font(.title3.weight(.semibold))
                 RevisionPicker(title: String(localized: "From revision"), revision: $state.left, store: store)
                 HStack {
                     Spacer()
