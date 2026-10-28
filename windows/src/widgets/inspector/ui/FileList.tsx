@@ -1,3 +1,4 @@
+import { FILE_ROW_HEIGHT, visibleFileRange } from "../lib/visible-file-range";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, List, ListTree } from "lucide-react";
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { changeId, type FileChange, fileDir, fileName, type LineStat, StatusBadge } from "@/entities/git";
@@ -176,7 +177,6 @@ export function ChangeList({
   );
 }
 
-const FILE_ROW_HEIGHT = 28;
 
 /** 전체 목록 높이는 유지하고 스크롤 근처의 행만 만들어 변경 화면 진입 비용을 제한한다. */
 function VisibleFileRows<T extends { id: string }>({ rows, render }: { rows: T[]; render: (row: T) => ReactNode }) {
@@ -192,8 +192,9 @@ function VisibleFileRows<T extends { id: string }>({ rows, render }: { rows: T[]
     const viewport = scroll;
     const update = () => {
       const offset = Math.max(0, viewport.getBoundingClientRect().top - element.getBoundingClientRect().top);
-      const first = Math.min(rows.length, Math.max(0, Math.floor(offset / FILE_ROW_HEIGHT) - 8));
-      const last = Math.min(rows.length, Math.ceil((offset + viewport.clientHeight) / FILE_ROW_HEIGHT) + 8);
+      const stack = viewport.closest<HTMLElement>(".shared-stack");
+      const natural = !!stack && getComputedStyle(stack).overflowY === "visible";
+      const { first, last } = visibleFileRange(rows.length, offset, viewport.clientHeight, document.documentElement.clientHeight || window.innerHeight, !natural);
       setRange((old) => old.first === first && old.last === last ? old : { first, last });
     };
     update();

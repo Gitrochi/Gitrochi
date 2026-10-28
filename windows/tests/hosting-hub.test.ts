@@ -17,13 +17,14 @@ describe("hosting workspace endpoints",()=>{
    const page = await hubPage(c(), "organizations");
    expect(page.items[0].avatarURL).toBe(listAvatar);
    expect((await hubDetail(c(), "organizations", page.items[0])).item.avatarURL).toBe(detailAvatar);
-   expect(http).toHaveBeenCalledTimes(3);
+   expect(http).toHaveBeenCalledTimes(4);
    expect(http.mock.calls.every(([method]) => method === "GET")).toBe(true);
  });
  it("resolves GitLab group icons and retains them when detail omits the field", async () => {
    let profile: Record<string, unknown> = {name:"Team"};
    vi.spyOn(ipc, "http").mockImplementation(async (_method, url) => response(
      url.includes("/groups?") ? [{id:5, name:"Team", full_path:"team", avatar_url:"/uploads/group/avatar/5/team.png"}]
+       : url.endsWith("/user") ? {id:9, username:"me"} : url.endsWith("/members/all/9") ? {id:9, username:"me", access_level:30}
        : url.includes("/projects?") ? [] : profile
    ));
    const page = await hubPage(c("gitlab"), "organizations");
@@ -168,5 +169,5 @@ describe("hosting workspace endpoints",()=>{
 
 });
 
- it("keeps organization member avatars and profile links without extra requests",async()=>{const http=vi.spyOn(ipc,"http").mockImplementation(async(_m,url)=>response(url.includes("/members?")?[{id:1,login:"alice",avatar_url:"https://avatars.githubusercontent.com/u/1",html_url:"https://github.com/alice"}]:{name:"Team"}));const d=await hubDetail(c(),"organizations",{...item(),id:"team"},1,undefined,"members");expect(d.members[0]).toMatchObject({name:"alice",username:"alice",role:"Member",avatarURL:"https://avatars.githubusercontent.com/u/1",url:"https://github.com/alice"});expect(http).toHaveBeenCalledTimes(2);});
- it("preserves GitLab member names and readable roles while rejecting unsafe profile data",async()=>{vi.spyOn(ipc,"http").mockImplementation(async(_m,url)=>response(url.includes("/members/all?")?[{id:1,name:"Alice Kim",username:"alice",access_level:40,avatar_url:"javascript:alert(1)",web_url:"https://evil.test/alice"},{id:2,username:"bob",access_level:10,avatar_url:"https://gitlab.test/avatar/2",web_url:"https://gitlab.test/bob"}]:{name:"Team"}));const d=await hubDetail(c("gitlab"),"organizations",item(),1,undefined,"members");expect(d.members[0]).toMatchObject({name:"Alice Kim",username:"alice",role:"Maintainer",avatarURL:null,url:""});expect(d.members[1]).toMatchObject({name:"bob",username:"bob",role:"Guest",url:"https://gitlab.test/bob"});});
+ it("keeps organization member avatars and profile links with bounded capability and name reads",async()=>{const http=vi.spyOn(ipc,"http").mockImplementation(async(_m,url)=>response(url.includes("/members?")?[{id:1,login:"alice",avatar_url:"https://avatars.githubusercontent.com/u/1",html_url:"https://github.com/alice"}]:{name:"Team"}));const d=await hubDetail(c(),"organizations",{...item(),id:"team"},1,undefined,"members");expect(d.members[0]).toMatchObject({name:"alice",username:"alice",role:"Member",avatarURL:"https://avatars.githubusercontent.com/u/1",url:"https://github.com/alice"});expect(http).toHaveBeenCalledTimes(4);});
+ it("preserves GitLab member names and readable roles while rejecting unsafe profile data",async()=>{vi.spyOn(ipc,"http").mockImplementation(async(_m,url)=>response(url.endsWith("/user")?{id:9,username:"me"}:url.endsWith("/members/all/9")?{id:9,username:"me",access_level:30}:url.includes("/members/all?")?[{id:1,name:"Alice Kim",username:"alice",access_level:40,avatar_url:"javascript:alert(1)",web_url:"https://evil.test/alice"},{id:2,username:"bob",access_level:10,avatar_url:"https://gitlab.test/avatar/2",web_url:"https://gitlab.test/bob"}]:{name:"Team"}));const d=await hubDetail(c("gitlab"),"organizations",item(),1,undefined,"members");expect(d.members[0]).toMatchObject({name:"Alice Kim",username:"alice",role:"Maintainer",avatarURL:null,url:""});expect(d.members[1]).toMatchObject({name:"bob",username:"bob",role:"Guest",url:"https://gitlab.test/bob"});});

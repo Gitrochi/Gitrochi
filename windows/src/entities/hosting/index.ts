@@ -23,3 +23,9 @@ export { rescheduleHubProjectItem } from "./api/project-scheduling";
 export { readProjectScheduleSettings, saveProjectScheduleSettings } from "./model/project-schedule-preferences";
 export { createHubProjectTask } from "./api/project-task-creation";
 export { workStateTitle } from "./lib/work-state";
+
+export { hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizationMember, cancelHubOrganizationInvitation, hubOrganizationLinks, type HubOrganizationTab, type HubOrganizationTeam, type HubOrganizationInvitation, type HubOrganizationInfo, type HubOrganizationData, type HubOrganizationInviteInput, type HubOrganizationLink } from "./api/organization-management";
+
+export { loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, type HubOrganizationSection, type HubOrganizationSectionState, type HubOrganizationSectionPage } from "./api/organization-dashboard";
+export { readHubOrganizationMemberAccess, readHubOrganizationTeamAccess, setHubOrganizationMemberRole, setHubOrganizationTeamRole, type HubOrganizationMemberAccess, type HubOrganizationAccessScope } from "./api/organization-permissions";
+export { resolveHubOrganizationMember } from "./api/organization-permissions";

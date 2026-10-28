@@ -11,7 +11,8 @@ extension RepoStore {
     /// Releases belong to the open repository, so they use its account (chosen in the toolbar) rather than the hub's own pick.
     private func hubAccount(in section: HostingHubSection) -> HostAccount? { if hubIsLocalProject(in: section) { return nil }; if section == .releases { return hostingAccount }; return AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
     private func hubSelectionStamp(in section: HostingHubSection) -> String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount(in: section)?.id ?? "", hostingHub.projectScope, hostingHub.projectSource].joined(separator: "\0") }
-    var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString }
+    var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString + "|" + hostingHub.organizationReadRevision.uuidString }
+    var hubOrganizationLoading: Bool { hostingHub.section == .organizations && (hostingHub.detail?.organizationSections.values.contains(where: { $0.loading }) == true || hostingHub.detail?.teams.contains(where: { $0.memberState.loading }) == true) }
     var hubProvider: Provider { if hubIsLocalProject { return .github }; return hubAccount?.provider ?? target?.provider ?? .github }
     var hubCredentialState: CredentialCache.State? { hubAccount.map { AccountStore.shared.credentialState(for: $0) } }
     var pendingHubCredentialAccount: HostAccount? { hubAccount.flatMap { AccountStore.shared.awaitsAccess($0) ? $0 : nil } }
@@ -34,7 +35,7 @@ extension RepoStore {
         let sectionChanged = hostingHub.section != section
         hostingHub.section = section
         let stamp = hubContextStamp
-        if sectionChanged || hostingHub.context != stamp { let selected = hostingHub.selectedAccountID, projectScope = hostingHub.projectScope, projectSource = hostingHub.projectSource; hostingHub = HostingHubState(); hostingHub.selectedAccountID = selected; hostingHub.projectScope = projectScope; hostingHub.projectSource = projectSource; hostingHub.section = section; hostingHub.context = stamp }
+        if sectionChanged || hostingHub.context != stamp { let selected = hostingHub.selectedAccountID, projectScope = hostingHub.projectScope, projectSource = hostingHub.projectSource; hostingHub = HostingHubState(); hostingHub.selectedAccountID = selected; hostingHub.projectScope = projectScope; hostingHub.projectSource = projectSource; hostingHub.section = section; hostingHub.context = stamp; if section == .organizations { hostingHub.tab = "overview" } }
         if hostingHub.page == 0 && !hostingHub.loading { await loadHostingHub() }
     }
     func selectHubAccount(_ id: String) async { guard !hostingHub.busy else { return }; hostingHub.selectedAccountID = id; await activateHostingHub(hostingHub.section) }
@@ -98,12 +99,12 @@ extension RepoStore {
         let current = { self.hostingHub.generation == generation && self.hostingHub.detailID == loadID }
         defer { if current() { hostingHub.detailLoading = false } }
         var access: HubAccess?
-        do { let c = try await hubAccess(); access = c; var result = try await HostingHubAPI.detail(c, section: hostingHub.section, item: item, page: append ? hostingHub.detailPage + 1 : 1, cursor: append ? hostingHub.detailCursor : nil, tab: hostingHub.tab); guard current(), c.isCurrent?() != false else { return }; if append, let old = hostingHub.detail { result.rows = old.rows + result.rows.filter { row in !old.rows.contains(where: { $0.id == row.id }) }; result.repositories = old.repositories + result.repositories.filter { row in !old.repositories.contains(where: { $0.id == row.id }) }; result.members = old.members + result.members.filter { row in !old.members.contains(where: { $0.id == row.id }) } }; hostingHub.detail = result; hostingHub.detailPage = append ? hostingHub.detailPage + 1 : 1; hostingHub.detailCursor = result.cursor; hostingHub.uncertainWrite = false }
+        do { let c = try await hubAccess(); access = c; var result = try await HostingHubAPI.detail(c, section: hostingHub.section, item: item, page: append ? hostingHub.detailPage + 1 : 1, cursor: append ? hostingHub.detailCursor : nil, tab: hostingHub.tab); guard current(), c.isCurrent?() != false else { return }; if append, let old = hostingHub.detail { result.teams = old.teams + result.teams.filter { row in !old.teams.contains(where: { $0.id == row.id }) }; result.invitations = old.invitations + result.invitations.filter { row in !old.invitations.contains(where: { $0.id == row.id }) }; result.rows = old.rows + result.rows.filter { row in !old.rows.contains(where: { $0.id == row.id }) }; result.repositories = old.repositories + result.repositories.filter { row in !old.repositories.contains(where: { $0.id == row.id }) }; result.members = old.members + result.members.filter { row in !old.members.contains(where: { $0.id == row.id }) } }; hostingHub.detail = result; hostingHub.detailPage = append ? hostingHub.detailPage + 1 : 1; hostingHub.detailCursor = result.cursor; hostingHub.uncertainWrite = false }
         catch { if current() { hostingHub.error = HostingHubAPI.error(error, token: access?.token); hostingHub.projectPermissionRequired = error is HubProjectPermissionError } }
     }
     @discardableResult
     func hostingHubAction(expected: String, refreshList: Bool = false, action: (HubAccess) async throws -> Void) async -> Bool {
-        guard hubActionStamp == expected, !hostingHub.busy, !hostingHub.loading, !hostingHub.detailLoading, !hostingHub.uncertainWrite, hubCredentialState != .loading else { return false }
+        guard hubActionStamp == expected, !hostingHub.busy, !hostingHub.loading, !hostingHub.detailLoading, !hubOrganizationLoading, !hostingHub.uncertainWrite, hubCredentialState != .loading else { return false }
         let generation = hostingHub.generation, item = hostingHub.detail?.item
         hostingHub.busy = true; hostingHub.error = nil; hostingHub.projectPermissionRequired = false; var access: HubAccess?
         let current = { self.hostingHub.generation == generation && self.hubActionStamp == expected }

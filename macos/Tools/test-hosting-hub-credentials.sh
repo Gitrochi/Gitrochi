@@ -105,9 +105,10 @@ enum AccountConnectionFailure {
         return request
     }
     static func data(_ request: URLRequest) async throws -> Data {
-        precondition(request.url?.host == "api.github.com" && request.url?.path == "/graphql", "Unexpected fixture request")
+        precondition(request.url?.host == "api.github.com", "Unexpected fixture server")
         requests.append(request)
         if let handler { return try handler(request) }
+        precondition(request.url?.path == "/graphql", "Unexpected fixture request")
         let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
         let owner = (body["variables"] as! [String: Any])["owner"] as! String
         return try JSONSerialization.data(withJSONObject: ["data": ["user": ["projectsV2": ["nodes": [["id": owner, "title": "Fixture project"]], "pageInfo": ["hasNextPage": false]]]]])
@@ -300,13 +301,55 @@ actor LocalHubMemory: LocalProjectPersistence {
         precondition(releases.hostingHub.section == .releases && releases.hubAccount?.id == second.id, "Releases must use the repository's account, not the hub's pick")
         releases.hostingHub.section = .projects
         precondition(releases.hubAccount?.id == first.id && releases.hubContextStamp != releasesStamp && releases.hubContextStamp(in: .releases) == releasesStamp, "A page's own stamp must not move while the hub is on another section")
-        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning, repository-bound releases and uncertain-write recovery passed (fake credentials and HTTP only)")
+        let organization = fixture()
+        accounts.set(.ready, for: first)
+        let organizationItem = HubItem(id: "team", title: "Team")
+        let previewPeople = (1...12).map { HubMember(id: String($0), name: "Person \($0)", role: "Member", username: "person\($0)") }
+        var preview = HubDetail(item: organizationItem, organizationAccess: HubOrganizationAccess(role: "Owner", canInvite: true), members: previewPeople)
+        preview.organizationSections["members"] = HubOrganizationSectionState(more: true, loaded: true)
+        preview.organizationSections["repositories"] = HubOrganizationSectionState(more: true, loaded: true)
+        preview.teams = [HubOrganizationTeam(id: "1", name: "Engineering", description: "", url: "", privacy: "closed", slug: "engineering", members: Array(previewPeople.prefix(6)), memberState: HubOrganizationSectionState(more: true, loaded: true))]
+        organization.hostingHub.section = .organizations; organization.hostingHub.tab = "overview"; organization.hostingHub.detail = preview
+        Hosting.handler = { request in
+            if request.url!.path == "/graphql" { return try JSONSerialization.data(withJSONObject: ["data": [:]]) }
+            precondition(request.url!.query!.contains("per_page=30") && request.url!.query!.contains("page=1"), "Preview pagination skipped the beginning of the full page")
+            return try JSONSerialization.data(withJSONObject: (1...30).map { ["id": $0, "login": "person\($0)"] })
+        }
+        let beforeInline = organization.hubActionStamp
+        await organization.loadOrganizationSection("members")
+        precondition(organization.hostingHub.tab == "overview" && organization.hostingHub.detail!.members.count == 30 && organization.hostingHub.detail!.organizationSections["members"]!.page == 1)
+        precondition(beforeInline != organization.hubActionStamp, "An inline read did not invalidate a previously reviewed write")
+        await organization.loadOrganizationTeamMembers("1")
+        precondition(organization.hostingHub.detail!.teams[0].members.count == 30 && organization.hostingHub.detail!.teams[0].memberState.page == 1)
+        Hosting.handler = { request in
+            if request.url!.path == "/graphql" { return try JSONSerialization.data(withJSONObject: ["data": [:]]) }
+            precondition(request.url!.query!.contains("page=2"))
+            return try JSONSerialization.data(withJSONObject: (31...35).map { ["id": $0, "login": "person\($0)"] })
+        }
+        await organization.loadOrganizationSection("members")
+        precondition(organization.hostingHub.detail!.members.count == 35 && !organization.hostingHub.detail!.organizationSections["members"]!.more)
+        Hosting.handler = { _ in throw HostingError(status: 403) }
+        await organization.loadOrganizationSection("repositories")
+        precondition(organization.hostingHub.detail!.organizationSections["repositories"]!.error != nil && organization.hostingHub.detail!.members.count == 35 && organization.hostingHub.error == nil, "One failed section hid the rest of the dashboard")
+        organization.hostingHub.detail!.organizationSections["members"]!.more = true
+        accounts.holdTokenLoads = true
+        let staleInline = Task { await organization.loadOrganizationSection("members") }
+        await until { accounts.pendingToken(first) }
+        let overlappingWrite = await organization.hostingHubAction(expected: organization.hubActionStamp) { _ in fatalError("Dashboard read overlapped a write") }
+        precondition(!overlappingWrite && organization.hubOrganizationLoading)
+        organization.hostingHub.detail = HubDetail(item: HubItem(id: "other", title: "Other"))
+        organization.hostingHub.detailID = UUID()
+        let requestCount = Hosting.requests.count
+        accounts.finishToken(first)
+        await staleInline.value
+        precondition(organization.hostingHub.detail?.item.id == "other" && organization.hostingHub.detail!.members.isEmpty && Hosting.requests.count == requestCount, "A stale dashboard page replaced the selected organization")
+        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning, repository-bound releases uncertain-write recovery, dashboard deduplicated preview/full pagination, independent failures, read/write exclusion and stale organization reads passed (fake credentials and HTTP only)")
     }
 }
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Core/CredentialCache.swift" \
     "$ROOT/Sources/Services/HostingHub.swift" "${PROJECT_BACKEND_TEST_SOURCES[@]}" \
-    "$ROOT/Sources/Store/RepoStore+HostingHub.swift" \
+    "$ROOT/Sources/Store/RepoStore+HostingHub.swift" "$ROOT/Sources/Store/RepoStore+Organizations.swift" \
     "$TASK_TMP/main.swift" -o "$TASK_TMP/test-hosting-hub-credentials"
 "$TASK_TMP/test-hosting-hub-credentials"

@@ -1,6 +1,7 @@
 import type { Provider, RepoTarget } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import * as H from "./hosting";
+import { hubOrganizationDetail, type HubOrganizationData, type HubOrganizationTab } from "./organization-management";
 import { localProjects, isLocalProject } from "../model/local-projects";
 
 export type HostingHubSection = "releases" | "projects" | "organizations";
@@ -13,7 +14,7 @@ export type HubProjectFieldKind = "singleSelect" | "text" | "number" | "date" | 
 export interface HubProjectOption { id: string; name: string; startDate?: string; duration?: number }
 export interface HubProjectField { id: string; name: string; options: HubProjectOption[]; kind?: HubProjectFieldKind }
 export interface HubProjectRow { id: string; title: string; body: string; url: string; contentID: string; statuses: Record<string, string>; labels?: string[]; kind?: "issue" | "pullRequest" | "draft" | "redacted"; number?: number; repository?: string; state?: string; assignees?: string[]; updatedAt?: string; headRefName?: string; archived?: boolean; values?: Record<string, string>; author?: string; createdAt?: string; predecessorIDs?: string[]; durationDays?: number }
-export interface HubDetail { item: HubItem; members: HubMember[]; repositories: HubRepository[]; assets: { id: string; name: string; size?: number; downloads?: number; url: string }[]; fields: HubProjectField[]; rows: HubProjectRow[]; more: boolean; cursor?: string; notice?: string }
+export interface HubDetail { organization?: HubOrganizationData; item: HubItem; members: HubMember[]; repositories: HubRepository[]; assets: { id: string; name: string; size?: number; downloads?: number; url: string }[]; fields: HubProjectField[]; rows: HubProjectRow[]; more: boolean; cursor?: string; notice?: string }
 export interface HubReleaseInput { tag: string; name: string; body: string; target: string; draft: boolean; prerelease: boolean }
 type J = Record<string, any>;
 const pageSize = 30;
@@ -59,7 +60,7 @@ async function graphql<T>(c: HubAccess, query: string, variables: Record<string,
   if (r.errors?.length || !r.data) throw new Error(t("Projects could not be loaded. Retry or open GitHub in your browser."));
   return r.data;
 }
-export { graphql as hubGraphql, request as hubRequest };
+export { graphql as hubGraphql, request as hubRequest, raw as hubRawRequest };
 export function hubSafeURL(c: {target: Pick<RepoTarget, "provider" | "host">}, value: string, asset = false): string | null { try { const u = new URL(value); if (u.protocol !== "https:" || u.username || u.password) return null; const allowed = new Set([c.target.host.toLowerCase(), ...(c.target.provider === "github" ? ["github.com", "gist.github.com", ...(asset ? ["objects.githubusercontent.com", "release-assets.githubusercontent.com", "github-releases.githubusercontent.com"] : [])] : [])]); return allowed.has(u.hostname.toLowerCase()) ? u.href : null; } catch { return null; } }
 export function hubError(error: unknown, token?: string): string { let s = error instanceof Error ? error.message : String(error); if (token) s = s.split(token).join("[redacted]"); return s.replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[redacted]@").replace(/\b(?:gh[pousr]_[\w]+|github_pat_[\w]+|glpat-[\w-]+)\b/g, "[redacted]").replace(/([?&](?:access_token|private_token|token|api_key)=)[^&\s]+/gi, "$1[redacted]").slice(0, 1200); }
 export class HubUncertainWriteError extends Error { constructor(message: string, readonly createdProject?: HubItem) { super(message); } }
@@ -86,7 +87,7 @@ const memberRole = (level?: number): string => {
     default: return t("Member");
   }
 };
-function organizationAvatarURL(c: HubAccess, value: unknown): string | null {
+export function organizationAvatarURL(c: HubAccess, value: unknown): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
   try {
     const avatar = value.startsWith("/") && !value.startsWith("//") ? new URL(value, c.apiBase) : new URL(value);
@@ -94,7 +95,7 @@ function organizationAvatarURL(c: HubAccess, value: unknown): string | null {
     return avatar.protocol === "https:" && !avatar.username && !avatar.password && allowed.has(avatar.hostname.toLowerCase()) ? avatar.href : null;
   } catch { return null; }
 }
-function member(c: HubAccess, value: J): HubMember {
+export function hubMember(c: HubAccess, value: J): HubMember {
   const username = value.login ?? value.username ?? String(value.id);
   let avatarURL: string | null = null;
   try {
@@ -141,7 +142,19 @@ export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1
   if(c.local){ensureHubCurrent(c);if(section!=="projects")throw new Error(t("This action requires a GitHub project."));await localProjects.load();ensureHubCurrent(c);if(localProjects.error)throw new Error(localProjects.error);return{items:localProjects.projects,more:false,notice:t("Saved on this device. Local projects do not sync with GitHub.")};}
   const query = `per_page=${pageSize}&page=${Math.max(1, page)}`;
   if (section === "releases") { const list = await request<J[]>(c, `${repo(c)}/releases?${query}`); return {items: list.map(x => releaseItem(c.target.provider, x)), more: list.length === pageSize, notice: c.target.provider === "gitlab" ? t("GitLab releases are published immediately; GitHub-style drafts and prereleases are unavailable.") : undefined}; }
-  if (section === "organizations") { const list = await request<J[]>(c, `${c.apiBase}/${c.target.provider === "github" ? "user/orgs" : "groups?all_available=false"}${c.target.provider === "github" ? "?" : "&"}${query}`); return {items: list.map(x => ({id: String(c.target.provider === "github" ? x.login : x.id), title: x.name || x.login || x.full_name, subtitle: x.full_path ?? x.login, body: x.description ?? "", url: x.html_url ?? x.web_url ?? `https://github.com/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x})), more: list.length === pageSize}; }
+  if (section === "organizations") {
+    let membershipSource = c.target.provider === "github" && cursor === "organizationMemberships";
+    let list = membershipSource ? [] : await request<J[]>(c, `${c.apiBase}/${c.target.provider === "github" ? "user/orgs" : "groups?all_available=false"}${c.target.provider === "github" ? "?" : "&"}${query}`);
+    if (c.target.provider === "github" && (membershipSource || (page === 1 && list.length === 0))) {
+      try {
+        const memberships = await request<J[]>(c, `${c.apiBase}/user/memberships/orgs?state=active&${query}`);
+        list = memberships.filter(value => value.state === "active" && value.organization?.login).map(value => value.organization);
+        membershipSource = true;
+        return { items: list.map(x => ({ id: String(x.login), title: x.name || x.login, subtitle: x.login, body: x.description ?? "", url: x.html_url ?? `https://${c.target.host}/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x })), more: memberships.length === pageSize, cursor: "organizationMemberships" };
+      } catch (error) { ensureHubCurrent(c); if (membershipSource || !(error instanceof H.HostingError) || ![403, 404].includes(error.status)) throw error; }
+    }
+    return {items: list.map(x => ({id: String(c.target.provider === "github" ? x.login : x.id), title: x.name || x.login || x.full_name, subtitle: x.full_path ?? x.login, body: x.description ?? "", url: x.html_url ?? x.web_url ?? `https://${c.target.host}/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x})), more: list.length === pageSize};
+  }
   if (c.target.provider === "gitlab") { if (c.target.path.endsWith("/workspace")) throw new Error(t("Open a GitLab repository to browse its issue boards.")); const list = await request<J[]>(c, `${repo(c)}/boards`); return {items: list.slice((page-1)*pageSize,page*pageSize).map(x => ({id: String(x.id), title: x.name, subtitle: t("GitLab issue board"), body: "", url: `https://${c.target.host}/${c.target.path}/-/boards/${x.id}`, data: x})), more: list.length > page*pageSize}; }
   const [owner, name] = c.target.path.split("/");
   const noRepo = name === "workspace";
@@ -149,11 +162,11 @@ export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1
   const p = noRepo ? r.user?.projectsV2 : r.repository?.owner?.projectsV2; if (!p) throw new Error(t("Projects are unavailable for this repository owner."));
   return {items: p.nodes.map((x: J) => ({id: x.id, title: x.title, subtitle: `#${x.number}${x.closed ? " · closed" : ""}`, body: x.shortDescription ?? "", url: x.url, data: x})), more: p.pageInfo.hasNextPage, cursor: p.pageInfo.endCursor, notice: t("Projects sync with GitHub. Changes are saved after confirmation.")};
 }
-export async function hubDetail(c: HubAccess, section: HostingHubSection, item: HubItem, page = 1, cursor?: string, tab: "repositories" | "members" = "repositories"): Promise<HubDetail> {
+export async function hubDetail(c: HubAccess, section: HostingHubSection, item: HubItem, page = 1, cursor?: string, tab: HubOrganizationTab = "repositories"): Promise<HubDetail> {
   if(hubUsesLocal(c,item)){if(section!=="projects")throw new Error(t("This action requires a GitHub project."));const result=await localProjects.detail(item.id);ensureHubCurrent(c);return result;}
-  const p = c.target.provider, qs = `per_page=${pageSize}&page=${page}`;
+  const p = c.target.provider;
   if (section === "releases") { const x = await request<J>(c, `${repo(c)}/releases/${enc(item.id)}`); const d = empty(releaseItem(p,x)); d.assets = p === "github" ? (x.assets ?? []).map((a: J) => ({id:String(a.id),name:a.name,size:a.size,downloads:a.download_count,url:a.browser_download_url})) : [...(x.assets?.links ?? []).map((a: J) => ({id:String(a.id),name:a.name,url:a.direct_asset_url ?? a.url})), ...(x.assets?.sources ?? []).map((a: J) => ({id:a.format,name:a.format,url:a.url}))]; return d; }
-  if (section === "organizations") { const base = `${c.apiBase}/${p === "github" ? "orgs" : "groups"}/${enc(item.id)}`; const x = await request<J>(c, base); const d = empty({...item,title:x.name || item.title,body:x.description ?? "",url:x.html_url ?? x.web_url ?? item.url,avatarURL:x.avatar_url === undefined ? item.avatarURL : organizationAvatarURL(c, x.avatar_url),data:x}); const list = await request<J[]>(c, `${base}/${tab === "members" ? p === "github" ? "members" : "members/all" : p === "github" ? "repos" : "projects"}?${qs}${tab === "repositories" ? p === "github" ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""}`); if (tab === "members") d.members = list.map(a => member(c, a)); else d.repositories = list.map(a => ({id:String(a.id),name:a.full_name ?? a.path_with_namespace,description:a.description ?? "",cloneURL:a.clone_url ?? a.http_url_to_repo,url:a.html_url ?? a.web_url})); d.more = list.length === pageSize; d.notice = p === "github" && tab === "members" ? t("Only members visible to this account are returned by the server.") : undefined; return d; }
+  if (section === "organizations") return hubOrganizationDetail(c, item, page, tab);
   if (p === "gitlab") { const board = await request<J>(c, `${repo(c)}/boards/${enc(item.id)}`); const lists = await request<J[]>(c, `${repo(c)}/boards/${enc(item.id)}/lists?per_page=100`); const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name})); const issues = await request<J[]>(c, `${repo(c)}/issues?${hubBoardIssueQuery(board,page)}`); const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}]; d.rows=issues.map(x=>({id:String(x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",author:x.author?.username||undefined,createdAt:x.created_at||undefined,labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}})); d.more=issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d; }
   const r = await graphql<{node:J}>(c, projectDetailQuery, {id:item.id,cursor:cursor??null});
   const x=r.node;if(!x?.id) throw new Error(t("Project is unavailable or this account cannot access it."));

@@ -34,6 +34,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       body: Record<string, unknown>;
     }[] = [],
     details: string[] = [];
+  let organizationMemberRole = "member", organizationTeamRole: string | null = null;
+  let organizationInvitations = [{ id: 10, email: "pending@example.com", role: "direct_member", created_at: "2026-10-27" }];
   const source = {
     path: "C:/hosting-hub-selftest",
     target: {
@@ -50,6 +52,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     [...host.querySelectorAll<HTMLButtonElement>("button")].find(
       (e) => e.textContent?.trim() === t(label) || e.getAttribute("aria-label") === t(label) || (label === "Confirm" && e.matches(".project-review-sheet footer > button:last-child, .project-create-review footer > button:last-child")),
     );
+  const organizationTabReady = (label: string) => {
+    const tab = [...host.querySelectorAll<HTMLButtonElement>(".organization-tabs button")].find(element => element.textContent?.trim() === t(label));
+    return !!tab && !tab.disabled && tab.getAttribute("aria-pressed") === "true";
+  };
   const enter = (
     element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
     value: string,
@@ -258,6 +264,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
           };
       } else if (method !== "GET") {
         writes.push({ method, url, body: payload });
+        if (method === "PUT" && u.pathname === "/orgs/team/memberships/reviewer") { organizationMemberRole = String(payload.role); result = { state: "active", role: organizationMemberRole, user: { id: 7, login: "reviewer" } }; }
+        if (method === "PUT" && u.pathname === "/orgs/team/teams/desktop/memberships/reviewer") { organizationTeamRole = String(payload.role); result = { state: "active", role: organizationTeamRole }; }
+        if (method === "POST" && u.pathname === "/orgs/team/invitations") organizationInvitations.push({ id: 11, email: String(payload.email), role: String(payload.role), created_at: "2026-10-28" });
+        if (method === "DELETE" && u.pathname.startsWith("/orgs/team/invitations/")) { organizationInvitations = organizationInvitations.filter(invitation => String(invitation.id) !== u.pathname.split("/").at(-1)); status = 204; }
         if (method === "PATCH" && url.includes("/releases/1"))
           releaseName = String(payload.name);
         if (u.pathname.endsWith("/issues/2/comments")) {
@@ -269,10 +279,18 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else if (u.pathname.endsWith("/releases/1")) result = release();
       else if (u.pathname === "/user/orgs")
         result = [{ id: 5, login: "team", description: "Studio" }];
+      else if (u.pathname === "/user/memberships/orgs/team") result = { state: "active", role: "admin", user: { login: "me" } };
+      else if (u.pathname === "/orgs/team/memberships/reviewer") result = { state: "active", role: organizationMemberRole, user: { id: 7, login: "reviewer" } };
+      else if (u.pathname === "/orgs/team/teams/desktop/memberships/reviewer") { if (organizationTeamRole) result = { state: "active", role: organizationTeamRole }; else { status = 404; result = { message: "No team membership" }; } }
+      else if (u.pathname === "/orgs/team/teams/desktop") result = { id: 8, slug: "desktop" };
+      else if (u.pathname === "/orgs/team/teams") result = [{ id: 8, slug: "desktop", name: "Desktop team", description: "Build the client", html_url: "https://github.com/orgs/team/teams/desktop" }];
+      else if (u.pathname === "/orgs/team/teams/desktop/members") result = [{ id: 17, login: "desktop-reviewer" }, ...(organizationTeamRole ? [{ id: 7, login: "reviewer", role: organizationTeamRole }] : [])];
+      else if (u.pathname === "/orgs/team/invitations") result = organizationInvitations;
       else if (u.pathname === "/orgs/team")
         result = {
           name: "Team",
           description: "Shared workspace",
+          public_repos: 12, total_private_repos: 3,
           html_url: "https://github.com/team",
         };
       else if (u.pathname.endsWith("/orgs/team/repos"))
@@ -851,13 +869,45 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       host.querySelector(".hub-organization-row > .avatar")?.textContent === "T",
       "Organization list icon fallback missing",
     );
-    host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
+    ensure(await until(() => organizationTabReady("Overview") && !!button("Invite member") && !button("Invite member")!.disabled), "Organization overview did not open automatically");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("reviewer") === true, "Overview people missing");
+    ensure(host.querySelector(".organization-team-card")?.textContent?.includes("desktop-reviewer") === true, "Overview team people missing");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("team/client") === true, "Overview repositories missing");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("pending@example.com") === true, "Overview pending invitations missing");
+    ensure(host.textContent?.includes("12") === true, "Organization repository count missing");
+    button("Manage access")!.click();
+    ensure(await until(() => !!host.querySelector('.organization-dialog select[aria-label="' + t("Organization member") + '"]')), "Access editor did not open");
+    enter(host.querySelector<HTMLSelectElement>('.organization-dialog select[aria-label="' + t("Organization member") + '"]')!, "7");
+    ensure(await until(() => !!host.querySelector<HTMLSelectElement>("[data-organization-role]") && !host.querySelector<HTMLSelectElement>("[data-organization-role]")!.disabled), "Current organization role was not loaded");
+    enter(host.querySelector<HTMLSelectElement>("[data-organization-role]")!, "admin"); await pause(25);
+    const beforeRole = writes.length;
+    button("Review access change")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Access change review missing");
+    ensure(writes.length === beforeRole, "Access review changed permissions before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click(); await pause(25);
+    ensure(writes.length === beforeRole, "Cancelling access review changed permissions");
+    button("Review access change")!.click(); ensure(await until(() => !!button("Update access")), "Access confirmation action missing"); button("Update access")!.click();
+    ensure(await until(() => organizationMemberRole === "admin" && !host.querySelector('[role="alertdialog"]') && !host.querySelector(".organization-dialog") && organizationTabReady("Overview")), "Confirmed organization role was not updated");
+    const addMember = [...host.querySelectorAll<HTMLButtonElement>(".organization-team-card button")].find(element => element.textContent?.trim() === t("Add member"));
+    ensure(!!addMember, "Team assignment action missing"); addMember!.click();
+    ensure(await until(() => !!host.querySelector('.organization-dialog select[aria-label="' + t("Organization member") + '"]')), "Team assignment editor missing");
+    enter(host.querySelector<HTMLSelectElement>('.organization-dialog select[aria-label="' + t("Organization member") + '"]')!, "7");
+    ensure(await until(() => !!host.querySelector<HTMLSelectElement>("[data-organization-role]") && !host.querySelector<HTMLSelectElement>("[data-organization-role]")!.disabled), "Current team access was not loaded");
+    enter(host.querySelector<HTMLSelectElement>("[data-organization-role]")!, "maintainer"); await pause(25);
+    const beforeTeam = writes.length; button("Review access change")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Team access review missing"); ensure(writes.length === beforeTeam, "Team access review wrote before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click(); await pause(25); ensure(writes.length === beforeTeam, "Team review cancellation assigned a member");
+    button("Review access change")!.click(); ensure(await until(() => !!button("Grant access")), "Team access confirmation missing"); button("Grant access")!.click();
+    ensure(await until(() => organizationTeamRole === "maintainer" && !host.querySelector('[role="alertdialog"]') && !host.querySelector(".organization-dialog") && organizationTabReady("Overview")), "Confirmed team access was not assigned");
+    ensure([...host.querySelectorAll(".organization-team-card .organization-person strong")].some(element => element.textContent === "reviewer"), "Granted team member did not appear after refresh");
+    details.push("organization roles + team assignment + cancelled reviews + confirmed mock grants + refreshed team people");
+    button("Repositories")!.click();
     ensure(
-      await until(() => !!button("Clone")),
+      await until(() => organizationTabReady("Repositories") && !!button("Clone") && !button("Clone")!.disabled),
       "Organization repository did not render",
     );
     ensure(
-      host.querySelector(".hub-organization-heading > .avatar")?.textContent === "T",
+      host.querySelector(".organization-hero > .avatar")?.textContent === "T",
       "Organization detail icon fallback missing",
     );
     button("Clone")!.click();
@@ -867,10 +917,43 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     button("Members")!.click();
     ensure(
-      await until(() => host.textContent?.includes("reviewer") === true),
+      await until(() => organizationTabReady("Members") && host.querySelector(".hub-members .hub-member")?.textContent?.includes("reviewer") === true),
       "Organization members did not render",
     );
-    details.push("organization icons + repositories + members + clone");
+    const focusedMemberAccess = [...host.querySelectorAll<HTMLButtonElement>(".hub-members .hub-member button")].find(element => element.textContent?.trim() === t("Manage access"));
+    ensure(!!focusedMemberAccess && !focusedMemberAccess.disabled, "Focused Members tab lost access management"); focusedMemberAccess!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(".organization-dialog [data-organization-role]")?.value === "admin"), "Focused Members tab did not load the live role editor");
+    host.querySelector<HTMLButtonElement>(".organization-dialog-close")!.click();
+    ensure(await until(() => !host.querySelector(".organization-dialog") && organizationTabReady("Members")), "Focused member editor did not close");
+    button("Teams")!.click();
+    ensure(await until(() => organizationTabReady("Teams") && host.querySelector(".organization-team-card")?.textContent?.includes("Desktop team") === true && host.querySelector(".organization-team-card")?.textContent?.includes("desktop-reviewer") === true), "Organization teams did not render");
+    button("Overview")!.click();
+    ensure(await until(() => organizationTabReady("Overview") && !!button("Invite member") && !button("Invite member")!.disabled), "Organization invitation action missing");
+    button("Invite member")!.click();
+    ensure(await until(() => !!host.querySelector('input[type="email"]')), "Organization invitation editor missing");
+    enter(host.querySelector<HTMLInputElement>('input[type="email"]')!, "new-member@example.com");
+    await pause(25);
+    const beforeInvite = writes.length;
+    button("Review invitation")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Invitation review missing");
+    ensure(writes.length === beforeInvite, "Review sent an invitation before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click();
+    await pause(25);
+    ensure(writes.length === beforeInvite, "Cancelling review sent an invitation");
+    button("Review invitation")!.click();
+    ensure(await until(() => !!button("Send invitation")), "Invitation send confirmation missing");
+    button("Send invitation")!.click();
+    ensure(await until(() => writes.some(write => write.method === "POST" && write.url.endsWith("/orgs/team/invitations") && write.body.email === "new-member@example.com")), "Confirmed invitation was not sent");
+    ensure(await until(() => !host.querySelector('[role="alertdialog"]') && organizationTabReady("Overview")), "Invitation review did not close");
+    button("Invitations")!.click();
+    ensure(await until(() => organizationTabReady("Invitations") && host.querySelector(".organization-invitation")?.textContent?.includes("pending@example.com") === true), "Pending organization invitations missing");
+    button("Cancel invitation")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Invitation cancellation review missing");
+    const beforeCancel = writes.length;
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click();
+    await pause(25);
+    ensure(writes.length === beforeCancel, "Cancelled invitation cancellation changed the server");
+    details.push("organization overview + icons + repositories + members + teams + reviewed invitations + cancellation");
     await mount(<HostingHubPanel store={source} section="releases" />);
     ensure(await until(() => !!host.querySelector("button.hub-item")), "Release list did not render again");
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
