@@ -171,6 +171,30 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             descendants(view).compactMap { $0 as? WindowContentProbe.ProbeView }
                 .filter { !$0.isHiddenOrHasHiddenAncestor && $0.visibleRect.width > 1 && $0.visibleRect.height > 1 }
         }
+        // SwiftUI hears of a native toggle late and, until then, re-applies the old column visibility,
+        // undoing the toggle for longer than a fixed delay lasts on a slow runner. The toggle has settled
+        // once the navigation rail shows exactly while the sidebar is collapsed.
+        func waitForSidebar(_ scenario: String, _ item: NSSplitViewItem, collapsed: Bool) {
+            let start = ProcessInfo.processInfo.systemUptime
+            var settledSince: TimeInterval?
+            repeat {
+                settle(0.025)
+                let now = ProcessInfo.processInfo.systemUptime
+                let rail = probes(in: host.view).contains { $0.identifierForFixture == "rail-control" }
+                guard item.isCollapsed == collapsed && rail == collapsed else {
+                    settledSince = nil
+                    continue
+                }
+                settledSince = settledSince ?? now
+                // Never before the former fixed delay: the frame checks after a toggle still rely on it.
+                if let settledSince, now - settledSince >= 0.15, now - start >= 0.45 {
+                    FileHandle.standardError.write(Data(String(format: "Sidebar settled: %@ collapsed=%@ after %.2fs\n",
+                        scenario, String(collapsed), now - start).utf8))
+                    return
+                }
+            } while ProcessInfo.processInfo.systemUptime < start + 5
+            FileHandle.standardError.write(Data("Sidebar did not settle: \(scenario) collapsed=\(item.isCollapsed) expected=\(collapsed)\n".utf8))
+        }
         func controls(for window: NSWindow) -> [NSButton] {
             [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].compactMap { window.standardWindowButton($0) }
                 .filter { !$0.isHiddenOrHasHiddenAncestor && $0.window?.isVisible == true }
@@ -323,11 +347,11 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         let sidebar = sidebarItem(in: splitController)
         let initialCollapsed = sidebar.isCollapsed
         splitController.toggleSidebar(nil)
-        settle(0.45)
+        waitForSidebar("sidebar-toggled", sidebar, collapsed: !initialCollapsed)
         precondition(sidebar.isCollapsed != initialCollapsed, "The native sidebar toggle must change its actual collapsed state")
         try capture("sidebar-toggled")
         splitController.toggleSidebar(nil)
-        settle(0.45)
+        waitForSidebar("sidebar-restored", sidebar, collapsed: initialCollapsed)
         precondition(sidebar.isCollapsed == initialCollapsed, "The native sidebar toggle must restore its actual collapsed state")
         try capture("sidebar-restored")
 
@@ -466,11 +490,11 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             let tabbedSidebar = sidebarItem(in: tabbedSplitController)
             let tabbedCollapsed = tabbedSidebar.isCollapsed
             tabbedSplitController.toggleSidebar(nil)
-            settle(0.45)
+            waitForSidebar("native-tabs-sidebar-toggled-\(name)", tabbedSidebar, collapsed: !tabbedCollapsed)
             precondition(tabbedSidebar.isCollapsed != tabbedCollapsed, "A tabbed sidebar must actually change its collapsed state")
             try capture("native-tabs-sidebar-toggled-\(name)")
             tabbedSplitController.toggleSidebar(nil)
-            settle(0.45)
+            waitForSidebar("native-tabs-sidebar-restored-\(name)", tabbedSidebar, collapsed: tabbedCollapsed)
             precondition(tabbedSidebar.isCollapsed == tabbedCollapsed, "A tabbed sidebar must restore its original collapsed state")
             try capture("native-tabs-sidebar-restored-\(name)")
             window.tabGroup?.selectedWindow = secondWindow
