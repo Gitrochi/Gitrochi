@@ -1242,5 +1242,19 @@
   "Plain text": "Texto simples",
   "Read only": "Somente leitura",
   "Wrapping is unavailable for files with more than 5,000 lines.": "A quebra de linhas não está disponível para arquivos com mais de 5.000 linhas.",
-  "More than 10,000 matches. Refine your search.": "Mais de 10.000 resultados. Refine sua busca."
+  "More than 10,000 matches. Refine your search.": "Mais de 10.000 resultados. Refine sua busca.",
+  "Quick open": "Abertura rápida",
+  "Open files": "Arquivos abertos",
+  "Recent files": "Arquivos recentes",
+  "Close file": "Fechar arquivo",
+  "Close all files": "Fechar todos os arquivos",
+  "Navigate back": "Voltar",
+  "Navigate forward": "Avançar",
+  "Go to line": "Ir para a linha",
+  "Line number": "Número da linha",
+  "Enter a line from 1 to {0}.": "Digite uma linha de 1 a {0}.",
+  "Outline": "Estrutura",
+  "No symbols found": "Nenhum símbolo encontrado",
+  "Search files by name or path": "Buscar por nome ou caminho",
+  "Close quick open": "Fechar abertura rápida"
 }

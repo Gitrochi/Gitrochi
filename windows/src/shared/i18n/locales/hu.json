@@ -1257,5 +1257,19 @@
   "Plain text": "Egyszerű szöveg",
   "Read only": "Csak olvasható",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Az 5 000 sornál hosszabb fájloknál a sortördelés nem érhető el.",
-  "More than 10,000 matches. Refine your search.": "Több mint 10 000 találat. Pontosítsa a keresést."
+  "More than 10,000 matches. Refine your search.": "Több mint 10 000 találat. Pontosítsa a keresést.",
+  "Quick open": "Gyors megnyitás",
+  "Open files": "Megnyitott fájlok",
+  "Recent files": "Legutóbbi fájlok",
+  "Close file": "Fájl bezárása",
+  "Close all files": "Összes fájl bezárása",
+  "Navigate back": "Vissza",
+  "Navigate forward": "Előre",
+  "Go to line": "Ugrás sorra",
+  "Line number": "Sorszám",
+  "Enter a line from 1 to {0}.": "Adjon meg egy sort 1 és {0} között.",
+  "Outline": "Vázlat",
+  "No symbols found": "Nincs szimbólum",
+  "Search files by name or path": "Keresés fájlnév vagy útvonal alapján",
+  "Close quick open": "Gyors megnyitás bezárása"
 }

@@ -1226,5 +1226,19 @@
   "Plain text": "Platte tekst",
   "Read only": "Alleen-lezen",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Regelafbreking is niet beschikbaar voor bestanden met meer dan 5.000 regels.",
-  "More than 10,000 matches. Refine your search.": "Meer dan 10.000 overeenkomsten. Verfijn je zoekopdracht."
+  "More than 10,000 matches. Refine your search.": "Meer dan 10.000 overeenkomsten. Verfijn je zoekopdracht.",
+  "Quick open": "Snel openen",
+  "Open files": "Geopende bestanden",
+  "Recent files": "Recente bestanden",
+  "Close file": "Bestand sluiten",
+  "Close all files": "Alle bestanden sluiten",
+  "Navigate back": "Terug",
+  "Navigate forward": "Vooruit",
+  "Go to line": "Ga naar regel",
+  "Line number": "Regelnummer",
+  "Enter a line from 1 to {0}.": "Voer een regel van 1 tot {0} in.",
+  "Outline": "Overzicht",
+  "No symbols found": "Geen symbolen gevonden",
+  "Search files by name or path": "Zoeken op bestandsnaam of pad",
+  "Close quick open": "Snel openen sluiten"
 }

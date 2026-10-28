@@ -9,6 +9,8 @@ struct RepositorySourceView: NSViewRepresentable {
     let fontSize: CGFloat
     let wraps: Bool
     let activeMatch: NSRange?
+    var targetLine: Int? = nil
+    var jumpID: UUID? = nil
     @Environment(\.colorScheme) private var colorScheme
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -105,15 +107,21 @@ struct RepositorySourceView: NSViewRepresentable {
             view.sizeToFit()
             coordinator.wraps = wraps
         }
-        if changed || styleChanged || coordinator.activeMatch != activeMatch {
+        let jumpChanged = coordinator.jumpID != jumpID || coordinator.targetLine != targetLine
+        if changed || styleChanged || coordinator.activeMatch != activeMatch || jumpChanged {
             if let layout = view.layoutManager {
                 layout.removeTemporaryAttribute(.backgroundColor, forCharacterRange: NSRange(location: 0, length: (text as NSString).length))
+                let target = targetLine.flatMap { RepositoryCodeReading.lineRange($0, starts: lineStarts, length: (text as NSString).length) }
+                if let target { layout.addTemporaryAttribute(.backgroundColor, value: NSColor.controlAccentColor.withAlphaComponent(0.14), forCharacterRange: target) }
                 if let range = activeMatch, NSMaxRange(range) <= (text as NSString).length {
                     layout.addTemporaryAttribute(.backgroundColor, value: NSColor.systemYellow.withAlphaComponent(0.4), forCharacterRange: range)
-                    view.scrollRangeToVisible(range)
+                    if !jumpChanged { view.scrollRangeToVisible(range) }
                 }
+                if let target, jumpChanged || ((changed || styleChanged) && activeMatch == nil) { view.scrollRangeToVisible(NSRange(location: target.location, length: min(1, target.length))) }
             }
             coordinator.activeMatch = activeMatch
+            coordinator.targetLine = targetLine
+            coordinator.jumpID = jumpID
         }
         coordinator.ruler?.needsDisplay = true
     }
@@ -131,6 +139,8 @@ struct RepositorySourceView: NSViewRepresentable {
         var dark = false
         var wraps: Bool?
         var activeMatch: NSRange?
+        var targetLine: Int?
+        var jumpID: UUID?
         deinit { if let scrollObserver { NotificationCenter.default.removeObserver(scrollObserver) } }
     }
 }
@@ -161,7 +171,7 @@ private final class RepositoryLineRuler: NSRulerView {
             if lineStarts[middle] < chars.location { low = middle + 1 } else { high = middle }
         }
         let first = max(0, low - 1)
-        let attributes: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedSystemFont(ofSize: fontSize - 1, weight: .regular), .foregroundColor: NSColor.tertiaryLabelColor]
+        let attributes: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedSystemFont(ofSize: fontSize - 1, weight: .regular), .foregroundColor: NSColor.secondaryLabelColor]
         for index in first..<lineStarts.count {
             guard lineStarts[index] <= NSMaxRange(chars), lineStarts[index] < (view.string as NSString).length else { break }
             let glyph = layout.glyphIndexForCharacter(at: lineStarts[index])

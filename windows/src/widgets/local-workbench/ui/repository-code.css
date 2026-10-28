@@ -5,6 +5,62 @@
 .code-revision-field:focus-within, .code-search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 .code-revision-summary { display: flex; align-items: center; justify-content: flex-end; flex: 1; gap: 12px; color: var(--text-2); font-size: 11px; }
 .code-revision-summary code { font: 11px var(--mono); padding: 4px 7px; background: var(--bg); border-radius: 5px; }
+.code-history-controls { display: flex; align-items: center; gap: 2px; }
+.code-history-controls .icon-btn { width: 25px; height: 27px; }
+.code-quick-trigger { gap: 5px; }
+.code-explorer-sections { display: flex; gap: 3px; align-items: center; min-width: 0; }
+.code-explorer-sections > button { border: 0; background: transparent; padding: 4px 6px; border-radius: 5px; font-size: 11px; color: var(--text-2); cursor: pointer; white-space: nowrap; }
+.code-explorer-sections > button.on { color: var(--text); background: var(--hover); font-weight: 600; }
+.code-open-files { display: flex; align-items: center; flex: none; min-width: 0; border-bottom: 1px solid var(--border); background: var(--sidebar); padding-right: 6px; }
+.code-file-tabs { display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.code-file-tab { display: flex; align-items: center; min-width: 115px; max-width: 210px; flex: 0 0 auto; border-right: 1px solid var(--border); border-bottom: 2px solid transparent; }
+.code-file-tab.on { background: var(--surface); border-bottom-color: var(--accent); }
+.code-file-tab > button { display: flex; align-items: center; justify-content: flex-start; gap: 6px; border: 0; color: var(--text-2); background: transparent; cursor: pointer; }
+.code-file-tab > button:first-child { flex: 1; min-width: 0; min-height: 36px; padding: 9px 6px 8px 12px; font-size: 11px; }
+.code-file-tab > button:first-child > svg { flex: none; }
+.code-file-tab > button:first-child > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-file-tab.on > button:first-child { color: var(--accent); }
+.code-file-tab > .code-close-file { justify-content: center; flex: none; width: 23px; height: 23px; padding: 0; margin-right: 6px; border-radius: 4px; }
+.code-file-tab > .code-close-file:hover { background: var(--hover); color: var(--text); }
+.code-position-tools { display: flex; align-items: center; justify-content: space-between; flex: none; gap: 10px; min-height: 35px; padding: 5px 18px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.code-go-line { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.code-go-line > input { width: 78px; border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; background: var(--input); font: 11px var(--mono); }
+.code-go-line > input[aria-invalid="true"] { border-color: var(--danger); }
+.code-go-line > button { font-size: 10px; padding: 4px 7px; }
+.code-line-error { flex: 1 0 100%; color: var(--danger); font-size: 10px; line-height: 1.5; }
+.code-outline { position: relative; flex: none; font-size: 10px; }
+.code-outline > summary { display: flex; gap: 5px; align-items: center; cursor: pointer; padding: 4px 6px; border-radius: 5px; color: var(--text-2); list-style: none; }
+.code-outline > summary::-webkit-details-marker { display: none; }
+.code-outline > summary > span { font-size: 9px; color: var(--text-3); }
+.code-outline[open] > summary, .code-outline > summary:hover { background: var(--hover); color: var(--text); }
+.code-outline-list { position: absolute; z-index: 20; right: 0; top: calc(100% + 6px); width: min(360px, 75vw); max-height: 280px; padding: 5px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+.code-outline-list > button { display: flex; width: 100%; align-items: center; gap: 8px; padding: 8px; border: 0; border-radius: 5px; background: transparent; text-align: left; cursor: pointer; }
+.code-outline-list > button:hover { background: var(--hover); }
+.code-outline-list > button > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px var(--mono); }
+.code-outline-list > button > small { color: var(--text-2); font-size: 10px; white-space: nowrap; }
+.code-symbol-kind { display: inline-flex; justify-content: center; width: 18px; color: var(--accent); font: 12px var(--mono); }
+.code-symbol-kind.type { color: var(--orange); }
+.code-outline-list > p { margin: 8px; }
+.source-row.source-line-jump { background: color-mix(in srgb, var(--accent) 13%, var(--surface)); box-shadow: inset 3px 0 var(--accent); }
+.source-row.source-line-jump .source-line-number { color: var(--accent); }
+.source-large-text > .source-line-jump { background: var(--select); outline: 1px solid var(--accent); border-radius: 2px; }
+.code-quick-backdrop { z-index: 900; align-items: flex-start; padding: min(16vh, 100px) 16px 24px; }
+.code-quick-open { width: min(600px, 100%); max-height: min(640px, 80vh); display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.code-quick-heading { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px 4px; font-size: 12px; }
+.code-quick-search { display: flex; align-items: center; gap: 10px; padding: 13px 17px; border-bottom: 1px solid var(--border); color: var(--accent); }
+.code-quick-search > input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; font-size: 14px; }
+.code-quick-section { padding: 11px 17px 7px; font-size: 10px; color: var(--text-2); }
+.code-quick-results { min-height: 80px; max-height: 420px; overflow: auto; padding: 0 7px 8px; }
+.code-quick-results > button { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: 7px; padding: 10px; background: transparent; text-align: left; cursor: pointer; }
+.code-quick-results > button > svg { color: var(--text-2); flex: none; }
+.code-quick-results > button.on { background: var(--select); }
+.code-quick-results > button > span { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.code-quick-results strong { font-size: 12px; font-weight: 500; }
+.code-quick-results small { font: 10px var(--mono); color: var(--text-2); }
+.code-quick-results strong, .code-quick-results small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-quick-results kbd { font: 13px var(--mono); color: var(--text-2); }
+.code-quick-empty { padding: 25px 10px; text-align: center; color: var(--text-2); font-size: 12px; }
+.code-quick-open > footer { display: flex; justify-content: flex-end; gap: 16px; padding: 9px 17px; background: var(--sidebar); border-top: 1px solid var(--border); color: var(--text-2); font: 10px var(--mono); }
 .code-reader-layout { display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); flex: 1; min-height: 0; min-width: 0; }
 .code-reader-layout.focused { grid-template-columns: minmax(0, 1fr); }
 .code-explorer { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--sidebar); border-right: 1px solid var(--border); }
@@ -90,7 +146,7 @@
 @container code-reader (max-width: 500px) {
   .code-revision-bar { padding: 10px; gap: 6px; }
   .code-revision-field { flex: 1; }
-  .code-revision-summary { flex: 0; }
+  .code-revision-summary { display: none; }
   .code-revision-summary code { display: none; }
   .code-reader-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(130px, 28%) minmax(0, 1fr); overflow: auto; }
   .code-reader-layout.focused { grid-template-rows: minmax(0, 1fr); }
@@ -103,6 +159,9 @@
   .code-file-emblem { width: 30px; height: 30px; }
   .code-mode-bar button { font-size: 10px; padding: 6px; }
   .code-reading-tools { gap: 4px; }
+  .code-position-tools { padding: 5px 10px; }
+  .code-explorer-heading { gap: 6px; }
+  .code-explorer-sections > button { font-size: 10px; }
   .code-find { flex-basis: 160px; }
   .code-display-tools { border-left: 0; padding-left: 0; }
   .code-status-bar { gap: 10px; padding: 6px 12px; }

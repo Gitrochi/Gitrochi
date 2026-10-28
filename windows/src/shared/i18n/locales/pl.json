@@ -1256,5 +1256,19 @@
   "Plain text": "Zwykły tekst",
   "Read only": "Tylko do odczytu",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Zawijanie jest niedostępne dla plików mających więcej niż 5000 wierszy.",
-  "More than 10,000 matches. Refine your search.": "Ponad 10 000 dopasowań. Zawęź wyszukiwanie."
+  "More than 10,000 matches. Refine your search.": "Ponad 10 000 dopasowań. Zawęź wyszukiwanie.",
+  "Quick open": "Szybkie otwieranie",
+  "Open files": "Otwarte pliki",
+  "Recent files": "Ostatnie pliki",
+  "Close file": "Zamknij plik",
+  "Close all files": "Zamknij wszystkie pliki",
+  "Navigate back": "Wstecz",
+  "Navigate forward": "Dalej",
+  "Go to line": "Przejdź do wiersza",
+  "Line number": "Numer wiersza",
+  "Enter a line from 1 to {0}.": "Wpisz wiersz od 1 do {0}.",
+  "Outline": "Struktura",
+  "No symbols found": "Nie znaleziono symboli",
+  "Search files by name or path": "Szukaj po nazwie lub ścieżce",
+  "Close quick open": "Zamknij szybkie otwieranie"
 }

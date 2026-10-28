@@ -1273,5 +1273,19 @@
   "Plain text": "Звичайний текст",
   "Read only": "Лише читання",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Перенесення рядків недоступне для файлів із понад 5 000 рядків.",
-  "More than 10,000 matches. Refine your search.": "Понад 10 000 збігів. Уточніть пошук."
+  "More than 10,000 matches. Refine your search.": "Понад 10 000 збігів. Уточніть пошук.",
+  "Quick open": "Швидке відкриття",
+  "Open files": "Відкриті файли",
+  "Recent files": "Нещодавні файли",
+  "Close file": "Закрити файл",
+  "Close all files": "Закрити всі файли",
+  "Navigate back": "Назад",
+  "Navigate forward": "Уперед",
+  "Go to line": "Перейти до рядка",
+  "Line number": "Номер рядка",
+  "Enter a line from 1 to {0}.": "Введіть рядок від 1 до {0}.",
+  "Outline": "Структура",
+  "No symbols found": "Символів не знайдено",
+  "Search files by name or path": "Пошук за назвою або шляхом",
+  "Close quick open": "Закрити швидке відкриття"
 }
