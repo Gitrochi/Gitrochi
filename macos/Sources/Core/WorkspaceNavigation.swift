@@ -7,6 +7,9 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case pullRequests, issues, actions, releases, projects, account
     case flows
     var id: String { rawValue }
+    /// Pages the repository screen links to (request and issue rows, a commit's CI icon, the tags); opened from there,
+    /// they offer the way back
+    var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
     var title: String {
         switch self {

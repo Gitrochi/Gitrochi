@@ -160,6 +160,7 @@ import SwiftUI
         nav.navigate(.code); precondition(!nav.cameFromRepository)
         nav.navigate(.pullRequests); precondition(!nav.cameFromRepository, "Only a page opened from the repository screen offers the way back")
         nav.navigate(.repository); nav.navigate(.pullRequests); precondition(nav.cameFromRepository)
+        nav.navigate(.repository); nav.navigate(.actions); precondition(nav.cameFromRepository, "Actions opened from a commit's CI icon offers the way back")
         workspaceNavigationFixtureDefaults.set([firstPath: "code", secondPath: "issues"], forKey: "workspaceDestinations")
         nav.fixtureRepository(firstPath); nav.restoreWorkspaceDestination()
         precondition(nav.destination == .code)

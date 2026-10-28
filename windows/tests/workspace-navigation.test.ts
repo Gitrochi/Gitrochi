@@ -77,7 +77,7 @@ describe("workspace navigation", () => {
     const store = fixture(); store.navigate("pullRequests"); store.select({ kind: "pullRequest", number: 7 }); expect(store.destination).toBe("pullRequests");
     store.select({ kind: "commit", sha: older }); expect(store.destination).toBe("repository"); expect(store.selection).toEqual({ kind: "commit", sha: older });
   });
-  it("offers the way back only when the repository screen opened Pull requests or Issues", () => {
+  it("offers the way back only when the repository screen opened one of the pages it links to", () => {
     const store = fixture(); store.navigate("repository");
     store.navigate("pullRequests"); expect(store.cameFromRepository).toBe(true);
     store.navigate("pullRequests"); expect(store.cameFromRepository).toBe(true);
@@ -89,6 +89,8 @@ describe("workspace navigation", () => {
     store.navigate("repository"); store.navigate("pullRequests"); store.select({ kind: "commit", sha: older });
     expect(store.destination).toBe("repository"); expect(store.cameFromRepository).toBe(false);
     store.navigate("issues"); internal(store).resetState(); expect(store.cameFromRepository).toBe(false);
+    // a commit's CI badge opens Actions, which offers the way back too
+    store.navigate("repository"); store.navigate("actions"); expect(store.cameFromRepository).toBe(true);
   });
   it("clears unrelated file and diff panels when entering Pull requests", () => {
     const store = fixture(); store.selection = { kind: "commit", sha: head }; store.diffSource = { kind: "working", change: file }; store.fileInspect = { mode: "history", path: file.path, rev: null };
