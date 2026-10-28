@@ -23,3 +23,5 @@ export { rescheduleHubProjectItem } from "./api/project-scheduling";
 export { readProjectScheduleSettings, saveProjectScheduleSettings } from "./model/project-schedule-preferences";
 export { createHubProjectTask } from "./api/project-task-creation";
 export { workStateTitle } from "./lib/work-state";
+export { releaseVersion, compareReleaseVersions, releaseTag, releaseDate, releaseState, releaseFamily, orderedReleases, newestReleases, releaseCompareURL, releaseAssetSize, releaseMarkdownLinks } from "./model/releases";
+export { ReleasePortfolio, releasePortfolio, type ReleaseSummary } from "./model/release-portfolio";

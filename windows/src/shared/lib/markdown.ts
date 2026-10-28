@@ -39,6 +39,7 @@ export interface MdRefs {
   request?(n: string): string;
   user(name: string): string;
   image?(src: string): string | null;
+  link?(href: string): string | null;
 }
 
 export function parseMarkdown(text: string, refs?: MdRefs): MdBlock[] {

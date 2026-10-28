@@ -377,7 +377,7 @@ struct UpdateView: View {
                         .font(.callout).foregroundStyle(.secondary)
                     if !r.notes.isEmpty {
                         ScrollView {
-                            ReleaseNotes(text: r.notes)
+                            ReleaseMarkdown(text: r.notes, target: RepoTarget(provider: .github, remote: "origin", host: "github.com", path: UpdateCenter.repo), tag: "v" + r.version)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxHeight: 160)
@@ -409,58 +409,5 @@ struct UpdateView: View {
         }
         .padding(20)
         .frame(width: 520)
-    }
-}
-
-/// 릴리스 노트(GitHub 마크다운)를 읽기 좋게: 제목·목록·구분선·코드 블록, 줄 안의 굵게·링크·코드
-private struct ReleaseNotes: View {
-    let text: String
-
-    private enum Block { case heading(String), bullet(String), code(String), rule, text(String) }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                switch block {
-                case .heading(let s): Text(inline(s)).fontWeight(.semibold).padding(.top, 4)
-                case .bullet(let s):
-                    HStack(alignment: .firstTextBaseline, spacing: 6) { Text(verbatim: "•"); Text(inline(s)) }
-                case .code(let s): Text(s).font(.caption.monospaced()).foregroundStyle(.secondary)
-                case .rule: Divider().padding(.vertical, 2)
-                case .text(let s): Text(inline(s))
-                }
-            }
-        }
-        .font(.callout)
-        .textSelection(.enabled)
-    }
-
-    private var blocks: [Block] {
-        var out: [Block] = []
-        var code: [String]? = nil
-        for line in text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n") {
-            let t = line.trimmingCharacters(in: .whitespaces)
-            if t.hasPrefix("```") {
-                if let c = code { out.append(.code(c.joined(separator: "\n"))); code = nil } else { code = [] }
-            } else if code != nil {
-                code?.append(line)
-            } else if t.isEmpty {
-                continue
-            } else if t.hasPrefix("#") {
-                out.append(.heading(t.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces)))
-            } else if t.hasPrefix("- ") || t.hasPrefix("* ") {
-                out.append(.bullet(String(t.dropFirst(2))))
-            } else if t.count >= 3, t.allSatisfy({ $0 == "-" }) {
-                out.append(.rule)
-            } else {
-                out.append(.text(t))
-            }
-        }
-        if let c = code { out.append(.code(c.joined(separator: "\n"))) }
-        return out
-    }
-
-    private func inline(_ s: String) -> AttributedString {
-        (try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(s)
     }
 }
