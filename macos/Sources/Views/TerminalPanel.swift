@@ -98,36 +98,58 @@ private struct TerminalSplitView: View {
     let b: TerminalNode
     let corner: UUID
     let split: Bool
+    /// Only for turning a drag into a ratio; the layout itself reads the space it is given
+    @ViewState private var total: CGFloat = 0
 
     var body: some View {
-        GeometryReader { geo in
-            let side = axis == .sideBySide
-            let total = side ? geo.size.width : geo.size.height
-            let first = max(0, total * ratio - 0.5)
-            let stack = side ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
-            stack {
-                TerminalNodeView(node: a, corner: corner, split: split)
-                    .frame(width: side ? first : nil, height: side ? nil : first)
-                Rectangle()
-                    .fill(Color(nsColor: .separatorColor))
-                    .frame(width: side ? 1 : nil, height: side ? nil : 1)
-                    .overlay {
-                        // a wider grab area than the 1pt line
-                        Color.clear
-                            .frame(width: side ? 7 : nil, height: side ? nil : 7)
-                            .contentShape(Rectangle())
-                            .pointerStyle(side ? .columnResize : .rowResize)
-                            .gesture(
-                                DragGesture(minimumDistance: 1, coordinateSpace: .named(id))
-                                    .onChanged { v in
-                                        guard total > 0 else { return }
-                                        store.resizeTerminalSplit(id, to: (side ? v.location.x : v.location.y) / total)
-                                    }
-                            )
-                    }
-                TerminalNodeView(node: b, corner: corner, split: split)
+        let side = axis == .sideBySide
+        TerminalSplitLayout(sideBySide: side, ratio: ratio) {
+            TerminalNodeView(node: a, corner: corner, split: split)
+            Rectangle()
+                .fill(Color(nsColor: .separatorColor))
+                .overlay {
+                    // a wider grab area than the 1pt line
+                    Color.clear
+                        .frame(width: side ? 7 : nil, height: side ? nil : 7)
+                        .contentShape(Rectangle())
+                        .pointerStyle(side ? .columnResize : .rowResize)
+                        .gesture(
+                            DragGesture(minimumDistance: 1, coordinateSpace: .named(id))
+                                .onChanged { v in
+                                    guard total > 0 else { return }
+                                    store.resizeTerminalSplit(id, to: (side ? v.location.x : v.location.y) / total)
+                                }
+                        )
+                }
+            TerminalNodeView(node: b, corner: corner, split: split)
+        }
+        .coordinateSpace(.named(id))
+        .onGeometryChange(for: CGFloat.self) { side ? $0.size.width : $0.size.height } action: { total = $0 }
+    }
+}
+
+/// Places the first pane, the 1pt divider and the second pane in the space the split is given. A GeometryReader here
+/// sized the first pane from the new size but kept both panes in the old frame after a window resize.
+private struct TerminalSplitLayout: Layout {
+    let sideBySide: Bool
+    let ratio: Double
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 3 else { return }
+        let total = sideBySide ? bounds.width : bounds.height
+        let first = min(max(0, total * ratio - 0.5), max(0, total - 1))
+        var offset: CGFloat = 0
+        for (view, length) in zip(subviews, [first, 1, max(0, total - first - 1)]) {
+            if sideBySide {
+                view.place(at: CGPoint(x: bounds.minX + offset, y: bounds.minY), proposal: ProposedViewSize(width: length, height: bounds.height))
+            } else {
+                view.place(at: CGPoint(x: bounds.minX, y: bounds.minY + offset), proposal: ProposedViewSize(width: bounds.width, height: length))
             }
-            .coordinateSpace(.named(id))
+            offset += length
         }
     }
 }
