@@ -1,13 +1,17 @@
 import { createRoot } from "react-dom/client";
 import { agents } from "@/entities/agent";
 import { RepoStore } from "@/entities/repo";
+import type { TerminalSession } from "@/entities/terminal";
 import { AgentsPanel } from "@/widgets/sidebar";
 import { ipc, type AgentScan } from "@/shared/api";
 import { t } from "@/shared/i18n";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-/** Agents in other apps from a fake process scan: listed under their app and folder, and a click brings the app forward. */
+/**
+ * Agents in other apps from a fake process scan: listed under their app and folder, and a click brings the app forward.
+ * An agent typed into a tab of the terminal below shows in its worktree's card, and a click goes to that tab.
+ */
 export async function externalAgentsSelfTest(): Promise<[boolean, string]> {
   const original = { scan: ipc.externalAgents, forward: ipc.bringAppForward, external: agents.external };
   const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-10000px;top:0;width:320px;height:800px"; document.body.append(host);
@@ -21,6 +25,7 @@ export async function externalAgentsSelfTest(): Promise<[boolean, string]> {
       { pid: 200, name: "node.exe", args: ["C:/npm/node_modules/@google/gemini-cli/dist/index.js"], cwd: "C:/fixture/agents-topic", started: 0, ancestors: [{ pid: 30, name: "Code.exe", window: true }] },
       { pid: 300, name: "claude.exe", args: [], cwd: "C:/fixture/agents", started: 0, ancestors: [{ pid: 900, name: "Gitrochi.exe", window: true }] },
       { pid: 400, name: "codex.exe", args: [], cwd: "D:/elsewhere", started: 0, ancestors: [terminal] },
+      { pid: 500, name: "claude.exe", args: [], cwd: "C:/fixture/agents-topic/app", started: 0, ancestors: [{ pid: 50, name: "pwsh.exe", window: false }, { pid: 900, name: "Gitrochi.exe", window: true }] },
     ],
   };
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
@@ -34,6 +39,10 @@ export async function externalAgentsSelfTest(): Promise<[boolean, string]> {
       { path: "C:/fixture/agents-topic", head: null, branch: "topic", isMain: false, locked: false, prunable: false },
     ];
     store.refreshWorktreeStats = async () => {};
+    const tab = { pid: 50, running: true } as TerminalSession;
+    const focused: TerminalSession[] = [];
+    store.terminals = [tab];
+    store.focusTerminal = (term) => { focused.push(term); };
     // skip the shared five-second throttle so the fake scan is read now
     await agents.refreshExternal(Date.now() + 60_000);
     root.render(<AgentsPanel store={store} />); await pause(80);
@@ -44,7 +53,13 @@ export async function externalAgentsSelfTest(): Promise<[boolean, string]> {
     ensure(rows[1].textContent?.includes("VS Code") && rows[1].textContent.includes("topic"), `Second row: ${rows[1].textContent}`);
     rows[0].click(); await pause();
     ensure(forwarded.join() === "10", `A click must bring the host app forward: ${forwarded}`);
-    return [true, "Agents from a fake scan: Gitrochi's own and other folders left out, host app and folder shown, a click brings Windows Terminal forward"];
+    const cards = [...host.querySelectorAll<HTMLElement>(".wt-card")];
+    const typed = [...host.querySelectorAll<HTMLElement>(".terminal-agent")];
+    ensure(typed.length === 1 && cards[1]?.contains(typed[0]), `The agent typed into the terminal must show once, in the topic worktree's card: ${typed.length}`);
+    ensure(typed[0].textContent?.includes("Claude Code") && typed[0].textContent.includes("app"), `Terminal agent row: ${typed[0].textContent}`);
+    typed[0].click(); await pause();
+    ensure(focused.length === 1 && focused[0] === tab, "A click must go to the terminal tab the agent runs in");
+    return [true, "Agents from a fake scan: Gitrochi's own and other folders left out, host app and folder shown, a click brings Windows Terminal forward; one typed into the terminal shows in its worktree card and a click goes to its tab"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

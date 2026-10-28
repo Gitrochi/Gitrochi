@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { agentHost, agents, appDisplayName, containingRoot, externalAgentKind, relativeFolder, resolveExternalAgents } from "@/entities/agent";
+import { type AgentHost, agentHost, agents, appDisplayName, containingRoot, externalAgentKind, relativeFolder, resolveExternalAgents, terminalShell } from "@/entities/agent";
+import type { TerminalSession } from "@/entities/terminal";
 import { ipc, type AgentProcess, type AgentScan } from "@/shared/api";
 
 const own = 900;
 const terminal = { pid: 10, name: "WindowsTerminal.exe", window: true };
 const shell = { pid: 20, name: "pwsh.exe", window: false };
+const gitrochi = { pid: own, name: "Gitrochi.exe", window: true };
 const proc = (pid: number, name: string, cwd: string, ancestors = [shell, terminal], args: string[] = [], started = 1_700_000_000): AgentProcess => ({ pid, name, args, cwd, started, ancestors });
 
 afterEach(() => vi.restoreAllMocks());
@@ -23,12 +25,18 @@ describe("external agents", () => {
   });
   it("takes the first ancestor with an app window as the host, and leaves Gitrochi's own sessions out", () => {
     expect(agentHost([shell, terminal], own)).toEqual(terminal);
-    expect(agentHost([shell, { pid: own, name: "Gitrochi.exe", window: true }, terminal], own)).toBe("own");
+    expect(agentHost([shell, gitrochi, terminal], own)).toBe("own");
     expect(agentHost([shell, { pid: 30, name: "explorer.exe", window: false }], own)).toBeNull();
     // a window below Gitrochi wins: the agent runs in another app that Gitrochi only launched
-    expect(agentHost([{ pid: 40, name: "Code.exe", window: true }, { pid: own, name: "Gitrochi.exe", window: true }], own)).toEqual({ pid: 40, name: "Code.exe", window: true });
+    expect(agentHost([{ pid: 40, name: "Code.exe", window: true }, gitrochi], own)).toEqual({ pid: 40, name: "Code.exe", window: true });
   });
-  it("lists each agent once, outside Gitrochi, newest first", () => {
+  it("finds the terminal tab's shell right below Gitrochi", () => {
+    expect(terminalShell([{ pid: 70, name: "cmd.exe", window: false }, shell, gitrochi], own)).toBe(20);
+    // Gitrochi started it directly: a session or an AI call, not something typed into a terminal
+    expect(terminalShell([gitrochi], own)).toBeNull();
+    expect(terminalShell([shell, terminal], own)).toBeNull();
+  });
+  it("lists each agent once, newest first, and below Gitrochi only those typed into its terminal", () => {
     const scan: AgentScan = {
       own,
       processes: [
@@ -36,13 +44,19 @@ describe("external agents", () => {
         // the Codex npm shim and the native binary it starts: one agent, shown as the outer process
         proc(200, "node.exe", "C:/repo/sub", [shell, terminal], ["C:/npm/node_modules/@openai/codex/bin/codex.js"], 1_700_000_200),
         proc(201, "codex-x86_64-pc-windows-msvc.exe", "C:/repo/sub", [{ pid: 200, name: "node.exe", window: false }, shell, terminal], [], 1_700_000_201),
-        proc(300, "claude.exe", "C:/repo", [{ pid: 50, name: "pwsh.exe", window: false }, { pid: own, name: "Gitrochi.exe", window: true }]),
+        proc(300, "claude.exe", "C:/repo", [{ pid: 50, name: "pwsh.exe", window: false }, gitrochi]),
+        proc(310, "claude.exe", "C:/repo", [gitrochi]),
         proc(400, "node.exe", "C:/repo", [shell, terminal], ["server.js"]),
         proc(500, "gemini.exe", "D:/elsewhere", [{ pid: 60, name: "cmd.exe", window: true }], [], 0),
       ],
     };
     const list = resolveExternalAgents(scan);
-    expect(list.map((a) => [a.pid, a.kind, a.hostPid, a.hostExe])).toEqual([[200, "codex", 10, "WindowsTerminal.exe"], [100, "claude", 10, "WindowsTerminal.exe"], [500, "gemini", 60, "cmd.exe"]]);
+    expect(list.map((a) => [a.pid, a.kind, a.hostPid, a.hostExe, a.terminalPid])).toEqual([
+      [200, "codex", 10, "WindowsTerminal.exe", null],
+      [100, "claude", 10, "WindowsTerminal.exe", null],
+      [300, "claude", own, "", 50],
+      [500, "gemini", 60, "cmd.exe", null],
+    ]);
     expect(list.find((a) => a.pid === 500)?.started).toBeNull();
   });
   it("matches working folders to the repository and its worktrees, deepest first and case-insensitive on Windows paths", () => {
@@ -71,5 +85,30 @@ describe("external agents", () => {
     expect(agents.externalIn(["C:/other"])).toEqual([]);
     await agents.refreshExternal(Date.now() + 10_000);
     expect(scan).toHaveBeenCalledTimes(2);
+  });
+  it("puts agents typed into the terminal below with their tab, apart from agents in other apps", async () => {
+    vi.spyOn(ipc, "externalAgents").mockResolvedValue({
+      own,
+      processes: [
+        proc(100, "claude.exe", "C:/repo/src", [{ pid: 50, name: "pwsh.exe", window: false }, gitrochi]),
+        proc(200, "codex.exe", "C:/repo"),
+        proc(300, "gemini.exe", "C:/repo", [{ pid: 60, name: "pwsh.exe", window: false }, gitrochi]),
+      ],
+    });
+    await agents.refreshExternal(Date.now() + 120_000);
+    const tab = { pid: 50, running: true } as TerminalSession;
+    const ended = { pid: 60, running: false } as TerminalSession;
+    const host: AgentHost = { terminals: [tab, ended], newTerminal: vi.fn(), focusTerminal: vi.fn() };
+    expect(agents.externalIn(["C:/repo"]).map((a) => a.pid)).toEqual([200]);
+    expect(agents.terminalAgentsIn(["C:/repo"], [host]).map((x) => [x.agent.pid, x.term, x.host])).toEqual([[100, tab, host]]);
+    expect(agents.terminalAgentsIn(["C:/other"], [host])).toEqual([]);
+    // a tab that runs a session started from Gitrochi already shows as that session
+    const sessions = (agents as unknown as { terminals: Map<string, { term: TerminalSession; host: AgentHost }> }).terminals;
+    sessions.set("session", { term: tab, host });
+    try {
+      expect(agents.terminalAgentsIn(["C:/repo"], [host])).toEqual([]);
+    } finally {
+      sessions.delete("session");
+    }
   });
 });

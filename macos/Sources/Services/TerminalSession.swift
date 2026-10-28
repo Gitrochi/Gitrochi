@@ -127,6 +127,12 @@ final class TerminalSession: Identifiable {
         return Self.processName(pgid)
     }
 
+    /// The shell's pid while it runs; an agent typed into this tab has it as an ancestor
+    var shellPID: Int32? {
+        guard running, let pid = view.process?.shellPid, pid > 0 else { return nil }
+        return pid
+    }
+
     // MARK: 상태 갱신
 
     fileprivate func setShellTitle(_ t: String) {

@@ -36,10 +36,12 @@ struct AgentsPanel: View {
                     .help("Start \(agents.defaultKind.title) in this worktree now")
                 }
 
+                let typed = agents.terminalAgents(in: store.worktrees.map(\.path))
                 ForEach(store.worktrees) { w in
                     WorktreeCard(worktree: w,
                                  stats: store.worktreeStats[w.path],
                                  sessions: agents.sessions(in: w.path),
+                                 typed: typed.filter { root(for: $0)?.path == w.path },
                                  isCurrent: AgentCenter.normalize(w.path) == AgentCenter.normalize(store.url?.path ?? ""))
                 }
 
@@ -129,7 +131,7 @@ private struct ExternalAgentRow: View {
         var parts: [String] = []
         if let root {
             parts.append(root.branch ?? (root.path as NSString).lastPathComponent)
-            let rel = String(AgentCenter.normalize(agent.cwd).dropFirst(AgentCenter.normalize(root.path).count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let rel = ExternalAgents.relativeFolder(agent.cwd, in: root.path)
             if !rel.isEmpty { parts.append(rel) }
         } else {
             parts.append((agent.cwd as NSString).abbreviatingWithTildeInPath)
@@ -139,11 +141,49 @@ private struct ExternalAgentRow: View {
     }
 }
 
+/// An agent typed into a tab of the terminal below (not started from here); clicking goes to that tab
+private struct TerminalAgentRow: View {
+    let agent: ExternalAgent
+    let root: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 6) {
+            StatusDot(status: .running)
+                .padding(.top, 5)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(AgentStatus.running.title).fontWeight(.medium)
+                    Text(agent.kind.title).font(.caption2).foregroundStyle(.tertiary)
+                }
+                Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
+            }
+            Spacer(minLength: 0)
+        }
+        .font(.callout)
+        .contentShape(Rectangle())
+        .onTapGesture { ExternalAgents.bringForward(agent) }
+        .help("Click to go to that terminal")
+        .contextMenu {
+            Button("Go to terminal") { ExternalAgents.bringForward(agent) }
+            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
+        }
+    }
+
+    /// "sub/folder · 12 min ago"
+    private var place: String {
+        [ExternalAgents.relativeFolder(agent.cwd, in: root), agent.started.map(Fmt.short) ?? ""]
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
+    }
+}
+
 private struct WorktreeCard: View {
     @Environment(RepoStore.self) private var store
     let worktree: Worktree
     let stats: WorktreeStats?
     let sessions: [AgentSession]
+    /// Agents typed into the terminal below that work here
+    let typed: [ExternalAgent]
     let isCurrent: Bool
 
     @ViewState private var hover = false
@@ -185,9 +225,10 @@ private struct WorktreeCard: View {
                 .font(.callout.monospacedDigit().weight(.medium))
             }
 
-            if !sessions.isEmpty {
+            if !sessions.isEmpty || !typed.isEmpty {
                 Divider()
                 ForEach(sessions) { s in SessionRow(session: s, showPath: false) }
+                ForEach(typed) { a in TerminalAgentRow(agent: a, root: worktree.path) }
             }
         }
         .padding(10)

@@ -85,8 +85,16 @@ export interface AgentSession {
 
 /** 세션을 띄울 저장소 창(탭) — 순환 참조를 피하려고 필요한 것만 */
 export interface AgentHost {
+  readonly terminals: readonly TerminalSession[];
   newTerminal(path: string, spec?: { program?: string; args?: string[]; env?: Record<string, string>; title?: string; cwd?: string }): TerminalSession;
   focusTerminal(term: TerminalSession): void;
+}
+
+/** An agent typed into a tab of the terminal below, and that tab */
+export interface TerminalAgent {
+  agent: ExternalAgent;
+  term: TerminalSession;
+  host: AgentHost;
 }
 
 const events = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest", "Notification", "Stop", "SessionEnd"];
@@ -300,9 +308,25 @@ class AgentCenter extends Observable {
     }
   }
 
-  /** The external agents working in one of the folders (the repository and its worktrees) */
+  /** The agents in other apps working in one of the folders (the repository and its worktrees) */
   externalIn(roots: string[]) {
-    return this.external.filter((a) => containingRoot(a.cwd, roots) !== null);
+    return this.external.filter((a) => a.terminalPid === null && containingRoot(a.cwd, roots) !== null);
+  }
+
+  /**
+   * Agents typed into a tab of the terminal below, working in one of the folders, with the tab they run in
+   * (macOS: AgentCenter.terminalAgents). A tab that runs a session started here is that session's.
+   */
+  terminalAgentsIn(roots: string[], hosts: readonly AgentHost[]): TerminalAgent[] {
+    const sessionTabs = new Set([...this.terminals.values()].map((s) => s.term));
+    return this.external.flatMap((agent) => {
+      if (agent.terminalPid === null || containingRoot(agent.cwd, roots) === null) return [];
+      for (const host of hosts) {
+        const term = host.terminals.find((x) => x.running && x.pid === agent.terminalPid);
+        if (term) return sessionTabs.has(term) ? [] : [{ agent, term, host }];
+      }
+      return [];
+    });
   }
 
   /** Brings the app that runs the agent to the front */
