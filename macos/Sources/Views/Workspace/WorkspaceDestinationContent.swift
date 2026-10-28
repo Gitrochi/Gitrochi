@@ -70,12 +70,13 @@ struct PageHeader: View {
 struct RepositoryScreen: View {
     @AppStorage("repositorySidebarWidth") private var sidebarWidth = 250.0
     @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 380.0
+    @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
 
     var body: some View {
         WorkspaceColumns(width: $sidebarWidth, fixedTrailing: false, minimumFlexible: 560) {
             SidebarView()
         } trailing: {
-            WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 480) {
+            WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 480, trailingCollapsed: inspectorCollapsed) {
                 ContentColumn()
             } trailing: {
                 InspectorView()

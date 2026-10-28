@@ -1254,5 +1254,7 @@
  "CLI appearance": "Вигляд CLI",
  "Show the small eye logo in CLI output": "Показувати маленький логотип з очима у виводі CLI",
  "You can also use gitch logo on or gitch logo off in a terminal.": "Також можна використовувати gitch logo on або gitch logo off у терміналі.",
- "Couldn't read the CLI logo setting.": "Не вдалося прочитати налаштування логотипа CLI."
+ "Couldn't read the CLI logo setting.": "Не вдалося прочитати налаштування логотипа CLI.",
+  "Hide right panel": "Приховати праву панель",
+  "Show right panel": "Показати праву панель"
 }

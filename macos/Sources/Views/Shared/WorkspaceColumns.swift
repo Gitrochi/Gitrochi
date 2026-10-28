@@ -5,6 +5,7 @@ struct WorkspaceColumns<Leading: View, Trailing: View>: View {
     @Binding var width: Double
     let fixedTrailing: Bool
     let minimumFlexible: CGFloat
+    var trailingCollapsed = false
     @ViewBuilder let leading: Leading
     @ViewBuilder let trailing: Trailing
     @ViewState private var dragStart: Double?
@@ -13,15 +14,17 @@ struct WorkspaceColumns<Leading: View, Trailing: View>: View {
         GeometryReader { geometry in
             let upper = max(250, min(380, geometry.size.width - minimumFlexible - 1))
             let fixed = min(max(width, 250), upper)
-            let left = fixedTrailing ? max(0, geometry.size.width - fixed - 1) : fixed
+            let left = trailingCollapsed ? geometry.size.width : (fixedTrailing ? max(0, geometry.size.width - fixed - 1) : fixed)
             HStack(spacing: 0) {
                 leading
                     .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
                     .frame(width: left, height: geometry.size.height, alignment: .topLeading).clipped()
-                divider(upper: upper)
+                if !trailingCollapsed { divider(upper: upper) }
                 trailing
                     .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
                     .frame(width: max(0, geometry.size.width - left - 1), height: geometry.size.height, alignment: .topLeading).clipped()
+                    .disabled(trailingCollapsed)
+                    .accessibilityHidden(trailingCollapsed)
             }
         }
     }

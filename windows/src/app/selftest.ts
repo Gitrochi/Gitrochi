@@ -29,6 +29,7 @@ import { repositoryAssistantSelfTest } from "./lib/repository-assistant-selftest
 import { navigationSelfTest } from "./lib/navigation-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
+import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { localPlannerSelfTest } from "./lib/local-planner-selftest";
@@ -247,6 +248,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
+  await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);

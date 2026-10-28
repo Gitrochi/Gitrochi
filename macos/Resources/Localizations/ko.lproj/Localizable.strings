@@ -2625,3 +2625,5 @@
 
 /* Shared workspace navigation and account messages. */
 "Clear selection" = "선택 해제";
+"Hide right panel" = "오른쪽 패널 숨기기";
+"Show right panel" = "오른쪽 패널 표시";

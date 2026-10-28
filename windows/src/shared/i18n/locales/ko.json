@@ -2758,5 +2758,7 @@
   "Drag to resize the column": "끌어서 칸 너비 조정",
   "SHA": "SHA",
   "Open in Releases": "릴리스 화면에서 열기",
-  "Clear filter": "필터 해제"
+  "Clear filter": "필터 해제",
+  "Hide right panel": "오른쪽 패널 숨기기",
+  "Show right panel": "오른쪽 패널 표시"
 }

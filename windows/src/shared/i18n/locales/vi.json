@@ -1210,5 +1210,7 @@
  "CLI appearance": "Giao diện CLI",
  "Show the small eye logo in CLI output": "Hiện biểu tượng đôi mắt nhỏ trong đầu ra CLI",
  "You can also use gitch logo on or gitch logo off in a terminal.": "Bạn cũng có thể dùng gitch logo on hoặc gitch logo off trong terminal.",
- "Couldn't read the CLI logo setting.": "Không thể đọc cài đặt biểu tượng CLI."
+ "Couldn't read the CLI logo setting.": "Không thể đọc cài đặt biểu tượng CLI.",
+  "Hide right panel": "Ẩn bảng bên phải",
+  "Show right panel": "Hiện bảng bên phải"
 }

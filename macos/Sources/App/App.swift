@@ -163,6 +163,7 @@ struct RepoWindow: View {
 
 struct AppCommands: Commands {
     @FocusedValue(\.repoStore) private var store
+    @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
@@ -201,6 +202,9 @@ struct AppCommands: Commands {
                 .keyboardShortcut("g", modifiers: [.command, .shift])
             Button("Toggle sidebar") { store?.sidebarToggleRequest += 1 }
                 .keyboardShortcut("s", modifiers: [.command, .control])
+            Button(inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel")) { inspectorCollapsed.toggle() }
+                .keyboardShortcut("b", modifiers: [.command, .option])
+                .disabled(store?.destination != .repository)
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
             Button("Show home") { store?.navigate(.home) }.keyboardShortcut("0")

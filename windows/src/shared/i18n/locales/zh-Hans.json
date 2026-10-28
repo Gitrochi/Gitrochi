@@ -1256,5 +1256,7 @@
  "CLI appearance": "CLI 外观",
  "Show the small eye logo in CLI output": "在 CLI 输出中显示小眼睛标志",
  "You can also use gitch logo on or gitch logo off in a terminal.": "也可以在终端中使用 gitch logo on 或 gitch logo off。",
- "Couldn't read the CLI logo setting.": "无法读取 CLI 标志设置。"
+ "Couldn't read the CLI logo setting.": "无法读取 CLI 标志设置。",
+  "Hide right panel": "隐藏右侧面板",
+  "Show right panel": "显示右侧面板"
 }

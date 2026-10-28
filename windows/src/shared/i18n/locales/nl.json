@@ -1207,5 +1207,7 @@
  "CLI appearance": "CLI-weergave",
  "Show the small eye logo in CLI output": "Toon het kleine ogenlogo in de CLI-uitvoer",
  "You can also use gitch logo on or gitch logo off in a terminal.": "Je kunt ook gitch logo on of gitch logo off in een terminal gebruiken.",
- "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen."
+ "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen.",
+  "Hide right panel": "Rechterpaneel verbergen",
+  "Show right panel": "Rechterpaneel tonen"
 }

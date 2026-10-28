@@ -85,6 +85,9 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
   if (e.shiftKey && !e.altKey && !s.path && k === "o") return run(() => s.openSheet({ kind: "clone" }));
   if (e.altKey && !e.shiftKey && s.path) {
     switch (k) {
+      case "b":
+        if (s.destination === "repository") return run(() => settings.set("inspectorCollapsed", !settings.get("inspectorCollapsed", false)));
+        break;
       case "w":
         return run(() => s.openSheet({ kind: "addWorktree", branch: null, start: null }));
       case "m":

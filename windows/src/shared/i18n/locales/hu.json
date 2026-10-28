@@ -1238,5 +1238,7 @@
  "CLI appearance": "A CLI megjelenése",
  "Show the small eye logo in CLI output": "A kis szemlogó megjelenítése a CLI kimenetében",
  "You can also use gitch logo on or gitch logo off in a terminal.": "A terminálban a gitch logo on vagy a gitch logo off parancsot is használhatod.",
- "Couldn't read the CLI logo setting.": "Nem sikerült beolvasni a CLI logójának beállítását."
+ "Couldn't read the CLI logo setting.": "Nem sikerült beolvasni a CLI logójának beállítását.",
+  "Hide right panel": "Jobb oldali panel elrejtése",
+  "Show right panel": "Jobb oldali panel megjelenítése"
 }

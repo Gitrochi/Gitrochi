@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, PanelRightClose, PanelRightOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
 import { structureGraphMenus } from "@/features/git-menus";
 import { agentKind, agents } from "@/entities/agent";
 import { providerInfo, statusIsEmpty } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
-import { basename, displayPath, recents, samePath } from "@/shared/config";
+import { basename, displayPath, recents, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { type MenuItem, showMenuBelow, Spinner, tip } from "@/shared/ui";
@@ -14,6 +14,9 @@ import "./toolbar.css";
 /** 툴바 버튼은 아이콘만. 무슨 버튼인지는 마우스를 올리면 설명 풍선으로 보여 준다. */
 export function Toolbar({ store }: { store: RepoStore }) {
   useObserve(store);
+  useObserve(settings);
+  const inspectorCollapsed = settings.get("inspectorCollapsed", false);
+  const inspectorTitle = inspectorCollapsed ? t("Show right panel") : t("Hide right panel");
   const st = store.status;
   const sheet = (s: RepoStore["sheet"]) => {
     store.sheet = s;
@@ -231,6 +234,17 @@ export function Toolbar({ store }: { store: RepoStore }) {
           <SquareTerminal size={16} />
         </button>
       </div>
+      {store.destination === "repository" && (
+        <button
+          className={`tool ${inspectorCollapsed ? "" : "on"}`}
+          aria-label={inspectorTitle}
+          aria-expanded={!inspectorCollapsed}
+          onClick={() => settings.set("inspectorCollapsed", !inspectorCollapsed)}
+          data-tip={tip(inspectorTitle, "", "Ctrl+Alt+B")}
+        >
+          {inspectorCollapsed ? <PanelRightOpen size={16} /> : <PanelRightClose size={16} />}
+        </button>
+      )}
       <AccountQuickControls store={store} />
     </div>
   );
