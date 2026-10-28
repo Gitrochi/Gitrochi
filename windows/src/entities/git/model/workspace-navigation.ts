@@ -6,6 +6,8 @@ export const workspaceDestinations = ["home", "repository", "compare", "rebase",
 export type WorkspaceDestination = (typeof workspaceDestinations)[number];
 /** Pages that need an open repository. Home, Issues, Releases, Projects and Account work from an account alone. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
+/** Pages the repository screen links to (request and issue rows, a commit's CI badge, the tags); opened from there, they offer the way back (macOS: returnsToRepository) */
+export const returnsToRepository: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["pullRequests", "issues", "actions", "releases"]);
 export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination {
   return typeof value === "string" && (workspaceDestinations as readonly string[]).includes(value);
 }
