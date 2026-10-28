@@ -97,6 +97,9 @@ jobs:
           bash macos/Tools/test-history-tools.sh
           bash macos/Tools/test-collaboration.sh
           bash macos/Tools/test-local-workflows.sh
+          bash macos/Tools/test-work-context.sh
+          bash macos/Tools/test-work-validation.sh
+          bash macos/Tools/test-project-dependencies.sh
           bash macos/Tools/test-workspace-navigation.sh
           bash macos/Tools/test-inspector-layout.sh
           bash macos/Tools/test-adaptive-workbench-identity.sh

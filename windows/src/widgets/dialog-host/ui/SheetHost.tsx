@@ -6,6 +6,7 @@ import { TagSheet } from "@/features/create-tag";
 import { GitchBackupsSheet } from "@/features/gitch-backups";
 import { GraphCheckSheet } from "@/features/graph-check";
 import { GraphDiffSheet } from "@/features/graph-diff";
+import { StructureGraphSheet } from "@/features/structure-graph";
 import { InteractiveRebaseSheet } from "@/features/interactive-rebase";
 import { RunPipelineSheet } from "@/features/run-pipeline";
 import { SplitCommitsSheet } from "@/features/split-commits";
@@ -15,6 +16,7 @@ import { PushReviewSheet } from "@/features/push-review";
 import { AskChangesSheet } from "@/features/ask-changes";
 import { CompareRevisionsSheet, BatchCommitsSheet, LineHistorySheet } from "@/features/history-tools";
 import { LocalWorkflowsSheet } from "@/features/local-workflows";
+import { WorkValidationSheet } from "@/features/work-validation";
 import { WorkspaceOverviewSheet } from "@/features/workspace-overview";
 import { CollaborationInboxSheet } from "@/features/collaboration-inbox";
 import { RepositoryAssistantSheet, MCPConnectionSheet } from "@/features/repository-assistant";
@@ -55,6 +57,7 @@ function SheetSwitch({ store, sheet, close }: { store: RepoStore; sheet: SheetKi
     case "batchCommits": return <BatchCommitsSheet store={store} close={close} />;
     case "lineHistory": return <LineHistorySheet store={store} close={close} />;
     case "localWorkflows": return <LocalWorkflowsSheet store={store} close={close} />;
+    case "workValidation": return <WorkValidationSheet key={store.path} store={store} close={close} />;
     case "workspaceOverview": return <WorkspaceOverviewSheet store={store} close={close} />;
     case "collaborationInbox": return <CollaborationInboxSheet store={store} close={close} />;
     case "repositoryAssistant": return <RepositoryAssistantSheet store={store} close={close} />;
@@ -73,6 +76,8 @@ function SheetSwitch({ store, sheet, close }: { store: RepoStore; sheet: SheetKi
       return <GitchBackupsSheet store={store} close={close} />;
     case "graphDiff":
       return <GraphDiffSheet store={store} close={close} />;
+    case "structureGraph":
+      return <StructureGraphSheet store={store} close={close} {...sheet} />;
     case "graphCheck":
       return <GraphCheckSheet store={store} close={close} />;
     case "issueEditor":

@@ -251,6 +251,7 @@ final class RepoStore: Identifiable {
     private var reloadGeneration = 0
     /// 상태만 다시 읽는 가벼운 새로 고침의 세대(전체 새로 고침이 시작되면 함께 올라간다)
     private var statusGeneration = 0
+    var workContentRevision: Int { statusGeneration }
     private var watchTask: Task<Void, Never>?
     /// 파일 감시가 모아 둔 새로 고침 종류(전체가 상태만보다 우선)
     private var pendingKind: ReloadKind?

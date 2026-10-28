@@ -1,15 +1,13 @@
 import SwiftUI
 
-/// 저장소 메뉴(툴바 · 메뉴 막대)의 gitch graph 항목들 — 앱에 든 gitch 로 html 을 만들어 기본 브라우저로 연다.
-/// 「Structure graph」(관계를 고름), 「Dependencies changed on this branch」(gitch graph diff), 「Check dependency rules…」(gitch graph check, 결과 창).
-/// gitch 계정이 없어도 되는 기능이라, 계정을 만들어 두었을 때만 보이는 커밋 칸 위 ⋯ 메뉴가 아니라 저장소 메뉴에 둔다.
+/// Repository graph entry points do not require a configured hosting account.
 struct StructureGraphMenu: View {
     /// 메뉴 막대에서는 앞에 있는 창의 저장소(없을 수 있다)
     let store: RepoStore?
 
     var body: some View {
-        let summary = String(localized: "Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser.")
-        let diffSummary = String(localized: "Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser.")
+        let summary = String(localized: "Explore this repository's imports, modules, co-changing files and folders in the graph workspace.")
+        let diffSummary = String(localized: "Compare working-tree dependencies with the branch's common ancestor in the graph workspace.")
         let checkSummary = String(localized: "Checks the dependencies against the rules in .gitch/graph.rules (gitch graph check) and lists what breaks them.")
         let unavailable = Gitch.graphUnavailableReason
         if unavailable != nil || store?.url == nil {

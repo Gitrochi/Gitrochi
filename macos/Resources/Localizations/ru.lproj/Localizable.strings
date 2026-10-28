@@ -8,7 +8,7 @@
 "Compare dependencies" = "Сравнить зависимости";
 "Compare with" = "Сравнить с";
 "Compare with…" = "Сравнить с…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Сравнивает зависимости в рабочей копии, включая незакоммиченные изменения, с местом, где эта ветка отделилась от ветки по умолчанию (gitch graph diff), и открывает изменения в браузере.";
+
 "Comparing dependencies…" = "Сравниваются зависимости…";
 "Couldn't check the rules" = "Не удалось проверить правила";
 "Create rules file" = "Создать файл правил";
@@ -404,7 +404,7 @@
 "Draft" = "Черновик";
 "Drawing the graph with %lld commits…" = "Построение графа (коммитов: %1$lld)…";
 "Drawing the structure graph…" = "Рисуется граф структуры…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Рисует с помощью gitch graph импорты, модули, файлы, меняющиеся вместе, или папки этого репозитория и открывает результат в браузере.";
+
 "Drop" = "Удалить";
 "Dropping stash…" = "Удаление спрятанных изменений…";
 "Drop…" = "Удалить…";

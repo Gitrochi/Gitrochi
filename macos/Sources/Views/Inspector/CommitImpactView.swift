@@ -40,6 +40,7 @@ struct CommitImpactView: View {
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 content
+                Button("Connect verification evidence…") { store.sheet = .workValidation }.controlSize(.small)
             }
         }
     }

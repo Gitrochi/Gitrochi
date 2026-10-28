@@ -55,6 +55,56 @@ pub async fn http_request(
     Ok(HttpResponse { status, body })
 }
 
+fn team_hub_url(value: &str) -> Result<url::Url, String> {
+    let url = url::Url::parse(value).map_err(|_| "Invalid team hub URL.")?;
+    let loopback = matches!(
+        url.host_str(),
+        Some("localhost" | "127.0.0.1" | "[::1]" | "::1")
+    );
+    if !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !(url.scheme() == "https" || url.scheme() == "http" && loopback)
+        || !url.path().contains("/api/v1/repos/")
+        || !(url.path().ends_with("/presence") || url.path().ends_with("/overlaps"))
+    {
+        return Err("Unsupported team hub read URL.".into());
+    }
+    Ok(url)
+}
+
+/// Team credentials stay on the configured origin, with bounded read-only responses.
+#[tauri::command]
+pub async fn team_hub_read(url: String, token: String) -> Result<HttpResponse, String> {
+    let url = team_hub_url(&url)?;
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(Duration::from_secs(15))
+        .build()
+        .map_err(|_| "Could not prepare the team hub request.")?;
+    let mut response = client
+        .get(url)
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(|_| "The team hub is unavailable. Check the connection and try again.")?;
+    let status = response.status().as_u16();
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|_| "Could not read the team hub response.")?
+    {
+        if bytes.len() + chunk.len() > 2_000_000 {
+            return Err("The team hub response is too large.".into());
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    let body = String::from_utf8(bytes).map_err(|_| "The team hub response is not text.")?;
+    Ok(HttpResponse { status, body })
+}
+
 /// 이미지를 받아 data: 주소로(사내 GitLab 의 프로필 사진은 토큰이 있어야 열리기도 해서 웹뷰 대신 여기서 받는다)
 #[tauri::command]
 pub async fn http_image(url: String, headers: HashMap<String, String>) -> Option<String> {
@@ -265,6 +315,23 @@ pub async fn ci_job_log(
 #[cfg(test)]
 mod ci_log_tests {
     use super::*;
+    #[test]
+    fn team_hub_read_boundaries() {
+        for value in [
+            "https://hub.example.com/api/v1/repos/example.com/team/app/presence",
+            "http://127.0.0.1:7420/api/v1/repos/example.com/team/app/overlaps",
+        ] {
+            assert!(team_hub_url(value).is_ok());
+        }
+        for value in [
+            "http://hub.example.com/api/v1/repos/example.com/a/b/presence",
+            "https://token@hub.example.com/api/v1/repos/a/b/overlaps",
+            "https://hub.example.com/api/v1/tokens",
+            "https://hub.example.com/api/v1/repos/a/b/overlaps?token=secret",
+        ] {
+            assert!(team_hub_url(value).is_err());
+        }
+    }
     #[test]
     fn redirect_boundaries() {
         for s in [

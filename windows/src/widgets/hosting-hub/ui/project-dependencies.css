@@ -1,0 +1,22 @@
+.project-dependencies-editor,.project-dependency-view{display:flex;flex-direction:column;gap:10px;min-width:0}
+.project-dependencies-editor fieldset{border:0;padding:0;margin:0;min-width:0;display:flex;flex-direction:column;gap:10px}
+.project-dependencies-editor label,.project-dependency-view>label{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.project-predecessor-choices{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto}
+.project-predecessor-choices label{display:flex;flex-direction:row;align-items:flex-start;gap:8px;overflow-wrap:anywhere}
+.project-dependency-view{padding:18px 20px;border-bottom:1px solid var(--border)}
+.project-dependencies-editor p,.project-dependency-view p{margin:0;line-height:1.5}
+.project-dependencies-editor h3{margin:0;font-size:12px}
+.project-dependency-view header{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.project-dependency-view h3,.project-dependency-view h4{margin:0}
+.project-dependency-view header>span,.project-dependency-state{font-size:12px;color:var(--text-2)}
+.project-dependency-task-picker{display:flex;flex-wrap:wrap;gap:8px;max-height:210px;overflow:auto}
+.project-dependency-node{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:5px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.project-dependency-node strong{font-size:12px;max-width:100%;overflow-wrap:anywhere}
+.project-dependency-node span{font-size:11px;color:var(--text-2)}
+.project-dependency-node[aria-pressed=true]{border-color:var(--accent)}
+.project-dependency-node.critical{border-inline-start:3px solid var(--accent)}
+.project-dependency-neighborhood{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr);gap:10px;align-items:start}
+.project-dependency-neighborhood>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.project-dependency-neighborhood h4{font-size:12px;color:var(--text-2)}
+.project-dependency-arrow{margin-top:34px;color:var(--text-3)}
+@media(max-width:700px){.project-dependency-neighborhood{grid-template-columns:minmax(0,1fr)}.project-dependency-arrow{margin:0;transform:rotate(90deg);justify-self:center}}

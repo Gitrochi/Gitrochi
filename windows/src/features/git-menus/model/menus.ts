@@ -178,8 +178,8 @@ export function commitMenu(store: RepoStore, c: Commit): MenuItem[] {
  * gitch 계정이 없어도 되는 기능이라, 계정을 만들어 두었을 때만 보이는 커밋 칸 위 ⋯ 메뉴가 아니라 저장소 메뉴에 둔다.
  */
 export function structureGraphMenus(store: RepoStore | null): MenuItem[] {
-  const summary = t("Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser.");
-  const diffSummary = t("Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser.");
+  const summary = t("Explore this repository's imports, modules, co-changing files and folders in the graph workspace.");
+  const diffSummary = t("Compare working-tree dependencies with the branch's common ancestor in the graph workspace.");
   const checkSummary = t("Checks the dependencies against the rules in .gitch/graph.rules (gitch graph check) and lists what breaks them.");
   const graph = t("Structure graph");
   const diff = t("Dependencies changed on this branch");

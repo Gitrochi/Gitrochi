@@ -6,7 +6,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 const [chromePath, html, tmp] = process.argv.slice(2);
 const port = 9400 + Math.floor(Math.random() * 400);
 const chrome = spawn(chromePath, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${tmp}/chrome`, "--no-first-run",
-  "--no-default-browser-check", "--disable-gpu", "--allow-file-access-from-files", "--use-mock-keychain", "--password-store=basic", "about:blank"], { stdio: "ignore" });
+  "--no-default-browser-check", "--disable-gpu", "--enable-precise-memory-info", "--allow-file-access-from-files", "--use-mock-keychain", "--password-store=basic", "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let ws, id = 0;
 const waiting = new Map(), errors = [], externalRequests=[];
@@ -40,7 +40,7 @@ try {
   for (let i = 0; i < 100; i++) { await sleep(100); if (await evaluate("!!window.gitchGraphTest")) break; }
   const first=await evaluate('({at:performance.now(),state:window.gitchGraphTest.state(),metrics:window.gitchGraphTest.metrics()})');
   const t0=Date.now();while(Date.now()-t0<20000&&await evaluate('window.gitchGraphTest.state().running'))await sleep(100);
-  const result=await evaluate('({state:window.gitchGraphTest.state(),metrics:window.gitchGraphTest.metrics(),review:window.gitchGraphTest.benchmarkReview(),at:performance.now()})');
+  const result=await evaluate('({state:window.gitchGraphTest.state(),metrics:window.gitchGraphTest.metrics(),review:window.gitchGraphTest.benchmarkReview(),selection:window.gitchGraphTest.benchmarkSelection?.(),snapshot:(()=>{const cold=performance.now();window.gitchGraph?.snapshot();const coldMs=performance.now()-cold,warm=[];for(let i=0;i<5;i++){const t=performance.now();window.gitchGraph?.snapshot();warm.push(performance.now()-t);}return {coldMs,warmMs:warm};})(),memory:performance.memory?{usedJSHeapSize:performance.memory.usedJSHeapSize,totalJSHeapSize:performance.memory.totalJSHeapSize}:null,at:performance.now()})');
   if(process.env.GITCH_BENCH_REPORT_DIR) {
     const dir=process.env.GITCH_BENCH_REPORT_DIR;await mkdir(dir,{recursive:true});
     await writeFile(`${dir}/review.md`,await evaluate('window.gitchGraphTest.markdown()'));

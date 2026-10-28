@@ -8,7 +8,7 @@
 "Compare dependencies" = "比較相依性";
 "Compare with" = "比較對象";
 "Compare with…" = "選擇比較對象…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "將工作目錄（含未提交的變更）的相依性與此分支從預設分支分出的位置比較（gitch graph diff），並在瀏覽器中開啟變更。";
+
 "Comparing dependencies…" = "正在比較相依性…";
 "Couldn't check the rules" = "無法檢查規則";
 "Create rules file" = "建立規則檔案";
@@ -405,7 +405,7 @@
 "Draft" = "草稿";
 "Drawing the graph with %lld commits…" = "正在以 %1$lld 個提交繪製圖表…";
 "Drawing the structure graph…" = "正在繪製結構圖…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "以 gitch graph 繪製此存放庫的匯入、模組、一起變更的檔案或資料夾，並在瀏覽器中開啟。";
+
 "Drop" = "移除";
 "Dropping stash…" = "正在丟棄擱置…";
 "Drop…" = "丟棄…";

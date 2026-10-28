@@ -316,6 +316,23 @@ enum Gitch {
         return page
     }
 
+    /// Select only file paths present in a freshly observed static graph.
+    static func graphPathSelection(_ paths: [String], in repo: URL) async throws -> String {
+        struct Node: Decodable { let id: String; let kind: String }
+        struct Snapshot: Decodable { let schemaVersion: Int; let snapshotID: String; let nodes: [Node] }
+        let result = try await runGraph(["files", "--json"], in: repo)
+        let snapshot = try JSONDecoder().decode(Snapshot.self, from: result.data)
+        guard snapshot.schemaVersion == 1, snapshot.snapshotID.range(of: "^(?:[a-f0-9]{40}|[a-f0-9]{64})$", options: .regularExpression) != nil else {
+            throw Failure(message: String(localized: "The graph snapshot could not be read. Analyze again."))
+        }
+        let known = Set(snapshot.nodes.filter { $0.kind == "file" }.map(\.id))
+        guard !paths.isEmpty, paths.count <= 100, Set(paths).count == paths.count, paths.allSatisfy(known.contains) else {
+            throw Failure(message: String(localized: "Some selected files are not present in this dependency graph. Analyze the current files again."))
+        }
+        let actions = WorkGraphActions(schemaVersion: 1, snapshotID: snapshot.snapshotID, actions: [WorkGraphAction(kind: "nodes", nodeIDs: paths)])
+        return String(decoding: try JSONEncoder().encode(actions), as: UTF8.self)
+    }
+
     static func affectedGraph(base: String? = nil, in repo: URL) async throws -> GraphPage {
         let file = graphFile("affected", in: repo)
         let r = try await runGraph(["affected"] + (base.map { ["--base", $0] } ?? []) + ["--format", "html", "--out", file.path, "--no-open"], in: repo)
@@ -417,6 +434,7 @@ enum Gitch {
         guard let exe = bundled else { throw Failure(message: String(localized: "Couldn't find gitch inside Gitrochi.")) }
         var graphEnvironment = environment
         graphEnvironment["GITCH_GRAPH_LANG"] = AppLanguage.graphCode
+        graphEnvironment["GITSW_SWIFT_DESCRIBE"] = "0"
         let r = try await Shell.run("/bin/bash", [exe, "graph"] + args, cwd: repo, env: graphEnvironment, timeout: 600)
         guard ok.contains(r.status) else { throw graphFailure(r) }
         return r

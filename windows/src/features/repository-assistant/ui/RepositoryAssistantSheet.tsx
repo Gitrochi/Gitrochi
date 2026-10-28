@@ -6,6 +6,7 @@ import { useObserve } from "@/shared/lib";
 import { describe } from "@/shared/platform";
 import { Button, Modal, Spinner } from "@/shared/ui";
 import { AssistantPresentation } from "./AssistantPresentation";
+import { AssistantContextPanel } from "./AssistantContextPanel";
 
 export function RepositoryAssistantSheet({ store, close, embedded = false }: { store: RepoStore; close: () => void; embedded?: boolean }) {
   useObserve(store);
@@ -18,16 +19,20 @@ export function RepositoryAssistantSheet({ store, close, embedded = false }: { s
     <span className="spacer" />
     {session?.working && <><Spinner size={14} /><Button onClick={() => store.stopRepositoryAssistant()}>{t("Stop waiting")}</Button></>}
     {!embedded && <Button onClick={finish}>{t("Close")}</Button>}
-    <Button kind="primary" disabled={!session?.runtime || session.loading || session.working || !session.question.trim() || session.question.length > 6000 || !!problem}
+    <Button kind="primary" disabled={!session?.runtime || session.loading || session.working || session.graphLoading || store.repositoryContextStale || !session.question.trim() || session.question.length > 6000 || !!problem}
       onClick={() => void store.sendRepositoryQuestion()}>{t("Send question")}</Button>
   </>}>
     <strong>{session?.providerTitle}</strong>
     <span className="hint">{t("Sending a question lets AI read tracked files, status and history in this repository. Each read is shown below. Files are never changed.")}</span>
     <span className="hint mono">{session?.repository} · HEAD {session?.head?.slice(0, 12) ?? t("No commits")}</span>
+    <AssistantContextPanel store={store} />
     {session?.loading && <span className="row"><Spinner />{t("Preparing repository context…")}</span>}
     {!!session?.preview.length && <details open={!session.messages.length}><summary>{t("Context for AI")}</summary><pre className="mono" style={{ maxHeight: 180, overflow: "auto", whiteSpace: "pre-wrap", userSelect: "text" }}>{session.preview.map((item) => `${item.tool}\n${item.text}${item.truncated ? "\n[truncated]" : ""}`).join("\n\n")}</pre></details>}
     {!!session?.messages.length && <div role="log" aria-label={t("AI conversation")} className="col" style={{ maxHeight: 270, overflow: "auto", gap: 12 }}>
-      {session.messages.map((message, i) => <div key={i} className="col" style={{ gap: 4 }}><strong className="hint">{message.role === "user" ? t("You") : t("AI answer")}</strong><div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", userSelect: "text" }}>{message.text}</div></div>)}
+      {session.messages.map((message, i) => <div key={i} className="col" style={{ gap: 4 }}><strong className="hint">{message.role === "user" ? t("You") : t("AI answer")}</strong><div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", userSelect: "text" }}>{message.text}</div>
+        {message.context && message.context.fingerprint !== store.captureWorkContext(message.context.scope)?.fingerprint && <span className="hint">{t("Answer belongs to an earlier selection.")}</span>}
+        {message.graphActions && <Button size="small" disabled={session.working || session.graphLoading || message.context?.fingerprint !== store.captureWorkContext(message.context?.scope)?.fingerprint} onClick={() => void store.openAssistantGraph(JSON.stringify(message.graphActions))}>{t("Apply graph selection")}</Button>}
+      </div>)}
     </div>}
     {!!session?.traces.length && <details><summary>{t("Read activity")} ({session.traces.length})</summary><div style={{ maxHeight: 210, overflow: "auto" }}>{session.traces.map((trace, i) => <details key={i} style={{ padding: 4 }}><summary className="mono">{trace.request.name} {JSON.stringify(trace.request.arguments)}</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", userSelect: "text" }}>{trace.error ?? trace.result?.text ?? t("Reading…")}</pre></details>)}</div></details>}
     <textarea className="textarea" rows={3} aria-label={t("Question about this repository")} placeholder={t("Question about this repository")} value={session?.question ?? ""}

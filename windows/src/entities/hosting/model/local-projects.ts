@@ -4,6 +4,7 @@ import { Observable } from "@/shared/lib";
 import type { HubDetail, HubItem, HubProjectField, HubProjectRow } from "../api/hub";
 import { decodeLocalProjects, localPriorityIDs, localStatusIDs, localProjectLimits, type LocalPlannerDocument, type LocalPlannerProject, type LocalPlannerTask } from "./local-project-document";
 import { parseScheduleDay, scheduleReschedule, type ProjectScheduleSettings } from "./project-schedule";
+import { validateProjectDependencies } from "./project-dependencies";
 
 export interface LocalProjectPersistence { read(): Promise<string | null>; write(expected: string | null, content: string): Promise<void> }
 const nativePersistence: LocalProjectPersistence = { read: () => ipc.localProjectsRead(), write: (expected, content) => ipc.localProjectsWrite(expected, content) };
@@ -17,7 +18,7 @@ export const localProjectFields = (): HubProjectField[] => [
   { id: "local-assignees", name: t("Assignees"), kind: "text", options: [] },
 ];
 const projectItem = (project: LocalPlannerProject): HubItem => ({ id: project.id, title: project.title, subtitle: t("Local project"), body: project.description, url: "", editable: true, data: { localProject: true, localRevision: project.revision, createdAt: project.createdAt, updatedAt: project.updatedAt } });
-const projectDetail = (project: LocalPlannerProject): HubDetail => ({ item: projectItem(project), fields: localProjectFields(), rows: project.tasks.map(task => ({ id: task.id, title: task.title, body: task.body, contentID: task.id, url: "", kind: "draft", archived: task.archived, state: task.status === "local-done" ? "CLOSED" : "OPEN", updatedAt: task.updatedAt, assignees: [...task.assignees], labels: [], statuses: { "local-status": task.status, "local-priority": task.priority }, values: { "local-status": task.status, "local-start": task.start, "local-due": task.due, "local-priority": task.priority, "local-assignees": task.assignees.join(", ") } })), members: [], repositories: [], assets: [], more: false });
+const projectDetail = (project: LocalPlannerProject): HubDetail => ({ item: projectItem(project), fields: localProjectFields(), rows: project.tasks.map(task => ({ id: task.id, title: task.title, body: task.body, contentID: task.id, url: "", kind: "draft", archived: task.archived, state: task.status === "local-done" ? "CLOSED" : "OPEN", updatedAt: task.updatedAt, assignees: [...task.assignees], predecessorIDs: task.predecessorIDs ? [...task.predecessorIDs] : undefined, durationDays: task.durationDays, labels: [], statuses: { "local-status": task.status, "local-priority": task.priority }, values: { "local-status": task.status, "local-start": task.start, "local-due": task.due, "local-priority": task.priority, "local-assignees": task.assignees.join(", ") } })), members: [], repositories: [], assets: [], more: false });
 
 /** Local planner data is account-independent and never passes through a hosting API. */
 export class LocalProjectStore extends Observable {
@@ -81,8 +82,26 @@ export class LocalProjectStore extends Observable {
   async archiveMany(detail: HubDetail, rows: HubProjectRow[], archived: boolean): Promise<HubDetail> {
     return this.change(detail, project => { for (const row of rows) { const task = this.task(project, row); task.archived = archived; task.updatedAt = new Date().toISOString(); } });
   }
-  async removeItem(detail: HubDetail, row: HubProjectRow): Promise<HubDetail> { return this.change(detail, project => { this.task(project, row); project.tasks = project.tasks.filter(task => task.id !== row.id); }); }
-  async removeMany(detail: HubDetail, rows: HubProjectRow[]): Promise<HubDetail> { return this.change(detail, project => { for (const row of rows) this.task(project, row); const ids = new Set(rows.map(row => row.id)); project.tasks = project.tasks.filter(task => !ids.has(task.id)); }); }
+  async removeItem(detail: HubDetail, row: HubProjectRow): Promise<HubDetail> { return this.removeMany(detail, [row]); }
+  async removeMany(detail: HubDetail, rows: HubProjectRow[]): Promise<HubDetail> { return this.change(detail, project => {
+    for (const row of rows) this.task(project, row);
+    const ids = new Set(rows.map(row => row.id));
+    if (project.tasks.some(task => !ids.has(task.id) && task.predecessorIDs?.some(id => ids.has(id)))) fail("Remove predecessor links from dependent tasks before deleting this task.");
+    project.tasks = project.tasks.filter(task => !ids.has(task.id));
+  }); }
+  async setDependencies(detail: HubDetail, row: HubProjectRow, predecessorIDs: string[], durationDays?: number): Promise<HubDetail> {
+    return this.change(detail, project => {
+      const task = this.task(project, row);
+      if (task.archived) fail("Restore this task before editing it.");
+      task.predecessorIDs = [...predecessorIDs];
+      if (durationDays === undefined) delete task.durationDays; else task.durationDays = durationDays;
+      const error = validateProjectDependencies(project.tasks);
+      if (error === "duration") fail("Enter a duration from 1 to 3650 whole days, or leave it empty.");
+      if (error === "predecessors") fail("Choose up to 100 different predecessor tasks from this project, excluding this task.");
+      if (error === "cycle") fail("These predecessor links would create a cycle.");
+      task.updatedAt = new Date().toISOString();
+    });
+  }
   async reorder(detail: HubDetail, row: HubProjectRow, afterRow: HubProjectRow | null): Promise<HubDetail> {
     return this.change(detail, project => { const task = this.task(project, row); if (afterRow) this.task(project, afterRow); if (afterRow?.id === row.id) fail("Select a local project item."); project.tasks = project.tasks.filter(value => value.id !== row.id); project.tasks.splice(afterRow ? project.tasks.findIndex(value => value.id === afterRow.id) + 1 : 0, 0, task); });
   }

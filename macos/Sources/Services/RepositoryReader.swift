@@ -15,6 +15,7 @@ struct RepositoryReader {
     let node: String
     let arguments: [String]
     let repository: URL
+    let environment: [String: String]
 
     @MainActor static func prepare(in repository: URL) async throws -> RepositoryReader {
         guard let node = ToolStore.shared.path(.node) else { throw Failure.message(String(localized: "Install Node.js 22 or later, then locate it in Settings > Tools.")) }
@@ -26,8 +27,9 @@ struct RepositoryReader {
             throw Failure.message(String(localized: "The bundled repository reader is missing. Reinstall or rebuild Gitrochi."))
         }
         var args = [script, "--repo", repository.path, "--git", ToolStore.shared.path(.git) ?? "/usr/bin/git"]
-        if let gitch = Gitch.executable { args += ["--gitch", gitch, "--bash", "/bin/bash"] }
-        return RepositoryReader(node: node, arguments: args, repository: repository)
+        // Snapshot identity includes CLI and adjacent core bytes, as in the graph workspace.
+        if let gitch = Gitch.bundled { args += ["--gitch", gitch, "--bash", "/bin/bash"] }
+        return RepositoryReader(node: node, arguments: args, repository: repository, environment: Gitch.environment)
     }
 
     var configuration: String {
@@ -37,14 +39,14 @@ struct RepositoryReader {
     }
 
     func catalog() async throws -> String {
-        let result = try await Shell.run(node, [arguments[0], "--tools"], cwd: repository, timeout: 10)
+        let result = try await Shell.run(node, [arguments[0], "--tools"], cwd: repository, env: environment, timeout: 10)
         guard result.status == 0 else { throw Failure.message(result.stderr) }
         return result.output
     }
 
     func call(_ name: String, arguments values: [String: Any] = [:]) async throws -> RepositoryReadResult {
         let data = try JSONSerialization.data(withJSONObject: ["name": name, "arguments": values], options: [.sortedKeys])
-        let result = try await Shell.run(node, arguments + ["--call", String(decoding: data, as: UTF8.self)], cwd: repository, timeout: 30)
+        let result = try await Shell.run(node, arguments + ["--call", String(decoding: data, as: UTF8.self)], cwd: repository, env: environment, timeout: 30)
         guard result.status == 0 else { throw Failure.message(result.stderr.trimmed) }
         let value = try JSONDecoder().decode(RepositoryReadResult.self, from: result.data)
         guard value.readOnly else { throw Failure.message(String(localized: "The repository reader returned an invalid result.")) }

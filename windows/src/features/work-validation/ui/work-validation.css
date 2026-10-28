@@ -1,0 +1,9 @@
+.work-validation { display: flex; flex-direction: column; gap: 12px; max-height: 72vh; overflow: auto; }
+.work-validation .wrap { flex-wrap: wrap; gap: 8px; }
+.work-validation .validation-section { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.work-validation h3, .work-validation p { margin: 0; }
+.work-validation .validation-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px; }
+.work-validation label { display: flex; flex-direction: column; gap: 5px; }
+.work-validation .validation-results, .work-validation .validation-overlap { display: flex; flex-direction: column; gap: 8px; overflow-wrap: anywhere; }
+.work-validation details { padding-block: 6px; }
+.work-validation .mono { overflow-wrap: anywhere; white-space: pre-wrap; }

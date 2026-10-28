@@ -129,6 +129,7 @@ extension RepoStore {
     /// 구조 그래프(gitch graph)를 html 로 만들어 기본 브라우저로 연다. 실패하면 gitch 가 낸 문구를 보여 준다.
     func openStructureGraph(_ relation: Gitch.GraphRelation, precise: Bool = false) async {
         guard let url, graphJob == nil else { return }
+        let head = headHash
         graphJob = .draw(relation)
         defer { graphJob = nil }
         // 메뉴가 닫히고 브라우저가 뜨기까지 몇 초 걸릴 수 있어 VoiceOver 에 먼저 알린다
@@ -136,15 +137,16 @@ extension RepoStore {
         do {
             let page = try await Gitch.graph(relation, in: url, precise: precise)
             guard self.url == url else { return }
+            guard self.headHash == head else { throw Gitch.Failure(message: String(localized: "HEAD changed while preparing the graph. Refresh the analysis.")) }
             if page.nodes == 0 {
                 // 빈 페이지를 띄우기보다 gitch 가 찾지 못한 것을 먼저 알린다
                 confirm = ConfirmRequest(title: String(localized: "Nothing to draw"),
                                          message: page.hint ?? String(localized: "gitch found nothing to draw for \(relation.title)."),
                                          actionTitle: String(localized: "Open anyway"), destructive: false) { [weak self] in
-                    await self?.openGraphPage(page.liveURL ?? page.file)
+                    await self?.openGraphPage(page.file, browserURL: page.liveURL)
                 }
             } else {
-                await openGraphPage(page.liveURL ?? page.file)
+                await openGraphPage(page.file, browserURL: page.liveURL)
             }
         } catch {
             guard self.url == url else { return }
@@ -155,12 +157,14 @@ extension RepoStore {
     /// 수정한 파일과 그것을 참조하는 파일을 함께 추려 그린다.
     func openAffectedGraph(base: String? = nil) async {
         guard let url, graphJob == nil else { return }
+        let head = headHash
         graphJob = .draw(.files)
         defer { graphJob = nil }
         do {
             let page = try await Gitch.affectedGraph(base: base, in: url)
             guard self.url == url else { return }
-            await openGraphPage(page.liveURL ?? page.file)
+            guard self.headHash == head else { throw Gitch.Failure(message: String(localized: "HEAD changed while preparing the graph. Refresh the analysis.")) }
+            await openGraphPage(page.file, browserURL: page.liveURL)
         } catch {
             guard self.url == url else { return }
             errorMessage = describe(error)
@@ -171,12 +175,14 @@ extension RepoStore {
     /// base 가 nil 이면 gitch 의 기본값(기본 브랜치와 갈라진 곳), 있으면 그 브랜치 · 태그와 이 브랜치가 갈라진 곳과 비교한다.
     func openGraphDiff(_ relation: Gitch.GraphRelation, base: String? = nil) async {
         guard let url, graphJob == nil else { return }
+        let head = headHash
         graphJob = .diff(relation)
         defer { graphJob = nil }
         if let text = graphProgress { AccessibilityNotification.Announcement(text).post() }
         do {
             let file = try await Gitch.graphDiff(relation, base: base, in: url)
             guard self.url == url else { return }
+            guard self.headHash == head else { throw Gitch.Failure(message: String(localized: "HEAD changed while preparing the graph. Refresh the analysis.")) }
             await openGraphPage(file)
         } catch {
             guard self.url == url else { return }
@@ -253,11 +259,44 @@ extension RepoStore {
         }
     }
 
-    func openGraphPage(_ file: URL) async {
+    func openGraphPage(_ file: URL, browserURL: URL? = nil) async {
         do {
-            try await Launcher.openInBrowser(file)
+            try await StructureGraphWindow.open(file: file, browserURL: browserURL, store: self)
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// The renderer revalidates assistant actions against this generated snapshot.
+    func openAssistantGraph(actionsJSON: String) async {
+        guard let url, graphJob == nil, actionsJSON.utf8.count <= 65_536 else { return }
+        let head = headHash
+        graphJob = .draw(.files)
+        defer { graphJob = nil }
+        do {
+            let page = try await Gitch.graph(.files, in: url)
+            guard self.url == url else { return }
+            guard self.headHash == head else { throw Gitch.Failure(message: String(localized: "HEAD changed while preparing the graph. Refresh the analysis.")) }
+            try await StructureGraphWindow.open(file: page.file, browserURL: page.liveURL, store: self, actionsJSON: actionsJSON)
+        } catch { if self.url == url { errorMessage = describe(error) } }
+    }
+
+    /// Team evidence can highlight real paths without an AI provider or network request.
+    func openWorkGraphForPaths(_ paths: [String]) async {
+        guard let url, graphJob == nil else { return }
+        let head = headHash, selected = Array(Set(paths)).sorted()
+        guard !selected.isEmpty, selected.count <= 100, selected.allSatisfy(WorkContext.safePath) else {
+            errorMessage = String(localized: "Some selected files are not present in this dependency graph. Analyze the current files again.")
+            return
+        }
+        graphJob = .draw(.files)
+        let actionsJSON: String
+        do {
+            actionsJSON = try await Gitch.graphPathSelection(selected, in: url)
+            guard self.url == url else { graphJob = nil; return }
+            guard self.headHash == head else { throw Gitch.Failure(message: String(localized: "HEAD changed while preparing the graph. Refresh the analysis.")) }
+        } catch { if self.url == url { errorMessage = describe(error) }; graphJob = nil; return }
+        graphJob = nil
+        await openAssistantGraph(actionsJSON: actionsJSON)
     }
 }

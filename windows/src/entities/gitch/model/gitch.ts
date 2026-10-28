@@ -471,6 +471,16 @@ class GitchService {
     return { file, ...parseGraphSummary(plain(r.stdout)), ...(liveUrl ? { liveUrl } : {}) };
   }
 
+  /** Select only paths proven to exist in the current file dependency snapshot. */
+  async graphPathSelection(repo: string, paths: string[]): Promise<string> {
+    const result = await this.runGraph(["files", "--json"], repo);
+    const value: unknown = JSON.parse(result.stdout);
+    if (!value || typeof value !== "object" || !("schemaVersion" in value) || value.schemaVersion !== 1 || !("snapshotID" in value) || typeof value.snapshotID !== "string" || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(value.snapshotID) || !("nodes" in value) || !Array.isArray(value.nodes)) throw new GitchError(t("The graph snapshot could not be read. Analyze again."));
+    const known = new Set(value.nodes.filter((node): node is { id: string; kind: string } => !!node && typeof node === "object" && "id" in node && typeof node.id === "string" && "kind" in node && node.kind === "file").map(node => node.id));
+    if (!paths.length || paths.length > 100 || new Set(paths).size !== paths.length || paths.some(path => !known.has(path))) throw new GitchError(t("Some selected files are not present in this dependency graph. Analyze the current files again."));
+    return JSON.stringify({ schemaVersion: 1, snapshotID: value.snapshotID, actions: [{ kind: "nodes", nodeIDs: paths }] });
+  }
+
   async affectedGraph(repo: string, base: string | null = null): Promise<GraphPage> {
     const file = await graphFile("affected", repo);
     const r = await this.runGraph(["affected", ...(base ? ["--base", base] : []), "--format", "html", "--out", file, "--no-open"], repo);
@@ -548,7 +558,7 @@ class GitchService {
   private async runGraph(args: string[], repo: string, ok = [0]) {
     const reason = await this.graphUnavailable();
     if (reason) throw new GitchError(reason);
-    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage() });
+    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage(), GITSW_SWIFT_DESCRIBE: "0" });
     if (!ok.includes(r.status)) throw graphFailure(r);
     return r;
   }

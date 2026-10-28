@@ -9,6 +9,7 @@ import type {
 import { language, t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
 import { projectDateRange, projectRepository } from "../lib/project-workspace";
+import { ProjectDependencyView } from "./ProjectDependencyView";
 
 const day = 86_400_000;
 const dateLabel = (value: number) =>
@@ -87,6 +88,7 @@ export function ProjectRoadmap({
     ticks = Array.from({ length: 5 }, (_, index) => first + (span * index) / 4);
   return (
     <section className="project-roadmap" aria-label={t("Project timeline")}>
+      {detail.item.data.localProject === true && <ProjectDependencyView rows={detail.rows} select={select} selectedID={selectedID} />}
       <div className="project-roadmap-controls">
         <span>
           <CalendarDays size={15} />

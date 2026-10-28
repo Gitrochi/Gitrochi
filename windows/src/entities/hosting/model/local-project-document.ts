@@ -1,8 +1,10 @@
 import { parseScheduleDay } from "./project-schedule";
+import { validateProjectDependencies } from "./project-dependencies";
 
 export interface LocalPlannerTask {
   id: string; title: string; body: string; status: string; start: string; due: string;
   priority: string; assignees: string[]; archived: boolean; updatedAt: string;
+  predecessorIDs?: string[]; durationDays?: number;
 }
 export interface LocalPlannerProject {
   id: string; title: string; description: string; revision: number; createdAt: string; updatedAt: string; tasks: LocalPlannerTask[];
@@ -29,6 +31,7 @@ export function decodeLocalProjects(raw: string | null): LocalPlannerDocument {
       if (!object(task) || !text(task.id, 100, true) || !/^local-task:[a-zA-Z0-9-]+$/.test(task.id) || !text(task.title, 500, true) || !text(task.body, 200_000) || !localStatusIDs.includes(String(task.status)) || !localPriorityIDs.includes(String(task.priority)) || typeof task.archived !== "boolean" || !text(task.updatedAt, 50, true) || !Array.isArray(task.assignees) || task.assignees.length > 20 || !task.assignees.every(value => text(value, 100, true)) || !text(task.start, 10) || !text(task.due, 10) || (task.start !== "" && !parseScheduleDay(task.start)) || (task.due !== "" && !parseScheduleDay(task.due)) || (!!task.start && !!task.due && task.start > task.due)) throw new Error("Local project data is invalid. Your saved data has not been changed.");
     }
     if (!unique(project.tasks as LocalPlannerTask[])) throw new Error("Local project data is invalid. Your saved data has not been changed.");
+    if (validateProjectDependencies(project.tasks as LocalPlannerTask[])) throw new Error("Local project data is invalid. Your saved data has not been changed.");
   }
   if (!unique(value.projects as LocalPlannerProject[])) throw new Error("Local project data is invalid. Your saved data has not been changed.");
   return value as unknown as LocalPlannerDocument;

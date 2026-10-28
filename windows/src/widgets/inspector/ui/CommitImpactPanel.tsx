@@ -57,6 +57,7 @@ export function CommitImpactPanel({ store }: { store: RepoStore }) {
           </ImpactGroup>
         </div>
         <span className="hint">{t("Candidates come from dependencies or file names. Tests have not been run.")}</span>
+        <Button size="small" onClick={() => { store.openSheet({ kind: "workValidation" }); }}>{t("Connect verification evidence…")}</Button>
         {result.limitations.length > 0 && <details className="commit-impact-group"><summary>{t("Analysis limitations")} · {result.limitations.length}</summary><ul className="hint">{result.limitations.map((line, i) => <li key={i}>{t(line)}</li>)}</ul></details>}
         <Button size="small" disabled={stale || store.commitImpactVerifying || !!store.graphJob || !result.changed.length} onClick={() => void store.openCommitImpactGraph()}>
           {store.graphJob?.kind === "review" ? <Spinner size={11} /> : <ExternalLink size={12} />}{t("View staged impact as graph")}

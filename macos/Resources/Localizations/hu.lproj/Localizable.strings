@@ -8,7 +8,7 @@
 "Compare dependencies" = "Függőségek összevetése";
 "Compare with" = "Összevetés ezzel";
 "Compare with…" = "Összevetés ezzel…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Összeveti a munkakönyvtár függőségeit – a nem commitolt módosításokkal együtt – azzal a ponttal, ahol ez az ág levált az alapértelmezett ágról (gitch graph diff), és megnyitja a változásokat a böngészőben.";
+
 "Comparing dependencies…" = "Függőségek összevetése…";
 "Couldn't check the rules" = "Nem sikerült ellenőrizni a szabályokat";
 "Create rules file" = "Szabályfájl létrehozása";
@@ -398,7 +398,7 @@
 "Draft" = "Piszkozat";
 "Drawing the graph with %lld commits…" = "Gráf rajzolása (%1$lld commit)…";
 "Drawing the structure graph…" = "Szerkezeti gráf rajzolása…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "A gitch graph segítségével megrajzolja a tároló importjait, moduljait, együtt változó fájljait vagy mappáit, és megnyitja a böngészőben.";
+
 "Drop" = "Kihagyás";
 "Dropping stash…" = "Stash eldobása…";
 "Drop…" = "Eldobás…";

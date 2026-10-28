@@ -8,7 +8,7 @@
 "Compare dependencies" = "So sánh phụ thuộc";
 "Compare with" = "So sánh với";
 "Compare with…" = "So sánh với…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "So sánh các phụ thuộc trong thư mục làm việc, kể cả thay đổi chưa commit, với điểm mà nhánh này tách ra từ nhánh mặc định (gitch graph diff), rồi mở các thay đổi trong trình duyệt.";
+
 "Comparing dependencies…" = "Đang so sánh phụ thuộc…";
 "Couldn't check the rules" = "Không thể kiểm tra quy tắc";
 "Create rules file" = "Tạo tệp quy tắc";
@@ -388,7 +388,7 @@
 "Draft" = "Bản nháp";
 "Drawing the graph with %lld commits…" = "Đang vẽ đồ thị với %1$lld commit…";
 "Drawing the structure graph…" = "Đang vẽ đồ thị cấu trúc…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Vẽ import, mô-đun, các tệp thay đổi cùng nhau hoặc thư mục của kho lưu trữ này bằng gitch graph rồi mở trong trình duyệt.";
+
 "Dropping stash…" = "Đang drop stash…";
 "Easy for beginners to understand" = "Dễ hiểu với người mới";
 "Edit manually" = "Sửa thủ công";

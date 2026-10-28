@@ -6889,15 +6889,36 @@ graph_core() {
 
 # 기존 -v 메타데이터 계약을 유지해 diff·review·HTML도 같은 변환기를 쓴다.
 graph_json() {
-  local helper
-  helper=$(graph_core)
-  if [ -n "$helper" ]; then "$helper" graph-json "$@"; return $?; fi
-  local vars=() files=()
+  local helper rel="" scope="" langs="" when="" version="" commit="" analysisScope=worktree base="" pair key value
+  local original=("$@") vars=() files=() inputFile=""
   while [ $# -gt 0 ]; do
-    if [ "$1" = -v ]; then vars+=("$1" "$2"); shift 2
+    if [ "$1" = -v ]; then
+      pair=$2; key=${pair%%=*}; value=${pair#*=}
+      case "$key" in rel) rel=$value ;; scope) scope=$value ;; langs) langs=$value ;; when) when=$value ;; ver) version=$value ;; commit) commit=$value ;; diffbase) base=$value ;; diffhead) analysisScope=$value ;; esac
+      vars+=("$1" "$2"); shift 2
     else files+=("$1"); shift; fi
   done
-  awk ${vars[@]+"${vars[@]}"} "$(graph_awk_lib)$(graph_awk_json)" ${files[@]+"${files[@]}"}
+  if [ ${#files[@]} -eq 0 ]; then
+    inputFile=$(mktemp "${TMPDIR:-/tmp}/gitch-graph-records.XXXXXX") || return 1
+    cat > "$inputFile" || { rm -f "$inputFile"; return 1; }
+    files+=("$inputFile"); original+=("$inputFile")
+  fi
+  local head graphStamp contentKey snapshot coverage prefix
+  head=$(git rev-parse --verify HEAD 2>/dev/null || printf '%s' "$commit")
+  # Content cache identities include tracked bytes; exclude cache-hit telemetry from snapshot identity.
+  contentKey=$(awk -F'\t' '$1 == "0" && $2 == "cache" { if(match($3,/"key":"[a-f0-9]+"/)) { v=substr($3,RSTART,RLENGTH); sub(/^"key":"/,"",v);sub(/"$/,"",v);print v;exit } }' ${files[@]+"${files[@]}"})
+  graphStamp=$(awk -F'\t' '!($1 == "0" && $2 == "cache")' ${files[@]+"${files[@]}"} | LC_ALL=C sort | git hash-object --stdin) || return 1
+  snapshot=$(printf '%s\0' "$version" "$head" "$rel" "$scope" "$langs" "$analysisScope" "$base" "$graphStamp" "$contentKey" | git hash-object --stdin) || return 1
+  coverage=$(awk -F'\t' '$1 == "1" && $3 == "file" { f++;if($6 ~ /"analysis":"(static-import|compiler-index|name-heuristic|swift-index)"/)a++ } $1 == "2" {e++;if($6=="h")h++} $1=="0" && $2=="diagnostic"{d++} END{printf "{\"files\":%d,\"analyzed\":%d,\"unsupported\":%d,\"edges\":%d,\"heuristicEdges\":%d,\"declaredEdges\":%d,\"diagnostics\":%d}",f,a,f-a,e,h,e-h,d}' ${files[@]+"${files[@]}"})
+  prefix=$(printf '"snapshotID":%s,"provenance":{"schemaVersion":1,"headSha":%s,"graphStamp":%s,"contentKey":%s,"scope":%s,"pathScope":%s,"toolVersion":%s,"generatedAt":%s,"verification":{"status":"not-run"}},"coverage":%s' "$(json_str "$snapshot")" "$(json_str "$head")" "$(json_str "$graphStamp")" "$(json_str "$contentKey")" "$(json_str "$analysisScope")" "$(json_str "$scope")" "$(json_str "$version")" "$(json_str "$when")" "$coverage")
+  helper=$(graph_core)
+  {
+    if [ -n "$helper" ]; then "$helper" graph-json "${original[@]}"
+    else awk ${vars[@]+"${vars[@]}"} "$(graph_awk_lib)$(graph_awk_json)" ${files[@]+"${files[@]}"}; fi
+  } | GITCH_GRAPH_PROVENANCE="$prefix" awk 'NR == 1 { sub(/^{/, "{" ENVIRON["GITCH_GRAPH_PROVENANCE"] ",") } {print}'
+  local rendered=${PIPESTATUS[0]}
+  [ -z "$inputFile" ] || rm -f "$inputFile"
+  return "$rendered"
 }
 
 # Swift 파일끼리의 정확한 참조는 Xcode 인덱스에 있다 — 그것을 읽는 도우미(앱이 gitch 옆에 둔다)의 경로, 없으면 빈 값
@@ -7013,7 +7034,7 @@ graph_cached_collect() {
       find "$dir" -type f -name '*.records' -mtime +7 -delete 2>/dev/null
     fi
   fi
-  printf '0\tcache\t{"hit":%s,"strategy":"content"}\n' "$hit"
+  printf '0\tcache\t{"hit":%s,"strategy":"content","key":"%s"}\n' "$hit" "$key"
   [ ! -f "$tmp/unsafe-paths.records" ] || cat "$tmp/unsafe-paths.records"
 }
 
@@ -10837,6 +10858,10 @@ body { background: radial-gradient(1400px 900px at 50% 40%, var(--glow), transpa
 button, input, select { font: inherit; color: inherit; }
 canvas { position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; outline: none; }
 canvas.dragging { cursor: grabbing; }
+.graph-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.relation-target { color:inherit; background:transparent; border:0; padding:3px 0; text-align:left; cursor:pointer; }
+#analysisProvenance { font-size:11px; color:var(--text-2); overflow-wrap:anywhere; margin-top:6px; }
+#analysisProvenanceBody { max-height:180px; overflow:auto; }
 canvas.over { cursor: pointer; }
 canvas.picking { cursor: crosshair; }
 .hud { position: fixed; z-index: 2; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow), inset 0 1px 0 var(--edge-hl); -webkit-backdrop-filter: blur(20px) saturate(1.1); backdrop-filter: blur(20px) saturate(1.1); }
@@ -11252,12 +11277,14 @@ body.leftClosed { --left-w:0px; } body.rightClosed { --right-w:0px; }
 <header class="hud" id="masthead"><span id="brand"></span><div id="context"></div><span id="phase" role="status">Building graph…</span><button id="leftToggle" aria-controls="top" aria-expanded="true" aria-label="Collapse or expand explorer">Explore</button><button id="rightToggle" aria-controls="rightDock" aria-expanded="true" aria-label="Collapse or expand graph tools">Tools</button></header>
 <nav class="hud" id="quickViews" aria-label="Graph views"><button id="quickStars" type="button" aria-pressed="false">✦ <span>Constellation</span></button><button id="quickFolders" type="button" aria-pressed="false">▤ <span>Folder tree</span></button><button id="quickArchitecture" type="button" aria-controls="architecture" aria-pressed="false">↔ <span>Coupling &amp; cohesion</span></button><button id="quickLayouts" type="button" aria-controls="layout">▦ <span>Layouts</span></button><button id="quickNextStars" type="button" aria-label="Next constellation" title="Next constellation" hidden>↻</button><output id="activeLayout"></output></nav>
 <button class="splitter" id="leftSizer" aria-label="Resize explorer" title="Drag or use Left and Right arrows to resize"></button><button class="splitter" id="rightSizer" aria-label="Resize details panel" title="Drag or use Left and Right arrows to resize"></button>
-<canvas id="c" tabindex="0" aria-label="Structure graph — use the list button at the bottom right for a table"></canvas>
+<p id="graphTextSummary" class="graph-sr-only" role="status" aria-live="polite"></p>
+<canvas id="c" tabindex="0" aria-describedby="graphTextSummary" aria-label="Structure graph — use the list button at the bottom right for a table"></canvas>
 <div class="hud" id="top">
   <div id="explore"><div class="row1"><span id="logo" hidden></span><span id="repo" hidden>gitch graph</span><span>Explore structure</span>
     <button class="icon-btn" id="noteBtn" type="button" title="Help" aria-label="Help" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button></div>
   <div class="tabs" id="tabs" role="tablist" aria-label="Relationships"></div>
   <div id="stats"></div>
+  <details id="analysisProvenance"><summary>Analysis evidence</summary><div id="analysisProvenanceBody" class="sec-note"></div></details>
   <div id="notes" hidden></div>
   <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="q" type="search" placeholder="Search  /" autocomplete="off" spellcheck="false" aria-label="Find nodes"><span id="hits"></span></label>
   <div id="searchResults" class="review" aria-live="polite"></div>
@@ -12240,7 +12267,21 @@ HTMLEOF
     "More graph analysis": "More graph analysis",
     "Current file dependency snapshot": "Current file dependency snapshot",
     "Sort folders": "Sort folders",
-    "Cycle": "Cycle"
+    "Cycle": "Cycle",
+    "Analysis evidence": "Analysis evidence",
+    "## Analysis evidence": "## Analysis evidence",
+    "Graph actions do not match this analysis snapshot. Analyze again.": "Graph actions do not match this analysis snapshot. Analyze again.",
+    "AI graph selection": "AI graph selection",
+    "Use arrow keys on the graph to select nodes. Press L for the keyboard accessible list.": "Use arrow keys on the graph to select nodes. Press L for the keyboard accessible list.",
+    "Files analyzed / detected": "Files analyzed / detected",
+    "Unsupported files": "Unsupported files",
+    "Declared / inferred edges": "Declared / inferred edges",
+    "Tests have not been run.": "Tests have not been run.",
+    "This is a snapshot. Regenerate after editing files.": "This is a snapshot. Regenerate after editing files.",
+    "Snapshot": "Snapshot",
+    "Scope": "Scope",
+    "Generated": "Generated",
+    "Unavailable": "Unavailable"
   },
   "ko": {
     "Select a file first.": "먼저 파일을 선택하세요.",
@@ -13099,7 +13140,21 @@ HTMLEOF
     "More graph analysis": "순환 · 핫스팟 등 더 보기",
     "Current file dependency snapshot": "현재 파일 의존 구조",
     "Sort folders": "폴더 정렬",
-    "Cycle": "순환"
+    "Cycle": "순환",
+    "Analysis evidence": "분석 근거",
+    "## Analysis evidence": "## 분석 근거",
+    "Graph actions do not match this analysis snapshot. Analyze again.": "그래프 동작이 이 분석 스냅샷과 맞지 않습니다. 다시 분석하세요.",
+    "AI graph selection": "AI 그래프 선택",
+    "Use arrow keys on the graph to select nodes. Press L for the keyboard accessible list.": "그래프에서 화살표 키로 노드를 선택하세요. L 키로 키보드 탐색 목록을 엽니다.",
+    "Files analyzed / detected": "분석 / 인식 파일",
+    "Unsupported files": "미지원 파일",
+    "Declared / inferred edges": "선언 / 추정 연결",
+    "Tests have not been run.": "테스트는 실행하지 않았습니다.",
+    "This is a snapshot. Regenerate after editing files.": "분석 시점의 스냅샷입니다. 파일 수정 후 다시 생성하세요.",
+    "Snapshot": "스냅샷",
+    "Scope": "범위",
+    "Generated": "생성 시각",
+    "Unavailable": "사용 불가"
   },
   "ja": {
     "Select a file first.": "先にファイルを選択してください。",
@@ -13958,7 +14013,21 @@ HTMLEOF
     "More graph analysis": "循環・ホットスポットなどを表示",
     "Current file dependency snapshot": "現在のファイル依存構造",
     "Sort folders": "フォルダーの並べ替え",
-    "Cycle": "循環"
+    "Cycle": "循環",
+    "Analysis evidence": "解析根拠",
+    "## Analysis evidence": "## 解析根拠",
+    "Graph actions do not match this analysis snapshot. Analyze again.": "グラフ操作がこの解析スナップショットと一致しません。再解析してください。",
+    "AI graph selection": "AIのグラフ選択",
+    "Use arrow keys on the graph to select nodes. Press L for the keyboard accessible list.": "矢印キーでノードを選択し、Lキーでキーボード操作可能な一覧を開きます。",
+    "Files analyzed / detected": "解析済み / 検出ファイル",
+    "Unsupported files": "未対応ファイル",
+    "Declared / inferred edges": "宣言 / 推定の接続",
+    "Tests have not been run.": "テストは実行していません。",
+    "This is a snapshot. Regenerate after editing files.": "解析時点のスナップショットです。編集後に再生成してください。",
+    "Snapshot": "スナップショット",
+    "Scope": "範囲",
+    "Generated": "生成時刻",
+    "Unavailable": "利用不可"
   }
 }
 </script>
@@ -15919,12 +15988,13 @@ HTMLEOF
     const seen = new Map();
     for (const [, o] of pairs) seen.set(o.label, (seen.get(o.label) || 0) + 1);
     const where = (o) => (seen.get(o.label) > 1 && dirOf(o) ? ` <small class="dir">${esc(dirOf(o).split("/").slice(-2).join("/"))}</small>` : "");
-    const items = pairs.slice(0, 400).map(([e, o]) => `<li data-i="${o.i}" title="${esc(o.id)}">${dotHtml(o)}<span class="name">${esc(o.label)}${where(o)}</span><small>${esc(edgeNote(e))}</small>${evidenceHtml(e)}</li>`).join("");
+    const items = pairs.slice(0, 400).map(([e, o]) => `<li data-i="${o.i}" title="${esc(o.id)}">${dotHtml(o)}<button class="name relation-target" type="button">${esc(o.label)}${where(o)}</button><small>${esc(edgeNote(e))}</small>${evidenceHtml(e)}</li>`).join("");
     return `<h3 class="sec-title"><span class="arrow">${arrowCh}</span>${esc(title)} · ${pairs.length}</h3><ul class="rows">${items}</ul>`;
   }
   function placeInfo() { if(dockView==='info'&&!sel)dockView='review'; syncDockView(); }
   function renderInfo() {
     const info = $("info");
+    updateGraphTextSummary(sel);
     if (!sel || !m) { info.innerHTML = ""; placeInfo(); return; }
     const n = sel, a = analyze(), rows = [];
     for (const [k, v] of Object.entries(n.d)) {
@@ -16002,11 +16072,11 @@ HTMLEOF
   function renderTable() {
     const [mName, mFn] = METRIC();
     const cols = [["label", tr("Name"), ""], ["grp", tr("Groups"), ""], ["in", m.directed ? tr("Incoming") : "", "num"], ["out", m.directed ? tr("Outgoing") : tr("Edges"), "num"], ["m", mName, "num"], ["chg", CHG.size && m.rel !== "changes" && m.rel !== "modules" ? tr("Change count") : "", "num"]].filter((c) => c[1]);
-    $("thead").innerHTML = cols.map(([key, name, cls]) => `<th class="${cls}" data-k="${key}">${esc(name)}${sortKey === key ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("");
+    $("thead").innerHTML = cols.map(([key, name, cls]) => `<th class="${cls}" data-k="${key}" aria-sort="${sortKey === key ? (sortDir < 0 ? "descending" : "ascending") : "none"}"><button class="relation-target" type="button">${esc(name)}${sortKey === key ? (sortDir < 0 ? " ↓" : " ↑") : ""}</button></th>`).join("");
     const val = (n, key) => (key === "label" ? n.label.toLowerCase() : key === "grp" ? famLabel(n) : key === "in" ? n.inc.length : key === "out" ? (m.directed ? n.out.length : n.deg) : key === "m" ? mFn(n) : key === "chg" ? heatOf(n) : n.deg);
     const rows = (matchSet ? matches : visNodes).slice().sort((a, b) => { const x = val(a, sortKey), y = val(b, sortKey); return (x < y ? -1 : x > y ? 1 : byId(a, b)) * sortDir; });
     const shown = rows.slice(0, 1500), chg = cols.some((c) => c[0] === "chg");
-    $("tbody").innerHTML = shown.map((n) => `<tr data-i="${n.i}"><td class="name" title="${esc(n.id)}">${esc(n.label)}${dirOf(n) ? ` <small>${esc(dirOf(n))}</small>` : ""}</td><td>${dotHtml(n).replace('class="dot', 'style="display:inline-block;margin-right:6px" class="dot')}${esc(famLabel(n))}</td>${m.directed ? `<td class="num">${n.inc.length}</td>` : ""}<td class="num">${m.directed ? n.out.length : n.deg}</td><td class="num">${mFn(n)}</td>${chg ? `<td class="num">${heatOf(n) || ""}</td>` : ""}</tr>`).join("");
+    $("tbody").innerHTML = shown.map((n) => `<tr data-i="${n.i}"><td class="name" title="${esc(n.id)}"><button class="relation-target" type="button">${esc(n.label)}${dirOf(n) ? ` <small>${esc(dirOf(n))}</small>` : ""}</button></td><td>${dotHtml(n).replace('class="dot', 'style="display:inline-block;margin-right:6px" class="dot')}${esc(famLabel(n))}</td>${m.directed ? `<td class="num">${n.inc.length}</td>` : ""}<td class="num">${m.directed ? n.out.length : n.deg}</td><td class="num">${mFn(n)}</td>${chg ? `<td class="num">${heatOf(n) || ""}</td>` : ""}</tr>`).join("");
     $("tableNote").textContent = tr("{0} items", rows.length);
     $("tmore").hidden = rows.length <= shown.length;
     $("tmore").textContent = tr("Showing first {0} items — narrow with search", shown.length);
@@ -16431,6 +16501,7 @@ HTMLEOF
     $("notes").innerHTML = notes.map((t) => `<p>${esc(trAnalysis(t))}</p>`).join("") + diagnostics.map((d) => `<p>${d.file && META.repoPath ? `<a href="${esc(appLink(d.file, d.line))}">${esc(d.file)}${d.line ? ":" + d.line : ""}</a> · ` : ""}${esc(d.code)}: ${esc(trAnalysis(d.message))}</p>`).join("");
     $("noteBtn").hidden = !notes.length && !diagnostics.length;
     if (!notes.length && !diagnostics.length) $("notes").hidden = true;
+    renderGraphProvenance();
     renderQuickViews();renderArchitecture();
   }
   function setUnit(u) { if (u === vs.unit) return; stopReplay(false); vs.unit = u; switchModel(); }
@@ -16578,7 +16649,13 @@ HTMLEOF
     if(!$('pathMenu').hidden && ev.key==='Escape'){ev.preventDefault();closePathMenu();return;}
     if(!$('pathMenu').hidden && ev.target.closest?.('#pathMenu'))return;
     if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.isComposing || ev.target.closest?.("input,select,textarea,[contenteditable=true]") || (ev.target instanceof HTMLButtonElement && ["Enter"," "].includes(ev.key))) return;
-    if (ev.key === "/") { ev.preventDefault(); document.body.classList.remove('leftClosed');setChangesExpanded(false);setNavigatorMode('changes');if(innerWidth<=900)document.body.classList.add('narrowExplore');resize();q.focus();q.select(); }
+    if (ev.target === canvas && ["ArrowDown","ArrowRight","ArrowUp","ArrowLeft","Home","End"].includes(ev.key)) {
+      ev.preventDefault(); const index=visNodes.indexOf(sel), delta=["ArrowUp","ArrowLeft"].includes(ev.key)?-1:1;
+      const next=ev.key==="Home"?0:ev.key==="End"?visNodes.length-1:(index+delta+visNodes.length)%visNodes.length;
+      if(visNodes[next]){select(visNodes[next]);centerOn(visNodes[next],Math.max(view.k,1.2));} return;
+    }
+    if (ev.key === "l" || ev.key === "L") { ev.preventDefault();toggleDrawer("table", $("table").hidden); }
+    else if (ev.key === "/") { ev.preventDefault(); document.body.classList.remove('leftClosed');setChangesExpanded(false);setNavigatorMode('changes');if(innerWidth<=900)document.body.classList.add('narrowExplore');resize();q.focus();q.select(); }
     else if (ev.key === "Escape") { if (pathFrom || HL) clearHL(); else if (!$("table").hidden) toggleDrawer("table", false); else if (!$("ana").hidden) toggleDrawer("ana", false); else select(null); }
     else if (ev.key === "f" || ev.key === "F") { m.userMoved = false; animateTo(fitView()); }
     else if (ev.key === "a" || ev.key === "A") toggleDrawer("ana", $("ana").hidden);
@@ -16693,7 +16770,7 @@ HTMLEOF
 
   const viewKey = "gitch-graph-views-v1:" + (META.repoPath || META.repo) + ":" + (META.scope || "");
   const analysisKey = (META.diff ? "diff" : META.stats?.affected ? "affected" : "graph") + ":" + (META.review?.scope || RAW.review?.scope || "worktree");
-  const snapshotKey = JSON.stringify([META.commit, META.generated, META.diff?.base, RAW.review?.baseSha]);
+  const snapshotKey = META.snapshotID || JSON.stringify([META.commit, META.generated, META.diff?.base, RAW.review?.baseSha]);
   const lastKey = viewKey + ":" + analysisKey + ":last:" + (RAW.initial || META.relation) + (META.diff ? ":diff" : META.stats?.affected ? ":affected" : META.stats?.precise ? ":precise" : "");
   function captureView() {
     return { schemaVersion: 1, tool: "gitch graph view", repo: META.repo, snapshot: snapshotKey, analysis: analysisKey, review: {chosen:[...chosen],depth:reviewDepth,folder:folderQuery}, panels:{navigatorMode,folderFilter,expandedFolders:[...expandedFolders],changesExpanded:$("top").classList.contains("changesExpanded"),architecture:{depth:ARCH.depth,search:ARCH.search,sort:ARCH.sort,allPairs:ARCH.allPairs},dock:["settings","review","info","architecture"].includes(dockView)?dockView:dockReturn,narrowExplore:document.body.classList.contains("narrowExplore"),leftClosed:document.body.classList.contains("leftClosed"),rightClosed:document.body.classList.contains("rightClosed"),left:getComputedStyle(root).getPropertyValue("--left-w"),right:getComputedStyle(root).getPropertyValue("--right-w")}, relation: REL, filters: { ...P },
@@ -17129,6 +17206,7 @@ HTMLEOF
     const r=reviewImpact(), p=reviewPriorities(), ids=new Set(r.routes.keys()), relevant=v=>v.nodes?.some(n=>ids.has(n))||ids.has(v.source)||ids.has(v.target);
     const lim=reviewLimitations(r);
     return scrubReport({schemaVersion:1,tool:'gitch change review',repo:META.repo,branch:REVIEW?.branch||META.branch,generated:META.generated,
+      snapshotID:m.G.snapshotID,provenance:m.G.provenance,coverage:m.G.coverage,verification:{status:'not-run'},
       selectedRef:REVIEW?.selectedRef,baseSha:REVIEW?.baseSha,headSha:REVIEW?.headSha,snapshot:REVIEW?.snapshot,mergeBase:REVIEW?.mergeBase,scope:REVIEW?.scope,untracked:REVIEW?.untracked,
       selection:reviewSeeds(),filters:{language:P.lang,query:q.value,folder:folderQuery,includeHeuristic:P.heur,includeTests:P.tests,depth:reviewDepth,hiddenGroups:[...hidden],canvas:{relation:REL,unit:vs.unit,onlyDiff:P.onlyDiff,onlyAffected:P.onlyAffected}},
       priorities:p.rows,direct:r.direct,indirect:r.indirect,cycles:Object.fromEntries(Object.entries(p.cycles).map(([k,v])=>[k,v.filter(relevant)])),violations:p.violations.filter(relevant),
@@ -17145,6 +17223,7 @@ HTMLEOF
     if(!REVIEW)return tr("# Change review\n\nThis analysis has no change snapshot. Compare with gitch g diff --format html.\n");
     const d=reviewReport(), text=v=>String(v??'').replace(/[\r\n]/g,' ').replace(/[\\`*_[\]<>#|]/g,c=>'\\'+c);
     const lines=['# '+text(d.repo)+tr(" Change review"),'',tr("- Branch: {0}", text(d.branch)),tr("- Generated: {0}", text(d.generated)),tr("- Scope: {0} · untracked files: {1}", text(scopeLabel(d.scope)), text(d.untracked)),tr("- Selected ref: {0}", text(d.selectedRef)),tr("- Base SHA: {0}", text(d.baseSha)),tr("- Current HEAD: {0} · snapshot {1}", text(d.headSha), text(d.snapshot)),`- merge-base: ${d.mergeBase?tr("Applied"):tr("Not applied")}`,tr("- Filters: {0}", text(JSON.stringify(d.filters))),'',tr("## Selected changes and review order"),''];
+    lines.splice(2,0,tr('## Analysis evidence'),'',text(JSON.stringify({snapshotID:d.snapshotID,provenance:d.provenance,coverage:d.coverage,verification:d.verification})), '');
     for(const c of d.priorities)lines.push(`- ${text(c.path)} · ${text(changeLabel(c.status))}${c.oldPath?tr(" · Previously ")+text(c.oldPath):''} · ${text(c.reasons.join(' · ')||tr("Review changes"))}`);
     if(!d.selection.length)lines.push(tr("No changes selected."));
     for(const [title,rows] of [[tr("Direct review targets"),d.direct],[tr("Indirect review targets"),d.indirect]]) {lines.push('','## '+title+' · '+rows.length,'');for(const r of rows)lines.push(tr("- {0} · {1} hops{2}{3}", text(r.path.join(' → ')), r.depth, r.base?tr(" · Base graph"):'', r.heuristic?tr(" · includes inference"):''));if(!rows.length)lines.push(tr("No paths found."));}
@@ -17164,6 +17243,7 @@ HTMLEOF
     const route=r=>item(r.path.join(' → ')+' · '+r.depth+tr(" hops")+(r.base?tr(" · Base graph"):'')+(r.heuristic?tr(" · includes inference"):''));
     let content='<h1>'+esc(d.repo)+tr(" Change review\u003c/h1>\u003cp class=\"meta\">")+esc(d.branch)+' · '+esc(d.generated)+'<br>'+esc(scopeLabel(d.scope))+tr(" · Untracked files ")+(d.untracked==='included'?tr("Included"):tr("Excluded"))+'</p>';
     content+=tr("\u003cdl>\u003cdt>Selected ref\u003c/dt>\u003cdd>")+esc(d.selectedRef)+tr("\u003c/dd>\u003cdt>Base SHA\u003c/dt>\u003cdd>")+esc(d.baseSha)+tr("\u003c/dd>\u003cdt>Current HEAD\u003c/dt>\u003cdd>")+esc(d.headSha)+tr("\u003c/dd>\u003cdt>Snapshot / merge-base\u003c/dt>\u003cdd>")+esc(d.snapshot)+' / '+(d.mergeBase?tr("Applied"):tr("Not applied"))+tr("\u003c/dd>\u003c/dl>\u003cp>Filters: \u003ccode>")+esc(JSON.stringify(d.filters))+'</code></p>';
+    content+='<h2>'+esc(tr('Analysis evidence'))+'</h2><pre>'+esc(JSON.stringify({snapshotID:d.snapshotID,provenance:d.provenance,coverage:d.coverage,verification:d.verification},null,2))+'</pre>';
     content+=tr("\u003cdiv class=\"counts\">\u003cb>Changes ")+d.selection.length+tr("\u003c/b>\u003cb>Direct ")+d.direct.length+tr("\u003c/b>\u003cb>Indirect ")+d.indirect.length+tr("\u003c/b>\u003c/div>\u003cp>Review targets along dependency paths, not confirmed runtime errors.\u003c/p>");
     content+=tr("\u003ch2>Selected changes and review order\u003c/h2>")+list(d.priorities.map(c=>item(c.path+' · '+changeLabel(c.status)+(c.oldPath?tr(" · Previously ")+c.oldPath:'')+' · '+(c.reasons.join(' · ')||tr("Review changes")))));
     if(!d.selection.length)content+=tr("\u003cp>No changes selected.\u003c/p>");
@@ -17188,6 +17268,77 @@ HTMLEOF
     rememberNavigation();
   }
 
+
+  const graphSnapshotCache = new Map();
+  function graphSnapshot(relation=REL) {
+    const graph=VIEWS[relation];
+    if(!graph || !graph.snapshotID)return null;
+    if(graphSnapshotCache.has(relation))return graphSnapshotCache.get(relation);
+    // Immutable inputs need one projection, even when clients repeatedly inspect a large graph.
+    const snapshot=Object.freeze({schemaVersion:1,id:graph.snapshotID,nodeIDs:Object.freeze(graph.nodes.map(node=>node.id)),edges:Object.freeze(graph.edges.map(({source,target})=>Object.freeze({source,target})))});
+    graphSnapshotCache.set(relation,snapshot);return snapshot;
+  }
+  function validatedGraphActions(value,snapshot) {
+    if(!snapshot || !value || typeof value!=="object" || Array.isArray(value))return null;
+    if(Object.keys(value).some(key=>!["schemaVersion","snapshotID","actions"].includes(key)) || value.schemaVersion!==1 || value.snapshotID!==snapshot.id || !Array.isArray(value.actions) || value.actions.length>12)return null;
+    const known=new Set(snapshot.nodeIDs), edges=new Set(snapshot.edges.map(edge=>JSON.stringify([edge.source,edge.target])));
+    for(const action of value.actions) {
+      if(!action || typeof action!=="object" || Array.isArray(action))return null;
+      if(action.kind==="clear" && Object.keys(action).length===1)continue;
+      if(!["nodes","path"].includes(action.kind) || Object.keys(action).some(key=>!["kind","nodeIDs"].includes(key)) || !Array.isArray(action.nodeIDs) || !action.nodeIDs.length || action.nodeIDs.length>100 || !action.nodeIDs.every(id=>typeof id==="string" && known.has(id)) || new Set(action.nodeIDs).size!==action.nodeIDs.length)return null;
+      if(action.kind==="path" && (action.nodeIDs.length<2 || action.nodeIDs.slice(1).some((id,index)=>!edges.has(JSON.stringify([action.nodeIDs[index],id])))))return null;
+    }
+    return value;
+  }
+  function applyGraphEnvelope(value) {
+    const relation=ORDER.find(key=>VIEWS[key].snapshotID===value?.snapshotID), snapshot=relation?graphSnapshot(relation):null;
+    const envelope=validatedGraphActions(value,snapshot);
+    if(!envelope){banner(tr('Graph actions do not match this analysis snapshot. Analyze again.'));return false;}
+    if(REL!==relation)show(relation);
+    if(vs.unit!=='file')setUnit('file');
+    for(const action of envelope.actions) {
+      if(action.kind==='clear'){clearHL();select(null);continue;}
+      P.lang='all';P.tests=true;P.ext=true;P.heur=true;P.local=false;hidden.clear();folderQuery='';q.value='';setQuery('');filtersChanged();
+      const nodes=action.nodeIDs.map(id=>m.nodeOf.get(id));
+      if(nodes.some(node=>!node)){banner(tr('Graph actions do not match this analysis snapshot. Analyze again.'));return false;}
+      const pairs=new Set(action.nodeIDs.slice(1).map((id,index)=>JSON.stringify([action.nodeIDs[index],id])));
+      const edges=action.kind==='path'?m.edges.filter(edge=>pairs.has(JSON.stringify([edge.s.id,edge.t.id]))):null;
+      select(nodes[nodes.length-1]);
+      highlight(nodes,edges,tr('AI graph selection')+' · '+action.nodeIDs.join(' → '),[nodes[0],nodes[nodes.length-1]]);
+    }
+    return true;
+  }
+  function updateGraphTextSummary(node) {
+    const text=$('graphTextSummary');if(!text)return;
+    if(!node){text.textContent=tr('Use arrow keys on the graph to select nodes. Press L for the keyboard accessible list.');return;}
+    const relation=edge=>(edge.d.heuristic?tr('Inferred')+': ':'')+(edge.s===node?edge.t.id:edge.s.id);
+    const rows=[node.id,tr('Incoming')+': '+node.inc.length,tr('Outgoing')+': '+node.out.length];
+    if(node.inc.length)rows.push(tr('Incoming')+' '+node.inc.slice(0,20).map(relation).join(', '));
+    if(node.out.length)rows.push(tr('Outgoing')+' '+node.out.slice(0,20).map(relation).join(', '));
+    text.textContent=rows.join('. ');
+  }
+  function renderGraphProvenance() {
+    const graph=m.G, p=graph.provenance||{}, c=graph.coverage||{}, target=$('analysisProvenanceBody');if(!target)return;
+    const rows=[tr('Snapshot')+': '+(graph.snapshotID||tr('Unavailable')), 'HEAD: '+(p.headSha||graph.commit||tr('No commits')),
+      tr('Scope')+': '+(p.scope||'worktree')+' · '+(p.pathScope||'./'),tr('Generated')+': '+(p.generatedAt||graph.generated||''),
+      'gitch '+(p.toolVersion||graph.version||''),tr('Files analyzed / detected')+': '+(c.analyzed??'—')+' / '+(c.files??'—'),
+      tr('Unsupported files')+': '+(c.unsupported??'—'),tr('Declared / inferred edges')+': '+(c.declaredEdges??'—')+' / '+(c.heuristicEdges??'—'),
+      tr('Tests have not been run.'),tr('This is a snapshot. Regenerate after editing files.')];
+    target.replaceChildren(...rows.map(value=>{const row=document.createElement('p');row.textContent=value;return row;}));
+  }
+  window.gitchGraph=Object.freeze({snapshot:graphSnapshot,applyEnvelope:applyGraphEnvelope});
+  function initializeGraphActions() {
+    const embedded=$('graph-actions');
+    try {
+      if(embedded && embedded.textContent.trim()!=='null'){applyGraphEnvelope(JSON.parse(embedded.textContent));return;}
+      if(location.hash.startsWith('#actions=')) {
+        const raw=location.hash.slice(9);if(raw.length>90000)throw new Error('Large graph actions');
+        const bytes=Uint8Array.from(atob(raw.replace(/-/g,'+').replace(/_/g,'/')),char=>char.charCodeAt(0));
+        applyGraphEnvelope(JSON.parse(new TextDecoder().decode(bytes)));
+      }
+    }catch {banner(tr('Graph actions do not match this analysis snapshot. Analyze again.'));}
+  }
+
   // ----- 시작 -----
   document.title = `${META.repo}${META.scope ? "/" + META.scope : ""} — gitch graph`;
   $("repo").textContent = META.repo + (META.scope ? " / " + META.scope : "");
@@ -17204,6 +17355,7 @@ HTMLEOF
   initializeSharing();
   renderSavedViews();
   try { const last = localStorage.getItem(lastKey); if (last && location.hash !== "#test") restoreView(JSON.parse(last)); } catch { /* other snapshots may omit this relation */ }
+  initializeGraphActions();
   if (location.hash === "#test") window.gitchGraphTest = {
     replay: () => ({active:replay.active,playing:replay.playing,progress:replay.progress,reduced:!!replay.reduced?.matches,
       nodes:replay.active?visNodes.map(n=>({id:n.id,label:replayLabel(n),before:replay.data.before.has(n.id),current:replay.data.current.has(n.id),opacity:replayNodeOpacity(n),x:n.x,y:n.y})):[],
@@ -17213,6 +17365,7 @@ HTMLEOF
     select: (id) => { if(id===null){select(null);return true;} const n = m.nodeOf.get(id); if (n) select(n); return !!n; },
     review: () => ({seeds:reviewSeeds(),direct:reviewImpact().direct,indirect:reviewImpact().indirect,priorities:reviewPriorities(),tests:reviewTests(reviewImpact()),withoutGuesses:{direct:reviewImpact(false).direct,indirect:reviewImpact(false).indirect},depth:reviewDepth}),
     benchmarkReview: () => {reviewGraphCache.clear();reviewCycleCache.clear();reviewOwnerCache.clear();const cold=performance.now();renderReview();const coldMs=performance.now()-cold,warm=[];for(let i=0;i<5;i++){const t=performance.now();renderReview();warm.push(performance.now()-t);}return {coldMs,warmMs:warm};},
+    benchmarkSelection: () => {const rows=[];for(const node of visNodes.slice(0,5)){const t=performance.now();select(node);rows.push({id:node.id,kind:node.kind,ms:performance.now()-t});}return {visibleNodes:visNodes.length,samples:rows};},
     metrics: () => ({...reviewMetrics,nodes:m.nodes.length,edges:m.edges.length,htmlBytes:new Blob([document.documentElement.outerHTML]).size}),
     architecture: computeArchitecture,
     highlight:()=>({nodes:[...(HL?.nodes||[])].map(n=>n.id),edges:HL?.edges?.size||0}),
@@ -17439,6 +17592,105 @@ schema_cmd() {
       "edges"
     ],
     "properties": {
+      "snapshotID": {
+        "type": "string",
+        "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$",
+        "description": "Opaque identity of revision, tracked content and graph inputs; independent of wall-clock and cache-hit telemetry."
+      },
+      "provenance": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "headSha",
+          "graphStamp",
+          "contentKey",
+          "scope",
+          "pathScope",
+          "toolVersion",
+          "generatedAt",
+          "verification"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "headSha": {
+            "type": "string"
+          },
+          "graphStamp": {
+            "type": "string"
+          },
+          "contentKey": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "pathScope": {
+            "type": "string"
+          },
+          "toolVersion": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "not-run"
+              }
+            }
+          }
+        }
+      },
+      "coverage": {
+        "type": "object",
+        "required": [
+          "files",
+          "analyzed",
+          "unsupported",
+          "edges",
+          "heuristicEdges",
+          "declaredEdges",
+          "diagnostics"
+        ],
+        "properties": {
+          "files": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "analyzed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unsupported": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "edges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "heuristicEdges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "declaredEdges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "diagnostics": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+,
       "schemaVersion": {
         "const": 1
       },

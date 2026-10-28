@@ -270,7 +270,7 @@ struct ProjectWorkspace: View {
                 else if layout == "calendar" { ProjectCalendar(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, reschedule: reschedule, manageFields: { manage(isLocal ? .overview : .fields) }) }
                 else if layout == "table" { ProjectTaskTable(rows: rows, fields: tableFields, selectedID: selectedID, selectedItems: selectedItems, select: select, edit: editField,
                     setField: { row, field, value in await saveField(row, field: field, detail: detail, value: value) }, canEdit: !locked && !hub.uncertainWrite).id(detail.item.id) }
-                else if layout == "roadmap" { ProjectRoadmap(rows: rows, fields: detail.fields, settings: scheduleSettings, select: select, editDate: editField) }
+                else if layout == "roadmap" { ProjectRoadmap(rows: rows, fields: detail.fields, settings: scheduleSettings, select: select, editDate: editField, dependencyRows: isLocal ? detail.rows : nil, selectedID: selectedID) }
                 else { board(detail).id(detail.item.id) }
             }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             if width >= 1080, let selected { Divider(); inspector(selected, detail: detail).frame(width: 325) }
@@ -323,6 +323,8 @@ struct ProjectWorkspace: View {
             }
         }, setField: { field, value in
             await saveField(row, field: field, detail: detail, value: value)
+        }, setDependencies: { predecessors, duration in
+            await save(expected: stamp) { c in try await HostingHubAPI.saveProjectDependencies(c, detail: detail, row: row, predecessorIDs: predecessors, durationDays: duration) }
         }, postComment: { text in
             await postComment(text, row: row, detail: detail, expected: stamp)
         })

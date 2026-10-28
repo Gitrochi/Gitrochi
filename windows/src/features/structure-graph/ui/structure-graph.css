@@ -1,0 +1,9 @@
+.structure-graph-frame {
+  display: block;
+  width: 100%;
+  height: min(68vh, 760px);
+  min-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
