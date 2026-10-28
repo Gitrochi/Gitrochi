@@ -1187,3 +1187,13 @@
 "Open in Releases" = "Ouvrir dans Versions";
 "Hide right panel" = "Masquer le panneau droit";
 "Show right panel" = "Afficher le panneau droit";
+"Development" = "Développement";
+"Newest first" = "Plus récentes";
+"Version number" = "Version";
+"Create branch" = "Créer une branche";
+"Create pull request" = "Créer une pull request";
+"Create merge request" = "Créer une merge request";
+"Quote reply" = "Citer et répondre";
+"Edit comment" = "Modifier le commentaire";
+"Save comment" = "Enregistrer le commentaire";
+"Not published" = "Non publiée";

@@ -837,3 +837,6 @@
 
 /* Panes retain their natural width and scroll within their allocated height. */
 .shared-pane { flex:none; min-width:0; overflow-x:hidden; }
+
+.hosting-date { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); line-height: 1.5; }
+.hosting-date svg { flex-shrink: 0; opacity: .8; }

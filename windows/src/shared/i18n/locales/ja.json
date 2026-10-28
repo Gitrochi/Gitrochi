@@ -2022,5 +2022,15 @@
   "View overlap in graph": "グラフで重複を表示",
   "Commits": "コミット",
   "Related test candidates": "関連テストの候補",
-  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。"
+  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。",
+  "Development": "開発",
+  "Newest first": "新しい順",
+  "Version number": "バージョン順",
+  "Create branch": "ブランチを作成",
+  "Create pull request": "プルリクエストを作成",
+  "Create merge request": "マージリクエストを作成",
+  "Quote reply": "引用して返信",
+  "Edit comment": "コメントを編集",
+  "Save comment": "コメントを保存",
+  "Not published": "未公開"
 }

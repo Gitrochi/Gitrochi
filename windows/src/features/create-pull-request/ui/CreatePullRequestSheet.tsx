@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { issueRequestBody } from "@/entities/hosting";
 import { ai } from "@/entities/ai";
 import { markdownLinks, providerInfo } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -10,11 +11,13 @@ export function CreatePullRequestSheet({ store, close }: { store: RepoStore; clo
   const provider = store.target?.provider ?? "github";
   const [title, setTitle] = useState(() => {
     if (store.newPullRequestDraft?.branch === store.headBranch) return store.newPullRequestDraft.title;
+    if (store.currentBranchIssue) return store.currentBranchIssue.title;
     const b = store.headBranch ?? "";
     return (b.split("/").pop() ?? b).replace(/-/g, " ");
   });
   const saved = store.newPullRequestDraft?.branch === store.headBranch ? store.newPullRequestDraft : null;
-  const [body, setBody] = useState(saved?.body ?? "");
+  const issue = saved?.issue ?? store.currentBranchIssue;
+  const [body, setBody] = useState(saved?.body ?? (issue ? issueRequestBody(issue) : ""));
   const [base, setBase] = useState(saved?.base ?? "");
   const [bases] = useState(() => store.pullRequestBaseCandidates());
   const [draft, setDraft] = useState(saved?.draft ?? false);
@@ -34,6 +37,7 @@ export function CreatePullRequestSheet({ store, close }: { store: RepoStore; clo
       onConfirm={() => void store.createPullRequest(title.trim(), body, base, draft)}
       leftFooter={store.status.upstream == null || store.status.ahead > 0 ? t("Pushes the current branch to {0} before creating.", store.target?.remote ?? t("Remotes")) : undefined}
     >
+      {issue && <div className="hint">{t("From issue #{0}: {1}", issue.number, issue.title)}</div>}
       <div className="row">
         <span className="mono">{store.headBranch}</span>
         <span className="muted">→</span>
@@ -73,7 +77,7 @@ export function CreatePullRequestSheet({ store, close }: { store: RepoStore; clo
             void store.draftPullRequest(base).then((d) => {
               if (d) {
                 setTitle(d[0]);
-                setBody(d[1]);
+                setBody(issue ? `${issueRequestBody(issue)}\n\n${d[1]}` : d[1]);
               }
               setGenerating(false);
             });

@@ -90,6 +90,50 @@ export abstract class RepoIssues extends RepoHosting {
     await this.openInboxItem(item);
   }
 
+  /** Opens a reviewed branch dialog without changing Git or posting to the server. */
+  requestIssueBranch(item: InboxItem) {
+    const task = Hosting.issueTaskReference(this.target, item);
+    if (!task || !this.headHash || this.busy) return;
+    this.requestNewBranch(this.headHash, this.headBranch ?? "HEAD", Hosting.issueBranchName(task), task);
+  }
+
+  get currentBranchIssue() {
+    const task = this.path && this.headBranch && this.target ? Hosting.projectBranchTask(this.path, this.headBranch, this.target.path, this.target.host) : null;
+    return task ? Hosting.issueTaskReference(this.target, { ...task, number: task.number ?? 0, kind: "issue" }) : null;
+  }
+
+  requestIssuePullRequest(item: InboxItem) {
+    const task = Hosting.issueTaskReference(this.target, item), branch = this.headBranch;
+    if (!task || !branch || this.busy) return;
+    const existing = this.pullRequests.find(request => request.source === branch);
+    if (existing) { this.navigate("pullRequests"); this.select({ kind: "pullRequest", number: existing.number }); return; }
+    this.newPullRequestDraft = { branch, title: task.title, body: Hosting.issueRequestBody(task), base: "", draft: true, issue: task };
+    this.openSheet({ kind: "createPullRequest" });
+  }
+
+  async changeIssueComment(item: InboxItem, comment: Hosting.InboxComment, body: string | null) {
+    if (this.inboxBusy || this.inboxLoading || this.inboxDetail?.item.id !== item.id || !this.inboxDetail.comments.some(value => value.id === comment.id && value.body === comment.body && value.editable)) return false;
+    const key = this.issueContextKey, current = () => key === this.issueContextKey && this.inboxDetail?.item.id === item.id;
+    this.inboxBusy = true; this.inboxError = null; this.emit();
+    try {
+      const access = await this.workspaceAccess();
+      if (!access || !current()) return false;
+      await Hosting.changeIssueComment({ ...access, stillCurrent: () => current() && access.stillCurrent?.() !== false }, item, comment, body);
+      if (!current()) return false;
+      await this.openInboxItem(item); return current();
+    } catch (error) { if (current()) this.inboxError = describe(error); return false; }
+    finally { if (key === this.issueContextKey) { this.inboxBusy = false; this.emit(); } }
+  }
+  confirmDeleteIssueComment(item: InboxItem, comment: Hosting.InboxComment) {
+    const key = this.issueContextKey;
+    this.confirm = { title: t("Delete comment?"), message: t("This permanently deletes your comment."), actionTitle: t("Delete"), destructive: true, action: async () => { if (key === this.issueContextKey) await this.changeIssueComment(item, comment, null); } }; this.emit();
+  }
+  async issueLinkedRequests(item: InboxItem, page = 1) {
+    const key = this.issueContextKey, access = await this.workspaceAccess();
+    if (!access || key !== this.issueContextKey) throw new Error(t("The repository or account changed. Reopen this action."));
+    return Hosting.issueLinkedRequests({ ...access, stillCurrent: () => key === this.issueContextKey && access.stillCurrent?.() !== false }, item, page);
+  }
+
   private clearIssueList() {
     this.issueListToken++;
     this.issues = []; this.issuePage = 0; this.issuesMore = false; this.issueState = { kind: "idle" };
