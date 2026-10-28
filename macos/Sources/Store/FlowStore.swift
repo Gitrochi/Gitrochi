@@ -32,8 +32,33 @@ final class FlowStore {
     /// Records of finished runs (run.json)
     private(set) var records: [String: FlowJSON] = [:]
     private var tails: [String: Task<Void, Never>] = [:]
+    var validationBindings: [ValidationBinding]
+    private var validationKey: String { "workValidation:" + repo.standardizedFileURL.path }
 
-    init(repo: URL) { self.repo = repo }
+    init(repo: URL) {
+        self.repo = repo
+        validationBindings = UserDefaults.standard.data(forKey: "workValidation:" + repo.standardizedFileURL.path).flatMap { try? JSONDecoder().decode([ValidationBinding].self, from: $0) } ?? []
+    }
+
+    private func saveValidation() {
+        if let data = try? JSONEncoder().encode(Array(validationBindings.suffix(100))) { UserDefaults.standard.set(data, forKey: validationKey) }
+    }
+
+    /// Local trusted plans can bind their actual run to the observed working contents.
+    func startVerified(_ flow: String, candidates: [String]) async throws -> String {
+        let plan = try await FlowEngine.plan(flow, in: repo)
+        guard plan.trust.trusted, plan.outward.isEmpty, plan.gates.isEmpty,
+              !plan.nodes.contains(where: { $0.decision == "run" && ($0.destructive == true || $0.outward == true || ($0.executor != nil && $0.executor != "local")) }) else {
+            throw FlowEngine.Failure(message: String(localized: "Review and approve this flow in the Flows workspace before running it here."))
+        }
+        let before = try await WorkStamp.read(in: repo)
+        let run = try await FlowEngine.start(flow, in: repo, affected: false, yes: false)
+        validationBindings.append(ValidationBinding(runID: run.runId, head: before.head, before: before.stamp, candidates: candidates, observedAt: ISO8601DateFormatter().string(from: Date())))
+        saveValidation()
+        follow(runId: run.runId, eventsPath: run.eventsPath)
+        Task { await refresh() }
+        return run.runId
+    }
 
     var engineAvailable: Bool { FlowEngine.executable != nil }
 
@@ -140,6 +165,13 @@ final class FlowStore {
             guard let self else { return }
             self.tails[runId] = nil
             if let rec = try? await FlowEngine.record(runId, in: self.repo) { self.records[runId] = rec }
+            if !Task.isCancelled, let record = self.records[runId], record["finishedAt"].string != nil,
+               ["SUCCEEDED", "FAILED", "REJECTED", "CANCELLED", "ROLLED_BACK", "ROLLBACK_FAILED"].contains(record["state"].string ?? ""),
+               let index = self.validationBindings.firstIndex(where: { $0.runID == runId && $0.after == nil }),
+               let current = try? await WorkStamp.read(in: self.repo) {
+                self.validationBindings[index].after = current.stamp
+                self.saveValidation()
+            }
             await self.refresh()
         }
     }

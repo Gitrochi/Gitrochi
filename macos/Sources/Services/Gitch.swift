@@ -234,6 +234,15 @@ enum Gitch {
         return env
     }
 
+    /// Runtime overrides remain local to graph processes and their children.
+    static func readOnlyGraphEnvironment(_ source: [String: String]) -> [String: String] {
+        var result = source
+        let parameters = source["GIT_CONFIG_PARAMETERS"] ?? ""
+        result["GIT_CONFIG_PARAMETERS"] = (parameters.isEmpty ? "" : parameters + " ") + "'core.fsmonitor=false'"
+        result["GITSW_SWIFT_DESCRIBE"] = "0"
+        return result
+    }
+
     static func status(in repo: URL) async -> Status? { await json(["status", "--json"], in: repo) }
 
     /// fetch 면 원격을 받아 받을 커밋까지 본다(몇 초). 아니면 지금 있는 원격 정보로만(0.2초 안팎).
@@ -311,17 +320,32 @@ enum Gitch {
     static func graph(_ relation: GraphRelation, in repo: URL, precise: Bool = false) async throws -> GraphPage {
         let file = graphFile(precise ? "files-precise" : relation.rawValue, in: repo)
         let r = try await runGraph([relation.rawValue] + (precise ? ["--precise"] : []) + ["--format", "html", "--out", file.path, "--no-open"], in: repo)
-        var page = graphPage(file, result: r)
-        page.liveURL = await graphWatchURL(precise ? "precise" : relation.rawValue, file: file, in: repo)
-        return page
+        return graphPage(file, result: r)
+    }
+
+    /// Select only file paths present in a freshly observed static graph.
+    static func graphPathSelection(_ paths: [String], in repo: URL) async throws -> String {
+        struct Node: Decodable { let id: String; let kind: String }
+        struct Snapshot: Decodable { let schemaVersion: Int; let snapshotID: String; let nodes: [Node] }
+        let result = try await runGraph(["files", "--json"], in: repo)
+        let snapshot = try JSONDecoder().decode(Snapshot.self, from: result.data)
+        guard snapshot.schemaVersion == 1, snapshot.snapshotID.range(of: "^(?:[a-f0-9]{40}|[a-f0-9]{64})$", options: .regularExpression) != nil else {
+            throw Failure(message: String(localized: "The graph snapshot could not be read. Analyze again."))
+        }
+        let known = Set(snapshot.nodes.filter { $0.kind == "file" }.map(\.id))
+        guard !paths.isEmpty, paths.count <= 100, Set(paths).count == paths.count, paths.allSatisfy(known.contains) else {
+            throw Failure(message: String(localized: "Some selected files are not present in this dependency graph. Analyze the current files again."))
+        }
+        struct Action: Encodable { let kind: String; let nodeIDs: [String] }
+        struct Envelope: Encodable { let schemaVersion: Int; let snapshotID: String; let actions: [Action] }
+        let actions = Envelope(schemaVersion: 1, snapshotID: snapshot.snapshotID, actions: [Action(kind: "nodes", nodeIDs: paths)])
+        return String(decoding: try JSONEncoder().encode(actions), as: UTF8.self)
     }
 
     static func affectedGraph(base: String? = nil, in repo: URL) async throws -> GraphPage {
         let file = graphFile("affected", in: repo)
         let r = try await runGraph(["affected"] + (base.map { ["--base", $0] } ?? []) + ["--format", "html", "--out", file.path, "--no-open"], in: repo)
-        var page = graphPage(file, result: r)
-        if base == nil { page.liveURL = await graphWatchURL("affected", file: file, in: repo) }
-        return page
+        return graphPage(file, result: r)
     }
 
     /// 작업 트리와 섞이지 않도록 CLI 가 HEAD 와 스테이지만 별도 스냅샷으로 분석한다.
@@ -344,14 +368,6 @@ enum Gitch {
         let result = try await runGraph(["review", "--format", "html", "--out", file.path, "--no-open"], in: repo)
         guard plain(result.output).contains("GRAPH_FILE=") else { throw graphFailure(result) }
         return file
-    }
-
-    private static func graphWatchURL(_ relation: String, file: URL, in repo: URL) async -> URL? {
-        struct Watch: Decodable { let url: String }
-        guard let r = try? await runGraph(["watch", relation, "--out", file.path, "--no-open", "--detach", "--json"], in: repo),
-              let result = try? JSONDecoder().decode(Watch.self, from: r.data), let url = URL(string: result.url),
-              url.scheme == "http", url.host == "127.0.0.1", url.port != nil, url.user == nil, url.password == nil else { return nil }
-        return url
     }
 
     private static func graphPage(_ file: URL, result r: GitResult) -> GraphPage {
@@ -415,7 +431,7 @@ enum Gitch {
     private static func runGraph(_ args: [String], in repo: URL, ok: Set<Int32> = [0]) async throws -> GitResult {
         if let reason = graphUnavailableReason { throw Failure(message: reason) }
         guard let exe = bundled else { throw Failure(message: String(localized: "Couldn't find gitch inside Gitrochi.")) }
-        var graphEnvironment = environment
+        var graphEnvironment = readOnlyGraphEnvironment(environment)
         graphEnvironment["GITCH_GRAPH_LANG"] = AppLanguage.graphCode
         let r = try await Shell.run("/bin/bash", [exe, "graph"] + args, cwd: repo, env: graphEnvironment, timeout: 600)
         guard ok.contains(r.status) else { throw graphFailure(r) }
@@ -434,8 +450,8 @@ enum Gitch {
         let hash = SHA256.hash(data: Data(repo.path.utf8)).prefix(4).map { String(format: "%02x", $0) }.joined()
         return FileManager.default.temporaryDirectory
             .appendingPathComponent("gitch-graph", isDirectory: true)
-            // Separate watcher identities so an earlier language cannot overwrite this page.
-            .appendingPathComponent("\(repo.lastPathComponent)-\(name)-\(AppLanguage.graphCode)-\(hash).html")
+            // Older live watchers cannot replace this immutable analysis document.
+            .appendingPathComponent("\(repo.lastPathComponent)-snapshot-\(name)-\(AppLanguage.graphCode)-\(hash)-\(UUID().uuidString).html")
     }
 
     private static func json<T: Decodable>(_ args: [String], in repo: URL) async -> T? {

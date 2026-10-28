@@ -23,7 +23,36 @@ export const tools = [
   tool("read_file", "Read a tracked text file, optionally from a commit. Secret paths, symlinks, binary and large files are excluded.", object({ path: text, ref }, ["path"])),
   tool("search_code", "Search a literal string in tracked working text files. Reads at most 100 matching file names, 64 KB each.", object({ query: text, path: text, count }, ["query"])),
   tool("gitch_preflight", "Read the locked account and preflight checks. No authentication or configuration changes.", object()),
+  tool("graph_context", "Read a bounded file-dependency snapshot of tracked working files, optionally the neighborhood of selected paths. Includes known node IDs and directed edges; does not run tests.", object({ paths: { type: "array", maxItems: 20, items: text } })),
 ];
+
+/** Keep graph context valid JSON within the same response budget as file reads. */
+export function boundedGraphContext(graph, selectedPaths = []) {
+  if (!graph || typeof graph !== "object" || typeof graph.snapshotID !== "string" || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(graph.snapshotID) || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) throw new Error("Update Gitrochi to read versioned graph snapshots.");
+  const eligible = graph.nodes.map((node) => node.id).filter((id) => { try { allowedPath(id); return true; } catch { return false; } });
+  const all = new Set(eligible), requested = selectedPaths.map(allowedPath);
+  let candidates = [...all].sort();
+  if (requested.length) {
+    const neighbors = new Map();
+    for (const edge of graph.edges) if (all.has(edge.source) && all.has(edge.target)) {
+      for (const [source, target] of [[edge.source, edge.target], [edge.target, edge.source]]) { if (!neighbors.has(source)) neighbors.set(source, []); neighbors.get(source).push(target); }
+    }
+    candidates = [...new Set(requested)].filter((id) => all.has(id));
+    const visited = new Set(candidates);
+    for (let index = 0; index < candidates.length && candidates.length < 150; index++) for (const id of neighbors.get(candidates[index]) ?? []) if (!visited.has(id)) { visited.add(id); candidates.push(id); if (candidates.length >= 150) break; }
+  }
+  const nodeIDs = candidates.slice(0, 150);
+  const known = new Set(nodeIDs);
+  const edges = graph.edges.filter((edge) => edge && known.has(edge.source) && known.has(edge.target)).map(({ source, target }) => ({ source, target })).slice(0, 300);
+  const result = { schemaVersion: 1, id: graph.snapshotID, nodeIDs, edges, scope: "worktree", requestedPaths: requested, coverage: { totalNodes: graph.nodes.length, totalEdges: graph.edges.length, shownNodes: nodeIDs.length, shownEdges: edges.length, truncated: eligible.length !== graph.nodes.length || eligible.length > nodeIDs.length || graph.edges.length > edges.length } };
+  while (JSON.stringify(result).length > LIMIT) {
+    if (edges.length) edges.pop();
+    else if (nodeIDs.length) nodeIDs.pop();
+    else throw new Error("The graph context exceeds its response budget.");
+    result.coverage.shownNodes = nodeIDs.length; result.coverage.shownEdges = edges.length; result.coverage.truncated = true;
+  }
+  return result;
+}
 
 const secretPath = /(^|\/)(\.git|\.env(?:\..*)?|\.ssh|\.aws|\.npmrc|\.netrc|credentials?|secrets?)(\/|$)|\.(?:pem|key|p12|pfx|keystore)$|(^|\/)id_(?:rsa|ed25519|ecdsa)(?:\.|$)/i;
 export function allowedPath(value) {
@@ -52,13 +81,20 @@ function validate(name, args) {
     if (rule.enum && !rule.enum.includes(value)) throw new Error(`Invalid ${key}.`);
     if (rule.type === "string" && (typeof value !== "string" || value.length > rule.maxLength || value.includes("\0"))) throw new Error(`Invalid ${key}.`);
     if (rule.type === "integer" && (!Number.isInteger(value) || value < rule.minimum || value > rule.maximum)) throw new Error(`Invalid ${key}.`);
+    if (rule.type === "array" && (!Array.isArray(value) || value.length > rule.maxItems || !value.every((item) => typeof item === "string" && item.length <= rule.items.maxLength && !item.includes("\0")))) throw new Error(`Invalid ${key}.`);
   }
 }
 
-function processOutput(program, args, cwd, signal, allowOne = false) {
+/** Last command-scope value wins over repository config and inherited indexed overrides. */
+export function readOnlyGraphEnvironment(environment = process.env) {
+  const inherited = environment.GIT_CONFIG_PARAMETERS ?? "";
+  return { GITSW_SWIFT_DESCRIBE: "0", GIT_CONFIG_PARAMETERS: (inherited ? inherited + " " : "") + "'core.fsmonitor=false'" };
+}
+
+function processOutput(program, args, cwd, signal, allowOne = false, maxBuffer = 2_000_000, environment = {}) {
   return new Promise((resolve, reject) => {
-    execFile(program, args, { cwd, signal, timeout: 15000, maxBuffer: 2_000_000, windowsHide: true,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GIT_OPTIONAL_LOCKS: "0", LC_ALL: "C", GIT_PAGER: "cat", GIT_LITERAL_PATHSPECS: "1" } }, (error, stdout, stderr) => {
+    execFile(program, args, { cwd, signal, timeout: 15000, maxBuffer, windowsHide: true,
+      env: { ...process.env, ...environment, GIT_TERMINAL_PROMPT: "0", GIT_OPTIONAL_LOCKS: "0", LC_ALL: "C", GIT_PAGER: "cat", GIT_LITERAL_PATHSPECS: "1" } }, (error, stdout, stderr) => {
       if (error && !(allowOne && error.code === 1)) return reject(new Error(redact(stderr || error.message).slice(0, 1200)));
       resolve(stdout);
     });
@@ -162,6 +198,16 @@ export async function openRepository(folder, options = {}) {
           output = options.bash
             ? await processOutput(options.bash, [options.gitch.replaceAll("\\", "/"), "preflight", "--json"], root, signal, true)
             : await processOutput(options.gitch, ["preflight", "--json"], root, signal, true); break;
+        }
+        case "graph_context": {
+          if (!options.gitch) throw new Error("The bundled gitch path is not configured.");
+          (args.paths ?? []).forEach(allowedPath);
+          const graphArgs = ["graph", "files", "--json"];
+          const graphEnvironment = readOnlyGraphEnvironment();
+          const raw = options.bash
+            ? await processOutput(options.bash, [options.gitch.replaceAll("\\", "/"), ...graphArgs], root, signal, false, 16_000_000, graphEnvironment)
+            : await processOutput(options.gitch, graphArgs, root, signal, false, 16_000_000, graphEnvironment);
+          output = JSON.stringify(boundedGraphContext(JSON.parse(raw), args.paths ?? [])); break;
         }
         default: throw new Error("Unknown read-only tool.");
       }

@@ -8,7 +8,7 @@
 "Compare dependencies" = "Comparer les dépendances";
 "Compare with" = "Comparer avec";
 "Compare with…" = "Comparer avec…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Compare les dépendances de votre copie de travail, modifications non validées comprises, avec le point où cette branche s’est séparée de la branche par défaut (gitch graph diff), puis ouvre les changements dans votre navigateur.";
+
 "Comparing dependencies…" = "Comparaison des dépendances…";
 "Couldn't check the rules" = "Impossible de vérifier les règles";
 "Create rules file" = "Créer le fichier de règles";
@@ -393,7 +393,7 @@
 "Draft" = "Brouillon";
 "Drawing the graph with %lld commits…" = "Tracé du graphe (%1$lld commit(s))…";
 "Drawing the structure graph…" = "Dessin du graphe de structure…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Dessine avec gitch graph les imports, modules, fichiers modifiés ensemble ou dossiers de ce dépôt, puis l’ouvre dans votre navigateur.";
+
 "Drop" = "Supprimer";
 "Dropping stash…" = "Suppression du stash…";
 "Drop…" = "Supprimer…";

@@ -23,6 +23,7 @@ import { Button } from "@/shared/ui";
 import { ProjectFieldEditor } from "./ProjectFieldEditor";
 import { ProjectTaskConversation } from "./ProjectTaskConversation";
 import { ProjectTaskActions } from "./ProjectTaskActions";
+import { ProjectDependenciesEditor } from "./ProjectDependenciesEditor";
 import {
   projectFieldValue,
   type ProjectAsk,
@@ -299,6 +300,7 @@ export function ProjectInspector({
           />
         ))}
         </div>
+        {localProject && <ProjectDependenciesEditor detail={detail} row={row} locked={locked} ask={ask} />}
         {!editableFields.length && (
           <p className="hint">{t("No project fields are available.")}</p>
         )}

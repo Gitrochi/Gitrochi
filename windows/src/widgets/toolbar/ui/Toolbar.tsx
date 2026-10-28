@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, PackageOpen, PanelRightClose, PanelRightOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FolderOpen, GitBranch, GitPullRequestArrow, Network, PackageOpen, PanelRightClose, PanelRightOpen, RefreshCcw, SquarePen, SquareTerminal, Undo2 } from "lucide-react";
 import { structureGraphMenus } from "@/features/git-menus";
 import { agentKind, agents } from "@/entities/agent";
 import { providerInfo, statusIsEmpty } from "@/entities/git";
@@ -62,6 +62,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
               "divider",
               ...structureGraphMenus(store),
               { label: t("Repository tools…"), onClick: () => sheet({ kind: "localWorkflows" }) },
+              { label: t("Work validation…"), onClick: () => sheet({ kind: "workValidation" }) },
               "divider",
               { label: t("Ask AI about changes…"), disabled: !!store.busy, onClick: () => void store.openChangeQuestion() },
               { label: t("Repository assistant…"), onClick: () => void store.openRepositoryAssistant() },
@@ -221,6 +222,9 @@ export function Toolbar({ store }: { store: RepoStore }) {
         statusIsEmpty(st) && !store.stashes.length,
       )}
 
+      <button className="tool" data-tip={t("Structure graph workspace")} aria-label={t("Structure graph workspace")} disabled={!!store.busy || !!store.graphJob} onClick={() => void store.openStructureGraph("files")}>
+        <Network size={16} />
+      </button>
       <div className="tool-group">
         <button
           className={`tool ${store.showTerminal ? "on" : ""}`}

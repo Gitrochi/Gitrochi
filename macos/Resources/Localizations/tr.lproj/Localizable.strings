@@ -8,7 +8,7 @@
 "Compare dependencies" = "Bağımlılıkları karşılaştır";
 "Compare with" = "Karşılaştırılacak";
 "Compare with…" = "Şununla karşılaştır…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Çalışma dizinindeki bağımlılıkları, commit edilmemiş değişiklikler dahil, bu dalın varsayılan daldan ayrıldığı noktayla karşılaştırır (gitch graph diff) ve değişenleri tarayıcıda açar.";
+
 "Comparing dependencies…" = "Bağımlılıklar karşılaştırılıyor…";
 "Couldn't check the rules" = "Kurallar denetlenemedi";
 "Create rules file" = "Kural dosyası oluştur";
@@ -394,7 +394,7 @@
 "Draft" = "Taslak";
 "Drawing the graph with %lld commits…" = "%1$lld commit ile grafik çiziliyor…";
 "Drawing the structure graph…" = "Yapı grafiği çiziliyor…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Bu deponun içe aktarmalarını, modüllerini, birlikte değişen dosyalarını veya klasörlerini gitch graph ile çizer ve tarayıcıda açar.";
+
 "Drop" = "Çıkar";
 "Dropping stash…" = "Stash siliniyor…";
 "Drop…" = "Sil (Drop)…";

@@ -8,7 +8,7 @@
 "Compare dependencies" = "เปรียบเทียบการพึ่งพา";
 "Compare with" = "เปรียบเทียบกับ";
 "Compare with…" = "เปรียบเทียบกับ…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "เปรียบเทียบการพึ่งพาในเวิร์กกิงทรี รวมถึงการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต กับจุดที่แบรนช์นี้แยกออกจากแบรนช์เริ่มต้น (gitch graph diff) แล้วเปิดสิ่งที่เปลี่ยนในเบราว์เซอร์";
+
 "Comparing dependencies…" = "กำลังเปรียบเทียบการพึ่งพา…";
 "Couldn't check the rules" = "ตรวจกฎไม่ได้";
 "Create rules file" = "สร้างไฟล์กฎ";
@@ -400,7 +400,7 @@
 "Draft" = "ฉบับร่าง";
 "Drawing the graph with %lld commits…" = "กำลังวาดกราฟจาก %1$lld คอมมิต…";
 "Drawing the structure graph…" = "กำลังวาดกราฟโครงสร้าง…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "วาด import, โมดูล, ไฟล์ที่เปลี่ยนพร้อมกัน หรือโฟลเดอร์ของรีโพสิทอรีนี้ด้วย gitch graph แล้วเปิดในเบราว์เซอร์";
+
 "Drop" = "ตัดออก";
 "Dropping stash…" = "กำลังลบสแตช…";
 "Drop…" = "ลบทิ้ง (Drop)…";

@@ -434,6 +434,104 @@
         },
         "cycles": {
           "type": "object"
+        },
+        "snapshotID": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$",
+          "description": "Opaque identity of revision, tracked content and graph inputs; independent of wall-clock and cache-hit telemetry."
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "headSha",
+            "graphStamp",
+            "contentKey",
+            "scope",
+            "pathScope",
+            "toolVersion",
+            "generatedAt",
+            "verification"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "headSha": {
+              "type": "string"
+            },
+            "graphStamp": {
+              "type": "string"
+            },
+            "contentKey": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            },
+            "pathScope": {
+              "type": "string"
+            },
+            "toolVersion": {
+              "type": "string"
+            },
+            "generatedAt": {
+              "type": "string"
+            },
+            "verification": {
+              "type": "object",
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "const": "not-run"
+                }
+              }
+            }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": [
+            "files",
+            "analyzed",
+            "unsupported",
+            "edges",
+            "heuristicEdges",
+            "declaredEdges",
+            "diagnostics"
+          ],
+          "properties": {
+            "files": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "analyzed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unsupported": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "edges": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "heuristicEdges": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "declaredEdges": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "diagnostics": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         }
       }
     },

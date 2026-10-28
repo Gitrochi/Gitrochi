@@ -2,6 +2,7 @@ import { countGraphRules, gitch, type GitchAccount, type GitchBackup, type Gitch
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { workContextPath } from "@/shared/lib";
 import { describe } from "@/shared/platform";
 import { RepoTerminal } from "./terminal";
 
@@ -275,12 +276,14 @@ export abstract class RepoGitch extends RepoTerminal {
   /** 구조 그래프(gitch graph)를 html 로 만들어 기본 브라우저로 연다. 실패하면 gitch 가 낸 문구를 보여 준다. */
   async openStructureGraph(relation: GraphRelation, precise = false) {
     const path = this.path;
+    const head = this.headHash;
     if (!path || this.graphJob) return;
     this.graphJob = { kind: "draw", relation };
     this.emit();
     try {
       const page = await gitch.graph(relation, path, precise);
       if (this.path !== path) return;
+      if (this.headHash !== head) throw new Error(t("HEAD changed while preparing the graph. Refresh the analysis."));
       if (page.nodes === 0) {
         // 빈 페이지를 띄우기보다 gitch 가 찾지 못한 것을 먼저 알린다
         const title = graphRelations().find((r) => r.id === relation)?.title ?? relation;
@@ -301,11 +304,13 @@ export abstract class RepoGitch extends RepoTerminal {
 
   async openAffectedGraph(base: string | null = null) {
     const path = this.path;
+    const head = this.headHash;
     if (!path || this.graphJob) return;
     this.graphJob = { kind: "draw", relation: "files" };
     this.emit();
     try {
       const page = await gitch.affectedGraph(path, base);
+      if (this.path === path && this.headHash !== head) throw new Error(t("HEAD changed while preparing the graph. Refresh the analysis."));
       if (this.path === path) await this.openStructureGraphPage(page);
     } catch (error) {
       if (this.path === path) this.fail(error);
@@ -315,8 +320,41 @@ export abstract class RepoGitch extends RepoTerminal {
     }
   }
 
-  private openStructureGraphPage(page: GraphPage) {
-    return page.liveUrl ? ipc.openUrl(page.liveUrl) : ipc.openHtml(page.file);
+  private async openStructureGraphPage(page: GraphPage) {
+    if (!this.path) return;
+    this.openSheet({ kind: "structureGraph", ...page, repository: this.path, head: this.headHash, generation: Date.now() });
+  }
+
+  /** The renderer validates actions against the newly generated snapshot again. */
+  async openAssistantGraph(actionsJSON: string) {
+    const path = this.path;
+    const head = this.headHash;
+    if (!path || this.graphJob || actionsJSON.length > 65_536) return;
+    this.graphJob = { kind: "draw", relation: "files" }; this.emit();
+    try {
+      JSON.parse(actionsJSON);
+      const page = await gitch.graph("files", path);
+      if (this.path === path && this.headHash !== head) throw new Error(t("HEAD changed while preparing the graph. Refresh the analysis."));
+      if (this.path === path) this.openSheet({ kind: "structureGraph", ...page, repository: path, head: this.headHash, actionsJSON, generation: Date.now() });
+    } catch (error) { if (this.path === path) this.fail(error); }
+    finally { this.graphJob = null; this.emit(); }
+  }
+
+  /** Team evidence can highlight real files without involving an AI provider. */
+  async openWorkGraphForPaths(paths: string[]) {
+    const path = this.path, head = this.headHash;
+    if (!path || this.graphJob) return;
+    const selected = [...new Set(paths)];
+    if (!selected.length || selected.length > 100 || selected.some(value => !workContextPath(value))) { this.fail(new Error(t("Some selected files are not present in this dependency graph. Analyze the current files again."))); return; }
+    let actionsJSON: string;
+    this.graphJob = { kind: "draw", relation: "files" }; this.emit();
+    try {
+      actionsJSON = await gitch.graphPathSelection(path, selected);
+      if (this.path !== path) return;
+      if (this.headHash !== head) throw new Error(t("HEAD changed while preparing the graph. Refresh the analysis."));
+    } catch (error) { if (this.path === path) this.fail(error); return; }
+    finally { this.graphJob = null; this.emit(); }
+    await this.openAssistantGraph(actionsJSON);
   }
 
   /**
@@ -325,13 +363,15 @@ export abstract class RepoGitch extends RepoTerminal {
    */
   async openGraphDiff(relation: GraphRelation, base: string | null = null) {
     const path = this.path;
+    const head = this.headHash;
     if (!path || this.graphJob) return;
     this.graphJob = { kind: "diff", relation };
     this.emit();
     try {
       const file = await gitch.graphDiff(relation, base, path);
       if (this.path !== path) return;
-      await ipc.openHtml(file);
+      if (this.headHash !== head) throw new Error(t("HEAD changed while preparing the graph. Refresh the analysis."));
+      this.openStructureGraphPage({ file, nodes: null, hint: null });
     } catch (e) {
       if (this.path === path) this.fail(e);
     } finally {

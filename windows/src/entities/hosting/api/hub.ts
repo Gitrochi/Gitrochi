@@ -12,7 +12,7 @@ export interface HubRepository { id: string; name: string; description: string; 
 export type HubProjectFieldKind = "singleSelect" | "text" | "number" | "date" | "iteration" | "unsupported";
 export interface HubProjectOption { id: string; name: string; startDate?: string; duration?: number }
 export interface HubProjectField { id: string; name: string; options: HubProjectOption[]; kind?: HubProjectFieldKind }
-export interface HubProjectRow { id: string; title: string; body: string; url: string; contentID: string; statuses: Record<string, string>; labels?: string[]; kind?: "issue" | "pullRequest" | "draft" | "redacted"; number?: number; repository?: string; state?: string; assignees?: string[]; updatedAt?: string; headRefName?: string; archived?: boolean; values?: Record<string, string>; author?: string; createdAt?: string }
+export interface HubProjectRow { id: string; title: string; body: string; url: string; contentID: string; statuses: Record<string, string>; labels?: string[]; kind?: "issue" | "pullRequest" | "draft" | "redacted"; number?: number; repository?: string; state?: string; assignees?: string[]; updatedAt?: string; headRefName?: string; archived?: boolean; values?: Record<string, string>; author?: string; createdAt?: string; predecessorIDs?: string[]; durationDays?: number }
 export interface HubDetail { item: HubItem; members: HubMember[]; repositories: HubRepository[]; assets: { id: string; name: string; size?: number; downloads?: number; url: string }[]; fields: HubProjectField[]; rows: HubProjectRow[]; more: boolean; cursor?: string; notice?: string }
 export interface HubReleaseInput { tag: string; name: string; body: string; target: string; draft: boolean; prerelease: boolean }
 type J = Record<string, any>;
@@ -207,6 +207,11 @@ export async function saveHubProjectDraft(c:HubAccess,detail:HubDetail,title:str
     await graphql(c,"mutation($input:UpdateProjectV2DraftIssueInput!){updateProjectV2DraftIssue(input:$input){draftIssue{id}}}",{input:{draftIssueId:loaded.contentID,title:title.trim(),body}});
   }
   else {try{await graphql(c,"mutation($input:AddProjectV2DraftIssueInput!){addProjectV2DraftIssue(input:$input){projectItem{id}}}",{input:{projectId:detail.item.id,title:title.trim(),body}});}catch(error){if(error instanceof H.HostingError&&error.status>=400&&error.status<500||error instanceof HubProjectPermissionError||error instanceof HubProjectActionDeniedError)throw error;throw new HubUncertainWriteError(`${hubError(error,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}}
+}
+/** Local dependency edits share the captured account/context and revision guards of other task edits. */
+export async function saveHubProjectDependencies(c:HubAccess,detail:HubDetail,row:HubProjectRow,predecessorIDs:string[],durationDays?:number) {
+  if(!hubUsesLocal(c,detail.item))throw new Error(t("Predecessor planning is available for local projects."));
+  await localProjects.setDependencies(detail,row,predecessorIDs,durationDays);ensureHubCurrent(c);
 }
 export async function archiveHubProjectItem(c:HubAccess,detail:HubDetail,row:HubProjectRow,archived:boolean) {
   if(hubUsesLocal(c,detail.item)){await localProjects.archive(detail,row,archived);ensureHubCurrent(c);return;}

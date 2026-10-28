@@ -77,6 +77,7 @@ pub fn run() {
             watch::watch_start,
             watch::watch_stop,
             net::http_request,
+            net::team_hub_read,
             net::ci_job_log,
             net::http_image,
             net::resolve_host,

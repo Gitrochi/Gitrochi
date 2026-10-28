@@ -7,6 +7,8 @@ struct ProjectRoadmap: View {
     var settings = ProjectScheduleSettings()
     let select: (HubProjectRow) -> Void
     var editDate: ((HubProjectRow, HubProjectField) -> Void)? = nil
+    var dependencyRows: [HubProjectRow]? = nil
+    var selectedID: String? = nil
     @ViewState private var startID: String?
     @ViewState private var dueID: String?
     private var dateFields: [HubProjectField] { fields.filter { $0.kind == .date } }
@@ -30,6 +32,7 @@ struct ProjectRoadmap: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    if let dependencyRows { ProjectDependencyView(rows: dependencyRows, select: select, selectedID: selectedID) }
                     HStack(spacing: 10) {
                         Label("Roadmap", systemImage: "chart.bar.xaxis").font(.system(size: 13, weight: .semibold))
                         Text(scheduled.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary)

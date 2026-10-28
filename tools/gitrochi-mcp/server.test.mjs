@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync, spawn } from "node:child_process";
-import { openRepository, allowedPath, redact, tools } from "./server.mjs";
+import { openRepository, allowedPath, redact, tools, boundedGraphContext, readOnlyGraphEnvironment } from "./server.mjs";
 
 let temp, repo, home, reader, original;
 const script = fileURLToPath(new URL("server.mjs", import.meta.url));
@@ -28,8 +28,20 @@ before(async () => {
 after(async () => { await rm(temp, { recursive: true, force: true }); });
 
 test("all exposed tools are read-only with strict schemas", () => {
-  assert.equal(tools.length, 8);
+  assert.equal(tools.length, 9);
   assert.ok(tools.every((t) => t.annotations.readOnlyHint && t.inputSchema.additionalProperties === false));
+});
+test("graph context is bounded valid JSON with known file nodes and snapshot provenance", () => {
+  const graph = { snapshotID: "a".repeat(64), nodes: [{ id: ".env" }, { id: "/outside" }, ...Array.from({ length: 180 }, (_, index) => ({ id: `src/${index}-` + "x".repeat(180) + ".ts" }))], edges: [] };
+  graph.edges = graph.nodes.slice(2).map((node) => ({ source: node.id, target: graph.nodes[2].id }));
+  const context = boundedGraphContext(graph);
+  assert.equal(context.id, graph.snapshotID); assert.equal(context.scope, "worktree"); assert.ok(context.coverage.truncated);
+  assert.ok(JSON.stringify(context).length <= 18000); assert.ok(context.nodeIDs.every((id) => id.startsWith("src/")));
+  assert.ok(context.edges.every((edge) => context.nodeIDs.includes(edge.source) && context.nodeIDs.includes(edge.target)));
+  assert.throws(() => boundedGraphContext({ nodes: [], edges: [] }), /versioned graph/);
+  const selected = boundedGraphContext({ snapshotID: "a".repeat(64), nodes: [{ id: "isolated.ts" }, { id: "selected.ts" }, { id: "dependent.ts" }], edges: [{ source: "dependent.ts", target: "selected.ts" }] }, ["selected.ts"]);
+  assert.deepEqual(selected.nodeIDs, ["selected.ts", "dependent.ts"]); assert.equal(selected.edges.length, 1);
+  assert.throws(() => boundedGraphContext(graph, ["../outside"]));
 });
 test("tracked file reading and exact historical content", async () => {
   const live = await reader.call("read_file", { path: "source.txt" });
@@ -42,6 +54,8 @@ test("path boundaries, secrets, metadata and option injection are rejected", asy
   await assert.rejects(reader.call("git_log", { count: 1000 }));
   await assert.rejects(reader.call("git_status", { command: "push" }));
   await assert.rejects(reader.call("shell", { command: "pwd" }));
+  await assert.rejects(reader.call("graph_context", { paths: "source.txt" }));
+  await assert.rejects(reader.call("graph_context", { paths: Array(21).fill("source.txt") }));
 });
 test("whole patches and file lists exclude secret paths", async () => {
   const diff = await reader.call("git_diff");
@@ -78,6 +92,71 @@ test("calls preserve HEAD, index and working files", async () => {
   assert.equal(git("write-tree"), index); assert.equal(git("rev-parse", "HEAD").trim(), original);
   assert.deepEqual(await readFile(path.join(repo, "source.txt")), before);
 });
+test("reader and offline workspace share the same bundled graph snapshot identity", async () => {
+  const cli = fileURLToPath(new URL("../gitch/gitch", import.meta.url));
+  const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "/bin/bash";
+  await writeFile(path.join(repo, "graph-source.ts"), "export const source = 1;\n");
+  await writeFile(path.join(repo, "graph-consumer.ts"), 'import { source } from "./graph-source";\nexport const consumer = source;\n');
+  git("add", "graph-source.ts", "graph-consumer.ts");
+  const graphReader = await openRepository(repo, { gitch: cli, bash });
+  const context = JSON.parse((await graphReader.call("graph_context", { paths: ["graph-source.ts"] })).text);
+  const output = path.join(temp, "workspace.html");
+  execFileSync(bash, [cli.replaceAll("\\", "/"), "graph", "files", "--format", "html", "--out", output.replaceAll("\\", "/"), "--no-open"], {
+    cwd: repo, encoding: "utf8", timeout: 30000, maxBuffer: 2_000_000,
+    env: { ...process.env, GITSW_SWIFT_DESCRIBE: "0", GIT_OPTIONAL_LOCKS: "0", GIT_TERMINAL_PROMPT: "0", LC_ALL: "C", GIT_LITERAL_PATHSPECS: "1" },
+  });
+  const html = await readFile(output, "utf8");
+  const embedded = html.match(/<script id="graph-data" type="application\/json">\s*([\s\S]*?)<\/script>/);
+  assert.ok(embedded, "The offline workspace must contain its source graph snapshot.");
+  const graph = JSON.parse(embedded[1]);
+  assert.equal(context.id, (graph.views?.files ?? graph).snapshotID);
+  assert.ok(context.nodeIDs.includes("graph-source.ts"));
+  assert.ok(context.edges.some((edge) => edge.source === "graph-consumer.ts" && edge.target === "graph-source.ts"));
+});
+test("graph subprocess disables fsmonitor after inherited runtime configuration", () => {
+  const inherited = {
+    ...process.env,
+    GIT_CONFIG_COUNT: "2", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: "indexed-hook",
+    GIT_CONFIG_KEY_1: "gitrochi.indexed", GIT_CONFIG_VALUE_1: "preserved",
+    GIT_CONFIG_PARAMETERS: "'gitrochi.parameter=preserved' 'core.fsmonitor=parameter-hook'",
+  };
+  const hardened = { ...inherited, ...readOnlyGraphEnvironment(inherited) };
+  const get = (name) => execFileSync("git", ["config", "--get", name], { cwd: repo, env: hardened, encoding: "utf8" }).trim();
+  assert.equal(get("core.fsmonitor"), "false");
+  assert.equal(get("gitrochi.indexed"), "preserved"); assert.equal(get("gitrochi.parameter"), "preserved");
+  assert.equal(hardened.GIT_CONFIG_COUNT, "2"); assert.equal(hardened.GITSW_SWIFT_DESCRIBE, "0");
+  assert.equal(inherited.GIT_CONFIG_PARAMETERS, "'gitrochi.parameter=preserved' 'core.fsmonitor=parameter-hook'");
+});
+test("openRepository and graph_context never execute a configured fsmonitor hook", async () => {
+  const folder = path.join(temp, "fsmonitor-repo"); await mkdir(folder);
+  const fixtureEnv = { ...process.env, HOME: home, XDG_CONFIG_HOME: home, GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_COUNT: "0", GIT_CONFIG_PARAMETERS: "" };
+  const fixtureGit = (...args) => execFileSync("git", args, { cwd: folder, env: fixtureEnv, encoding: "utf8" });
+  fixtureGit("init", "-q"); fixtureGit("config", "user.name", "Example Developer"); fixtureGit("config", "user.email", "dev@example.com");
+  await writeFile(path.join(folder, "source.ts"), "export const source = 1;\n");
+  fixtureGit("add", "source.ts"); fixtureGit("commit", "-qm", "Add fsmonitor fixture");
+  const hook = ".git/fsmonitor-hook", marker = path.join(folder, ".git/fsmonitor-marker");
+  await writeFile(path.join(folder, hook), '#!/bin/sh\nprintf "invoked\\n" >> .git/fsmonitor-marker\nprintf "gitrochi-monitor-token\\0"\n', { mode: 0o755 });
+  fixtureGit("config", "core.fsmonitor", hook);
+  fixtureGit("ls-files"); assert.match(await readFile(marker, "utf8"), /invoked/); await rm(marker);
+  const cli = fileURLToPath(new URL("../gitch/gitch", import.meta.url));
+  const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "/bin/bash";
+  const index = await readFile(path.join(folder, ".git/index"));
+  const graphReader = await openRepository(folder, { gitch: cli, bash });
+  const direct = JSON.parse((await graphReader.call("graph_context", { paths: ["source.ts"] })).text);
+  assert.ok(direct.nodeIDs.includes("source.ts")); await assert.rejects(readFile(marker), { code: "ENOENT" });
+  for (const runtime of [
+    { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: hook },
+    { GIT_CONFIG_PARAMETERS: "'core.fsmonitor=" + hook + "'" },
+    { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: hook, GIT_CONFIG_PARAMETERS: "'core.fsmonitor=" + hook + "'" },
+  ]) {
+    const response = JSON.parse(execFileSync(process.execPath, [script, "--repo", folder, "--gitch", cli, "--bash", bash, "--call", JSON.stringify({ name: "graph_context", arguments: { paths: ["source.ts"] } })], {
+      cwd: folder, encoding: "utf8", timeout: 30000, maxBuffer: 2_000_000, env: { ...fixtureEnv, ...runtime },
+    }));
+    assert.equal(JSON.parse(response.text).id, direct.id); await assert.rejects(readFile(marker), { code: "ENOENT" });
+  }
+  assert.equal(fixtureGit("config", "--get", "core.fsmonitor").trim(), hook);
+  assert.deepEqual(await readFile(path.join(folder, ".git/index")), index);
+});
 test("stdio initialization, pipelined notification, calls and errors", async () => {
   const child = spawn(process.execPath, [script, "--repo", repo], { stdio: ["pipe", "pipe", "pipe"] });
   const requests = [
@@ -96,6 +175,6 @@ test("stdio initialization, pipelined notification, calls and errors", async () 
   assert.equal(code, 0, errors);
   const results = output.trim().split("\n").map((s) => JSON.parse(s));
   assert.equal(results.length, 5); assert.equal(results[0].result.protocolVersion, "2025-11-25");
-  assert.equal(results[1].result.tools.length, 8); assert.equal(results[2].result.isError, false); assert.equal(results[3].result.isError, true);
+  assert.equal(results[1].result.tools.length, 9); assert.equal(results[2].result.isError, false); assert.equal(results[3].result.isError, true);
   assert.equal(results[4].error.code, -32800);
 });

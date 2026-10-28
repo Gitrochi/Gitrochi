@@ -1,5 +1,6 @@
-import { samePathKey } from "@/shared/config";
-import { Observable } from "@/shared/lib";
+import { samePathKey, settings } from "@/shared/config";
+import { Observable, decodeValidationBindings, type ValidationBinding } from "@/shared/lib";
+import { worktreeStamp } from "@/shared/platform";
 import { FlowEngineError, flowEngine } from "./engine";
 import { consumeEvents, newRunView, type RunView } from "./run-view";
 import type { FlowGate, FlowList, FlowRunRow } from "./types";
@@ -23,9 +24,26 @@ export class FlowStore extends Observable {
   /** Records of finished runs (run.json) */
   records = new Map<string, Record<string, unknown>>();
   private tails = new Set<string>();
+  validationBindings: ValidationBinding[];
 
   constructor(public readonly repo: string) {
     super();
+    this.validationBindings = decodeValidationBindings(settings.get(`workValidation:${samePathKey(repo)}`, []));
+  }
+
+  private saveValidation() { settings.set(`workValidation:${samePathKey(this.repo)}`, this.validationBindings.slice(-100)); }
+
+  /** Only a trusted local plan can start from change evidence; other plans use the existing review UI. */
+  async startVerified(flow: string, candidates: string[]): Promise<string> {
+    const plan = await flowEngine.plan(flow, this.repo, false);
+    if (!plan.trust.trusted || plan.outward.length || plan.gates.length || plan.nodes.some(node => node.decision === "run" && (node.destructive || node.outward || node.executor && node.executor !== "local"))) throw new Error("Review and approve this flow in the Flows workspace before running it here.");
+    const before = await worktreeStamp(this.repo);
+    const run = await flowEngine.start(flow, this.repo, false, false);
+    this.validationBindings.push({ schemaVersion: 1, runID: run.runId, head: before.head, before: before.stamp, candidates, observedAt: new Date().toISOString() });
+    this.saveValidation();
+    this.follow(run.runId);
+    void this.refresh();
+    return run.runId;
   }
 
   changed() {
@@ -126,6 +144,11 @@ export class FlowStore extends Observable {
         this.tails.delete(runId);
         const rec = await flowEngine.record(runId, this.repo).catch(() => null);
         if (rec) this.records.set(runId, rec);
+        const binding = this.validationBindings.find(value => value.runID === runId && !value.after);
+        if (binding && rec && ["SUCCEEDED", "FAILED", "REJECTED", "CANCELLED", "ROLLED_BACK", "ROLLBACK_FAILED"].includes(String(rec.state)) && typeof rec.finishedAt === "string") {
+          try { binding.after = (await worktreeStamp(this.repo)).stamp; this.saveValidation(); }
+          catch { /* A missing end snapshot remains unbound. */ }
+        }
         await this.refresh();
         return;
       }

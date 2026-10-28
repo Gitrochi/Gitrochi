@@ -10,11 +10,14 @@ struct RepositoryAssistantSheet: View {
         @Bindable var state = store.repositoryAssistant
         let problem = AIStore.shared.problem(state.provider)
         VStack(alignment: .leading, spacing: 12) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
             Text("Repository assistant").font(.title3.bold())
             Text(state.providerTitle).font(.caption).foregroundStyle(.secondary)
             Text("Sending a question lets AI read tracked files, status and history in this repository. Each read is shown below. Files are never changed.").font(.caption).foregroundStyle(.secondary)
             Text(repositoryLabel(state))
                 .font(.system(.caption, design: .monospaced)).textSelection(.enabled)
+            AssistantContextPanel()
             if state.loading { HStack { ProgressView().controlSize(.small); Text("Preparing repository context…") } }
             if !state.preview.isEmpty {
                 DisclosureGroup("Context for AI") {
@@ -26,6 +29,13 @@ struct RepositoryAssistantSheet: View {
                     ForEach(state.messages) { message in VStack(alignment: .leading, spacing: 4) {
                         Text(message.user ? String(localized: "You") : String(localized: "AI answer")).font(.caption.bold()).foregroundStyle(.secondary)
                         Text(message.text).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                        if let context = message.context, context.fingerprint != store.captureWorkContext(scope: context.scope)?.fingerprint { Text("Answer belongs to an earlier selection.").font(.caption).foregroundStyle(.secondary) }
+                        if let actions = message.graphActions {
+                            Button("Apply graph selection") {
+                                guard let data = try? JSONEncoder().encode(actions) else { return }
+                                Task { await store.openAssistantGraph(actionsJSON: String(decoding: data, as: UTF8.self)) }
+                            }.disabled(state.working || state.graphLoading || message.context?.fingerprint != store.captureWorkContext(scope: message.context?.scope)?.fingerprint)
+                        }
                     } }
                 }.padding(6) }.frame(maxHeight: 260)
             }
@@ -41,13 +51,15 @@ struct RepositoryAssistantSheet: View {
                 .accessibilityLabel(Text("Question about this repository"))
             Text("Reads are bounded and reflect the files at the time they are read. Secret paths, binary files and symlinks are excluded.").font(.caption).foregroundStyle(.secondary)
             if let error = state.error ?? problem { Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(maxHeight: embedded ? .infinity : 560)
             HStack {
                 Button("New conversation") { Task { await store.openRepositoryAssistant(fresh: true, present: !embedded) } }.disabled(state.loading || state.working)
                 Spacer()
                 if state.working { ProgressView().controlSize(.small); Button("Stop waiting") { state.stop() } }
                 if !embedded { Button("Close") { dismiss() } }
                 Button("Send question") { store.sendRepositoryQuestion() }.keyboardShortcut(.return, modifiers: .command)
-                    .disabled(state.loading || state.working || state.reader == nil || state.question.trimmed.isEmpty || state.question.count > 6000 || problem != nil)
+                    .disabled(state.loading || state.working || state.graphLoading || store.repositoryContextStale || state.reader == nil || state.question.trimmed.isEmpty || state.question.count > 6000 || problem != nil)
             }
         }.padding(20).frame(width: embedded ? nil : 860).frame(maxWidth: embedded ? .infinity : nil, maxHeight: embedded ? .infinity : nil, alignment: .topLeading)
             .onDisappear { state.active = false; state.stop() }

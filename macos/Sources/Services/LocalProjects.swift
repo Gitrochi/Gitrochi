@@ -82,12 +82,23 @@ import Observation
         }
     }
     func removeItem(detail: HubDetail, row: HubProjectRow) async throws -> HubDetail {
-        try await change(detail) { project in let index = try taskIndex(project, row); project.tasks.remove(at: index) }
+        try await removeMany(detail: detail, rows: [row])
     }
     func removeMany(detail: HubDetail, rows: [HubProjectRow]) async throws -> HubDetail {
         try await change(detail) { project in
             for row in rows { _ = try taskIndex(project, row) }
-            let ids = Set(rows.map(\.id)); project.tasks.removeAll { ids.contains($0.id) }
+            let ids = Set(rows.map(\.id))
+            guard !project.tasks.contains(where: { !ids.contains($0.id) && ($0.predecessorIDs ?? []).contains(where: { ids.contains($0) }) }) else { throw LocalProjectError.dependentDeletion }
+            project.tasks.removeAll { ids.contains($0.id) }
+        }
+    }
+    func setDependencies(detail: HubDetail, row: HubProjectRow, predecessorIDs: [String], durationDays: Int?) async throws -> HubDetail {
+        try await change(detail) { project in
+            let index = try taskIndex(project, row)
+            guard !project.tasks[index].archived else { throw LocalProjectError.archived }
+            project.tasks[index].predecessorIDs = predecessorIDs; project.tasks[index].durationDays = durationDays
+            if let error = LocalProjectDependencies.validate(project.tasks) { throw error }
+            project.tasks[index].updatedAt = timestamp()
         }
     }
     func reorder(detail: HubDetail, row: HubProjectRow, afterRow: HubProjectRow?) async throws -> HubDetail {
@@ -175,7 +186,7 @@ import Observation
     private static func item(_ project: LocalPlannerProject) -> HubItem { HubItem(id: project.id, title: project.title, subtitle: String(localized: "Local project"), body: project.description, editable: true, data: ["localProject": true, "localRevision": project.revision, "createdAt": project.createdAt, "updatedAt": project.updatedAt]) }
     private static func detail(_ project: LocalPlannerProject) -> HubDetail {
         HubDetail(item: item(project), fields: fields, rows: project.tasks.map { task in
-            HubProjectRow(id: task.id, title: task.title, body: task.body, url: "", contentID: task.id, statuses: ["local-status": task.status, "local-priority": task.priority], kind: .draft, state: task.status == "local-done" ? "CLOSED" : "OPEN", assignees: task.assignees, updatedAt: task.updatedAt, archived: task.archived, values: ["local-status": task.status, "local-start": task.start, "local-due": task.due, "local-priority": task.priority, "local-assignees": task.assignees.joined(separator: ", ")])
+            HubProjectRow(id: task.id, title: task.title, body: task.body, url: "", contentID: task.id, statuses: ["local-status": task.status, "local-priority": task.priority], kind: .draft, state: task.status == "local-done" ? "CLOSED" : "OPEN", assignees: task.assignees, updatedAt: task.updatedAt, archived: task.archived, values: ["local-status": task.status, "local-start": task.start, "local-due": task.due, "local-priority": task.priority, "local-assignees": task.assignees.joined(separator: ", ")], predecessorIDs: task.predecessorIDs, durationDays: task.durationDays)
         })
     }
 }

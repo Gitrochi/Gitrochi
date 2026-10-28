@@ -16,7 +16,7 @@ describe("Offline graph app language", () => {
     }
   });
 
-  it("passes the app language to generation and watching, with a separate page per language", async () => {
+  it("passes the app language to isolated offline generations without starting a watcher", async () => {
     vi.spyOn(gitch, "bundled", "get").mockReturnValue("/bundled/gitch");
     vi.spyOn(gitch, "bash").mockResolvedValue("/bin/bash");
     vi.spyOn(gitch, "graphUnavailable").mockResolvedValue(null);
@@ -33,14 +33,20 @@ describe("Offline graph app language", () => {
       const page = await gitch.graph("files", "/repo");
       pages.push(page.file);
       const calls = run.mock.calls.slice(start);
-      expect(calls).toHaveLength(2);
+      expect(calls).toHaveLength(1);
+      expect(page.liveUrl).toBeUndefined();
       for (const call of calls) {
         expect(call[2]?.env?.GITCH_GRAPH_LANG).toBe(code);
         expect(call[1][call[1].indexOf("--out") + 1]).toBe(page.file);
       }
-      expect(page.file).toMatch(new RegExp(`-files-${code}-[a-f0-9]+\\.html$`));
+      expect(page.file).toMatch(new RegExp(`-snapshot-files-${code}-[a-f0-9]+-[a-f0-9-]+\\.html$`));
+      expect(calls[0][1]).not.toContain("watch");
+      expect(calls[0][1][0]).toBe("-c");
+      expect(calls[0][1][1]).toContain("'core.fsmonitor=false'");
     }
     expect(new Set(pages).size).toBe(3);
+    const repeated = await gitch.graph("files", "/repo");
+    expect(pages).not.toContain(repeated.file);
 
     await loadLanguage("ja");
     await gitch.commitReviewGraph("/repo");

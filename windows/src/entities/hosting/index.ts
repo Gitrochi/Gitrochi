@@ -16,6 +16,8 @@ export { ProjectPortfolioState, portfolioTasks, type ProjectPortfolioTask, type 
 export { readProjectPortfolioSelection, saveProjectPortfolioSelection } from "./model/project-portfolio-preferences";
 export { LocalProjectStore, localProjects, isLocalProject, localProjectFields, type LocalProjectPersistence } from "./model/local-projects";
 export { localProjectLimits } from "./model/local-project-document";
+export { projectDependencyGraph, validateProjectDependencies, projectDependencyLimits, type ProjectDependencyGraph, type ProjectDependencyNode } from "./model/project-dependencies";
+export { saveHubProjectDependencies } from "./api/hub";
 export { rescheduleHubProjectItem } from "./api/project-scheduling";
 
 export { readProjectScheduleSettings, saveProjectScheduleSettings } from "./model/project-schedule-preferences";

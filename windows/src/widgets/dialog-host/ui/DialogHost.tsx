@@ -1,7 +1,9 @@
+import { lazy, Suspense } from "react";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { Button, Modal } from "@/shared/ui";
-import { SheetHost } from "./SheetHost";
+import { Button, Modal, Spinner } from "@/shared/ui";
+
+const SheetHost = lazy(() => import("./SheetHost").then(module => ({ default: module.SheetHost })));
 
 /** 탭 위에 뜨는 대화상자: 시트, 오류, 확인, 저장소 안내 */
 export function DialogHost({ store }: { store: RepoStore }) {
@@ -11,7 +13,7 @@ export function DialogHost({ store }: { store: RepoStore }) {
   };
   return (
     <>
-      <SheetHost store={store} />
+      {store.sheet && <Suspense fallback={<Modal title={t("Loading…")} onClose={close(() => { store.sheet = null; })}><Spinner /></Modal>}><SheetHost store={store} /></Suspense>}
       {store.errorMessage && (
         <Modal
           title={t("Couldn't complete the operation")}

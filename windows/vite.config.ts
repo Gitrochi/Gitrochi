@@ -8,5 +8,9 @@ export default defineConfig({
   resolve: { alias: { "@": "/src" } },
   clearScreen: false,
   server: { port: 1420, strictPort: true, watch: { ignored: ["**/src-tauri/**"] } },
-  build: { target: "es2022", chunkSizeWarningLimit: 2000 },
+  build: {
+    target: "es2022",
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: { output: { manualChunks: { "react-vendor": ["react", "react-dom"] } } },
+  },
 });

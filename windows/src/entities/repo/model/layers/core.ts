@@ -298,6 +298,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
     return selectionID(this.selection);
   }
 
+  get workContentRevision(): number { return this.statusGeneration; }
+
   /** 연결된 워크트리(메인이 아닌)로 연 탭인지 */
   get isLinkedWorktree() {
     return !!this.gitDir && slash(this.gitDir).includes("/worktrees/");

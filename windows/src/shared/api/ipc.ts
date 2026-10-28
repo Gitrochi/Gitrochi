@@ -151,6 +151,7 @@ export const ipc = {
 
   http: (method: string, url: string, headers: Record<string, string>, body?: string, timeoutMs?: number) =>
     invoke<HttpResponse>("http_request", { method, url, headers, body: body ?? null, timeoutMs: timeoutMs ?? null }),
+  hubRead: (url: string, token: string) => invoke<HttpResponse>("team_hub_read", { url, token }),
   ciLog: (provider: string, apiBase: string, repoPath: string, jobId: number, token: string) =>
     invoke<{ body: string; truncated: boolean }>("ci_job_log", { provider, apiBase, repoPath, jobId, token }),
   /** 이미지를 받아 data: 주소로(실패하면 null) */

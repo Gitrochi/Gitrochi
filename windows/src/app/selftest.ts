@@ -26,6 +26,11 @@ import { historyToolsSelfTest } from "./lib/history-tools-selftest";
 import { collaborationSelfTest } from "./lib/collaboration-selftest";
 import { localWorkflowsSelfTest } from "./lib/local-workflows-selftest";
 import { repositoryAssistantSelfTest } from "./lib/repository-assistant-selftest";
+import { assistantContextSelfTest } from "./lib/assistant-context-selftest";
+import { structureGraphSelfTest } from "./lib/structure-graph-selftest";
+import { projectDependenciesSelfTest } from "./lib/project-dependencies-selftest";
+import { workValidationSelfTest } from "./lib/work-validation-selftest";
+import { environmentPathsSelfTest } from "./lib/environment-paths-selftest";
 import { navigationSelfTest } from "./lib/navigation-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
@@ -244,6 +249,11 @@ export async function runSelfTest(): Promise<boolean> {
   await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
   await step("저장소 AI·MCP·통합 작업함의 실제 React 화면", repositoryAssistantSelfTest);
+  await step("Selection context, reusable prompts and validated assistant graph actions", assistantContextSelfTest);
+  await step("Embedded structure graph, provenance and stale repository boundaries", structureGraphSelfTest);
+  await step("Local predecessor editing, dependency graph and explicit critical path", projectDependenciesSelfTest);
+  await step("Bound verification, configured team hub reads and agent handoffs", workValidationSelfTest);
+  await step("Native Unicode paths, nested paths and disconnected hub failure", environmentPathsSelfTest);
 
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);

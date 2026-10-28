@@ -8,7 +8,7 @@
 "Compare dependencies" = "Bandingkan dependensi";
 "Compare with" = "Bandingkan dengan";
 "Compare with…" = "Bandingkan dengan…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Membandingkan dependensi di direktori kerja, termasuk perubahan yang belum di-commit, dengan titik tempat branch ini bercabang dari branch default (gitch graph diff), lalu membuka perubahannya di browser.";
+
 "Comparing dependencies…" = "Membandingkan dependensi…";
 "Couldn't check the rules" = "Tidak dapat memeriksa aturan";
 "Create rules file" = "Buat file aturan";
@@ -384,7 +384,7 @@
 "Draft" = "Draf";
 "Drawing the graph with %lld commits…" = "Menggambar grafik dengan %1$lld commit…";
 "Drawing the structure graph…" = "Menggambar grafik struktur…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Menggambar impor, modul, file yang berubah bersama, atau folder repositori ini dengan gitch graph, lalu membukanya di browser.";
+
 "Dropping stash…" = "Menghapus stash…";
 "Easy for beginners to understand" = "Mudah dipahami pemula";
 "Edit manually" = "Edit manual";

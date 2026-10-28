@@ -286,6 +286,7 @@ struct RepoContainer: View {
             case .batchCommits: BatchCommitsSheet(store: store)
             case .lineHistory: LineHistorySheet(store: store)
             case .localWorkflows: LocalWorkflowsSheet()
+            case .workValidation: WorkValidationSheet(store: store)
             case .repositoryAssistant: RepositoryAssistantSheet()
             case .mcpConnection: MCPConnectionSheet()
             case .startAgent(let path): StartAgentSheet(presetPath: path)

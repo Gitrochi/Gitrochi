@@ -530,6 +530,7 @@ enum SheetKind: Identifiable {
     case batchCommits
     case lineHistory
     case localWorkflows
+    case workValidation
     case repositoryAssistant
     case mcpConnection
     /// 에이전트 세션 시작(path 가 있으면 그 워크트리를 미리 고름)
@@ -563,6 +564,7 @@ enum SheetKind: Identifiable {
         case .batchCommits: return "batchCommits"
         case .lineHistory: return "lineHistory"
         case .localWorkflows: return "localWorkflows"
+        case .workValidation: return "workValidation"
         case .repositoryAssistant: return "repositoryAssistant"
         case .mcpConnection: return "mcpConnection"
         case .startAgent(let p): return "agent:" + (p ?? "")

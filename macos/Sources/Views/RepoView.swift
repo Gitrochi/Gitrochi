@@ -127,6 +127,7 @@ struct RepoView: View {
                 Divider()
                 StructureGraphMenu(store: store)
                 Button("Repository tools…") { store.sheet = .localWorkflows }.disabled(store.url == nil)
+                Button("Work validation…") { store.sheet = .workValidation }.disabled(store.url == nil)
                 Divider()
                 Button("Ask AI about changes…") { Task { await store.openChangeQuestion() } }.disabled(store.url == nil)
                 Button("Repository assistant…") { Task { await store.openRepositoryAssistant() } }.disabled(store.url == nil)
@@ -239,6 +240,12 @@ struct RepoView: View {
                       (store.status.isEmpty ? String(localized: "Applies the most recently stashed changes (Pop).") : String(localized: "Saves uncommitted changes for later."))
                         + (store.stashes.isEmpty ? "" : String(localized: " \(store.stashes.count) stashes saved.")) + String(localized: " Choose Stash or Pop from ▾."),
                       shortcut: "⇧⌘S")
+
+            Button { Task { await store.openStructureGraph(.files) } } label: {
+                ToolLabel(title: String(localized: "Structure graph workspace"), icon: "network")
+            }
+            .disabled(store.url == nil || store.graphJob != nil || Gitch.graphUnavailableReason != nil)
+            .help("Structure graph workspace")
 
             Button { store.toggleTerminal() } label: {
                 ToolLabel(title: String(localized: "Terminal"), icon: store.showTerminal ? "apple.terminal.fill" : "apple.terminal")

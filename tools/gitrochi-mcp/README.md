@@ -31,6 +31,9 @@ Windows 경로는 JSON 문자열에서 `C:/projects/example`처럼 슬래시를 
 | `read_file` | 추적 중인 일반 텍스트 파일, 현재 내용 또는 커밋 blob |
 | `search_code` | 최대 100개 추적 파일에서 문자열 그대로 검색 |
 | `gitch_preflight` | 계정 잠금·사전 점검 읽기 |
+| `graph_context` | Bounded file graph context with a real snapshot ID, provenance, coverage and selected paths |
+
+The app reader uses the same bundled gitch and static manifest-reading environment as the embedded graph workspace, so validated actions refer to the same snapshot. Graph context prioritizes selected files and their neighbors, excludes unsafe paths, and reports omitted nodes/edges. The provider-facing response remains valid bounded JSON; its coverage limits are separate from text truncation. Task prompt templates are saved per repository, while conversation/read activity remains in memory.
 
 Git 쓰기, 임의 셸, 인증 설정, 네트워크 도구는 노출하지 않습니다. 연결 시 고른 저장소 밖으로 이동할 수 없고 경로·Git 디렉터리가 바뀌면 재연결을 요구합니다. 파일은 64 KB까지, 도구 응답은 18,000자까지이며 생략 여부를 제공합니다. 전체 diff는 비밀 경로를 제외한 최대 150개 파일입니다. 큰 결과·검색 제한 때문에 일부 근거를 읽지 못할 수 있습니다.
 

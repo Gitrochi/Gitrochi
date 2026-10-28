@@ -8,7 +8,7 @@
 "Compare dependencies" = "Порівняти залежності";
 "Compare with" = "Порівняти з";
 "Compare with…" = "Порівняти з…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Порівнює залежності в робочій копії разом із незакоміченими змінами з місцем, де ця гілка відокремилася від гілки за замовчуванням (gitch graph diff), і відкриває зміни в браузері.";
+
 "Comparing dependencies…" = "Порівнюються залежності…";
 "Couldn't check the rules" = "Не вдалося перевірити правила";
 "Create rules file" = "Створити файл правил";
@@ -404,7 +404,7 @@
 "Draft" = "Чернетка";
 "Drawing the graph with %lld commits…" = "Побудова графа (комітів: %1$lld)…";
 "Drawing the structure graph…" = "Малюється граф структури…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Малює за допомогою gitch graph імпорти, модулі, файли, що змінюються разом, або папки цього репозиторію й відкриває результат у браузері.";
+
 "Drop" = "Викинути";
 "Dropping stash…" = "Викидання схованки…";
 "Drop…" = "Викинути…";

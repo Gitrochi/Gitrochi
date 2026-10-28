@@ -194,6 +194,7 @@ struct ProjectTaskInspector: View {
     let reorder: (HubProjectRow?) -> Void
     let convert: (String) -> Void
     var setField: ((HubProjectField, String?) async -> String?)? = nil
+    var setDependencies: (([String], Int?) async -> String?)? = nil
     var postComment: ((String) async -> String?)? = nil
     @ViewState private var conversation: CollaborationInboxDetail?
     @ViewState private var conversationError: String?
@@ -255,6 +256,7 @@ struct ProjectTaskInspector: View {
                         }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(Color.accentColor.opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
                     }
                     properties
+                    if localProject, let setDependencies { ProjectDependenciesEditor(detail: detail, row: row, locked: locked, save: setDependencies).id(row.id) }
                     Divider()
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Description").font(.system(size: 12, weight: .semibold))

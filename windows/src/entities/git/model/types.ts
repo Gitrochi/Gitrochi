@@ -470,6 +470,7 @@ export type SheetKind =
   | { kind: "batchCommits" }
   | { kind: "lineHistory" }
   | { kind: "localWorkflows" }
+  | { kind: "workValidation" }
   | { kind: "workspaceOverview" }
   | { kind: "collaborationInbox" }
   | { kind: "repositoryAssistant" }
@@ -485,6 +486,7 @@ export type SheetKind =
   | { kind: "gitchBackups" }
   /** 이 브랜치에서 바뀐 의존(gitch graph diff)의 기준 고르기 */
   | { kind: "graphDiff" }
+  | { kind: "structureGraph"; file: string; liveUrl?: string; repository: string; head: string | null; actionsJSON?: string; generation?: number }
   /** 의존 규칙 검사 결과(gitch graph check) */
   | { kind: "graphCheck" }
   /** 새 이슈 또는 이슈 고치기(number 가 있으면) */

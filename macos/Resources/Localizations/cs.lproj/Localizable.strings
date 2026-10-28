@@ -8,7 +8,7 @@
 "Compare dependencies" = "Porovnat závislosti";
 "Compare with" = "Porovnat s";
 "Compare with…" = "Porovnat s…";
-"Compares the dependencies in your working tree, uncommitted changes included, with where this branch split off from the default branch (gitch graph diff), and opens what changed in your browser." = "Porovná závislosti v pracovním adresáři včetně necommitnutých změn s místem, kde se tato větev oddělila od výchozí větve (gitch graph diff), a otevře změny v prohlížeči.";
+
 "Comparing dependencies…" = "Porovnávám závislosti…";
 "Couldn't check the rules" = "Pravidla se nepodařilo zkontrolovat";
 "Create rules file" = "Vytvořit soubor pravidel";
@@ -393,7 +393,7 @@
 "Draft" = "Koncept";
 "Drawing the graph with %lld commits…" = "Vykreslování grafu (commity: %1$lld)…";
 "Drawing the structure graph…" = "Kreslím graf struktury…";
-"Draws this repository's imports, modules, files that change together or folders with gitch graph, and opens it in your browser." = "Pomocí gitch graph vykreslí importy, moduly, společně měněné soubory nebo složky tohoto repozitáře a otevře je v prohlížeči.";
+
 "Drop" = "Zahodit";
 "Dropping stash…" = "Zahazování stashe…";
 "Drop…" = "Zahodit…";
