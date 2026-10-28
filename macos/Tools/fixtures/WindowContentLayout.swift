@@ -101,6 +101,8 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                               backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
+        // Someone working at the Mac must not drag or scroll the measured windows; clicks go to the windows behind.
+        window.ignoresMouseEvents = true
         window.title = "Gitrochi window layout regression fixture"
         window.toolbarStyle = .unified
         window.contentViewController = host
@@ -229,9 +231,18 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             current: normalRestored, minimum: constrainedMinimum) == normalRestored,
             "A normal-size restored frame must not be classified as minimum-size reflow")
         checks.append(["scenario": "normal-restored-frame-preserved", "windowFrame": rect(normalRestored)])
+        // A tab bar adds 36 pt, so the style change can take a frame above its minimum below it.
+        let tabbedBefore = NSRect(x: 60, y: 135, width: 900, height: 540)
+        let tabbedAfter = NSRect(x: 60, y: 135, width: 900, height: 452)
+        let tabbedReflow = NSRect(x: 60, y: 99, width: 900, height: 488)
+        precondition(RepositoryWindowLayout.restorationFrame(before: tabbedBefore, after: tabbedAfter,
+            current: tabbedReflow, minimum: NSSize(width: 700, height: 488)) == tabbedBefore,
+            "Minimum-size reflow of a larger tabbed frame must restore that frame")
+        checks.append(["scenario": "tabbed-minimum-reflow-restored", "windowFrame": rect(tabbedBefore)])
         let deferredWindow = DeferredFrameFixtureWindow(contentRect: NSRect(x: 100, y: 100, width: 640, height: 420),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         deferredWindow.isReleasedWhenClosed = false
+        deferredWindow.ignoresMouseEvents = true
         deferredWindow.contentView = NSView()
         deferredWindow.toolbar = NSToolbar(identifier: "DeferredFrameFixture")
         RepositoryWindowLayout.configure(deferredWindow)
@@ -411,6 +422,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                                     backing: .buffered, defer: false)
         secondWindow.isReleasedWhenClosed = false
+        secondWindow.ignoresMouseEvents = true
         secondWindow.toolbarStyle = .unified
         secondWindow.contentViewController = secondHost
         fixtureWindows.append(secondWindow)
@@ -521,6 +533,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                 .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height)))
             let peer = NSWindow(contentRect: window.contentLayoutRect, styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
             peer.isReleasedWhenClosed = false
+            peer.ignoresMouseEvents = true
             peer.title = "Synthetic repository \(index)"
             peer.toolbarStyle = .unified
             peer.contentViewController = peerHost
@@ -632,6 +645,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         print(String(decoding: data, as: UTF8.self))
         if inspect {
             // Keep the actual two-repository tab group available for manual inspection.
+            for tab in [window, secondWindow] { tab.ignoresMouseEvents = false }
             secondWindow.setFrame(window.frame, display: false)
             window.addTabbedWindow(secondWindow, ordered: .above)
             window.tabGroup?.selectedWindow = window

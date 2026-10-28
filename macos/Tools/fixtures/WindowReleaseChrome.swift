@@ -127,6 +127,8 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         window.tabbingIdentifier = "GitrochiReleaseChromeFixture"
         window.tabbingMode = .preferred
         window.isReleasedWhenClosed = false
+        // Someone working at the Mac must not drag the windows or scroll the measured lists.
+        window.ignoresMouseEvents = true
         RepositoryWindowLayout.configure(window)
         if let first = windows[0], first !== window {
             window.alphaValue = 0
@@ -161,6 +163,9 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
     }
 
     private func run() async throws {
+        // The first credential read, which also starts when the app becomes active, bumps AccountStore.revision:
+        // every hub then reloads and drops the seeded releases. Settle it before the checks.
+        for account in AccountStore.shared.accounts { _ = await AccountStore.shared.loadToken(for: account) }
         guard let first = windows[0], let selected = windows[1], let other = windows[3] else { throw Failure("Missing fixture windows") }
         for index in 1..<4 {
             guard let window = windows[index] else { throw Failure("Missing tab \(index)") }
@@ -298,6 +303,8 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         }
         let safe = window.contentLayoutRect
         var failures: [String] = [], frames: [String: Any] = [:]
+        // Probes of a reloaded list linger outside the viewport and would read as unreachable.
+        if stores[1].hostingHub.items.isEmpty { failures.append("The hub reloaded and dropped the seeded releases") }
         let measured = probes(in: content)
         for (identifier, scroll) in [("hub-item:release-chrome-29", list), ("hub-pagination", list), ("hub-detail-end", detail)] {
             guard let probe = measured.first(where: { $0.identifierForFixture == identifier }) else {
