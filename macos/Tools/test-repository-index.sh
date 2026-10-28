@@ -7,20 +7,6 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
 
-# A private git configuration, so the developer's settings and hooks stay out of the fixture.
-mkdir -p "$TASK_TMP/home"
-: > "$TASK_TMP/gitconfig"
-export HOME="$TASK_TMP/home" GIT_CONFIG_GLOBAL="$TASK_TMP/gitconfig" GIT_CONFIG_NOSYSTEM=1
-REPO="$TASK_TMP/repo"
-git init -q -b main "$REPO"
-git -C "$REPO" config user.name "Index Fixture"
-git -C "$REPO" config user.email "fixture@example.com"
-mkdir -p "$REPO/Src/Lib"
-echo "let needle = 1" > "$REPO/Src/Lib/Login.swift"
-git -C "$REPO" add -A && git -C "$REPO" commit -qm "로그 인 화면"
-echo "notes" > "$REPO/notes.md"
-git -C "$REPO" add -A && git -C "$REPO" commit -qm "Unrelated" -m "body mentions FIXME here"
-
 cat > "$TASK_TMP/stubs.swift" <<'SWIFT'
 import Foundation
 enum SearchScope { case commits, files, code }
@@ -100,8 +86,24 @@ import Foundation
 }
 SWIFT
 
+# Build with the real HOME (rustup finds its toolchains there), then isolate git.
 TASK_CORE="$(bash "$ROOT/../tools/build-core-native.sh")"
 swiftc -I "$ROOT/../crates/gitrochi-core/include" -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Core/RepoIndex.swift" "$TASK_TMP/stubs.swift" "$TASK_TMP/main.swift" "$TASK_CORE" \
     -o "$TASK_TMP/test-repository-index"
+
+# A private git configuration, so the developer's settings and hooks stay out of the fixture.
+mkdir -p "$TASK_TMP/home"
+: > "$TASK_TMP/gitconfig"
+export HOME="$TASK_TMP/home" GIT_CONFIG_GLOBAL="$TASK_TMP/gitconfig" GIT_CONFIG_NOSYSTEM=1
+REPO="$TASK_TMP/repo"
+git init -q -b main "$REPO"
+git -C "$REPO" config user.name "Index Fixture"
+git -C "$REPO" config user.email "fixture@example.com"
+mkdir -p "$REPO/Src/Lib"
+echo "let needle = 1" > "$REPO/Src/Lib/Login.swift"
+git -C "$REPO" add -A && git -C "$REPO" commit -qm "로그 인 화면"
+echo "notes" > "$REPO/notes.md"
+git -C "$REPO" add -A && git -C "$REPO" commit -qm "Unrelated" -m "body mentions FIXME here"
+
 "$TASK_TMP/test-repository-index" "$REPO"
