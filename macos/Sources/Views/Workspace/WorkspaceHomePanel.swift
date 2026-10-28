@@ -10,6 +10,7 @@ struct WorkspaceHomePanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 WorkspacePlanningDashboard()
+                ReleaseOverview()
                 LazyVGrid(
                     columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)],
                     alignment: .leading, spacing: 8

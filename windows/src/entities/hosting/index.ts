@@ -29,3 +29,5 @@ export { hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizatio
 export { loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, type HubOrganizationSection, type HubOrganizationSectionState, type HubOrganizationSectionPage } from "./api/organization-dashboard";
 export { readHubOrganizationMemberAccess, readHubOrganizationTeamAccess, setHubOrganizationMemberRole, setHubOrganizationTeamRole, type HubOrganizationMemberAccess, type HubOrganizationAccessScope } from "./api/organization-permissions";
 export { resolveHubOrganizationMember } from "./api/organization-permissions";
+export { releaseVersion, compareReleaseVersions, releaseTag, releaseDate, releaseState, releaseFamily, orderedReleases, newestReleases, releaseCompareURL, releaseAssetSize, releaseMarkdownLinks } from "./model/releases";
+export { ReleasePortfolio, releasePortfolio, type ReleaseSummary } from "./model/release-portfolio";

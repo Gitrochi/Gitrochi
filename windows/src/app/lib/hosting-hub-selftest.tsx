@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { accounts } from "@/entities/hosting";
+import { accounts, HostingHubStore } from "@/entities/hosting";
 import type { RepoTarget } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
@@ -48,6 +48,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       return accounts.accounts[0] ?? null;
     },
   };
+  Object.assign(source, { hostingHub: new HostingHubStore(source) });
   const button = (label: string) =>
     [...host.querySelectorAll<HTMLButtonElement>("button")].find(
       (e) => e.textContent?.trim() === t(label) || e.getAttribute("aria-label") === t(label) || (label === "Confirm" && e.matches(".project-review-sheet footer > button:last-child, .project-create-review footer > button:last-child")),
@@ -95,7 +96,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     id: 1,
     name: releaseName,
     tag_name: "v1.0",
-    body: "Release notes",
+    body: "## Release notes\n\n- **Markdown** preview\n\n| Platform | Version |\n| --- | --- |\n| Desktop | 1.0 |",
     draft: true,
     updated_at: "stable",
     html_url: "https://github.com/team/repo/releases/tag/v1.0",
@@ -326,8 +327,18 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       await until(() => !!button("Download in browser")),
       "Release assets did not render",
     );
+    ensure(!!host.querySelector(".release-markdown h2") && !!host.querySelector(".release-markdown table"), "Release Markdown did not render");
     button("Edit")!.click();
     await pause(30);
+    const notes = host.querySelector<HTMLTextAreaElement>("textarea")!;
+    const originalNotes = notes.value;
+    button("Preview")!.click();
+    await pause(25);
+    ensure(!!host.querySelector(".release-markdown table"), "Preview did not use release Markdown");
+    button("Write")!.click();
+    await pause(25);
+    ensure(host.querySelector<HTMLTextAreaElement>("textarea")!.value === originalNotes, "Preview lost draft text");
+    details.push("release Markdown + preview draft preservation");
     const nameInput = [...host.querySelectorAll("label")]
       .find((l) => l.textContent?.trim() === t("Name"))!
       .querySelector("input")!;
@@ -817,6 +828,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else throw new Error(`Unexpected GitLab fixture: ${method} ${path}`);
       return { status: 200, body: JSON.stringify(result) };
     };
+    Object.assign(gitlabSource, { hostingHub: new HostingHubStore(gitlabSource) });
     await mount(<HostingHubPanel store={gitlabSource} section="projects" />);
     ensure(
       await until(() => !!host.querySelector(".project-card")),
@@ -965,6 +977,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(25);
     ensure(writes.length === before, "Cancel deleted the release");
     details.push("release delete cancellation");
+    root.render(<HostingHubPanel store={source} section="organizations"/>);
+    ensure(await until(() => !!host.querySelector(".hub-organization-row")), "Shared controller did not switch from releases to organizations");
+    root.render(<HostingHubPanel store={source} section="releases"/>);
+    ensure(await until(() => !!host.querySelector(".release-workspace button.hub-item")), "Shared controller did not switch back to releases");
+    details.push("shared controller section transitions");
     return [true, details.join("; ")];
   } catch (e) {
     return [

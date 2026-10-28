@@ -35,7 +35,7 @@ for _ in {1..40}; do [[ -s "$TASK_TMP/endpoint" ]] && break; sleep 0.05; done
 [[ -s "$TASK_TMP/endpoint" ]] || { echo "Image fixture server failed to start" >&2; exit 1; }
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
-    "$ROOT/Sources/Core/Models.swift" \
+    "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/ProjectTaskReference.swift" \
     "$ROOT/Sources/Views/Shared/MarkdownView.swift" \
     "$ROOT/Tools/fixtures/MarkdownImages.swift" -o "$TASK_TMP/markdown-images"
 "$TASK_TMP/markdown-images" "$TASK_OUTPUT" "$(cat "$TASK_TMP/endpoint")"
