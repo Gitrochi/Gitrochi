@@ -457,8 +457,9 @@ printf '</body></html>' >> "$out"
             self.assertEqual(module.hidden(), {"creationflags": module.CREATE_NO_WINDOW})
         self.assertEqual(runs[0].get("creationflags"), module.CREATE_NO_WINDOW)
         self.assertEqual(started, {"creationflags": module.CREATE_NO_WINDOW | group})
-        self.assertEqual((module.hidden(), module.detached()), ({}, {"start_new_session": True}),
-                         "other systems keep their session handling and get no Windows flags")
+        with mock.patch.object(module.os, "name", "posix"):
+            self.assertEqual((module.hidden(), module.detached()), ({}, {"start_new_session": True}),
+                             "other systems keep their session handling and get no Windows flags")
 
     def test_served_html_and_generation_snapshot_are_atomic(self):
         _, watcher = self.atomic_watcher()
