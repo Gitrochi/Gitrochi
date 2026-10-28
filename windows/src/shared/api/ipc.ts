@@ -54,6 +54,16 @@ export interface EnvInfo {
 
 export type PtyEvent = { kind: "data"; data: string } | { kind: "exit"; code: number | null };
 
+/** A repository index command; `git` picks the git executable the app found. */
+export interface IndexRequest {
+  repo: string;
+  git?: string;
+  command: string;
+  args?: Record<string, unknown>;
+}
+
+export type IndexResponse = { result: Record<string, unknown> } | { error: { code: string; message: string } };
+
 export interface HttpResponse {
   status: number;
   body: string;
@@ -156,6 +166,8 @@ export const ipc = {
   writeText: (path: string, content: string) => invoke<void>("fs_write_text", { path, content }),
   localProjectsRead: () => invoke<string | null>("local_projects_read"),
   localProjectsWrite: (expected: string | null, content: string) => invoke<void>("local_projects_write", { expected, content }),
+  /** Repository index (crates/gitrochi-index): one JSON command, answered with {result} or {error} */
+  indexCall: (request: IndexRequest) => invoke<IndexResponse>("index_call", { request }),
   /** Saves bytes as <temp>/Gitrochi/<name> and returns the path (pasted images, dropped files); raw body, name hex-encoded in a header */
   writeTemp: (name: string, bytes: Uint8Array) =>
     tauriInvoke<string>("fs_write_temp", bytes, { headers: { "x-name-hex": Array.from(new TextEncoder().encode(name), (b) => b.toString(16).padStart(2, "0")).join("") } }).catch((e) => {

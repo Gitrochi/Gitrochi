@@ -53,16 +53,23 @@ extension RepoStore {
         searchTask = Task {
             try? await Task.sleep(for: .milliseconds(scope == .commits ? 350 : 500))
             guard !Task.isCancelled else { return }
-            var args = ["log", "--exclude=refs/stash", "--all", "--format=%H"]
-            switch scope {
-            case .commits: args += ["-n", "20000", "-i", "-E", "--grep=" + query.gitPattern]
-            case .files: args += ["-n", "20000", "--", ":(glob,icase)**/*\(q)*"]
-            case .code: args += ["-n", "1000", "-G", NSRegularExpression.escapedPattern(for: q)]
+            let codePattern = NSRegularExpression.escapedPattern(for: q)
+            // The repository index answers the same question from SQLite while it is current.
+            var found: Set<String>
+            if let indexed = await RepoIndex.searchMatches(url, scope: scope, query: q, codePattern: codePattern) {
+                found = indexed
+            } else {
+                var args = ["log", "--exclude=refs/stash", "--all", "--format=%H"]
+                switch scope {
+                case .commits: args += ["-n", "20000", "-i", "-E", "--grep=" + query.gitPattern]
+                case .files: args += ["-n", "20000", "--", ":(glob,icase)**/*\(q)*"]
+                case .code: args += ["-n", "1000", "-G", codePattern]
+                }
+                let r = try? await Git.run(args, in: url, timeout: 180, env: ["GIT_LITERAL_PATHSPECS": "0"])
+                found = Set((r?.output ?? "").split(separator: "\n").map(String.init))
             }
-            let r = try? await Git.run(args, in: url, timeout: 180, env: ["GIT_LITERAL_PATHSPECS": "0"])
             guard !Task.isCancelled, searchText.trimmed == q, searchScope == scope else { return }
             searching = false
-            var found = Set((r?.output ?? "").split(separator: "\n").map(String.init))
             if scope == .commits { found.formUnion(searchMatchSet) }
             applySearch(found, jump: scope != .commits || searchMatches.isEmpty)
         }

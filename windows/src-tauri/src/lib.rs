@@ -8,6 +8,7 @@ mod launch;
 mod local_projects;
 mod process;
 mod pty;
+mod repo_index;
 mod system;
 mod update;
 mod watch;
@@ -101,6 +102,7 @@ pub fn run() {
             launch::take_app_launches,
             local_projects::local_projects_read,
             local_projects::local_projects_write,
+            repo_index::index_call,
             update::update_check,
             update::update_install,
             update::update_verify,
