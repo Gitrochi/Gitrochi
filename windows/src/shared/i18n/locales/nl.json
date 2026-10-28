@@ -1207,5 +1207,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Je kunt ook gitch logo on of gitch logo off in een terminal gebruiken.",
  "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen.",
   "Hide right panel": "Rechterpaneel verbergen",
-  "Show right panel": "Rechterpaneel tonen"
+  "Show right panel": "Rechterpaneel tonen",
+  "Find in file": "Zoeken in bestand",
+  "Previous match": "Vorige overeenkomst",
+  "Next match": "Volgende overeenkomst",
+  "{0} of {1}": "{0} van {1}",
+  "No matches": "Geen overeenkomsten",
+  "Wrap lines": "Regels afbreken",
+  "Decrease font size": "Lettertype verkleinen",
+  "Increase font size": "Lettertype vergroten",
+  "Copy source": "Broncode kopiëren",
+  "Hide file explorer": "Bestandsverkenner verbergen",
+  "Show file explorer": "Bestandsverkenner tonen",
+  "Files": "Bestanden",
+  "{0} lines": "{0} regels",
+  "Plain text": "Platte tekst",
+  "Read only": "Alleen-lezen",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Regelafbreking is niet beschikbaar voor bestanden met meer dan 5.000 regels.",
+  "More than 10,000 matches. Refine your search.": "Meer dan 10.000 overeenkomsten. Verfijn je zoekopdracht."
 }

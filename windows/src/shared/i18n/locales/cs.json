@@ -1236,5 +1236,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "V terminálu můžete také použít gitch logo on nebo gitch logo off.",
  "Couldn't read the CLI logo setting.": "Nastavení loga CLI se nepodařilo přečíst.",
   "Hide right panel": "Skrýt pravý panel",
-  "Show right panel": "Zobrazit pravý panel"
+  "Show right panel": "Zobrazit pravý panel",
+  "Find in file": "Hledat v souboru",
+  "Previous match": "Předchozí výskyt",
+  "Next match": "Další výskyt",
+  "{0} of {1}": "{0} z {1}",
+  "No matches": "Žádné shody",
+  "Wrap lines": "Zalamovat řádky",
+  "Decrease font size": "Zmenšit písmo",
+  "Increase font size": "Zvětšit písmo",
+  "Copy source": "Kopírovat zdrojový kód",
+  "Hide file explorer": "Skrýt průzkumník souborů",
+  "Show file explorer": "Zobrazit průzkumník souborů",
+  "Files": "Soubory",
+  "{0} lines": "{0} řádků",
+  "Plain text": "Prostý text",
+  "Read only": "Pouze ke čtení",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Zalamování není dostupné pro soubory s více než 5 000 řádky.",
+  "More than 10,000 matches. Refine your search.": "Více než 10 000 shod. Upřesněte hledání."
 }

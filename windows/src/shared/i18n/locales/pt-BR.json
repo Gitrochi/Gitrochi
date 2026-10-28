@@ -1223,5 +1223,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Você também pode usar gitch logo on ou gitch logo off em um terminal.",
  "Couldn't read the CLI logo setting.": "Não foi possível ler a configuração do logotipo da CLI.",
   "Hide right panel": "Ocultar painel direito",
-  "Show right panel": "Mostrar painel direito"
+  "Show right panel": "Mostrar painel direito",
+  "Find in file": "Buscar no arquivo",
+  "Previous match": "Resultado anterior",
+  "Next match": "Próximo resultado",
+  "{0} of {1}": "{0} de {1}",
+  "No matches": "Nenhum resultado",
+  "Wrap lines": "Quebrar linhas",
+  "Decrease font size": "Diminuir fonte",
+  "Increase font size": "Aumentar fonte",
+  "Copy source": "Copiar código-fonte",
+  "Hide file explorer": "Ocultar explorador de arquivos",
+  "Show file explorer": "Mostrar explorador de arquivos",
+  "Files": "Arquivos",
+  "{0} lines": "{0} linhas",
+  "Plain text": "Texto simples",
+  "Read only": "Somente leitura",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "A quebra de linhas não está disponível para arquivos com mais de 5.000 linhas.",
+  "More than 10,000 matches. Refine your search.": "Mais de 10.000 resultados. Refine sua busca."
 }

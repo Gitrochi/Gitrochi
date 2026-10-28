@@ -1207,5 +1207,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Anda juga dapat menggunakan gitch logo on atau gitch logo off di terminal.",
  "Couldn't read the CLI logo setting.": "Pengaturan logo CLI tidak dapat dibaca.",
   "Hide right panel": "Sembunyikan panel kanan",
-  "Show right panel": "Tampilkan panel kanan"
+  "Show right panel": "Tampilkan panel kanan",
+  "Find in file": "Cari dalam file",
+  "Previous match": "Kecocokan sebelumnya",
+  "Next match": "Kecocokan berikutnya",
+  "{0} of {1}": "{0} dari {1}",
+  "No matches": "Tidak ada kecocokan",
+  "Wrap lines": "Bungkus baris",
+  "Decrease font size": "Perkecil ukuran huruf",
+  "Increase font size": "Perbesar ukuran huruf",
+  "Copy source": "Salin kode sumber",
+  "Hide file explorer": "Sembunyikan penjelajah file",
+  "Show file explorer": "Tampilkan penjelajah file",
+  "Files": "File",
+  "{0} lines": "{0} baris",
+  "Plain text": "Teks biasa",
+  "Read only": "Hanya baca",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Pembungkusan baris tidak tersedia untuk file dengan lebih dari 5.000 baris.",
+  "More than 10,000 matches. Refine your search.": "Lebih dari 10.000 kecocokan. Persempit pencarian Anda."
 }
