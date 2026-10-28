@@ -15,8 +15,8 @@
 .release-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .release-tag { color: var(--accent); font-family: var(--mono, monospace); font-size: 14px; overflow-wrap: anywhere; }
 .release-article { max-width: 880px; min-width: 0; margin: 0 auto; }
-.release-article h2 { font-size: 24px; line-height: 1.3; overflow-wrap: anywhere; margin: 10px 0; }
-.release-article h2:focus { outline: none; }
+.release-article > h2 { font-size: 24px; line-height: 1.3; overflow-wrap: anywhere; margin: 10px 0; }
+.release-article > h2:focus { outline: none; }
 .release-markdown { min-width: 0; max-width: 100%; font-size: 13px; line-height: 1.7; margin: 20px 0 28px; }
 .release-workspace .release-markdown pre { white-space: pre; overflow-wrap: normal; max-width: 100%; overflow-x: auto; }
 .release-markdown .md-table { max-width: 100%; overflow-x: auto; }
@@ -44,3 +44,34 @@
   .release-workspace .release-back { display: inline-flex; }
   .release-versions { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
 }
+
+.release-workspace > header { padding: 22px 24px 18px; border-bottom: 0; }
+.release-heading-icon { width: 44px; height: 44px; display: grid; place-items: center; color: var(--accent); border-radius: 13px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); flex-shrink: 0; }
+.release-versions { margin: 0 22px 18px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: color-mix(in srgb, var(--text) 2%, var(--surface)); gap: 20px; align-items: center; }
+.release-versions > div { gap: 9px; }
+.release-versions > div > span { display: flex; align-items: center; gap: 6px; line-height: 1.4; }
+.release-versions strong { font-size: 13px; font-weight: 600; }
+.release-versions small { font-size: 10px; color: var(--text-2); }
+.release-versions .release-version-primary strong { font-size: 29px; color: var(--accent); font-weight: 650; letter-spacing: -.04em; line-height: 1.05; }
+.release-versions .release-version-primary .hosting-date { font-size: 10px; }
+.release-workspace .hub-list { padding: 16px; }
+.release-workspace .hub-list > .input { border-radius: 9px; padding: 9px 11px; }
+.release-filters { position: relative; align-items: center; border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 3px; background: var(--input); }
+.release-filters > select { border: 0; background-color: transparent; box-shadow: none; padding: 6px; font-size: 11px; }
+.release-sort-icon { display: flex; color: var(--text-2); }
+.release-workspace .hub-list button.hub-item { padding: 14px; margin: 6px 0; border: 1px solid transparent; border-radius: 11px; gap: 8px; }
+.release-workspace .hub-list button.hub-item.active { border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+.release-workspace .hub-list button.hub-item > span:not(.release-row-top) { font-size: 12px; line-height: 1.5; }
+.release-row-top strong { font-size: 14px; }
+.release-detail-meta { display: flex; align-items: center; gap: 9px; font-size: 11px; color: var(--text-2); margin: 14px 0 18px; }
+.release-meta-dot { opacity: .5; }
+.release-workspace .hub-content { padding: 26px 28px; }
+.release-compare { padding: 10px 12px; background: color-mix(in srgb, var(--text) 2%, var(--surface)); border-radius: 10px; }
+.release-article > h2 { font-size: 26px; letter-spacing: -.025em; }
+@container hosting-hub (max-width: 680px) {
+  .release-versions { margin: 0 12px 12px; padding: 14px; gap: 16px; }
+  .release-workspace .hub-content { padding: 18px; }
+  .release-versions .release-version-primary strong { font-size: 25px; }
+}
+
+.release-markdown h2 { font-size: 19px; letter-spacing: -.01em; }

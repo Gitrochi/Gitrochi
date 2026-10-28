@@ -1907,5 +1907,15 @@
   "Allow access to the saved account to use repository services.": "リポジトリサービスを使うには、保存済みアカウントへのアクセスを許可してください。",
   "Waiting for your macOS approval. You can continue using local Git tools.": "macOS の承認を待っています。ローカルの Git ツールは引き続き使えます。",
   "Hide right panel": "右パネルを非表示",
-  "Show right panel": "右パネルを表示"
+  "Show right panel": "右パネルを表示",
+  "Development": "開発",
+  "Newest first": "新しい順",
+  "Version number": "バージョン順",
+  "Create branch": "ブランチを作成",
+  "Create pull request": "プルリクエストを作成",
+  "Create merge request": "マージリクエストを作成",
+  "Quote reply": "引用して返信",
+  "Edit comment": "コメントを編集",
+  "Save comment": "コメントを保存",
+  "Not published": "未公開"
 }

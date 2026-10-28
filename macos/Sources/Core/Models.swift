@@ -584,6 +584,7 @@ struct NewPullRequestDraft {
     let body: String
     let base: String
     let draft: Bool
+    var issue: ProjectTaskReference? = nil
 }
 
 struct ConfirmRequest: Identifiable {

@@ -1766,3 +1766,13 @@
 "Search the list, then read the conversation and reply here." = "一覧で探して、ここで会話を読み、返信します。";
 "Hide right panel" = "右パネルを非表示";
 "Show right panel" = "右パネルを表示";
+"Development" = "開発";
+"Newest first" = "新しい順";
+"Version number" = "バージョン順";
+"Create branch" = "ブランチを作成";
+"Create pull request" = "プルリクエストを作成";
+"Create merge request" = "マージリクエストを作成";
+"Quote reply" = "引用して返信";
+"Edit comment" = "コメントを編集";
+"Save comment" = "コメントを保存";
+"Not published" = "未公開";
