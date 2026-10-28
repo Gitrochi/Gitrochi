@@ -98,19 +98,22 @@ struct ReleaseWorkspace: View {
             Text("Search filters loaded pages. Load more to search older items.").font(.caption).foregroundStyle(.secondary)
             if sort == "version" { Text("Version ordering applies to one SemVer package; other selections use published dates.").font(.caption).foregroundStyle(.secondary) }
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 5) {
-                    ForEach(items) { item in
-                        Button {
-                            editor = nil; detailOpen = true; base = ""
-                            Task { await store.selectHostingHubItem(item) }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 7) {
-                                WorkbenchFlow(spacing: 8) { Label(ReleaseCatalog.tag(item), systemImage: "tag").font(.callout.weight(.semibold)); badge(item) }
-                                Text(item.title).font(.callout)
-                                if ReleaseCatalog.state(item) == "Draft" { Text("Not published").font(.caption).foregroundStyle(.secondary) } else { HostingDate(value: ReleaseCatalog.date(item)) }
-                            }.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())
-                        }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.15) : .clear)).disabled(store.hostingHub.busy)
+                VStack(alignment: .leading, spacing: 5) {
+                    LazyVStack(alignment: .leading, spacing: 5) {
+                        ForEach(items) { item in
+                            Button {
+                                editor = nil; detailOpen = true; base = ""
+                                Task { await store.selectHostingHubItem(item) }
+                            } label: {
+                                VStack(alignment: .leading, spacing: 7) {
+                                    WorkbenchFlow(spacing: 8) { Label(ReleaseCatalog.tag(item), systemImage: "tag").font(.callout.weight(.semibold)); badge(item) }
+                                    Text(item.title).font(.callout)
+                                    if ReleaseCatalog.state(item) == "Draft" { Text("Not published").font(.caption).foregroundStyle(.secondary) } else { HostingDate(value: ReleaseCatalog.date(item)) }
+                                }.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())
+                            }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.15) : .clear)).disabled(store.hostingHub.busy)
+                        }
                     }
+                    // Keep pagination outside the lazy rows so repeated scrolls retain its position.
                     if store.hostingHub.loading { ProgressView().padding() }
                     if !store.hostingHub.loading && items.isEmpty && store.hostingHub.error == nil { Text(store.hostingHub.items.isEmpty ? String(localized: "No releases found for this repository.") : String(localized: "No matching releases.")).font(.callout).foregroundStyle(.secondary).padding(12) }
                     if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }
