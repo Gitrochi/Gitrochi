@@ -56,4 +56,43 @@ extension RepoStore {
         await loadIssues()
         await openInboxItem(item)
     }
+    func issueTask(_ item: CollaborationInboxItem) -> ProjectTaskReference? {
+        IssueWorkflow.task(target: target, number: item.number, title: item.title, url: item.url, isIssue: item.kind == "issue" && !item.isRequest)
+    }
+    func requestIssueBranch(_ item: CollaborationInboxItem) {
+        guard let task = issueTask(item), let headHash, busy == nil else { return }
+        sheet = .newBranch(start: headHash, label: headBranch ?? "HEAD", suggestedName: IssueWorkflow.branchName(task), projectTask: task)
+    }
+    var currentBranchIssue: ProjectTaskReference? {
+        guard let path = url?.path, let branch = headBranch, let target,
+              let task = ProjectTaskLinks.task(repositoryPath: path, branch: branch, repository: target.path, host: target.host), let number = task.number else { return nil }
+        return IssueWorkflow.task(target: target, number: number, title: task.title, url: task.url)
+    }
+    func requestIssuePullRequest(_ item: CollaborationInboxItem) {
+        guard let task = issueTask(item), let branch = headBranch, busy == nil else { return }
+        if let existing = pullRequests.first(where: { $0.source == branch }) { navigate(.pullRequests); select(.pullRequest(existing.number)); return }
+        newPullRequestDraft = NewPullRequestDraft(branch: branch, title: task.title, body: IssueWorkflow.requestBody(task), base: "", draft: true, issue: task)
+        sheet = .createPullRequest
+    }
+
+    func changeIssueComment(_ item: CollaborationInboxItem, comment: CollaborationInboxComment, body: String?) async -> Bool {
+        guard !collaboration.inboxBusy, !collaboration.inboxLoading, collaboration.inboxDetail?.item.id == item.id,
+              collaboration.inboxDetail?.comments.contains(where: { $0.id == comment.id && $0.body == comment.body && $0.editable }) == true, let access = issueAccess else { return false }
+        let key = issueContextKey
+        let current = { self.issueContextKey == key && self.collaboration.inboxDetail?.item.id == item.id && access.isCurrent?() != false }
+        collaboration.inboxBusy = true; collaboration.inboxError = nil
+        defer { if issueContextKey == key { collaboration.inboxBusy = false } }
+        do {
+            try await CollaborationAPI.changeIssueComment(access, item: item, comment: comment, body: body)
+            guard current() else { return false }
+            await openInboxItem(item); return current()
+        } catch { if current() { collaboration.inboxError = describe(error) }; return false }
+    }
+    func confirmDeleteIssueComment(_ item: CollaborationInboxItem, comment: CollaborationInboxComment) {
+        let key = issueContextKey
+        confirm = ConfirmRequest(title: String(localized: "Delete comment?"), message: String(localized: "This permanently deletes your comment."), actionTitle: String(localized: "Delete"), destructive: true) {
+            if self.issueContextKey == key { _ = await self.changeIssueComment(item, comment: comment, body: nil) }
+        }
+    }
+
 }

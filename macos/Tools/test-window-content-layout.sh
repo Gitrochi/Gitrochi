@@ -71,6 +71,19 @@ for source in (root / 'Sources').rglob('*.swift'):
         needle = '}.frame(maxWidth: .infinity, alignment: .leading).padding(22)'
         assert text.count(needle) == 1, 'Hosting detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
+    elif relative == 'Views/Hub/ReleaseWorkspace.swift':
+        needle = 'Text("Releases").font(.title2.weight(.semibold))'
+        assert text.count(needle) == 1, 'Release heading measurement attachment changed'
+        text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-title:releases"))')
+        needle = '}.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())'
+        assert text.count(needle) == 1, 'Release list measurement attachment changed'
+        text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-item:" + item.id))')
+        needle = 'if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }'
+        assert text.count(needle) == 1, 'Release pagination measurement attachment changed'
+        text = text.replace(needle, needle[:-2] + '.background(WindowContentProbe(identifier: "hub-pagination")) }')
+        needle = '}.frame(maxWidth: 880, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)'
+        assert text.count(needle) == 1, 'Release detail footer measurement attachment changed'
+        text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Services/Accounts.swift':
         needle = 'private let credentials = CredentialCache { await Keychain.read($0) }'
         assert text.count(needle) == 1, 'Isolated credential reader attachment changed'

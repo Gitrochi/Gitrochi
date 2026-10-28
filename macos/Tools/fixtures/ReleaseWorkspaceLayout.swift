@@ -72,7 +72,7 @@ enum Git {
                 store.hostingHub.page = 1
                 store.hostingHub.detail = HubDetail(item: item, assets: [HubAsset(id: "asset", name: "Example-desktop-1.10.0-macOS-universal.zip", size: 12_582_912, downloads: 142, url: "https://github.com/sample-studio/desktop/releases/download/v1.10.0/example.zip")])
                 let bounds = NSRect(x: 0, y: 0, width: width, height: 900)
-                let host = NSHostingView(rootView: ReleaseWorkspace(store: store).frame(width: width, height: 900).background(Color(nsColor: .windowBackgroundColor)).preferredColorScheme(dark ? .dark : .light))
+                let host = NSHostingView(rootView: ReleaseWorkspace(store: store).frame(width: width, height: 900).background(Color(nsColor: .windowBackgroundColor)).environment(\.locale, Locale(identifier: "en_US")).preferredColorScheme(dark ? .dark : .light))
                 let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)
                 window.setFrameOrigin(NSPoint(x: -4000, y: 0)); window.contentView = host; host.frame = bounds; window.orderBack(nil)
                 RunLoop.current.run(until: Date().addingTimeInterval(0.3)); host.layoutSubtreeIfNeeded(); window.displayIfNeeded()

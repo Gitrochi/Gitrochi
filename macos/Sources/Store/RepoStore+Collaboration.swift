@@ -126,7 +126,8 @@ extension RepoStore {
         let state = collaboration, context = collaboration.contextID, repoURL = url
         let current = { self.url == repoURL && state.contextID == context }
         guard !state.inboxBusy, var c = collaborationAccess else { return false }
-        c.isCurrent = current
+        let accessCurrent = c.isCurrent
+        c.isCurrent = { current() && accessCurrent?() != false }
         state.inboxBusy = true; state.inboxError = nil
         defer { if current() { state.inboxBusy = false } }
         do {
