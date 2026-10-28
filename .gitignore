@@ -16,3 +16,6 @@ node_modules
 
 # Worktrees Claude Code creates for its sessions; the rest of .claude/ can be shared.
 .claude/worktrees/
+
+# The C++ module's own build output (native/build.sh).
+native/build/
