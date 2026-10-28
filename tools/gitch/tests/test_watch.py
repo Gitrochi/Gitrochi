@@ -21,7 +21,7 @@ from types import SimpleNamespace
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
-from helper_test_support import bash_executable, stop_process_tree, write_utf8
+from helper_test_support import bash_executable, remove_when_released, stop_process_tree, write_utf8
 
 
 HELPER = Path(__file__).resolve().parents[1] / "gitch-graph-watch"
@@ -30,7 +30,7 @@ HELPER = Path(__file__).resolve().parents[1] / "gitch-graph-watch"
 class WatchTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
+        self.addCleanup(remove_when_released, self.temp)
         self.parent = Path(self.temp.name)
         self.repo = self.parent / "work repo"
         self.repo.mkdir()

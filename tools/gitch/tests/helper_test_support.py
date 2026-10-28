@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import signal
 import subprocess
+import time
 
 
 def bash_executable():
@@ -37,3 +38,20 @@ def stop_process_tree(pid):
             os.kill(pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
+
+
+def remove_when_released(directory, timeout=10):
+    """Remove a test's TemporaryDirectory once the processes it stopped have let go of it.
+
+    Windows ends a killed process tree asynchronously: until a git or Git Bash process from that tree
+    has exited, the folder it works in stays in use (WinError 32).
+    """
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            directory.cleanup()
+            return
+        except PermissionError:
+            if os.name != "nt" or time.monotonic() >= deadline:
+                raise
+            time.sleep(0.1)
