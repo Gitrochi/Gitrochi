@@ -437,6 +437,29 @@ printf '</body></html>' >> "$out"
             mock.call.getsockname(),
         ])
 
+    def test_windows_processes_start_without_console_windows(self):
+        # A detached watcher without a console made every git and Git Bash
+        # process it started open a console window of its own (#83). Check the
+        # Windows flags on every host.
+        module, watcher = self.atomic_watcher()
+        runs = []
+
+        def run(command, **options):
+            runs.append(options)
+            return subprocess.CompletedProcess(command, 0, b"", b"")
+
+        group = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200)
+        with mock.patch.object(module.os, "name", "nt"), \
+                mock.patch.object(module.subprocess, "CREATE_NEW_PROCESS_GROUP", group, create=True), \
+                mock.patch.object(module.subprocess, "run", run):
+            watcher.git("ls-files", "-z")
+            started = module.detached()
+            self.assertEqual(module.hidden(), {"creationflags": module.CREATE_NO_WINDOW})
+        self.assertEqual(runs[0].get("creationflags"), module.CREATE_NO_WINDOW)
+        self.assertEqual(started, {"creationflags": module.CREATE_NO_WINDOW | group})
+        self.assertEqual((module.hidden(), module.detached()), ({}, {"start_new_session": True}),
+                         "other systems keep their session handling and get no Windows flags")
+
     def test_served_html_and_generation_snapshot_are_atomic(self):
         _, watcher = self.atomic_watcher()
         entered, release, written = threading.Event(), threading.Event(), threading.Event()
