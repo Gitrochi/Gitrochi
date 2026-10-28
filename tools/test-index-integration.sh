@@ -21,11 +21,7 @@ GP=("$PY" "$ROOT/tools/gitrochi-py/gitrochi-py")
 fail() { echo "FAIL: $*" >&2; exit 1; }
 json() { "$PY" -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.argv[1], {'d': d}))" "$1"; }
 
-mkdir -p "$T/home"
-: > "$T/gitconfig"
-export HOME="$T/home" GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
-unset GITROCHI_INDEX GITROCHI_INDEX_DB GITROCHI_HUB_TOKEN GITROCHI_HUB_URL
-
+# Build first, with the real HOME: rustup and Go find their toolchains and caches there.
 INDEX="${GITROCHI_INDEX_BIN:-$ROOT/crates/target/release/gitrochi-index}"
 if [ ! -x "$INDEX" ]; then
     cargo build --locked --release --manifest-path "$ROOT/crates/Cargo.toml" --bin gitrochi-index >&2
@@ -34,6 +30,11 @@ export GITROCHI_INDEX_BIN="$INDEX"
 bash "$ROOT/services/hub/build.sh" >&2
 HUB="$ROOT/services/hub/dist/gitrochi-hub"
 [ -x "$HUB" ] || fail "the hub did not build"
+
+mkdir -p "$T/home"
+: > "$T/gitconfig"
+export HOME="$T/home" GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
+unset GITROCHI_INDEX GITROCHI_INDEX_DB GITROCHI_HUB_TOKEN GITROCHI_HUB_URL
 
 member() { # member NAME FOLDER: a clone with the member's identity
     git clone -q "$T/origin.git" "$2"

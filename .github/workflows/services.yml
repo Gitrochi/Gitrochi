@@ -65,9 +65,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-26]
-        # 3.9 is macOS's system python3, which the shipped tools must keep working with.
-        python: ["3.9", "3.13"]
+        include:
+          # 3.9 is macOS's system python3, which the shipped tools must keep working with
+          # (Ubuntu 26.04 runners no longer offer it).
+          - {os: macos-26, python: "3.9"}
+          - {os: macos-26, python: "3.13"}
+          - {os: ubuntu-latest, python: "3.13"}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -135,7 +138,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-26]
+        include:
+          - {os: ubuntu-latest, python: "3.13"}
+          - {os: macos-26, python: "3.9"}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -156,7 +161,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python }}
 
       # The index, the Python supervisor and review, and the Go hub and monitors together.
       - name: Index, Python tools and Go services on throwaway repositories
