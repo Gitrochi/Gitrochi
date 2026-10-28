@@ -90,7 +90,7 @@ struct RepoWindow: View {
                 store.close()
             }))
             .focusedSceneValue(\.repoStore, store)
-            .navigationTitle(store.url == nil ? "Gitrochi" : store.name)
+            .navigationTitle(store.windowTitle)
             .task {
                 // 탭을 오가며 화면이 다시 나타나도 한 번만 연다
                 guard !started else { return }
