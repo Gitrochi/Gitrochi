@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { returnsToRepository } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
+import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { destinationIcons, destinationTitle } from "@/widgets/sidebar";
@@ -18,7 +19,7 @@ export function PageHeader({ store }: { store: RepoStore }) {
     <header className="page-header">
       {back && (
         <>
-          <button type="button" className="page-header-back" aria-label={t("Back to the repository screen")} data-tip={t("Back to the repository screen")} onClick={() => store.navigate("repository")}>
+          <button type="button" className="page-header-back" aria-label={t("Back to the repository screen")} data-tip={keyLabel(t("Back to the repository screen (Ctrl+[)"))} onClick={() => store.returnToRepository()}>
             <ChevronLeft size={15} />
             {t("Repository")}
           </button>

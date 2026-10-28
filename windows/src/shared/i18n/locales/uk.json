@@ -1231,6 +1231,7 @@
  "Bringing another app forward is only available on Windows.": "Виводити інший застосунок на передній план можна лише в Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Не вдалося відкрити {0}: це не всередині репозиторію Git.",
  "Back to the repository screen": "Повернутися до екрана репозиторію",
+ "Back to the repository screen (Ctrl+[)": "Назад до екрана репозиторію (Ctrl+[)",
  "Graph lanes": "Доріжки графа",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Перетягніть або прокрутіть тут убік чи з Shift+коліщатком, щоб побачити інші доріжки",
  "Runs": "Запуски",

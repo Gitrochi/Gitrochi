@@ -1227,6 +1227,7 @@
  "Bringing another app forward is only available on Windows.": "การนำแอปอื่นมาไว้ด้านหน้าใช้ได้เฉพาะบน Windows",
  "Couldn't open {0}: it isn't inside a Git repository.": "เปิด {0} ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git",
  "Back to the repository screen": "กลับไปที่หน้าจอที่เก็บ",
+ "Back to the repository screen (Ctrl+[)": "กลับไปที่หน้าจอที่เก็บ (Ctrl+[)",
  "Graph lanes": "เลนของกราฟ",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "ลาก หรือเลื่อนด้านข้างหรือใช้ Shift+ล้อเมาส์ที่นี่ เพื่อดูเลนเพิ่มเติม",
  "Runs": "รายการรัน",

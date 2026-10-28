@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.hoisted(() => vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} })));
 vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
+import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
+import { workspace } from "@/entities/workspace";
 import { isWorkspaceDestination, repositoryDestinations, restoredDestination, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
 import { settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
@@ -91,6 +93,26 @@ describe("workspace navigation", () => {
     store.navigate("issues"); internal(store).resetState(); expect(store.cameFromRepository).toBe(false);
     // a commit's CI badge opens Actions, which offers the way back too
     store.navigate("repository"); store.navigate("actions"); expect(store.cameFromRepository).toBe(true);
+  });
+  it("goes back with Ctrl+[ like the ‹ Repository button, only on a page that offers it", () => {
+    const store = fixture();
+    vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+    vi.stubGlobal("document", { querySelector: () => null });
+    const press = (cancelled = false) => {
+      const e = { key: "[", code: "BracketLeft", ctrlKey: true, metaKey: false, shiftKey: false, altKey: false, defaultPrevented: cancelled, target: null, preventDefault() { e.defaultPrevented = true; }, stopPropagation() {} };
+      handleShortcut(e as unknown as KeyboardEvent, () => {});
+    };
+    try {
+      store.navigate("repository"); store.navigate("issues");
+      expect(store.returnToRepository()).toBe(true); expect(store.destination).toBe("repository");
+      store.navigate("pullRequests"); press(); expect(store.destination).toBe("repository");
+      store.navigate("compare"); store.navigate("issues");
+      expect(store.returnToRepository()).toBe(false); press(); expect(store.destination).toBe("issues");
+      // in the terminal Ctrl+[ is Escape: xterm sends it to the shell and cancels the event before the app sees it
+      store.navigate("repository"); store.navigate("actions"); press(true); expect(store.destination).toBe("actions");
+    } finally {
+      Reflect.deleteProperty(globalThis, "document");
+    }
   });
   it("clears unrelated file and diff panels when entering Pull requests", () => {
     const store = fixture(); store.selection = { kind: "commit", sha: head }; store.diffSource = { kind: "working", change: file }; store.fileInspect = { mode: "history", path: file.path, rev: null };

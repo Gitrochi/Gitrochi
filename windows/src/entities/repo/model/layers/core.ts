@@ -83,6 +83,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.emit(); return true;
   }
 
+  /** "‹ Repository" and its shortcut Ctrl+[ (macOS: ⌘[): back to the repository screen from a page it opened */
+  returnToRepository() {
+    return this.cameFromRepository && returnsToRepository.has(this.destination) && this.navigate("repository");
+  }
+
   /** The run the Actions page should select and show next, set by a CI badge in the graph (macOS: ciFocus) */
   ciFocus: number | null = null;
   /** The run shown on the right of the Actions page (macOS: ciSelected) */
