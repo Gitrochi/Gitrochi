@@ -55,6 +55,8 @@ export class TerminalSession extends Observable {
   unseenOutput = false;
   visible = false;
   onExit?: (code: number | null) => void;
+  /** The shell's process id while it runs; an agent typed into this tab has it as an ancestor */
+  pid: number | null = null;
 
   private ptyId: string | null = null;
   private opened = false;
@@ -231,7 +233,7 @@ export class TerminalSession extends Observable {
     const ptyId = crypto.randomUUID();
     this.ptyId = ptyId;
     try {
-      await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, (ev) => {
+      const pid = await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, (ev) => {
         if (this.ptyId !== ptyId) return;
         if (ev.kind === "data") {
           this.term.write(ev.data);
@@ -241,11 +243,14 @@ export class TerminalSession extends Observable {
           }
         } else {
           this.running = false;
+          this.pid = null;
           this.exitCode = ev.code;
           this.emit();
           this.onExit?.(ev.code);
         }
       });
+      // the shell may already have ended before the spawn call returned
+      if (this.ptyId === ptyId && this.running) this.pid = pid;
     } catch (e) {
       this.running = false;
       this.term.write(t("\r\n\u001b[31mCouldn't start the terminal: {0}\u001b[0m\r\n", String(e)));

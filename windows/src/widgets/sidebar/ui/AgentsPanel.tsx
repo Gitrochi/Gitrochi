@@ -1,8 +1,9 @@
 import { AppWindow, GitBranch, House, Pencil, Plus, ShieldOff, Sparkles, SquareArrowOutUpRight, Zap } from "lucide-react";
 import { useEffect } from "react";
-import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, appDisplayName, containingRoot, type ExternalAgent, relativeFolder, skipsPermissions } from "@/entities/agent";
+import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, appDisplayName, containingRoot, type ExternalAgent, relativeFolder, skipsPermissions, type TerminalAgent } from "@/entities/agent";
 import { statsClean, type Worktree, type WorktreeStats } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
+import { workspace } from "@/entities/workspace";
 import { ipc } from "@/shared/api";
 import { basename, displayPath, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -27,6 +28,9 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
   }, [store]);
   const roots = [...store.worktrees.map((w) => w.path), ...(store.path ? [store.path] : [])];
   const elsewhere = agents.externalIn(roots);
+  // typed into a terminal tab of this window tab or another one; each shows in the card of the worktree it works in
+  const worktreePaths = store.worktrees.map((w) => w.path);
+  const typed = agents.terminalAgentsIn(worktreePaths, [store, ...workspace.tabs.filter((tab) => tab !== store)]);
   const others = agents.sessions.filter((s) => !store.worktrees.some((w) => samePath(w.path, s.path)) && s.status !== "ended");
   const sheet = (s: RepoStore["sheet"]) => {
     store.sheet = s;
@@ -52,7 +56,8 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
         </Button>
       </div>
       {store.worktrees.map((w) => (
-        <WorktreeCard key={w.path} store={store} worktree={w} stats={store.worktreeStats[w.path]} sessions={agents.sessionsIn(w.path)} isCurrent={samePath(w.path, store.path)} />
+        <WorktreeCard key={w.path} store={store} worktree={w} stats={store.worktreeStats[w.path]} sessions={agents.sessionsIn(w.path)}
+          typed={typed.filter((x) => samePath(containingRoot(x.agent.cwd, worktreePaths) ?? "", w.path))} isCurrent={samePath(w.path, store.path)} />
       ))}
       {elsewhere.length > 0 && (
         <>
@@ -78,7 +83,7 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
   );
 }
 
-function WorktreeCard({ store, worktree: w, stats, sessions, isCurrent }: { store: RepoStore; worktree: Worktree; stats?: WorktreeStats; sessions: AgentSession[]; isCurrent: boolean }) {
+function WorktreeCard({ store, worktree: w, stats, sessions, typed, isCurrent }: { store: RepoStore; worktree: Worktree; stats?: WorktreeStats; sessions: AgentSession[]; typed: TerminalAgent[]; isCurrent: boolean }) {
   return (
     <div
       className={`wt-card ${isCurrent ? "current" : ""}`}
@@ -156,14 +161,47 @@ function WorktreeCard({ store, worktree: w, stats, sessions, isCurrent }: { stor
           )}
         </div>
       )}
-      {sessions.length > 0 && (
+      {(sessions.length > 0 || typed.length > 0) && (
         <>
           <div style={{ height: 1, background: "var(--border)" }} />
           {sessions.map((s) => (
             <SessionRow key={s.id} store={store} session={s} showPath={false} />
           ))}
+          {typed.map((x) => (
+            <TerminalAgentRow key={x.agent.pid} store={store} typed={x} root={w.path} />
+          ))}
         </>
       )}
+    </div>
+  );
+}
+
+/** An agent typed into a tab of the terminal below (not started from here); clicking goes to that tab (macOS: TerminalAgentRow) */
+function TerminalAgentRow({ store, typed: { agent, term, host }, root }: { store: RepoStore; typed: TerminalAgent; root: string }) {
+  // "sub/folder · 12 minutes ago"
+  const place = [relativeFolder(agent.cwd, root), agent.started ? shortDate(agent.started) : ""].filter(Boolean).join(" · ");
+  const go = () => host.focusTerminal(term);
+  return (
+    <div
+      className="session-row terminal-agent"
+      data-pid={agent.pid}
+      onClick={go}
+      data-tip={t("Click to go to that terminal")}
+      onContextMenu={(e) =>
+        showContextMenu(e, [
+          { label: t("Go to terminal"), onClick: go },
+          { label: t("Copy folder path"), onClick: () => store.copy(agent.cwd) },
+        ])
+      }
+    >
+      <span className="dot pulse" style={{ background: dotColor.running, marginTop: 5 }} />
+      <span className="col grow">
+        <span className="row">
+          <span style={{ fontWeight: 500 }}>{agentStatusTitle.running}</span>
+          <span className="faint" style={{ fontSize: 11 }}>{agentKind(agent.kind).title.split(" (")[0]}</span>
+        </span>
+        {place && <span className="faint ellipsis" style={{ fontSize: 11 }}>{place}</span>}
+      </span>
     </div>
   );
 }

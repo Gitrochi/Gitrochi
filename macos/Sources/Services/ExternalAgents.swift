@@ -1,8 +1,8 @@
 import AppKit
 import Darwin
 
-/// An agent process Gitrochi did not start (Claude Code, Codex or Gemini CLI run in cmux, Terminal, iTerm, an editor…),
-/// found by its executable name and working directory. (Windows: entities/agent/lib/external-agents.ts, src-tauri/src/agents.rs)
+/// An agent process Gitrochi did not start (Claude Code, Codex or Gemini CLI run in cmux, Terminal, iTerm, an editor…
+/// or typed into Gitrochi's own terminal), found by its executable name and working directory. (Windows: entities/agent/lib/external-agents.ts, src-tauri/src/agents.rs)
 struct ExternalAgent: Identifiable, Hashable {
     let pid: Int32
     let kind: AgentKind
@@ -14,6 +14,8 @@ struct ExternalAgent: Identifiable, Hashable {
     let hostPID: Int32?
     let hostName: String
     let hostBundleID: String?
+    /// The shell of the Gitrochi terminal tab it was typed into; nil when another app runs it
+    var terminalPID: Int32? = nil
     var id: Int32 { pid }
 }
 
@@ -45,6 +47,11 @@ enum ExternalAgents {
             let r = AgentCenter.normalize(root)
             return path == r || path.hasPrefix(r.hasSuffix("/") ? r : r + "/")
         }
+    }
+
+    /// The working directory below its root ("" for the root itself) (Windows: relativeFolder)
+    static func relativeFolder(_ cwd: String, in root: String) -> String {
+        String(AgentCenter.normalize(cwd).dropFirst(AgentCenter.normalize(root).count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 
     /// Reads the process table (same-user processes only; others fail quietly). Runs off the main thread.
@@ -156,11 +163,17 @@ enum ExternalAgents {
         return chain
     }
 
-    /// The first ancestor that is a regular app; agents inside this very app are left to the in-app session list
+    /// The first ancestor that is a regular app. Below Gitrochi itself the ancestor right under it is a terminal tab's
+    /// shell; an agent Gitrochi started directly (with no shell between) is left out.
     @MainActor static func resolve(_ raw: Raw) -> ExternalAgent? {
         let own = ProcessInfo.processInfo.processIdentifier
-        for pid in raw.ancestors {
-            if pid == own { return nil }
+        for (index, pid) in raw.ancestors.enumerated() {
+            if pid == own {
+                guard index > 0 else { return nil }
+                return ExternalAgent(pid: raw.pid, kind: raw.kind, cwd: raw.cwd, tty: raw.tty, started: raw.started,
+                                     hostPID: own, hostName: "Gitrochi", hostBundleID: Bundle.main.bundleIdentifier,
+                                     terminalPID: raw.ancestors[index - 1])
+            }
             guard let app = NSRunningApplication(processIdentifier: pid), app.activationPolicy == .regular else { continue }
             return ExternalAgent(pid: raw.pid, kind: raw.kind, cwd: raw.cwd, tty: raw.tty, started: raw.started,
                                  hostPID: pid, hostName: app.localizedName ?? app.bundleIdentifier ?? "?", hostBundleID: app.bundleIdentifier)
@@ -169,8 +182,22 @@ enum ExternalAgents {
                              hostPID: nil, hostName: String(localized: "Unknown app"), hostBundleID: nil)
     }
 
-    /// Brings the app that runs the agent to the front; Terminal and iTerm also select the agent's tab
+    /// The open terminal tab an agent was typed into, and the repository tab it belongs to
+    @MainActor static func terminal(of agent: ExternalAgent) -> (store: RepoStore, session: TerminalSession)? {
+        guard let shell = agent.terminalPID else { return nil }
+        for store in Workspace.shared.openRepositories {
+            if let session = store.terminals.first(where: { $0.shellPID == shell }) { return (store, session) }
+        }
+        return nil
+    }
+
+    /// Brings the app that runs the agent to the front; Terminal and iTerm also select the agent's tab,
+    /// and an agent in Gitrochi's own terminal gets its tab selected and focused
     @MainActor static func bringForward(_ agent: ExternalAgent) {
+        if agent.terminalPID != nil {
+            if let found = terminal(of: agent) { found.store.focusTerminal(found.session) }
+            return
+        }
         if let tty = agent.tty, let script = tabScript(bundleID: agent.hostBundleID, tty: tty) {
             // selecting the tab can fail (automation not allowed); the app still comes forward below
             var error: NSDictionary?

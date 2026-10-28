@@ -131,12 +131,22 @@ final class AgentCenter {
     func refreshExternal() async {
         let own = Set(sessions.compactMap(\.pid))
         let raw = await Task.detached(priority: .utility) { ExternalAgents.scan() }.value
-        let list = raw.filter { !own.contains($0.pid) }.compactMap(ExternalAgents.resolve).sorted { ($0.started ?? .distantPast) > ($1.started ?? .distantPast) }
+        // typed into the terminal: only while its tab is open, and a tab a session runs in is that session's
+        let shells = Set(Workspace.shared.openRepositories.flatMap(\.terminals).compactMap(\.shellPID)).subtracting(own)
+        let list = raw.filter { !own.contains($0.pid) }.compactMap(ExternalAgents.resolve)
+            .filter { $0.terminalPID.map(shells.contains) ?? true }
+            .sorted { ($0.started ?? .distantPast) > ($1.started ?? .distantPast) }
         if list != external { external = list }
     }
 
+    /// Agents running in other apps, working in one of the folders
     func external(in roots: [String]) -> [ExternalAgent] {
-        external.filter { ExternalAgents.isInside($0.cwd, roots: roots) }
+        external.filter { $0.terminalPID == nil && ExternalAgents.isInside($0.cwd, roots: roots) }
+    }
+
+    /// Agents typed into a tab of Gitrochi's terminal, working in one of the folders (Windows: AgentCenter.terminalAgentsIn)
+    func terminalAgents(in roots: [String]) -> [ExternalAgent] {
+        external.filter { $0.terminalPID != nil && ExternalAgents.isInside($0.cwd, roots: roots) }
     }
 
     func sessions(in path: String) -> [AgentSession] {

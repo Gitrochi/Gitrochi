@@ -1,7 +1,10 @@
 import type { AgentProcess, AgentScan, ProcessLink } from "@/shared/api";
 import type { AgentKind } from "../model/agents";
 
-/** An agent Gitrochi did not start, and the app that runs it (macOS: ExternalAgent in Services/ExternalAgents.swift) */
+/**
+ * An agent Gitrochi did not start, in another app or typed into Gitrochi's own terminal, and the app that runs it
+ * (macOS: ExternalAgent in Services/ExternalAgents.swift)
+ */
 export interface ExternalAgent {
   pid: number;
   kind: AgentKind;
@@ -12,6 +15,8 @@ export interface ExternalAgent {
   hostPid: number | null;
   /** The app's executable, e.g. "WindowsTerminal.exe"; empty when unknown */
   hostExe: string;
+  /** The shell of the Gitrochi terminal tab it was typed into; null when another app runs it */
+  terminalPid: number | null;
 }
 
 const stem = (name: string) => name.toLowerCase().replace(/\.exe$/, "");
@@ -34,8 +39,8 @@ export function externalAgentKind(name: string, args: readonly string[]): AgentK
 }
 
 /**
- * The app that runs an agent: the first ancestor that owns a visible window. "own" when Gitrochi itself is on the way,
- * so its own sessions stay in the session list.
+ * The app that runs an agent: the first ancestor that owns a visible window. "own" when Gitrochi itself is on the way:
+ * its own sessions, and agents typed into its terminal.
  */
 export function agentHost(ancestors: readonly ProcessLink[], own: number): ProcessLink | "own" | null {
   for (const link of ancestors) {
@@ -45,7 +50,19 @@ export function agentHost(ancestors: readonly ProcessLink[], own: number): Proce
   return null;
 }
 
-/** The scan's agents outside Gitrochi, newest first; a wrapper's child agent counts once (the outermost process) */
+/**
+ * The shell of the Gitrochi terminal tab an agent was typed into: the ancestor right below Gitrochi.
+ * Null when Gitrochi started the agent directly, with no shell between.
+ */
+export function terminalShell(ancestors: readonly ProcessLink[], own: number): number | null {
+  const at = ancestors.findIndex((link) => link.pid === own);
+  return at > 0 ? ancestors[at - 1].pid : null;
+}
+
+/**
+ * The scan's agents Gitrochi did not start, newest first; a wrapper's child agent counts once (the outermost process).
+ * Below Gitrochi only agents typed into its terminal count.
+ */
 export function resolveExternalAgents(scan: AgentScan): ExternalAgent[] {
   const matched = new Map<number, { process: AgentProcess; kind: AgentKind }>();
   for (const process of scan.processes) {
@@ -56,8 +73,13 @@ export function resolveExternalAgents(scan: AgentScan): ExternalAgent[] {
   for (const { process, kind } of matched.values()) {
     if (process.ancestors.some((a) => matched.get(a.pid)?.kind === kind)) continue;
     const host = agentHost(process.ancestors, scan.own);
-    if (host === "own") continue;
-    found.push({ pid: process.pid, kind, cwd: process.cwd, started: process.started > 0 ? process.started : null, hostPid: host?.pid ?? null, hostExe: host?.name ?? "" });
+    const agent = { pid: process.pid, kind, cwd: process.cwd, started: process.started > 0 ? process.started : null };
+    if (host !== "own") {
+      found.push({ ...agent, hostPid: host?.pid ?? null, hostExe: host?.name ?? "", terminalPid: null });
+      continue;
+    }
+    const terminalPid = terminalShell(process.ancestors, scan.own);
+    if (terminalPid !== null) found.push({ ...agent, hostPid: scan.own, hostExe: "", terminalPid });
   }
   return found.sort((a, b) => (b.started ?? 0) - (a.started ?? 0));
 }
