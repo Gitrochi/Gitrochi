@@ -39,6 +39,7 @@ enum Hosting {
                 var detail = githubOrganization; detail["name"] = "Octo team"; detail["html_url"] = "https://github.com/octo"; detail["avatar_url"] = "https://avatars.githubusercontent.com/u/77?v=5"
                 return try json(detail)
             }
+            if request.url!.path == "/user/memberships/orgs/octo" { return try json(["role": "admin", "state": "active", "user": ["login": "me"]]) }
             precondition(request.url!.path == "/orgs/octo/repos")
             return try json([])
         }
@@ -48,7 +49,7 @@ enum Hosting {
         precondition(githubOrganizationItem.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=4" && !githubOrganizations.more)
         let githubOrganizationDetail = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationItem)
         precondition(githubOrganizationDetail.item.title == "Octo team" && githubOrganizationDetail.item.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=5")
-        precondition(organizationPaths == ["/user/orgs", "/orgs/octo", "/orgs/octo/repos"])
+        precondition(organizationPaths == ["/user/orgs", "/orgs/octo", "/user/memberships/orgs/octo", "/orgs/octo/repos"])
         Hosting.handler = { request in try json(request.url!.path == "/orgs/octo" ? ["description": "Updated team"] : [] as [Any]) }
         let sparseGithubOrganization = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationDetail.item)
         precondition(sparseGithubOrganization.item.id == "octo" && sparseGithubOrganization.item.title == "Octo team" && sparseGithubOrganization.item.subtitle == "octo")
@@ -58,6 +59,8 @@ enum Hosting {
         Hosting.handler = { request in
             if request.url!.path == "/api/v4/groups" { return try json([gitlabOrganization]) }
             if request.url!.path == "/api/v4/groups/9" { return try json(gitlabOrganization) }
+            if request.url!.path == "/api/v4/user" { return try json(["id": 7, "username": "me"]) }
+            if request.url!.path == "/api/v4/groups/9/members/all/7" { return try json(["id": 7, "username": "me", "access_level": 50]) }
             precondition(request.url!.path == "/api/v4/groups/9/projects")
             return try json([])
         }

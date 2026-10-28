@@ -16,6 +16,7 @@ const object = (value: unknown): ObjectValue => value && typeof value === "objec
 const text = (value: unknown): string => typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
 const number = (value: unknown): number | undefined => typeof value === "number" && Number.isFinite(value) ? value : undefined;
 const enc = encodeURIComponent;
+const sameAccount = (membership: ObjectValue, me: string) => text(object(membership.user).login).toLowerCase() === me.toLowerCase();
 const base = (c: HubAccess, item: HubItem) => `${c.apiBase}/${c.target.provider === "github" ? "orgs" : "groups"}/${enc(item.id)}`;
 const permissionNotice = () => t("This account cannot access this section. Check organization ownership, token permissions and server policy.");
 const roleName = (role: string): string => ({ admin: t("Owner"), direct_member: t("Member"), member: t("Member"), billing_manager: t("Billing manager"), "10": t("Guest"), "15": t("Planner"), "20": t("Reporter"), "30": t("Developer"), "40": t("Maintainer"), "50": t("Owner") })[role] ?? role;
@@ -26,7 +27,7 @@ async function permissions(c: HubAccess, item: HubItem, profile: ObjectValue): P
   if (c.target.provider === "github") {
     try {
       const membership = await hubRequest<ObjectValue>(c, `${c.apiBase}/user/memberships/orgs/${enc(item.id)}`);
-      const active = membership.state === "active";
+      const active = membership.state === "active" && sameAccount(membership, c.me);
       role = active ? roleName(text(membership.role)) : t("Pending membership");
       canInvite = active && membership.role === "admin";
     } catch (error) { ensureHubCurrent(c); if (error instanceof HostingError && [403, 404].includes(error.status)) notice = permissionNotice(); else throw error; }
@@ -37,7 +38,7 @@ async function permissions(c: HubAccess, item: HubItem, profile: ObjectValue): P
       const membership = await hubRequest<ObjectValue>(c, `${base(c, item)}/members/all/${enc(text(user.id))}`);
       const access = number(membership.access_level) ?? 0;
       if (access > 0) role = roleName(String(access));
-      canInvite = access === 50;
+      canInvite = access === 50 && text(membership.id) === text(user.id) && text(membership.username).toLowerCase() === c.me.toLowerCase() && (membership.membership_state === undefined || membership.membership_state === "active");
     } catch (error) { ensureHubCurrent(c); if (error instanceof HostingError && [403, 404].includes(error.status)) notice = permissionNotice(); else throw error; }
   }
   return { role, canInvite, publicRepositories: number(profile.public_repos), privateRepositories: number(profile.total_private_repos), location: text(profile.location), website: text(profile.blog), visibility: text(profile.visibility), notice };
@@ -50,7 +51,9 @@ export async function hubOrganizationDetail(c: HubAccess, item: HubItem, page: n
   const detail: HubDetail = { item: { ...item, title: text(profile.name) || item.title, body: text(profile.description), data: profile, avatarURL: profile.avatar_url === undefined ? item.avatarURL : organizationAvatarURL(c, profile.avatar_url), url: hubSafeURL(c, text(profile.html_url ?? profile.web_url)) ?? item.url }, members: [], repositories: [], assets: [], fields: [], rows: [], more: false, organization: { info, sections: organizationSections(), teams: [], invitations: [] } };
   if (tab === "overview") return loadHubOrganizationDashboard(c, detail);
   try {
-    const result = await loadHubOrganizationSection(c, detail.item, tab === "teams" ? "teams" : "invitations", page, info.canInvite);
+    const result = await loadHubOrganizationSection(c, detail.item, tab, page, info.canInvite);
+    detail.members = result.members;
+    detail.repositories = result.repositories;
     detail.organization!.teams = result.teams;
     detail.organization!.invitations = result.invitations;
     detail.more = result.state.more;
@@ -58,6 +61,7 @@ export async function hubOrganizationDetail(c: HubAccess, item: HubItem, page: n
   } catch (error) {
     ensureHubCurrent(c);
     detail.notice = hubError(error, c.token);
+    detail.organization!.sections[tab] = { page, loaded: true, loading: false, more: false, error: detail.notice };
   }
   return detail;
 }

@@ -27,7 +27,7 @@ enum Hosting {
         Hosting.handler = { request in
             let path = request.url!.path
             if path == "/orgs/team" { return try json(["login": "team", "name": "Team", "public_repos": 4]) }
-            if path == "/user/memberships/orgs/team" { return try json(["role": owner ? "admin" : "member", "state": "active"]) }
+            if path == "/user/memberships/orgs/team" { return try json(["role": owner ? "admin" : "member", "state": "active", "user": ["login": "me"]]) }
             if path == "/orgs/team/teams" { return try json((0..<6).map { ["id": $0, "slug": "team-\($0)", "name": "Team \($0)", "html_url": "https://github.com/orgs/team/teams/demo"] }) }
             if path == "/orgs/team/members" || path.hasPrefix("/orgs/team/teams/") && path.hasSuffix("/members") { return try json([["id": 7, "login": "developer", "name": "Demo developer"]]) }
             if path == "/orgs/team/repos" { return try json([["id": 12, "full_name": "team/app", "html_url": "https://github.com/team/app"]]) }
@@ -38,6 +38,10 @@ enum Hosting {
         }
         let overview = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "overview")
         precondition(overview.organizationAccess?.canInvite == true && overview.item.data["public_repos"] as? Int == 4 && overview.members.first?.username == "developer" && overview.teams.first?.members.first?.name == "Demo developer" && overview.repositories.count == 1 && overview.invitations.count == 1)
+        let focusedMembers = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "members")
+        precondition(focusedMembers.organizationAccess?.canInvite == true && focusedMembers.organizationAccess?.role == "Owner" && focusedMembers.members.first?.username == "developer" && focusedMembers.organizationSections["members"]?.loaded == true && focusedMembers.organizationSections["invitations"] == nil, "Focused member view lost management capability or implied invitations were loaded")
+        let focusedRepositories = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "repositories")
+        precondition(focusedRepositories.organizationAccess?.canInvite == true && focusedRepositories.organizationSections["repositories"]?.loaded == true)
         let initialHandler = Hosting.handler
         Hosting.handler = { request in
             if request.url!.path == "/orgs/team/invitations" { throw HostingError(status: 403) }
@@ -81,12 +85,15 @@ enum Hosting {
             if path == "/api/v4/groups/9" { return try json(["id": 9, "name": "Design", "full_path": "team/design"]) }
             if request.httpMethod == "POST" || request.httpMethod == "DELETE" { gitlabWrites.append(request); return try json(gitlabResponse) }
             if path == "/api/v4/groups/9/invitations" { return try json([["invite_email": "member+test@example.com", "access_level": 30]]) }
+            if path == "/api/v4/groups/9/members/all" { return try json([["id": 8, "username": "designer", "name": "Demo designer", "access_level": 30]]) }
             if path == "/api/v4/groups/11/members/all" { return try json([["id": 8, "username": "designer", "name": "Demo designer", "access_level": 30]]) }
             if path == "/api/v4/groups/9/subgroups" { precondition(request.url!.query!.contains("all_available=true")); return try json([["id": 11, "name": "Backend", "web_url": "https://gitlab.test/team/design/backend"]]) }
             fatalError("Unexpected request \(request)")
         }
         let pending = try await HostingHubAPI.detail(gl, section: .organizations, item: group, tab: "invitations")
         precondition(pending.organizationAccess?.role == "Owner" && pending.invitations.first?.id == "member+test@example.com")
+        let focusedGroupMembers = try await HostingHubAPI.detail(gl, section: .organizations, item: group, tab: "members")
+        precondition(focusedGroupMembers.organizationAccess?.canInvite == true && focusedGroupMembers.members.first?.username == "designer" && focusedGroupMembers.organizationSections["members"]?.loaded == true)
         let subgroups = try await HostingHubAPI.detail(gl, section: .organizations, item: group, tab: "teams")
         precondition(subgroups.teams.first?.name == "Backend")
         try await HostingHubAPI.inviteOrganizationMember(gl, item: group, email: "member@example.com", role: "30", expiresAt: "2099-12-31")
@@ -120,7 +127,7 @@ enum Hosting {
         let links = HostingHubAPI.organizationLinks(provider: .gitlab, host: "gitlab.test", item: group)
         precondition(links.contains { $0.url == "https://gitlab.test/groups/team/design/-/group_members" })
         precondition(HostingHubAPI.organizationLinks(provider: .github, host: "github.com", item: org).contains { $0.title == "Audit log" })
-        print("Organizations: populated people/team/repository/invitation overview, bounded team people previews, independent failures, owner permissions, teams/subgroups, invitation pagination, request payloads, cancellation encoding, server rejections, queued approval, expiration and stale-context guards passed")
+        print("Organizations: populated people/team/repository/invitation overview and focused-member management capability, bounded team people previews, independent failures, owner permissions, teams/subgroups, invitation pagination, request payloads, cancellation encoding, server rejections, queued approval, expiration and stale-context guards passed")
     }
 }
 SWIFT

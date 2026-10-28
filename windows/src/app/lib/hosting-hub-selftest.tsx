@@ -34,6 +34,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       body: Record<string, unknown>;
     }[] = [],
     details: string[] = [];
+  let organizationMemberRole = "member", organizationTeamRole: string | null = null;
   let organizationInvitations = [{ id: 10, email: "pending@example.com", role: "direct_member", created_at: "2026-10-27" }];
   const source = {
     path: "C:/hosting-hub-selftest",
@@ -263,6 +264,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
           };
       } else if (method !== "GET") {
         writes.push({ method, url, body: payload });
+        if (method === "PUT" && u.pathname === "/orgs/team/memberships/reviewer") { organizationMemberRole = String(payload.role); result = { state: "active", role: organizationMemberRole, user: { id: 7, login: "reviewer" } }; }
+        if (method === "PUT" && u.pathname === "/orgs/team/teams/desktop/memberships/reviewer") { organizationTeamRole = String(payload.role); result = { state: "active", role: organizationTeamRole }; }
         if (method === "POST" && u.pathname === "/orgs/team/invitations") organizationInvitations.push({ id: 11, email: String(payload.email), role: String(payload.role), created_at: "2026-10-28" });
         if (method === "DELETE" && u.pathname.startsWith("/orgs/team/invitations/")) { organizationInvitations = organizationInvitations.filter(invitation => String(invitation.id) !== u.pathname.split("/").at(-1)); status = 204; }
         if (method === "PATCH" && url.includes("/releases/1"))
@@ -276,9 +279,12 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else if (u.pathname.endsWith("/releases/1")) result = release();
       else if (u.pathname === "/user/orgs")
         result = [{ id: 5, login: "team", description: "Studio" }];
-      else if (u.pathname === "/user/memberships/orgs/team") result = { state: "active", role: "admin" };
+      else if (u.pathname === "/user/memberships/orgs/team") result = { state: "active", role: "admin", user: { login: "me" } };
+      else if (u.pathname === "/orgs/team/memberships/reviewer") result = { state: "active", role: organizationMemberRole, user: { id: 7, login: "reviewer" } };
+      else if (u.pathname === "/orgs/team/teams/desktop/memberships/reviewer") { if (organizationTeamRole) result = { state: "active", role: organizationTeamRole }; else { status = 404; result = { message: "No team membership" }; } }
+      else if (u.pathname === "/orgs/team/teams/desktop") result = { id: 8, slug: "desktop" };
       else if (u.pathname === "/orgs/team/teams") result = [{ id: 8, slug: "desktop", name: "Desktop team", description: "Build the client", html_url: "https://github.com/orgs/team/teams/desktop" }];
-      else if (u.pathname === "/orgs/team/teams/desktop/members") result = [{ id: 17, login: "desktop-reviewer" }];
+      else if (u.pathname === "/orgs/team/teams/desktop/members") result = [{ id: 17, login: "desktop-reviewer" }, ...(organizationTeamRole ? [{ id: 7, login: "reviewer", role: organizationTeamRole }] : [])];
       else if (u.pathname === "/orgs/team/invitations") result = organizationInvitations;
       else if (u.pathname === "/orgs/team")
         result = {
@@ -869,13 +875,39 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("team/client") === true, "Overview repositories missing");
     ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("pending@example.com") === true, "Overview pending invitations missing");
     ensure(host.textContent?.includes("12") === true, "Organization repository count missing");
+    button("Manage access")!.click();
+    ensure(await until(() => !!host.querySelector('.organization-dialog select[aria-label="' + t("Organization member") + '"]')), "Access editor did not open");
+    enter(host.querySelector<HTMLSelectElement>('.organization-dialog select[aria-label="' + t("Organization member") + '"]')!, "7");
+    ensure(await until(() => !!host.querySelector<HTMLSelectElement>("[data-organization-role]") && !host.querySelector<HTMLSelectElement>("[data-organization-role]")!.disabled), "Current organization role was not loaded");
+    enter(host.querySelector<HTMLSelectElement>("[data-organization-role]")!, "admin"); await pause(25);
+    const beforeRole = writes.length;
+    button("Review access change")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Access change review missing");
+    ensure(writes.length === beforeRole, "Access review changed permissions before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click(); await pause(25);
+    ensure(writes.length === beforeRole, "Cancelling access review changed permissions");
+    button("Review access change")!.click(); ensure(await until(() => !!button("Update access")), "Access confirmation action missing"); button("Update access")!.click();
+    ensure(await until(() => organizationMemberRole === "admin" && !host.querySelector('[role="alertdialog"]') && !host.querySelector(".organization-dialog") && organizationTabReady("Overview")), "Confirmed organization role was not updated");
+    const addMember = [...host.querySelectorAll<HTMLButtonElement>(".organization-team-card button")].find(element => element.textContent?.trim() === t("Add member"));
+    ensure(!!addMember, "Team assignment action missing"); addMember!.click();
+    ensure(await until(() => !!host.querySelector('.organization-dialog select[aria-label="' + t("Organization member") + '"]')), "Team assignment editor missing");
+    enter(host.querySelector<HTMLSelectElement>('.organization-dialog select[aria-label="' + t("Organization member") + '"]')!, "7");
+    ensure(await until(() => !!host.querySelector<HTMLSelectElement>("[data-organization-role]") && !host.querySelector<HTMLSelectElement>("[data-organization-role]")!.disabled), "Current team access was not loaded");
+    enter(host.querySelector<HTMLSelectElement>("[data-organization-role]")!, "maintainer"); await pause(25);
+    const beforeTeam = writes.length; button("Review access change")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Team access review missing"); ensure(writes.length === beforeTeam, "Team access review wrote before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click(); await pause(25); ensure(writes.length === beforeTeam, "Team review cancellation assigned a member");
+    button("Review access change")!.click(); ensure(await until(() => !!button("Grant access")), "Team access confirmation missing"); button("Grant access")!.click();
+    ensure(await until(() => organizationTeamRole === "maintainer" && !host.querySelector('[role="alertdialog"]') && !host.querySelector(".organization-dialog") && organizationTabReady("Overview")), "Confirmed team access was not assigned");
+    ensure([...host.querySelectorAll(".organization-team-card .organization-person strong")].some(element => element.textContent === "reviewer"), "Granted team member did not appear after refresh");
+    details.push("organization roles + team assignment + cancelled reviews + confirmed mock grants + refreshed team people");
     button("Repositories")!.click();
     ensure(
       await until(() => organizationTabReady("Repositories") && !!button("Clone") && !button("Clone")!.disabled),
       "Organization repository did not render",
     );
     ensure(
-      host.querySelector(".hub-organization-heading > .avatar")?.textContent === "T",
+      host.querySelector(".organization-hero > .avatar")?.textContent === "T",
       "Organization detail icon fallback missing",
     );
     button("Clone")!.click();
@@ -888,6 +920,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       await until(() => organizationTabReady("Members") && host.querySelector(".hub-members .hub-member")?.textContent?.includes("reviewer") === true),
       "Organization members did not render",
     );
+    const focusedMemberAccess = [...host.querySelectorAll<HTMLButtonElement>(".hub-members .hub-member button")].find(element => element.textContent?.trim() === t("Manage access"));
+    ensure(!!focusedMemberAccess && !focusedMemberAccess.disabled, "Focused Members tab lost access management"); focusedMemberAccess!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(".organization-dialog [data-organization-role]")?.value === "admin"), "Focused Members tab did not load the live role editor");
+    host.querySelector<HTMLButtonElement>(".organization-dialog-close")!.click();
+    ensure(await until(() => !host.querySelector(".organization-dialog") && organizationTabReady("Members")), "Focused member editor did not close");
     button("Teams")!.click();
     ensure(await until(() => organizationTabReady("Teams") && host.querySelector(".organization-team-card")?.textContent?.includes("Desktop team") === true && host.querySelector(".organization-team-card")?.textContent?.includes("desktop-reviewer") === true), "Organization teams did not render");
     button("Overview")!.click();
