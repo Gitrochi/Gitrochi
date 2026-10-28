@@ -59,15 +59,20 @@ struct GitResult {
 enum Git {
     static func run(_ args: [String], in directory: URL) async throws -> GitResult {
         precondition(directory.path == "/fixture/repository", "Only synthetic repository reads are allowed")
+        if args.first == "cat-file" {
+            let oid = args.last ?? ""
+            guard let data = oid == fixtureOID ? Data(fixtureSource.utf8) : RepositoryHTMLFixtureData.objects[oid] else { fatalError("Unknown fixture object") }
+            return GitResult(data: args.contains("-s") ? Data(String(data.count).utf8) : data)
+        }
         let text: String
         switch args.first {
         case "rev-parse": text = fixtureOID
         case "ls-tree":
             text = ["src/Preview.swift", "src/Theme.swift", "src/Views/Toolbar.swift", "docs/reading.md"].map {
                 "100644 blob \(fixtureOID) \(fixtureSource.utf8.count)\t\($0)\0"
+            }.joined() + RepositoryHTMLFixtureData.entries.map {
+                "100644 blob \($0.oid) \($0.size)\t\($0.path)\0"
             }.joined()
-        case "cat-file" where args.contains("-s"): text = String(fixtureSource.utf8.count)
-        case "cat-file": text = fixtureSource
         case "log": text = "a1b2c3d 2026-01-01 Demo Developer\nImprove source readability\n"
         case "blame": text = "a1b2c3d (Demo Developer 2026-01-01 1) import SwiftUI\n"
         case "diff": text = ""
@@ -75,6 +80,13 @@ enum Git {
         }
         return GitResult(data: Data(text.utf8))
     }
+}
+
+// Markdown rendering has its own production layout fixture; this suite exercises Source and HTML.
+struct MarkdownView: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View { Text(text) }
 }
 
 @MainActor @Observable private final class NativeReaderState {
@@ -100,6 +112,7 @@ private struct NativeReaderFixture: View {
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         checkNavigationModels()
+        checkLanguageComposition()
         try checkNativeReader()
         var results: [[String: Any]] = []
         for width: CGFloat in [440, 1100] {
@@ -145,9 +158,26 @@ private struct NativeReaderFixture: View {
         }
         checkQuickOpenSubmission()
         try checkQuickOpen(output: output)
+        try RepositoryHTMLLayoutFixture.run(output: output)
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
         print("PASS: Production Code panel light/dark and narrow/wide layouts; native syntax colors, wrap resizing, line6000 goto, match scrolling, bounded session navigation, quick-open immediate submission and previews. \(output.path)")
+    }
+
+    private static func checkLanguageComposition() {
+        let object = String(repeating: "a", count: 40)
+        let entries = [RepositoryTreeEntry(path: "src/main.tsx", mode: "100644", oid: object, size: 30),
+                       RepositoryTreeEntry(path: "src/other.ts", mode: "100644", oid: object, size: 20),
+                       RepositoryTreeEntry(path: "README.md", mode: "100644", oid: object, size: 10),
+                       RepositoryTreeEntry(path: "alias.swift", mode: "120000", oid: object, size: 9),
+                       RepositoryTreeEntry(path: "module", mode: "160000", oid: object, size: 0)]
+        let composition = RepositoryLanguages.composition(entries)
+        precondition(composition.count == 2 && composition[0].language == "TypeScript" && composition[0].count == 2 && composition[0].bytes == 50)
+        precondition(abs(composition.reduce(0) { $0 + $1.fraction } - 1) < 0.00001)
+        precondition(entries.filter { $0.isFile && RepositoryLanguages.language(for: $0.path) == "TypeScript" }.count == 2)
+        for (path, language) in [(".gitignore", "Configuration"), ("Dockerfile", "Dockerfile"), ("src/config.jsonc", "JSON"), ("src/shape.svg", "SVG"), ("swift", "Other files"), (".json", "Other files")] {
+            precondition(RepositoryLanguages.language(for: path) == language)
+        }
     }
 
     private static func checkNavigationModels() {

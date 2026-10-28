@@ -25,10 +25,16 @@ struct RepositoryCodePanel: View {
     @ViewState private var navigation = RepositoryCodeNavigation()
     @ViewState private var quickOpen = false
     @ViewState private var panelWidth: CGFloat = 600
-    private let modes = ["Source", "File history", "Blame", "Working changes"]
+    @ViewState private var languages: [RepositoryLanguages.Segment] = []
+    @ViewState private var languageFilter: String?
+    @ViewState private var editors: [ExternalEditor] = []
+    private var modes: [String] { ["Source"] + (selected.map { supportsPreview($0.path) } == true ? ["Preview"] : []) + ["File history", "Blame", "Working changes"] }
     private var prefix: String { directory.isEmpty ? "" : directory + "/" }
-    private var matching: [RepositoryTreeEntry] { tree?.entries.filter { entry in query.isEmpty ? entry.path.hasPrefix(prefix) && !entry.path.dropFirst(prefix.count).contains("/") : entry.path.localizedCaseInsensitiveContains(query) } ?? [] }
-    private var folders: [String] { guard query.isEmpty else { return [] }; return Array(Set((tree?.entries ?? []).filter { $0.path.hasPrefix(prefix) && $0.path.dropFirst(prefix.count).contains("/") }.map { prefix + String($0.path.dropFirst(prefix.count).split(separator: "/")[0]) })).sorted() }
+    private var matching: [RepositoryTreeEntry] { tree?.entries.filter { entry in
+        if let languageFilter { return entry.isFile && RepositoryLanguages.language(for: entry.path) == languageFilter && (query.isEmpty || entry.path.localizedCaseInsensitiveContains(query)) }
+        return query.isEmpty ? entry.path.hasPrefix(prefix) && !entry.path.dropFirst(prefix.count).contains("/") : entry.path.localizedCaseInsensitiveContains(query)
+    } ?? [] }
+    private var folders: [String] { guard query.isEmpty && languageFilter == nil else { return [] }; return Array(Set((tree?.entries ?? []).filter { $0.path.hasPrefix(prefix) && $0.path.dropFirst(prefix.count).contains("/") }.map { prefix + String($0.path.dropFirst(prefix.count).split(separator: "/")[0]) })).sorted() }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,7 +63,8 @@ struct RepositoryCodePanel: View {
                 if let entry = tree?.entries.first(where: { $0.path == path }) { requestOpen(entry) }
             }, close: { quickOpen = false })
         }
-        .task(id: store.url) { revisionInput = "HEAD"; query = ""; findText = ""; await loadTree() }
+        .task(id: store.url) { editors = ExternalEditors.editors(); revisionInput = "HEAD"; query = ""; findText = ""; await loadTree() }
+        .onChange(of: languageFilter) { _, value in if value != nil { directory = "" } }
         .onDisappear { treeRequest = UUID(); fileRequest = UUID() }
     }
 
@@ -96,6 +103,8 @@ struct RepositoryCodePanel: View {
                 .keyboardShortcut("p", modifiers: .command).disabled(tree == nil || loading).accessibilityIdentifier("code-quick-open")
             Text("⌘P").font(.caption.monospaced()).foregroundStyle(.tertiary)
             Spacer(minLength: 0)
+            RepositoryExternalEditorMenu(editors: editors, fileAvailable: selected?.isFile == true && treeURL == store.url,
+                open: openExternal, refresh: { editors = ExternalEditors.editors() }).disabled(store.url == nil)
             Menu {
                 ForEach(navigation.recent, id: \.self) { path in
                     Button(path) { if let entry = tree?.entries.first(where: { $0.path == path }) { requestOpen(entry) } }
@@ -163,6 +172,7 @@ struct RepositoryCodePanel: View {
                     Button { directory = directory.split(separator: "/").dropLast().joined(separator: "/") } label: { Image(systemName: "arrow.up") }.buttonStyle(.plain).help("Parent folder").accessibilityLabel("Parent folder")
                 }
             }.font(.caption).padding(.horizontal, 13).padding(.bottom, 11)
+            RepositoryLanguageControl(segments: languages, truncated: tree?.truncated == true, selected: $languageFilter)
             Divider()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
@@ -180,7 +190,7 @@ struct RepositoryCodePanel: View {
                         Button { requestOpen(entry) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: entry.isSubmodule ? "shippingbox" : entry.isSymlink ? "link" : "doc.text").foregroundStyle(.secondary)
-                                Text(query.isEmpty ? String(entry.path.dropFirst(prefix.count)) : entry.path).lineLimit(1).truncationMode(.middle)
+                                Text(query.isEmpty && languageFilter == nil ? String(entry.path.dropFirst(prefix.count)) : entry.path).lineLimit(1).truncationMode(.middle)
                                 Spacer(minLength: 0)
                             }.font(.callout).padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading)
                                 .background(selected?.path == entry.path ? Color.accentColor.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 6))
@@ -207,6 +217,11 @@ struct RepositoryCodePanel: View {
                         Text(selected.path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     }.help(selected.path)
                     Spacer(minLength: 0)
+                    Text(LocalizedStringKey(RepositoryLanguages.language(for: selected.path))).font(.caption.weight(.medium))
+                        .padding(.horizontal, 7).padding(.vertical, 4)
+                        .background(RepositoryLanguageSummary.color(RepositoryLanguages.language(for: selected.path)).opacity(0.13), in: RoundedRectangle(cornerRadius: 5))
+                        .accessibilityLabel(String(localized: "Language") + ": " + Bundle.main.localizedString(forKey: RepositoryLanguages.language(for: selected.path), value: nil, table: nil))
+                        .accessibilityIdentifier("code-file-language")
                     Text(ByteCountFormatter.string(fromByteCount: Int64(selected.size), countStyle: .file)).font(.caption).foregroundStyle(.secondary)
                 }.padding(14)
                 WorkbenchFlow(spacing: 4) {
@@ -223,6 +238,10 @@ struct RepositoryCodePanel: View {
                 if let notice = preview?.notice { Label(notice, systemImage: "info.circle").font(.callout).foregroundStyle(.secondary).padding(12) }
                 if fileLoading {
                     VStack { Spacer(); ProgressView("Loading…").controlSize(.small); Spacer() }.frame(maxWidth: .infinity)
+                } else if mode == "Preview", let text = preview?.text {
+                    if ["html", "htm"].contains((selected.path as NSString).pathExtension.lowercased()), let tree, let repository = treeURL {
+                        RepositoryHTMLPreview(text: text, entry: selected, tree: tree, repository: repository)
+                    } else { ScrollView { MarkdownView(text).padding(24) }.frame(maxWidth: .infinity, maxHeight: .infinity) }
                 } else if mode == "Source", let data = preview?.image, let image = NSImage(data: data) {
                     ScrollView([.horizontal, .vertical]) { Image(nsImage: image).resizable().scaledToFit().frame(maxWidth: 1200).padding(24) }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let text = mode == "Source" ? preview?.text : auxiliary {
@@ -240,12 +259,15 @@ struct RepositoryCodePanel: View {
 
     private func loadTree() async {
         guard let url = store.url else { return }
-        let token = UUID(); treeRequest = token; fileRequest = UUID(); loading = true; fileLoading = false; error = nil; tree = nil; treeURL = nil; directory = ""; selected = nil; preview = nil; auxiliary = nil; navigation = RepositoryCodeNavigation(); quickOpen = false
+        let token = UUID(); treeRequest = token; fileRequest = UUID(); loading = true; fileLoading = false; error = nil; tree = nil; treeURL = nil; directory = ""; selected = nil; preview = nil; auxiliary = nil; navigation = RepositoryCodeNavigation(); quickOpen = false; languages = []; languageFilter = nil
         do {
             let value = try await RepositoryBrowser.tree(in: url, ref: revisionInput)
             guard !Task.isCancelled, store.url == url, treeRequest == token else { return }
             tree = value
             treeURL = url
+            let summary = await Task.detached(priority: .userInitiated) { RepositoryLanguages.composition(value.entries) }.value
+            guard !Task.isCancelled, store.url == url, treeRequest == token else { return }
+            languages = summary
             if let entry = RepositoryBrowser.initialFile(value.entries) { directory = entry.path.split(separator: "/").dropLast().joined(separator: "/"); await open(entry) }
         } catch { if !Task.isCancelled && store.url == url && treeRequest == token { self.error = store.describe(error) } }
         if store.url == url && treeRequest == token { loading = false }
@@ -259,7 +281,7 @@ struct RepositoryCodePanel: View {
         func current() -> Bool { !Task.isCancelled && store.url == url && self.tree?.revision == snapshot && fileRequest == token }
         defer { if current() { fileLoading = false } }
         do {
-            if view == "Source" {
+            if view == "Source" || view == "Preview" {
                 let value = try await RepositoryBrowser.blob(in: url, entry: entry)
                 if current() { preview = value }
             } else {
@@ -304,5 +326,17 @@ struct RepositoryCodePanel: View {
 
     private func clearFile() {
         fileRequest = UUID(); selected = nil; preview = nil; auxiliary = nil; fileLoading = false; error = nil
+    }
+
+    private func supportsPreview(_ path: String) -> Bool { ["html", "htm", "md", "markdown"].contains((path as NSString).pathExtension.lowercased()) }
+
+    private func openExternal(_ editorID: String, file: Bool) {
+        guard let repository = store.url, !file || selected?.isFile == true else { return }
+        let path = file ? selected?.path : nil, generation = treeRequest, applications = editors
+        Task {
+            guard store.url == repository, treeRequest == generation else { return }
+            do { try await ExternalEditors.open(repository: repository, editorID: editorID, file: path, available: applications) }
+            catch { if store.url == repository { self.error = store.describe(error) } }
+        }
     }
 }
