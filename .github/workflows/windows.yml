@@ -104,6 +104,7 @@ jobs:
           cp src-tauri/target/release/gitrochi.exe "$stage/Gitrochi.exe"
           cp ../LICENSE "$stage/LICENSE.txt"
           cp ../THIRD_PARTY_NOTICES.md "$stage/THIRD_PARTY_NOTICES.md"
+          cp ../tools/gitch-flow/THIRD_PARTY_NOTICES.txt "$stage/gitch-flow-THIRD-PARTY-NOTICES.txt"
           # 앱이 쓰는 gitch(설치본은 tauri.conf.json 의 resources 로 같은 자리에 들어간다)
           for file in gitch gitch-scip-index gitch-graph-watch; do
             cp "../tools/gitch/$file" "$stage/$file"
@@ -117,7 +118,9 @@ jobs:
           cp "$engine" "$stage/gitch-flow.exe"
           cp "$engine" "$out/gitch-flow-windows-x64.exe"
           (cd "$out" && sha256sum gitch-flow-windows-x64.exe | sed 's/ \*/  /' > gitch-flow-windows-x64.exe.sha256)
-          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe gitch-flow.exe >/dev/null)
+          cp ../tools/gitch-flow/THIRD_PARTY_NOTICES.txt "$out/gitch-flow-THIRD-PARTY-NOTICES.txt"
+          (cd "$out" && sha256sum gitch-flow-THIRD-PARTY-NOTICES.txt | sed 's/ \*/  /' > gitch-flow-THIRD-PARTY-NOTICES.txt.sha256)
+          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch-flow-THIRD-PARTY-NOTICES.txt gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe gitch-flow.exe >/dev/null)
           # Git Bash 의 sha256sum 이 이름 앞에 붙이는 *(바이너리 표시)는 빼서 맥과 같은 「해시  이름」으로
           (cd "$out" && sha256sum "$setup" "$zip" | sed 's/ \*/  /' > "Gitrochi_${ver}_windows.sha256")
           if [ -f "$nsis/$setup.sig" ]; then
@@ -412,6 +415,7 @@ jobs:
     # 맥(macos.yml 「배포 파일」)과 같은 그룹으로 하나씩 돈다: 먼저 도는 쪽이 초안을 만들고 다음 쪽은 그 초안에 올린다
     concurrency:
       group: release-${{ github.ref }}
+      queue: max
       cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@v4

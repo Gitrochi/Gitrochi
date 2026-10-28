@@ -1,7 +1,7 @@
 name: Flow engine
 
 # The flow engine (tools/gitch-flow) and gitch's front door (gitch flow, gitch test, the pre-push gate).
-# Pull requests: format, static checks, unit and integration tests on three systems → gitch front-door tests → real Docker tests (Linux).
+# Pull requests: format, static checks, unit and integration tests on three systems → gitch front-door tests → real Docker tests and the static release build (Linux).
 # v* tags: upload the static Linux engine to that tag's release (a draft if there is none). The macOS and Windows engines are uploaded by each app's workflow.
 on:
   push:
@@ -88,6 +88,45 @@ jobs:
           GITCH_FLOW_REAL_DOCKER: "1"
         run: cargo test --locked --test real_docker -- --ignored --test-threads 1
 
+  # Exercise the exact musl packaging path before a tag, without release permissions or secrets.
+  linux-static:
+    name: Linux static release checks
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "tools/gitch-flow -> target"
+
+      - name: Install the static compiler and ELF tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q musl-tools binutils
+
+      - name: Verify the locked dependency notices
+        run: |
+          python3 -m unittest discover -s tools/gitch-flow/ci -p 'test_*.py'
+          python3 tools/gitch-flow/ci/generate-notices.py --check
+
+      - name: Build and verify the Linux release asset
+        run: |
+          ver="$(sed -n 's/^version = "\([^"]*\)".*/\1/p' tools/gitch-flow/Cargo.toml | head -1)"
+          mkdir -p dist
+          tools/gitch-flow/build.sh dist/gitch-flow-linux-x64 x86_64-unknown-linux-musl
+          (cd dist && sha256sum gitch-flow-linux-x64 > gitch-flow-linux-x64.sha256)
+          bash tools/gitch-flow/ci/verify-linux-asset.sh dist/gitch-flow-linux-x64 "$ver"
+          cp tools/gitch-flow/THIRD_PARTY_NOTICES.txt dist/gitch-flow-THIRD-PARTY-NOTICES.txt
+          (cd dist && sha256sum gitch-flow-THIRD-PARTY-NOTICES.txt > gitch-flow-THIRD-PARTY-NOTICES.txt.sha256 && sha256sum -c gitch-flow-THIRD-PARTY-NOTICES.txt.sha256)
+
   # For Linux users of gitch without the app: install.sh and gitch self-update download it
   release:
     name: Linux engine release asset
@@ -100,6 +139,7 @@ jobs:
     # One at a time with the macOS and Windows upload jobs, so the same tag never gets two drafts
     concurrency:
       group: release-${{ github.ref }}
+      queue: max
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
@@ -120,11 +160,15 @@ jobs:
 
       - name: Build (statically linked)
         run: |
-          sudo apt-get install -y -q musl-tools
+          python3 tools/gitch-flow/ci/generate-notices.py --check
+          sudo apt-get update -q
+          sudo apt-get install -y -q musl-tools binutils
           mkdir -p dist
           tools/gitch-flow/build.sh dist/gitch-flow-linux-x64 x86_64-unknown-linux-musl
           (cd dist && sha256sum gitch-flow-linux-x64 > gitch-flow-linux-x64.sha256)
-          file dist/gitch-flow-linux-x64
+          bash tools/gitch-flow/ci/verify-linux-asset.sh dist/gitch-flow-linux-x64 "${GITHUB_REF_NAME#v}"
+          cp tools/gitch-flow/THIRD_PARTY_NOTICES.txt dist/gitch-flow-THIRD-PARTY-NOTICES.txt
+          (cd dist && sha256sum gitch-flow-THIRD-PARTY-NOTICES.txt > gitch-flow-THIRD-PARTY-NOTICES.txt.sha256 && sha256sum -c gitch-flow-THIRD-PARTY-NOTICES.txt.sha256)
 
       - name: Upload to the release
         env:

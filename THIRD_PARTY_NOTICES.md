@@ -69,13 +69,19 @@ not a complete software bill of materials or a completed release compliance audi
   not been exhaustively collected here.
 - `tools/gitch-flow/Cargo.lock` covers the flow engine, which both apps bundle
   and releases also publish on its own as `gitch-flow-macos`,
-  `gitch-flow-windows-x64.exe` and `gitch-flow-linux-x64`. It lists 124 registry
-  packages across platforms. Exact-version cached manifests were available for
-  103; 21, mostly Windows and Linux platform packages, were unavailable and remain
-  unreviewed. Available metadata includes MIT, Apache-2.0, BSD-3-Clause, ISC,
-  Zlib, Unicode-3.0, and CDLA-Permissive-2.0 terms; none declared MPL-2.0. The
-  standalone engine assets are published without these notices beside them, and
-  the engine's Rust license texts have not been collected here either.
+  `gitch-flow-windows-x64.exe` and `gitch-flow-linux-x64`. Its separate versioned
+  notice bundle, `tools/gitch-flow/THIRD_PARTY_NOTICES.txt`, covers the 124 locked
+  normal and build dependency packages across all platforms, excluding the root
+  package and dev-only edges. The generator preserves upstream license,
+  copyright, copying and NOTICE files, including nested files, and records exact
+  package source archives and declared license expressions. Two published
+  packages omit their license files (`linux-keyutils` 0.2.5 and `yaml-rust2`
+  0.10.4); the bundle explicitly selects their offered Apache-2.0 option and
+  reproduces the official Apache license text. The bundle is included in both
+  apps and published as `gitch-flow-THIRD-PARTY-NOTICES.txt` with its SHA-256
+  sidecar beside the standalone engines. CI checks regeneration against the
+  locked graph. This collection does not complete the separate Windows Rust
+  dependency review described above.
 - The npm lockfile also includes development packages, including caniuse-lite
   under CC-BY-4.0. Development metadata alone does not show whether its data or
   notices are present in a shipped artifact. Inspect the final bundle if included.

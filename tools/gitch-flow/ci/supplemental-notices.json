@@ -1,0 +1,24 @@
+[
+  {
+    "package": "linux-keyutils",
+    "version": "0.2.5",
+    "declared_license": "Apache-2.0 OR MIT",
+    "selected_license": "Apache-2.0",
+    "declaration_source": "https://github.com/landhb/linux-keyutils/blob/7b508d396669fd046136e9928283b2eca4bd7bf6/README.md#license",
+    "path": "upstream-notices/Apache-2.0.txt",
+    "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "reason": "The exact published crate and recorded upstream revision omit license files; its manifest and README offer this license."
+  },
+  {
+    "package": "yaml-rust2",
+    "version": "0.10.4",
+    "declared_license": "MIT OR Apache-2.0",
+    "selected_license": "Apache-2.0",
+    "declaration_source": "https://github.com/Ethiraric/yaml-rust2/blob/215f3fc67606ce8dcaca3a18ca9df2aa7bdbc189/README.md#license",
+    "path": "upstream-notices/Apache-2.0.txt",
+    "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "reason": "The exact published crate and recorded upstream revision omit license files; its manifest and README offer this license."
+  }
+]
