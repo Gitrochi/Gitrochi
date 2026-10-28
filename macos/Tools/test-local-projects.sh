@@ -117,5 +117,5 @@ final class MemoryDefaults: UserDefaults {
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$ROOT/Sources/Services/ProjectBackend.swift" "$ROOT/Sources/Core/ProjectSchedule.swift" "$ROOT/Sources/Core/ProjectSchedulePreferences.swift" "$ROOT/Sources/Core/LocalProjectDocument.swift" "$ROOT/Sources/Services/LocalProjectPersistence.swift" "$ROOT/Sources/Services/LocalProjects.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-local-projects"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/HostingHub.swift" "$ROOT/Sources/Services/OrganizationManagement.swift" "$ROOT/Sources/Services/ProjectBackend.swift" "$ROOT/Sources/Core/ProjectSchedule.swift" "$ROOT/Sources/Core/ProjectSchedulePreferences.swift" "$ROOT/Sources/Core/LocalProjectDocument.swift" "$ROOT/Sources/Services/LocalProjectPersistence.swift" "$ROOT/Sources/Services/LocalProjects.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-local-projects"
 "$TASK_TMP/test-local-projects" "$TASK_TMP"

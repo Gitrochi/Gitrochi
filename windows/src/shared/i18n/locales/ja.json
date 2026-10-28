@@ -2022,5 +2022,22 @@
   "View overlap in graph": "グラフで重複を表示",
   "Commits": "コミット",
   "Related test candidates": "関連テストの候補",
-  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。"
+  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。",
+  "Invitations": "招待",
+  "Invite member": "メンバーを招待",
+  "Cancel invitation": "招待を取り消す",
+  "Review invitation": "招待を確認",
+  "Send invitation": "招待を送信",
+  "Organization tools": "組織のツール",
+  "Your role": "自分の役割",
+  "Teams": "チーム",
+  "Subgroups": "サブグループ",
+  "Audit log": "監査ログ",
+  "Billing": "請求",
+  "Billing manager": "請求管理者",
+  "Public repositories": "公開リポジトリ",
+  "Private repositories": "非公開リポジトリ",
+  "Email address": "メールアドレス",
+  "Pending invitations": "保留中の招待",
+  "No pending invitations.": "保留中の招待はありません。"
 }

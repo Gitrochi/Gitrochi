@@ -31,6 +31,8 @@ export function ProjectReviewDialog({
     return () => previous?.focus();
   }, []);
   const actions: [string, string, boolean][] = [
+    ["Invite this member?", "Send invitation", false],
+    ["Cancel this invitation?", "Cancel invitation", true],
     ["Delete local project?", "Delete project", true],
     ["Remove item from project?", "Remove from project", true],
     ["Remove selected items from project?", "Remove selected items", true],
