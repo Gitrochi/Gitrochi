@@ -48,3 +48,7 @@ GITCH_CORE='' bash tools/gitch/tests/run.sh -k graph
 WASM과 네이티브 CLI는 빌드 산출물이며 소스에 넣지 않는다. `Cargo.lock`은 고정한다. 시스템 Rust를 변경하지 않고 `.build/rust-tools/rustup/toolchains/stable-<host>/bin`에 준비한 프로젝트 전용 툴체인도 빌드 도구가 인식한다. 다른 실행 파일은 `GITROCHI_CARGO`·`RUSTC`로 지정할 수 있다.
 
 참고: [Rust WebAssembly 타깃](https://doc.rust-lang.org/rustc/platform-support/wasm32-unknown-unknown.html), [Rust FFI](https://doc.rust-lang.org/nomicon/ffi.html).
+
+## Repository index
+
+`gitrochi-index` keeps a repository's commits, per-commit file changes, change relationships (files that change together) and a search cache in SQLite, with a C++ tokenizer from `native/` for Korean, Japanese and Chinese text and code identifiers. The native static library above carries it too (`gitrochi_index_call` in `gitrochi_core.h`), so the macOS app still links one Rust runtime; the Windows backend depends on the crate directly, and the `gitrochi-index` executable serves gitch, the Python tools and the Go monitor. The WebAssembly core leaves it out. Contract and checks: [gitrochi-index/README.md](gitrochi-index/README.md).
