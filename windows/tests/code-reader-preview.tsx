@@ -63,9 +63,26 @@ export function RepositoryCard({ repository }: { repository: Repository }) {
 `,
     "src/components/Sidebar.tsx": 'export const sections = ["Overview", "Code", "History"];\n',
     "src/hooks/useRepository.ts": 'export const useRepository = () => ({ branch: "main", changedFiles: 3 });\n',
+    "src/utils/formatRepository.ts": `interface RepositorySummary {
+  name: string;
+  changedFiles: number;
+}
+
+export function formatRepository(repository: RepositorySummary): string {
+  return repository.name + " · " + formatChangeCount(repository.changedFiles);
+}
+
+export function formatChangeCount(count: number): string {
+  return count === 0 ? "Up to date" : count + " changed files";
+}
+`,
+    "docs/overview.md": '# Repository workspace\n\nRead files and follow the code at your own pace.\n\n## Navigation\n\nUse quick open to find a file by name or path.\n\n## Reading\n\nJump between declarations with the outline, or go directly to a line.\n',
     "src/styles/theme.css": ':root {\n  color-scheme: light dark;\n  --space: 8px;\n}\n',
     "tests/repository.test.ts": 'import { expect, it } from "vitest";\nit("starts on main", () => expect("main").toBe("main"));\n',
   };
+  if (params.get("large") === "1") {
+    files["src/large.ts"] = "line\n".repeat(6000) + "export function tail() {}\n";
+  }
   const entries = Object.entries(files).map(([path, text]) => ({ path, mode: "100644", oid, size: new TextEncoder().encode(text).length, kind: "file" as const }));
   const source: RepositoryCodeSource = {
     tree: async () => ({ revision: oid, entries, truncated: false }),

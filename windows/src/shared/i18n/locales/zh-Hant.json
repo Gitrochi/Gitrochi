@@ -1273,5 +1273,19 @@
   "Plain text": "純文字",
   "Read only": "唯讀",
   "Wrapping is unavailable for files with more than 5,000 lines.": "超過 5,000 行的檔案不支援自動換行。",
-  "More than 10,000 matches. Refine your search.": "符合項目超過 10,000 個。請縮小搜尋範圍。"
+  "More than 10,000 matches. Refine your search.": "符合項目超過 10,000 個。請縮小搜尋範圍。",
+  "Quick open": "快速開啟",
+  "Open files": "已開啟的檔案",
+  "Recent files": "最近的檔案",
+  "Close file": "關閉檔案",
+  "Close all files": "關閉所有檔案",
+  "Navigate back": "上一頁",
+  "Navigate forward": "下一頁",
+  "Go to line": "移至行",
+  "Line number": "行號",
+  "Enter a line from 1 to {0}.": "請輸入 1 到 {0} 之間的行號。",
+  "Outline": "大綱",
+  "No symbols found": "找不到符號",
+  "Search files by name or path": "依檔案名稱或路徑搜尋",
+  "Close quick open": "關閉快速開啟"
 }

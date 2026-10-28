@@ -15,7 +15,13 @@ struct RepositoryCodeReader: View {
     @ViewState private var matches: [NSRange] = []
     @ViewState private var truncatedMatches = false
     @ViewState private var copied = false
+    @ViewState private var symbols: [RepositoryCodeReading.Symbol] = []
+    @ViewState private var goToLine = false
+    @ViewState private var lineInput = ""
+    @ViewState private var targetLine: Int?
+    @ViewState private var jumpID: UUID?
     @FocusState private var findFocused: Bool
+    @FocusState private var lineFocused: Bool
 
     private struct Document: Equatable { let text: String; let path: String; let syntax: Bool }
     private struct Search: Equatable { let text: String; let query: String }
@@ -44,12 +50,28 @@ struct RepositoryCodeReader: View {
             if truncatedMatches {
                 Text("More than 10,000 matches. Refine your search.").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(10)
             }
-            RepositorySourceView(text: text, tokens: tokens, lineStarts: starts, fontSize: fontSize, wraps: wraps, activeMatch: activeMatch)
+            RepositorySourceView(text: text, tokens: tokens, lineStarts: starts, fontSize: fontSize, wraps: wraps, activeMatch: activeMatch, targetLine: targetLine, jumpID: jumpID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             WorkbenchFlow(spacing: 12) {
                 Label(LocalizedStringKey(syntax ? RepositoryCodeReading.language(for: path) : "Plain text"), systemImage: "chevron.left.forwardslash.chevron.right")
                 Text(verbatim: String(localized: "{0} lines").replacingOccurrences(of: "{0}", with: starts.count.formatted()))
+                Button { goToLine = true } label: { Label("Go to line", systemImage: "list.number") }
+                    .keyboardShortcut("l", modifiers: .command).disabled(starts.isEmpty)
+                    .help("Go to line").accessibilityIdentifier("code-go-to-line")
+                    .popover(isPresented: $goToLine) { lineNavigation }
+                if syntax {
+                    Menu {
+                        if symbols.isEmpty { Text("No symbols found") }
+                        ForEach(symbols) { symbol in
+                            Button {
+                                jump(to: symbol.line)
+                            } label: { Text(symbol.name + " · " + String(localized: "Line {0}").replacingOccurrences(of: "{0}", with: symbol.line.formatted())) }
+                                .accessibilityIdentifier("code-symbol-\(symbol.line)")
+                        }
+                    } label: { Label("Outline", systemImage: "list.bullet.indent") }
+                        .menuStyle(.borderlessButton).fixedSize().help("Outline").accessibilityIdentifier("code-outline")
+                }
                 Label("Read only", systemImage: "lock")
                 Button { wraps.toggle() } label: {
                     Image(systemName: "text.word.spacing").foregroundStyle(wraps ? Color.accentColor : .secondary)
@@ -70,13 +92,13 @@ struct RepositoryCodeReader: View {
                 .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         }
         .task(id: Document(text: text, path: path, syntax: syntax)) {
-            tokens = []; starts = []; copied = false
+            tokens = []; starts = []; symbols = []; copied = false; targetLine = nil; jumpID = nil; lineInput = ""; goToLine = false
             let input = text, inputPath = path, shouldStyle = syntax
             let result = await Task.detached(priority: .userInitiated) {
-                (RepositoryCodeReading.lineStarts(in: input), shouldStyle ? RepositoryCodeReading.tokens(in: input, path: inputPath) : [])
+                (RepositoryCodeReading.lineStarts(in: input), shouldStyle ? RepositoryCodeReading.tokens(in: input, path: inputPath) : [], shouldStyle ? RepositoryCodeReading.outline(in: input, path: inputPath) : [])
             }.value
             guard !Task.isCancelled else { return }
-            starts = result.0; tokens = result.1
+            starts = result.0; tokens = result.1; symbols = result.2
         }
         .task(id: Search(text: text, query: findText)) {
             matches = []; matchIndex = 0; truncatedMatches = false
@@ -94,6 +116,29 @@ struct RepositoryCodeReader: View {
             Task { try? await Task.sleep(for: .seconds(2)); copied = false }
         }
         .onExitCommand { if findFocused { findText = "" } }
+    }
+
+    private var lineNavigation: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Go to line").font(.headline)
+            HStack {
+                TextField("Line number", text: $lineInput).textFieldStyle(.roundedBorder).focused($lineFocused)
+                    .onSubmit(submitLine).accessibilityIdentifier("code-line-number")
+                Button("Go to line", action: submitLine).disabled(RepositoryCodeReading.validLine(lineInput, count: starts.count) == nil)
+                    .accessibilityIdentifier("code-line-submit")
+            }
+            Text(verbatim: String(localized: "Enter a line from 1 to {0}.").replacingOccurrences(of: "{0}", with: starts.count.formatted()))
+                .font(.caption).foregroundStyle(!lineInput.isEmpty && RepositoryCodeReading.validLine(lineInput, count: starts.count) == nil ? Color.red : .secondary)
+        }.padding(18).frame(width: 280).onAppear { lineFocused = true }.onExitCommand { goToLine = false }
+    }
+
+    private func submitLine() {
+        guard let line = RepositoryCodeReading.validLine(lineInput, count: starts.count) else { return }
+        jump(to: line); goToLine = false
+    }
+
+    private func jump(to line: Int) {
+        findText = ""; targetLine = line; jumpID = UUID(); lineInput = String(line)
     }
 
     private func advance(_ delta: Int) {

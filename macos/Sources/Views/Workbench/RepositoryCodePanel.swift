@@ -7,6 +7,7 @@ struct RepositoryCodePanel: View {
     @ViewState private var query = ""
     @ViewState private var directory = ""
     @ViewState private var tree: RepositoryTreeSnapshot?
+    @ViewState private var treeURL: URL?
     @ViewState private var selected: RepositoryTreeEntry?
     @ViewState private var preview: RepositoryBlobPreview?
     @ViewState private var mode = "Source"
@@ -21,6 +22,9 @@ struct RepositoryCodePanel: View {
     @ViewState private var wraps = false
     @ViewState private var findText = ""
     @ViewState private var matchIndex = 0
+    @ViewState private var navigation = RepositoryCodeNavigation()
+    @ViewState private var quickOpen = false
+    @ViewState private var panelWidth: CGFloat = 600
     private let modes = ["Source", "File history", "Blame", "Working changes"]
     private var prefix: String { directory.isEmpty ? "" : directory + "/" }
     private var matching: [RepositoryTreeEntry] { tree?.entries.filter { entry in query.isEmpty ? entry.path.hasPrefix(prefix) && !entry.path.dropFirst(prefix.count).contains("/") : entry.path.localizedCaseInsensitiveContains(query) } ?? [] }
@@ -29,6 +33,7 @@ struct RepositoryCodePanel: View {
     var body: some View {
         VStack(spacing: 0) {
             revisionToolbar
+            navigationToolbar
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(.red)
                     .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(12)
@@ -45,6 +50,13 @@ struct RepositoryCodePanel: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { panelWidth = $0 }
+        .sheet(isPresented: $quickOpen) {
+            RepositoryQuickOpen(paths: tree?.entries.map(\.path) ?? [], recent: navigation.recent, width: panelWidth, open: { path in
+                quickOpen = false
+                if let entry = tree?.entries.first(where: { $0.path == path }) { requestOpen(entry) }
+            }, close: { quickOpen = false })
+        }
         .task(id: store.url) { revisionInput = "HEAD"; query = ""; findText = ""; await loadTree() }
         .onDisappear { treeRequest = UUID(); fileRequest = UUID() }
     }
@@ -70,7 +82,62 @@ struct RepositoryCodePanel: View {
             Spacer(minLength: 0)
             if loading { ProgressView().controlSize(.small) }
             else if let tree { Text(String(tree.revision.prefix(8))).font(.caption.monospaced()).foregroundStyle(.secondary).help(tree.revision) }
-        }.padding(16)
+        }.padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10)
+    }
+
+    private var navigationToolbar: some View {
+        HStack(spacing: 8) {
+            Button { navigate(-1) } label: { Image(systemName: "arrow.left") }.disabled(!navigation.canGoBack)
+                .help("Navigate back").accessibilityLabel("Navigate back").accessibilityIdentifier("code-back")
+            Button { navigate(1) } label: { Image(systemName: "arrow.right") }.disabled(!navigation.canGoForward)
+                .help("Navigate forward").accessibilityLabel("Navigate forward").accessibilityIdentifier("code-forward")
+            Divider().frame(height: 16)
+            Button { quickOpen = true } label: { Label("Quick open", systemImage: "doc.text.magnifyingglass") }
+                .keyboardShortcut("p", modifiers: .command).disabled(tree == nil || loading).accessibilityIdentifier("code-quick-open")
+            Text("⌘P").font(.caption.monospaced()).foregroundStyle(.tertiary)
+            Spacer(minLength: 0)
+            Menu {
+                ForEach(navigation.recent, id: \.self) { path in
+                    Button(path) { if let entry = tree?.entries.first(where: { $0.path == path }) { requestOpen(entry) } }
+                }
+            } label: { Image(systemName: "clock.arrow.circlepath") }
+                .menuStyle(.borderlessButton).fixedSize().disabled(navigation.recent.isEmpty)
+                .help("Recent files").accessibilityLabel("Recent files").accessibilityIdentifier("code-recent")
+        }.buttonStyle(.borderless).font(.callout).padding(.horizontal, 18).padding(.bottom, 12)
+    }
+
+    private var fileTabs: some View {
+        HStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 3) {
+                    ForEach(navigation.tabs, id: \.self) { path in
+                        HStack(spacing: 8) {
+                            Button {
+                                if let entry = tree?.entries.first(where: { $0.path == path }) { requestOpen(entry, view: navigation.tabModes[path] ?? "Source") }
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text((path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
+                                    if navigation.tabs.filter({ ($0 as NSString).lastPathComponent == (path as NSString).lastPathComponent }).count > 1 {
+                                        Text((path as NSString).deletingLastPathComponent.isEmpty ? String(localized: "Repository") : (path as NSString).deletingLastPathComponent).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                                    }
+                                }.frame(minWidth: 60, maxWidth: 180, alignment: .leading)
+                            }.accessibilityIdentifier("code-tab-" + path)
+                            Button { closeTab(path) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .medium)) }
+                                .help("Close file").accessibilityLabel("Close file").accessibilityIdentifier("code-close-" + path)
+                        }.font(.callout).padding(.horizontal, 11).padding(.vertical, 10)
+                            .background(selected?.path == path ? Color(nsColor: .textBackgroundColor) : .clear, in: RoundedRectangle(cornerRadius: 6))
+                            .overlay(alignment: .bottom) { if selected?.path == path { Color.accentColor.frame(height: 2) } }
+                            .id(path).help(path).accessibilityAddTraits(selected?.path == path ? .isSelected : [])
+                    }
+                    }.padding(5)
+                }.scrollIndicators(.hidden).accessibilityLabel("Open files")
+                    .onChange(of: selected?.path) { _, path in if let path { proxy.scrollTo(path, anchor: .center) } }
+            }
+            Button(action: closeAllFiles) { Image(systemName: "xmark.square") }.padding(10)
+                .help("Close all files").accessibilityLabel("Close all files").accessibilityIdentifier("code-close-all")
+        }.buttonStyle(.plain).frame(height: Set(navigation.tabs.map { ($0 as NSString).lastPathComponent }).count == navigation.tabs.count ? 42 : 55)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
     }
 
     private var explorer: some View {
@@ -110,7 +177,7 @@ struct RepositoryCodePanel: View {
                         }.buttonStyle(.plain).help(folder)
                     }
                     ForEach(Array(matching.prefix(2000))) { entry in
-                        Button { Task { await open(entry) } } label: {
+                        Button { requestOpen(entry) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: entry.isSubmodule ? "shippingbox" : entry.isSymlink ? "link" : "doc.text").foregroundStyle(.secondary)
                                 Text(query.isEmpty ? String(entry.path.dropFirst(prefix.count)) : entry.path).lineLimit(1).truncationMode(.middle)
@@ -131,6 +198,8 @@ struct RepositoryCodePanel: View {
     @ViewBuilder private var content: some View {
         if let selected {
             VStack(alignment: .leading, spacing: 0) {
+                fileTabs
+                Divider()
                 HStack(spacing: 10) {
                     Image(systemName: "doc.text").foregroundStyle(Color.accentColor)
                     VStack(alignment: .leading, spacing: 3) {
@@ -142,7 +211,7 @@ struct RepositoryCodePanel: View {
                 }.padding(14)
                 WorkbenchFlow(spacing: 4) {
                     ForEach(modes, id: \.self) { value in
-                        Button { Task { await open(selected, view: value) } } label: {
+                        Button { requestOpen(selected, view: value) } label: {
                             Text(LocalizedStringKey(value)).font(.callout.weight(mode == value ? .semibold : .regular))
                                 .padding(.horizontal, 10).padding(.vertical, 7)
                                 .foregroundStyle(mode == value ? Color.accentColor : .secondary)
@@ -171,20 +240,22 @@ struct RepositoryCodePanel: View {
 
     private func loadTree() async {
         guard let url = store.url else { return }
-        let token = UUID(); treeRequest = token; fileRequest = UUID(); loading = true; fileLoading = false; error = nil; tree = nil; directory = ""; selected = nil; preview = nil; auxiliary = nil
+        let token = UUID(); treeRequest = token; fileRequest = UUID(); loading = true; fileLoading = false; error = nil; tree = nil; treeURL = nil; directory = ""; selected = nil; preview = nil; auxiliary = nil; navigation = RepositoryCodeNavigation(); quickOpen = false
         do {
             let value = try await RepositoryBrowser.tree(in: url, ref: revisionInput)
             guard !Task.isCancelled, store.url == url, treeRequest == token else { return }
             tree = value
+            treeURL = url
             if let entry = RepositoryBrowser.initialFile(value.entries) { directory = entry.path.split(separator: "/").dropLast().joined(separator: "/"); await open(entry) }
         } catch { if !Task.isCancelled && store.url == url && treeRequest == token { self.error = store.describe(error) } }
         if store.url == url && treeRequest == token { loading = false }
     }
 
-    private func open(_ entry: RepositoryTreeEntry, view: String = "Source") async {
-        guard let url = store.url, let tree else { return }
+    private func open(_ entry: RepositoryTreeEntry, view: String = "Source", record: Bool = true) async {
+        guard let url = store.url, treeURL == url, let tree, tree.entries.first(where: { $0.path == entry.path }) == entry else { return }
         let token = UUID(), snapshot = tree.revision; fileRequest = token; selected = entry; mode = view; preview = nil; auxiliary = nil; error = nil; fileLoading = true; matchIndex = 0
         directory = entry.path.split(separator: "/").dropLast().joined(separator: "/")
+        navigation.visit(entry.path, mode: view, record: record)
         func current() -> Bool { !Task.isCancelled && store.url == url && self.tree?.revision == snapshot && fileRequest == token }
         defer { if current() { fileLoading = false } }
         do {
@@ -206,5 +277,32 @@ struct RepositoryCodePanel: View {
                 if current() { auxiliary = String(value.prefix(2_000_000)) }
             }
         } catch { if current() { self.error = store.describe(error) } }
+    }
+
+    private func requestOpen(_ entry: RepositoryTreeEntry, view: String = "Source", record: Bool = true) {
+        let generation = treeRequest
+        Task {
+            guard treeRequest == generation else { return }
+            await open(entry, view: view, record: record)
+        }
+    }
+
+    private func navigate(_ delta: Int) {
+        guard let location = navigation.move(delta), let entry = tree?.entries.first(where: { $0.path == location.path }) else { return }
+        requestOpen(entry, view: location.mode, record: false)
+    }
+
+    private func closeTab(_ path: String) {
+        let active = selected?.path
+        let next = navigation.close(path, selected: active)
+        guard active == path else { return }
+        if let next, let entry = tree?.entries.first(where: { $0.path == next }) { requestOpen(entry, view: navigation.tabModes[next] ?? "Source") }
+        else { clearFile() }
+    }
+
+    private func closeAllFiles() { navigation.closeAll(); clearFile() }
+
+    private func clearFile() {
+        fileRequest = UUID(); selected = nil; preview = nil; auxiliary = nil; fileLoading = false; error = nil
     }
 }

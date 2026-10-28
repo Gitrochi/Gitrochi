@@ -1250,5 +1250,19 @@
   "Plain text": "Klartext",
   "Read only": "Schreibgeschützt",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Zeilenumbruch ist bei Dateien mit mehr als 5.000 Zeilen nicht verfügbar.",
-  "More than 10,000 matches. Refine your search.": "Mehr als 10.000 Treffer. Grenzen Sie die Suche ein."
+  "More than 10,000 matches. Refine your search.": "Mehr als 10.000 Treffer. Grenzen Sie die Suche ein.",
+  "Quick open": "Schnell öffnen",
+  "Open files": "Geöffnete Dateien",
+  "Recent files": "Zuletzt geöffnete Dateien",
+  "Close file": "Datei schließen",
+  "Close all files": "Alle Dateien schließen",
+  "Navigate back": "Zurück",
+  "Navigate forward": "Vorwärts",
+  "Go to line": "Gehe zu Zeile",
+  "Line number": "Zeilennummer",
+  "Enter a line from 1 to {0}.": "Geben Sie eine Zeile von 1 bis {0} ein.",
+  "Outline": "Gliederung",
+  "No symbols found": "Keine Symbole gefunden",
+  "Search files by name or path": "Nach Dateiname oder Pfad suchen",
+  "Close quick open": "Schnell öffnen schließen"
 }

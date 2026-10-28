@@ -49,9 +49,39 @@ enum Git {
         let tokens = RepositoryCodeReading.tokens(in: "const answer = \"42\"; // 7\n", path: "source.ts")
         precondition(tokens.map(\.kind) == [.keyword, .string, .comment])
         precondition(RepositoryCodeReading.tokens(in: String(repeating: "let x = 1\n", count: 30_000), path: "source.swift").isEmpty)
-        print("Repository browser passed: immutable object previews, safe paths and limits, UTF-16 search, line metadata, bounded syntax colors and search results")
+        var navigation = RepositoryCodeNavigation()
+        for index in 0..<80 { navigation.visit("file\(index).swift", mode: "Source") }
+        precondition(navigation.tabs.count == 12 && navigation.recent.count == 20 && navigation.history.count == 50)
+        precondition(navigation.move(-1)?.path == "file78.swift" && navigation.canGoForward)
+        navigation.visit("branch.swift", mode: "Blame")
+        precondition(!navigation.canGoForward && navigation.history.last?.mode == "Blame" && navigation.tabModes["branch.swift"] == "Blame")
+        let historyCount = navigation.history.count
+        navigation.visit("branch.swift", mode: "Blame")
+        precondition(navigation.history.count == historyCount && Set(navigation.recent).count == navigation.recent.count)
+        navigation.visit("branch.swift", mode: "File history")
+        precondition(navigation.tabModes["branch.swift"] == "File history")
+        let replacement = navigation.close("branch.swift", selected: "branch.swift")
+        precondition(replacement != nil && !navigation.tabs.contains("branch.swift") && navigation.tabModes["branch.swift"] == nil)
+        navigation.closeAll(); precondition(navigation.tabs.isEmpty && navigation.tabModes.isEmpty && !navigation.recent.isEmpty)
+        let paths = ["src/view.swift", "view.swift", "src/views/long-view.swift", "docs/guide.md"]
+        precondition(RepositoryCodeNavigation.rankedPaths(paths, query: "view.swift", recent: []).first == "view.swift")
+        precondition(RepositoryCodeNavigation.rankedPaths(paths, query: "src long", recent: []) == ["src/views/long-view.swift"])
+        precondition(RepositoryCodeNavigation.rankedPaths(paths, query: "", recent: ["missing", "docs/guide.md"]) == ["docs/guide.md"])
+        precondition(RepositoryCodeNavigation.rankedPaths((0..<100).map { "file\($0).swift" }, query: "file", recent: []).count == 50)
+        precondition(RepositoryCodeReading.validLine(" 2 ", count: 4) == 2)
+        for value in ["", "0", "-1", "1.5", "1e2", "5", "999999999999999999999999"] { precondition(RepositoryCodeReading.validLine(value, count: 4) == nil) }
+        precondition(RepositoryCodeReading.lineRange(2, starts: [0, 4], length: 9) == NSRange(location: 4, length: 5))
+        let source = "func visible() {}\nlet example = `\nfunction hidden() {}\n`;\nlet note = /*\nclass Hidden {}\n*/ 1;\nexport class Visible {}\n"
+        precondition(RepositoryCodeReading.outline(in: source, path: "source.ts").map(\.name) == ["visible", "Visible"])
+        let markdown = "# Guide\n````md\n# Hidden\n```\n# Still hidden\n````\n## Details\n"
+        let headings = RepositoryCodeReading.outline(in: markdown, path: "README.md")
+        precondition(headings.map(\.name) == ["Guide", "Details"] && headings.map(\.line) == [1, 7])
+        let separators = "let sample = \"a\rb\u{2028}c\"\nfunc real() {}\n"
+        precondition(RepositoryCodeReading.outline(in: separators, path: "source.swift").first?.line == 2)
+        precondition(RepositoryCodeReading.outline(in: (0..<400).map { "func symbol\($0)() {}" }.joined(separator: "\n"), path: "source.swift").count == 200)
+        print("Repository browser passed: immutable previews, safe paths/limits, UTF-16 search and lines, bounded syntax, tabs/history/recent, ranked quick open, validated line jumps and comment-aware outline")
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Core/RepositoryBrowser.swift" "$ROOT/Sources/Core/RepositoryCodeReading.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/browser-tests"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Core/RepositoryBrowser.swift" "$ROOT/Sources/Core/RepositoryCodeReading.swift" "$ROOT/Sources/Core/RepositoryCodeNavigation.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/browser-tests"
 "$TASK_TMP/browser-tests" "$TASK_TMP"

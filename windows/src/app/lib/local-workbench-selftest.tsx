@@ -52,6 +52,63 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     await control("Show file explorer"); check(host.querySelector(".code-explorer"), "Focus control did not restore the explorer");
     check(host.querySelector(".code-status-bar")?.textContent?.includes(t("{0} lines", "1")), "Reader line count missing");
     reset();
+    const codeFiles: Record<string, string> = {
+      "src/first.ts": "export function first() {\r\n  return 1;\r\n}\r\n\r\nexport function second() { return 2; }\r\n",
+      "src/second.ts": "export const second = () => 2;\n",
+      "src/large.ts": "line\n".repeat(6000) + "export function tail() {}\n",
+    };
+    let deferSecond = false, releaseSecond: ((value: { text: string }) => void) | undefined;
+    const navigationSource: RepositoryCodeSource = {
+      tree: async () => ({ revision: a, entries: Object.entries(codeFiles).map(([path, text]) => ({ path, mode: "100644", oid: b, size: text.length, kind: "file" })), truncated: false }),
+      blob: async (_repo, entry) => { if (deferSecond && entry.path === "src/second.ts") return new Promise<{ text: string }>((resolve) => { releaseSecond = resolve; }); return { text: codeFiles[entry.path] }; },
+      read: async () => "fixture file history",
+    };
+    const setInputValue = async (field: HTMLInputElement, value: string) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, value); field.dispatchEvent(new Event("input", { bubbles: true })); await pause(); };
+    const quickSelect = async (query: string) => {
+      await click("Quick open");
+      const field = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Search files by name or path")}"]`)!;
+      await setInputValue(field, query);
+      await waitFor(() => host.querySelectorAll('.code-quick-results [role="option"]').length === 1, "Quick open did not rank the requested file");
+      field.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); await pause();
+    };
+    await mount(<RepositoryCodePanel store={store} source={navigationSource}/>);
+    await waitFor(() => host.querySelector("pre")?.textContent?.includes("function first"), "Navigation fixture did not open its first file");
+    check([...host.querySelectorAll(".source-line-text")].map((line) => line.textContent).join("") === codeFiles["src/first.ts"], "Reader changed original CRLF or final newline");
+    await quickSelect("second.ts");
+    await waitFor(() => host.querySelector("pre")?.textContent?.includes("const second"), "Quick open Enter did not open the selected result");
+    check(!host.querySelector('[role="dialog"]') && host.querySelectorAll(".code-file-tab").length === 2, "Quick open did not close or preserve open tabs");
+    await click("Recent files");
+    check(host.querySelector(".code-file-list .code-file-row")?.textContent?.includes("src/second.ts"), "Recent files are not in reading order");
+    await control("Navigate back"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("function first"), "Back did not restore the previous file");
+    await click("File history"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("fixture file history"), "File history fixture did not load");
+    await control("Navigate back"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("function first"), "Back did not preserve source mode");
+    await control("Navigate forward"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("fixture file history"), "Forward did not preserve history mode");
+    await click("Source"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("function first"), "Source did not restore after history");
+    const lineField = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Line number")}"]`)!;
+    await setInputValue(lineField, "0"); await click("Go to line");
+    check(lineField.getAttribute("aria-invalid") === "true" && host.querySelector(".code-line-error"), "Go to line accepted an invalid number");
+    await setInputValue(lineField, "5"); await click("Go to line");
+    await waitFor(() => host.querySelector('[data-line-jump="5"]')?.textContent?.includes("function second"), "Go to line did not target the actual source line");
+    host.querySelector<HTMLElement>(".code-outline summary")!.click(); await pause();
+    check(host.querySelectorAll(".code-outline-list button").length === 2, "Outline did not list function declarations");
+    host.querySelector<HTMLButtonElement>(".code-outline-list button")!.click(); await pause();
+    check(host.querySelector('[data-line-jump="1"]')?.textContent?.includes("function first"), "Outline did not jump to its declaration");
+    await quickSelect("large.ts"); await waitFor(() => host.querySelector("pre.large"), "Large source did not use bounded rendering");
+    await setInputValue(host.querySelector<HTMLInputElement>(`input[aria-label="${t("Line number")}"]`)!, "6001"); await click("Go to line");
+    await waitFor(() => [...host.querySelectorAll('[data-line-jump="6001"]')].map((part) => part.textContent).join("") === "export function tail() {}\n", "Large-file line navigation did not target the actual text");
+    check(host.querySelector(".source-large-text")?.textContent === codeFiles["src/large.ts"], "Large-file line decoration changed source text");
+    host.querySelector<HTMLButtonElement>(".code-file-tab.on .code-close-file")!.click(); await pause();
+    await waitFor(() => host.querySelector("pre")?.textContent?.includes("const second"), "Closing the selected tab did not activate its neighbor");
+    deferSecond = true;
+    await control("Navigate back"); await waitFor(() => host.querySelector("pre.large"), "History did not reopen the closed large file");
+    await quickSelect("second.ts"); await waitFor(() => host.querySelector(".code-loading"), "Delayed tab fixture did not wait");
+    host.querySelector<HTMLButtonElement>(".code-file-tab.on .code-close-file")!.click(); await pause();
+    await waitFor(() => host.querySelector("pre.large"), "Closing a pending tab did not activate its adjacent file");
+    check(releaseSecond, "Delayed tab fixture did not start"); releaseSecond!({ text: "stale tab preview" }); await pause();
+    check(host.querySelector("pre.large"), "Closed tab replaced the current preview after loading");
+    await control("Close all files");
+    check(!host.querySelector(".code-file-tab") && host.textContent?.includes(t("Choose a file")), "Close all files did not clear the reader");
+    reset();
     let releaseBlame: ((value: { text: string }) => void) | undefined, staleReads = 0, blobReads = 0;
     const delayedSource: RepositoryCodeSource = {
       tree: async (_repo, ref) => ({ revision: ref === "HEAD" ? a : b, entries: [{ path: ref === "HEAD" ? "src/fixture.ts" : "src/fresh.ts", mode: "100644", oid: b, size: 20, kind: "file" }], truncated: false }),
@@ -63,6 +120,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     const revision = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Revision")}"]`)!;
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(revision, "topic"); revision.dispatchEvent(new Event("input", { bubbles: true })); await pause(); await click("Load revision");
     await waitFor(() => host.querySelector("pre")?.textContent?.includes("const fresh"), "Revision switch did not show its source");
+    check(host.querySelectorAll(".code-file-tab").length === 1 && host.querySelector<HTMLButtonElement>(`button[aria-label="${t("Navigate back")}"]`)?.disabled, "Revision switch did not reset tabs and reading history");
     check(releaseBlame, "Blame fixture did not wait for its source"); releaseBlame!({ text: "const stale = 3;\n" }); await pause();
     check(staleReads === 0 && host.querySelector("pre")?.textContent?.includes("const fresh"), "Stale blame issued another Git read or replaced the current file");
     reset(); store.headHash=a;store.headBranch="topic";store.repoState="clean";
@@ -72,7 +130,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(!host.querySelector("h1, h2.workbench-heading, .workbench-heading") && host.textContent?.includes(t("Current branch")), "Rebase must keep its current branch line without a large page title");
     check(host.querySelectorAll(".workbench-rebase-candidates button").length===2&&!store.confirm,"Opening rebase must only preview commits");
     reset(); store.repoState = "rebasing"; store.continueOperation = async () => { rebases++; }; await mount(<RebaseWorkbenchPanel store={store}/>); await click("Continue"); check(rebases === 1 && host.textContent?.includes(t("Abort…")), "In-progress rebase controls missing");
-    return [true, "Two-column Compare page with branch list, filter and row action, automatic safe Code preview, source colors, line numbers, find, wrapping, font sizing, explorer focus, stale blame cancellation, immutable rebase summary and rebase continue rendered"];
+    return [true, "Compare controls, safe Code preview, source colors and exact newlines, find/wrap/font/focus, quick open, tabs and recents, back/forward view history, outline and large-file line navigation, closed-tab and stale-blame cancellation, revision reset and rebase controls rendered"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); store.cancelHistoryTools(); }
 }

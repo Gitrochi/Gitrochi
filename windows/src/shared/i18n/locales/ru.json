@@ -1271,5 +1271,19 @@
   "Plain text": "Обычный текст",
   "Read only": "Только чтение",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Перенос строк недоступен для файлов, содержащих более 5 000 строк.",
-  "More than 10,000 matches. Refine your search.": "Более 10 000 совпадений. Уточните поиск."
+  "More than 10,000 matches. Refine your search.": "Более 10 000 совпадений. Уточните поиск.",
+  "Quick open": "Быстрое открытие",
+  "Open files": "Открытые файлы",
+  "Recent files": "Недавние файлы",
+  "Close file": "Закрыть файл",
+  "Close all files": "Закрыть все файлы",
+  "Navigate back": "Назад",
+  "Navigate forward": "Вперёд",
+  "Go to line": "Перейти к строке",
+  "Line number": "Номер строки",
+  "Enter a line from 1 to {0}.": "Введите строку от 1 до {0}.",
+  "Outline": "Структура",
+  "No symbols found": "Символы не найдены",
+  "Search files by name or path": "Поиск по имени или пути",
+  "Close quick open": "Закрыть быстрое открытие"
 }

@@ -1293,5 +1293,19 @@
   "Plain text": "Texto sin formato",
   "Read only": "Solo lectura",
   "Wrapping is unavailable for files with more than 5,000 lines.": "El ajuste de líneas no está disponible para archivos de más de 5.000 líneas.",
-  "More than 10,000 matches. Refine your search.": "Más de 10.000 coincidencias. Afina la búsqueda."
+  "More than 10,000 matches. Refine your search.": "Más de 10.000 coincidencias. Afina la búsqueda.",
+  "Quick open": "Apertura rápida",
+  "Open files": "Archivos abiertos",
+  "Recent files": "Archivos recientes",
+  "Close file": "Cerrar archivo",
+  "Close all files": "Cerrar todos los archivos",
+  "Navigate back": "Atrás",
+  "Navigate forward": "Adelante",
+  "Go to line": "Ir a la línea",
+  "Line number": "Número de línea",
+  "Enter a line from 1 to {0}.": "Introduce una línea entre 1 y {0}.",
+  "Outline": "Esquema",
+  "No symbols found": "No se encontraron símbolos",
+  "Search files by name or path": "Buscar por nombre o ruta",
+  "Close quick open": "Cerrar apertura rápida"
 }
