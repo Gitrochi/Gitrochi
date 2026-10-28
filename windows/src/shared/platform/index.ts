@@ -2,6 +2,7 @@
 export { describe, git, gitAvailable, gitBytes, type GitOptions, gitRaw, unsafeRepository } from "./git";
 export { worktreeStamp } from "./work-stamp";
 export { readOnlyGraphArguments } from "./readonly-graph";
+export { externalEditors, type ExternalEditor, type ExternalEditorID } from "./editors";
 export { type IndexSearchScope, repoIndex } from "./repo-index";
 export { type ToolId, toolList, tools, wslCapable } from "./tools";
 export { updater } from "./updater";

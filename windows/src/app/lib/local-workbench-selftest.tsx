@@ -1,8 +1,9 @@
 import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import { RepoStore } from "@/entities/repo";
-import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource } from "@/widgets/local-workbench";
+import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource, type RepositoryEditorSource } from "@/widgets/local-workbench";
 import { t } from "@/shared/i18n";
+import { codePreviewSelfTest } from "./code-preview-selftest";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 40));
 /** Exercises real controls with fixture data. No repository mutation or network request. */
 export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
@@ -15,6 +16,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
   const mount = async (view: ReactNode) => { root.render(view); await pause(); };
   const reset = () => { root.unmount(); host.replaceChildren(); root = createRoot(host); };
   try {
+    await codePreviewSelfTest();
     store.localBranches = [{ name: "main", target: a, upstream: "origin/main", ahead: 1, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false }, { name: "topic", target: b, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false }];
     store.remoteBranches = [{ ...store.localBranches[1], name: "origin/topic", isRemote: true }]; store.tags = [{ name: "v1", target: a }]; store.stashes = [{ ref: "stash@{0}", hash: b, message: "Saved fixture" }];
     store.loadRevisionComparison = async () => { comparisons++; const s = store.historyTools; s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [], stats: {} }; store.changed(); };
@@ -123,6 +125,65 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(host.querySelectorAll(".code-file-tab").length === 1 && host.querySelector<HTMLButtonElement>(`button[aria-label="${t("Navigate back")}"]`)?.disabled, "Revision switch did not reset tabs and reading history");
     check(releaseBlame, "Blame fixture did not wait for its source"); releaseBlame!({ text: "const stale = 3;\n" }); await pause();
     check(staleReads === 0 && host.querySelector("pre")?.textContent?.includes("const fresh"), "Stale blame issued another Git read or replaced the current file");
+    reset();
+    const previewFiles: Record<string, string> = {
+      "src/Card.tsx": "export function Card() { return <div>Card</div>; }\n",
+      "src/util.ts": "export const value = 1;\n",
+      "pages/index.html": '<html><head><link rel="stylesheet" href="site.css"></head><body><h1 class="hero">Working HTML preview</h1><script>parent.gitrochiPreviewRan = true</script><a href="https://example.invalid" target="_top">Link</a></body></html>',
+      "pages/site.css": ".hero { color: rgb(23, 45, 67); }",
+      "README.md": "# Preview documentation\n\nRendered documentation.\n",
+    };
+    const previewSource: RepositoryCodeSource = {
+      tree: async () => ({ revision: a, entries: Object.entries(previewFiles).map(([path, text]) => ({ path, size: text.length, oid: b, mode: "100644", kind: "file" })), truncated: false }),
+      blob: async (_repo, entry) => ({ text: previewFiles[entry.path] }), read: async () => "",
+    };
+    let listCalls = 0, delayEditors = false;
+    const availableEditors: Awaited<ReturnType<RepositoryEditorSource["list"]>> = [{ id: "system", name: "System default", available: true, supportsFolders: true }, { id: "vscode", name: "Visual Studio Code", available: true, supportsFolders: true }, { id: "notepad", name: "Notepad", available: false, supportsFolders: false }];
+    let releaseEditors: ((value: typeof availableEditors) => void) | undefined;
+    const launches: { repo: string; editor: string; file?: string }[] = [];
+    const editorSource: RepositoryEditorSource = {
+      list: async () => { listCalls++; return delayEditors ? new Promise<typeof availableEditors>((resolve) => { releaseEditors = resolve; }) : availableEditors; },
+      open: async (repo, editor, file) => { launches.push({ repo, editor, file }); },
+    };
+    await mount(<RepositoryCodePanel store={store} source={previewSource} editorSource={editorSource}/>);
+    await waitFor(() => host.querySelector("pre")?.textContent?.includes("Preview documentation"), "Language/editor fixture did not open its README");
+    await quickSelect("Card.tsx"); await waitFor(() => host.querySelector(".code-language-badge")?.textContent?.includes("TypeScript"), "Selected-file language badge did not normalize TSX");
+    await click("Languages");
+    const languageButton = [...host.querySelectorAll<HTMLButtonElement>(".code-language-legend button")].find((button) => button.querySelector("span")?.textContent === "TypeScript");
+    check(languageButton?.textContent?.includes("40"), "Language composition was not counted by tracked files"); languageButton!.click(); await pause();
+    check(host.querySelectorAll(".code-file-row.folder").length === 1 && host.querySelector(".code-file-row.folder")?.textContent === "src", "Language filter did not derive its folders from matching files");
+    await click("src"); check(host.querySelectorAll(".code-file-row:not(.folder)").length === 2, "Language filter did not show matching source files");
+    await click("All languages"); check([...host.querySelectorAll(".code-file-row.folder")].some((folder) => folder.textContent === "pages"), "All languages did not clear the file filter");
+    host.querySelector<HTMLElement>(".code-external-editors summary")!.click();
+    await waitFor(() => host.querySelectorAll(".code-editor-section").length === 2 && host.querySelector(".code-editor-section")?.querySelectorAll("button").length === availableEditors.length && !host.querySelector(".code-editor-menu .spinner"), "Editor discovery did not render file and repository choices");
+    const appButton = (sectionIndex: number) => [...host.querySelectorAll(".code-editor-section")][sectionIndex]?.querySelectorAll<HTMLButtonElement>("button") ?? [];
+    const fileChoices = [...appButton(0)];
+    check(fileChoices.find((button) => button.textContent?.includes("Notepad"))?.disabled, "Unavailable editor must remain disabled");
+    fileChoices.find((button) => button.textContent?.trim() === "Visual Studio Code")!.click(); await pause();
+    check(launches[0]?.repo === store.path && launches[0]?.file === "src/Card.tsx" && launches[0]?.editor === "vscode", "Open file did not send the current working-copy path to the native adapter");
+    host.querySelector<HTMLElement>(".code-external-editors summary")!.click(); await pause();
+    [...appButton(1)].find((button) => button.textContent?.trim() === "Visual Studio Code")!.click(); await pause();
+    check(launches[1]?.file === undefined && launches[1]?.repo === store.path, "Open repository incorrectly sent a preview file");
+    host.querySelector<HTMLElement>(".code-external-editors summary")!.click(); await click("Refresh applications");
+    check(listCalls === 2, "Refresh applications did not query native availability again");
+    delayEditors = true; await click("Refresh applications");
+    check(host.querySelector(".code-editor-menu .spinner"), "Delayed application refresh did not show loading");
+    await quickSelect("index.html"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("Working HTML preview"), "HTML source did not load");
+    host.querySelector<HTMLElement>(".code-external-editors summary")!.click(); await pause();
+    check(!host.querySelector(".code-editor-menu .spinner") && appButton(0).length === 3, "Changing files left editor discovery stuck loading");
+    check(releaseEditors, "Delayed editor fixture did not start"); releaseEditors!([]); await pause();
+    check(appButton(0).length === 3, "Stale editor discovery replaced the current choices");
+    host.querySelector<HTMLElement>(".code-external-editors summary")!.click();
+    await click("Preview");
+    await waitFor(() => host.querySelector<HTMLIFrameElement>(".code-html-preview iframe")?.srcdoc.includes("Working HTML preview"), "HTML Preview did not assemble a rendered document");
+    const frame = host.querySelector<HTMLIFrameElement>(".code-html-preview iframe")!;
+    check(frame.getAttribute("sandbox") === "" && frame.referrerPolicy === "no-referrer", "HTML Preview must remain opaque and script-free");
+    const rendered = new DOMParser().parseFromString(frame.srcdoc, "text/html");
+    check(!rendered.querySelector("script, a[href]") && rendered.querySelector("style")?.textContent?.includes("rgb(23, 45, 67)"), "HTML Preview did not isolate scripts/navigation or include committed CSS");
+    await control("Navigate back"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("Working HTML preview"), "History did not preserve HTML source mode");
+    await control("Navigate forward"); await waitFor(() => host.querySelector(".code-html-preview iframe"), "History did not preserve HTML Preview mode");
+    await quickSelect("README.md"); await waitFor(() => host.querySelector("pre")?.textContent?.includes("Preview documentation"), "Markdown source did not open");
+    await click("Preview"); await waitFor(() => host.querySelector(".code-markdown-preview h1")?.textContent === "Preview documentation", "Markdown Preview did not render the document");
     reset(); store.headHash=a;store.headBranch="topic";store.repoState="clean";
     let previewReads=0;const summary=async()=>{previewReads++;return{base:b,head:a,incoming:3,replay:2,commits:[{id:a,subject:"Newest fixture commit"},{id:b,subject:"Oldest fixture commit"}]};};
     await mount(<RebaseWorkbenchPanel store={store} previewSource={summary}/>);await new Promise(resolve=>setTimeout(resolve,350));
@@ -130,7 +191,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(!host.querySelector("h1, h2.workbench-heading, .workbench-heading") && host.textContent?.includes(t("Current branch")), "Rebase must keep its current branch line without a large page title");
     check(host.querySelectorAll(".workbench-rebase-candidates button").length===2&&!store.confirm,"Opening rebase must only preview commits");
     reset(); store.repoState = "rebasing"; store.continueOperation = async () => { rebases++; }; await mount(<RebaseWorkbenchPanel store={store}/>); await click("Continue"); check(rebases === 1 && host.textContent?.includes(t("Abort…")), "In-progress rebase controls missing");
-    return [true, "Compare controls, safe Code preview, source colors and exact newlines, find/wrap/font/focus, quick open, tabs and recents, back/forward view history, outline and large-file line navigation, closed-tab and stale-blame cancellation, revision reset and rebase controls rendered"];
+    return [true, "Compare, source reading/navigation, immutable language composition/filtering, injected working-copy editors, isolated HTML/CSS/raster and Markdown previews, DOM security/resource budgets, stale requests, revision resets and rebase controls rendered"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); store.cancelHistoryTools(); }
 }

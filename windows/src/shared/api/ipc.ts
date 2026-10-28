@@ -76,6 +76,16 @@ export interface FileHead {
   size: number;
 }
 
+export type ExternalEditorID = "system" | "vscode" | "vscode-insiders" | "xcode" | "intellij" | "textedit" | "notepad" | "notepad-plus-plus" | "sublime";
+
+/** Known applications on this OS; executable paths remain in the native backend. */
+export interface ExternalEditor {
+  id: ExternalEditorID;
+  name: string;
+  available: boolean;
+  supportsFolders: boolean;
+}
+
 /** A process on the way from an agent up to the system (src-tauri/src/agents.rs) */
 export interface ProcessLink {
   pid: number;
@@ -125,6 +135,9 @@ export const ipc = {
   externalAgents: () => invoke<AgentScan>("external_agents"),
   /** Brings a process's app window to the front (Windows) */
   bringAppForward: (pid: number) => invoke<void>("bring_app_forward", { pid }),
+  externalEditors: () => invoke<ExternalEditor[]>("external_editors"),
+  openExternalEditor: (repo: string, editorID: ExternalEditorID, file?: string) =>
+    invoke<void>("open_external_editor", { repo, editorId: editorID, file: file ?? null }),
 
   ptySpawn: (
     id: string,

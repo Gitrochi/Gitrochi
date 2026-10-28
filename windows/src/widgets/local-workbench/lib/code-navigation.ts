@@ -1,4 +1,4 @@
-export type CodeViewMode = "Source" | "File history" | "Blame" | "Working changes";
+export type CodeViewMode = "Source" | "Preview" | "File history" | "Blame" | "Working changes";
 export interface CodeLocation { path: string; mode: CodeViewMode }
 export interface CodeNavigation { tabs: CodeLocation[]; recent: string[]; history: CodeLocation[]; cursor: number }
 export interface CodeSymbol { name: string; line: number; kind: "function" | "type" | "heading" }
