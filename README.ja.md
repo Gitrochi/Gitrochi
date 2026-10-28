@@ -49,7 +49,7 @@ Gitrochi は macOS と Windows 向けのネイティブ Git クライアント�
 - **gitch** — 同梱の CLI がリポジトリごとに Git アカウントを固定し、誤った作者・シークレット・force push をフックで防止
 - **フロー** — リポジトリのテスト・チェック・サービス・デプロイ手順を `.gitch/flow.yml` に組み立て、アプリ・`gitch flow`・push 前・CI で同じ方法で実行：このマシン上、Docker 内、または GitLab CI・GitHub Actions・Jenkins 経由で、手順が失敗したらロールバック
 
-統合リポジトリ画面、Push 前の確認、行コメントと一括レビュー、履歴・復旧ツール、プロジェクトボード、選択した変更への AI 質問と読み取り専用 MCP も利用できます。両アプリは Rust の計算コアを共有します。[実装と検証範囲](docs/complete-workflows-validation.md)（韓国語）と[共通コア](crates/README.md)（英語）を確認してください。Windows 実機へのインストール、実際の LFS ロックとサーバーへの書き込みは、利用環境での追加確認が必要です。
+統合リポジトリ画面、Push 前の確認、行コメントと一括レビュー、履歴・復旧ツール、プロジェクトボード、選択した変更への AI 質問と読み取り専用 MCP も利用できます。両アプリは Rust の計算コアを共有し、コミット履歴・ファイル変更・同時に変わるファイルの関係を SQLite のリポジトリインデックス（C++ のトークナイザーでコード識別子と日本語・韓国語・中国語を索引）に保持します。Python ツールと Go のチームハブ・モニターもこれを利用します（[言語ごとの役割](docs/architecture.md)、英語）。[実装と検証範囲](docs/complete-workflows-validation.md)（韓国語）と[共通コア](crates/README.md)（英語）を確認してください。Windows 実機へのインストール、実際の LFS ロックとサーバーへの書き込みは、利用環境での追加確認が必要です。
 
 使い方とショートカットを含む全機能の一覧：[docs/features.md](docs/features.md)（英語）。
 

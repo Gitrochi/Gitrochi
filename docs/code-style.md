@@ -21,8 +21,14 @@ windows/src/            Feature-Sliced Design — a layer imports only the layer
   shared/    api (ipc) · config (env, settings) · platform (git, tools, WSL, updates) · i18n · lib · ui (base parts, theme) · assets
 windows/src-tauri/src/  processes, pty, file watching, HTTP, credentials (Rust)
 crates/gitrochi-core/   shared parsing, diff, patches, conflicts, graph layout and CLI analysis
+crates/gitrochi-index/  repository index in SQLite (commits, file changes, change relationships, search cache)
+native/                 C++: the FTS5 tokenizer the index compiles in (also a loadable SQLite extension)
 windows/src/shared/core/  WebAssembly boundary and cancellable worker queue
+tools/gitrochi-py/      Python on top of the index and the flow engine: AI review, analysis, tests, runtimes
+services/hub/           Go: the team hub server and the repository monitor daemon (one static binary)
 ```
+
+Which language owns what, and the contracts between them: [architecture.md](architecture.md).
 
 Windows folder rules (`windows/tests/architecture.test.ts` fails when they are broken):
 
@@ -89,7 +95,9 @@ Windows folder rules (`windows/tests/architecture.test.ts` fails when they are b
 - Changed [gitch](../tools/gitch/README.md) (bash 3.2 + git, bundled with the macOS app)? Run `tools/gitch/tests/run.sh` (about three minutes, touches no real configuration). Changed the precise-reference or auto-refresh helpers? Also `python3 tools/gitch/tests/test_scip.py` and `python3 tools/gitch/tests/test_watch.py`; app URL routing is checked with `bash macos/Tools/test-app-route.sh`. CI also validates the JSON Schema contracts (test dependency `jsonschema==4.25.1`; the shipped helpers use only the Python standard library).
 - Changed [gitch-swift-index](../tools/gitch-swift-index/README.md) (Swift, the Xcode index helper next to gitch)? Run `tools/gitch-swift-index/tests/run.sh` (about 30 seconds).
 - The apps, gitch and the flow engine share one release version: `bash tools/check-versions.sh` checks macOS, Windows, the CLI and the engine at once (the macOS build and CI run it too).
-- Shared Rust: run `cargo fmt --manifest-path crates/Cargo.toml -- --check`, `cargo test --locked --manifest-path crates/Cargo.toml` and `cargo clippy --locked --manifest-path crates/Cargo.toml --all-targets -- -D warnings`. Rust 1.88+ and rustup are recommended. Add `wasm32-unknown-unknown` for Windows; universal macOS builds need both Apple targets. See [the shared core notes](../crates/README.md).
+- Changed the [repository index](../crates/gitrochi-index/README.md) or the [C++ tokenizer](../native/README.md)? Run `cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-index`, `bash native/build.sh` and `bash macos/Tools/test-repository-index.sh`; after dependency changes, `python3 tools/generate-core-notices.py` (CI runs `--check`). The Windows side is `npx vitest run tests/repo-index.test.ts`.
+- Changed [the Python tools](../tools/gitrochi-py/README.md)? `python3 -m unittest discover -s tools/gitrochi-py/tests` with macOS's system `python3` (3.9) as well as a current one; standard library only. Changed [the Go hub or monitor](../services/hub/README.md)? In `services/hub`: `gofmt -l .`, `go vet ./...`, `go test -race ./...` and `bash build.sh --all`; standard library only. The project-local Go in `.build/go-tools` is used when `go` is not installed (`GITROCHI_GO` selects another). `bash tools/test-index-integration.sh` runs all three together end to end: the index, the Python supervisor starting the hub, two members' monitors and the hub's overlap warning, and the review flagging a missing file.
+- Shared Rust (`--all`: with more than one crate in the workspace, `cargo fmt` finds nothing to format through `--manifest-path` without it): run `cargo fmt --all --manifest-path crates/Cargo.toml -- --check`, `cargo test --locked --manifest-path crates/Cargo.toml` and `cargo clippy --locked --manifest-path crates/Cargo.toml --all-targets -- -D warnings`. Rust 1.88+ and rustup are recommended. Add `wasm32-unknown-unknown` for Windows; universal macOS builds need both Apple targets. See [the shared core notes](../crates/README.md).
 - `npm ci`, `npm run build`, `npm test` and `npm run dev` in `windows/` generate the core. Run `npm run core` before invoking `tsc` or `vitest` directly. Keep lockfiles; generated WASM, binaries and Cargo target directories stay out of commits.
 - Changed the [flow engine](flow/DESIGN.md) (`tools/gitch-flow`, Rust, bundled with both apps and gitch)? Run `cd tools/gitch-flow && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test` (about a minute, with temporary repositories and HOME, a fake docker CLI and fake GitLab, GitHub and Jenkins servers). Changed its JSON? Update `tools/gitch-flow/schema/` and the app models (macOS `FlowModels.swift`, Windows `entities/flow`) in the same pull request and run `bash macos/Tools/test-flow.sh`. The real Docker tests are `GITCH_FLOW_REAL_DOCKER=1 cargo test --test real_docker -- --ignored` (CI's **Flow engine** job runs them too).
 

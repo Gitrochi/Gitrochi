@@ -12,7 +12,7 @@ import { ipc } from "@/shared/api";
 import { addRecent, basename, env, joinPath, samePath, settings, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
-import { describe, git, type GitOptions, gitRaw, unsafeRepository } from "@/shared/platform";
+import { describe, git, type GitOptions, gitRaw, repoIndex, unsafeRepository } from "@/shared/platform";
 import type { UndoPoint } from "../../lib/undo-model";
 
 /** Which worktree rows a graph was drawn with */
@@ -713,6 +713,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.emit();
       trace(`full reload ${Math.round(performance.now() - started)}ms (graph ${sameLog ? "reused" : "rebuilt"}, status ${Math.round(statusMs)}ms)`);
       this.refreshIndexIfSlow(statusMs);
+      // Refs may have moved; the repository index catches up in the background (a no-op when current).
+      void repoIndex.refresh(path);
     } catch (e) {
       if (gen !== this.reloadGeneration || quiet) return;
       this.fail(e);
@@ -741,7 +743,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const g = gitDirs.find((d) => p === d || p.startsWith(d + "/"));
       if (g) {
         const rel = p === g ? "" : p.slice(g.length + 1);
-        if (!rel || rel.startsWith("objects") || rel.startsWith("logs/") || rel.endsWith(".lock") || rel.startsWith("lfs/")) continue;
+        // gitrochi/ holds the repository index, which syncs after reloads: watching it would loop.
+        if (!rel || rel.startsWith("objects") || rel.startsWith("logs/") || rel.endsWith(".lock") || rel.startsWith("lfs/") || rel.startsWith("gitrochi/")) continue;
         if (rel === "index") {
           kind ??= "status";
           continue;

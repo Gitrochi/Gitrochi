@@ -1,0 +1,27 @@
+[package]
+name = "gitrochi-index"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+publish = false
+# No license identifier until the Community Use proposal is adopted; see THIRD_PARTY_NOTICES.md.
+description = "SQLite repository index shared by the Gitrochi apps, gitch, the Python tools and the Go services"
+
+[lib]
+crate-type = ["rlib"]
+
+[[bin]]
+name = "gitrochi-index"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+
+# SQLite is compiled in (bundled) so every platform gets the same version with FTS5.
+# libsqlite3-sys is listed directly so build.rs receives its header folder.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+libsqlite3-sys = { version = "0.38.2", features = ["bundled"] }
+
+[build-dependencies]
+cc = "1.8"

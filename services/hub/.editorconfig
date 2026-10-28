@@ -1,0 +1,6 @@
+# Go code is formatted by gofmt, which indents with tabs (the root file says spaces).
+[*.go]
+indent_style = tab
+
+[go.mod]
+indent_style = tab

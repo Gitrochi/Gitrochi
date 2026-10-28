@@ -592,6 +592,8 @@ final class RepoStore: Identifiable {
             guard gen == reloadGeneration, self.url == url else { return }
             if graph != nil { lastLog = (lg.data, wip, head, pendingKey) }
             Self.trace("  graph \(graph == nil ? "reused" : "rebuilt (\(graph!.commits.count) commits)"), status \(statusTime)")
+            // Refs may have moved; the index catches up in the background (a no-op when current).
+            RepoIndex.refresh(url)
 
             let refs = Parsers.refs(rf.output)
             update(\.status, newStatus)
@@ -663,7 +665,9 @@ final class RepoStore: Identifiable {
         for p in paths {
             if let g = gitDirs.first(where: { p == $0 || p.hasPrefix($0 + "/") }) {
                 let rel = p == g ? "" : String(p.dropFirst(g.count + 1))
-                if rel.isEmpty || rel.hasPrefix("objects") || rel.hasPrefix("logs/") || rel.hasSuffix(".lock") || rel.hasPrefix("lfs/") {
+                // gitrochi/ holds the repository index, which syncs after reloads: watching it would loop.
+                if rel.isEmpty || rel.hasPrefix("objects") || rel.hasPrefix("logs/") || rel.hasSuffix(".lock") || rel.hasPrefix("lfs/")
+                    || rel.hasPrefix("gitrochi/") {
                     continue
                 }
                 if rel == "index" {

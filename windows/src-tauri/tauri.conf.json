@@ -66,7 +66,8 @@
       "../../tools/gitch/gitch-scip-index": "gitch-scip-index",
       "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
       "../../tools/gitrochi-mcp/server.mjs": "gitrochi-mcp.mjs",
-      "generated/gitch-core.exe": "gitch-core.exe"
+      "generated/gitch-core.exe": "gitch-core.exe",
+      "generated/gitrochi-index.exe": "gitrochi-index.exe"
     }
   },
   "plugins": {

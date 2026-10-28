@@ -1,5 +1,5 @@
 import { CommitSearchQuery, isPending, type SearchScope } from "@/entities/git";
-import { git } from "@/shared/platform";
+import { git, repoIndex } from "@/shared/platform";
 import { RepoSelection } from "./selection";
 
 /** 커밋·파일·코드 검색 */
@@ -70,19 +70,24 @@ export abstract class RepoSearch extends RepoSelection {
     this.searching = true;
     this.emit();
     this.searchTimer = setTimeout(async () => {
-      const args = ["log", "--exclude=refs/stash", "--all", "--format=%H"];
-      if (scope === "commits") args.push("-n", "20000", "-i", "-E", "--grep=" + query.gitPattern);
-      else if (scope === "files") args.push("-n", "20000", "--", `:(glob,icase)**/*${q}*`);
-      else args.push("-n", "1000", "-G", q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-      let out = "";
-      try {
-        out = (await git(args, path, { timeoutMs: 180_000, env: { GIT_LITERAL_PATHSPECS: "0" } })).stdout;
-      } catch {
-        out = "";
+      const codePattern = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // The repository index answers the same question from SQLite while it is current.
+      let found = await repoIndex.searchMatches(path, scope, q, codePattern);
+      if (!found) {
+        const args = ["log", "--exclude=refs/stash", "--all", "--format=%H"];
+        if (scope === "commits") args.push("-n", "20000", "-i", "-E", "--grep=" + query.gitPattern);
+        else if (scope === "files") args.push("-n", "20000", "--", `:(glob,icase)**/*${q}*`);
+        else args.push("-n", "1000", "-G", codePattern);
+        let out = "";
+        try {
+          out = (await git(args, path, { timeoutMs: 180_000, env: { GIT_LITERAL_PATHSPECS: "0" } })).stdout;
+        } catch {
+          out = "";
+        }
+        found = new Set(out.split(/\r?\n/).filter(Boolean));
       }
       if (gen !== this.searchGen) return;
       this.searching = false;
-      const found = new Set(out.split(/\r?\n/).filter(Boolean));
       if (scope === "commits") for (const id of this.searchMatchSet) found.add(id);
       this.applySearch(found, scope !== "commits" || !this.searchMatches.length);
       this.emit();

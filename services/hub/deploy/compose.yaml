@@ -1,0 +1,30 @@
+# The hub with its data in a named volume, reachable on this host only.
+# Put a TLS reverse proxy in front of it, or pass --tls-cert/--tls-key.
+#   docker compose -f services/hub/deploy/compose.yaml run --rm hub init --data /data
+#   docker compose -f services/hub/deploy/compose.yaml up -d
+name: gitrochi-hub
+services:
+  hub:
+    build:
+      context: ..
+    image: gitrochi-hub:local
+    command: ["serve", "--listen", ":7420", "--log-format", "json"]
+    ports:
+      - "127.0.0.1:7420:7420"
+    volumes:
+      - hub-data:/data
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    # Long enough for SSE streams to drain and the journal to be flushed.
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "/gitrochi-hub", "health", "--url", "http://127.0.0.1:7420/healthz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+volumes:
+  hub-data:

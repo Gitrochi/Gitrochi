@@ -31,6 +31,8 @@ wait-timeout = "0.2"
 tokio = { version = "1", features = ["sync"] }
 # agent processes in other apps: process tree and working directories (MIT)
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+# repository index shared with the macOS app and the CLIs: SQLite and the C++ tokenizer
+gitrochi-index = { path = "../../crates/gitrochi-index" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

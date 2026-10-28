@@ -18,5 +18,5 @@ if [ -z "${GITROCHI_CARGO:-}" ] && [ -x "$TASK_LOCAL_BIN/cargo" ] && [ -x "$TASK
   export DYLD_LIBRARY_PATH="$TASK_LOCAL_BIN/../lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
 fi
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-15.0}"
-"$TASK_CARGO" build --manifest-path "$TASK_ROOT/crates/Cargo.toml" --locked --release --lib --bin gitch-core --target "$TASK_TARGET" >&2
+"$TASK_CARGO" build --manifest-path "$TASK_ROOT/crates/Cargo.toml" --locked --release --lib --bin gitch-core --bin gitrochi-index --target "$TASK_TARGET" >&2
 printf '%s\n' "$TASK_ROOT/crates/target/$TASK_TARGET/release/libgitrochi_core.a"

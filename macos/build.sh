@@ -73,11 +73,13 @@ build_arch() {
 
 BINS=()
 CORE_BINS=()
+INDEX_BINS=()
 for arch in "${ARCHS[@]}"; do
     build_arch "$arch"
     BINS+=("$OBJECTS/$arch/$BIN")
     case "$arch" in arm64) core_target=aarch64-apple-darwin ;; *) core_target=x86_64-apple-darwin ;; esac
     CORE_BINS+=("$REPO/crates/target/$core_target/release/gitch-core")
+    INDEX_BINS+=("$REPO/crates/target/$core_target/release/gitrochi-index")
 done
 
 rm -rf "$BUILD"
@@ -85,6 +87,9 @@ mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 lipo -create "${BINS[@]}" -output "$CONTENTS/MacOS/$BIN"
 lipo -create "${CORE_BINS[@]}" -output "$CONTENTS/MacOS/gitch-core"
 ln -s ../MacOS/gitch-core "$CONTENTS/Resources/gitch-core"
+# gitrochi-index: the repository index CLI for gitch, the Python tools and the Go monitor (the app itself links the library).
+lipo -create "${INDEX_BINS[@]}" -output "$CONTENTS/MacOS/gitrochi-index"
+ln -s ../MacOS/gitrochi-index "$CONTENTS/Resources/gitrochi-index"
 cp "$ROOT/Resources/Info.plist" "$CONTENTS/Info.plist"
 cp "$ROOT/Resources/AppIcon.icns" "$CONTENTS/Resources/AppIcon.icns"
 # 화면 번역(한국어 글자가 키, <언어>.lproj/Localizable.strings)
@@ -144,6 +149,7 @@ sign() {
 echo "▶ 서명: ${IDENTITY:-ad-hoc}"
 # 안에 든 실행 파일을 먼저(번들 서명은 그 서명까지 묶는다)
 sign "$CONTENTS/MacOS/gitch-core"
+sign "$CONTENTS/MacOS/gitrochi-index"
 sign "$CONTENTS/MacOS/gitch-swift-index"
 [[ -f "$CONTENTS/MacOS/gitch-flow" ]] && sign "$CONTENTS/MacOS/gitch-flow"
 sign "$BUNDLE"

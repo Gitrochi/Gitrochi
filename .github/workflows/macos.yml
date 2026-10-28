@@ -80,6 +80,9 @@ jobs:
       - name: Git 파서 · 충돌 · 줄 단위 패치 회귀 테스트
         run: bash macos/Tools/test-git-core.sh
 
+      - name: Repository index from Swift (C ABI, SQLite, C++ tokenizer)
+        run: bash macos/Tools/test-repository-index.sh
+
       - name: Push 검토 · PR 리뷰 · AI 변경 질문 테스트
         run: |
           bash macos/Tools/test-push-review.sh

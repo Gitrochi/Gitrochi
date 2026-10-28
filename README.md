@@ -53,12 +53,13 @@ Gitrochi is a native Git client for macOS and Windows. It draws your history as 
 - **Review and advanced Git tools** — review the account, destination and outgoing changes before pushing; draft line comments and batch reviews; compare revisions, select several commits, edit three-way conflicts, browse recovery history, LFS, submodules and bisect
 - **Connected work** — PR/MR management, issues, actions and one Account page for the inbox, releases, projects and organizations; the account control in the toolbar; AI questions about selected changes, repository reading tools and a local read-only MCP server
 - **Shared Rust core** — parsing, diff, patches, conflicts and graph calculations shared by both apps, with cancellable background calculations; commit searches ignore spacing
+- **Repository index** — the whole history, each commit's file changes and which files change together, kept in SQLite by the shared Rust code with a C++ tokenizer for code identifiers and Korean, Japanese and Chinese text; the search bar answers from it, and the Python tools (AI review, analysis, test planning, runtimes) and the Go team hub and monitor build on it
 
 The full list, with usage and shortcuts: [docs/features.md](docs/features.md).
 
 ## Implementation and verification
 
-[Review workflows](docs/review-workflows-validation.md), [extended workflows](docs/complete-workflows-validation.md), [workspace navigation](docs/navigation-workspace-validation.md) (Korean), and the [shared core](crates/README.md) document the implementation and checks. Local fixtures and simulated services cover these flows; Windows installation on a real device, live LFS locks and real-server writes still need environment-specific verification. Repository AI and MCP require Node.js 22+; LFS operations require Git LFS.
+[Which language does what](docs/architecture.md) explains the parts and their contracts. [Review workflows](docs/review-workflows-validation.md), [extended workflows](docs/complete-workflows-validation.md), [workspace navigation](docs/navigation-workspace-validation.md) (Korean), the [shared core](crates/README.md) and the [repository index](crates/gitrochi-index/README.md) document the implementation and checks. Local fixtures and simulated services cover these flows; Windows installation on a real device, live LFS locks and real-server writes still need environment-specific verification. Repository AI and MCP require Node.js 22+; LFS operations require Git LFS.
 
 ## Install
 

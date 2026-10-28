@@ -5,6 +5,10 @@ mod graph;
 mod parsers;
 pub mod records;
 
+// Re-exported so the symbols land in libgitrochi_core.a next to the core's own.
+#[cfg(not(target_arch = "wasm32"))]
+pub use gitrochi_index::ffi::{gitrochi_index_call, gitrochi_index_free};
+
 #[cfg(test)]
 mod tests;
 
