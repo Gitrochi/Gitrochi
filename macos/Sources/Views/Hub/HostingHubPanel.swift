@@ -102,8 +102,13 @@ struct HostingHubPanel: View {
                 Task { await store.activateHostingHub(.projects) }
             }
         }
+        .onChange(of: store.hostingHub.loading) { _, loading in
+            if section == .organizations, !loading, store.hostingHub.detail == nil, store.hostingHub.error == nil, let first = store.hostingHub.items.first {
+                Task { guard !store.hostingHub.detailLoading, store.hostingHub.detail == nil else { return }; await store.selectHostingHubItem(first, tab: "overview") }
+            }
+        }
         .onChange(of: store.hostingHub.uncertainWrite) { _, uncertain in if uncertain { editor = nil } }
-        .task(id: section.rawValue + store.hubContextStamp(in: section)) { editor = nil; issueURL = ""; await store.activateHostingHub(section) }
+        .task(id: section.rawValue + store.hubContextStamp(in: section)) { editor = nil; issueURL = ""; await store.activateHostingHub(section); if section == .organizations, store.hostingHub.detail == nil, store.hostingHub.error == nil, !store.hostingHub.detailLoading, let first = store.hostingHub.items.first { await store.selectHostingHubItem(first, tab: "overview") } }
     }
     private func itemRow(_ item: HubItem) -> some View {
         HStack(spacing: 10) {
@@ -185,7 +190,7 @@ struct HostingHubPanel: View {
             projectWorkspace(d)
 
         }
-        if d.more { Button("Load more") { Task { await store.selectHostingHubItem(d.item, append: true) } }.disabled(locked) }
+        if d.more && section != .organizations { Button("Load more") { Task { await store.selectHostingHubItem(d.item, append: true) } }.disabled(locked) }
         if store.hostingHub.detailLoading { ProgressView() }
     }
     private func groupingField(_ detail: HubDetail) -> HubProjectField? {

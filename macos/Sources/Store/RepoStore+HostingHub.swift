@@ -11,7 +11,8 @@ extension RepoStore {
     /// Releases belong to the open repository, so they use its account (chosen in the toolbar) rather than the hub's own pick.
     private func hubAccount(in section: HostingHubSection) -> HostAccount? { if hubIsLocalProject(in: section) { return nil }; if section == .releases { return hostingAccount }; return AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
     private func hubSelectionStamp(in section: HostingHubSection) -> String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount(in: section)?.id ?? "", hostingHub.projectScope, hostingHub.projectSource].joined(separator: "\0") }
-    var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString }
+    var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString + "|" + hostingHub.organizationReadRevision.uuidString }
+    var hubOrganizationLoading: Bool { hostingHub.section == .organizations && (hostingHub.detail?.organizationSections.values.contains(where: { $0.loading }) == true || hostingHub.detail?.teams.contains(where: { $0.memberState.loading }) == true) }
     var hubProvider: Provider { if hubIsLocalProject { return .github }; return hubAccount?.provider ?? target?.provider ?? .github }
     var hubCredentialState: CredentialCache.State? { hubAccount.map { AccountStore.shared.credentialState(for: $0) } }
     var pendingHubCredentialAccount: HostAccount? { hubAccount.flatMap { AccountStore.shared.awaitsAccess($0) ? $0 : nil } }
@@ -103,7 +104,7 @@ extension RepoStore {
     }
     @discardableResult
     func hostingHubAction(expected: String, refreshList: Bool = false, action: (HubAccess) async throws -> Void) async -> Bool {
-        guard hubActionStamp == expected, !hostingHub.busy, !hostingHub.loading, !hostingHub.detailLoading, !hostingHub.uncertainWrite, hubCredentialState != .loading else { return false }
+        guard hubActionStamp == expected, !hostingHub.busy, !hostingHub.loading, !hostingHub.detailLoading, !hubOrganizationLoading, !hostingHub.uncertainWrite, hubCredentialState != .loading else { return false }
         let generation = hostingHub.generation, item = hostingHub.detail?.item
         hostingHub.busy = true; hostingHub.error = nil; hostingHub.projectPermissionRequired = false; var access: HubAccess?
         let current = { self.hostingHub.generation == generation && self.hubActionStamp == expected }

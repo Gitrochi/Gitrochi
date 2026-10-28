@@ -4,6 +4,7 @@ import { Observable } from "@/shared/lib";
 import { accounts } from "./accounts";
 import * as API from "../api/hub";
 import type { HubOrganizationTab } from "../api/organization-management";
+import { applyHubOrganizationSection, loadHubOrganizationSection, loadHubOrganizationTeamMembers, organizationSectionError, type HubOrganizationSection } from "../api/organization-dashboard";
 export interface HubSource { readonly path: string | null; readonly target: RepoTarget | null; readonly hostingAccount: HostAccount | null; readonly hostingHubRevision?: number }
 /** A separate controller keeps sidebar work isolated from local Git operations. */
 export class HostingHubStore extends Observable {
@@ -23,12 +24,13 @@ export class HostingHubStore extends Observable {
   requestProjectRow(id: string | null) { this.requestedProjectRowID = id; this.emit(); }
   consumeRequestedProjectRow(id: string) { if(this.requestedProjectRowID===id){this.requestedProjectRowID=null;this.emit();} }
   selectedAccountID: string | null = null; query = "";
+  private organizationReadRevision = 0;
   private generation = 0; private listID = 0; private detailID = 0; private context = "";
   constructor(readonly source: HubSource) { super(); }
   /** Releases belong to the open repository, so they use its account (chosen in the toolbar) rather than the hub's own pick. */
   get account() { if(this.isLocalProject)return null;if(this.section==="releases")return this.source.hostingAccount;return accounts.accounts.find(a=>a.id===this.selectedAccountID) ?? this.source.hostingAccount ?? accounts.accounts[0] ?? null; }
   get contextStamp() { return JSON.stringify([this.source.path,this.source.target,this.source.hostingHubRevision,this.account?.id,this.projectScope,this.projectSource,this.isLocalProject ? 0 : accounts.revision]); }
-  get actionStamp() { return JSON.stringify([this.contextStamp,this.section,this.detail?.item.id??null,this.detailID]); }
+  get actionStamp() { return JSON.stringify([this.contextStamp,this.section,this.detail?.item.id??null,this.detailID,this.organizationReadRevision]); }
   get provider() { if(this.isLocalProject)return "github";return this.account?.provider ?? this.source.target?.provider ?? "github"; }
   get projectRepositoryOwner() { const target=this.source.target,account=this.account; return target&&account&&accounts.candidates(target).some(value=>value.id===account.id)?target.path.split("/")[0]:null; }
   get projectEffectiveScope() { return this.projectRepositoryOwner ? this.projectScope : "personal"; }
@@ -42,8 +44,40 @@ export class HostingHubStore extends Observable {
   async access():Promise<API.HubAccess>{if(this.isLocalProject){const stamp=this.contextStamp,g=this.generation;return{local:true,target:{provider:"github",host:"local",path:"local/workspace",remote:"origin"},token:"",apiBase:"",me:"",stillCurrent:()=>this.generation===g&&this.contextStamp===stamp};}const a=this.account,stamp=this.contextStamp,g=this.generation,actual=this.source.target;if(!a)throw new Error(this.section!=="releases"?t("Connect a GitHub or GitLab account to use this workspace."):actual?t("Connect an account on {0} to use repository services.",actual.host):t("Open a repository on the selected account's server to use releases and projects."));const matchingTarget=actual&&actual.provider===a.provider&&accounts.candidates(actual).some(x=>x.id===a.id)?actual:null;const target=API.hubProjectTarget(matchingTarget,a.provider,accountHost(a),a.username,this.section==="projects"&&a.provider==="github"&&this.projectScope==="personal");const current=()=>this.generation===g&&this.contextStamp===stamp;const token=await accounts.token(a,{reportReadFailure:true});if(!current())throw new Error(t("The repository or account changed. Reopen this action."));if(!token)throw new Error(t("The selected account has no token. Reconnect it from Settings → Accounts."));return{target,token,apiBase:accountApiBase(a),me:a.username,stillCurrent:current};}
   async load(append=false) {if(this.loading||this.busy)return;const id=++this.listID,g=this.generation;this.loading=true;this.error=null;this.projectPermissionRequired=false;if(!append){this.detail=null;this.detailID++;}this.emit();let c:API.HubAccess|undefined;try{c=await this.access();const r=await API.hubPage(c,this.section,append?this.page+1:1,append?this.cursor:undefined);if(g!==this.generation||id!==this.listID||c.stillCurrent?.()===false)return;this.items=append?[...this.items,...r.items.filter(i=>!this.items.some(p=>p.id===i.id))]:r.items;this.more=r.more;this.cursor=r.cursor;this.page=append?this.page+1:1;this.notice=r.notice??null;this.uncertainWrite=false;}catch(e){if(g===this.generation&&id===this.listID){this.error=API.hubError(e,c?.token);this.projectPermissionRequired=e instanceof API.HubProjectPermissionError;}}finally{if(g===this.generation&&id===this.listID){this.loading=false;this.emit();}}}
   async select(item:API.HubItem,append=false,tab=this.tab){if(this.busy)return;const id=++this.detailID,g=this.generation;this.detailLoading=true;this.error=null;this.projectPermissionRequired=false;this.tab=tab;if(!append&&this.detail?.item.id!==item.id)this.detail=null;this.emit();let c:API.HubAccess|undefined;try{c=await this.access();const r=await API.hubDetail(c,this.section,item,append?this.detailPage+1:1,append?this.detailCursor:undefined,tab);if(g!==this.generation||id!==this.detailID||c.stillCurrent?.()===false)return;if(append&&this.detail){if(r.organization&&this.detail.organization){r.organization.teams=[...this.detail.organization.teams,...r.organization.teams.filter(v=>!this.detail!.organization!.teams.some(o=>o.id===v.id))];r.organization.invitations=[...this.detail.organization.invitations,...r.organization.invitations.filter(v=>!this.detail!.organization!.invitations.some(o=>o.id===v.id))];}r.rows=[...this.detail.rows,...r.rows.filter(v=>!this.detail!.rows.some(o=>o.id===v.id))];r.members=[...this.detail.members,...r.members.filter(v=>!this.detail!.members.some(o=>o.id===v.id))];r.repositories=[...this.detail.repositories,...r.repositories.filter(v=>!this.detail!.repositories.some(o=>o.id===v.id))];}this.detail=r;this.uncertainWrite=false;this.detailPage=append?this.detailPage+1:1;this.detailCursor=r.cursor;}catch(e){if(g===this.generation&&id===this.detailID){this.error=API.hubError(e,c?.token);this.projectPermissionRequired=e instanceof API.HubProjectPermissionError;}}finally{if(g===this.generation&&id===this.detailID){this.detailLoading=false;this.emit();}}}
+  get organizationLoading() { const data = this.detail?.organization; return !!data && (Object.values(data.sections).some(state => state.loading) || data.teams.some(team => team.memberState.loading)); }
+  /** Read one dashboard card without replacing the selected overview or other successful lists. */
+  async loadOrganizationSection(section: HubOrganizationSection, teamID?: string) {
+    const detail = this.detail, data = detail?.organization;
+    if (!detail || !data || this.section !== "organizations" || this.busy || this.detailLoading || this.loading) return;
+    const team = teamID ? data.teams.find(value => value.id === teamID) : undefined;
+    if (teamID && !team) return;
+    const state = team ? team.memberState : data.sections[section];
+    if (state.loading) return;
+    const generation = this.generation, detailID = this.detailID, context = this.contextStamp, tab = this.tab;
+    const current = () => generation === this.generation && detailID === this.detailID && context === this.contextStamp && this.detail?.item.id === detail.item.id && this.tab === tab;
+    const page = state.error ? state.page : state.loaded ? state.page + 1 : 0;
+    state.page = page; state.loading = true; state.error = undefined; this.organizationReadRevision++; this.emit();
+    let access: API.HubAccess | undefined;
+    try {
+      const captured = await this.access(); access = { ...captured, stillCurrent: () => captured.stillCurrent?.() !== false && current() };
+      if (team) {
+        const result = await loadHubOrganizationTeamMembers(access, detail.item, team, page);
+        if (!current() || !this.detail?.organization) return;
+        const loadedTeam = this.detail.organization.teams.find(value => value.id === team.id);
+        if (!loadedTeam) return;
+        loadedTeam.members = [...loadedTeam.members, ...result.members.filter(value => !loadedTeam.members.some(old => old.id === value.id))];
+        loadedTeam.memberState = result.state;
+      } else {
+        const result = await loadHubOrganizationSection(access, detail.item, section, page, data.info.canInvite);
+        if (!current() || !this.detail) return;
+        this.detail = applyHubOrganizationSection(this.detail, result, true);
+      }
+    } catch (error) {
+      if (current()) { state.error = organizationSectionError(error, access?.token); state.loading = false; }
+    } finally { if (current()) { state.loading = false; this.emit(); } }
+  }
   async action(work:(c:API.HubAccess)=>Promise<unknown>,refresh:"list"|"detail"="detail",expectedStamp=this.actionStamp):Promise<boolean>{
-    if(expectedStamp!==this.actionStamp||this.busy||this.loading||this.detailLoading||this.uncertainWrite)return false;
+    if(expectedStamp!==this.actionStamp||this.busy||this.loading||this.detailLoading||this.organizationLoading||this.uncertainWrite)return false;
     const stamp=this.actionStamp,context=this.contextStamp,g=this.generation,item=this.detail?.item;
     this.busy=true;this.error=null;this.projectPermissionRequired=false;this.emit();
     let c:API.HubAccess|undefined;let ok=false;

@@ -28,15 +28,35 @@ enum Hosting {
             let path = request.url!.path
             if path == "/orgs/team" { return try json(["login": "team", "name": "Team", "public_repos": 4]) }
             if path == "/user/memberships/orgs/team" { return try json(["role": owner ? "admin" : "member", "state": "active"]) }
-            if path == "/orgs/team/teams" { precondition(request.url!.query!.contains("page=2")); return try json((0..<30).map { ["id": $0, "name": "Team \($0)", "html_url": "https://github.com/orgs/team/teams/demo"] }) }
+            if path == "/orgs/team/teams" { return try json((0..<6).map { ["id": $0, "slug": "team-\($0)", "name": "Team \($0)", "html_url": "https://github.com/orgs/team/teams/demo"] }) }
+            if path == "/orgs/team/members" || path.hasPrefix("/orgs/team/teams/") && path.hasSuffix("/members") { return try json([["id": 7, "login": "developer", "name": "Demo developer"]]) }
+            if path == "/orgs/team/repos" { return try json([["id": 12, "full_name": "team/app", "html_url": "https://github.com/team/app"]]) }
+            if path == "/graphql" { return try json(["data": [:]]) }
             if request.httpMethod == "POST" || request.httpMethod == "DELETE" { writes.append(request); return try json(["id": 3]) }
             if path == "/orgs/team/invitations" { return try json([["id": 3, "email": "member@example.com", "role": "direct_member"]]) }
             fatalError("Unexpected request \(request)")
         }
         let overview = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "overview")
-        precondition(overview.organizationAccess?.canInvite == true && overview.item.data["public_repos"] as? Int == 4)
+        precondition(overview.organizationAccess?.canInvite == true && overview.item.data["public_repos"] as? Int == 4 && overview.members.first?.username == "developer" && overview.teams.first?.members.first?.name == "Demo developer" && overview.repositories.count == 1 && overview.invitations.count == 1)
+        let initialHandler = Hosting.handler
+        Hosting.handler = { request in
+            if request.url!.path == "/orgs/team/invitations" { throw HostingError(status: 403) }
+            if request.url!.path == "/orgs/team/teams/team-0/members" { throw HostingError(status: 403) }
+            return try initialHandler(request)
+        }
+        let partial = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "overview")
+        precondition(partial.members.count == 1 && partial.repositories.count == 1 && partial.teams.count == 6 && partial.teams[0].memberState.error != nil && partial.teams[1].members.count == 1 && partial.organizationSections["invitations"]?.error != nil, "A failed invitation or team request hid visible people")
+        var teamMemberReads = 0
+        Hosting.handler = { request in
+            if request.url!.path == "/orgs/team/teams" { return try json((0..<50).map { ["id": $0, "slug": "team-\($0)", "name": "Team \($0)"] }) }
+            if request.url!.path.hasPrefix("/orgs/team/teams/") && request.url!.path.hasSuffix("/members") { teamMemberReads += 1 }
+            return try initialHandler(request)
+        }
+        let bounded = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "overview")
+        precondition(bounded.teams.count == 6 && teamMemberReads == 6 && bounded.organizationSections["teams"]?.more == true, "A server page expanded eager work beyond the team preview bound")
+        Hosting.handler = initialHandler
         let teams = try await HostingHubAPI.detail(gh, section: .organizations, item: org, page: 2, tab: "teams")
-        precondition(teams.teams.count == 30 && teams.more)
+        precondition(teams.teams.count == 6 && teams.more)
         let invitations = try await HostingHubAPI.detail(gh, section: .organizations, item: org, tab: "invitations")
         precondition(invitations.invitations.first?.email == "member@example.com")
         try await HostingHubAPI.inviteOrganizationMember(gh, item: org, email: "member@example.com", role: "direct_member", expiresAt: "")
@@ -61,6 +81,7 @@ enum Hosting {
             if path == "/api/v4/groups/9" { return try json(["id": 9, "name": "Design", "full_path": "team/design"]) }
             if request.httpMethod == "POST" || request.httpMethod == "DELETE" { gitlabWrites.append(request); return try json(gitlabResponse) }
             if path == "/api/v4/groups/9/invitations" { return try json([["invite_email": "member+test@example.com", "access_level": 30]]) }
+            if path == "/api/v4/groups/11/members/all" { return try json([["id": 8, "username": "designer", "name": "Demo designer", "access_level": 30]]) }
             if path == "/api/v4/groups/9/subgroups" { precondition(request.url!.query!.contains("all_available=true")); return try json([["id": 11, "name": "Backend", "web_url": "https://gitlab.test/team/design/backend"]]) }
             fatalError("Unexpected request \(request)")
         }
@@ -99,7 +120,7 @@ enum Hosting {
         let links = HostingHubAPI.organizationLinks(provider: .gitlab, host: "gitlab.test", item: group)
         precondition(links.contains { $0.url == "https://gitlab.test/groups/team/design/-/group_members" })
         precondition(HostingHubAPI.organizationLinks(provider: .github, host: "github.com", item: org).contains { $0.title == "Audit log" })
-        print("Organizations: overview, owner permissions, teams/subgroups, invitation pagination, request payloads, cancellation encoding, server rejections, queued approval, expiration and stale-context guards passed")
+        print("Organizations: populated people/team/repository/invitation overview, bounded team people previews, independent failures, owner permissions, teams/subgroups, invitation pagination, request payloads, cancellation encoding, server rejections, queued approval, expiration and stale-context guards passed")
     }
 }
 SWIFT

@@ -1205,3 +1205,10 @@
 "Email address" = "Correo electrónico";
 "Pending invitations" = "Invitaciones pendientes";
 "No pending invitations." = "No hay invitaciones pendientes.";
+"{0} loaded" = "{0} cargados";
+"{0} people loaded" = "{0} personas cargadas";
+"{0} public repositories" = "{0} repositorios públicos";
+"Load members" = "Cargar miembros";
+"Load more members" = "Cargar más miembros";
+"Team members" = "Miembros del equipo";
+"{0} loaded members" = "{0} miembros cargados";

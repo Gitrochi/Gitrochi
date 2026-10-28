@@ -24,10 +24,11 @@ struct HubProjectColumn: Identifiable { var id: String; var title: String; var r
 enum HubProjectRowKind: String { case issue, pullRequest, draft, redacted }
 struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = []; var kind: HubProjectRowKind = .issue; var number: Int?; var repository = ""; var state = ""; var assignees: [String] = []; var updatedAt = ""; var headRefName = ""; var archived = false; var values: [String: String] = [:]; var author: String? = nil; var createdAt: String? = nil }
 struct HubOrganizationAccess { var role = ""; var canInvite = false; var notice: String? }
-struct HubOrganizationTeam: Identifiable { var id: String; var name: String; var description: String; var url: String; var privacy: String }
+struct HubOrganizationSectionState { var page = 0; var more = false; var loading = false; var error: String?; var loaded = false }
+struct HubOrganizationTeam: Identifiable { var id: String; var name: String; var description: String; var url: String; var privacy: String; var slug = ""; var members: [HubMember] = []; var memberState = HubOrganizationSectionState() }
 struct HubOrganizationInvitation: Identifiable { var id: String; var email: String; var role: String; var createdAt: String; var inviter: String }
 struct HubOrganizationLink: Identifiable { var id: String { title }; var title: String; var url: String }
-struct HubDetail { var item: HubItem; var organizationAccess: HubOrganizationAccess?; var teams: [HubOrganizationTeam] = []; var invitations: [HubOrganizationInvitation] = []; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
+struct HubDetail { var item: HubItem; var organizationAccess: HubOrganizationAccess?; var organizationSections: [String: HubOrganizationSectionState] = [:]; var teams: [HubOrganizationTeam] = []; var invitations: [HubOrganizationInvitation] = []; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
 struct HubPage { var items: [HubItem]; var more: Bool; var cursor: String?; var notice: String? }
 struct HubReleaseInput { var tag = ""; var name = ""; var body = ""; var target = ""; var draft = true; var prerelease = false }
 struct HubGistInput { var description = ""; var isPublic = false; var files = [HubFile(name: "snippet.txt", content: "")] }
@@ -42,6 +43,7 @@ struct HostingHubState {
     var allowingCredentialAccess = false
     var uncertainWrite = false; var loading = false; var detailLoading = false; var busy = false; var error: String?; var notice: String?
     var query = ""; var page = 0; var cursor: String?; var more = false; var detailPage = 1; var detailCursor: String?; var tab = "repositories"
+    var organizationReadRevision = UUID()
     var generation = UUID(); var listID = UUID(); var detailID = UUID(); var context = ""
     var filteredItems: [HubItem] { let q = query.trimmingCharacters(in: .whitespacesAndNewlines); return q.isEmpty ? items : items.filter { ($0.title + " " + $0.subtitle + " " + $0.body).localizedCaseInsensitiveContains(q) } }
 }
@@ -287,7 +289,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             let extra = tab == "repositories" ? p == .github ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""
             let rows = try await list(c, base + route + "?" + qs + extra)
             if tab == "members" { d.members = try await members(c, rows: rows); if p == .github { d.notice = String(localized: "Only members visible to this account are returned by the server.") } }
-            else { d.repositories = rows.map { HubRepository(id: id($0), name: s($0, p == .github ? "full_name" : "path_with_namespace"), description: s($0, "description"), cloneURL: s($0, p == .github ? "clone_url" : "http_url_to_repo"), url: s($0, p == .github ? "html_url" : "web_url")) } }; d.more = rows.count == 30; return d
+            else { d.repositories = rows.map { HubRepository(id: id($0), name: s($0, p == .github ? "full_name" : "path_with_namespace"), description: s($0, "description"), cloneURL: s($0, p == .github ? "clone_url" : "http_url_to_repo"), url: s($0, p == .github ? "html_url" : "web_url")) } }; d.more = rows.count == 30; d.organizationSections[tab] = HubOrganizationSectionState(page: page, more: d.more, loaded: true); return d
         case .gists:
             let base = c.apiBase + (p == .github ? "/gists/" : "/snippets/") + enc(item.id), x = try await object(c, base); var d = HubDetail(item: gistItem(c, x))
             if p == .github { d.files = obj(x, "files").sorted { $0.key < $1.key }.map { key, value in let f = value as? J ?? [:]; return HubFile(name: key, content: s(f, "content"), truncated: f["truncated"] as? Bool == true) }; do { _ = try await value(c, base + "/star"); d.starred = true } catch let error as HostingError where error.status == 404 { d.starred = false } catch { d.notice = String(localized: "Star status could not be loaded: \(Self.error(error, token: c.token))") }; if x["truncated"] as? Bool == true { d.notice = String(localized: "The server truncated the file list. Open the gist in a browser before editing.") } }

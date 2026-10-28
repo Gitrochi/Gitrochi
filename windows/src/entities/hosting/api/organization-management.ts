@@ -1,13 +1,15 @@
 import { t } from "@/shared/i18n";
 import { HostingError } from "./hosting";
-import { ensureHubCurrent, hubRequest, hubRawRequest, hubSafeURL, organizationAvatarURL, hubError, HubUncertainWriteError, type HubAccess, type HubDetail, type HubItem } from "./hub";
+import { ensureHubCurrent, hubRequest, hubRawRequest, hubSafeURL, organizationAvatarURL, hubError, HubUncertainWriteError, type HubAccess, type HubDetail, type HubItem, type HubMember } from "./hub";
+
+import { loadHubOrganizationDashboard, loadHubOrganizationSection, organizationSections, type HubOrganizationSectionState } from "./organization-dashboard";
 
 type ObjectValue = Record<string, unknown>;
 export type HubOrganizationTab = "overview" | "repositories" | "members" | "teams" | "invitations";
-export interface HubOrganizationTeam { id: string; name: string; description: string; url: string; privacy: string }
+export interface HubOrganizationTeam { id: string; name: string; description: string; url: string; privacy: string; slug: string; members: HubMember[]; memberState: HubOrganizationSectionState }
 export interface HubOrganizationInvitation { id: string; email: string; name: string; role: string; createdAt: string; expiresAt: string }
 export interface HubOrganizationInfo { role: string; canInvite: boolean; publicRepositories?: number; privateRepositories?: number; location: string; website: string; visibility: string; notice?: string }
-export interface HubOrganizationData { info: HubOrganizationInfo; teams: HubOrganizationTeam[]; invitations: HubOrganizationInvitation[] }
+export interface HubOrganizationData { info: HubOrganizationInfo; sections: ReturnType<typeof organizationSections>; teams: HubOrganizationTeam[]; invitations: HubOrganizationInvitation[] }
 export interface HubOrganizationInviteInput { email: string; role: string; expiresAt: string }
 export interface HubOrganizationLink { title: string; url: string }
 const object = (value: unknown): ObjectValue => value && typeof value === "object" && !Array.isArray(value) ? value as ObjectValue : {};
@@ -45,27 +47,17 @@ async function permissions(c: HubAccess, item: HubItem, profile: ObjectValue): P
 export async function hubOrganizationDetail(c: HubAccess, item: HubItem, page: number, tab: HubOrganizationTab): Promise<HubDetail> {
   const profile = await hubRequest<ObjectValue>(c, base(c, item));
   const info = await permissions(c, item, profile);
-  const detail: HubDetail = { item: { ...item, title: text(profile.name) || item.title, body: text(profile.description), data: profile, avatarURL: profile.avatar_url === undefined ? item.avatarURL : organizationAvatarURL(c, profile.avatar_url), url: hubSafeURL(c, text(profile.html_url ?? profile.web_url)) ?? item.url }, members: [], repositories: [], assets: [], fields: [], rows: [], more: false, organization: { info, teams: [], invitations: [] } };
-  const data = detail.organization!;
-  if (tab === "overview") return detail;
-  if (tab === "invitations" && !info.canInvite) { detail.notice = permissionNotice(); return detail; }
-  const path = tab === "teams" ? c.target.provider === "github" ? "teams" : "subgroups" : "invitations";
+  const detail: HubDetail = { item: { ...item, title: text(profile.name) || item.title, body: text(profile.description), data: profile, avatarURL: profile.avatar_url === undefined ? item.avatarURL : organizationAvatarURL(c, profile.avatar_url), url: hubSafeURL(c, text(profile.html_url ?? profile.web_url)) ?? item.url }, members: [], repositories: [], assets: [], fields: [], rows: [], more: false, organization: { info, sections: organizationSections(), teams: [], invitations: [] } };
+  if (tab === "overview") return loadHubOrganizationDashboard(c, detail);
   try {
-    const values = await hubRequest<unknown>(c, `${base(c, item)}/${path}?per_page=30&page=${Math.max(1, page)}${c.target.provider === "gitlab" && tab === "teams" ? "&all_available=true" : ""}`);
-    if (!Array.isArray(values)) throw new Error(t("The server returned an unexpected response."));
-    detail.more = values.length === 30;
-    if (tab === "teams") data.teams = values.map(value => {
-      const row = object(value);
-      return { id: text(row.id), name: text(row.name), description: text(row.description), url: hubSafeURL(c, text(row.html_url ?? row.web_url)) ?? "", privacy: text(row.privacy ?? row.visibility) };
-    });
-    else data.invitations = values.map(value => {
-      const row = object(value), email = text(row.email ?? row.invite_email);
-      return { id: c.target.provider === "github" ? text(row.id) : email, email, name: text(row.login) || email, role: roleName(text(row.role ?? row.access_level)), createdAt: text(row.created_at), expiresAt: text(row.expires_at) };
-    });
+    const result = await loadHubOrganizationSection(c, detail.item, tab === "teams" ? "teams" : "invitations", page, info.canInvite);
+    detail.organization!.teams = result.teams;
+    detail.organization!.invitations = result.invitations;
+    detail.more = result.state.more;
+    detail.organization!.sections[result.section] = result.state;
   } catch (error) {
     ensureHubCurrent(c);
-    if (error instanceof HostingError && [403, 404].includes(error.status)) detail.notice = permissionNotice();
-    else throw error;
+    detail.notice = hubError(error, c.token);
   }
   return detail;
 }

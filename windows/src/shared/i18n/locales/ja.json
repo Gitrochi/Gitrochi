@@ -1924,5 +1924,12 @@
   "Private repositories": "非公開リポジトリ",
   "Email address": "メールアドレス",
   "Pending invitations": "保留中の招待",
-  "No pending invitations.": "保留中の招待はありません。"
+  "No pending invitations.": "保留中の招待はありません。",
+  "{0} loaded": "{0}件読み込み済み",
+  "{0} people loaded": "{0}人読み込み済み",
+  "{0} public repositories": "公開リポジトリ {0}件",
+  "Load members": "メンバーを読み込む",
+  "Load more members": "メンバーをさらに読み込む",
+  "Team members": "チームメンバー",
+  "{0} loaded members": "メンバー{0}人読み込み済み"
 }

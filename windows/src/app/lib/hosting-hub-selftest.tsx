@@ -51,6 +51,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     [...host.querySelectorAll<HTMLButtonElement>("button")].find(
       (e) => e.textContent?.trim() === t(label) || e.getAttribute("aria-label") === t(label) || (label === "Confirm" && e.matches(".project-review-sheet footer > button:last-child, .project-create-review footer > button:last-child")),
     );
+  const organizationTabReady = (label: string) => {
+    const tab = [...host.querySelectorAll<HTMLButtonElement>(".organization-tabs button")].find(element => element.textContent?.trim() === t(label));
+    return !!tab && !tab.disabled && tab.getAttribute("aria-pressed") === "true";
+  };
   const enter = (
     element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
     value: string,
@@ -273,7 +277,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else if (u.pathname === "/user/orgs")
         result = [{ id: 5, login: "team", description: "Studio" }];
       else if (u.pathname === "/user/memberships/orgs/team") result = { state: "active", role: "admin" };
-      else if (u.pathname === "/orgs/team/teams") result = [{ id: 8, name: "Desktop team", description: "Build the client", html_url: "https://github.com/orgs/team/teams/desktop" }];
+      else if (u.pathname === "/orgs/team/teams") result = [{ id: 8, slug: "desktop", name: "Desktop team", description: "Build the client", html_url: "https://github.com/orgs/team/teams/desktop" }];
+      else if (u.pathname === "/orgs/team/teams/desktop/members") result = [{ id: 17, login: "desktop-reviewer" }];
       else if (u.pathname === "/orgs/team/invitations") result = organizationInvitations;
       else if (u.pathname === "/orgs/team")
         result = {
@@ -858,12 +863,15 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       host.querySelector(".hub-organization-row > .avatar")?.textContent === "T",
       "Organization list icon fallback missing",
     );
-    host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
-    ensure(await until(() => !!button("Invite member")), "Organization overview did not render");
+    ensure(await until(() => organizationTabReady("Overview") && !!button("Invite member") && !button("Invite member")!.disabled), "Organization overview did not open automatically");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("reviewer") === true, "Overview people missing");
+    ensure(host.querySelector(".organization-team-card")?.textContent?.includes("desktop-reviewer") === true, "Overview team people missing");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("team/client") === true, "Overview repositories missing");
+    ensure(host.querySelector(".organization-dashboard")?.textContent?.includes("pending@example.com") === true, "Overview pending invitations missing");
     ensure(host.textContent?.includes("12") === true, "Organization repository count missing");
     button("Repositories")!.click();
     ensure(
-      await until(() => !!button("Clone")),
+      await until(() => organizationTabReady("Repositories") && !!button("Clone") && !button("Clone")!.disabled),
       "Organization repository did not render",
     );
     ensure(
@@ -877,13 +885,13 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     button("Members")!.click();
     ensure(
-      await until(() => host.textContent?.includes("reviewer") === true),
+      await until(() => organizationTabReady("Members") && host.querySelector(".hub-members .hub-member")?.textContent?.includes("reviewer") === true),
       "Organization members did not render",
     );
     button("Teams")!.click();
-    ensure(await until(() => host.textContent?.includes("Desktop team") === true), "Organization teams did not render");
+    ensure(await until(() => organizationTabReady("Teams") && host.querySelector(".organization-team-card")?.textContent?.includes("Desktop team") === true && host.querySelector(".organization-team-card")?.textContent?.includes("desktop-reviewer") === true), "Organization teams did not render");
     button("Overview")!.click();
-    ensure(await until(() => !!button("Invite member")), "Organization invitation action missing");
+    ensure(await until(() => organizationTabReady("Overview") && !!button("Invite member") && !button("Invite member")!.disabled), "Organization invitation action missing");
     button("Invite member")!.click();
     ensure(await until(() => !!host.querySelector('input[type="email"]')), "Organization invitation editor missing");
     enter(host.querySelector<HTMLInputElement>('input[type="email"]')!, "new-member@example.com");
@@ -899,9 +907,9 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !!button("Send invitation")), "Invitation send confirmation missing");
     button("Send invitation")!.click();
     ensure(await until(() => writes.some(write => write.method === "POST" && write.url.endsWith("/orgs/team/invitations") && write.body.email === "new-member@example.com")), "Confirmed invitation was not sent");
-    ensure(await until(() => !host.querySelector('[role="alertdialog"]')), "Invitation review did not close");
+    ensure(await until(() => !host.querySelector('[role="alertdialog"]') && organizationTabReady("Overview")), "Invitation review did not close");
     button("Invitations")!.click();
-    ensure(await until(() => host.textContent?.includes("pending@example.com") === true), "Pending organization invitations missing");
+    ensure(await until(() => organizationTabReady("Invitations") && host.querySelector(".organization-invitation")?.textContent?.includes("pending@example.com") === true), "Pending organization invitations missing");
     button("Cancel invitation")!.click();
     ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Invitation cancellation review missing");
     const beforeCancel = writes.length;
