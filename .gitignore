@@ -13,3 +13,6 @@ windows/src/shared/core/core.generated.ts
 
 # Keep local dependency and test caches out of commits.
 node_modules
+
+# Worktrees Claude Code creates for its sessions; the rest of .claude/ can be shared.
+.claude/worktrees/
