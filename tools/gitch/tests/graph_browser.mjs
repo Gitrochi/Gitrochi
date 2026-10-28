@@ -16,6 +16,17 @@ async function evaluate(expression) {
   if (r.result.exceptionDetails) throw new Error(r.result.exceptionDetails.exception ? r.result.exceptionDetails.exception.description : r.result.exceptionDetails.text);
   return r.result.result.value;
 }
+// Page.navigate answers before the new document has loaded; a check run after a fixed delay can still find it parsing.
+async function navigate(url) {
+  const answer = await send("Page.navigate", { url });
+  if (answer.result?.errorText) throw new Error(`Navigation failed: ${answer.result.errorText} ${url}`);
+  const loaded = `location.href===${JSON.stringify(new URL(url).href)}&&document.readyState==='complete'`;
+  for (let i = 0; i < 400; i++) {
+    try { if (await evaluate(loaded)) return; } catch (e) { /* the previous document is being replaced */ }
+    await sleep(50);
+  }
+  throw new Error(`Page did not load: ${url}`);
+}
 async function clickElement(selector, { index = 0, shift = false } = {}) {
   const point = await evaluate(`(() => {
     const e=[...document.querySelectorAll(${JSON.stringify(selector)})][${index}];
@@ -69,7 +80,7 @@ try {
   await send("Runtime.enable"); await send("Page.enable"); await send("Network.enable");
   await send("Network.emulateNetworkConditions",{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});
   await send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
-  await send("Page.navigate", { url: `file://${html}#test` });
+  await navigate(`file://${html}#test`);
   for (let i = 0; i < 100; i++) { await sleep(100); if (await evaluate("!!window.gitchGraphTest")) break; }
   const dockInitial = await evaluate(`(() => {
     const dock=document.getElementById('rightDock'), visible=e=>!!e&&!e.hidden&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';
@@ -491,7 +502,7 @@ try {
       await writeFile(`${process.env.GITCH_TEST_ARTIFACT_DIR}/graph-review-${width}.png`,Buffer.from(shot.result.data,'base64'));
     }
   }
-  await send('Page.navigate',{url:`file://${reportFile}`});await sleep(300);
+  await navigate(`file://${reportFile}`);
   const offline=await evaluate(`document.querySelectorAll('script,[src]').length===0 && document.querySelector('h1')?.textContent.includes('변경 리뷰') && document.querySelector('main').textContent.includes('테스트 후보')`);
   const nativePathMenus=[], sourceHtml=await readFile(html,'utf8');
   for(const [index,repoPath] of ['C:/workspace/Graph repo',String.raw`\\server\share\Graph repo`].entries()) {
@@ -500,7 +511,8 @@ try {
       return start+JSON.stringify(data).replace(/</g,'\\u003c')+end;
     });
     const fixture=`${tmp}/native-path-${index}.html`;await writeFile(fixture,nativeHtml);
-    await send('Page.navigate',{url:`file://${fixture}#test`});
+    // The previous fixture also has the test hook, so wait for this document before polling for it.
+    await navigate(`file://${fixture}#test`);
     for(let i=0;i<100;i++){await sleep(50);if(await evaluate('!!window.gitchGraphTest'))break;}
     const result=await evaluate(`(() => {
       const t=window.gitchGraphTest,s=t.capture();s.relation='tree';s.query='';s.filters.lang='all';s.filters.onlyDiff=false;s.filters.onlyAffected=false;s.filters.minDeg=0;s.panels.dock='info';s.panels.rightClosed=false;t.restore(s);t.select('packages/a/src/');
