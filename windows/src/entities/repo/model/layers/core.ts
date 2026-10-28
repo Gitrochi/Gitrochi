@@ -1,6 +1,6 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
-import { isWorkspaceDestination, repositoryDestinations, restoredDestination, type WorkspaceDestination } from "@/entities/git";
+import { isWorkspaceDestination, repositoryDestinations, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
@@ -62,7 +62,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   // 저장소
   path: string | null = null;
   destination: WorkspaceDestination = "home";
-  /** The Pull requests, Issues or Releases page was opened from the repository screen, so it shows "‹ Repository" (macOS: cameFromRepository) */
+  /** A page the repository screen links to was opened from there, so it shows "‹ Repository" (macOS: cameFromRepository) */
   cameFromRepository = false;
   /** True while a reload reconciles the selection, so it never changes the page (macOS: workspaceNavigationPreparing) */
   private reconcilingSelection = false;
@@ -75,7 +75,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   navigate(page: WorkspaceDestination, prepare = true) {
     if (!isWorkspaceDestination(page) || (repositoryDestinations.has(page) && !this.path)) return false;
     // the Pull requests and Issues pages offer a way back when the repository screen opened them
-    if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && (page === "pullRequests" || page === "issues" || page === "releases");
+    if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && returnsToRepository.has(page);
     this.destination = page;
     if (this.path) settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: page });
     // the Pull requests page shows one request at a time; an unrelated diff or file view would hide its list

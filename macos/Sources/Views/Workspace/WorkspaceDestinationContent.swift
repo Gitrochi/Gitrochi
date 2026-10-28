@@ -46,7 +46,7 @@ struct PageHeader: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            if store.cameFromRepository, [.pullRequests, .issues, .releases].contains(page) {
+            if store.cameFromRepository, page.returnsToRepository {
                 Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
                     .buttonStyle(.borderless)
                     .keyboardShortcut("[", modifiers: .command)
