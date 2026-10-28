@@ -20,10 +20,12 @@ enum RepositoryWindowLayout {
     static func restorationFrame(before: NSRect?, after: NSRect?, current: NSRect, minimum: NSSize, inLiveResize: Bool = false) -> NSRect {
         guard let before else { return current }
         guard let after, after != current else { return before }
-        // Minimum-size reflow keeps the temporary content top after the toolbar shrinks the frame.
-        let reflowedMinimum = !inLiveResize && before.size == minimum && current.size == before.size
+        // The style change shrinks the frame in place and SwiftUI grows it back to its minimum height, keeping the
+        // temporary content top. A tab bar's extra height makes this happen above the minimum too.
+        let reflowedMinimum = !inLiveResize
             && before.origin == after.origin && before.width == after.width && after.height < before.height
-            && current.minX == before.minX && current.maxY == after.maxY
+            && current.minX == before.minX && current.width == before.width && current.maxY == after.maxY
+            && current.height == minimum.height && current.height <= before.height
         return reflowedMinimum ? before : current
     }
 

@@ -231,6 +231,14 @@ private final class DeferredFrameFixtureWindow: NSWindow {
             current: normalRestored, minimum: constrainedMinimum) == normalRestored,
             "A normal-size restored frame must not be classified as minimum-size reflow")
         checks.append(["scenario": "normal-restored-frame-preserved", "windowFrame": rect(normalRestored)])
+        // A tab bar adds 36 pt, so the style change can take a frame above its minimum below it.
+        let tabbedBefore = NSRect(x: 60, y: 135, width: 900, height: 540)
+        let tabbedAfter = NSRect(x: 60, y: 135, width: 900, height: 452)
+        let tabbedReflow = NSRect(x: 60, y: 99, width: 900, height: 488)
+        precondition(RepositoryWindowLayout.restorationFrame(before: tabbedBefore, after: tabbedAfter,
+            current: tabbedReflow, minimum: NSSize(width: 700, height: 488)) == tabbedBefore,
+            "Minimum-size reflow of a larger tabbed frame must restore that frame")
+        checks.append(["scenario": "tabbed-minimum-reflow-restored", "windowFrame": rect(tabbedBefore)])
         let deferredWindow = DeferredFrameFixtureWindow(contentRect: NSRect(x: 100, y: 100, width: 640, height: 420),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         deferredWindow.isReleasedWhenClosed = false
