@@ -6,16 +6,21 @@ struct OrganizationWorkspace: View {
     let detail: HubDetail
     var onClone: ((String) -> Void)?
     @ViewState private var inviting = false
-    @ViewState private var email = ""
-    @ViewState private var role = ""
-    @ViewState private var expiresAt = ""
+    @ViewState private var accessRequest: OrganizationAccessRequest?
+    @ViewState private var query = ""
+    @ViewState private var toolsExpanded = false
+    @ViewState private var showInvitations = false
     private var github: Bool { store.hubProvider == .github }
     private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy }
     private var canInvite: Bool { detail.organizationAccess?.canInvite == true && !store.hostingHub.uncertainWrite }
-    private var roles: [(String, String)] { HostingHubAPI.organizationRoles(store.hubProvider) }
+    private var managementLocked: Bool { locked || store.hubOrganizationLoading }
+    private func matches(_ value: String) -> Bool { query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || value.localizedCaseInsensitiveContains(query.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    private var filteredMembers: [HubMember] { detail.members.filter { matches($0.name + " " + $0.username) } }
+    private var filteredTeams: [HubOrganizationTeam] { detail.teams.filter { team in matches(team.name + " " + team.description + " " + team.members.map { $0.name + " " + $0.username }.joined(separator: " ")) } }
     private var links: [HubOrganizationLink] { HostingHubAPI.organizationLinks(provider: store.hubProvider, host: store.hubAccount?.host ?? "", item: detail.item) }
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
+            header
             WorkbenchFlow(spacing: 6) {
                 tab(String(localized: "Overview"), "overview", "square.grid.2x2")
                 tab(String(localized: "Repositories"), "repositories", "folder")
@@ -23,7 +28,6 @@ struct OrganizationWorkspace: View {
                 tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams", "person.3")
                 tab(String(localized: "Invitations"), "invitations", "envelope")
             }.disabled(locked)
-            if inviting && canInvite { invitationForm }
             switch store.hostingHub.tab {
             case "overview": overview
             case "members": members; sectionStatus("members")
@@ -32,9 +36,40 @@ struct OrganizationWorkspace: View {
             default: repositories; sectionStatus("repositories")
             }
         }
+        .sheet(isPresented: $inviting) { OrganizationInvitationSheet(store: store, detail: detail) }
+        .sheet(item: $accessRequest) { request in OrganizationAccessSheet(store: store, detail: detail, request: request) }
+        .onChange(of: showInvitations) { _, showing in
+            if showing && detail.organizationSections["invitations"]?.loaded != true && detail.organizationSections["invitations"]?.loading != true {
+                Task { await store.loadOrganizationSection("invitations") }
+            }
+        }
         .onChange(of: detail.item.id) { _, _ in resetInvitation() }
         .onChange(of: store.hubAccount?.id) { _, _ in resetInvitation() }
-        .onChange(of: store.hostingHub.uncertainWrite) { _, value in if value { inviting = false } }
+        .onChange(of: store.hostingHub.uncertainWrite) { _, value in if value { inviting = false; accessRequest = nil } }
+    }
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                HostingAvatar(name: detail.item.title, username: detail.item.subtitle, avatarURL: detail.item.avatarURL, size: 38, style: .organization)
+                VStack(alignment: .leading, spacing: 3) { Text(detail.item.title).font(.title3.weight(.semibold)); Text(detail.item.subtitle + " · " + (detail.organizationAccess?.role ?? String(localized: "Unknown"))).font(.caption).foregroundStyle(.secondary) }
+                Spacer(minLength: 0)
+                if canInvite {
+                    Button("Invite member") { inviting = true }.buttonStyle(.borderedProminent).disabled(managementLocked)
+                    Button("Manage access") { accessRequest = OrganizationAccessRequest() }.disabled(managementLocked)
+                }
+            }
+            Text("Invite colleagues, organize teams, and grant the access each person needs.").font(.callout).foregroundStyle(.secondary)
+            if let notice = detail.notice { Text(notice).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
+            if canInvite || !detail.invitations.isEmpty {
+                DisclosureGroup(isExpanded: $showInvitations) {
+                    invitations
+                    sectionStatus("invitations")
+                } label: {
+                    HStack { Label("Pending invitations", systemImage: "envelope"); if detail.organizationSections["invitations"]?.error != nil { Text("Unavailable").font(.caption).foregroundStyle(.secondary) } else if detail.organizationSections["invitations"]?.loading == true { ProgressView().controlSize(.small) } else if detail.organizationSections["invitations"]?.loaded != true { Text("Not loaded").font(.caption).foregroundStyle(.secondary) } else { Text(verbatim: String(localized: "{0} loaded").replacingOccurrences(of: "{0}", with: detail.invitations.count.formatted())).font(.caption).foregroundStyle(.secondary) } }
+                }
+            }
+            TextField("Search loaded people and teams", text: $query).textFieldStyle(.roundedBorder).frame(maxWidth: 390)
+        }
     }
     private func tab(_ title: String, _ value: String, _ icon: String) -> some View {
         Button { inviting = false; Task { await store.selectHostingHubItem(detail.item, tab: value) } } label: { Label(title, systemImage: icon) }
@@ -42,24 +77,18 @@ struct OrganizationWorkspace: View {
     }
     private var overview: some View {
         VStack(alignment: .leading, spacing: 18) {
-            WorkbenchFlow(spacing: 14) {
-                Label("Your role", systemImage: "person.crop.circle.badge.checkmark").foregroundStyle(.secondary)
-                Text(detail.organizationAccess?.role ?? String(localized: "Unknown")).fontWeight(.semibold)
-                if let count = detail.item.data["public_repos"] as? Int { Text(verbatim: String(localized: "{0} public repositories").replacingOccurrences(of: "{0}", with: count.formatted())).font(.caption).foregroundStyle(.secondary) }
-                if canInvite { Button("Invite member") { startInvitation() }.buttonStyle(.borderedProminent).disabled(locked) }
-            }
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: 18) { peopleDashboard.frame(minWidth: 320); teamsDashboard.frame(minWidth: 320) }
                 VStack(alignment: .leading, spacing: 18) { peopleDashboard; teamsDashboard }
             }
             dashboardSection(String(localized: "Repositories"), section: "repositories", count: detail.repositories.count) { repositories }
-            dashboardSection(String(localized: "Pending invitations"), section: "invitations", count: detail.invitations.count) { invitations }
-            Text("Organization tools").font(.headline)
+            DisclosureGroup("Organization tools", isExpanded: $toolsExpanded) {
             Text("Open administration tools on the connected server. Availability depends on your role, account permissions, and plan.").font(.caption).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)], alignment: .leading, spacing: 10) {
                 ForEach(links) { link in
                     Button { open(link.url) } label: { HStack { Text(link.title); Spacer(); Image(systemName: "arrow.up.right") }.frame(maxWidth: .infinity) }.buttonStyle(.bordered)
                 }
+            }
             }
         }
     }
@@ -97,11 +126,11 @@ struct OrganizationWorkspace: View {
     }
     private var members: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 12) {
-            ForEach(detail.members) { member in memberCard(member) }
+            ForEach(filteredMembers) { member in memberCard(member) }
             if detail.members.isEmpty && detail.organizationSections["members"]?.error == nil { Text("No members visible to this account.").font(.caption).foregroundStyle(.secondary) }
         }
     }
-    private func memberCard(_ member: HubMember) -> some View {
+    private func memberCard(_ member: HubMember, team: HubOrganizationTeam? = nil) -> some View {
         HStack(spacing: 8) {
             HostingAvatar(name: member.name, username: member.username, avatarURL: member.avatarURL, size: 30)
             VStack(alignment: .leading, spacing: 3) {
@@ -110,20 +139,22 @@ struct OrganizationWorkspace: View {
                 if !github { Text(member.role).font(.caption2).foregroundStyle(.secondary) }
             }
             Spacer(minLength: 0)
+            if canInvite { Button { accessRequest = OrganizationAccessRequest(member: member, team: team) } label: { Image(systemName: "key").font(.caption2) }.buttonStyle(.borderless).help("Manage access").accessibilityLabel("Manage access").disabled(managementLocked) }
             if let url = member.profileURL { Link(destination: url) { Image(systemName: "arrow.up.right").font(.caption2) }.help("Open profile").accessibilityLabel("Open profile") }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(7).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
     }
     private var teams: some View {
         LazyVStack(alignment: .leading, spacing: 12) {
-            ForEach(detail.teams) { team in
+            ForEach(filteredTeams) { team in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top, spacing: 8) {
                         VStack(alignment: .leading, spacing: 4) { Text(team.name).font(.callout.weight(.semibold)); if !team.description.isEmpty { Text(team.description).font(.caption).foregroundStyle(.secondary).lineLimit(2) } }
                         Spacer(minLength: 0)
+                        if canInvite { Button("Add member") { accessRequest = OrganizationAccessRequest(team: team, assigning: true) }.controlSize(.small).disabled(managementLocked) }
                         if safeURL(team.url) != nil { Button { open(team.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
                     }
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 8) {
-                        ForEach(team.members) { member in memberCard(member) }
+                        ForEach(team.members.filter { matches(team.name) || matches($0.name + " " + $0.username) }) { member in memberCard(member, team: team) }
                     }
                     HStack {
                         Text(verbatim: String(localized: "{0} people loaded").replacingOccurrences(of: "{0}", with: team.members.count.formatted())).font(.caption2).foregroundStyle(.secondary)
@@ -142,7 +173,7 @@ struct OrganizationWorkspace: View {
     }
     private var invitations: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if store.hostingHub.tab != "overview" { HStack { Text("Pending invitations").font(.headline); Spacer(); if canInvite { Button("Invite member") { startInvitation() }.buttonStyle(.borderedProminent).disabled(locked) } } }
+            if store.hostingHub.tab != "overview" { HStack { Text("Pending invitations").font(.headline); Spacer(); if canInvite { Button("Invite member") { inviting = true }.buttonStyle(.borderedProminent).disabled(locked) } } }
             ForEach(detail.invitations) { invitation in
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) { Text(invitation.email).fontWeight(.semibold).textSelection(.enabled); Text(invitation.role).font(.caption).foregroundStyle(.secondary); if !invitation.createdAt.isEmpty { Text(String(invitation.createdAt.prefix(10))).font(.caption2).foregroundStyle(.secondary) } }
@@ -150,32 +181,10 @@ struct OrganizationWorkspace: View {
                     if canInvite { Button("Cancel invitation", role: .destructive) { cancel(invitation) }.disabled(locked) }
                 }.padding(14).background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
             }
-            if detail.invitations.isEmpty && detail.organizationSections["invitations"]?.error == nil && detail.notice == nil { Text("No pending invitations.").foregroundStyle(.secondary) }
+            if detail.invitations.isEmpty && detail.organizationSections["invitations"]?.loaded == true && detail.organizationSections["invitations"]?.error == nil && detail.notice == nil { Text("No pending invitations.").foregroundStyle(.secondary) }
         }
     }
-    private var invitationForm: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Divider()
-            Text("Invite member").font(.headline)
-            Text("The invitation is sent by the selected account to this organization after confirmation.").font(.caption).foregroundStyle(.secondary)
-            TextField("Email address", text: $email).textFieldStyle(.roundedBorder)
-            Picker("Invitation role", selection: $role) { ForEach(roles, id: \.0) { value, title in Text(title).tag(value) } }
-            if !github { TextField("Expiration date (YYYY-MM-DD, optional)", text: $expiresAt).textFieldStyle(.roundedBorder) }
-            HStack { Button("Review invitation") { reviewInvitation() }.buttonStyle(.borderedProminent).disabled(!HostingHubAPI.validOrganizationEmail(email.trimmingCharacters(in: .whitespacesAndNewlines)) || !roles.contains(where: { $0.0 == role })); Button("Cancel") { inviting = false } }
-        }.disabled(locked)
-    }
-    private func startInvitation() { email = ""; expiresAt = ""; role = github ? "direct_member" : "30"; inviting = true }
-    private func resetInvitation() { inviting = false; email = ""; expiresAt = ""; role = "" }
-    private func reviewInvitation() {
-        let item = detail.item, email = email.trimmingCharacters(in: .whitespacesAndNewlines), role = role, expires = expiresAt, context = store.hubActionStamp
-        let account = store.hubAccount.map { "\($0.host) · @\($0.username)" } ?? ""
-        let label = roles.first { $0.0 == role }?.1 ?? role
-        store.confirm = ConfirmRequest(title: String(localized: "Send organization invitation?"), message: [item.title, account, email, label, expires].filter { !$0.isEmpty }.joined(separator: "\n"), actionTitle: String(localized: "Send invitation"), destructive: false) {
-            var notice: String?
-            let saved = await store.hostingHubAction(expected: context) { c in notice = try await HostingHubAPI.inviteOrganizationMember(c, item: item, email: email, role: role, expiresAt: expires) }
-            if saved { inviting = false; if let notice { store.hostingHub.notice = notice } }
-        }
-    }
+    private func resetInvitation() { inviting = false; accessRequest = nil; query = "" }
     private func cancel(_ invitation: HubOrganizationInvitation) {
         let item = detail.item, context = store.hubActionStamp
         store.confirm = ConfirmRequest(title: String(localized: "Cancel this invitation?"), message: item.title + "\n" + invitation.email + "\n" + invitation.role, actionTitle: String(localized: "Cancel invitation"), destructive: true) {

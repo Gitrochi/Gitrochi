@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { accounts, HostingHubStore, hubPage, loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizationMember, cancelHubOrganizationInvitation, hubOrganizationLinks, HubUncertainWriteError, type HubAccess, type HubItem, type HubOrganizationInviteInput } from "@/entities/hosting";
+import { accounts, HostingHubStore, hubPage, hubDetail, loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizationMember, cancelHubOrganizationInvitation, hubOrganizationLinks, HubUncertainWriteError, type HubAccess, type HubItem, type HubOrganizationInviteInput } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
 const access = (provider: "github" | "gitlab" = "github"): HubAccess => ({ target: { provider, host: provider === "github" ? "github.com" : "gitlab.example.com", remote: "origin", path: "team/repo" }, apiBase: provider === "github" ? "https://api.github.com" : "https://gitlab.example.com/api/v4", token: "fixture-token", me: "demo" });
 const item = (provider: "github" | "gitlab" = "github"): HubItem => ({ id: provider === "github" ? "team" : "5", title: "Demo team", subtitle: "team", url: provider === "github" ? "https://github.com/team" : "https://gitlab.example.com/team", body: "", data: {} });
@@ -10,7 +10,7 @@ function fixture(role = "admin", provider: "github" | "gitlab" = "github") {
     if (url.endsWith("/graphql")) { const variables = JSON.parse(body!).variables as Record<string, string>; return response({ data: Object.fromEntries(Object.entries(variables).map(([key, login]) => [key.replace("login", "member"), { name: `Display ${login}` }])) }); }
     if (method !== "GET") return response(provider === "github" ? { id: 10 } : { status: "success" }, method === "DELETE" ? 204 : 201);
     const request = new URL(url), limit = Number(request.searchParams.get("per_page") ?? 6), page = Number(request.searchParams.get("page") ?? 1);
-    if (url.includes("/user/memberships/")) return response({ role, state: "active" });
+    if (url.includes("/user/memberships/")) return response({ role, state: "active", user: { login: "demo" } });
     if (url.endsWith("/user")) return response({ id: 9, username: "demo" });
     if (url.endsWith("/members/all/9")) return response({ id: 9, username: "demo", access_level: Number(role) });
     if (url.includes("/invitations?")) return response([{ id: 10, ...(provider === "github" ? { email: "member@example.com" } : { invite_email: "member@example.com" }), role: "direct_member", access_level: 30 }]);
@@ -28,6 +28,13 @@ describe("organization management", () => {
     await hubPage(access(), "organizations", 2, first.cursor); expect(http.mock.calls.at(-1)?.[1]).toContain("/user/memberships/orgs?state=active&per_page=30&page=2"); expect(http.mock.calls.filter(call => call[1].includes("/user/orgs?"))).toHaveLength(1);
   });
 
+  it("loads fresh owner capabilities when entering focused Members or Repositories directly", async () => {
+    fixture();
+    for (const tab of ["members", "repositories"] as const) {
+      const detail = await hubDetail(access(), "organizations", item(), 1, undefined, tab);
+      expect(detail.organization?.info).toMatchObject({ role: "Owner", canInvite: true }); expect(detail.organization?.sections[tab].loaded).toBe(true); expect(detail.organization?.sections.invitations.loaded).toBe(false); expect(detail.organization?.invitations).toEqual([]);
+    }
+  });
   it("loads overview counts and confirms active GitHub ownership", async () => {
     const http = fixture(); const detail = await hubOrganizationDetail(access(), item(), 1, "overview");
     expect(detail.organization?.info).toMatchObject({ role: "Owner", canInvite: true, publicRepositories: 12, privateRepositories: 3 }); expect(detail.members).toHaveLength(12); expect(detail.repositories).toHaveLength(6); expect(detail.organization?.teams).toHaveLength(6); expect(detail.organization?.teams.every(team => team.members.length === 6)).toBe(true); expect(detail.members[0].name).toBe("Display person-0"); expect(http.mock.calls.filter(call => /\/teams\/[^/]+\/members\?/.test(call[1]))).toHaveLength(6);

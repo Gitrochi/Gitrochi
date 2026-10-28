@@ -269,27 +269,14 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
     }
     static func detail(_ c: HubAccess, section: HostingHubSection, item: HubItem, page: Int = 1, cursor: String? = nil, tab: String = "repositories") async throws -> HubDetail {
         if try usesLocal(c, item: item) { guard section == .projects else { throw fail(String(localized: "This action requires a GitHub project.")) }; let result = try await localProjectStore.detail(projectID: item.id); try check(c); return result }
-        let p = c.target.provider, qs = "per_page=30&page=\(page)"
+        let p = c.target.provider
         switch section {
         case .releases:
             let x = try await object(c, repo(c) + "/releases/" + enc(item.id)); var d = HubDetail(item: releaseItem(p, x))
             if p == .github { d.assets = arr(x, "assets").map { HubAsset(id: id($0), name: s($0, "name"), size: $0["size"] as? Int, downloads: $0["download_count"] as? Int, url: s($0, "browser_download_url")) } }
             else { let assets = obj(x, "assets"); d.assets = arr(assets, "links").map { HubAsset(id: id($0), name: s($0, "name"), url: s($0, "direct_asset_url").isEmpty ? s($0, "url") : s($0, "direct_asset_url")) } + arr(assets, "sources").map { HubAsset(id: s($0, "format"), name: s($0, "format"), url: s($0, "url")) } }; return d
         case .organizations:
-            if ["overview", "teams", "invitations"].contains(tab) { return try await organizationDetail(c, item: item, page: page, tab: tab) }
-            let base = c.apiBase + (p == .github ? "/orgs/" : "/groups/") + enc(item.id), x = try await object(c, base)
-            var updated = organizationItem(c, x)
-            if updated.id.isEmpty { updated.id = item.id }
-            if s(x, "name").isEmpty { updated.title = item.title }
-            if updated.subtitle.isEmpty { updated.subtitle = item.subtitle }
-            if s(x, p == .github ? "html_url" : "web_url").isEmpty { updated.url = item.url }
-            if x["avatar_url"] == nil { updated.avatarURL = item.avatarURL }
-            var d = HubDetail(item: updated)
-            let route = tab == "members" ? p == .github ? "/members" : "/members/all" : p == .github ? "/repos" : "/projects"
-            let extra = tab == "repositories" ? p == .github ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""
-            let rows = try await list(c, base + route + "?" + qs + extra)
-            if tab == "members" { d.members = try await members(c, rows: rows); if p == .github { d.notice = String(localized: "Only members visible to this account are returned by the server.") } }
-            else { d.repositories = rows.map { HubRepository(id: id($0), name: s($0, p == .github ? "full_name" : "path_with_namespace"), description: s($0, "description"), cloneURL: s($0, p == .github ? "clone_url" : "http_url_to_repo"), url: s($0, p == .github ? "html_url" : "web_url")) } }; d.more = rows.count == 30; d.organizationSections[tab] = HubOrganizationSectionState(page: page, more: d.more, loaded: true); return d
+            return try await organizationDetail(c, item: item, page: page, tab: tab)
         case .gists:
             let base = c.apiBase + (p == .github ? "/gists/" : "/snippets/") + enc(item.id), x = try await object(c, base); var d = HubDetail(item: gistItem(c, x))
             if p == .github { d.files = obj(x, "files").sorted { $0.key < $1.key }.map { key, value in let f = value as? J ?? [:]; return HubFile(name: key, content: s(f, "content"), truncated: f["truncated"] as? Bool == true) }; do { _ = try await value(c, base + "/star"); d.starred = true } catch let error as HostingError where error.status == 404 { d.starred = false } catch { d.notice = String(localized: "Star status could not be loaded: \(Self.error(error, token: c.token))") }; if x["truncated"] as? Bool == true { d.notice = String(localized: "The server truncated the file list. Open the gist in a browser before editing.") } }

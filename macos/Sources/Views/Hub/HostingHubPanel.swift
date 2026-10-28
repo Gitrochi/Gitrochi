@@ -158,17 +158,10 @@ struct HostingHubPanel: View {
     }
     @ViewBuilder private func detailView(_ d: HubDetail) -> some View {
         if section == .organizations {
-            HStack(spacing: 14) {
-                HostingAvatar(name: d.item.title, username: d.item.subtitle, avatarURL: d.item.avatarURL, size: 56, style: .organization)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
-                    Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
-                }
-            }
+            OrganizationWorkspace(store: store, detail: d, onClone: onClone)
         } else {
             Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
             Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
-        }
         WorkbenchFlow {
             if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
             if section == .releases || section == .gists && d.item.editable { Button("Edit") { startEditor(edit: true) }.disabled(section == .gists && (d.files.contains(where: \.truncated) || d.item.data["truncated"] as? Bool == true)) }
@@ -185,13 +178,14 @@ struct HostingHubPanel: View {
         case .gists:
             ForEach(d.files) { file in VStack(alignment: .leading, spacing: 8) { Text(file.name).font(.headline); if file.truncated { Text("The server truncated this file. Editing is disabled to avoid data loss.").font(.caption).foregroundStyle(.orange) }; Text(file.content).font(.system(.callout, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(12).background(Color.secondary.opacity(0.08)) } }
         case .organizations:
-            OrganizationWorkspace(store: store, detail: d, onClone: onClone)
+            EmptyView()
         case .projects:
             projectWorkspace(d)
 
         }
         if d.more && section != .organizations { Button("Load more") { Task { await store.selectHostingHubItem(d.item, append: true) } }.disabled(locked) }
         if store.hostingHub.detailLoading { ProgressView() }
+        }
     }
     private func groupingField(_ detail: HubDetail) -> HubProjectField? {
         detail.fields.first { $0.id == projectFieldID } ?? detail.fields.first { ["status", "상태"].contains($0.name.lowercased()) } ?? detail.fields.first

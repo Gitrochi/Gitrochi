@@ -9,13 +9,16 @@ import Foundation
         do {
             if c.target.provider == .github {
                 let membership = try await object(c, c.apiBase + "/user/memberships/orgs/" + enc(item.id))
+                let actor = s(obj(membership, "user"), "login")
+                guard !actor.isEmpty, actor.caseInsensitiveCompare(c.me) == .orderedSame else { throw fail(String(localized: "The selected account does not match the server identity. Reconnect this account before managing access.")) }
                 let active = s(membership, "state") == "active", owner = s(membership, "role") == "admin"
                 return HubOrganizationAccess(role: active ? owner ? String(localized: "Owner") : String(localized: "Member") : String(localized: "Pending"), canInvite: active && owner)
             }
             let user = try await object(c, c.apiBase + "/user")
             guard !id(user).isEmpty, s(user, "username").caseInsensitiveCompare(c.me) == .orderedSame else { throw fail(String(localized: "The server returned an unexpected response.")) }
             let membership = try await object(c, organizationBase(c, item: item) + "/members/all/" + enc(id(user)))
-            return HubOrganizationAccess(role: member(c, membership).role, canInvite: Int(id(membership, "access_level")) == 50)
+            let active = (s(membership, "state").isEmpty || s(membership, "state") == "active") && (s(membership, "membership_state").isEmpty || s(membership, "membership_state") == "active")
+            return HubOrganizationAccess(role: member(c, membership).role, canInvite: active && Int(id(membership, "access_level")) == 50)
         } catch {
             try check(c)
             return HubOrganizationAccess(role: String(localized: "Unknown"), notice: String(localized: "Organization permissions could not be verified. Check account access or open the organization in your browser."))
