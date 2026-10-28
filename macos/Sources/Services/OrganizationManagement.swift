@@ -22,7 +22,7 @@ import Foundation
         }
     }
     static func organizationDetail(_ c: HubAccess, item: HubItem, page: Int, tab: String) async throws -> HubDetail {
-        let base = organizationBase(c, item: item), x = try await object(c, base)
+        let x = try await object(c, organizationBase(c, item: item))
         var updated = organizationItem(c, x)
         if updated.id.isEmpty { updated.id = item.id }
         if s(x, "name").isEmpty { updated.title = item.title }
@@ -32,30 +32,82 @@ import Foundation
         let access = try await organizationAccess(c, item: updated)
         var result = HubDetail(item: updated, organizationAccess: access)
         result.notice = access.notice
-        guard tab != "overview" else { return result }
-        if tab == "invitations", !access.canInvite {
-            result.notice = String(localized: "Only organization owners with the required account access can manage invitations.")
+        let organization = updated
+        if tab == "overview" {
+            async let members = organizationSection(c, item: organization, access: access, section: "members", page: 0)
+            async let teams = organizationSection(c, item: organization, access: access, section: "teams", page: 1)
+            async let repositories = organizationSection(c, item: organization, access: access, section: "repositories", page: 0)
+            async let invitations = organizationSection(c, item: organization, access: access, section: "invitations", page: 0)
+            for page in try await [members, teams, repositories, invitations] {
+                result.members += page.members; result.teams += page.teams; result.repositories += page.repositories; result.invitations += page.invitations
+                result.organizationSections.merge(page.organizationSections) { _, fresh in fresh }
+            }
             return result
         }
+        let section = try await organizationSection(c, item: organization, access: access, section: tab, page: page)
+        result.members = section.members; result.teams = section.teams; result.repositories = section.repositories; result.invitations = section.invitations
+        result.organizationSections = section.organizationSections; result.more = section.more; result.notice = section.organizationSections[tab]?.error ?? result.notice
+        return result
+    }
+    /// Preview pages stay bounded; full people lists restart at page one before appending further pages.
+    static func organizationSection(_ c: HubAccess, item: HubItem, access: HubOrganizationAccess, section: String, page: Int) async throws -> HubDetail {
+        let size = section == "teams" ? 6 : page == 0 ? section == "members" ? 12 : 6 : 30
+        var result = HubDetail(item: item), state = HubOrganizationSectionState(page: page, loaded: true)
+        if section == "invitations", !access.canInvite {
+            state.error = String(localized: "Only organization owners with the required account access can manage invitations.")
+            result.organizationSections[section] = state; return result
+        }
         do {
-            let route = tab == "invitations" ? "/invitations" : c.target.provider == .github ? "/teams" : "/subgroups"
-            let rows = try await list(c, base + route + "?per_page=30&page=\(max(1, page))" + (tab == "teams" && c.target.provider == .gitlab ? "&all_available=true" : ""))
-            result.more = rows.count == 30
-            if tab == "teams" {
-                result.teams = rows.map { row in
-                    HubOrganizationTeam(id: id(row), name: s(row, "name"), description: s(row, "description"), url: s(row, c.target.provider == .github ? "html_url" : "web_url"), privacy: s(row, c.target.provider == .github ? "privacy" : "visibility"))
+            let github = c.target.provider == .github
+            let route: String
+            switch section {
+            case "members": route = github ? "/members" : "/members/all"
+            case "teams": route = github ? "/teams" : "/subgroups"
+            case "repositories": route = github ? "/repos" : "/projects"
+            case "invitations": route = "/invitations"
+            default: throw fail(String(localized: "The server returned an unexpected response."))
+            }
+            let extra = section == "teams" && !github ? "&all_available=true" : section == "repositories" ? github ? "&sort=updated" : "&include_subgroups=true&order_by=last_activity_at" : ""
+            let rawRows = try await list(c, organizationBase(c, item: item) + route + "?per_page=\(size)&page=\(max(1, page))" + extra)
+            let rows = Array(rawRows.prefix(size))
+            state.more = rawRows.count >= size; result.more = state.more
+            switch section {
+            case "members": result.members = try await members(c, rows: rows)
+            case "repositories": result.repositories = rows.map { HubRepository(id: id($0), name: s($0, github ? "full_name" : "path_with_namespace"), description: s($0, "description"), cloneURL: s($0, github ? "clone_url" : "http_url_to_repo"), url: s($0, github ? "html_url" : "web_url")) }
+            case "teams":
+                for row in rows {
+                    var team = HubOrganizationTeam(id: id(row), name: s(row, "name"), description: s(row, "description"), url: s(row, github ? "html_url" : "web_url"), privacy: s(row, github ? "privacy" : "visibility"), slug: s(row, "slug"))
+                    team = try await organizationTeamMembers(c, item: item, team: team, page: 0)
+                    result.teams.append(team)
                 }
-                result.notice = String(localized: "Only teams and subgroups visible to this account are returned by the server.")
-            } else {
+            default:
                 result.invitations = rows.map { row in
-                    let email = s(row, c.target.provider == .github ? "email" : "invite_email"), username = s(row, "login")
-                    let role = c.target.provider == .github ? s(row, "role") == "admin" ? String(localized: "Owner") : s(row, "role") == "billing_manager" ? String(localized: "Billing manager") : String(localized: "Member") : member(c, row).role
-                    return HubOrganizationInvitation(id: c.target.provider == .github ? id(row) : email, email: email.isEmpty ? username : email, role: role, createdAt: s(row, "created_at"), inviter: s(obj(row, "inviter"), c.target.provider == .github ? "login" : "username"))
+                    let email = s(row, github ? "email" : "invite_email"), username = s(row, "login")
+                    let role = github ? s(row, "role") == "admin" ? String(localized: "Owner") : s(row, "role") == "billing_manager" ? String(localized: "Billing manager") : String(localized: "Member") : member(c, row).role
+                    return HubOrganizationInvitation(id: github ? id(row) : email, email: email.isEmpty ? username : email, role: role, createdAt: s(row, "created_at"), inviter: s(obj(row, "inviter"), github ? "login" : "username"))
                 }
             }
         } catch {
             try check(c)
-            result.notice = String(localized: "This section could not be loaded. Check account permissions, retry, or open it in your browser.") + "\n" + Self.error(error, token: c.token)
+            state.error = String(localized: "This section could not be loaded. Check account permissions, retry, or open it in your browser.") + "\n" + Self.error(error, token: c.token)
+        }
+        result.organizationSections[section] = state
+        return result
+    }
+    static func organizationTeamMembers(_ c: HubAccess, item: HubItem, team: HubOrganizationTeam, page: Int) async throws -> HubOrganizationTeam {
+        var result = team
+        result.memberState = HubOrganizationSectionState(page: page, loaded: true)
+        do {
+            let github = c.target.provider == .github
+            guard !team.id.isEmpty, !github || !team.slug.isEmpty else { throw fail(String(localized: "The server returned an unexpected response.")) }
+            let base = github ? organizationBase(c, item: item) + "/teams/" + enc(team.slug) + "/members" : c.apiBase + "/groups/" + enc(team.id) + "/members/all"
+            let size = page == 0 ? 6 : 30
+            let rawRows = try await list(c, base + "?per_page=\(size)&page=\(max(1, page))" + (github ? "&role=all" : ""))
+            result.members = try await members(c, rows: Array(rawRows.prefix(size)))
+            result.memberState.more = rawRows.count >= size
+        } catch {
+            try check(c)
+            result.memberState.error = String(localized: "Team members could not be loaded. Retry here to see people in this team.") + "\n" + Self.error(error, token: c.token)
         }
         return result
     }

@@ -23,14 +23,14 @@ struct OrganizationWorkspace: View {
                 tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams", "person.3")
                 tab(String(localized: "Invitations"), "invitations", "envelope")
             }.disabled(locked)
+            if inviting && canInvite { invitationForm }
             switch store.hostingHub.tab {
             case "overview": overview
-            case "members": members
-            case "teams": teams
-            case "invitations": invitations
-            default: repositories
+            case "members": members; sectionStatus("members")
+            case "teams": teams; sectionStatus("teams")
+            case "invitations": invitations; sectionStatus("invitations")
+            default: repositories; sectionStatus("repositories")
             }
-            if inviting && canInvite { invitationForm }
         }
         .onChange(of: detail.item.id) { _, _ in resetInvitation() }
         .onChange(of: store.hubAccount?.id) { _, _ in resetInvitation() }
@@ -42,20 +42,18 @@ struct OrganizationWorkspace: View {
     }
     private var overview: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack {
+            WorkbenchFlow(spacing: 14) {
                 Label("Your role", systemImage: "person.crop.circle.badge.checkmark").foregroundStyle(.secondary)
                 Text(detail.organizationAccess?.role ?? String(localized: "Unknown")).fontWeight(.semibold)
-                Spacer()
+                if let count = detail.item.data["public_repos"] as? Int { Text(verbatim: String(localized: "{0} public repositories").replacingOccurrences(of: "{0}", with: count.formatted())).font(.caption).foregroundStyle(.secondary) }
                 if canInvite { Button("Invite member") { startInvitation() }.buttonStyle(.borderedProminent).disabled(locked) }
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), alignment: .leading)], alignment: .leading, spacing: 12) {
-                if let count = detail.item.data["public_repos"] as? Int { metric(String(localized: "Public repositories"), String(count)) }
-                if let count = detail.item.data["total_private_repos"] as? Int { metric(String(localized: "Private repositories"), String(count)) }
-                if let visibility = detail.item.data["visibility"] as? String, !visibility.isEmpty { metric(String(localized: "Visibility"), visibility) }
-                if let location = detail.item.data["location"] as? String, !location.isEmpty { metric(String(localized: "Location"), location) }
-                if let created = detail.item.data["created_at"] as? String, !created.isEmpty { metric(String(localized: "Created"), String(created.prefix(10))) }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 18) { peopleDashboard.frame(minWidth: 320); teamsDashboard.frame(minWidth: 320) }
+                VStack(alignment: .leading, spacing: 18) { peopleDashboard; teamsDashboard }
             }
-            if !canInvite { Text("Only organization owners with the required account access can manage invitations.").font(.caption).foregroundStyle(.secondary) }
+            dashboardSection(String(localized: "Repositories"), section: "repositories", count: detail.repositories.count) { repositories }
+            dashboardSection(String(localized: "Pending invitations"), section: "invitations", count: detail.invitations.count) { invitations }
             Text("Organization tools").font(.headline)
             Text("Open administration tools on the connected server. Availability depends on your role, account permissions, and plan.").font(.caption).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)], alignment: .leading, spacing: 10) {
@@ -65,9 +63,22 @@ struct OrganizationWorkspace: View {
             }
         }
     }
-    private func metric(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) { Text(title).font(.caption).foregroundStyle(.secondary); Text(value).font(.title3.weight(.semibold)).textSelection(.enabled) }
-            .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading).padding(14).background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+    private var peopleDashboard: some View { dashboardSection(String(localized: "Members"), section: "members", count: detail.members.count) { members } }
+    private var teamsDashboard: some View { dashboardSection(github ? String(localized: "Teams") : String(localized: "Subgroups"), section: "teams", count: detail.teams.count) { teams } }
+    private func dashboardSection<Content: View>(_ title: String, section: String, count: Int, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack { Text(title).font(.headline); Spacer(); Text(verbatim: (section == "members" ? String(localized: "{0} people loaded") : String(localized: "{0} loaded")).replacingOccurrences(of: "{0}", with: count.formatted())).font(.caption).foregroundStyle(.secondary) }
+            content()
+            sectionStatus(section)
+        }.frame(maxWidth: .infinity, alignment: .topLeading).padding(14).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
+    }
+    @ViewBuilder private func sectionStatus(_ section: String) -> some View {
+        let state = detail.organizationSections[section] ?? HubOrganizationSectionState()
+        if let error = state.error { Text(error).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
+        if state.loading { ProgressView().controlSize(.small) }
+        else if state.more || state.error != nil || !state.loaded {
+            Button(state.error == nil ? String(localized: "Load more") : String(localized: "Retry")) { Task { await store.loadOrganizationSection(section) } }.disabled(locked)
+        }
     }
     private var repositories: some View {
         LazyVStack(alignment: .leading, spacing: 12) {
@@ -81,37 +92,57 @@ struct OrganizationWorkspace: View {
                     if safeURL(repository.url) != nil { Button { open(repository.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
                 }.padding(14).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
             }
-            if detail.repositories.isEmpty { Text("No repositories visible to this account.").foregroundStyle(.secondary) }
+            if detail.repositories.isEmpty && detail.organizationSections["repositories"]?.error == nil { Text("No repositories visible to this account.").foregroundStyle(.secondary) }
         }
     }
     private var members: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 235), alignment: .leading)], alignment: .leading, spacing: 12) {
-            ForEach(detail.members) { member in
-                HStack(spacing: 12) {
-                    HostingAvatar(name: member.name, username: member.username, avatarURL: member.avatarURL, size: 42)
-                    VStack(alignment: .leading, spacing: 5) { Text(member.name).fontWeight(.semibold); Text(verbatim: "@" + member.username).font(.caption).foregroundStyle(.secondary); Text(member.role).font(.caption).foregroundStyle(.secondary) }
-                    Spacer(minLength: 0)
-                    if let url = member.profileURL { Link(destination: url) { Image(systemName: "arrow.up.right") }.help("Open profile").accessibilityLabel("Open profile") }
-                }.padding(14).background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
-            }
-            if detail.members.isEmpty { Text("No members visible to this account.").foregroundStyle(.secondary) }
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 12) {
+            ForEach(detail.members) { member in memberCard(member) }
+            if detail.members.isEmpty && detail.organizationSections["members"]?.error == nil { Text("No members visible to this account.").font(.caption).foregroundStyle(.secondary) }
         }
+    }
+    private func memberCard(_ member: HubMember) -> some View {
+        HStack(spacing: 8) {
+            HostingAvatar(name: member.name, username: member.username, avatarURL: member.avatarURL, size: 30)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(member.name).font(.callout.weight(.medium)).lineLimit(2).fixedSize(horizontal: false, vertical: true).help(member.name)
+                Text(verbatim: "@" + member.username).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                if !github { Text(member.role).font(.caption2).foregroundStyle(.secondary) }
+            }
+            Spacer(minLength: 0)
+            if let url = member.profileURL { Link(destination: url) { Image(systemName: "arrow.up.right").font(.caption2) }.help("Open profile").accessibilityLabel("Open profile") }
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(7).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
     }
     private var teams: some View {
         LazyVStack(alignment: .leading, spacing: 12) {
             ForEach(detail.teams) { team in
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) { Text(team.name).fontWeight(.semibold); if !team.description.isEmpty { Text(team.description).font(.caption).foregroundStyle(.secondary) }; if !team.privacy.isEmpty { Text(team.privacy).font(.caption2).foregroundStyle(.secondary) } }
-                    Spacer()
-                    if safeURL(team.url) != nil { Button("Open in browser") { open(team.url) } }
-                }.padding(14).background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 4) { Text(team.name).font(.callout.weight(.semibold)); if !team.description.isEmpty { Text(team.description).font(.caption).foregroundStyle(.secondary).lineLimit(2) } }
+                        Spacer(minLength: 0)
+                        if safeURL(team.url) != nil { Button { open(team.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
+                    }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 8) {
+                        ForEach(team.members) { member in memberCard(member) }
+                    }
+                    HStack {
+                        Text(verbatim: String(localized: "{0} people loaded").replacingOccurrences(of: "{0}", with: team.members.count.formatted())).font(.caption2).foregroundStyle(.secondary)
+                        Spacer()
+                        if team.memberState.loading { ProgressView().controlSize(.small) }
+                        else if team.memberState.more || team.memberState.error != nil || !team.memberState.loaded {
+                            Button(team.memberState.error == nil ? String(localized: "Load more") : String(localized: "Retry")) { Task { await store.loadOrganizationTeamMembers(team.id) } }.controlSize(.small).disabled(locked)
+                        }
+                    }
+                    if let error = team.memberState.error { Text(error).font(.caption).foregroundStyle(.secondary) }
+                    else if team.memberState.loaded && team.members.isEmpty { Text("No members visible to this account.").font(.caption).foregroundStyle(.secondary) }
+                }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
             }
-            if detail.teams.isEmpty { Text("No visible teams or subgroups.").foregroundStyle(.secondary) }
+            if detail.teams.isEmpty && detail.organizationSections["teams"]?.error == nil { Text("No visible teams or subgroups.").font(.caption).foregroundStyle(.secondary) }
         }
     }
     private var invitations: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("Pending invitations").font(.headline); Spacer(); if canInvite { Button("Invite member") { startInvitation() }.buttonStyle(.borderedProminent).disabled(locked) } }
+            if store.hostingHub.tab != "overview" { HStack { Text("Pending invitations").font(.headline); Spacer(); if canInvite { Button("Invite member") { startInvitation() }.buttonStyle(.borderedProminent).disabled(locked) } } }
             ForEach(detail.invitations) { invitation in
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) { Text(invitation.email).fontWeight(.semibold).textSelection(.enabled); Text(invitation.role).font(.caption).foregroundStyle(.secondary); if !invitation.createdAt.isEmpty { Text(String(invitation.createdAt.prefix(10))).font(.caption2).foregroundStyle(.secondary) } }
@@ -119,7 +150,7 @@ struct OrganizationWorkspace: View {
                     if canInvite { Button("Cancel invitation", role: .destructive) { cancel(invitation) }.disabled(locked) }
                 }.padding(14).background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
             }
-            if detail.invitations.isEmpty && detail.notice == nil { Text("No pending invitations.").foregroundStyle(.secondary) }
+            if detail.invitations.isEmpty && detail.organizationSections["invitations"]?.error == nil && detail.notice == nil { Text("No pending invitations.").foregroundStyle(.secondary) }
         }
     }
     private var invitationForm: some View {

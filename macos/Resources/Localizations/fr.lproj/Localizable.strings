@@ -1204,3 +1204,10 @@
 "Email address" = "Adresse e-mail";
 "Pending invitations" = "Invitations en attente";
 "No pending invitations." = "Aucune invitation en attente.";
+"{0} loaded" = "{0} chargés";
+"{0} people loaded" = "{0} personnes chargées";
+"{0} public repositories" = "{0} dépôts publics";
+"Load members" = "Charger les membres";
+"Load more members" = "Charger plus de membres";
+"Team members" = "Membres de l’équipe";
+"{0} loaded members" = "{0} membres chargés";

@@ -2844,3 +2844,12 @@
 "Website" = "웹사이트";
 "Your role" = "내 역할";
 "Expiration dates are only supported for GitLab invitations." = "만료일은 GitLab 초대에서만 지정할 수 있습니다.";
+"Team members could not be loaded. Retry here to see people in this team." = "팀 구성원을 불러오지 못했습니다. 여기서 다시 시도해 이 팀의 사람들을 확인하세요.";
+"The server did not provide this team's identifier." = "서버가 이 팀의 식별자를 제공하지 않았습니다.";
+"{0} loaded" = "{0}개 불러옴";
+"{0} people loaded" = "{0}명 불러옴";
+"{0} public repositories" = "공개 저장소 {0}개";
+"Load members" = "구성원 불러오기";
+"Load more members" = "구성원 더 불러오기";
+"Team members" = "팀 구성원";
+"{0} loaded members" = "구성원 {0}명 불러옴";

@@ -3,13 +3,39 @@
 .organization-tabs { padding-bottom:12px; border-bottom:1px solid var(--border); }
 .organization-access { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
 .organization-access > .hint { max-width:440px; }
-.organization-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
-.organization-stats .hub-card { display:flex; flex-direction:column; gap:8px; margin:0; }
-.organization-stats strong { font-size:24px; }
-.organization-stats span { color:var(--text-2); font-size:12px; }
+.organization-summary { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; }
+.organization-stat-chip { color:var(--text-2); font-size:12px; background:var(--hover); padding:5px 8px; border-radius:6px; }
+.organization-stat-chip strong { color:var(--text); }
 .organization-workspace h4, .organization-workspace p { margin:0; }
 .organization-workspace .hub-notice { margin:0; }
 .organization-invite { max-width:520px; padding:16px; border:1px solid var(--border); border-radius:10px; background:var(--card); }
 .organization-team, .organization-invitation { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .organization-team > div, .organization-invitation > div { display:flex; flex-direction:column; gap:6px; min-width:0; overflow-wrap:anywhere; }
 @media (max-width:700px) { .organization-team, .organization-invitation { align-items:flex-start; flex-direction:column; } }
+
+.organization-dashboard { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+.organization-section { min-width:0; display:flex; flex-direction:column; gap:12px; padding:16px; border:1px solid var(--border); border-radius:12px; background:var(--card); }
+.organization-section > header, .organization-team-card > header { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.hosting-hub .organization-section > header { padding:0; border:0; flex-wrap:wrap; background:none; }
+.organization-section h4 { font-size:14px; }
+.organization-section > .btn { align-self:flex-start; }
+.organization-people { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+.organization-person { display:flex; align-items:center; gap:9px; min-width:0; padding:7px 0; }
+.organization-person > div { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.organization-person strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; line-height:1.3; overflow-wrap:anywhere; }
+.organization-person .hint { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.organization-person > .avatar { flex-shrink:0; }
+.organization-person > button { flex-shrink:0; }
+.organization-person.compact { padding:3px 0; }
+.organization-person.compact strong { font-size:12px; }
+.organization-person.compact > button { opacity:.65; }
+.organization-team-list, .organization-repository-list, .organization-invitation-list { display:flex; flex-direction:column; gap:12px; }
+.organization-team-card { display:flex; flex-direction:column; gap:9px; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:9px; min-width:0; }
+.hosting-hub .organization-team-card > header { padding:0; border:0; background:none; align-items:flex-start; }
+.organization-team-card > header > div { min-width:0; display:flex; flex-direction:column; gap:5px; }
+.organization-team-people { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px 12px; }
+.organization-section-error { color:var(--text-2); font-size:12px; overflow-wrap:anywhere; display:flex; flex-direction:column; gap:8px; }
+.organization-repository { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.organization-repository > div:first-child { display:flex; flex-direction:column; gap:5px; min-width:0; overflow-wrap:anywhere; }
+.organization-dashboard .organization-invitation { flex-wrap:wrap; padding-bottom:10px; border-bottom:1px solid var(--border); }
+@media (max-width:1000px) { .organization-dashboard { grid-template-columns:minmax(0,1fr); } }

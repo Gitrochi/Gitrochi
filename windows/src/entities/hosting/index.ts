@@ -25,3 +25,5 @@ export { createHubProjectTask } from "./api/project-task-creation";
 export { workStateTitle } from "./lib/work-state";
 
 export { hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizationMember, cancelHubOrganizationInvitation, hubOrganizationLinks, type HubOrganizationTab, type HubOrganizationTeam, type HubOrganizationInvitation, type HubOrganizationInfo, type HubOrganizationData, type HubOrganizationInviteInput, type HubOrganizationLink } from "./api/organization-management";
+
+export { loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, type HubOrganizationSection, type HubOrganizationSectionState, type HubOrganizationSectionPage } from "./api/organization-dashboard";
