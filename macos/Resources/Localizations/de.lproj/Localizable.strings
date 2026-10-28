@@ -1,3 +1,15 @@
+/* Release and issue workspace. */
+"Development" = "Entwicklung";
+"Newest first" = "Neueste zuerst";
+"Version number" = "Versionsnummer";
+"Create branch" = "Branch erstellen";
+"Create pull request" = "Pull Request erstellen";
+"Create merge request" = "Merge Request erstellen";
+"Quote reply" = "Zitieren und antworten";
+"Edit comment" = "Kommentar bearbeiten";
+"Save comment" = "Kommentar speichern";
+"Not published" = "Nicht veröffentlicht";
+
 /* Gitrochi — de. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "Check again" = "Erneut prüfen";
@@ -1181,13 +1193,3 @@
 "Open in Releases" = "In Releases öffnen";
 "Hide right panel" = "Rechten Bereich ausblenden";
 "Show right panel" = "Rechten Bereich anzeigen";
-"Development" = "Entwicklung";
-"Newest first" = "Neueste zuerst";
-"Version number" = "Versionsnummer";
-"Create branch" = "Branch erstellen";
-"Create pull request" = "Pull Request erstellen";
-"Create merge request" = "Merge Request erstellen";
-"Quote reply" = "Zitieren und antworten";
-"Edit comment" = "Kommentar bearbeiten";
-"Save comment" = "Kommentar speichern";
-"Not published" = "Nicht veröffentlicht";

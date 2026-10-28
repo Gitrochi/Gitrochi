@@ -1,4 +1,14 @@
 {
+ "Development": "Entwicklung",
+ "Newest first": "Neueste zuerst",
+ "Version number": "Versionsnummer",
+ "Create branch": "Branch erstellen",
+ "Create pull request": "Pull Request erstellen",
+ "Create merge request": "Merge Request erstellen",
+ "Quote reply": "Zitieren und antworten",
+ "Edit comment": "Kommentar bearbeiten",
+ "Save comment": "Kommentar speichern",
+ "Not published": "Nicht veröffentlicht",
  "\n\n(The diff was long, so only the beginning was explained.)": "\n\n(Der Diff war lang, daher wurde nur der Anfang erklärt.)",
  "\n\nAuthentication is required. Connect a GitHub or GitLab account in Settings (Ctrl+,), or push/pull once in a terminal to save your credentials (": "\n\nAuthentifizierung erforderlich. Verbinden Sie in den Einstellungen (Ctrl+,) ein GitHub- oder GitLab-Konto oder führen Sie einmal in einem Terminal push/pull aus, um Ihre Anmeldedaten zu speichern (",
  "\n\nThe token needs the api scope, and only people who can approve this MR can approve it.": "\n\nDas Token benötigt den Scope api, und nur Personen, die diesen MR genehmigen dürfen, können ihn genehmigen.",
@@ -1233,15 +1243,5 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Du kannst im Terminal auch gitch logo on oder gitch logo off verwenden.",
  "Couldn't read the CLI logo setting.": "Die CLI-Logoeinstellung konnte nicht gelesen werden.",
   "Hide right panel": "Rechten Bereich ausblenden",
-  "Show right panel": "Rechten Bereich anzeigen",
- "Development": "Entwicklung",
- "Newest first": "Neueste zuerst",
- "Version number": "Versionsnummer",
- "Create branch": "Branch erstellen",
- "Create pull request": "Pull Request erstellen",
- "Create merge request": "Merge Request erstellen",
- "Quote reply": "Zitieren und antworten",
- "Edit comment": "Kommentar bearbeiten",
- "Save comment": "Kommentar speichern",
- "Not published": "Nicht veröffentlicht"
+  "Show right panel": "Rechten Bereich anzeigen"
 }

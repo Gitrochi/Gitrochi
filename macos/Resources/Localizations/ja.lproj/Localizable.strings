@@ -1,3 +1,15 @@
+/* Release and issue workspace. */
+"Development" = "開発";
+"Newest first" = "新しい順";
+"Version number" = "バージョン順";
+"Create branch" = "ブランチを作成";
+"Create pull request" = "プルリクエストを作成";
+"Create merge request" = "マージリクエストを作成";
+"Quote reply" = "引用して返信";
+"Edit comment" = "コメントを編集";
+"Save comment" = "コメントを保存";
+"Not published" = "未公開";
+
 /* Gitrochi — ja. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "Check again" = "再チェック";
@@ -1928,13 +1940,3 @@
 "{0} invitations loaded" = "招待{0}件読み込み済み";
 "Update access" = "アクセス権を変更";
 "Grant access" = "アクセス権を付与";
-"Development" = "開発";
-"Newest first" = "新しい順";
-"Version number" = "バージョン順";
-"Create branch" = "ブランチを作成";
-"Create pull request" = "プルリクエストを作成";
-"Create merge request" = "マージリクエストを作成";
-"Quote reply" = "引用して返信";
-"Edit comment" = "コメントを編集";
-"Save comment" = "コメントを保存";
-"Not published" = "未公開";
