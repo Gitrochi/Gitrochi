@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync, spawn } from "node:child_process";
-import { openRepository, allowedPath, redact, tools, boundedGraphContext } from "./server.mjs";
+import { openRepository, allowedPath, redact, tools, boundedGraphContext, readOnlyGraphEnvironment } from "./server.mjs";
 
 let temp, repo, home, reader, original;
 const script = fileURLToPath(new URL("server.mjs", import.meta.url));
@@ -112,6 +112,50 @@ test("reader and offline workspace share the same bundled graph snapshot identit
   assert.equal(context.id, (graph.views?.files ?? graph).snapshotID);
   assert.ok(context.nodeIDs.includes("graph-source.ts"));
   assert.ok(context.edges.some((edge) => edge.source === "graph-consumer.ts" && edge.target === "graph-source.ts"));
+});
+test("graph subprocess disables fsmonitor after inherited runtime configuration", () => {
+  const inherited = {
+    ...process.env,
+    GIT_CONFIG_COUNT: "2", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: "indexed-hook",
+    GIT_CONFIG_KEY_1: "gitrochi.indexed", GIT_CONFIG_VALUE_1: "preserved",
+    GIT_CONFIG_PARAMETERS: "'gitrochi.parameter=preserved' 'core.fsmonitor=parameter-hook'",
+  };
+  const hardened = { ...inherited, ...readOnlyGraphEnvironment(inherited) };
+  const get = (name) => execFileSync("git", ["config", "--get", name], { cwd: repo, env: hardened, encoding: "utf8" }).trim();
+  assert.equal(get("core.fsmonitor"), "false");
+  assert.equal(get("gitrochi.indexed"), "preserved"); assert.equal(get("gitrochi.parameter"), "preserved");
+  assert.equal(hardened.GIT_CONFIG_COUNT, "2"); assert.equal(hardened.GITSW_SWIFT_DESCRIBE, "0");
+  assert.equal(inherited.GIT_CONFIG_PARAMETERS, "'gitrochi.parameter=preserved' 'core.fsmonitor=parameter-hook'");
+});
+test("openRepository and graph_context never execute a configured fsmonitor hook", async () => {
+  const folder = path.join(temp, "fsmonitor-repo"); await mkdir(folder);
+  const fixtureEnv = { ...process.env, HOME: home, XDG_CONFIG_HOME: home, GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_COUNT: "0", GIT_CONFIG_PARAMETERS: "" };
+  const fixtureGit = (...args) => execFileSync("git", args, { cwd: folder, env: fixtureEnv, encoding: "utf8" });
+  fixtureGit("init", "-q"); fixtureGit("config", "user.name", "Example Developer"); fixtureGit("config", "user.email", "dev@example.com");
+  await writeFile(path.join(folder, "source.ts"), "export const source = 1;\n");
+  fixtureGit("add", "source.ts"); fixtureGit("commit", "-qm", "Add fsmonitor fixture");
+  const hook = ".git/fsmonitor-hook", marker = path.join(folder, ".git/fsmonitor-marker");
+  await writeFile(path.join(folder, hook), '#!/bin/sh\nprintf "invoked\\n" >> .git/fsmonitor-marker\nprintf "gitrochi-monitor-token\\0"\n', { mode: 0o755 });
+  fixtureGit("config", "core.fsmonitor", hook);
+  fixtureGit("ls-files"); assert.match(await readFile(marker, "utf8"), /invoked/); await rm(marker);
+  const cli = fileURLToPath(new URL("../gitch/gitch", import.meta.url));
+  const bash = process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "/bin/bash";
+  const index = await readFile(path.join(folder, ".git/index"));
+  const graphReader = await openRepository(folder, { gitch: cli, bash });
+  const direct = JSON.parse((await graphReader.call("graph_context", { paths: ["source.ts"] })).text);
+  assert.ok(direct.nodeIDs.includes("source.ts")); await assert.rejects(readFile(marker), { code: "ENOENT" });
+  for (const runtime of [
+    { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: hook },
+    { GIT_CONFIG_PARAMETERS: "'core.fsmonitor=" + hook + "'" },
+    { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: hook, GIT_CONFIG_PARAMETERS: "'core.fsmonitor=" + hook + "'" },
+  ]) {
+    const response = JSON.parse(execFileSync(process.execPath, [script, "--repo", folder, "--gitch", cli, "--bash", bash, "--call", JSON.stringify({ name: "graph_context", arguments: { paths: ["source.ts"] } })], {
+      cwd: folder, encoding: "utf8", timeout: 30000, maxBuffer: 2_000_000, env: { ...fixtureEnv, ...runtime },
+    }));
+    assert.equal(JSON.parse(response.text).id, direct.id); await assert.rejects(readFile(marker), { code: "ENOENT" });
+  }
+  assert.equal(fixtureGit("config", "--get", "core.fsmonitor").trim(), hook);
+  assert.deepEqual(await readFile(path.join(folder, ".git/index")), index);
 });
 test("stdio initialization, pipelined notification, calls and errors", async () => {
   const child = spawn(process.execPath, [script, "--repo", repo], { stdio: ["pipe", "pipe", "pipe"] });

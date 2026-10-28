@@ -1,7 +1,7 @@
 import { ipc } from "@/shared/api";
 import { dirname, env, isWindows, joinPath, slash } from "@/shared/config";
 import { language, t } from "@/shared/i18n";
-import { git, tools } from "@/shared/platform";
+import { git, readOnlyGraphArguments, tools } from "@/shared/platform";
 import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability, type GitchAccountInput, machineError, parseAccountSetup, parseBrowserLogin, parseDoctor } from "./onboarding";
 import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
 
@@ -168,7 +168,7 @@ export function supportsGraph(head: string): boolean {
 /** gitch graph 가 만든 html */
 export interface GraphPage {
   file: string;
-  /** Loopback live view, or absent when the optional watcher runtime isn't available. */
+  /** Optional standalone live view; embedded graph generations use offline snapshots. */
   liveUrl?: string;
   /** 끝 줄(GRAPH_FILE=… NODES=… EDGES=…)의 노드 수. 그 줄이 없으면 null */
   nodes: number | null;
@@ -284,16 +284,13 @@ export function graphLanguage(code = language): "en" | "ko" | "ja" {
   return base === "ko" || base === "ja" ? base : "en";
 }
 
-/**
- * 임시 폴더의 gitch-graph/(터미널의 gitch graph 가 쓰는 곳)에 <저장소 폴더>-<이름>-<경로 해시>.html(이름: 관계 · <관계>-diff · check).
- * 다시 그리면 덮어쓰고, 폴더 이름이 같은 다른 저장소 · 워크트리와는 해시로 갈린다.
- */
+/** Keep each graph generation isolated from other repositories and live watchers. */
 async function graphFile(kind: string, repo: string): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(slash(repo))));
   const hash = [...digest.slice(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join("");
   const name = slash(repo).replace(/\/+$/, "").split("/").pop() || "repo";
-  // Separate watcher identities so an earlier language cannot overwrite this page.
-  return joinPath(env.temp, "gitch-graph", `${name}-${kind}-${graphLanguage()}-${hash}.html`);
+  // A live watcher from an older app must never replace an offline snapshot.
+  return joinPath(env.temp, "gitch-graph", `${name}-snapshot-${kind}-${graphLanguage()}-${hash}-${crypto.randomUUID()}.html`);
 }
 
 class GitchService {
@@ -374,13 +371,13 @@ class GitchService {
     return h ? versionOf(h.text) : null;
   }
 
-  private async spawn(args: string[], cwd: string, timeoutMs: number, exe?: string | null, extraEnv: Record<string, string> = {}) {
+  private async spawn(args: string[], cwd: string, timeoutMs: number, exe?: string | null, extraEnv: Record<string, string> = {}, readOnlyGraph = false) {
     const path = exe ?? (await this.executable());
     if (!path) throw new GitchError(t("Couldn't find gitch inside Gitrochi."));
     const bash = await this.bash();
     if (!bash) throw new GitchError(t("gitch needs Git for Windows (Git Bash). Install it from https://git-scm.com/download/win."));
     // 앱에서 부를 때는 사람이 보는 터미널이 아니다: 색·로고 없이, 묻지 않고(확인이 필요하면 종료 코드 2)
-    return ipc.run(bash, [path, ...args], { cwd, timeoutMs, env: { GITSW_COLOR: "never", GITSW_BANNER: "never", ...extraEnv } });
+    return ipc.run(bash, readOnlyGraph ? readOnlyGraphArguments(bash, path, args) : [path, ...args], { cwd, timeoutMs, env: { GITSW_COLOR: "never", GITSW_BANNER: "never", ...extraEnv } });
   }
 
   private async json(args: string[], cwd: string): Promise<string | null> {
@@ -467,8 +464,7 @@ class GitchService {
   async graph(relation: GraphRelation, repo: string, precise = false): Promise<GraphPage> {
     const file = await graphFile(precise ? "files-precise" : relation, repo);
     const r = await this.runGraph([relation, ...(precise ? ["--precise"] : []), "--format", "html", "--out", file, "--no-open"], repo);
-    const liveUrl = await this.graphWatchURL(precise ? "precise" : relation, file, repo);
-    return { file, ...parseGraphSummary(plain(r.stdout)), ...(liveUrl ? { liveUrl } : {}) };
+    return { file, ...parseGraphSummary(plain(r.stdout)) };
   }
 
   /** Select only paths proven to exist in the current file dependency snapshot. */
@@ -484,8 +480,7 @@ class GitchService {
   async affectedGraph(repo: string, base: string | null = null): Promise<GraphPage> {
     const file = await graphFile("affected", repo);
     const r = await this.runGraph(["affected", ...(base ? ["--base", base] : []), "--format", "html", "--out", file, "--no-open"], repo);
-    const liveUrl = base === null ? await this.graphWatchURL("affected", file, repo) : null;
-    return { file, ...parseGraphSummary(plain(r.stdout)), ...(liveUrl ? { liveUrl } : {}) };
+    return { file, ...parseGraphSummary(plain(r.stdout)) };
   }
 
   /** 이번 커밋의 영향은 스테이지 내용과 HEAD만 비교한다. 작업 트리나 브랜치 분기점은 쓰지 않는다. */
@@ -509,13 +504,6 @@ class GitchService {
     const file = await graphFile("staged-review", repo);
     const r = await this.runGraph(["review", "--format", "html", "--out", file, "--no-open"], repo);
     return { file, ...parseGraphSummary(plain(r.stdout)) };
-  }
-
-  private async graphWatchURL(relation: string, file: string, repo: string): Promise<string | null> {
-    try {
-      const r = await this.runGraph(["watch", relation, "--out", file, "--no-open", "--detach", "--json"], repo);
-      return parseGraphWatchURL(r.stdout);
-    } catch { return null; }
   }
 
   /**
@@ -558,7 +546,7 @@ class GitchService {
   private async runGraph(args: string[], repo: string, ok = [0]) {
     const reason = await this.graphUnavailable();
     if (reason) throw new GitchError(reason);
-    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage(), GITSW_SWIFT_DESCRIBE: "0" });
+    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage(), GITSW_SWIFT_DESCRIBE: "0" }, true);
     if (!ok.includes(r.status)) throw graphFailure(r);
     return r;
   }

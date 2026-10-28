@@ -18,7 +18,7 @@ Gitrochi connects the current selection to repository questions, structure graph
 | Screen-to-code map | Maintained entries connect Gitrochi screens to macOS and Windows implementations and verification files. They are labeled maintained links, rather than inferred imports. Source links require the Gitrochi source checkout. |
 | Graph evidence | Full revision, scope, source graph identity, tool version, coverage, inferred edges and unsupported analysis are included in graph data and reports. Filtered/omitted relationships are not evidence of absence. |
 | Reusable prompts | Structure, impact, review, tests and performance starters include the current selection. Saving a template does not freeze an old generated context footer or send a question. |
-| Graph workspace | Both apps reuse the existing offline graph document. Windows embeds a sandboxed frame; macOS uses a bounded WebKit window. Network access is blocked and app links are limited to validated repository-relative destinations. External-browser use remains available. |
+| Graph workspace | Both apps reuse the existing offline graph document. Windows embeds a sandboxed frame; macOS uses a bounded WebKit window. Each generation has a separate snapshot path, and embedded snapshots do not start a background watcher. Network access is blocked and app links are limited to validated repository-relative destinations. External-browser use and explicit standalone CLI watching remain available. |
 | Execution evidence | Configured, trusted local flows can bind a run to before/after tracked-working-content stamps and actual engine records. Other plans use the existing Flows review path. Counts come only from reported test observations. |
 | Large graphs | Reproducible 2,000/10,000/50,000-node renderer workloads measure preparation, selection, snapshot projection and heap usage. Repeated immutable snapshot projections are cached. See the measurement limits below. |
 | Accessible graph navigation | Node lists and relationship lists expose native controls, keyboard traversal and text evidence alongside the visual graph. Physical screen-reader verification remains separate. |
@@ -29,6 +29,8 @@ Gitrochi connects the current selection to repository questions, structure graph
 | Reproducible reports | Graph exports retain graph provenance and explicit tests-not-run information. Handoff JSON separately records actual Flow observations, content stamp, candidate paths and limits. User task text can contain private information and should be reviewed before sharing. |
 
 ## Verification semantics
+
+App and MCP graph readers disable Git FSMonitor only in their child-process environment, including conflicting inherited runtime overrides. They preserve other Git settings and do not modify repository configuration. Regression tests use a real configured hook to verify that analysis still returns a graph without executing the hook.
 
 The working-content stamp hashes the full HEAD identity, tracked working diff and machine-readable status locally. An unborn repository also includes staged and unstaged changes. Untracked bytes, assume-unchanged/skip-worktree entries and dirty submodules prevent a certified current result. No repository contents or local paths are sent to the hub by this view.
 
@@ -43,6 +45,7 @@ macos/build.sh
 bash macos/Tools/test-work-context.sh
 bash macos/Tools/test-work-validation.sh
 bash macos/Tools/test-structure-graph.sh
+bash macos/Tools/test-graph-language.sh
 bash macos/Tools/test-project-dependencies.sh
 bash macos/Tools/test-local-projects.sh
 node --test tools/gitrochi-mcp/server.test.mjs

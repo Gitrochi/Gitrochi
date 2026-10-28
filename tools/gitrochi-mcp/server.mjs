@@ -85,6 +85,12 @@ function validate(name, args) {
   }
 }
 
+/** Last command-scope value wins over repository config and inherited indexed overrides. */
+export function readOnlyGraphEnvironment(environment = process.env) {
+  const inherited = environment.GIT_CONFIG_PARAMETERS ?? "";
+  return { GITSW_SWIFT_DESCRIBE: "0", GIT_CONFIG_PARAMETERS: (inherited ? inherited + " " : "") + "'core.fsmonitor=false'" };
+}
+
 function processOutput(program, args, cwd, signal, allowOne = false, maxBuffer = 2_000_000, environment = {}) {
   return new Promise((resolve, reject) => {
     execFile(program, args, { cwd, signal, timeout: 15000, maxBuffer, windowsHide: true,
@@ -197,7 +203,7 @@ export async function openRepository(folder, options = {}) {
           if (!options.gitch) throw new Error("The bundled gitch path is not configured.");
           (args.paths ?? []).forEach(allowedPath);
           const graphArgs = ["graph", "files", "--json"];
-          const graphEnvironment = { GITSW_SWIFT_DESCRIBE: "0" };
+          const graphEnvironment = readOnlyGraphEnvironment();
           const raw = options.bash
             ? await processOutput(options.bash, [options.gitch.replaceAll("\\", "/"), ...graphArgs], root, signal, false, 16_000_000, graphEnvironment)
             : await processOutput(options.gitch, graphArgs, root, signal, false, 16_000_000, graphEnvironment);
