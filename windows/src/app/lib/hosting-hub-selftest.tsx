@@ -34,6 +34,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       body: Record<string, unknown>;
     }[] = [],
     details: string[] = [];
+  let organizationInvitations = [{ id: 10, email: "pending@example.com", role: "direct_member", created_at: "2026-10-27" }];
   const source = {
     path: "C:/hosting-hub-selftest",
     target: {
@@ -258,6 +259,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
           };
       } else if (method !== "GET") {
         writes.push({ method, url, body: payload });
+        if (method === "POST" && u.pathname === "/orgs/team/invitations") organizationInvitations.push({ id: 11, email: String(payload.email), role: String(payload.role), created_at: "2026-10-28" });
+        if (method === "DELETE" && u.pathname.startsWith("/orgs/team/invitations/")) { organizationInvitations = organizationInvitations.filter(invitation => String(invitation.id) !== u.pathname.split("/").at(-1)); status = 204; }
         if (method === "PATCH" && url.includes("/releases/1"))
           releaseName = String(payload.name);
         if (u.pathname.endsWith("/issues/2/comments")) {
@@ -269,10 +272,14 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       else if (u.pathname.endsWith("/releases/1")) result = release();
       else if (u.pathname === "/user/orgs")
         result = [{ id: 5, login: "team", description: "Studio" }];
+      else if (u.pathname === "/user/memberships/orgs/team") result = { state: "active", role: "admin" };
+      else if (u.pathname === "/orgs/team/teams") result = [{ id: 8, name: "Desktop team", description: "Build the client", html_url: "https://github.com/orgs/team/teams/desktop" }];
+      else if (u.pathname === "/orgs/team/invitations") result = organizationInvitations;
       else if (u.pathname === "/orgs/team")
         result = {
           name: "Team",
           description: "Shared workspace",
+          public_repos: 12, total_private_repos: 3,
           html_url: "https://github.com/team",
         };
       else if (u.pathname.endsWith("/orgs/team/repos"))
@@ -852,6 +859,9 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       "Organization list icon fallback missing",
     );
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
+    ensure(await until(() => !!button("Invite member")), "Organization overview did not render");
+    ensure(host.textContent?.includes("12") === true, "Organization repository count missing");
+    button("Repositories")!.click();
     ensure(
       await until(() => !!button("Clone")),
       "Organization repository did not render",
@@ -870,7 +880,35 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       await until(() => host.textContent?.includes("reviewer") === true),
       "Organization members did not render",
     );
-    details.push("organization icons + repositories + members + clone");
+    button("Teams")!.click();
+    ensure(await until(() => host.textContent?.includes("Desktop team") === true), "Organization teams did not render");
+    button("Overview")!.click();
+    ensure(await until(() => !!button("Invite member")), "Organization invitation action missing");
+    button("Invite member")!.click();
+    ensure(await until(() => !!host.querySelector('input[type="email"]')), "Organization invitation editor missing");
+    enter(host.querySelector<HTMLInputElement>('input[type="email"]')!, "new-member@example.com");
+    await pause(25);
+    const beforeInvite = writes.length;
+    button("Review invitation")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Invitation review missing");
+    ensure(writes.length === beforeInvite, "Review sent an invitation before confirmation");
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click();
+    await pause(25);
+    ensure(writes.length === beforeInvite, "Cancelling review sent an invitation");
+    button("Review invitation")!.click();
+    ensure(await until(() => !!button("Send invitation")), "Invitation send confirmation missing");
+    button("Send invitation")!.click();
+    ensure(await until(() => writes.some(write => write.method === "POST" && write.url.endsWith("/orgs/team/invitations") && write.body.email === "new-member@example.com")), "Confirmed invitation was not sent");
+    ensure(await until(() => !host.querySelector('[role="alertdialog"]')), "Invitation review did not close");
+    button("Invitations")!.click();
+    ensure(await until(() => host.textContent?.includes("pending@example.com") === true), "Pending organization invitations missing");
+    button("Cancel invitation")!.click();
+    ensure(await until(() => !!host.querySelector('[role="alertdialog"]')), "Invitation cancellation review missing");
+    const beforeCancel = writes.length;
+    host.querySelector<HTMLButtonElement>(".project-review-sheet footer button:first-child")!.click();
+    await pause(25);
+    ensure(writes.length === beforeCancel, "Cancelled invitation cancellation changed the server");
+    details.push("organization overview + icons + repositories + members + teams + reviewed invitations + cancellation");
     await mount(<HostingHubPanel store={source} section="releases" />);
     ensure(await until(() => !!host.querySelector("button.hub-item")), "Release list did not render again");
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();

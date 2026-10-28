@@ -1234,5 +1234,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Vous pouvez aussi utiliser gitch logo on ou gitch logo off dans un terminal.",
  "Couldn't read the CLI logo setting.": "Impossible de lire le réglage du logo de la CLI.",
   "Hide right panel": "Masquer le panneau droit",
-  "Show right panel": "Afficher le panneau droit"
+  "Show right panel": "Afficher le panneau droit",
+  "Invitations": "Invitations",
+  "Invite member": "Inviter un membre",
+  "Cancel invitation": "Annuler l’invitation",
+  "Review invitation": "Vérifier l’invitation",
+  "Send invitation": "Envoyer l’invitation",
+  "Organization tools": "Outils de l’organisation",
+  "Your role": "Votre rôle",
+  "Teams": "Équipes",
+  "Subgroups": "Sous-groupes",
+  "Audit log": "Journal d’audit",
+  "Billing": "Facturation",
+  "Billing manager": "Responsable de facturation",
+  "Public repositories": "Dépôts publics",
+  "Private repositories": "Dépôts privés",
+  "Email address": "Adresse e-mail",
+  "Pending invitations": "Invitations en attente",
+  "No pending invitations.": "Aucune invitation en attente."
 }

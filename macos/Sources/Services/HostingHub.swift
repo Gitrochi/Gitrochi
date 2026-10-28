@@ -23,7 +23,11 @@ struct HubProjectField: Identifiable { var id: String; var name: String; var opt
 struct HubProjectColumn: Identifiable { var id: String; var title: String; var rows: [HubProjectRow] }
 enum HubProjectRowKind: String { case issue, pullRequest, draft, redacted }
 struct HubProjectRow: Identifiable { var id: String; var title: String; var body: String; var url: String; var contentID: String; var statuses: [String: String]; var labels: [String] = []; var kind: HubProjectRowKind = .issue; var number: Int?; var repository = ""; var state = ""; var assignees: [String] = []; var updatedAt = ""; var headRefName = ""; var archived = false; var values: [String: String] = [:]; var author: String? = nil; var createdAt: String? = nil }
-struct HubDetail { var item: HubItem; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
+struct HubOrganizationAccess { var role = ""; var canInvite = false; var notice: String? }
+struct HubOrganizationTeam: Identifiable { var id: String; var name: String; var description: String; var url: String; var privacy: String }
+struct HubOrganizationInvitation: Identifiable { var id: String; var email: String; var role: String; var createdAt: String; var inviter: String }
+struct HubOrganizationLink: Identifiable { var id: String { title }; var title: String; var url: String }
+struct HubDetail { var item: HubItem; var organizationAccess: HubOrganizationAccess?; var teams: [HubOrganizationTeam] = []; var invitations: [HubOrganizationInvitation] = []; var files: [HubFile] = []; var members: [HubMember] = []; var repositories: [HubRepository] = []; var assets: [HubAsset] = []; var fields: [HubProjectField] = []; var rows: [HubProjectRow] = []; var more = false; var cursor: String?; var notice: String?; var starred: Bool? }
 struct HubPage { var items: [HubItem]; var more: Bool; var cursor: String?; var notice: String? }
 struct HubReleaseInput { var tag = ""; var name = ""; var body = ""; var target = ""; var draft = true; var prerelease = false }
 struct HubGistInput { var description = ""; var isPublic = false; var files = [HubFile(name: "snippet.txt", content: "")] }
@@ -234,7 +238,18 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             let rows = try await list(c, repo(c) + "/releases?" + query)
             return HubPage(items: rows.map { releaseItem(p, $0) }, more: rows.count == 30, notice: p == .gitlab ? String(localized: "GitLab releases are published immediately; GitHub-style drafts and prereleases are unavailable.") : nil)
         case .organizations:
+            if p == .github, cursor == "organizationMemberships" {
+                let rows = try await list(c, c.apiBase + "/user/memberships/orgs?state=active&" + query)
+                return HubPage(items: rows.map { organizationItem(c, obj($0, "organization")) }, more: rows.count == 30, cursor: "organizationMemberships")
+            }
             let rows = try await list(c, c.apiBase + (p == .github ? "/user/orgs?" : "/groups?all_available=false&") + query)
+            // Fine-grained tokens return an empty public list even when organization memberships are readable.
+            if p == .github, rows.isEmpty, page == 1 {
+                do {
+                    let memberships = try await list(c, c.apiBase + "/user/memberships/orgs?state=active&" + query)
+                    return HubPage(items: memberships.map { organizationItem(c, obj($0, "organization")) }, more: memberships.count == 30, cursor: "organizationMemberships")
+                } catch { try check(c) }
+            }
             return HubPage(items: rows.map { organizationItem(c, $0) }, more: rows.count == 30)
         case .gists:
             let rows = try await list(c, c.apiBase + (p == .github ? "/gists?" : "/snippets?") + query)
@@ -259,6 +274,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             if p == .github { d.assets = arr(x, "assets").map { HubAsset(id: id($0), name: s($0, "name"), size: $0["size"] as? Int, downloads: $0["download_count"] as? Int, url: s($0, "browser_download_url")) } }
             else { let assets = obj(x, "assets"); d.assets = arr(assets, "links").map { HubAsset(id: id($0), name: s($0, "name"), url: s($0, "direct_asset_url").isEmpty ? s($0, "url") : s($0, "direct_asset_url")) } + arr(assets, "sources").map { HubAsset(id: s($0, "format"), name: s($0, "format"), url: s($0, "url")) } }; return d
         case .organizations:
+            if ["overview", "teams", "invitations"].contains(tab) { return try await organizationDetail(c, item: item, page: page, tab: tab) }
             let base = c.apiBase + (p == .github ? "/orgs/" : "/groups/") + enc(item.id), x = try await object(c, base)
             var updated = organizationItem(c, x)
             if updated.id.isEmpty { updated.id = item.id }

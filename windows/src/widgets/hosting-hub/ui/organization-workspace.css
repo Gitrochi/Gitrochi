@@ -1,0 +1,15 @@
+.organization-workspace { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.organization-tabs, .organization-tools { display:flex; flex-wrap:wrap; gap:8px; }
+.organization-tabs { padding-bottom:12px; border-bottom:1px solid var(--border); }
+.organization-access { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+.organization-access > .hint { max-width:440px; }
+.organization-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.organization-stats .hub-card { display:flex; flex-direction:column; gap:8px; margin:0; }
+.organization-stats strong { font-size:24px; }
+.organization-stats span { color:var(--text-2); font-size:12px; }
+.organization-workspace h4, .organization-workspace p { margin:0; }
+.organization-workspace .hub-notice { margin:0; }
+.organization-invite { max-width:520px; padding:16px; border:1px solid var(--border); border-radius:10px; background:var(--card); }
+.organization-team, .organization-invitation { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.organization-team > div, .organization-invitation > div { display:flex; flex-direction:column; gap:6px; min-width:0; overflow-wrap:anywhere; }
+@media (max-width:700px) { .organization-team, .organization-invitation { align-items:flex-start; flex-direction:column; } }
