@@ -9,7 +9,7 @@ import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
 import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
-import { settings } from "@/shared/config";
+import { keyLabel, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { workspaceFixtureProjectQuery } from "./workspace-panels-fixture";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 60));
@@ -174,6 +174,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // opened from the repository screen, the page offers the way back; from another page it does not
     const back = () => host.querySelector<HTMLButtonElement>(`.page-header button[aria-label="${t("Back to the repository screen")}"]`);
     check(back()?.textContent?.includes(t("Repository")), "The Issues page opened from the repository screen must offer the way back");
+    check(back()?.dataset.tip === keyLabel(t("Back to the repository screen (Ctrl+[)")), "The back button's tooltip must name its shortcut");
     back()!.click(); await pause();
     check(store.destination === "repository" && !back(), "The back button did not return to the repository screen");
     store.navigate("compare"); store.navigate("issues"); await pause();

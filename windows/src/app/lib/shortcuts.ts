@@ -34,6 +34,9 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
         return run(() => (s.path ? workspace.newTab() : s).pickAndOpen());
       case "f":
         return run(() => s.path && s.requestSearchFocus());
+      case "[":
+        // "‹ Repository" on a page the repository screen opened (macOS ⌘[); in the terminal it stays Escape
+        return run(() => s.returnToRepository());
       case "b":
         // the page list folds into a rail of icons and back
         return run(() => settings.set("navigationSidebarCollapsed", !settings.get("navigationSidebarCollapsed", false)));

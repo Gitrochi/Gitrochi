@@ -1213,6 +1213,7 @@
  "Bringing another app forward is only available on Windows.": "Přenesení jiné aplikace do popředí je dostupné jen ve Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} nelze otevřít: není uvnitř repozitáře Git.",
  "Back to the repository screen": "Zpět na obrazovku repozitáře",
+ "Back to the repository screen (Ctrl+[)": "Zpět na obrazovku repozitáře (Ctrl+[)",
  "Graph lanes": "Pruhy grafu",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Přetažením nebo posunem do strany či Shift+kolečkem zde zobrazíte další pruhy",
  "Runs": "Běhy",

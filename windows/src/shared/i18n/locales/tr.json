@@ -1220,6 +1220,7 @@
  "Bringing another app forward is only available on Windows.": "Başka bir uygulamayı öne getirmek yalnızca Windows'ta kullanılabilir.",
  "Couldn't open {0}: it isn't inside a Git repository.": "{0} açılamadı: bir Git deposunun içinde değil.",
  "Back to the repository screen": "Depo ekranına dön",
+ "Back to the repository screen (Ctrl+[)": "Depo ekranına dön (Ctrl+[)",
  "Graph lanes": "Grafik şeritleri",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Daha fazla şerit görmek için sürükleyin ya da burada yana veya Shift+tekerlekle kaydırın",
  "Runs": "Çalıştırmalar",

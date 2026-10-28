@@ -1210,6 +1210,7 @@
  "Bringing another app forward is only available on Windows.": "Traer otra app al frente solo está disponible en Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "No se pudo abrir {0}: no está dentro de un repositorio Git.",
  "Back to the repository screen": "Volver a la pantalla del repositorio",
+ "Back to the repository screen (Ctrl+[)": "Volver a la pantalla del repositorio (Ctrl+[)",
  "Graph lanes": "Carriles del grafo",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Arrastra o desplázate de lado o con Mayús+rueda aquí para ver más carriles",
  "Runs": "Ejecuciones",

@@ -1209,6 +1209,7 @@
  "Bringing another app forward is only available on Windows.": "Mettre une autre app au premier plan n'est possible que sous Windows.",
  "Couldn't open {0}: it isn't inside a Git repository.": "Impossible d'ouvrir {0} : il ne se trouve dans aucun dépôt Git.",
  "Back to the repository screen": "Revenir à l'écran du dépôt",
+ "Back to the repository screen (Ctrl+[)": "Revenir à l'écran du dépôt (Ctrl+[)",
  "Graph lanes": "Voies du graphe",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Faites glisser, ou défilez latéralement ou avec Maj+molette ici, pour voir d'autres voies",
  "Runs": "Exécutions",

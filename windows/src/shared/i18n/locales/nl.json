@@ -1184,6 +1184,7 @@
  "Couldn't open {0}: it isn't inside a Git repository.": "Kan {0} niet openen: het staat niet in een Git-repository.",
  "Repository": "Repository",
  "Back to the repository screen": "Terug naar het repositoryscherm",
+ "Back to the repository screen (Ctrl+[)": "Terug naar het repositoryscherm (Ctrl+[)",
  "Graph lanes": "Grafiekbanen",
  "Drag, or scroll sideways or with Shift+wheel here, to see more lanes": "Sleep, of scrol hier zijwaarts of met Shift+scrollwiel, om meer banen te zien",
  "Runs": "Runs",
