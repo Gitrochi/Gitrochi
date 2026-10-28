@@ -101,6 +101,8 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                               backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
+        // Someone working at the Mac must not drag or scroll the measured windows; clicks go to the windows behind.
+        window.ignoresMouseEvents = true
         window.title = "Gitrochi window layout regression fixture"
         window.toolbarStyle = .unified
         window.contentViewController = host
@@ -232,6 +234,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         let deferredWindow = DeferredFrameFixtureWindow(contentRect: NSRect(x: 100, y: 100, width: 640, height: 420),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         deferredWindow.isReleasedWhenClosed = false
+        deferredWindow.ignoresMouseEvents = true
         deferredWindow.contentView = NSView()
         deferredWindow.toolbar = NSToolbar(identifier: "DeferredFrameFixture")
         RepositoryWindowLayout.configure(deferredWindow)
@@ -411,6 +414,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                                     backing: .buffered, defer: false)
         secondWindow.isReleasedWhenClosed = false
+        secondWindow.ignoresMouseEvents = true
         secondWindow.toolbarStyle = .unified
         secondWindow.contentViewController = secondHost
         fixtureWindows.append(secondWindow)
@@ -521,6 +525,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
                 .frame(minWidth: nativeTabMinimum.width, minHeight: nativeTabMinimum.height)))
             let peer = NSWindow(contentRect: window.contentLayoutRect, styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
             peer.isReleasedWhenClosed = false
+            peer.ignoresMouseEvents = true
             peer.title = "Synthetic repository \(index)"
             peer.toolbarStyle = .unified
             peer.contentViewController = peerHost
@@ -632,6 +637,7 @@ private final class DeferredFrameFixtureWindow: NSWindow {
         print(String(decoding: data, as: UTF8.self))
         if inspect {
             // Keep the actual two-repository tab group available for manual inspection.
+            for tab in [window, secondWindow] { tab.ignoresMouseEvents = false }
             secondWindow.setFrame(window.frame, display: false)
             window.addTabbedWindow(secondWindow, ordered: .above)
             window.tabGroup?.selectedWindow = window

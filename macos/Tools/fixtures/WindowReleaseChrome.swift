@@ -127,6 +127,8 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         window.tabbingIdentifier = "GitrochiReleaseChromeFixture"
         window.tabbingMode = .preferred
         window.isReleasedWhenClosed = false
+        // Someone working at the Mac must not drag the windows or scroll the measured lists.
+        window.ignoresMouseEvents = true
         RepositoryWindowLayout.configure(window)
         if let first = windows[0], first !== window {
             window.alphaValue = 0
