@@ -1,10 +1,16 @@
 import Foundation
 
 extension RepoStore {
-    var hubIsLocalProject: Bool { hostingHub.section == .projects && hostingHub.projectSource == "local" }
-    var hubAccount: HostAccount? { if hubIsLocalProject { return nil }; return AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
-    private var hubSelectionStamp: String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount?.id ?? "", hostingHub.projectScope, hostingHub.projectSource].joined(separator: "\0") }
-    var hubContextStamp: String { hubSelectionStamp + "\0" + String(hubIsLocalProject ? 0 : AccountStore.shared.revision) }
+    var hubIsLocalProject: Bool { hubIsLocalProject(in: hostingHub.section) }
+    var hubAccount: HostAccount? { hubAccount(in: hostingHub.section) }
+    private var hubSelectionStamp: String { hubSelectionStamp(in: hostingHub.section) }
+    var hubContextStamp: String { hubContextStamp(in: hostingHub.section) }
+    /// Pages key their loading on their own section: the store only switches to it once the page activates it, and a key that moved then would cancel that first load.
+    func hubContextStamp(in section: HostingHubSection) -> String { hubSelectionStamp(in: section) + "\0" + String(hubIsLocalProject(in: section) ? 0 : AccountStore.shared.revision) }
+    private func hubIsLocalProject(in section: HostingHubSection) -> Bool { section == .projects && hostingHub.projectSource == "local" }
+    /// Releases belong to the open repository, so they use its account (chosen in the toolbar) rather than the hub's own pick.
+    private func hubAccount(in section: HostingHubSection) -> HostAccount? { if hubIsLocalProject(in: section) { return nil }; if section == .releases { return hostingAccount }; return AccountStore.shared.accounts.first { $0.id == hostingHub.selectedAccountID } ?? hostingAccount ?? AccountStore.shared.accounts.first }
+    private func hubSelectionStamp(in section: HostingHubSection) -> String { [url?.path ?? "", target?.provider.rawValue ?? "", target?.host ?? "", target?.path ?? "", hubAccount(in: section)?.id ?? "", hostingHub.projectScope, hostingHub.projectSource].joined(separator: "\0") }
     var hubActionStamp: String { hubContextStamp + "|" + hostingHub.generation.uuidString + "|" + hostingHub.section.rawValue + "|" + (hostingHub.detail?.item.id ?? "") + "|" + hostingHub.detailID.uuidString }
     var hubProvider: Provider { if hubIsLocalProject { return .github }; return hubAccount?.provider ?? target?.provider ?? .github }
     var hubCredentialState: CredentialCache.State? { hubAccount.map { AccountStore.shared.credentialState(for: $0) } }
@@ -53,10 +59,12 @@ extension RepoStore {
             let stamp = hubContextStamp, generation = hostingHub.generation
             return HubAccess(target: RepoTarget(provider: .github, remote: "origin", host: "local", path: "local/workspace"), token: "", apiBase: "", me: "", isCurrent: { self.hubContextStamp == stamp && self.hostingHub.generation == generation }, local: true)
         }
-        guard let account = hubAccount else { throw HostingHubAPI.fail(String(localized: "Connect a GitHub or GitLab account to use this workspace.")) }
+        guard let account = hubAccount else {
+            if hostingHub.section == .releases { throw HostingHubAPI.fail(target.map { String(localized: "Connect an account on \($0.host) to use repository services.") } ?? String(localized: "Open a repository on the selected account's server to use releases and projects.")) }
+            throw HostingHubAPI.fail(String(localized: "Connect a GitHub or GitLab account to use this workspace."))
+        }
         let generation = hostingHub.generation, selection = hubSelectionStamp, section = hostingHub.section
         let actual = target, candidates = actual.map { AccountStore.shared.candidates(for: $0) } ?? []
-        if hostingHub.section == .releases && (actual == nil || !candidates.contains(where: { $0.id == account.id })) { throw HostingHubAPI.fail(String(localized: "Open a repository on the selected account's server to use releases and projects.")) }
         let selectedTarget: RepoTarget
         let matchingTarget = actual.flatMap { value in candidates.contains(where: { $0.id == account.id }) ? value : nil }
         selectedTarget = HostingHubAPI.projectTarget(matchingTarget, provider: account.provider, host: account.host, username: account.username, personal: hostingHub.section == .projects && account.provider == .github && hostingHub.projectScope == "personal")

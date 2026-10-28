@@ -299,6 +299,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       await until(() => !!host.querySelector("button.hub-item")),
       "Release list did not render",
     );
+    ensure(
+      !host.querySelector(`select[aria-label="${t("Workspace account")}"]`),
+      "Releases still offer their own account picker",
+    );
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
     ensure(
       await until(() => !!button("Download in browser")),
