@@ -294,7 +294,13 @@ actor LocalHubMemory: LocalProjectPersistence {
         await localHub.activateHostingHub(.projects)
         precondition(localHub.hostingHub.items.count == 1 && localHub.hostingHub.items[0].title == "Synthetic local plan")
         precondition(accounts.tokenLoadsCount == tokenCount && Hosting.requests.isEmpty, "Local hub planning accessed account credentials or HTTP")
-        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning and uncertain-write recovery passed (fake credentials and HTTP only)")
+        let releases = fixture()
+        releases.hostingAccount = second
+        let releasesStamp = releases.hubContextStamp(in: .releases)
+        precondition(releases.hostingHub.section == .releases && releases.hubAccount?.id == second.id, "Releases must use the repository's account, not the hub's pick")
+        releases.hostingHub.section = .projects
+        precondition(releases.hubAccount?.id == first.id && releases.hubContextStamp != releasesStamp && releases.hubContextStamp(in: .releases) == releasesStamp, "A page's own stamp must not move while the hub is on another section")
+        print("Hosting hub credentials: pending reads, silent denial, explicit selected-account recovery, missing credentials, stale approvals, project-bound confirmations, awaited token guards, credential-free local planning, repository-bound releases and uncertain-write recovery passed (fake credentials and HTTP only)")
     }
 }
 SWIFT

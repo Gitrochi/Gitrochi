@@ -86,7 +86,7 @@ struct ProjectWorkspace: View {
             if value >= 1080 { compactInspector = false }
             else if wasWide, selectedID != nil { compactInspector = true }
         }
-        .task(id: store.hubContextStamp) {
+        .task(id: store.hubContextStamp(in: .projects)) {
             selectedItems = []; selectingItems = false
             if AccountStore.shared.accounts.isEmpty { store.hostingHub.projectSource = "local" }
             await store.activateHostingHub(.projects)

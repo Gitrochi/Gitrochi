@@ -23,10 +23,13 @@ struct HostingHubPanel: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title).font(.title2.weight(.semibold))
                 WorkbenchFlow(spacing: 10) {
-                    Picker("Workspace account", selection: Binding(get: { store.hubAccount?.id ?? "" }, set: { id in editor = nil; Task { await store.selectHubAccount(id) } })) {
-                        if AccountStore.shared.accounts.isEmpty { Text("No connected account").tag("") }
-                        ForEach(AccountStore.shared.accounts) { a in Text("\(a.host) · @\(a.username)").tag(a.id) }
-                    }.labelsHidden().frame(width: 250).disabled(locked)
+                    // Releases use the repository's account, which the toolbar already chooses
+                    if section != .releases {
+                        Picker("Workspace account", selection: Binding(get: { store.hubAccount?.id ?? "" }, set: { id in editor = nil; Task { await store.selectHubAccount(id) } })) {
+                            if AccountStore.shared.accounts.isEmpty { Text("No connected account").tag("") }
+                            ForEach(AccountStore.shared.accounts) { a in Text("\(a.host) · @\(a.username)").tag(a.id) }
+                        }.labelsHidden().frame(width: 250).disabled(locked)
+                    }
                     if section == .projects, store.hubProvider == .github, let account = store.hubAccount {
                         Picker("Project scope", selection: Binding(get: { store.hubProjectEffectiveScope }, set: { scope in editor = nil; Task { await store.selectHubProjectScope(scope) } })) {
                             if let owner = store.hubProjectRepositoryOwner { Text(verbatim: String(localized: "Repository owner: {0}").replacingOccurrences(of: "{0}", with: owner)).tag("repository") }
@@ -100,7 +103,7 @@ struct HostingHubPanel: View {
             }
         }
         .onChange(of: store.hostingHub.uncertainWrite) { _, uncertain in if uncertain { editor = nil } }
-        .task(id: section.rawValue + store.hubContextStamp) { editor = nil; issueURL = ""; await store.activateHostingHub(section) }
+        .task(id: section.rawValue + store.hubContextStamp(in: section)) { editor = nil; issueURL = ""; await store.activateHostingHub(section) }
     }
     private func itemRow(_ item: HubItem) -> some View {
         HStack(spacing: 10) {
