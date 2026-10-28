@@ -2,10 +2,11 @@
 //! git 동작은 새로 구현하지 않고 시스템 git 을 그대로 실행한다.
 
 mod agents;
+mod editors;
 pub mod helper;
-mod net;
 mod launch;
 mod local_projects;
+mod net;
 mod process;
 mod pty;
 mod repo_index;
@@ -70,6 +71,8 @@ pub fn run() {
             process::which,
             agents::external_agents,
             agents::bring_app_forward,
+            editors::external_editors,
+            editors::open_external_editor,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,

@@ -12,12 +12,19 @@ for TASK_SOURCE in \
     "$ROOT/Sources/Core/RepositoryBrowser.swift" \
     "$ROOT/Sources/Core/RepositoryCodeReading.swift" \
     "$ROOT/Sources/Core/RepositoryCodeNavigation.swift" \
+    "$ROOT/Sources/Core/RepositoryLanguages.swift" \
+    "$ROOT/Sources/Services/ExternalEditors.swift" \
+    "$ROOT/Sources/Services/RepositoryHTMLDocument.swift" \
     "$ROOT/Sources/Views/Workbench/AdaptiveWorkbenchLayout.swift" \
     "$ROOT/Sources/Views/Workbench/RepositorySourceView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodeReader.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryQuickOpen.swift" \
+    "$ROOT/Sources/Views/Workbench/RepositoryLanguageSummary.swift" \
+    "$ROOT/Sources/Views/Workbench/RepositoryExternalEditorMenu.swift" \
+    "$ROOT/Sources/Views/Workbench/RepositoryHTMLPreview.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodePanel.swift" \
-    "$ROOT/Tools/fixtures/RepositoryCodeLayout.swift"; do
+    "$ROOT/Tools/fixtures/RepositoryCodeLayout.swift" \
+    "$ROOT/Tools/fixtures/RepositoryHTMLLayout.swift"; do
     TASK_TARGET="$TASK_TMP/$(basename "$TASK_SOURCE")"
     cp "$TASK_SOURCE" "$TASK_TARGET"
     TASK_SOURCES+=("$TASK_TARGET")
@@ -35,6 +42,17 @@ replacement = needle[:-2] + """
         }"""
 path.write_text(source.replace(needle, replacement))
 PYTHON
+TASK_APP="$TASK_TMP/RepositoryCodeLayout.app"
+mkdir -p "$TASK_APP/Contents/MacOS"
+cat > "$TASK_APP/Contents/Info.plist" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>dev.gitrochi.code-layout-fixture</string>
+<key>CFBundleExecutable</key><string>RepositoryCodeLayout</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+</dict></plist>
+PLIST
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
-    "${TASK_SOURCES[@]}" -o "$TASK_TMP/repository-code-layout"
-"$TASK_TMP/repository-code-layout" "$TASK_OUTPUT"
+    "${TASK_SOURCES[@]}" -o "$TASK_APP/Contents/MacOS/RepositoryCodeLayout"
+"$TASK_APP/Contents/MacOS/RepositoryCodeLayout" "$TASK_OUTPUT"
