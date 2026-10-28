@@ -20,8 +20,14 @@ from gitrochi.runtime import versions
 
 PY = sys.executable
 POSIX = os.name != "nt"
-APP = """import http.server, os
+APP = """import http.server, os, socketserver
 version = os.environ.get("VERSION", "none")
+class Server(http.server.HTTPServer):
+    def server_bind(self):
+        # HTTPServer looks its own name up by reverse DNS, which can block for tens of
+        # seconds on macOS CI runners; the health checks would time out meanwhile.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = "127.0.0.1", self.server_address[1]
 print("serving", version, "on", os.environ["PORT"], flush=True)
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -32,7 +38,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
     def log_message(self, *args):
         pass
-http.server.HTTPServer(("127.0.0.1", int(os.environ["PORT"])), Handler).serve_forever()
+Server(("127.0.0.1", int(os.environ["PORT"])), Handler).serve_forever()
 """
 
 
