@@ -1,0 +1,66 @@
+# systemd unit for the hub. Install:
+#   install -m 755 dist/gitrochi-hub-linux-amd64 /usr/local/bin/gitrochi-hub
+#   install -m 644 deploy/gitrochi-hub.service /etc/systemd/system/
+#   systemctl daemon-reload
+# create the first admin token (README.md, "systemd"), then
+#   systemctl enable --now gitrochi-hub
+#
+# TLS without a reverse proxy: hand the files over as credentials, which a
+# DynamicUser can read, and add to ExecStart
+#   --tls-cert ${CREDENTIALS_DIRECTORY}/tls.crt --tls-key ${CREDENTIALS_DIRECTORY}/tls.key
+# with
+#   LoadCredential=tls.crt:/etc/gitrochi-hub/tls.crt
+#   LoadCredential=tls.key:/etc/gitrochi-hub/tls.key
+# Ports below 1024 also need CAP_NET_BIND_SERVICE in CapabilityBoundingSet=
+# and AmbientCapabilities=.
+
+[Unit]
+Description=Gitrochi hub (team collaboration server)
+Documentation=https://github.com/Gitrochi/Gitrochi/blob/main/services/hub/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=GITROCHI_HUB_DATA=/var/lib/gitrochi-hub
+ExecStart=/usr/local/bin/gitrochi-hub serve --listen 127.0.0.1:7420 --log-format json
+Restart=on-failure
+RestartSec=2s
+# Drain SSE streams and flush the journal before a kill.
+TimeoutStopSec=30s
+
+DynamicUser=yes
+StateDirectory=gitrochi-hub
+StateDirectoryMode=0700
+UMask=0077
+
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateUsers=yes
+ProtectHostname=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RemoveIPC=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

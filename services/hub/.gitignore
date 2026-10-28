@@ -1,0 +1,5 @@
+# Build output of build.sh
+/dist/
+# Test binaries and coverage profiles
+*.test
+*.out
