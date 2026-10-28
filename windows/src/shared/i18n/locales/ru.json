@@ -1256,5 +1256,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Также можно использовать gitch logo on или gitch logo off в терминале.",
  "Couldn't read the CLI logo setting.": "Не удалось прочитать настройку логотипа CLI.",
   "Hide right panel": "Скрыть правую панель",
-  "Show right panel": "Показать правую панель"
+  "Show right panel": "Показать правую панель",
+  "Find in file": "Найти в файле",
+  "Previous match": "Предыдущее совпадение",
+  "Next match": "Следующее совпадение",
+  "{0} of {1}": "{0} из {1}",
+  "No matches": "Нет совпадений",
+  "Wrap lines": "Перенос строк",
+  "Decrease font size": "Уменьшить шрифт",
+  "Increase font size": "Увеличить шрифт",
+  "Copy source": "Копировать исходный код",
+  "Hide file explorer": "Скрыть проводник файлов",
+  "Show file explorer": "Показать проводник файлов",
+  "Files": "Файлы",
+  "{0} lines": "{0} строк",
+  "Plain text": "Обычный текст",
+  "Read only": "Только чтение",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Перенос строк недоступен для файлов, содержащих более 5 000 строк.",
+  "More than 10,000 matches. Refine your search.": "Более 10 000 совпадений. Уточните поиск."
 }

@@ -1212,5 +1212,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Bạn cũng có thể dùng gitch logo on hoặc gitch logo off trong terminal.",
  "Couldn't read the CLI logo setting.": "Không thể đọc cài đặt biểu tượng CLI.",
   "Hide right panel": "Ẩn bảng bên phải",
-  "Show right panel": "Hiện bảng bên phải"
+  "Show right panel": "Hiện bảng bên phải",
+  "Find in file": "Tìm trong tệp",
+  "Previous match": "Kết quả trước",
+  "Next match": "Kết quả tiếp theo",
+  "{0} of {1}": "{0} trên {1}",
+  "No matches": "Không có kết quả",
+  "Wrap lines": "Ngắt dòng",
+  "Decrease font size": "Giảm cỡ chữ",
+  "Increase font size": "Tăng cỡ chữ",
+  "Copy source": "Sao chép mã nguồn",
+  "Hide file explorer": "Ẩn trình duyệt tệp",
+  "Show file explorer": "Hiện trình duyệt tệp",
+  "Files": "Tệp",
+  "{0} lines": "{0} dòng",
+  "Plain text": "Văn bản thuần",
+  "Read only": "Chỉ đọc",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Không thể ngắt dòng đối với tệp có hơn 5.000 dòng.",
+  "More than 10,000 matches. Refine your search.": "Hơn 10.000 kết quả. Hãy thu hẹp tìm kiếm."
 }

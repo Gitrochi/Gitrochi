@@ -1,44 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Folder, File, Search } from "lucide-react";
-import { validRevisionInput, fullObjectID, loadRepositoryBlob, loadRepositoryTree, initialRepositoryFile, repositoryFolderCount, defaultRebaseBase, loadRebasePreview, statusIsEmpty, type RebasePreview, type RepositoryBlob, type RepositoryTree, type RepositoryTreeEntry } from "@/entities/git";
+import { validRevisionInput, fullObjectID, defaultRebaseBase, loadRebasePreview, statusIsEmpty, type RebasePreview } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { CompareRevisionsSheet } from "@/features/history-tools";
 import { InteractiveRebaseSheet } from "@/features/interactive-rebase";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { describe, git } from "@/shared/platform";
-import { Button, Empty, Spinner } from "@/shared/ui";
+import { Button, Spinner } from "@/shared/ui";
 import "./local-workbench.css";
 
 type Props = { store: RepoStore };
 const refs = (store: RepoStore) => [...store.localBranches.map((b) => b.name), ...store.remoteBranches.map((b) => b.name), ...store.tags.map((b) => b.name)];
-
-export interface RepositoryCodeSource { tree: typeof loadRepositoryTree; blob: typeof loadRepositoryBlob; read: (args: string[], repo: string) => Promise<string> }
-const defaultCodeSource: RepositoryCodeSource = { tree: loadRepositoryTree, blob: loadRepositoryBlob, read: async (args, repo) => (await git(args, repo)).stdout };
-export function RepositoryCodePanel({ store, source = defaultCodeSource }: Props & { source?: RepositoryCodeSource }) {
-  useObserve(store);
-  const [directory, setDirectory] = useState(""), [input, setInput] = useState("HEAD"), [query, setQuery] = useState(""), [tree, setTree] = useState<RepositoryTree | null>(null), [selected, setSelected] = useState<RepositoryTreeEntry | null>(null), [blob, setBlob] = useState<RepositoryBlob | null>(null), [mode, setMode] = useState("Source"), [aux, setAux] = useState(""), [loading, setLoading] = useState(false), [error, setError] = useState<string | null>(null);
-  const request = useRef(0), fileRequest = useRef(0), repo = store.path;
-  const load = async (ref = input) => { if (!repo) return; const token = ++request.current; ++fileRequest.current; setLoading(true); setError(null); setTree(null); setDirectory(""); setSelected(null); setBlob(null); setAux(""); try { const value = await source.tree(repo, ref); if (token === request.current && store.path === repo) {
-    setTree(value); const initial=initialRepositoryFile(value.entries);
-    if(initial){const fileToken=++fileRequest.current;setSelected(initial);setMode("Source");const parent=initial.path.split("/").slice(0,-1).join("/");setDirectory(parent);const preview=await source.blob(repo,initial);if(token===request.current&&fileToken===fileRequest.current&&store.path===repo)setBlob(preview);}
-  } } catch (e) { if (token === request.current && store.path === repo) setError(describe(e)); } finally { if (token === request.current && store.path === repo) setLoading(false); } };
-  useEffect(() => { setInput("HEAD"); setQuery(""); void load("HEAD"); return () => { ++request.current; ++fileRequest.current; }; }, [repo, source]);
-  const open = async (entry: RepositoryTreeEntry, view = "Source") => {
-    if (!repo || !tree) return; const token = ++fileRequest.current, snapshot = tree; setSelected(entry); setMode(view); setBlob(null); setAux(""); setError(null);
-    try {
-      if (view === "Source") { const value = await source.blob(repo, entry); if (token === fileRequest.current && snapshot === tree && store.path === repo) setBlob(value); }
-      else { let lineCount = 1; if (view === "Blame") { const preview = await source.blob(repo, entry); if (!preview.text) { if (token === fileRequest.current && store.path === repo) setAux(preview.notice ?? t("No content to show.")); return; } lineCount = Math.max(1, Math.min(5000, preview.text.split("\n").length - (preview.text.endsWith("\n") ? 1 : 0))); } const args = view === "File history" ? ["log", "--follow", "-n", "100", "--date=short", "--format=%h %ad %an%n%s%n", snapshot.revision, "--", entry.path] : view === "Working changes" ? ["diff", "--no-ext-diff", "--no-textconv", "HEAD", "--", entry.path] : ["blame", "--date=short", "-L", `1,${lineCount}`, snapshot.revision, "--", entry.path]; const result = await source.read(args, repo); if (token === fileRequest.current && store.path === repo) setAux(result.slice(0, 2_000_000)); }
-    } catch (e) { if (token === fileRequest.current && store.path === repo) setError(describe(e)); }
-  };
-  const allEntries = tree?.entries ?? [], prefix = directory ? directory + "/" : "";
-  const folders = query ? [] : [...new Set(allEntries.filter((entry) => entry.path.startsWith(prefix) && entry.path.slice(prefix.length).includes("/")).map((entry) => prefix + entry.path.slice(prefix.length).split("/")[0]))].sort();
-  const entries = allEntries.filter((entry) => query ? entry.path.toLowerCase().includes(query.toLowerCase()) : entry.path.startsWith(prefix) && !entry.path.slice(prefix.length).includes("/")), visible = entries.slice(0, 2000);
-  return <section className="local-workbench"><div className="row workbench-controls"><input aria-label={t("Revision")} className="input grow workbench-revision" value={input} onChange={(e) => setInput(e.target.value)} list="code-revisions"/><datalist id="code-revisions">{refs(store).map((name) => <option key={name} value={name}/>)}</datalist><Button kind="primary" disabled={loading} onClick={() => void load()}>{t("Load revision")}</Button><Search size={15}/><input aria-label={t("Search files")} placeholder={t("Search files")} className="input workbench-search" value={query} onChange={(e) => setQuery(e.target.value)}/></div>
-    {loading && <Spinner/>}{error && <div role="alert" className="error-text">{error}</div>}{tree && <div className="hint mono">{tree.revision.slice(0,12)} · {t("{0} files · {1} folders",tree.entries.length,repositoryFolderCount(tree.entries))}{tree.truncated ? ` · ${t("File list truncated. Narrow the repository or use another tool for the remaining files.")}` : ""}</div>}
-    <div className="workbench-code-layout"><nav className="workbench-file-tree" aria-label={t("Repository files")}><div className="workbench-breadcrumb"><button onClick={() => setDirectory("")}>{t("Repository")}</button>{directory.split("/").filter(Boolean).map((part, i, list) => <button key={i} onClick={() => setDirectory(list.slice(0, i + 1).join("/"))}>/ {part}</button>)}</div>{folders.map((folder) => <button key={folder} onClick={() => setDirectory(folder)}><Folder size={15}/><span>{folder.slice(prefix.length)}</span></button>)}{visible.map((entry) => <button key={entry.path} className={selected?.path === entry.path ? "on" : ""} onClick={() => void open(entry)} title={entry.path}><File size={14}/><span>{query ? entry.path : entry.path.slice(prefix.length)}</span><span className="hint">{entry.kind === "file" ? "" : entry.kind === "symlink" ? "↪" : "⊞"}</span></button>)}{entries.length > visible.length && <p className="hint">{t("Showing the first 2,000 matches. Search to narrow the file list.")}</p>}{tree && !entries.length && !folders.length && <Empty title={t("No matching files")}/>}</nav><div className="workbench-code-content">{selected ? <><div className="row workbench-code-toolbar"><strong className="grow ellipsis" title={selected.path}>{selected.path}</strong><span className="hint">{selected.size.toLocaleString()} B</span></div><div className="row workbench-tabs">{["Source", "File history", "Blame", "Working changes"].map((view) => <Button key={view} kind={mode === view ? "primary" : undefined} disabled={selected.kind !== "file" && view !== "Source"} onClick={() => void open(selected, view)}>{t(view)}</Button>)}</div>{blob?.notice && <p className="hint">{blob.notice}</p>}{blob?.image ? <div className="workbench-image"><img src={blob.image} alt={selected.path}/></div> : <pre className="workbench-source" tabIndex={0}>{mode === "Source" ? blob?.text ?? (blob?.notice ? "" : t("Loading…")) : aux || t("No content to show.")}</pre>}</> : <Empty title={t("Choose a file")} detail={t("Search paths or choose a file from the repository tree.")}/>}</div></div>
-  </section>;
-}
 
 export function RebaseWorkbenchPanel({ store, previewSource=loadRebasePreview }: Props & {previewSource?: typeof loadRebasePreview}) {
   useObserve(store);

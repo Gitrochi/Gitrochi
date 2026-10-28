@@ -1239,5 +1239,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Możesz też użyć gitch logo on lub gitch logo off w terminalu.",
  "Couldn't read the CLI logo setting.": "Nie udało się odczytać ustawienia logo CLI.",
   "Hide right panel": "Ukryj prawy panel",
-  "Show right panel": "Pokaż prawy panel"
+  "Show right panel": "Pokaż prawy panel",
+  "Find in file": "Znajdź w pliku",
+  "Previous match": "Poprzednie dopasowanie",
+  "Next match": "Następne dopasowanie",
+  "{0} of {1}": "{0} z {1}",
+  "No matches": "Brak dopasowań",
+  "Wrap lines": "Zawijaj wiersze",
+  "Decrease font size": "Zmniejsz czcionkę",
+  "Increase font size": "Powiększ czcionkę",
+  "Copy source": "Kopiuj kod źródłowy",
+  "Hide file explorer": "Ukryj eksplorator plików",
+  "Show file explorer": "Pokaż eksplorator plików",
+  "Files": "Pliki",
+  "{0} lines": "{0} wierszy",
+  "Plain text": "Zwykły tekst",
+  "Read only": "Tylko do odczytu",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Zawijanie jest niedostępne dla plików mających więcej niż 5000 wierszy.",
+  "More than 10,000 matches. Refine your search.": "Ponad 10 000 dopasowań. Zawęź wyszukiwanie."
 }

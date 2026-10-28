@@ -1235,5 +1235,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Du kannst im Terminal auch gitch logo on oder gitch logo off verwenden.",
  "Couldn't read the CLI logo setting.": "Die CLI-Logoeinstellung konnte nicht gelesen werden.",
   "Hide right panel": "Rechten Bereich ausblenden",
-  "Show right panel": "Rechten Bereich anzeigen"
+  "Show right panel": "Rechten Bereich anzeigen",
+  "Find in file": "In Datei suchen",
+  "Previous match": "Vorheriger Treffer",
+  "Next match": "Nächster Treffer",
+  "{0} of {1}": "{0} von {1}",
+  "No matches": "Keine Treffer",
+  "Wrap lines": "Zeilen umbrechen",
+  "Decrease font size": "Schrift verkleinern",
+  "Increase font size": "Schrift vergrößern",
+  "Copy source": "Quelltext kopieren",
+  "Hide file explorer": "Dateiexplorer ausblenden",
+  "Show file explorer": "Dateiexplorer anzeigen",
+  "Files": "Dateien",
+  "{0} lines": "{0} Zeilen",
+  "Plain text": "Klartext",
+  "Read only": "Schreibgeschützt",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "Zeilenumbruch ist bei Dateien mit mehr als 5.000 Zeilen nicht verfügbar.",
+  "More than 10,000 matches. Refine your search.": "Mehr als 10.000 Treffer. Grenzen Sie die Suche ein."
 }
