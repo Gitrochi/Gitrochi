@@ -1224,5 +1224,19 @@
   "Plain text": "Teks biasa",
   "Read only": "Hanya baca",
   "Wrapping is unavailable for files with more than 5,000 lines.": "Pembungkusan baris tidak tersedia untuk file dengan lebih dari 5.000 baris.",
-  "More than 10,000 matches. Refine your search.": "Lebih dari 10.000 kecocokan. Persempit pencarian Anda."
+  "More than 10,000 matches. Refine your search.": "Lebih dari 10.000 kecocokan. Persempit pencarian Anda.",
+  "Quick open": "Buka cepat",
+  "Open files": "File terbuka",
+  "Recent files": "File terbaru",
+  "Close file": "Tutup file",
+  "Close all files": "Tutup semua file",
+  "Navigate back": "Kembali",
+  "Navigate forward": "Maju",
+  "Go to line": "Ke baris",
+  "Line number": "Nomor baris",
+  "Enter a line from 1 to {0}.": "Masukkan baris dari 1 hingga {0}.",
+  "Outline": "Kerangka",
+  "No symbols found": "Tidak ada simbol ditemukan",
+  "Search files by name or path": "Cari berdasarkan nama atau jalur",
+  "Close quick open": "Tutup buka cepat"
 }

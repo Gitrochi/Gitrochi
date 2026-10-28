@@ -4,6 +4,7 @@ import Observation
 import Vision
 
 typealias ViewState<Value> = SwiftUI.State<Value>
+@MainActor var repositoryCodeLayoutQuickScenario: String?
 
 private let fixtureSource = """
 import SwiftUI
@@ -77,17 +78,19 @@ enum Git {
 }
 
 @MainActor @Observable private final class NativeReaderState {
-    let text = (1...160).map { "let row\($0) = \"A comfortably readable source line with enough words to wrap in a narrow reader\"" }.joined(separator: "\n") + "\n"
+    var text = (1...160).map { "let row\($0) = \"A comfortably readable source line with enough words to wrap in a narrow reader\"" }.joined(separator: "\n") + "\n"
     var wraps = false
     var fontSize: CGFloat = 13
     var activeMatch: NSRange?
+    var targetLine: Int?
+    var jumpID: UUID?
 }
 private struct NativeReaderFixture: View {
     let state: NativeReaderState
     var body: some View {
         RepositorySourceView(text: state.text, tokens: RepositoryCodeReading.tokens(in: state.text, path: "fixture.swift"),
                              lineStarts: RepositoryCodeReading.lineStarts(in: state.text), fontSize: state.fontSize,
-                             wraps: state.wraps, activeMatch: state.activeMatch)
+                             wraps: state.wraps, activeMatch: state.activeMatch, targetLine: state.targetLine, jumpID: state.jumpID)
     }
 }
 
@@ -96,6 +99,7 @@ private struct NativeReaderFixture: View {
         NSApplication.shared.setActivationPolicy(.prohibited)
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        checkNavigationModels()
         try checkNativeReader()
         var results: [[String: Any]] = []
         for width: CGFloat in [440, 1100] {
@@ -139,9 +143,98 @@ private struct NativeReaderFixture: View {
                 window.orderOut(nil)
             }
         }
+        checkQuickOpenSubmission()
+        try checkQuickOpen(output: output)
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
-        print("PASS: Production Code panel light/dark and narrow/wide layouts; native syntax colors, wrap resizing, font sizing and match scrolling. \(output.path)")
+        print("PASS: Production Code panel light/dark and narrow/wide layouts; native syntax colors, wrap resizing, line6000 goto, match scrolling, bounded session navigation, quick-open immediate submission and previews. \(output.path)")
+    }
+
+    private static func checkNavigationModels() {
+        var bounded = RepositoryCodeNavigation()
+        for index in 0..<65 { bounded.visit("src/file\(index).swift", mode: "Source") }
+        precondition(bounded.tabs.count == 12 && bounded.recent.count == 20 && bounded.history.count == 50)
+        precondition(bounded.tabModes.count == 12 && bounded.index == 49)
+        var navigation = RepositoryCodeNavigation()
+        navigation.visit("src/A.swift", mode: "Source")
+        navigation.visit("src/B.swift", mode: "Blame")
+        precondition(navigation.move(-1)?.path == "src/A.swift")
+        navigation.visit("src/C.swift", mode: "Source")
+        precondition(!navigation.canGoForward && navigation.history.map(\.path) == ["src/A.swift", "src/C.swift"])
+        precondition(navigation.tabModes["src/B.swift"] == "Blame")
+        precondition(navigation.close("src/C.swift", selected: "src/C.swift") == "src/B.swift")
+        precondition(navigation.tabModes["src/C.swift"] == nil)
+        navigation.closeAll()
+        precondition(navigation.tabs.isEmpty && navigation.tabModes.isEmpty && !navigation.recent.isEmpty)
+        let paths = ["preview.swift/archive.txt", "src/Preview.swift", "src/Preview.swift.bak", "test/other.swift"]
+        precondition(RepositoryCodeNavigation.rankedPaths(paths, query: "preview.swift", recent: []) == ["src/Preview.swift", "src/Preview.swift.bak", "preview.swift/archive.txt"])
+        precondition(RepositoryCodeNavigation.rankedPaths(paths, query: "", recent: ["missing", "src/Preview.swift"]) == ["src/Preview.swift"])
+        precondition(RepositoryCodeReading.validLine(" 120 ", count: 160) == 120)
+        for invalid in ["0", "-1", "1.5", "161", "1e2", ""] { precondition(RepositoryCodeReading.validLine(invalid, count: 160) == nil) }
+        let example = #"""
+        const note = /*
+        function hiddenComment() {}
+        */ "done";
+        const template = `
+        function hiddenTemplate() {}
+        `;
+        const python = """
+        def hiddenQuoted(): pass
+        """;
+        export class Widget {}
+        export function read() {}
+        """#
+        let symbols = RepositoryCodeReading.outline(in: example, path: "fixture.ts")
+        precondition(symbols.map(\.name) == ["Widget", "read"], "Outline included quoted or commented examples")
+        precondition(symbols.map(\.line) == [10, 11], "Outline offsets must follow source LF line numbers")
+        let markdown = "# Guide\n````typescript\n## Hidden\n```\n## Still hidden\n````\n## Visible\n"
+        precondition(RepositoryCodeReading.outline(in: markdown, path: "guide.md").map(\.name) == ["Guide", "Visible"], "Outline ended a longer Markdown fence too early")
+        let declarations = (1...250).map { "func method\($0)() {}" }.joined(separator: "\n")
+        precondition(RepositoryCodeReading.outline(in: declarations, path: "fixture.swift").count == 200)
+    }
+
+    @MainActor private static func checkQuickOpenSubmission() {
+        for scenario in ["fresh-query", "keyboard"] {
+            repositoryCodeLayoutQuickScenario = scenario
+            var opened: [String] = []
+            let host = NSHostingView(rootView: RepositoryQuickOpen(paths: ["src/Preview.swift", "src/Theme.swift"],
+                recent: ["src/Theme.swift", "src/Preview.swift"], width: 620,
+                open: { opened.append($0) }, close: {}))
+            let window = NSWindow(contentRect: NSRect(x: -4000, y: 0, width: 580, height: 420), styleMask: [.borderless], backing: .buffered, defer: false)
+            window.contentView = host
+            window.orderBack(nil)
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            host.layoutSubtreeIfNeeded()
+            precondition(opened == ["src/Preview.swift"], "Quick-open \(scenario) activated a stale or unselected path: \(opened)")
+            window.orderOut(nil)
+            repositoryCodeLayoutQuickScenario = nil
+        }
+    }
+
+    @MainActor private static func checkQuickOpen(output: URL) throws {
+        for width: CGFloat in [360, 580] {
+            for dark in [false, true] {
+                var actions = 0
+                let theme = dark ? "dark" : "light"
+                let bounds = NSRect(x: 0, y: 0, width: width, height: 420)
+                let host = NSHostingView(rootView: RepositoryQuickOpen(paths: ["src/Preview.swift", "src/Theme.swift", "docs/reading.md"],
+                    recent: ["src/Theme.swift", "src/Preview.swift"], width: width + 40,
+                    open: { _ in actions += 1 }, close: { actions += 1 })
+                    .preferredColorScheme(dark ? .dark : .light))
+                let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)
+                window.setFrameOrigin(NSPoint(x: -4000, y: 0))
+                window.contentView = host
+                window.orderBack(nil)
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+                host.layoutSubtreeIfNeeded()
+                guard let bitmap = host.bitmapImageRepForCachingDisplay(in: bounds) else { fatalError("No quick-open bitmap") }
+                host.cacheDisplay(in: bounds, to: bitmap)
+                guard let data = bitmap.representation(using: .png, properties: [:]) else { fatalError("No quick-open PNG") }
+                try data.write(to: output.appendingPathComponent("quick-open-\(Int(width))-\(theme).png"))
+                precondition(actions == 0, "Showing quick open must not execute a file action")
+                window.orderOut(nil)
+            }
+        }
     }
 
     @MainActor private static func checkNativeReader() throws {
@@ -183,7 +276,38 @@ private struct NativeReaderFixture: View {
         precondition(scroll.contentView.bounds.origin.y > 0, "Finding a later source match must scroll into view")
         let highlight = reader.layoutManager?.temporaryAttribute(.backgroundColor, atCharacterIndex: matches[0].location, effectiveRange: nil)
         precondition(highlight != nil, "Active source match was not highlighted")
+        state.activeMatch = nil
+        state.targetLine = 120
+        state.jumpID = UUID()
+        settle()
+        checkTarget(reader, text: state.text, line: 120)
+        scroll.contentView.scroll(to: .zero)
+        state.jumpID = UUID()
+        settle()
+        checkTarget(reader, text: state.text, line: 120)
+        state.text = (1...6200).map { "let row\($0) = \($0)" }.joined(separator: "\n") + "\n"
+        state.targetLine = nil
+        state.jumpID = nil
+        state.wraps = false
+        settle()
+        state.targetLine = 6000
+        state.jumpID = UUID()
+        settle()
+        checkTarget(reader, text: state.text, line: 6000)
+        precondition(reader.string == state.text, "A large-file line jump changed the source")
         window.orderOut(nil)
+    }
+
+    @MainActor private static func checkTarget(_ reader: NSTextView, text: String, line: Int) {
+        let starts = RepositoryCodeReading.lineStarts(in: text)
+        guard let target = RepositoryCodeReading.lineRange(line, starts: starts, length: (text as NSString).length),
+              let layout = reader.layoutManager, let container = reader.textContainer else { fatalError("Invalid native line target") }
+        let glyphs = layout.glyphRange(forCharacterRange: target, actualCharacterRange: nil)
+        var targetBounds = layout.boundingRect(forGlyphRange: glyphs, in: container)
+        targetBounds.origin.x += reader.textContainerOrigin.x
+        targetBounds.origin.y += reader.textContainerOrigin.y
+        precondition(reader.visibleRect.intersects(targetBounds), "Go to line did not reveal its target")
+        precondition(layout.temporaryAttribute(.backgroundColor, atCharacterIndex: target.location, effectiveRange: nil) != nil, "Go to line did not highlight its target")
     }
 
     @MainActor private static func checkGutter(_ reader: NSTextView) {
