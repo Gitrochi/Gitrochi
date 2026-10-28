@@ -44,8 +44,10 @@ struct RepoView: View {
                     }
                     feedback
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
             }
+            // Split details must shrink with the viewport instead of centering a page's larger minimum height.
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         }
         .navigationTitle(store.windowTitle)
         .navigationSubtitle(subtitle)

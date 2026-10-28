@@ -13,7 +13,7 @@ struct WorkspaceDestinationContent: View {
             }
             page
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
     }
 
     @ViewBuilder private var page: some View {
@@ -34,7 +34,7 @@ struct WorkspaceDestinationContent: View {
             case .flows: FlowPanel()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
