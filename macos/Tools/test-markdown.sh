@@ -106,5 +106,5 @@ import Foundation
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
-    "$ROOT/Sources/Core/Models.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/markdown-tests"
+    "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/ProjectTaskReference.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/markdown-tests"
 "$TASK_TMP/markdown-tests"

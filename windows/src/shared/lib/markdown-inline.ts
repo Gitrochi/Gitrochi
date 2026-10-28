@@ -178,7 +178,7 @@ export function inlines(s: string, refs: MdRefs | undefined, inLink = false): Md
     if (c === "[" && !inLink) {
       const l = linkAt(scan, i);
       if (l) {
-        const href = safeUrl(l.href);
+        const href = safeUrl(refs?.link ? refs.link(l.href) ?? "" : l.href);
         const children = inlines(l.text, refs, true);
         if (href) push({ kind: "link", href, children });
         else {
