@@ -1335,3 +1335,21 @@
 "Commits" = "提交";
 "Related test candidates" = "相关测试候选";
 "The staged contents or HEAD changed. Analyze again before using this result." = "暂存内容或 HEAD 已更改。请重新分析后再使用此结果。";
+
+"Find in file" = "在文件中查找";
+"Previous match" = "上一个匹配项";
+"Next match" = "下一个匹配项";
+"{0} of {1}" = "第 {0} 项，共 {1} 项";
+"No matches" = "无匹配项";
+"Wrap lines" = "自动换行";
+"Decrease font size" = "缩小字号";
+"Increase font size" = "放大字号";
+"Copy source" = "复制源码";
+"Hide file explorer" = "隐藏文件浏览器";
+"Show file explorer" = "显示文件浏览器";
+"Files" = "文件";
+"{0} lines" = "{0} 行";
+"Plain text" = "纯文本";
+"Read only" = "只读";
+"Wrapping is unavailable for files with more than 5,000 lines." = "超过 5,000 行的文件不支持自动换行。";
+"More than 10,000 matches. Refine your search." = "匹配项超过 10,000 个。请缩小搜索范围。";

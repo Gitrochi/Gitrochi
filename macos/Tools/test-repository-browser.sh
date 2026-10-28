@@ -42,9 +42,16 @@ enum Git {
         let hugePreview = try await RepositoryBrowser.blob(in: root, entry: huge); precondition(hugePreview.notice != nil)
         let sha256 = String(repeating: "b", count: 64)
         precondition(RepositoryBrowser.parseTree("160000 commit \(sha256) -\tmodule\0").first?.isSubmodule == true)
-        print("Repository browser passed: real Git tree/blob reads, literal paths, immutable SHA, symlink isolation, images, binary detection and size limits")
+        precondition(RepositoryCodeReading.lineStarts(in: "").isEmpty)
+        precondition(RepositoryCodeReading.lineStarts(in: "a\r\nb\n") == [0, 3])
+        precondition(RepositoryCodeReading.matches(in: "🧭 let value = LET", query: "let") == [NSRange(location: 3, length: 3), NSRange(location: 15, length: 3)])
+        precondition(RepositoryCodeReading.matches(in: String(repeating: "x", count: 20_000), query: "x").count == 10_001)
+        let tokens = RepositoryCodeReading.tokens(in: "const answer = \"42\"; // 7\n", path: "source.ts")
+        precondition(tokens.map(\.kind) == [.keyword, .string, .comment])
+        precondition(RepositoryCodeReading.tokens(in: String(repeating: "let x = 1\n", count: 30_000), path: "source.swift").isEmpty)
+        print("Repository browser passed: immutable object previews, safe paths and limits, UTF-16 search, line metadata, bounded syntax colors and search results")
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Core/RepositoryBrowser.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/browser-tests"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Core/RepositoryBrowser.swift" "$ROOT/Sources/Core/RepositoryCodeReading.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/browser-tests"
 "$TASK_TMP/browser-tests" "$TASK_TMP"

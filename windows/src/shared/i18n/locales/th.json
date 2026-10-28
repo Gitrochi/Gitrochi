@@ -1250,5 +1250,22 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "คุณยังสามารถใช้ gitch logo on หรือ gitch logo off ในเทอร์มินัลได้",
  "Couldn't read the CLI logo setting.": "อ่านการตั้งค่าโลโก้ CLI ไม่ได้",
   "Hide right panel": "ซ่อนแผงด้านขวา",
-  "Show right panel": "แสดงแผงด้านขวา"
+  "Show right panel": "แสดงแผงด้านขวา",
+  "Find in file": "ค้นหาในไฟล์",
+  "Previous match": "รายการที่ตรงกันก่อนหน้า",
+  "Next match": "รายการที่ตรงกันถัดไป",
+  "{0} of {1}": "{0} จาก {1}",
+  "No matches": "ไม่พบรายการที่ตรงกัน",
+  "Wrap lines": "ตัดบรรทัด",
+  "Decrease font size": "ลดขนาดตัวอักษร",
+  "Increase font size": "เพิ่มขนาดตัวอักษร",
+  "Copy source": "คัดลอกซอร์สโค้ด",
+  "Hide file explorer": "ซ่อนตัวสำรวจไฟล์",
+  "Show file explorer": "แสดงตัวสำรวจไฟล์",
+  "Files": "ไฟล์",
+  "{0} lines": "{0} บรรทัด",
+  "Plain text": "ข้อความธรรมดา",
+  "Read only": "อ่านอย่างเดียว",
+  "Wrapping is unavailable for files with more than 5,000 lines.": "ไม่สามารถตัดบรรทัดในไฟล์ที่มีมากกว่า 5,000 บรรทัดได้",
+  "More than 10,000 matches. Refine your search.": "พบมากกว่า 10,000 รายการ โปรดระบุคำค้นหาให้เจาะจงขึ้น"
 }
