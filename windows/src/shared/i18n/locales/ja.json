@@ -1,4 +1,14 @@
 {
+  "Development": "開発",
+  "Newest first": "新しい順",
+  "Version number": "バージョン順",
+  "Create branch": "ブランチを作成",
+  "Create pull request": "プルリクエストを作成",
+  "Create merge request": "マージリクエストを作成",
+  "Quote reply": "引用して返信",
+  "Edit comment": "コメントを編集",
+  "Save comment": "コメントを保存",
+  "Not published": "未公開",
   "\n\n(The diff was long, so only the beginning was explained.)": "\n\n(差分が長いため、先頭部分だけを見て説明しました。)",
   "\n\nAuthentication is required. Connect a GitHub or GitLab account in Settings (Ctrl+,), or push/pull once in a terminal to save your credentials (": "\n\n認証が必要です。設定 (Ctrl+,) で GitHub または GitLab のアカウントを接続するか、ターミナルで一度 push/pull を実行して資格情報 (",
   "\n\nThe token needs the api scope, and only people who can approve this MR can approve it.": "\n\nトークンに api スコープが必要です。また、この MR を承認できるのは、承認権限を持つユーザーだけです。",
@@ -2022,15 +2032,5 @@
   "View overlap in graph": "グラフで重複を表示",
   "Commits": "コミット",
   "Related test candidates": "関連テストの候補",
-  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。",
-  "Development": "開発",
-  "Newest first": "新しい順",
-  "Version number": "バージョン順",
-  "Create branch": "ブランチを作成",
-  "Create pull request": "プルリクエストを作成",
-  "Create merge request": "マージリクエストを作成",
-  "Quote reply": "引用して返信",
-  "Edit comment": "コメントを編集",
-  "Save comment": "コメントを保存",
-  "Not published": "未公開"
+  "The staged contents or HEAD changed. Analyze again before using this result.": "ステージした内容またはHEADが変わりました。この結果を使う前に再度分析してください。"
 }

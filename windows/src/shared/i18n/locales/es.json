@@ -1,4 +1,14 @@
 {
+ "Development": "Desarrollo",
+ "Newest first": "Más recientes",
+ "Version number": "Número de versión",
+ "Create branch": "Crear rama",
+ "Create pull request": "Crear pull request",
+ "Create merge request": "Crear merge request",
+ "Quote reply": "Citar y responder",
+ "Edit comment": "Editar comentario",
+ "Save comment": "Guardar comentario",
+ "Not published": "Sin publicar",
  "\n\n(The diff was long, so only the beginning was explained.)": "\n\n(El diff era largo, así que solo se explicó el principio.)",
  "\n\nAuthentication is required. Connect a GitHub or GitLab account in Settings (Ctrl+,), or push/pull once in a terminal to save your credentials (": "\n\nSe requiere autenticación. Conecta una cuenta de GitHub o GitLab en Ajustes (Ctrl+,) o haz push/pull una vez en una terminal para guardar tus credenciales (",
  "\n\nThe token needs the api scope, and only people who can approve this MR can approve it.": "\n\nEl token necesita el ámbito api, y solo pueden aprobar este MR las personas con permiso para aprobarlo.",
@@ -1233,15 +1243,5 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "También puedes usar gitch logo on o gitch logo off en una terminal.",
  "Couldn't read the CLI logo setting.": "No se pudo leer la configuración del logotipo de la CLI.",
   "Hide right panel": "Ocultar panel derecho",
-  "Show right panel": "Mostrar panel derecho",
- "Development": "Desarrollo",
- "Newest first": "Más recientes",
- "Version number": "Número de versión",
- "Create branch": "Crear rama",
- "Create pull request": "Crear pull request",
- "Create merge request": "Crear merge request",
- "Quote reply": "Citar y responder",
- "Edit comment": "Editar comentario",
- "Save comment": "Guardar comentario",
- "Not published": "Sin publicar"
+  "Show right panel": "Mostrar panel derecho"
 }
