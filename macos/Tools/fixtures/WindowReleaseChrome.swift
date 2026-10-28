@@ -205,6 +205,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             selected.setFrame(minimum, display: true)
             await settle(0.6)
             try await capture("swiftui-releases-\(name)-minimum", window: selected, expectedFrame: minimum)
+            try await capture("swiftui-releases-\(name)-minimum-repeat", window: selected, expectedFrame: minimum)
 
             selected.setFrame(original, display: true)
             await settle(0.6)
