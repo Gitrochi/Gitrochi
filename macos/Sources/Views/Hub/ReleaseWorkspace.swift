@@ -56,6 +56,7 @@ struct ReleaseWorkspace: View {
     }
     private var header: some View {
         HStack(spacing: 12) {
+            Image(systemName: "tag.fill").font(.title2).foregroundStyle(Color.accentColor).frame(width: 46, height: 46).background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 13))
             VStack(alignment: .leading, spacing: 5) {
                 Text("Releases").font(.title2.weight(.semibold))
                 if let target = store.target { Text(target.host + " / " + target.path).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
@@ -71,14 +72,17 @@ struct ReleaseWorkspace: View {
         let prerelease = sorted.first { ReleaseCatalog.state($0) == "Prerelease" }
         let packageChosen = families.count <= 1 || family != "*"
         return LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), alignment: .leading)], alignment: .leading, spacing: 12) {
+            versionCell(store.hostingHub.more ? "Newest loaded stable" : "Latest stable by date", packageChosen ? stable.map(ReleaseCatalog.tag) ?? "—" : String(localized: "Select a package"), primary: true)
             versionCell("Tag at checkout", exact.isEmpty ? String(localized: "No tag at checkout") : exact)
             versionCell("Nearest ancestor tag", nearest.map { $0.isEmpty ? String(localized: "No ancestor tag") : $0 } ?? "—")
-            versionCell(store.hostingHub.more ? "Newest loaded stable" : "Latest stable by date", packageChosen ? stable.map(ReleaseCatalog.tag) ?? "—" : String(localized: "Select a package"))
             versionCell(store.hostingHub.more ? "Newest loaded prerelease" : "Latest prerelease by date", packageChosen ? prerelease.map(ReleaseCatalog.tag) ?? "—" : String(localized: "Select a package"))
-        }.padding(.horizontal, 20).padding(.bottom, 16).overlay(alignment: .bottom) { Divider() }
+        }.padding(16).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.12))).padding(.horizontal, 20).padding(.bottom, 16)
     }
-    private func versionCell(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) { Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary); Text(value).font(.callout.weight(.medium)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) }.frame(maxWidth: .infinity, alignment: .leading)
+    private func versionCell(_ title: String, _ value: String, primary: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(primary ? .system(size: 27, weight: .semibold, design: .rounded) : .callout.weight(.semibold)).foregroundStyle(primary ? Color.accentColor : Color.primary).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+        }.frame(maxWidth: .infinity, minHeight: 66, alignment: .leading)
     }
     private var list: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -88,7 +92,7 @@ struct ReleaseWorkspace: View {
                     Text("All releases").tag("All releases"); Text("Stable").tag("Stable")
                     if store.hubProvider == .github { Text("Prerelease").tag("Prerelease"); Text("Draft").tag("Draft") }
                 }.labelsHidden()
-                Picker("Sort releases", selection: $sort) { Text("Published date").tag("date"); Text("Version").tag("version") }.labelsHidden()
+                Picker("Sort releases", selection: $sort) { Text("Newest first").tag("date"); Text("Version number").tag("version") }.labelsHidden()
             }
             if families.count > 1 { Picker("Package", selection: $family) { Text("All packages").tag("*"); ForEach(families, id: \.self) { value in Text(value.isEmpty ? String(localized: "Repository releases") : value).tag(value) } } }
             Text("Search filters loaded pages. Load more to search older items.").font(.caption).foregroundStyle(.secondary)
@@ -103,7 +107,7 @@ struct ReleaseWorkspace: View {
                             VStack(alignment: .leading, spacing: 7) {
                                 WorkbenchFlow(spacing: 8) { Label(ReleaseCatalog.tag(item), systemImage: "tag").font(.callout.weight(.semibold)); badge(item) }
                                 Text(item.title).font(.callout)
-                                Text(String(ReleaseCatalog.date(item).prefix(10))).font(.caption).foregroundStyle(.secondary)
+                                if ReleaseCatalog.state(item) == "Draft" { Text("Not published").font(.caption).foregroundStyle(.secondary) } else { HostingDate(value: ReleaseCatalog.date(item)) }
                             }.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())
                         }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.15) : .clear)).disabled(store.hostingHub.busy)
                     }
@@ -129,7 +133,7 @@ struct ReleaseWorkspace: View {
         let tag = ReleaseCatalog.tag(d.item)
         WorkbenchFlow { Text(tag).font(.system(.title3, design: .monospaced)).foregroundStyle(Color.accentColor).textSelection(.enabled); badge(d.item) }
         Text(d.item.title).font(.title.weight(.semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-        Text(ReleaseCatalog.date(d.item).isEmpty ? String(localized: "Date unavailable") : String(ReleaseCatalog.date(d.item).prefix(10))).font(.callout).foregroundStyle(.secondary)
+        if ReleaseCatalog.state(d.item) == "Draft" { Text("Not published").font(.caption).foregroundStyle(.secondary) } else { HostingDate(value: ReleaseCatalog.date(d.item), published: true) }
         WorkbenchFlow {
             if safe(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
             Menu {

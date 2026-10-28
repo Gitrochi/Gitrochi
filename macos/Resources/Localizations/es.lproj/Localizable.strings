@@ -1283,3 +1283,13 @@
 "{0} invitations loaded" = "{0} invitaciones cargadas";
 "Update access" = "Actualizar acceso";
 "Grant access" = "Conceder acceso";
+"Development" = "Desarrollo";
+"Newest first" = "Más recientes";
+"Version number" = "Número de versión";
+"Create branch" = "Crear rama";
+"Create pull request" = "Crear pull request";
+"Create merge request" = "Crear merge request";
+"Quote reply" = "Citar y responder";
+"Edit comment" = "Editar comentario";
+"Save comment" = "Guardar comentario";
+"Not published" = "Sin publicar";

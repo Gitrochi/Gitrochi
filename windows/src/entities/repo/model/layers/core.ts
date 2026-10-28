@@ -138,7 +138,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   // 선택·상세
   selection: Selection | null = null;
-  newPullRequestDraft: { branch: string; title: string; body: string; base: string; draft: boolean } | null = null;
+  newPullRequestDraft: { branch: string; title: string; body: string; base: string; draft: boolean; issue?: P.ProjectTaskReference } | null = null;
   detail: CommitDetail | null = null;
   detailFiles: FileChange[] = [];
   detailStats: Record<string, LineStat> = {};
