@@ -3,7 +3,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { accounts } from "./accounts";
 import * as API from "../api/hub";
-export interface HubSource { readonly path: string | null; readonly target: RepoTarget | null; readonly hostingAccount: HostAccount | null; readonly hostingHubRevision?: number }
+export interface HubSource { readonly path: string | null; readonly target: RepoTarget | null; readonly hostingAccount: HostAccount | null; readonly hostingHubRevision?: number; readonly headHash?: string | null; readonly tags?: {name: string; target: string}[] }
 /** A separate controller keeps sidebar work isolated from local Git operations. */
 export class HostingHubStore extends Observable {
   section: API.HostingHubSection = "releases"; items: API.HubItem[] = []; detail: API.HubDetail | null = null;

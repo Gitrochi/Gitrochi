@@ -1,9 +1,10 @@
+import { releaseMarkdownLinks } from "@/entities/hosting";
 import { Download } from "lucide-react";
 import { env } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { updater } from "@/shared/platform";
-import { Button, Modal, Spinner } from "@/shared/ui";
+import { Button, Markdown, Modal, Spinner } from "@/shared/ui";
 
 const mb = (n: number) => (n / 1024 / 1024).toFixed(1);
 
@@ -54,7 +55,7 @@ export function UpdateDialog() {
         {t("Current version {0} → {1}{2}", u.current, u.version, u.date ? ` · ${u.date.slice(0, 10)}` : "")}</div>
       {u.notes && (
         <div className="markdown selectable" style={{ maxHeight: 260, overflow: "auto", border: "1px solid var(--border)", borderRadius: 6, padding: 10, fontSize: 12.5 }}>
-          {u.notes}
+          <Markdown text={u.notes} {...releaseMarkdownLinks({provider: "github", remote: "origin", host: "github.com", path: "Gitrochi/Gitrochi"}, `v${u.version}`)}/>
         </div>
       )}
       {busy && (

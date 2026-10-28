@@ -2,3 +2,4 @@ export { WorkInboxPanel, MyWorkPanel, ActionsWorkspacePanel } from "./ui/Workspa
 export { WorkspaceHomePanel } from "./ui/WorkspaceHomePanel";
 
 export { WorkspacePlanningDashboard } from "./ui/WorkspacePlanningDashboard";
+export { ReleaseOverview } from "./ui/ReleaseOverview";
