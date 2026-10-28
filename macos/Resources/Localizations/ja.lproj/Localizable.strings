@@ -1764,3 +1764,5 @@
 "No pull requests match this filter." = "この条件に一致するプルリクエストはありません。";
 "An empty search lists repositories you belong to." = "検索欄を空にすると、所属しているリポジトリを一覧します。";
 "Search the list, then read the conversation and reply here." = "一覧で探して、ここで会話を読み、返信します。";
+"Hide right panel" = "右パネルを非表示";
+"Show right panel" = "右パネルを表示";

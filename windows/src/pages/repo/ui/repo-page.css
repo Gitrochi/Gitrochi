@@ -39,6 +39,8 @@
   overflow: hidden;
 }
 
+.repository-screen > [hidden] { display: none; }
+
 .sidebar {
   background: var(--sidebar);
   border-right: 1px solid var(--border);

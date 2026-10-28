@@ -3,6 +3,7 @@ import SwiftUI
 /// The repository window: the page list on the left (an icon rail once a repository is open), the page on the right.
 struct RepoView: View {
     @Environment(RepoStore.self) private var store
+    @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     @ViewState private var sidebarPresentation = SidebarPresentationState()
     @ViewState private var sidebarCollapsed = false
     @ViewState private var sidebarExpandRequest = 0
@@ -247,6 +248,15 @@ struct RepoView: View {
                       store.showTerminal ? String(localized: "Hides the terminal panel below. Shells keep running.")
                                          : String(localized: "Opens a terminal in this repository's folder below the graph. The graph updates as soon as you run git commands."),
                       shortcut: "⌃`")
+
+            if store.destination == .repository {
+                Button { inspectorCollapsed.toggle() } label: {
+                    ToolLabel(title: inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"),
+                              icon: "sidebar.right")
+                }
+                .accessibilityLabel(inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"))
+                .help((inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel")) + " (⌥⌘B)")
+            }
         }
         // the hosting account and Git identity stay in the toolbar's trailing corner, in a capsule of their own:
         // without the gap macOS draws the terminal button and the account in one shared capsule

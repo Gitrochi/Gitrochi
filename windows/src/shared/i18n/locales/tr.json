@@ -1243,5 +1243,7 @@
  "CLI appearance": "CLI görünümü",
  "Show the small eye logo in CLI output": "CLI çıktısında küçük göz logosunu göster",
  "You can also use gitch logo on or gitch logo off in a terminal.": "Terminalde gitch logo on veya gitch logo off komutunu da kullanabilirsiniz.",
- "Couldn't read the CLI logo setting.": "CLI logo ayarı okunamadı."
+ "Couldn't read the CLI logo setting.": "CLI logo ayarı okunamadı.",
+  "Hide right panel": "Sağ paneli gizle",
+  "Show right panel": "Sağ paneli göster"
 }

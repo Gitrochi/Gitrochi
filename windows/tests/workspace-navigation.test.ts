@@ -27,6 +27,28 @@ beforeEach(() => {
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
 
 describe("workspace navigation", () => {
+  it("toggles the right panel with Ctrl+Alt+B only on the repository screen", () => {
+    const store = fixture(); store.destination = "repository";
+    memory.inspectorWidth = 410;
+    vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+    vi.stubGlobal("document", { querySelector: () => null });
+    const press = (extra: Partial<KeyboardEvent> = {}) => {
+      const event = { key: "b", ctrlKey: true, metaKey: false, altKey: true, shiftKey: false, defaultPrevented: false, target: null, preventDefault() { event.defaultPrevented = true; }, stopPropagation() {}, ...extra };
+      handleShortcut(event as unknown as KeyboardEvent, () => {});
+      return event.defaultPrevented;
+    };
+    try {
+      expect(press()).toBe(true); expect(memory.inspectorCollapsed).toBe(true);
+      expect(press()).toBe(true); expect(memory.inspectorCollapsed).toBe(false);
+      expect(memory.inspectorWidth).toBe(410);
+      press({ defaultPrevented: true }); expect(memory.inspectorCollapsed).toBe(false);
+      press({ shiftKey: true }); expect(memory.inspectorCollapsed).toBe(false);
+      press({ ctrlKey: false }); expect(memory.inspectorCollapsed).toBe(false);
+      store.destination = "issues"; expect(press()).toBe(false); expect(memory.inspectorCollapsed).toBe(false);
+      store.destination = "repository"; store.path = null;
+      expect(press()).toBe(false); expect(memory.inspectorCollapsed).toBe(false);
+    } finally { vi.unstubAllGlobals(); }
+  });
   it("lists the twelve pages in the sidebar's order and rejects untrusted saved values", () => {
     expect([...workspaceDestinations]).toEqual(["home", "repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"]);
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);

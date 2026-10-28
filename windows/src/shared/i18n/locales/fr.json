@@ -1232,5 +1232,7 @@
  "CLI appearance": "Apparence de la CLI",
  "Show the small eye logo in CLI output": "Afficher le petit logo en forme d’œil dans la sortie de la CLI",
  "You can also use gitch logo on or gitch logo off in a terminal.": "Vous pouvez aussi utiliser gitch logo on ou gitch logo off dans un terminal.",
- "Couldn't read the CLI logo setting.": "Impossible de lire le réglage du logo de la CLI."
+ "Couldn't read the CLI logo setting.": "Impossible de lire le réglage du logo de la CLI.",
+  "Hide right panel": "Masquer le panneau droit",
+  "Show right panel": "Afficher le panneau droit"
 }
