@@ -47,7 +47,7 @@ struct RepoView: View {
                 .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle(store.name)
+        .navigationTitle(store.windowTitle)
         .navigationSubtitle(subtitle)
         .toolbar { toolbar }
         .background(ToolbarTitles.Observer())

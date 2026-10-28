@@ -14,6 +14,9 @@ final class RepoStore: Identifiable {
     private(set) var url: URL?
     private(set) var gitDir: URL?
     var name: String { url?.lastPathComponent ?? "Gitrochi" }
+    /// The window and tab title. A tab without a repository is a new tab, as on Windows: the app's name there read like
+    /// a repository called Gitrochi.
+    var windowTitle: String { url != nil ? name : loading?.title ?? String(localized: "New tab") }
 
     // MARK: 데이터
     private(set) var entries: [GraphEntry] = []
