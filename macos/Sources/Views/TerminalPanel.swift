@@ -6,7 +6,6 @@ import SwiftTerm
 /// The middle column of the repository screen: graph, diff or file history above, the terminal below
 struct ContentColumn: View {
     @Environment(RepoStore.self) private var store
-    @AppStorage("terminalHeight") private var terminalHeight = 260.0
     @ViewState private var columnHeight: CGFloat = 800
 
     var body: some View {
@@ -23,12 +22,7 @@ struct ContentColumn: View {
             .frame(minHeight: 0, maxHeight: .infinity)
 
             if store.showTerminal {
-                let range = 120.0...max(120.0, Double(columnHeight) - 200)
-                TerminalPanel()
-                    .frame(height: min(max(terminalHeight, range.lowerBound), range.upperBound))
-                    .overlay(alignment: .top) {
-                        SplitHandle(height: $terminalHeight, range: range)
-                    }
+                TerminalPanel(columnHeight: columnHeight)
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
@@ -59,16 +53,25 @@ private struct SplitHandle: View {
     }
 }
 
-/// The terminal panel: panes split right or down, each with its own tabs
+/// The terminal panel: panes split right or down, each with its own tabs. Its top edge drags to resize it, and every
+/// page shares the height. (Windows: widgets/terminal-panel/ui/TerminalPanel.tsx)
 struct TerminalPanel: View {
     @Environment(RepoStore.self) private var store
+    @AppStorage("terminalHeight") private var terminalHeight = 260.0
+    /// The height of the column the panel sits in; the content above keeps at least 200 pt
+    let columnHeight: CGFloat
 
     var body: some View {
+        let range = 120.0...max(120.0, Double(columnHeight) - 200)
         VStack(spacing: 0) {
             Divider()
             if let layout = store.terminalLayout {
                 TerminalNodeView(node: layout, corner: layout.corner.id, split: layout.panes.count > 1)
             }
+        }
+        .frame(height: min(max(terminalHeight, range.lowerBound), range.upperBound))
+        .overlay(alignment: .top) {
+            SplitHandle(height: $terminalHeight, range: range)
         }
     }
 }
@@ -98,36 +101,58 @@ private struct TerminalSplitView: View {
     let b: TerminalNode
     let corner: UUID
     let split: Bool
+    /// Only for turning a drag into a ratio; the layout itself reads the space it is given
+    @ViewState private var total: CGFloat = 0
 
     var body: some View {
-        GeometryReader { geo in
-            let side = axis == .sideBySide
-            let total = side ? geo.size.width : geo.size.height
-            let first = max(0, total * ratio - 0.5)
-            let stack = side ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
-            stack {
-                TerminalNodeView(node: a, corner: corner, split: split)
-                    .frame(width: side ? first : nil, height: side ? nil : first)
-                Rectangle()
-                    .fill(Color(nsColor: .separatorColor))
-                    .frame(width: side ? 1 : nil, height: side ? nil : 1)
-                    .overlay {
-                        // a wider grab area than the 1pt line
-                        Color.clear
-                            .frame(width: side ? 7 : nil, height: side ? nil : 7)
-                            .contentShape(Rectangle())
-                            .pointerStyle(side ? .columnResize : .rowResize)
-                            .gesture(
-                                DragGesture(minimumDistance: 1, coordinateSpace: .named(id))
-                                    .onChanged { v in
-                                        guard total > 0 else { return }
-                                        store.resizeTerminalSplit(id, to: (side ? v.location.x : v.location.y) / total)
-                                    }
-                            )
-                    }
-                TerminalNodeView(node: b, corner: corner, split: split)
+        let side = axis == .sideBySide
+        TerminalSplitLayout(sideBySide: side, ratio: ratio) {
+            TerminalNodeView(node: a, corner: corner, split: split)
+            Rectangle()
+                .fill(Color(nsColor: .separatorColor))
+                .overlay {
+                    // a wider grab area than the 1pt line
+                    Color.clear
+                        .frame(width: side ? 7 : nil, height: side ? nil : 7)
+                        .contentShape(Rectangle())
+                        .pointerStyle(side ? .columnResize : .rowResize)
+                        .gesture(
+                            DragGesture(minimumDistance: 1, coordinateSpace: .named(id))
+                                .onChanged { v in
+                                    guard total > 0 else { return }
+                                    store.resizeTerminalSplit(id, to: (side ? v.location.x : v.location.y) / total)
+                                }
+                        )
+                }
+            TerminalNodeView(node: b, corner: corner, split: split)
+        }
+        .coordinateSpace(.named(id))
+        .onGeometryChange(for: CGFloat.self) { side ? $0.size.width : $0.size.height } action: { total = $0 }
+    }
+}
+
+/// Places the first pane, the 1pt divider and the second pane in the space the split is given. A GeometryReader here
+/// sized the first pane from the new size but kept both panes in the old frame after a window resize.
+private struct TerminalSplitLayout: Layout {
+    let sideBySide: Bool
+    let ratio: Double
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 3 else { return }
+        let total = sideBySide ? bounds.width : bounds.height
+        let first = min(max(0, total * ratio - 0.5), max(0, total - 1))
+        var offset: CGFloat = 0
+        for (view, length) in zip(subviews, [first, 1, max(0, total - first - 1)]) {
+            if sideBySide {
+                view.place(at: CGPoint(x: bounds.minX + offset, y: bounds.minY), proposal: ProposedViewSize(width: length, height: bounds.height))
+            } else {
+                view.place(at: CGPoint(x: bounds.minX, y: bounds.minY + offset), proposal: ProposedViewSize(width: bounds.width, height: length))
             }
-            .coordinateSpace(.named(id))
+            offset += length
         }
     }
 }

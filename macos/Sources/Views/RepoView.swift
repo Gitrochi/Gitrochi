@@ -7,6 +7,7 @@ struct RepoView: View {
     @ViewState private var sidebarCollapsed = false
     @ViewState private var sidebarExpandRequest = 0
     @ViewState private var pendingCommand: WorkspaceCommand?
+    @ViewState private var pageHeight: CGFloat = 800
 
     private var showsNavigationRail: Bool { sidebarPresentation.visibility == .detailOnly || sidebarCollapsed }
 
@@ -40,11 +41,12 @@ struct RepoView: View {
                     WorkspaceDestinationContent()
                     // the repository screen has its own terminal under the graph; the other pages get one below
                     if store.showTerminal, store.destination != .repository {
-                        Divider(); TerminalPanel().frame(height: 240)
+                        TerminalPanel(columnHeight: pageHeight)
                     }
                     feedback
                 }
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { pageHeight = $0 }
             }
             // Split details must shrink with the viewport instead of centering a page's larger minimum height.
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
