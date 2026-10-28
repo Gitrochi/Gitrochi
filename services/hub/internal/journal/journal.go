@@ -89,7 +89,9 @@ func Open(dir string) (*Journal, Recovered, error) {
 	}
 
 	path := filepath.Join(dir, LogName)
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600)
+	// Not O_APPEND: on Windows that handle may only append, so cutting a torn tail
+	// or the compacted log would be refused. Append writes at j.size instead.
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, rec, err
 	}
@@ -196,7 +198,7 @@ func (j *Journal) Append(records []Record) error {
 		j.buf.Write(line)
 		j.buf.WriteByte('\n')
 	}
-	n, err := j.f.Write(j.buf.Bytes())
+	n, err := j.f.WriteAt(j.buf.Bytes(), j.size)
 	j.size += int64(n)
 	if err != nil {
 		return err
