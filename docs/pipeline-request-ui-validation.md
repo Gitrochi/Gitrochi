@@ -17,7 +17,7 @@ The activity rail uses the review comments and system notes already returned by 
 | `macos/build.sh` | Passed on arm64; existing `SecKeychainGetUserInteractionAllowed` / `SecKeychainSetUserInteractionAllowed` deprecation warnings in unchanged account code remain |
 | Windows `npm run build` | Passed; existing Vite bundle-size advisory remains |
 | Windows `npm test` | 88 files, 716 tests passed |
-| Windows UI self-test routines in Chrome | Request activity, timestamp units, keyboard tabs, retained comment/metadata drafts and diff round trips passed; workspace pipeline selection and redacted logs passed |
+| Windows UI self-test routines in Chrome | Request activity, timestamp units, keyboard tabs, retained comment/metadata drafts and diff round trips passed; active-tab line editors, draft removal and batch review submission passed; workspace pipeline selection and redacted logs passed |
 | `bash macos/Tools/test-request-checks.sh` | Passed |
 | `bash macos/Tools/test-pull-request-review.sh` | Passed |
 | `bash macos/Tools/test-adaptive-workbench-identity.sh` | Passed |
@@ -32,7 +32,9 @@ Native captures can be reproduced after building with:
 GITROCHI_REQUEST_LAYOUT_SCENARIOS=activity,pipeline bash macos/Tools/test-request-layout.sh /tmp/gitrochi-request-ui
 ```
 
-The two expanded Windows UI routines remain registered in `windows/src/app/selftest.ts`. Screenshot harnesses use fake HTTP/process entry points and in-memory settings. Results are recorded in [native captures](screenshots/pipeline-requests/native-result.json) and [browser captures](screenshots/pipeline-requests/browser-result.json).
+The expanded Windows UI routines remain registered in `windows/src/app/selftest.ts`. Screenshot harnesses use fake HTTP/process entry points and in-memory settings. Results are recorded in [native captures](screenshots/pipeline-requests/native-result.json) and [browser captures](screenshots/pipeline-requests/browser-result.json).
+
+The first Windows CI run exposed a legacy self-test that counted editors in both mounted tabs. Its selector now targets the active tab, and it verifies the edited draft survives switching to Files and back to Conversation before submitting. The updated routine and the existing request/workspace routines passed together in Chrome; the Windows runner verifies the same registered steps.
 
 ## Screenshots
 
