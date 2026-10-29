@@ -1262,3 +1262,9 @@
 "Open in Releases" = "เปิดในรีลีส";
 "Hide right panel" = "ซ่อนแผงด้านขวา";
 "Show right panel" = "แสดงแผงด้านขวา";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "งานที่โหลดแล้ว";
+"No changed files" = "ไม่มีไฟล์ที่เปลี่ยนแปลง";
+"No log output yet." = "ยังไม่มีข้อมูลบันทึก";
+"Checks are unavailable until the request's commit is known." = "การตรวจสอบจะพร้อมใช้งานเมื่อทราบคอมมิตของคำขอ";

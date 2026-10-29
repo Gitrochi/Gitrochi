@@ -1431,5 +1431,9 @@
   "View overlap in graph": "在图谱中查看重叠",
   "Commits": "提交",
   "Related test candidates": "相关测试候选",
-  "The staged contents or HEAD changed. Analyze again before using this result.": "暂存内容或 HEAD 已更改。请重新分析后再使用此结果。"
+  "The staged contents or HEAD changed. Analyze again before using this result.": "暂存内容或 HEAD 已更改。请重新分析后再使用此结果。",
+  "Loaded jobs": "已加载的作业",
+  "No changed files": "没有更改的文件",
+  "No log output yet.": "暂无日志输出。",
+  "Checks are unavailable until the request's commit is known.": "确定请求的提交后才能查看检查结果。"
 }

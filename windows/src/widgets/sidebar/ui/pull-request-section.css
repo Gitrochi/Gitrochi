@@ -1,0 +1,6 @@
+/* Request list rows remain usable in the repository sidebar and the request workspace. */
+.request-list-row.on-page { padding:10px; border-bottom:1px solid var(--border); border-radius:0; }
+.request-list-row.on-page > .col { gap:5px; }
+.request-list-row .request-list-title { font-weight:550; white-space:normal; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.request-list-row > .col > .row:first-child { align-items:flex-start; }
+.request-list-row:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }

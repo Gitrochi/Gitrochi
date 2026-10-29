@@ -1249,3 +1249,9 @@
 "Open in Releases" = "Otwórz w Wydaniach";
 "Hide right panel" = "Ukryj prawy panel";
 "Show right panel" = "Pokaż prawy panel";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Wczytane zadania";
+"No changed files" = "Brak zmienionych plików";
+"No log output yet." = "Brak danych dziennika.";
+"Checks are unavailable until the request's commit is known." = "Kontrole będą dostępne po ustaleniu commitu żądania.";

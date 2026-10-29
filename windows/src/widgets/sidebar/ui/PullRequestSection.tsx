@@ -10,6 +10,7 @@ import { useObserve } from "@/shared/lib";
 import { IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
 import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
+import "./pull-request-section.css";
 
 /**
  * The repository's pull/merge requests: in the repository sidebar, and as the list of the Pull requests page (onPage).
@@ -95,7 +96,11 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
       {store.pullRequests.map((pr) => (
         <div
           key={pr.number}
-          className="side-row"
+          className={`side-row request-list-row ${onPage ? "on-page" : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={store.selection?.kind === "pullRequest" && store.selection.number === pr.number}
+          onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); store.select({ kind: "pullRequest", number: pr.number }); } }}
           data-request={pr.number}
           style={{ alignItems: "flex-start", background: store.selection?.kind === "pullRequest" && store.selection.number === pr.number ? "var(--select)" : undefined }}
           onClick={() => store.select({ kind: "pullRequest", number: pr.number })}
@@ -113,7 +118,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
               <span className="muted" style={{ fontVariantNumeric: "tabular-nums" }}>
                 #{pr.number}
               </span>
-              <span className="ellipsis">{pr.title}</span>
+              <span className={onPage ? "request-list-title" : "ellipsis"}>{pr.title}</span>
               {pr.headSHA && store.ci.bySha.get(pr.headSHA) && (
                 <span className="ci-badge" data-tip={`CI: ${statusInfo[store.ci.bySha.get(pr.headSHA)!.status].title} · #${store.ci.bySha.get(pr.headSHA)!.number}`}>
                   <CIStatusIcon status={store.ci.bySha.get(pr.headSHA)!.status} size={11} />
@@ -126,6 +131,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
                 {pr.source} → {pr.target}
               </span>
             </span>
+            {onPage && <span className="side-sub ellipsis">@{pr.author}</span>}
           </span>
         </div>
       ))}

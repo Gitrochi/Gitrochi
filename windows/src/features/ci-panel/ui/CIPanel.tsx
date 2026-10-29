@@ -299,13 +299,17 @@ function PipelineRow({
     <div
       className={`side-row ci-run ${selected ? "selected" : ""}`}
       data-pipeline={p.id}
-      aria-selected={selected}
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); store.selectRun(p); } }}
       onClick={() => store.selectRun(p)}
       onContextMenu={(e) => runMenu(e, store, p, provider)}
     >
       <CIStatusIcon status={p.status} />
       <div className="col grow" style={{ minWidth: 0, gap: 0 }}>
-        <span className="ellipsis">{runTitle(store, p)}</span>
+        <span className="ci-run-title">{runTitle(store, p)}</span>
+        <span className="ci-run-status" style={{ color: statusInfo[p.status].color }}>{statusInfo[p.status].title}</span>
         <span className="side-sub row" style={{ gap: 4, minWidth: 0 }}>
           {provider === "github" && p.name && (
             <span className="ellipsis" style={{ flex: "0 1 auto" }}>

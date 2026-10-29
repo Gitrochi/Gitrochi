@@ -151,6 +151,12 @@ struct CIPanel: View {
             .background(store.ciSelected == p.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
             .onTapGesture { store.selectRun(p) }
+            .focusable()
+            .onKeyPress(.return) { store.selectRun(p); return .handled }
+            .onKeyPress(.space) { store.selectRun(p); return .handled }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(store.ciSelected == p.id ? [.isButton, .isSelected] : [.isButton])
+            .accessibilityAction { store.selectRun(p) }
             .id(p.id)
     }
 
@@ -197,7 +203,8 @@ private struct PipelineRow: View {
         HStack(alignment: .center, spacing: 6) {
             CIStatusIcon(status: p.status)
             VStack(alignment: .leading, spacing: 1) {
-                Text(store.ciTitle(p)).lineLimit(1)
+                Text(store.ciTitle(p)).fontWeight(.medium).lineLimit(2)
+                Text(p.status.title).font(.caption2).foregroundStyle(p.status.color)
                 HStack(spacing: 4) {
                     if provider == .github, !p.name.isEmpty { Text(p.name).lineLimit(1) }
                     Text("#\(p.number)").monospacedDigit()

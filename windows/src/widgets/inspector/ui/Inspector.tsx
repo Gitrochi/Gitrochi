@@ -1,20 +1,18 @@
-import { ArrowDownToLine, ArrowLeft, CircleCheck, CircleDot, CircleMinus, CirclePlus, Clock, ExternalLink, GitBranch, GitMerge, GitPullRequest, Hash, Layers, RefreshCw, Sparkles, TriangleAlert, Waypoints } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, CircleCheck, CircleDot, CircleMinus, CirclePlus, Clock, GitBranch, GitMerge, Hash, Layers, Sparkles, TriangleAlert, Waypoints } from "lucide-react";
+import { type ReactNode, useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";
-import { type FileChange, markdownLinks, providerInfo, RefBadge, sameDiffSource, short, StatusBadge, statusCount, statusIsEmpty } from "@/entities/git";
+import { type FileChange, markdownLinks, RefBadge, sameDiffSource, short, statusCount, statusIsEmpty } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, Markdown, type MenuItem, SharedPane, SharedStack, Spinner, tip } from "@/shared/ui";
+import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, LineStatText, Markdown, type MenuItem, SharedPane, SharedStack, Spinner, tip } from "@/shared/ui";
 import { ChangeList, FileViewToggle } from "./FileList";
 import { CommitImpactPanel } from "./CommitImpactPanel";
 import { GitchBar } from "./GitchBar";
 import { WorktreeChanges } from "./WorktreeChanges";
-import { ReviewDraftPanel, ReviewThreadActions } from "./ReviewPanels";
-import { RequestLifecyclePanel } from "./RequestLifecyclePanel";
-import { RequestChecksPanel } from "./RequestChecksPanel";
+import { PullRequestDetailView } from "./PullRequestDetailView";
 import "./inspector.css";
 
 /** 오른쪽 열: 작업 영역 또는 커밋 상세 */
@@ -26,7 +24,7 @@ export function Inspector({ store }: { store: RepoStore }) {
   if (sel.kind === "wip") return <WorkingChanges store={store} />;
   if (sel.kind === "commit") return <CommitDetailView store={store} sha={sel.sha} />;
   if (sel.kind === "worktree") return <WorktreeChanges store={store} path={sel.path} />;
-  return <PullRequestDetail store={store} number={sel.number} />;
+  return <PullRequestDetailView store={store} number={sel.number} />;
 }
 
 // MARK: - 작업 영역
@@ -372,150 +370,6 @@ function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
 }
 
 // MARK: - PR 상세
-
-function PullRequestDetail({ store, number }: { store: RepoStore; number: number }) {
-  useObserve(store.ci);
-  const [draft, setDraft] = useState("");
-  useEffect(() => {
-    setDraft("");
-    void store.loadReview(number);
-  }, [store, number]);
-  const pr = store.pullRequests.find((p) => p.number === number);
-  const target = store.target;
-  const md = useMemo(() => markdownLinks(target, pr?.headSHA ?? pr?.source ?? "HEAD"), [target, pr?.headSHA, pr?.source]);
-  if (!pr || !target) return <Empty icon={<GitPullRequest size={30} />} title={t("{0} not in the list", target ? providerInfo[target.provider].requestShort : "PR")} detail={t("It was closed or hasn't been loaded yet.")} />;
-  const r = store.review?.number === number ? store.review : null;
-  const s = r?.state;
-  const text = draft.trim();
-  const pending = store.reviewDraftsFor(number).length;
-  const after = (ok: boolean) => {
-    if (ok && store.selection?.kind === "pullRequest" && store.selection.number === number)
-      setDraft((current) => current.trim() === text ? "" : current);
-  };
-  return (
-    <div className="col grow" style={{ height: "100%" }}>
-      <div className="panel-head">
-        <GitPullRequest size={15} className="muted" />
-        <span style={{ fontWeight: 600 }}>
-          {providerInfo[target.provider].requestShort} #{pr.number}
-        </span>
-        {pr.isDraft && <span className="chip-warn">{t("Draft")}</span>}
-        <span className="spacer" />
-        {store.reviewLoading && <Spinner size={12} />}
-        <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh conversation and approvals")} onClick={() => void store.loadReview(number)} />
-      </div>
-      <div className="panel-scroll request-detail-scroll" key={number}>
-        <header className="request-summary">
-          <h1 className="selectable">{pr.title}</h1>
-          <div className="request-meta"><span>@{pr.author}</span>{pr.updated && <span>{t("Update")} {longDate(pr.updated)}</span>}</div>
-          <div className="request-branches selectable"><GitBranch size={13}/><code>{pr.source}</code><span>→</span><code>{pr.target}</code>{pr.fromFork && <span className="muted">{t("fork")}</span>}</div>
-          <div className="request-actions"><Button kind="primary" onClick={() => void store.checkoutPullRequest(pr)}><ArrowDownToLine size={14}/>{t("Check out branch")}</Button><Button onClick={() => store.openUrl(pr.url)}><ExternalLink size={14}/>{t("Browser")}</Button>{pr.headSHA && store.commitIndex.has(pr.headSHA) && <Button onClick={() => store.reveal(pr.headSHA!)}>{t("Show in graph")}</Button>}</div>
-        </header>
-        <section className="request-description"><strong className="request-section-label">{t("Description")}</strong>{pr.body.trim() ? <Markdown text={pr.body} {...md} /> : <span className="muted">{t("No description")}</span>}</section>
-        <RequestChecksPanel store={store} number={number} sha={pr.headSHA} url={pr.url}/>
-        <RequestLifecyclePanel store={store} number={number} />
-        {store.reviewError && (
-          <span className="error-text" style={{ fontSize: 11.5, whiteSpace: "pre-wrap" }}>
-            {store.reviewError}
-          </span>
-        )}
-        {r && s && (
-          <>
-            <div className="col" style={{ gap: 4 }}>
-              <span style={{ fontWeight: 600 }}>{t("Review")}</span>
-              {!s.approvedBy.length && !s.changesRequestedBy.length && <span className="muted">{t("No one has approved yet.")}</span>}
-              {s.approvedBy.length > 0 && <span style={{ color: "var(--green)" }}>{t("✓ Approved: {0}", s.approvedBy.map((x) => "@" + x).join(", "))}</span>}
-              {s.changesRequestedBy.length > 0 && <span style={{ color: "var(--orange)" }}>{t("Changes requested: {0}", s.changesRequestedBy.map((x) => "@" + x).join(", "))}</span>}
-              {s.approvalsLeft != null && s.approvalsLeft > 0 && <span className="muted" style={{ fontSize: 11.5 }}>{t("{0} more approvals needed.", s.approvalsLeft)}</span>}
-            </div>
-            <div className="col" style={{ gap: 2 }}>
-              <span style={{ fontWeight: 600 }}>{t("Changed files {0}", r.files.length)}</span>
-              {r.files.map((f) => {
-                const open = store.diffSource?.kind === "review" && store.diffSource.number === number && store.diffSource.change.path === f.path;
-                return (
-                  <div
-                    key={f.path}
-                    className="side-row review-file"
-                    style={{ background: open ? "var(--select)" : undefined }}
-                    data-tip={f.patch ? t("Click to see the diff in the center") : t("Binary or too large — view it in the browser")}
-                    onClick={() => store.openReviewFile(number, f)}
-                  >
-                    <StatusBadge kind={f.kind} />
-                    <span className="ellipsis">{f.path.split("/").pop()}</span>
-                    <span className="side-sub ellipsis grow">{f.path.split("/").slice(0, -1).join("/")}</span>
-                    <LineStatText added={f.additions} deleted={f.deletions} />
-                  </div>
-                );
-              })}
-            </div>
-            <ReviewDraftPanel store={store} number={number} />
-            <div className="col" style={{ gap: 8 }}>
-              <span style={{ fontWeight: 600 }}>{t("Conversation {0}", r.comments.filter((c) => c.kind !== "system").length)}</span>
-              {r.comments.map((c) =>
-                c.kind === "system" ? (
-                  <span key={c.id} className="muted" style={{ fontSize: 11.5 }}>
-                    @{c.author} {c.body}
-                  </span>
-                ) : (
-                  <div key={c.id} className="review-comment">
-                    <div className="row" style={{ gap: 6 }}>
-                      <span style={{ fontWeight: 600 }}>@{c.author}</span>
-                      {c.kind === "approved" && <span style={{ color: "var(--green)", fontSize: 11.5 }}>{t("✓ Approve")}</span>}
-                      {c.kind === "changesRequested" && <span style={{ color: "var(--orange)", fontSize: 11.5 }}>{t("Request changes")}</span>}
-                      <span className="spacer" />
-                      {c.date != null && <span className="muted" style={{ fontSize: 11.5 }}>{shortDate(c.date)}</span>}
-                    </div>
-                    {c.path && (
-                      <span className="mono muted" style={{ fontSize: 11 }}>
-                        {c.path}
-                        {c.line != null ? `:${c.line}` : ""}
-                      </span>
-                    )}
-                    {c.body && <Markdown text={c.body} {...md} />}
-                    <ReviewThreadActions store={store} number={number} comment={c} />
-                  </div>
-                ),
-              )}
-            </div>
-          </>
-        )}
-      </div>
-      <div className="col" style={{ gap: 6, padding: 10, borderTop: "1px solid var(--border)" }}>
-        <textarea
-          className="textarea"
-          style={{ height: 58 }}
-          placeholder={t("Comment · review feedback")}
-          value={draft}
-          disabled={store.reviewBusy || store.reviewLoading}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && (text || pending) && !store.reviewBusy) {
-              e.preventDefault();
-              void store.postReviewComment(number, text).then(after);
-            }
-          }}
-        />
-        <div className="row" style={{ gap: 6 }}>
-          {store.reviewBusy && <Spinner size={12} />}
-          <span className="spacer" />
-          {target.provider === "github" && (
-            <Button size="small" disabled={(!text && !pending) || store.reviewBusy} tip={t("Request changes with a comment (comment required)")} onClick={() => void store.requestChanges(number, text).then(after)}>
-              {t("Request changes")}</Button>
-          )}
-          {target.provider === "gitlab" && s?.approvedByMe ? (
-            <Button size="small" disabled={store.reviewBusy} onClick={() => void store.unapprovePullRequest(number)}>
-              {t("Revoke approval")}</Button>
-          ) : (
-            <Button size="small" disabled={store.reviewBusy || !!s?.approvedByMe} tip={text ? t("Approve with a comment") : t("Approves this request")} onClick={() => void store.approvePullRequest(number, text).then(after)}>
-              {t("✓ Approve")}</Button>
-          )}
-          <Button size="small" kind="primary" disabled={(!text && !pending) || store.reviewBusy} tip={keyLabel(t("Comment (Ctrl+Enter)"))} onClick={() => void store.postReviewComment(number, text).then(after)}>
-            {pending ? t("Submit review") : t("Comment")}</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /** 변경 목록 트리의 폴더 줄 우클릭 */
 function folderMenu(store: RepoStore, path: string): MenuItem[] {

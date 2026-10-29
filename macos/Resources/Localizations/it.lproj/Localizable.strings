@@ -1239,3 +1239,9 @@
 "Open in Releases" = "Apri in Release";
 "Hide right panel" = "Nascondi pannello destro";
 "Show right panel" = "Mostra pannello destro";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Processi caricati";
+"No changed files" = "Nessun file modificato";
+"No log output yet." = "Nessun output del registro disponibile.";
+"Checks are unavailable until the request's commit is known." = "I controlli saranno disponibili quando sarà noto il commit della richiesta.";

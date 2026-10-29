@@ -1294,3 +1294,9 @@
 "{0} invitations loaded" = "{0} invitations chargées";
 "Update access" = "Modifier les droits";
 "Grant access" = "Accorder un accès";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Tâches chargées";
+"No changed files" = "Aucun fichier modifié";
+"No log output yet." = "Aucune sortie de journal pour le moment.";
+"Checks are unavailable until the request's commit is known." = "Les vérifications seront disponibles lorsque le commit de la demande sera connu.";

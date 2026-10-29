@@ -187,8 +187,10 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // a row selects the run; a job shows its log beside the jobs
     host.querySelector<HTMLElement>('.ci-run[data-pipeline="1"]')!.click(); await pause(); await pause();
     check(store.ciSelected === 1 && host.querySelector(".ci-run-detail")?.textContent?.includes("Fixture run"), "Selecting a run did not show it");
-    host.querySelector<HTMLElement>(".ci-job")!.click(); await pause(); await pause(); await pause();
+    check(!!host.querySelector(".ci-job-summary") && !!host.querySelector(".ci-stage-group"), "Run status summary or stage hierarchy is missing");
+    host.querySelector<HTMLButtonElement>(".ci-job-select")!.click(); await pause(); await pause(); await pause();
     check(host.querySelector(".ci-log-text")?.textContent?.includes("build passed"), "Job log preview missing");
+    check(host.querySelector(".ci-job-select")?.getAttribute("aria-pressed") === "true", "Selected job is not accessible");
     host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;

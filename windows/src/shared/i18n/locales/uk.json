@@ -1303,5 +1303,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Також можна використовувати gitch logo on або gitch logo off у терміналі.",
  "Couldn't read the CLI logo setting.": "Не вдалося прочитати налаштування логотипа CLI.",
   "Hide right panel": "Приховати праву панель",
-  "Show right panel": "Показати праву панель"
+  "Show right panel": "Показати праву панель",
+  "Loaded jobs": "Завантажені завдання",
+  "No changed files": "Немає змінених файлів",
+  "No log output yet.": "Виводу журналу ще немає.",
+  "Checks are unavailable until the request's commit is known.": "Перевірки стануть доступні, коли буде відомий коміт запиту."
 }

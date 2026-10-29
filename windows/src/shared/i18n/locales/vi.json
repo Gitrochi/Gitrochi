@@ -1259,5 +1259,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Bạn cũng có thể dùng gitch logo on hoặc gitch logo off trong terminal.",
  "Couldn't read the CLI logo setting.": "Không thể đọc cài đặt biểu tượng CLI.",
   "Hide right panel": "Ẩn bảng bên phải",
-  "Show right panel": "Hiện bảng bên phải"
+  "Show right panel": "Hiện bảng bên phải",
+  "Loaded jobs": "Tác vụ đã tải",
+  "No changed files": "Không có tệp thay đổi",
+  "No log output yet.": "Chưa có đầu ra nhật ký.",
+  "Checks are unavailable until the request's commit is known.": "Có thể xem kiểm tra sau khi xác định được commit của yêu cầu."
 }

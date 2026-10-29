@@ -2133,5 +2133,9 @@
   "Search loaded people and teams": "読み込んだメンバーとチームを検索",
   "{0} invitations loaded": "招待{0}件読み込み済み",
   "Update access": "アクセス権を変更",
-  "Grant access": "アクセス権を付与"
+  "Grant access": "アクセス権を付与",
+  "Loaded jobs": "読み込んだジョブ",
+  "No changed files": "変更されたファイルはありません",
+  "No log output yet.": "ログ出力はまだありません。",
+  "Checks are unavailable until the request's commit is known.": "リクエストのコミットが判明するとチェックを表示できます。"
 }

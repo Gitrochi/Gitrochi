@@ -1210,3 +1210,9 @@
 "Open in Releases" = "Openen in Releases";
 "Hide right panel" = "Rechterpaneel verbergen";
 "Show right panel" = "Rechterpaneel tonen";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Geladen taken";
+"No changed files" = "Geen gewijzigde bestanden";
+"No log output yet." = "Nog geen loguitvoer.";
+"Checks are unavailable until the request's commit is known." = "Controles zijn beschikbaar zodra de commit van het verzoek bekend is.";

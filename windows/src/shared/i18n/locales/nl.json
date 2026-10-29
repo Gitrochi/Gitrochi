@@ -1256,5 +1256,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Je kunt ook gitch logo on of gitch logo off in een terminal gebruiken.",
  "Couldn't read the CLI logo setting.": "De instelling voor het CLI-logo kon niet worden gelezen.",
   "Hide right panel": "Rechterpaneel verbergen",
-  "Show right panel": "Rechterpaneel tonen"
+  "Show right panel": "Rechterpaneel tonen",
+  "Loaded jobs": "Geladen taken",
+  "No changed files": "Geen gewijzigde bestanden",
+  "No log output yet.": "Nog geen loguitvoer.",
+  "Checks are unavailable until the request's commit is known.": "Controles zijn beschikbaar zodra de commit van het verzoek bekend is."
 }

@@ -82,7 +82,7 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         let target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/Gitrochi")
         let sha = String(repeating: "a", count: 40)
         var results: [[String: Any]] = []
-        let allScenarios = ["conversation", "checks", "organizations", "members", "empty"]
+        let allScenarios = ["conversation", "checks", "organizations", "members", "empty", "activity", "pipeline"]
         let requestedScenarios = ProcessInfo.processInfo.environment["GITROCHI_REQUEST_LAYOUT_SCENARIOS"]
             .map { Set($0.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) }
         if let requestedScenarios {
@@ -91,7 +91,8 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         let scenarios = allScenarios.filter { requestedScenarios?.contains($0) ?? true }
         for scenario in scenarios {
             requestFixtureDetailTab = scenario == "checks" ? "checks" : "conversation"
-            for width: CGFloat in [1080, 700] {
+            let sizes: [(CGFloat, CGFloat)] = ["activity", "pipeline"].contains(scenario) ? [(1080, 800), (1440, 1000), (700, 800)] : [(1080, 1200), (700, 1200)]
+            for (width, height) in sizes {
                 for dark in [false, true] {
                     let store = RepoStore()
                     store.fixtureRepository(); store.target = target
@@ -108,6 +109,26 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                         ReviewComment(id: "two", author: "morgan", body: "Please keep the fallback initials for missing avatars.", date: nil, path: "HostingHubPanel.swift", line: 154, threadID: "two", replyID: 2, resolvable: true),
                     ], state: ReviewState(approvedBy: ["sam"]))
                     store.collaboration.lifecycle = RequestLifecycle(number: 42, headSHA: sha, state: "open", title: "Review workspace refresh", body: "", base: "main", reviewers: ["sam", "morgan"], methods: ["squash", "merge"], blockers: ["One check still needs attention."], checks: "2 checks complete", policy: "The server enforces branch rules.", canEdit: true, canRebase: false)
+                    if scenario == "activity" {
+                        let request = store.pullRequests[0]
+                        store.pullRequests[0] = PullRequest(number: request.number, title: request.title, author: request.author, source: "feature/review-workspace", target: "main", url: request.url, isDraft: false, updated: request.updated, body: "A clearer workspace for reviews, checks and the next action.", headSHA: sha, fromFork: false)
+                        store.review = PullRequestReview(number: 42, repositoryKey: ReviewAPI.repositoryKey(target), refs: ReviewRefs(headSHA: sha, baseSHA: "b", startSHA: "b"), comments: [
+                            ReviewComment(id: "ready", author: "demo", body: "Marked ready for review", date: Date(timeIntervalSince1970: 1_792_972_000), kind: .system),
+                            ReviewComment(id: "feedback", author: "reviewer", body: "Looks ready. The **review timeline** makes the next step clear.", date: Date(timeIntervalSince1970: 1_792_973_000)),
+                            ReviewComment(id: "approved", author: "maintainer", body: "The updated layouts are ready.", date: Date(timeIntervalSince1970: 1_792_973_100), kind: .approved)
+                        ], state: ReviewState(approvedBy: ["maintainer"]))
+                    }
+                    if scenario == "pipeline" {
+                        store.target = RepoTarget(provider: .gitlab, remote: "origin", host: "gitlab.example.com", path: "demo/review-workspace")
+                        store.destination = .actions
+                        let run = CIPipeline(id: 12, number: 128, name: "Verify workspace", title: "Improve review and pipeline workspaces", ref: "feature/review-workspace", sha: sha, status: .failed, url: "https://example.com/team/repo/pipelines/12", created: Date(timeIntervalSince1970: 1_792_973_000), event: "push", actor: "demo")
+                        store.ciPipelines = [run]; store.ciSelected = run.id; store.ciState = .loaded
+                        store.ciJobs[run.id] = [
+                            CIJob(id: 1, name: "Check formatting", stage: "Validate", status: .success, url: "https://example.com/jobs/1", allowFailure: false, duration: 18),
+                            CIJob(id: 2, name: "Build workspace", stage: "Build", status: .failed, url: "https://example.com/jobs/2", allowFailure: false, duration: 92),
+                            CIJob(id: 3, name: "Review deployment", stage: "Deploy", status: .manual, url: "https://example.com/jobs/3", allowFailure: false, duration: nil)
+                        ]
+                    }
                     var organization = HubItem(id: "team", title: "Gitrochi team", subtitle: "team", body: "The people building Gitrochi.", url: "https://github.com/team")
                     organization.avatarURL = URL(string: "https://example.invalid/organization.png")
                     store.hostingHub.section = .organizations; store.hostingHub.page = 1; store.hostingHub.selectedAccountID = account.id
@@ -132,7 +153,7 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                         HubRepository(id: "design", name: "team/Design", description: "Shared design resources.", cloneURL: "https://github.com/team/Design.git", url: "https://github.com/team/Design"),
                     ] : [])
                     let view = ["organizations", "members"].contains(scenario) ? AnyView(HostingHubPanel(store: store, section: .organizations)) : AnyView(WorkspaceDestinationContent())
-                    let bounds = NSRect(x: 0, y: 0, width: width, height: 1200)
+                    let bounds = NSRect(x: 0, y: 0, width: width, height: height)
                     let host = NSHostingView(rootView: view.environment(store).defaultAppStorage(requestFixtureDefaults)
                         .frame(width: width, height: bounds.height).background(Color(nsColor: .windowBackgroundColor))
                         .preferredColorScheme(dark ? .dark : .light))
@@ -148,15 +169,16 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                     let recognition = VNRecognizeTextRequest(); recognition.recognitionLevel = .accurate; recognition.recognitionLanguages = ["en-US"]
                     try VNImageRequestHandler(data: data).perform([recognition])
                     let text = (recognition.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-                    let expected = scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
+                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Loaded jobs", "Build workspace", "Update the dependency lockfile"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
                     try text.write(to: output.appendingPathComponent(name + ".txt"), atomically: true, encoding: .utf8)
-                    for value in expected { precondition(text.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }
+                    let searchable = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                    for value in expected { precondition(searchable.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }
                     results.append(["scenario": scenario, "width": width, "theme": dark ? "dark" : "light", "screenshot": name, "expectedTextVisible": true])
                     window.orderOut(nil); window.contentView = nil
                 }
             }
         }
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys]).write(to: output.appendingPathComponent("result.json"))
-        print("PASS: \(scenarios.joined(separator: ", ")) at 1080/700 points, light/dark. \(output.path)")
+        print("PASS: \(scenarios.joined(separator: ", ")) in standard and narrow windows, light/dark. \(output.path)")
     }
 }

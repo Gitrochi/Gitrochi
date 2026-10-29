@@ -1256,5 +1256,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Anda juga dapat menggunakan gitch logo on atau gitch logo off di terminal.",
  "Couldn't read the CLI logo setting.": "Pengaturan logo CLI tidak dapat dibaca.",
   "Hide right panel": "Sembunyikan panel kanan",
-  "Show right panel": "Tampilkan panel kanan"
+  "Show right panel": "Tampilkan panel kanan",
+  "Loaded jobs": "Tugas yang dimuat",
+  "No changed files": "Tidak ada berkas yang diubah",
+  "No log output yet.": "Belum ada keluaran log.",
+  "Checks are unavailable until the request's commit is known.": "Pemeriksaan tersedia setelah commit permintaan diketahui."
 }
