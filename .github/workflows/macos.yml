@@ -22,7 +22,8 @@ jobs:
     name: 빌드
     if: github.ref_type != 'tag'
     runs-on: macos-26
-    timeout-minutes: 30
+    # The native build, window fixtures and regression suites run in one job.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
