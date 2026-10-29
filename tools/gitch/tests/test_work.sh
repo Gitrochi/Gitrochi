@@ -194,7 +194,12 @@ test_work_rejects_invalid_names_ai_and_unsafe_state() {
   rmdir "$WORK_RECORD/.lock"
   mv "$WORK_RECORD/safe.config" "$T/safe.config"
   ln -s "$T/safe.config" "$WORK_RECORD/safe.config"
-  run gitch work info safe --json; assert_fail; assert_json "$OUT"
+  if [ -L "$WORK_RECORD/safe.config" ]; then
+    run gitch work info safe --json; assert_fail; assert_json "$OUT"
+  else
+    # Git Bash without symlink support creates an ordinary valid record copy.
+    run gitch work info safe --json; assert_ok; assert_json "$OUT"
+  fi
   rm "$WORK_RECORD/safe.config"
   cp "$T/safe.config" "$WORK_RECORD/safe.config"
   git config --file "$WORK_RECORD/safe.config" repo.0.phase unknown

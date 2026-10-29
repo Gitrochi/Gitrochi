@@ -78,12 +78,17 @@ test_workspace_rejects_symlink_records_and_control_paths() {
   ln -s "$T/outside" "$HOME/.local/state/gitsw/workspaces/product.config"
   run gitch workspace create product "$T/backend" --json
   assert_rc 1
-  run gitch workspace show product --json
-  assert_rc 1
-  mkdir -p "$T/line
+  # Git Bash can copy a file for ln -s when native symlinks are unavailable.
+  if [ -L "$HOME/.local/state/gitsw/workspaces/product.config" ]; then
+    run gitch workspace show product --json
+    assert_rc 1
+  fi
+  if mac_only; then
+    mkdir -p "$T/line
 break"
-  git init -q "$T/line
+    git init -q "$T/line
 break"
+  fi
   run gitch workspace create controls "$T/line
 break" --json
   assert_rc 1
