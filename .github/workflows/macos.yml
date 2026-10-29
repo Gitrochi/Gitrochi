@@ -32,6 +32,9 @@ jobs:
       - name: Native sidebar visibility test
         run: bash macos/Tools/test-sidebar-visibility.sh
 
+      - name: Native sidebar tree layout regression
+        run: bash macos/Tools/test-sidebar-tree-layout.sh "$RUNNER_TEMP/sidebar-tree-layout"
+
       - name: Right panel visibility test
         run: bash macos/Tools/test-inspector-visibility.sh
 
