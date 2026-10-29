@@ -89,6 +89,7 @@ struct SidebarView: View {
                     } label: {
                         folderLabel(f)
                     }
+                    .disclosureGroupStyle(SidebarTreeGroup())
                 }
             } header: {
                 Text("Local branches \(store.localBranches.count)")
@@ -111,15 +112,18 @@ struct SidebarView: View {
                             } label: {
                                 folderLabel(f)
                             }
+                            .disclosureGroupStyle(SidebarTreeGroup())
                         }
                     } label: {
-                        HStack {
-                            Label(remote, systemImage: "cloud")
-                            Spacer()
+                        HStack(spacing: 6) {
+                            Image(systemName: "cloud").frame(width: 16)
+                                .foregroundStyle(.secondary)
+                            Text(remote).lineLimit(1).truncationMode(.middle)
+                            Spacer(minLength: 4)
                             Text("\(branches.count)").font(.caption).foregroundStyle(.secondary)
                         }
-                        .sidebarRow()
                     }
+                    .disclosureGroupStyle(SidebarTreeGroup())
                 }
             } header: {
                 Text("Remotes \(store.remoteBranches.count)")
@@ -200,12 +204,15 @@ struct SidebarView: View {
     }
 
     private func folderLabel(_ f: BranchFolder) -> some View {
-        HStack {
-            Label(f.name, systemImage: f.branches.contains(where: \.isCurrent) ? "folder.fill" : "folder")
-            Spacer()
+        let current = f.branches.contains(where: \.isCurrent)
+        return HStack(spacing: 6) {
+            Image(systemName: current ? "folder.fill" : "folder")
+                .foregroundStyle(current ? Color.accentColor : .secondary)
+                .frame(width: 16)
+            Text(f.name).lineLimit(1).truncationMode(.middle)
+            Spacer(minLength: 4)
             Text("\(f.branches.count)").font(.caption).foregroundStyle(.secondary)
         }
-        .sidebarRow()
     }
 
     private func localRow(_ b: Branch, label: String) -> some View {
@@ -214,7 +221,7 @@ struct SidebarView: View {
         return BranchRow(branch: b, label: label, worktreePath: store.worktree(using: b.name)?.path,
                          hidden: store.isHidden(b), pinned: store.isPinned(b), protected: store.gitchProtected.contains(b.name),
                          toggleHidden: canHide ? { Task { await store.setHidden(b, !store.isHidden(b)) } } : nil)
-            .sidebarRow()
+            .sidebarTreeRow()
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "arrow.triangle.branch").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
@@ -225,7 +232,7 @@ struct SidebarView: View {
     private func remoteRow(_ b: Branch, label: String) -> some View {
         BranchRow(branch: b, label: label, hidden: store.isHidden(b),
                   toggleHidden: { Task { await store.setHidden(b, !store.isHidden(b)) } })
-            .sidebarRow()
+            .sidebarTreeRow()
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "cloud").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
@@ -343,6 +350,8 @@ private struct BranchRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            Color.clear.frame(width: 12, height: 16)
+                .accessibilityHidden(true)
             Image(systemName: branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch")
                 .foregroundStyle(branch.isCurrent ? Color.accentColor : .secondary)
                 .frame(width: 16)

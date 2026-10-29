@@ -92,18 +92,20 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
   }
 
   const folder = (id: string, name: string, count: number, current: boolean, body: ReactNode, icon?: ReactNode) => (
-    <div key={id}>
-      <div className="side-row" onClick={() => toggle(id)}>
-        <ChevronDown size={11} className="muted" style={{ transform: expanded.has(id) ? undefined : "rotate(-90deg)", flex: "none" }} />
+    <div key={id} className="side-tree-group" data-tree-id={id}>
+      <button type="button" className="side-row side-tree-row side-tree-toggle" aria-expanded={expanded.has(id)} onClick={() => toggle(id)}>
+        <span className="side-tree-disclosure" aria-hidden="true">
+          <ChevronDown size={12} className="muted" style={{ transform: expanded.has(id) ? undefined : "rotate(-90deg)" }} />
+        </span>
         <span className="lead" style={{ color: current ? "var(--accent)" : undefined }}>
           {icon ?? (current || expanded.has(id) ? <FolderOpen size={14} /> : <Folder size={14} />)}
         </span>
-        <span className="ellipsis grow">{name}</span>
-        <span className="faint" style={{ fontSize: 11 }}>
+        <span className="ellipsis grow side-tree-label">{name}</span>
+        <span className="faint side-tree-count">
           {count}
         </span>
-      </div>
-      {expanded.has(id) && <div style={{ paddingLeft: 14 }}>{body}</div>}
+      </button>
+      {expanded.has(id) && <div className="side-tree-children">{body}</div>}
     </div>
   );
 
@@ -242,7 +244,7 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
   const hidden = store.isHidden(b);
   return (
     <div
-      className={`side-row ${b.isCurrent ? "current" : ""}`}
+      className={`side-row side-tree-row ${b.isCurrent ? "current" : ""}`}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", branchPayload + b.name);
@@ -255,8 +257,9 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       onContextMenu={(e) => showContextMenu(e, b.isRemote ? remoteBranchMenu(store, b) : localBranchMenu(store, b))}
       data-tip={tip(b.name, t("Click: show in graph · Double-click: check out · Drag onto another branch in the graph: merge or rebase"))}
     >
+      <span className="side-tree-disclosure" aria-hidden="true" />
       <span className="lead">{b.isCurrent ? <CircleCheck size={14} /> : <GitBranch size={14} />}</span>
-      <span className="ellipsis grow" style={hidden ? { color: "var(--text-2)" } : undefined}>
+      <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
         {label}
       </span>
       {store.isPinned(b) && (

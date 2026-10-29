@@ -53,6 +53,7 @@ import { graphLanesSelfTest } from "./lib/graph-lanes-selftest";
 import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
+import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -244,6 +245,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("PR timeline, keyboard tabs, checks and retained review drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
+  await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
   await step("Author, time and SHA columns: off by default, turned on from the column menu, lined up with the header, resized and reset", graphColumnsSelfTest);
