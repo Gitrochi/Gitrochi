@@ -89,7 +89,7 @@ export function RequestChecksPanel({ store, number, sha, url }: { store: RepoSto
     <header className="request-section-head"><strong>{t("Checks and CI")}</strong>{loading && <Spinner size={12}/>}<span className="spacer"/><IconButton small disabled={loading} icon={<RefreshCw size={12}/>} tip={t("Refresh checks")} onClick={() => setRefresh(value => value + 1)}/><Button size="small" onClick={() => open(`${url}${target?.provider === "github" ? "/checks" : "/pipelines"}`)}>{t("All results")}<ExternalLink size={12}/></Button></header>
     {sha && <code className="request-check-sha">{sha.slice(0, 12)}</code>}
     {error && <p className="error-text" role="alert">{error}</p>}
-    {!sha && <p className="muted">{t("No checks reported")}</p>}
+    {!sha && <p className="muted">{t("Checks are unavailable until the request's commit is known.")}</p>}
     {!loading && sha && !checks.length && !runs.length && !error && <p className="muted">{t("No checks reported")}</p>}
     {checks.map(check => <div className="request-check-row" key={check.id}><CIStatusIcon status={check.status} size={15}/><div className="grow"><strong>{check.name}</strong>{check.summary && <span>{check.summary}</span>}</div><span className="request-check-status" style={{ color: statusInfo[check.status].color }}>{statusInfo[check.status].title}</span>{check.url && <IconButton small icon={<ExternalLink size={13}/>} tip={t("Open result")} onClick={() => open(check.url)}/>}</div>)}
     {(truncated || runs.length === 30) && <p className="muted">{t("More results are available in the browser.")}</p>}

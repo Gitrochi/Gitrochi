@@ -1,0 +1,175 @@
+{
+  "tests": [
+    [
+      true,
+      "{\"screenshotsRendered\":true,\"checksRendered\":true,\"reviewRoundTrips\":2,\"commentRetained\":true,\"metadataRetained\":true,\"timelineRendered\":true,\"keyboardTabs\":true,\"otherRequestReset\":true,\"unexpected\":[]}"
+    ],
+    [
+      true,
+      "Home project catalog query=1 with zero mutations; exact read/comment/create/edit mutations=4; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed"
+    ]
+  ],
+  "errors": [],
+  "results": [
+    {
+      "scenario": "activity",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-1440-light.png"
+    },
+    {
+      "scenario": "checks",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "logRetained": true,
+      "screenshot": "windows-checks-1440-light.png"
+    },
+    {
+      "scenario": "activity",
+      "theme": "light",
+      "width": 1080,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-1080-light.png"
+    },
+    {
+      "scenario": "activity",
+      "theme": "light",
+      "width": 700,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-700-light.png"
+    },
+    {
+      "scenario": "activity",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-1440-dark.png"
+    },
+    {
+      "scenario": "checks",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "logRetained": true,
+      "screenshot": "windows-checks-1440-dark.png"
+    },
+    {
+      "scenario": "activity",
+      "theme": "dark",
+      "width": 1080,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-1080-dark.png"
+    },
+    {
+      "scenario": "activity",
+      "theme": "dark",
+      "width": 700,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 3,
+      "stages": 0,
+      "log": false,
+      "screenshot": "windows-activity-700-dark.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-1440-light.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "light",
+      "width": 1080,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-1080-light.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "light",
+      "width": 700,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-700-light.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-1440-dark.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "dark",
+      "width": 1080,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-1080-dark.png"
+    },
+    {
+      "scenario": "pipeline",
+      "theme": "dark",
+      "width": 700,
+      "height": 800,
+      "overflow": false,
+      "detailOverflow": false,
+      "timeline": 0,
+      "stages": 3,
+      "log": true,
+      "screenshot": "windows-pipeline-700-dark.png"
+    }
+  ]
+}

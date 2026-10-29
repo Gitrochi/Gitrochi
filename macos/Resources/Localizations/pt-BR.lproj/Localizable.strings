@@ -1230,3 +1230,9 @@
 "Open in Releases" = "Abrir em Lançamentos";
 "Hide right panel" = "Ocultar painel direito";
 "Show right panel" = "Mostrar painel direito";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Tarefas carregadas";
+"No changed files" = "Nenhum arquivo alterado";
+"No log output yet." = "Ainda não há saída de log.";
+"Checks are unavailable until the request's commit is known." = "As verificações estarão disponíveis quando o commit da solicitação for conhecido.";

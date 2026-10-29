@@ -47,6 +47,11 @@ for source in (root / 'Sources').rglob('*.swift'):
         text = replace_body(text, '    private init()', '        states[.git] = State(path: "/usr/bin/git", source: .auto, version: "fixture")')
     elif relative == 'Services/Hosting.swift':
         text = replace_body(text, '    static func data(_ req: URLRequest)', '        throw NSError(domain: "RequestLayoutFixture.NetworkDisabled", code: 1)')
+    elif relative == 'Store/RepoStore+CI.swift':
+        text = replace_body(text, '    func loadCI(silent: Bool = false, withJobs: Bool = true)', '        // Fixture state is supplied by the renderer.')
+        text = replace_body(text, '    func loadJobs(_ p: CIPipeline, silent: Bool = false)', '        // Fixture state is supplied by the renderer.')
+    elif relative == 'Views/Workspace/CIRunDetailView.swift':
+        text = replace_body(text, '    private func load() async', '        text = "Build started\\nChecking workspace\\nFAIL: Update the dependency lockfile\\nProcess exited with code 1"; loadedJob = job.id; busy = false; error = nil')
     elif relative == 'Store/RepoStore+Review.swift':
         text = replace_body(text, '    func loadReview(_ number: Int)', '        // Fixture state is supplied by the renderer.')
     elif relative == 'Store/RepoStore+Collaboration.swift':

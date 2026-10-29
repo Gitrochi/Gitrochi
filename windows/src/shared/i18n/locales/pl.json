@@ -1286,5 +1286,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Możesz też użyć gitch logo on lub gitch logo off w terminalu.",
  "Couldn't read the CLI logo setting.": "Nie udało się odczytać ustawienia logo CLI.",
   "Hide right panel": "Ukryj prawy panel",
-  "Show right panel": "Pokaż prawy panel"
+  "Show right panel": "Pokaż prawy panel",
+  "Loaded jobs": "Wczytane zadania",
+  "No changed files": "Brak zmienionych plików",
+  "No log output yet.": "Brak danych dziennika.",
+  "Checks are unavailable until the request's commit is known.": "Kontrole będą dostępne po ustaleniu commitu żądania."
 }

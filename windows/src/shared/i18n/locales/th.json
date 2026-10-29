@@ -1299,5 +1299,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "คุณยังสามารถใช้ gitch logo on หรือ gitch logo off ในเทอร์มินัลได้",
  "Couldn't read the CLI logo setting.": "อ่านการตั้งค่าโลโก้ CLI ไม่ได้",
   "Hide right panel": "ซ่อนแผงด้านขวา",
-  "Show right panel": "แสดงแผงด้านขวา"
+  "Show right panel": "แสดงแผงด้านขวา",
+  "Loaded jobs": "งานที่โหลดแล้ว",
+  "No changed files": "ไม่มีไฟล์ที่เปลี่ยนแปลง",
+  "No log output yet.": "ยังไม่มีข้อมูลบันทึก",
+  "Checks are unavailable until the request's commit is known.": "การตรวจสอบจะพร้อมใช้งานเมื่อทราบคอมมิตของคำขอ"
 }

@@ -3088,3 +3088,8 @@
 "Not loaded" = "불러오지 않음";
 "Invitation status has not been loaded." = "초대 현황을 아직 불러오지 않았습니다.";
 "Subgroup owners can manage this subgroup's members and settings." = "하위 그룹 소유자는 해당 하위 그룹의 구성원과 설정을 관리할 수 있습니다.";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "불러온 작업";
+"No changed files" = "변경된 파일이 없습니다";
+"Checks are unavailable until the request's commit is known." = "리퀘스트의 커밋을 확인해야 검사 결과를 볼 수 있습니다.";

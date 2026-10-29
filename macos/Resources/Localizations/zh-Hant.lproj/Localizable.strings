@@ -1268,3 +1268,9 @@
 "Open in Releases" = "在發行版本中開啟";
 "Hide right panel" = "隱藏右側面板";
 "Show right panel" = "顯示右側面板";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "已載入的作業";
+"No changed files" = "沒有變更的檔案";
+"No log output yet." = "尚無日誌輸出。";
+"Checks are unavailable until the request's commit is known." = "確定請求的提交後才能查看檢查結果。";

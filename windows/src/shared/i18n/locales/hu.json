@@ -1287,5 +1287,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "A terminálban a gitch logo on vagy a gitch logo off parancsot is használhatod.",
  "Couldn't read the CLI logo setting.": "Nem sikerült beolvasni a CLI logójának beállítását.",
   "Hide right panel": "Jobb oldali panel elrejtése",
-  "Show right panel": "Jobb oldali panel megjelenítése"
+  "Show right panel": "Jobb oldali panel megjelenítése",
+  "Loaded jobs": "Betöltött feladatok",
+  "No changed files": "Nincsenek módosított fájlok",
+  "No log output yet.": "Még nincs naplókimenet.",
+  "Checks are unavailable until the request's commit is known.": "Az ellenőrzések a kérés commitjának ismeretében érhetők el."
 }

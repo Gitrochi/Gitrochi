@@ -1254,3 +1254,9 @@
 "Open in Releases" = "Sürümlerde aç";
 "Hide right panel" = "Sağ paneli gizle";
 "Show right panel" = "Sağ paneli göster";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Yüklenen işler";
+"No changed files" = "Değişen dosya yok";
+"No log output yet." = "Henüz günlük çıktısı yok.";
+"Checks are unavailable until the request's commit is known." = "İsteğin commit bilgisi belirlendiğinde kontroller kullanılabilir.";

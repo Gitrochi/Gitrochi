@@ -1217,3 +1217,9 @@
 "Open in Releases" = "Buka di Rilis";
 "Hide right panel" = "Sembunyikan panel kanan";
 "Show right panel" = "Tampilkan panel kanan";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Tugas yang dimuat";
+"No changed files" = "Tidak ada berkas yang diubah";
+"No log output yet." = "Belum ada keluaran log.";
+"Checks are unavailable until the request's commit is known." = "Pemeriksaan tersedia setelah commit permintaan diketahui.";

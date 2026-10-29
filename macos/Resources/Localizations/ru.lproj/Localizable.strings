@@ -1266,3 +1266,9 @@
 "Open in Releases" = "Открыть в релизах";
 "Hide right panel" = "Скрыть правую панель";
 "Show right panel" = "Показать правую панель";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Загруженные задания";
+"No changed files" = "Нет изменённых файлов";
+"No log output yet." = "Вывод журнала пока отсутствует.";
+"Checks are unavailable until the request's commit is known." = "Проверки станут доступны, когда будет известен коммит запроса.";

@@ -59,7 +59,7 @@ struct PullRequestSection: View {
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 4) {
                         Text("#\(pr.number)").foregroundStyle(.secondary).monospacedDigit()
-                        Text(pr.title).lineLimit(1)
+                        Text(pr.title).fontWeight(onPage ? .medium : .regular).lineLimit(onPage ? 2 : 1)
                         if let sha = pr.headSHA, let ci = store.ciBySha[sha] {
                             CIStatusIcon(status: ci.status, size: 10)
                                 .help("CI: \(ci.status.title) · #\(ci.number)")
@@ -69,10 +69,18 @@ struct PullRequestSection: View {
                         if pr.isDraft { Text("Draft").font(.caption2.weight(.semibold)).foregroundStyle(.orange) }
                         Text("\(pr.source) → \(pr.target)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
+                    if onPage { Text("@\(pr.author)").font(.caption2).foregroundStyle(.secondary) }
                 }
                 .sidebarRow()
+                .padding(.vertical, onPage ? 5 : 0)
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
+                .focusable()
+                .onKeyPress(.return) { store.select(.pullRequest(pr.number)); return .handled }
+                .onKeyPress(.space) { store.select(.pullRequest(pr.number)); return .handled }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(store.selection == .pullRequest(pr.number) ? [.isButton, .isSelected] : [.isButton])
+                .accessibilityAction { store.select(.pullRequest(pr.number)) }
                 .background(onPage && store.selection == .pullRequest(pr.number) ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                 .contextMenu {
                     if !onPage {

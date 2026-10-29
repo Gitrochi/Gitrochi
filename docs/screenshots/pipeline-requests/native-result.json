@@ -1,0 +1,86 @@
+[
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-1080-light.png",
+    "theme" : "light",
+    "width" : 1080
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-1080-dark.png",
+    "theme" : "dark",
+    "width" : 1080
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-1440-light.png",
+    "theme" : "light",
+    "width" : 1440
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-1440-dark.png",
+    "theme" : "dark",
+    "width" : 1440
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-700-light.png",
+    "theme" : "light",
+    "width" : 700
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "activity",
+    "screenshot" : "request-activity-700-dark.png",
+    "theme" : "dark",
+    "width" : 700
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-1080-light.png",
+    "theme" : "light",
+    "width" : 1080
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-1080-dark.png",
+    "theme" : "dark",
+    "width" : 1080
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-1440-light.png",
+    "theme" : "light",
+    "width" : 1440
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-1440-dark.png",
+    "theme" : "dark",
+    "width" : 1440
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-700-light.png",
+    "theme" : "light",
+    "width" : 700
+  },
+  {
+    "expectedTextVisible" : true,
+    "scenario" : "pipeline",
+    "screenshot" : "request-pipeline-700-dark.png",
+    "theme" : "dark",
+    "width" : 700
+  }
+]

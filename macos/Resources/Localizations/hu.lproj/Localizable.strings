@@ -1249,3 +1249,9 @@
 "Open in Releases" = "Megnyitás a kiadásokban";
 "Hide right panel" = "Jobb oldali panel elrejtése";
 "Show right panel" = "Jobb oldali panel megjelenítése";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Betöltött feladatok";
+"No changed files" = "Nincsenek módosított fájlok";
+"No log output yet." = "Még nincs naplókimenet.";
+"Checks are unavailable until the request's commit is known." = "Az ellenőrzések a kérés commitjának ismeretében érhetők el.";

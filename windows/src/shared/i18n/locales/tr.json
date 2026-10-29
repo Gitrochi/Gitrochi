@@ -1292,5 +1292,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "Terminalde gitch logo on veya gitch logo off komutunu da kullanabilirsiniz.",
  "Couldn't read the CLI logo setting.": "CLI logo ayarı okunamadı.",
   "Hide right panel": "Sağ paneli gizle",
-  "Show right panel": "Sağ paneli göster"
+  "Show right panel": "Sağ paneli göster",
+  "Loaded jobs": "Yüklenen işler",
+  "No changed files": "Değişen dosya yok",
+  "No log output yet.": "Henüz günlük çıktısı yok.",
+  "Checks are unavailable until the request's commit is known.": "İsteğin commit bilgisi belirlendiğinde kontroller kullanılabilir."
 }

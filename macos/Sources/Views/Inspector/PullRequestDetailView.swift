@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// 오른쪽: PR·MR 상세 — 설명, CI, 승인 상태와 승인·변경 요청, 바뀐 파일(누르면 가운데 diff), 대화와 댓글 쓰기
+/// Request summary, activity and review tabs. Windows: PullRequestDetailView.tsx.
 struct PullRequestDetailView: View {
     @Environment(RepoStore.self) private var store
     let number: Int
@@ -13,53 +13,63 @@ struct PullRequestDetailView: View {
     var body: some View {
         if let pr = store.pullRequests.first(where: { $0.number == number }), let t = store.target {
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(spacing: 8) {
-                        Label("\(t.provider.requestShort) #\(pr.number)", systemImage: "arrow.triangle.pull")
-                            .font(.callout.weight(.semibold)).foregroundStyle(.secondary)
-                        if pr.isDraft {
-                            Text("Draft").font(.caption2.weight(.semibold)).padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Color.secondary.opacity(0.12), in: Capsule())
-                        }
-                        Spacer()
-                        if store.reviewLoading { ProgressView().controlSize(.small) }
-                        Button { Task { await store.loadReview(number); await store.loadRequestLifecycle(number) } } label: { Image(systemName: "arrow.clockwise") }
-                            .buttonStyle(.borderless).help("Refresh conversation and approvals").accessibilityLabel("Refresh conversation and approvals")
+                HStack(spacing: 8) {
+                    Label("\(t.provider.requestShort) #\(pr.number)", systemImage: "arrow.triangle.pull")
+                        .font(.callout.weight(.semibold))
+                    if let state = store.collaboration.lifecycle, state.number == number {
+                        Text(WorkState.title(state.state)).font(.caption.weight(.semibold))
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Color.accentColor.opacity(0.10), in: Capsule())
                     }
-                    Text(pr.title).font(.title2.weight(.semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                    info(pr)
-                    actions(pr)
-                }.padding(20)
-                WorkbenchFlow(spacing: 6) {
-                    tabButton("conversation", title: String(localized: "Conversation"), symbol: "bubble.left.and.bubble.right", count: store.review?.number == number ? store.review?.comments.filter { $0.kind != .system }.count : nil)
-                    tabButton("files", title: String(localized: "Changed files"), symbol: "doc.on.doc", count: store.review?.number == number ? store.review?.files.count : nil)
-                    tabButton("checks", title: String(localized: "Checks"), symbol: "checkmark.circle", count: nil)
-                }.padding(.horizontal, 16).padding(.bottom, 10)
+                    if pr.isDraft { Text("Draft").font(.caption).foregroundStyle(.secondary) }
+                    Spacer(minLength: 4)
+                    if store.reviewLoading { ProgressView().controlSize(.small) }
+                    Button { Task { await store.loadReview(number); await store.loadRequestLifecycle(number) } } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.borderless).help("Refresh conversation and approvals").accessibilityLabel("Refresh conversation and approvals")
+                }.padding(.horizontal, 20).padding(.vertical, 12)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        tabButton("conversation", title: String(localized: "Conversation"), symbol: "bubble.left.and.bubble.right", count: store.review?.number == number ? store.review?.comments.filter { $0.kind != .system }.count : nil)
+                        tabButton("files", title: String(localized: "Changed files"), symbol: "doc.on.doc", count: store.review?.number == number ? store.review?.files.count : nil)
+                        tabButton("checks", title: String(localized: "Checks"), symbol: "checkmark.circle", count: nil)
+                    }.padding(.horizontal, 16).padding(.bottom, 10)
+                }.scrollIndicators(.hidden)
                 Divider()
                 InspectorScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(pr.title).font(.title2.weight(.semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                            info(pr)
+                            actions(pr)
+                        }
+
                         if let e = store.reviewError {
                             Label(e, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).textSelection(.enabled)
                         }
-                        if tab == "conversation" {
-                            Card {
-                                Text("Description").font(.subheadline.weight(.semibold))
-                                if pr.body.trimmed.isEmpty { Text("No description").foregroundStyle(.secondary) }
-                                else { MarkdownView(pr.body, target: t, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url)) }
+                        VStack(spacing: 0) {
+                            panel("conversation") {
+                                Card {
+                                    Text("Description").font(.subheadline.weight(.semibold))
+                                    if pr.body.trimmed.isEmpty { Text("No description").foregroundStyle(.secondary) }
+                                    else { MarkdownView(pr.body, target: t, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url)) }
+                                }
+                                if let r = store.review, r.number == number {
+                                    Card { approval(r.state, provider: t.provider) }
+                                    if !store.reviewDraftsFor(number).isEmpty { ReviewDraftPanel(number: number) }
+                                    RequestActivity(number: number, review: r, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url))
+                                }
+                                RequestLifecyclePanel(number: number)
                             }
-                            if let r = store.review, r.number == number {
-                                Card { approval(r.state, provider: t.provider) }
-                                ReviewDraftPanel(number: number)
-                                conversation(r, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url))
+                            panel("files") {
+                                if let r = store.review, r.number == number {
+                                    Card { files(r) }
+                                    ReviewDraftPanel(number: number)
+                                } else if store.reviewLoading { ProgressView().padding(20) }
                             }
-                        } else if tab == "files" {
-                            if let r = store.review, r.number == number {
-                                Card { files(r) }
-                                ReviewDraftPanel(number: number)
-                            } else if store.reviewLoading { ProgressView().padding(20) }
-                        } else {
-                            if let sha = pr.headSHA, !sha.isEmpty { RequestChecksPanel(number: number, headSHA: sha) }
-                            RequestLifecyclePanel(number: number)
+                            panel("checks") {
+                                if let sha = pr.headSHA, !sha.isEmpty { RequestChecksPanel(number: number, headSHA: sha) }
+                                else { Text("Checks are unavailable until the request's commit is known.").foregroundStyle(.secondary) }
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -74,6 +84,15 @@ struct PullRequestDetailView: View {
             ContentUnavailableView("\(store.target?.provider.requestShort ?? "PR") not in the list", systemImage: "arrow.triangle.pull",
                                    description: Text("It was closed or hasn't been loaded yet."))
         }
+    }
+
+    /// Keep metadata edits, pending reviews and loaded checks alive across tab switches.
+    private func panel<Content: View>(_ value: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 20, content: content)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: tab == value ? nil : 0, alignment: .top)
+            .clipped().opacity(tab == value ? 1 : 0)
+            .allowsHitTesting(tab == value).accessibilityHidden(tab != value)
     }
 
     private func tabButton(_ value: String, title: String, symbol: String, count: Int?) -> some View {
@@ -91,7 +110,10 @@ struct PullRequestDetailView: View {
 
     private func info(_ pr: PullRequest) -> some View {
         WorkbenchFlow(spacing: 10) {
-            Label("@\(pr.author)", systemImage: "person.crop.circle").font(.callout)
+            HStack(spacing: 6) {
+                Avatar(name: pr.author, email: pr.author, size: 24)
+                Text("@\(pr.author)").font(.callout.weight(.semibold))
+            }
             Text("\(pr.source) → \(pr.target)\(pr.fromFork ? String(localized: "  (fork)") : "")")
                 .font(.system(size: 11, design: .monospaced)).padding(.horizontal, 8).padding(.vertical, 4)
                 .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 5))
@@ -142,6 +164,7 @@ struct PullRequestDetailView: View {
     private func files(_ r: PullRequestReview) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Changed files \(r.files.count)").font(.subheadline.weight(.semibold))
+            if r.files.isEmpty { Text("No changed files").font(.callout).foregroundStyle(.secondary) }
             ForEach(r.files) { f in
                 HStack(spacing: 6) {
                     StatusBadge(kind: f.kind)
@@ -155,6 +178,7 @@ struct PullRequestDetailView: View {
                 .background(RoundedRectangle(cornerRadius: 5).fill(isOpen(f) ? Color.accentColor.opacity(0.18) : .clear))
                 .contentShape(Rectangle())
                 .onTapGesture { store.openReviewFile(r.number, f) }
+                .accessibilityLabel(f.path)
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { store.openReviewFile(r.number, f) }
@@ -168,41 +192,6 @@ struct PullRequestDetailView: View {
         return false
     }
 
-    /// 대화(일반 댓글·코드 줄 댓글·리뷰·시스템 기록)
-    private func conversation(_ r: PullRequestReview, revision: String?, baseURL: URL?) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Conversation \(r.comments.filter { $0.kind != .system }.count)").font(.subheadline.weight(.semibold))
-            if r.comments.isEmpty { Text("No comments yet.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 8) }
-            ForEach(r.comments) { c in
-                if c.kind == .system {
-                    Text("@\(c.author) \(c.body)").font(.caption).foregroundStyle(.secondary)
-                } else {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text("@\(c.author)").font(.callout.weight(.semibold))
-                            switch c.kind {
-                            case .approved: Label("Approve", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green)
-                            case .changesRequested: Label("Request changes", systemImage: "exclamationmark.bubble.fill").font(.caption).foregroundStyle(.orange)
-                            default: EmptyView()
-                            }
-                            Spacer()
-                            if let d = c.date { Text(Fmt.short(d)).font(.caption).foregroundStyle(.secondary) }
-                        }
-                        if let path = c.path {
-                            Text(path + (c.line.map { ":\($0)" } ?? ""))
-                                .font(.caption.monospaced()).foregroundStyle(.secondary)
-                        }
-                        if !c.body.isEmpty { MarkdownView(c.body, target: store.target, revision: revision, baseURL: baseURL).font(.callout) }
-                        ReviewThreadActions(number: number, comment: c)
-                    }
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.08)))
-                }
-            }
-        }
-    }
-
     /// 아래: 댓글 쓰기 · 승인 · 변경 요청
     private func composer(_ provider: Provider) -> some View {
         let s = store.review?.number == number ? store.review?.state : nil
@@ -212,7 +201,8 @@ struct PullRequestDetailView: View {
         return VStack(alignment: .leading, spacing: 6) {
             TextEditor(text: $draft)
                 .font(.callout)
-                .disabled(store.reviewBusy)
+                .disabled(store.reviewBusy || store.reviewLoading)
+                .accessibilityLabel("Comment · review feedback")
                 .frame(height: 56)
                 .scrollContentBackground(.hidden)
                 .padding(4)

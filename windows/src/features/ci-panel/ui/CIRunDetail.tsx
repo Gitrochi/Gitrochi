@@ -78,7 +78,7 @@ export function CIRunDetail({
             ? t("Pipeline #{0}", p.number)
             : t("Run #{0}", p.number)}
         </strong>
-        <span className="muted">{statusInfo[p.status].title}</span>
+        <span className="ci-status-pill" style={{ color: statusInfo[p.status].color }}>{statusInfo[p.status].title}</span>
         <span className="spacer" />
         {busy && <Spinner size={12} />}
         <IconButton
@@ -91,6 +91,10 @@ export function CIRunDetail({
       </header>
       <section className="ci-run-summary col">
         <h2 className="selectable">{runTitle(store, p)}</h2>
+        {jobs && <div className="ci-job-summary" aria-label={t("Loaded jobs")}>
+          <span>{t("Loaded jobs")} <strong>{jobs.length}</strong></span>
+          {[...new Set(jobs.map(item => item.status))].map(status => <span key={status}><CIStatusIcon status={status} size={12}/>{statusInfo[status].title} <strong>{jobs.filter(item => item.status === status).length}</strong></span>)}
+        </div>}
         <dl className="ci-run-facts">
           {provider === "github" && p.name && (
             <>
@@ -174,8 +178,8 @@ export function CIRunDetail({
             <span className="muted">{t("No jobs")}</span>
           ) : (
             stages(jobs).map(([stage, list]) => (
-              <div key={stage || "-"} className="col" style={{ gap: 1 }}>
-                {stage && <span className="ci-stage muted">{stage}</span>}
+              <section key={stage || "-"} className="ci-stage-group">
+                <div className="ci-stage"><span>{stage || t("Jobs")}</span><span className="ci-stage-count">{list.length}</span></div>
                 {list.map((j) => (
                   <JobRow
                     key={j.id}
@@ -186,7 +190,7 @@ export function CIRunDetail({
                     select={() => setJob(j.id)}
                   />
                 ))}
-              </div>
+              </section>
             ))
           )}
         </div>
@@ -372,7 +376,7 @@ function JobLog({
           {error}
         </p>
       ) : !text ? (
-        <div className="ci-log-empty">{busy && <Spinner size={14} />}</div>
+        <div className="ci-log-empty muted">{busy ? <Spinner size={14} /> : t("No log output yet.")}</div>
       ) : (
         <>
           {truncated && (
@@ -471,9 +475,7 @@ function JobRow({
   return (
     <div
       className={`side-row ci-job ${selected ? "selected" : ""}`}
-      aria-selected={selected}
-      data-tip={statusInfo[job.status].title}
-      onClick={select}
+      data-job={job.id}
       onContextMenu={(e) =>
         showContextMenu(e, [
           {
@@ -504,12 +506,13 @@ function JobRow({
         ])
       }
     >
-      <CIStatusIcon status={job.status} size={12} />
-      <span className="ellipsis grow">{job.name}</span>
+      <button className="ci-job-select" aria-pressed={selected} onClick={select}>
+        <CIStatusIcon status={job.status} size={14}/>
+        <span className="ci-job-label"><strong>{job.name}</strong><span>{statusInfo[job.status].title}</span></span>
       {job.allowFailure && job.status === "failed" && (
         <span
           data-tip={t("Allowed to fail")}
-          style={{ color: "#e8912d", display: "inline-flex" }}
+          style={{ color: "var(--orange)", display: "inline-flex" }}
         >
           <TriangleAlert size={11} />
         </span>
@@ -519,6 +522,7 @@ function JobRow({
           {duration(job.duration)}
         </span>
       )}
+      </button>
       {action}
     </div>
   );
@@ -549,12 +553,12 @@ function DeploymentApproval({
         padding: 8,
         margin: "2px 0 4px",
         borderRadius: 6,
-        background: "color-mix(in srgb, #e8912d 10%, transparent)",
+        background: "color-mix(in srgb, var(--orange) 10%, transparent)",
       }}
     >
       <span
         className="row"
-        style={{ gap: 4, color: "#e8912d", fontWeight: 600, fontSize: 11.5 }}
+        style={{ gap: 4, color: "var(--orange)", fontWeight: 600, fontSize: 11.5 }}
       >
         <Hand size={12} />{" "}
         {t(

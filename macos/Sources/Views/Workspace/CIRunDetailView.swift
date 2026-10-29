@@ -14,27 +14,28 @@ struct CIRunDetailView: View {
     private var jobs: [CIJob]? { store.ciJobs[pipeline.id] }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            summary
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-            Divider()
-            AdaptiveWorkbenchSplit(listWidth: 280) {
-                ScrollView { jobList.padding(8) }
-                    .background(Color(nsColor: .windowBackgroundColor))
-            } detail: {
-                if let selected = jobs?.first(where: { $0.id == job }) {
-                    CIJobLogView(job: selected) { job = nil }
-                } else {
-                    Group {
-                        if jobs?.isEmpty == false { Text("Choose a job to read its log here.") }
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                header
+                Divider()
+                ScrollView {
+                    summary.padding(18).frame(maxWidth: .infinity, alignment: .leading)
+                }.frame(height: min(geometry.size.height * 0.43, 280))
+                Divider()
+                AdaptiveWorkbenchSplit(listWidth: 280) {
+                    ScrollView { jobList.padding(8) }
+                        .background(Color(nsColor: .windowBackgroundColor))
+                } detail: {
+                    if let selected = jobs?.first(where: { $0.id == job }) {
+                        CIJobLogView(job: selected) { job = nil }
+                    } else {
+                        Group {
+                            if jobs?.isEmpty == false { Text("Choose a job to read its log here.") }
+                        }
+                        .font(.callout).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(nsColor: .textBackgroundColor))
                     }
-                    .font(.callout).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(nsColor: .textBackgroundColor))
                 }
             }
         }
@@ -53,7 +54,9 @@ struct CIRunDetailView: View {
         HStack(spacing: 6) {
             CIStatusIcon(status: pipeline.status)
             Text(provider == .gitlab ? "Pipeline #\(pipeline.number)" : "Run #\(pipeline.number)").font(.headline)
-            Text(pipeline.status.title).foregroundStyle(.secondary)
+            Text(pipeline.status.title).font(.caption.weight(.semibold)).foregroundStyle(pipeline.status.color)
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(pipeline.status.color.opacity(0.10), in: Capsule())
             Spacer()
             if store.ciBusy.contains("pipeline:\(pipeline.id)") { ProgressView().controlSize(.small) }
             Button { Task { await store.loadJobs(pipeline) } } label: { Image(systemName: "arrow.clockwise") }
@@ -66,7 +69,20 @@ struct CIRunDetailView: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(store.ciTitle(pipeline)).font(.title3.weight(.semibold)).textSelection(.enabled)
+            Text(store.ciTitle(pipeline)).font(.title2.weight(.semibold)).textSelection(.enabled)
+            if let jobs {
+                WorkbenchFlow(spacing: 12) {
+                    Text("Loaded jobs").foregroundStyle(.secondary)
+                    Text(verbatim: "\(jobs.count)").fontWeight(.semibold)
+                    ForEach(jobStatuses(jobs), id: \.self) { status in
+                        HStack(spacing: 4) {
+                            CIStatusIcon(status: status, size: 11)
+                            Text(status.title).foregroundStyle(.secondary)
+                            Text(verbatim: "\(jobs.filter { $0.status == status }.count)").fontWeight(.semibold)
+                        }
+                    }
+                }.font(.caption)
+            }
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 10, verticalSpacing: 6) {
                 if provider == .github, !pipeline.name.isEmpty {
                     GridRow { Text("Workflow").foregroundStyle(.secondary); Text(pipeline.name) }
@@ -136,10 +152,11 @@ struct CIRunDetailView: View {
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(stages(jobs), id: \.0) { stage, list in
-                        if !stage.isEmpty {
-                            Text(stage).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
-                                .padding(.top, 6)
-                        }
+                        HStack(spacing: 7) {
+                            Circle().fill(Color.secondary.opacity(0.4)).frame(width: 6, height: 6)
+                            Text(stage.isEmpty ? String(localized: "Jobs") : stage)
+                            Text(verbatim: "\(list.count)").monospacedDigit()
+                        }.font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 10).padding(.bottom, 5)
                         ForEach(list) { j in
                             CIJobRow(job: j, pipeline: pipeline)
                                 .padding(.vertical, 4)
@@ -147,6 +164,12 @@ struct CIRunDetailView: View {
                                 .background(job == j.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                                 .contentShape(Rectangle())
                                 .onTapGesture { job = j.id }
+                                .focusable()
+                                .onKeyPress(.return) { job = j.id; return .handled }
+                                .onKeyPress(.space) { job = j.id; return .handled }
+                                .accessibilityElement(children: .contain)
+                                .accessibilityAddTraits(job == j.id ? [.isButton, .isSelected] : [.isButton])
+                                .accessibilityAction { job = j.id }
                         }
                     }
                 }
@@ -154,6 +177,11 @@ struct CIRunDetailView: View {
                 ProgressView().controlSize(.small)
             }
         }
+    }
+
+    private func jobStatuses(_ jobs: [CIJob]) -> [CIStatus] {
+        var seen: Set<CIStatus> = []
+        return jobs.map(\.status).filter { seen.insert($0).inserted }
     }
 
     /// GitLab orders jobs by stage; GitHub jobs have none and stay in one group
@@ -215,7 +243,10 @@ private struct CIJobLogView: View {
                     .padding(12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else if text.isEmpty {
-                Group { if busy { ProgressView().controlSize(.small) } }
+                Group {
+                    if busy { ProgressView().controlSize(.small) }
+                    else { Text("No log output yet.").font(.callout).foregroundStyle(.secondary) }
+                }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 if truncated {
@@ -307,7 +338,10 @@ private struct CIJobRow: View {
     var body: some View {
         HStack(spacing: 6) {
             CIStatusIcon(status: job.status, size: 11)
-            Text(job.name).lineLimit(1).truncationMode(.middle)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(job.name).fontWeight(.medium).lineLimit(2)
+                Text(job.status.title).font(.caption2).foregroundStyle(.secondary)
+            }
             if job.allowFailure, job.status == .failed {
                 Image(systemName: "exclamationmark.triangle").font(.caption2).foregroundStyle(.orange).help("Allowed to fail")
             }

@@ -1335,5 +1335,9 @@
  "Search loaded people and teams": "Buscar personas y equipos cargados",
  "{0} invitations loaded": "{0} invitaciones cargadas",
  "Update access": "Actualizar acceso",
- "Grant access": "Conceder acceso"
+ "Grant access": "Conceder acceso",
+ "Loaded jobs": "Trabajos cargados",
+ "No changed files": "No hay archivos modificados",
+ "No log output yet.": "Todavía no hay salida del registro.",
+ "Checks are unavailable until the request's commit is known.": "Las comprobaciones estarán disponibles cuando se conozca el commit de la solicitud."
 }

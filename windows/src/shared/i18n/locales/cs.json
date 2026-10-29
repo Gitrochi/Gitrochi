@@ -1285,5 +1285,9 @@
  "You can also use gitch logo on or gitch logo off in a terminal.": "V terminálu můžete také použít gitch logo on nebo gitch logo off.",
  "Couldn't read the CLI logo setting.": "Nastavení loga CLI se nepodařilo přečíst.",
   "Hide right panel": "Skrýt pravý panel",
-  "Show right panel": "Zobrazit pravý panel"
+  "Show right panel": "Zobrazit pravý panel",
+  "Loaded jobs": "Načtené úlohy",
+  "No changed files": "Žádné změněné soubory",
+  "No log output yet.": "Zatím žádný výstup protokolu.",
+  "Checks are unavailable until the request's commit is known.": "Kontroly budou dostupné po zjištění commitu požadavku."
 }

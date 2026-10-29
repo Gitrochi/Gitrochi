@@ -1246,3 +1246,9 @@
 "Open in Releases" = "Otevřít ve vydáních";
 "Hide right panel" = "Skrýt pravý panel";
 "Show right panel" = "Zobrazit pravý panel";
+
+// Pipeline and request workspaces
+"Loaded jobs" = "Načtené úlohy";
+"No changed files" = "Žádné změněné soubory";
+"No log output yet." = "Zatím žádný výstup protokolu.";
+"Checks are unavailable until the request's commit is known." = "Kontroly budou dostupné po zjištění commitu požadavku.";
