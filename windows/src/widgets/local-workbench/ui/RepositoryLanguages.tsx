@@ -1,0 +1,12 @@
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { t } from "@/shared/i18n";
+import { formatRepositoryBytes, type RepositoryLanguageSummary } from "../lib/repository-languages";
+
+export function RepositoryLanguages({ summary, selected, select }: { summary: RepositoryLanguageSummary; selected: string | null; select: (language: string | null) => void }) {
+  const [expanded, setExpanded] = useState(false), [disclosed, setDisclosed] = useState(false);
+  return <section className="code-languages" aria-label={t("Language composition")}>
+    <div className="code-languages-heading"><button type="button" aria-expanded={disclosed} onClick={() => setDisclosed((value) => !value)}><strong>{t("Languages")}</strong>{disclosed ? <ChevronUp size={11}/> : <ChevronDown size={11}/>}</button><span>{t("By file count")}</span></div>
+    {summary.files ? <><div className="code-language-bar" aria-hidden="true">{summary.languages.map((language) => <span key={language.name} title={`${language.name} ${(language.share * 100).toFixed(1)}%`} style={{ flex: language.files, background: language.color }}/>)}</div><div className="code-language-total"><span>{t("{0} files", summary.files.toLocaleString())}</span><span>{formatRepositoryBytes(summary.bytes)}</span></div>{disclosed && <div className="code-language-legend">{(expanded ? summary.languages : summary.languages.slice(0, 6)).map((language) => <button key={language.name} type="button" className={selected === language.name ? "on" : ""} aria-pressed={selected === language.name} onClick={() => select(selected === language.name ? null : language.name)} title={`${t("{0} files", language.files)} · ${formatRepositoryBytes(language.bytes)}`}><i style={{ background: language.color }}/><span>{["Other files", "Plain text", "Configuration"].includes(language.name) ? t(language.name) : language.name}</span><small>{(language.share * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%</small></button>)}</div>}{(disclosed || selected) && <div className="code-language-actions"><button type="button" className={!selected ? "on" : ""} onClick={() => select(null)}>{t("All languages")}</button>{disclosed && summary.languages.length > 6 && <button type="button" onClick={() => setExpanded((value) => !value)}>{t(expanded ? "Collapse" : "Show all")}{expanded ? <ChevronUp size={11}/> : <ChevronDown size={11}/>}</button>}</div>}</> : <p className="hint">{t("No language data")}</p>}
+  </section>;
+}
