@@ -2862,15 +2862,49 @@ prune_cmd() {   # 합쳐진 브랜치 정리 [--gone] [--yes]
   log_action prune "count=$(( ${#merged[@]} + ${#goneb[@]} ))"
 }
 
-wt_cmd() {   # 워크트리: ls | new <브랜치> [폴더] | rm <폴더> [--force] | prune
+wt_list_json() (
+  local tmp entry path='' head='' branch='' detached=false bare=false locked=false prunable=false first=1
+  tmp=$(mktemp) || die 'Could not inspect worktrees.'
+  trap 'rm -f "$tmp"' EXIT
+  git worktree list --porcelain -z > "$tmp" || return 1
+  printf '{"schemaVersion":1,"tool":"gitch wt list","worktrees":['
+  while IFS= read -r -d '' entry; do
+    case "$entry" in
+      'worktree '*) path=${entry#worktree } ;;
+      'HEAD '*) head=${entry#HEAD } ;;
+      'branch '*) branch=${entry#branch refs/heads/} ;;
+      detached) detached=true ;;
+      bare) bare=true ;;
+      locked|'locked '*) locked=true ;;
+      prunable|'prunable '*) prunable=true ;;
+      '')
+        [ -n "$path" ] || continue
+        [ "$first" = 1 ] || printf ','; first=0
+        printf '{"path":%s,"head":%s,"branch":%s,"detached":%s,"bare":%s,"locked":%s,"prunable":%s}' "$(json_str "$path")" "$(json_str "$head")" "$(json_str "$branch")" "$detached" "$bare" "$locked" "$prunable"
+        path=''; head=''; branch=''; detached=false; bare=false; locked=false; prunable=false
+        ;;
+    esac
+  done < "$tmp"
+  printf ']}\n'
+)
+
+wt_cmd() {   # Keep worktree mutations in system Git; expose a stable list for scripts.
+  case "${1:-}" in help|--help|-h)
+    say 'Usage: gitch wt [list [--json] | new BRANCH [PATH] | rm PATH [--force] | prune]'; return 0 ;;
+  esac
   require_repo
   local sub="${1:-ls}" b p force="" common mainroot name
   [ $# -gt 0 ] && shift
   case "$sub" in
-    ls|list) git worktree list ;;
+    ls|list)
+      if [ $# -eq 0 ]; then git worktree list
+      elif [ $# -eq 1 ] && [ "$1" = --json ]; then wt_list_json
+      else die 'Usage: gitch wt list [--json]'; fi ;;
     new|add)
+      [ $# -ge 1 ] && [ $# -le 2 ] || die 'Usage: gitch wt new BRANCH [PATH]'
       b="$1"; p="$2"
       [ -z "$b" ] && die "사용법: gitch wt new <브랜치> [폴더]"
+      git check-ref-format --branch "$b" >/dev/null 2>&1 || die 'Invalid worktree branch.'
       common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
       mainroot=${common%/.git}; name=$(basename "$mainroot")
       [ -z "$p" ] && p="$(dirname "$mainroot")/$name.worktrees/$(printf '%s' "$b" | tr '/' '-')"
@@ -2881,10 +2915,12 @@ wt_cmd() {   # 워크트리: ls | new <브랜치> [폴더] | rm <폴더> [--forc
       ok "워크트리: $(tilde "$p")  (브랜치 $b — 계정/잠금은 그대로 이어집니다)"
       say "  cd $(tilde "$p")" ;;
     rm|remove)
+      [ $# -ge 1 ] && [ $# -le 2 ] || die 'Usage: gitch wt rm PATH [--force]'
+      [ $# -lt 2 ] || [ "$2" = --force ] || die 'Usage: gitch wt rm PATH [--force]'
       p="$1"; [ "$2" = --force ] && force=--force
       [ -z "$p" ] && die "사용법: gitch wt rm <폴더> [--force]"
       git worktree remove $force "$p" && ok "워크트리를 지웠습니다: $p" ;;
-    prune) git worktree prune && ok "사라진 워크트리 정보를 정리했습니다." ;;
+    prune) [ $# -eq 0 ] || die 'Usage: gitch wt prune'; git worktree prune && ok "사라진 워크트리 정보를 정리했습니다." ;;
     *) die "사용법: gitch wt [ls | new <브랜치> [폴더] | rm <폴더> [--force] | prune]" ;;
   esac
 }
@@ -3656,6 +3692,7 @@ pr_cmd() {
   require_repo
   need_config
   case "${1:-}" in
+    list) shift; pr_list_cmd "$@"; return $? ;;
     status|view) shift; pr_status_cmd "$@"; return $? ;;
     create) shift ;;
     ""|-*) ;;
@@ -5759,6 +5796,71 @@ guard_git() {
   return 0
 }
 
+guard_gitsw_work() {
+  local action=${1:-help} name='' dry='' delete='' force='' tags='' first_child='' token rows path branch
+  local G_CWD="$G_CWD"
+  [ $# -eq 0 ] || shift
+  while [ $# -gt 0 ]; do
+    token=$1; shift
+    case "$token" in
+      -h|--help) return 0 ;;
+      --json|--yes) ;;
+      --dry-run) dry=1 ;;
+      --delete-branch) delete=1 ;;
+      --work|--workspace|--repo|--branch|--base)
+        [ $# -gt 0 ] || { g_decide ask 'Cannot verify the arguments of this work command.'; return 0; }
+        [ "$token" != --work ] || name=$1
+        if [ "$action" = pr ] && [ "$token" = --base ] && [ -z "$first_child" ]; then first_child=$token; fi
+        shift ;;
+      *)
+        case "$action" in
+          commit|push|pr)
+            [ -n "$first_child" ] || first_child=$token
+            case "$token" in
+              -m|--message|-am|-F|--file|--trailer|--title|-t|--body|-b|--body-file|-B)
+                [ $# -gt 0 ] || { g_decide ask 'Cannot verify the arguments of this work command.'; return 0; }
+                shift ;;
+              --no-verify) g_decide deny '--no-verify cannot bypass the existing gitch checks.' ;;
+              -n) if [ "$action" = push ]; then dry=1; elif [ "$action" = commit ]; then g_decide deny '-n cannot bypass the existing gitch commit checks.'; fi ;;
+              -f|--force|--force-with-lease) force=1 ;;
+              --tags|--follow-tags) tags=1 ;;
+            esac ;;
+        esac ;;
+    esac
+  done
+  [ -z "$dry" ] || return 0
+  case "$action" in
+    end) [ -z "$delete" ] || g_decide ask 'Delete the merged local work branches after returning repositories to their original branches.'; return 0 ;;
+    pr)
+      case "$first_child" in status|view|list) return 0 ;; esac
+      case " $G_ENVS " in *' HOME '*|*' XDG_STATE_HOME '*|*' XDG_CONFIG_HOME '*) g_decide ask 'Cannot verify work PR settings after changing the configuration or state directory.'; return 0 ;; esac
+      g_pr_check 'gitch work pr'; return 0 ;;
+    push) ;;
+    *) return 0 ;;
+  esac
+  if [ -n "$force" ]; then g_decide ask 'Force-pushing work repositories requires user confirmation.'; return 0; fi
+  if [ -n "$tags" ]; then g_decide ask 'Pushing work repository tags requires user confirmation.'; return 0; fi
+  case " $G_ENVS " in *' HOME '*|*' XDG_STATE_HOME '*|*' XDG_CONFIG_HOME '*) g_decide ask 'Cannot verify work push targets after changing the configuration or state directory.'; return 0 ;; esac
+  # Resolve records in a subshell: malformed state must not exit the guard itself.
+  rows=$( {
+    work_state_dir
+    [ -n "$name" ] || name=$(work_active) || exit 1
+    work_load "$name"
+    [ "$W_STATE" = active ] || exit 1
+    for ((token = 0; token < ${#W_PATHS[@]}; token++)); do
+      path=${W_PATHS[$token]}
+      [ "${W_PHASES[$token]}" = started ] && [ "$(cli_repo_path "$path")" = "$path" ] &&
+        [ "$(git -C "$path" symbolic-ref --short HEAD 2>/dev/null)" = "$W_BRANCH" ] || exit 1
+      printf '%s\t%s\n' "$path" "$W_BRANCH"
+    done
+  } 2>/dev/null )
+  if [ $? -ne 0 ] || [ -z "$rows" ]; then g_decide ask 'Cannot verify every repository and branch selected by this work push.'; return 0; fi
+  while IFS=$'\t' read -r path branch; do
+    G_CWD=$path
+    g_push_check 'gitch work push' origin "$branch"
+  done <<< "$rows"
+}
+
 guard_gitsw() {
   local i=$1 sub="${GW[$1]:-}" rest=() lock acc k o
   rest=("${GW[@]:$((i+1))}")
@@ -5791,7 +5893,8 @@ guard_gitsw() {
       if g_in_list --force "${rest[@]}" || g_in_list -f "${rest[@]}" || g_in_list --force-with-lease "${rest[@]}"; then
         g_decide ask "강제 push(원격의 기존 커밋 덮어쓰기)입니다. 사용자 확인이 필요합니다."
       else g_push_check "gitch $sub" origin "$(g_cur_branch)"; fi ;;
-    pr|mr) case "${rest[0]:-}" in status|view) ;; *) g_pr_check "gitch $sub" ;; esac ;;
+    pr|mr) case "${rest[0]:-}" in status|view|list) ;; *) g_pr_check "gitch $sub" ;; esac ;;
+    work|w) guard_gitsw_work "${rest[@]}" ;;
     fix) g_in_list --yes "${rest[@]}" && g_decide ask "push 안 한 커밋의 작성자를 고칩니다 (기록 다시 쓰기)." ;;
     undo) g_decide ask "마지막 커밋을 취소합니다. 사용자가 요청한 경우에만 하세요." ;;
     amend) g_decide ask "마지막 커밋을 고칩니다. 사용자가 요청한 경우에만 하세요." ;;
@@ -17397,7 +17500,7 @@ HTMLEOF
 schema_cmd() {
   local kind=${1:-public}
   case "$kind" in flow|flow-*) flow_cmd schema "$kind"; return $? ;; esac
-  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
+  case "$kind" in public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo|workspace|work|hosting|worktrees) ;; --help|-h) say '사용법: gitch schema [public|graph|error|languages|status|ck|preflight|rules|version|list|doctor|scan|audit|report|pr|view|watch|index|account|login|review|overlap|move|module|logo|workspace|work|hosting|worktrees]'; return 0 ;; *) die "알 수 없는 JSON 스키마: $kind" ;; esac
   printf '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://github.com/Gitrochi/Gitrochi/blob/main/tools/gitch/schema/gitch-v1.schema.json","title":"gitch public JSON contract version 1","$ref":"#/$defs/%s",' "$kind"
   cat <<'SCHEMAEOF'
 "$defs": {
@@ -17592,105 +17695,6 @@ schema_cmd() {
       "edges"
     ],
     "properties": {
-      "snapshotID": {
-        "type": "string",
-        "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$",
-        "description": "Opaque identity of revision, tracked content and graph inputs; independent of wall-clock and cache-hit telemetry."
-      },
-      "provenance": {
-        "type": "object",
-        "required": [
-          "schemaVersion",
-          "headSha",
-          "graphStamp",
-          "contentKey",
-          "scope",
-          "pathScope",
-          "toolVersion",
-          "generatedAt",
-          "verification"
-        ],
-        "properties": {
-          "schemaVersion": {
-            "const": 1
-          },
-          "headSha": {
-            "type": "string"
-          },
-          "graphStamp": {
-            "type": "string"
-          },
-          "contentKey": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "pathScope": {
-            "type": "string"
-          },
-          "toolVersion": {
-            "type": "string"
-          },
-          "generatedAt": {
-            "type": "string"
-          },
-          "verification": {
-            "type": "object",
-            "required": [
-              "status"
-            ],
-            "properties": {
-              "status": {
-                "const": "not-run"
-              }
-            }
-          }
-        }
-      },
-      "coverage": {
-        "type": "object",
-        "required": [
-          "files",
-          "analyzed",
-          "unsupported",
-          "edges",
-          "heuristicEdges",
-          "declaredEdges",
-          "diagnostics"
-        ],
-        "properties": {
-          "files": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "analyzed": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "unsupported": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "edges": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "heuristicEdges": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "declaredEdges": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "diagnostics": {
-            "type": "integer",
-            "minimum": 0
-          }
-        }
-      }
-,
       "schemaVersion": {
         "const": 1
       },
@@ -17930,6 +17934,104 @@ schema_cmd() {
       },
       "cycles": {
         "type": "object"
+      },
+      "snapshotID": {
+        "type": "string",
+        "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$",
+        "description": "Opaque identity of revision, tracked content and graph inputs; independent of wall-clock and cache-hit telemetry."
+      },
+      "provenance": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "headSha",
+          "graphStamp",
+          "contentKey",
+          "scope",
+          "pathScope",
+          "toolVersion",
+          "generatedAt",
+          "verification"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "headSha": {
+            "type": "string"
+          },
+          "graphStamp": {
+            "type": "string"
+          },
+          "contentKey": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "pathScope": {
+            "type": "string"
+          },
+          "toolVersion": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "not-run"
+              }
+            }
+          }
+        }
+      },
+      "coverage": {
+        "type": "object",
+        "required": [
+          "files",
+          "analyzed",
+          "unsupported",
+          "edges",
+          "heuristicEdges",
+          "declaredEdges",
+          "diagnostics"
+        ],
+        "properties": {
+          "files": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "analyzed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unsupported": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "edges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "heuristicEdges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "declaredEdges": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "diagnostics": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
       }
     }
   },
@@ -18961,6 +19063,18 @@ schema_cmd() {
       },
       {
         "$ref": "#/$defs/logo"
+      },
+      {
+        "$ref": "#/$defs/workspace"
+      },
+      {
+        "$ref": "#/$defs/work"
+      },
+      {
+        "$ref": "#/$defs/hosting"
+      },
+      {
+        "$ref": "#/$defs/worktrees"
       }
     ]
   },
@@ -20169,6 +20283,393 @@ schema_cmd() {
     },
     "additionalProperties": false,
     "description": "Saved CLI trademark visibility. Defaults to true; environment overrides only affect rendering."
+  },
+  "workspace": {
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "tool",
+          "workspaces"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "tool": {
+            "const": "gitch workspace list"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "repositories"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "repositories": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "tool",
+          "name",
+          "repositories",
+          "ok"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "tool": {
+            "type": "string",
+            "pattern": "^gitch workspace (create|show|status|add|remove|rm|delete)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "repositories": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        }
+      }
+    ],
+    "description": "Local CLI repository groups. Status reads cached repository state without fetching; records do not synchronize with desktop workspaces."
+  },
+  "work": {
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "workItems"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "workItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "branch",
+                "state",
+                "created",
+                "repositoryCount",
+                "active"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "branch": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "created": {
+                  "type": "string"
+                },
+                "repositoryCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "active": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "name",
+          "branch",
+          "created",
+          "state",
+          "repositories"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "starting",
+              "active",
+              "partial",
+              "ended"
+            ]
+          },
+          "repositories": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "originalBranch",
+                "base",
+                "phase",
+                "currentBranch",
+                "changes",
+                "staged",
+                "ahead",
+                "behind",
+                "missing",
+                "matchesBranch"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "originalBranch": {
+                  "type": "string"
+                },
+                "base": {
+                  "type": "string"
+                },
+                "phase": {
+                  "enum": [
+                    "pending",
+                    "started",
+                    "ending",
+                    "ended"
+                  ]
+                },
+                "currentBranch": {
+                  "type": "string"
+                },
+                "changes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "staged": {
+                  "type": "boolean"
+                },
+                "ahead": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "behind": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "missing": {
+                  "type": "boolean"
+                },
+                "matchesBranch": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "action",
+          "name",
+          "dryRun",
+          "results",
+          "success"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "action": {
+            "enum": [
+              "start",
+              "add",
+              "set",
+              "commit",
+              "push",
+              "pr",
+              "end"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "results": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "status",
+                "exitCode",
+                "message"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "exitCode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "description": "Local work-item snapshots and recoverable per-repository mutation results. Aggregate operations delegate to guarded gitch commands."
+  },
+  "hosting": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "tool",
+      "provider",
+      "repository",
+      "items"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "tool": {
+        "enum": [
+          "gitch issue list",
+          "gitch issue show",
+          "gitch pr list"
+        ]
+      },
+      "provider": {
+        "enum": [
+          "github",
+          "gitlab"
+        ]
+      },
+      "repository": {
+        "type": "string"
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        }
+      }
+    },
+    "description": "Read-only hosting discovery using the bound existing account; item fields follow the native provider."
+  },
+  "worktrees": {
+    "type": "object",
+    "required": [
+      "schemaVersion",
+      "tool",
+      "worktrees"
+    ],
+    "properties": {
+      "schemaVersion": {
+        "const": 1
+      },
+      "tool": {
+        "const": "gitch wt list"
+      },
+      "worktrees": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path",
+            "head",
+            "branch",
+            "detached",
+            "bare",
+            "locked",
+            "prunable"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "head": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "detached": {
+              "type": "boolean"
+            },
+            "bare": {
+              "type": "boolean"
+            },
+            "locked": {
+              "type": "boolean"
+            },
+            "prunable": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
   }
 }
 }
@@ -20190,7 +20691,7 @@ completion_repositories() {
   done
 }
 completion_commands() {
-  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt overlap move module report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version logo self-update completion schema help
+  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt workspace work issue git overlap move module report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version logo self-update completion schema help
 }
 completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 낱말들(마지막은 입력 중인 낱말)
   local empty_current=""
@@ -20212,11 +20713,14 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
     elif [ "$prev" = --view ]; then printf '%s\n' graph files modules changes tree affected precise diff
     elif [ "$prev" = --language ]; then printf '%s\n' ts js python java kotlin scala
     elif [ "$prev" = --interval ]; then printf '%s\n' 1 2 5 10 30 60
+    elif [ "$prev" = --workspace ]; then workspace_names
+    elif [ "$prev" = --work ]; then work_names
+    elif [ "$prev" = --state ]; then printf '%s\n' open closed all; [ "$cmd" != pr ] || printf '%s\n' merged
     elif [ "$prev" = --commit ]; then git log -10 --format='%H' 2>/dev/null
     elif [ "$prev" = --base ] || [ "$cmd" = b ] || [ "$cmd" = branch ] || { [ "$cmd" = wt ] && [ "${words[1]:-}" = new ]; } || { { [ "$cmd" = g ] || [ "$cmd" = graph ]; } && [ "${words[1]:-}" = diff ] && [ "$n" -eq 3 ]; }; then
       git for-each-ref --format='%(refname:short)' refs/heads refs/remotes 2>/dev/null
       [ "${words[1]:-}" = diff ] && printf '%s\n' HEAD files modules tree
-    elif [ "$prev" = --out ] || [ "$prev" = --path ] || [ "$prev" = --repo ] || [ "$prev" = --rules ] || [ "$prev" = --index ] || [ "$prev" = --file ] || [ "$prev" = --folder ]; then
+    elif [ "$prev" = --out ] || [ "$prev" = --path ] || [ "$prev" = --repo ] || [ "$prev" = --rules ] || [ "$prev" = --index ] || [ "$prev" = --file ] || [ "$prev" = --folder ] || [ "$prev" = --body-file ] || [ "$prev" = -F ]; then
       compgen -f -- "$cur"
     elif [ "$prev" = --via ]; then load_config >/dev/null 2>&1; for i in "${ACC_IDS[@]}"; do printf '%s\n' "$i"; done
     elif [[ "$cur" == -* ]]; then
@@ -20232,7 +20736,11 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         status|st) printf '%s\n' --json --strict --ssh ;;
         preflight|pf) printf '%s\n' --json --no-fetch ;;
         c|commit|cp) printf '%s\n' -a -m -F --trailer ;;
-        pr|mr) printf '%s\n' --title --body --base --draft --web --json ;;
+        pr|mr) printf '%s\n' --title --body --body-file --base --draft --web --json; [ "${words[1]:-}" != list ] || printf '%s\n' --state --limit ;;
+        issue) printf '%s\n' --help --json --state --limit --label --assignee ;;
+        workspace|ws) printf '%s\n' --help --json --dry-run ;;
+        work|w) printf '%s\n' --help --json --dry-run --work --workspace --repo --branch --base --delete-branch --yes -m -F -a --title --body --body-file --draft --web ;;
+        wt|worktree) printf '%s\n' --help --json --force ;;
         app) printf '%s\n' --help --path --repo --file --line --commit --view ;;
         doctor) printf '%s\n' --json --no-net ;;
         list|ls) printf '%s\n' --json --check ;;
@@ -20269,12 +20777,23 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
             esac
           fi ;;
         test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
-        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo ;;
+        schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo workspace work hosting worktrees ;;
         logo) printf '%s\n' on off status ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;
         config) printf '%s\n' show path get set add unset edit ;;
-        wt|worktree) printf '%s\n' ls new rm ;;
-        pr|mr) printf '%s\n' status ;;
+        wt|worktree) printf '%s\n' ls new rm prune ;;
+        workspace|ws)
+          if [ "$n" -eq 2 ]; then printf '%s\n' create list show add remove delete status
+          elif [ "$n" -eq 3 ] && [ "${words[1]:-}" != create ]; then workspace_names
+          else compgen -d -- "$cur"; fi ;;
+        work|w)
+          if [ "$n" -eq 2 ]; then printf '%s\n' start list info status set add commit push pr end
+          elif [ "$n" -eq 3 ]; then
+            case "${words[1]:-}" in info|status|set|end) work_names ;; esac
+          fi ;;
+        issue) [ "$n" -ne 2 ] || printf '%s\n' list show ;;
+        git) [ "$n" -ne 2 ] || printf '%s\n' status log diff show ls-files rev-parse branch tag remote ;;
+        pr|mr) printf '%s\n' create list status ;;
         sign) printf '%s\n' on off ;;
         org) printf '%s\n' add rm ;;
         ssh) printf '%s\n' prune ;;
@@ -20352,6 +20871,832 @@ COMPLETION
   esac
 }
 
+# ================= Multi-repository CLI workflows =================
+
+# Local repository groups intentionally stay separate from desktop workspace settings.
+cli_name_valid() {
+  [ ${#1} -le 64 ] && [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+}
+
+cli_repo_path() {
+  local root
+  [[ "$1" != *[[:cntrl:]]* ]] || return 1
+  root=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 1
+  root=$(cd "$root" && pwd -P) || return 1
+  # Native Git converts MSYS arguments to drive paths before persisting config values.
+  if [ -n "$IS_WINDOWS" ]; then root=$(cygpath -am "$root" 2>/dev/null) || return 1; fi
+  [[ "$root" != *[[:cntrl:]]* ]] || return 1
+  printf '%s\n' "$root"
+}
+
+workspace_file() {
+  cli_name_valid "$1" || return 1
+  [ ! -L "$STATE_DIR/workspaces" ] && [ ! -L "$STATE_DIR/workspaces/$1.config" ] || return 1
+  printf '%s/workspaces/%s.config\n' "$STATE_DIR" "$1"
+}
+
+workspace_paths() {
+  local file path root count=0 stored
+  file=$(workspace_file "$1") || return 1
+  [ -f "$file" ] || return 1
+  [ "$(git config --no-includes --file "$file" --get workspace.name 2>/dev/null)" = "$1" ] || return 1
+  stored=$(git config --no-includes --file "$file" --get-all workspace.repository 2>/dev/null) || return 1
+  while IFS= read -r path; do
+    count=$((count+1))
+    [ "$count" -le 100 ] || return 1
+    root=$(cli_repo_path "$path") && [ "$root" = "$path" ] || return 1
+    printf '%s\n' "$path"
+  done <<< "$stored"
+}
+
+workspace_names() {
+  local file name
+  [ ! -L "$STATE_DIR/workspaces" ] || return 0
+  for file in "$STATE_DIR/workspaces/"*.config; do
+    [ -f "$file" ] && [ ! -L "$file" ] || continue
+    name=${file##*/}; name=${name%.config}
+    cli_name_valid "$name" && printf '%s\n' "$name"
+  done
+  return 0
+}
+
+workspace_help() {
+  cat <<'EOF'
+Usage: gitch workspace <command> [--json]
+  create NAME [REPO...]       Create a local group (default: the current repository)
+  list                       List local groups
+  show NAME                  Show registered repository paths
+  add NAME REPO...           Add repositories; duplicates are ignored
+  remove NAME REPO...        Remove paths from the group; keep every repository
+  delete NAME               Delete only the group record
+  status NAME               Inspect each repository without fetching
+Mutation commands accept --dry-run. Groups support at most 100 repositories.
+Repository paths are local to this computer; groups are not desktop workspaces.
+Use gitch work start TASK --workspace NAME to start a task across the group.
+EOF
+}
+
+workspace_cmd() (
+  local sub=${1:-list} name='' json='' dry='' arg file tmp='' lock='' path root found count rc=0 first=1 status error names='' item executable
+  local paths=() requested=() next=()
+  [ $# -eq 0 ] || shift
+  case "$sub" in help|--help|-h) workspace_help; return 0 ;; esac
+  for arg in "$@"; do
+    case "$arg" in
+      --json) json=1 ;;
+      --dry-run) dry=1 ;;
+      --help|-h) workspace_help; return 0 ;;
+      --*) die "Unknown workspace option: $arg" ;;
+      *) if [ -z "$name" ]; then name=$arg; else requested+=("$arg"); fi ;;
+    esac
+  done
+  case "$sub" in list|ls|show|status|create|add|remove|rm|delete) ;; *) die "Unknown workspace command: $sub (see gitch workspace --help)" ;; esac
+  if [ "$sub" = list ] || [ "$sub" = ls ]; then
+    [ -z "$name$dry" ] && [ ${#requested[@]} -eq 0 ] || die 'Usage: gitch workspace list [--json]'
+    names=$(workspace_names)
+    while IFS= read -r item; do
+      [ -n "$item" ] || continue
+      file=$(workspace_file "$item") || die 'Unsafe workspace record.'
+      [ "$(git config --no-includes --file "$file" --get workspace.name 2>/dev/null)" = "$item" ] || die "Invalid workspace record: $item"
+    done <<< "$names"
+    [ -z "$json" ] || printf '{"schemaVersion":1,"tool":"gitch workspace list","workspaces":['
+    while IFS= read -r item; do
+      [ -n "$item" ] || continue
+      file=$(workspace_file "$item") || return 1
+      count=$(git config --no-includes --file "$file" --get-all workspace.repository | wc -l | tr -d ' ')
+      if [ -n "$json" ]; then
+        [ "$first" = 1 ] || printf ','; first=0
+        printf '{"name":%s,"repositories":%s}' "$(json_str "$item")" "$count"
+      else printf '%s (%s repositories)\n' "$item" "$count"; fi
+    done <<< "$names"
+    if [ -n "$json" ]; then printf ']}\n'; elif [ -z "$names" ]; then say 'No local workspaces. Create one with gitch workspace create NAME REPO...'; fi
+    return 0
+  fi
+  [ -n "$name" ] || die 'A workspace name is required (see gitch workspace --help).'
+  file=$(workspace_file "$name") || die 'Invalid workspace name or state path.'
+  case "$sub" in show|status|delete) [ ${#requested[@]} -eq 0 ] || die "Unexpected repository arguments for workspace $sub." ;; esac
+  case "$sub" in show|status)
+    executable=$(self_path)
+    [ -z "$dry" ] || die '--dry-run is only available for workspace mutations.'
+    [ -f "$file" ] || die "Workspace does not exist: $name"
+    [ "$(git config --no-includes --file "$file" --get workspace.name 2>/dev/null)" = "$name" ] || die "Invalid workspace record: $name"
+    while IFS= read -r path; do [ -z "$path" ] || paths+=("$path"); done < <(git config --no-includes --file "$file" --get-all workspace.repository 2>/dev/null)
+    [ ${#paths[@]} -le 100 ] || die 'A workspace supports at most 100 repositories.'
+    if [ -n "$json" ]; then printf '{"schemaVersion":1,"tool":%s,"name":%s,"repositories":[' "$(json_str "gitch workspace $sub")" "$(json_str "$name")"; fi
+    for path in "${paths[@]}"; do
+      status=null; error=''
+      if [ "$sub" = status ]; then
+        if root=$(cli_repo_path "$path") && [ "$root" = "$path" ]; then
+          status=$(cd "$path" && "$executable" ck --json --no-fetch 2>/dev/null) || { error='Could not inspect repository.'; status=null; rc=1; }
+        else error='Repository is unavailable or has moved.'; rc=1; fi
+      fi
+      if [ -n "$json" ]; then
+        [ "$first" = 1 ] || printf ','; first=0
+        printf '{"path":%s' "$(json_str "$path")"
+        [ "$sub" != status ] || printf ',"status":%s,"error":%s' "$status" "$([ -z "$error" ] && printf null || json_str "$error")"
+        printf '}'
+      elif [ "$sub" = show ]; then say "$path"
+      elif [ -n "$error" ]; then err "$path: $error"
+      else
+        say "$path"
+        (cd "$path" && "$executable" ck --no-fetch) || rc=1
+      fi
+    done
+    [ -z "$json" ] || printf '],"ok":%s}\n' "$([ "$rc" = 0 ] && printf true || printf false)"
+    return "$rc"
+    ;;
+  esac
+  [ ! -L "$STATE_DIR" ] || die 'Workspace state directory must not be a symbolic link.'
+  if [ -z "$dry" ]; then
+    mkdir -p "$STATE_DIR/workspaces" || die 'Could not create workspace state directory.'
+    chmod 700 "$STATE_DIR/workspaces" || return 1
+    lock="$STATE_DIR/workspaces/.lock"
+    mkdir "$lock" 2>/dev/null || die 'Another workspace command is running. Retry after it finishes.'
+    trap '[ -z "$tmp" ] || rm -f "$tmp"; rmdir "$lock" 2>/dev/null' EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+  fi
+  if [ "$sub" = create ]; then
+    [ ! -e "$file" ] || die "Workspace already exists: $name"
+    [ ${#requested[@]} -gt 0 ] || requested+=(.)
+  else
+    [ -f "$file" ] || die "Workspace does not exist: $name"
+    [ "$(git config --no-includes --file "$file" --get workspace.name 2>/dev/null)" = "$name" ] || die "Invalid workspace record: $name"
+    while IFS= read -r path; do [ -z "$path" ] || paths+=("$path"); done < <(git config --no-includes --file "$file" --get-all workspace.repository 2>/dev/null)
+  fi
+  case "$sub" in add|remove|rm) [ ${#requested[@]} -gt 0 ] || die "Repository paths are required for workspace $sub." ;; esac
+  for path in "${requested[@]}"; do
+    if [ "$sub" = remove ] || [ "$sub" = rm ]; then
+      # Exact stored paths remain removable after a repository has been deleted.
+      root=$path
+      if [ -n "$IS_WINDOWS" ]; then root=$(cygpath -am "$path" 2>/dev/null) || die "Invalid repository path: $path"; fi
+      found=''
+      for item in "${paths[@]}"; do [ "$item" != "$root" ] || found=1; done
+      [ -n "$found" ] || root=$(cli_repo_path "$path") || die "Repository is not registered: $path"
+      found=''; next=()
+      for item in "${paths[@]}"; do if [ "$item" = "$root" ]; then found=1; else next+=("$item"); fi; done
+      [ -n "$found" ] || die "Repository is not registered: $path"
+      paths=("${next[@]}")
+    else
+      root=$(cli_repo_path "$path") || die "Expected an existing non-bare repository without control characters: $path"
+      found=''
+      for item in "${paths[@]}"; do [ "$item" != "$root" ] || found=1; done
+      [ -n "$found" ] || paths+=("$root")
+    fi
+  done
+  [ ${#paths[@]} -le 100 ] || die 'A workspace supports at most 100 repositories.'
+  if [ -z "$dry" ]; then
+    if [ "$sub" = delete ]; then rm -f "$file" || die 'Could not delete workspace record.'
+    else
+      tmp=$(mktemp "$STATE_DIR/workspaces/.record.XXXXXX") || return 1
+      chmod 600 "$tmp" || return 1
+      git config --file "$tmp" workspace.name "$name" || return 1
+      for path in "${paths[@]}"; do git config --file "$tmp" --add workspace.repository "$path" || return 1; done
+      mv -f "$tmp" "$file" || die 'Could not save workspace record.'
+      tmp=''
+    fi
+  fi
+  if [ -n "$json" ]; then
+    printf '{"schemaVersion":1,"tool":%s,"name":%s,"dryRun":%s,"repositories":[' "$(json_str "gitch workspace $sub")" "$(json_str "$name")" "$([ -n "$dry" ] && printf true || printf false)"
+    for path in "${paths[@]}"; do [ "$first" = 1 ] || printf ','; first=0; printf '{"path":%s}' "$(json_str "$path")"; done
+    printf '],"ok":true}\n'
+  else say "Workspace $name: $sub${dry:+ (dry run)} (${#paths[@]} repositories)."; fi
+)
+
+# Local work items coordinate existing guarded gitch commands across repositories.
+work_fail() {
+  if [ -n "${MACHINE_JSON:-}" ]; then machine_error GITCH_WORK_ERROR 1 "$*"; else err "$*"; fi
+  exit 1
+}
+
+work_state_dir() {
+  local p="$STATE_DIR" parent
+  while [ "$p" != / ] && [ "$p" != . ] && [ -n "$p" ]; do
+    [ ! -L "$p" ] || work_fail "Work state must not use a symbolic link: $p"
+    parent=$(dirname "$p"); [ "$parent" != "$p" ] || break; p=$parent
+  done
+  WORK_DIR="$STATE_DIR/work"
+  [ ! -L "$WORK_DIR" ] || work_fail "Work state must not use a symbolic link: $WORK_DIR"
+  [ ! -e "$WORK_DIR" ] || [ -d "$WORK_DIR" ] || work_fail "Work state is not a directory."
+  [ ! -L "$WORK_DIR/active" ] || work_fail "Active work record must not be a symbolic link."
+  [ ! -e "$WORK_DIR/active" ] || [ -f "$WORK_DIR/active" ] || work_fail "Active work record must be a regular file."
+}
+
+work_lock() {
+  mkdir -p "$WORK_DIR" || work_fail "Cannot create work state directory."
+  chmod 700 "$WORK_DIR" || work_fail "Cannot protect work state directory."
+  WORK_LOCK="$WORK_DIR/.lock"
+  mkdir "$WORK_LOCK" 2>/dev/null || work_fail "Another work command is running, or a stale lock remains: $WORK_LOCK"
+  trap '[ -z "${WORK_TEMP:-}" ] || rm -f "$WORK_TEMP"; rmdir "$WORK_LOCK" 2>/dev/null' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+}
+
+work_value() {
+  local value LC_ALL=C
+  value=$(git config --no-includes --file "$1" --get-all "$2" 2>/dev/null) || work_fail "Missing work field: $2"
+  [ -n "$value" ] && [[ "$value" != *[[:cntrl:]]* ]] || work_fail "Invalid work field: $2"
+  printf '%s' "$value"
+}
+
+work_active() {
+  local value
+  [ ! -L "$WORK_DIR/active" ] || work_fail "Active work record must not be a symbolic link."
+  [ -f "$WORK_DIR/active" ] || work_fail "No active work item. Use gitch work start NAME or --work NAME."
+  value=$(cat "$WORK_DIR/active") || work_fail "Cannot read active work item."
+  cli_name_valid "$value" || work_fail "Invalid active work item."
+  printf '%s' "$value"
+}
+
+work_activate() {
+  [ ! -L "$WORK_DIR/active" ] || work_fail "Active work record must not be a symbolic link."
+  WORK_TEMP=$(mktemp "$WORK_DIR/.active.XXXXXX") || work_fail "Cannot write active work item."
+  printf '%s\n' "$W_NAME" > "$WORK_TEMP" && mv -f "$WORK_TEMP" "$WORK_DIR/active" || work_fail "Cannot save active work item."
+  WORK_TEMP=''
+}
+
+work_load() {
+  local file="$WORK_DIR/$1.config" n i value keys expected path
+  cli_name_valid "$1" || work_fail "Invalid work name. Use up to 64 letters, numbers, dots, underscores or hyphens."
+  [ -f "$file" ] && [ ! -L "$file" ] || work_fail "Work item does not exist or is unsafe: $1"
+  git config --no-includes --file "$file" --list >/dev/null 2>&1 || work_fail "Corrupt work record: $1"
+  value=$(work_value "$file" work.schemaVersion) || exit 1
+  [ "$value" = 1 ] || work_fail "Unsupported work record version."
+  W_NAME=$(work_value "$file" work.name) || exit 1
+  [ "$W_NAME" = "$1" ] || work_fail "Work record name does not match its file."
+  W_BRANCH=$(work_value "$file" work.branch) || exit 1
+  git check-ref-format --branch "$W_BRANCH" >/dev/null 2>&1 && git check-ref-format "refs/heads/$W_BRANCH" >/dev/null 2>&1 || work_fail "Invalid recorded work branch."
+  W_CREATED=$(work_value "$file" work.created) || exit 1
+  W_STATE=$(work_value "$file" work.state) || exit 1
+  case "$W_STATE" in active|starting|partial|ended) ;; *) work_fail "Invalid work record state." ;; esac
+  n=$(work_value "$file" work.count) || exit 1
+  case "$n" in ''|0*|*[!0-9]*) work_fail "Invalid work repository count." ;; esac
+  [ ${#n} -le 3 ] && [ "$n" -ge 1 ] && [ "$n" -le 100 ] || work_fail "Invalid work repository count."
+  W_PATHS=(); W_ORIGINALS=(); W_BASES=(); W_PHASES=()
+  i=0
+  while [ "$i" -lt "$n" ]; do
+    path=$(work_value "$file" "repo.$i.path") || exit 1
+    case "$path" in /*|[A-Za-z]:/*) ;; *) work_fail "Recorded repository path must be absolute." ;; esac
+    for value in "${W_PATHS[@]}"; do [ "$value" != "$path" ] || work_fail "Duplicate repository in work record."; done
+    W_PATHS+=("$path")
+    value=$(work_value "$file" "repo.$i.original") || exit 1
+    git check-ref-format --branch "$value" >/dev/null 2>&1 || work_fail "Invalid original branch in work record."
+    W_ORIGINALS+=("$value")
+    value=$(work_value "$file" "repo.$i.base") || exit 1
+    git check-ref-format "$value" >/dev/null 2>&1 || work_fail "Invalid base reference in work record."
+    case "$value" in refs/heads/*|refs/remotes/*) ;; *) work_fail "Invalid recorded base reference." ;; esac
+    W_BASES+=("$value")
+    value=$(work_value "$file" "repo.$i.phase") || exit 1
+    case "$value" in pending|started|ending|ended) ;; *) work_fail "Invalid repository work phase." ;; esac
+    W_PHASES+=("$value")
+    i=$((i+1))
+  done
+  keys=$(git config --no-includes --file "$file" --name-only --list | wc -l | tr -d ' ')
+  expected=$((6 + 4*n))
+  [ "$keys" = "$expected" ] || work_fail "Unexpected or duplicate fields in work record."
+}
+
+work_save() {
+  local i=0 file="$WORK_DIR/$W_NAME.config"
+  [ ! -L "$file" ] || work_fail "Work record must not be a symbolic link."
+  WORK_TEMP=$(mktemp "$WORK_DIR/.work.XXXXXX") || work_fail "Cannot create work record."
+  git config --file "$WORK_TEMP" work.schemaVersion 1 &&
+    git config --file "$WORK_TEMP" work.name "$W_NAME" &&
+    git config --file "$WORK_TEMP" work.branch "$W_BRANCH" &&
+    git config --file "$WORK_TEMP" work.created "$W_CREATED" &&
+    git config --file "$WORK_TEMP" work.state "$W_STATE" &&
+    git config --file "$WORK_TEMP" work.count "${#W_PATHS[@]}" || work_fail "Cannot write work record."
+  while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+    git config --file "$WORK_TEMP" "repo.$i.path" "${W_PATHS[$i]}" &&
+      git config --file "$WORK_TEMP" "repo.$i.original" "${W_ORIGINALS[$i]}" &&
+      git config --file "$WORK_TEMP" "repo.$i.base" "${W_BASES[$i]}" &&
+      git config --file "$WORK_TEMP" "repo.$i.phase" "${W_PHASES[$i]}" || work_fail "Cannot write work repository record."
+    i=$((i+1))
+  done
+  mv -f "$WORK_TEMP" "$file" || work_fail "Cannot save work record."
+  WORK_TEMP=''
+}
+
+work_repo_ready() {
+  local path=$1 branch gitdir marker changes
+  branch=$(git -C "$path" symbolic-ref --short HEAD 2>/dev/null) || { W_ERROR="Repository has a detached or missing HEAD: $path"; return 1; }
+  git -C "$path" rev-parse --verify HEAD >/dev/null 2>&1 || { W_ERROR="Repository has no commits: $path"; return 1; }
+  changes=$(git -C "$path" status --porcelain=v1 --untracked-files=all 2>/dev/null) || { W_ERROR="Cannot inspect repository: $path"; return 1; }
+  [ -z "$changes" ] || { W_ERROR="Repository has uncommitted or untracked changes: $path"; return 1; }
+  for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD REBASE_HEAD rebase-merge rebase-apply sequencer BISECT_LOG; do
+    gitdir=$(git -C "$path" rev-parse --git-path "$marker") || return 1
+    case "$gitdir" in /*|[A-Za-z]:/*) ;; *) gitdir="$path/$gitdir" ;; esac
+    [ ! -e "$gitdir" ] || { W_ERROR="Repository has an operation in progress: $path"; return 1; }
+  done
+  W_ORIGINAL=$branch
+}
+
+work_base_ref() {
+  local path=$1 base=$2
+  [ -n "$base" ] || base=$(cd "$path" && default_branch origin)
+  case "$base" in -*|'') W_ERROR="Invalid base branch: $base"; return 1 ;; esac
+  case "$base" in refs/heads/*|refs/remotes/*) ;; *)
+    if git -C "$path" show-ref --verify --quiet "refs/heads/$base"; then base="refs/heads/$base"
+    elif git -C "$path" show-ref --verify --quiet "refs/remotes/$base"; then base="refs/remotes/$base"
+    else base="refs/remotes/origin/$base"; fi ;;
+  esac
+  git check-ref-format "$base" >/dev/null 2>&1 && git -C "$path" rev-parse --verify "$base^{commit}" >/dev/null 2>&1 || { W_ERROR="Base branch is unavailable locally: $base ($path). Fetch explicitly first."; return 1; }
+  W_BASE=$base
+}
+
+work_add_paths() {
+  local input path existing common other
+  for input in "$@"; do
+    path=$(cli_repo_path "$input") || work_fail "Cannot resolve repository: $input"
+    for existing in "${W_PATHS[@]}"; do [ "$existing" != "$path" ] || work_fail "Repository is already in this work item: $path"; done
+    common=$(git -C "$path" rev-parse --git-common-dir) || work_fail "Cannot inspect repository: $path"
+    case "$common" in /*|[A-Za-z]:/*) ;; *) common="$path/$common" ;; esac
+    common=$(cd "$common" && pwd -P) || work_fail "Cannot inspect repository: $path"
+    for existing in "${W_PATHS[@]}"; do
+      other=$(git -C "$existing" rev-parse --git-common-dir) || work_fail "Cannot inspect repository: $existing"
+      case "$other" in /*|[A-Za-z]:/*) ;; *) other="$existing/$other" ;; esac
+      other=$(cd "$other" && pwd -P) || work_fail "Cannot inspect repository: $existing"
+      [ "$common" != "$other" ] || work_fail "A work item cannot contain two worktrees of the same repository."
+    done
+    [ "${#W_PATHS[@]}" -lt 100 ] || work_fail "A work item supports at most 100 repositories."
+    work_repo_ready "$path" || work_fail "$W_ERROR"
+    git -C "$path" show-ref --verify --quiet "refs/heads/$W_BRANCH" && work_fail "Work branch already exists: $W_BRANCH ($path)"
+    work_base_ref "$path" "$base" || work_fail "$W_ERROR"
+    W_PATHS+=("$path"); W_ORIGINALS+=("$W_ORIGINAL"); W_BASES+=("$W_BASE"); W_PHASES+=(pending)
+  done
+}
+
+work_result() {
+  local path=$1 status=$2 rc=$3 message=$4
+  if [ -n "$json" ]; then
+    [ "$result_first" = 1 ] || printf ','
+    result_first=0
+    printf '{"path":%s,"status":%s,"exitCode":%s,"message":%s}' "$(json_str "$path")" "$(json_str "$status")" "$rc" "$(json_str "$message")"
+  else
+    printf '%s: %s\n' "$path" "$status"
+    [ -z "$message" ] || printf '%s\n' "$message"
+  fi
+}
+
+work_results_begin() {
+  result_first=1
+  [ -z "$json" ] || printf '{"schemaVersion":1,"action":%s,"name":%s,"dryRun":%s,"results":[' "$(json_str "$sub")" "$(json_str "$W_NAME")" "$dry"
+}
+
+work_results_end() {
+  [ -z "$json" ] || printf '],"success":%s}\n' "$([ "$failed" = 0 ] && printf true || printf false)"
+  return "$failed"
+}
+
+work_info() {
+  local i=0 path current changes staged missing matches ahead behind counts rc error status_output inspect_failed=0
+  if [ -n "$json" ]; then
+    printf '{"schemaVersion":1,"name":%s,"branch":%s,"created":%s,"state":%s,"repositories":[' "$(json_str "$W_NAME")" "$(json_str "$W_BRANCH")" "$(json_str "$W_CREATED")" "$(json_str "$W_STATE")"
+  else printf '%s · %s · %s\n' "$W_NAME" "$W_BRANCH" "$W_STATE"; fi
+  while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+    path=${W_PATHS[$i]}; current=''; changes=0; staged=false; missing=false; matches=false; ahead=0; behind=0; error=''
+    if [ "$(cli_repo_path "$path" 2>/dev/null)" != "$path" ]; then missing=true; inspect_failed=1; error='Repository is unavailable or has moved.'
+    else
+      current=$(git -C "$path" symbolic-ref --short HEAD 2>/dev/null)
+      [ "$current" != "$W_BRANCH" ] || matches=true
+      status_output=$(git -C "$path" status --porcelain=v1 --untracked-files=all 2>/dev/null); rc=$?
+      if [ "$rc" = 0 ]; then
+        [ -z "$status_output" ] || changes=$(printf '%s\n' "$status_output" | wc -l | tr -d ' ')
+      else error='Cannot inspect repository status.'; inspect_failed=1; fi
+      git -C "$path" diff --cached --quiet --exit-code 2>/dev/null; rc=$?
+      [ "$rc" != 1 ] || staged=true
+      if [ "$rc" != 0 ] && [ "$rc" != 1 ]; then error='Cannot inspect staged changes.'; inspect_failed=1; fi
+      if git -C "$path" rev-parse --verify '@{upstream}' >/dev/null 2>&1; then
+        counts=$(git -C "$path" rev-list --left-right --count 'HEAD...@{upstream}' 2>/dev/null); rc=$?
+        if [ "$rc" = 0 ]; then read -r ahead behind <<< "$counts"; else error='Cannot inspect upstream changes.'; inspect_failed=1; fi
+      fi
+    fi
+    if [ -n "$json" ]; then
+      [ "$i" = 0 ] || printf ','
+      printf '{"path":%s,"originalBranch":%s,"base":%s,"phase":%s,"currentBranch":%s,"changes":%s,"staged":%s,"ahead":%s,"behind":%s,"missing":%s,"matchesBranch":%s}' "$(json_str "$path")" "$(json_str "${W_ORIGINALS[$i]}")" "$(json_str "${W_BASES[$i]}")" "$(json_str "${W_PHASES[$i]}")" "$(json_str "$current")" "$changes" "$staged" "$ahead" "$behind" "$missing" "$matches"
+    else
+      printf '  %s · %s · %s · changes %s%s\n' "$path" "${current:-unavailable}" "${W_PHASES[$i]}" "$changes" "$([ "$matches" = true ] || printf ' (work branch is not checked out)')"
+      [ -z "$error" ] || printf '    %s\n' "$error"
+    fi
+    i=$((i+1))
+  done
+  [ -z "$json" ] || printf ']}\n'
+  return "$inspect_failed"
+}
+
+work_names() (
+  local WORK_DIR file name
+  work_state_dir
+  [ ! -d "$WORK_DIR" ] || for file in "$WORK_DIR"/*.config; do
+    [ -f "$file" ] && [ ! -L "$file" ] || continue
+    name=${file##*/}; name=${name%.config}
+    cli_name_valid "$name" && printf '%s\n' "$name"
+  done
+)
+
+work_help() {
+  cat <<'HELP'
+Usage: gitch work COMMAND [options]
+  start NAME [--repo PATH ... | --workspace NAME] [--branch BRANCH] [--base BASE]
+  list | info [NAME] | status [NAME]
+  set NAME                         Select the active work item; does not switch branches
+  add [--repo PATH ...] [--work NAME] [--base BASE]
+  commit [-a] -m MESSAGE [--work NAME]
+  push [--work NAME]
+  pr [create|status] [--title TITLE] [--body-file FILE] [--work NAME]
+  end [NAME] [--delete-branch --yes]
+Options: --json, --dry-run (mutations), --work NAME (select without changing active item)
+Start uses local or cached remote base branches without fetching. Every repository is
+checked before branch creation. Commit uses staged files unless -a is explicit.
+End returns clean repositories to their original branches and preserves work branches.
+Delete requires the work branch to be merged into its recorded base. Partial failures
+keep the record so you can inspect it with info and retry end. AI is not supported.
+HELP
+}
+
+work_cmd() (
+  local sub=${1:-help} json='' dry=false name='' workspace='' branch='' base='' delete='' yes=''
+  local W_NAME W_BRANCH W_CREATED W_STATE W_PATHS=() W_ORIGINALS=() W_BASES=() W_PHASES=()
+  local W_ERROR W_ORIGINAL W_BASE WORK_DIR WORK_LOCK WORK_TEMP='' args=() paths=() positional=()
+  local token file i start=0 path output rc failed=0 result_first=1 all='' cli active value active_name=''
+  [ $# -eq 0 ] || shift
+  for token in "$@"; do [ "$token" != --json ] || json=1; done
+  while [ $# -gt 0 ]; do
+    token=$1; shift
+    case "$token" in
+      -h|--help) work_help; exit 0 ;;
+      --json) json=1 ;;
+      --dry-run) dry=true ;;
+      --work|--workspace|--repo|--branch|--base)
+        [ $# -gt 0 ] && [ -n "$1" ] || work_fail "Missing value for $token."
+        case "$token" in
+          --work) [ -z "$name" ] || work_fail "Specify --work once."; name=$1 ;;
+          --workspace) [ -z "$workspace" ] || work_fail "Specify --workspace once."; workspace=$1 ;;
+          --repo) paths+=("$1") ;;
+          --branch) [ -z "$branch" ] || work_fail "Specify --branch once."; branch=$1 ;;
+          --base) if [ "$sub" = pr ]; then args+=(--base "$1"); else [ -z "$base" ] || work_fail "Specify --base once."; base=$1; fi ;;
+        esac; shift ;;
+      --delete-branch) delete=1 ;;
+      --yes) if [ "$sub" = push ]; then args+=(--yes); else yes=1; fi ;;
+      --ai|--ai=*) work_fail "AI messages are not supported by work. Supply commit -m or pr --title and --body-file. gitch ai manages agent rules." ;;
+      *)
+        case "$sub" in
+          commit|push|pr)
+            case "$token" in
+              --file=*) value=${token#--file=}; case "$value" in /*|[A-Za-z]:/*) ;; *) value="$(pwd -P)/$value" ;; esac; args+=("--file=$value"); continue ;;
+            esac
+            args+=("$token"); case "$token" in -a|--all|-am) all=1 ;; esac
+            case "$token" in
+              -m|--message|-am|-F|--file|--trailer|--title|-t|--body|-b|--body-file|-B)
+                [ $# -gt 0 ] || work_fail "Missing value for $token."
+                value=$1
+                case "$token" in -F|--file|--body-file) case "$value" in /*|[A-Za-z]:/*) ;; *) value="$(pwd -P)/$value" ;; esac ;; esac
+                args+=("$value"); shift ;;
+            esac ;;
+          *) case "$token" in -*) work_fail "Unknown work option: $token" ;; *) positional+=("$token") ;; esac ;;
+        esac ;;
+    esac
+  done
+  case "$sub" in help|-h|--help) work_help; exit 0 ;; start|list|info|status|set|add|commit|push|pr|end) ;; *) work_fail "Unknown work command: $sub" ;; esac
+  case "$sub" in start|add) ;; *) [ ${#paths[@]} -eq 0 ] && [ -z "$workspace$branch$base" ] || work_fail "Repository, workspace, branch and base options require start or add." ;; esac
+  [ "$sub" = start ] || [ -z "$workspace$branch" ] || work_fail "Workspace and branch options require start."
+  [ "$sub" = end ] || [ -z "$delete$yes" ] || work_fail "--delete-branch and --yes require end."
+  case "$sub" in list|info|status) [ "$dry" = false ] || work_fail "--dry-run requires a mutation command." ;; esac
+  work_state_dir
+  [ ! -e "$WORK_DIR/active" ] || active_name=$(work_active) || exit 1
+  if [ "$sub" = list ]; then
+    [ ${#positional[@]} -eq 0 ] && [ -z "$name" ] || work_fail "Usage: gitch work list [--json]"
+    for file in "$WORK_DIR"/*.config; do
+      [ -e "$file" ] || [ -L "$file" ] || continue
+      value=${file##*/}; work_load "${value%.config}"
+    done
+    [ -z "$json" ] || printf '{"schemaVersion":1,"workItems":['
+    for file in "$WORK_DIR"/*.config; do
+      [ -e "$file" ] || [ -L "$file" ] || continue
+      value=${file##*/}; value=${value%.config}; work_load "$value"
+      active=false; [ "$active_name" != "$W_NAME" ] || active=true
+      if [ -n "$json" ]; then
+        [ "$result_first" = 1 ] || printf ','; result_first=0
+        printf '{"name":%s,"branch":%s,"state":%s,"created":%s,"repositoryCount":%s,"active":%s}' "$(json_str "$W_NAME")" "$(json_str "$W_BRANCH")" "$(json_str "$W_STATE")" "$(json_str "$W_CREATED")" "${#W_PATHS[@]}" "$active"
+      else printf '%s%s · %s · %s · %s repositories\n' "$([ "$active" = true ] && printf '* ' || printf '  ')" "$W_NAME" "$W_BRANCH" "$W_STATE" "${#W_PATHS[@]}"; fi
+    done
+    [ -z "$json" ] || printf ']}\n'
+    exit 0
+  fi
+  if [ "$sub" = start ] || [ "$sub" = set ] || [ "$sub" = info ] || [ "$sub" = status ] || [ "$sub" = end ]; then
+    [ ${#positional[@]} -le 1 ] || work_fail "Specify one work name."
+    if [ ${#positional[@]} -eq 1 ]; then [ -z "$name" ] || work_fail "Specify a work name once."; name=${positional[0]}; fi
+  elif [ "$sub" = add ]; then paths+=("${positional[@]}"); fi
+  if [ "$sub" = start ]; then
+    [ -n "$name" ] || work_fail "Usage: gitch work start NAME [--repo PATH ...]"
+    cli_name_valid "$name" || work_fail "Invalid work name. Use up to 64 letters, numbers, dots, underscores or hyphens."
+  else [ -n "$name" ] || name=$(work_active) || exit 1; fi
+  case "$sub" in info|status) work_load "$name"; work_info; exit $? ;; esac
+  [ "$dry" = true ] || work_lock
+  active_name=''
+  [ ! -e "$WORK_DIR/active" ] || active_name=$(work_active) || exit 1
+  if [ "$sub" = start ]; then
+    [ ! -e "$WORK_DIR/$name.config" ] && [ ! -L "$WORK_DIR/$name.config" ] || work_fail "Work item already exists: $name"
+    W_NAME=$name; W_BRANCH=${branch:-feature/$name}; W_CREATED=$(date -u '+%Y-%m-%dT%H:%M:%SZ'); W_STATE=starting
+    git check-ref-format --branch "$W_BRANCH" >/dev/null 2>&1 && git check-ref-format "refs/heads/$W_BRANCH" >/dev/null 2>&1 || work_fail "Invalid work branch: $W_BRANCH"
+    if [ -n "$workspace" ]; then
+      [ ${#paths[@]} -eq 0 ] || work_fail "Choose --repo or --workspace."
+      output=$(workspace_paths "$workspace" 2>/dev/null) || work_fail "Cannot load workspace: $workspace"
+      while IFS= read -r path; do [ -z "$path" ] || paths+=("$path"); done <<< "$output"
+      [ ${#paths[@]} -gt 0 ] || work_fail "Workspace has no repositories."
+    fi
+    [ ${#paths[@]} -gt 0 ] || paths=(.)
+    work_add_paths "${paths[@]}"
+  else
+    work_load "$name"
+    if [ "$sub" = set ]; then
+      [ "$W_STATE" != ended ] || work_fail "Cannot activate an ended work item."
+      [ "$dry" = true ] || work_activate
+      work_results_begin; work_result '' "$([ "$dry" = true ] && printf planned || printf ok)" 0 "Active work item: $W_NAME"; work_results_end; exit $?
+    fi
+    [ "$W_STATE" != ended ] || work_fail "Work item has ended: $W_NAME"
+    if [ "$sub" = add ]; then
+      [ "$W_STATE" = active ] || work_fail "Finish or recover the partial work item before adding repositories."
+      start=${#W_PATHS[@]}; [ ${#paths[@]} -gt 0 ] || paths=(.)
+      work_add_paths "${paths[@]}"
+    fi
+  fi
+  if [ "$sub" = start ] || [ "$sub" = add ]; then
+    if [ "$dry" = false ]; then work_save; [ "$sub" != start ] || work_activate; fi
+    work_results_begin
+    i=$start
+    while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+      path=${W_PATHS[$i]}
+      if [ "$dry" = true ]; then work_result "$path" planned 0 "Create $W_BRANCH from ${W_BASES[$i]}"
+      elif ! work_repo_ready "$path" || [ "$W_ORIGINAL" != "${W_ORIGINALS[$i]}" ]; then
+        failed=1; work_result "$path" failed 1 "Repository changed after preflight; record retained."
+      else
+        output=$(git -C "$path" switch --no-track -c "$W_BRANCH" "${W_BASES[$i]}" 2>&1); rc=$?
+        if [ "$rc" = 0 ]; then W_PHASES[$i]=started; else failed=1; fi
+        work_save; work_result "$path" "$([ "$rc" = 0 ] && printf ok || printf failed)" "$rc" "$output"
+      fi
+      i=$((i+1))
+    done
+    W_STATE=active; [ "$failed" = 0 ] || W_STATE=partial
+    [ "$dry" = true ] || work_save
+    work_results_end; exit $?
+  fi
+  if [ "$sub" = end ]; then
+    # Validate every repository before switching any of them.
+    i=0
+    while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+      path=${W_PATHS[$i]}
+      [ "$(cli_repo_path "$path" 2>/dev/null)" = "$path" ] || work_fail "Repository is unavailable or has moved: $path"
+      work_repo_ready "$path" || work_fail "$W_ERROR"
+      case "${W_PHASES[$i]}" in
+        started) [ "$W_ORIGINAL" = "$W_BRANCH" ] || work_fail "Repository is not on its work branch: $path" ;;
+        ending) [ "$W_ORIGINAL" = "$W_BRANCH" ] || [ "$W_ORIGINAL" = "${W_ORIGINALS[$i]}" ] || work_fail "Repository is not on its work or original branch: $path" ;;
+        pending)
+          if [ "$W_ORIGINAL" = "$W_BRANCH" ]; then W_PHASES[$i]=started
+          else [ "$W_ORIGINAL" = "${W_ORIGINALS[$i]}" ] || work_fail "Repository is not on its recorded original branch: $path"; fi ;;
+        ended) [ "$W_ORIGINAL" = "${W_ORIGINALS[$i]}" ] || work_fail "Repository is not on its recorded original branch: $path" ;;
+      esac
+      git -C "$path" show-ref --verify --quiet "refs/heads/${W_ORIGINALS[$i]}" || work_fail "Original branch no longer exists: $path"
+      if [ -n "$delete" ] && git -C "$path" show-ref --verify --quiet "refs/heads/$W_BRANCH"; then
+        git -C "$path" merge-base --is-ancestor "refs/heads/$W_BRANCH" "${W_BASES[$i]}" || work_fail "Work branch is not merged into its recorded base: $path"
+      fi
+      i=$((i+1))
+    done
+    if [ -n "$delete" ] && [ "$dry" = false ]; then confirm "Delete merged work branches for $W_NAME?" "$yes" "gitch work end --work $W_NAME --delete-branch --yes"; fi
+    if [ "$dry" = false ]; then
+      # Journal the return before switching so an interrupted end can be retried safely.
+      i=0
+      while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+        [ "${W_PHASES[$i]}" != started ] || W_PHASES[$i]=ending
+        i=$((i+1))
+      done
+      W_STATE=partial; work_save
+    fi
+    work_results_begin
+    i=0
+    while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+      path=${W_PATHS[$i]}; output=''; rc=0
+      if [ "$dry" = true ]; then work_result "$path" planned 0 "Return to ${W_ORIGINALS[$i]}$([ -z "$delete" ] || printf ' and delete the merged work branch')"
+      else
+        if ! work_repo_ready "$path"; then output=$W_ERROR; rc=1
+        elif [ "${W_PHASES[$i]}" = ending ]; then
+          if [ "$W_ORIGINAL" = "$W_BRANCH" ]; then output=$(git -C "$path" switch "${W_ORIGINALS[$i]}" 2>&1); rc=$?
+          elif [ "$W_ORIGINAL" != "${W_ORIGINALS[$i]}" ]; then output='Repository changed branches after end preflight.'; rc=1; fi
+        elif [ "$W_ORIGINAL" != "${W_ORIGINALS[$i]}" ]; then output='Repository changed branches after end preflight.'; rc=1
+        fi
+        if [ "$rc" = 0 ]; then W_PHASES[$i]=ended; work_save; fi
+        if [ "$rc" = 0 ] && [ -n "$delete" ] && git -C "$path" show-ref --verify --quiet "refs/heads/$W_BRANCH"; then
+          if git -C "$path" merge-base --is-ancestor "refs/heads/$W_BRANCH" "${W_BASES[$i]}"; then output=$(git -C "$path" branch -d "$W_BRANCH" 2>&1); rc=$?
+          else output='Work branch is no longer merged into its recorded base.'; rc=1; fi
+        fi
+        [ "$rc" = 0 ] || failed=1
+        work_result "$path" "$([ "$rc" = 0 ] && printf ok || printf failed)" "$rc" "$output"
+      fi
+      i=$((i+1))
+    done
+    if [ "$dry" = false ]; then
+      W_STATE=ended; [ "$failed" = 0 ] || W_STATE=partial; work_save
+      if [ "$failed" = 0 ] && [ "$active_name" = "$W_NAME" ]; then rm -f "$WORK_DIR/active" || work_fail "Cannot clear active work item."; fi
+    fi
+    work_results_end; exit $?
+  fi
+  cli=$(self_path)
+  case "$cli" in /*|[A-Za-z]:/*) ;; *) cli="$(pwd -P)/$cli" ;; esac
+  work_results_begin
+  i=0
+  while [ "$i" -lt "${#W_PATHS[@]}" ]; do
+    path=${W_PATHS[$i]}; output=''; rc=0
+    if [ "${W_PHASES[$i]}" != started ] || [ "$(cli_repo_path "$path" 2>/dev/null)" != "$path" ] || [ "$(git -C "$path" symbolic-ref --short HEAD 2>/dev/null)" != "$W_BRANCH" ]; then
+      rc=1; output='Repository is unavailable or is not on its recorded work branch.'
+    elif [ "$sub" = commit ] && [ -z "$all" ]; then
+      git -C "$path" diff --cached --quiet --exit-code; rc=$?
+      if [ "$rc" = 0 ]; then work_result "$path" skipped 0 'No staged changes; stage files or explicitly use -a.'; i=$((i+1)); continue; fi
+      [ "$rc" = 1 ] && rc=0 || output='Cannot inspect staged changes.'
+    fi
+    if [ "$rc" = 0 ]; then
+      if [ "$dry" = true ]; then work_result "$path" planned 0 "Run guarded gitch $sub"
+      else
+        case "$sub" in commit) token=c ;; push) token=p ;; pr) token='pr' ;; esac
+        output=$(cd "$path" && "$BASH" "$cli" "$token" "${args[@]}" 2>&1); rc=$?
+        [ "$rc" = 0 ] || failed=1
+        work_result "$path" "$([ "$rc" = 0 ] && printf ok || printf failed)" "$rc" "$output"
+      fi
+    else failed=1; work_result "$path" failed "$rc" "$output"; fi
+    i=$((i+1))
+  done
+  work_results_end
+)
+
+# Read-only hosting discovery keeps the repository's bound account explicit.
+hosting_read_help() {
+  cat <<'EOF'
+Usage:
+  gitch issue list [--state open|closed|all] [--limit 1..100] [--label NAME] [--assignee LOGIN] [--json]
+  gitch issue show NUMBER [--json]
+  gitch pr list [--state open|closed|merged|all] [--limit 1..100] [--json]
+
+Uses the repository's existing account. GitHub needs gh; GitLab needs glab
+authenticated as that account. No authentication settings are changed.
+EOF
+}
+
+hosting_read_error() {
+  local code="$1" message="$2"
+  if [ -n "$MACHINE_JSON" ]; then machine_error "$code" 1 "$message"; else err "$message"; fi
+  return 1
+}
+
+hosting_gitlab_path() {
+  local value="$1"
+  value=$(urlenc "$value")
+  value=${value//\//%2F}
+  printf '%s' "$value"
+}
+
+hosting_read_cmd() {
+  local kind="$1" action="$2" state=open limit=30 label='' assignee='' number='' json='' tok='' out='' user='' endpoint='' web='' item=''
+  local args=() fields='number,title,url,state,author,assignees,labels,createdAt,updatedAt'
+  shift 2
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --help|-h) hosting_read_help; return 0 ;;
+      --json) json=1 ;;
+      --state|--limit|--label|--assignee)
+        [ $# -ge 2 ] && [ -n "$2" ] || { hosting_read_error INVALID_ARGUMENT "Missing value for $1."; return 1; }
+        case "$1" in --state) state=$2 ;; --limit) limit=$2 ;; --label) label=$2 ;; --assignee) assignee=$2 ;; esac
+        shift ;;
+      -*) hosting_read_error INVALID_ARGUMENT "Unknown option: $1"; return 1 ;;
+      *) [ "$action" = show ] && [ -z "$number" ] || { hosting_read_error INVALID_ARGUMENT "Unexpected argument: $1"; return 1; }; number=$1 ;;
+    esac
+    shift
+  done
+  case "$limit" in ''|*[!0-9]*) hosting_read_error INVALID_ARGUMENT 'Limit must be between 1 and 100.'; return 1 ;; esac
+  [ ${#limit} -le 3 ] && [ "$limit" -ge 1 ] && [ "$limit" -le 100 ] || { hosting_read_error INVALID_ARGUMENT 'Limit must be between 1 and 100.'; return 1; }
+  case "$state" in open|closed|all) ;; merged) [ "$kind" = pr ] || { hosting_read_error INVALID_ARGUMENT 'Issue state must be open, closed, or all.'; return 1; } ;; *) hosting_read_error INVALID_ARGUMENT 'Unknown state.'; return 1 ;; esac
+  if [ "$action" = show ]; then
+    case "$number" in ''|*[!0-9]*|0) hosting_read_error INVALID_ARGUMENT 'Provide a positive issue number.'; return 1 ;; esac
+    [ ${#number} -le 10 ] || { hosting_read_error INVALID_ARGUMENT 'Issue number is too large.'; return 1; }
+    [ "$number" -gt 0 ] || { hosting_read_error INVALID_ARGUMENT 'Provide a positive issue number.'; return 1; }
+    [ "$state" = open ] && [ "$limit" = 30 ] && [ -z "$label$assignee" ] || { hosting_read_error INVALID_ARGUMENT 'List filters cannot be used with show.'; return 1; }
+  fi
+  require_repo
+  need_config
+  resolve_repo .
+  [ -n "$R_HOST" ] && [ -n "$R_PATH" ] || { hosting_read_error HOSTING_REMOTE_MISSING 'Cannot determine the hosting repository from origin.'; return 1; }
+  [ -n "$R_ACC" ] && [ -n "$R_LOGIN" ] || { hosting_read_error HOSTING_ACCOUNT_MISSING 'Choose the repository account with gitch use before reading hosting data.'; return 1; }
+  web="https://$R_HOST/$R_PATH"
+  if [ "$R_HOST" = github.com ]; then
+    tok=$(gh_token "$R_LOGIN") || tok=''
+    [ -n "$tok" ] || { hosting_read_error HOSTING_AUTH_REQUIRED "GitHub CLI must already be authenticated as $R_LOGIN. Run gitch doctor to inspect the account."; return 1; }
+    if [ "$action" = show ]; then
+      args=(issue view "$number" -R "$R_PATH")
+      fields="$fields,body"
+    else
+      args=("$kind" list -R "$R_PATH" --state "$state" --limit "$limit")
+      [ -z "$label" ] || args+=(--label "$label")
+      [ -z "$assignee" ] || args+=(--assignee "$assignee")
+      [ "$kind" != pr ] || fields="$fields,isDraft,headRefName,baseRefName"
+    fi
+    if [ -z "$json" ]; then
+      GH_TOKEN="$tok" GH_HOST=github.com GH_PROMPT_DISABLED=1 gh "${args[@]}"
+      return $?
+    fi
+    out=$(GH_TOKEN="$tok" GH_HOST=github.com GH_PROMPT_DISABLED=1 gh "${args[@]}" --json "$fields" 2>/dev/null) || { hosting_read_error HOSTING_REQUEST_FAILED "Unable to read $kind $action. Check access to $web and run gitch doctor."; return 1; }
+  else
+    if [ "$kind" = pr ]; then web="$web/-/merge_requests"; item=merge_requests; else web="$web/-/issues"; item=issues; fi
+    command -v glab >/dev/null 2>&1 || { hosting_read_error HOSTING_CLI_MISSING "GitLab discovery needs an existing glab login for $R_HOST as $R_LOGIN. View in the browser: $web"; return 1; }
+    user=$(GLAB_PROMPT_DISABLED=1 glab api --hostname "$R_HOST" --method GET user --jq .username 2>/dev/null) || { hosting_read_error HOSTING_AUTH_REQUIRED "Cannot verify the existing GitLab CLI login for $R_HOST. View in the browser: $web"; return 1; }
+    [ "$user" = "$R_LOGIN" ] || { hosting_read_error HOSTING_ACCOUNT_MISMATCH "GitLab CLI is not authenticated as the repository account $R_LOGIN on $R_HOST. No account was changed. View in the browser: $web"; return 1; }
+    endpoint="projects/$(hosting_gitlab_path "$R_PATH")/$item"
+    if [ "$action" = show ]; then endpoint="$endpoint/$number"
+    else
+      [ "$state" != open ] || state=opened
+      endpoint="$endpoint?state=$state&per_page=$limit"
+      [ -z "$label" ] || endpoint="$endpoint&labels=$(hosting_gitlab_path "$label")"
+      [ -z "$assignee" ] || endpoint="$endpoint&assignee_username=$(hosting_gitlab_path "$assignee")"
+    fi
+    out=$(GLAB_PROMPT_DISABLED=1 glab api --hostname "$R_HOST" --method GET "$endpoint" 2>/dev/null) || { hosting_read_error HOSTING_REQUEST_FAILED "Unable to read $kind $action. Check access to $web."; return 1; }
+    if [ -z "$json" ]; then printf '%s\n' "$out"; return 0; fi
+  fi
+  [ -n "$out" ] || { hosting_read_error HOSTING_RESPONSE_INVALID 'The hosting CLI returned an empty response.'; return 1; }
+  [ "$action" != show ] || out="[$out]"
+  printf '{"schemaVersion":1,"tool":%s,"provider":%s,"repository":%s,"items":%s}\n' \
+    "$(json_str "gitch $kind $action")" "$(json_str "$([ "$R_HOST" = github.com ] && printf github || printf gitlab)")" "$(json_str "$R_PATH")" "$out"
+}
+
+issue_cmd() {
+  [ $# -gt 0 ] || { hosting_read_cmd issue list; return $?; }
+  case "${1:-list}" in
+    --help|-h|help) hosting_read_help ;;
+    list|show) local action=$1; shift; hosting_read_cmd issue "$action" "$@" ;;
+    '') hosting_read_cmd issue list ;;
+    *) hosting_read_error INVALID_ARGUMENT 'Usage: gitch issue list [options] or gitch issue show NUMBER [--json].' ;;
+  esac
+}
+
+pr_list_cmd() { hosting_read_cmd pr list "$@"; }
+
+git_read_help() {
+  cat <<'EOF'
+Usage: gitch git COMMAND [OPTIONS] [REVISIONS] [-- PATHS]
+
+Read-only access to system git: status, log, diff, show, ls-files, rev-parse,
+branch [--list], tag [--list], remote [-v|get-url NAME].
+Use gitch c, p, pl, b, wt, and pr for changes. Global git options, output
+files, external diff tools, and mutation commands are rejected.
+EOF
+}
+
+git_read_reject() { hosting_read_error GIT_READ_ONLY 'This argument is not supported by read-only gitch git. Use the corresponding guarded gitch command for changes.'; }
+
+git_cmd() {
+  local command="${1:-}" arg='' after_paths='' list='' count=0 options=()
+  case "$command" in ''|help|--help|-h) git_read_help; return 0 ;; esac
+  shift
+  case "$command" in
+    remote)
+      case "$#:$1" in 0:|1:-v|1:--verbose) git --no-pager remote "$@"; return $? ;; esac
+      [ "${1:-}" = get-url ] || { git_read_reject; return 1; }
+      shift
+      for arg in "$@"; do
+        case "$arg" in --all|--push) ;; -*) git_read_reject; return 1 ;; *) count=$((count+1)) ;; esac
+      done
+      [ "$count" -eq 1 ] || { git_read_reject; return 1; }
+      git --no-pager remote get-url "$@"; return $? ;;
+    branch|tag)
+      for arg in "$@"; do
+        case "$arg" in --list|-l) list=1 ;; esac
+      done
+      for arg in "$@"; do
+        case "$arg" in
+          --list|-l|--all|-a|--remotes|-r|--verbose|-v|-vv|--no-color|--color=never|--format=*|--sort=*|--contains=*|--no-contains=*|--merged=*|--no-merged=*) ;;
+          -*) git_read_reject; return 1 ;;
+          *) [ -n "$list" ] || { git_read_reject; return 1; } ;;
+        esac
+      done
+      git --no-pager "$command" "$@"; return $? ;;
+    status|log|diff|show|ls-files|rev-parse) ;;
+    *) git_read_reject; return 1 ;;
+  esac
+  for arg in "$@"; do
+    if [ -n "$after_paths" ]; then continue; fi
+    [ "$arg" != -- ] || { after_paths=1; continue; }
+    case "$arg" in -*) ;; *) continue ;; esac
+    case "$command:$arg" in
+      status:--short|status:-s|status:--branch|status:-b|status:--porcelain|status:--porcelain=v1|status:--porcelain=v2|status:--ignored|status:--ignored=*|status:--untracked-files=*|status:--no-untracked-files|status:-uno|status:-uall|status:--show-stash|status:-z|status:--null) ;;
+      log:--oneline|log:--graph|log:--all|log:--first-parent|log:--no-merges|log:--merges|log:--reverse|log:--topo-order|log:--date-order|log:--decorate|log:--decorate=*|log:--no-decorate|log:--max-count=*|log:--since=*|log:--until=*|log:--author=*|log:--committer=*|log:--grep=*|log:--fixed-strings|log:--regexp-ignore-case|log:--date=*|log:--format=*|log:--pretty=*|log:--abbrev-commit|log:--no-abbrev-commit|log:--name-only|log:--name-status|log:--stat|log:--shortstat|log:--numstat|log:--patch|log:-p|log:--no-patch|log:-s|log:--no-color|log:--color=never|log:--no-ext-diff|log:--no-textconv|log:--no-show-signature) ;;
+      diff:--cached|diff:--staged|diff:--stat|diff:--shortstat|diff:--numstat|diff:--name-only|diff:--name-status|diff:--check|diff:--quiet|diff:--exit-code|diff:--patch|diff:-p|diff:--no-patch|diff:-s|diff:--raw|diff:--summary|diff:--compact-summary|diff:--binary|diff:--no-color|diff:--color=never|diff:--no-ext-diff|diff:--no-textconv|diff:--no-renames|diff:--find-renames|diff:--find-renames=*|diff:--ignore-space-change|diff:-b|diff:--ignore-all-space|diff:-w|diff:--ignore-space-at-eol|diff:--ignore-blank-lines|diff:--word-diff|diff:--word-diff=*|diff:--unified=*|diff:-z) ;;
+      show:--format=*|show:--pretty=*|show:--stat|show:--shortstat|show:--numstat|show:--name-only|show:--name-status|show:--patch|show:-p|show:--no-patch|show:-s|show:--no-color|show:--color=never|show:--no-ext-diff|show:--no-textconv|show:--no-show-signature) ;;
+      ls-files:--cached|ls-files:-c|ls-files:--deleted|ls-files:-d|ls-files:--modified|ls-files:-m|ls-files:--others|ls-files:-o|ls-files:--ignored|ls-files:-i|ls-files:--stage|ls-files:-s|ls-files:--unmerged|ls-files:-u|ls-files:--exclude-standard|ls-files:--error-unmatch|ls-files:--full-name|ls-files:-z) ;;
+      rev-parse:--verify|rev-parse:--quiet|rev-parse:-q|rev-parse:--short|rev-parse:--short=*|rev-parse:--abbrev-ref|rev-parse:--abbrev-ref=*|rev-parse:--symbolic-full-name|rev-parse:--show-toplevel|rev-parse:--show-prefix|rev-parse:--git-dir|rev-parse:--git-common-dir|rev-parse:--is-inside-work-tree|rev-parse:--is-bare-repository|rev-parse:--show-object-format|rev-parse:--end-of-options) ;;
+      log:-[0-9]*) case "${arg#-}" in *[!0-9]*) git_read_reject; return 1 ;; esac ;;
+      *) git_read_reject; return 1 ;;
+    esac
+  done
+  case "$command" in log|show) options=(--no-ext-diff --no-textconv --no-show-signature) ;; diff) options=(--no-ext-diff --no-textconv) ;; esac
+  git --no-pager "$command" "${options[@]}" "$@"
+}
+
 # ================= 도움말 =================
 
 help_cmd() {
@@ -20375,6 +21720,22 @@ gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))
   gitch rescue [번호] [--branch 이름|--restore]  자동 백업 목록 / 복구
   gitch o                                  저장소 웹페이지
   gitch app [--path 앱경로]                Gitrochi 데스크톱 앱 열기 (macOS · Windows)
+
+Multi-repository workflows
+  gitch workspace create NAME [REPO...]    Create a local repository group (alias: ws)
+  gitch workspace list|show|status [NAME] [--json]
+  gitch workspace add|remove NAME REPO... / delete NAME
+  gitch work start NAME [--workspace NAME | --repo PATH] [--branch BRANCH] [--base BASE]
+  gitch work list / info [NAME] [--json]    Inspect work items (alias: w)
+  gitch work set NAME / add [--work NAME] --repo PATH
+  gitch work commit [--work NAME] -m MESSAGE [-a]   Commit staged changes by default
+  gitch work push / pr [--work NAME]       Use existing account and push protections
+  gitch work end [NAME] [--delete-branch --yes]     Return to original branches; preserve branches by default
+  gitch issue list|show [NUMBER] [--json]  Read issues with the existing account
+  gitch pr list [--state open|closed|merged|all] [--json]
+  gitch wt list --json                    Inspect worktrees
+  gitch git COMMAND [ARGS]                Read-only system Git access
+  Workspace/work mutations accept --dry-run; use gitch help work or workspace for details.
 
 PR / MR
   gitch pr --title 제목 [--body 내용] [--base 브랜치] [--draft] [--web]
@@ -20527,7 +21888,15 @@ setup_colors
 ui_start "$@"
 
 case "${1:-}" in
-  help|-h|--help) help_cmd; exit 0 ;;
+  help|-h|--help)
+    case "${2:-}" in
+      workspace|ws) workspace_help ;;
+      work|w) work_help ;;
+      issue) hosting_read_help ;;
+      git) git_read_help ;;
+      *) help_cmd ;;
+    esac
+    exit 0 ;;
   version|-v|--version) shift; version_cmd "$@"; exit 0 ;;
   logo) shift; logo_cmd "$@"; exit $? ;;
   completion) shift; completion_cmd "$@"; exit $? ;;
@@ -20569,6 +21938,10 @@ case "${1:-}" in
   scan) shift; scan_cmd "$@"; exit $? ;;
   audit) shift; audit_cmd "$@"; exit $? ;;
   prune) shift; prune_cmd "$@"; exit $? ;;
+  work|w) shift; work_cmd "$@"; exit $? ;;
+  issue) shift; issue_cmd "$@"; exit $? ;;
+  git) shift; git_cmd "$@"; exit $? ;;
+  workspace|ws) shift; workspace_cmd "$@"; exit $? ;;
   wt|worktree) shift; wt_cmd "$@"; exit $? ;;
   overlap) shift; overlap_cmd "$@"; exit $? ;;
   move) shift; move_cmd "$@"; exit $? ;;

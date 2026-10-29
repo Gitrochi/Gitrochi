@@ -223,6 +223,16 @@ export async function runSelfTest(): Promise<boolean> {
     await sleep(150);
     window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" }));
     const find = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".modal button")).find((b) => b.textContent?.trim() === t(label));
+    const workflowReady = await until(() => !!document.querySelector(".modal [data-cli-workflow-guide] summary"), 15000);
+    const workflows = document.querySelector<HTMLDetailsElement>(".modal [data-cli-workflow-guide]");
+    workflows?.querySelector<HTMLElement>("summary")?.click();
+    const workflowCommands = workflows?.querySelectorAll("code");
+    const workflowGuide = workflowReady && !!workflows?.open && workflowCommands?.length === 11
+      && workflows.textContent?.includes("gitch workspace create product")
+      && workflows.textContent?.includes("gitch work commit --work feature-name")
+      && workflows.textContent?.includes("gitch issue show 123 --json")
+      && workflows.querySelectorAll(`button[aria-label="${t("Copy command")}"]`).length === 11;
+    workflows?.querySelector<HTMLElement>("summary")?.click();
     const tab = await until(() => !!find("Getting started and commands"), 15000);
     find("Getting started and commands")?.click();
     const guide = await until(() => !!find("All commands and options"), 5000);
@@ -232,7 +242,7 @@ export async function runSelfTest(): Promise<boolean> {
     const doctor = await until(() => Array.from(document.querySelectorAll(".modal strong")).some((e) => e.textContent === t("Setup diagnosis")), 15000);
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await sleep(150);
-    return [tab && guide && help && doctor, `tab=${tab} guide=${guide} help=${help} diagnosis=${doctor}`];
+    return [!!workflowGuide && tab && guide && help && doctor, `workflows=${workflowGuide} tab=${tab} guide=${guide} help=${help} diagnosis=${doctor}`];
   });
   await step("브라우저 로그인 시작 응답 전 화면 이탈 → 늦은 세션 취소", () => browserLoginLifecycle("start"));
   await step("브라우저 로그인 취소 → 늦은 완료 응답 연결 차단", () => browserLoginLifecycle("status"));

@@ -1563,6 +1563,18 @@
         },
         {
           "$ref": "#/$defs/logo"
+        },
+        {
+          "$ref": "#/$defs/workspace"
+        },
+        {
+          "$ref": "#/$defs/work"
+        },
+        {
+          "$ref": "#/$defs/hosting"
+        },
+        {
+          "$ref": "#/$defs/worktrees"
         }
       ]
     },
@@ -2771,6 +2783,393 @@
       },
       "additionalProperties": false,
       "description": "Saved CLI trademark visibility. Defaults to true; environment overrides only affect rendering."
+    },
+    "workspace": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "tool",
+            "workspaces"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "tool": {
+              "const": "gitch workspace list"
+            },
+            "workspaces": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "repositories"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "repositories": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "tool",
+            "name",
+            "repositories",
+            "ok"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "tool": {
+              "type": "string",
+              "pattern": "^gitch workspace (create|show|status|add|remove|rm|delete)$"
+            },
+            "name": {
+              "type": "string"
+            },
+            "repositories": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "required": [
+                  "path"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "ok": {
+              "type": "boolean"
+            },
+            "dryRun": {
+              "type": "boolean"
+            }
+          }
+        }
+      ],
+      "description": "Local CLI repository groups. Status reads cached repository state without fetching; records do not synchronize with desktop workspaces."
+    },
+    "work": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "workItems"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "workItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "branch",
+                  "state",
+                  "created",
+                  "repositoryCount",
+                  "active"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "branch": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "created": {
+                    "type": "string"
+                  },
+                  "repositoryCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "name",
+            "branch",
+            "created",
+            "state",
+            "repositories"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "name": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "created": {
+              "type": "string"
+            },
+            "state": {
+              "enum": [
+                "starting",
+                "active",
+                "partial",
+                "ended"
+              ]
+            },
+            "repositories": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "originalBranch",
+                  "base",
+                  "phase",
+                  "currentBranch",
+                  "changes",
+                  "staged",
+                  "ahead",
+                  "behind",
+                  "missing",
+                  "matchesBranch"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "originalBranch": {
+                    "type": "string"
+                  },
+                  "base": {
+                    "type": "string"
+                  },
+                  "phase": {
+                    "enum": [
+                      "pending",
+                      "started",
+                      "ending",
+                      "ended"
+                    ]
+                  },
+                  "currentBranch": {
+                    "type": "string"
+                  },
+                  "changes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "staged": {
+                    "type": "boolean"
+                  },
+                  "ahead": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "behind": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  },
+                  "matchesBranch": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "action",
+            "name",
+            "dryRun",
+            "results",
+            "success"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "action": {
+              "enum": [
+                "start",
+                "add",
+                "set",
+                "commit",
+                "push",
+                "pr",
+                "end"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "dryRun": {
+              "type": "boolean"
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "results": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "status",
+                  "exitCode",
+                  "message"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "exitCode": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Local work-item snapshots and recoverable per-repository mutation results. Aggregate operations delegate to guarded gitch commands."
+    },
+    "hosting": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "tool",
+        "provider",
+        "repository",
+        "items"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "tool": {
+          "enum": [
+            "gitch issue list",
+            "gitch issue show",
+            "gitch pr list"
+          ]
+        },
+        "provider": {
+          "enum": [
+            "github",
+            "gitlab"
+          ]
+        },
+        "repository": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Read-only hosting discovery using the bound existing account; item fields follow the native provider."
+    },
+    "worktrees": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "tool",
+        "worktrees"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "tool": {
+          "const": "gitch wt list"
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "head",
+              "branch",
+              "detached",
+              "bare",
+              "locked",
+              "prunable"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "head": {
+                "type": "string"
+              },
+              "branch": {
+                "type": "string"
+              },
+              "detached": {
+                "type": "boolean"
+              },
+              "bare": {
+                "type": "boolean"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "prunable": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

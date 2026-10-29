@@ -2137,5 +2137,9 @@
   "Loaded jobs": "読み込んだジョブ",
   "No changed files": "変更されたファイルはありません",
   "No log output yet.": "ログ出力はまだありません。",
-  "Checks are unavailable until the request's commit is known.": "リクエストのコミットが判明するとチェックを表示できます。"
+  "Checks are unavailable until the request's commit is known.": "リクエストのコミットが判明するとチェックを表示できます。",
+  "Multi-repository CLI workflows": "複数リポジトリのCLIワークフロー",
+  "Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command.": "ローカルリポジトリをまとめて1つのタスクを管理します。実行前に例のパス、名前、Issue番号を置き換えてください。",
+  "Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention.": "コミットにはステージ済みのファイルを使います。終了すると記録済みのブランチに戻り、作業ブランチを保持します。変更や予期しないブランチがある場合は停止します。",
+  "CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions.": "CLIのリポジトリグループはアプリのワークスペースとは別にローカル保存されます。オプションは gitch workspace --help または gitch work --help、シェル補完は gitch completion で確認できます。"
 }

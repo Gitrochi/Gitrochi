@@ -286,3 +286,78 @@ test_guard_move_plan_and_module_read_contract() {
   jq -e '.permissions.allow | index("Bash(gitch module audit:*)")' "$HOME/.claude/settings.json" >/dev/null || fail "module audit 허용 목록 누락"
   jq -e '.permissions.allow | index("Bash(gitch module:*)") == null' "$HOME/.claude/settings.json" >/dev/null || fail "임의 module 하위 명령을 허용함"
 }
+
+guard_work_fixture() {
+  mk_config
+  install_quiet
+  mk_remote_seeded github-alice alice/guard-one alice@example.com
+  mk_remote_seeded github-alice alice/guard-two alice@example.com
+  GUARD_WORK_ONE="$HOME/Develop/alice/guard one"
+  GUARD_WORK_TWO="$HOME/Develop/alice/guard two"
+  gitch clone alice alice/guard-one "$GUARD_WORK_ONE" >/dev/null 2>&1 || fail clone
+  gitch clone alice alice/guard-two "$GUARD_WORK_TWO" >/dev/null 2>&1 || fail clone
+  (cd "$GUARD_WORK_ONE" && gitch work start review --repo "$GUARD_WORK_ONE" --repo "$GUARD_WORK_TWO" >/dev/null) || fail work
+}
+
+test_guard_work_aggregate_push_checks_each_recorded_repository() {
+  guard_work_fixture
+  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  expect none 'gitch work push' "$T"
+  expect none 'gitch w push --work review' "$T"
+  git -C "$GUARD_WORK_TWO" config --add gitswitch.protect feature/review
+  expect ask 'gitch work push' "$GUARD_WORK_ONE"
+  expect ask 'gitch work push --work review' "$T"
+  git -C "$GUARD_WORK_TWO" config --unset-all gitswitch.protect
+  git -C "$GUARD_WORK_TWO" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/feature/review
+  expect ask 'gitch work push' "$GUARD_WORK_ONE"
+  git -C "$GUARD_WORK_TWO" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
+  git -C "$GUARD_WORK_ONE" switch -q main
+  git -C "$GUARD_WORK_TWO" switch -q main
+  git config --file "$HOME/.local/state/gitsw/work/review.config" work.branch main
+  expect ask 'gitch work push' "$T"
+  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  expect none 'gitch work push' "$T"
+  expect ask 'gitch work push --force' "$T"
+}
+
+test_guard_work_push_unknown_state_and_modified_state_directory() {
+  guard_work_fixture
+  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  expect ask 'gitch work push --work missing' "$T"
+  expect ask 'gitch work push --work "--dry-run"' "$T"
+  expect ask 'XDG_STATE_HOME=/tmp/other gitch work push' "$T"
+  expect ask 'XDG_CONFIG_HOME=/tmp/other gitch work push' "$T"
+  git -C "$GUARD_WORK_TWO" switch -q main
+  expect ask 'gitch work push' "$GUARD_WORK_ONE"
+  printf '../invalid\n' > "$HOME/.local/state/gitsw/work/active"
+  expect ask 'gitch work push' "$T"
+}
+
+test_guard_work_pr_and_deletion_respect_dry_run_and_message_values() {
+  mk_config
+  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  expect ask 'gitch work pr --title "Task pull request"'
+  expect ask 'gitch w pr create --title "Task pull request"'
+  expect ask 'gitch work pr --title "--dry-run"'
+  expect ask 'gitch work pr --body-file "--dry-run"'
+  expect ask 'gitch work pr --base "--dry-run"'
+  expect ask 'gitch work pr --work "--dry-run"'
+  expect none 'gitch work pr --title "Task pull request" --dry-run'
+  expect none 'gitch work pr status'
+  expect none 'gitch work pr view --work task'
+  expect none 'gitch work pr list --work task'
+  expect none 'gitch pr list --json'
+  expect ask 'gitch work end task --delete-branch --yes'
+  expect ask 'gitch work end --work "--dry-run" --delete-branch --yes'
+  expect none 'gitch work end task --delete-branch --yes --dry-run'
+  expect none 'gitch work push --dry-run'
+  expect none 'gitch work push -n'
+  expect deny 'gitch work commit --no-verify -m message'
+  expect deny 'gitch work commit -n -m message'
+  expect none 'gitch work commit -m "--no-verify"'
+  expect none 'gitch work commit --message "--no-verify"'
+  expect none 'gitch work commit -am "-n"'
+  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  expect none 'gitch work pr --title "Task pull request"'
+  expect ask 'gitch work end task --delete-branch --yes'
+}

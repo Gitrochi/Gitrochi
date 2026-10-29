@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Copy } from "lucide-react";
 import { gitch, type GitchAccount, type GitchDoctor } from "@/entities/gitch";
 import { displayPath, env, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -151,6 +152,7 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
           <Button size="small" disabled={logoBusy || !info.bash} onClick={() => void loadLogo()}>{t("Retry")}</Button>
         </div>}
       </div>
+      <CLIWorkflowGuide />
       <div className="form-section" style={{ gap: 8, padding: 12 }}>
         <div className="row">
           <span style={{ fontWeight: 600 }}>gitch</span>
@@ -248,4 +250,47 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
     </div>
   );
+}
+
+/** macOS: CLISettings.swift presents the same examples without running them. */
+function CLIWorkflowGuide() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const commands = [
+    "gitch workspace create product ../api ../web",
+    "gitch workspace status product --json",
+    "gitch work start feature-name --workspace product",
+    "gitch work info feature-name --json",
+    "gitch work commit --work feature-name -m \"Area: Describe change\"",
+    "gitch work push --work feature-name",
+    "gitch work pr --work feature-name --title \"Describe change\" --body-file pr.md",
+    "gitch work end feature-name",
+    "gitch issue list --json",
+    "gitch issue show 123 --json",
+    "gitch pr list --json",
+  ];
+  const copy = async (command: string) => {
+    setCopied(null);
+    setError(null);
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(command);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  return <details className="form-section" data-cli-workflow-guide style={{ padding: 12 }}>
+    <summary style={{ cursor: "pointer", fontWeight: 600 }}>{t("Multi-repository CLI workflows")}</summary>
+    <div className="col" style={{ gap: 10, paddingTop: 10 }}>
+      <span className="hint">{t("Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command.")}</span>
+      {commands.map((command) => <div className="row" key={command} style={{ alignItems: "flex-start", gap: 8 }}>
+        <code className="selectable grow" style={{ fontSize: 11.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere", minWidth: 0 }}>{command}</code>
+        <Button size="small" tip={t("Copy command")} aria-label={t("Copy command")} onClick={() => void copy(command)}><Copy size={13} /></Button>
+      </div>)}
+      <span className="hint">{t("Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention.")}</span>
+      <span className="hint">{t("CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions.")}</span>
+      {copied && <span className="hint" role="status">{t("Copied")}</span>}
+      {error && <span className="error-text selectable" role="alert">{error}</span>}
+    </div>
+  </details>;
 }
