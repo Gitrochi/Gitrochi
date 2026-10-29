@@ -1435,5 +1435,9 @@
   "Loaded jobs": "已加载的作业",
   "No changed files": "没有更改的文件",
   "No log output yet.": "暂无日志输出。",
-  "Checks are unavailable until the request's commit is known.": "确定请求的提交后才能查看检查结果。"
+  "Checks are unavailable until the request's commit is known.": "确定请求的提交后才能查看检查结果。",
+  "Multi-repository CLI workflows": "多仓库 CLI 工作流程",
+  "Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command.": "将本地仓库分组，在多个仓库间管理同一任务。运行命令前，请替换示例路径、名称和议题编号。",
+  "Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention.": "提交使用已暂存的文件。结束任务会返回记录的分支并保留任务分支；如有更改或分支不符需要处理，则停止操作。",
+  "CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions.": "CLI 仓库组保存在本地，与应用工作区分开管理。使用 gitch workspace --help 或 gitch work --help 查看选项，使用 gitch completion 查看命令行补全。"
 }

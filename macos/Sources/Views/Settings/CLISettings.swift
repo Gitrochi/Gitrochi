@@ -28,6 +28,9 @@ struct CLISettings: View {
                         .disabled(logoSaving)
                 }
             }
+            Section {
+                CLIWorkflowGuide()
+            }
             GitchSection()
         }
         .formStyle(.grouped)
@@ -64,6 +67,53 @@ struct CLISettings: View {
                 logoError = error.localizedDescription
             }
             logoSaving = false
+        }
+    }
+}
+
+/// Windows: CLISettings.tsx presents the same examples without running them.
+private struct CLIWorkflowGuide: View {
+    private let commands = [
+        "gitch workspace create product ../api ../web",
+        "gitch workspace status product --json",
+        "gitch work start feature-name --workspace product",
+        "gitch work info feature-name --json",
+        "gitch work commit --work feature-name -m \"Area: Describe change\"",
+        "gitch work push --work feature-name",
+        "gitch work pr --work feature-name --title \"Describe change\" --body-file pr.md",
+        "gitch work end feature-name",
+        "gitch issue list --json",
+        "gitch issue show 123 --json",
+        "gitch pr list --json"
+    ]
+
+    var body: some View {
+        DisclosureGroup("Multi-repository CLI workflows") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command.")
+                    .font(.caption).foregroundStyle(.secondary)
+                ForEach(commands, id: \.self) { command in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(verbatim: command)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(command, forType: .string)
+                        } label: { Image(systemName: "doc.on.doc") }
+                            .buttonStyle(.borderless)
+                            .help("Copy command")
+                            .accessibilityLabel("Copy command")
+                            .accessibilityValue(command)
+                    }
+                }
+                Text("Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.top, 8)
         }
     }
 }

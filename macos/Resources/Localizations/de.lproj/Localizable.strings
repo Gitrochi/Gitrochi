@@ -1251,3 +1251,7 @@
 "No changed files" = "Keine geänderten Dateien";
 "No log output yet." = "Noch keine Protokollausgabe.";
 "Checks are unavailable until the request's commit is known." = "Prüfungen sind verfügbar, sobald der Commit der Anfrage bekannt ist.";
+"Multi-repository CLI workflows" = "CLI-Abläufe für mehrere Repositorys";
+"Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command." = "Gruppieren Sie lokale Repositorys und verwalten Sie eine Aufgabe über mehrere Repositorys hinweg. Ersetzen Sie vor dem Ausführen die Beispielpfade, Namen und Issue-Nummer.";
+"Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention." = "Commits verwenden vorgemerkte Dateien. Beim Beenden wird zum gespeicherten Branch zurückgekehrt und Aufgaben-Branches bleiben erhalten. Änderungen oder ein unerwarteter Branch stoppen den Vorgang.";
+"CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions." = "CLI-Repositorygruppen werden lokal und getrennt von App-Arbeitsbereichen gespeichert. Optionen finden Sie mit gitch workspace --help oder gitch work --help, Shell-Vervollständigung mit gitch completion.";

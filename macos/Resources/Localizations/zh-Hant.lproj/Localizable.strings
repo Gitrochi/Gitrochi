@@ -1274,3 +1274,7 @@
 "No changed files" = "沒有變更的檔案";
 "No log output yet." = "尚無日誌輸出。";
 "Checks are unavailable until the request's commit is known." = "確定請求的提交後才能查看檢查結果。";
+"Multi-repository CLI workflows" = "多儲存庫 CLI 工作流程";
+"Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command." = "將本機儲存庫分組，在多個儲存庫間管理同一工作。執行指令前，請替換範例路徑、名稱和議題編號。";
+"Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention." = "提交使用已暫存的檔案。結束工作會返回記錄的分支並保留工作分支；如有變更或分支不符需要處理，則停止操作。";
+"CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions." = "CLI 儲存庫群組保存在本機，與應用程式工作區分開管理。使用 gitch workspace --help 或 gitch work --help 查看選項，使用 gitch completion 查看指令補全。";

@@ -23,7 +23,7 @@ test_cli_contract_schema_embedded_matches_standalone() {
   run gitch schema; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -S .)" "$(jq -S . "$ROOT/schema/gitch-v1.schema.json")"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$schema"')" https://json-schema.org/draft/2020-12/schema
-  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 24
+  assert_eq "$(printf '%s' "$OUT" | jq '."$defs".public.oneOf | length')" 28
   run gitch schema graph; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/graph'
   run gitch schema overlap; assert_ok; assert_json "$OUT"
@@ -33,6 +33,45 @@ test_cli_contract_schema_embedded_matches_standalone() {
   run gitch schema module; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '."$ref"')" '#/$defs/module'
   run gitch schema unknown --json; assert_rc 1; assert_json "$OUT"
+}
+
+test_cli_contract_workspace_work_and_worktree_outputs() {
+  contract_repo
+  run gitch workspace create product . --json; assert_ok
+  contract_validate workspace; contract_validate public
+  run gitch workspace list --json; assert_ok
+  contract_validate workspace; contract_validate public
+  run gitch workspace status product --json; assert_ok
+  contract_validate workspace; contract_validate public
+  run gitch work start contract-work --workspace product --json; assert_ok
+  contract_validate work; contract_validate public
+  run gitch work list --json; assert_ok
+  contract_validate work; contract_validate public
+  run gitch work info contract-work --json; assert_ok
+  contract_validate work; contract_validate public
+  run gitch work end contract-work --json; assert_ok
+  contract_validate work; contract_validate public
+  git worktree add -q -b fixture-worktree "$T/worktree with spaces" || fail 'worktree fixture'
+  run gitch wt list --json; assert_ok
+  contract_validate worktrees; contract_validate public
+  assert_eq "$(printf '%s' "$OUT" | jq '.worktrees | length')" 2
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.worktrees[1].branch')" fixture-worktree
+}
+
+test_cli_contract_workflow_completion_names_and_help() {
+  contract_repo
+  run gitch workspace create product .; assert_ok
+  run gitch work start feature-name --workspace product; assert_ok
+  run gitch _complete -- workspace show ''; assert_ok; assert_out product
+  run gitch _complete -- work info ''; assert_ok; assert_out feature-name
+  run gitch _complete -- work start task --workspace ''; assert_ok; assert_out product
+  run gitch _complete -- work push --work ''; assert_ok; assert_out feature-name
+  run gitch _complete -- issue ''; assert_ok; assert_out list; assert_out show
+  run gitch _complete -- pr ''; assert_ok; assert_out list
+  cd "$T" || fail cd
+  run gitch help work; assert_ok; assert_out 'gitch work'
+  run gitch help workspace; assert_ok; assert_out 'gitch workspace'
+  run gitch wt --help; assert_ok; assert_out 'gitch wt'
 }
 
 test_cli_contract_staged_review_and_stamp() {

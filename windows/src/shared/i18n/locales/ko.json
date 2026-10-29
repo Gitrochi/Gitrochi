@@ -3215,5 +3215,9 @@
   "Loaded jobs": "불러온 작업",
   "No changed files": "변경된 파일이 없습니다",
   "No log output yet.": "아직 로그가 없습니다.",
-  "Checks are unavailable until the request's commit is known.": "리퀘스트의 커밋을 확인해야 검사 결과를 볼 수 있습니다."
+  "Checks are unavailable until the request's commit is known.": "리퀘스트의 커밋을 확인해야 검사 결과를 볼 수 있습니다.",
+  "Multi-repository CLI workflows": "여러 저장소 CLI 작업",
+  "Group local repositories and manage one task across them. Replace the example paths, names and issue number before running a command.": "로컬 저장소를 묶어 하나의 작업을 함께 관리합니다. 명령을 실행하기 전에 예제 경로, 이름, 이슈 번호를 바꾸세요.",
+  "Commit uses staged files. End returns to the recorded branch, keeps task branches, and stops if changes or an unexpected branch need attention.": "커밋은 스테이지된 파일만 사용합니다. 종료하면 기록된 브랜치로 돌아가고 작업 브랜치를 보존하며, 변경 사항이나 다른 브랜치를 확인해야 하면 멈춥니다.",
+  "CLI repository groups are stored locally, separately from app workspaces. Use gitch workspace --help or gitch work --help for options, and gitch completion for shell suggestions.": "CLI 저장소 그룹은 앱 작업 공간과 별도로 로컬에 저장됩니다. 옵션은 gitch workspace --help 또는 gitch work --help에서, 셸 자동완성은 gitch completion에서 확인하세요."
 }
