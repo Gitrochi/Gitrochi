@@ -20883,6 +20883,8 @@ cli_repo_path() {
   [[ "$1" != *[[:cntrl:]]* ]] || return 1
   root=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 1
   root=$(cd "$root" && pwd -P) || return 1
+  # Native Git converts MSYS arguments to drive paths before persisting config values.
+  if [ -n "$IS_WINDOWS" ]; then root=$(cygpath -am "$root" 2>/dev/null) || return 1; fi
   [[ "$root" != *[[:cntrl:]]* ]] || return 1
   printf '%s\n' "$root"
 }
@@ -21027,8 +21029,9 @@ workspace_cmd() (
     if [ "$sub" = remove ] || [ "$sub" = rm ]; then
       # Exact stored paths remain removable after a repository has been deleted.
       root=$path
+      if [ -n "$IS_WINDOWS" ]; then root=$(cygpath -am "$path" 2>/dev/null) || die "Invalid repository path: $path"; fi
       found=''
-      for item in "${paths[@]}"; do [ "$item" != "$path" ] || found=1; done
+      for item in "${paths[@]}"; do [ "$item" != "$root" ] || found=1; done
       [ -n "$found" ] || root=$(cli_repo_path "$path") || die "Repository is not registered: $path"
       found=''; next=()
       for item in "${paths[@]}"; do if [ "$item" = "$root" ]; then found=1; else next+=("$item"); fi; done

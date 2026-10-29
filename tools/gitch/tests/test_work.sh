@@ -20,6 +20,7 @@ test_work_start_info_list_and_preserving_end() {
   run gitch work start sample --repo "$WORK_ONE" --repo "$WORK_TWO" --json
   assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '.results | length')" 2
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.results[0].path')" "$(git config --file "$WORK_RECORD/sample.config" repo.0.path)" 'reported and persisted paths must round-trip through native Git'
   assert_eq "$(git -C "$WORK_ONE" branch --show-current)" feature/sample
   assert_eq "$(git -C "$WORK_TWO" branch --show-current)" feature/sample
   run gitch work info --json; assert_ok; assert_json "$OUT"

@@ -17,6 +17,7 @@ test_workspace_membership_and_canonical_paths() {
   run gitch workspace create product "$T/Frontend with spaces" "$T/backend" --json
   assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq '.repositories | length')" 2
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.repositories[0].path')" "$(git config --file "$HOME/.local/state/gitsw/workspaces/product.config" --get-all workspace.repository | head -1)" 'reported and persisted repository paths must match'
   run gitch ws add product "$T/backend/." --json
   assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq '.repositories | length')" 2
