@@ -183,10 +183,10 @@ export abstract class RepoHosting extends RepoWorktrees {
     if (this.inboxBusy) return false;
     const generation = this.reviewContextGeneration, path = this.path;
     const current = () => generation === this.reviewContextGeneration && path === this.path;
-    const c = await this.reviewAccess(); if (!c || !current()) return false;
     this.inboxBusy = true; this.inboxError = null; this.emit();
     try {
-      if (kind === "comment") await Hosting.postInboxComment({ ...c, stillCurrent: current }, item, body);
+      const c = await this.reviewAccess(); if (!c || !current()) return false;
+      if (kind === "comment") await Hosting.postInboxComment({ ...c, stillCurrent: () => current() && c.stillCurrent?.() !== false }, item, body);
       else if (kind === "read") await Hosting.markInboxRead({ ...c, stillCurrent: current }, item);
       else { if (item.kind !== "issue") return false; await Hosting.setIssueState({ ...c, stillCurrent: current }, item, kind === "reopen"); }
       if (!current()) return false;
@@ -249,7 +249,7 @@ export abstract class RepoHosting extends RepoWorktrees {
       branch = this.headBranch;
     if (!target || !branch || !this.path || this.busy) return;
     const originalPath = this.path, originalHead = this.headHash, context = this.reviewContextGeneration;
-    this.newPullRequestDraft = { branch, title, body, base, draft };
+    this.newPullRequestDraft = { branch, title, body, base, draft, issue: this.newPullRequestDraft?.branch === branch ? this.newPullRequestDraft.issue : undefined };
     const acct = this.hostingAccount;
     const token = acct ? await accounts.token(acct) : null;
     const current = () => context === this.reviewContextGeneration && this.path === originalPath && sameTarget(this.target, target);

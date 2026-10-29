@@ -75,9 +75,27 @@ enum Hosting {
         let detail = try await CollaborationAPI.detail(gl, item: inbox.0[0], page: 1); precondition(detail.item.isRequest && detail.comments.count == 1 && detail.comments[0].createdAt == "2026-10-02T13:00:00Z")
         try await CollaborationAPI.inboxAction(gl, item: detail.item, action: "comment", body: "Reply")
         let state = CollaborationState(); state.inbox = inbox.0; let context = state.contextID; state.reset(); precondition(state.inbox.isEmpty && context != state.contextID)
+        let issue = CollaborationInboxItem(id: "issue-7", kind: "issue", number: 7, title: "Search", url: "https://github.example/team/repo/issues/7", body: "", state: "open", author: "reviewer")
+        let own = CollaborationInboxComment(id: "12", author: "reviewer", body: "Original", editable: true)
+        var editedBody = "Original", commentWrites = 0
+        Hosting.handler = { request in
+            if request.httpMethod == "PATCH" { commentWrites += 1; return try json([:]) }
+            return try json(["body": editedBody, "user": ["login": "reviewer"], "issue_url": "https://github.example/api/repos/team/repo/issues/7"])
+        }
+        try await CollaborationAPI.changeIssueComment(gh, item: issue, comment: own, body: "Edited")
+        precondition(commentWrites == 1)
+        editedBody = "Collaborator edit"
+        do { try await CollaborationAPI.changeIssueComment(gh, item: issue, comment: own, body: "New"); fatalError("Stale comment accepted") } catch {}
+        precondition(commentWrites == 1)
+        Hosting.handler = { request in
+            precondition(request.url!.path.hasSuffix("/issues/7/timeline"))
+            return try json([["event": "cross-referenced", "source": ["issue": ["number": 9, "title": "Search", "state": "open", "html_url": "https://github.example/team/repo/pull/9", "pull_request": [:]]]]])
+        }
+        let linked = try await CollaborationAPI.issueLinkedRequests(gh, item: issue, page: 1)
+        precondition(linked.0.count == 1 && linked.0[0].number == 9 && !linked.1)
         print("Collaboration: REST list paging and page filters, merge SHA and context guards, request mention replies, state reset passed")
     }
 }
 SWIFT
-swiftc -swift-version 5 -parse-as-library "$ROOT/Sources/Services/Collaboration.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test"
+swiftc -swift-version 5 -parse-as-library "$ROOT/Sources/Services/Collaboration.swift" "$ROOT/Sources/Services/IssueCollaboration.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test"
 "$TASK_TMP/test"

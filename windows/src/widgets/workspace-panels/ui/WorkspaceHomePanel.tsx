@@ -7,6 +7,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import { Button, showContextMenu } from "@/shared/ui";
+import { ReleaseOverview } from "./ReleaseOverview";
 import { WorkspacePlanningDashboard } from "./WorkspacePlanningDashboard";
 import { RemoteRepositorySearch } from "./RemoteRepositorySearch";
 import "./workspace-panels.css";
@@ -20,6 +21,7 @@ export function WorkspaceHomePanel({ store, openSettings }: { store: RepoStore; 
   return (
     <div className="workspace-home">
       <WorkspacePlanningDashboard store={store} />
+      <ReleaseOverview/>
     <div className="welcome">
       <div className="welcome-main">
         <img src={icon} width={112} height={112} alt="" />

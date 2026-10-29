@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { HardDrive, Cloud, ExternalLink, RefreshCw, Plus, Trash2, FileCode } from "lucide-react";
 import { accounts, HostingHubStore, hubSafeURL, hubError, saveHubRelease, deleteHubItem, issuePage, ensureHubCurrent, type HubSource, type HostingHubSection, type HubReleaseInput, type HubAccess } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
@@ -15,12 +15,17 @@ import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ProjectCreateDialog } from "./ProjectCreateDialog";
 import type { ProjectCreationMode } from "./ProjectCreationChooser";
 import type { ProjectLocalActions } from "../lib/project-workspace";
+const ReleaseWorkspace = lazy(() => import("./ReleaseWorkspace").then(module => ({ default: module.ReleaseWorkspace })));
+
+export function HostingHubPanel(props: Parameters<typeof StandardHostingHubPanel>[0]) {
+  return props.section === "releases" ? <Suspense fallback={<Spinner/>}><ReleaseWorkspace source={props.store}/></Suspense> : <StandardHostingHubPanel {...props}/>;
+}
 const names: Record<HostingHubSection,string>={releases:"Releases",projects:"Projects",organizations:"Organizations"};
-export function HostingHubPanel({store,section,onClone,projectActions}:{store:HubSource;section:HostingHubSection;onClone?:(url:string)=>void;projectActions?:Omit<ProjectLocalActions,"repository"|"host">}){
+function StandardHostingHubPanel({store,section,onClone,projectActions}:{store:HubSource;section:HostingHubSection;onClone?:(url:string)=>void;projectActions?:Omit<ProjectLocalActions,"repository"|"host">}){
   const hub=useMemo(()=>"hostingHub" in store && store.hostingHub instanceof HostingHubStore ? store.hostingHub : new HostingHubStore(store),[store]);useObserve(hub);useObserve(accounts);useObserve(avatars);
   const [editor,setEditor]=useState<"new"|"edit"|null>(null),[release,setRelease]=useState<HubReleaseInput>({tag:"",name:"",body:"",target:"",draft:true,prerelease:false}),[confirm,setConfirm]=useState<null|{title:string;body:string;action:(c:HubAccess)=>Promise<unknown>;refresh:"list"|"detail";context:string;project?:string;owner?:string}>(null);
   const context=hub.contextStamp;useLayoutEffect(()=>{void hub.activate(section);setEditor(null);setConfirm(null);},[hub,section,context]);
-  useEffect(()=>()=>hub.reset(),[hub]);
+  useLayoutEffect(()=>()=>hub.reset(),[hub]);
   const [projectCreation,setProjectCreation]=useState<ProjectCreationMode|null>(null);
   useEffect(()=>{const mode=hub.requestedProjectCreation;if(section==="projects"&&mode){setProjectCreation(mode);hub.consumeProjectCreation(mode);}},[hub,section,hub.requestedProjectCreation]);
   const [projectAccessAccount,setProjectAccessAccount]=useState<string|null>(null);

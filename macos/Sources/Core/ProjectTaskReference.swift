@@ -21,4 +21,14 @@ enum ProjectTaskLinks {
         let saved = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode([String: [String: ProjectTaskReference]].self, from: $0) } ?? [:]
         return (saved[repositoryPath] ?? [:]).filter { _, task in task.id == taskID && task.repository.caseInsensitiveCompare(repository) == .orderedSame && task.host.caseInsensitiveCompare(host) == .orderedSame }.keys.sorted()
     }
+    static func task(repositoryPath: String, branch: String, repository: String, host: String, defaults: UserDefaults = .standard) -> ProjectTaskReference? {
+        let saved = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode([String: [String: ProjectTaskReference]].self, from: $0) } ?? [:]
+        guard let task = saved[repositoryPath]?[branch], task.repository.caseInsensitiveCompare(repository) == .orderedSame, task.host.caseInsensitiveCompare(host) == .orderedSame else { return nil }
+        return task
+    }
+    static func issueBranches(_ task: ProjectTaskReference, repositoryPath: String, defaults: UserDefaults = .standard) -> [String] {
+        let saved = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode([String: [String: ProjectTaskReference]].self, from: $0) } ?? [:]
+        return (saved[repositoryPath] ?? [:]).filter { _, value in value.number == task.number && value.repository.caseInsensitiveCompare(task.repository) == .orderedSame && value.host.caseInsensitiveCompare(task.host) == .orderedSame }.keys.sorted()
+    }
+
 }

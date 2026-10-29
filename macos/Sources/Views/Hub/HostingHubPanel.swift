@@ -15,7 +15,8 @@ struct HostingHubPanel: View {
     private var accessRequired: Bool { store.hostingHub.projectPermissionRequired || store.hubCredentialState == .authorizationRequired }
     private var title: String { if store.hubProvider == .gitlab { switch section { case .gists: return String(localized: "Snippets"); case .organizations: return String(localized: "Groups"); case .projects: return String(localized: "Issue boards"); default: break } }; return section.title }
     @ViewBuilder var body: some View {
-        if section == .projects { ProjectWorkspace(store: store) }
+        if section == .releases { ReleaseWorkspace(store: store) }
+        else if section == .projects { ProjectWorkspace(store: store) }
         else { standardBody }
     }
     private var standardBody: some View {

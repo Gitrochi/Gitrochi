@@ -11,6 +11,7 @@ struct CreatePullRequestSheet: View {
     @ViewState private var draft = false
     @ViewState private var generating = false
     @ViewState private var previewing = false
+    @ViewState private var issue: ProjectTaskReference?
 
     var body: some View {
         let provider = store.target?.provider ?? .github
@@ -25,6 +26,7 @@ struct CreatePullRequestSheet: View {
                 .labelsHidden()
                 .frame(maxWidth: 220)
             }
+            if let issue, let number = issue.number { Text(String(localized: "From issue #{0}: {1}").replacingOccurrences(of: "{0}", with: String(number)).replacingOccurrences(of: "{1}", with: issue.title)).font(.caption).foregroundStyle(.secondary) }
             TextField("Title", text: $title)
                 .textFieldStyle(.roundedBorder)
             Picker("", selection: $previewing) {
@@ -84,8 +86,10 @@ struct CreatePullRequestSheet: View {
             bases = store.pullRequestBaseCandidates()
             if let b = await store.defaultBaseBranch() { base = b }
             if let saved = store.newPullRequestDraft, saved.branch == store.headBranch {
-                title = saved.title; bodyText = saved.body; base = saved.base; draft = saved.draft
+                title = saved.title; bodyText = saved.body; if !saved.base.isEmpty { base = saved.base }; draft = saved.draft; issue = saved.issue
             }
+            if issue == nil { issue = store.currentBranchIssue }
+            if title.isEmpty, let issue { title = issue.title; bodyText = IssueWorkflow.requestBody(issue) }
             if title.isEmpty, let branch = store.headBranch {
                 title = branch.split(separator: "/").last.map { $0.replacingOccurrences(of: "-", with: " ") } ?? branch
             }
@@ -97,7 +101,7 @@ struct CreatePullRequestSheet: View {
         Task {
             if let d = await store.draftPullRequest(base: base) {
                 title = d.title
-                bodyText = d.body
+                bodyText = issue.map { IssueWorkflow.requestBody($0) + "\n\n" + d.body } ?? d.body
             }
             generating = false
         }

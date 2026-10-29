@@ -205,6 +205,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             selected.setFrame(minimum, display: true)
             await settle(0.6)
             try await capture("swiftui-releases-\(name)-minimum", window: selected, expectedFrame: minimum)
+            try await capture("swiftui-releases-\(name)-minimum-repeat", window: selected, expectedFrame: minimum)
 
             selected.setFrame(original, display: true)
             await settle(0.6)
@@ -215,7 +216,8 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
     private func seedReleases() {
         let items = (0..<30).map { index in
             HubItem(id: "release-chrome-\(index)", title: "Synthetic release \(index + 1)",
-                    subtitle: "v0.0.\(index + 1) · Fixture only", body: "A synthetic release used to measure the real scrolling list.")
+                    subtitle: "v0.0.\(index + 1) · Fixture only", body: "A synthetic release used to measure the real scrolling list.",
+                    data: ["tag_name": "v0.0.\(index + 1)", "released_at": String(format: "2026-10-%02dT12:00:00Z", 30 - index)])
         }
         stores[1].hostingHub.items = items
         stores[1].hostingHub.more = true
@@ -360,7 +362,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         let attempts = windowFixtureNetworkAttempts()
         if ok { try require(attempts == 0, "The isolated WindowGroup requested remote data") }
         var result: [String: Any] = ["ok": ok, "actualWindowGroup": true, "networkAttempts": attempts,
-                                    "actualViews": ["RepoContainer", "RepoView", "PageHeader", "HostingHubPanel", "NavigationSidebarRail"], "checks": checks]
+                                    "actualViews": ["RepoContainer", "RepoView", "PageHeader", "HostingHubPanel", "ReleaseWorkspace", "NavigationSidebarRail"], "checks": checks]
         if let error { result["error"] = error }
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         if let output {
