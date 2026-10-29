@@ -114,7 +114,7 @@ Run the matching macOS feature checks when those areas change (commands below st
 | Release versions and layout | `bash macos/Tools/test-releases.sh`, `bash macos/Tools/test-release-layout.sh`; Windows: `tests/releases.test.ts` and the release/overview app self-tests |
 | Accounts, hosting hub and operations | `bash macos/Tools/test-hosting-target.sh`, `bash macos/Tools/test-hosting-hub.sh`, `bash macos/Tools/test-workspace-operations.sh`, `bash macos/Tools/test-confirmation-guard.sh` |
 | Large lists and responsive layout | `bash macos/Tools/test-inspector-layout.sh`, `bash macos/Tools/test-large-changes.sh`, `bash macos/Tools/test-adaptive-workbench-identity.sh` |
-| Sidebar and titlebar safe areas | `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
+| Sidebar tree and titlebar safe areas | `bash macos/Tools/test-sidebar-tree-layout.sh`, `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
 | Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |
 | Credential access | `bash macos/Tools/test-keychain.sh`, `bash macos/Tools/test-credential-access.sh` |
 | Flows (the app ↔ engine contract) | `bash macos/Tools/test-flow.sh` |
