@@ -49,6 +49,7 @@ Never write or tick CLA assent on someone else's behalf. The checklist in the pr
 
 - After cloning, run `git config core.hooksPath .githooks` once: the hooks check the Git rules when you commit and push.
 - The Windows app runs on a Mac too: `npx tauri dev` (its data folder is separate, `Gitrochi (Tauri)`).
+- To open the latest remote `main` of the native macOS app, double-click `macos/open-main.command` in Finder or run `bash macos/open-main.command`. It requires `gitch`, Python 3 and the macOS build tools above. It updates a separate checkout under `.build/main-launcher/`, builds and opens that exact bundle; your working branch and installed app stay unchanged. Update or build failures stop the launch. Build output is saved to `.build/main-launcher/latest.log`. From Gitrochi's own terminal it only builds; open the resulting bundle from an external terminal or Finder.
 - Changed a screen? Check it with the demo repository (`docs/make-demo-repo.sh <folder>`) and attach light and dark screenshots to the pull request.
 - The tests for the bundled helpers (gitch, gitch-swift-index, the flow engine gitch-flow) and the version check are in [docs/code-style.md](docs/code-style.md#tests-and-verification).
 
