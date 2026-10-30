@@ -2,4 +2,7 @@
 export { FlowEngineError, flowEngine } from "./model/engine";
 export { applyEvent, consumeEvents, formatDuration, type FlowNodeState, isBadState, newRunView, runCounts, type RunNode, type RunStep, type RunView, TAIL_LIMIT } from "./model/run-view";
 export { FlowStore, flowStoreFor } from "./model/store";
+export { recordIsRunning, recoverRunHistory, runPresentationState, runRowPresentationState } from "./model/history";
+export { layoutFlowGraph } from "./model/graph";
+export { flowConfigFiles, saveFlowConfig, scriptFlowExample } from "./model/config";
 export { type FlowDetached, type FlowEvent, type FlowGate, type FlowInitProposal, type FlowItem, type FlowList, type FlowPlan, type FlowPlanNode, type FlowRunRow, needsConfirmation, parseEngineError } from "./model/types";

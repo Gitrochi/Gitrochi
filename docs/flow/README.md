@@ -25,6 +25,39 @@ gitch flow export github   # propose a workflow that runs the same flow in CI
 
 In the app it is **Flows** under Workspace tools in the sidebar (⌘K / Ctrl+K finds it too): the flows, ▶ to run, live progress, failure locations (file:line), rollback, copying a summary and turning on the pre-push check. Without a flow file, **Set up flows…** shows the proposal and creates the file.
 
+### Visual workspace and scripts
+
+Screenshots with synthetic repository data: [Windows light](../screenshots/flow-workspace/windows-flow-light.jpg), [Windows dark](../screenshots/flow-workspace/windows-flow-dark.jpg), [macOS light](../screenshots/flow-workspace/macos-workspace-light.png), [macOS dark](../screenshots/flow-workspace/macos-workspace-dark.png), [full graph](../screenshots/flow-workspace/macos-graph-light.png), [script editor](../screenshots/flow-workspace/windows-editor-light.jpg) and [run history](../screenshots/flow-workspace/windows-history-light.jpg). Windows captures use the production components in an isolated browser fixture; native macOS views are rendered offscreen.
+
+Select a flow to preview its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to inspect its command, undo command, executor and source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
+
+Use the configuration editor to add commands or change dependencies in the repository's flow files. Existing YAML is kept as text, including comments and advanced block settings. Saving validates the configuration with the flow engine; it does not execute commands or approve trust. If validation fails, the previous file is restored. If another editor changed the file since it was opened, reload it before saving.
+
+For example, this flow calls repository scripts and runs two checks in parallel before building:
+
+```yaml
+version: 1
+flows:
+  verify:
+    description: Check and build the project
+    nodes:
+      prepare:
+        run: bash scripts/prepare.sh
+      lint:
+        needs: [prepare]
+        run: bash scripts/lint.sh
+      test:
+        needs: [prepare]
+        run: bash scripts/test.sh
+      build:
+        needs: [lint, test]
+        run: bash scripts/build.sh
+```
+
+Replace these example commands with scripts that exist in your repository. Commands run from the repository root unless a step sets `cwd`; Bash commands need Git Bash on Windows. Use a `test.*` block or a suite when the engine should check test reports and test counts, rather than only a script's exit code.
+
+Review and approve changed commands when prompted, then run the flow. Open the history view to compare recorded results and durations and select a run for its diagram, step output, failure details and rollback. Saved runs remain available after reopening the repository, as long as their local engine records have been retained. Local flow history and hosted CI history are separate; add `ci.*` blocks to a flow when it should start and follow hosted CI.
+
 ## The flow file
 
 `.gitch/flow.yml` is a safe subset of YAML: anchors, aliases, tags and multiple documents are errors. Files overlay in the order `flow.yml` ⊕ `flows/*.yml` ⊕ the uncommitted `flow.local.yml` (init adds it to `.gitignore`). Unknown keys are errors (keys starting with `x-` are allowed). Schema: `gitch schema flow`.

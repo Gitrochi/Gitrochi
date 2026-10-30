@@ -1,12 +1,16 @@
-import { Circle, CircleCheck, CircleSlash, CircleX, Crosshair, FileSearch, Hand, MinusCircle, Play, RefreshCw, RotateCcw, Shield, ShieldCheck, TriangleAlert, Undo2, Wand2, Workflow } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { type FlowItem, type FlowPlan, type FlowPlanNode, type FlowRunRow, type FlowStore, flowEngine, flowStoreFor, formatDuration, type FlowInitProposal, isBadState, needsConfirmation, runCounts, type RunNode } from "@/entities/flow";
+import { CircleCheck, Code2, Crosshair, Hand, RefreshCw, Shield, ShieldCheck, TriangleAlert, Wand2, Workflow } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
+import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, flowStoreFor, type FlowInitProposal, needsConfirmation } from "@/entities/flow";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
 import { joinPath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { shortDate, useObserve } from "@/shared/lib";
-import { Button, IconButton, Modal, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
+import { useObserve } from "@/shared/lib";
+import { Button, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { FlowRunDialog } from "./FlowRunDialog";
+import { FlowWorkspace } from "./FlowWorkspace";
+import { FlowConfigDialog } from "./FlowConfigDialog";
+import "./flow-workspace.css";
 
 /**
  * The Flows workspace page: the flows (.gitch/flow.yml) that assemble this repository's tests, checks and deploy steps, and the recent runs (like the macOS FlowPanel.swift).
@@ -20,7 +24,7 @@ export function FlowPanel({ store }: { store: RepoStore }) {
   return <FlowPanelBody flows={flowStoreFor(store.path)} />;
 }
 
-type Dialog = { kind: "run"; runId: string } | { kind: "trust"; flow: string; plan: FlowPlan; thenRun: boolean } | { kind: "confirm"; flow: string; plan: FlowPlan } | { kind: "setup" } | { kind: "error"; message: string };
+type Dialog = { kind: "run"; runId: string } | { kind: "trust"; flow: string; plan: FlowPlan; thenRun: boolean } | { kind: "confirm"; flow: string; plan: FlowPlan } | { kind: "setup" } | { kind: "config" } | { kind: "error"; message: string };
 
 function FlowPanelBody({ flows }: { flows: FlowStore }) {
   useObserve(flows);
@@ -114,16 +118,17 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
           onClick={() => settings.set("flowAffectedOnly", !affected)}
         />
         <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh")} onClick={() => void flows.refresh()} />
+        <IconButton small icon={<Code2 size={13} />} tip={t("Configure scripts")} disabled={!flows.engine} onClick={() => setDialog({ kind: "config" })} />
         <IconButton small icon={<Wand2 size={13} />} tip={t("Detect tests and propose a flow file")} disabled={!flows.engine} onClick={() => setDialog({ kind: "setup" })} />
       </div>
-      <div className="side-scroll">
+      <div className="col" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         {flows.engine === null ? (
           <EmptyNote icon={<TriangleAlert size={26} />} text={t("The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows.")} />
         ) : !flows.hasFlowFile ? (
           <div className="col" style={{ alignItems: "center", gap: 10, padding: 20, textAlign: "center" }}>
             <Workflow size={28} style={{ opacity: 0.35 }} />
             <span className="muted">{t("Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI.")}</span>
-            <Button onClick={() => setDialog({ kind: "setup" })}>{t("Set up flows…")}</Button>
+            <div className="row" style={{ gap: 8 }}><Button onClick={() => setDialog({ kind: "setup" })}>{t("Set up flows…")}</Button><Button onClick={() => setDialog({ kind: "config" })}>{t("Configure scripts")}</Button></div>
           </div>
         ) : flows.error ? (
           <div className="col" style={{ gap: 6, padding: 8, alignItems: "flex-start" }}>
@@ -136,6 +141,7 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
               <button className="link" onClick={() => void ipc.reveal(joinPath(flows.repo, ".gitch/flow.yml"))}>
                 {t("Show in Explorer")}
               </button>
+              <button className="link" onClick={() => setDialog({ kind: "config" })}>{t("Configure scripts")}</button>
               <button className="link" onClick={() => void flows.refresh()}>
                 {t("Try again")}
               </button>
@@ -149,22 +155,7 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
                 <span>{t("This flow file is new or changed. Review the commands before running it.")}</span>
               </div>
             )}
-            <div className="muted" style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600 }}>
-              {t("Flows")}
-            </div>
-            {list.flows.map((f) => (
-              <FlowRow key={f.name} f={f} busy={starting === f.name} onRun={() => void prepare(f.name)} onShow={(id) => setDialog({ kind: "run", runId: id })} onReview={() => void flowEngine.plan(f.name, flows.repo).then((plan) => setDialog({ kind: "trust", flow: f.name, plan, thenRun: false }), fail)} />
-            ))}
-            {flows.runs.length > 0 && (
-              <>
-                <div className="muted" style={{ padding: "10px 12px 2px", fontSize: 11, fontWeight: 600 }}>
-                  {t("Recent runs")}
-                </div>
-                {flows.runs.slice(0, 30).map((r) => (
-                  <RunRow key={r.runId} r={r} onOpen={() => setDialog({ kind: "run", runId: r.runId })} />
-                ))}
-              </>
-            )}
+            <FlowWorkspace flows={flows} affected={affected} busy={starting} onRun={(flow) => void prepare(flow)} onOpen={(id) => setDialog({ kind: "run", runId: id })} onEdit={() => setDialog({ kind: "config" })} onReview={(flow) => void flowEngine.plan(flow, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow, plan, thenRun: false }), fail)} />
           </>
         ) : (
           <div className="row" style={{ justifyContent: "center", padding: 20 }}>
@@ -212,6 +203,7 @@ function FlowPanelBody({ flows }: { flows: FlowStore }) {
           <div style={{ whiteSpace: "pre-line", lineHeight: 1.5 }}>{confirmText(dialog.plan)}</div>
         </Modal>
       )}
+      {dialog?.kind === "config" && <FlowConfigDialog flows={flows} onClose={() => setDialog(null)} />}
       {dialog?.kind === "setup" && <FlowSetupDialog flows={flows} onClose={() => setDialog(null)} />}
       {dialog?.kind === "error" && (
         <Modal title={t("Couldn't run the flow")} width={480} onClose={() => setDialog(null)} footer={<Button onClick={() => setDialog(null)}>{t("OK")}</Button>}>
@@ -243,307 +235,6 @@ function EmptyNote({ icon, text }: { icon: ReactNode; text: string }) {
   );
 }
 
-function FlowRow({ f, busy, onRun, onShow, onReview }: { f: FlowItem; busy: boolean; onRun: () => void; onShow: (runId: string) => void; onReview: () => void }) {
-  return (
-    <div
-      className="side-row"
-      style={{ gap: 6, height: "auto", padding: "4px 10px" }}
-      onDoubleClick={onRun}
-      onContextMenu={(e) =>
-        showContextMenu(e, [
-          { label: t("Run"), onClick: onRun },
-          ...(f.last ? [{ label: t("Show last run"), onClick: () => onShow(f.last!.runId) }] : []),
-          { label: t("Review commands…"), onClick: onReview },
-        ])
-      }
-    >
-      <FlowStateIcon state={f.last?.state ?? null} />
-      <div className="col" style={{ minWidth: 0, flex: 1, gap: 1 }}>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
-        <span className="muted" style={{ fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {[f.description, t("{0} steps", f.nodes)].filter(Boolean).join(" · ")}
-        </span>
-      </div>
-      {busy ? <Spinner size={12} /> : <IconButton small icon={<Play size={12} />} tip={t("Run {0}", f.name)} aria-label={t("Run {0}", f.name)} onClick={onRun} />}
-    </div>
-  );
-}
-
-function RunRow({ r, onOpen }: { r: FlowRunRow; onOpen: () => void }) {
-  return (
-    <div className="side-row" style={{ gap: 6, height: "auto", padding: "4px 10px" }} onClick={onOpen}>
-      <FlowStateIcon state={r.running ? "RUNNING" : r.state} />
-      <div className="col" style={{ minWidth: 0, flex: 1, gap: 1 }}>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.flow}</span>
-        <span className="muted" style={{ fontSize: 11 }}>
-          {[r.startedAt ? shortDate(Date.parse(r.startedAt) / 1000) : null, !r.running && r.durationMs != null ? formatDuration(r.durationMs) : null, !r.running ? r.code : null].filter(Boolean).join(" · ")}
-        </span>
-      </div>
-      {r.signed === false && !r.running && (
-        <span data-tip={t("This record isn't signed by the engine, so gates don't trust it")} style={{ color: "var(--orange)", display: "inline-flex" }}>
-          <TriangleAlert size={12} />
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function stateTitle(s: string | null | undefined): string {
-  switch (s) {
-    case "SUCCEEDED":
-      return t("Succeeded");
-    case "PASSED":
-      return t("Passed");
-    case "CACHED":
-      return t("Passed before with the same inputs");
-    case "FAILED":
-      return t("Failed");
-    case "INDETERMINATE":
-      return t("Couldn't judge (counts as a failure)");
-    case "REJECTED":
-      return t("Rejected before running");
-    case "ROLLING_BACK":
-      return t("Rolling back");
-    case "ROLLED_BACK":
-      return t("Failed and rolled back");
-    case "ROLLBACK_FAILED":
-      return t("Rollback failed — environment on hold");
-    case "CANCELLED":
-      return t("Canceled");
-    case "RUNNING":
-    case "PREFLIGHT":
-      return t("Running");
-    case "SKIPPED":
-      return t("Skipped");
-    case "PENDING":
-      return t("Waiting");
-    default:
-      return t("Not run yet");
-  }
-}
-
-/** Run and node state icon (spinning while running) */
-export function FlowStateIcon({ state, size = 14 }: { state: string | null; size?: number }) {
-  const title = stateTitle(state);
-  if (state === "RUNNING" || state === "PREFLIGHT") {
-    return (
-      <span data-tip={title} aria-label={title} style={{ display: "inline-flex", width: size, justifyContent: "center", flex: "none" }}>
-        <Spinner size={size - 2} />
-      </span>
-    );
-  }
-  let icon: ReactNode = <Circle size={size} />;
-  let color = "var(--text-3)";
-  if (state === "SUCCEEDED" || state === "PASSED" || state === "CACHED") {
-    icon = <CircleCheck size={size} />;
-    color = "var(--green)";
-  } else if (state === "FAILED" || state === "INDETERMINATE" || state === "ROLLBACK_FAILED") {
-    icon = <CircleX size={size} />;
-    color = "var(--red)";
-  } else if (state === "ROLLED_BACK" || state === "ROLLING_BACK") {
-    icon = <RotateCcw size={size} />;
-    color = "var(--orange)";
-  } else if (state === "REJECTED") {
-    icon = <CircleSlash size={size} />;
-    color = "var(--orange)";
-  } else if (state === "SKIPPED" || state === "CANCELLED") {
-    icon = <MinusCircle size={size} />;
-  }
-  return (
-    <span data-tip={title} aria-label={title} style={{ color, display: "inline-flex", flex: "none" }}>
-      {icon}
-    </span>
-  );
-}
-
-type Json = Record<string, unknown>;
-const arr = (v: unknown) => (Array.isArray(v) ? (v as Json[]) : []);
-const str = (v: unknown) => (typeof v === "string" ? v : null);
-
-/** One run: live node states, the end of the chosen node's log, failure locations and rollback. Verdicts are shown exactly as the engine made them. */
-function FlowRunDialog({ flows, runId, onClose }: { flows: FlowStore; runId: string; onClose: () => void }) {
-  useObserve(flows);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  useEffect(() => {
-    void flows.open(runId);
-  }, [flows, runId]);
-  const view = flows.views.get(runId);
-  const record = flows.records.get(runId);
-  const running = !!view && !view.done;
-  const nodes = view?.nodes ?? [];
-  // Without a choice, the node that is running (or else the first that failed)
-  const shown = useMemo(() => {
-    const pick = nodes.find((n) => n.id === selected);
-    if (pick && !(pick.state === "PASSED" && !selected)) return pick;
-    return nodes.find((n) => n.state === "RUNNING") ?? nodes.find((n) => isBadState(n.state)) ?? pick ?? null;
-  }, [nodes, selected, view?.lastSeq]);
-  const state = view?.state ?? str(record?.state);
-  const counts = view ? runCounts(view) : null;
-  return (
-    <Modal
-      width={900}
-      onClose={onClose}
-      title={
-        <div className="row" style={{ gap: 8 }}>
-          <FlowStateIcon state={state} size={16} />
-          <span>{view?.flow || str(record?.flow) || ""}</span>
-          <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
-            {stateTitle(state)}
-            {(view?.code ?? str(record?.code)) ? ` · ${view?.code ?? str(record?.code)}` : ""}
-          </span>
-          <span className="spacer" />
-          {counts && <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>{t("{0} passed · {1} failed · {2} steps", counts.passed, counts.failed, counts.total)}</span>}
-          {running && <Spinner size={12} />}
-        </div>
-      }
-      footer={
-        <>
-          {running && (
-            <Button
-              kind="danger"
-              disabled={cancelling}
-              tip={t("Stops every step and its child processes, then undoes what was changed")}
-              onClick={() => {
-                setCancelling(true);
-                void flows.cancel(runId).catch(() => setCancelling(false));
-              }}
-            >
-              {t("Cancel run")}
-            </Button>
-          )}
-          <Button
-            disabled={running}
-            tip={t("Copy a Markdown summary (failures with file and line) to paste into a PR or an AI chat")}
-            onClick={() =>
-              void flowEngine.markdown(runId, flows.repo).then((md) => {
-                void navigator.clipboard.writeText(md);
-                setCopied(true);
-              })
-            }
-          >
-            {copied ? t("Copied") : t("Copy summary")}
-          </Button>
-          <span className="spacer" />
-          <Button kind="primary" onClick={onClose}>
-            {t("Done")}
-          </Button>
-        </>
-      }
-    >
-      <div className="row" style={{ alignItems: "stretch", gap: 12, height: 480 }}>
-        <div className="col" style={{ width: 260, flex: "none", overflow: "auto", borderRight: "1px solid var(--border)", paddingRight: 8 }}>
-          <div className="muted" style={{ fontSize: 11, fontWeight: 600, padding: "2px 4px" }}>{t("Steps")}</div>
-          {nodes.map((n) => (
-            <div key={n.id} className={`side-row ${shown?.id === n.id ? "current" : ""}`} style={{ gap: 6 }} onClick={() => setSelected(n.id)}>
-              <FlowStateIcon state={n.state} size={13} />
-              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.branchOf ? "↳ " + n.id : n.id}</span>
-              {n.testsExecuted != null && <span className="muted mono" style={{ fontSize: 11 }}>{`${n.testsPassed ?? 0}/${n.testsExecuted}`}</span>}
-              {n.durationMs != null && <span className="muted mono" style={{ fontSize: 11 }}>{formatDuration(n.durationMs)}</span>}
-            </div>
-          ))}
-          {!!view?.steps.length && (
-            <>
-              <div className="muted" style={{ fontSize: 11, fontWeight: 600, padding: "10px 4px 2px" }}>{t("Services and rollback")}</div>
-              {view.steps.map((s) => (
-                <div key={s.id} className="row" style={{ gap: 6, padding: "2px 6px", fontSize: 12 }}>
-                  {s.state === "UNDONE" ? <Undo2 size={12} /> : s.state === "FAILED" ? <CircleX size={12} color="var(--red)" /> : <Circle size={12} />}
-                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.node ? `${s.node}: ${s.text}` : s.text}</span>
-                  <span className="muted mono" style={{ fontSize: 10.5 }}>{s.state}</span>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-        <div className="col" style={{ flex: 1, minWidth: 0, gap: 8 }}>
-          {shown ? <NodeDetail node={shown} record={record} repo={flows.repo} /> : <RollbackNote record={record} empty={nodes.length === 0} />}
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-function NodeDetail({ node, record, repo }: { node: RunNode; record: Json | undefined; repo: string }) {
-  const rec = arr(record?.nodes).find((n) => n.id === node.id);
-  const failure = rec?.failure as Json | null | undefined;
-  const failures = arr(rec?.failures);
-  const verdicts = arr(rec?.verdicts);
-  const logRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [node.tail.length]);
-  const runDir = str(record?.runDir);
-  return (
-    <>
-      <div className="row" style={{ gap: 8 }}>
-        <FlowStateIcon state={node.state} size={14} />
-        <span style={{ fontWeight: 600, userSelect: "text" }}>{node.id}</span>
-        <span className="muted mono" style={{ fontSize: 11 }}>{node.block}</span>
-        <span className="spacer" />
-        {node.log && runDir && <IconButton small icon={<FileSearch size={13} />} tip={t("Show the full log in Explorer")} onClick={() => void ipc.reveal(joinPath(runDir, node.log!))} />}
-      </div>
-      {failure ? (
-        <div className="col" style={{ gap: 3, padding: 8, borderRadius: "var(--radius)", background: "color-mix(in srgb, var(--red) 9%, transparent)" }}>
-          <span style={{ fontWeight: 500 }}>{str(failure.description)}</span>
-          {str(failure.action) && <span className="muted" style={{ fontSize: 11.5 }}>{str(failure.action)}</span>}
-          {str(failure.detail) && <span className="muted mono" style={{ fontSize: 11, whiteSpace: "pre-wrap", userSelect: "text" }}>{str(failure.detail)}</span>}
-        </div>
-      ) : (
-        node.reason && <span className="muted" style={{ fontSize: 11.5 }}>{node.reason}</span>
-      )}
-      {failures.length > 0 && (
-        <div className="col" style={{ gap: 4 }}>
-          <span style={{ fontWeight: 600, fontSize: 12 }}>{t("Failed tests")}</span>
-          {failures.map((f, i) => (
-            <div key={i} className="col" style={{ gap: 1 }}>
-              <span style={{ fontSize: 12 }}>{str(f.name)}</span>
-              {str(f.file) && (
-                <button className="link mono" style={{ fontSize: 11, alignSelf: "flex-start" }} data-tip={t("Show in Explorer")} onClick={() => void ipc.reveal(joinPath(repo, str(f.file)!))}>
-                  {str(f.file)}
-                  {typeof f.line === "number" ? `:${f.line}` : ""}
-                </button>
-              )}
-              {str(f.message) && <span className="muted" style={{ fontSize: 11 }}>{str(f.message)}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-      {verdicts.length > 0 && (
-        <div className="col" style={{ gap: 2 }}>
-          <span style={{ fontWeight: 600, fontSize: 12 }}>{t("Verdicts")}</span>
-          {verdicts.map((v, i) => (
-            <div key={i} className="row" style={{ gap: 6, fontSize: 11.5 }}>
-              <FlowStateIcon state={v.result === "PASS" ? "PASSED" : "FAILED"} size={11} />
-              <span className="mono">{str(v.rule)}</span>
-              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{str(v.title)}</span>
-              <span className="muted">{str(v.observed)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      <span style={{ fontWeight: 600, fontSize: 12 }}>{t("Output")}</span>
-      <div ref={logRef} className="mono" style={{ flex: 1, minHeight: 0, overflow: "auto", fontSize: 11, padding: 6, whiteSpace: "pre", userSelect: "text", background: "var(--term-bg)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
-        {node.tail.join("\n")}
-      </div>
-    </>
-  );
-}
-
-function RollbackNote({ record, empty }: { record: Json | undefined; empty: boolean }) {
-  const rb = record?.rollback as Json | null | undefined;
-  const kept = arr(rb?.kept).map(String);
-  return (
-    <div className="col" style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center" }}>
-      {rb && str(rb.state) === "ROLLBACK_FAILED" && <span style={{ color: "var(--red)" }}>{t("Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).")}</span>}
-      {rb && str(rb.state) === "ROLLED_BACK" && <span style={{ color: "var(--orange)" }}>{t("The changes were undone in reverse order.")}</span>}
-      {rb && str(rb.why) && <span className="muted" style={{ fontSize: 11.5 }}>{str(rb.why)}</span>}
-      {kept.length > 0 && <span className="muted" style={{ fontSize: 11.5 }}>{t("Kept as is: {0}", kept.join(", "))}</span>}
-      <span className="muted">{empty ? t("Waiting for the engine…") : t("Choose a step to see its output.")}</span>
-    </div>
-  );
-}
 
 /** Trusting a flow file: it is code, so it runs unattended only after a person has seen what will run and approved it. */
 function FlowTrustDialog({ plan, action, onApprove, onClose }: { plan: FlowPlan; action: string; onApprove: () => void; onClose: () => void }) {
