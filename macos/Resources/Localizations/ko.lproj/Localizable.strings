@@ -3167,3 +3167,17 @@
 "All flows" = "모든 흐름";
 "Live run" = "실시간 실행";
 "This graph follows the running flow. Open the run for step output." = "이 흐름도는 실행 중인 상태를 표시합니다. 단계별 출력은 실행 상세에서 확인하세요.";
+
+// Flow workspace presentation
+"Approval" = "승인";
+"Cached" = "캐시됨";
+"Container" = "컨테이너";
+"Deploy" = "배포";
+"No matching runs" = "조건에 맞는 실행 내역이 없습니다";
+"Notification" = "알림";
+"Rejected" = "거부됨";
+"Rolled back" = "되돌림 완료";
+"Services" = "서비스";
+"Setup" = "준비";
+"Tests" = "테스트";
+"Try another search or filter." = "검색어나 필터를 바꿔 보세요.";

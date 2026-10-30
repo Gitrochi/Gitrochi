@@ -27,7 +27,15 @@ In the app it is **Flows** under Workspace tools in the sidebar (⌘K / Ctrl+K f
 
 ### Visual workspace and scripts
 
-Screenshots with synthetic repository data: [Windows light](../screenshots/flow-workspace/windows-flow-light.jpg), [Windows dark](../screenshots/flow-workspace/windows-flow-dark.jpg), [macOS light](../screenshots/flow-workspace/macos-workspace-light.png), [macOS dark](../screenshots/flow-workspace/macos-workspace-dark.png), [full graph](../screenshots/flow-workspace/macos-graph-light.png), [script editor](../screenshots/flow-workspace/windows-editor-light.jpg) and [run history](../screenshots/flow-workspace/windows-history-light.jpg). Windows captures use the production components in an isolated browser fixture; native macOS views are rendered offscreen.
+The macOS screenshots below come from the actual built app, using an isolated demo repository and real flow runs. They show both appearances after inspecting scripts, saving valid configuration, rejecting an invalid draft and browsing successful and failed runs.
+
+| Screen | Light | Dark |
+| --- | --- | --- |
+| Dependency graph | [Open](../screenshots/flow-workspace/macos-workspace-light.png) | [Open](../screenshots/flow-workspace/macos-workspace-dark.png) |
+| Script settings | [Open](../screenshots/flow-workspace/macos-scripts-light.png) | [Open](../screenshots/flow-workspace/macos-scripts-dark.png) |
+| Run history | [Open](../screenshots/flow-workspace/macos-history-light.png) | [Open](../screenshots/flow-workspace/macos-history-dark.png) |
+
+Windows production components are also captured with isolated synthetic data: [light](../screenshots/flow-workspace/windows-flow-light.jpg), [dark](../screenshots/flow-workspace/windows-flow-dark.jpg), [script editor](../screenshots/flow-workspace/windows-editor-light.jpg) and [history](../screenshots/flow-workspace/windows-history-light.jpg).
 
 Select a flow to preview its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to inspect its command, undo command, executor and source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
 

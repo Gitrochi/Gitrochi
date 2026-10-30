@@ -1,5 +1,48 @@
 import SwiftUI
 
+/// Semantic block colors and symbols are shared by the canvas and inspector.
+enum FlowBlockStyle {
+    static func look(_ block: String) -> (icon: String, title: String, color: Color) {
+        if block.hasPrefix("test") || block.hasPrefix("check") { return ("checkmark.seal", String(localized: "Tests"), .green) }
+        if block.hasPrefix("ci.") { return ("arrow.triangle.branch", String(localized: "CI/CD"), .purple) }
+        if block.hasPrefix("deploy") { return ("shippingbox", String(localized: "Deploy"), .orange) }
+        if block.hasPrefix("gate") { return ("hand.raised", String(localized: "Approval"), .orange) }
+        if block.hasPrefix("service") || block.hasPrefix("mock") { return ("server.rack", String(localized: "Services"), .teal) }
+        if block.hasPrefix("docker") || block.hasPrefix("compose") { return ("shippingbox", String(localized: "Container"), .indigo) }
+        if block.hasPrefix("setup") { return ("wrench.and.screwdriver", String(localized: "Setup"), .teal) }
+        if block.hasPrefix("notify") { return ("bell", String(localized: "Notification"), .purple) }
+        return ("terminal", String(localized: "Script"), .blue)
+    }
+}
+
+/// A readable status capsule; color supplements the state label.
+struct FlowStatusBadge: View {
+    let state: String?
+    var compact = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let style = FlowStateIcon.look(state)
+        let color = state == nil ? Color.secondary : style.1
+        HStack(spacing: compact ? 3 : 5) {
+            if compact {
+                Circle().fill(color).frame(width: 4, height: 4).accessibilityHidden(true)
+            } else {
+                if state == "RUNNING", !reduceMotion { ProgressView().controlSize(.mini).scaleEffect(0.7).frame(width: 10, height: 10) }
+                else { Image(systemName: style.0).font(.system(size: 9, weight: .semibold)).foregroundStyle(color) }
+            }
+            Text(FlowFormat.shortStateTitle(state)).lineLimit(1)
+        }
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundStyle(.primary)
+        .padding(.horizontal, compact ? 6 : 8).padding(.vertical, compact ? 3 : 4)
+        .background(color.opacity(0.1), in: Capsule())
+        .overlay(Capsule().stroke(color.opacity(0.15), lineWidth: 0.5))
+        .help(FlowFormat.stateTitle(state))
+        .accessibilityLabel(FlowFormat.stateTitle(state))
+    }
+}
+
 /// Run and node state icons
 struct FlowStateIcon: View {
     let state: String?
@@ -33,6 +76,17 @@ struct FlowStateIcon: View {
 }
 
 enum FlowFormat {
+    static func shortStateTitle(_ state: String?) -> String {
+        switch state {
+        case nil: return String(localized: "Ready")
+        case "CACHED": return String(localized: "Cached")
+        case "INDETERMINATE", "ROLLBACK_FAILED": return String(localized: "Failed")
+        case "REJECTED": return String(localized: "Rejected")
+        case "ROLLED_BACK": return String(localized: "Rolled back")
+        default: return stateTitle(state)
+        }
+    }
+
     static func duration(_ ms: Int) -> String {
         if ms < 1000 { return "\(ms)ms" }
         let s = Double(ms) / 1000

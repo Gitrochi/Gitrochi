@@ -3291,5 +3291,16 @@
   "The flow file changed during validation. Your other editor's changes were kept.": "검사 중 흐름 파일이 변경되었습니다. 다른 편집기에서 수정한 내용을 유지했습니다.",
   "All flows": "모든 흐름",
   "Live run": "실시간 실행",
-  "This graph follows the running flow. Open the run for step output.": "이 흐름도는 실행 중인 상태를 표시합니다. 단계별 출력은 실행 상세에서 확인하세요."
+  "This graph follows the running flow. Open the run for step output.": "이 흐름도는 실행 중인 상태를 표시합니다. 단계별 출력은 실행 상세에서 확인하세요.",
+  "Approval": "승인",
+  "Cached": "캐시됨",
+  "Container": "컨테이너",
+  "Deploy": "배포",
+  "No matching runs": "조건에 맞는 실행 내역이 없습니다",
+  "Notification": "알림",
+  "Rejected": "거부됨",
+  "Rolled back": "되돌림 완료",
+  "Services": "서비스",
+  "Setup": "준비",
+  "Tests": "테스트"
 }

@@ -2081,3 +2081,18 @@
 "All flows" = "すべてのフロー";
 "Live run" = "実行中";
 "This graph follows the running flow. Open the run for step output." = "このグラフは実行中の状態を表示します。ステップの出力は実行の詳細で確認できます。";
+
+// Flow workspace presentation
+"Approval" = "承認";
+"Cached" = "キャッシュ済み";
+"Container" = "コンテナ";
+"Deploy" = "デプロイ";
+"No matching runs" = "一致する実行履歴がありません";
+"Notification" = "通知";
+"Rejected" = "拒否";
+"Rolled back" = "ロールバック済み";
+"Services" = "サービス";
+"Setup" = "セットアップ";
+"Tests" = "テスト";
+"Try another search or filter." = "検索条件やフィルタを変更してください。";
+"CI/CD" = "CI/CD";
