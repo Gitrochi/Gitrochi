@@ -1,6 +1,6 @@
-# Ledger design (draft)
+# Ledger design
 
-> **Status: P0 draft, waiting for the maintainer.** The code is being built in parallel ([§12](#12-phases-and-waves)) against **contract v0** ([§6](#6-contract-v0)): the shared types and methods, owned by the core crate `crates/gitrochi-ledger`, whose JSON Schema is their authoritative form. This document follows contract v0; where it describes more than v0 covers, the text says *proposed*. Decisions ([§14](#14-decisions)): D1–D10 are put to the maintainer and assumed as recommended until answered; D11–D13 are working defaults. To change a decision or the contract, change the schema and this document together.
+> **Status: P0 design; the maintainer confirmed decisions D1–D10 on 2026-10-31.** The code is being built in parallel ([§12](#12-phases-and-waves)) against **contract v0** ([§6](#6-contract-v0)): the shared types and methods, owned by the core crate `crates/gitrochi-ledger`, whose JSON Schema is their authoritative form. This document follows contract v0; where it describes more than v0 covers, the text says *proposed*. Decisions ([§14](#14-decisions)): D1–D10 confirmed as recommended (D7's compatibility surface still needs the original author's answer); D11–D13 are working defaults. To change a decision or the contract, change the schema and this document together.
 
 Agents report which baseline their work started from and where it stands. Gitrochi draws the sessions as branches off a baseline trunk, and a person only answers, confirms and cleans up. Information flows one way — **agent → ledger → screen**. The screens never drive an agent: what a person writes (an answer, a message, a status) waits in the ledger until that session's next report or read picks it up. The one exception is opt-in: when a person turns on auto-continue, Gitrochi answers an agent that has waited too long for them, within fixed limits, and records it for review ([§9](#9-auto-continue)).
 
@@ -596,20 +596,20 @@ Per item, and reported as run or not run:
 
 ## 14. Decisions
 
-D1–D10 are put to the maintainer and assumed as recommended (contract v0) until answered. D11–D13 are working defaults.
+The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 already assumed them. D11–D13 are working defaults that stand unless changed.
 
 | # | Topic | Recommended | Alternatives | Status |
 |---|---|---|---|---|
-| D1 | Name and place | Workspace destination `ledger`, "Ledger", in the Tools group | A tab in the Agents panel | Assumed; awaiting |
-| D2 | Parsers for one team's documents | None in the first release; later a general **document tracker** in settings (path glob, ID pattern, table-column mapping) in this repository | A private add-on pack outside this repository · leave out for good | Assumed; awaiting |
-| D3 | Work ledger | A general **Work log**, later (P5) | In the first release · leave out | Assumed; awaiting |
-| D4 | Sharing with another PC | Not in the first release; later on the hub's token authentication | The original's IP allow-list HTTP server | Assumed; awaiting |
-| D5 | Importing a claude-ledger database | A read-only import (wave 2) | No import | Assumed; awaiting |
-| D6 | Default baseline source | Git tags | Folder scan | Assumed; awaiting |
-| D7 | Rights to the original | Treat it as unlicensed: re-implement, copy nothing. Keep the compatibility surface (MCP tool names `ledger_overview` · `ledger_report` · `ledger_session`, report field names, the ```` ```ledger ```` block, the session ID shape) only if its author agrees; otherwise rename (`gitrochi_ledger_*`) and drop pasted-block compatibility | — | Assumed; needs the author's answer |
-| D8 | What auto-continue answers | Questions that end a turn, choice questions, and permission requests (never-auto-allowed ones excluded); plan approval is a setting, off by default. Questions in the Ledger are never closed automatically, whichever option is chosen | Plan approval on by default · leave permission requests to Claude Code's own `auto` permission mode | Assumed; awaiting |
-| D9 | How the automatic answer is written | The instant template; AI refinement only when a person turns it on | AI refinement by default | Assumed; awaiting |
-| D10 | When Gitrochi is not running | Synchronous hooks return at once without a decision, so the terminal's own dialog appears (the `stop_question` path works either way) | Wait and auto-continue anyway | Assumed; awaiting |
+| D1 | Name and place | Workspace destination `ledger`, "Ledger", in the Tools group | A tab in the Agents panel | Confirmed 2026-10-31 |
+| D2 | Parsers for one team's documents | None in the first release; later a general **document tracker** in settings (path glob, ID pattern, table-column mapping) in this repository | A private add-on pack outside this repository · leave out for good | Confirmed 2026-10-31 |
+| D3 | Work ledger | A general **Work log**, later (P5) | In the first release · leave out | Confirmed 2026-10-31 |
+| D4 | Sharing with another PC | Not in the first release; later on the hub's token authentication | The original's IP allow-list HTTP server | Confirmed 2026-10-31 |
+| D5 | Importing a claude-ledger database | A read-only import (wave 2) | No import | Confirmed 2026-10-31 |
+| D6 | Default baseline source | Git tags | Folder scan | Confirmed 2026-10-31 |
+| D7 | Rights to the original | Treat it as unlicensed: re-implement, copy nothing. Keep the compatibility surface (MCP tool names `ledger_overview` · `ledger_report` · `ledger_session`, report field names, the ```` ```ledger ```` block, the session ID shape) only if its author agrees; otherwise rename (`gitrochi_ledger_*`) and drop pasted-block compatibility | — | Confirmed 2026-10-31; the compatibility surface still needs the author's answer |
+| D8 | What auto-continue answers | Questions that end a turn, choice questions, and permission requests (never-auto-allowed ones excluded); plan approval is a setting, off by default. Questions in the Ledger are never closed automatically, whichever option is chosen | Plan approval on by default · leave permission requests to Claude Code's own `auto` permission mode | Confirmed 2026-10-31 |
+| D9 | How the automatic answer is written | The instant template; AI refinement only when a person turns it on | AI refinement by default | Confirmed 2026-10-31 |
+| D10 | When Gitrochi is not running | Synchronous hooks return at once without a decision, so the terminal's own dialog appears (the `stop_question` path works either way) | Wait and auto-continue anyway | Confirmed 2026-10-31 |
 | D11 | Windows search (no palette there yet) | Build the workspace command palette on Windows, mirroring macOS's name and shape (`features/workspace-command-palette`), with the Ledger group — its own small pull request | Search inside the Ledger page only | Working default |
 | D12 | Commit area | Add **Ledger** to the areas in `docs/git-workflow.md` (in the core's first commit); P0 uses `Agents` | Keep using `Agents` | Working default |
 | D13 | Sessions created by "Start agent" that never report | Create them (tracking on by default), but count them in the Inbox only once their branch has commits; until then they wait under **Unreported** | Create them only after the agent's first report · never create them automatically | Working default |
