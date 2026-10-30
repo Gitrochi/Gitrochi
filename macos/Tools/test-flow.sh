@@ -73,6 +73,24 @@ sleep 0.5
 bad_id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["runId"])' "$T/detached-bad.json")
 "$ENGINE" status "$bad_id" --json > "$T/record-bad.json" || true
 (cd "$T/empty" && "$ENGINE" init --dry-run --json > "$T/init.json")
+python3 - "$T" <<'PY'
+import json, pathlib, sys
+folder = pathlib.Path(sys.argv[1])
+source = "# Keep this explanation\nversion: 1\nx-custom: {retained: true}\nflows:\n  verify:\n    nodes:\n      check: {run: 'echo checked'}\n"
+(folder / "design-source.yml").write_text(source)
+(folder / "inspect-request.json").write_text(json.dumps({"yaml": source}))
+(folder / "invalid-request.json").write_text(json.dumps({"yaml": "flows: ["}))
+PY
+"$ENGINE" design inspect --json < "$T/inspect-request.json" > "$T/inspect.json"
+"$ENGINE" design inspect --json < "$T/invalid-request.json" > "$T/invalid-design.json"
+python3 - "$T" <<'PY'
+import json, pathlib, sys
+folder = pathlib.Path(sys.argv[1])
+inspection = json.loads((folder / "inspect.json").read_text())
+(folder / "render-request.json").write_text(json.dumps({"document": inspection["document"], "originalYaml": inspection["yaml"]}))
+PY
+"$ENGINE" design render --json < "$T/render-request.json" > "$T/render.json"
+"$ENGINE" blocks --json > "$T/blocks.json"
 
 cat > "$T/main.swift" <<'SWIFT'
 import Foundation
@@ -118,9 +136,26 @@ import Foundation
         precondition(rec["rollback"]["state"].string == "ROLLED_BACK" && rec["signature"].string != nil)
         let ip = try dec.decode(FlowInitProposal.self, from: data("init.json"))
         precondition(!ip.exists && ip.valid && ip.findings.contains { $0.kind == "vitest" } && ip.yaml.contains("version: 1"), "init")
-        print("Flow contract passed: list, plan, gate, error, detached run, events (split), runs, record, init")
+        let inspection = try dec.decode(FlowDesignInspection.self, from: data("inspect.json"))
+        precondition(inspection.editable && inspection.format == "flow")
+        precondition(inspection.document?["x-custom"]["retained"] == .bool(true))
+        let rendered = try dec.decode(FlowDesignRendered.self, from: data("render.json"))
+        precondition(!rendered.formattingChanged && rendered.yaml == inspection.yaml)
+        let invalid = try dec.decode(FlowDesignInspection.self, from: data("invalid-design.json"))
+        precondition(!invalid.editable && invalid.diagnostics.contains { $0.severity == "error" })
+        let catalog = try dec.decode(FlowBlockCatalog.self, from: data("blocks.json"))
+        precondition(catalog.blocks.contains { $0.id == "ci.jenkins.job" && !$0.inputs["properties"].object.isEmpty })
+        let edited = inspection.document!.setting(["flows", "verify", "nodes", "check", "run"], to: .string("echo edited"))
+        precondition(edited["x-custom"]["retained"] == .bool(true) && edited["flows"]["verify"]["nodes"]["check"]["run"].string == "echo edited")
+        var connection = FlowConnection.empty
+        connection.name = "build-server"; connection.url = "https://ci.example.com"
+        precondition(connection.problem == nil)
+        connection.url = "https://user:password@ci.example.com"
+        precondition(connection.problem != nil)
+        print("Flow contract passed: execution, history, design inspect/render, block forms, retained fields and connection references")
     }
 }
 SWIFT
-swiftc -parse-as-library "$ROOT/Sources/Core/FlowModels.swift" "$T/main.swift" -o "$T/test-flow"
+swiftc -parse-as-library "$ROOT/Sources/Core/FlowModels.swift" "$ROOT/Sources/Core/FlowDesignModels.swift" "$ROOT/Sources/Core/FlowConnectionModels.swift" "$T/main.swift" -o "$T/test-flow"
 "$T/test-flow" "$T"
+bash "$ROOT/Tools/test-flow-authoring.sh"

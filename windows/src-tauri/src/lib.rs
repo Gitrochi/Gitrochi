@@ -90,6 +90,7 @@ pub fn run() {
             system::fs_read_text,
             system::fs_read_head,
             system::fs_write_text,
+            system::fs_create_text,
             system::fs_list,
             system::fs_remove,
             system::fs_mkdirs,

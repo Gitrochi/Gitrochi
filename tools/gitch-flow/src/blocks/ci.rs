@@ -52,9 +52,34 @@ fn inputs_jenkins() -> Value {
         &["connection", "job"],
     )
 }
-fn inputs_http() -> Value {
+fn http_endpoint_inputs() -> Value {
     schema(
-        json!({"connection": {"type": "string"}, "trigger": {"type": "object"}, "id": {"type": "string"}, "status": {"type": "object"}, "logs": {"type": "object"}, "cancel": {"type": "object"}, "find": {"type": "object"}, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
+        json!({
+            "url": {"type": "string", "description": "Endpoint URL. {id} is the remote run ID and {corr} is the correlation ID; URL substitutions are encoded."},
+            "method": {"type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"], "default": "GET"},
+            "headers": {"type": "object", "additionalProperties": {"type": "string"}, "description": "Request header values may reference configured flow secrets."},
+            "body": {"description": "A string is sent as text; objects and arrays are encoded as JSON. {id} and {corr} are substituted in the body.", "oneOf": [{"type": "string"}, {"type": "object", "additionalProperties": true}, {"type": "array", "items": {}}]}
+        }),
+        &["url"],
+    )
+}
+
+fn inputs_http() -> Value {
+    let mut status = http_endpoint_inputs();
+    let properties = status["properties"].as_object_mut().unwrap();
+    properties.insert("pointer".into(), json!({"type": "string", "default": "/status", "description": "JSON Pointer to the status value in the response."}));
+    for (name, defaults) in [
+        ("success", vec!["success", "succeeded", "passed", "ok"]),
+        ("failure", vec!["failed", "failure", "error", "errored"]),
+        ("cancelled", vec!["cancelled", "canceled", "aborted"]),
+        ("queued", vec!["queued", "pending", "scheduled", "created"]),
+    ] {
+        properties.insert(name.into(), json!({"type": "array", "items": {"type": "string"}, "default": defaults, "description": "Status values are matched without case sensitivity."}));
+    }
+    let mut find = http_endpoint_inputs();
+    find["properties"]["id"] = json!({"type": "string", "default": "/id", "description": "JSON Pointer to a run ID in the lookup response."});
+    schema(
+        json!({"connection": {"type": "string"}, "trigger": http_endpoint_inputs(), "id": {"type": "string", "default": "/id", "description": "JSON Pointer to the run ID in the trigger response."}, "status": status, "logs": http_endpoint_inputs(), "cancel": http_endpoint_inputs(), "find": find, "timeout": {"type": "string"}, "poll": {"type": "string", "default": "5s"}, "findTimeout": {"type": "string", "default": "2m"}}),
         &["trigger", "status"],
     )
 }

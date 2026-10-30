@@ -1,5 +1,6 @@
 import { Channel, invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { nativeError, nativeText } from "@/shared/i18n";
 
 /** 백엔드(Rust) 명령 모음 */
@@ -74,6 +75,7 @@ export interface FileHead {
   binary: boolean;
   truncated: boolean;
   size: number;
+  utf8?: boolean;
 }
 
 export type ExternalEditorID = "system" | "vscode" | "vscode-insiders" | "xcode" | "intellij" | "textedit" | "notepad" | "notepad-plus-plus" | "sublime";
@@ -177,7 +179,9 @@ export const ipc = {
   exists: (path: string) => invoke<boolean>("fs_exists", { path }),
   readText: (path: string) => invoke<string | null>("fs_read_text", { path }),
   readHead: (path: string, max: number) => invoke<FileHead>("fs_read_head", { path, max }),
+  onFileDrop: async (callback: (paths: string[]) => void): Promise<UnlistenFn> => getCurrentWebview().onDragDropEvent((event) => { if (event.payload.type === "drop") callback(event.payload.paths); }),
   writeText: (path: string, content: string) => invoke<void>("fs_write_text", { path, content }),
+  createText: (path: string, content: string) => invoke<void>("fs_create_text", { path, content }),
   localProjectsRead: () => invoke<string | null>("local_projects_read"),
   localProjectsWrite: (expected: string | null, content: string) => invoke<void>("local_projects_write", { expected, content }),
   /** Repository index (crates/gitrochi-index): one JSON command, answered with {result} or {error} */

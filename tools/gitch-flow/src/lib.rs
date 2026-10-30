@@ -8,6 +8,7 @@ pub mod ci;
 pub mod cli;
 pub mod codes;
 pub mod connect;
+pub mod design;
 pub mod detect;
 pub mod docker;
 pub mod doctor;
