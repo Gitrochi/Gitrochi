@@ -30,6 +30,17 @@ What has **actually been checked** for the flow engine (`tools/gitch-flow`), git
 - The Windows real-app self-test checks dependency cards, script inspection, saved-run graph, invalid YAML rollback, valid save and trust invalidation. It passed in PR #146 before the visual polish; the polish is also covered by local type checking and unit tests.
 - Rust is unchanged, so `cargo check` and shared Rust checks were not repeated. The dependency graph diff introduces no cycles.
 
+## Visual authoring and connected CI checks (2026-10-30)
+
+- Flow engine: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test --locked` pass: 183 tests, with two real-Docker tests intentionally ignored. New coverage includes exact no-op source preservation, unknown fields, external CI proposals, unsupported YAML, numeric precision, nesting limits, HTTP form schemas, Jenkins discovery, allow lists, masked logs and cross-origin credential handling.
+- Windows: `npm run build`, `npm test` (751 tests in 93 files), `cargo check --manifest-path src-tauri/Cargo.toml` and the native exclusive-create regression pass. The production build reports a 2,116 KB main-chunk advisory. After the final diagnostic presentation change, type checking, build and 38 focused tests pass. The whole Tauri formatting check has existing unrelated differences; the new Rust code is formatted.
+- macOS: the final arm64 app builds. The same two pre-existing account-service deprecation warnings remain; the new flow code introduces no warnings. The real-engine Swift contract and the authoring regression suite pass, including wide/tall Fit, field preservation, explicit command syntax, inherited suites, dependency cycles, save locking and stale render/inspection protection. The authoring suite is also called by `macos/Tools/test-flow.sh` in CI.
+- Actual native app: both appearances completed four steps and two JUnit tests. YAML import produced four interpreted modules, saved a separate source with identical bytes and required command review again. CI module creation, saved-connection selection, dependency editing and discarding an unsaved draft were exercised. Zoom and accessible node movement updated the diagram and connections. The local Jenkins fixture was added and tested through the app; jobs, build states and logs loaded successfully.
+- Visual verification: actual native dependency graph, visual settings, run history, completed-run output, interpreted CI import and connected build history are captured in both themes. Windows production components were checked in both themes through IAB with a real design CLI bridge; pointer dragging moved a card and its edges, and zoom/Fit, imported job steps and connection forms rendered correctly. [Capture gallery](flow/README.md#visual-workspace-and-scripts).
+- Shared `crates/` Rust is unchanged. The dependency graph diff introduces no new cycles. Tests and captures use isolated demo data; no real external deployment or credential changes were performed.
+
+The Windows real-app self-test now covers the visual editor, schema inputs, dependency editing, source validation, interpreted file drop, exclusive import creation and Connected CI. Its Windows runtime execution remains a pull-request CI check; the local Mac run verifies its compilation and the corresponding logic/component behavior.
+
 ## Not checked yet
 
 | What | Why, and how to check it |

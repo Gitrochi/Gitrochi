@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use yaml_rust2::parser::{Event, MarkedEventReceiver, Parser};
 use yaml_rust2::scanner::{Marker, TScalarStyle};
 
+const MAX_NESTING_DEPTH: usize = 128;
+
 /// The parsed document and a line number per path. Paths look like `flows.pre-push.nodes.unit` or `suites.unit.with.args[0]`.
 #[derive(Debug, Clone, Default)]
 pub struct Doc {
@@ -230,6 +232,10 @@ impl MarkedEventReceiver for Builder {
                 self.push_value(scalar_value(&text, style), line);
             }
             Event::SequenceStart(anchor, tag) | Event::MappingStart(anchor, tag) => {
+                if self.stack.len() >= MAX_NESTING_DEPTH {
+                    self.fail(line, "YAML nesting must not exceed 128 levels.".into());
+                    return;
+                }
                 if anchor != 0 {
                     self.fail(
                         line,
@@ -317,14 +323,23 @@ pub fn parse(src: &str) -> Result<Doc, YamlError> {
         },
     };
     let mut parser = Parser::new_from_str(src);
-    if let Err(e) = parser.load(&mut router, true) {
-        return Err(YamlError {
-            line: e.marker().line(),
+    // Parser.load recursively walks containers even after a receiver error; events let us stop at the depth bound.
+    loop {
+        let (event, marker) = parser.next_token().map_err(|error| YamlError {
+            line: error.marker().line(),
             message: crate::util::tr(
-                &format!("YAML 형식 오류: {}", e.info()),
-                &format!("YAML syntax error: {}", e.info()),
+                &format!("YAML 형식 오류: {}", error.info()),
+                &format!("YAML syntax error: {}", error.info()),
             ),
-        });
+        })?;
+        let finished = matches!(event, Event::StreamEnd);
+        router.on_event(event, marker);
+        if let Some(error) = router.inner.error.take() {
+            return Err(error);
+        }
+        if finished {
+            break;
+        }
     }
     let b = router.inner;
     if let Some(e) = b.error {
@@ -395,5 +410,21 @@ mod tests {
     fn block_scalars() {
         let d = parse("run: |\n  echo one\n  echo two\n").unwrap();
         assert_eq!(d.value["run"], "echo one\necho two\n");
+    }
+
+    #[test]
+    fn rejects_deep_inline_and_indented_documents_without_recursive_loading() {
+        let inline = "[".repeat(20_000) + "0" + &"]".repeat(20_000);
+        let error = parse(&inline).unwrap_err();
+        assert!(
+            error.message.contains("128") || error.message.contains("recursion limit"),
+            "{error:?}"
+        );
+        let block = (0..200)
+            .map(|level| format!("{}value:\n", "  ".repeat(level)))
+            .collect::<String>();
+        assert!(parse(&block).unwrap_err().message.contains("128"));
+        let reasonable = "values: ".to_string() + &"[".repeat(32) + "0" + &"]".repeat(32);
+        assert!(parse(&reasonable).is_ok());
     }
 }

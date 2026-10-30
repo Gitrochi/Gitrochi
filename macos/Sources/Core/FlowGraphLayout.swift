@@ -20,6 +20,11 @@ enum FlowGraphLayout {
     static let cardWidth: CGFloat = 220
     static let cardHeight: CGFloat = 112
 
+    /// Fit includes the canvas toolbar and margins, even for diagrams wider than the default zoom range.
+    static func fit(_ layout: Layout, viewport: CGSize) -> CGFloat {
+        max(0.001, min(1, min((viewport.width - 12) / layout.width, (viewport.height - 48) / layout.height)))
+    }
+
     static func make(_ input: [Input]) -> Layout {
         var seen = Set<String>()
         let nodes = input.filter { seen.insert($0.id).inserted }

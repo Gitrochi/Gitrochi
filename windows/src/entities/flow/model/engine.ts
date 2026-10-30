@@ -3,6 +3,7 @@ import { ipc } from "@/shared/api";
 import { env, isWindows, joinPath, slash } from "@/shared/config";
 import { language, t } from "@/shared/i18n";
 import { type FlowDetached, type FlowGate, type FlowInitProposal, type FlowList, type FlowPlan, type FlowRunRow, parseEngineError } from "./types";
+import type { FlowBlock, FlowDesignInspection, FlowDesignRender, FlowDocument } from "./design";
 
 /**
  * Calls the flow engine (gitch-flow, tools/gitch-flow), like the macOS FlowEngine.swift. The app's gitch-flow.exe comes first,
@@ -48,11 +49,27 @@ class FlowEngineService {
     return e;
   }
 
-  async run(args: string[], repo: string, timeoutMs = 120_000) {
+  async run(args: string[], repo: string, timeoutMs = 120_000, stdin?: string) {
     const path = await this.executable();
     if (!path) throw new FlowEngineError(t("The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi, or build it with tools/gitch-flow/build.sh."), "ENGINE-03");
-    return ipc.run(path, args, { cwd: repo, env: await this.environment(), timeoutMs });
+    return ipc.run(path, args, { cwd: repo, env: await this.environment(), timeoutMs, stdin });
   }
+
+  private async designRequest<T>(operation: string, request: Record<string, unknown>, repo: string): Promise<T> {
+    const result = await this.run(["design", operation, "--json"], repo, 30_000, JSON.stringify(request));
+    if (result.status !== 0) throw this.failure(result);
+    try { return JSON.parse(result.stdout) as T; } catch { throw this.failure(result); }
+  }
+
+  inspectDesign(yaml: string, repo: string, fileName?: string) {
+    return this.designRequest<FlowDesignInspection>("inspect", { yaml, fileName }, repo);
+  }
+
+  renderDesign(document: FlowDocument, originalYaml: string, repo: string) {
+    return this.designRequest<FlowDesignRender>("render", { document, originalYaml }, repo);
+  }
+
+  async blocks(repo: string) { return (await this.json<{ blocks: FlowBlock[] }>(["blocks"], repo)).blocks; }
 
   /** A command that prints JSON. On failure it throws the engine's error envelope. */
   async json<T>(args: string[], repo: string, ok: number[] = [0], timeoutMs = 120_000): Promise<T> {

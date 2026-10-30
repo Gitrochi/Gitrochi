@@ -40,6 +40,8 @@ private struct FlowPanelBody: View {
     @ViewState private var confirm: (flow: String, plan: FlowPlan)?
     @ViewState private var error: String?
     @ViewState private var starting: String?
+    @ViewState private var editorFlow: String?
+    @ViewState private var editorNode: String?
     @AppStorage("flowAffectedOnly") private var affectedOnly = false
 
     var body: some View {
@@ -62,7 +64,7 @@ private struct FlowPanelBody: View {
                     }
                 }
             case .setup: FlowSetupSheet(flows: flows)
-            case .edit: FlowEditorSheet(flows: flows)
+            case .edit: FlowEditorSheet(flows: flows, initialFlow: editorFlow, initialNode: editorNode)
             }
         }
         .confirmationDialog(
@@ -150,14 +152,7 @@ private struct FlowPanelBody: View {
         if !flows.engineAvailable {
             emptyState(icon: "exclamationmark.triangle", text: String(localized: "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows."))
         } else if !flows.hasFlowFile {
-            VStack(spacing: 10) {
-                Image(systemName: "point.3.connected.trianglepath.dotted").font(.largeTitle).foregroundStyle(.tertiary)
-                Text("Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI.")
-                    .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                Button("Set up flows…") { sheet = .edit }
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            workspace(FlowList(project: nil, trusted: false, flows: [], suites: []))
         } else if let e = flows.loadError {
             VStack(alignment: .leading, spacing: 8) {
                 if let c = e.code { Text(c).font(.caption.monospaced()).foregroundStyle(.secondary) }
@@ -172,13 +167,18 @@ private struct FlowPanelBody: View {
             .padding(12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else if let list = flows.list {
-            FlowWorkspaceView(flows: flows, list: list, affected: affectedOnly, starting: starting,
-                              onRun: { name in Task { await prepare(name) } },
-                              onReview: { plan in sheet = .trust(flow: plan.flow, plan: plan, thenRun: false) },
-                              onEdit: { sheet = .edit }, onOpenRun: { sheet = .run($0) })
+            workspace(list)
         } else {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private func workspace(_ list: FlowList) -> some View {
+        FlowWorkspaceView(flows: flows, list: list, affected: affectedOnly, starting: starting,
+                          onRun: { name in Task { await prepare(name) } },
+                          onReview: { plan in sheet = .trust(flow: plan.flow, plan: plan, thenRun: false) },
+                          onEdit: { sheet = .edit }, onOpenRun: { sheet = .run($0) },
+                          onSelection: { flow, node in editorFlow = flow; editorNode = node })
     }
 
     private func emptyState(icon: String, text: String) -> some View {
