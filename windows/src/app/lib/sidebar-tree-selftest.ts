@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
-import type { Branch } from "@/entities/git";
+import type { Branch, Worktree } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { Sidebar } from "@/widgets/sidebar";
@@ -12,7 +12,7 @@ async function until(test: () => boolean) {
   return false;
 }
 
-/** Measure the production branch tree and exercise its disclosures without opening a repository. */
+/** Measure the production branch tree and worktree rows and exercise the disclosures without opening a repository. */
 export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
   const original = { get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion };
   const memory = new Map<string, unknown>(), listeners = new Set<() => void>();
@@ -23,6 +23,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
   const root = createRoot(host), store = new RepoStore();
   const longLeaf = "search-with-a-long-unbroken-branch-name-".repeat(8);
   const branch = (name: string, isRemote = false): Branch => ({ name, target: name, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: name === "feature/checkout", isRemote });
+  const worktree = (path: string, name: string): Worktree => ({ path, head: "0000000", branch: name, isMain: name === "feature/checkout", locked: false, prunable: false });
   const revealed: string[] = [];
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const group = (id: string) => host.querySelector<HTMLElement>(`[data-tree-id="${id}"]`);
@@ -31,7 +32,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
   const row = (element: HTMLElement) => element.closest<HTMLElement>(".side-tree-row")!;
   const left = (element: HTMLElement, selector: string) => row(element).querySelector<HTMLElement>(selector)!.getBoundingClientRect().left;
   const near = (a: number, b: number) => Math.abs(a - b) <= 1;
-  const widths: { width: number; rows: number; nestedOffset: number; longLabelWidth: number }[] = [];
+  const widths: { width: number; rows: number; nestedOffset: number; longLabelWidth: number; worktreeRows: number }[] = [];
   try {
     // Keep fixture expansion and sidebar preferences out of the user's settings.
     settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;
@@ -42,6 +43,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     store.headBranch = "feature/checkout";
     store.localBranches = [branch("main"), branch("feature/checkout"), branch("feature/search")];
     store.remoteBranches = [branch("origin/main", true), branch("origin/feature/checkout", true), branch(`origin/feature/${longLeaf}`, true), branch("upstream/main", true)];
+    store.worktrees = [worktree("C:/fixture/shop-web", "feature/checkout"), worktree("C:/fixture/shop-web-search", "feature/search")];
     store.reveal = (target) => { revealed.push(target); };
     root.render(createElement(Sidebar, { store, openSettings: () => {} }));
     ensure(await until(() => !!toggle("r:origin") && !!label(group("l:feature")!, "checkout")), "The current local folder did not expand when the sidebar mounted");
@@ -68,15 +70,23 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
         ensure(near(left(remoteMain, selector) - left(remoteRoot, selector), 18), `Remote children did not move one level at ${width}px`);
         ensure(near(left(nested, selector) - left(remoteFolder, selector), 18), `Folder leaves did not move one level at ${width}px`);
       }
+      // Worktree rows share the branch columns but keep their two-line layout (macOS: WorktreeRow).
+      const worktreeRows = [...host.querySelectorAll<HTMLElement>('[data-section="worktrees"] .side-tree-row')];
+      ensure(worktreeRows.length === 2, `The worktree rows are missing at ${width}px`);
+      for (const element of worktreeRows) {
+        ensure(near(element.querySelector<HTMLElement>(".lead")!.getBoundingClientRect().left, left(localMain, ".lead")), `Worktree and branch icons differ at ${width}px`);
+        ensure(near(element.querySelector<HTMLElement>(".col")!.getBoundingClientRect().left, left(localMain, ".side-tree-label")), `Worktree and branch labels differ at ${width}px`);
+        ensure(element.getBoundingClientRect().height >= 26 - 1, `A worktree row is shorter than a branch row at ${width}px`);
+      }
       const rows = [...host.querySelectorAll<HTMLElement>(".side-tree-row")], bounds = host.getBoundingClientRect();
-      ensure(rows.every((element) => near(element.getBoundingClientRect().height, 26)), `Tree row heights differ at ${width}px`);
+      ensure(rows.filter((element) => !worktreeRows.includes(element)).every((element) => near(element.getBoundingClientRect().height, 26)), `Tree row heights differ at ${width}px`);
       ensure(near(row(remoteFolder).getBoundingClientRect().top - row(remoteMain).getBoundingClientRect().top, 26), `Extra spacing separates sibling rows at ${width}px`);
       ensure(rows.every((element) => { const rect = element.getBoundingClientRect(); return rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1; }), `A tree row overflowed the ${width}px sidebar`);
       ensure(nested.getBoundingClientRect().width > 0 && nested.scrollWidth > nested.clientWidth && getComputedStyle(nested).textOverflow === "ellipsis", `The long branch label did not truncate at ${width}px`);
       ensure(row(nested).dataset.tip?.includes(`origin/feature/${longLeaf}`), "The full long branch name is unavailable on hover");
       row(nested).click();
       ensure(revealed.at(-1) === `origin/feature/${longLeaf}`, "Clicking a nested branch did not reveal its commit");
-      widths.push({ width, rows: rows.length, nestedOffset: left(nested, ".lead") - left(remoteFolder, ".lead"), longLabelWidth: nested.getBoundingClientRect().width });
+      widths.push({ width, rows: rows.length, nestedOffset: left(nested, ".lead") - left(remoteFolder, ".lead"), longLabelWidth: nested.getBoundingClientRect().width, worktreeRows: worktreeRows.length });
     }
     toggle("r:origin/feature")!.click();
     ensure(await until(() => toggle("r:origin/feature")?.getAttribute("aria-expanded") === "false" && !label(group("r:origin/feature")!, longLeaf)), "Collapsing the folder left its branches visible");
