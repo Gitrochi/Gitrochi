@@ -77,7 +77,6 @@ export function overlaps(views: Map<string, LedgerSession>, coupled: DemoWorld["
 }
 
 const KEY_EVENTS = new Set(["start", "artifact", "question", "decision", "sync", "applied", "release", "done", "merged", "closed", "dropped", "shelved"]);
-const ENDS = new Set(["done", "closed", "dropped", "shelved"]);
 
 /**
  * The Graph view for one project and period: lane 0 is the baseline trunk, each session a lane that forks from its base
@@ -119,13 +118,14 @@ export function buildGraph(w: DemoWorld, views: Map<string, LedgerSession>, proj
     nodes.push({ id: startId, lane, ts: first?.ts ?? s.createdAt, color: s.color, kind: "start", sessionId: s.id, ...(s.baseVersion ? { version: s.baseVersion } : {}), label: first?.summary ?? s.title });
     ids.push(startId);
     rest.forEach((e, i) => {
+      // a finished session's line ends by its status: a merge joins the trunk, anything else is an end
       const last = i === rest.length - 1 && !open;
-      const kind: LedgerGraphNode["kind"] = last && (e.type === "merged" || e.type === "release") ? "merge" : last && ENDS.has(e.type) ? "end" : "event";
+      const kind: LedgerGraphNode["kind"] = last ? (s.status === "merged" ? "merge" : "end") : "event";
       const id = `e:${e.id}`;
       nodes.push({ id, lane, ts: e.ts, color: s.color, kind, type: e.type, sessionId: s.id, ...(e.version ? { version: e.version } : {}), label: `${e.type}${e.summary ? `: ${e.summary}` : ""}` });
       ids.push(id);
       if (e.type === "sync" && e.version && has.has(baselineId(e.version))) edges.push({ from: baselineId(e.version), to: id, kind: "handoff", color: s.color });
-      if (e.type === "applied" && e.version && has.has(baselineId(e.version))) edges.push({ from: id, to: baselineId(e.version), kind: "handoff", color: s.color });
+      if (e.type === "applied" && s.stream && e.version && has.has(baselineId(e.version))) edges.push({ from: id, to: baselineId(e.version), kind: "handoff", color: s.color });
       if (kind === "merge" && s.mergedInto && has.has(baselineId(s.mergedInto))) edges.push({ from: id, to: baselineId(s.mergedInto), kind: "merge", color: s.color });
     });
     if (s.baseVersion && has.has(baselineId(s.baseVersion))) edges.push({ from: baselineId(s.baseVersion), to: startId, kind: "branch", color: s.color });

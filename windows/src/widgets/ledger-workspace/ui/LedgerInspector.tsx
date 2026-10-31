@@ -39,7 +39,8 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
   const open = questions.filter((q) => q.state === "open");
   const answered = questions.filter((q) => q.state !== "open");
   const human = (action: Parameters<LedgerStore["human"]>[0]["action"], extra: Omit<Parameters<LedgerStore["human"]>[0], "action" | "sessionId"> = {}) => () => void store.human({ action, sessionId: s.id, ...extra });
-  const confirmedBy = detail?.events.slice().reverse().find((e) => e.type === "merged" && e.data?.via === "applied");
+  // an implementation session applied the version this one released: the core records `applied` with `by` here
+  const confirmedBy = detail?.events.slice().reverse().find((e) => (e.type === "applied" || e.type === "merged") && typeof e.data?.by === "string" && (e.type === "applied" || e.data?.via === "applied"));
   return (
     <div className="ledger-inspector" aria-label={t("Session {0}", s.id)}>
       <div className="ledger-inspector-head">

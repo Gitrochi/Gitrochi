@@ -139,7 +139,7 @@ export function demoWorld(now: Ms, repoPath = "C:/Projects/atlas"): DemoWorld {
   event(stream.id, T - 6 * DAY + HOUR, "sync", { summary: "Read baseline 1.4.1", version: "1.4.1" });
   event(stream.id, T - 5 * DAY - 3 * HOUR, "artifact", { summary: "Timeout settings in the client", artifacts: [{ name: "src/api/timeouts.ts", ssot: "1.4.1" }] });
   event(stream.id, T - 5 * DAY, "applied", { summary: "Applied 1.4.1 as asked", version: "1.4.1", data: { targets: [timeout.id] } });
-  event(timeout.id, T - 5 * DAY, "merged", { actor: "agent", summary: `Confirmed by ${stream.id} (applied)`, version: "1.4.1", data: { by: stream.id, via: "applied" } });
+  event(timeout.id, T - 5 * DAY, "applied", { actor: "agent", summary: `Applied by ${stream.id}`, version: "1.4.1", data: { by: stream.id } });
   event(stream.id, T - 22 * HOUR, "sync", { summary: "Read baseline 1.4.2", version: "1.4.2" });
   event(cache.id, T - 22 * HOUR, "merged", { summary: `Merged into 1.4.2 when ${stream.id} read it`, version: "1.4.2", data: { by: stream.id, via: "sync" } });
   event(stream.id, T - 10 * HOUR, "artifact", { summary: "Key-level invalidation", artifacts: [{ name: "src/cache/store.ts", ssot: "1.4.2" }] });
