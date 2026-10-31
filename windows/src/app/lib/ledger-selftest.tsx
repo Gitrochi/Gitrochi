@@ -176,7 +176,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
 
     // Narrow: the filters move above the view and the inspector becomes a sheet
     host.style.width = "620px";
-    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), "A narrow page did not stack its filters");
+    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), `A narrow page did not stack its filters: layout=${$(".ledger-page")?.dataset.layout} width=${$(".ledger-page")?.clientWidth} modal=${!!document.querySelector(".modal-backdrop")}`);
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     await until(() => $(".ledger-table-row"));
     $(".ledger-table-row")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
