@@ -233,7 +233,17 @@ pub(crate) mod tests {
             "refs/remotes/origin/HEAD",
             "refs/remotes/origin/develop",
         ]);
-        repo.canonicalize().unwrap()
+        real_path(&repo)
+    }
+
+    /// The real path (macOS's temporary folder is behind a symlink, git reports the real
+    /// one), without the `\\?\` prefix Windows adds, which not every git accepts.
+    pub(crate) fn real_path(path: &Path) -> std::path::PathBuf {
+        let real = path.canonicalize().unwrap();
+        match real.to_str().and_then(|p| p.strip_prefix(r"\\?\")) {
+            Some(plain) => std::path::PathBuf::from(plain),
+            None => real,
+        }
     }
 
     #[test]
@@ -248,7 +258,7 @@ pub(crate) mod tests {
         assert_eq!(found.branch.as_deref(), Some("feature/hooks"));
         assert_eq!(found.upstream.as_deref(), Some("develop"));
         assert_eq!(found.default_branch.as_deref(), Some("develop"));
-        assert_eq!(Path::new(&found.root).canonicalize().unwrap(), repo);
+        assert_eq!(real_path(Path::new(&found.root)), repo);
         // a detached HEAD has no branch
         fixture_git(&dir, &repo, &["checkout", "-q", "--detach"]);
         let detached = checkout(&repo).unwrap();
