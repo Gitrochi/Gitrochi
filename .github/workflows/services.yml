@@ -1,8 +1,9 @@
 name: Index and services
 
-# The repository index (Rust, crates/gitrochi-index) with its C++ tokenizer (native/), the Python
-# tools on top of it (tools/gitrochi-py) and the Go hub and monitor (services/hub), each on the
-# systems it ships to. The apps' own workflows build the index into the apps.
+# The repository index (Rust, crates/gitrochi-index) with its C++ tokenizer (native/), the session
+# ledger (crates/gitrochi-ledger) and its auto-continue policy (crates/gitrochi-autocontinue), the
+# Python tools on top of the index (tools/gitrochi-py) and the Go hub and monitor (services/hub),
+# each on the systems it ships to. The apps' own workflows build the index into the apps.
 on:
   pull_request:
     paths: ["crates/**", "native/**", "tools/gitrochi-py/**", "services/**", "tools/generate-core-notices.py", "THIRD_PARTY_NOTICES.md", ".github/workflows/services.yml"]
@@ -59,6 +60,34 @@ jobs:
       - name: Dependency notices match the lockfile
         if: runner.os == 'Linux'
         run: python3 tools/generate-core-notices.py --check
+
+  # Apart from the index job, so the ledger's results never change the index checks.
+  ledger:
+    name: Ledger (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "crates -> target"
+
+      # Git without a console window and the database under %APPDATA% are Windows-only code paths.
+      # --nocapture keeps the large demo's timings and a skipped C/C++ header check in the log.
+      - name: Ledger and auto-continue tests
+        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger -p gitrochi-autocontinue -- --nocapture
 
   python:
     name: Python tools (${{ matrix.os }}, Python ${{ matrix.python }})
