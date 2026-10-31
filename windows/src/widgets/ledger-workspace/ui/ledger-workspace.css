@@ -75,6 +75,8 @@ button.ledger-link:hover { color: var(--text); border-color: var(--border-strong
 
 /* Inbox */
 .ledger-inbox { padding: 0 18px 28px; max-width: 980px; }
+/* focus comes back here once an answer is saved; the active row shows where the keys act */
+.ledger-inbox:focus { outline: none; }
 .ledger-row { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; margin: 0 -12px; border-radius: 8px; border: 1px solid transparent; cursor: default; }
 .ledger-row:hover { background: var(--hover); }
 .ledger-row.active { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 6%, transparent); }

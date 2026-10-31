@@ -41,7 +41,8 @@ export function LedgerAnswerField({ onSubmit, placeholder, submitLabel = "Save a
         placeholder={placeholder}
         aria-label={label}
         autoFocus={autoFocus}
-        disabled={saving}
+        // read-only rather than disabled: a disabled field loses focus, and a failed save should leave the person in it
+        readOnly={saving}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {

@@ -98,6 +98,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     type(field, "Three times, then stop.");
     key(field, "Enter", { ctrlKey: true });
     ensure(await until(() => backend.world.questions.find((q) => q.id === question.id)?.answer === "Three times, then stop." && !$(`[data-item="q:${question.id}"]`)), "Ctrl+Enter did not save the answer");
+    ensure(await until(() => document.activeElement === $(".ledger-inbox")), `Focus did not return to the Inbox after the answer was saved: ${document.activeElement?.tagName}`);
     passed.push("answer");
 
     // Triage keys: C confirms the active row, Ctrl+Z takes it back from the toast

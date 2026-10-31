@@ -51,6 +51,12 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
       if (anchor && item.session) mergeMenu(anchor, store, item.session);
     }
   };
+  // A saved answer takes its row out of the Inbox; focus comes back to the Inbox so its keys keep working, unless
+  // the person has moved it elsewhere meanwhile
+  const answered = (key: string) => {
+    const focused = document.activeElement;
+    if (!focused || focused === document.body || rows.current.get(key)?.contains(focused)) self.current?.focus({ preventScroll: true });
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -77,7 +83,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
 
   const busy = store.busy > 0;
   return (
-    <div className="ledger-inbox" aria-label={t("Inbox")} ref={self}>
+    <div className="ledger-inbox" role="region" aria-label={t("Inbox")} ref={self} tabIndex={-1}>
       <LedgerPromptStrip store={store} onOpen={onOpen} onOpenTerminal={onOpenTerminal} />
       {!groups.length ? (
         <div className="ledger-all-clear">
@@ -104,7 +110,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
                     onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, a, input") && item.session) onOpen(item.session.id); }}
                   >
                     {!(item.kind === "question" && i > 0 && shown[i - 1].kind === "question" && shown[i - 1].session?.id === item.session.id) && <RowHead session={item.session} />}
-                    <RowBody item={item} store={store} busy={busy} correcting={correcting === item.key} setCorrecting={(on) => setCorrecting(on ? item.key : null)} fieldRef={(el) => { if (el) fields.current.set(item.key, el); else fields.current.delete(item.key); }} />
+                    <RowBody item={item} store={store} busy={busy} correcting={correcting === item.key} setCorrecting={(on) => setCorrecting(on ? item.key : null)} fieldRef={(el) => { if (el) fields.current.set(item.key, el); else fields.current.delete(item.key); }} onAnswered={() => answered(item.key)} />
                   </div>
                 ))}
               </div>
@@ -136,13 +142,17 @@ function RowHead({ session }: { session: LedgerSession | null }) {
   );
 }
 
-function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef }: { item: InboxItem; store: LedgerStore; busy: boolean; correcting: boolean; setCorrecting: (on: boolean) => void; fieldRef: (el: HTMLTextAreaElement | null) => void }) {
+function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAnswered }: { item: InboxItem; store: LedgerStore; busy: boolean; correcting: boolean; setCorrecting: (on: boolean) => void; fieldRef: (el: HTMLTextAreaElement | null) => void; onAnswered: () => void }) {
+  const saved = (ok: boolean) => {
+    if (ok) onAnswered();
+    return ok;
+  };
   if (item.kind === "question") {
     const q = item.question;
     return (
       <>
         <div className="ledger-row-text selectable">{q.text}</div>
-        <LedgerAnswerField fieldRef={fieldRef} label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text)} />
+        <LedgerAnswerField fieldRef={fieldRef} label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text).then(saved)} />
         <div className="ledger-row-actions">
           <Button size="small" disabled={busy} onClick={() => void store.dismiss(q)} tip={`${t("Dismiss")}|${t("Closes the question without an answer; the session is told.")}`}><X size={13} />{t("Dismiss")}</Button>
         </div>
@@ -156,7 +166,7 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef }: { i
         <div className="ledger-row-text quiet selectable">{promptSummary(prompt)}</div>
         <div className="ledger-row-text selectable"><Sparkles size={12} className="muted" /> {t("Answered automatically: {0}", answerText(describeAnswer(prompt.answer)))}</div>
         {correcting ? (
-          <LedgerAnswerField autoFocus label={t("Correction")} placeholder={t("What should the session do instead?")} submitLabel="Send correction" onSubmit={(text) => store.reviewAuto(prompt, text)} onCancel={() => setCorrecting(false)} />
+          <LedgerAnswerField autoFocus label={t("Correction")} placeholder={t("What should the session do instead?")} submitLabel="Send correction" onSubmit={(text) => store.reviewAuto(prompt, text).then(saved)} onCancel={() => setCorrecting(false)} />
         ) : (
           <div className="ledger-row-actions">
             <Button size="small" kind="primary" disabled={busy} onClick={() => void store.reviewAuto(prompt)} tip={`${t("Confirm")}|${t("The automatic answer was fine; it leaves the Inbox.")}|C`}><CircleCheck size={13} />{t("Confirm")}</Button>
