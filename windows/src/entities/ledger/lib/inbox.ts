@@ -16,7 +16,7 @@ export interface InboxGroup {
 }
 
 /** What a triage key does to an item; null = nothing */
-export type InboxAction = "open" | "answer" | "confirm" | "archive" | "snooze";
+export type InboxAction = "open" | "answer" | "confirm" | "archive" | "snooze" | "merge";
 
 const titles: Record<InboxGroupId, string> = { questions: "Questions", auto: "Continued automatically — review", tidy: "To clean up", decide: "To decide" };
 
@@ -67,7 +67,8 @@ export function inboxCount(groups: readonly InboxGroup[]) {
 
 /**
  * Triage keys, never while typing: Enter opens the session, A answers (or sends a correction to an automatic reply),
- * C confirms, E archives, S marks a stale session still active. A key an item does not take does nothing.
+ * C confirms, E archives, S marks a stale session still active, M marks a finished one merged. A key an item does
+ * not take does nothing. (macOS: LedgerInboxView key handling)
  */
 export function inboxKeyAction(item: InboxItem, key: string): InboxAction | null {
   switch (key.toLowerCase()) {
@@ -81,6 +82,8 @@ export function inboxKeyAction(item: InboxItem, key: string): InboxAction | null
       return item.kind === "session" && item.session.verdict === "expirable" ? "archive" : null;
     case "s":
       return item.kind === "session" && item.session.verdict === "stale" ? "snooze" : null;
+    case "m":
+      return item.kind === "session" && item.session.verdict === "pending_merge" ? "merge" : null;
     default:
       return null;
   }

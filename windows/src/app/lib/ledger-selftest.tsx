@@ -107,6 +107,13 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     key(window, "ArrowDown");
     await pause();
     ensure($(".ledger-row.active"), "The arrow keys did not move through the Inbox");
+    const toMerge = find((s) => s.verdict === "pending_merge" && s.project === "atlas");
+    $(`[data-item="s:${toMerge.id}"]`)!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await pause();
+    key(window, "m");
+    ensure(await until(() => document.querySelector(".menu .menu-item")), "M did not open the version picker");
+    key(window, "Escape");
+    ensure(await until(() => !document.querySelector(".menu")), "Escape did not close the version picker");
     passed.push("triage keys and undo");
 
     // Waiting prompts: hold one, allow the permission

@@ -166,6 +166,9 @@ describe("Ledger Inbox", () => {
     expect(inboxKeyAction(exp, "c")).toBeNull();
     expect(inboxKeyAction(stale, "s")).toBe("snooze");
     expect(inboxKeyAction(done, "s")).toBeNull();
+    expect(inboxKeyAction(done, "M")).toBe("merge");
+    expect(inboxKeyAction(stale, "m")).toBeNull();
+    expect(inboxKeyAction(q, "m")).toBeNull();
     expect(inboxKeyAction(auto.items[1], "Enter")).toBeNull();
   });
   it("moves with the arrow keys inside the list", () => {

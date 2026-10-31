@@ -45,6 +45,11 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
       else void store.human({ action: "ack", sessionId: item.session.id });
     } else if (action === "archive") void store.human({ action: "archive", sessionId: item.session!.id });
     else if (action === "snooze") void store.human({ action: "snooze", sessionId: item.session!.id, until: Date.now() + STALE_HOURS * HOUR });
+    else if (action === "merge") {
+      // the version picker opens under the row's own Mark merged… button
+      const anchor = rows.current.get(item.key)?.querySelector<HTMLElement>("[data-merge]");
+      if (anchor && item.session) mergeMenu(anchor, store, item.session);
+    }
   };
 
   useEffect(() => {
@@ -111,7 +116,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
         })
       )}
       <footer className="ledger-keys" aria-label={t("Keyboard")}>
-        {[["↑ ↓", "Move"], ["Enter", "Open"], ["A", "Answer"], ["C", "Confirm"], ["E", "Clean up"], ["S", "Still active"]].map(([key, label]) => (
+        {[["↑ ↓", "Move"], ["Enter", "Open"], ["A", "Answer"], ["C", "Confirm"], ["E", "Clean up"], ["S", "Still active"], ["M", "Mark merged…"]].map(([key, label]) => (
           <span key={key}><span className="ledger-kbd">{key}</span>{t(label)}</span>
         ))}
       </footer>
@@ -172,7 +177,7 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef }: { i
       <div className="ledger-row-actions">
         {s.verdict === "confirm" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "ack", sessionId: s.id })} tip={`${t("Confirm")}|${t("The outcome is right; the conversation can be cleaned up next.")}|C`}><CircleCheck size={13} />{t("Confirm")}</Button>}
         {s.verdict === "expirable" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "archive", sessionId: s.id })} tip={`${t("Clean up")}|${t("The conversation is finished and may be closed.")}|E`}><Archive size={13} />{t("Clean up")}</Button>}
-        {s.verdict === "pending_merge" && <Button size="small" kind="primary" disabled={busy} onClick={(e) => mergeMenu(e.currentTarget, store, s)}><GitMerge size={13} />{t("Mark merged…")}</Button>}
+        {s.verdict === "pending_merge" && <Button size="small" kind="primary" data-merge disabled={busy} onClick={(e) => mergeMenu(e.currentTarget, store, s)} tip={`${t("Mark merged…")}||M`}><GitMerge size={13} />{t("Mark merged…")}</Button>}
         {s.verdict === "stale" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "snooze", sessionId: s.id, until: Date.now() + STALE_HOURS * HOUR })} tip={`${t("Still active")}|${t("Keeps it off the stale list for another 72 hours.")}|S`}><Clock size={13} />{t("Still active")}</Button>}
         {(s.verdict === "pending_merge" || s.verdict === "stale") && <Button size="small" disabled={busy} onClick={() => void store.human({ action: "set_status", sessionId: s.id, status: "closed" })} tip={`${t("Mark closed")}|${t("Finished without a merge.")}`}>{t("Mark closed")}</Button>}
       </div>
