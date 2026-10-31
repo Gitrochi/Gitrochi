@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/question.schema.json",
+  "title": "Question",
+  "description": "Something an agent needs a person for (CONTRACT.md: Question).",
+  "type": "object",
+  "required": [
+    "id",
+    "sessionId",
+    "text",
+    "state",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "open",
+        "answered",
+        "dismissed"
+      ]
+    },
+    "answer": {
+      "type": "string"
+    },
+    "answeredBy": {
+      "enum": [
+        "human",
+        "auto"
+      ]
+    },
+    "resolvedBy": {
+      "const": "agent",
+      "description": "The session settled the question itself"
+    },
+    "createdAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "answeredAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "deliveredAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    }
+  }
+}

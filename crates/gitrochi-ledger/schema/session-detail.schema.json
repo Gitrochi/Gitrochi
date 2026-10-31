@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/session-detail.schema.json",
+  "title": "SessionDetail",
+  "description": "The session method's result: one session with its history (CONTRACT.md: session).",
+  "type": "object",
+  "required": [
+    "session",
+    "events",
+    "questions",
+    "overlaps",
+    "cycles",
+    "waitingMessages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "session": {
+      "$ref": "session.schema.json"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "ledger-event.schema.json"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "question.schema.json"
+      }
+    },
+    "overlaps": {
+      "type": "array",
+      "items": {
+        "$ref": "state.schema.json#/$defs/overlap"
+      }
+    },
+    "cycles": {
+      "type": "array",
+      "items": {
+        "$ref": "state.schema.json#/$defs/streamCycle"
+      }
+    },
+    "head": {
+      "type": "string"
+    },
+    "waitingMessages": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/session.schema.json",
+  "title": "Session",
+  "description": "One unit of agent work, drawn as a branch in the graph (CONTRACT.md: Session).",
+  "type": "object",
+  "required": [
+    "id",
+    "project",
+    "title",
+    "kind",
+    "role",
+    "status",
+    "verdict",
+    "touches",
+    "related",
+    "links",
+    "color",
+    "createdAt",
+    "lastAt",
+    "openQuestions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "description": "A known kind (research, decision, implementation, llm-implementation, review, document, baseline, other) or one kept as typed"
+    },
+    "role": {
+      "enum": [
+        "decision",
+        "implementation",
+        "research",
+        "document",
+        "other"
+      ]
+    },
+    "status": {
+      "enum": [
+        "active",
+        "done",
+        "merged",
+        "closed",
+        "dropped",
+        "shelved"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "archived",
+        "needs_human",
+        "expirable",
+        "confirm",
+        "shelved",
+        "pending_merge",
+        "stale",
+        "active"
+      ]
+    },
+    "baseVersion": {
+      "type": "string"
+    },
+    "baseCurrent": {
+      "type": "string"
+    },
+    "baseWasLatest": {
+      "type": "boolean",
+      "description": "Present (true) when the base was given as latest"
+    },
+    "behind": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Baselines newer than baseCurrent"
+    },
+    "mergedInto": {
+      "type": "string"
+    },
+    "touches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "chatUrl": {
+      "type": "string"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repoPath": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "worktree": {
+          "type": "string"
+        },
+        "pr": {
+          "type": "object",
+          "required": [
+            "host",
+            "number",
+            "url"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "number": {
+              "type": "integer"
+            },
+            "url": {
+              "type": "string"
+            }
+          }
+        },
+        "agentId": {
+          "type": "string"
+        },
+        "agentSessionId": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        }
+      }
+    },
+    "color": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7
+    },
+    "createdAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "lastAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "lastAgentAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "ackAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "snoozeUntil": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "archivedAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "openQuestions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stream": {
+      "type": "object",
+      "required": [
+        "line"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "type": "string"
+        }
+      },
+      "description": "Present on live implementation sessions"
+    },
+    "autoContinue": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "delaySec"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "delaySec": {
+          "type": "integer"
+        }
+      },
+      "description": "This session's policy; absent means the global default"
+    }
+  }
+}
