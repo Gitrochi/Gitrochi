@@ -156,3 +156,8 @@ pub unsafe extern "C" fn gitrochi_free(ptr: *mut u8, len: usize) {
         drop(unsafe { Box::from_raw(std::ptr::slice_from_raw_parts_mut(ptr, len)) });
     }
 }
+
+// The ledger's C ABI, re-exported like the index's above. It sits last so the lines before it, and
+// with them the panic locations compiled into the WebAssembly core (which leaves it out), stay put.
+#[cfg(not(target_arch = "wasm32"))]
+pub use gitrochi_ledger::ffi::{gitrochi_ledger_call, gitrochi_ledger_free};
