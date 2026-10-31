@@ -298,7 +298,8 @@ final class LedgerStore {
     func perform(_ action: LedgerHumanAction, on ids: [String], message: String) async {
         guard !ids.isEmpty else { return }
         let before = Dictionary(ids.compactMap { id in session(id).map { (id, $0) } }) { first, _ in first }
-        let now = Self.localNow() + clockSkew
+        // the ledger's own time at the last read: undoing Still active snoozes until then, which has always passed
+        let now = state?.now ?? Self.localNow() + clockSkew
         working.formUnion(ids)
         defer { working.subtract(ids) }
         var steps: [(session: String, actions: [LedgerHumanAction])] = []
