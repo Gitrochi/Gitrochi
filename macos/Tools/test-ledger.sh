@@ -176,6 +176,10 @@ let start: LedgerMs = 1_793_400_000_000
         let encoded = String(decoding: try! JSONEncoder().encode(LedgerJSON.object(["n": 3, "f": .number(1.5)])), as: UTF8.self)
         check(encoded.contains("\"n\":3") && encoded.contains("1.5"), "whole numbers stay whole: \(encoded)")
         check((try? JSONDecoder().decode([LedgerVerdict].self, from: Data(#"["needs_human","from_a_newer_core"]"#.utf8))) == [.needsHuman, .active], "unknown values fall back")
+        let kinds = LedgerGlobalSettings.kindsArgument(["spike": .init(role: .research, line: "x", handoff: false), "build": .init(role: .implementation, line: " ", handoff: nil)])
+        check(kinds == ["spike": ["role": "research"], "build": ["role": "implementation", "line": "core", "handoff": true]], "kinds: a line and hand-off only for implementation: \(kinds)")
+        let rules = LedgerGlobalSettings(staleHours: 72, kinds: ["research": .init(role: .research)], autoContinue: nil, backupKeep: 14)
+        check(rules.unassignedKinds(among: ["research", "spike", "", "spike", "Research"]) == ["Research", "spike"], "kinds without a rule, once each, as stored")
         let point = LedgerGraphPlot.point(lane: 2, row: 3, laneWidth: 22, rowHeight: 30, leftPad: 6)
         check(point.x == 61 && point.y == 105 && LedgerGraphPlot.point(lane: 0.5, row: 0, laneWidth: 22, rowHeight: 30, leftPad: 6).x == 28, "coordinates")
     }
@@ -380,6 +384,27 @@ let start: LedgerMs = 1_793_400_000_000
         let empty = DemoLedgerBackend(mode: .empty, clock: { clock.now() })
         let nothing = try call(empty, "state", [:], as: LedgerState.self)
         check(nothing.sessions.isEmpty && nothing.pendingPrompts.isEmpty && nothing.attention.total == 0, "empty demo")
+
+        // Settings › Ledger on the demo: the same shapes as the core
+        let rules = DemoLedgerBackend(clock: { clock.now() })
+        let stored = try call(rules, "settings", as: LedgerGlobalSettings.self)
+        check(stored == DemoLedgerBackend.defaultSettings && stored.kinds["implementation"]?.line == "core", "demo settings")
+        let spike = LedgerGlobalSettings.kindsArgument(["spike": .init(role: .implementation, line: "", handoff: false)])
+        let saved = try call(rules, "settings_set", ["values": ["staleHours": 24, "kinds": spike]], as: LedgerSettingsWrite.self).settings
+        check(saved.staleHours == 24 && saved.kinds == ["spike": .init(role: .implementation, line: "core", handoff: false)], "demo settings_set: \(saved)")
+        check(failure(rules, "settings_set", ["values": ["backupKeep": 0]])?.code == "INVALID_ARGUMENT", "a value out of range is refused")
+        check(failure(rules, "settings_set", ["values": ["colour": 1]])?.code == "INVALID_ARGUMENT", "an unknown setting is refused")
+        let reset = try call(rules, "settings_set", ["values": ["staleHours": .null, "kinds": .null]], as: LedgerSettingsWrite.self).settings
+        check(reset == DemoLedgerBackend.defaultSettings, "null puts the defaults back")
+        let projects = try call(rules, "projects", as: LedgerProjectList.self).projects
+        check(projects.map(\.key) == ["harbor", "meadow"] && projects.allSatisfy { $0.baselineSource == .tags && $0.baselinePattern == DemoLedgerBackend.defaultPattern }, "demo projects")
+        let renamed = try call(rules, "project_set", ["project": "harbor", "name": "Harbour", "baselineSource": "folder", "scanSubdirs": ["specs"]], as: LedgerProjectWrite.self).project
+        let named = try call(rules, "state", [:], as: LedgerState.self).projects.first { $0.key == "harbor" }?.name
+        check(renamed.name == "Harbour" && renamed.baselineSource == .folder && renamed.scanSubdirs == ["specs"] && named == "Harbour", "demo project_set")
+        check(failure(rules, "project_set", ["project": "harbor", "baselineSource": "ftp"])?.code == "INVALID_ARGUMENT", "an unknown source is refused")
+        let scanned = try call(rules, "scan", ["project": "harbor"], as: LedgerScanResult.self).results
+        check(scanned.count == 1 && scanned[0].found > 0 && scanned[0].source == "folder", "demo scan")
+        check(failure(rules, "import_legacy", ["path": "/nowhere"])?.code == "INVALID_ARGUMENT", "the demo cannot import a database")
     }
 
     @MainActor static func store() async throws {

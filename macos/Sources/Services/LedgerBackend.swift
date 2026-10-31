@@ -63,6 +63,27 @@ struct LedgerClient: Sendable {
 
     func backup() async throws -> String { try await call("backup", as: LedgerBackupResult.self).path }
 
+    func settings() async throws -> LedgerGlobalSettings { try await call("settings") }
+
+    /// Stores settings (`.null` puts one back to its default) and answers with every setting as stored
+    func setSettings(_ values: [String: LedgerJSON]) async throws -> LedgerGlobalSettings {
+        try await call("settings_set", ["values": .object(values)], as: LedgerSettingsWrite.self).settings
+    }
+
+    func projects() async throws -> [LedgerProjectSettings] { try await call("projects", as: LedgerProjectList.self).projects }
+
+    /// Changes a project's name or baseline source (`.null` clears a value) and answers with the project as stored
+    func setProject(_ key: String, _ values: [String: LedgerJSON]) async throws -> LedgerProjectSettings {
+        var args = values
+        args["project"] = .string(key)
+        return try await call("project_set", args, as: LedgerProjectWrite.self).project
+    }
+
+    /// Looks for baselines now, for one project or all of them
+    func scan(project: String?) async throws -> [LedgerScanResult.Project] {
+        try await call("scan", project.map { ["project": .string($0)] } ?? [:], as: LedgerScanResult.self).results
+    }
+
     private func call<T: Decodable & Sendable>(_ method: String, _ args: [String: LedgerJSON] = [:], as type: T.Type = T.self) async throws -> T {
         let backend = backend
         return try await Task.detached(priority: .userInitiated) {

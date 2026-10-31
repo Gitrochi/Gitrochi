@@ -455,6 +455,31 @@ final class LedgerStore {
     func info() async throws -> LedgerInfo { try await client.info() }
     func backup() async throws -> String { try await client.backup() }
 
+    // MARK: - Settings
+
+    func settings() async throws -> LedgerGlobalSettings { try await client.settings() }
+
+    /// Stores settings; verdicts and roles follow them, so a page that is open reads again
+    func saveSettings(_ values: [String: LedgerJSON]) async throws -> LedgerGlobalSettings {
+        let saved = try await client.setSettings(values)
+        if state != nil { await reload() }
+        return saved
+    }
+
+    func projectSettings() async throws -> [LedgerProjectSettings] { try await client.projects() }
+
+    func saveProject(_ key: String, _ values: [String: LedgerJSON]) async throws -> LedgerProjectSettings {
+        let saved = try await client.setProject(key, values)
+        if state != nil { await reload() }
+        return saved
+    }
+
+    func scan(project: String?) async throws -> [LedgerScanResult.Project] {
+        let results = try await client.scan(project: project)
+        if state != nil { await reload() }
+        return results
+    }
+
     /// Writes only a changed value, so views that read it do not draw again for nothing
     private func setIfChanged<Value: Equatable>(_ path: ReferenceWritableKeyPath<LedgerStore, Value>, _ value: Value) {
         if self[keyPath: path] != value { self[keyPath: path] = value }

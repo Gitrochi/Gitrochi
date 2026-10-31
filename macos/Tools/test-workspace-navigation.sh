@@ -103,9 +103,10 @@ import SwiftUI
         }
         precondition(GraphMetrics.width(lanes: 24) == GraphMetrics.width(lanes: GraphMetrics.maxVisibleLanes), "Lanes past the visible limit do not widen the graph column")
         precondition(WorkspaceDestination.allCases.count == 13)
-        // Ledger is hidden until its core is connected: listed and restorable only with GITROCHI_LEDGER_PREVIEW=1
+        // Ledger is hidden until it is released: listed and restorable only with GITROCHI_LEDGER_PREVIEW=1
         let ledgerShown = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
         precondition(WorkspaceDestination.shown.count == (ledgerShown ? 13 : 12) && WorkspaceDestination.ledger.isShown == ledgerShown)
+        precondition(LedgerSettings.isShown == ledgerShown, "Settings › Ledger is shown only with the Ledger page")
         // the Ledger only adds: every page main has keeps its order, raw value and title
         let mainPages: [WorkspaceDestination] = [.home, .repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
         precondition(Array(WorkspaceDestination.shown.prefix(12)) == mainPages && Array(WorkspaceDestination.allCases.prefix(12)) == mainPages)
