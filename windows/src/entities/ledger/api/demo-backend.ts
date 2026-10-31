@@ -1,5 +1,7 @@
-import type { LedgerHumanRequest, LedgerImportResult, LedgerMethod, LedgerMethods, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerState, LedgerStatus, Ms } from "../model/types";
+import type { LedgerHumanRequest, LedgerImportResult, LedgerKindRule, LedgerMethod, LedgerMethods, LedgerProjectSettings, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerSettings, LedgerState, LedgerStatus, Ms } from "../model/types";
+import { ledgerBaselineSources, ledgerRoles } from "../model/types";
 import { inboxGroups } from "../lib/inbox";
+import { STALE_HOURS } from "../lib/verdict";
 import { compareVersions } from "../lib/version";
 import { LedgerError, type LedgerBackend } from "./backend";
 import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld, promptPayload } from "./demo-data";
@@ -21,6 +23,37 @@ export interface DemoOptions {
 const EVENTS = new Set(["start", "progress", "artifact", "question", "decision", "sync", "done", "merged", "closed", "dropped", "shelved", "release", "applied", "note", "heartbeat"]);
 const SESSION_ID = /^[\p{L}\p{N}._-]{3,48}$/u;
 const roleOf = (kind: string): LedgerRole => (["decision", "implementation", "research", "document"].includes(kind) ? (kind as LedgerRole) : "other");
+const DEFAULT_PATTERN = "^v?(\\d+(?:\\.\\d+)+)$";
+const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const invalid = (message: string) => new LedgerError("INVALID_ARGUMENT", message);
+
+/** The core's default settings (crates/gitrochi-ledger/src/settings.rs) */
+function defaultSettings(): LedgerSettings {
+  const implementation = (line: string, handoff: boolean): LedgerKindRule => ({ role: "implementation", line, handoff });
+  return {
+    staleHours: STALE_HOURS,
+    kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" } },
+    autoContinue: { enabled: false, delaySec: 30 },
+    backupKeep: 14,
+  };
+}
+
+/** Kinds as the core keeps them: a role, and a line and hand-off only for implementation kinds */
+function parseKinds(value: unknown): Record<string, LedgerKindRule> {
+  if (!isRecord(value)) throw invalid("kinds must be an object of kind → {role, line?, handoff?}");
+  const kinds: Record<string, LedgerKindRule> = {};
+  for (const [name, entry] of Object.entries(value)) {
+    const kind = name.trim();
+    if (!kind) throw invalid("A kind needs a name");
+    const rule = isRecord(entry) ? entry : {};
+    if (!(ledgerRoles as readonly unknown[]).includes(rule.role)) throw invalid(`kinds.${name}.role must be decision, implementation, research, document or other`);
+    if (rule.line !== undefined && rule.line !== null && (typeof rule.line !== "string" || !rule.line.trim())) throw invalid(`kinds.${name}.line must be a name`);
+    if (rule.handoff !== undefined && rule.handoff !== null && typeof rule.handoff !== "boolean") throw invalid(`kinds.${name}.handoff must be true or false`);
+    const role = rule.role as LedgerRole;
+    kinds[kind] = role === "implementation" ? { role, line: typeof rule.line === "string" ? rule.line.trim() : "core", handoff: rule.handoff !== false } : { role };
+  }
+  return kinds;
+}
 
 /** Canonical JSON (sorted keys), so the same report pasted twice is recognised */
 function canonical(value: unknown): string {
@@ -50,6 +83,8 @@ export class DemoLedgerBackend implements LedgerBackend {
   private readonly seen = new Set<string>();
   private nextSpawn: Ms;
   private spawned = 0;
+  private settings = defaultSettings();
+  private readonly projectSettings = new Map<string, LedgerProjectSettings>();
 
   constructor(options: DemoOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -100,11 +135,137 @@ export class DemoLedgerBackend implements LedgerBackend {
         return this.promptAnswer(Number(args.id), args.answer as LedgerPromptAnswer);
       case "prompt_review":
         return this.promptReview(args);
-      case "backup":
-        return { path: "ledger/backups/ledger-demo.sqlite3" };
+      case "backup": {
+        const d = new Date(this.now()), pad = (n: number) => String(n).padStart(2, "0");
+        return { path: `ledger/backups/ledger-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}.sqlite3`, created: true, size: 4096 * (8 + w.sessions.length), removed: [] };
+      }
+      case "settings":
+        return structuredClone(this.settings);
+      case "settings_set":
+        return this.settingsSet(args.values);
+      case "projects":
+        return { projects: w.projects.map((p) => this.project(p.key)).sort((a, b) => a.key.localeCompare(b.key)) };
+      case "project_set":
+        return this.projectSet(args);
+      case "scan": {
+        const keys = typeof args.project === "string" ? [args.project] : w.projects.map((p) => p.key);
+        return { results: keys.map((key) => this.scan(key)) };
+      }
+      case "import_legacy":
+        return this.importLegacy(args);
       default:
         throw new LedgerError("UNKNOWN_METHOD", `Unknown method ${String(method)}`);
     }
+  }
+
+  /** As the core: each value is checked, null restores the default, kinds are replaced as a whole */
+  private settingsSet(values: unknown) {
+    if (!isRecord(values)) throw invalid("Give values: {staleHours?, kinds?, autoContinue?, backupKeep?}");
+    const next = structuredClone(this.settings), defaults = defaultSettings();
+    for (const [key, value] of Object.entries(values)) {
+      if (key === "staleHours") {
+        if (value !== null && !(typeof value === "number" && value > 0 && value <= 10_000)) throw invalid("staleHours must be a number of hours (0–10000)");
+        next.staleHours = (value as number | null) ?? defaults.staleHours;
+      } else if (key === "backupKeep") {
+        if (value !== null && !(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 365)) throw invalid("backupKeep must be a whole number (1–365)");
+        next.backupKeep = (value as number | null) ?? defaults.backupKeep;
+      } else if (key === "kinds") {
+        next.kinds = value === null ? defaults.kinds : parseKinds(value);
+      } else if (key === "autoContinue") {
+        if (value !== null && !isRecord(value)) throw invalid("autoContinue must be an object");
+        next.autoContinue = (value as Record<string, unknown> | null) ?? defaults.autoContinue;
+      } else throw invalid(`Unknown setting ${key} (known: staleHours, kinds, autoContinue, backupKeep)`);
+    }
+    this.settings = next;
+    this.world.staleHours = next.staleHours;
+    this.world.rev++;
+    return { ok: true, rev: this.world.rev, settings: structuredClone(next) };
+  }
+
+  /** A project's settings; the first project is bound to the open repository through its sessions */
+  private project(key: string): LedgerProjectSettings {
+    const stored = this.projectSettings.get(key);
+    if (stored) return structuredClone(stored);
+    const name = this.world.projects.find((p) => p.key === key)?.name ?? key;
+    const repoPath = this.world.sessions.find((s) => s.project === key && s.links.repoPath)?.links.repoPath;
+    return { key, name, ...(repoPath ? { repoPath } : {}), baselineSource: "tags", baselinePattern: DEFAULT_PATTERN, scanFiles: false, scanSubdirs: [] };
+  }
+
+  /** As the core: unset fields stay, null clears one, a new key adds the project */
+  private projectSet(args: Record<string, unknown>) {
+    const w = this.world;
+    const key = typeof args.project === "string" ? args.project.trim() : "";
+    if (!key) throw invalid("Missing project");
+    if (!w.projects.some((p) => p.key === key)) w.projects.push({ key, name: key });
+    const p = this.project(key);
+    const text = (name: string): string | null | undefined => {
+      const value = args[name];
+      if (value === undefined || value === null) return value;
+      if (typeof value !== "string") throw invalid(`${name} must be text`);
+      return value.trim() || null;
+    };
+    const name = text("name"), repoPath = text("repoPath"), source = text("baselineSource"), pattern = text("baselinePattern"), dir = text("baselineDir");
+    if (name !== undefined) p.name = name ?? key;
+    if (repoPath !== undefined) { if (repoPath) p.repoPath = repoPath; else delete p.repoPath; }
+    if (source !== undefined) {
+      if (source && !(ledgerBaselineSources as readonly string[]).includes(source)) throw invalid("baselineSource must be tags, folder or manual");
+      p.baselineSource = (source ?? "tags") as LedgerProjectSettings["baselineSource"];
+    }
+    if (pattern !== undefined) {
+      try { new RegExp(pattern ?? DEFAULT_PATTERN, "i"); } catch (e) { throw invalid(`Invalid baseline pattern ${JSON.stringify(pattern)}: ${e instanceof Error ? e.message : String(e)}`); }
+      p.baselinePattern = pattern ?? DEFAULT_PATTERN;
+    }
+    if (dir !== undefined) { if (dir) p.baselineDir = dir; else delete p.baselineDir; }
+    if (typeof args.scanFiles === "boolean") p.scanFiles = args.scanFiles;
+    if (Array.isArray(args.scanSubdirs)) p.scanSubdirs = args.scanSubdirs.map(String).map((s) => s.trim()).filter(Boolean);
+    this.projectSettings.set(key, p);
+    const entry = w.projects.find((x) => x.key === key)!;
+    entry.name = p.name;
+    w.rev++;
+    return { ok: true, rev: w.rev, project: structuredClone(p) };
+  }
+
+  /** The demo's trunks are fixed; a folder source without its folder fails the way the core reports it */
+  private scan(key: string) {
+    const p = this.project(key);
+    const found = this.world.baselines.filter((b) => b.project === key && b.source !== "inferred").length;
+    if (p.baselineSource === "folder" && !p.baselineDir) return { project: key, source: p.baselineSource, found: 0, added: 0, error: "No baseline folder is set" };
+    return { project: key, source: p.baselineSource, found: p.baselineSource === "manual" ? 0 : found, added: 0 };
+  }
+
+  /**
+   * A claude-ledger database, as far as a demo has one: the file is never read and always holds the same two sessions
+   * of a project "ledger", so a dry run counts them, an import adds them and a second import skips them.
+   */
+  private importLegacy(args: Record<string, unknown>) {
+    const w = this.world, now = this.now();
+    if (typeof args.path !== "string" || !args.path.trim()) throw invalid("Missing path (the claude-ledger database file)");
+    const dryRun = args.dryRun === true;
+    const ids = ["S1020-01", "S1021-01"];
+    const skipped = ids.filter((id) => w.sessions.some((s) => s.id === id));
+    const fresh = ids.filter((id) => !skipped.includes(id));
+    const newProject = fresh.length > 0 && !w.projects.some((p) => p.key === "ledger");
+    const versions = fresh.length ? ["0.9.0", "1.0.0"].filter((v) => !w.baselines.some((b) => b.project === "ledger" && b.version === v)) : [];
+    const counts = { projects: newProject ? 1 : 0, baselines: versions.length, baselinesUpdated: 0, sessions: fresh.length, events: fresh.length * 3, questions: fresh.includes("S1021-01") ? 1 : 0, imports: fresh.length ? 2 : 0 };
+    if (!dryRun && fresh.length) {
+      const day = 24 * 60 * 60_000;
+      if (newProject) w.projects.push({ key: "ledger", name: "ledger" });
+      versions.forEach((version, i) => w.baselines.push({ project: "ledger", version, ts: now - (12 - i) * day, source: "tag" }));
+      for (const [i, id] of fresh.entries()) {
+        const merged = id === "S1020-01", at = now - (10 - i) * day;
+        w.sessions.push({ id, project: "ledger", title: merged ? "Release checklist" : "API naming", kind: merged ? "document" : "decision", role: merged ? "document" : "decision", status: merged ? "merged" : "active", ...(merged ? { mergedInto: "1.0.0", ackAt: at + 2 * 3_600_000 } : {}), baseVersion: "0.9.0", baseCurrent: "0.9.0", touches: [], related: [], links: {}, color: (w.sessions.filter((s) => s.project === "ledger").length % 8), createdAt: at, lastAt: at + 3_600_000, lastAgentAt: at + 3_600_000 });
+        const event = (type: string, ts: Ms, summary: string) => w.events.push({ id: w.nextEvent++, sessionId: id, ts, type, actor: "agent", summary });
+        event("start", at, merged ? "Started the release checklist" : "Started on the API names");
+        event("progress", at + 1_800_000, merged ? "Checked the release notes" : "Listed the endpoints");
+        if (merged) event("merged", at + 3_600_000, "Merged into 1.0.0");
+        else {
+          event("question", at + 3_600_000, "Asked about the naming rule");
+          w.questions.push({ id: w.nextQuestion++, sessionId: id, text: "Plural or singular resource names?", state: "open", createdAt: at + 3_600_000 });
+        }
+      }
+      w.rev++;
+    }
+    return { ok: true, dryRun, rev: w.rev, counts, skipped, errors: [] };
   }
 
   private state(project: string | undefined, range: LedgerRange): LedgerState {

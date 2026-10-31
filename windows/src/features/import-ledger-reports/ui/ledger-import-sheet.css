@@ -4,3 +4,7 @@
 .ledger-result .ok { color: var(--green); }
 .ledger-result .dup { color: var(--text-3); }
 .ledger-result .bad { color: var(--red); }
+
+/* Import from claude-ledger — what a dry run counted, and rows that could not be read */
+.ledger-legacy-result { font-size: 12px; }
+.ledger-legacy-errors { margin: 0; padding-left: 18px; max-height: 110px; overflow-y: auto; }

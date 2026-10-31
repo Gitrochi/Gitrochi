@@ -18,7 +18,7 @@ export function sessionViews(w: DemoWorld, now: Ms): Map<string, LedgerSession> 
   for (const q of w.questions) if (q.state === "open") open.set(q.sessionId, (open.get(q.sessionId) ?? 0) + 1);
   return new Map(w.sessions.map((s): [string, LedgerSession] => {
     const openQuestions = open.get(s.id) ?? 0;
-    return [s.id, { ...s, openQuestions, verdict: computeVerdict({ ...s, openQuestions }, now) }];
+    return [s.id, { ...s, openQuestions, verdict: computeVerdict({ ...s, openQuestions }, now, w.staleHours) }];
   }));
 }
 

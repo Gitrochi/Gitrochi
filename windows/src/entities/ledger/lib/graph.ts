@@ -61,9 +61,9 @@ export function edgePath(a: PlacedNode, b: PlacedNode, kind: LedgerGraphEdge["ki
 const rowOrder = (a: LedgerGraphNode, b: LedgerGraphNode) => b.ts - a.ts || a.lane - b.lane || a.id.localeCompare(b.id);
 
 /**
- * Rows and paths for a contract `Graph`: one row per node, newest on top, lane 0 the baseline trunk. A session whose
- * newest node is neither an end nor a merge is still open, so its lane continues upward as a dashed tail.
- * (macOS: LedgerGraphLayout.plot)
+ * Rows and paths for a contract `Graph`: one row per node, newest on top, lane 0 the baseline trunk. An open session's
+ * lane continues upward as a dashed tail: the sessions the core lists in `tails`, or without them those whose newest
+ * node is neither an end nor a merge. (macOS: LedgerGraphLayout.plot)
  */
 export function plotLedgerGraph(graph: LedgerGraph): GraphPlot {
   const byRow = graph.nodes.length > 0 && graph.nodes.every((n) => typeof n.row === "number");
@@ -77,8 +77,9 @@ export function plotLedgerGraph(graph: LedgerGraph): GraphPlot {
   }
   const newest = new Map<string, PlacedNode>();
   for (const p of nodes) if (p.node.sessionId && !newest.has(p.node.sessionId)) newest.set(p.node.sessionId, p);
-  for (const p of newest.values()) {
-    if (p.node.kind === "end" || p.node.kind === "merge" || p.row === 0) continue;
+  const open = graph.tails ? new Set(graph.tails.map((tail) => tail.sessionId)) : null;
+  for (const [sessionId, p] of newest) {
+    if (p.row === 0 || (open ? !open.has(sessionId) : p.node.kind === "end" || p.node.kind === "merge")) continue;
     paths.push({ d: `M${p.x},${p.y}L${p.x},0`, color: p.node.color, dashed: true, top: 0, bottom: p.y, kind: "tail" });
   }
   let lanes = Math.max(graph.lanes, 1);

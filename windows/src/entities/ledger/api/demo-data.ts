@@ -15,6 +15,8 @@ export interface DemoWorld {
   prompts: DemoPrompt[];
   /** File pairs that usually change together, the repository index's "likely overlap" */
   coupled: { a: string; b: string; paths: string[] }[];
+  /** Settings › Ledger's stale hours; 72 when not set */
+  staleHours?: number;
   nextEvent: number;
   nextQuestion: number;
   nextPrompt: number;

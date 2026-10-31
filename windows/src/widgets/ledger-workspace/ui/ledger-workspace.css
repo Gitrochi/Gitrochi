@@ -196,6 +196,6 @@ button.ledger-link:hover { color: var(--text); border-color: var(--border-strong
 /* Onboarding */
 .ledger-onboarding { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 32px; text-align: center; }
 .ledger-onboarding .empty { flex: none; padding: 0; }
-.ledger-onboarding-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 260px)); gap: 12px; }
+.ledger-onboarding-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 230px)); justify-content: center; gap: 12px; width: 100%; }
 .ledger-onboarding-steps .card { text-align: left; }
 @media (max-width: 640px) { .ledger-onboarding-steps { grid-template-columns: minmax(0, 1fr); } }

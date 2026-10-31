@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DemoLedgerBackend, type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, type LedgerMethod, type LedgerMethods, LedgerStore, ledgerVerdicts, nativeLedgerBackend, plotLedgerGraph } from "@/entities/ledger";
 import { ipc } from "@/shared/api";
+import { shapeErrors, type Spec, specs } from "./ledger-fixtures";
+
+const { session, event, question, overlap, cycle, state, graph } = specs;
 
 const MIN = 60_000, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const START = Date.UTC(2026, 9, 31, 9);
@@ -12,77 +15,30 @@ function demo(options: { large?: boolean; repoPath?: string } = {}) {
   return { backend, advance: (ms: number) => (now += ms), now: () => now };
 }
 
-// MARK: Contract shapes — every key the contract names, nothing else
-
-type Spec = string | Spec[] | { [key: string]: Spec } | ((value: unknown) => boolean);
-const enumOf = (...values: unknown[]) => (v: unknown) => values.includes(v);
-const record = (v: unknown) => !!v && typeof v === "object" && !Array.isArray(v);
-
-function check(value: unknown, spec: Spec, path: string, errors: string[]) {
-  if (typeof spec === "function") {
-    if (!spec(value)) errors.push(`${path}: unexpected ${JSON.stringify(value)}`);
-  } else if (typeof spec === "string") {
-    if (typeof value !== spec) errors.push(`${path}: ${typeof value}, not ${spec}`);
-  } else if (Array.isArray(spec)) {
-    if (!Array.isArray(value)) errors.push(`${path}: not an array`);
-    else value.forEach((item, i) => check(item, spec[0], `${path}[${i}]`, errors));
-  } else if (!record(value)) errors.push(`${path}: not an object`);
-  else {
-    const object = value as Record<string, unknown>;
-    for (const [key, inner] of Object.entries(spec)) {
-      const name = key.replace(/\?$/, "");
-      if (object[name] === undefined) { if (!key.endsWith("?")) errors.push(`${path}.${name}: missing`); }
-      else check(object[name], inner, `${path}.${name}`, errors);
-    }
-    const known = new Set(Object.keys(spec).map((k) => k.replace(/\?$/, "")));
-    for (const key of Object.keys(object)) if (!known.has(key)) errors.push(`${path}.${key}: not in the contract`);
-  }
-}
-const expectShape = (value: unknown, spec: Spec) => {
-  const errors: string[] = [];
-  check(value, spec, "$", errors);
-  expect(errors.slice(0, 10)).toEqual([]);
-};
-
-const session: Spec = {
-  id: "string", project: "string", title: "string", kind: "string", role: enumOf("decision", "implementation", "research", "document", "other"),
-  status: enumOf("active", "done", "merged", "closed", "dropped", "shelved"), verdict: enumOf(...ledgerVerdicts), "baseVersion?": "string", "baseCurrent?": "string", "mergedInto?": "string",
-  touches: ["string"], related: ["string"], "chatUrl?": "string",
-  links: { "repoPath?": "string", "branch?": "string", "worktree?": "string", "pr?": { host: "string", number: "number", url: "string" }, "agentId?": "string", "agentSessionId?": "string", "cwd?": "string" },
-  color: "number", createdAt: "number", lastAt: "number", "lastAgentAt?": "number", "ackAt?": "number", "snoozeUntil?": "number", "archivedAt?": "number", openQuestions: "number",
-  "stream?": { line: "string" }, "autoContinue?": { enabled: "boolean", delaySec: "number" },
-};
-const event: Spec = { id: "number", sessionId: "string", ts: "number", type: "string", actor: enumOf("agent", "human", "auto", "hook"), "summary?": "string", "body?": "string", "version?": "string", "artifacts?": [{ name: "string", "ssot?": "string", "ver?": "string" }], "data?": record, "deliveredAt?": "number" };
-const question: Spec = { id: "number", sessionId: "string", text: "string", state: enumOf("open", "answered", "dismissed"), "answer?": "string", "answeredBy?": enumOf("human", "auto"), createdAt: "number", "answeredAt?": "number", "deliveredAt?": "number" };
-const baseline: Spec = { project: "string", version: "string", ts: "number", source: enumOf("tag", "folder", "registered", "release", "inferred"), "note?": "string", "bySession?": "string" };
-const cycle: Spec = { sessionId: "string", line: "string", version: "string", state: enumOf("applied", "active", "skipped"), "syncedAt?": "number", "appliedAt?": "number", "releasedBy?": "string", eventIds: ["number"] };
-const overlap: Spec = { a: "string", b: "string", paths: ["string"], kind: enumOf("same", "coupled") };
-const prompt: Spec = { id: "number", "sessionId?": "string", "agentId?": "string", kind: enumOf("stop_question", "ask_user_question", "exit_plan_mode", "permission"), payload: record, createdAt: "number", deadline: "number", state: enumOf("waiting", "answered", "auto", "released", "expired"), "answer?": record, "answeredBy?": enumOf("human", "auto") };
-const state: Spec = {
-  schemaVersion: enumOf(1), rev: "number", now: "number", projects: [{ key: "string", name: "string", open: "number" }], baselines: [baseline], sessions: [session], questions: [question],
-  streams: [cycle], overlaps: [overlap], pendingPrompts: [prompt], "autoReview?": [prompt], attention: { questions: "number", tidy: "number", decide: "number", autoReview: "number", total: "number" }, hiddenBefore: "number",
-};
-const graph: Spec = {
-  lanes: "number", from: "number", to: "number",
-  nodes: [{ id: "string", lane: "number", ts: "number", color: "number", kind: enumOf("baseline", "start", "event", "merge", "release", "end"), "type?": "string", "sessionId?": "string", "version?": "string", "label?": "string" }],
-  edges: [{ from: "string", to: "string", kind: enumOf("trunk", "branch", "merge", "handoff"), color: "number" }],
-};
+/** The demo answers in exactly the contract's shape: every key it names, nothing else */
+const expectShape = (value: unknown, spec: Spec) => expect(shapeErrors(value, spec).slice(0, 10)).toEqual([]);
 
 describe("Ledger demo backend: contract", () => {
   it("answers every method in the contract's shape", async () => {
     const { backend } = demo();
     const s = await backend.call("state", {});
     expectShape(s, state);
-    expectShape(await backend.call("info", {}), { schemaVersion: "number", dbPath: "string", rev: "number", enabled: "boolean" });
+    expectShape(await backend.call("info", {}), specs.info);
     expectShape(await backend.call("rev", {}), { rev: "number" });
     for (const one of s.sessions) expectShape(await backend.call("session", { id: one.id }), { session, events: [event], questions: [question], overlaps: [overlap], cycles: [cycle] });
     for (const project of s.projects) for (const range of ["7d", "30d", "all"] as const) expectShape(await backend.call("graph", { project: project.key, range }), graph);
-    expectShape(await backend.call("search", { query: "cache" }), { hits: [{ kind: enumOf("session", "question", "event", "baseline"), id: "string", "sessionId?": "string", title: "string", snippet: "string" }] });
-    expectShape(await backend.call("import", { text: "{\"event\":\"note\"}" }), { results: [{ index: "number", ok: "boolean", duplicate: "boolean", "error?": "string", "sessionId?": "string" }] });
+    expectShape(await backend.call("search", { query: "cache" }), specs.search);
+    expectShape(await backend.call("import", { text: "{\"event\":\"note\"}" }), specs.importResults);
     expectShape(await backend.call("human", { action: "ack", sessionId: s.sessions[0].id }), { ok: "boolean", rev: "number" });
     expectShape(await backend.call("prompt_answer", { id: s.pendingPrompts.find((p) => p.state === "waiting")!.id, answer: { hold: true } }), { ok: "boolean", "rev?": "number", "state?": "string" });
     expectShape(await backend.call("prompt_review", { all: true }), { ok: "boolean", rev: "number", reviewed: "number" });
-    expectShape(await backend.call("backup", {}), { path: "string" });
+    expectShape(await backend.call("backup", {}), specs.backup);
+    expectShape(await backend.call("settings", {}), specs.settings);
+    expectShape(await backend.call("settings_set", { values: { staleHours: 48 } }), { ok: "boolean", rev: "number", settings: specs.settings });
+    expectShape(await backend.call("projects", {}), { projects: [specs.project] });
+    expectShape(await backend.call("project_set", { project: "atlas", name: "Atlas" }), { ok: "boolean", rev: "number", project: specs.project });
+    expectShape(await backend.call("scan", {}), specs.scan);
+    expectShape(await backend.call("import_legacy", { path: "C:/Tools/claude-ledger/data/ledger.db", dryRun: true }), specs.legacyImport);
   });
 
   it("has two projects, every verdict, a stream with three cycles, overlaps and waiting prompts", async () => {
@@ -319,6 +275,58 @@ describe("Ledger demo backend: large data", () => {
     const week = await backend.call("state", { range: "7d" });
     expect(week.hiddenBefore).toBeGreaterThan(0);
     expect(week.sessions.length + week.hiddenBefore).toBe(1000);
+  });
+});
+
+describe("Ledger demo backend: settings, projects and a claude-ledger database", () => {
+  const LEGACY = "C:/Tools/claude-ledger/data/ledger.db";
+
+  it("checks settings as the core does, restores defaults with null, and follows the stale hours", async () => {
+    const { backend } = demo();
+    const defaults = await backend.call("settings", {});
+    expect([defaults.staleHours, defaults.backupKeep, defaults.kinds.implementation, defaults.kinds["llm-implementation"]]).toEqual([72, 14, { role: "implementation", line: "core", handoff: true }, { role: "implementation", line: "llm", handoff: false }]);
+    for (const values of [{ staleHours: 0 }, { staleHours: 10_001 }, { backupKeep: 1.5 }, { kinds: { spike: { role: "boss" } } }, { kinds: { spike: { role: "other", handoff: "yes" } } }, { colour: 1 }]) {
+      await expect(backend.call("settings_set", { values } as never)).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    }
+    const stale = async () => (await backend.call("state", {})).sessions.filter((x) => x.verdict === "stale").length;
+    const before = await stale();
+    const { settings } = await backend.call("settings_set", { values: { staleHours: 1, kinds: { spike: { role: "implementation" }, review: { role: "other", line: "x" } } } });
+    expect(settings.kinds).toEqual({ spike: { role: "implementation", line: "core", handoff: true }, review: { role: "other" } });
+    expect(await stale()).toBeGreaterThan(before);
+    expect((await backend.call("settings_set", { values: { staleHours: null, kinds: null } })).settings).toEqual(defaults);
+    expect(await stale()).toBe(before);
+  });
+
+  it("keeps each project's baseline source and binds the first project to the open repository", async () => {
+    const { backend } = demo({ repoPath: "C:/Code/atlas" });
+    const { projects } = await backend.call("projects", {});
+    expect(projects.map((x) => [x.key, x.repoPath ?? null, x.baselineSource])).toEqual([["atlas", "C:/Code/atlas", "tags"], ["harbor", null, "tags"]]);
+    await expect(backend.call("project_set", { project: "atlas", baselineSource: "svn" as never })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await expect(backend.call("project_set", { project: "atlas", baselinePattern: "(" })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await expect(backend.call("project_set", { project: " " })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    const { project, rev } = await backend.call("project_set", { project: "atlas", name: "Atlas", baselineSource: "folder", scanSubdirs: [" specs ", ""] });
+    expect(project).toMatchObject({ name: "Atlas", baselineSource: "folder", scanSubdirs: ["specs"] });
+    expect((await backend.call("rev", {})).rev).toBe(rev);
+    expect((await backend.call("state", {})).projects.find((x) => x.key === "atlas")!.name).toBe("Atlas");
+    expect((await backend.call("scan", { project: "atlas" })).results).toEqual([{ project: "atlas", source: "folder", found: 0, added: 0, error: "No baseline folder is set" }]);
+    await backend.call("project_set", { project: "atlas", baselineDir: "C:/Specs", repoPath: null });
+    expect((await backend.call("scan", { project: "atlas" })).results[0]).toMatchObject({ project: "atlas", source: "folder", added: 0 });
+    expect((await backend.call("projects", {})).projects[0]).not.toHaveProperty("repoPath");
+  });
+
+  it("counts a claude-ledger database first, imports it once and skips it the second time", async () => {
+    const { backend } = demo();
+    await expect(backend.call("import_legacy", { path: " " })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    const { rev } = await backend.call("rev", {});
+    const dry = await backend.call("import_legacy", { path: LEGACY, dryRun: true });
+    expect([dry.dryRun, dry.counts.sessions, dry.skipped, (await backend.call("rev", {})).rev]).toEqual([true, 2, [], rev]);
+    const done = await backend.call("import_legacy", { path: LEGACY });
+    expect([done.dryRun, done.counts, done.rev]).toEqual([false, dry.counts, rev + 1]);
+    const s = await backend.call("state", {});
+    expect(s.sessions.filter((x) => x.project === "ledger").map((x) => x.verdict).sort()).toEqual(["expirable", "needs_human"]);
+    expect(s.projects.map((x) => x.key)).toContain("ledger");
+    const again = await backend.call("import_legacy", { path: LEGACY, dryRun: true });
+    expect([again.counts.sessions, again.skipped]).toEqual([0, ["S1020-01", "S1021-01"]]);
   });
 });
 

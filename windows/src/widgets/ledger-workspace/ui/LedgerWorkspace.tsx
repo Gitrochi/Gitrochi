@@ -1,9 +1,9 @@
-import { ClipboardPaste, Inbox, PlugZap, Search, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, Inbox, PlugZap, Search, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, type LedgerView } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
-import { LedgerImportSheet } from "@/features/import-ledger-reports";
+import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { isMac, keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -19,7 +19,7 @@ import { LedgerStreams } from "./LedgerStreams";
 import { onScreen, typing } from "./parts";
 import "./ledger-workspace.css";
 
-type Sheet = "import" | "connect" | "search" | null;
+type Sheet = "import" | "legacy" | "connect" | "search" | null;
 
 const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -134,14 +134,14 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
             </button>
           )}
           <span className="spacer" />
-          {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("The Ledger shows example sessions until its core is connected.")}`}>{t("Demo data")}</span>}
+          {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
           <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
           <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
           <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
         </div>
         {store.error && <div className="ledger-banner" role="alert">{store.error}<span className="spacer" /><Button size="small" onClick={() => void store.refresh(true)}>{t("Try again")}</Button></div>}
         {empty ? (
-          <Onboarding onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} />
+          <Onboarding onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onImportLegacy={() => setSheet("legacy")} />
         ) : store.repositoryWithoutSessions && store.view !== "graph" ? (
           <div className="ledger-view"><Empty title={t("No sessions for this repository")} detail={t("Agents working here have not reported to the Ledger yet.")} /><div className="row" style={{ justifyContent: "center" }}><Button onClick={() => store.setProjectChoice("all")}>{t("Show all projects")}</Button></div></div>
         ) : (
@@ -163,7 +163,8 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
           <div className="ledger-inspector-sheet">{inspector}</div>
         </Modal>
       )}
-      {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onOpenSession={(id) => { setSheet(null); open(id); }} />}
+      {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onOpenSession={(id) => { setSheet(null); open(id); }} onImportLegacy={() => setSheet("legacy")} />}
+      {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "search" && <LedgerSearch store={store} onClose={() => setSheet(null)} onPick={pick} />}
       <LedgerToast store={store} />
@@ -171,7 +172,7 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
   );
 }
 
-function Onboarding({ onConnect, onImport }: { onConnect: () => void; onImport: () => void }) {
+function Onboarding({ onConnect, onImport, onImportLegacy }: { onConnect: () => void; onImport: () => void; onImportLegacy: () => void }) {
   return (
     <div className="ledger-onboarding">
       <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No agent sessions yet")} detail={t("The Ledger keeps track of what each agent session was for, which baseline it started from and whether its result was merged. You answer, confirm and clean up.")} />
@@ -185,6 +186,11 @@ function Onboarding({ onConnect, onImport }: { onConnect: () => void; onImport: 
           <strong>{t("Paste reports")}</strong>
           <span className="hint">{t("For agents that cannot reach this computer: paste the report blocks they wrote.")}</span>
           <Button onClick={onImport}><ClipboardPaste size={14} />{t("Paste reports")}</Button>
+        </div>
+        <div className="card">
+          <strong>{t("Import from claude-ledger")}</strong>
+          <span className="hint">{t("Moving from claude-ledger? Bring its sessions, questions and baselines along.")}</span>
+          <Button onClick={onImportLegacy}><DatabaseBackup size={14} />{t("Import…")}</Button>
         </div>
       </div>
     </div>

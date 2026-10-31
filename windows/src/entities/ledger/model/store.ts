@@ -1,11 +1,12 @@
 import { env } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { nativeLedgerBackend } from "../api/backend";
 import { DemoLedgerBackend } from "../api/demo-backend";
-import { type AnswerKind, describeAnswer } from "../lib/countdown";
+import { type AnswerKind, describeAnswer, serverNow } from "../lib/countdown";
 import { summarizeImport, type ImportSummary } from "../lib/imports";
 import { inverseOperation, operationTitle } from "../lib/undo";
 import { LedgerReader, message } from "./reader";
-import type { LedgerHumanRequest, LedgerPendingPrompt, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
+import type { LedgerHumanRequest, LedgerMethods, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
 
 /**
  * The Ledger page's state, one per app: the contract `State` read when `rev` moves, the selected session's detail, the
@@ -29,10 +30,11 @@ export class LedgerStore extends LedgerReader {
   private async humanAll(requests: LedgerHumanRequest[], title: string): Promise<boolean> {
     const undo: LedgerHumanRequest[] = [];
     let undoable = true;
+    const now = this.state ? serverNow(this.state.now, this.stateReadAt, Date.now()) : Date.now();
     for (const r of requests) {
       const before = this.session(r.sessionId);
       const inverse = before ? inverseOperation(before, r) : null;
-      if (inverse) undo.push(...inverse);
+      if (inverse && inverse.every((x) => this.backend.canRun?.(x, now) ?? true)) undo.push(...inverse);
       else undoable = false;
     }
     this.busy++;
@@ -127,16 +129,57 @@ export class LedgerStore extends LedgerReader {
   info() {
     return this.backend.call("info", {});
   }
+
+  // MARK: Settings › Ledger
+
+  readSettings() {
+    return this.backend.call("settings", {});
+  }
+
+  /** Stores settings (null restores a default) and reads the state again, since roles and stale hours change verdicts */
+  async saveSettings(values: LedgerMethods["settings_set"]["args"]["values"]) {
+    const { settings } = await this.backend.call("settings_set", { values });
+    await this.refresh(true);
+    return settings;
+  }
+
+  async readProjects() {
+    return (await this.backend.call("projects", {})).projects;
+  }
+
+  async saveProject(change: LedgerProjectChange) {
+    const { project } = await this.backend.call("project_set", change);
+    await this.refresh(true);
+    return project;
+  }
+
+  /** Reads one project's baselines from its source now */
+  async scan(project: string) {
+    const { results } = await this.backend.call("scan", { project });
+    await this.refresh(true);
+    return results[0] ?? null;
+  }
+
+  backup() {
+    return this.backend.call("backup", {});
+  }
+
+  /** A claude-ledger database: `dryRun` only counts what an import would copy */
+  async importLegacy(path: string, dryRun: boolean) {
+    const result = await this.backend.call("import_legacy", { path, dryRun });
+    if (!dryRun) await this.refresh(true);
+    return result;
+  }
 }
 
 let shared: LedgerStore | null = null;
 
 /**
- * The app's Ledger. It runs on the demo backend until the core is connected through `ledger_call`;
- * GITROCHI_LEDGER_PREVIEW=large loads the large demo. The first repository to open the page is bound to the demo's
- * first project.
+ * The app's Ledger: the ledger database through `ledger_call`, or with GITROCHI_LEDGER_DEMO the demo ("large" for
+ * 1,000 sessions, "empty" for the onboarding), whose first project is bound to the first repository to open the page.
  */
 export function ledgerStore(repoPath: string | null): LedgerStore {
-  shared ??= new LedgerStore(new DemoLedgerBackend({ ...(repoPath ? { repoPath } : {}), large: env.ledgerPreview === "large", lively: true }));
+  const demo = env.ledgerDemo;
+  shared ??= new LedgerStore(demo ? new DemoLedgerBackend({ ...(repoPath ? { repoPath } : {}), large: demo === "large", empty: demo === "empty", lively: true }) : nativeLedgerBackend);
   return shared;
 }

@@ -73,7 +73,7 @@ export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onC
       {info && (
         <div className="card" role="status" style={{ gap: 4 }}>
           <strong>{info.enabled ? t("The Ledger answers.") : t("The Ledger is turned off.")}</strong>
-          <span className="hint">{info.dbPath === "demo" ? t("Demo data — the Ledger core is not connected yet.") : t("Database: {0}", info.dbPath)}</span>
+          <span className="hint">{info.dbPath === "demo" ? t("Example sessions from GITROCHI_LEDGER_DEMO; nothing is written to the ledger database.") : t("Database: {0}", info.dbPath)}</span>
           <span className="hint">{t("Schema {0} · revision {1}", info.schemaVersion, info.rev)}</span>
         </div>
       )}
