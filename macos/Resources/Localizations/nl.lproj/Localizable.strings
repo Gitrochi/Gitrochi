@@ -1526,4 +1526,17 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "De logboekopdracht ontbreekt in deze kopie van Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "De logboekopdracht reageerde niet op de MCP-handshake.";
 "The ledger command answers with its tools: %@." = "De logboekopdracht antwoordt met zijn hulpmiddelen: %@.";
+"Latest" = "Nieuwste";
+"Latest release" = "Nieuwste release";
+"Latest stable release" = "Nieuwste stabiele release";
+"{0} unreleased commits" = "{0} niet-uitgebrachte commits";
+"Not on top of {0}" = "Niet gebaseerd op {0}";
+"Compare in app" = "Vergelijken in de app";
+"Compare in browser" = "Vergelijken in de browser";
+"Other files ({0})" = "Andere bestanden ({0})";
+"Tagged from {0}" = "Getagd vanaf {0}";
+"Assets: {0}" = "Assets: {0}";
+"Published releases" = "Gepubliceerde releases";
+"Published, but marked as not ready for production" = "Gepubliceerd, maar gemarkeerd als niet klaar voor productie";
+"Saved but not published; only people with write access see it" = "Opgeslagen maar niet gepubliceerd; alleen mensen met schrijfrechten zien het";
 "Parent folder" = "Bovenliggende map";

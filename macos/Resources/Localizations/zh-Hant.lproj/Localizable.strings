@@ -1587,4 +1587,17 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "此 Gitrochi 缺少帳本命令：%@";
 "The ledger command did not answer the MCP handshake." = "帳本命令沒有回應 MCP 交握。";
 "The ledger command answers with its tools: %@." = "帳本命令以其工具回應：%@。";
+"Latest" = "最新";
+"Latest release" = "最新版本";
+"Latest stable release" = "最新穩定版本";
+"{0} unreleased commits" = "{0} 個未發布的提交";
+"Not on top of {0}" = "不在 {0} 之上";
+"Compare in app" = "在 App 中比較";
+"Compare in browser" = "在瀏覽器中比較";
+"Other files ({0})" = "其他檔案（{0}）";
+"Tagged from {0}" = "從 {0} 建立標籤";
+"Assets: {0}" = "資源：{0}";
+"Published releases" = "已發布的版本";
+"Published, but marked as not ready for production" = "已發布，但標示為尚未可用於正式環境";
+"Saved but not published; only people with write access see it" = "已儲存但未發布；僅有寫入權限的人可見";
 "Parent folder" = "上層資料夾";

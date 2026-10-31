@@ -1582,4 +1582,17 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "У цій копії Gitrochi немає команди журналу: %@";
 "The ledger command did not answer the MCP handshake." = "Команда журналу не відповіла на рукостискання MCP.";
 "The ledger command answers with its tools: %@." = "Команда журналу відповідає своїми інструментами: %@.";
+"Latest" = "Останній";
+"Latest release" = "Останній реліз";
+"Latest stable release" = "Останній стабільний реліз";
+"{0} unreleased commits" = "Невипущених комітів: {0}";
+"Not on top of {0}" = "Не базується на {0}";
+"Compare in app" = "Порівняти в застосунку";
+"Compare in browser" = "Порівняти в браузері";
+"Other files ({0})" = "Інші файли ({0})";
+"Tagged from {0}" = "Тег із {0}";
+"Assets: {0}" = "Файли: {0}";
+"Published releases" = "Опубліковані релізи";
+"Published, but marked as not ready for production" = "Опубліковано, але позначено як не готове до продакшену";
+"Saved but not published; only people with write access see it" = "Збережено, але не опубліковано; бачать лише люди з правом запису";
 "Parent folder" = "Батьківська тека";

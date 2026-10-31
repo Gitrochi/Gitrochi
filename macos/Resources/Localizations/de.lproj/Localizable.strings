@@ -1566,4 +1566,17 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Der Logbuch-Befehl fehlt in dieser Kopie von Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "Der Logbuch-Befehl hat auf den MCP-Handshake nicht geantwortet.";
 "The ledger command answers with its tools: %@." = "Der Logbuch-Befehl antwortet mit seinen Werkzeugen: %@.";
+"Latest" = "Neueste";
+"Latest release" = "Neuestes Release";
+"Latest stable release" = "Neuestes stabiles Release";
+"{0} unreleased commits" = "{0} unveröffentlichte Commits";
+"Not on top of {0}" = "Nicht auf {0} aufbauend";
+"Compare in app" = "In der App vergleichen";
+"Compare in browser" = "Im Browser vergleichen";
+"Other files ({0})" = "Weitere Dateien ({0})";
+"Tagged from {0}" = "Getaggt von {0}";
+"Assets: {0}" = "Assets: {0}";
+"Published releases" = "Veröffentlichte Releases";
+"Published, but marked as not ready for production" = "Veröffentlicht, aber als nicht produktionsreif markiert";
+"Saved but not published; only people with write access see it" = "Gespeichert, aber nicht veröffentlicht; nur Personen mit Schreibzugriff sehen es";
 "Parent folder" = "Übergeordneter Ordner";

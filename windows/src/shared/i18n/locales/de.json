@@ -1628,5 +1628,18 @@
   "Name": "Name",
   "Browse…": "Durchsuchen…",
   "Choose a file": "Datei auswählen",
+  "Latest": "Neueste",
+  "Latest release": "Neuestes Release",
+  "Latest stable release": "Neuestes stabiles Release",
+  "{0} unreleased commits": "{0} unveröffentlichte Commits",
+  "Not on top of {0}": "Nicht auf {0} aufbauend",
+  "Compare in app": "In der App vergleichen",
+  "Compare in browser": "Im Browser vergleichen",
+  "Other files ({0})": "Weitere Dateien ({0})",
+  "Tagged from {0}": "Getaggt von {0}",
+  "Assets: {0}": "Assets: {0}",
+  "Published releases": "Veröffentlichte Releases",
+  "Published, but marked as not ready for production": "Veröffentlicht, aber als nicht produktionsreif markiert",
+  "Saved but not published; only people with write access see it": "Gespeichert, aber nicht veröffentlicht; nur Personen mit Schreibzugriff sehen es",
   "Parent folder": "Übergeordneter Ordner"
 }

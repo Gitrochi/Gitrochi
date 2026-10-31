@@ -1565,4 +1565,17 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "A napló parancsa hiányzik a Gitrochi ezen példányából: %@";
 "The ledger command did not answer the MCP handshake." = "A napló parancsa nem válaszolt az MCP-kézfogásra.";
 "The ledger command answers with its tools: %@." = "A napló parancsa az eszközeivel válaszol: %@.";
+"Latest" = "Legújabb";
+"Latest release" = "Legújabb kiadás";
+"Latest stable release" = "Legújabb stabil kiadás";
+"{0} unreleased commits" = "Kiadatlan commitok: {0}";
+"Not on top of {0}" = "Nem erre épül: {0}";
+"Compare in app" = "Összehasonlítás az alkalmazásban";
+"Compare in browser" = "Összehasonlítás a böngészőben";
+"Other files ({0})" = "Egyéb fájlok ({0})";
+"Tagged from {0}" = "Címkézve innen: {0}";
+"Assets: {0}" = "Fájlok: {0}";
+"Published releases" = "Közzétett kiadások";
+"Published, but marked as not ready for production" = "Közzétéve, de nem éles használatra késznek jelölve";
+"Saved but not published; only people with write access see it" = "Mentve, de nincs közzétéve; csak írási joggal rendelkezők látják";
 "Parent folder" = "Szülőmappa";

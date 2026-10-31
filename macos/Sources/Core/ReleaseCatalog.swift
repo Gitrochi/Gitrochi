@@ -45,6 +45,44 @@ enum ReleaseCatalog {
             return a.id < b.id
         }
     }
+    /// The package a page opens with: the one whose release was published last.
+    static func defaultFamily(_ items: [HubItem]) -> String {
+        guard let newest = ordered(items.filter { state($0) != "Draft" }).first ?? ordered(items).first else { return "" }
+        return family(newest)
+    }
+    /// A readable package name: its newest release's title without the version ("Desktop 1.2.0" → "Desktop").
+    static func packageName(_ items: [HubItem], family value: String) -> String {
+        if let newest = ordered(items.filter { family($0) == value }).first {
+            let tag = tag(newest)
+            var name = newest.title
+            if let version = version(tag) {
+                name = name.replacingOccurrences(of: "v?" + version.core.joined(separator: "\\.") + "(?:-[\\w.-]+)?", with: " ", options: [.regularExpression, .caseInsensitive])
+            }
+            if !tag.isEmpty { name = name.replacingOccurrences(of: tag, with: " ") }
+            name = name.replacingOccurrences(of: #"\(\s*\)|\[\s*\]"#, with: " ", options: .regularExpression)
+                .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+                .replacingOccurrences(of: #"^[\s\-–—:·@/_]+|[\s\-–—:·@/_]+$"#, with: "", options: .regularExpression)
+            if !name.isEmpty { return name }
+        }
+        return value.replacingOccurrences(of: #"[@/\-_]+$"#, with: "", options: .regularExpression)
+    }
+    struct Timeline { var stable: HubItem?; var prerelease: HubItem?; var path: [HubItem] }
+    /// Recent releases of one package, oldest first: older stables, the newest stable, then a newer prerelease.
+    static func timeline(_ items: [HubItem], family value: String, count: Int = 4) -> Timeline {
+        let sorted = ordered(items.filter { family($0) == value && state($0) != "Draft" })
+        guard let index = sorted.firstIndex(where: { state($0) == "Stable" }) else { return Timeline(stable: nil, prerelease: sorted.first, path: Array(sorted.prefix(1))) }
+        let stable = sorted[index], prerelease = index > 0 ? sorted[0] : nil
+        let older = Array(sorted[(index + 1)...].filter { state($0) == "Stable" }.prefix(count - 1).reversed())
+        return Timeline(stable: stable, prerelease: prerelease, path: older + [stable] + (prerelease.map { [$0] } ?? []))
+    }
+    /// Installers and archives of this version come first; checksums, signatures and helper binaries fold away.
+    static func assetGroups<Asset>(_ assets: [Asset], tag value: String, name: (Asset) -> String) -> (primary: [Asset], other: [Asset]) {
+        let packages = assets.indices.filter { name(assets[$0]).range(of: #"\.(dmg|pkg|zip|exe|msi|msix|appimage|deb|rpm|apk|tar\.gz|tgz|tar\.xz|7z)$"#, options: [.regularExpression, .caseInsensitive]) != nil }
+        let versioned = version(value).map { v in packages.filter { name(assets[$0]).contains(v.core.joined(separator: ".")) } } ?? []
+        let primary = Set(versioned.isEmpty ? packages : versioned)
+        guard !primary.isEmpty, primary.count != assets.count else { return (assets, []) }
+        return (assets.indices.filter { primary.contains($0) }.map { assets[$0] }, assets.indices.filter { !primary.contains($0) }.map { assets[$0] })
+    }
     static func compareURL(_ target: RepoTarget?, base: String, head: String) -> URL? {
         guard let target, !base.isEmpty, !head.isEmpty, base != head,
               ![base, head].contains(where: { $0.unicodeScalars.contains { CharacterSet.controlCharacters.union(.whitespacesAndNewlines).contains($0) } }) else { return nil }
