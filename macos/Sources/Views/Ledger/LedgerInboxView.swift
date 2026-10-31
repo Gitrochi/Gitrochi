@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The first page: only what needs a person — waiting prompts, questions answered in place, what auto-continue sent,
 /// finished work to confirm or archive, sessions to decide. Keyboard (outside a text field): ↑↓ move, Return opens,
-/// A answers, C confirms, E archives, S snoozes; ⌘Z undoes from the toast.
+/// A answers, C confirms, E archives, S still active, M mark merged…; ⌘Z undoes from the toast.
 /// (Windows: widgets/ledger-workspace/ui/LedgerInboxView.tsx)
 struct LedgerInboxView: View {
     let ledger: LedgerStore
@@ -13,6 +13,8 @@ struct LedgerInboxView: View {
     @ViewState private var answering: String?
     @ViewState private var correcting: Int?
     @ViewState private var correction = ""
+    /// The session M asked to mark merged; a dialog picks the version
+    @ViewState private var merging: LedgerSession?
     @FocusState private var listFocused: Bool
 
     private var items: [LedgerInbox.Item] { ledger.inbox.items }
@@ -36,7 +38,7 @@ struct LedgerInboxView: View {
                                             description: "Questions, finished work to confirm and sessions to decide show up here.")
                             .frame(minHeight: 320)
                     } else {
-                        Text("↑↓ move · Return opens · A answers · C confirms · E archives · S still active")
+                        Text("↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged")
                             .font(.caption2).foregroundStyle(.tertiary).frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
@@ -54,7 +56,7 @@ struct LedgerInboxView: View {
                 open(session)
                 return .handled
             }
-            .onKeyPress(characters: CharacterSet(charactersIn: "aceACEsS")) { press in
+            .onKeyPress(characters: CharacterSet(charactersIn: "aceACEsSmM")) { press in
                 guard press.modifiers.isEmpty || press.modifiers == .shift else { return .ignored }
                 return key(press.characters.lowercased()) ? .handled : .ignored
             }
@@ -68,6 +70,18 @@ struct LedgerInboxView: View {
             }
             .onChange(of: ledger.selection) { _, id in
                 if let id, current?.sessionId != id, let item = items.first(where: { $0.sessionId == id }) { highlight(item.id) }
+            }
+            .confirmationDialog("Mark merged…", isPresented: Binding(get: { merging != nil }, set: { if !$0 { merging = nil } }),
+                                presenting: merging) { s in
+                let versions = LedgerMergeMenu.versions(s, baselines: ledger.state?.baselines ?? [])
+                ForEach(versions, id: \.self) { version in
+                    Button(version == versions.first ? String(localized: "\(version) (newest)") : version) {
+                        Task { await ledger.perform(.setStatus(.merged, version: version), on: [s.id], message: String(localized: "Marked \(s.id) merged into \(version)")) }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { s in
+                Text(s.id + " · " + s.title)
             }
         }
     }
@@ -105,6 +119,9 @@ struct LedgerInboxView: View {
             return true
         case ("s", .session) where session?.verdict == .stale:
             stillActive(session!)
+            return true
+        case ("m", .session) where session?.verdict == .pendingMerge:
+            merging = session
             return true
         default:
             return false
@@ -264,9 +281,15 @@ struct LedgerMergeMenu: View {
     let session: LedgerSession
     let ledger: LedgerStore
 
+    /// The project's versions, newest first
+    static func versions(_ session: LedgerSession, baselines: [LedgerBaseline]) -> [String] {
+        baselines.filter { $0.project == session.project }.map(\.version)
+            .sorted { LedgerProjects.versionKey($1).lexicographicallyPrecedes(LedgerProjects.versionKey($0)) }
+    }
+
     var body: some View {
-        let baselines = (ledger.state?.baselines ?? []).filter { $0.project == session.project }
-        let versions = baselines.map(\.version).sorted { LedgerProjects.versionKey($1).lexicographicallyPrecedes(LedgerProjects.versionKey($0)) }
+        let baselines = ledger.state?.baselines ?? []
+        let versions = Self.versions(session, baselines: baselines)
         let newest = LedgerProjects.head(session.project, baselines: baselines)
         Menu("Mark merged…") {
             ForEach(versions, id: \.self) { version in

@@ -1491,7 +1491,6 @@
 "Marked %@ still active" = "%@ még aktívként megjelölve";
 "It is still going: it does not count as stale for a while (S)" = "Még tart: egy ideig nem számít elhanyagoltnak (S)";
 "It is still going: it does not count as stale for a while" = "Még tart: egy ideig nem számít elhanyagoltnak";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ mozgás · Return megnyit · A válasz · C megerősít · E archivál · S még aktív";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Három napja nincs jelentés. Nézze meg a beszélgetést: zárja le, vagy jelölje „Még aktív”-nak, ha még tart.";
 "Answer in the Inbox" = "Válasz a beérkezett elemek között";
 
@@ -1506,3 +1505,4 @@
 "Open questions: %lld" = "%lld nyitott kérdés";
 "Sessions marked still active: %lld" = "%lld munkamenet még aktívként megjelölve";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Az ügynök már nem vár: a kérést máshol megválaszolták vagy elengedték.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ mozgás · Return megnyit · A válasz · C megerősít · E archivál · S még aktív · M beolvasztottnak jelöl";

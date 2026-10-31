@@ -1452,7 +1452,6 @@
 "Marked %@ still active" = "%@ gemarkeerd als nog actief";
 "It is still going: it does not count as stale for a while (S)" = "Loopt nog: telt een tijd niet als stil (S)";
 "It is still going: it does not count as stale for a while" = "Loopt nog: telt een tijd niet als stil";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ verplaatsen · Return opent · A antwoordt · C bevestigt · E archiveert · S nog actief";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Al drie dagen geen melding. Bekijk het gesprek: sluit het, of markeer het als ‘Nog actief’ als het nog loopt.";
 "Answer in the Inbox" = "Antwoorden in de inbox";
 
@@ -1467,3 +1466,4 @@
 "Open questions: %lld" = "%lld open vragen";
 "Sessions marked still active: %lld" = "%lld sessies gemarkeerd als nog actief";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "De agent wacht niet meer: de prompt is elders beantwoord of vrijgegeven.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ verplaatsen · Return opent · A antwoordt · C bevestigt · E archiveert · S nog actief · M als samengevoegd markeren";

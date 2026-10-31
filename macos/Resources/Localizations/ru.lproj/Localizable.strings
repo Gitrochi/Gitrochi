@@ -1508,7 +1508,6 @@
 "Marked %@ still active" = "%@ отмечена как ещё активная";
 "It is still going: it does not count as stale for a while (S)" = "Ещё идёт: какое-то время не считается заброшенной (S)";
 "It is still going: it does not count as stale for a while" = "Ещё идёт: какое-то время не считается заброшенной";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ перемещение · Return открыть · A ответить · C подтвердить · E в архив · S ещё активна";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Три дня без отчётов. Проверьте разговор: закройте его или отметьте «Ещё активна», если он идёт.";
 "Answer in the Inbox" = "Ответить во входящих";
 
@@ -1523,3 +1522,4 @@
 "Open questions: %lld" = "Открытых вопросов: %lld";
 "Sessions marked still active: %lld" = "Отмечено как ещё активные сессий: %lld";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Агент больше не ждёт: на запрос ответили или его отпустили в другом месте.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ перемещение · Return открыть · A ответить · C подтвердить · E в архив · S ещё активна · M отметить как влитую";

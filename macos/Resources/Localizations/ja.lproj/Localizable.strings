@@ -2238,7 +2238,6 @@
 "Marked %@ still active" = "%@ をまだ進行中にしました";
 "It is still going: it does not count as stale for a while (S)" = "まだ続いています：しばらく停滞として扱いません（S）";
 "It is still going: it does not count as stale for a while" = "まだ続いています：しばらく停滞として扱いません";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ 移動 · Return 開く · A 回答 · C 確認 · E アーカイブ · S まだ進行中";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "3日間報告がありません。会話を確認し、終了するか、まだ続いていれば「まだ進行中」にしてください。";
 "Answer in the Inbox" = "受信箱で回答";
 
@@ -2253,3 +2252,4 @@
 "Open questions: %lld" = "未回答の質問 %lld 件";
 "Sessions marked still active: %lld" = "%lld 件のセッションをまだ進行中にしました";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "エージェントは待機をやめました：プロンプトは別の場所で回答されたか解放されました。";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ 移動 · Return 開く · A 回答 · C 確認 · E アーカイブ · S まだ進行中 · M 取り込み済みにする";

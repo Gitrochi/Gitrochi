@@ -1488,7 +1488,6 @@
 "Marked %@ still active" = "%@ označeno jako stále aktivní";
 "It is still going: it does not count as stale for a while (S)" = "Stále běží: nějakou dobu se nepočítá jako zastaralá (S)";
 "It is still going: it does not count as stale for a while" = "Stále běží: nějakou dobu se nepočítá jako zastaralá";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ pohyb · Return otevře · A odpoví · C potvrdí · E archivuje · S stále aktivní";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Tři dny žádné hlášení. Zkontrolujte konverzaci: uzavřete ji, nebo ji označte jako „Stále aktivní“, pokud běží.";
 "Answer in the Inbox" = "Odpovědět ve schránce";
 
@@ -1503,3 +1502,4 @@
 "Open questions: %lld" = "Otevřené otázky: %lld";
 "Sessions marked still active: %lld" = "Označeno jako stále aktivní relací: %lld";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Agent už nečeká: výzva byla zodpovězena nebo uvolněna jinde.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ pohyb · Return otevře · A odpoví · C potvrdí · E archivuje · S stále aktivní · M označit jako začleněné";

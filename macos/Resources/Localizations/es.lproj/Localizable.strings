@@ -1540,7 +1540,6 @@
 "Marked %@ still active" = "%@ marcada como aún activa";
 "It is still going: it does not count as stale for a while (S)" = "Sigue en marcha: durante un tiempo no cuenta como inactiva (S)";
 "It is still going: it does not count as stale for a while" = "Sigue en marcha: durante un tiempo no cuenta como inactiva";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ moverse · Retorno abre · A responde · C confirma · E archiva · S sigue activa";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Sin informes desde hace tres días. Revisa la conversación: ciérrala o márcala «Sigue activa» si continúa.";
 "Answer in the Inbox" = "Responder en la bandeja de entrada";
 
@@ -1555,3 +1554,4 @@
 "Open questions: %lld" = "%lld preguntas abiertas";
 "Sessions marked still active: %lld" = "%lld sesiones marcadas como aún activas";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "El agente ya no espera: el aviso se respondió o se liberó en otro lugar.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ moverse · Retorno abre · A responde · C confirma · E archiva · S sigue activa · M marcar como integrada";

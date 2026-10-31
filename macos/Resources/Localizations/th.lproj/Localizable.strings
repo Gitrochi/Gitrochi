@@ -1503,7 +1503,6 @@
 "Marked %@ still active" = "ทำเครื่องหมาย %@ ว่ายังทำงานอยู่แล้ว";
 "It is still going: it does not count as stale for a while (S)" = "ยังดำเนินอยู่: จะไม่นับว่าค้างไปสักพัก (S)";
 "It is still going: it does not count as stale for a while" = "ยังดำเนินอยู่: จะไม่นับว่าค้างไปสักพัก";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ เลื่อน · Return เปิด · A ตอบ · C ยืนยัน · E เก็บถาวร · S ยังทำงานอยู่";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "ไม่มีรายงานมาสามวัน ตรวจการสนทนา: ปิด หรือทำเครื่องหมาย “ยังทำงานอยู่” ถ้ายังดำเนินอยู่";
 "Answer in the Inbox" = "ตอบในกล่องขาเข้า";
 
@@ -1518,3 +1517,4 @@
 "Open questions: %lld" = "คำถามค้างอยู่ %lld ข้อ";
 "Sessions marked still active: %lld" = "ทำเครื่องหมาย %lld เซสชันว่ายังทำงานอยู่แล้ว";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "เอเจนต์เลิกรอแล้ว: พรอมต์ถูกตอบหรือปล่อยไปจากที่อื่น";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ เลื่อน · Return เปิด · A ตอบ · C ยืนยัน · E เก็บถาวร · S ยังทำงานอยู่ · M ทำเครื่องหมายว่ารวมแล้ว";

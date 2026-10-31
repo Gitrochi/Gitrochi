@@ -1461,7 +1461,6 @@
 "Marked %@ still active" = "%@ ditandai masih aktif";
 "It is still going: it does not count as stale for a while (S)" = "Masih berjalan: untuk sementara tidak dianggap macet (S)";
 "It is still going: it does not count as stale for a while" = "Masih berjalan: untuk sementara tidak dianggap macet";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ pindah · Return membuka · A menjawab · C mengonfirmasi · E mengarsipkan · S masih aktif";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Tidak ada laporan selama tiga hari. Periksa percakapan: tutup, atau tandai “Masih aktif” jika masih berjalan.";
 "Answer in the Inbox" = "Jawab di Kotak Masuk";
 
@@ -1476,3 +1475,4 @@
 "Open questions: %lld" = "%lld pertanyaan terbuka";
 "Sessions marked still active: %lld" = "%lld sesi ditandai masih aktif";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Agen berhenti menunggu: prompt sudah dijawab atau dilepas di tempat lain.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ pindah · Return membuka · A menjawab · C mengonfirmasi · E mengarsipkan · S masih aktif · M tandai sudah digabung";

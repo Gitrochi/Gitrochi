@@ -1466,7 +1466,6 @@
 "Marked %@ still active" = "Đã đánh dấu %@ vẫn đang chạy";
 "It is still going: it does not count as stale for a while (S)" = "Vẫn đang diễn ra: một thời gian sẽ không bị coi là bỏ dở (S)";
 "It is still going: it does not count as stale for a while" = "Vẫn đang diễn ra: một thời gian sẽ không bị coi là bỏ dở";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ di chuyển · Return mở · A trả lời · C xác nhận · E lưu trữ · S vẫn đang chạy";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Ba ngày không có báo cáo. Kiểm tra cuộc trò chuyện: đóng lại, hoặc đánh dấu “Vẫn đang chạy” nếu vẫn tiếp diễn.";
 "Answer in the Inbox" = "Trả lời trong Hộp thư đến";
 
@@ -1481,3 +1480,4 @@
 "Open questions: %lld" = "%lld câu hỏi đang mở";
 "Sessions marked still active: %lld" = "Đã đánh dấu %lld phiên vẫn đang chạy";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Tác tử đã thôi chờ: lời nhắc đã được trả lời hoặc giải phóng ở nơi khác.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ di chuyển · Return mở · A trả lời · C xác nhận · E lưu trữ · S vẫn đang chạy · M đánh dấu đã gộp";

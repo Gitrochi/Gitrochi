@@ -1513,7 +1513,6 @@
 "Marked %@ still active" = "已將 %@ 標記為仍在進行";
 "It is still going: it does not count as stale for a while (S)" = "仍在進行：一段時間內不算停滯（S）";
 "It is still going: it does not count as stale for a while" = "仍在進行：一段時間內不算停滯";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ 移動 · Return 開啟 · A 回答 · C 確認 · E 封存 · S 仍在進行";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "三天沒有回報。檢查對話：關閉它，或若仍在進行則標記為「仍在進行」。";
 "Answer in the Inbox" = "在收件匣中回答";
 
@@ -1528,3 +1527,4 @@
 "Open questions: %lld" = "%lld 個未決問題";
 "Sessions marked still active: %lld" = "已將 %lld 個工作階段標記為仍在進行";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "代理已不再等待：該提示已在別處被回答或釋放。";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ 移動 · Return 開啟 · A 回答 · C 確認 · E 封存 · S 仍在進行 · M 標記為已合併";

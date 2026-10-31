@@ -1508,7 +1508,6 @@
 "Marked %@ still active" = "%@ позначено як ще активну";
 "It is still going: it does not count as stale for a while (S)" = "Ще триває: деякий час не вважається покинутою (S)";
 "It is still going: it does not count as stale for a while" = "Ще триває: деякий час не вважається покинутою";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ переміщення · Return відкрити · A відповісти · C підтвердити · E в архів · S ще активна";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Три дні без звітів. Перевірте розмову: закрийте її або позначте «Ще активна», якщо вона триває.";
 "Answer in the Inbox" = "Відповісти у вхідних";
 
@@ -1523,3 +1522,4 @@
 "Open questions: %lld" = "Відкритих запитань: %lld";
 "Sessions marked still active: %lld" = "Позначено як ще активні сесій: %lld";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Агент більше не чекає: на запит відповіли або його відпустили деінде.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ переміщення · Return відкрити · A відповісти · C підтвердити · E в архів · S ще активна · M позначити як влиту";

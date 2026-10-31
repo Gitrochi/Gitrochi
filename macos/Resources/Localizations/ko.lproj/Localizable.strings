@@ -3318,7 +3318,6 @@
 "Marked %@ still active" = "%@을(를) 아직 진행 중으로 표시함";
 "It is still going: it does not count as stale for a while (S)" = "아직 진행 중입니다: 한동안 멈춤 의심으로 치지 않습니다 (S)";
 "It is still going: it does not count as stale for a while" = "아직 진행 중입니다: 한동안 멈춤 의심으로 치지 않습니다";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ 이동 · Return 열기 · A 답하기 · C 확인 · E 정리 · S 아직 진행 중";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "3일 동안 보고가 없습니다. 대화를 확인해 종료하거나, 아직 진행 중이면 '아직 진행 중'으로 표시하세요.";
 "Answer in the Inbox" = "수신함에서 답하기";
 
@@ -3333,3 +3332,4 @@
 "Open questions: %lld" = "열린 질문 %lld개";
 "Sessions marked still active: %lld" = "세션 %lld개를 아직 진행 중으로 표시함";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "에이전트가 더는 기다리지 않습니다: 프롬프트가 다른 곳에서 답해졌거나 풀렸습니다.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ 이동 · Return 열기 · A 답하기 · C 확인 · E 정리 · S 미루기 · M 반영됨으로 표시";

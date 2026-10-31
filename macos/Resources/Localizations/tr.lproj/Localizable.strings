@@ -1495,7 +1495,6 @@
 "Marked %@ still active" = "%@ hâlâ etkin olarak işaretlendi";
 "It is still going: it does not count as stale for a while (S)" = "Hâlâ sürüyor: bir süre durgun sayılmaz (S)";
 "It is still going: it does not count as stale for a while" = "Hâlâ sürüyor: bir süre durgun sayılmaz";
-"↑↓ move · Return opens · A answers · C confirms · E archives · S still active" = "↑↓ gezin · Return açar · A yanıtlar · C onaylar · E arşivler · S hâlâ etkin";
 "No report for three days. Check the conversation: close it, or mark it Still active if it is still going." = "Üç gündür rapor yok. Konuşmayı kontrol edin: kapatın ya da sürüyorsa “Hâlâ etkin” olarak işaretleyin.";
 "Answer in the Inbox" = "Gelen kutusunda yanıtla";
 
@@ -1510,3 +1509,4 @@
 "Open questions: %lld" = "%lld açık soru";
 "Sessions marked still active: %lld" = "%lld oturum hâlâ etkin olarak işaretlendi";
 "The agent stopped waiting: the prompt was answered or released elsewhere." = "Ajan artık beklemiyor: istem başka bir yerde yanıtlandı ya da bırakıldı.";
+"↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged" = "↑↓ gezin · Return açar · A yanıtlar · C onaylar · E arşivler · S hâlâ etkin · M birleştirildi olarak işaretle";
