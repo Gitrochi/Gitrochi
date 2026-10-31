@@ -26,7 +26,7 @@ enum Git {
     var target: RepoTarget? = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "sample-studio/desktop")
     var tags = [Tag(name: "v1.9.0", target: "fixture-head")]
     var headHash: String? = "fixture-head"
-    var headBranch: String? = "main"
+    var headBranch: String? = "feature/workspace-search-results"
     var url: URL? = URL(fileURLWithPath: "/fixture/desktop")
     var hubAccount: HostAccount? = nil
     var hubCredentialState: FixtureCredentialState? = .ready

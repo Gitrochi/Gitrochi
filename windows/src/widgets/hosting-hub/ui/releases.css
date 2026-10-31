@@ -9,12 +9,14 @@
 .release-summary-latest > span, .release-summary-latest > small { font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .release-summary-latest > strong { font: 650 28px/1.1 var(--mono); color: var(--accent); letter-spacing: -.02em; overflow-wrap: anywhere; }
 .release-summary-latest .hosting-date { font-size: 11px; }
-.release-timeline { flex: 1 1 380px; min-width: 0; height: 14px; display: flex; align-items: center; margin: 26px 0 42px; padding: 0 36px 0 24px; }
+/* Labels are at most 132px wide and centered on their dot, so the track stops half a label before its edge. */
+.release-timeline { flex: 1 1 380px; min-width: 0; height: 14px; display: flex; align-items: center; margin: 26px 0 42px; padding: 0 66px 0 24px; }
 .release-node { position: relative; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); }
 .release-node.latest { width: 12px; height: 12px; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
 .release-node.prerelease { width: 10px; height: 10px; background: var(--orange); }
 .release-node.head { width: 12px; height: 12px; box-sizing: border-box; border: 2px solid var(--accent); background: var(--surface); }
-.release-node-label { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; font: 11px var(--mono); color: var(--text-2); }
+.release-node-label { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 132px; white-space: nowrap; font: 11px var(--mono); color: var(--text-2); }
+.release-node-label > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .release-node.latest .release-node-label { font-size: 12px; font-weight: 600; color: var(--accent); }
 .release-node.prerelease .release-node-label { font-weight: 600; color: var(--orange); }
 .release-node.head .release-node-label { font: 600 12px var(--font); color: var(--text); }
@@ -22,9 +24,9 @@
 .release-segment { position: relative; flex: 3 1 28px; height: 2px; background: var(--border-strong); }
 .release-segment.unreleased { flex-basis: 48px; height: 0; border-top: 2px dashed var(--accent); background: none; }
 .release-segment-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--accent); }
-.release-summary-action { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.release-summary-action { flex: none; max-width: 200px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
 .release-summary-action > button { justify-content: center; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: transparent; font-weight: 600; }
-.release-summary-action small { font: 11px var(--mono); color: var(--text-2); text-align: center; }
+.release-summary-action small { font: 11px var(--mono); color: var(--text-2); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* List */
 .release-workspace .hub-list { padding: 12px; display: flex; flex-direction: column; gap: 2px; background: color-mix(in srgb, var(--text) 1.5%, var(--surface)); }

@@ -39,16 +39,16 @@ export function ReleaseSummary({ source, items, family }: { source: HubSource; i
     {source.path && <div className="release-timeline">
       {timeline.path.map((item, index) => <Fragment key={item.id}>
         {index > 0 && <span className="release-segment" style={{ flexGrow: grow(value?.segments[index - 1]) }}/>}
-        <span className={`release-node ${item === timeline.stable ? "latest" : releaseState(item) === "Prerelease" ? "prerelease" : ""}`}><span className="release-node-label">{releaseTag(item)}{atLast && item === last && <small>{head}</small>}</span></span>
+        <span className={`release-node ${item === timeline.stable ? "latest" : releaseState(item) === "Prerelease" ? "prerelease" : ""}`}><span className="release-node-label" title={releaseTag(item)}><span>{releaseTag(item)}</span>{atLast && item === last && <small>{head}</small>}</span></span>
       </Fragment>)}
       {!atLast && source.headHash && <>
         <span className="release-segment unreleased" style={{ flexGrow: grow(value?.ahead) }}>{status && <span className="release-segment-label">{status}</span>}</span>
-        <span className="release-node head"><span className="release-node-label">{head}<small>{source.headHash.slice(0, 8)}</small></span></span>
+        <span className="release-node head"><span className="release-node-label" title={head}><span>{head}</span><small>{source.headHash.slice(0, 8)}</small></span></span>
       </>}
     </div>}
     {source.showRevisionComparison && value?.ahead != null && !atLast && <div className="release-summary-action">
       <Button onClick={() => source.showRevisionComparison?.(releaseTag(latest), source.headHash ?? "HEAD")}><GitCompare size={14}/>{t("Compare changes")}</Button>
-      <small>{releaseTag(latest)} → {head}</small>
+      <small title={`${releaseTag(latest)} → ${head}`}>{releaseTag(latest)} → {head}</small>
     </div>}
   </section>;
 }

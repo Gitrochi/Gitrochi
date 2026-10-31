@@ -56,5 +56,5 @@ if (params.get("mode") === "issues") {
   ipc.http = async (_method, url) => ({ status: 200, body: JSON.stringify(/\/releases\?/.test(url) ? releases : releases.find(item => url.endsWith(`/releases/${item.id}`)) ?? {}) });
   ipc.openUrl = async () => {};
   root.style.height = "100vh";
-  createRoot(root).render(<HostingHubPanel section="releases" store={{ path: "/fixture/desktop", headHash: "4f2c9a1e7b3d5f60", headBranch: "main", target: { provider: "github", remote: "origin", host: "github.com", path: "sample-studio/desktop" }, hostingAccount: accounts.accounts[0] }}/>);
+  createRoot(root).render(<HostingHubPanel section="releases" store={{ path: "/fixture/desktop", headHash: "4f2c9a1e7b3d5f60", headBranch: "feature/workspace-search-results", target: { provider: "github", remote: "origin", host: "github.com", path: "sample-studio/desktop" }, hostingAccount: accounts.accounts[0] }}/>);
 }

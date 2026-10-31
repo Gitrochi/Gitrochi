@@ -96,9 +96,10 @@ struct ReleaseWorkspace: View {
                 } else { Spacer(minLength: 0) }
                 if !atLast, value?.ahead != nil {
                     VStack(spacing: 6) {
-                        Button { store.showRevisionComparison(left: ReleaseCatalog.tag(latest), right: store.headHash ?? "HEAD") } label: { Label("Compare changes", systemImage: "arrow.left.arrow.right") }
+                        Button { store.showRevisionComparison(left: ReleaseCatalog.tag(latest), right: store.headHash ?? "HEAD") } label: { Label("Compare changes", systemImage: "arrow.left.arrow.right") }.fixedSize()
                         Text(verbatim: ReleaseCatalog.tag(latest) + " → " + headLabel).font(.caption2.monospaced()).foregroundStyle(.secondary)
-                    }.fixedSize()
+                            .lineLimit(1).truncationMode(.middle).help(ReleaseCatalog.tag(latest) + " → " + headLabel)
+                    }.frame(maxWidth: 200)
                 }
             }
             .padding(.horizontal, 22).padding(.vertical, 16)
@@ -360,7 +361,8 @@ struct ReleaseTimelineTrack: View {
     struct Segment { var weight: Double; var dashed: Bool; var label: String? }
     let nodes: [Node]
     let segments: [Segment]
-    private let line: CGFloat = 24, inset: CGFloat = 34, minimum: CGFloat = 28
+    // Labels are at most `label` wide and centered on their dot, so the track stops half a label before its edge.
+    private let line: CGFloat = 24, label: CGFloat = 132, leading: CGFloat = 34, minimum: CGFloat = 28
 
     var body: some View {
         GeometryReader { geometry in
@@ -379,9 +381,9 @@ struct ReleaseTimelineTrack: View {
                 ForEach(nodes.indices, id: \.self) { index in
                     dot(nodes[index].kind).position(x: centers[index], y: line)
                     VStack(spacing: 2) {
-                        Text(nodes[index].label).font(labelFont(nodes[index].kind)).foregroundStyle(labelColor(nodes[index].kind))
-                        if let detail = nodes[index].detail { Text(detail).font(.caption2.monospaced()).foregroundStyle(.secondary) }
-                    }.fixedSize().frame(height: 30, alignment: .top).position(x: centers[index], y: line + 26)
+                        Text(nodes[index].label).font(labelFont(nodes[index].kind)).foregroundStyle(labelColor(nodes[index].kind)).lineLimit(1).truncationMode(.middle)
+                        if let detail = nodes[index].detail { Text(detail).font(.caption2.monospaced()).foregroundStyle(.secondary).lineLimit(1) }
+                    }.frame(width: label, height: 30, alignment: .top).help(nodes[index].label).position(x: centers[index], y: line + 26)
                 }
             }.frame(width: geometry.size.width, height: geometry.size.height)
         }
@@ -392,8 +394,8 @@ struct ReleaseTimelineTrack: View {
     private func size(_ kind: Kind) -> CGFloat { kind == .older ? 8 : kind == .prerelease ? 10 : 12 }
     private func positions(width: CGFloat) -> [CGFloat] {
         let dots = nodes.reduce(0) { $0 + size($1.kind) }, total = segments.reduce(0) { $0 + $1.weight }
-        let spare = max(0, width - inset * 2 - dots - minimum * CGFloat(segments.count))
-        var x = inset, result: [CGFloat] = []
+        let spare = max(0, width - leading - label / 2 - dots - minimum * CGFloat(segments.count))
+        var x = leading, result: [CGFloat] = []
         for (index, node) in nodes.enumerated() {
             result.append(x + size(node.kind) / 2)
             x += size(node.kind) + (index < segments.count ? minimum + spare * CGFloat(segments[index].weight / max(total, 1)) : 0)
