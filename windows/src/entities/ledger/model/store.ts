@@ -6,7 +6,7 @@ import { type AnswerKind, describeAnswer, serverNow } from "../lib/countdown";
 import { summarizeImport, type ImportSummary } from "../lib/imports";
 import { inverseOperation, operationTitle } from "../lib/undo";
 import { LedgerReader, message } from "./reader";
-import type { LedgerHumanRequest, LedgerPendingPrompt, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
+import type { LedgerHumanRequest, LedgerMethods, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
 
 /**
  * The Ledger page's state, one per app: the contract `State` read when `rev` moves, the selected session's detail, the
@@ -130,6 +130,39 @@ export class LedgerStore extends LedgerReader {
     return this.backend.call("info", {});
   }
 
+  // MARK: Settings › Ledger
+
+  readSettings() {
+    return this.backend.call("settings", {});
+  }
+
+  /** Stores settings (null restores a default) and reads the state again, since roles and stale hours change verdicts */
+  async saveSettings(values: LedgerMethods["settings_set"]["args"]["values"]) {
+    const { settings } = await this.backend.call("settings_set", { values });
+    await this.refresh(true);
+    return settings;
+  }
+
+  async readProjects() {
+    return (await this.backend.call("projects", {})).projects;
+  }
+
+  async saveProject(change: LedgerProjectChange) {
+    const { project } = await this.backend.call("project_set", change);
+    await this.refresh(true);
+    return project;
+  }
+
+  /** Reads one project's baselines from its source now */
+  async scan(project: string) {
+    const { results } = await this.backend.call("scan", { project });
+    await this.refresh(true);
+    return results[0] ?? null;
+  }
+
+  backup() {
+    return this.backend.call("backup", {});
+  }
 }
 
 let shared: LedgerStore | null = null;

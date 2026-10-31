@@ -6,6 +6,7 @@ import { RepoPage } from "@/pages/repo";
 import { ipc } from "@/shared/api";
 import { env, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { SettingsDialog } from "@/widgets/settings";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -23,6 +24,11 @@ function type(el: HTMLTextAreaElement | HTMLInputElement, text: string) {
   Object.getOwnPropertyDescriptor(proto, "value")!.set!.call(el, text);
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
+/** Picks an option of a React-controlled select */
+function choose(el: HTMLSelectElement, value: string) {
+  Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(el, value);
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+}
 const key = (target: EventTarget, key: string, mods: KeyboardEventInit = {}) => target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...mods }));
 // A key press reaches the focused element, so window's capture listeners run first and its others last. Sent to
 // window itself, they would run in the order they were added, and the app's own Ctrl+Z would come first.
@@ -33,12 +39,12 @@ const command = (k: string) => press(k, env.os === "macos" ? { metaKey: true } :
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
  * waiting prompts, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
- * the narrow sheet, Streams, and the onboarding sheets. Nothing leaves the demo backend: the ledger core itself is
- * blocked.
+ * the narrow sheet, Streams, the onboarding sheets, and Settings › Ledger. Nothing leaves the demo backend: the ledger
+ * core itself is blocked.
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
-  const [{ DemoLedgerBackend, LedgerStore, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
+  const [{ DemoLedgerBackend, LedgerStore, ledgerStore, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
   const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
@@ -228,7 +234,58 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     button(".modal", "Test connection")!.click();
     ensure(await until(() => $(".modal .card[role='status']")), "Test connection did not answer");
     button(".modal", "Done")!.click();
+    await until(() => !$(".modal"));
     passed.push("onboarding, import and connect");
+
+    // Settings › Ledger: no tab without the preview; with it, the app's Ledger settings on the same backend
+    root.unmount();
+    root = createRoot(host);
+    const labels = () => $$<HTMLButtonElement>(".modal .segmented button").map((b) => b.textContent?.trim());
+    env.ledgerPreview = null;
+    root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
+    ensure(await until(() => labels().length > 0), "Settings did not open");
+    ensure(!labels().includes(t("Ledger")), `Settings showed a Ledger tab without the preview: ${labels().join(", ")}`);
+    root.unmount();
+    root = createRoot(host);
+    env.ledgerPreview = "1";
+    root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
+    ensure(await until(() => labels().includes(t("Ledger"))), "Settings did not offer the Ledger tab with the preview");
+    ensure(labels().indexOf(t("Ledger")) === labels().indexOf(t("Update")) - 1, `The Ledger tab must come before Update: ${labels().join(", ")}`);
+    $$<HTMLButtonElement>(".modal .segmented button").find((b) => b.textContent?.trim() === t("Ledger"))!.click();
+    const ledger = ledgerStore(null);
+    ensure(ledger.backend.kind === "demo", "The app's Ledger did not use the demo with GITROCHI_LEDGER_DEMO");
+    const staleField = () => $<HTMLInputElement>(`.ledger-settings input[aria-label="${t("Stale after")}"]`);
+    ensure(await until(() => staleField()?.value === "72"), `Settings › Ledger did not show the stale hours: ${staleField()?.value}`);
+    const stale = staleField()!;
+    stale.focus();
+    type(stale, "48");
+    key(stale, "Enter");
+    let saved = 0;
+    await until(() => { void ledger.readSettings().then((x) => { saved = x.staleHours; }); return saved === 48; });
+    ensure(saved === 48, `Leaving the stale hours field did not save them: ${saved}`);
+    const kind = $<HTMLInputElement>(`.ledger-settings input[aria-label="${t("New kind")}"]`)!;
+    kind.focus();
+    type(kind, "spike");
+    choose($<HTMLSelectElement>(`.ledger-settings select[aria-label="${t("Role")} · ${t("New kind")}"]`)!, "research");
+    $<HTMLButtonElement>(`.ledger-settings button[aria-label="${t("Add kind")}"]`)!.click();
+    ensure(await until(() => $<HTMLSelectElement>(`.ledger-kind[data-kind="spike"] select`)?.value === "research"), "Adding a kind did not list it with its role");
+    $<HTMLButtonElement>(`.ledger-kind[data-kind="spike"] button[aria-label="${t("Remove")} · spike"]`)!.click();
+    ensure(await until(() => !$(`.ledger-kind[data-kind="spike"]`)), "Removing a kind did not take it out");
+    const source = $<HTMLSelectElement>(`.ledger-project select[aria-label="${t("Baselines from")} · atlas"]`)!;
+    choose(source, "folder");
+    ensure(await until(() => $(`.ledger-project[data-project="atlas"] input[aria-label="${t("Folder")} · atlas"]`)), "Choosing folder names did not ask for the folder");
+    button(`.ledger-project[data-project="atlas"]`, "Scan now")!.click();
+    ensure(await until(() => $(`.ledger-project[data-project="atlas"] .error-text`)), "Scanning a folder source without a folder did not say so");
+    choose($<HTMLSelectElement>(`.ledger-project select[aria-label="${t("Baselines from")} · atlas"]`)!, "tags");
+    ensure(await until(() => !$(`.ledger-project[data-project="atlas"] input[aria-label="${t("Folder")} · atlas"]`)), "Going back to Git tags kept the folder fields");
+    // the project change saves first; the buttons wait for it
+    ensure(await until(() => button(".ledger-settings", "Back up now") && !button(".ledger-settings", "Back up now")!.disabled), "Back up now stayed disabled after the project was saved");
+    button(".ledger-settings", "Back up now")!.click();
+    ensure(await until(() => $(".ledger-settings [role='status']")?.getAttribute("data-tip")?.startsWith("ledger/backups/ledger-")), `Back up now did not say where the copy went: ${$(".ledger-settings [role='status']")?.textContent}`);
+    button(".ledger-settings", "Connect Claude Code…")!.click();
+    ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
+    button(".modal", "Done")!.click();
+    passed.push("settings");
 
     ensure(!unexpected.length, `The Ledger reached outside the demo: ${unexpected.join(", ")}`);
     return [true, passed.join("; ")];

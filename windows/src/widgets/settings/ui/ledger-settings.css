@@ -1,0 +1,6 @@
+/* widgets/settings — Settings › Ledger: the kinds table and the per-project blocks */
+.ledger-kinds { display: flex; flex-direction: column; gap: 4px; }
+.ledger-kind { display: grid; grid-template-columns: minmax(90px, 1.2fr) 132px minmax(70px, 1fr) 64px 24px; gap: 8px; align-items: center; min-height: 28px; }
+.ledger-kind.head { min-height: 0; font-size: 11px; color: var(--text-3); }
+.ledger-kind .select, .ledger-kind .input { width: 100%; min-width: 0; }
+.ledger-project + .ledger-project { border-top: 1px solid var(--border); padding-top: 10px; }

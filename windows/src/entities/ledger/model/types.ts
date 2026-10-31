@@ -218,6 +218,72 @@ export interface LedgerInfo {
   version?: string;
 }
 
+/** What a kind means to the rules: its role and, for implementation kinds, the stream line and whether it hands off */
+export interface LedgerKindRule {
+  role: LedgerRole;
+  line?: string;
+  /** Whether its sync and applied reports confirm decision sessions (implementation kinds; default true) */
+  handoff?: boolean;
+}
+
+/** The global settings every writer reads from the database; only the apps change them */
+export interface LedgerSettings {
+  staleHours: number;
+  /** kind → rule, replaced as a whole */
+  kinds: Record<string, LedgerKindRule>;
+  /** Auto-continue's policy, stored as given (its switches come in a later wave) */
+  autoContinue: Record<string, unknown>;
+  backupKeep: number;
+}
+
+export const ledgerBaselineSources = ["tags", "folder", "manual"] as const;
+export type LedgerBaselineSource = (typeof ledgerBaselineSources)[number];
+
+/** A project's settings: where its baselines come from */
+export interface LedgerProjectSettings {
+  key: string;
+  name: string;
+  repoPath?: string;
+  baselineSource: LedgerBaselineSource;
+  /** Regular expression for version tags or names; the first group, or the whole match without one */
+  baselinePattern: string;
+  baselineDir?: string;
+  scanFiles: boolean;
+  scanSubdirs: string[];
+}
+
+/** `project_set`: the fields to change; null clears one */
+export interface LedgerProjectChange {
+  project: string;
+  name?: string | null;
+  repoPath?: string | null;
+  baselineSource?: LedgerBaselineSource | null;
+  baselinePattern?: string | null;
+  baselineDir?: string | null;
+  scanFiles?: boolean;
+  scanSubdirs?: string[];
+}
+
+export interface LedgerScanResult {
+  project: string;
+  source: LedgerBaselineSource;
+  /** Versions the source has */
+  found: number;
+  /** Versions new to the trunk */
+  added: number;
+  /** A bad pattern, an unreadable folder or a git error; a scan never stops a report */
+  error?: string;
+}
+
+export interface LedgerBackupResult {
+  /** The new copy, or today's when `daily` found one */
+  path: string;
+  created: boolean;
+  size: number;
+  /** Older copies removed to keep the newest `backupKeep` */
+  removed: string[];
+}
+
 export interface LedgerSessionDetail {
   session: LedgerSession;
   events: LedgerEvent[];
@@ -293,6 +359,13 @@ export interface LedgerMethods {
   prompt_answer: { args: { id: number; answer: LedgerPromptAnswer }; result: { ok: boolean; rev?: number; state?: LedgerPendingPrompt["state"] } };
   /** Marks automatic answers as seen; they leave the Inbox */
   prompt_review: { args: { id: number } | { all: true }; result: { ok: boolean; rev: number; reviewed: number } };
-  backup: { args: Record<string, never>; result: { path: string } };
+  backup: { args: { keep?: number }; result: LedgerBackupResult };
+  settings: { args: Record<string, never>; result: LedgerSettings };
+  /** null restores a setting's default */
+  settings_set: { args: { values: { [K in keyof LedgerSettings]?: LedgerSettings[K] | null } }; result: { ok: boolean; rev: number; settings: LedgerSettings } };
+  projects: { args: Record<string, never>; result: { projects: LedgerProjectSettings[] } };
+  project_set: { args: LedgerProjectChange; result: { ok: boolean; rev: number; project: LedgerProjectSettings } };
+  /** Reads a project's baselines from its source now (every project without one) */
+  scan: { args: { project?: string }; result: { results: LedgerScanResult[] } };
 }
 export type LedgerMethod = keyof LedgerMethods;

@@ -33,6 +33,11 @@ describe("Ledger demo backend: contract", () => {
     expectShape(await backend.call("prompt_answer", { id: s.pendingPrompts.find((p) => p.state === "waiting")!.id, answer: { hold: true } }), { ok: "boolean", "rev?": "number", "state?": "string" });
     expectShape(await backend.call("prompt_review", { all: true }), { ok: "boolean", rev: "number", reviewed: "number" });
     expectShape(await backend.call("backup", {}), specs.backup);
+    expectShape(await backend.call("settings", {}), specs.settings);
+    expectShape(await backend.call("settings_set", { values: { staleHours: 48 } }), { ok: "boolean", rev: "number", settings: specs.settings });
+    expectShape(await backend.call("projects", {}), { projects: [specs.project] });
+    expectShape(await backend.call("project_set", { project: "atlas", name: "Atlas" }), { ok: "boolean", rev: "number", project: specs.project });
+    expectShape(await backend.call("scan", {}), specs.scan);
   });
 
   it("has two projects, every verdict, a stream with three cycles, overlaps and waiting prompts", async () => {
@@ -269,6 +274,41 @@ describe("Ledger demo backend: large data", () => {
     const week = await backend.call("state", { range: "7d" });
     expect(week.hiddenBefore).toBeGreaterThan(0);
     expect(week.sessions.length + week.hiddenBefore).toBe(1000);
+  });
+});
+
+describe("Ledger demo backend: settings and projects", () => {
+  it("checks settings as the core does, restores defaults with null, and follows the stale hours", async () => {
+    const { backend } = demo();
+    const defaults = await backend.call("settings", {});
+    expect([defaults.staleHours, defaults.backupKeep, defaults.kinds.implementation, defaults.kinds["llm-implementation"]]).toEqual([72, 14, { role: "implementation", line: "core", handoff: true }, { role: "implementation", line: "llm", handoff: false }]);
+    for (const values of [{ staleHours: 0 }, { staleHours: 10_001 }, { backupKeep: 1.5 }, { kinds: { spike: { role: "boss" } } }, { kinds: { spike: { role: "other", handoff: "yes" } } }, { colour: 1 }]) {
+      await expect(backend.call("settings_set", { values } as never)).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    }
+    const stale = async () => (await backend.call("state", {})).sessions.filter((x) => x.verdict === "stale").length;
+    const before = await stale();
+    const { settings } = await backend.call("settings_set", { values: { staleHours: 1, kinds: { spike: { role: "implementation" }, review: { role: "other", line: "x" } } } });
+    expect(settings.kinds).toEqual({ spike: { role: "implementation", line: "core", handoff: true }, review: { role: "other" } });
+    expect(await stale()).toBeGreaterThan(before);
+    expect((await backend.call("settings_set", { values: { staleHours: null, kinds: null } })).settings).toEqual(defaults);
+    expect(await stale()).toBe(before);
+  });
+
+  it("keeps each project's baseline source and binds the first project to the open repository", async () => {
+    const { backend } = demo({ repoPath: "C:/Code/atlas" });
+    const { projects } = await backend.call("projects", {});
+    expect(projects.map((x) => [x.key, x.repoPath ?? null, x.baselineSource])).toEqual([["atlas", "C:/Code/atlas", "tags"], ["harbor", null, "tags"]]);
+    await expect(backend.call("project_set", { project: "atlas", baselineSource: "svn" as never })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await expect(backend.call("project_set", { project: "atlas", baselinePattern: "(" })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await expect(backend.call("project_set", { project: " " })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    const { project, rev } = await backend.call("project_set", { project: "atlas", name: "Atlas", baselineSource: "folder", scanSubdirs: [" specs ", ""] });
+    expect(project).toMatchObject({ name: "Atlas", baselineSource: "folder", scanSubdirs: ["specs"] });
+    expect((await backend.call("rev", {})).rev).toBe(rev);
+    expect((await backend.call("state", {})).projects.find((x) => x.key === "atlas")!.name).toBe("Atlas");
+    expect((await backend.call("scan", { project: "atlas" })).results).toEqual([{ project: "atlas", source: "folder", found: 0, added: 0, error: "No baseline folder is set" }]);
+    await backend.call("project_set", { project: "atlas", baselineDir: "C:/Specs", repoPath: null });
+    expect((await backend.call("scan", { project: "atlas" })).results[0]).toMatchObject({ project: "atlas", source: "folder", added: 0 });
+    expect((await backend.call("projects", {})).projects[0]).not.toHaveProperty("repoPath");
   });
 });
 

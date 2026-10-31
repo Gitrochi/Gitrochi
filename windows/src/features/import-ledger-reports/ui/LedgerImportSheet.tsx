@@ -9,9 +9,10 @@ import "./ledger-import-sheet.css";
 /**
  * Paste reports: agents that cannot reach the Ledger (a web chat, another computer) end their answer with report
  * blocks, and a person pastes them here. Each report is imported on its own and gets its own line in the result:
- * imported, already imported, or the reason it failed. (macOS: Views/Ledger/LedgerImportSheet.swift)
+ * imported, already imported, or the reason it failed. Without `onOpenSession` the imported sessions are named, not
+ * linked. (macOS: Views/Ledger/LedgerImportSheet.swift)
  */
-export function LedgerImportSheet({ store, onClose, onOpenSession }: { store: LedgerStore; onClose: () => void; onOpenSession: (id: string) => void }) {
+export function LedgerImportSheet({ store, onClose, onOpenSession }: { store: LedgerStore; onClose: () => void; onOpenSession?: (id: string) => void }) {
   const [text, setText] = useState("");
   const [working, setWorking] = useState(false);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -76,11 +77,12 @@ export function LedgerImportSheet({ store, onClose, onOpenSession }: { store: Le
                 {line.outcome === "imported" ? <CircleCheck size={14} className="ok" /> : line.outcome === "duplicate" ? <Equal size={14} className="dup" /> : <CircleX size={14} className="bad" />}
                 <span className="mono faint">#{line.number}</span>
                 <span className="grow ellipsis">{line.outcome === "imported" ? t("Imported") : line.outcome === "duplicate" ? t("Already imported") : line.error}</span>
-                {line.sessionId && (
+                {line.sessionId && onOpenSession && (
                   <button type="button" className="link mono" onClick={() => onOpenSession(line.sessionId!)}>
                     {line.sessionId}
                   </button>
                 )}
+                {line.sessionId && !onOpenSession && <span className="mono faint">{line.sessionId}</span>}
               </div>
             ))}
           </div>

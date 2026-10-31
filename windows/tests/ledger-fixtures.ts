@@ -71,14 +71,21 @@ const graphShape: Spec = {
   nodes: [{ id: "string", lane: "number", ts: "number", color: "number", kind: enumOf("baseline", "start", "event", "merge", "release", "end"), "type?": "string", "sessionId?": "string", "version?": "string", "label?": "string" }],
   edges: [{ from: "string", to: "string", kind: enumOf("trunk", "branch", "merge", "handoff"), color: "number" }],
 };
+const roles = ["decision", "implementation", "research", "document", "other"];
+const settingsShape: Spec = {
+  staleHours: "number", backupKeep: "number", autoContinue: record,
+  kinds: (v) => record(v) && Object.values(v as Record<string, unknown>).every((r) => shapeErrors(r, { role: enumOf(...roles), "line?": "string", "handoff?": "boolean" }).length === 0),
+};
+const projectShape: Spec = { key: "string", name: "string", "repoPath?": "string", baselineSource: enumOf("tags", "folder", "manual"), baselinePattern: "string", "baselineDir?": "string", scanFiles: "boolean", scanSubdirs: ["string"] };
 
 /** The contract's shapes as the Windows screens read them (entities/ledger/model/types.ts) */
 export const specs = {
   session: sessionShape, event: eventShape, question: questionShape, baseline: baselineShape, cycle: cycleShape, overlap: overlapShape, prompt: promptShape,
-  state: stateShape, graph: graphShape,
+  state: stateShape, graph: graphShape, settings: settingsShape, project: projectShape,
   detail: { session: sessionShape, events: [eventShape], questions: [questionShape], overlaps: [overlapShape], cycles: [cycleShape] } as Spec,
   info: { schemaVersion: "number", dbPath: "string", rev: "number", enabled: "boolean" } as Spec,
   search: { hits: [{ kind: enumOf("session", "question", "event", "baseline"), id: "string", "sessionId?": "string", title: "string", snippet: "string" }] } as Spec,
   importResults: { results: [{ index: "number", ok: "boolean", duplicate: "boolean", "error?": "string", "sessionId?": "string" }] } as Spec,
-  backup: { path: "string" } as Spec,
+  backup: { path: "string", created: "boolean", size: "number", removed: ["string"] } as Spec,
+  scan: { results: [{ project: "string", source: enumOf("tags", "folder", "manual"), found: "number", added: "number", "error?": "string" }] } as Spec,
 };

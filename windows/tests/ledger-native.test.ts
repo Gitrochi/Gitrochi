@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { inboxGroups, type LedgerState, LedgerStore, nativeCanRun, nativeLedgerBackend, plotLedgerGraph } from "@/entities/ledger";
+import { DemoLedgerBackend, inboxGroups, type LedgerState, LedgerStore, nativeCanRun, nativeLedgerBackend, plotLedgerGraph } from "@/entities/ledger";
 import { ipc } from "@/shared/api";
 import { session, shapeErrors, specs } from "./ledger-fixtures";
 
@@ -17,9 +17,13 @@ describe("Ledger native backend: mapping", () => {
     const spy = vi.spyOn(ipc, "ledgerCall").mockResolvedValue({ ok: true, rev: 2 });
     await nativeLedgerBackend.call("human", { action: "set_status", sessionId: "S1031-01", status: "merged", into: "1.4.2" });
     await nativeLedgerBackend.call("prompt_answer", { id: 7, answer: { answers: { "Which one?": "The first" } } });
+    await nativeLedgerBackend.call("settings_set", { values: { staleHours: 48, kinds: null } });
+    await nativeLedgerBackend.call("project_set", { project: "atlas", baselineSource: "folder", baselineDir: null, scanSubdirs: ["specs"] });
     expect(spy.mock.calls).toEqual([
       ["human", { action: "set_status", sessionId: "S1031-01", status: "merged", into: "1.4.2" }],
       ["prompt_answer", { id: 7, answer: { answers: { "Which one?": "The first" } } }],
+      ["settings_set", { values: { staleHours: 48, kinds: null } }],
+      ["project_set", { project: "atlas", baselineSource: "folder", baselineDir: null, scanSubdirs: ["specs"] }],
     ]);
   });
 
@@ -102,7 +106,7 @@ describe("Ledger native backend: the real core", () => {
     if (process.env.CI) expect(built).toBe(true);
   });
 
-  it.skipIf(!built)("reads the state, sessions, graphs and search in the shapes the screens read", async () => {
+  it.skipIf(!built)("reads the state, sessions, graphs, search and settings in the shapes the screens read", async () => {
     vi.spyOn(ipc, "ledgerCall").mockImplementation(async (method, args) => call(method, args));
     const store = new LedgerStore(nativeLedgerBackend);
     try {
@@ -128,7 +132,10 @@ describe("Ledger native backend: the real core", () => {
       }
       expect(shapeErrors(await nativeLedgerBackend.call("search", { query: "retry" }), specs.search, false)).toEqual([]);
       expect(shapeErrors(await store.info(), specs.info, false)).toEqual([]);
-      expect(shapeErrors(await nativeLedgerBackend.call("backup", {}), specs.backup, false)).toEqual([]);
+      expect(shapeErrors(await store.readSettings(), specs.settings, false)).toEqual([]);
+      for (const p of await store.readProjects()) expect(shapeErrors(p, specs.project, false)).toEqual([]);
+      expect(shapeErrors(await store.backup(), specs.backup, false)).toEqual([]);
+      expect(shapeErrors(await nativeLedgerBackend.call("scan", {}), specs.scan, false)).toEqual([]);
     } finally {
       store.dispose();
     }
@@ -151,6 +158,14 @@ describe("Ledger native backend: the real core", () => {
     vi.spyOn(ipc, "ledgerCall").mockImplementation(async (method, args) => call(method, args));
     const { sessions } = await nativeLedgerBackend.call("state", {});
     await expect(nativeLedgerBackend.call("human", { action: "ack", sessionId: sessions[0].id })).rejects.toMatchObject({ code: "NOT_ALLOWED" });
+    await expect(nativeLedgerBackend.call("settings_set", { values: { staleHours: 1 } })).rejects.toMatchObject({ code: "NOT_ALLOWED" });
   });
 
+  it.skipIf(!built)("starts the demo from the core's own defaults", async () => {
+    expect(await new DemoLedgerBackend({ now: () => NOW }).call("settings", {})).toEqual(call("settings", {}));
+    // a project the core created with its first report, without a repository
+    const project = call("projects", {}).projects[0];
+    const { project: fresh } = await new DemoLedgerBackend({ now: () => NOW, empty: true }).call("project_set", { project: project.key });
+    expect(fresh).toEqual(project);
+  });
 });

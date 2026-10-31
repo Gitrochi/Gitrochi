@@ -10,9 +10,10 @@ import { env, initEnv } from "../src/shared/config";
 import { loadLanguage } from "../src/shared/i18n";
 import { MenuHost, TooltipHost } from "../src/shared/ui";
 import { LedgerWorkspace } from "../src/widgets/ledger-workspace";
+import { SettingsDialog } from "../src/widgets/settings";
 import "../src/app/styles/global.css";
 
-// The Ledger page on the demo backend in a browser: ?theme=dark&lang=ko&view=board&select=needs_human&width=900&click=<selector>&mode=empty|large|app|selftest
+// The Ledger page on the demo backend in a browser: ?theme=dark&lang=ko&view=board&select=needs_human&width=900&click=<selector>&mode=empty|large|app|settings|selftest
 const params = new URLSearchParams(location.search);
 await initEnv({ ...env, os: "windows", resourceDir: "C:\\Program Files\\Gitrochi" });
 await loadLanguage(params.get("lang") ?? "en");
@@ -42,6 +43,11 @@ if (mode === "selftest") {
   app.navigate("ledger");
   root.style.height = "100vh";
   createRoot(root).render(<><RepoPage store={app} openSettings={() => {}} /><MenuHost /><TooltipHost /></>);
+} else if (mode === "settings") {
+  // Settings › Ledger on the app's demo store
+  env.ledgerPreview = "1";
+  env.ledgerDemo = "1";
+  createRoot(root).render(<><SettingsDialog onClose={() => {}} initialTab="ledger" /><MenuHost /><TooltipHost /></>);
 } else {
   ipc.openUrl = async () => {};
   const repoPath = "C:/Projects/atlas";
