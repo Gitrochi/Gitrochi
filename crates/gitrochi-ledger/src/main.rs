@@ -27,8 +27,9 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   call METHOD [JSON]
   mcp
   hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
-                                PreToolUse, PermissionRequest, SessionEnd); always exits 0,
-                                or 2 when the Stop hook wakes the agent
+                                PreToolUse, PermissionRequest, PostToolUse,
+                                PostToolUseFailure, SessionEnd); always exits 0, or 2 when
+                                the Stop hook wakes the agent
 
 The database is GITROCHI_LEDGER_DB, else the per-user default (gitrochi-ledger call info).
 GITROCHI_LEDGER_SESSION is the default session for report, overview and session.

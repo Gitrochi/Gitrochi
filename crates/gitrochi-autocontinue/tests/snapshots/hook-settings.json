@@ -11,6 +11,30 @@
       "matcher": ""
     }
   ],
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PostToolUse",
+          "timeout": 10,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "PostToolUseFailure": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PostToolUseFailure",
+          "timeout": 10,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
   "PreToolUse": [
     {
       "hooks": [

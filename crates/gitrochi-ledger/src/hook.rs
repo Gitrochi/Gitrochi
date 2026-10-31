@@ -4,6 +4,8 @@
 //! never a status. Auto-continue on Stop, PreToolUse (`AskUserQuestion`, `ExitPlanMode`) and
 //! PermissionRequest, only for sessions where a person turned it on: `gitrochi-autocontinue`
 //! decides and formats, this module stores the pending prompt, waits for it and prints.
+//! PostToolUse and PostToolUseFailure tell it which permission answers applied: the terminal
+//! shows its own dialog while a PermissionRequest hook waits (Claude Code 2.1.309, #171).
 //!
 //! A hook must never get in the agent's way. Every failure — bad input, no database, a
 //! locked file — ends with exit 0, no decision and one short line on stderr; the only other
@@ -33,12 +35,14 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// The events the handler knows; any other ends at once, silently.
-pub const EVENTS: [&str; 6] = [
+pub const EVENTS: [&str; 8] = [
     "SessionStart",
     "UserPromptSubmit",
     "Stop",
     "PreToolUse",
     "PermissionRequest",
+    "PostToolUse",
+    "PostToolUseFailure",
     "SessionEnd",
 ];
 
@@ -188,6 +192,7 @@ fn handle(event: &str, text: &str, env: &HookEnv) -> HookResult {
         "SessionStart" => session_start(&db, session_id, &input, &raw),
         "UserPromptSubmit" => prompt_submitted(&db, session_id, &input),
         "SessionEnd" => session_end(&db, session_id, &input, &raw),
+        "PostToolUse" | "PostToolUseFailure" => tool_ran(&db, session_id, &input, &raw),
         _ => auto_continue(&db, env, session_id, &input),
     };
     result.unwrap_or_else(|error| HookResult::note(&format!("{}; no decision", error.message)))
@@ -335,6 +340,7 @@ fn session_start(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<Ho
             source.as_deref(),
             now,
         )?;
+        prompts::settle_unconfirmed(c, id, None)?;
         prompts::release_session(c, id)?;
         Ok(())
     });
@@ -355,9 +361,11 @@ fn session_start(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<Ho
 }
 
 /// UserPromptSubmit: Claude Code holds the prompt until this returns, so it is one short
-/// write. A waiting stop question is answered by the person's prompt (or released by a
-/// prompt Claude Code submitted on its own), and the person's prompt starts the count of
-/// automatic answers again.
+/// write. A waiting stop question is answered by the person's prompt, or released by a
+/// prompt Claude Code submitted on its own — the wake-up of Gitrochi's own Stop answer is
+/// one of those. The person's prompt also ends what is left of the turn before (a hook that
+/// Esc interrupted never closes its prompt itself) and starts the count of automatic
+/// answers again.
 fn prompt_submitted(db: &Db, id: &str, input: &HookInput) -> Result<HookResult> {
     let now = now_ms();
     let person = is_person_prompt(&input.prompt);
@@ -368,6 +376,10 @@ fn prompt_submitted(db: &Db, id: &str, input: &HookInput) -> Result<HookResult> 
         touch(c, &row, now)?;
         link(c, &row, "UserPromptSubmit", &input.session_id, None, now)?;
         prompts::settle_stop_questions(c, id, person, now)?;
+        if person {
+            prompts::settle_unconfirmed(c, id, None)?;
+            prompts::release_session(c, id)?;
+        }
         if person && prompts::in_a_row(c, id)? > 0 {
             hook_event(
                 c,
@@ -396,6 +408,7 @@ fn session_end(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<Hook
             return Ok(false);
         };
         touch(c, &row, now)?;
+        prompts::settle_unconfirmed(c, id, None)?;
         prompts::release_session(c, id)?;
         let mut data = json!({"hook": "SessionEnd"});
         if let Some(reason) = &reason {
@@ -468,22 +481,68 @@ fn permission_context(
     ctx
 }
 
+/// Which call a permission prompt is about, so the PostToolUse of that call can be matched
+/// to it: PermissionRequest input has no `tool_use_id` (issue #171). The key hashes the tool
+/// and what it acts on (the command, the file, the URL or the query, else the whole input),
+/// so fields Claude Code adds to the input later do not matter; `agent` keeps a subagent's
+/// calls apart from the main agent's.
+fn call_of(input: &HookInput) -> Value {
+    let field = |key: &str| input.tool_input.get(key).and_then(Value::as_str);
+    let subject = match input.tool_name.as_str() {
+        "Bash" | "PowerShell" => field("command"),
+        "Edit" | "MultiEdit" | "Write" | "Read" | "NotebookEdit" => {
+            field("file_path").or_else(|| field("notebook_path"))
+        }
+        "WebFetch" => field("url"),
+        "WebSearch" => field("query"),
+        _ => None,
+    }
+    .map_or_else(|| input.tool_input.to_string(), str::to_string);
+    let key = crate::sha1::hex(format!("{}\0{subject}", input.tool_name).as_bytes());
+    json!({"key": key, "agent": input.agent_id})
+}
+
+/// PostToolUse and PostToolUseFailure: a call ran. While a permission hook waits, the
+/// terminal shows its own dialog and the person may answer there; the hook does not learn
+/// of it, and its later decision is ignored (issue #171). The call running settles that:
+/// see `prompts::settle_call`. One read when nothing waits.
+fn tool_ran(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<HookResult> {
+    let agent = input.agent_id.as_deref();
+    let (_, waiting, unconfirmed) = db.read(|c| prompts::open_work(c, id, agent))?;
+    if !waiting && !unconfirmed {
+        return Ok(HookResult::default());
+    }
+    let key = call_of(input)["key"].as_str().unwrap_or("").to_string();
+    let duration = raw["duration_ms"].as_i64();
+    let now = now_ms();
+    db.write(|c| prompts::settle_call(c, id, agent, &key, duration, now))?;
+    Ok(HookResult::default())
+}
+
 /// Stop, PreToolUse and PermissionRequest. With auto-continue off for the session, or the
 /// app closed for a synchronous hook (D10), this ends after one read (plus the Stop's
-/// activity). Otherwise `decide` runs inside the write that stores the pending prompt, so
-/// the count of automatic answers in a row cannot move under it.
+/// activity, and settling what the agent moved past). Otherwise `decide` runs inside the
+/// write that stores the pending prompt, so the count of automatic answers in a row cannot
+/// move under it.
 fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<HookResult> {
     let kind = prompt_kind(input);
     let stop = kind == Some(PromptKind::StopQuestion);
+    // Stop is always the main agent's; the others say whose call it is.
+    let agent = if stop {
+        None
+    } else {
+        input.agent_id.as_deref()
+    };
+    let call = (kind == Some(PromptKind::Permission)).then(|| call_of(input));
+    let own_key = call
+        .as_ref()
+        .and_then(|c| c["key"].as_str())
+        .map(str::to_string);
     // The app's countdown is the only place to answer while a synchronous hook waits.
     let alive = app_alive(heartbeat(&env.db), now_seconds());
-    let Some((row, settings, stop_waiting)) = db.read(|c| {
+    let Some((row, settings, (stop_waiting, permission_waiting, unconfirmed))) = db.read(|c| {
         Ok(match session::load(c, id)? {
-            Some(row) => Some((
-                row,
-                Settings::load(c)?,
-                prompts::stop_question_waiting(c, id)?,
-            )),
+            Some(row) => Some((row, Settings::load(c)?, prompts::open_work(c, id, agent)?)),
             None => None,
         })
     })?
@@ -496,8 +555,13 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
     let may_wait =
         kind.is_some_and(|k| policy.enabled && trigger_on(&policy, k) && should_wait(k, alive));
     // the main agent working again means its stop question was moved past
-    let supersede = stop_waiting && (stop || input.agent_id.is_none());
-    if !may_wait && !stop && !supersede {
+    let supersede = stop_waiting && (stop || agent.is_none());
+    // an agent asking about something else, or ending its turn, answered its earlier
+    // permission dialog in the terminal
+    let moved_on = permission_waiting;
+    // the turn ended: automatic permission answers nothing confirmed stay unknown
+    let unconfirmed_end = stop && unconfirmed;
+    if !may_wait && !stop && !supersede && !moved_on {
         return Ok(HookResult::default().noted(unreadable));
     }
     let ctx = permission_context(
@@ -517,6 +581,12 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
         if supersede {
             prompts::settle_stop_questions(c, id, false, now)?;
         }
+        if moved_on {
+            prompts::settle_moved_on(c, id, agent, own_key.as_deref(), now)?;
+        }
+        if unconfirmed_end {
+            prompts::settle_unconfirmed(c, id, Some(None))?;
+        }
         if !may_wait {
             return Ok((None, None));
         }
@@ -527,21 +597,27 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
             return Ok((None, None));
         }
         let state = SessionState {
-            consecutive: replies + prompts::waiting(c, id)?,
+            consecutive: replies + prompts::open_count(c, id)?,
         };
         let decision = decide(input, &policy, state, &ctx, alive);
         let prompt = match &decision {
-            Decision::Wait(wait) => Some(prompts::create(
-                c,
-                &json!({
-                    "kind": wait.kind.as_str(),
-                    "sessionId": id,
-                    "agentId": env.agent_id,
-                    "payload": wait.payload,
-                    "delaySec": wait.delay_sec,
-                }),
-                now,
-            )?),
+            Decision::Wait(wait) => {
+                let mut payload = serde_json::to_value(&wait.payload)?;
+                if let Some(call) = &call {
+                    payload["call"] = call.clone();
+                }
+                Some(prompts::create(
+                    c,
+                    &json!({
+                        "kind": wait.kind.as_str(),
+                        "sessionId": id,
+                        "agentId": env.agent_id,
+                        "payload": payload,
+                        "delaySec": wait.delay_sec,
+                    }),
+                    now,
+                )?)
+            }
             Decision::Pass(_) => None,
         };
         Ok((Some(decision), prompt))
@@ -611,9 +687,21 @@ fn wait_for_answer(
 
 /// Closes a prompt that still waits (`auto` with the answer, or `released`) and says what
 /// the hook sends: the automatic answer only once it is on record, the person's answer if
-/// they were a moment faster, else nothing.
+/// they were a moment faster, else nothing. An automatic permission answer is recorded as
+/// unconfirmed: the person may already have answered the terminal's own dialog, and which
+/// decision applied shows only when the call runs (`tool_ran`).
 fn close(db: &Db, wait: &Wait, input: &HookInput, args: &Value) -> HookResult {
-    match db.write(|c| prompts::resolve(c, args, now_ms())) {
+    let unconfirmed = wait.kind == PromptKind::Permission && args["state"] == "auto";
+    let closed = db.write(|c| {
+        let now = now_ms();
+        if unconfirmed {
+            let id = args["id"].as_i64().unwrap_or(0);
+            prompts::resolve_unconfirmed(c, id, &args["answer"], now)
+        } else {
+            prompts::resolve(c, args, now)
+        }
+    });
+    match closed {
         Ok(((true, closed), _)) if closed.state == "auto" => HookResult::emit(&wait.output),
         Ok(((false, current), _)) if current.state == "answered" => {
             answered(wait, input, current.answer.as_ref())

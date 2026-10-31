@@ -137,6 +137,10 @@ impl Fixture {
             "cwd": self.work.to_string_lossy(),
             "permission_mode": "default",
             "hook_event_name": event,
+            // fields Claude Code 2.1.309 sends that the documentation leaves out (#171)
+            "prompt_id": "6f0d9a52-8c1e-4b7a-9d3e-2a4b6c8d0e1f",
+            "effort": {"level": "high"},
+            "scratchpad_dir": self.dir.join("scratchpad").to_string_lossy(),
         });
         for (key, value) in extra.as_object().unwrap() {
             input[key] = value.clone();
@@ -693,8 +697,24 @@ fn activity_only_hooks_are_fast() {
     assert!(f.session()["session"]["lastAt"].as_i64().unwrap() > 0);
 }
 
-/// A permission request that nobody answers, allowed automatically.
-fn allowed_automatically(f: &Fixture) {
+/// The PostToolUse Claude Code sends once a call ran; `duration_ms` is how long it ran.
+fn ran_call(f: &Fixture, command: &str, duration_ms: Option<i64>, agent: Option<&str>) {
+    let mut extra = bash(command);
+    extra["tool_use_id"] = json!("toolu_01Ran");
+    extra["tool_response"] = json!({"stdout": "ok", "stderr": "", "interrupted": false});
+    if let Some(duration) = duration_ms {
+        extra["duration_ms"] = json!(duration);
+    }
+    if let Some(agent) = agent {
+        extra["agent_id"] = json!(agent);
+    }
+    f.hook("PostToolUse", extra)
+        .assert_no_decision("PostToolUse");
+}
+
+/// A permission request that nobody answers, allowed automatically; the command then runs
+/// for 40 ms, which confirms the automatic answer applied.
+fn allowed_automatically(f: &Fixture) -> Value {
     f.app_running();
     let running = f.spawn("PermissionRequest", bash("cargo test"));
     let prompt = f.waiting_prompt();
@@ -706,14 +726,17 @@ fn allowed_automatically(f: &Fixture) {
         "{}",
         ran.stderr
     );
+    std::thread::sleep(Duration::from_millis(60));
+    ran_call(f, "cargo test", Some(40), None);
+    prompt
 }
 
 /// What the limit counts: automatic answers since the person's last input, and prompts
-/// still waiting.
+/// that may still become one.
 fn in_a_row(f: &Fixture) -> u32 {
     let connection = sql(&f.db);
     gitrochi_ledger::prompts::in_a_row(&connection, SESSION).unwrap()
-        + gitrochi_ledger::prompts::waiting(&connection, SESSION).unwrap()
+        + gitrochi_ledger::prompts::open_count(&connection, SESSION).unwrap()
 }
 
 #[test]
@@ -1002,4 +1025,232 @@ fn bad_input_a_missing_database_and_a_locked_file_never_break_the_hook() {
     assert!(ran.stderr.is_empty());
     let ran = f.spawn_with("Stop", "{}", &[]).finish();
     ran.assert_no_decision("an empty Stop");
+}
+
+// The terminal shows its own permission dialog while a PermissionRequest hook waits, and a
+// decision the hook sends after the person answered there is ignored (issue #171). These
+// tests play the hooks Claude Code fires around such a dialog.
+
+fn prompt_of(f: &Fixture, prompt: &Value) -> Value {
+    app(&f.db, "prompt_get", json!({"id": prompt["id"]}))
+}
+
+#[test]
+fn a_permission_allowed_in_the_terminal_during_the_wait_is_the_persons() {
+    let f = Fixture::new("hook-terminal-allow");
+    f.auto_continue(true);
+    f.app_running();
+    let running = f.spawn("PermissionRequest", bash("cargo test"));
+    let prompt = f.waiting_prompt();
+    // the person chose Yes in the terminal: the command ran, Claude Code reports it
+    ran_call(&f, "cargo test", Some(1200), None);
+    let ran = running.finish();
+    ran.assert_no_decision("the hook after the terminal answer");
+    assert!(ran.took < Duration::from_secs(8), "{:?}", ran.took);
+    let stored = prompt_of(&f, &prompt);
+    assert_eq!(stored["state"], "answered");
+    assert_eq!(stored["answeredBy"], "human");
+    assert!(stored.get("answer").is_none());
+    assert!(f.events("auto_reply").is_empty());
+    assert_eq!(in_a_row(&f), 0);
+}
+
+#[test]
+fn an_answer_sent_after_the_persons_is_not_recorded_as_automatic() {
+    let f = Fixture::new("hook-too-late");
+    f.auto_continue(true);
+    f.app_running();
+    let running = f.spawn("PermissionRequest", bash("cargo build --release"));
+    let prompt = f.waiting_prompt();
+    // the person allowed it just before the deadline and the build is still running when
+    // the hook sends its own allow, which Claude Code ignores
+    f.deadline_now(&prompt);
+    assert_eq!(
+        running.finish().json()["hookSpecificOutput"]["decision"]["behavior"],
+        "allow"
+    );
+    let sent = prompt_of(&f, &prompt);
+    assert_eq!(sent["state"], "auto");
+    assert_eq!(sent["answer"]["outcome"], "unconfirmed");
+    assert!(f.events("auto_reply").is_empty(), "not on record yet");
+    // it counts toward the limit meanwhile
+    assert_eq!(in_a_row(&f), 1);
+    // the build ends; it ran for longer than the time since the hook's answer
+    let since = now_ms() - sent["answeredAt"].as_i64().unwrap();
+    ran_call(&f, "cargo build --release", Some(since + 5_000), None);
+    let settled = prompt_of(&f, &prompt);
+    assert_eq!(settled["state"], "answered");
+    assert_eq!(settled["answeredBy"], "human");
+    assert!(f.events("auto_reply").is_empty());
+    assert_eq!(in_a_row(&f), 0);
+}
+
+#[test]
+fn an_automatic_answer_that_applied_is_confirmed_when_the_call_runs() {
+    let f = Fixture::new("hook-confirmed");
+    f.auto_continue(true);
+    let prompt = allowed_automatically(&f);
+    let stored = prompt_of(&f, &prompt);
+    assert_eq!(stored["state"], "auto");
+    assert_eq!(stored["answer"]["outcome"], "confirmed");
+    let replies = f.events("auto_reply");
+    assert_eq!(replies.len(), 1);
+    assert_eq!(replies[0]["data"]["answer"]["outcome"], "confirmed");
+    assert_eq!(replies[0]["data"]["promptId"], prompt["id"]);
+    assert_eq!(
+        replies[0]["summary"],
+        "Auto-continue answered: Bash: cargo test"
+    );
+    // dated when the answer went out, not when it was confirmed
+    assert_eq!(replies[0]["ts"], stored["answeredAt"]);
+    let attention = app(&f.db, "attention", json!({}));
+    assert_eq!(attention["attention"]["autoReview"], 1);
+}
+
+#[test]
+fn without_a_signal_the_outcome_is_unknown() {
+    let f = Fixture::new("hook-unknown");
+    f.auto_continue(true);
+    // a PostToolUse without duration_ms cannot tell whose answer applied
+    f.app_running();
+    let running = f.spawn("PermissionRequest", bash("cargo test"));
+    let prompt = f.waiting_prompt();
+    f.deadline_now(&prompt);
+    assert_eq!(running.finish().code, 0);
+    ran_call(&f, "cargo test", None, None);
+    assert_eq!(prompt_of(&f, &prompt)["answer"]["outcome"], "unknown");
+    // nothing shows the call running before the turn ends
+    f.app_running();
+    let running = f.spawn("PermissionRequest", bash("cargo fmt"));
+    let second = f.waiting_prompt();
+    f.deadline_now(&second);
+    assert_eq!(running.finish().code, 0);
+    f.hook(
+        "Stop",
+        json!({"stop_hook_active": false, "last_assistant_message": "Formatting is done."}),
+    )
+    .assert_no_decision("Stop");
+    assert_eq!(prompt_of(&f, &second)["answer"]["outcome"], "unknown");
+    let summaries: Vec<Value> = f
+        .events("auto_reply")
+        .iter()
+        .map(|e| e["summary"].clone())
+        .collect();
+    assert_eq!(
+        summaries,
+        [
+            json!("Auto-continue may have answered: Bash: cargo test"),
+            json!("Auto-continue may have answered: Bash: cargo fmt"),
+        ]
+    );
+    // both count, as automatic answers may have
+    assert_eq!(in_a_row(&f), 2);
+}
+
+#[test]
+fn a_denial_in_the_terminal_shows_when_the_agent_moves_on() {
+    let f = Fixture::new("hook-terminal-deny");
+    f.auto_continue(true);
+    // No in the terminal: the call never runs, and the agent's turn ends instead
+    f.app_running();
+    let running = f.spawn("PermissionRequest", bash("cargo doc --no-deps"));
+    let prompt = f.waiting_prompt();
+    f.hook(
+        "Stop",
+        json!({"stop_hook_active": false, "last_assistant_message": "Understood, I will skip the docs."}),
+    )
+    .assert_no_decision("Stop");
+    running
+        .finish()
+        .assert_no_decision("the hook after the denial");
+    assert_eq!(prompt_of(&f, &prompt)["answeredBy"], "human");
+    // or the agent asks about something else
+    f.app_running();
+    let first = f.spawn("PermissionRequest", bash("cargo test"));
+    let earlier = f.waiting_prompt();
+    f.app_running();
+    let second = f.spawn("PermissionRequest", bash("cargo check"));
+    first.finish().assert_no_decision("the earlier request");
+    assert_eq!(prompt_of(&f, &earlier)["state"], "answered");
+    let later = f.waiting_prompt();
+    assert_ne!(later["id"], earlier["id"]);
+    // or another of its calls runs
+    ran_call(&f, "git status", Some(30), None);
+    second.finish().assert_no_decision("the later request");
+    assert_eq!(prompt_of(&f, &later)["state"], "answered");
+    assert!(f.events("auto_reply").is_empty());
+}
+
+#[test]
+fn a_subagents_calls_are_kept_apart_from_the_main_agents() {
+    let f = Fixture::new("hook-subagent-calls");
+    f.auto_continue(true);
+    f.app_running();
+    let mut request = bash("cargo test");
+    request["agent_id"] = json!("sub-1");
+    let running = f.spawn("PermissionRequest", request);
+    let prompt = f.waiting_prompt();
+    // the main agent's own calls say nothing about the subagent's dialog
+    ran_call(&f, "cargo test", Some(30), None);
+    ran_call(&f, "ls", Some(5), None);
+    assert_eq!(prompt_of(&f, &prompt)["state"], "waiting");
+    // the subagent's call running does
+    ran_call(&f, "cargo test", Some(30), Some("sub-1"));
+    running
+        .finish()
+        .assert_no_decision("the subagent's request");
+    assert_eq!(prompt_of(&f, &prompt)["answeredBy"], "human");
+}
+
+#[test]
+fn the_wake_up_of_an_automatic_answer_is_not_the_person() {
+    let f = Fixture::new("hook-wake");
+    f.auto_continue(true);
+    let running = f.spawn("Stop", stop_question());
+    let prompt = f.waiting_prompt();
+    f.deadline_now(&prompt);
+    assert_eq!(running.finish().code, 2);
+    // the wake fires UserPromptSubmit with a task notification (Claude Code 2.1.309, #171)
+    f.hook(
+        "UserPromptSubmit",
+        json!({"prompt": "<task-notification>\n<summary>Stop hook feedback</summary>\n[Gitrochi] Auto-continue — Question: Should I also update the README with the new option?"}),
+    )
+    .assert_no_decision("the wake-up");
+    assert_eq!(in_a_row(&f), 1);
+    assert!(f
+        .events("hook")
+        .iter()
+        .all(|e| e["data"]["person"] != json!(true)));
+    // the Stop after the woken turn has stop_hook_active, and the count goes on from one
+    let running = f.spawn(
+        "Stop",
+        json!({"stop_hook_active": true, "last_assistant_message": "README updated. Should I also add a changelog entry?"}),
+    );
+    let next = f.waiting_prompt();
+    f.deadline_now(&next);
+    assert_eq!(running.finish().code, 2);
+    let consecutive: Vec<Value> = f
+        .events("auto_reply")
+        .iter()
+        .map(|e| e["data"]["answer"]["consecutive"].clone())
+        .collect();
+    assert_eq!(consecutive, [json!(1), json!(2)]);
+}
+
+#[test]
+fn a_hook_interrupted_by_esc_leaves_nothing_waiting_once_the_person_types() {
+    let f = Fixture::new("hook-esc");
+    f.auto_continue(true);
+    f.app_running();
+    let mut running = f.spawn("PreToolUse", ask_user_question());
+    let prompt = f.waiting_prompt();
+    // Esc interrupts the turn and Claude Code ends the hook (SIGTERM on 2.1.309)
+    running.child.kill().unwrap();
+    let _ = running.child.wait();
+    assert_eq!(prompt_of(&f, &prompt)["state"], "waiting");
+    f.hook("UserPromptSubmit", json!({"prompt": "Use SQLite."}))
+        .assert_no_decision("UserPromptSubmit");
+    assert_eq!(prompt_of(&f, &prompt)["state"], "released");
+    let state = app(&f.db, "state", json!({}));
+    assert!(state["pendingPrompts"].as_array().unwrap().is_empty());
 }

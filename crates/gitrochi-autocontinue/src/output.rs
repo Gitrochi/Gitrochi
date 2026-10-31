@@ -110,8 +110,11 @@ pub fn permission_deny(message: &str) -> HookOutput {
 
 /// The `hooks` entries that run the handler: `command` followed by the event name. Each
 /// timeout is the delay plus a margin; the Stop hook runs in the background and wakes
-/// Claude (`asyncRewake`), the others hold Claude while they wait. UserPromptSubmit does
-/// not wait: it only tells the handler that the person typed, which resets the count.
+/// Claude (`asyncRewake`, whose timeout Claude Code enforces), the others hold Claude while
+/// they wait. UserPromptSubmit does not wait: it only tells the handler that the person
+/// typed, which resets the count. PostToolUse and PostToolUseFailure do not wait either:
+/// they tell the handler that a call ran, because the terminal shows its own permission
+/// dialog while a PermissionRequest hook waits and the person may answer there (#171).
 pub fn hook_settings(command: &str, delay_sec: u32) -> Value {
     let timeout = delay_sec.clamp(MIN_DELAY_SEC, MAX_DELAY_SEC) + HOOK_TIMEOUT_MARGIN_SEC;
     let entry = |event: &str| format!("{command} {event}");
@@ -137,6 +140,14 @@ pub fn hook_settings(command: &str, delay_sec: u32) -> Value {
         "UserPromptSubmit": [{
             "matcher": "",
             "hooks": [{"type": "command", "command": entry("UserPromptSubmit"), "timeout": 10}],
+        }],
+        "PostToolUse": [{
+            "matcher": "",
+            "hooks": [{"type": "command", "command": entry("PostToolUse"), "timeout": 10}],
+        }],
+        "PostToolUseFailure": [{
+            "matcher": "",
+            "hooks": [{"type": "command", "command": entry("PostToolUseFailure"), "timeout": 10}],
         }],
     })
 }

@@ -90,10 +90,11 @@ gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
 | Event | What it does |
 | --- | --- |
 | `SessionStart` | `lastAt`, links the Claude session ID (a new one, after `/clear` say, is also kept in a `hook` event with the previous one); with auto-continue on, context that asks the agent to ask with `AskUserQuestion`, recommendation first |
-| `UserPromptSubmit` | `lastAt`, the link; the person's prompt answers a waiting stop question and starts the count of automatic answers again |
+| `UserPromptSubmit` | `lastAt`, the link; the person's prompt answers a waiting stop question, ends what is left of the previous turn and starts the count of automatic answers again (the `<task-notification>` prompt of an automatic answer's wake-up is not the person's) |
 | `Stop` | `lastAt`; with auto-continue on, a turn that ended with a question waits, then the answer goes out as exit 2 with the text on stderr (the entry is `async` with `asyncRewake`) |
 | `PreToolUse` (`AskUserQuestion`, `ExitPlanMode`) | With auto-continue on: waits, then `allow` with `updatedInput` carrying the questions and the answers, or the plan approval |
-| `PermissionRequest` | With auto-continue on: waits, then allows this one request; never-auto-allowed requests get no decision |
+| `PermissionRequest` | With auto-continue on: waits, then allows this one request; never-auto-allowed requests get no decision. The terminal shows its own dialog meanwhile, so the answer counts as automatic only once the call is seen to start after it |
+| `PostToolUse`, `PostToolUseFailure` | A call ran: settles a permission prompt for it (the person allowed it in the terminal, or the automatic allow applied), and one of the same agent that it moved past; one read when nothing waits |
 | `SessionEnd` | `lastAt` and a `hook` event with the reason; nothing it waited on stays open |
 
 A wait is a pending prompt that the apps show with a countdown and can answer (`prompt_answer`); the handler checks it every 250 ms until its deadline. It never stores prompt text or tool input for activity, never changes a status and never touches a person's operations. Bad input, a missing database and a locked file all end with exit 0, no decision and one line on stderr; the only other exit code is the Stop hook's 2. The rules are in [CONTRACT.md](CONTRACT.md#hooks) and DESIGN.md §9.

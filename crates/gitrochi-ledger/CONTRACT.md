@@ -197,7 +197,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 ## Hooks
 
-`gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
+`gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on: `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PostToolUseFailure` and `SessionEnd`. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
 
 - **Activity.**
   - `SessionStart`, `UserPromptSubmit`, `Stop` and `SessionEnd` move `lastAt` forward. They never touch `lastAgentAt` or a status.
@@ -205,16 +205,24 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - `SessionEnd` records a `hook` event with `data: {hook: "SessionEnd", reason?, agentSessionId?}`.
   - Nothing else from the input is stored: no prompt text and no tool input.
 - **Pending prompts.** A stop question, an `AskUserQuestion`, an `ExitPlanMode` (when its setting is on) or a permission request becomes a `PendingPrompt`.
-  - Its payload is `gitrochi-autocontinue`'s `PromptPayload`, and its deadline is now plus the delay.
+  - Its payload is `gitrochi-autocontinue`'s `PromptPayload`, and its deadline is now plus the delay. A permission prompt's payload also has `call: {key, agent?}`: a hash of the tool and what it acts on (the command, the file, the URL or the query, else the whole input), and the subagent it came from. `PermissionRequest` input has no `tool_use_id`, so this is how the call is recognised later.
   - The handler reads the prompt every 250 ms. It keeps the earlier of the stored deadline and its own, so the app can bring an answer forward but never push it past the hook's timeout.
   - At the deadline it resolves the prompt `auto`. The answer is the `AutoReply`, which also goes into the `auto_reply` event. The output is printed only if that write succeeded.
+  - **A permission answer starts out unconfirmed.** The terminal shows its own dialog while the hook waits, and a decision sent after the person answered there is ignored (Claude Code 2.1.309, issue #171). So at the deadline the prompt becomes `auto` with `answer.outcome: "unconfirmed"`, and it has no `auto_reply` event yet. A `PostToolUse` or `PostToolUseFailure` for the same call settles it, judged by when the call started (now minus `duration_ms`):
+    - It started before the answer went out, so the person's terminal answer applied. The prompt becomes `answered` by `human` with no answer, and nothing automatic is recorded.
+    - It started after, so the automatic answer applied. `outcome` becomes `confirmed`, and the `auto_reply` event is recorded, dated when the answer went out.
+    - There is no `duration_ms`, or nothing ran by the time the main agent's turn ended, the person typed, or the conversation started over or ended. `outcome` becomes `unknown`, and the `auto_reply` event is recorded with it.
 - **Who settles a prompt.**
   - The person in the app, with `prompt_answer`:
     - `{text}` wakes a stop question with that text.
     - `{answers: {question: label}}` answers an `AskUserQuestion`. A question the person left out takes the proposed answer.
     - `{decision: "allow" | "deny", message?}` decides a permission request or a plan.
     - `{release: true}` (answer in the terminal) and `{hold: true}` (not this time) end the hook without a decision. So does an answer that does not fit the prompt.
-  - The person typing in the terminal: a `UserPromptSubmit` with their own prompt marks waiting stop questions `answered` by `human`, and stores no answer. A prompt that Claude Code submitted itself only releases them.
+  - The person typing in the terminal: a `UserPromptSubmit` with their own prompt marks waiting stop questions `answered` by `human`, and stores no answer. It also releases the session's other waiting prompts; a hook that Esc interrupted never closes its own. A prompt that Claude Code submitted itself only releases the stop questions. That includes a prompt starting with `<task-notification>`, which is how the wake-up of an automatic Stop answer arrives.
+  - The person answering a permission dialog in the terminal:
+    - The call running while the hook waits (`PostToolUse`, `PostToolUseFailure`) marks the prompt `answered` by `human`.
+    - So does the same agent moving on while the hook waits: another `PermissionRequest`, a `PreToolUse`, another call running, or, for the main agent, its `Stop`. A No in the terminal leaves no other trace; `PermissionDenied` fires only for auto mode's own denials.
+    - The hook still waiting then sends nothing.
   - Later events release what the conversation waited on before: a newer `Stop`, a `PreToolUse` or `PermissionRequest` of the main agent (one without `agent_id`), and every `SessionStart` and `SessionEnd`. A late automatic answer then never lands in the middle of other work.
   - The app's heartbeat stopping during a synchronous wait releases that prompt.
 - **When nothing waits.** In these cases the hook ends at once with no decision, and no prompt is stored:
@@ -226,7 +234,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - the question or the answer is risky;
   - `stop_hook_active` is set and there has been no automatic answer since the person's last input;
   - there have already been three automatic answers in a row.
-- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts still waiting; `stop_hook_active` looks at the automatic answers alone. The person's last input is the latest of:
+- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
   - a `hook` event with `data.person`, written when they type in the terminal;
   - any of their actions on the session in the app, except `link`;
   - a prompt they answered.
@@ -257,6 +265,6 @@ Narrowed on purpose (the original tool was wider):
 
 Added for the hook handler (wave 2):
 
-15. The CLI command `hook <event>` ([Hooks](#hooks)). `lastAt` also moves with a launched agent's hook activity, as DESIGN.md §6.1 and §7.11 describe; `lastAgentAt` stays the agent's own reports. `hook` events carry `data.hook` and the fields above. The handler moves waiting prompts to `answered` (the person typed in the terminal: `answeredBy: "human"`, no `answer`) and to `released`.
+15. The CLI command `hook <event>` ([Hooks](#hooks)). `lastAt` also moves with a launched agent's hook activity, as DESIGN.md §6.1 and §7.11 describe; `lastAgentAt` stays the agent's own reports. `hook` events carry `data.hook` and the fields above. The handler moves waiting prompts to `answered` (the person answered in the terminal: `answeredBy: "human"`, no `answer`) and to `released`. A permission prompt's payload has `call`; its automatic answer has `outcome` (`unconfirmed`, `confirmed`, `unknown`), and its `auto_reply` event waits for the outcome.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
