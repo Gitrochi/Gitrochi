@@ -24,7 +24,10 @@ function type(el: HTMLTextAreaElement | HTMLInputElement, text: string) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 const key = (target: EventTarget, key: string, mods: KeyboardEventInit = {}) => target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...mods }));
-const command = (k: string) => key(window, k, env.os === "macos" ? { metaKey: true } : { ctrlKey: true });
+// A key press reaches the focused element, so window's capture listeners run first and its others last. Sent to
+// window itself, they would run in the order they were added, and the app's own Ctrl+Z would come first.
+const press = (k: string, mods: KeyboardEventInit = {}) => key(document.activeElement ?? document.body, k, mods);
+const command = (k: string) => press(k, env.os === "macos" ? { metaKey: true } : { ctrlKey: true });
 
 /**
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
@@ -91,6 +94,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     // An answer saved in place with Ctrl+Enter
     const question = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
     const field = $<HTMLTextAreaElement>(`[data-item="q:${question.id}"] textarea`)!;
+    field.focus();
     type(field, "Three times, then stop.");
     key(field, "Enter", { ctrlKey: true });
     ensure(await until(() => backend.world.questions.find((q) => q.id === question.id)?.answer === "Three times, then stop." && !$(`[data-item="q:${question.id}"]`)), "Ctrl+Enter did not save the answer");
@@ -100,19 +104,20 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const toConfirm = find((s) => s.verdict === "confirm" && s.project === "atlas");
     $(`[data-item="s:${toConfirm.id}"]`)!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     await pause();
-    key(window, "c");
+    press("c");
     ensure(await until(() => store.session(toConfirm.id)?.verdict === "expirable" && $(".ledger-toast button")), "C did not confirm the active session with an Undo toast");
     command("z");
     ensure(await until(() => store.session(toConfirm.id)?.verdict === "confirm"), "Ctrl+Z did not undo the confirmation");
-    key(window, "ArrowDown");
+    ensure(!document.querySelector(".modal-backdrop"), "Ctrl+Z also reached the repository's undo");
+    press("ArrowDown");
     await pause();
     ensure($(".ledger-row.active"), "The arrow keys did not move through the Inbox");
     const toMerge = find((s) => s.verdict === "pending_merge" && s.project === "atlas");
     $(`[data-item="s:${toMerge.id}"]`)!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     await pause();
-    key(window, "m");
+    press("m");
     ensure(await until(() => document.querySelector(".menu .menu-item")), "M did not open the version picker");
-    key(window, "Escape");
+    press("Escape");
     ensure(await until(() => !document.querySelector(".menu")), "Escape did not close the version picker");
     passed.push("triage keys and undo");
 

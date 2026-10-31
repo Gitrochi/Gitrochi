@@ -1,7 +1,9 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
+import { handleShortcut } from "../src/app/lib/shortcuts";
 import { DemoLedgerBackend, LedgerStore, type LedgerView, type LedgerVerdict } from "../src/entities/ledger";
 import { RepoStore } from "../src/entities/repo";
+import { workspace } from "../src/entities/workspace";
 import { RepoPage } from "../src/pages/repo";
 import { ipc } from "../src/shared/api";
 import { env, initEnv } from "../src/shared/config";
@@ -18,6 +20,11 @@ document.documentElement.dataset.theme = params.get("theme") ?? "light";
 const root = document.getElementById("root")!;
 const mode = params.get("mode");
 if (mode === "selftest") {
+  // As in the app, its own shortcuts listen on window from start-up, before the Ledger adds its keys; a Ctrl+Z
+  // that reaches the repository's undo opens its confirmation
+  const confirmation = Object.assign(document.createElement("div"), { className: "modal-backdrop" });
+  Object.defineProperty(workspace, "active", { get: () => ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
+  window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
   const [passed, detail] = await ledgerSelfTest();
   const result = document.createElement("pre");
