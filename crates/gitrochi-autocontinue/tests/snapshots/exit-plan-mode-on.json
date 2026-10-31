@@ -1,0 +1,40 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 45,
+    "kind": "exit_plan_mode",
+    "language": "en",
+    "question": "Add the policy crate",
+    "rule": "plan:approve",
+    "schemaVersion": 1,
+    "sent": {
+      "note": "[Gitrochi] Auto-continue — The plan was approved.\nNo answer for 45 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "approve_plan"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 45,
+  "event": "PreToolUse",
+  "kind": "exit_plan_mode",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"[Gitrochi] Auto-continue — The plan was approved.\\nNo answer for 45 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.\",\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"plan\":\"## Add the policy crate\\n1. Parse hook input\\n2. Classify questions\\n3. Write table tests\",\"planFilePath\":\"/Users/me/.claude/plans/policy-crate.md\"}}}"
+  },
+  "payload": {
+    "delaySec": 45,
+    "kind": "exit_plan_mode",
+    "language": "en",
+    "proposed": {
+      "note": "[Gitrochi] Auto-continue — The plan was approved.\nNo answer for 45 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "approve_plan"
+    },
+    "question": "Add the policy crate",
+    "schemaVersion": 1,
+    "text": "## Add the policy crate\n1. Parse hook input\n2. Classify questions\n3. Write table tests",
+    "tool": {
+      "name": "ExitPlanMode",
+      "summary": "/Users/me/.claude/plans/policy-crate.md"
+    }
+  }
+}

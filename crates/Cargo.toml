@@ -1,5 +1,5 @@
 [workspace]
-members = ["gitrochi-core", "gitrochi-index", "gitrochi-ledger"]
+members = ["gitrochi-core", "gitrochi-index", "gitrochi-autocontinue", "gitrochi-ledger"]
 resolver = "2"
 
 [profile.release]
