@@ -1728,3 +1728,4 @@
 "Published releases" = "已发布的版本";
 "Published, but marked as not ready for production" = "已发布，但标记为尚未可用于生产";
 "Saved but not published; only people with write access see it" = "已保存但未发布；仅有写入权限的人可见";
+"Parent folder" = "上级文件夹";

@@ -1645,5 +1645,6 @@
   "Assets: {0}": "Файлы: {0}",
   "Published releases": "Опубликованные релизы",
   "Published, but marked as not ready for production": "Опубликован, но помечен как не готовый к продакшену",
-  "Saved but not published; only people with write access see it": "Сохранён, но не опубликован; видят только люди с правом записи"
+  "Saved but not published; only people with write access see it": "Сохранён, но не опубликован; видят только люди с правом записи",
+  "Parent folder": "Родительская папка"
 }

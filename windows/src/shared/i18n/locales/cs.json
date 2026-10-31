@@ -1627,5 +1627,6 @@
   "Assets: {0}": "Soubory: {0}",
   "Published releases": "Publikovaná vydání",
   "Published, but marked as not ready for production": "Publikováno, ale označeno jako nepřipravené pro produkci",
-  "Saved but not published; only people with write access see it": "Uloženo, ale nepublikováno; vidí jen lidé s oprávněním k zápisu"
+  "Saved but not published; only people with write access see it": "Uloženo, ale nepublikováno; vidí jen lidé s oprávněním k zápisu",
+  "Parent folder": "Nadřazená složka"
 }

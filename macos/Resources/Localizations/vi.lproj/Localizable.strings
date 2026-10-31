@@ -1553,3 +1553,4 @@
 "Published releases" = "Các bản đã phát hành";
 "Published, but marked as not ready for production" = "Đã phát hành nhưng được đánh dấu là chưa sẵn sàng cho môi trường thực tế";
 "Saved but not published; only people with write access see it" = "Đã lưu nhưng chưa phát hành; chỉ người có quyền ghi mới thấy";
+"Parent folder" = "Thư mục cha";

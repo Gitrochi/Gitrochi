@@ -2325,3 +2325,4 @@
 "Published releases" = "公開済みのリリース";
 "Published, but marked as not ready for production" = "公開済みだが、本番向けではないと表示されています";
 "Saved but not published; only people with write access see it" = "保存のみで未公開。書き込み権限のあるユーザーだけが見られます";
+"Parent folder" = "親フォルダ";

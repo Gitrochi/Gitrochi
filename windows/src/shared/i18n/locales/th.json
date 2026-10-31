@@ -1641,5 +1641,6 @@
   "Assets: {0}": "ไฟล์แนบ: {0}",
   "Published releases": "รีลีสที่เผยแพร่แล้ว",
   "Published, but marked as not ready for production": "เผยแพร่แล้ว แต่ระบุว่ายังไม่พร้อมใช้งานจริง",
-  "Saved but not published; only people with write access see it": "บันทึกไว้แต่ยังไม่เผยแพร่ เฉพาะผู้มีสิทธิ์เขียนเท่านั้นที่เห็น"
+  "Saved but not published; only people with write access see it": "บันทึกไว้แต่ยังไม่เผยแพร่ เฉพาะผู้มีสิทธิ์เขียนเท่านั้นที่เห็น",
+  "Parent folder": "โฟลเดอร์หลัก"
 }

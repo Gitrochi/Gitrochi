@@ -153,6 +153,8 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(languageButton?.textContent?.includes("40"), "Language composition was not counted by tracked files"); languageButton!.click(); await pause();
     check(host.querySelectorAll(".code-file-row.folder").length === 1 && host.querySelector(".code-file-row.folder")?.textContent === "src", "Language filter did not derive its folders from matching files");
     await click("src"); check(host.querySelectorAll(".code-file-row:not(.folder)").length === 2, "Language filter did not show matching source files");
+    host.querySelector<HTMLButtonElement>(".code-file-row.parent")!.click(); await pause();
+    check(!host.querySelector(".code-file-row.parent") && host.querySelector(".code-file-row.folder")?.textContent === "src", "The .. row did not go up to the parent folder");
     await click("All languages"); check([...host.querySelectorAll(".code-file-row.folder")].some((folder) => folder.textContent === "pages"), "All languages did not clear the file filter");
     host.querySelector<HTMLElement>(".code-external-editors summary")!.click();
     await waitFor(() => host.querySelectorAll(".code-editor-section").length === 2 && host.querySelector(".code-editor-section")?.querySelectorAll("button").length === availableEditors.length && !host.querySelector(".code-editor-menu .spinner"), "Editor discovery did not render file and repository choices");

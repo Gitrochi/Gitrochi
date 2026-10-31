@@ -1599,5 +1599,6 @@
   "Assets: {0}": "Assets: {0}",
   "Published releases": "Gepubliceerde releases",
   "Published, but marked as not ready for production": "Gepubliceerd, maar gemarkeerd als niet klaar voor productie",
-  "Saved but not published; only people with write access see it": "Opgeslagen maar niet gepubliceerd; alleen mensen met schrijfrechten zien het"
+  "Saved but not published; only people with write access see it": "Opgeslagen maar niet gepubliceerd; alleen mensen met schrijfrechten zien het",
+  "Parent folder": "Bovenliggende map"
 }

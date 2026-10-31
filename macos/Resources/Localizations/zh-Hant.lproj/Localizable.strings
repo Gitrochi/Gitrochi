@@ -1600,3 +1600,4 @@
 "Published releases" = "已發布的版本";
 "Published, but marked as not ready for production" = "已發布，但標示為尚未可用於正式環境";
 "Saved but not published; only people with write access see it" = "已儲存但未發布；僅有寫入權限的人可見";
+"Parent folder" = "上層資料夾";

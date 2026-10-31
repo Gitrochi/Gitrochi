@@ -1645,5 +1645,6 @@
   "Assets: {0}": "Файли: {0}",
   "Published releases": "Опубліковані релізи",
   "Published, but marked as not ready for production": "Опубліковано, але позначено як не готове до продакшену",
-  "Saved but not published; only people with write access see it": "Збережено, але не опубліковано; бачать лише люди з правом запису"
+  "Saved but not published; only people with write access see it": "Збережено, але не опубліковано; бачать лише люди з правом запису",
+  "Parent folder": "Батьківська тека"
 }

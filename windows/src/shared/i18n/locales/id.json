@@ -1599,5 +1599,6 @@
   "Assets: {0}": "Aset: {0}",
   "Published releases": "Rilis yang diterbitkan",
   "Published, but marked as not ready for production": "Diterbitkan, tetapi ditandai belum siap untuk produksi",
-  "Saved but not published; only people with write access see it": "Disimpan tetapi belum diterbitkan; hanya orang dengan akses tulis yang melihatnya"
+  "Saved but not published; only people with write access see it": "Disimpan tetapi belum diterbitkan; hanya orang dengan akses tulis yang melihatnya",
+  "Parent folder": "Folder induk"
 }

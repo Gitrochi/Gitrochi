@@ -1681,5 +1681,6 @@
   "Assets: {0}": "Archivos: {0}",
   "Published releases": "Versiones publicadas",
   "Published, but marked as not ready for production": "Publicada, pero marcada como no lista para producción",
-  "Saved but not published; only people with write access see it": "Guardada pero no publicada; solo la ven quienes tienen acceso de escritura"
+  "Saved but not published; only people with write access see it": "Guardada pero no publicada; solo la ven quienes tienen acceso de escritura",
+  "Parent folder": "Carpeta superior"
 }
