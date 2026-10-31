@@ -49,6 +49,8 @@ export interface LedgerSession {
   snoozeUntil?: Ms;
   archivedAt?: Ms;
   openQuestions: number;
+  /** Baselines newer than baseCurrent (the core adds it to v0) */
+  behind?: number;
   stream?: { line: string };
   autoContinue?: { enabled: boolean; delaySec: number };
 }
@@ -80,6 +82,8 @@ export interface LedgerQuestion {
   state: "open" | "answered" | "dismissed";
   answer?: string;
   answeredBy?: "human" | "auto";
+  /** The session settled the question itself (the core adds it to v0) */
+  resolvedBy?: "agent";
   createdAt: Ms;
   answeredAt?: Ms;
   deliveredAt?: Ms;

@@ -33,7 +33,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
     );
   }
   const busy = store.busy > 0;
-  const newer = (store.state?.baselines ?? []).filter((b) => b.project === s.project && s.baseCurrent && compareVersions(b.version, s.baseCurrent) > 0).length;
+  const newer = s.behind ?? (store.state?.baselines ?? []).filter((b) => b.project === s.project && s.baseCurrent && compareVersions(b.version, s.baseCurrent) > 0).length;
   const agent = s.links.agentId ? agents.sessions.find((a) => a.id === s.links.agentId) : undefined;
   const questions = detail?.questions ?? [];
   const open = questions.filter((q) => q.state === "open");
@@ -83,7 +83,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
             {answered.map((q) => (
               <div key={q.id} className="ledger-question">
                 <span className="ledger-row-text quiet selectable">{q.text}</span>
-                <span className="ledger-row-text selectable">{q.state === "dismissed" ? t("Dismissed") : q.answeredBy === "auto" ? t("Answered automatically: {0}", q.answer ?? "") : t("Answered: {0}", q.answer ?? "")}</span>
+                <span className="ledger-row-text selectable">{q.state === "dismissed" ? t("Dismissed") : q.resolvedBy === "agent" ? t("Settled by the session") : q.answeredBy === "auto" ? t("Answered automatically: {0}", q.answer ?? "") : t("Answered: {0}", q.answer ?? "")}</span>
               </div>
             ))}
           </Section>
