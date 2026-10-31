@@ -9,10 +9,10 @@ import "./ledger-import-sheet.css";
 /**
  * Paste reports: agents that cannot reach the Ledger (a web chat, another computer) end their answer with report
  * blocks, and a person pastes them here. Each report is imported on its own and gets its own line in the result:
- * imported, already imported, or the reason it failed. Without `onOpenSession` the imported sessions are named, not
- * linked. (macOS: Views/Ledger/LedgerImportSheet.swift)
+ * imported, already imported, or the reason it failed. `onImportLegacy` offers a claude-ledger database instead;
+ * without `onOpenSession` the imported sessions are named, not linked. (macOS: Views/Ledger/LedgerImportSheet.swift)
  */
-export function LedgerImportSheet({ store, onClose, onOpenSession }: { store: LedgerStore; onClose: () => void; onOpenSession?: (id: string) => void }) {
+export function LedgerImportSheet({ store, onClose, onOpenSession, onImportLegacy }: { store: LedgerStore; onClose: () => void; onOpenSession?: (id: string) => void; onImportLegacy?: () => void }) {
   const [text, setText] = useState("");
   const [working, setWorking] = useState(false);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -68,6 +68,12 @@ export function LedgerImportSheet({ store, onClose, onOpenSession }: { store: Le
       />
       <span className="hint">{t("{0} imports · Importing the same report twice is recognised and skipped.", keyLabel("Ctrl+Enter"))}</span>
       {error && <span role="alert" className="error-text">{error}</span>}
+      {onImportLegacy && (
+        <div className="row">
+          <span className="hint grow">{t("Moving from claude-ledger? Import its database instead.")}</span>
+          <Button size="small" onClick={onImportLegacy}>{t("Import from claude-ledger…")}</Button>
+        </div>
+      )}
       {summary && (
         <div className="col" style={{ gap: 6 }} aria-live="polite">
           <strong>{t("{0} imported · {1} already imported · {2} failed", summary.imported, summary.duplicates, summary.failed)}</strong>

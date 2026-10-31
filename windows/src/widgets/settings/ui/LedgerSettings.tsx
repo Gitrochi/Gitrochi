@@ -2,7 +2,7 @@ import { ClipboardPaste, DatabaseBackup, FolderOpen, Plus, PlugZap, RefreshCw, X
 import { useCallback, useEffect, useState } from "react";
 import { type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
-import { LedgerImportSheet } from "@/features/import-ledger-reports";
+import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -51,7 +51,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [backup, setBackup] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<"connect" | "import" | null>(null);
+  const [sheet, setSheet] = useState<"connect" | "import" | "legacy" | null>(null);
   const load = useCallback(async () => {
     try {
       const [i, s, p] = await Promise.all([store.info(), store.readSettings(), store.readProjects()]);
@@ -147,11 +147,13 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
         <div className="row" style={{ flexWrap: "wrap" }}>
           <Button size="small" onClick={() => setSheet("connect")}><PlugZap size={13} />{t("Connect Claude Code…")}</Button>
           <Button size="small" onClick={() => setSheet("import")}><ClipboardPaste size={13} />{t("Import…")}</Button>
+          <Button size="small" onClick={() => setSheet("legacy")}><DatabaseBackup size={13} />{t("Import from claude-ledger…")}</Button>
         </div>
       </div>
 
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
+      {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
     </div>
   );
 }

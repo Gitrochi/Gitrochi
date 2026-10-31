@@ -1549,6 +1549,7 @@
   "Connect and import": "Kết nối và nhập",
   "Connect Claude Code…": "Kết nối Claude Code…",
   "Import…": "Nhập…",
+  "Import from claude-ledger…": "Nhập từ claude-ledger…",
   "Roles and stream lines": "Vai trò và tuyến kênh",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Mỗi loại phiên có một vai trò. Các loại triển khai báo cáo theo chu kỳ trên một tuyến kênh; tuyến có bàn giao sẽ xác nhận các phiên quyết định mà nó áp dụng bản cơ sở.",
   "Stream line": "Tuyến kênh",
@@ -1573,6 +1574,19 @@
   "Git tags": "Thẻ Git",
   "Folder names": "Tên thư mục",
   "Registered versions only": "Chỉ các phiên bản đã đăng ký",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Phiên: {0} · sự kiện: {1} · câu hỏi: {2} · bản cơ sở: {3} · dự án: {4}",
+  "Choose a claude-ledger database": "Chọn cơ sở dữ liệu claude-ledger",
+  "Import from claude-ledger": "Nhập từ claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Sao chép dự án, bản cơ sở, phiên và câu hỏi từ cơ sở dữ liệu claude-ledger vào Sổ cái. Tệp chỉ được đọc, không bao giờ bị thay đổi.",
+  "No file chosen": "Chưa chọn tệp",
+  "Counting what an import would copy…": "Đang đếm những gì một lần nhập sẽ sao chép…",
+  "Nothing new to import.": "Không có gì mới để nhập.",
+  "An import would copy:": "Một lần nhập sẽ sao chép:",
+  "Already in the Ledger, skipped with their history: {0}": "Đã có trong Sổ cái, bỏ qua cùng lịch sử: {0}",
+  "Rows that could not be read, left out: {0}": "Dòng không đọc được, bị bỏ qua: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Chuyển từ claude-ledger? Hãy nhập cơ sở dữ liệu của nó.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Chuyển từ claude-ledger? Mang theo các phiên, câu hỏi và bản cơ sở của nó.",
   "Role": "Vai trò",
-  "Browse…": "Duyệt…"
+  "Browse…": "Duyệt…",
+  "Choose a file": "Chọn tệp"
 }

@@ -109,6 +109,7 @@ pub fn run() {
             local_projects::local_projects_write,
             repo_index::index_call,
             ledger::ledger_call,
+            ledger::ledger_pick_database,
             update::update_check,
             update::update_install,
             update::update_verify,

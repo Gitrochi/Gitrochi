@@ -1547,6 +1547,7 @@
   "Connect and import": "Koppelen en importeren",
   "Connect Claude Code…": "Claude Code koppelen…",
   "Import…": "Importeren…",
+  "Import from claude-ledger…": "Importeren uit claude-ledger…",
   "Roles and stream lines": "Rollen en streamlijnen",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Elke soort sessie heeft een rol. Implementatiesoorten melden in cycli op een streamlijn; een lijn die overdraagt, bevestigt de beslissessies waarvan ze de baselines toepast.",
   "Stream line": "Streamlijn",
@@ -1571,6 +1572,19 @@
   "Git tags": "Git-tags",
   "Folder names": "Mapnamen",
   "Registered versions only": "Alleen geregistreerde versies",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sessies: {0} · gebeurtenissen: {1} · vragen: {2} · baselines: {3} · projecten: {4}",
+  "Choose a claude-ledger database": "Kies een claude-ledger-database",
+  "Import from claude-ledger": "Importeren uit claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Kopieert de projecten, baselines, sessies en vragen van een claude-ledger-database naar het Register. Het bestand wordt alleen gelezen, nooit gewijzigd.",
+  "No file chosen": "Geen bestand gekozen",
+  "Counting what an import would copy…": "Tellen wat een import zou kopiëren…",
+  "Nothing new to import.": "Niets nieuws om te importeren.",
+  "An import would copy:": "Een import zou kopiëren:",
+  "Already in the Ledger, skipped with their history: {0}": "Al in het Register, met hun geschiedenis overgeslagen: {0}",
+  "Rows that could not be read, left out: {0}": "Onleesbare rijen, weggelaten: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Kom je van claude-ledger? Importeer dan de database daarvan.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Kom je van claude-ledger? Neem de sessies, vragen en baselines mee.",
   "Role": "Rol",
-  "Browse…": "Bladeren…"
+  "Browse…": "Bladeren…",
+  "Choose a file": "Kies een bestand"
 }

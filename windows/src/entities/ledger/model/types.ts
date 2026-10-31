@@ -284,6 +284,18 @@ export interface LedgerBackupResult {
   removed: string[];
 }
 
+/** What an import of a claude-ledger database copied, or with a dry run would copy */
+export interface LedgerLegacyImport {
+  ok: boolean;
+  dryRun: boolean;
+  rev: number;
+  counts: { projects: number; baselines: number; baselinesUpdated: number; sessions: number; events: number; questions: number; imports: number };
+  /** Sessions the ledger already has; neither they nor their history were copied */
+  skipped: string[];
+  /** Rows that could not be read; everything else was imported */
+  errors: string[];
+}
+
 export interface LedgerSessionDetail {
   session: LedgerSession;
   events: LedgerEvent[];
@@ -367,5 +379,7 @@ export interface LedgerMethods {
   project_set: { args: LedgerProjectChange; result: { ok: boolean; rev: number; project: LedgerProjectSettings } };
   /** Reads a project's baselines from its source now (every project without one) */
   scan: { args: { project?: string }; result: { results: LedgerScanResult[] } };
+  /** A claude-ledger database, read only; `dryRun` counts without writing */
+  import_legacy: { args: { path: string; dryRun?: boolean }; result: LedgerLegacyImport };
 }
 export type LedgerMethod = keyof LedgerMethods;

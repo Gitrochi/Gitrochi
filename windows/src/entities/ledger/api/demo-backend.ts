@@ -151,6 +151,8 @@ export class DemoLedgerBackend implements LedgerBackend {
         const keys = typeof args.project === "string" ? [args.project] : w.projects.map((p) => p.key);
         return { results: keys.map((key) => this.scan(key)) };
       }
+      case "import_legacy":
+        return this.importLegacy(args);
       default:
         throw new LedgerError("UNKNOWN_METHOD", `Unknown method ${String(method)}`);
     }
@@ -229,6 +231,41 @@ export class DemoLedgerBackend implements LedgerBackend {
     const found = this.world.baselines.filter((b) => b.project === key && b.source !== "inferred").length;
     if (p.baselineSource === "folder" && !p.baselineDir) return { project: key, source: p.baselineSource, found: 0, added: 0, error: "No baseline folder is set" };
     return { project: key, source: p.baselineSource, found: p.baselineSource === "manual" ? 0 : found, added: 0 };
+  }
+
+  /**
+   * A claude-ledger database, as far as a demo has one: the file is never read and always holds the same two sessions
+   * of a project "ledger", so a dry run counts them, an import adds them and a second import skips them.
+   */
+  private importLegacy(args: Record<string, unknown>) {
+    const w = this.world, now = this.now();
+    if (typeof args.path !== "string" || !args.path.trim()) throw invalid("Missing path (the claude-ledger database file)");
+    const dryRun = args.dryRun === true;
+    const ids = ["S1020-01", "S1021-01"];
+    const skipped = ids.filter((id) => w.sessions.some((s) => s.id === id));
+    const fresh = ids.filter((id) => !skipped.includes(id));
+    const newProject = fresh.length > 0 && !w.projects.some((p) => p.key === "ledger");
+    const versions = fresh.length ? ["0.9.0", "1.0.0"].filter((v) => !w.baselines.some((b) => b.project === "ledger" && b.version === v)) : [];
+    const counts = { projects: newProject ? 1 : 0, baselines: versions.length, baselinesUpdated: 0, sessions: fresh.length, events: fresh.length * 3, questions: fresh.includes("S1021-01") ? 1 : 0, imports: fresh.length ? 2 : 0 };
+    if (!dryRun && fresh.length) {
+      const day = 24 * 60 * 60_000;
+      if (newProject) w.projects.push({ key: "ledger", name: "ledger" });
+      versions.forEach((version, i) => w.baselines.push({ project: "ledger", version, ts: now - (12 - i) * day, source: "tag" }));
+      for (const [i, id] of fresh.entries()) {
+        const merged = id === "S1020-01", at = now - (10 - i) * day;
+        w.sessions.push({ id, project: "ledger", title: merged ? "Release checklist" : "API naming", kind: merged ? "document" : "decision", role: merged ? "document" : "decision", status: merged ? "merged" : "active", ...(merged ? { mergedInto: "1.0.0", ackAt: at + 2 * 3_600_000 } : {}), baseVersion: "0.9.0", baseCurrent: "0.9.0", touches: [], related: [], links: {}, color: (w.sessions.filter((s) => s.project === "ledger").length % 8), createdAt: at, lastAt: at + 3_600_000, lastAgentAt: at + 3_600_000 });
+        const event = (type: string, ts: Ms, summary: string) => w.events.push({ id: w.nextEvent++, sessionId: id, ts, type, actor: "agent", summary });
+        event("start", at, merged ? "Started the release checklist" : "Started on the API names");
+        event("progress", at + 1_800_000, merged ? "Checked the release notes" : "Listed the endpoints");
+        if (merged) event("merged", at + 3_600_000, "Merged into 1.0.0");
+        else {
+          event("question", at + 3_600_000, "Asked about the naming rule");
+          w.questions.push({ id: w.nextQuestion++, sessionId: id, text: "Plural or singular resource names?", state: "open", createdAt: at + 3_600_000 });
+        }
+      }
+      w.rev++;
+    }
+    return { ok: true, dryRun, rev: w.rev, counts, skipped, errors: [] };
   }
 
   private state(project: string | undefined, range: LedgerRange): LedgerState {

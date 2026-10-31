@@ -38,6 +38,7 @@ describe("Ledger demo backend: contract", () => {
     expectShape(await backend.call("projects", {}), { projects: [specs.project] });
     expectShape(await backend.call("project_set", { project: "atlas", name: "Atlas" }), { ok: "boolean", rev: "number", project: specs.project });
     expectShape(await backend.call("scan", {}), specs.scan);
+    expectShape(await backend.call("import_legacy", { path: "C:/Tools/claude-ledger/data/ledger.db", dryRun: true }), specs.legacyImport);
   });
 
   it("has two projects, every verdict, a stream with three cycles, overlaps and waiting prompts", async () => {
@@ -277,7 +278,9 @@ describe("Ledger demo backend: large data", () => {
   });
 });
 
-describe("Ledger demo backend: settings and projects", () => {
+describe("Ledger demo backend: settings, projects and a claude-ledger database", () => {
+  const LEGACY = "C:/Tools/claude-ledger/data/ledger.db";
+
   it("checks settings as the core does, restores defaults with null, and follows the stale hours", async () => {
     const { backend } = demo();
     const defaults = await backend.call("settings", {});
@@ -309,6 +312,21 @@ describe("Ledger demo backend: settings and projects", () => {
     await backend.call("project_set", { project: "atlas", baselineDir: "C:/Specs", repoPath: null });
     expect((await backend.call("scan", { project: "atlas" })).results[0]).toMatchObject({ project: "atlas", source: "folder", added: 0 });
     expect((await backend.call("projects", {})).projects[0]).not.toHaveProperty("repoPath");
+  });
+
+  it("counts a claude-ledger database first, imports it once and skips it the second time", async () => {
+    const { backend } = demo();
+    await expect(backend.call("import_legacy", { path: " " })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    const { rev } = await backend.call("rev", {});
+    const dry = await backend.call("import_legacy", { path: LEGACY, dryRun: true });
+    expect([dry.dryRun, dry.counts.sessions, dry.skipped, (await backend.call("rev", {})).rev]).toEqual([true, 2, [], rev]);
+    const done = await backend.call("import_legacy", { path: LEGACY });
+    expect([done.dryRun, done.counts, done.rev]).toEqual([false, dry.counts, rev + 1]);
+    const s = await backend.call("state", {});
+    expect(s.sessions.filter((x) => x.project === "ledger").map((x) => x.verdict).sort()).toEqual(["expirable", "needs_human"]);
+    expect(s.projects.map((x) => x.key)).toContain("ledger");
+    const again = await backend.call("import_legacy", { path: LEGACY, dryRun: true });
+    expect([again.counts.sessions, again.skipped]).toEqual([0, ["S1020-01", "S1021-01"]]);
   });
 });
 

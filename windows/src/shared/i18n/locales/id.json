@@ -1547,6 +1547,7 @@
   "Connect and import": "Hubungkan dan impor",
   "Connect Claude Code…": "Hubungkan Claude Code…",
   "Import…": "Impor…",
+  "Import from claude-ledger…": "Impor dari claude-ledger…",
   "Roles and stream lines": "Peran dan jalur stream",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Setiap jenis sesi punya peran. Jenis implementasi melapor per siklus di jalur stream; jalur yang menyerahkan mengonfirmasi sesi keputusan yang baseline-nya ia terapkan.",
   "Stream line": "Jalur stream",
@@ -1571,6 +1572,19 @@
   "Git tags": "Tag Git",
   "Folder names": "Nama folder",
   "Registered versions only": "Hanya versi terdaftar",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sesi: {0} · peristiwa: {1} · pertanyaan: {2} · baseline: {3} · proyek: {4}",
+  "Choose a claude-ledger database": "Pilih basis data claude-ledger",
+  "Import from claude-ledger": "Impor dari claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Menyalin proyek, baseline, sesi, dan pertanyaan dari basis data claude-ledger ke Ledger. File hanya dibaca, tidak pernah diubah.",
+  "No file chosen": "Belum ada file dipilih",
+  "Counting what an import would copy…": "Menghitung yang akan disalin impor…",
+  "Nothing new to import.": "Tidak ada yang baru untuk diimpor.",
+  "An import would copy:": "Impor akan menyalin:",
+  "Already in the Ledger, skipped with their history: {0}": "Sudah ada di Ledger, dilewati beserta riwayatnya: {0}",
+  "Rows that could not be read, left out: {0}": "Baris yang tidak terbaca, dilewati: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Pindah dari claude-ledger? Impor basis datanya saja.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Pindah dari claude-ledger? Bawa sesi, pertanyaan, dan baseline-nya.",
   "Role": "Peran",
-  "Browse…": "Telusuri…"
+  "Browse…": "Telusuri…",
+  "Choose a file": "Pilih file"
 }

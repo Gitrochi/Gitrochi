@@ -1589,6 +1589,7 @@
   "Connect and import": "เชื่อมต่อและนำเข้า",
   "Connect Claude Code…": "เชื่อมต่อ Claude Code…",
   "Import…": "นำเข้า…",
+  "Import from claude-ledger…": "นำเข้าจาก claude-ledger…",
   "Roles and stream lines": "บทบาทและสายสตรีม",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "เซสชันแต่ละประเภทมีบทบาท ประเภทการพัฒนาจะรายงานเป็นรอบบนสายสตรีม สายที่ส่งต่อจะยืนยันเซสชันการตัดสินใจที่สายนั้นนำเบสไลน์ไปใช้",
   "Stream line": "สายสตรีม",
@@ -1613,6 +1614,19 @@
   "Git tags": "แท็ก Git",
   "Folder names": "ชื่อโฟลเดอร์",
   "Registered versions only": "เฉพาะเวอร์ชันที่ลงทะเบียน",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "เซสชัน {0} · เหตุการณ์ {1} · คำถาม {2} · เบสไลน์ {3} · โปรเจกต์ {4}",
+  "Choose a claude-ledger database": "เลือกฐานข้อมูล claude-ledger",
+  "Import from claude-ledger": "นำเข้าจาก claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "คัดลอกโปรเจกต์ เบสไลน์ เซสชัน และคำถามจากฐานข้อมูล claude-ledger มายัง Ledger ไฟล์จะถูกอ่านเท่านั้น ไม่มีการแก้ไข",
+  "No file chosen": "ยังไม่ได้เลือกไฟล์",
+  "Counting what an import would copy…": "กำลังนับสิ่งที่การนำเข้าจะคัดลอก…",
+  "Nothing new to import.": "ไม่มีอะไรใหม่ให้นำเข้า",
+  "An import would copy:": "การนำเข้าจะคัดลอก:",
+  "Already in the Ledger, skipped with their history: {0}": "มีอยู่ใน Ledger แล้ว ข้ามไปพร้อมประวัติ: {0}",
+  "Rows that could not be read, left out: {0}": "แถวที่อ่านไม่ได้และถูกข้าม: {0}",
+  "Moving from claude-ledger? Import its database instead.": "ย้ายมาจาก claude-ledger ใช่ไหม นำเข้าฐานข้อมูลของมันแทน",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "ย้ายมาจาก claude-ledger ใช่ไหม นำเซสชัน คำถาม และเบสไลน์มาด้วย",
   "Role": "บทบาท",
-  "Browse…": "เรียกดู…"
+  "Browse…": "เรียกดู…",
+  "Choose a file": "เลือกไฟล์"
 }

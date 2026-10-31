@@ -1571,6 +1571,7 @@
   "Connect and import": "Collega e importa",
   "Connect Claude Code…": "Collega Claude Code…",
   "Import…": "Importa…",
+  "Import from claude-ledger…": "Importa da claude-ledger…",
   "Roles and stream lines": "Ruoli e linee di stream",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Ogni tipo di sessione ha un ruolo. I tipi di implementazione riferiscono a cicli su una linea di stream; una linea che passa il testimone conferma le sessioni di decisione di cui applica le baseline.",
   "Stream line": "Linea di stream",
@@ -1595,6 +1596,19 @@
   "Git tags": "Tag Git",
   "Folder names": "Nomi delle cartelle",
   "Registered versions only": "Solo versioni registrate",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sessioni: {0} · eventi: {1} · domande: {2} · baseline: {3} · progetti: {4}",
+  "Choose a claude-ledger database": "Scegli un database di claude-ledger",
+  "Import from claude-ledger": "Importa da claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Copia progetti, baseline, sessioni e domande di un database di claude-ledger nel Registro. Il file viene solo letto, mai modificato.",
+  "No file chosen": "Nessun file scelto",
+  "Counting what an import would copy…": "Conteggio di ciò che un’importazione copierebbe…",
+  "Nothing new to import.": "Niente di nuovo da importare.",
+  "An import would copy:": "Un’importazione copierebbe:",
+  "Already in the Ledger, skipped with their history: {0}": "Già nel Registro, saltate con la loro cronologia: {0}",
+  "Rows that could not be read, left out: {0}": "Righe non leggibili, escluse: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Arrivi da claude-ledger? Importa invece il suo database.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Arrivi da claude-ledger? Porta con te sessioni, domande e baseline.",
   "Role": "Ruolo",
-  "Browse…": "Sfoglia…"
+  "Browse…": "Sfoglia…",
+  "Choose a file": "Scegli un file"
 }

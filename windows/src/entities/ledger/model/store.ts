@@ -163,6 +163,13 @@ export class LedgerStore extends LedgerReader {
   backup() {
     return this.backend.call("backup", {});
   }
+
+  /** A claude-ledger database: `dryRun` only counts what an import would copy */
+  async importLegacy(path: string, dryRun: boolean) {
+    const result = await this.backend.call("import_legacy", { path, dryRun });
+    if (!dryRun) await this.refresh(true);
+    return result;
+  }
 }
 
 let shared: LedgerStore | null = null;

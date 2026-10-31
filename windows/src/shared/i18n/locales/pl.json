@@ -1576,6 +1576,7 @@
   "Connect and import": "Połączenie i import",
   "Connect Claude Code…": "Połącz Claude Code…",
   "Import…": "Importuj…",
+  "Import from claude-ledger…": "Importuj z claude-ledger…",
   "Roles and stream lines": "Role i linie kanałów",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Każdy rodzaj sesji ma swoją rolę. Rodzaje implementacyjne raportują w cyklach na linii kanału; linia, która przekazuje, potwierdza sesje decyzyjne, których wersje bazowe stosuje.",
   "Stream line": "Linia kanału",
@@ -1600,6 +1601,19 @@
   "Git tags": "Tagi Git",
   "Folder names": "Nazwy folderów",
   "Registered versions only": "Tylko zarejestrowane wersje",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sesje: {0} · zdarzenia: {1} · pytania: {2} · wersje bazowe: {3} · projekty: {4}",
+  "Choose a claude-ledger database": "Wybierz bazę danych claude-ledger",
+  "Import from claude-ledger": "Importuj z claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Kopiuje projekty, wersje bazowe, sesje i pytania z bazy danych claude-ledger do Ewidencji. Plik jest tylko odczytywany, nigdy zmieniany.",
+  "No file chosen": "Nie wybrano pliku",
+  "Counting what an import would copy…": "Liczenie, co skopiowałby import…",
+  "Nothing new to import.": "Nie ma nic nowego do zaimportowania.",
+  "An import would copy:": "Import skopiowałby:",
+  "Already in the Ledger, skipped with their history: {0}": "Już są w Ewidencji, pominięte wraz z historią: {0}",
+  "Rows that could not be read, left out: {0}": "Nieczytelne wiersze, pominięte: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Przechodzisz z claude-ledger? Zaimportuj jego bazę danych.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Przechodzisz z claude-ledger? Przenieś jego sesje, pytania i wersje bazowe.",
   "Role": "Rola",
-  "Browse…": "Przeglądaj…"
+  "Browse…": "Przeglądaj…",
+  "Choose a file": "Wybierz plik"
 }

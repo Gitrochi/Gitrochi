@@ -1575,6 +1575,7 @@
   "Connect and import": "Připojení a import",
   "Connect Claude Code…": "Připojit Claude Code…",
   "Import…": "Importovat…",
+  "Import from claude-ledger…": "Importovat z claude-ledger…",
   "Roles and stream lines": "Role a linie kanálů",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Každý druh relace má roli. Implementační druhy hlásí v cyklech na linii kanálu; linie, která předává, potvrzuje rozhodovací relace, jejichž základní verze uplatňuje.",
   "Stream line": "Linie kanálu",
@@ -1599,6 +1600,19 @@
   "Git tags": "Značky Gitu",
   "Folder names": "Názvy složek",
   "Registered versions only": "Jen registrované verze",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Relace: {0} · události: {1} · otázky: {2} · základní verze: {3} · projekty: {4}",
+  "Choose a claude-ledger database": "Vyberte databázi claude-ledger",
+  "Import from claude-ledger": "Importovat z claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Zkopíruje projekty, základní verze, relace a otázky z databáze claude-ledger do Evidence. Soubor se jen čte, nikdy se nemění.",
+  "No file chosen": "Není vybrán žádný soubor",
+  "Counting what an import would copy…": "Počítá se, co by import zkopíroval…",
+  "Nothing new to import.": "Není co nového importovat.",
+  "An import would copy:": "Import by zkopíroval:",
+  "Already in the Ledger, skipped with their history: {0}": "Už jsou v Evidenci, přeskočeno i s historií: {0}",
+  "Rows that could not be read, left out: {0}": "Nečitelné řádky, vynechané: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Přecházíte z claude-ledger? Importujte raději jeho databázi.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Přecházíte z claude-ledger? Přeneste si jeho relace, otázky a základní verze.",
   "Role": "Role",
-  "Browse…": "Procházet…"
+  "Browse…": "Procházet…",
+  "Choose a file": "Vybrat soubor"
 }

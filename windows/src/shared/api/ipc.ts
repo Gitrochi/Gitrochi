@@ -188,6 +188,8 @@ export const ipc = {
   indexCall: (request: IndexRequest) => invoke<IndexResponse>("index_call", { request }),
   /** Ledger (crates/gitrochi-ledger): one method with JSON arguments, answered with JSON or {error} */
   ledgerCall: (method: string, args: Record<string, unknown>) => invoke<unknown>("ledger_call", { method, args }),
+  /** A claude-ledger database to import; null when cancelled */
+  ledgerPickDatabase: (title: string) => invoke<string | null>("ledger_pick_database", { title }),
   /** Saves bytes as <temp>/Gitrochi/<name> and returns the path (pasted images, dropped files); raw body, name hex-encoded in a header */
   writeTemp: (name: string, bytes: Uint8Array) =>
     tauriInvoke<string>("fs_write_temp", bytes, { headers: { "x-name-hex": Array.from(new TextEncoder().encode(name), (b) => b.toString(16).padStart(2, "0")).join("") } }).catch((e) => {

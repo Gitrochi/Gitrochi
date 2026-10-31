@@ -1582,6 +1582,7 @@
   "Connect and import": "Bağlan ve içe aktar",
   "Connect Claude Code…": "Claude Code'u bağla…",
   "Import…": "İçe aktar…",
+  "Import from claude-ledger…": "claude-ledger'dan içe aktar…",
   "Roles and stream lines": "Roller ve kanal hatları",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Her oturum türünün bir rolü vardır. Uygulama türleri bir kanal hattında döngüler hâlinde rapor verir; devreden bir hat, temel sürümlerini uyguladığı karar oturumlarını onaylar.",
   "Stream line": "Kanal hattı",
@@ -1606,6 +1607,19 @@
   "Git tags": "Git etiketleri",
   "Folder names": "Klasör adları",
   "Registered versions only": "Yalnızca kayıtlı sürümler",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Oturum: {0} · olay: {1} · soru: {2} · temel sürüm: {3} · proje: {4}",
+  "Choose a claude-ledger database": "Bir claude-ledger veritabanı seçin",
+  "Import from claude-ledger": "claude-ledger'dan içe aktar",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Bir claude-ledger veritabanındaki projeleri, temel sürümleri, oturumları ve soruları Defter'e kopyalar. Dosya yalnızca okunur, asla değiştirilmez.",
+  "No file chosen": "Dosya seçilmedi",
+  "Counting what an import would copy…": "İçe aktarmanın neleri kopyalayacağı sayılıyor…",
+  "Nothing new to import.": "İçe aktarılacak yeni bir şey yok.",
+  "An import would copy:": "İçe aktarma şunları kopyalar:",
+  "Already in the Ledger, skipped with their history: {0}": "Zaten Defter'de, geçmişleriyle birlikte atlandı: {0}",
+  "Rows that could not be read, left out: {0}": "Okunamayan ve dışarıda bırakılan satır: {0}",
+  "Moving from claude-ledger? Import its database instead.": "claude-ledger'dan mı geçiyorsunuz? Bunun yerine veritabanını içe aktarın.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger'dan mı geçiyorsunuz? Oturumlarını, sorularını ve temel sürümlerini getirin.",
   "Role": "Rol",
-  "Browse…": "Gözat…"
+  "Browse…": "Gözat…",
+  "Choose a file": "Dosya seç"
 }

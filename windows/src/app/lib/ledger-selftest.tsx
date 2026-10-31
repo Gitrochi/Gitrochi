@@ -39,13 +39,13 @@ const command = (k: string) => press(k, env.os === "macos" ? { metaKey: true } :
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
  * waiting prompts, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
- * the narrow sheet, Streams, the onboarding sheets, and Settings › Ledger. Nothing leaves the demo backend: the ledger
- * core itself is blocked.
+ * the narrow sheet, Streams, the onboarding sheets with the claude-ledger import, and Settings › Ledger. Nothing leaves
+ * the demo backend: the ledger core itself is blocked.
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
   const [{ DemoLedgerBackend, LedgerStore, ledgerStore, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
-  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall };
+  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
   let version = 0;
@@ -68,6 +68,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ipc.writeText = async () => { unexpected.push("write"); throw new Error("Ledger fixture blocked a write"); };
     ipc.openUrl = async () => { unexpected.push("url"); };
     ipc.ledgerCall = async () => { unexpected.push("ledger core"); throw new Error("Ledger fixture blocked the ledger core"); };
+    ipc.ledgerPickDatabase = async () => "C:/fixture/claude-ledger/data/ledger.db";
     // the app's own Ledger runs on the demo too
     env.ledgerDemo = "1";
 
@@ -221,6 +222,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
+    ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");
     type($<HTMLTextAreaElement>(".modal textarea")!, '```ledger\n{"event":"start","session":"S1101-01","project":"atlas","title":"Imported in the self-test"}\n```\n```ledger\n{"event":"teleport"}\n```');
@@ -236,6 +238,21 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     button(".modal", "Done")!.click();
     await until(() => !$(".modal"));
     passed.push("onboarding, import and connect");
+
+    // Import from claude-ledger: a dry run counts first, then the import adds the sessions
+    $<HTMLButtonElement>(`.ledger-toolbar button[aria-label="${t("Paste reports")}"]`)!.click();
+    ensure(await until(() => button(".modal", "Import from claude-ledger…")), "The import sheet did not offer the claude-ledger import");
+    button(".modal", "Import from claude-ledger…")!.click();
+    ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger did not open");
+    ensure(button(".modal-footer", "Import")?.disabled, "Import from claude-ledger must wait for a file and its count");
+    button(".modal", "Choose a file")!.click();
+    ensure(await until(() => $(".modal .ledger-legacy-result") && !button(".modal-footer", "Import")?.disabled), "Choosing a claude-ledger file did not count what it would copy");
+    ensure(!empty.session("S1021-01"), "The dry run must not import anything");
+    button(".modal-footer", "Import")!.click();
+    ensure(await until(() => empty.session("S1021-01") && button(".modal-footer", "Done")), "Import from claude-ledger did not add the sessions");
+    button(".modal-footer", "Done")!.click();
+    await until(() => !$(".modal"));
+    passed.push("claude-ledger import");
 
     // Settings › Ledger: no tab without the preview; with it, the app's Ledger settings on the same backend
     root.unmount();
@@ -285,6 +302,9 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     button(".ledger-settings", "Connect Claude Code…")!.click();
     ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
     button(".modal", "Done")!.click();
+    button(".ledger-settings", "Import from claude-ledger…")!.click();
+    ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");
+    button(".modal-footer", "Close")!.click();
     passed.push("settings");
 
     ensure(!unexpected.length, `The Ledger reached outside the demo: ${unexpected.join(", ")}`);
@@ -298,6 +318,6 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     env.ledgerPreview = original.preview;
     env.ledgerDemo = original.demo;
     settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;
-    ipc.run = original.run; ipc.http = original.http; ipc.writeText = original.write; ipc.openUrl = original.open; ipc.ledgerCall = original.core;
+    ipc.run = original.run; ipc.http = original.http; ipc.writeText = original.write; ipc.openUrl = original.open; ipc.ledgerCall = original.core; ipc.ledgerPickDatabase = original.pick;
   }
 }

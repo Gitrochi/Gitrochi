@@ -1593,6 +1593,7 @@
   "Connect and import": "Подключение и импорт",
   "Connect Claude Code…": "Подключить Claude Code…",
   "Import…": "Импортировать…",
+  "Import from claude-ledger…": "Импортировать из claude-ledger…",
   "Roles and stream lines": "Роли и линии каналов",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "У каждого типа сеанса есть роль. Типы реализации отчитываются циклами на линии канала; линия, которая передаёт, подтверждает сеансы решений, чьи базовые версии она применяет.",
   "Stream line": "Линия канала",
@@ -1617,6 +1618,19 @@
   "Git tags": "Теги Git",
   "Folder names": "Имена папок",
   "Registered versions only": "Только зарегистрированные версии",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Сеансов: {0} · событий: {1} · вопросов: {2} · базовых версий: {3} · проектов: {4}",
+  "Choose a claude-ledger database": "Выберите базу данных claude-ledger",
+  "Import from claude-ledger": "Импорт из claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Копирует проекты, базовые версии, сеансы и вопросы из базы данных claude-ledger в книгу учёта. Файл только читается и никогда не изменяется.",
+  "No file chosen": "Файл не выбран",
+  "Counting what an import would copy…": "Подсчёт того, что скопирует импорт…",
+  "Nothing new to import.": "Нового для импорта нет.",
+  "An import would copy:": "Импорт скопирует:",
+  "Already in the Ledger, skipped with their history: {0}": "Уже есть в книге учёта, пропущены вместе с историей: {0}",
+  "Rows that could not be read, left out: {0}": "Не удалось прочитать и пропущено строк: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Переходите с claude-ledger? Импортируйте его базу данных.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Переходите с claude-ledger? Перенесите его сеансы, вопросы и базовые версии.",
   "Role": "Роль",
-  "Browse…": "Обзор…"
+  "Browse…": "Обзор…",
+  "Choose a file": "Выбрать файл"
 }

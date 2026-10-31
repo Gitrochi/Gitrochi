@@ -3494,6 +3494,7 @@
   "Connect and import": "연결과 가져오기",
   "Connect Claude Code…": "Claude Code 연결…",
   "Import…": "가져오기…",
+  "Import from claude-ledger…": "claude-ledger에서 가져오기…",
   "Roles and stream lines": "역할과 구현 채널",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "세션 종류마다 역할이 있습니다. 구현 종류는 구현 채널에서 주기별로 보고하고, 인계하는 채널은 자신이 적용한 기준 버전의 판정 세션을 확인 처리합니다.",
   "Stream line": "채널",
@@ -3517,5 +3518,17 @@
   "Other": "기타",
   "Git tags": "Git 태그",
   "Folder names": "폴더 이름",
-  "Registered versions only": "등록한 버전만"
+  "Registered versions only": "등록한 버전만",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "세션 {0}개 · 이벤트 {1}개 · 질문 {2}개 · 기준 버전 {3}개 · 프로젝트 {4}개",
+  "Choose a claude-ledger database": "claude-ledger 데이터베이스 선택",
+  "Import from claude-ledger": "claude-ledger에서 가져오기",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "claude-ledger 데이터베이스의 프로젝트, 기준 버전, 세션, 질문을 원장으로 복사합니다. 파일은 읽기만 하고 바꾸지 않습니다.",
+  "No file chosen": "선택한 파일 없음",
+  "Counting what an import would copy…": "가져올 내용을 세는 중…",
+  "Nothing new to import.": "새로 가져올 것이 없습니다.",
+  "An import would copy:": "가져오면 복사될 내용:",
+  "Already in the Ledger, skipped with their history: {0}": "이미 원장에 있어 기록과 함께 건너뜀: {0}",
+  "Rows that could not be read, left out: {0}": "읽지 못해 빠진 행: {0}개",
+  "Moving from claude-ledger? Import its database instead.": "claude-ledger를 쓰고 있었다면 그 데이터베이스를 가져오세요.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger를 쓰고 있었다면 세션, 질문, 기준 버전을 그대로 가져오세요."
 }

@@ -1599,6 +1599,7 @@
   "Connect and import": "連結與匯入",
   "Connect Claude Code…": "連結 Claude Code…",
   "Import…": "匯入…",
+  "Import from claude-ledger…": "從 claude-ledger 匯入…",
   "Roles and stream lines": "角色與實作流路線",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "每種工作階段類型都有一個角色。實作類型會在實作流路線上依週期回報；會移交的路線會把它套用的基準所對應的決策工作階段標示為已確認。",
   "Stream line": "路線",
@@ -1623,6 +1624,19 @@
   "Git tags": "Git 標籤",
   "Folder names": "資料夾名稱",
   "Registered versions only": "僅限登記的版本",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "工作階段 {0} 個 · 事件 {1} 個 · 問題 {2} 個 · 基準 {3} 個 · 專案 {4} 個",
+  "Choose a claude-ledger database": "選擇 claude-ledger 資料庫",
+  "Import from claude-ledger": "從 claude-ledger 匯入",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "把 claude-ledger 資料庫中的專案、基準、工作階段和問題複製到台帳中。只讀取該檔案，從不修改。",
+  "No file chosen": "未選擇檔案",
+  "Counting what an import would copy…": "正在計算匯入會複製的內容…",
+  "Nothing new to import.": "沒有新的內容可匯入。",
+  "An import would copy:": "匯入將複製：",
+  "Already in the Ledger, skipped with their history: {0}": "已在台帳中，連同歷史一起略過：{0}",
+  "Rows that could not be read, left out: {0}": "無法讀取而略過的列：{0}",
+  "Moving from claude-ledger? Import its database instead.": "要從 claude-ledger 移轉嗎？請改為匯入它的資料庫。",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "要從 claude-ledger 移轉嗎？把它的工作階段、問題和基準一起帶過來。",
   "Role": "角色",
-  "Browse…": "瀏覽…"
+  "Browse…": "瀏覽…",
+  "Choose a file": "選擇檔案"
 }

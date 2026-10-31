@@ -1563,6 +1563,7 @@
   "Connect and import": "Conectar e importar",
   "Connect Claude Code…": "Conectar o Claude Code…",
   "Import…": "Importar…",
+  "Import from claude-ledger…": "Importar do claude-ledger…",
   "Roles and stream lines": "Papéis e linhas de frente",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Cada tipo de sessão tem um papel. Os tipos de implementação relatam em ciclos em uma linha de frente; uma linha que repassa confirma as sessões de decisão cujas linhas de base ela aplica.",
   "Stream line": "Linha de frente",
@@ -1587,6 +1588,19 @@
   "Git tags": "Tags do Git",
   "Folder names": "Nomes de pasta",
   "Registered versions only": "Somente versões registradas",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sessões: {0} · eventos: {1} · perguntas: {2} · linhas de base: {3} · projetos: {4}",
+  "Choose a claude-ledger database": "Escolha um banco de dados do claude-ledger",
+  "Import from claude-ledger": "Importar do claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Copia os projetos, linhas de base, sessões e perguntas de um banco de dados do claude-ledger para o Registro. O arquivo é apenas lido, nunca alterado.",
+  "No file chosen": "Nenhum arquivo escolhido",
+  "Counting what an import would copy…": "Contando o que uma importação copiaria…",
+  "Nothing new to import.": "Nada novo para importar.",
+  "An import would copy:": "Uma importação copiaria:",
+  "Already in the Ledger, skipped with their history: {0}": "Já estão no Registro e foram ignoradas com o histórico: {0}",
+  "Rows that could not be read, left out: {0}": "Linhas que não puderam ser lidas, deixadas de fora: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Vindo do claude-ledger? Importe o banco de dados dele.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Vindo do claude-ledger? Traga as sessões, perguntas e linhas de base dele.",
   "Role": "Papel",
-  "Browse…": "Procurar…"
+  "Browse…": "Procurar…",
+  "Choose a file": "Escolher um arquivo"
 }

@@ -1577,6 +1577,7 @@
   "Connect and import": "Csatlakozás és importálás",
   "Connect Claude Code…": "Claude Code csatlakoztatása…",
   "Import…": "Importálás…",
+  "Import from claude-ledger…": "Importálás claude-ledgerből…",
   "Roles and stream lines": "Szerepek és csatornavonalak",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Minden munkamenettípusnak van szerepe. A megvalósítási típusok ciklusokban jelentenek egy csatornavonalon; az átadó vonal megerősíti azokat a döntési munkameneteket, amelyek alapverzióit alkalmazza.",
   "Stream line": "Csatornavonal",
@@ -1601,6 +1602,19 @@
   "Git tags": "Git-címkék",
   "Folder names": "Mappanevek",
   "Registered versions only": "Csak regisztrált verziók",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Munkamenet: {0} · esemény: {1} · kérdés: {2} · alapverzió: {3} · projekt: {4}",
+  "Choose a claude-ledger database": "Válasszon claude-ledger adatbázist",
+  "Import from claude-ledger": "Importálás claude-ledgerből",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Egy claude-ledger adatbázis projektjeit, alapverzióit, munkameneteit és kérdéseit másolja a Nyilvántartásba. A fájlt csak olvassa, sosem módosítja.",
+  "No file chosen": "Nincs kiválasztott fájl",
+  "Counting what an import would copy…": "Annak számolása, mit másolna egy importálás…",
+  "Nothing new to import.": "Nincs új importálnivaló.",
+  "An import would copy:": "Egy importálás ezt másolná:",
+  "Already in the Ledger, skipped with their history: {0}": "Már a Nyilvántartásban vannak, az előzményeikkel együtt kimaradnak: {0}",
+  "Rows that could not be read, left out: {0}": "Olvashatatlan, kihagyott sorok: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Claude-ledgerről vált? Importálja inkább az adatbázisát.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Claude-ledgerről vált? Hozza át a munkameneteit, kérdéseit és alapverzióit.",
   "Role": "Szerep",
-  "Browse…": "Tallózás…"
+  "Browse…": "Tallózás…",
+  "Choose a file": "Fájl kiválasztása"
 }

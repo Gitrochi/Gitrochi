@@ -1725,6 +1725,7 @@
   "Connect and import": "连接与导入",
   "Connect Claude Code…": "连接 Claude Code…",
   "Import…": "导入…",
+  "Import from claude-ledger…": "从 claude-ledger 导入…",
   "Roles and stream lines": "角色与实现流线路",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "每种会话类型都有一个角色。实现类型在实现流线路上按周期报告；会移交的线路会把它应用的基线所对应的决策会话标记为已确认。",
   "Stream line": "线路",
@@ -1749,6 +1750,19 @@
   "Git tags": "Git 标签",
   "Folder names": "文件夹名称",
   "Registered versions only": "仅登记的版本",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "会话 {0} 个 · 事件 {1} 个 · 问题 {2} 个 · 基线 {3} 个 · 项目 {4} 个",
+  "Choose a claude-ledger database": "选择 claude-ledger 数据库",
+  "Import from claude-ledger": "从 claude-ledger 导入",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "把 claude-ledger 数据库中的项目、基线、会话和问题复制到台账中。只读取该文件，从不修改。",
+  "No file chosen": "未选择文件",
+  "Counting what an import would copy…": "正在统计导入将复制的内容…",
+  "Nothing new to import.": "没有可导入的新内容。",
+  "An import would copy:": "导入将复制：",
+  "Already in the Ledger, skipped with their history: {0}": "已在台账中，连同历史一起跳过：{0}",
+  "Rows that could not be read, left out: {0}": "无法读取而略过的行：{0}",
+  "Moving from claude-ledger? Import its database instead.": "从 claude-ledger 迁移？请改为导入它的数据库。",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "从 claude-ledger 迁移？把它的会话、问题和基线一起带过来。",
   "Role": "角色",
-  "Browse…": "浏览…"
+  "Browse…": "浏览…",
+  "Choose a file": "选择文件"
 }

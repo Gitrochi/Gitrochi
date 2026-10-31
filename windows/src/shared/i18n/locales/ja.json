@@ -2418,6 +2418,7 @@
   "Connect and import": "接続とインポート",
   "Connect Claude Code…": "Claude Code を接続…",
   "Import…": "インポート…",
+  "Import from claude-ledger…": "claude-ledger からインポート…",
   "Roles and stream lines": "役割とストリームのライン",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "セッションの種類ごとに役割があります。実装の種類はストリームのラインでサイクルごとに報告し、引き継ぐラインは適用したベースラインを出した判断セッションを確認済みにします。",
   "Stream line": "ライン",
@@ -2442,6 +2443,19 @@
   "Git tags": "Git タグ",
   "Folder names": "フォルダー名",
   "Registered versions only": "登録したバージョンのみ",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "セッション {0} · イベント {1} · 質問 {2} · ベースライン {3} · プロジェクト {4}",
+  "Choose a claude-ledger database": "claude-ledger のデータベースを選択",
+  "Import from claude-ledger": "claude-ledger からインポート",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "claude-ledger のデータベースにあるプロジェクト、ベースライン、セッション、質問を台帳にコピーします。ファイルは読み取るだけで、変更しません。",
+  "No file chosen": "ファイルが選択されていません",
+  "Counting what an import would copy…": "インポートでコピーされる内容を数えています…",
+  "Nothing new to import.": "新しくインポートするものはありません。",
+  "An import would copy:": "インポートでコピーされる内容:",
+  "Already in the Ledger, skipped with their history: {0}": "台帳にすでにあるため、履歴ごとスキップ: {0}",
+  "Rows that could not be read, left out: {0}": "読み取れず除外した行: {0}",
+  "Moving from claude-ledger? Import its database instead.": "claude-ledger から移行しますか？代わりにそのデータベースをインポートしてください。",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger から移行しますか？セッション、質問、ベースラインを引き継げます。",
   "Role": "役割",
-  "Browse…": "参照…"
+  "Browse…": "参照…",
+  "Choose a file": "ファイルを選択"
 }

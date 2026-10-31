@@ -19,11 +19,13 @@ describe("Ledger native backend: mapping", () => {
     await nativeLedgerBackend.call("prompt_answer", { id: 7, answer: { answers: { "Which one?": "The first" } } });
     await nativeLedgerBackend.call("settings_set", { values: { staleHours: 48, kinds: null } });
     await nativeLedgerBackend.call("project_set", { project: "atlas", baselineSource: "folder", baselineDir: null, scanSubdirs: ["specs"] });
+    await nativeLedgerBackend.call("import_legacy", { path: "C:/Tools/claude-ledger/data/ledger.db", dryRun: true });
     expect(spy.mock.calls).toEqual([
       ["human", { action: "set_status", sessionId: "S1031-01", status: "merged", into: "1.4.2" }],
       ["prompt_answer", { id: 7, answer: { answers: { "Which one?": "The first" } } }],
       ["settings_set", { values: { staleHours: 48, kinds: null } }],
       ["project_set", { project: "atlas", baselineSource: "folder", baselineDir: null, scanSubdirs: ["specs"] }],
+      ["import_legacy", { path: "C:/Tools/claude-ledger/data/ledger.db", dryRun: true }],
     ]);
   });
 
@@ -141,7 +143,7 @@ describe("Ledger native backend: the real core", () => {
     }
   });
 
-  it.skipIf(!built)("imports pasted reports one by one and recognises them the second time", async () => {
+  it.skipIf(!built)("imports pasted reports and refuses a file that is not a claude-ledger database", async () => {
     vi.spyOn(ipc, "ledgerCall").mockImplementation(async (method, args) => call(method, args));
     const store = new LedgerStore(nativeLedgerBackend);
     try {
@@ -149,6 +151,8 @@ describe("Ledger native backend: the real core", () => {
       expect([summary.imported, summary.failed, summary.sessions]).toEqual([1, 1, ["S1101-07"]]);
       expect(store.session("S1101-07")).toMatchObject({ title: "Pasted in a test", role: "research" });
       expect((await store.importReports("```ledger\n{\"event\":\"start\",\"session\":\"S1101-07\",\"project\":\"Example App\",\"title\":\"Pasted in a test\",\"kind\":\"research\"}\n```")).duplicates).toBe(1);
+      await expect(store.importLegacy(join(dir, "missing.db"), true)).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+      await expect(store.importLegacy(db, true)).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
     } finally {
       store.dispose();
     }

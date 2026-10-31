@@ -1593,6 +1593,7 @@
   "Connect and import": "Підключення та імпорт",
   "Connect Claude Code…": "Підключити Claude Code…",
   "Import…": "Імпортувати…",
+  "Import from claude-ledger…": "Імпортувати з claude-ledger…",
   "Roles and stream lines": "Ролі та лінії каналів",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Кожен тип сеансу має роль. Типи реалізації звітують циклами на лінії каналу; лінія, що передає, підтверджує сеанси рішень, чиї базові версії вона застосовує.",
   "Stream line": "Лінія каналу",
@@ -1617,6 +1618,19 @@
   "Git tags": "Теги Git",
   "Folder names": "Імена папок",
   "Registered versions only": "Лише зареєстровані версії",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Сеансів: {0} · подій: {1} · питань: {2} · базових версій: {3} · проєктів: {4}",
+  "Choose a claude-ledger database": "Виберіть базу даних claude-ledger",
+  "Import from claude-ledger": "Імпорт із claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Копіює проєкти, базові версії, сеанси й питання з бази даних claude-ledger до Книги обліку. Файл лише читається й ніколи не змінюється.",
+  "No file chosen": "Файл не вибрано",
+  "Counting what an import would copy…": "Підрахунок того, що скопіює імпорт…",
+  "Nothing new to import.": "Нового для імпорту немає.",
+  "An import would copy:": "Імпорт скопіює:",
+  "Already in the Ledger, skipped with their history: {0}": "Уже є в Книзі обліку, пропущено разом з історією: {0}",
+  "Rows that could not be read, left out: {0}": "Не вдалося прочитати й пропущено рядків: {0}",
+  "Moving from claude-ledger? Import its database instead.": "Переходите з claude-ledger? Імпортуйте його базу даних.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Переходите з claude-ledger? Перенесіть його сеанси, питання й базові версії.",
   "Role": "Роль",
-  "Browse…": "Огляд…"
+  "Browse…": "Огляд…",
+  "Choose a file": "Вибрати файл"
 }

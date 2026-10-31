@@ -1628,6 +1628,7 @@
   "Connect and import": "Connexion et import",
   "Connect Claude Code…": "Connecter Claude Code…",
   "Import…": "Importer…",
+  "Import from claude-ledger…": "Importer depuis claude-ledger…",
   "Roles and stream lines": "Rôles et lignes de chantier",
   "Each kind of session has a role. Implementation kinds report in cycles on a stream line; a line that hands off confirms the decision sessions whose baselines it applies.": "Chaque type de session a un rôle. Les types d’implémentation rendent compte par cycles sur une ligne de chantier ; une ligne qui transmet confirme les sessions de décision dont elle applique les références.",
   "Stream line": "Ligne de chantier",
@@ -1652,6 +1653,19 @@
   "Git tags": "Tags Git",
   "Folder names": "Noms de dossiers",
   "Registered versions only": "Versions enregistrées seulement",
+  "Sessions: {0} · events: {1} · questions: {2} · baselines: {3} · projects: {4}": "Sessions : {0} · événements : {1} · questions : {2} · références : {3} · projets : {4}",
+  "Choose a claude-ledger database": "Choisir une base claude-ledger",
+  "Import from claude-ledger": "Importer depuis claude-ledger",
+  "Copies the projects, baselines, sessions and questions of a claude-ledger database into the Ledger. The file is only read, never changed.": "Copie les projets, références, sessions et questions d’une base claude-ledger dans le Registre. Le fichier est seulement lu, jamais modifié.",
+  "No file chosen": "Aucun fichier choisi",
+  "Counting what an import would copy…": "Calcul de ce qu’un import copierait…",
+  "Nothing new to import.": "Rien de nouveau à importer.",
+  "An import would copy:": "Un import copierait :",
+  "Already in the Ledger, skipped with their history: {0}": "Déjà dans le Registre, ignorées avec leur historique : {0}",
+  "Rows that could not be read, left out: {0}": "Lignes illisibles, laissées de côté : {0}",
+  "Moving from claude-ledger? Import its database instead.": "Vous venez de claude-ledger ? Importez plutôt sa base de données.",
+  "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Vous venez de claude-ledger ? Reprenez ses sessions, questions et références.",
   "Role": "Rôle",
-  "Browse…": "Parcourir…"
+  "Browse…": "Parcourir…",
+  "Choose a file": "Choisir un fichier"
 }

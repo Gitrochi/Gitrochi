@@ -47,6 +47,7 @@ if (mode === "selftest") {
   // Settings › Ledger on the app's demo store
   env.ledgerPreview = "1";
   env.ledgerDemo = "1";
+  ipc.ledgerPickDatabase = async () => "C:/Tools/claude-ledger/data/ledger.db";
   createRoot(root).render(<><SettingsDialog onClose={() => {}} initialTab="ledger" /><MenuHost /><TooltipHost /></>);
 } else {
   ipc.openUrl = async () => {};
