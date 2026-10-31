@@ -4,7 +4,31 @@
       "hooks": [
         {
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PermissionRequest",
-          "timeout": 45,
+          "timeout": 40,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PostToolUse",
+          "timeout": 10,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "PostToolUseFailure": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PostToolUseFailure",
+          "timeout": 10,
           "type": "command"
         }
       ],
@@ -16,7 +40,7 @@
       "hooks": [
         {
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PreToolUse",
-          "timeout": 45,
+          "timeout": 40,
           "type": "command"
         }
       ],
@@ -30,7 +54,7 @@
           "async": true,
           "asyncRewake": true,
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook Stop",
-          "timeout": 45,
+          "timeout": 40,
           "type": "command"
         }
       ],

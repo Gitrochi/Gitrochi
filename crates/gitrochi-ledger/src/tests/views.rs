@@ -308,6 +308,20 @@ fn agents_cannot_reach_a_persons_operations() {
     assert!(h.view(&id).ack_at.is_some());
     let error = api::call_as(Caller::Hook, "report", &json!({"db": db})).unwrap_err();
     assert_eq!(error.code, "NOT_ALLOWED");
+    // the hook handler has the prompt methods, and none of a person's operations
+    for method in [
+        "human",
+        "prompt_answer",
+        "prompt_review",
+        "settings_set",
+        "project_set",
+        "import",
+        "state",
+    ] {
+        let error = api::call_as(Caller::Hook, method, &json!({"db": db})).unwrap_err();
+        assert_eq!(error.code, "NOT_ALLOWED", "{method}");
+    }
+    assert!(h.view(&id).ack_at.is_some());
     assert_eq!(
         api::call_as(Caller::App, "nope", &json!({}))
             .unwrap_err()

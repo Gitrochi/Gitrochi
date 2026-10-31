@@ -26,8 +26,8 @@ pub use decide::{
 };
 pub use input::{HookEvent, HookInput};
 pub use output::{
-    hook_settings, permission_allow, permission_deny, pre_tool_use_allow, silent, stop_wake,
-    HookOutput,
+    hook_settings, permission_allow, permission_deny, pre_tool_use_allow, pre_tool_use_deny,
+    session_start_context, silent, stop_wake, HookOutput,
 };
 pub use permission::{evaluate_permission, Hold, PermissionContext, Rule, Verdict};
 pub use policy::{
@@ -39,8 +39,8 @@ pub use question::{classify_stop, Choice, StopQuestion};
 pub use record::RECORD_SCHEMA_VERSION;
 pub use record::{AutoReply, OptionView, PromptPayload, Proposed, QuestionView, ToolView};
 pub use reply::{
-    compose_answer_note, compose_plan_note, compose_reply, detect_language, reply_language, Lang,
-    REPLY_TAG,
+    compose_answer_note, compose_plan_note, compose_reply, compose_session_context,
+    detect_language, reply_language, Lang, REPLY_TAG,
 };
 pub use risk::risky;
 

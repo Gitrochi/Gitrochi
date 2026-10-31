@@ -47,7 +47,12 @@ Stored by the apps as JSON with camelCase fields; missing fields take the defaul
 
 **`stop_hook_active`**: when another stop hook is already continuing the turn and Gitrochi has not answered since the person's last input, the turn is left alone, so two hooks never feed each other.
 
-**Counting**: `SessionState { consecutive }` is the handler's per-session counter: automatic answers of every kind, permissions included, since the person last answered or typed (the design's "at most three in a row", §9.4). `after_auto_reply()` adds one; `after_prompt(prompt)` resets it when the prompt is the person's. Prompts Claude Code submits for scheduled tasks, background agents and other sessions arrive wrapped in one XML-like element and do not reset it, nor does anything quoting `[Gitrochi]`. At the limit every prompt waits for the person.
+**Counting**: `SessionState { consecutive }` is the handler's per-session counter: automatic answers of every kind, permissions included, since the person last answered or typed (the design's "at most three in a row", §9.4). `after_auto_reply()` adds one; `after_prompt(prompt)` resets it when the prompt is the person's. These do not reset it:
+- prompts Claude Code submits for scheduled tasks, background agents and other sessions, which arrive wrapped in one XML-like element;
+- a prompt that starts with `<task-notification>`, which is how the wake-up of an automatic Stop answer arrives (#171);
+- anything quoting `[Gitrochi]`.
+
+At the limit every prompt waits for the person.
 
 **App closed (D10)**: `should_wait(kind, app_alive)`. A synchronous hook (PreToolUse, PermissionRequest) may keep Claude Code's own prompt from appearing while it waits, so with nobody able to see the countdown it ends at once without a decision. The Stop hook runs in the background and the person can still type, so it does not need the app. `app_alive(last_heartbeat, now)` counts the app as running while its heartbeat (`ledger/app.alive`, touched every 5 seconds) is under 15 seconds old.
 
@@ -105,9 +110,12 @@ The first line names Gitrochi and summarizes the question (or the chosen answers
 | PreToolUse `AskUserQuestion` / `ExitPlanMode` | exit 0 and `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": {…the original input…, "answers": {"<question>": "<label>"}}, "additionalContext": "<note>"}}` | exit 0, no output |
 | PermissionRequest | exit 0 and `{"hookSpecificOutput": {"hookEventName": "PermissionRequest", "decision": {"behavior": "allow"}}}` | exit 0, no output |
 
-`permission_deny(message)` builds `{"decision": {"behavior": "deny", "message": …}}` for when the person denies from the app. No output ever sets `updatedPermissions`, so nothing outlives the call. A background hook's decision fields have no effect, which is why the Stop answer travels as exit code 2 and stderr. The `additionalContext` note tells Claude the answer was chosen automatically, so it can say so in its summary. `tests/snapshots/` pins every output with the fixtures in `tests/fixtures/`.
+`permission_deny(message)` builds `{"decision": {"behavior": "deny", "message": …}}` for when the person denies from the app, and `pre_tool_use_deny(reason)` the PreToolUse `permissionDecision: "deny"` for a plan the person turns down. `session_start_context(text)` puts `compose_session_context(lang, policy)` into a SessionStart hook's `additionalContext`: with auto-continue on, it asks the agent to ask with `AskUserQuestion` and to put its recommendation first, marked "(Recommended)", so the automatic answer is the agent's own pick (design §9.2). No output ever sets `updatedPermissions`, so nothing outlives the call. A background hook's decision fields have no effect, which is why the Stop answer travels as exit code 2 and stderr. The `additionalContext` note tells Claude the answer was chosen automatically, so it can say so in its summary. `tests/snapshots/` pins every output with the fixtures in `tests/fixtures/`.
 
-`hook_settings(command, delaySec)` returns the `hooks` entries the handler installs next to Gitrochi's status hooks in the app's `hooks.json` (passed with `--settings`): `Stop` with `"async": true, "asyncRewake": true`, `PreToolUse` with matcher `AskUserQuestion|ExitPlanMode`, `PermissionRequest`, each with `timeout` = delay + 15, and a `UserPromptSubmit` entry (timeout 10) that only tells the handler the person typed. Each runs `command <Event>`; [`tests/snapshots/hook-settings.json`](tests/snapshots/hook-settings.json) shows the result.
+`hook_settings(command, delaySec)` returns the `hooks` entries the handler installs next to Gitrochi's status hooks in the app's `hooks.json` (passed with `--settings`):
+- `Stop` with `"async": true, "asyncRewake": true`, `PreToolUse` with matcher `AskUserQuestion|ExitPlanMode`, and `PermissionRequest`, each with `timeout` = delay + 10 (design §9.1). Claude Code enforces the timeout for the `asyncRewake` entry too.
+- A `UserPromptSubmit` entry (timeout 10) that only tells the handler the person typed.
+- `PostToolUse` and `PostToolUseFailure` entries (timeout 10) that tell it a call ran. The terminal shows its own permission dialog while the PermissionRequest hook waits, so the person may answer there (#171). Each runs `command <Event>`; [`tests/snapshots/hook-settings.json`](tests/snapshots/hook-settings.json) shows the result.
 
 ## What the Ledger stores
 
@@ -171,19 +179,23 @@ Checked against the hooks documentation on 2026-10-31:
 
 Seen in a real run (Claude Code 2.1.309, hooks passed with `--settings`): the UserPromptSubmit input (`session_id`, `prompt_id`, `transcript_path`, `cwd`, `permission_mode`, `hook_event_name`, `prompt`) parses, and the prompt counts as the person's.
 
-Not yet confirmed in a real session, because no logged-in standalone `claude` was available where this was built:
+Checked with a real Claude Code 2.1.309 in [#171](https://github.com/Gitrochi/Gitrochi/issues/171):
 
-- that Claude Code applies the three outputs above end to end (the Stop wake-up with the reply, the `AskUserQuestion` answers with `additionalContext`, the PermissionRequest allow);
-- whether Claude Code shows its permission dialog while a PermissionRequest hook is still running (the documentation does not say);
-- whether the wake-up from `asyncRewake` fires UserPromptSubmit or sets `stop_hook_active` on the next Stop (the counting above is written so either way stays bounded);
-- the exact separator Claude Code's own picker uses for multi-select answers (`, ` here; the documentation says "commas").
+- The Stop wake-up holds. Exit 2 from the `asyncRewake` hook wakes an idle session, and only stderr reaches the agent, as a system reminder marked not user input. The wake fires UserPromptSubmit with a `<task-notification>` prompt, and the next Stop has `stop_hook_active: true`.
+- The AskUserQuestion answer holds: `allow` with `updatedInput` answers it, and `allow` alone does not. The question dialog stays hidden during the wait and comes back when the hook gives no decision.
+- The PermissionRequest allow holds, for this once only. **Its dialog is shown during the wait**, though: the person can answer in the terminal, and a later decision from the hook is then ignored. The handler therefore confirms an automatic allow only by the call that ran after it.
+- The timeout is enforced for `asyncRewake` hooks, not for plain `async` ones, and a hook that times out gives no decision.
+- ExitPlanMode was not checked; it stays off by default.
+- Input also carries `prompt_id`, `effort` and `scratchpad_dir`; unknown fields are ignored.
+- Still to check: the exact separator Claude Code's own picker uses for multi-select answers (`, ` here; the documentation says "commas").
 
 ## For the hook handler
 
 - Only the four kinds above are ever answered; the Ledger's own questions and decisions are never answered or closed automatically, and sessions with the decision role never auto-continue: pass them a policy with `enabled: false` (D8, design §9.4).
 - Add the repository's default branch to `protected_branches` when it is not `main` or `master`.
 - Supersede a waiting prompt when the same session sends any newer event (a prompt, a tool call, another Stop, SessionEnd), so a late wake-up never lands in the middle of other work.
-- While a PreToolUse or PermissionRequest hook waits, the terminal shows no prompt; the app's countdown is the only place to answer. An answer from the app goes back through `updatedInput` (or `permission_deny`); "answer in the terminal" ends the hook with no output.
+- While a PreToolUse hook on AskUserQuestion waits, the terminal shows no prompt, so the app's countdown is the only place to answer. While a PermissionRequest hook waits, the terminal shows its own dialog too (#171). The handler therefore takes a call running before its answer, or the agent moving on, as the person's terminal answer.
+- An answer from the app goes back through `updatedInput` (or `permission_deny`); "answer in the terminal" ends the hook with no output.
 - Keep `SessionState` per session (or count the session's `auto_reply` events since the person's last input); call `after_prompt` on every UserPromptSubmit, `after_person` when the person answers in the app, `after_auto_reply` after sending.
 - Fill `PermissionContext` with the canonical repository root, the session's scratchpad (from the input), and the current branch and its upstream (`git rev-parse --abbrev-ref HEAD @{upstream}`, remote name removed); without them a bare push is held.
-- Finish before the hook's timeout (delay + 15 seconds).
+- Finish before the hook's timeout (delay + 10 seconds).

@@ -91,11 +91,18 @@ impl SessionState {
 
 /// Whether a submitted prompt came from the person. Claude Code also submits prompts for
 /// scheduled tasks, background agents and other sessions, wrapped in one XML-like element;
-/// those, and anything quoting Gitrochi's own reply, do not reset the count.
+/// those, and anything quoting Gitrochi's own reply, do not reset the count. The wake-up of
+/// an `asyncRewake` Stop hook (Gitrochi's own answer) arrives as a task notification, so a
+/// prompt that starts with one never counts either, whatever follows (issue #171).
 pub fn is_person_prompt(prompt: &str) -> bool {
     let text = prompt.trim();
     if text.is_empty() || text.contains(REPLY_TAG) {
         return false;
+    }
+    if let Some(rest) = text.strip_prefix("<task-notification") {
+        if rest.starts_with(|c: char| c == '>' || c.is_whitespace()) {
+            return false;
+        }
     }
     match envelope(text) {
         Some(tag) => tag == "pasted_content",

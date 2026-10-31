@@ -27,6 +27,8 @@ struct Texts {
     plan: &'static str,
     /// `{seconds}` is the real delay.
     guidance: &'static str,
+    /// The session-start context; `{seconds}` is the real delay.
+    session: &'static str,
 }
 
 const KO: Texts = Texts {
@@ -35,6 +37,7 @@ const KO: Texts = Texts {
     answered: "고른 답",
     plan: "계획을 승인했습니다.",
     guidance: "{seconds}초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+    session: "이 세션은 자동 진행이 켜져 있습니다. 사람이 {seconds}초 안에 답하지 않으면 Gitrochi가 대신 답합니다. 사람의 결정이 필요하면 AskUserQuestion 도구로 물어보고, 추천하는 선택지를 맨 앞에 두고 라벨 끝에 \"(추천)\"을 붙이세요. 제때 답이 없으면 그 선택지가 골라집니다. 턴 끝에 글로만 물은 질문에는 대신 일반적인 진행 안내가 갑니다.",
 };
 
 const EN: Texts = Texts {
@@ -44,6 +47,7 @@ const EN: Texts = Texts {
     plan: "The plan was approved.",
     // the wording of docs/ledger/DESIGN.md §9.2
     guidance: "No answer for {seconds} seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+    session: "Auto-continue is on for this session: when the person does not answer within {seconds} seconds, Gitrochi answers for them. When you need the person's decision, ask with the AskUserQuestion tool and put the option you recommend first, with \"(Recommended)\" at the end of its label; with no answer in time, that option is chosen. A question asked in plain text at the end of a turn gets a general go-ahead instead.",
 };
 
 const JA: Texts = Texts {
@@ -52,6 +56,7 @@ const JA: Texts = Texts {
     answered: "選んだ回答",
     plan: "計画を承認しました。",
     guidance: "{seconds}秒間回答がなかったため、自動で続行します。あなたが推奨した案で進めてください。推奨がなかった場合は、元に戻しやすい案を選んでください。元に戻しにくい作業（データの削除、force push、main や保護ブランチへの push、デプロイ、認証情報・アカウント設定の変更）は行わず、止まってもう一度質問してください。選んだ前提は最後の要約に書いてください。",
+    session: "このセッションでは自動で続行が有効です。本人が{seconds}秒以内に回答しないと、Gitrochi が代わりに回答します。本人の判断が必要なときは AskUserQuestion ツールで質問し、推奨する選択肢を先頭に置いて、ラベルの末尾に「(推奨)」を付けてください。時間内に回答がなければ、その選択肢が選ばれます。ターンの最後に文章だけで尋ねた質問には、代わりに一般的な続行の指示が届きます。",
 };
 
 const ZH: Texts = Texts {
@@ -60,6 +65,7 @@ const ZH: Texts = Texts {
     answered: "选择的答案",
     plan: "计划已批准。",
     guidance: "{seconds} 秒内没有回复，因此自动继续。请按你推荐的方案进行。如果没有推荐，请选择最容易撤销的方案。不要执行难以撤销的操作（删除数据、force push、推送到 main 或受保护分支、部署、更改凭据或账户设置），而是停下来再次询问。请在最后的总结中写明你所做的假设。",
+    session: "此会话已开启自动继续：如果用户在 {seconds} 秒内没有回答，Gitrochi 会代替用户回答。需要用户做决定时，请使用 AskUserQuestion 工具提问，把你推荐的选项放在第一位，并在其标签末尾加上“(推荐)”；如果没有及时回答，就会选择该选项。在回合结束时只用文字提出的问题，则会收到一般性的继续指示。",
 };
 
 fn texts(lang: Lang) -> &'static Texts {
@@ -161,6 +167,15 @@ pub fn compose_answer_note(answers: &[Answer], lang: Lang, policy: &Policy) -> S
         t.answered,
         guidance(lang, policy, &chosen)
     )
+}
+
+/// The context a session with auto-continue on gets at its start (design §9.2): ask with
+/// `AskUserQuestion` and recommend first, so the automatic answer is the agent's own pick.
+pub fn compose_session_context(lang: Lang, policy: &Policy) -> String {
+    let session = texts(lang)
+        .session
+        .replace("{seconds}", &policy.delay().to_string());
+    format!("{REPLY_TAG} {session}")
 }
 
 /// The note that goes with an automatic plan approval.
