@@ -45,7 +45,7 @@ pub fn project_of(connection: &Connection, args: &Value) -> Result<Option<String
     }
 }
 
-fn new_id(connection: &Connection, ts: Ms) -> Result<String> {
+pub(crate) fn new_id(connection: &Connection, ts: Ms) -> Result<String> {
     let day: String = connection.query_row(
         "SELECT strftime('%m%d', ?1 / 1000, 'unixepoch', 'localtime')",
         [ts],
@@ -80,6 +80,50 @@ fn question_texts(value: &Value) -> Vec<String> {
             .collect(),
         _ => Vec::new(),
     }
+}
+
+/// A new session's base: a version, or `latest`/`head` stored as HEAD's number. What cannot
+/// be read is left out with a notice, and a version the trunk lacks is added as inferred.
+pub(crate) fn base_of(
+    connection: &Connection,
+    project: &str,
+    head: Option<&str>,
+    text: Option<String>,
+    ts: Ms,
+    notices: &mut Vec<String>,
+) -> Result<(Option<String>, bool)> {
+    let (base, was_latest) = match text {
+        None => {
+            notices.push(
+                "No base (the baseline this work started from), so the graph cannot connect the session to the trunk."
+                    .into(),
+            );
+            (None, false)
+        }
+        Some(text) => match util::parse_version(&text).as_deref() {
+            None => {
+                notices.push(format!(
+                    "Could not read base '{text}' as a version (for example 1.4.2)."
+                ));
+                (None, false)
+            }
+            Some("latest") => match head {
+                Some(head) => (Some(head.to_string()), true),
+                None => {
+                    notices.push(
+                        "No baseline is known yet, so 'latest' could not be resolved; send a version number as base."
+                            .into(),
+                    );
+                    (None, false)
+                }
+            },
+            Some(version) => (Some(version.to_string()), false),
+        },
+    };
+    if let Some(base) = &base {
+        baseline::ensure(connection, project, base, ts - 1000)?;
+    }
+    Ok((base, was_latest))
 }
 
 pub(crate) fn is_link(url: &str) -> bool {
@@ -146,9 +190,32 @@ pub fn report(
     let head = baseline::head(connection, &project)?;
 
     let mut created = false;
+    // The base an agent's start gives a session Gitrochi registered when it launched the agent.
+    let mut launch_base: Option<(Option<String>, bool)> = None;
     let mut row: SessionRow = match existing {
-        Some(found) => {
-            if event == "start" {
+        Some(mut found) => {
+            if event == "start" && found.last_agent_at.is_none() {
+                // No agent has reported here yet: the app registered the session when it launched
+                // this agent (crate::track), so the agent's own start names it.
+                if arg_str(args, "base").is_some() {
+                    let (base, was_latest) = base_of(
+                        connection,
+                        &project,
+                        head.as_deref(),
+                        arg_str(args, "base"),
+                        ts,
+                        &mut notices,
+                    )?;
+                    if base.is_some() {
+                        found.base_current = base.clone();
+                        launch_base = Some((base, was_latest));
+                    }
+                }
+                notices.push(
+                    "Gitrochi registered this session when it launched you; your start fills in its title, kind and base."
+                        .into(),
+                );
+            } else if event == "start" {
                 if let Some(title) = arg_str(args, "title") {
                     if title != found.title {
                         return Err(Error::conflict(format!(
@@ -176,37 +243,14 @@ pub fn report(
                 Some(id) => id.clone(),
                 None => new_id(connection, ts)?,
             };
-            let (base, was_latest) = match arg_str(args, "base") {
-                None => {
-                    notices.push(
-                        "No base (the baseline this work started from), so the graph cannot connect the session to the trunk."
-                            .into(),
-                    );
-                    (None, false)
-                }
-                Some(text) => match util::parse_version(&text).as_deref() {
-                    None => {
-                        notices.push(format!(
-                            "Could not read base '{text}' as a version (for example 1.4.2)."
-                        ));
-                        (None, false)
-                    }
-                    Some("latest") => match &head {
-                        Some(head) => (Some(head.clone()), true),
-                        None => {
-                            notices.push(
-                                "No baseline is known yet, so 'latest' could not be resolved; send a version number as base."
-                                    .into(),
-                            );
-                            (None, false)
-                        }
-                    },
-                    Some(version) => (Some(version.to_string()), false),
-                },
-            };
-            if let Some(base) = &base {
-                baseline::ensure(connection, &project, base, ts - 1000)?;
-            }
+            let (base, was_latest) = base_of(
+                connection,
+                &project,
+                head.as_deref(),
+                arg_str(args, "base"),
+                ts,
+                &mut notices,
+            )?;
             let count: i64 = connection.query_row(
                 "SELECT COUNT(*) FROM sessions WHERE project = ?1",
                 [&project],
@@ -571,6 +615,12 @@ pub fn report(
             row.archived_at,
         ],
     )?;
+    if let Some((base, was_latest)) = &launch_base {
+        connection.execute(
+            "UPDATE sessions SET base_version = ?2, base_was_latest = ?3 WHERE id = ?1",
+            params![sid, base, *was_latest as i64],
+        )?;
+    }
 
     // The reply: the session as it is now, what the agent should know, a person's messages.
     let trunk = baseline::trunk(connection, &project)?;

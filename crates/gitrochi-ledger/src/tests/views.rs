@@ -288,6 +288,7 @@ fn agents_cannot_reach_a_persons_operations() {
         ("prompt_review", json!({"all": true})),
         ("settings_set", json!({"values": {"staleHours": 1}})),
         ("project_set", json!({"project": P, "repoPath": "/tmp"})),
+        ("track", json!({"project": P})),
         ("prompt_create", json!({"kind": "permission"})),
         ("prompt_resolve", json!({"id": 1, "state": "auto"})),
     ] {
@@ -315,6 +316,7 @@ fn agents_cannot_reach_a_persons_operations() {
         "prompt_review",
         "settings_set",
         "project_set",
+        "track",
         "import",
         "state",
     ] {

@@ -141,6 +141,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `prompt_review` | `{id}` or `{all: true}` | `{ok, rev, reviewed}` | app only |
 | `settings_set` | `{values: {key: value \| null}}` (null = default) | `{ok, rev, settings}` | app only |
 | `project_set` | `{project, name?, repoPath?, baselineSource?, baselinePattern?, baselineDir?, scanFiles?, scanSubdirs?}` (null clears) | `{ok, rev, project}` | app only |
+| `track` | `{project, title?, base?, kind?, links?: {repoPath?, branch?, worktree?, cwd?, agentId?}, autoContinue?}` | `{ok, rev, session, notices}` ([below](#launched-agents)) | app only |
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
@@ -150,7 +151,11 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 ### Report fields
 
-`project` (needed for a new session), `session` (or `sessionId`; issued as `S<MMDD>-<nn>` in local time when absent; otherwise 3–48 letters of any script, digits, `.`, `_`, `-`), `event` (default `progress`), `kind`, `title`, `base`, `summary`, `body`, `question`, `questions` (a string is one question), `touches`, `related`, `artifacts` (list, one object, or names; `artifact` adds one), `version`, `into`, `absorbs`, `targets`, `resolves` (question numbers), `ssot`, `note` (release note), `chatUrl` (or `chat_url`; http(s) only), `work` (kept in `data.work`). Lists may be arrays, comma-separated text or one number. `latest`/`head` resolve to HEAD at that moment and are stored as the number. A version the trunk lacks is added as `inferred` and promoted when a scan or registration finds it. A non-start event on an unknown session creates it with an automatic start just before. A `start` with another title on an existing ID is a `CONFLICT`; with the same title it is recorded as `progress`.
+`project` (needed for a new session), `session` (or `sessionId`; issued as `S<MMDD>-<nn>` in local time when absent; otherwise 3–48 letters of any script, digits, `.`, `_`, `-`), `event` (default `progress`), `kind`, `title`, `base`, `summary`, `body`, `question`, `questions` (a string is one question), `touches`, `related`, `artifacts` (list, one object, or names; `artifact` adds one), `version`, `into`, `absorbs`, `targets`, `resolves` (question numbers), `ssot`, `note` (release note), `chatUrl` (or `chat_url`; http(s) only), `work` (kept in `data.work`). Lists may be arrays, comma-separated text or one number. `latest`/`head` resolve to HEAD at that moment and are stored as the number. A version the trunk lacks is added as `inferred` and promoted when a scan or registration finds it. A non-start event on an unknown session creates it with an automatic start just before. A `start` with another title on an existing ID is a `CONFLICT`; with the same title it is recorded as `progress`. The exception is a session no agent has reported to yet (no `lastAgentAt`, one an app registered with [`track`](#launched-agents)): the agent's `start` is recorded as its start and sets the title, kind and base it gives.
+
+### Launched agents
+
+`track` registers a session for an agent an app is about to launch while **Track agents I start** is on (DESIGN.md §7.11); the app passes its ID to the agent as `GITROCHI_LEDGER_SESSION`, so the hooks and the MCP server find it from the first moment. The session is active, has no `lastAgentAt` (no agent report yet) and the channel `app`; its ID is issued as usual. `title` defaults to `links.branch`, else `(untitled)`; `base` is read as a report's (an unreadable one is left out with a notice); `links` takes the `link` action's keys, and `autoContinue` the `auto_continue` action's policy. One `hook` event records the launch (`data: {launch: true, agentId?}`, already delivered). The agent's own first `start` then fills in the title, kind and base.
 
 ### A person's operations (`human`)
 
@@ -266,5 +271,9 @@ Narrowed on purpose (the original tool was wider):
 Added for the hook handler (wave 2):
 
 15. The CLI command `hook <event>` ([Hooks](#hooks)). `lastAt` also moves with a launched agent's hook activity, as DESIGN.md §6.1 and §7.11 describe; `lastAgentAt` stays the agent's own reports. `hook` events carry `data.hook` and the fields above. The handler moves waiting prompts to `answered` (the person answered in the terminal: `answeredBy: "human"`, no `answer`) and to `released`. A permission prompt's payload has `call`; its automatic answer has `outcome` (`unconfirmed`, `confirmed`, `unknown`), and its `auto_reply` event waits for the outcome.
+
+Added for launch tracking (wave 2):
+
+16. Method `track` for the sessions of launched agents, and its exception to the `start` conflict (wave 2, [Launched agents](#launched-agents)).
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

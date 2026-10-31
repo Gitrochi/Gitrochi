@@ -28,6 +28,7 @@ pub mod settings;
 mod sha1;
 pub mod streams;
 pub mod text;
+pub mod track;
 pub mod util;
 pub mod views;
 pub mod vocab;

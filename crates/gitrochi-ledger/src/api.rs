@@ -16,6 +16,7 @@ use crate::report;
 use crate::search;
 use crate::settings::{self, Settings};
 use crate::text;
+use crate::track;
 use crate::util::{self, arg_str, arg_str_any, now_ms};
 use crate::views::{self, Range, API_SCHEMA};
 use serde_json::{json, Value};
@@ -34,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 25] = [
+pub const METHODS: [(&str, &[Caller]); 26] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -56,6 +57,7 @@ pub const METHODS: [(&str, &[Caller]); 25] = [
     ("prompt_review", &[Caller::App]),
     ("settings_set", &[Caller::App]),
     ("project_set", &[Caller::App]),
+    ("track", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
     ("prompt_get", &[Caller::App, Caller::Hook]),
     ("prompt_resolve", &[Caller::App, Caller::Hook]),
@@ -273,6 +275,22 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
         "project_set" => {
             let (project, rev) = db.write(|c| baseline::set_project(c, args, now))?;
             Ok(json!({"ok": true, "rev": rev, "project": project}))
+        }
+        "track" => {
+            if let Some(project) = arg_str(args, "project") {
+                let _ = baseline::refresh(db, &project, false);
+            }
+            let (tracked, rev) = db.write(|c| track::track(c, args, now))?;
+            let detail = db.read(|c| {
+                let settings = Settings::load(c)?;
+                views::session_detail(c, &settings, &tracked.session_id, now)
+            })?;
+            Ok(json!({
+                "ok": true,
+                "rev": rev,
+                "session": views::to_value(&detail.session)?,
+                "notices": tracked.notices,
+            }))
         }
         "prompt_create" => {
             let (prompt, rev) = db.write(|c| prompts::create(c, args, now))?;

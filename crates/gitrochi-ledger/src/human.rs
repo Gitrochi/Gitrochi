@@ -13,7 +13,7 @@ use crate::vocab::{self, HUMAN_ACTIONS, STATUSES};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 
-const LINK_KEYS: [&str; 6] = [
+pub(crate) const LINK_KEYS: [&str; 6] = [
     "repoPath",
     "branch",
     "worktree",

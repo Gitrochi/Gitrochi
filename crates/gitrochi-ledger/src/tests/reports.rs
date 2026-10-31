@@ -102,6 +102,116 @@ fn start_with_the_same_title_is_progress_another_title_is_a_conflict() {
 }
 
 #[test]
+fn a_launched_agents_start_fills_in_the_session_the_app_registered() {
+    let h = H::new();
+    let now = h.tick();
+    let args = json!({
+        "project": P, "base": "1.0.3",
+        "links": {"branch": "feature/login", "worktree": "/work/login", "cwd": "/work/login",
+                  "agentId": "a1b2", "nope": "ignored"},
+        "autoContinue": {"enabled": true, "delaySec": 45},
+    });
+    let tracked =
+        h.db.write(|c| crate::track::track(c, &args, now))
+            .unwrap()
+            .0;
+    let id = tracked.session_id;
+    assert!(valid_session_id(&id));
+    assert!(tracked.notices.is_empty(), "{:?}", tracked.notices);
+    let view = h.view(&id);
+    assert_eq!(view.title, "feature/login");
+    assert_eq!(view.base_version.as_deref(), Some("1.0.3"));
+    assert_eq!(view.last_agent_at, None);
+    assert_eq!(view.verdict, Verdict::Active);
+    assert_eq!(
+        view.links,
+        json!({"branch": "feature/login", "worktree": "/work/login", "cwd": "/work/login", "agentId": "a1b2"})
+    );
+    assert_eq!(
+        view.auto_continue,
+        Some(json!({"enabled": true, "delaySec": 45}))
+    );
+    let events = h.detail(&id).events;
+    assert_eq!(events.len(), 1);
+    assert_eq!(
+        (events[0].kind.as_str(), events[0].actor.as_str()),
+        ("hook", "hook")
+    );
+    assert_eq!(events[0].data["agentId"], "a1b2");
+    assert!(events[0].delivered_at.is_some());
+
+    // The agent's own start (its MCP server reads GITROCHI_LEDGER_SESSION) names the session.
+    let reply = h.start(json!({"session": id, "title": "Fix login retry", "kind": "implementation", "base": "1.0.5"}));
+    assert_eq!(reply.event, "start");
+    assert!(!reply.created);
+    assert!(has(
+        &reply.notices,
+        "registered this session when it launched you"
+    ));
+    let view = h.view(&id);
+    assert_eq!(view.title, "Fix login retry");
+    assert_eq!(view.kind, "implementation");
+    assert_eq!(view.base_version.as_deref(), Some("1.0.5"));
+    assert_eq!(view.base_current.as_deref(), Some("1.0.5"));
+    assert!(view.last_agent_at.is_some());
+    assert_eq!(view.links["branch"], "feature/login");
+    assert_eq!(
+        view.auto_continue,
+        Some(json!({"enabled": true, "delaySec": 45}))
+    );
+    // From now on the usual rule holds: a start with another title is a conflict.
+    let error = h
+        .try_report(json!({"project": P, "session": id, "event": "start", "title": "Other"}))
+        .unwrap_err();
+    assert_eq!(error.code, "CONFLICT");
+}
+
+#[test]
+fn a_launch_needs_a_project_and_keeps_what_it_cannot_read_out() {
+    let h = H::new();
+    let now = h.tick();
+    let track = |args: Value| h.db.write(|c| crate::track::track(c, &args, now));
+    assert_eq!(track(json!({})).unwrap_err().code, "INVALID_ARGUMENT");
+    assert_eq!(
+        track(json!({"project": P, "links": {"branch": 7}}))
+            .unwrap_err()
+            .code,
+        "INVALID_ARGUMENT"
+    );
+    assert_eq!(
+        track(json!({"project": P, "autoContinue": {"enabled": true}}))
+            .unwrap_err()
+            .code,
+        "INVALID_ARGUMENT"
+    );
+    // no branch and no base: an untitled session the agent's start will name
+    let (tracked, _) = track(json!({"project": P})).unwrap();
+    let view = h.view(&tracked.session_id);
+    assert_eq!(view.title, "(untitled)");
+    assert_eq!(view.base_version, None);
+    assert_eq!(view.auto_continue, None);
+    let (odd, _) = track(json!({"project": P, "base": "soon", "title": "Odd"})).unwrap();
+    assert!(has(&odd.notices, "Could not read base 'soon'"));
+    // the agent's start without a base keeps none, and without a title keeps the app's
+    let reply = h.start(json!({"session": odd.session_id, "title": null, "base": null}));
+    assert_eq!(reply.event, "start");
+    assert_eq!(h.view(&odd.session_id).title, "Odd");
+    // the apps' entry point answers the session as the screens read it
+    let db = h.db.path.to_string_lossy().to_string();
+    let answer = crate::api::call_as(
+        crate::api::Caller::App,
+        "track",
+        &json!({"db": db, "project": P, "links": {"branch": "fix/x"}}),
+    )
+    .unwrap();
+    assert_eq!(answer["ok"], true);
+    assert!(answer["rev"].as_i64().unwrap() > 0);
+    assert_eq!(answer["session"]["title"], "fix/x");
+    assert_eq!(answer["session"]["links"], json!({"branch": "fix/x"}));
+    assert!(answer["session"].get("lastAgentAt").is_none());
+}
+
+#[test]
 fn invalid_reports_are_rejected_and_write_nothing() {
     let h = H::new();
     let id = h.sid(json!({}));
