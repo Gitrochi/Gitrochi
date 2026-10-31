@@ -602,10 +602,15 @@ fn with_auto_continue_off_hooks_end_within_milliseconds() {
     } else {
         Duration::from_millis(10)
     };
+    // PostToolUse runs after every tool call; with nothing waiting it is one read
+    let mut ran = bash("cargo test");
+    ran["tool_use_id"] = json!("toolu_01Off");
+    ran["duration_ms"] = json!(12);
     for (event, extra) in [
         ("PermissionRequest", bash("cargo test")),
         ("PreToolUse", ask_user_question()),
         ("Stop", stop_question()),
+        ("PostToolUse", ran),
     ] {
         let input = f.input(event, extra).to_string();
         let mut runs = Vec::new();
