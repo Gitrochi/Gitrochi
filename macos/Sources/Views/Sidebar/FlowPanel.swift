@@ -22,12 +22,14 @@ enum FlowSheet: Identifiable, Equatable {
     case run(String)
     case trust(flow: String, plan: FlowPlan, thenRun: Bool)
     case setup
+    case edit
 
     var id: String {
         switch self {
         case .run(let id): return "run:" + id
         case .trust(let f, _, _): return "trust:" + f
         case .setup: return "setup"
+        case .edit: return "edit"
         }
     }
 }
@@ -60,6 +62,7 @@ private struct FlowPanelBody: View {
                     }
                 }
             case .setup: FlowSetupSheet(flows: flows)
+            case .edit: FlowEditorSheet(flows: flows)
             }
         }
         .confirmationDialog(
@@ -104,6 +107,10 @@ private struct FlowPanelBody: View {
             Button { Task { await flows.refresh() } } label: { Image(systemName: "arrow.clockwise") }
                 .buttonStyle(.borderless)
                 .help("Refresh")
+            Button { sheet = .edit } label: { Image(systemName: "square.and.pencil") }
+                .buttonStyle(.borderless)
+                .help("Edit flow file…")
+                .disabled(!flows.engineAvailable)
             Button { sheet = .setup } label: { Image(systemName: "wand.and.stars") }
                 .buttonStyle(.borderless)
                 .help("Detect tests and propose a flow file")
@@ -147,7 +154,7 @@ private struct FlowPanelBody: View {
                 Image(systemName: "point.3.connected.trianglepath.dotted").font(.largeTitle).foregroundStyle(.tertiary)
                 Text("Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI.")
                     .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                Button("Set up flows…") { sheet = .setup }
+                Button("Set up flows…") { sheet = .edit }
             }
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -157,7 +164,7 @@ private struct FlowPanelBody: View {
                 Text(e.message).font(.caption).foregroundStyle(.red).textSelection(.enabled)
                 if let a = e.action { Text(a).font(.caption).foregroundStyle(.secondary) }
                 HStack {
-                    Button("Open flow file") { NSWorkspace.shared.open(flows.repo.appendingPathComponent(".gitch/flow.yml")) }
+                    Button("Edit flow file…") { sheet = .edit }
                     Button("Try again") { Task { await flows.refresh() } }
                 }
                 .buttonStyle(.link)
@@ -165,24 +172,10 @@ private struct FlowPanelBody: View {
             .padding(12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else if let list = flows.list {
-            List {
-                if !list.trusted {
-                    Section {
-                        Label("This flow file is new or changed. Review the commands before running it.", systemImage: "hand.raised")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                }
-                Section("Flows") {
-                    ForEach(list.flows) { f in flowRow(f) }
-                }
-                if !flows.runs.isEmpty {
-                    Section("Recent runs") {
-                        ForEach(flows.runs.prefix(30)) { r in runRow(r) }
-                    }
-                }
-            }
-            .listStyle(.sidebar)
+            FlowWorkspaceView(flows: flows, list: list, affected: affectedOnly, starting: starting,
+                              onRun: { name in Task { await prepare(name) } },
+                              onReview: { plan in sheet = .trust(flow: plan.flow, plan: plan, thenRun: false) },
+                              onEdit: { sheet = .edit }, onOpenRun: { sheet = .run($0) })
         } else {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -195,66 +188,6 @@ private struct FlowPanelBody: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func flowRow(_ f: FlowList.Flow) -> some View {
-        HStack(spacing: 6) {
-            FlowStateIcon(state: f.last?.state)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(f.name).lineLimit(1)
-                HStack(spacing: 4) {
-                    if let d = f.description, !d.isEmpty { Text(d).lineLimit(1) }
-                    Text("\(f.nodes) steps")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-            if starting == f.name {
-                ProgressView().controlSize(.mini)
-            } else {
-                Button { Task { await prepare(f.name) } } label: { Image(systemName: "play.fill") }
-                    .buttonStyle(.borderless)
-                    .help("Run \(f.name)")
-                    .accessibilityLabel("Run \(f.name)")
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) { Task { await prepare(f.name) } }
-        .contextMenu {
-            Button("Run") { Task { await prepare(f.name) } }
-            if let last = f.last { Button("Show last run") { sheet = .run(last.runId) } }
-            Button("Review commands…") {
-                Task {
-                    do { sheet = .trust(flow: f.name, plan: try await FlowEngine.plan(f.name, in: flows.repo), thenRun: false) }
-                    catch { self.error = error.localizedDescription }
-                }
-            }
-        }
-    }
-
-    private func runRow(_ r: FlowRunRow) -> some View {
-        HStack(spacing: 6) {
-            FlowStateIcon(state: r.running == true ? "RUNNING" : r.state)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(r.flow).lineLimit(1)
-                HStack(spacing: 4) {
-                    if let s = r.startedAt, let d = ISO8601DateFormatter.flow.date(from: s) { Text(Fmt.short(d)) }
-                    if let ms = r.durationMs, r.running != true { Text(FlowFormat.duration(ms)) }
-                    if let c = r.code, r.running != true { Text(c).font(.caption.monospaced()) }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-            if r.signed == false, r.running != true {
-                Image(systemName: "exclamationmark.shield").foregroundStyle(.orange)
-                    .help("This record isn't signed by the engine, so gates don't trust it")
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { sheet = .run(r.runId) }
-        .accessibilityAction { sheet = .run(r.runId) }
     }
 
     /// Before a run: read the plan to see whether trust or confirmation is needed.
@@ -295,72 +228,4 @@ private struct FlowPanelBody: View {
         parts.append(String(localized: "Environment: \(p.env)"))
         return parts.joined(separator: "\n")
     }
-}
-
-/// Run and node state icons
-struct FlowStateIcon: View {
-    let state: String?
-    var size: CGFloat = 12
-
-    var body: some View {
-        let (name, color) = FlowStateIcon.look(state)
-        Image(systemName: name)
-            .font(.system(size: size))
-            .foregroundStyle(color)
-            .help(FlowFormat.stateTitle(state))
-            .accessibilityLabel(FlowFormat.stateTitle(state))
-    }
-
-    static func look(_ s: String?) -> (String, Color) {
-        switch s {
-        case "SUCCEEDED", "PASSED": return ("checkmark.circle.fill", .green)
-        case "CACHED": return ("checkmark.circle", .green)
-        case "FAILED", "ROLLBACK_FAILED": return ("xmark.circle.fill", .red)
-        case "INDETERMINATE": return ("questionmark.circle.fill", .red)
-        case "REJECTED": return ("nosign", .orange)
-        case "ROLLED_BACK", "ROLLING_BACK": return ("arrow.uturn.backward.circle.fill", .orange)
-        case "CANCELLED": return ("stop.circle.fill", .secondary)
-        case "RUNNING", "PREFLIGHT": return ("circle.dotted", .blue)
-        case "SKIPPED": return ("minus.circle", .secondary)
-        case nil: return ("circle", .secondary)
-        default: return ("circle", .secondary)
-        }
-    }
-}
-
-enum FlowFormat {
-    static func duration(_ ms: Int) -> String {
-        if ms < 1000 { return "\(ms)ms" }
-        let s = Double(ms) / 1000
-        if s < 60 { return String(format: "%.1fs", s) }
-        return "\(Int(s) / 60)m \(Int(s) % 60)s"
-    }
-
-    static func stateTitle(_ s: String?) -> String {
-        switch s {
-        case "SUCCEEDED": return String(localized: "Succeeded")
-        case "PASSED": return String(localized: "Passed")
-        case "CACHED": return String(localized: "Passed before with the same inputs")
-        case "FAILED": return String(localized: "Failed")
-        case "INDETERMINATE": return String(localized: "Couldn't judge (counts as a failure)")
-        case "REJECTED": return String(localized: "Rejected before running")
-        case "ROLLING_BACK": return String(localized: "Rolling back")
-        case "ROLLED_BACK": return String(localized: "Failed and rolled back")
-        case "ROLLBACK_FAILED": return String(localized: "Rollback failed — environment on hold")
-        case "CANCELLED": return String(localized: "Canceled")
-        case "RUNNING", "PREFLIGHT": return String(localized: "Running")
-        case "SKIPPED": return String(localized: "Skipped")
-        case "PENDING": return String(localized: "Waiting")
-        default: return String(localized: "Not run yet")
-        }
-    }
-}
-
-extension ISO8601DateFormatter {
-    /// The engine's timestamps (2026-10-26T05:23:20.616Z)
-    static let flow: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
 }

@@ -20,6 +20,16 @@ What has **actually been checked** for the flow engine (`tools/gitch-flow`), git
 | macOS app | App build with `macos/build.sh` (the engine signed into `Contents/MacOS` next to `gitch-core`, linked from Resources, `gitch flow version` through the app's gitch; no new compiler warnings), **`macos/Tools/test-flow.sh`: list, plan, gate, the error envelope, a detached run, events (fed cut mid-line), the run list, records and init from the real engine, read with the app's models**, and `macos/Tools/test-workspace-navigation.sh` with the Flows page among the workspace destinations | Passed |
 | Windows app (on macOS) | `npm run core`, then `npx tsc --noEmit -p .`, `npx vitest run` (including 4 for reading flow events, the error envelope and confirmation rules, the workspace navigation with the Flows page, and the folder-structure rules), `npx vite build`, `cargo check` in `src-tauri` (without the engine: its resource is only in `tauri.windows.conf.json`, so other systems' builds are not blocked; in the base config this check fails) | 425 passed |
 
+## Visual workspace checks (2026-10-30)
+
+- `npm run build` and `npm test` pass: 733 tests in 91 files. New tests cover dependency ordering and invalid graphs, preserving YAML, rejected-save rollback, external-edit conflicts and recovering historical verdicts and dependencies. The production build reports a large-bundle advisory.
+- `macos/build.sh` succeeds. The unchanged account service emits two deprecation warnings for `SecKeychainGetUserInteractionAllowed` and `SecKeychainSetUserInteractionAllowed`; there are no new flow compiler warnings.
+- `bash macos/Tools/test-flow.sh` passes against the real engine. Native history recovery assertions and fork/join/cycle layout checks also pass.
+- The built macOS app was opened with an isolated demo repository and captured in light and dark: dependency graph, script settings and run history. In each appearance, the real engine completed four steps and two JUnit tests. An intentional sample failure displayed the correct state and output. Invalid YAML was rejected and the original file restored; a valid edit saved successfully. History search and the failures-only filter were exercised. [Screenshots](flow/README.md#visual-workspace-and-scripts) show only synthetic demo data.
+- Narrow native layouts were also rendered offscreen. The Windows workspace, node selection, command inspector, history and script editor were inspected using production components with isolated synthetic data.
+- The Windows real-app self-test checks dependency cards, script inspection, saved-run graph, invalid YAML rollback, valid save and trust invalidation. It passed in PR #146 before the visual polish; the polish is also covered by local type checking and unit tests.
+- Rust is unchanged, so `cargo check` and shared Rust checks were not repeated. The dependency graph diff introduces no cycles.
+
 ## Not checked yet
 
 | What | Why, and how to check it |
@@ -28,7 +38,7 @@ What has **actually been checked** for the flow engine (`tools/gitch-flow`), git
 | **Engine tests and the static build on Linux** | Same reason. → The **Flow engine** job (ubuntu-latest) and the musl build on tag runs. |
 | **Real Docker** | The Docker daemon on this Mac was off, so `tests/real_docker.rs` (running in a real alpine container, file owner, an nginx service, containers reaching each other by alias, label cleanup) was skipped. The fake docker CLI tests check only arguments, order and cleanup. → The **Real Docker tests** job in **Flow engine**. compose.up has never run against a real compose. |
 | **Real GitLab, GitHub and Jenkins** | The driving rules were checked against fake servers, but not real servers' response shapes, permissions, artifact paths (GitHub artifacts are zip files, so the verdict currently comes from the log marker) or Jenkins plugin differences. → Make a connection and run each once with a CI file from `gitch flow export`. |
-| **The app screens by eye** | macOS: build, type check and contract test; Windows: type check and unit tests. The screens have not been looked at (light, dark, VoiceOver included). The Windows self-test has a new flow step (trust, a detached run and the Flows page with the bundled engine) that first runs in CI. |
+| **Full accessibility walkthrough** | The actual-app checks above cover the requested screens and interactions. A complete VoiceOver walkthrough remains to be run. |
 | **Universal macOS build and release signing** | Development builds are arm64 only on this Mac. `build.sh release` (aarch64 + x86_64 with lipo) first runs on a CI tag run. |
 | **OS secret stores** | The tests set `GITCH_FLOW_NO_KEYSTORE=1` and never touch the Keychain or the Credential Manager. `connect add` (storing a token) and reading app account tokens (`app:`) need a manual check. |
 | **Remote deployment over SSH** | `deploy.compose` with `host:` (DOCKER_HOST=ssh://) was checked only for its arguments with a fake docker. |

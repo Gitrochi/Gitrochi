@@ -117,20 +117,32 @@ final class FlowStore {
 
     func record(_ runId: String) -> FlowJSON? { records[runId] }
 
-    /// Opening a finished run fills the node states from its record (for runs that were not followed).
+    /// Final records remain readable even when the event stream is missing or ends before run.done.
     func open(_ runId: String) async {
-        if views[runId] == nil || records[runId] == nil, let rec = try? await FlowEngine.record(runId, in: repo) {
-            records[runId] = rec
-            if views[runId] == nil, let path = rec["eventsPath"].string {
-                if rec["state"].string.map({ ["RUNNING", "PENDING", "PREFLIGHT", "ROLLING_BACK"].contains($0) }) == true {
-                    follow(runId: runId, eventsPath: path)
-                } else if let data = FileManager.default.contents(atPath: path) {
-                    var v = FlowRunView(runId: runId)
-                    _ = v.consume(data)
-                    views[runId] = v
-                }
-            }
+        guard let rec = try? await FlowEngine.record(runId, in: repo) else { return }
+        records[runId] = rec
+        guard tails[runId] == nil else { return }
+        var view = views[runId] ?? FlowRunView(runId: runId)
+        if views[runId] == nil, let path = rec["eventsPath"].string,
+           let data = await Task.detached(operation: { FileManager.default.contents(atPath: path) }).value {
+            _ = view.consume(data)
         }
+        let plan = await Self.savedPlan(rec)
+        let observedRunning = runs.first(where: { $0.runId == runId })?.running
+        views[runId] = FlowRunHistory.recover(view, record: rec, savedPlan: plan, observedRunning: observedRunning)
+        if views[runId]?.done != true, FlowRunHistory.isRunning(rec, observedRunning: observedRunning), let path = rec["eventsPath"].string {
+            follow(runId: runId, eventsPath: path)
+        }
+    }
+
+    private nonisolated static func savedPlan(_ record: FlowJSON) async -> FlowJSON? {
+        let directory = record["runDir"].string.map { URL(fileURLWithPath: $0, isDirectory: true) }
+            ?? record["eventsPath"].string.map { URL(fileURLWithPath: $0).deletingLastPathComponent() }
+        guard let directory else { return nil }
+        return await Task.detached {
+            guard let data = try? Data(contentsOf: directory.appendingPathComponent("plan.json")) else { return nil }
+            return try? JSONDecoder().decode(FlowJSON.self, from: data)
+        }.value
     }
 
     private func follow(runId: String, eventsPath: String) {
@@ -164,7 +176,10 @@ final class FlowStore {
             }
             guard let self else { return }
             self.tails[runId] = nil
-            if let rec = try? await FlowEngine.record(runId, in: self.repo) { self.records[runId] = rec }
+            if let rec = try? await FlowEngine.record(runId, in: self.repo) {
+                self.records[runId] = rec
+                self.views[runId] = FlowRunHistory.recover(self.views[runId] ?? FlowRunView(runId: runId), record: rec, savedPlan: await Self.savedPlan(rec))
+            }
             if !Task.isCancelled, let record = self.records[runId], record["finishedAt"].string != nil,
                ["SUCCEEDED", "FAILED", "REJECTED", "CANCELLED", "ROLLED_BACK", "ROLLBACK_FAILED"].contains(record["state"].string ?? ""),
                let index = self.validationBindings.firstIndex(where: { $0.runID == runId && $0.after == nil }),

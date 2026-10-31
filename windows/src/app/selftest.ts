@@ -25,6 +25,7 @@ import { reviewWorkflowsSelfTest } from "./lib/review-workflows-selftest";
 import { historyToolsSelfTest } from "./lib/history-tools-selftest";
 import { collaborationSelfTest } from "./lib/collaboration-selftest";
 import { localWorkflowsSelfTest } from "./lib/local-workflows-selftest";
+import { flowWorkspaceSelfTest } from "./lib/flow-workspace-selftest";
 import { repositoryAssistantSelfTest } from "./lib/repository-assistant-selftest";
 import { assistantContextSelfTest } from "./lib/assistant-context-selftest";
 import { structureGraphSelfTest } from "./lib/structure-graph-selftest";
@@ -1017,11 +1018,12 @@ export async function runSelfTest(): Promise<boolean> {
     const done = await until(() => !!fs.views.get(id)?.done, 60000);
     const view = fs.views.get(id);
     const ran = view?.state === "SUCCEEDED" && view.nodes.length === 2 && view.nodes.every((n) => n.state === "PASSED") && view.nodes[0].tail.some((l) => l.includes("hello-from-flow"));
+    const visual = await flowWorkspaceSelfTest(dir, id);
     s.navigate("flows");
     const panel = await until(() => document.body.innerText.includes("흐름 설정…"), 5000);
     s.navigate("repository");
     await ipc.remove(dir);
-    return [listed && done && ran && panel, `version=${v.version} listed=${listed} done=${done} state=${view?.state} nodes=${view?.nodes.map((n) => n.state)} panel=${panel}`];
+    return [listed && done && ran && panel && visual[0], `version=${v.version} listed=${listed} done=${done} state=${view?.state} nodes=${view?.nodes.map((n) => n.state)} panel=${panel} visual=${visual[0]} ${visual[1]}`];
   });
 
   await step("설정 화면", async () => {

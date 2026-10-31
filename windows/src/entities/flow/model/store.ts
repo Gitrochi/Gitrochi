@@ -1,11 +1,11 @@
-import { samePathKey, settings } from "@/shared/config";
+import { ipc } from "@/shared/api";
+import { joinPath, samePathKey, settings } from "@/shared/config";
 import { Observable, decodeValidationBindings, type ValidationBinding } from "@/shared/lib";
 import { worktreeStamp } from "@/shared/platform";
 import { FlowEngineError, flowEngine } from "./engine";
+import { recordIsRunning, recoverRunHistory } from "./history";
 import { consumeEvents, newRunView, type RunView } from "./run-view";
 import type { FlowGate, FlowList, FlowRunRow } from "./types";
-
-const activeStates = new Set(["RUNNING", "PENDING", "PREFLIGHT", "ROLLING_BACK"]);
 
 /**
  * One per repository: the flows, recent runs and the run being followed (like the macOS FlowStore.swift).
@@ -106,15 +106,24 @@ export class FlowStore extends Observable {
   async open(runId: string) {
     const rec = await flowEngine.record(runId, this.repo).catch(() => null);
     if (rec) this.records.set(runId, rec);
-    if (!this.views.has(runId)) {
-      if (rec && activeStates.has(String(rec.state))) this.follow(runId);
-      else {
-        const v = newRunView(runId);
-        consumeEvents(v, await flowEngine.events(runId, 0, this.repo));
-        this.views.set(runId, v);
-      }
+    if (!this.tails.has(runId)) {
+      let view = this.views.get(runId) ?? newRunView(runId);
+      if (!this.views.has(runId)) consumeEvents(view, await flowEngine.events(runId, 0, this.repo));
+      if (rec) view = recoverRunHistory(view, rec, await this.savedPlan(rec), this.runs.find(row => row.runId === runId)?.running);
+      this.views.set(runId, view);
+      if (rec && !view.done && recordIsRunning(rec, this.runs.find(row => row.runId === runId)?.running)) this.follow(runId);
     }
     this.changed();
+  }
+
+  private async savedPlan(record: Record<string, unknown>): Promise<unknown> {
+    const directory = typeof record.runDir === "string" ? record.runDir
+      : typeof record.eventsPath === "string" ? record.eventsPath.replace(/[\\/][^\\/]+$/, "") : null;
+    if (!directory) return null;
+    try {
+      const source = await ipc.readText(joinPath(directory, "plan.json"));
+      return source ? JSON.parse(source) as unknown : null;
+    } catch { return null; }
   }
 
   private follow(runId: string) {
@@ -143,7 +152,10 @@ export class FlowStore extends Observable {
       if (v.done) {
         this.tails.delete(runId);
         const rec = await flowEngine.record(runId, this.repo).catch(() => null);
-        if (rec) this.records.set(runId, rec);
+        if (rec) {
+          this.records.set(runId, rec);
+          this.views.set(runId, recoverRunHistory(v, rec, await this.savedPlan(rec)));
+        }
         const binding = this.validationBindings.find(value => value.runID === runId && !value.after);
         if (binding && rec && ["SUCCEEDED", "FAILED", "REJECTED", "CANCELLED", "ROLLED_BACK", "ROLLBACK_FAILED"].includes(String(rec.state)) && typeof rec.finishedAt === "string") {
           try { binding.after = (await worktreeStamp(this.repo)).stamp; this.saveValidation(); }
