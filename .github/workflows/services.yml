@@ -1,8 +1,9 @@
 name: Index and services
 
-# The repository index (Rust, crates/gitrochi-index) with its C++ tokenizer (native/), the Python
-# tools on top of it (tools/gitrochi-py) and the Go hub and monitor (services/hub), each on the
-# systems it ships to. The apps' own workflows build the index into the apps.
+# The repository index (Rust, crates/gitrochi-index) with its C++ tokenizer (native/), the session
+# ledger (crates/gitrochi-ledger), the Python tools on top of the index (tools/gitrochi-py) and the
+# Go hub and monitor (services/hub), each on the systems it ships to. The apps' own workflows build
+# the index into the apps.
 on:
   pull_request:
     paths: ["crates/**", "native/**", "tools/gitrochi-py/**", "services/**", "tools/generate-core-notices.py", "THIRD_PARTY_NOTICES.md", ".github/workflows/services.yml"]
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   index:
-    name: Index and tokenizer (${{ matrix.os }})
+    name: Index, ledger and tokenizer (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +49,10 @@ jobs:
       # SQLite and the C++ tokenizer compile through the cc crate: clang, gcc or MSVC.
       - name: Index tests
         run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-index
+
+      # Git without a console window and the database under %APPDATA% are Windows-only code paths.
+      - name: Ledger tests
+        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger
 
       - name: C++ module on its own (tests, runtime-free check, loadable extension)
         if: runner.os != 'Windows'
