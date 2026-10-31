@@ -100,6 +100,7 @@ enum LedgerJSON: Codable, Hashable {
     subscript(key: String) -> LedgerJSON { if case .object(let o) = self { return o[key] ?? .null }; return .null }
     var string: String? { if case .string(let s) = self { return s }; return nil }
     var int: Int? { if case .number(let n) = self { return Int(n) }; return nil }
+    var number: Double? { if case .number(let n) = self { return n }; return nil }
     var bool: Bool? { if case .bool(let b) = self { return b }; return nil }
     var array: [LedgerJSON] { if case .array(let a) = self { return a }; return [] }
     var object: [String: LedgerJSON]? { if case .object(let o) = self { return o }; return nil }
@@ -411,6 +412,109 @@ struct LedgerWriteResult: Codable, Hashable {
 }
 
 struct LedgerBackupResult: Codable, Hashable { var path: String }
+
+/// `import_legacy`: what a read-only import of a claude-ledger database copied, or with `dryRun` would copy
+struct LedgerLegacyImportResult: Codable, Hashable {
+    struct Counts: Codable, Hashable {
+        var projects: Int
+        var baselines: Int
+        var baselinesUpdated: Int
+        var sessions: Int
+        var events: Int
+        var questions: Int
+        var imports: Int
+    }
+    var ok: Bool
+    var dryRun: Bool
+    var rev: Int?
+    var counts: Counts
+    /// Sessions the ledger already has; they were left as they are
+    var skipped: [String]
+    /// Rows that could not be read
+    var errors: [String]
+}
+
+/// `settings`: the rules every writer reads from the ledger's database. Only the app changes them (`settings_set`).
+struct LedgerGlobalSettings: Codable, Hashable {
+    /// What a session's kind means: its role, and for the implementation role its stream line and whether its
+    /// `sync` and `applied` reports hand off to decision sessions
+    struct KindRule: Codable, Hashable {
+        var role: LedgerRole
+        var line: String?
+        var handoff: Bool?
+    }
+    var staleHours: Double
+    var kinds: [String: KindRule]
+    /// Auto-continue's defaults; their settings arrive with auto-continue
+    var autoContinue: LedgerJSON?
+    var backupKeep: Int
+
+    /// `kinds` as `settings_set` takes it, replaced as a whole: line and hand-off only for the implementation role
+    static func kindsArgument(_ kinds: [String: KindRule]) -> LedgerJSON {
+        .object(kinds.mapValues { rule in
+            var entry: [String: LedgerJSON] = ["role": .string(rule.role.rawValue)]
+            if rule.role == .implementation {
+                let line = (rule.line ?? "").trimmingCharacters(in: .whitespaces)
+                entry["line"] = .string(line.isEmpty ? "core" : line)
+                entry["handoff"] = .bool(rule.handoff ?? true)
+            }
+            return .object(entry)
+        })
+    }
+
+    /// Kinds in use that have no rule (their role is `other`), so a person can give them one. The core stores kinds
+    /// and rules in the same spelling, so they compare as they are.
+    func unassignedKinds(among used: [String]) -> [String] {
+        Set(used.filter { !$0.isEmpty && kinds[$0] == nil }).sorted()
+    }
+}
+
+/// One project's baseline source, from `projects`; `project_set` changes it
+struct LedgerProjectSettings: Codable, Hashable, Identifiable {
+    enum Source: String, LedgerEnum, CaseIterable, Identifiable {
+        case tags, folder, manual
+        static let fallback = Source.manual
+        var id: String { rawValue }
+    }
+
+    var key: String
+    var name: String
+    var repoPath: String?
+    var baselineSource: Source
+    var baselinePattern: String
+    var baselineDir: String?
+    var scanFiles: Bool
+    var scanSubdirs: [String]
+    var id: String { key }
+}
+
+/// `scan`: baselines found per project; a failure is reported here, not thrown
+struct LedgerScanResult: Codable, Hashable {
+    struct Project: Codable, Hashable {
+        var project: String
+        var source: String
+        var found: Int
+        var added: Int
+        var error: String?
+    }
+    var results: [Project]
+}
+
+/// `settings_set`'s answer: every setting as stored
+struct LedgerSettingsWrite: Codable, Hashable {
+    var ok: Bool
+    var rev: Int?
+    var settings: LedgerGlobalSettings
+}
+
+struct LedgerProjectList: Codable, Hashable { var projects: [LedgerProjectSettings] }
+
+/// `project_set`'s answer: the project as stored
+struct LedgerProjectWrite: Codable, Hashable {
+    var ok: Bool
+    var rev: Int?
+    var project: LedgerProjectSettings
+}
 
 /// `{"error": {"code", "message"}}`
 struct LedgerErrorEnvelope: Codable, Hashable {

@@ -34,6 +34,9 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     private var promptCycle = 0
     private var colorCounters: [String: Int] = [:]
     private var idCounters: [String: Int] = [:]
+    /// Settings and baseline sources are stored and answered as the core does; the demo's verdicts keep 72 hours
+    private var settings = DemoLedgerBackend.defaultSettings
+    private var projectSettings: [String: LedgerProjectSettings] = [:]
     private let dayFormat: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -71,6 +74,16 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             case "prompt_answer": return try encode(answerPrompt(a, now: now))
             case "prompt_review": return try encode(reviewPrompts(a))
             case "backup": return try encode(LedgerBackupResult(path: "ledger-demo-" + dayFormat.string(from: date(now)) + ".sqlite3"))
+            case "settings": return try encode(settings)
+            case "settings_set": return try encode(setSettings(a))
+            case "projects": return try encode(LedgerProjectList(projects: projects.map { project($0.key) }))
+            case "project_set": return try encode(setProject(a))
+            case "scan":
+                let keys = a["project"].string.map { [$0] } ?? projects.map(\.key)
+                return try encode(LedgerScanResult(results: keys.map { key in
+                    LedgerScanResult.Project(project: key, source: project(key).baselineSource.rawValue, found: baselines.filter { $0.project == key }.count, added: 0)
+                }))
+            case "import_legacy": throw LedgerFailure(code: "INVALID_ARGUMENT", message: "The demo cannot import a database")
             default: throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown method: \(method)")
             }
         } catch let failure as LedgerFailure {
@@ -384,8 +397,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             }
             questions[i].answeredAt = now
         case "snooze":
-            // Still active sends no time: now plus the stale hours
-            s.snoozeUntil = a["until"].int ?? a["hours"].int.map { now + LedgerMs($0) * Self.hour } ?? now + Self.staleMs
+            // Still active sends no time: now plus the stale hours. Like the core, a snooze ends in the future.
+            let until = a["until"].int ?? a["hours"].int.map { now + LedgerMs($0) * Self.hour } ?? now + Self.staleMs
+            guard until > now else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "until must be in the future") }
+            s.snoozeUntil = until
         case "shelve": s.status = .shelved
         case "link":
             // each link the request names is set; null removes it
@@ -424,6 +439,83 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     }
 
     private struct ReviewResult: Encodable { let ok: Bool; let rev: Int; let reviewed: Int }
+
+    /// The core's defaults (crates/gitrochi-ledger/src/settings.rs)
+    static let defaultSettings = LedgerGlobalSettings(
+        staleHours: 72,
+        kinds: ["research": .init(role: .research), "decision": .init(role: .decision),
+                "implementation": .init(role: .implementation, line: "core", handoff: true),
+                "llm-implementation": .init(role: .implementation, line: "llm", handoff: false),
+                "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "other": .init(role: .other)],
+        autoContinue: ["enabled": false, "delaySec": 30],
+        backupKeep: 14)
+    static let defaultPattern = #"^v?(\d+(?:\.\d+)+)$"#
+
+    private func project(_ key: String) -> LedgerProjectSettings {
+        projectSettings[key] ?? LedgerProjectSettings(key: key, name: projects.first { $0.key == key }?.name ?? key, baselineSource: .tags,
+                                                      baselinePattern: Self.defaultPattern, scanFiles: false, scanSubdirs: [])
+    }
+
+    /// `settings_set {values}`: null puts a setting back to its default; a value out of range is refused as a whole
+    private func setSettings(_ a: LedgerJSON) throws -> LedgerSettingsWrite {
+        guard let values = a["values"].object else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Give values") }
+        var next = settings
+        for (key, value) in values {
+            let reset = value == .null
+            switch key {
+            case "staleHours":
+                guard reset || value.number.map({ $0 > 0 && $0 <= 10_000 }) == true else {
+                    throw LedgerFailure(code: "INVALID_ARGUMENT", message: "staleHours must be a number of hours (0–10000)")
+                }
+                next.staleHours = value.number ?? Self.defaultSettings.staleHours
+            case "kinds":
+                if reset { next.kinds = Self.defaultSettings.kinds; continue }
+                var kinds: [String: LedgerGlobalSettings.KindRule] = [:]
+                for (name, entry) in value.object ?? [:] {
+                    guard let role = entry["role"].string.flatMap(LedgerRole.init(rawValue:)), !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+                        throw LedgerFailure(code: "INVALID_ARGUMENT", message: "kinds.\(name).role must be decision, implementation, research, document or other")
+                    }
+                    kinds[name.trimmingCharacters(in: .whitespaces)] = role == .implementation
+                        ? .init(role: role, line: entry["line"].string ?? "core", handoff: entry["handoff"].bool ?? true) : .init(role: role)
+                }
+                next.kinds = kinds
+            case "backupKeep":
+                guard reset || value.int.map({ (1...365).contains($0) }) == true else {
+                    throw LedgerFailure(code: "INVALID_ARGUMENT", message: "backupKeep must be a whole number (1–365)")
+                }
+                next.backupKeep = value.int ?? Self.defaultSettings.backupKeep
+            case "autoContinue": next.autoContinue = reset ? Self.defaultSettings.autoContinue : value
+            default: throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown setting \(key)")
+            }
+        }
+        settings = next
+        rev += 1
+        return LedgerSettingsWrite(ok: true, rev: rev, settings: settings)
+    }
+
+    /// `project_set {project, …}`: the fields given change, null clears one
+    private func setProject(_ a: LedgerJSON) throws -> LedgerProjectWrite {
+        guard let key = a["project"].string, !key.isEmpty else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Missing project") }
+        if !projects.contains(where: { $0.key == key }) { projects.append(LedgerProject(key: key, name: key, open: 0)) }
+        var p = project(key)
+        let fields = a.object ?? [:]
+        if let name = fields["name"] { p.name = name.string ?? key }
+        if let repo = fields["repoPath"] { p.repoPath = repo.string }
+        if let source = fields["baselineSource"] {
+            guard let value = LedgerProjectSettings.Source(rawValue: source.string ?? "tags") else {
+                throw LedgerFailure(code: "INVALID_ARGUMENT", message: "baselineSource must be tags, folder or manual")
+            }
+            p.baselineSource = value
+        }
+        if let pattern = fields["baselinePattern"] { p.baselinePattern = pattern.string ?? Self.defaultPattern }
+        if let dir = fields["baselineDir"] { p.baselineDir = dir.string }
+        if let files = fields["scanFiles"]?.bool { p.scanFiles = files }
+        if let subdirs = fields["scanSubdirs"] { p.scanSubdirs = subdirs.array.compactMap(\.string) }
+        projectSettings[key] = p
+        if let i = projects.firstIndex(where: { $0.key == key }) { projects[i].name = p.name }
+        rev += 1
+        return LedgerProjectWrite(ok: true, rev: rev, project: p)
+    }
 
     private func answerPrompt(_ a: LedgerJSON, now: LedgerMs) throws -> LedgerWriteResult {
         guard let id = a["id"].int, let i = prompts.firstIndex(where: { $0.id == id }) else {

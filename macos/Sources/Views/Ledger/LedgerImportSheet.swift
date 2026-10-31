@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Paste reports: fenced ```ledger blocks (or JSON lines with an "event") from a conversation that could not report
-/// itself; each block gets its own result. (Windows: features/import-ledger-reports/ui/LedgerImportSheet.tsx)
+/// itself; each block gets its own result. Import from claude-ledger… swaps in the database import.
+/// (Windows: features/import-ledger-reports/ui/LedgerImportSheet.tsx)
 struct LedgerImportSheet: View {
     let ledger: LedgerStore
     @Environment(\.dismiss) private var dismiss
@@ -9,8 +10,18 @@ struct LedgerImportSheet: View {
     @ViewState private var results: [LedgerImportResult.Block]?
     @ViewState private var importing = false
     @ViewState private var error: String?
+    /// A claude-ledger database being imported instead
+    @ViewState private var legacyPath: String?
 
     var body: some View {
+        if let legacyPath {
+            LedgerLegacyImportSheet(ledger: ledger, path: legacyPath, back: { self.legacyPath = nil })
+        } else {
+            paste
+        }
+    }
+
+    private var paste: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Paste reports").font(.title3.bold())
             Text("Paste a conversation or the ledger blocks from it. Every block is read on its own: one that fails does not stop the rest, and a block imported before is skipped.")
@@ -26,6 +37,11 @@ struct LedgerImportSheet: View {
             if let results { resultList(results) }
             if let error { Text(error).font(.caption).foregroundStyle(Color(nsColor: .systemRed)).textSelection(.enabled) }
             HStack {
+                Button("Import from claude-ledger…") {
+                    if let path = LedgerLegacyImportSheet.chooseDatabase() { legacyPath = path }
+                }
+                .disabled(importing)
+                .help("Copy the sessions of a claude-ledger database into the ledger")
                 if importing { ProgressView().controlSize(.small) }
                 Spacer()
                 Button(results == nil ? String(localized: "Cancel") : String(localized: "Close")) { dismiss() }.keyboardShortcut(.cancelAction)

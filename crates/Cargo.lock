@@ -67,6 +67,7 @@ name = "gitrochi-core"
 version = "0.1.0"
 dependencies = [
  "gitrochi-index",
+ "gitrochi-ledger",
  "serde",
  "serde_json",
  "unicode-segmentation",

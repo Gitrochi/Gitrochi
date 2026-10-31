@@ -2,12 +2,12 @@ import SwiftUI
 import AppKit
 
 /// Connect Claude Code: the `claude mcp add` command for the bundled ledger binary, to copy and run in a terminal, and a
-/// connection test (`info`). It never edits a client's settings; agents Gitrochi starts need none of this.
-/// (Windows: features/connect-ledger-mcp/ui/LedgerConnectSheet.tsx)
+/// connection test (the bundled binary's MCP handshake, and `info`). It never edits a client's settings; agents Gitrochi
+/// starts need none of this. (Windows: features/connect-ledger-mcp/ui/LedgerConnectSheet.tsx)
 struct LedgerConnectSheet: View {
     let ledger: LedgerStore
     /// Where the app bundles the ledger's command-line tool
-    var binaryPath = Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/gitrochi-ledger").path
+    var binaryPath = LedgerCommandLine.bundled.path
     @Environment(\.dismiss) private var dismiss
     @ViewState private var notice = ""
     @ViewState private var error: String?
@@ -55,8 +55,10 @@ struct LedgerConnectSheet: View {
         error = nil
         Task {
             do {
+                let tools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: binaryPath))
                 let info = try await ledger.info()
-                notice = String(localized: "The ledger answers: schema \(info.schemaVersion), change \(info.rev), database \(info.dbPath).")
+                notice = String(localized: "The ledger command answers with its tools: \(tools.joined(separator: ", ")).") + "\n"
+                    + String(localized: "The ledger answers: schema \(info.schemaVersion), change \(info.rev), database \(info.dbPath).")
                     + (info.enabled ? "" : "\n" + String(localized: "The ledger is turned off (GITROCHI_LEDGER=0)."))
             } catch {
                 self.error = error.localizedDescription

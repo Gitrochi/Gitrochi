@@ -39,9 +39,10 @@ struct LedgerToast: Identifiable, Equatable {
 final class LedgerStore {
     static let shared = LedgerStore(client: LedgerClient(backend: LedgerStore.makeBackend()))
 
-    /// The demo until the core is connected (wave 2); GITROCHI_LEDGER_DEMO=large or =empty picks another demo
-    nonisolated static func makeBackend() -> LedgerBackend {
-        DemoLedgerBackend(mode: DemoLedgerBackend.Mode(rawValue: ProcessInfo.processInfo.environment["GITROCHI_LEDGER_DEMO"] ?? "") ?? .standard)
+    /// The core (the person's ledger database); GITROCHI_LEDGER_DEMO=standard, =large or =empty shows a demo instead
+    nonisolated static func makeBackend(environment: [String: String] = ProcessInfo.processInfo.environment) -> LedgerBackend {
+        guard let demo = environment["GITROCHI_LEDGER_DEMO"], !demo.isEmpty else { return NativeLedgerBackend() }
+        return DemoLedgerBackend(mode: DemoLedgerBackend.Mode(rawValue: demo) ?? .standard)
     }
 
     nonisolated static func localNow() -> LedgerMs { LedgerMs((Date().timeIntervalSince1970 * 1000).rounded()) }
@@ -452,8 +453,40 @@ final class LedgerStore {
         return results
     }
 
+    /// A claude-ledger database, read only: `dryRun` counts what would be copied, without it the sessions are copied
+    func importLegacy(path: String, dryRun: Bool) async throws -> LedgerLegacyImportResult {
+        let result = try await client.importLegacy(path: path, dryRun: dryRun)
+        if !dryRun { await reload() }
+        return result
+    }
+
     func info() async throws -> LedgerInfo { try await client.info() }
     func backup() async throws -> String { try await client.backup() }
+
+    // MARK: - Settings
+
+    func settings() async throws -> LedgerGlobalSettings { try await client.settings() }
+
+    /// Stores settings; verdicts and roles follow them, so a page that is open reads again
+    func saveSettings(_ values: [String: LedgerJSON]) async throws -> LedgerGlobalSettings {
+        let saved = try await client.setSettings(values)
+        if state != nil { await reload() }
+        return saved
+    }
+
+    func projectSettings() async throws -> [LedgerProjectSettings] { try await client.projects() }
+
+    func saveProject(_ key: String, _ values: [String: LedgerJSON]) async throws -> LedgerProjectSettings {
+        let saved = try await client.setProject(key, values)
+        if state != nil { await reload() }
+        return saved
+    }
+
+    func scan(project: String?) async throws -> [LedgerScanResult.Project] {
+        let results = try await client.scan(project: project)
+        if state != nil { await reload() }
+        return results
+    }
 
     /// Writes only a changed value, so views that read it do not draw again for nothing
     private func setIfChanged<Value: Equatable>(_ path: ReferenceWritableKeyPath<LedgerStore, Value>, _ value: Value) {

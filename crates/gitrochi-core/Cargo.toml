@@ -19,6 +19,8 @@ serde_json = "1"
 unicode-segmentation = "1.12"
 
 # The native static library also carries the repository index (SQLite + the C++
-# tokenizer), so the macOS app links a single Rust runtime. WebAssembly builds leave it out.
+# tokenizer) and the session ledger, so the macOS app links a single Rust runtime.
+# WebAssembly builds leave them out.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 gitrochi-index = { path = "../gitrochi-index" }
+gitrochi-ledger = { path = "../gitrochi-ledger" }

@@ -2,8 +2,10 @@
 # The Ledger screens' logic without SwiftUI: the pure presentation rules (verdict order, countdowns, filters, Inbox
 # grouping, undo, graph rows and coordinates), every demo backend answer decoded with the app's contract models,
 # LedgerStore (polling by rev, operations, undo, prompts) and the large demo (1,000 sessions, 50,000 events) with timings.
-# With the core's command-line tool (GITROCHI_LEDGER_BIN, else crates/target/release/gitrochi-ledger) it also reads the
-# core's own demo through the app's client, Inbox, graph and store.
+# It builds the shared core (tools/build-core-native.sh) and reads the core's own demo through the app's client, Inbox,
+# graph and store twice: through the command-line tool as an agent (GITROCHI_LEDGER_BIN, else the one just built), and
+# through the C ABI in libgitrochi_core.a as the app (NativeLedgerBackend), with a person's operations, settings,
+# projects, backups, both imports and the bundled command's MCP handshake, in temporary folders only.
 #   macos/Tools/test-ledger.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -93,7 +95,10 @@ let start: LedgerMs = 1_793_400_000_000
         if let i = CommandLine.arguments.firstIndex(of: "--core"), i + 2 < CommandLine.arguments.count {
             try await core(binary: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2])
         }
-        print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, large demo")
+        if let i = CommandLine.arguments.firstIndex(of: "--native"), i + 3 < CommandLine.arguments.count {
+            try await native(cli: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2], legacy: CommandLine.arguments[i + 3])
+        }
+        print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, settings, large demo, the core through its C ABI")
     }
 
     static func pureLogic() {
@@ -144,9 +149,10 @@ let start: LedgerMs = 1_793_400_000_000
         before.mergedInto = "v1.2.0"
         check(LedgerUndo.inverse(of: .ack, before: before, now: 9) == [.unack], "undo confirm")
         check(LedgerUndo.inverse(of: .archive, before: before, now: 9) == [.unarchive], "undo archive")
-        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 9)], "undo Still active: snoozed until now, so stale again")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == nil, "no Undo for Still active without a snooze to put back: the core snoozes into the future only")
         before.snoozeUntil = 77
-        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 77)], "undo Still active restores the old time")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 77)], "undo Still active restores a snooze that still runs")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 77) == nil, "a snooze that has ended cannot be put back")
         check(LedgerUndo.inverse(of: .setStatus(.active, version: nil), before: before, now: 9) == [.setStatus(.merged, version: "v1.2.0"), .unack], "undo reopen")
         before.ackAt = 5
         before.archivedAt = 6
@@ -175,6 +181,10 @@ let start: LedgerMs = 1_793_400_000_000
         let encoded = String(decoding: try! JSONEncoder().encode(LedgerJSON.object(["n": 3, "f": .number(1.5)])), as: UTF8.self)
         check(encoded.contains("\"n\":3") && encoded.contains("1.5"), "whole numbers stay whole: \(encoded)")
         check((try? JSONDecoder().decode([LedgerVerdict].self, from: Data(#"["needs_human","from_a_newer_core"]"#.utf8))) == [.needsHuman, .active], "unknown values fall back")
+        let kinds = LedgerGlobalSettings.kindsArgument(["spike": .init(role: .research, line: "x", handoff: false), "build": .init(role: .implementation, line: " ", handoff: nil)])
+        check(kinds == ["spike": ["role": "research"], "build": ["role": "implementation", "line": "core", "handoff": true]], "kinds: a line and hand-off only for implementation: \(kinds)")
+        let rules = LedgerGlobalSettings(staleHours: 72, kinds: ["research": .init(role: .research)], autoContinue: nil, backupKeep: 14)
+        check(rules.unassignedKinds(among: ["research", "spike", "", "spike", "Research"]) == ["Research", "spike"], "kinds without a rule, once each, as stored")
         let point = LedgerGraphPlot.point(lane: 2, row: 3, laneWidth: 22, rowHeight: 30, leftPad: 6)
         check(point.x == 61 && point.y == 105 && LedgerGraphPlot.point(lane: 0.5, row: 0, laneWidth: 22, rowHeight: 30, leftPad: 6).x == 28, "coordinates")
     }
@@ -322,8 +332,9 @@ let start: LedgerMs = 1_793_400_000_000
         _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id)], as: LedgerWriteResult.self)
         let snoozed = try call(demo, "session", ["id": .string(stale.id)], as: LedgerSessionDetail.self).session
         check(snoozed.verdict == .active && snoozed.snoozeUntil == start + 72 * hour, "Still active: not stale for the stale hours")
-        _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .number(Double(start))], as: LedgerWriteResult.self)
-        check(try verdict(stale.id) == .stale, "snoozed until now: stale again")
+        let pastSnooze = failure(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .number(Double(start))])
+        let stillSnoozed = try verdict(stale.id)
+        check(pastSnooze?.code == "INVALID_ARGUMENT" && stillSnoozed == .active, "like the core, a snooze ends in the future")
         let asked = state.questions.first { $0.state == .open }!
         _ = try call(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "answer": "Yes, both."], as: LedgerWriteResult.self)
         let answered = try call(demo, "session", ["id": .string(asked.sessionId)], as: LedgerSessionDetail.self)
@@ -378,6 +389,27 @@ let start: LedgerMs = 1_793_400_000_000
         let empty = DemoLedgerBackend(mode: .empty, clock: { clock.now() })
         let nothing = try call(empty, "state", [:], as: LedgerState.self)
         check(nothing.sessions.isEmpty && nothing.pendingPrompts.isEmpty && nothing.attention.total == 0, "empty demo")
+
+        // Settings › Ledger on the demo: the same shapes as the core
+        let rules = DemoLedgerBackend(clock: { clock.now() })
+        let stored = try call(rules, "settings", as: LedgerGlobalSettings.self)
+        check(stored == DemoLedgerBackend.defaultSettings && stored.kinds["implementation"]?.line == "core", "demo settings")
+        let spike = LedgerGlobalSettings.kindsArgument(["spike": .init(role: .implementation, line: "", handoff: false)])
+        let saved = try call(rules, "settings_set", ["values": ["staleHours": 24, "kinds": spike]], as: LedgerSettingsWrite.self).settings
+        check(saved.staleHours == 24 && saved.kinds == ["spike": .init(role: .implementation, line: "core", handoff: false)], "demo settings_set: \(saved)")
+        check(failure(rules, "settings_set", ["values": ["backupKeep": 0]])?.code == "INVALID_ARGUMENT", "a value out of range is refused")
+        check(failure(rules, "settings_set", ["values": ["colour": 1]])?.code == "INVALID_ARGUMENT", "an unknown setting is refused")
+        let reset = try call(rules, "settings_set", ["values": ["staleHours": .null, "kinds": .null]], as: LedgerSettingsWrite.self).settings
+        check(reset == DemoLedgerBackend.defaultSettings, "null puts the defaults back")
+        let projects = try call(rules, "projects", as: LedgerProjectList.self).projects
+        check(projects.map(\.key) == ["harbor", "meadow"] && projects.allSatisfy { $0.baselineSource == .tags && $0.baselinePattern == DemoLedgerBackend.defaultPattern }, "demo projects")
+        let renamed = try call(rules, "project_set", ["project": "harbor", "name": "Harbour", "baselineSource": "folder", "scanSubdirs": ["specs"]], as: LedgerProjectWrite.self).project
+        let named = try call(rules, "state", [:], as: LedgerState.self).projects.first { $0.key == "harbor" }?.name
+        check(renamed.name == "Harbour" && renamed.baselineSource == .folder && renamed.scanSubdirs == ["specs"] && named == "Harbour", "demo project_set")
+        check(failure(rules, "project_set", ["project": "harbor", "baselineSource": "ftp"])?.code == "INVALID_ARGUMENT", "an unknown source is refused")
+        let scanned = try call(rules, "scan", ["project": "harbor"], as: LedgerScanResult.self).results
+        check(scanned.count == 1 && scanned[0].found > 0 && scanned[0].source == "folder", "demo scan")
+        check(failure(rules, "import_legacy", ["path": "/nowhere"])?.code == "INVALID_ARGUMENT", "the demo cannot import a database")
     }
 
     @MainActor static func store() async throws {
@@ -424,8 +456,12 @@ let start: LedgerMs = 1_793_400_000_000
         let stale = ledger.state!.sessions.first { $0.verdict == .stale }!
         await ledger.perform(.stillActive, on: [stale.id], message: "Still active")
         check(ledger.session(stale.id)?.verdict == .active && !ledger.inbox.items.contains { $0.sessionId == stale.id }, "Still active leaves the Inbox")
+        check(ledger.toast?.canUndo == false && !ledger.canUndo && ledger.actionError == nil, "no Undo without a snooze to put back")
+        let firstSnooze = ledger.session(stale.id)!.snoozeUntil!
+        await ledger.perform(.snooze(until: firstSnooze + hour), on: [stale.id], message: "Snoozed")
+        check(ledger.toast?.canUndo == true && ledger.session(stale.id)?.snoozeUntil == firstSnooze + hour, "a later snooze can put the running one back")
         await ledger.undo()
-        check(ledger.session(stale.id)?.verdict == .stale && ledger.inbox.items.contains { $0.sessionId == stale.id }, "undo Still active")
+        check(ledger.session(stale.id)?.snoozeUntil == firstSnooze && ledger.session(stale.id)?.verdict == .active && ledger.actionError == nil, "undo Still active")
 
         let question = ledger.inbox.items(in: .questions).compactMap { item -> LedgerQuestion? in if case .question(let q) = item.content { return q }; return nil }.first!
         ledger.drafts[question.id] = "  "
@@ -529,6 +565,144 @@ let start: LedgerMs = 1_793_400_000_000
         print("Core contract: \(state.sessions.count) sessions, \(state.projects.count) projects, attention \(state.attention.total) — decoded and grouped like the core")
     }
 
+    /// The core through its C ABI, as the app reads it: the same ledger the command line sees, a person's operations,
+    /// settings and projects, backups, both imports, several threads at once, the switch that turns it off, and the
+    /// bundled command's MCP handshake. Every call names a database in `folder`.
+    @MainActor static func native(cli: String, folder: String, legacy: String) async throws {
+        let db = folder + "/ledger.sqlite3"
+        _ = CLIBackend(binary: cli, db: db).run(["demo", db])
+        let native = NativeLedgerBackend(database: db)
+        let client = LedgerClient(backend: native)
+        check(LedgerStore.makeBackend(environment: [:]) is NativeLedgerBackend && LedgerStore.makeBackend(environment: ["GITROCHI_LEDGER_DEMO": ""]) is NativeLedgerBackend,
+              "the preview reads the core")
+        check(LedgerStore.makeBackend(environment: ["GITROCHI_LEDGER_DEMO": "empty"]) is DemoLedgerBackend, "GITROCHI_LEDGER_DEMO still picks a demo")
+        let info = try await client.info()
+        check(info.schemaVersion == 1 && info.enabled && info.dbPath == db, "C ABI info: \(info.dbPath)")
+        let state = try await client.state(project: nil, range: .all)
+        let agent = try await LedgerClient(backend: CLIBackend(binary: cli, db: db)).state(project: nil, range: .all)
+        check(!state.sessions.isEmpty && state.rev == agent.rev && state.sessions.map(\.id) == agent.sessions.map(\.id) && state.attention == agent.attention,
+              "the C ABI and the command line read the same ledger")
+        let inbox = LedgerInbox.build(state)
+        check(inbox.items(in: .questions).count == state.attention.questions && inbox.items(in: .tidy).count == state.attention.tidy
+              && inbox.items(in: .decide).count == state.attention.decide, "the Inbox groups agree with the core's counts")
+        for s in state.sessions.prefix(8) {
+            let detail = try await client.session(s.id)
+            check(detail.session.id == s.id, "session \(s.id) through the C ABI")
+        }
+        for p in state.projects {
+            let graph = try await client.graph(project: p.key, range: .all)
+            check(LedgerGraphPlot.plot(graph).rows.count == graph.nodes.count, "graph \(p.key) through the C ABI")
+        }
+        let reads = await withTaskGroup(of: Int?.self) { group in
+            for i in 0..<24 { group.addTask { i % 4 == 0 ? try? await client.state(project: nil, range: .week).rev : try? await client.rev() } }
+            return await group.reduce(into: [Int?]()) { $0.append($1) }
+        }
+        check(reads.count == 24 && reads.allSatisfy { $0 == state.rev }, "calls from several threads at once: \(reads)")
+
+        // A person's operations, which the command line refuses
+        guard let confirm = state.sessions.first(where: { $0.verdict == .confirm }) else { return check(false, "the core's demo has a session to confirm") }
+        let written = try await client.human(.ack, sessionId: confirm.id)
+        let confirmed = try await client.session(confirm.id).session
+        check(written.ok && (written.rev ?? 0) > state.rev && confirmed.verdict == .expirable, "a person's operation through the C ABI")
+        let suite = "dev.gitrochi.ledger-native-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LedgerStore(client: client, defaults: defaults, interval: .seconds(600))
+        await store.poll()
+        check(store.state != nil && store.loadError == nil && store.inbox.count == store.attentionTotal, "the store reads the core")
+        if let stale = store.state?.sessions.first(where: { $0.verdict == .stale }) {
+            await store.perform(.stillActive, on: [stale.id], message: "Still active")
+            let first = store.session(stale.id)?.snoozeUntil
+            check(store.session(stale.id)?.verdict == .active && first != nil && store.actionError == nil, "Still active in the core")
+            try await Task.sleep(for: .milliseconds(20))
+            await store.perform(.stillActive, on: [stale.id], message: "Still active")
+            check(store.toast?.canUndo == true && store.session(stale.id)?.snoozeUntil != first, "a second Still active")
+            await store.undo()
+            check(store.session(stale.id)?.snoozeUntil == first && store.actionError == nil, "the core takes the running snooze back: \(store.actionError ?? "")")
+        } else {
+            check(false, "the core's demo has a stale session")
+        }
+
+        // Settings: the demo's defaults are the core's; verdicts follow the stale hours
+        let initial = try await client.settings()
+        check(initial == DemoLedgerBackend.defaultSettings, "the demo's default settings are the core's: \(initial)")
+        let now = try await client.state(project: nil, range: .all)
+        let quiet = now.sessions.first { $0.verdict == .active && $0.stream == nil && $0.lastAt < now.now - 2 * hour && ($0.snoozeUntil ?? 0) < now.now }
+        let hourly = try await client.setSettings(["staleHours": 1])
+        let afterHourly = try await client.state(project: nil, range: .all)
+        check(hourly.staleHours == 1 && quiet.map { q in afterHourly.sessions.first { $0.id == q.id }?.verdict == .stale } ?? true, "verdicts follow the stale hours")
+        var kinds = hourly.kinds
+        kinds["spike"] = .init(role: .research)
+        kinds["review"] = nil
+        let custom = try await client.setSettings(["kinds": LedgerGlobalSettings.kindsArgument(kinds), "backupKeep": 3])
+        check(custom.kinds["spike"]?.role == .research && custom.kinds["review"] == nil && custom.backupKeep == 3, "kinds are replaced as a whole")
+        check(failure(native, "settings_set", ["values": ["staleHours": -1]])?.code == "INVALID_ARGUMENT", "a bad value is refused")
+        let reset = try await client.setSettings(["staleHours": .null, "kinds": .null, "backupKeep": .null])
+        check(reset == initial, "null puts the defaults back")
+
+        // Projects and their baseline sources
+        let projects = try await client.projects()
+        check(!projects.isEmpty && projects.allSatisfy { $0.baselineSource == .tags && $0.baselinePattern == DemoLedgerBackend.defaultPattern }, "projects: \(projects.map(\.key))")
+        let key = projects[0].key
+        let renamed = try await client.setProject(key, ["name": "Renamed", "baselineSource": "manual"])
+        check(renamed.name == "Renamed" && renamed.baselineSource == .manual, "project_set")
+        try FileManager.default.createDirectory(atPath: folder + "/specs/v9.9.0", withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: folder + "/v9.8.7", withIntermediateDirectories: true)
+        let fromFolder = try await client.setProject(key, ["baselineSource": "folder", "baselineDir": .string(folder), "scanSubdirs": ["specs"]])
+        check(fromFolder.baselineSource == .folder && fromFolder.baselineDir == folder && fromFolder.scanSubdirs == ["specs"], "a folder source")
+        check(failure(native, "project_set", ["project": .string(key), "baselinePattern": "(unclosed"])?.code == "INVALID_ARGUMENT", "a bad pattern is refused")
+        let scanned = try await client.scan(project: key)
+        let trunk = try await client.state(project: key, range: .all).baselines.filter { $0.project == key }.map(\.version)
+        check(scanned.count == 1 && scanned[0].found == 2 && scanned[0].added == 2 && scanned[0].error == nil && trunk.contains("9.9.0") && trunk.contains("9.8.7"),
+              "a scan finds folder versions: \(scanned), \(trunk)")
+        let cleared = try await client.setProject(key, ["name": .null, "baselineSource": .null, "baselineDir": .null, "scanSubdirs": []])
+        check(cleared.name == key && cleared.baselineSource == .tags && cleared.baselineDir == nil && cleared.scanSubdirs.isEmpty, "null clears")
+
+        // Backups and imports
+        let backup = try await client.backup()
+        check(backup.hasPrefix(folder + "/backups/") && FileManager.default.fileExists(atPath: backup), "a backup next to the database: \(backup)")
+        let block = "```ledger\n{\"event\": \"start\", \"session\": \"native-paste\", \"title\": \"From a paste\", \"project\": \"harbor\"}\n```"
+        let pasted = try await client.importReports(block, project: nil)
+        let again = try await client.importReports(block, project: nil)
+        check(pasted.first?.ok == true && pasted.first?.duplicate == false && again.first?.duplicate == true, "a pasted report, then the same again")
+        let original = try Data(contentsOf: URL(fileURLWithPath: legacy))
+        let revBefore = try await client.rev()
+        let preview = try await client.importLegacy(path: legacy, dryRun: true)
+        let revPreview = try await client.rev()
+        check(preview.ok && preview.dryRun && revPreview == revBefore && preview.counts.sessions == 2 && preview.counts.events == 2
+              && preview.counts.questions == 1 && preview.counts.baselines == 1 && preview.counts.projects == 1, "a dry run counts without writing: \(preview.counts)")
+        let imported = try await client.importLegacy(path: legacy, dryRun: false)
+        let revImported = try await client.rev()
+        check(!imported.dryRun && imported.counts == preview.counts && revImported > revBefore && imported.skipped.isEmpty && imported.errors.isEmpty, "the import")
+        let twice = try await client.importLegacy(path: legacy, dryRun: true)
+        check(twice.counts.sessions == 0 && Set(twice.skipped) == ["legacy-one", "legacy-two"], "sessions the ledger has are skipped: \(twice.skipped)")
+        check((try Data(contentsOf: URL(fileURLWithPath: legacy))) == original, "the claude-ledger file is left as it was")
+        let all = try await client.state(project: nil, range: .all).sessions.map(\.kind)
+        check(try await client.settings().unassignedKinds(among: all).contains("spike"), "an imported kind without a role is listed for Settings")
+        check(failure(native, "import_legacy", ["path": .string(folder + "/missing.db")])?.code == "INVALID_ARGUMENT", "a missing file is refused")
+
+        // Errors, and the switch that turns the core off
+        check(failure(native, "no_such_method")?.code == "INVALID_ARGUMENT", "an unknown method")
+        let garbled = String(decoding: native.call(method: "rev", args: Data("{".utf8)), as: UTF8.self)
+        check(garbled.contains("INVALID_ARGUMENT"), "arguments that are not JSON: \(garbled)")
+        setenv("GITROCHI_LEDGER", "0", 1)
+        let off = try call(native, "info", as: LedgerInfo.self)
+        let refused = failure(native, "state")
+        unsetenv("GITROCHI_LEDGER")
+        check(!off.enabled && refused?.code == "DISABLED", "GITROCHI_LEDGER=0 turns the core off: \(refused?.code ?? "")")
+
+        // The command Connect Claude Code points at
+        let tools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
+        check(tools == ["ledger_overview", "ledger_report", "ledger_session"], "the command's MCP tools: \(tools)")
+        do {
+            _ = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: folder + "/missing"))
+            check(false, "a missing command is reported")
+        } catch let missing as LedgerFailure {
+            check(missing.code == "NOT_FOUND", "a missing command: \(missing.code)")
+        }
+        print("C ABI: \(state.sessions.count) sessions read as the app; operations, settings, projects, scan, backup, both imports and the MCP handshake checked")
+    }
+
     @MainActor static func large() async throws {
         var clock = Date()
         let demo = DemoLedgerBackend(mode: .large)
@@ -588,15 +762,19 @@ let start: LedgerMs = 1_793_400_000_000
     }
 }
 SWIFT
-swiftc -O -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
+ARCH="$(uname -m)"
+case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-darwin ;; esac
+# The library the app links (the ledger's C ABI is re-exported there) and the gitrochi-ledger command next to it
+cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
+swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
+    "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
-    "$TASK_TMP/main.swift" -o "$TASK_TMP/test-ledger"
-CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/release/gitrochi-ledger}"
-if [[ -x "$CORE" ]]; then
-    mkdir -p "$TASK_TMP/core"
-    "$TASK_TMP/test-ledger" --core "$CORE" "$TASK_TMP/core"
-else
-    "$TASK_TMP/test-ledger"
-    echo "Core contract: skipped (no gitrochi-ledger binary; set GITROCHI_LEDGER_BIN to check against the core)"
-fi
+    "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
+CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"
+[[ -x "$CORE" ]] || { echo "No gitrochi-ledger command at $CORE" >&2; exit 1; }
+mkdir -p "$TASK_TMP/core" "$TASK_TMP/native"
+# A call that names no database would use this one, never the person's ledger
+export GITROCHI_LEDGER_DB="$TASK_TMP/default.sqlite3"
+sqlite3 "$TASK_TMP/claude-ledger.db" < "$ROOT/Tools/fixtures/claude-ledger.sql"
+"$TASK_TMP/test-ledger" --core "$CORE" "$TASK_TMP/core" --native "$CORE" "$TASK_TMP/native" "$TASK_TMP/claude-ledger.db"
