@@ -82,12 +82,12 @@ fn question_texts(value: &Value) -> Vec<String> {
     }
 }
 
-fn is_link(url: &str) -> bool {
+pub(crate) fn is_link(url: &str) -> bool {
     let lower = url.to_ascii_lowercase();
     lower.starts_with("https://") || lower.starts_with("http://")
 }
 
-fn cut_body(text: &str) -> (String, bool) {
+pub(crate) fn cut_body(text: &str) -> (String, bool) {
     if text.chars().count() <= BODY_MAX {
         return (text.to_string(), false);
     }

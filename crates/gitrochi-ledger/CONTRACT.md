@@ -2,7 +2,7 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph` and `pending-prompt`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt` and `legacy-import`. The tests check real results against them.
 
 ## Decisions assumed
 
@@ -130,6 +130,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `overview` | `{project?, session?, deliver?}` | `{text, data}` — messages are delivered only with `session` and `deliver: true` | app, agent |
 | `report` | the report fields below | `{sessionId, notices, messages: Message[], created, event, session, head?, questionIds, text}`; the session's waiting messages are delivered exactly once | app, agent |
 | `import` | `{text, project?}` | `{results: [{index, ok, duplicate, error?, sessionId?, event?, notices?}]}` — a duplicate is `ok` and skipped | app, agent |
+| `import_legacy` | `{path, dryRun?}` | `{ok, dryRun, rev, counts: {projects, baselines, baselinesUpdated, sessions, events, questions, imports}, skipped, errors}` ([below](#importing-a-claude-ledger-database)) | app, agent |
 | `scan` | `{project?}` | `{results: [{project, source, found, added, error?}]}` (forced, all projects without one) | app, agent |
 | `register_baseline` | `{project, version, note?}` | `{ok, rev, project, version}` | app, agent |
 | `backup` | `{daily?, keep?}` | `{path, created, size, removed}` | app, agent |
@@ -165,6 +166,19 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 | `message` | `sessionId, text` | A note for the agent, delivered once |
 | `auto_continue` | `sessionId, autoContinue: {enabled, delaySec} \| null` | The session's policy; null = the global default |
 
+### Importing a claude-ledger database
+
+`import_legacy` copies the database of the standalone claude-ledger tool (D5). `path` is the file, taken as given; `dryRun` counts without writing, for a preview. The file is never written: with nothing next to it, it is opened `immutable=1` (no locks, no files created); a `-wal`, `-shm` or `-journal` file next to it means the tool has it open or stopped mid-write, so it is opened `mode=ro` with SQLite's usual locking, which reads its newest committed data. Only these tables and columns are read — the compatibility surface — and a column an older file lacks reads as empty. Work-ledger and note tables are not read (D3).
+
+- `versions` (`project`, `version`, `ts`, `source`, `note`, `by_session`) → baselines. `scan` becomes `folder`, an unknown source `registered`. `by_session` is kept only for a session imported in the same run, because the same ID here may be another conversation and would misdirect hand-offs. A baseline the ledger already has keeps what it knows; an `inferred` one takes the file's source and time, and a missing releaser or note is filled in (`baselinesUpdated`).
+- `sessions` (`id`, `project`, `kind`, `title`, `base_version`, `base_current`, `base_was_latest`, `status`, `merged_into`, `touches`, `related`, `chat_url`, `channel`, `color`, `created_ts`, `last_ts`, `ack_ts`, `snooze_ts`, `archived_ts`) → sessions. Kinds go through the alias table, unknown kinds are kept as typed. `snoozeUntil` is `snooze_ts` plus `staleHours`; `lastAgentAt` is the newest event its own agent sent (hand-off records from other sessions excluded); a chat link that is not http(s) is dropped.
+- `events` (`session_id`, `ts`, `type`, `actor`, `summary`, `ssot`, `artifacts`, `data`, `channel`, `delivered_ts`) → events, in time order. The actor `claude` becomes `agent`; a person's `status` and `note` become `set_status` and `message`, so those still waiting are delivered once; `ssot` becomes `version`, `data.body` the `body`; the data keys `item`, `items`, `from_status` and `reopened_from` become `questionId`, `questionIds`, `fromStatus` and `reopenedFrom`, and the artifact key `ssot_inferred` becomes `ssotInferred`.
+- `items` (`id`, `session_id`, `ts`, `text`, `state`, `answer`, `answered_by`, `answered_ts`, `delivered_ts`) → questions. `answered_by` `claude` becomes `resolvedBy: "agent"`. A question keeps its number where the ledger has it free, so an agent's `resolves` still finds it; the others are numbered after them and the events' references follow.
+- `imports` (`hash`, `ts`) → import hashes, so pasted blocks the tool imported are duplicates here.
+- Projects: a row per project name, with default settings (the tool keeps project settings outside its database).
+
+A session whose ID the ledger already has is skipped with its events and questions and listed in `skipped`. Rows that cannot be read — an ID the ledger does not accept, an unknown status or question state, history that belongs to no session — are listed in `errors`, and the rest is imported. The copy is one write transaction; a dry run, or a file with nothing new, writes nothing and leaves `rev` alone, so a second import of the same file changes nothing.
+
 ### Errors
 
 `INVALID_ARGUMENT` (bad or missing input), `NOT_FOUND`, `CONFLICT` (a session ID with another title or project), `NOT_ALLOWED` (wrong caller), `DISABLED` (`GITROCHI_LEDGER=0`), `DATABASE`, `SCHEMA_MISMATCH`, `GIT_FAILED` (scans report it in their result instead).
@@ -173,7 +187,7 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 - **C ABI** (macOS): `char *gitrochi_ledger_call(const char *method, const char *json)` and `void gitrochi_ledger_free(char *)` in [`include/gitrochi_ledger.h`](include/gitrochi_ledger.h). NULL `json` means `{}`; the result is never NULL; safe from several threads; panics become `DATABASE` errors. Linking it into `libgitrochi_core.a` is wave 2.
 - **Windows**: one Tauri command `ledger_call(method: String, args: serde_json::Value) -> Result<serde_json::Value, String>` calling `gitrochi_ledger::call` (wave 2).
-- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `scan`, `register`, `backup`, `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`; `hook <event>` arrives in wave 2. See the [README](README.md).
+- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`; `hook <event>` arrives in wave 2. See the [README](README.md).
 - **MCP** (`gitrochi-ledger mcp`): `ledger_overview`, `ledger_report`, `ledger_session`; delivery only for the caller's own session; no person's operations. Protocol versions as `tools/gitrochi-mcp`: `2025-11-25`, `2025-06-18`, `2024-11-05`.
 - `GITROCHI_LEDGER_SESSION` is the default session of the CLI and the MCP tools (for agents Gitrochi launches).
 
@@ -197,9 +211,11 @@ Additions (optional fields and new methods; nothing renamed or removed):
 10. Methods `attention`, `scan`, `register_baseline`, `settings`, `projects`, `settings_set`, `project_set`, `prompt_create`, `prompt_get`, `prompt_resolve`, `prompt_expire`, `prompt_review`; the human action `auto_continue`; the `hook` caller; `args.db`; the CLI command `register`.
 11. Settled: settings live in the database (above); kinds are stored in canonical English, with `llm-implementation` as a default second line without hand-offs; `lastAt` is the last agent activity on the session (its own reports, and hand-offs that changed it) and drives `stale`; a snooze sets `snoozeUntil`.
 
+12. Method `import_legacy` (D5, wave 2) with the schema `legacy-import` and the CLI command `import-legacy`.
+
 Narrowed on purpose (the original tool was wider):
 
-12. `applied` hands off only from implementation sessions on a hand-off line; from any other session it records the version and confirms nothing.
-13. A person's `shelve` (and `set_status` shelved) is limited to research and document roles, like the agent's `shelved`.
+13. `applied` hands off only from implementation sessions on a hand-off line; from any other session it records the version and confirms nothing.
+14. A person's `shelve` (and `set_status` shelved) is limited to research and document roles, like the agent's `shelved`.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

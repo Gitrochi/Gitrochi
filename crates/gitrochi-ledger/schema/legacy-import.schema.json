@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/legacy-import.schema.json",
+  "title": "LegacyImport",
+  "description": "The import_legacy method's result: what a read-only import of a claude-ledger database copied, or with dryRun would copy (CONTRACT.md: import_legacy).",
+  "type": "object",
+  "required": [
+    "ok",
+    "dryRun",
+    "rev",
+    "counts",
+    "skipped",
+    "errors"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "ok": {
+      "const": true
+    },
+    "dryRun": {
+      "type": "boolean",
+      "description": "true: counted only, nothing written"
+    },
+    "rev": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The ledger's rev after the import; unchanged by a dry run or when nothing was new"
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "projects",
+        "baselines",
+        "baselinesUpdated",
+        "sessions",
+        "events",
+        "questions",
+        "imports"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "projects": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Project rows created, with default settings"
+        },
+        "baselines": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Baselines added"
+        },
+        "baselinesUpdated": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Baselines the ledger had that the file completed: an inferred version promoted, a missing releaser or note filled in"
+        },
+        "sessions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "questions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "imports": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hashes of pasted blocks, so blocks imported there count as duplicates here"
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of sessions the ledger already has; neither they nor their events and questions were copied"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Rows that could not be read, for people; everything else was imported"
+    }
+  }
+}

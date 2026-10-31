@@ -16,6 +16,7 @@ mod git;
 pub mod graph;
 pub mod human;
 pub mod import;
+pub mod legacy;
 pub mod mcp;
 pub mod overlap;
 pub mod prompts;
