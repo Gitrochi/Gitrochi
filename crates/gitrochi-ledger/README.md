@@ -9,7 +9,7 @@ The session ledger. Agents report which baseline their work started from and whe
 | Agents (Claude Code and other MCP clients) | `gitrochi-ledger mcp`: `ledger_overview`, `ledger_report`, `ledger_session` |
 | Scripts, terminals, pasted reports | The `gitrochi-ledger` command line |
 
-[CONTRACT.md](CONTRACT.md) is the API: storage, vocabulary, verdicts, hand-offs, types, methods, callers and errors. [`schema/`](schema/) has JSON Schemas for `State`, `Session`, `LedgerEvent`, `Question`, `Graph`, `PendingPrompt` and the session detail.
+[CONTRACT.md](CONTRACT.md) is the API: storage, vocabulary, verdicts, hand-offs, types, methods, callers and errors. [`schema/`](schema/) has JSON Schemas for `State`, `Session`, `LedgerEvent`, `Question`, `Graph`, `PendingPrompt`, the session detail and the result of a claude-ledger import.
 
 ## The rules in short
 
@@ -58,6 +58,7 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   overview [-p PROJECT] [-s SESSION --deliver]
   session ID [--deliver]
   import FILE|- [-p PROJECT]
+  import-legacy FILE [--dry-run]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
@@ -78,6 +79,8 @@ gitrochi-ledger session S1031-02 --deliver   # only the session itself
 gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
 ```
 
+`import-legacy` copies a database of the standalone claude-ledger tool, which the ledger re-implements, without ever writing to that file: projects, baselines, sessions with their events and questions, and the hashes of pasted blocks it imported. Sessions the ledger already has are skipped and listed, so running it again changes nothing; `--dry-run` only counts (see [CONTRACT.md](CONTRACT.md#importing-a-claude-ledger-database)).
+
 `demo` writes neutral demo data into a new file: two projects, a session in every verdict, a stream with three cycles, questions, a waiting prompt, an automatic answer to review and an overlap; `--large` adds a project with 1,000 sessions and 50,000 events.
 
 ## Layout
@@ -90,6 +93,7 @@ gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
 | `baseline.rs`, `git.rs` | The trunk: tags, folders, registration, releases, inferred versions |
 | `graph.rs`, `search.rs` | The graph layout; search |
 | `import.rs`, `sha1.rs` | Pasted blocks and their duplicate hash (the original tool's canonical JSON) |
+| `legacy.rs` | The read-only import of a claude-ledger database |
 | `backup.rs`, `prompts.rs`, `settings.rs` | Backups, pending prompts for auto-continue, global settings |
 | `api.rs`, `ffi.rs`, `mcp.rs`, `main.rs` | The dispatcher and its callers, the C ABI, the MCP server, the CLI |
 | `text.rs`, `demo.rs`, `vocab.rs` | Text for agents, demo data, the vocabulary and input aliases |
@@ -102,4 +106,4 @@ cargo clippy --locked --manifest-path crates/Cargo.toml --all-targets -- -D warn
 cargo test --release --manifest-path crates/Cargo.toml -p gitrochi-ledger --test scale -- --nocapture   # timings
 ```
 
-The tests port the original tool's scenarios as Rust tests on temporary databases: every verdict and its order, resuming, release and absorbs, the sync and applied hand-offs, inferred baselines and their promotion, titles, imports and duplicates, exactly-once delivery, shelving, staleness and snoozing, streams and lines, git tag and folder scans, migrations, backups while writing, threads and real processes writing at once, many threads and processes opening a brand-new file at the same moment (`LEDGER_STRESS_ROUNDS` repeats it), the C ABI (and the header with a C and a C++ compiler), the CLI and an MCP conversation as real processes, the schemas against the demo, graph determinism, and timings on the large demo. On this development Mac (Apple Silicon, release build, median of five, 1,011 sessions and 50,036 events): `state` 10 ms, `graph` 32 ms for 7 days and 84 ms for everything (50,000 nodes), `session` 5 ms, `search` 12 ms, `rev` under 0.1 ms.
+The tests port the original tool's scenarios as Rust tests on temporary databases: every verdict and its order, resuming, release and absorbs, the sync and applied hand-offs, inferred baselines and their promotion, titles, imports and duplicates, the claude-ledger import from a generated file, exactly-once delivery, shelving, staleness and snoozing, streams and lines, git tag and folder scans, migrations, backups while writing, threads and real processes writing at once, many threads and processes opening a brand-new file at the same moment (`LEDGER_STRESS_ROUNDS` repeats it), the C ABI (and the header with a C and a C++ compiler), the CLI and an MCP conversation as real processes, the schemas against the demo, graph determinism, and timings on the large demo. On this development Mac (Apple Silicon, release build, median of five, 1,011 sessions and 50,036 events): `state` 10 ms, `graph` 32 ms for 7 days and 84 ms for everything (50,000 nodes), `session` 5 ms, `search` 12 ms, `rev` under 0.1 ms.

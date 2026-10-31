@@ -10,6 +10,7 @@ use crate::event;
 use crate::graph;
 use crate::human;
 use crate::import;
+use crate::legacy;
 use crate::prompts;
 use crate::report;
 use crate::search;
@@ -33,7 +34,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 24] = [
+pub const METHODS: [(&str, &[Caller]); 25] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -44,6 +45,7 @@ pub const METHODS: [(&str, &[Caller]); 24] = [
     ("overview", &[Caller::App, Caller::Agent]),
     ("report", &[Caller::App, Caller::Agent]),
     ("import", &[Caller::App, Caller::Agent]),
+    ("import_legacy", &[Caller::App, Caller::Agent]),
     ("scan", &[Caller::App, Caller::Agent]),
     ("register_baseline", &[Caller::App, Caller::Agent]),
     ("backup", &[Caller::App, Caller::Agent]),
@@ -204,6 +206,15 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
                 now,
             )?;
             Ok(json!({"results": results}))
+        }
+        "import_legacy" => {
+            // Taken as given: normalising a file name could point at another file.
+            let path = args["path"]
+                .as_str()
+                .filter(|p| !p.trim().is_empty())
+                .ok_or_else(|| Error::invalid("Missing path (the claude-ledger database file)"))?;
+            let dry_run = util::arg_bool(args, "dryRun").unwrap_or(false);
+            views::to_value(&legacy::import(db, std::path::Path::new(path), dry_run)?)
         }
         "scan" => {
             let projects: Vec<String> = match arg_str(args, "project") {

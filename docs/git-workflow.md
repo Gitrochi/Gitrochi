@@ -23,7 +23,7 @@ Area: Imperative summary of the change
 - Another change
 ```
 
-- The subject is `Area: Summary`. **The area is required.** Use the part of the app the change is about: `Graph`, `Sidebar`, `Inspector`, `Terminal`, `Diff`, `CI/CD`, `Agents`, `Settings`, `i18n`, `Perf`, `README`, `Docs`, `CI`, `gitch`. Use `macOS` or `Windows` only when the change really is about one platform (a platform-specific fix); a feature done on both sides takes the feature's area. One space after the colon.
+- The subject is `Area: Summary`. **The area is required.** Use the part of the app the change is about: `Graph`, `Sidebar`, `Inspector`, `Terminal`, `Diff`, `CI/CD`, `Agents`, `Ledger`, `Settings`, `i18n`, `Perf`, `README`, `Docs`, `CI`, `gitch`. Use `macOS` or `Windows` only when the change really is about one platform (a platform-specific fix); a feature done on both sides takes the feature's area. One space after the colon.
 - The summary is **imperative**: `Add …`, `Fix …`, `Show …` (not `Added`, `Fixes`, `Updating`). Examples: `Graph: Show avatars in the inspector`, `Windows: Fix the layout on narrow windows`, `Terminal: Type dropped files as paths`.
 - If you must quote text that is not English (a translated label, say), wrap it in backticks: `` `탐색기에서 보기` ``. Names in trailers such as `Co-Authored-By:` may stay as they are.
 - The hook checks: English (Latin letters and punctuation) · subject within 100 characters · no period at the end · the area and one space after the colon · imperative mood · a blank line after the subject · no empty subjects like `wip`, `fix`, `update`.

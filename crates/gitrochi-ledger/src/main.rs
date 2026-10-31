@@ -18,6 +18,7 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   overview [-p PROJECT] [-s SESSION --deliver]
   session ID [--deliver]
   import FILE|- [-p PROJECT]
+  import-legacy FILE [--dry-run]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
@@ -29,8 +30,8 @@ The database is GITROCHI_LEDGER_DB, else the per-user default (gitrochi-ledger c
 GITROCHI_LEDGER_SESSION is the default session for report, overview and session.
 Details: crates/gitrochi-ledger/README.md";
 
-const FLAGS: [&str; 7] = [
-    "json", "pretty", "deliver", "daily", "list", "large", "force",
+const FLAGS: [&str; 8] = [
+    "json", "pretty", "deliver", "daily", "list", "large", "force", "dry-run",
 ];
 const REPEATED: [&str; 2] = ["ask", "artifact"];
 
@@ -232,6 +233,71 @@ fn report_args(invocation: &Invocation) -> Result<Value, Error> {
     Ok(Value::Object(args))
 }
 
+/// The legacy import's result in a few lines; long skip lists are shortened.
+fn legacy_text(result: &Value) -> String {
+    let counts = &result["counts"];
+    let n = |key: &str| counts[key].as_u64().unwrap_or(0);
+    let keys = [
+        "projects",
+        "baselines",
+        "baselinesUpdated",
+        "sessions",
+        "events",
+        "questions",
+        "imports",
+    ];
+    let mut lines = vec![if keys.iter().all(|k| n(k) == 0) {
+        "Nothing new to import from claude-ledger.".to_string()
+    } else {
+        format!(
+            "{} from claude-ledger: {} session(s) · {} event(s) · {} question(s) · {} baseline(s), {} completed · {} project(s) · {} pasted-block hash(es)",
+            if result["dryRun"] == json!(true) {
+                "Would import"
+            } else {
+                "Imported"
+            },
+            n("sessions"),
+            n("events"),
+            n("questions"),
+            n("baselines"),
+            n("baselinesUpdated"),
+            n("projects"),
+            n("imports"),
+        )
+    }];
+    let skipped: Vec<&str> = result["skipped"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    if !skipped.is_empty() {
+        let shown = skipped
+            .iter()
+            .take(10)
+            .copied()
+            .collect::<Vec<_>>()
+            .join(", ");
+        let more = match skipped.len() {
+            0..=10 => String::new(),
+            count => format!(" and {} more", count - 10),
+        };
+        lines.push(format!(
+            "Skipped {} session(s) the ledger already has: {shown}{more}",
+            skipped.len()
+        ));
+    }
+    for error in result["errors"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+    {
+        lines.push(format!("  - {error}"));
+    }
+    lines.join("\n")
+}
+
 enum Output {
     Text(String, Value),
     Json(Value),
@@ -313,6 +379,15 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                 }
             }
             Ok(Output::Text(lines.join("\n"), result))
+        }
+        "import-legacy" => {
+            let args = json!({
+                "db": path.to_string_lossy(),
+                "path": positional(0, "the claude-ledger database file")?,
+                "dryRun": invocation.flag("dry-run"),
+            });
+            let result = api::call_as(Caller::Agent, "import_legacy", &args)?;
+            Ok(Output::Text(legacy_text(&result), result))
         }
         "scan" => {
             let mut args = json!({"db": path.to_string_lossy()});
