@@ -1,0 +1,11 @@
+{
+  "session_id": "3f1c2a9e-7b1d-4c55-9a0e-2f7d8c1b6e40",
+  "transcript_path": "/Users/me/.claude/projects/-Users-me-work-app/3f1c2a9e.jsonl",
+  "cwd": "/Users/me/work/app",
+  "permission_mode": "default",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false,
+  "last_assistant_message": "파서를 고치고 테스트 12개를 추가했습니다.\n\n남은 선택이 하나 있습니다.\n\n1. 기존 API를 그대로 둔다\n2. 새 API로 바꾼다 (추천)\n\n어떻게 할까요?",
+  "background_tasks": [],
+  "session_crons": []
+}

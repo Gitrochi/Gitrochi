@@ -1,0 +1,36 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 30,
+    "kind": "stop_question",
+    "language": "en",
+    "question": "Should I also update the README with the new option?",
+    "rule": "question:en:should i",
+    "schemaVersion": 1,
+    "sent": {
+      "text": "[Gitrochi] Auto-continue — Question: Should I also update the README with the new option?\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "reply"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 30,
+  "event": "Stop",
+  "kind": "stop_question",
+  "output": {
+    "exitCode": 2,
+    "stderr": "[Gitrochi] Auto-continue — Question: Should I also update the README with the new option?\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+    "stdout": ""
+  },
+  "payload": {
+    "delaySec": 30,
+    "kind": "stop_question",
+    "language": "en",
+    "proposed": {
+      "text": "[Gitrochi] Auto-continue — Question: Should I also update the README with the new option?\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "reply"
+    },
+    "question": "Should I also update the README with the new option?",
+    "schemaVersion": 1,
+    "text": "The Windows side builds now and all 42 tests pass.\n\nShould I also update the README with the new option? I'd recommend it."
+  }
+}

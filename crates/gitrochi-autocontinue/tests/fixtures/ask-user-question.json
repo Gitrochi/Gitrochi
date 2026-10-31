@@ -1,0 +1,31 @@
+{
+  "session_id": "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+  "transcript_path": "/Users/me/.claude/projects/-Users-me-work-app/5a6b7c8d.jsonl",
+  "cwd": "/Users/me/work/app",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "AskUserQuestion",
+  "tool_use_id": "toolu_01FixtureAsk",
+  "tool_input": {
+    "questions": [
+      {
+        "question": "Which storage should the ledger use?",
+        "header": "Storage",
+        "options": [
+          {"label": "JSON files", "description": "Simple, one file per session"},
+          {"label": "SQLite (Recommended)", "description": "One database, safe for several writers"}
+        ],
+        "multiSelect": false
+      },
+      {
+        "question": "Which platforms should get the screen first?",
+        "header": "Platforms",
+        "options": [
+          {"label": "macOS", "description": "SwiftUI"},
+          {"label": "Windows", "description": "Tauri"}
+        ],
+        "multiSelect": true
+      }
+    ]
+  }
+}
