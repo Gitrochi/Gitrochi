@@ -42,6 +42,9 @@
 /* Inspector column, and the sheet it becomes in a narrow window */
 .ledger-inspector-column { flex: 0 0 350px; min-width: 300px; max-width: 42%; border-left: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; min-height: 0; }
 .ledger-inspector-sheet { width: 100%; max-height: calc(100vh - 80px); display: flex; flex-direction: column; min-height: 0; }
+/* the sheet scrolls inside the inspector, so the dialog adds no padding or scroll of its own */
+.modal-body:has(> .ledger-inspector-sheet) { padding: 0; overflow: hidden; }
+.ledger-inspector-sheet .ledger-inspector-head { border-radius: 10px 10px 0 0; }
 .ledger-inspector { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow-y: auto; }
 .ledger-inspector-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 7px; background: var(--surface); }
 .ledger-inspector-head h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
