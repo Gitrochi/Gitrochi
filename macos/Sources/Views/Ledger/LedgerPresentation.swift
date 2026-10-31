@@ -283,14 +283,17 @@ struct LedgerInbox: Equatable {
 /// What undoes a person's operation, worked out from the session as it was before (Windows: entities/ledger/lib/undo.ts)
 enum LedgerUndo {
     /// nil when the operation cannot be undone: answers, dismissals, messages and links are delivered as they are.
-    /// `now` stands in for "no snooze": snoozed until now is stale again at once.
+    /// The core only snoozes into the future, so Still active is undone only by putting back a snooze that still runs
+    /// at `now`; without one there is nothing to restore.
     static func inverse(of action: LedgerHumanAction, before s: LedgerSession, now: LedgerMs) -> [LedgerHumanAction]? {
         switch action {
         case .ack: return s.ackAt == nil ? [.unack] : []
         case .unack: return s.ackAt != nil ? [.ack] : []
         case .archive: return s.archivedAt == nil ? [.unarchive] : []
         case .unarchive: return s.archivedAt != nil ? [.archive] : []
-        case .stillActive, .snooze: return [.snooze(until: s.snoozeUntil ?? now)]
+        case .stillActive, .snooze:
+            guard let until = s.snoozeUntil, until > now else { return nil }
+            return [.snooze(until: until)]
         case .setStatus, .shelve:
             // the status first (it may confirm or clear), then confirmation and archive as they were
             var steps: [LedgerHumanAction] = [.setStatus(s.status, version: s.status == .merged ? s.mergedInto : nil)]

@@ -144,9 +144,10 @@ let start: LedgerMs = 1_793_400_000_000
         before.mergedInto = "v1.2.0"
         check(LedgerUndo.inverse(of: .ack, before: before, now: 9) == [.unack], "undo confirm")
         check(LedgerUndo.inverse(of: .archive, before: before, now: 9) == [.unarchive], "undo archive")
-        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 9)], "undo Still active: snoozed until now, so stale again")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == nil, "no Undo for Still active without a snooze to put back: the core snoozes into the future only")
         before.snoozeUntil = 77
-        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 77)], "undo Still active restores the old time")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 77)], "undo Still active restores a snooze that still runs")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 77) == nil, "a snooze that has ended cannot be put back")
         check(LedgerUndo.inverse(of: .setStatus(.active, version: nil), before: before, now: 9) == [.setStatus(.merged, version: "v1.2.0"), .unack], "undo reopen")
         before.ackAt = 5
         before.archivedAt = 6
@@ -322,8 +323,9 @@ let start: LedgerMs = 1_793_400_000_000
         _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id)], as: LedgerWriteResult.self)
         let snoozed = try call(demo, "session", ["id": .string(stale.id)], as: LedgerSessionDetail.self).session
         check(snoozed.verdict == .active && snoozed.snoozeUntil == start + 72 * hour, "Still active: not stale for the stale hours")
-        _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .number(Double(start))], as: LedgerWriteResult.self)
-        check(try verdict(stale.id) == .stale, "snoozed until now: stale again")
+        let pastSnooze = failure(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .number(Double(start))])
+        let stillSnoozed = try verdict(stale.id)
+        check(pastSnooze?.code == "INVALID_ARGUMENT" && stillSnoozed == .active, "like the core, a snooze ends in the future")
         let asked = state.questions.first { $0.state == .open }!
         _ = try call(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "answer": "Yes, both."], as: LedgerWriteResult.self)
         let answered = try call(demo, "session", ["id": .string(asked.sessionId)], as: LedgerSessionDetail.self)
@@ -424,8 +426,12 @@ let start: LedgerMs = 1_793_400_000_000
         let stale = ledger.state!.sessions.first { $0.verdict == .stale }!
         await ledger.perform(.stillActive, on: [stale.id], message: "Still active")
         check(ledger.session(stale.id)?.verdict == .active && !ledger.inbox.items.contains { $0.sessionId == stale.id }, "Still active leaves the Inbox")
+        check(ledger.toast?.canUndo == false && !ledger.canUndo && ledger.actionError == nil, "no Undo without a snooze to put back")
+        let firstSnooze = ledger.session(stale.id)!.snoozeUntil!
+        await ledger.perform(.snooze(until: firstSnooze + hour), on: [stale.id], message: "Snoozed")
+        check(ledger.toast?.canUndo == true && ledger.session(stale.id)?.snoozeUntil == firstSnooze + hour, "a later snooze can put the running one back")
         await ledger.undo()
-        check(ledger.session(stale.id)?.verdict == .stale && ledger.inbox.items.contains { $0.sessionId == stale.id }, "undo Still active")
+        check(ledger.session(stale.id)?.snoozeUntil == firstSnooze && ledger.session(stale.id)?.verdict == .active && ledger.actionError == nil, "undo Still active")
 
         let question = ledger.inbox.items(in: .questions).compactMap { item -> LedgerQuestion? in if case .question(let q) = item.content { return q }; return nil }.first!
         ledger.drafts[question.id] = "  "

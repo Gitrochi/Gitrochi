@@ -384,8 +384,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             }
             questions[i].answeredAt = now
         case "snooze":
-            // Still active sends no time: now plus the stale hours
-            s.snoozeUntil = a["until"].int ?? a["hours"].int.map { now + LedgerMs($0) * Self.hour } ?? now + Self.staleMs
+            // Still active sends no time: now plus the stale hours. Like the core, a snooze ends in the future.
+            let until = a["until"].int ?? a["hours"].int.map { now + LedgerMs($0) * Self.hour } ?? now + Self.staleMs
+            guard until > now else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "until must be in the future") }
+            s.snoozeUntil = until
         case "shelve": s.status = .shelved
         case "link":
             // each link the request names is set; null removes it
