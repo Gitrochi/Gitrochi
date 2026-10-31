@@ -5,8 +5,20 @@ import Foundation
 enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case home, repository, compare, rebase, code
     case pullRequests, issues, actions, releases, projects, account
-    case flows
+    case flows, ledger
     var id: String { rawValue }
+
+    /// A remembered page that is not shown (Ledger without its preview) reads as unknown, so the default page opens
+    init?(rawValue: String) {
+        guard let page = Self.allCases.first(where: { $0.rawValue == rawValue }), page.isShown else { return nil }
+        self = page
+    }
+
+    /// Ledger stays hidden until its core is connected: GITROCHI_LEDGER_PREVIEW=1 shows it on demo data
+    /// (GITROCHI_LEDGER_DEMO=large or =empty picks the large or the empty demo)
+    static let ledgerPreview = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
+    var isShown: Bool { self != .ledger || Self.ledgerPreview }
+    static var shown: [WorkspaceDestination] { allCases.filter(\.isShown) }
     /// Pages the repository screen links to (request and issue rows, a commit's CI icon, the tags); opened from there,
     /// they offer the way back
     var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
@@ -25,6 +37,7 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .projects: return String(localized: "Projects")
         case .account: return String(localized: "Account")
         case .flows: return String(localized: "Flows")
+        case .ledger: return String(localized: "Ledger")
         }
     }
     func title(gitlab: Bool) -> String {
@@ -51,6 +64,7 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .projects: return "rectangle.3.group"
         case .account: return "person.crop.circle"
         case .flows: return "flowchart"
+        case .ledger: return "checklist"
         }
     }
 }

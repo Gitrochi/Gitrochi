@@ -102,7 +102,15 @@ import SwiftUI
             }
         }
         precondition(GraphMetrics.width(lanes: 24) == GraphMetrics.width(lanes: GraphMetrics.maxVisibleLanes), "Lanes past the visible limit do not widen the graph column")
-        precondition(WorkspaceDestination.allCases.count == 12)
+        precondition(WorkspaceDestination.allCases.count == 13)
+        // Ledger is hidden until its core is connected: listed and restorable only with GITROCHI_LEDGER_PREVIEW=1
+        let ledgerShown = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
+        precondition(WorkspaceDestination.shown.count == (ledgerShown ? 13 : 12) && WorkspaceDestination.ledger.isShown == ledgerShown)
+        // the Ledger only adds: every page main has keeps its order, raw value and title
+        let mainPages: [WorkspaceDestination] = [.home, .repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
+        precondition(Array(WorkspaceDestination.shown.prefix(12)) == mainPages && Array(WorkspaceDestination.allCases.prefix(12)) == mainPages)
+        precondition(mainPages.allSatisfy { WorkspaceDestination(rawValue: $0.rawValue) == $0 && $0.isShown }, "Existing pages restore as before")
+        precondition(!WorkspaceDestination.ledger.needsRepository, "Ledger opens without a repository")
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
             let previous = nav.destination
@@ -166,6 +174,9 @@ import SwiftUI
         precondition(nav.destination == .code)
         nav.resetNavigationFixture(); nav.fixtureRepository(secondPath); nav.restoreWorkspaceDestination()
         precondition(nav.destination == .issues, "A repository must restore its own page")
+        workspaceNavigationFixtureDefaults.set([secondPath: "ledger"], forKey: "workspaceDestinations")
+        nav.restoreWorkspaceDestination()
+        precondition(nav.destination == (ledgerShown ? .ledger : .repository), "A remembered Ledger page opens only while the Ledger is shown")
         for saved in ["missing-page", "settings", "__proto__", "changes", "branches", "worktrees"] {
             workspaceNavigationFixtureDefaults.set([secondPath: saved], forKey: "workspaceDestinations")
             nav.restoreWorkspaceDestination()
@@ -252,7 +263,7 @@ import SwiftUI
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional, resizable columns; 12 page gates, changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
+        print("PASS: independent PR/commit/worktree documents, same-SHA branch identity, background reload, WIP keyboard/batch selection, shared pane heights; workspace/file context, drafts, graph sizing; lane scrolling and optional, resizable columns; 13 page gates (Ledger hidden without its preview), changes/history areas on the repository screen, background selection, explicit document/review navigation and isolated per-repository restore")
     }
 }
 SWIFT
