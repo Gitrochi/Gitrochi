@@ -516,6 +516,37 @@ struct LedgerProjectWrite: Codable, Hashable {
     var project: LedgerProjectSettings
 }
 
+/// `track`'s answer: the session created for an agent Gitrochi starts
+struct LedgerTrackResult: Codable, Hashable {
+    var ok: Bool
+    var rev: Int?
+    var session: LedgerSession
+}
+
+extension LedgerGlobalSettings {
+    /// The policy of sessions that have none of their own: the core's `autoContinue` (off, 30 s by default)
+    var autoContinueDefault: LedgerSession.AutoContinue {
+        .init(enabled: autoContinue?["enabled"].bool ?? false, delaySec: autoContinue?["delaySec"].int ?? 30)
+    }
+
+    /// Settings › Ledger's switch and wait for agents started in a repository (`autoContinue.repositories`)
+    func autoContinue(forRepository path: String) -> LedgerSession.AutoContinue? {
+        guard let policy = autoContinue?["repositories"].object?[path], let enabled = policy["enabled"].bool,
+              let delay = policy["delaySec"].int else { return nil }
+        return .init(enabled: enabled, delaySec: delay)
+    }
+
+    /// The whole `autoContinue` value for `settings_set` with one repository's policy changed (nil removes it); the other
+    /// keys, which belong to auto-continue, stay as stored
+    func autoContinueArgument(repository path: String, _ policy: LedgerSession.AutoContinue?) -> LedgerJSON {
+        var object = autoContinue?.object ?? ["enabled": false, "delaySec": 30]
+        var repositories = object["repositories"]?.object ?? [:]
+        repositories[path] = policy.map { ["enabled": .bool($0.enabled), "delaySec": .number(Double($0.delaySec))] }
+        object["repositories"] = repositories.isEmpty ? nil : .object(repositories)
+        return .object(object)
+    }
+}
+
 /// `{"error": {"code", "message"}}`
 struct LedgerErrorEnvelope: Codable, Hashable {
     struct Body: Codable, Hashable {
@@ -539,6 +570,8 @@ enum LedgerHumanAction: Hashable {
     /// Sets one link (`branch`, `worktree`, `repoPath`, `agentId`, `chatUrl` …); nil removes it
     case link(field: String, value: String?)
     case message(text: String)
+    /// The session's own auto-continue switch and wait; nil follows the default again
+    case autoContinue(LedgerSession.AutoContinue?)
 
     /// The arguments of `human`, without `sessionId`
     var arguments: [String: LedgerJSON] {
@@ -558,6 +591,9 @@ enum LedgerHumanAction: Hashable {
         case .shelve: return ["action": "shelve"]
         case .link(let field, let value): return ["action": "link", field: value.map { .string($0) } ?? .null]
         case .message(let text): return ["action": "message", "text": .string(text)]
+        case .autoContinue(let policy):
+            return ["action": "auto_continue",
+                    "autoContinue": policy.map { ["enabled": .bool($0.enabled), "delaySec": .number(Double($0.delaySec))] } ?? .null]
         }
     }
 }
@@ -572,7 +608,7 @@ enum LedgerPromptReply: Hashable {
     case deny(message: String?)
     /// Leaves the prompt to the terminal: the agent shows its own question there
     case answerInTerminal
-    /// Keeps waiting for a person: no automatic answer for this prompt
+    /// Not this time: no automatic answer for this prompt; the agent asks in its terminal
     case holdAuto
 
     var answer: [String: LedgerJSON] {

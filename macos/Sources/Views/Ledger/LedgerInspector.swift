@@ -32,6 +32,7 @@ struct LedgerInspector: View {
                     actions(s)
                     if let detail {
                         questions(detail)
+                        autoContinue(s)
                         timeline(detail)
                         touches(s, detail: detail)
                     } else {
@@ -188,6 +189,39 @@ struct LedgerInspector: View {
                 }
             }
         }
+    }
+
+    // MARK: - Auto-continue
+
+    /// The session's own switch and wait (DESIGN.md §9.3); without its own it shows the default it follows
+    @ViewBuilder private func autoContinue(_ s: LedgerSession) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            LedgerSectionHeader(title: String(localized: "Auto-continue"))
+            if s.role == .decision {
+                Text("Decision sessions never continue automatically.").font(.caption).foregroundStyle(.secondary)
+            } else {
+                let policy = s.autoContinue ?? ledger.autoContinueDefault ?? .init(enabled: false, delaySec: 30)
+                let busy = ledger.working.contains(s.id)
+                Toggle("Continue automatically when nobody answers", isOn: Binding(get: { policy.enabled }, set: { on in
+                    Task { await ledger.setAutoContinue(s, .init(enabled: on, delaySec: policy.delaySec)) }
+                }))
+                .toggleStyle(.checkbox).disabled(busy)
+                HStack(spacing: 8) {
+                    LedgerWaitPicker(seconds: policy.delaySec) { seconds in
+                        Task { await ledger.setAutoContinue(s, .init(enabled: policy.enabled, delaySec: seconds)) }
+                    }
+                    .disabled(busy)
+                    if s.autoContinue != nil {
+                        Button("Use the default") { Task { await ledger.setAutoContinue(s, nil) } }
+                            .controlSize(.small).disabled(busy)
+                            .help("Follow the repository's or the default auto-continue setting again")
+                    }
+                }
+                Text("Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .task { await ledger.loadAutoContinueDefault() }
     }
 
     // MARK: - Timeline

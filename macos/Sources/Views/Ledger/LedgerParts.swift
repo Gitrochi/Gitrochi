@@ -64,6 +64,19 @@ struct LedgerSessionLabel: View {
 }
 
 /// A group title in the Inbox and the inspector: small capitals, count on the right
+/// How long auto-continue waits for a person: the core keeps waits between 10 s and 5 minutes
+struct LedgerWaitPicker: View {
+    let seconds: Int
+    let choose: (Int) -> Void
+
+    var body: some View {
+        Picker("Wait", selection: Binding(get: { LedgerWait.clamped(seconds) }, set: choose)) {
+            ForEach(LedgerWait.choices(including: seconds), id: \.self) { Text("\($0) s").tag($0) }
+        }
+        .fixedSize()
+    }
+}
+
 struct LedgerSectionHeader: View {
     let title: String
     var count: Int?

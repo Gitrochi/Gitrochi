@@ -176,12 +176,7 @@ final class AgentCenter {
         try? script.write(to: hookScript, atomically: true, encoding: .utf8)
         try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hookScript.path)
 
-        let events = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest", "Notification", "Stop", "SessionEnd"]
-        var hooks: [String: Any] = [:]
-        for e in events {
-            hooks[e] = [["matcher": "", "hooks": [["type": "command", "command": "\"\(hookScript.path)\" \(e)", "timeout": 5]]]]
-        }
-        if let data = try? JSONSerialization.data(withJSONObject: ["hooks": hooks], options: [.prettyPrinted, .sortedKeys]) {
+        if let data = AgentLaunch.hooks(script: hookScript.path) {
             try? data.write(to: hooksFile)
         }
     }
@@ -294,14 +289,58 @@ final class AgentCenter {
         let meta: [String: Any] = ["id": id, "kind": kind.rawValue, "path": path, "task": task.trimmed, "mode": permissionMode ?? "",
                                    "created": Date().timeIntervalSince1970]
         try JSONSerialization.data(withJSONObject: meta).write(to: file(id + ".meta"))
-        let args = kind.arguments(hooks: hooksFile.path, task: task.trimmed, mode: permissionMode)
-        let env = ["GITROCHI_AGENT_ID": id], pidFile = file(id + ".pid").path
+        if kind == .claude, LedgerTracking.isOn {
+            Task { await startTracked(kind, exe: exe, id: id, in: path, task: task.trimmed, permissionMode: permissionMode, host: host) }
+            load()
+            return
+        }
+        let args = AgentLaunch.arguments(kind, hooks: hooksFile.path, task: task.trimmed, mode: permissionMode)
+        let env = AgentLaunch.environment(agent: id)
+        try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host)
+        load()
+    }
+
+    private func launch(_ kind: AgentKind, exe: String, id: String, in path: String, args: [String], env: [String: String],
+                        host: RepoStore?) throws {
+        let pidFile = file(id + ".pid").path
         if let host, Place.current == .app,
            let session = host.newTerminal(in: path, command: .init(program: exe, args: args, env: env, title: kind.title, pidFile: pidFile)) {
             inApp[id] = TerminalLink(session, host)
         } else {
             try Launcher.run(exe, args: args, in: path, env: env, pidFile: pidFile)
         }
+    }
+
+    /// Track agents I start (Claude Code): the ledger session first, then the agent with GITROCHI_LEDGER_SESSION, a hooks
+    /// file of its own that adds the ledger's entries after the existing ones, and the Ledger tools when Claude Code has
+    /// no server of that name. When the ledger cannot take the session, the agent starts untracked and the person is told.
+    private func startTracked(_ kind: AgentKind, exe: String, id: String, in path: String, task: String, permissionMode: String?,
+                              host: RepoStore?) async {
+        var args = AgentLaunch.arguments(kind, hooks: hooksFile.path, task: task, mode: permissionMode)
+        var env = AgentLaunch.environment(agent: id)
+        var problem: String?
+        do {
+            let tracked = try await LedgerTracking.prepare(agent: id, folder: path, repository: host?.url?.path ?? path, claude: exe,
+                                                           client: LedgerStore.shared.client)
+            let hooks = file(id + ".hooks.json"), config = file(id + ".mcp.json")
+            guard let data = AgentLaunch.hooks(script: hookScript.path, ledger: tracked.ledger) else { throw CocoaError(.fileWriteUnknown) }
+            try data.write(to: hooks)
+            var mcp: String?
+            if tracked.tools, let data = AgentLaunch.mcpConfig(tracked.ledger) {
+                try data.write(to: config)
+                mcp = config.path
+            }
+            args = AgentLaunch.arguments(kind, hooks: hooks.path, task: task, mode: permissionMode, mcpConfig: mcp)
+            env = AgentLaunch.environment(agent: id, ledger: tracked.ledger)
+        } catch {
+            problem = String(localized: "\(kind.title) started without the Ledger: \(error.localizedDescription)")
+        }
+        do {
+            try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host)
+        } catch {
+            problem = error.localizedDescription
+        }
+        if let problem { host?.errorMessage = problem }
         load()
     }
 
@@ -345,7 +384,7 @@ final class AgentCenter {
     }
 
     func remove(id: String) {
-        for ext in [".meta", ".state", ".pid", ".state.tmp"] {
+        for ext in [".meta", ".state", ".pid", ".state.tmp", ".hooks.json", ".mcp.json"] {
             try? FileManager.default.removeItem(at: file(id + ext))
         }
         inApp[id] = nil

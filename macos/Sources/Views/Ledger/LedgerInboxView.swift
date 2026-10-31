@@ -191,13 +191,15 @@ struct LedgerInboxView: View {
     }
 
     @ViewBuilder private func autoReply(_ prompt: LedgerPendingPrompt) -> some View {
-        let asked = prompt.payload["questions"]?.array.first?["question"].string ?? prompt.payload["question"]?.string
-            ?? prompt.payload["description"]?.string ?? prompt.kind.title
-        let sent = Self.describe(prompt.answer ?? [:])
+        let asked = LedgerPromptText.summary(prompt)
+        let sent = LedgerPromptText.sent(prompt.answer ?? [:])
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(asked).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Image(systemName: "arrow.right").font(.caption).foregroundStyle(.tertiary).accessibilityHidden(true)
-            Text("“\(sent)”").font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+            Text("“\(sent)”").font(.callout.weight(.medium)).lineLimit(3).fixedSize(horizontal: false, vertical: true)
+        }
+        if let outcome = LedgerPromptText.outcome(prompt.answer) {
+            Label(outcome, systemImage: "questionmark.circle").font(.caption).foregroundStyle(.secondary)
         }
         let busy = ledger.working.contains("p\(prompt.id)")
         if correcting == prompt.id {
@@ -268,12 +270,6 @@ struct LedgerInboxView: View {
         Task { await ledger.perform(.stillActive, on: [s.id], message: String(localized: "Marked \(s.id) still active")) }
     }
 
-    static func describe(_ answer: [String: LedgerJSON]) -> String {
-        if let text = answer["text"]?.string { return text }
-        if let decision = answer["decision"]?.string { return decision == "allow" ? String(localized: "Allowed") : String(localized: "Denied") }
-        if let answers = answer["answers"]?.object { return answers.values.compactMap(\.string).sorted().joined(separator: ", ") }
-        return ""
-    }
 }
 
 /// "Mark merged…": the project's versions, newest first; a person's choice also confirms

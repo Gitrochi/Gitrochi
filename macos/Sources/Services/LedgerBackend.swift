@@ -84,6 +84,14 @@ struct LedgerClient: Sendable {
         return try await call("project_set", args, as: LedgerProjectWrite.self).project
     }
 
+    /// Creates the session for an agent Gitrochi is about to start in `cwd` (Track agents I start); the core fills in the
+    /// branch, worktree, project, base and the repository's auto-continue policy from the checkout
+    func track(cwd: String, repository: String?, agent: String) async throws -> LedgerSession {
+        var args: [String: LedgerJSON] = ["cwd": .string(cwd), "agentId": .string(agent)]
+        if let repository { args["repoPath"] = .string(repository) }
+        return try await call("track", args, as: LedgerTrackResult.self).session
+    }
+
     /// Looks for baselines now, for one project or all of them
     func scan(project: String?) async throws -> [LedgerScanResult.Project] {
         try await call("scan", project.map { ["project": .string($0)] } ?? [:], as: LedgerScanResult.self).results

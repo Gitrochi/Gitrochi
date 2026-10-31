@@ -4,8 +4,8 @@ import AppKit
 /// Settings › Ledger: the rules the ledger core keeps in its database (when a session is stale, what each kind of
 /// session means, where a project's baselines come from), its backups, and the ways in: Connect Claude Code and Import.
 /// Changes are saved as they are made. The tab goes with the Ledger page, so for now it shows only with
-/// GITROCHI_LEDGER_PREVIEW=1. Track agents I start, auto-continue and notifications come with those features.
-/// (Windows: widgets/settings/ui/LedgerSettings.tsx)
+/// GITROCHI_LEDGER_PREVIEW=1. Track agents I start is this app's choice (UserDefaults); auto-continue per repository
+/// lives in the ledger's `autoContinue` setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
 struct LedgerSettings: View {
     static var isShown: Bool { WorkspaceDestination.ledgerPreview }
 
@@ -35,10 +35,16 @@ struct LedgerSettings: View {
     /// Saves run one after another, so quick changes reach the database in the order they were made
     @ViewState private var saving: Task<Void, Never>?
     @ViewState private var saveCount = 0
+    @AppStorage(LedgerTracking.trackKey) private var trackAgents = false
+    @AppStorage(LedgerTracking.toolsKey) private var agentTools = true
+    /// The repository whose auto-continue switch is shown
+    @ViewState private var autoRepository: String?
 
     var body: some View {
         Form {
             if let settings {
+                trackingSection
+                autoContinueSection(settings)
                 sessionsSection
                 kindsSection(settings)
                 projectsSection
@@ -69,6 +75,61 @@ struct LedgerSettings: View {
     }
 
     // MARK: - Sections
+
+    private var trackingSection: some View {
+        Section {
+            Toggle("Track agents I start", isOn: $trackAgents)
+            Toggle("Give them the Ledger tools", isOn: $agentTools).disabled(!trackAgents)
+        } header: {
+            Text("Agents Gitrochi starts")
+        } footer: {
+            Text("Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func autoContinueSection(_ settings: LedgerGlobalSettings) -> some View {
+        let repositories = Self.repositories(settings)
+        let selected = autoRepository.flatMap { repositories.contains($0) ? $0 : nil } ?? repositories.first
+        return Section {
+            if let selected {
+                Picker("Repository", selection: Binding(get: { selected }, set: { autoRepository = $0 })) {
+                    ForEach(repositories, id: \.self) { path in Text(verbatim: (path as NSString).lastPathComponent).tag(path) }
+                }
+                .help(selected)
+                let policy = settings.autoContinue(forRepository: selected)
+                    ?? .init(enabled: false, delaySec: settings.autoContinueDefault.delaySec)
+                Toggle("Continue automatically when nobody answers", isOn: Binding(get: { policy.enabled }, set: { on in
+                    setAutoContinue(selected, .init(enabled: on, delaySec: policy.delaySec))
+                }))
+                LedgerWaitPicker(seconds: policy.delaySec) { seconds in
+                    setAutoContinue(selected, .init(enabled: policy.enabled, delaySec: seconds))
+                }
+            } else {
+                Text("Open a repository to set auto-continue for it.").foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Auto-continue")
+        } footer: {
+            Text("When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// The open repositories, then the ones that already have a setting
+    private static func repositories(_ settings: LedgerGlobalSettings) -> [String] {
+        let open = Workspace.shared.openRepositories.compactMap { $0.url?.path }
+        let stored = (settings.autoContinue?["repositories"].object?.keys).map(Array.init) ?? []
+        var seen = Set<String>()
+        return (open + stored.sorted()).filter { seen.insert($0).inserted }
+    }
+
+    private func setAutoContinue(_ repository: String, _ policy: LedgerSession.AutoContinue) {
+        guard let settings else { return }
+        let value = settings.autoContinueArgument(repository: repository, policy)
+        self.settings?.autoContinue = value
+        save(["autoContinue": value])
+    }
 
     private var sessionsSection: some View {
         Section {
