@@ -1565,3 +1565,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "A napló parancsa hiányzik a Gitrochi ezen példányából: %@";
 "The ledger command did not answer the MCP handshake." = "A napló parancsa nem válaszolt az MCP-kézfogásra.";
 "The ledger command answers with its tools: %@." = "A napló parancsa az eszközeivel válaszol: %@.";
+"Parent folder" = "Szülőmappa";

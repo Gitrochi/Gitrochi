@@ -1586,5 +1586,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Pindah dari claude-ledger? Bawa sesi, pertanyaan, dan baseline-nya.",
   "Role": "Peran",
   "Browse…": "Telusuri…",
-  "Choose a file": "Pilih file"
+  "Choose a file": "Pilih file",
+  "Parent folder": "Folder induk"
 }

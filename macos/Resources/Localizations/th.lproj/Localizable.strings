@@ -1577,3 +1577,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Gitrochi ชุดนี้ไม่มีคำสั่งของสมุดบันทึก: %@";
 "The ledger command did not answer the MCP handshake." = "คำสั่งของสมุดบันทึกไม่ตอบการจับมือ MCP";
 "The ledger command answers with its tools: %@." = "คำสั่งของสมุดบันทึกตอบกลับพร้อมเครื่องมือ: %@";
+"Parent folder" = "โฟลเดอร์หลัก";

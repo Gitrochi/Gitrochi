@@ -1615,3 +1615,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "La commande du registre manque dans cette copie de Gitrochi : %@";
 "The ledger command did not answer the MCP handshake." = "La commande du registre n’a pas répondu à la poignée de main MCP.";
 "The ledger command answers with its tools: %@." = "La commande du registre répond avec ses outils : %@.";
+"Parent folder" = "Dossier parent";

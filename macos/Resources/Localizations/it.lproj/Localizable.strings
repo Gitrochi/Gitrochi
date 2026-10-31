@@ -1555,3 +1555,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Il comando del registro manca in questa copia di Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "Il comando del registro non ha risposto all’handshake MCP.";
 "The ledger command answers with its tools: %@." = "Il comando del registro risponde con i suoi strumenti: %@.";
+"Parent folder" = "Cartella superiore";

@@ -1614,5 +1614,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Přecházíte z claude-ledger? Přeneste si jeho relace, otázky a základní verze.",
   "Role": "Role",
   "Browse…": "Procházet…",
-  "Choose a file": "Vybrat soubor"
+  "Choose a file": "Vybrat soubor",
+  "Parent folder": "Nadřazená složka"
 }

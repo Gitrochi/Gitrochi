@@ -1715,3 +1715,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "此 Gitrochi 缺少账本命令：%@";
 "The ledger command did not answer the MCP handshake." = "账本命令没有响应 MCP 握手。";
 "The ledger command answers with its tools: %@." = "账本命令以其工具响应：%@。";
+"Parent folder" = "上级文件夹";

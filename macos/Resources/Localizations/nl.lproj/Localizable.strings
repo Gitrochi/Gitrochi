@@ -1526,3 +1526,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "De logboekopdracht ontbreekt in deze kopie van Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "De logboekopdracht reageerde niet op de MCP-handshake.";
 "The ledger command answers with its tools: %@." = "De logboekopdracht antwoordt met zijn hulpmiddelen: %@.";
+"Parent folder" = "Bovenliggende map";

@@ -1562,3 +1562,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "V této kopii Gitrochi chybí příkaz evidence: %@";
 "The ledger command did not answer the MCP handshake." = "Příkaz evidence neodpověděl na úvodní výměnu MCP.";
 "The ledger command answers with its tools: %@." = "Příkaz evidence odpovídá svými nástroji: %@.";
+"Parent folder" = "Nadřazená složka";

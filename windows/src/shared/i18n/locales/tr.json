@@ -1621,5 +1621,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger'dan mı geçiyorsunuz? Oturumlarını, sorularını ve temel sürümlerini getirin.",
   "Role": "Rol",
   "Browse…": "Gözat…",
-  "Choose a file": "Dosya seç"
+  "Choose a file": "Dosya seç",
+  "Parent folder": "Üst klasör"
 }
