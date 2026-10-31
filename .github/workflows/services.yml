@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   index:
-    name: Index, ledger and tokenizer (${{ matrix.os }})
+    name: Index and tokenizer (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -50,11 +50,6 @@ jobs:
       - name: Index tests
         run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-index
 
-      # Git without a console window and the database under %APPDATA% are Windows-only code paths.
-      # --nocapture keeps the large demo's timings and a skipped C/C++ header check in the log.
-      - name: Ledger tests
-        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger -- --nocapture
-
       - name: C++ module on its own (tests, runtime-free check, loadable extension)
         if: runner.os != 'Windows'
         run: |
@@ -65,6 +60,34 @@ jobs:
       - name: Dependency notices match the lockfile
         if: runner.os == 'Linux'
         run: python3 tools/generate-core-notices.py --check
+
+  # Apart from the index job, so the ledger's results never change the index checks.
+  ledger:
+    name: Ledger (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "crates -> target"
+
+      # Git without a console window and the database under %APPDATA% are Windows-only code paths.
+      # --nocapture keeps the large demo's timings and a skipped C/C++ header check in the log.
+      - name: Ledger tests
+        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger -- --nocapture
 
   python:
     name: Python tools (${{ matrix.os }}, Python ${{ matrix.python }})
