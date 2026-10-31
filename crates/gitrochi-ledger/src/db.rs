@@ -16,6 +16,10 @@ pub const DB_SCHEMA: i64 = 1;
 /// Writers wait this long for another process's transaction before giving up.
 pub const BUSY_TIMEOUT: Duration = Duration::from_secs(15);
 
+/// The hook handler gives up on a lock much sooner: Claude Code holds a prompt until its
+/// `UserPromptSubmit` hooks finish, and `SessionEnd` hooks share a 1.5 s budget.
+pub const HOOK_BUSY_TIMEOUT: Duration = Duration::from_millis(1000);
+
 const READER_POOL: usize = 4;
 
 // Additive steps only: a later schema adds tables and columns and never edits a shipped step.
@@ -97,9 +101,39 @@ fn enable_wal(connection: &Connection, path: &Path, patience: Duration) -> Resul
     }
 }
 
-fn configure(connection: &Connection, path: &Path) -> Result<()> {
-    connection.busy_timeout(BUSY_TIMEOUT)?;
-    enable_wal(connection, path, BUSY_TIMEOUT)?;
+/// How a process opens the database. The apps, the CLI and MCP create it when it is missing
+/// and wait up to [`BUSY_TIMEOUT`] for another writer; the hook handler only opens a file
+/// that exists and waits [`HOOK_BUSY_TIMEOUT`], so a hook never holds an agent up.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OpenOptions {
+    /// Create the file and its folder when they are missing.
+    pub create: bool,
+    /// How long to wait for another process's transaction (and for the first WAL switch).
+    pub busy_timeout: Duration,
+}
+
+impl Default for OpenOptions {
+    fn default() -> Self {
+        OpenOptions {
+            create: true,
+            busy_timeout: BUSY_TIMEOUT,
+        }
+    }
+}
+
+impl OpenOptions {
+    /// The hook handler's: an existing file only, and a short wait.
+    pub fn hook() -> Self {
+        OpenOptions {
+            create: false,
+            busy_timeout: HOOK_BUSY_TIMEOUT,
+        }
+    }
+}
+
+fn configure(connection: &Connection, path: &Path, busy_timeout: Duration) -> Result<()> {
+    connection.busy_timeout(busy_timeout)?;
+    enable_wal(connection, path, busy_timeout)?;
     connection.execute_batch(
         "PRAGMA trusted_schema = OFF;
          PRAGMA synchronous = NORMAL;
@@ -108,20 +142,18 @@ fn configure(connection: &Connection, path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn open_connection(path: &Path) -> Result<Connection> {
-    let connection = Connection::open_with_flags(
-        path,
-        OpenFlags::SQLITE_OPEN_READ_WRITE
-            | OpenFlags::SQLITE_OPEN_CREATE
-            | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )
-    .map_err(|e| {
+fn open_connection(path: &Path, options: OpenOptions) -> Result<Connection> {
+    let mut flags = OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    if options.create {
+        flags |= OpenFlags::SQLITE_OPEN_CREATE;
+    }
+    let connection = Connection::open_with_flags(path, flags).map_err(|e| {
         Error::new(
             "DATABASE",
             format!("Could not open {}: {e}", path.display()),
         )
     })?;
-    configure(&connection, path)?;
+    configure(&connection, path, options.busy_timeout)?;
     Ok(connection)
 }
 
@@ -163,6 +195,7 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 /// process, so reads never queue behind a write in this process.
 pub struct Db {
     pub path: PathBuf,
+    options: OpenOptions,
     writer: Mutex<Connection>,
     readers: Mutex<Vec<Connection>>,
     /// Set when the file was written by a newer build: reads still work, writes refuse.
@@ -171,7 +204,18 @@ pub struct Db {
 
 impl Db {
     pub fn open(path: &Path) -> Result<Db> {
-        if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+        Db::open_with(path, OpenOptions::default())
+    }
+
+    pub fn open_with(path: &Path, options: OpenOptions) -> Result<Db> {
+        if !options.create {
+            if !path.is_file() {
+                return Err(Error::not_found(format!(
+                    "No ledger database at {}",
+                    path.display()
+                )));
+            }
+        } else if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
             std::fs::create_dir_all(parent).map_err(|e| {
                 Error::new(
                     "DATABASE",
@@ -179,10 +223,11 @@ impl Db {
                 )
             })?;
         }
-        let mut writer = open_connection(path)?;
+        let mut writer = open_connection(path, options)?;
         let version = migrate(&mut writer)?;
         Ok(Db {
             path: path.to_path_buf(),
+            options,
             writer: Mutex::new(writer),
             readers: Mutex::new(Vec::new()),
             newer_schema: (version > DB_SCHEMA).then_some(version),
@@ -195,7 +240,7 @@ impl Db {
         let connection = match pooled {
             Some(connection) => connection,
             None => {
-                let connection = open_connection(&self.path)?;
+                let connection = open_connection(&self.path, self.options)?;
                 connection.execute_batch("PRAGMA query_only = ON")?;
                 connection
             }

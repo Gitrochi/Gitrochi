@@ -14,6 +14,7 @@ pub mod event;
 pub mod ffi;
 mod git;
 pub mod graph;
+pub mod hook;
 pub mod human;
 pub mod import;
 pub mod legacy;

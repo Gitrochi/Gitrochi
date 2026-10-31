@@ -1,10 +1,11 @@
 //! `gitrochi-ledger`: the session ledger for agents and scripts. Reports and reads print
-//! short English text (`--json` for the data); `mcp` serves the MCP tools over stdio.
+//! short English text (`--json` for the data); `mcp` serves the MCP tools over stdio;
+//! `hook` handles the Claude Code hooks of agents Gitrochi launched.
 
 use gitrochi_ledger::api::{self, Caller};
-use gitrochi_ledger::{backup, db, demo, mcp, text, util, Error};
+use gitrochi_ledger::{backup, db, demo, hook, mcp, text, util, Error};
 use serde_json::{json, Map, Value};
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -25,6 +26,9 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
+  hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
+                                PreToolUse, PermissionRequest, SessionEnd); always exits 0,
+                                or 2 when the Stop hook wakes the agent
 
 The database is GITROCHI_LEDGER_DB, else the per-user default (gitrochi-ledger call info).
 GITROCHI_LEDGER_SESSION is the default session for report, overview and session.
@@ -515,8 +519,48 @@ fn print_json(value: &Value, pretty: bool) {
     println!("{}", text.unwrap_or_else(|_| "{}".into()));
 }
 
+/// `hook EVENT` or `--db FILE hook EVENT`, recognised before any other parsing: a usage
+/// error exits 2, which would block the prompt or the tool call of most hooks.
+fn hook_args(raw: &[String]) -> Option<(String, Option<PathBuf>)> {
+    let (db, rest) = match raw {
+        [flag, path, rest @ ..] if flag == "--db" => (Some(PathBuf::from(path)), rest),
+        [flag, rest @ ..] if flag.starts_with("--db=") => {
+            (Some(PathBuf::from(&flag["--db=".len()..])), rest)
+        }
+        _ => (None, raw),
+    };
+    match rest {
+        [command, rest @ ..] if command == "hook" => {
+            Some((rest.first().cloned().unwrap_or_default(), db))
+        }
+        _ => None,
+    }
+}
+
+fn run_hook(event: &str, db: Option<PathBuf>) -> ExitCode {
+    let mut input = Vec::new();
+    let _ = io::stdin().read_to_end(&mut input);
+    let result = hook::run(
+        event,
+        &String::from_utf8_lossy(&input),
+        &hook::HookEnv::from_process(db),
+    );
+    // Claude Code may have stopped reading; a failed write must not turn into a panic.
+    if !result.stdout.is_empty() {
+        let _ = writeln!(io::stdout(), "{}", result.stdout);
+    }
+    if !result.stderr.is_empty() {
+        let _ = writeln!(io::stderr(), "{}", result.stderr);
+    }
+    ExitCode::from(u8::try_from(result.code).unwrap_or(0))
+}
+
 fn main() -> ExitCode {
-    let invocation = match parse(std::env::args().skip(1).collect()) {
+    let raw: Vec<String> = std::env::args().skip(1).collect();
+    if let Some((event, db)) = hook_args(&raw) {
+        return run_hook(&event, db);
+    }
+    let invocation = match parse(raw) {
         Ok(invocation) => invocation,
         Err(message) if message.is_empty() => {
             println!("{USAGE}");
@@ -531,6 +575,11 @@ fn main() -> ExitCode {
         .text("db")
         .map(PathBuf::from)
         .unwrap_or_else(db::default_db_path);
+    if invocation.command == "hook" {
+        // with other options in front; the entries Gitrochi installs never have them
+        let event = invocation.positional.first().cloned().unwrap_or_default();
+        return run_hook(&event, Some(path));
+    }
     if invocation.command == "mcp" {
         let stdin = io::stdin();
         return match mcp::serve(path, stdin.lock(), io::stdout().lock()) {
@@ -604,6 +653,31 @@ mod tests {
         for (input, expected) in cases {
             assert_eq!(parse_artifact(input), expected, "{input}");
         }
+    }
+
+    #[test]
+    fn hooks_are_recognised_before_the_options() {
+        let args = |list: &[&str]| list.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(
+            hook_args(&args(&["hook", "Stop"])),
+            Some(("Stop".into(), None))
+        );
+        assert_eq!(
+            hook_args(&args(&[
+                "--db",
+                "x.sqlite3",
+                "hook",
+                "SessionEnd",
+                "--weird"
+            ])),
+            Some(("SessionEnd".into(), Some(PathBuf::from("x.sqlite3"))))
+        );
+        assert_eq!(
+            hook_args(&args(&["--db=y.sqlite3", "hook"])),
+            Some((String::new(), Some(PathBuf::from("y.sqlite3"))))
+        );
+        assert_eq!(hook_args(&args(&["report", "hook"])), None);
+        assert_eq!(hook_args(&args(&["--json", "hook", "Stop"])), None);
     }
 
     #[test]

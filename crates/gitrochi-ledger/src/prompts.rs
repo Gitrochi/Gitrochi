@@ -226,6 +226,81 @@ pub fn resolve(connection: &Connection, args: &Value, now: Ms) -> Result<(bool, 
     Ok((changed == 1, prompt))
 }
 
+/// The hook handler settles the session's waiting stop questions once the agent moved on:
+/// `answered` (by the person) when they typed in the terminal — what they typed is not
+/// stored — else `released`, so a late automatic answer never lands in other work.
+pub fn settle_stop_questions(
+    connection: &Connection,
+    session_id: &str,
+    by_person: bool,
+    now: Ms,
+) -> Result<usize> {
+    let changed = if by_person {
+        connection.execute(
+            "UPDATE pending_prompts SET state = 'answered', answered_by = 'human',
+                answered_at = ?2, reviewed_at = ?2
+             WHERE session_id = ?1 AND state = 'waiting' AND kind = 'stop_question'",
+            params![session_id, now],
+        )?
+    } else {
+        connection.execute(
+            "UPDATE pending_prompts SET state = 'released'
+             WHERE session_id = ?1 AND state = 'waiting' AND kind = 'stop_question'",
+            [session_id],
+        )?
+    };
+    Ok(changed)
+}
+
+/// Whether the session has a stop question waiting (a read before deciding to write).
+pub fn stop_question_waiting(connection: &Connection, session_id: &str) -> Result<bool> {
+    Ok(connection.query_row(
+        "SELECT EXISTS (SELECT 1 FROM pending_prompts
+                        WHERE session_id = ?1 AND state = 'waiting' AND kind = 'stop_question')",
+        [session_id],
+        |r| r.get(0),
+    )?)
+}
+
+/// Releases every prompt the session still waits on: its conversation ended or started over,
+/// so nothing earlier can be answered any more.
+pub fn release_session(connection: &Connection, session_id: &str) -> Result<usize> {
+    Ok(connection.execute(
+        "UPDATE pending_prompts SET state = 'released' WHERE session_id = ?1 AND state = 'waiting'",
+        [session_id],
+    )?)
+}
+
+/// Automatic answers in a row (design §9.4): the session's `auto_reply` events since the
+/// person last typed in the terminal (a `hook` event with `person`), acted on the session
+/// in the app, or answered one of its prompts.
+pub fn in_a_row(connection: &Connection, session_id: &str) -> Result<u32> {
+    let count: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM events e
+         WHERE e.session_id = ?1 AND e.type = 'auto_reply'
+           AND e.id > COALESCE((SELECT MAX(id) FROM events
+                                WHERE session_id = ?1
+                                  AND ((actor = 'human' AND type <> 'link')
+                                       OR (type = 'hook' AND json_extract(data, '$.person') = 1))), 0)
+           AND e.ts > COALESCE((SELECT MAX(answered_at) FROM pending_prompts
+                                WHERE session_id = ?1 AND answered_by = 'human'), 0)",
+        [session_id],
+        |r| r.get(0),
+    )?;
+    Ok(count.clamp(0, i64::from(u32::MAX)) as u32)
+}
+
+/// The session's prompts still waiting: each may become an automatic answer, so the limit
+/// counts them too and two parallel requests never add up past it.
+pub fn waiting(connection: &Connection, session_id: &str) -> Result<u32> {
+    let count: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM pending_prompts WHERE session_id = ?1 AND state = 'waiting'",
+        [session_id],
+        |r| r.get(0),
+    )?;
+    Ok(count.clamp(0, i64::from(u32::MAX)) as u32)
+}
+
 /// Expires prompts nobody resolved long after their deadline; returns how many.
 pub fn expire(connection: &Connection, now: Ms) -> Result<usize> {
     Ok(connection.execute(

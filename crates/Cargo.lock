@@ -86,6 +86,7 @@ dependencies = [
 name = "gitrochi-ledger"
 version = "0.1.0"
 dependencies = [
+ "gitrochi-autocontinue",
  "regex-lite",
  "rusqlite",
  "serde",

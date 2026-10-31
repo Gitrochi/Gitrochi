@@ -11,7 +11,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14]
 ## Storage
 
 - One SQLite database per user. `default_db_path()`: macOS `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3`, Windows `%APPDATA%\Gitrochi\ledger\ledger.sqlite3`, elsewhere `$XDG_DATA_HOME/gitrochi/ledger/ledger.sqlite3` (or `~/.local/share/…`). `GITROCHI_LEDGER_DB` overrides it; `GITROCHI_LEDGER=0` turns the feature off (every method but `info` answers `DISABLED`, and nothing is created).
-- WAL, `BEGIN IMMEDIATE` for every write, busy timeout 15 s, `synchronous = NORMAL`, `trusted_schema = OFF`.
+- WAL, `BEGIN IMMEDIATE` for every write, busy timeout 15 s (1 s for the hook handler), `synchronous = NORMAL`, `trusted_schema = OFF`.
 - `PRAGMA user_version` is the schema (1). Migration steps only add tables and columns, each in its own IMMEDIATE transaction, safe to run twice and from two processes at once. A file written by a newer build is read but never written (`SCHEMA_MISMATCH`).
 - Only this crate writes the database, from any process. Every write is one transaction that also increments `meta.rev`; the apps poll `rev` and reload only when it moved. Reads run in one read transaction (one snapshot).
 - Times are epoch milliseconds (i64). Input strings are NFC-normalised and trimmed (report bodies keep their layout).
@@ -187,13 +187,50 @@ A session whose ID the ledger already has is skipped with its events and questio
 
 - **C ABI** (macOS): `char *gitrochi_ledger_call(const char *method, const char *json)` and `void gitrochi_ledger_free(char *)` in [`include/gitrochi_ledger.h`](include/gitrochi_ledger.h). NULL `json` means `{}`; the result is never NULL; safe from several threads; panics become `DATABASE` errors. Linking it into `libgitrochi_core.a` is wave 2.
 - **Windows**: one Tauri command `ledger_call(method: String, args: serde_json::Value) -> Result<serde_json::Value, String>` calling `gitrochi_ledger::call` (wave 2).
-- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`; `hook <event>` arrives in wave 2. See the [README](README.md).
+- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`, `hook <event>` ([below](#hooks)). See the [README](README.md).
 - **MCP** (`gitrochi-ledger mcp`): `ledger_overview`, `ledger_report`, `ledger_session`; delivery only for the caller's own session; no person's operations. Protocol versions as `tools/gitrochi-mcp`: `2025-11-25`, `2025-06-18`, `2024-11-05`.
 - `GITROCHI_LEDGER_SESSION` is the default session of the CLI and the MCP tools (for agents Gitrochi launches).
 
 ## Auto-continue
 
 The hook handler creates a `pending_prompts` row when an agent stops to ask (`prompt_create`, deadline = now + the delay), polls it (`prompt_get`), and closes it with `prompt_resolve`: `auto` when auto-continue answered (also an `auto_reply` event on the session, actor `auto`, `data: {promptId, kind, answer}`), `released` when it let go, `expired`. A person answers from the app with `prompt_answer`, which wins only while the prompt waits. Automatic answers count in `attention.autoReview` until `prompt_review`. The policy (what to answer, deny rules, hook outputs) belongs to `crates/gitrochi-autocontinue`; the payload and the answer are stored as given. Auto-continue never answers Ledger questions and never acknowledges a session.
+
+## Hooks
+
+`gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
+
+- **Activity.**
+  - `SessionStart`, `UserPromptSubmit`, `Stop` and `SessionEnd` move `lastAt` forward. They never touch `lastAgentAt` or a status.
+  - `SessionStart` and `UserPromptSubmit` set `links.agentSessionId` to the input's `session_id`. A new ID is also recorded as a `hook` event, `data: {hook, agentSessionId, previous?, source?}`, so every ID the conversation had can still be found.
+  - `SessionEnd` records a `hook` event with `data: {hook: "SessionEnd", reason?, agentSessionId?}`.
+  - Nothing else from the input is stored: no prompt text and no tool input.
+- **Pending prompts.** A stop question, an `AskUserQuestion`, an `ExitPlanMode` (when its setting is on) or a permission request becomes a `PendingPrompt`.
+  - Its payload is `gitrochi-autocontinue`'s `PromptPayload`, and its deadline is now plus the delay.
+  - The handler reads the prompt every 250 ms. It keeps the earlier of the stored deadline and its own, so the app can bring an answer forward but never push it past the hook's timeout.
+  - At the deadline it resolves the prompt `auto`. The answer is the `AutoReply`, which also goes into the `auto_reply` event. The output is printed only if that write succeeded.
+- **Who settles a prompt.**
+  - The person in the app, with `prompt_answer`:
+    - `{text}` wakes a stop question with that text.
+    - `{answers: {question: label}}` answers an `AskUserQuestion`. A question the person left out takes the proposed answer.
+    - `{decision: "allow" | "deny", message?}` decides a permission request or a plan.
+    - `{release: true}` (answer in the terminal) and `{hold: true}` (not this time) end the hook without a decision. So does an answer that does not fit the prompt.
+  - The person typing in the terminal: a `UserPromptSubmit` with their own prompt marks waiting stop questions `answered` by `human`, and stores no answer. A prompt that Claude Code submitted itself only releases them.
+  - Later events release what the conversation waited on before: a newer `Stop`, a `PreToolUse` or `PermissionRequest` of the main agent (one without `agent_id`), and every `SessionStart` and `SessionEnd`. A late automatic answer then never lands in the middle of other work.
+  - The app's heartbeat stopping during a synchronous wait releases that prompt.
+- **When nothing waits.** In these cases the hook ends at once with no decision, and no prompt is stored:
+  - auto-continue is off for the session (the global `autoContinue` setting, with the session's own `enabled` and `delaySec` on top);
+  - the session has the decision role;
+  - the trigger for this kind of prompt is off;
+  - the hook is synchronous and the app is not running (`app.alive`, next to the database, is 15 s old or more; D10);
+  - the request is never auto-allowed;
+  - the question or the answer is risky;
+  - `stop_hook_active` is set and there has been no automatic answer since the person's last input;
+  - there have already been three automatic answers in a row.
+- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts still waiting; `stop_hook_active` looks at the automatic answers alone. The person's last input is the latest of:
+  - a `hook` event with `data.person`, written when they type in the terminal;
+  - any of their actions on the session in the app, except `link`;
+  - a prompt they answered.
+- **Never in the way.** Without a decision, the hook exits 0 with no output. The Stop answer is exit 2 with the text on stderr. Any failure is exit 0, no decision and one line on stderr: input that is not a JSON object, a missing database, a lock held for more than a second, or a database with a newer schema.
 
 ## Changes from v0
 
@@ -217,5 +254,9 @@ Narrowed on purpose (the original tool was wider):
 
 13. `applied` hands off only from implementation sessions on a hand-off line; from any other session it records the version and confirms nothing.
 14. A person's `shelve` (and `set_status` shelved) is limited to research and document roles, like the agent's `shelved`.
+
+Added for the hook handler (wave 2):
+
+15. The CLI command `hook <event>` ([Hooks](#hooks)). `lastAt` also moves with a launched agent's hook activity, as DESIGN.md §6.1 and §7.11 describe; `lastAgentAt` stays the agent's own reports. `hook` events carry `data.hook` and the fields above. The handler moves waiting prompts to `answered` (the person typed in the terminal: `answeredBy: "human"`, no `answer`) and to `released`.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
