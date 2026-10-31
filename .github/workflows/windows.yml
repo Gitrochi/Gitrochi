@@ -113,6 +113,7 @@ jobs:
           done
           cp ../crates/target/release/gitch-core.exe "$stage/gitch-core.exe"
           cp ../crates/target/release/gitrochi-index.exe "$stage/gitrochi-index.exe"
+          cp ../crates/target/release/gitrochi-ledger.exe "$stage/gitrochi-ledger.exe"
           cp ../tools/gitrochi-mcp/server.mjs "$stage/gitrochi-mcp.mjs"
           # The flow engine (built by beforeBuildCommand): next to gitch in the portable zip, and on its own for CLI-only users (install.sh, self-update)
           engine=../tools/gitch-flow/target/release/gitch-flow.exe
@@ -121,7 +122,7 @@ jobs:
           (cd "$out" && sha256sum gitch-flow-windows-x64.exe | sed 's/ \*/  /' > gitch-flow-windows-x64.exe.sha256)
           cp ../tools/gitch-flow/THIRD_PARTY_NOTICES.txt "$out/gitch-flow-THIRD-PARTY-NOTICES.txt"
           (cd "$out" && sha256sum gitch-flow-THIRD-PARTY-NOTICES.txt | sed 's/ \*/  /' > gitch-flow-THIRD-PARTY-NOTICES.txt.sha256)
-          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch-flow-THIRD-PARTY-NOTICES.txt gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe gitrochi-index.exe gitch-flow.exe >/dev/null)
+          (cd "$stage" && 7z a -tzip "$out/$zip" Gitrochi.exe LICENSE.txt THIRD_PARTY_NOTICES.md gitch-flow-THIRD-PARTY-NOTICES.txt gitch gitch-scip-index gitch-graph-watch gitrochi-mcp.mjs gitch-core.exe gitrochi-index.exe gitrochi-ledger.exe gitch-flow.exe >/dev/null)
           # Git Bash 의 sha256sum 이 이름 앞에 붙이는 *(바이너리 표시)는 빼서 맥과 같은 「해시  이름」으로
           (cd "$out" && sha256sum "$setup" "$zip" | sed 's/ \*/  /' > "Gitrochi_${ver}_windows.sha256")
           if [ -f "$nsis/$setup.sig" ]; then
