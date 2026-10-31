@@ -110,18 +110,24 @@ impl Fixture {
         hook::heartbeat_path(&self.db)
     }
 
-    /// The app touches `app.alive` every 5 s while it runs.
+    /// The app touches `app.alive` every 5 s while it runs. Setting the time, not rewriting
+    /// the empty file: on Windows that leaves the modification time as it was.
     fn app_running(&self) {
-        std::fs::write(self.heartbeat(), b"").unwrap();
+        self.beat(SystemTime::now());
     }
 
     fn app_stopped_beating(&self) {
+        self.beat(SystemTime::now() - Duration::from_secs(20));
+    }
+
+    fn beat(&self, at: SystemTime) {
         let file = std::fs::File::options()
+            .create(true)
+            .truncate(false)
             .write(true)
             .open(self.heartbeat())
             .unwrap();
-        file.set_modified(SystemTime::now() - Duration::from_secs(20))
-            .unwrap();
+        file.set_modified(at).unwrap();
     }
 
     fn input(&self, event: &str, extra: Value) -> Value {

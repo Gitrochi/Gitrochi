@@ -221,7 +221,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - auto-continue is off for the session (the global `autoContinue` setting, with the session's own `enabled` and `delaySec` on top);
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
-  - the hook is synchronous and the app is not running (`app.alive`, next to the database, is 15 s old or more; D10);
+  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
   - the request is never auto-allowed;
   - the question or the answer is risky;
   - `stop_hook_active` is set and there has been no automatic answer since the person's last input;
