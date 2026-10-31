@@ -1,0 +1,6 @@
+/* features/import-ledger-reports — one line per pasted report */
+.ledger-results { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto; }
+.ledger-result { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+.ledger-result .ok { color: var(--green); }
+.ledger-result .dup { color: var(--text-3); }
+.ledger-result .bad { color: var(--red); }

@@ -36,7 +36,7 @@ export function WorktreeSection({ store }: { store: RepoStore }) {
         return (
           <div
             key={w.path}
-            className={`side-row ${current ? "current" : ""}`}
+            className={`side-row side-tree-row ${current ? "current" : ""}`}
             style={{ alignItems: "flex-start" }}
             onDoubleClick={() => void store.switchWorktree(w.path)}
             onContextMenu={(e) =>
@@ -55,6 +55,8 @@ export function WorktreeSection({ store }: { store: RepoStore }) {
             }
             data-tip={t("Double-click: open in a new tab")}
           >
+            {/* the branch rows' disclosure column keeps the sections' icons aligned (macOS: WorktreeRow) */}
+            <span className="side-tree-disclosure" aria-hidden="true" />
             <span className="lead" style={{ marginTop: 2 }}>
               {current ? <FolderOpen size={14} /> : <Folder size={14} />}
             </span>

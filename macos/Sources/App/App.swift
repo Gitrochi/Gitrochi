@@ -216,6 +216,9 @@ struct AppCommands: Commands {
             Button("Show pull requests") { store?.navigate(.pullRequests) }.keyboardShortcut("4")
             Button("Show CI/CD") { store?.navigate(.actions) }.keyboardShortcut("5")
             Button("Show flows") { store?.navigate(.flows) }.keyboardShortcut("6")
+            if WorkspaceDestination.ledger.isShown {
+                Button("Show ledger") { store?.navigate(.ledger) }.keyboardShortcut("7")
+            }
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])

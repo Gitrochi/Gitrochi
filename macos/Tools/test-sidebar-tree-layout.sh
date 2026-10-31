@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check production branch rows and disclosure spacing without account or repository access.
+# Check production branch and worktree rows and disclosure spacing without account or repository access.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -24,9 +24,18 @@ row = row.replace(label, label + '                .background(TreeLayoutProbe(id
 models = (root / 'Sources/Core/Models.swift').read_text()
 branch = models[models.index('struct Branch: Identifiable, Hashable {'):models.index('\nstruct Tag:')]
 (target / 'BranchRow.swift').write_text('import SwiftUI\ntypealias ViewState<Value> = SwiftUI.State<Value>\n' + branch + '\n' + row)
+section = (root / 'Sources/Views/Sidebar/WorktreeSection.swift').read_text()
+worktreeRow = section[section.index('private struct WorktreeRow: View {'):].replace('private struct WorktreeRow:', 'struct WorktreeRow:', 1)
+assert worktreeRow.count(icon) == 1, 'Worktree icon measurement attachment changed'
+worktreeRow = worktreeRow.replace(icon, icon + '                .background(TreeLayoutProbe(identifier: "icon:" + worktree.path))\n')
+name = '                    .fontWeight(current ? .semibold : .regular)\n'
+assert worktreeRow.count(name) == 1, 'Worktree label measurement attachment changed'
+worktreeRow = worktreeRow.replace(name, name + '                    .background(TreeLayoutProbe(identifier: "label:" + worktree.path))\n')
+worktree = models[models.index('struct Worktree: Identifiable, Hashable {'):models.index('\nstruct WorktreeStats:')]
+(target / 'WorktreeRow.swift').write_text('import SwiftUI\n' + worktree + '\n' + worktreeRow)
 PY
 xcrun swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     "$ROOT/Sources/Views/Sidebar/SidebarTreeGroup.swift" \
-    "$TASK_TMP/BranchRow.swift" "$ROOT/Tools/fixtures/SidebarTreeLayout.swift" \
+    "$TASK_TMP/BranchRow.swift" "$TASK_TMP/WorktreeRow.swift" "$ROOT/Tools/fixtures/SidebarTreeLayout.swift" \
     -o "$TASK_TMP/sidebar-tree-layout"
 "$TASK_TMP/sidebar-tree-layout" "$TASK_OUTPUT"

@@ -25,7 +25,7 @@ struct NavigationSidebar: View {
                     groupTitle(store.target?.provider == .gitlab ? "GitLab" : "GitHub")
                     rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     groupTitle(String(localized: "Tools"))
-                    rows([.flows])
+                    rows([.flows, .ledger].filter(\.isShown))
                 }.padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 12)
             }
             Divider()
@@ -33,6 +33,8 @@ struct NavigationSidebar: View {
                 .buttonStyle(.plain).padding(8).keyboardShortcut(",", modifiers: .command).accessibilityLabel("Settings")
         }
         .background(Color(nsColor: .windowBackgroundColor))
+        // the Ledger row's badge counts what needs a person
+        .task { if WorkspaceDestination.ledger.isShown { LedgerStore.shared.activate() } }
     }
 
     private func groupTitle(_ text: String) -> some View {
@@ -59,6 +61,7 @@ struct NavigationSidebar: View {
                     Spacer(minLength: 2)
                     if page == .repository, store.status.count > 0 { badge(store.status.count) }
                     if page == .pullRequests, !store.pullRequests.isEmpty { badge(store.pullRequests.count) }
+                    if page == .ledger, LedgerStore.shared.attentionTotal > 0 { badge(LedgerStore.shared.attentionTotal) }
                 }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 54 : 38)
                     .foregroundStyle(active ? Color.accentColor : disabled ? Color.secondary.opacity(0.5) : Color.primary.opacity(0.8))
                     .background(active ? Color.accentColor.opacity(0.11) : Color.clear, in: RoundedRectangle(cornerRadius: 8))

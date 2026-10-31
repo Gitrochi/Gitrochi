@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector, IssueDetail } from "@/widgets/inspector";
 import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
@@ -8,13 +8,16 @@ import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-p
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty } from "@/shared/ui";
+import { Button, Empty, Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
 import { PageHeader } from "./PageHeader";
 
+// The Ledger is a preview page: its code loads the first time it opens
+const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
+
 /** The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift) */
 // Pages with the shared title row; Home has its own welcome and the repository screen is the work screen
-const titled = new Set(["compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"]);
+const titled = new Set(["compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows", "ledger"]);
 
 export function WorkspaceContent({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
@@ -37,6 +40,7 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
+    case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} /></Suspense>;
     default: return null;
   }
 }
