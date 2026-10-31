@@ -51,8 +51,9 @@ jobs:
         run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-index
 
       # Git without a console window and the database under %APPDATA% are Windows-only code paths.
+      # --nocapture keeps the large demo's timings and a skipped C/C++ header check in the log.
       - name: Ledger tests
-        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger
+        run: cargo test --locked --manifest-path crates/Cargo.toml -p gitrochi-ledger -- --nocapture
 
       - name: C++ module on its own (tests, runtime-free check, loadable extension)
         if: runner.os != 'Windows'
