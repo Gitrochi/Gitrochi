@@ -47,7 +47,12 @@ Stored by the apps as JSON with camelCase fields; missing fields take the defaul
 
 **`stop_hook_active`**: when another stop hook is already continuing the turn and Gitrochi has not answered since the person's last input, the turn is left alone, so two hooks never feed each other.
 
-**Counting**: `SessionState { consecutive }` is the handler's per-session counter: automatic answers of every kind, permissions included, since the person last answered or typed (the design's "at most three in a row", §9.4). `after_auto_reply()` adds one; `after_prompt(prompt)` resets it when the prompt is the person's. Prompts Claude Code submits for scheduled tasks, background agents and other sessions arrive wrapped in one XML-like element and do not reset it, nor does anything quoting `[Gitrochi]`. At the limit every prompt waits for the person.
+**Counting**: `SessionState { consecutive }` is the handler's per-session counter: automatic answers of every kind, permissions included, since the person last answered or typed (the design's "at most three in a row", §9.4). `after_auto_reply()` adds one; `after_prompt(prompt)` resets it when the prompt is the person's. These do not reset it:
+- prompts Claude Code submits for scheduled tasks, background agents and other sessions, which arrive wrapped in one XML-like element;
+- a prompt that starts with `<task-notification>`, which is how the wake-up of an automatic Stop answer arrives (#171);
+- anything quoting `[Gitrochi]`.
+
+At the limit every prompt waits for the person.
 
 **App closed (D10)**: `should_wait(kind, app_alive)`. A synchronous hook (PreToolUse, PermissionRequest) may keep Claude Code's own prompt from appearing while it waits, so with nobody able to see the countdown it ends at once without a decision. The Stop hook runs in the background and the person can still type, so it does not need the app. `app_alive(last_heartbeat, now)` counts the app as running while its heartbeat (`ledger/app.alive`, touched every 5 seconds) is under 15 seconds old.
 

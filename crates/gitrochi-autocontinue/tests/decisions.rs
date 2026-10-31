@@ -268,6 +268,14 @@ fn scheduled_and_relayed_prompts_are_not_the_person() {
         "<pasted_content id=\"1\">\nlog\n</pasted_content id=\"1\">"
     ));
     assert!(!is_person_prompt("[Gitrochi] 자동 진행 — 질문: x"));
+    // the wake-up of an asyncRewake Stop hook, as Claude Code 2.1.309 submits it (#171)
+    assert!(!is_person_prompt(
+        "<task-notification>\n<summary>Stop hook feedback</summary>\nGo ahead with option 2"
+    ));
+    assert!(!is_person_prompt(
+        "<task-notification id=\"t1\">\n<status>completed</status>\n</task-notification>\nand more"
+    ));
+    assert!(is_person_prompt("<task-notifications> are on my list"));
 }
 
 #[test]
