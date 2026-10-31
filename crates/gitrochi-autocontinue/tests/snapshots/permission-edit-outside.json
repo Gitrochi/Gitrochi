@@ -1,0 +1,15 @@
+{
+  "decision": "pass",
+  "event": "PermissionRequest",
+  "message": "held by outside-repo-write: writes `/Users/me/.zshrc` outside the repository",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "held",
+    "detail": "writes `/Users/me/.zshrc` outside the repository",
+    "rule": "outside-repo-write"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "PermissionRequest": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PermissionRequest",
+          "timeout": 45,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PreToolUse",
+          "timeout": 45,
+          "type": "command"
+        }
+      ],
+      "matcher": "AskUserQuestion|ExitPlanMode"
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "async": true,
+          "asyncRewake": true,
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook Stop",
+          "timeout": 45,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook UserPromptSubmit",
+          "timeout": 10,
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ]
+}

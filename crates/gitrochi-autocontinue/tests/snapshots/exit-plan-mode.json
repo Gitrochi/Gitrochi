@@ -1,0 +1,14 @@
+{
+  "decision": "pass",
+  "event": "PreToolUse",
+  "message": "auto-continue is off for exit_plan_mode",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "trigger_off",
+    "kind": "exit_plan_mode"
+  }
+}
