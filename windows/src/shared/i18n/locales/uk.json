@@ -1632,5 +1632,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Переходите з claude-ledger? Перенесіть його сеанси, питання й базові версії.",
   "Role": "Роль",
   "Browse…": "Огляд…",
-  "Choose a file": "Вибрати файл"
+  "Choose a file": "Вибрати файл",
+  "Parent folder": "Батьківська тека"
 }

@@ -1616,5 +1616,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Claude-ledgerről vált? Hozza át a munkameneteit, kérdéseit és alapverzióit.",
   "Role": "Szerep",
   "Browse…": "Tallózás…",
-  "Choose a file": "Fájl kiválasztása"
+  "Choose a file": "Fájl kiválasztása",
+  "Parent folder": "Szülőmappa"
 }

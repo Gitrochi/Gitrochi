@@ -1586,5 +1586,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Kom je van claude-ledger? Neem de sessies, vragen en baselines mee.",
   "Role": "Rol",
   "Browse…": "Bladeren…",
-  "Choose a file": "Kies een bestand"
+  "Choose a file": "Kies een bestand",
+  "Parent folder": "Bovenliggende map"
 }

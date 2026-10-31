@@ -1569,3 +1569,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Gitrochi’nin bu kopyasında defter komutu eksik: %@";
 "The ledger command did not answer the MCP handshake." = "Defter komutu MCP el sıkışmasına yanıt vermedi.";
 "The ledger command answers with its tools: %@." = "Defter komutu araçlarıyla yanıt veriyor: %@.";
+"Parent folder" = "Üst klasör";

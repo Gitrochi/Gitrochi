@@ -1615,5 +1615,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Przechodzisz z claude-ledger? Przenieś jego sesje, pytania i wersje bazowe.",
   "Role": "Rola",
   "Browse…": "Przeglądaj…",
-  "Choose a file": "Wybierz plik"
+  "Choose a file": "Wybierz plik",
+  "Parent folder": "Folder nadrzędny"
 }

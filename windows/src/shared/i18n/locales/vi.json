@@ -1588,5 +1588,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Chuyển từ claude-ledger? Mang theo các phiên, câu hỏi và bản cơ sở của nó.",
   "Role": "Vai trò",
   "Browse…": "Duyệt…",
-  "Choose a file": "Chọn tệp"
+  "Choose a file": "Chọn tệp",
+  "Parent folder": "Thư mục cha"
 }

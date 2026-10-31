@@ -1602,5 +1602,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Vindo do claude-ledger? Traga as sessões, perguntas e linhas de base dele.",
   "Role": "Papel",
   "Browse…": "Procurar…",
-  "Choose a file": "Escolher um arquivo"
+  "Choose a file": "Escolher um arquivo",
+  "Parent folder": "Pasta pai"
 }

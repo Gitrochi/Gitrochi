@@ -2312,3 +2312,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "この Gitrochi には台帳のコマンドがありません：%@";
 "The ledger command did not answer the MCP handshake." = "台帳のコマンドが MCP の接続確認に応答しませんでした。";
 "The ledger command answers with its tools: %@." = "台帳のコマンドがツール一覧で応答しました：%@。";
+"Parent folder" = "親フォルダ";

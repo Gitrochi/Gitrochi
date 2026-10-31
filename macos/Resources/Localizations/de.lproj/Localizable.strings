@@ -1566,3 +1566,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Der Logbuch-Befehl fehlt in dieser Kopie von Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "Der Logbuch-Befehl hat auf den MCP-Handshake nicht geantwortet.";
 "The ledger command answers with its tools: %@." = "Der Logbuch-Befehl antwortet mit seinen Werkzeugen: %@.";
+"Parent folder" = "Übergeordneter Ordner";

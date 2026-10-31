@@ -1627,5 +1627,6 @@
   "Role": "Rolle",
   "Name": "Name",
   "Browse…": "Durchsuchen…",
-  "Choose a file": "Datei auswählen"
+  "Choose a file": "Datei auswählen",
+  "Parent folder": "Übergeordneter Ordner"
 }

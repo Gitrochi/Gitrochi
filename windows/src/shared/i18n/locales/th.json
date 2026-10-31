@@ -1628,5 +1628,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "ย้ายมาจาก claude-ledger ใช่ไหม นำเซสชัน คำถาม และเบสไลน์มาด้วย",
   "Role": "บทบาท",
   "Browse…": "เรียกดู…",
-  "Choose a file": "เลือกไฟล์"
+  "Choose a file": "เลือกไฟล์",
+  "Parent folder": "โฟลเดอร์หลัก"
 }

@@ -1535,3 +1535,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Perintah Buku Log tidak ada di salinan Gitrochi ini: %@";
 "The ledger command did not answer the MCP handshake." = "Perintah Buku Log tidak menjawab jabat tangan MCP.";
 "The ledger command answers with its tools: %@." = "Perintah Buku Log menjawab dengan alatnya: %@.";
+"Parent folder" = "Folder induk";

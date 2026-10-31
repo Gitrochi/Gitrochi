@@ -1565,3 +1565,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "W tej kopii Gitrochi brakuje polecenia rejestru: %@";
 "The ledger command did not answer the MCP handshake." = "Polecenie rejestru nie odpowiedziało na powitanie MCP.";
 "The ledger command answers with its tools: %@." = "Polecenie rejestru odpowiada swoimi narzędziami: %@.";
+"Parent folder" = "Folder nadrzędny";

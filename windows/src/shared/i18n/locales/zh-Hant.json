@@ -1638,5 +1638,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "要從 claude-ledger 移轉嗎？把它的工作階段、問題和基準一起帶過來。",
   "Role": "角色",
   "Browse…": "瀏覽…",
-  "Choose a file": "選擇檔案"
+  "Choose a file": "選擇檔案",
+  "Parent folder": "上層資料夾"
 }

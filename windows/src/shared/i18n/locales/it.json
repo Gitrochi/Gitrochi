@@ -1610,5 +1610,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Arrivi da claude-ledger? Porta con te sessioni, domande e baseline.",
   "Role": "Ruolo",
   "Browse…": "Sfoglia…",
-  "Choose a file": "Scegli un file"
+  "Choose a file": "Scegli un file",
+  "Parent folder": "Cartella superiore"
 }

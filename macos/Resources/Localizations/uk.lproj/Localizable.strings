@@ -1582,3 +1582,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "У цій копії Gitrochi немає команди журналу: %@";
 "The ledger command did not answer the MCP handshake." = "Команда журналу не відповіла на рукостискання MCP.";
 "The ledger command answers with its tools: %@." = "Команда журналу відповідає своїми інструментами: %@.";
+"Parent folder" = "Батьківська тека";

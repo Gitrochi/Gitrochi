@@ -30,6 +30,7 @@ struct RepositoryCodePanel: View {
     @ViewState private var editors: [ExternalEditor] = []
     private var modes: [String] { ["Source"] + (selected.map { supportsPreview($0.path) } == true ? ["Preview"] : []) + ["File history", "Blame", "Working changes"] }
     private var prefix: String { directory.isEmpty ? "" : directory + "/" }
+    private var parentDirectory: String { directory.split(separator: "/").dropLast().joined(separator: "/") }
     private var matching: [RepositoryTreeEntry] { tree?.entries.filter { entry in
         if let languageFilter { return entry.isFile && RepositoryLanguages.language(for: entry.path) == languageFilter && (query.isEmpty || entry.path.localizedCaseInsensitiveContains(query)) }
         return query.isEmpty ? entry.path.hasPrefix(prefix) && !entry.path.dropFirst(prefix.count).contains("/") : entry.path.localizedCaseInsensitiveContains(query)
@@ -169,13 +170,23 @@ struct RepositoryCodePanel: View {
                     Image(systemName: "chevron.right").font(.system(size: 8))
                     Text(directory).lineLimit(1).truncationMode(.middle).help(directory)
                     Spacer(minLength: 0)
-                    Button { directory = directory.split(separator: "/").dropLast().joined(separator: "/") } label: { Image(systemName: "arrow.up") }.buttonStyle(.plain).help("Parent folder").accessibilityLabel("Parent folder")
+                    Button { directory = parentDirectory } label: { Image(systemName: "arrow.up") }.buttonStyle(.plain).help("Parent folder").accessibilityLabel("Parent folder")
                 }
             }.font(.caption).padding(.horizontal, 13).padding(.bottom, 11)
             RepositoryLanguageControl(segments: languages, truncated: tree?.truncated == true, selected: $languageFilter)
             Divider()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
+                    if !directory.isEmpty && query.isEmpty && languageFilter == nil {
+                        Button { directory = parentDirectory } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "chevron.right").font(.system(size: 9)).hidden()
+                                Image(systemName: "folder").foregroundStyle(Color.accentColor.opacity(0.8))
+                                Text(verbatim: "..")
+                                Spacer(minLength: 0)
+                            }.font(.callout).padding(.horizontal, 9).padding(.vertical, 8).contentShape(Rectangle())
+                        }.buttonStyle(.plain).help("Parent folder").accessibilityLabel("Parent folder").accessibilityIdentifier("code-parent-folder")
+                    }
                     ForEach(folders, id: \.self) { folder in
                         Button { directory = folder } label: {
                             HStack(spacing: 8) {

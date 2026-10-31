@@ -1540,3 +1540,4 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Bản Gitrochi này thiếu lệnh của sổ theo dõi: %@";
 "The ledger command did not answer the MCP handshake." = "Lệnh của sổ theo dõi không phản hồi bước bắt tay MCP.";
 "The ledger command answers with its tools: %@." = "Lệnh của sổ theo dõi phản hồi với các công cụ: %@.";
+"Parent folder" = "Thư mục cha";

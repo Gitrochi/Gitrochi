@@ -2457,5 +2457,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger から移行しますか？セッション、質問、ベースラインを引き継げます。",
   "Role": "役割",
   "Browse…": "参照…",
-  "Choose a file": "ファイルを選択"
+  "Choose a file": "ファイルを選択",
+  "Parent folder": "親フォルダ"
 }

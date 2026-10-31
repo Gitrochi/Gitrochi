@@ -1764,5 +1764,6 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "从 claude-ledger 迁移？把它的会话、问题和基线一起带过来。",
   "Role": "角色",
   "Browse…": "浏览…",
-  "Choose a file": "选择文件"
+  "Choose a file": "选择文件",
+  "Parent folder": "上级文件夹"
 }
