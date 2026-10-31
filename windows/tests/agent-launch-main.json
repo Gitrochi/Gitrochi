@@ -1,0 +1,152 @@
+{
+  "from": "origin/main 827f6098, recorded with tests/agent-launch-harness.ts",
+  "hooks": {
+    "C:/Users/example/AppData/Roaming/Gitrochi/agents/hooks.json": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook SessionStart\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook UserPromptSubmit\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook PreToolUse\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"PermissionRequest\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook PermissionRequest\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"Notification\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook Notification\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook Stop\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"C:/Program Files/Gitrochi's tools/Gitrochi.exe\\\" --agent-hook SessionEnd\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ]\n  }\n}",
+    "C:/Users/example/AppData/Roaming/Gitrochi/agents/hooks-wsl.json": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook SessionStart\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook UserPromptSubmit\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook PreToolUse\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PermissionRequest\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook PermissionRequest\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"Notification\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook Notification\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook Stop\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"matcher\": \"\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"'/mnt/c/Program Files/Gitrochi'\\\\''s tools/Gitrochi.exe' --agent-hook SessionEnd\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ]\n  }\n}"
+  },
+  "launches": {
+    "native · plain": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "C:/Users/example/.local/bin/claude.exe",
+          "args": [
+            "--settings",
+            "C:/Users/example/AppData/Roaming/Gitrochi/agents/hooks.json"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100"
+          },
+          "title": "Claude Code"
+        }
+      }
+    ],
+    "native · task and mode": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "C:/Users/example/.local/bin/claude.exe",
+          "args": [
+            "--settings",
+            "C:/Users/example/AppData/Roaming/Gitrochi/agents/hooks.json",
+            "--permission-mode",
+            "plan",
+            "fix the login retry"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100"
+          },
+          "title": "Claude Code"
+        }
+      }
+    ],
+    "native · multi-line task": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "C:/Users/example/.local/bin/claude.exe",
+          "args": [
+            "--settings",
+            "C:/Users/example/AppData/Roaming/Gitrochi/agents/hooks.json",
+            "--permission-mode",
+            "acceptEdits",
+            "line one\nline two"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100"
+          },
+          "title": "Claude Code"
+        }
+      }
+    ],
+    "wsl · plain": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "wsl.exe",
+          "args": [
+            "-d",
+            "Ubuntu",
+            "--cd",
+            "/mnt/c/Work/example-app",
+            "--exec",
+            "bash",
+            "-lic",
+            "a=(); for x in \"$@\"; do case \"$x\" in @file:*) a+=(\"$(cat \"${x#@file:}\")\");; *) a+=(\"$x\");; esac; done; case \"$0\" in */*) PATH=\"$(dirname \"$0\"):$PATH\";; esac; exec \"$0\" \"${a[@]}\"",
+            "/home/example/.local/bin/claude",
+            "--settings",
+            "/mnt/c/Users/example/AppData/Roaming/Gitrochi/agents/hooks-wsl.json"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100",
+            "WSLENV": "GITROCHI_AGENT_ID"
+          },
+          "title": "Claude Code · WSL"
+        }
+      }
+    ],
+    "wsl · task and mode": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "wsl.exe",
+          "args": [
+            "-d",
+            "Ubuntu",
+            "--cd",
+            "/mnt/c/Work/example-app",
+            "--exec",
+            "bash",
+            "-lic",
+            "a=(); for x in \"$@\"; do case \"$x\" in @file:*) a+=(\"$(cat \"${x#@file:}\")\");; *) a+=(\"$x\");; esac; done; case \"$0\" in */*) PATH=\"$(dirname \"$0\"):$PATH\";; esac; exec \"$0\" \"${a[@]}\"",
+            "/home/example/.local/bin/claude",
+            "--settings",
+            "/mnt/c/Users/example/AppData/Roaming/Gitrochi/agents/hooks-wsl.json",
+            "--permission-mode",
+            "plan",
+            "fix the login retry"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100",
+            "WSLENV": "GITROCHI_AGENT_ID"
+          },
+          "title": "Claude Code · WSL"
+        }
+      }
+    ],
+    "wsl · multi-line task": [
+      {
+        "path": "C:/Work/example-app",
+        "spec": {
+          "program": "wsl.exe",
+          "args": [
+            "-d",
+            "Ubuntu",
+            "--cd",
+            "/mnt/c/Work/example-app",
+            "--exec",
+            "bash",
+            "-lic",
+            "a=(); for x in \"$@\"; do case \"$x\" in @file:*) a+=(\"$(cat \"${x#@file:}\")\");; *) a+=(\"$x\");; esac; done; case \"$0\" in */*) PATH=\"$(dirname \"$0\"):$PATH\";; esac; exec \"$0\" \"${a[@]}\"",
+            "/home/example/.local/bin/claude",
+            "--settings",
+            "/mnt/c/Users/example/AppData/Roaming/Gitrochi/agents/hooks-wsl.json",
+            "--permission-mode",
+            "acceptEdits",
+            "@file:/mnt/c/Users/example/AppData/Local/Temp/gitrochi-0f0e0d0c-task.txt"
+          ],
+          "env": {
+            "GITROCHI_AGENT_ID": "0f0e0d0c-0b0a-4908-8706-050403020100",
+            "WSLENV": "GITROCHI_AGENT_ID"
+          },
+          "title": "Claude Code · WSL"
+        }
+      }
+    ]
+  },
+  "files": {
+    "wsl · multi-line task": {
+      "C:/Users/example/AppData/Local/Temp/gitrochi-0f0e0d0c-task.txt": "line one\nline two"
+    }
+  }
+}

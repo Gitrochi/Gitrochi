@@ -153,6 +153,8 @@ export class DemoLedgerBackend implements LedgerBackend {
       }
       case "import_legacy":
         return this.importLegacy(args);
+      case "track":
+        return this.track(args);
       default:
         throw new LedgerError("UNKNOWN_METHOD", `Unknown method ${String(method)}`);
     }
@@ -358,6 +360,51 @@ export class DemoLedgerBackend implements LedgerBackend {
     }
     this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.into ? { version: r.into } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.until !== undefined ? { until: r.until } : {}) }, r.action === "answer" ? r.answer ?? r.text : r.action === "message" ? r.text : undefined);
     w.rev++;
+  }
+
+  /**
+   * As the core's `track`: the session of an agent about to be launched, active with no agent report yet. What is left
+   * out comes from the given paths, since the demo reads no checkout: the project bound to `repoPath`, else its folder's
+   * name; the branch, else the folder's name, as the title; the repository's policy from `autoContinue.repositories`.
+   */
+  private track(args: Record<string, unknown>) {
+    const w = this.world, now = this.now();
+    const links: DemoSession["links"] = {};
+    for (const key of ["repoPath", "branch", "worktree", "cwd", "agentId"] as const) {
+      const value = args[key];
+      if (value === undefined || value === null) continue;
+      if (typeof value !== "string") throw invalid(`${key} must be text`);
+      if (value.trim()) links[key] = value.trim();
+    }
+    const folder = links.cwd ?? links.worktree ?? links.repoPath;
+    const repo = links.repoPath ?? links.worktree;
+    const name = (path: string | undefined) => path?.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || undefined;
+    const trim = (path: string) => path.replace(/[\\/]+$/, "");
+    const bound = repo ? w.projects.find((p) => this.project(p.key).repoPath && trim(this.project(p.key).repoPath!) === trim(repo)) : undefined;
+    const project = typeof args.project === "string" && args.project.trim() ? args.project.trim() : bound?.key ?? name(repo);
+    if (!project) throw invalid("Give project or repoPath");
+    if (!w.projects.some((p) => p.key === project)) {
+      w.projects.push({ key: project, name: project });
+      if (repo) this.projectSettings.set(project, { ...this.project(project), repoPath: repo });
+    }
+    let policy: DemoSession["autoContinue"] | null | undefined = args.autoContinue as DemoSession["autoContinue"] | null | undefined;
+    if (policy === undefined && links.repoPath) {
+      const stored = this.settings.autoContinue.repositories;
+      const own = stored && typeof stored === "object" ? Object.entries(stored as Record<string, DemoSession["autoContinue"]>).find(([path]) => trim(path) === trim(links.repoPath!)) : undefined;
+      policy = own?.[1];
+    }
+    if (policy && (typeof policy.enabled !== "boolean" || !Number.isInteger(policy.delaySec))) throw invalid("autoContinue needs enabled and delaySec");
+    const base = typeof args.base === "string" ? /^v?(\d+(?:\.\d+)+)$/i.exec(args.base.trim())?.[1] : undefined;
+    const kind = typeof args.kind === "string" ? args.kind.trim() : "";
+    const d = new Date(now), day = `S${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-`;
+    let n = w.sessions.filter((x) => x.id.startsWith(day)).length + 1;
+    while (w.sessions.some((x) => x.id === `${day}${String(n).padStart(2, "0")}`)) n++;
+    const id = `${day}${String(n).padStart(2, "0")}`;
+    const title = typeof args.title === "string" && args.title.trim() ? args.title.trim() : links.branch ?? name(folder) ?? "(untitled)";
+    w.sessions.push({ id, project, title, kind, role: roleOf(kind), status: "active", ...(base ? { baseVersion: base, baseCurrent: base } : {}), touches: [], related: [], links, color: w.sessions.filter((x) => x.project === project).length % 8, createdAt: now, lastAt: now, ...(policy ? { autoContinue: { enabled: policy.enabled, delaySec: policy.delaySec } } : {}) });
+    w.events.push({ id: w.nextEvent++, sessionId: id, ts: now, type: "hook", actor: "hook", summary: "Started from Gitrochi", ...(base ? { version: base } : {}), data: { hook: "launch", ...(links.agentId ? { agentId: links.agentId } : {}), ...(policy ? { autoContinue: policy } : {}) } });
+    w.rev++;
+    return { ok: true, rev: w.rev, session: sessionViews(w, now).get(id)! };
   }
 
   /** As the core: only research and documents are shelved */
