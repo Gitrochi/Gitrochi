@@ -8,7 +8,7 @@ use rusqlite::{Connection, OpenFlags, TransactionBehavior};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// The newest schema this build writes (`PRAGMA user_version`).
 pub const DB_SCHEMA: i64 = 1;
@@ -59,10 +59,34 @@ pub fn enabled() -> bool {
     !matches!(std::env::var("GITROCHI_LEDGER"), Ok(v) if v.trim() == "0")
 }
 
+fn is_busy(error: &rusqlite::Error) -> bool {
+    error.sqlite_error_code() == Some(rusqlite::ErrorCode::DatabaseBusy)
+}
+
+/// Switches the file to WAL. Only the first open of a new file changes anything, and
+/// SQLite does it by turning the read lock the pragma holds into a write lock — an upgrade
+/// it never waits for, so that two connections doing the same cannot deadlock. When the
+/// app, a hook and an agent open a new file at once, all but one of them get SQLITE_BUSY
+/// immediately, whatever the busy timeout. They wait for the one switching with BEGIN
+/// IMMEDIATE, which does honour the timeout, and ask again: by then the file is in WAL mode
+/// and the pragma needs no lock.
+fn enable_wal(connection: &Connection) -> Result<()> {
+    let deadline = Instant::now() + BUSY_TIMEOUT;
+    loop {
+        match connection.query_row("PRAGMA journal_mode = WAL", [], |r| r.get::<_, String>(0)) {
+            // Network file systems can refuse WAL; the ledger then keeps working in rollback mode.
+            Ok(_) => return Ok(()),
+            Err(error) if is_busy(&error) && Instant::now() < deadline => {
+                connection.execute_batch("BEGIN IMMEDIATE; ROLLBACK;")?;
+            }
+            Err(error) => return Err(error.into()),
+        }
+    }
+}
+
 fn configure(connection: &Connection) -> Result<()> {
     connection.busy_timeout(BUSY_TIMEOUT)?;
-    // Network file systems can refuse WAL; the ledger then keeps working in rollback mode.
-    let _: String = connection.query_row("PRAGMA journal_mode = WAL", [], |r| r.get(0))?;
+    enable_wal(connection)?;
     connection.execute_batch(
         "PRAGMA trusted_schema = OFF;
          PRAGMA synchronous = NORMAL;
