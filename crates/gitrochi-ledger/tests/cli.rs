@@ -246,6 +246,38 @@ fn usage_errors_and_the_off_switch() {
 }
 
 #[test]
+fn the_default_database_is_in_the_per_user_data_folder() {
+    let dir = TempDir::new("cli-default");
+    // HOME, APPDATA and XDG_DATA_HOME all point here, so no real ledger is touched.
+    let info = || {
+        let mut command = binary();
+        command
+            .env("HOME", &dir.0)
+            .env("APPDATA", &dir.0)
+            .env("XDG_DATA_HOME", &dir.0)
+            .args(["call", "info"]);
+        command
+    };
+    let output = info().output().unwrap();
+    assert!(output.status.success(), "{}", stderr(&output));
+    let data = if cfg!(target_os = "macos") {
+        dir.join("Library")
+            .join("Application Support")
+            .join("Gitrochi")
+    } else if cfg!(windows) {
+        dir.join("Gitrochi")
+    } else {
+        dir.join("gitrochi")
+    };
+    let db = data.join("ledger").join("ledger.sqlite3");
+    assert_eq!(json_of(&output)["dbPath"], db.to_str().unwrap());
+    assert!(db.is_file(), "the folders are created on first use");
+    let moved = dir.join("moved.sqlite3");
+    let output = info().env("GITROCHI_LEDGER_DB", &moved).output().unwrap();
+    assert_eq!(json_of(&output)["dbPath"], moved.to_str().unwrap());
+}
+
+#[test]
 fn demo_writes_a_fresh_database_only() {
     let dir = TempDir::new("cli-demo");
     let target = dir.join("demo.sqlite3");
