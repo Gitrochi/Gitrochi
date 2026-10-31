@@ -1,0 +1,13 @@
+{
+  "decision": "pass",
+  "event": "Stop",
+  "message": "another stop hook is already continuing the turn",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "stop_hook_active"
+  }
+}

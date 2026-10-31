@@ -1,0 +1,7 @@
+{
+  "session_id": "1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7081",
+  "cwd": "/Users/me/work/app",
+  "permission_mode": "default",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "2번으로 해 줘"
+}
