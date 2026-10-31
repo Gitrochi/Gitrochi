@@ -1,10 +1,12 @@
 # Ledger design
 
-> **Status: P0 design; the maintainer confirmed decisions D1–D10 on 2026-10-31.** The code is being built in parallel ([§12](#12-phases-and-waves)) against **contract v0** ([§6](#6-contract-v0)): the shared types and methods, owned by the core crate `crates/gitrochi-ledger`, whose JSON Schema is their authoritative form. This document follows contract v0; where it describes more than v0 covers, the text says *proposed*. Decisions ([§14](#14-decisions)): D1–D10 confirmed as recommended, and D7's compatibility surface is kept; D11–D13 are working defaults. To change a decision or the contract, change the schema and this document together.
+> **Status: P0 design; the maintainer confirmed decisions D1–D10 on 2026-10-31.** The code is being built in parallel ([§12](#12-phases-and-waves)) against **contract v0** ([§6](#6-contract-v0)): the shared types and methods, owned by the core crate `crates/gitrochi-ledger`, whose JSON Schema is their authoritative form. This document follows contract v0; where it describes more than v0 covers, the text says *proposed*. Decisions ([§14](#14-decisions)): D1–D10 confirmed as recommended, and D7's compatibility surface is kept; D11–D13 are working defaults, and the additive-only rule below changed D11 and D13. To change a decision or the contract, change the schema and this document together.
 
 Agents report which baseline their work started from and where it stands. Gitrochi draws the sessions as branches off a baseline trunk, and a person only answers, confirms and cleans up. Information flows one way — **agent → ledger → screen**. The screens never drive an agent: what a person writes (an answer, a message, a status) waits in the ledger until that session's next report or read picks it up. The one exception is opt-in: when a person turns on auto-continue, Gitrochi answers an agent that has waited too long for them, within fixed limits, and records it for review ([§9](#9-auto-continue)).
 
 This document is the contract for phases P1–P5: the feature map, the shared types, the rules (verdicts, resuming, hand-offs), the permission boundary, auto-continue, the screens and the open decisions.
+
+**Additive only** (the maintainer's rule, 2026-10-31). Ledger is one feature among others, and it only adds. It never removes, renames, replaces or changes the behaviour of an existing menu, page, shortcut, panel, setting, command or CI check. With the Ledger off, every existing feature behaves exactly as on `main`, and tests prove it wherever an existing file is touched. Its entry points are its own row in Tools under Flows (`⌘7` / `Ctrl+7`), its own Settings › Ledger tab, and the Ledger group appended to the macOS palette.
 
 ## 1. Where it comes from
 
@@ -12,7 +14,7 @@ Ledger reimplements the ideas of an existing standalone tool, *claude-ledger* (a
 
 What Gitrochi adds on top:
 
-- **Tracking without reports.** Sessions Gitrochi launches already carry Claude Code hooks. The ledger records their activity, so "stale" is accurate even when an agent forgets to report, and a session used again after it was archived resurfaces.
+- **Tracking without reports** (opt-in). Sessions Gitrochi launches already carry Claude Code hooks. With **Track agents I start** on, the ledger records their activity too, so "stale" is accurate even when an agent forgets to report, and a session used again after it was archived resurfaces.
 - **Git links.** A session knows its branch, worktree, commits, pull request and running agent. "Touches" are what the agent declared plus the files its branch actually changed, and overlap warnings also use the repository index's change coupling.
 - **Fast triage.** The Inbox works from the keyboard alone, and confirming or archiving shows an undo toast.
 - **Auto-continue (opt-in).** An agent that asks about its implementation and gets no answer within 30 s (adjustable) receives a safe "go ahead" from Gitrochi through documented Claude Code hooks; the person reviews it later ([§9](#9-auto-continue)).
@@ -26,15 +28,15 @@ What Gitrochi adds on top:
 | Sessions, events, questions, verdicts, resume rules, overlaps | **Core**: new crate `crates/gitrochi-ledger` | P1 | Rules in [§7](#7-rules); the original's scenarios become Rust tests |
 | Baseline trunk from version folders | **Baselines** with a choosable source: git tags (default), folder or file name pattern, registration and `release` events | P1 | D6 |
 | Graph: trunk + session branches, 7 days · 30 days · all | **Graph** view; lanes computed in Rust, drawn with the commit graph's colours and line widths | P2 | [§10.5](#105-graph) |
-| "My turn": questions, clean-up, decisions | **Inbox** (the first screen) + sidebar badge + Home card | P2 (badge P3) | The original's count, plus auto-continue reviews |
+| "My turn": questions, clean-up, decisions | **Inbox** (the first screen) + a badge on the Ledger's own sidebar row | P2 (badge P3) | The original's count, plus auto-continue reviews |
 | Clean-up board | **Board**: verdict filter chips, multi-select, bulk actions | P2 | |
 | Implementation channel and its cycles | **Streams**; which kinds have the decision role and which the implementation role is a setting | P4 | No kind names in the rules |
-| Ctrl+K search | macOS: a Ledger group in `WorkspaceCommandPalette`; Windows: D11 | P3 | No Ledger-only search window |
+| Ctrl+K search | macOS: a Ledger group appended to `WorkspaceCommandPalette`; Windows: search inside the Ledger page (D11) | P3 | No Ledger-only search window |
 | Paste import of ```` ```ledger ```` blocks | **Import** sheet; the duplicate hash is kept | P1 parser, P4 sheet | |
 | MCP tools and CLI | `gitrochi-ledger`: a CLI (short text, or JSON with `--json`) with an `mcp` stdio subcommand, bundled with both apps | P1 binary, P3 sheet | The "Connect Claude…" sheet copies a `claude mcp add …` command and a config snippet; it never edits a client's files |
 | Tray notifications | Native notifications + Dock/taskbar badge, switchable in Settings | P3 | Neither app has system notifications yet |
-| Electron terminal and quick launch | Gitrochi's terminal panel + "Ledger overview" and "Claude Code" quick launches | P4 | |
-| GitLab merge-request tab and merging | Nothing new: a **session chip** on the existing pull/merge request pages, and the inspector links to the request | P3 | Merging stays in Gitrochi's own confirmed flow |
+| Electron terminal and quick launch | "Ledger overview" and "Claude Code" quick launches in the Ledger page, opening tabs through the terminal's existing API | P4 | |
+| GitLab merge-request tab and merging | Nothing new, and the existing pull/merge request pages stay untouched: the Ledger inspector links to the request | P3 | Merging stays in Gitrochi's own confirmed flow |
 | AI "current state" summary | Gitrochi's AI service and its stored key | P5 | Off without a key or offline |
 | Daily backup, 14 kept | The same, with `VACUUM INTO` | P1 | |
 | Sharing with another PC (IP allow list) | Not in the first release; later on the hub's token authentication | — | D4 |
@@ -133,17 +135,17 @@ crates/gitrochi-autocontinue/  auto-continue's pure logic, no I/O: question dete
 
 | Existing piece | How Ledger uses it |
 |---|---|
-| Agent center: `Services/Agents.swift` ↔ `entities/agent`, `src-tauri/src/agents.rs` | "Start agent" creates the ledger session ([§7.11](#711-tracking-launched-agents)) and passes `GITROCHI_LEDGER_SESSION` next to `GITROCHI_AGENT_ID`. The inspector shows the agent's live state and opens its terminal tab. |
-| Claude Code hooks: the app-owned `hooks.json` passed with `--settings` (`hook.sh` on macOS, `Gitrochi.exe --agent-hook` on Windows, `hooks-wsl.json` for WSL) | Both apps add `gitrochi-ledger hook <event>` entries next to the existing ones (WSL: the Windows executable, as `hooks-wsl.json` already does): activity on `SessionStart`, `UserPromptSubmit`, `Stop` and `SessionEnd`; auto-continue on `Stop`, `PreToolUse` (question tools only) and `PermissionRequest` ([§9](#9-auto-continue)). The agent center's entries stay as they are. Nothing is written to a project's or the user's Claude settings. |
+| Agent center: `Services/Agents.swift` ↔ `entities/agent`, `src-tauri/src/agents.rs` | Only while **Track agents I start** (Settings › Ledger, off by default) is on, "Start agent" creates the ledger session ([§7.11](#711-tracking-launched-agents)) and passes `GITROCHI_LEDGER_SESSION` next to `GITROCHI_AGENT_ID`. With it off, the launch command and the environment are byte-for-byte what they are today, and a test checks that. The Ledger inspector shows the agent's live state and opens its terminal tab through the existing APIs. |
+| Claude Code hooks: the app-owned `hooks.json` passed with `--settings` (`hook.sh` on macOS, `Gitrochi.exe --agent-hook` on Windows, `hooks-wsl.json` for WSL) | Only while **Track agents I start** is on, both apps add `gitrochi-ledger hook <event>` entries next to the existing ones (WSL: the Windows executable, as `hooks-wsl.json` already does): activity on `SessionStart`, `UserPromptSubmit`, `Stop` and `SessionEnd`; auto-continue on `Stop`, `PreToolUse` (question tools only) and `PermissionRequest` ([§9](#9-auto-continue)). The existing entries keep their exact content and `timeout: 5`; with tracking off, the hooks file is byte-for-byte what it is today, and a test checks that. Nothing is written to a project's or the user's Claude settings. |
 | `ExternalAgents` (process scan, both platforms) | Agents Gitrochi did not start appear in the Inbox as "Running, not in the Ledger" — a suggestion with **Track** and **Hide**, never an automatic session. The scan runs while the Inbox is visible, as it does for the Agents tab. |
 | Repository index (`gitrochi-index`) | Read-only `coupled` queries for overlap warnings; the ledger never writes the index. |
 | Commit graph (`gitrochi-core` `graph::layout`, `Palette.lanes`/`GraphMetrics` ↔ `laneColors`/`metrics.ts`) | The core may reuse the layout to compute the Graph view's lanes; the apps draw with the commit graph's colours and metrics ([§10.5](#105-graph)). |
-| Pull/merge request pages (`PullRequestSection`, `PullRequestDetailView` on both platforms) | A session chip on rows and in the request header (head branch, or a session ID in the title, branch or description); the inspector opens the request. |
+| Pull/merge request pages (`PullRequestSection`, `PullRequestDetailView` on both platforms) | Untouched — no chip. The Ledger inspector links to a session's request instead (head branch, or a session ID in the request's title, branch or description) and opens it on the existing page. |
 | `WorkspaceCommandPalette` (macOS) | Adding `.ledger` to `WorkspaceDestination` gives "Go to Ledger"; a Ledger group appended to the palette's command list adds sessions, questions and baselines from `search`. |
 | `MCPConnectionSheet` (both platforms) | The Connect Claude Code sheet follows its layout (Copy configuration, Test connection) and adds the `claude mcp add` command. |
 | AI service (`Services/AI.swift` ↔ `entities/ai`) | Auto-continue's optional refinement and P5 summaries, through `complete`, with the key Gitrochi already stores. |
 | `MarkdownView` ↔ `shared/ui/Markdown.tsx` | Report bodies and questions. |
-| Terminal panel | P4 quick launches. |
+| Terminal panel | P4 quick launches from the Ledger page, through the terminal's existing API only. |
 | `tools/gitrochi-mcp` (read-only) | Untouched. Ledger's writing tools live in their own server so the read-only server stays read-only. |
 | `services/hub` | Only if D4 asks for sharing later. |
 
@@ -323,7 +325,7 @@ Two live, non-stream sessions in the same project overlap (`kind: same`) when th
 
 Wave 2.
 
-- **Start.** When a person starts an agent from Gitrochi and tracking is on, the app creates the session before launch (title and base set automatically: the branch name, and the newest baseline tag reachable from the worktree), fills its `links` (agent, branch, worktree, folder) and passes `GITROCHI_LEDGER_SESSION`. The MCP server uses it as the default `session`, so the agent's reports land on the right session without being told the ID. Wave 2 also checks whether launching with `--session-id` lets the app link the Claude session ID before the first prompt (the documentation does not say that it matches the hooks' `session_id`).
+- **Start.** When a person starts an agent from Gitrochi and **Track agents I start** is on (it stays off until a person turns it on; D13), the app creates the session before launch (title and base set automatically: the branch name, and the newest baseline tag reachable from the worktree), fills its `links` (agent, branch, worktree, folder) and passes `GITROCHI_LEDGER_SESSION`. The MCP server uses it as the default `session`, so the agent's reports land on the right session without being told the ID. Wave 2 also checks whether launching with `--session-id` lets the app link the Claude session ID before the first prompt (the documentation does not say that it matches the hooks' `session_id`).
 - **Hooks.** `UserPromptSubmit` updates `lastAt` and fills `links.agentSessionId` from the payload; `Stop` and `SessionStart` update `lastAt`; `SessionEnd` records a `hook` event. Claude Code holds the prompt until `UserPromptSubmit` hooks finish, so that handler must stay in milliseconds. `/clear` gives the conversation a new Claude session ID (`SessionEnd` with reason `clear`, then `SessionStart` with source `clear`); the ledger session follows the launch, keeps its own ID and records the new one, while still finding itself by the old one, which the MCP server keeps. `SessionEnd` is not documented to fire when the agent crashes or its terminal is closed, so the agent center's liveness check records those ends. Activity hooks store IDs and times only — never prompt text or tool input — and they never change a status. (Auto-continue, when a person turns it on, also keeps the question it answered; [§9](#9-auto-continue).)
 - **Never block the agent.** The activity path opens the database, runs one transaction, prints nothing and exits 0 on every failure. The only hooks that wait are auto-continue's, and only for sessions where a person turned it on.
 - **Unreported sessions** (no `lastAgentAt`) count in the Inbox only when their branch has commits beyond its base; until then they wait under the Board's **Unreported** filter (D13).
@@ -359,7 +361,7 @@ The product rule from the original: confirming, archiving, changing a status, an
 | Activity and the Claude session link | — | — | — | ✓ |
 
 - `api.rs` takes the caller (`app` or `agent`) from the entry point, not from the request: the C ABI and the Tauri command are `app`; the CLI (including `call`), MCP and the hook are `agent`. `human` and `prompt_answer` answer `NOT_ALLOWED` to an agent caller, and no flag turns the CLI into an app caller.
-- The database file is not a security boundary — anything running as the user can open it. The boundary is about the tools Gitrochi hands to agents. P3 proposes adding the ledger folder to the paths gitch guard keeps AI agents from editing, as it already does for flow trust records.
+- The database file is not a security boundary — anything running as the user can open it. The boundary is about the tools Gitrochi hands to agents. gitch is not changed.
 - MCP's stdout carries JSON-RPC only; logs go to stderr.
 - Merging pull requests stays in Gitrochi's existing confirmed flow; the ledger has no path to it.
 - Auto-continue answers only an agent's own wait in its conversation. It never performs a person's ledger action, never answers or closes a question in the Ledger, and never presses a gitch or system confirmation dialog.
@@ -383,7 +385,7 @@ A second reading the same day confirmed: `SessionStart` context (plain stdout or
 | Plan approval — a setting, off by default (D8) | `exit_plan_mode` | `PreToolUse` matching `ExitPlanMode`, synchronous, as above | Approve | The person's choice |
 | A permission request | `permission` | `PermissionRequest`, synchronous; it answers with `hookSpecificOutput.decision.behavior: "allow"` | Allow **this once** unless the request is never auto-allowed ([§9.4](#94-safety)); no permanent rule is added | The person's Allow or Deny in Gitrochi |
 
-- **Gitrochi's screens answer during the wait.** While a synchronous hook waits, the terminal's own dialog may not show (the documentation does not say; P3b checks). So for those seconds the Ledger's prompt strip, the Agents panel row and a notification show the question and a countdown, with **Answer…**, **Allow**, **Deny**, **Answer in terminal** and **Not this time** (`prompt_answer`). The last two end the hook without a decision (`released`), and the terminal's own dialog appears.
+- **Gitrochi's screens answer during the wait.** While a synchronous hook waits, the terminal's own dialog may not show (the documentation does not say; P3b checks). So for those seconds the Ledger's prompt strip and a notification show the question and a countdown, with **Answer…**, **Allow**, **Deny**, **Answer in terminal** and **Not this time** (`prompt_answer`). The last two end the hook without a decision (`released`), and the terminal's own dialog appears.
 - **Gitrochi not running.** Synchronous hooks do not wait: they return at once without a decision and the terminal's dialog appears (D10). The `stop_question` path needs no Gitrochi screen and works either way. The app shows it is running by touching `ledger/app.alive` every 5 s; a hook counts it as running while the file is under 15 s old.
 - **One handler for both platforms** (wave 2). `gitrochi-ledger hook <event>` writes a `PendingPrompt` and checks it for an answer every 250 ms; both apps read the same database, so neither needs waiting code of its own. With auto-continue off for the session it exits within milliseconds. Only these entries get a longer `timeout` (the wait plus a 10 s margin); the existing entries keep `timeout: 5`. Whether Claude Code enforces a timeout on the asynchronous `Stop` entry is unclear, so the handler keeps its own deadline either way.
 - **Other agents.** Codex and Gemini have no such hooks and are left out at first. If they are needed later, the candidate is typing the answer and Enter into the Gitrochi terminal tab that runs the agent, cancelled whenever the person is typing there.
@@ -401,7 +403,7 @@ A second reading the same day confirmed: `SessionStart` context (plain stdout or
 
 ### 9.3 Turning it on
 
-Off by default. A checkbox in the Start agent sheet ("Continue automatically after [30] s without an answer") or a per-repository setting turns it on for a session (`Session.autoContinue {enabled, delaySec}`); defaults live in `settings`. It is independent of Claude Code's permission modes: it never switches to bypass mode or accepts that mode's warning.
+Off by default. It is turned on per repository in Settings › Ledger, or per session in the Ledger inspector ("Continue automatically after [30] s without an answer"; `Session.autoContinue {enabled, delaySec}`); defaults live in `settings`. The Start agent sheet and the Agents panel stay as they are. It is independent of Claude Code's permission modes: it never switches to bypass mode or accepts that mode's warning.
 
 ### 9.4 Safety
 
@@ -422,7 +424,6 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 - A new workspace destination `ledger`, titled **Ledger** (D1), in the sidebar's **Tools** group under Flows (symbol `checklist` · lucide `ListChecks`), with a badge = `attention.total`; `⌘7` / `Ctrl+7`, both free today. It opens without a repository (`needsRepository = false`) and filters to the current repository's project when there is one.
 - Until the native backend is wired (wave 2) the destination stays hidden; `GITROCHI_LEDGER_PREVIEW=1` shows it with the demo backend.
-- A Home card ("Ledger — 3 need you") and, in P3, a ledger chip on Agents panel rows and on pull/merge request rows.
 
 ### 10.2 Layout
 
@@ -503,12 +504,13 @@ One card per stream (label, line, verdict, current version, last report) with it
 - **Header**: ID, title, kind and role, agent, base → current (behind), verdict chip, chips for branch, worktree, pull request, the running agent (live state from the agent center, **Open terminal**) and the chat link.
 - **Actions** by verdict: Confirm · Archive · Mark merged… (version picker defaulting to HEAD) · Close · Drop · Shelve (research and document roles) · Still active · Reopen · Unconfirm · Unarchive · Message… — and, if adopted, Edit… and Delete…
 - **Questions** with answer fields (`⌘↩`/`Ctrl+Enter`) and Dismiss.
+- **Auto-continue**: this session's switch and wait ([§9.3](#93-turning-it-on)).
 - **Timeline**: events newest first; bodies through `MarkdownView` ↔ `Markdown.tsx`, collapsed except the newest; a person's actions, hook records and automatic answers in quieter styles; the hand-off source ("Confirmed by S… (applied)").
 - **Touches**: declared and changed files, overlap and likely-overlap badges that select the other session; **Commits (n)** opens the branch in the repository graph.
 
 ### 10.8 Empty state = onboarding
 
-`WorkspaceEmptyState` ↔ `Empty`, with three buttons below it as the pull-request page already composes them: **Connect Claude Code** (the sheet below), **Paste reports** (Import), **Import from claude-ledger…** (D5). Once there are sessions, the same actions stay in the view menu.
+`WorkspaceEmptyState` ↔ `Empty`, with buttons below it as the pull-request page already composes them: **Track agents I start** (turns the setting on; D13), **Connect Claude Code** (the sheet below), **Paste reports** (Import), **Import from claude-ledger…** (D5). Once there are sessions, the same actions stay in the view menu.
 
 ### 10.9 Sheets
 
@@ -517,7 +519,7 @@ One card per stream (label, line, verdict, current version, last report) with it
 
 ### 10.10 Search
 
-macOS appends a Ledger group to `WorkspaceCommandPalette`'s command list (`⌘K`): session IDs and titles, open questions, report summaries and bodies, baselines, from the `search` method, so bodies never have to be loaded into the palette; choosing a result opens the Ledger with the session selected and scrolls to the event. Windows has no palette and `Ctrl+K` is free: D11. Each Ledger list also keeps the plain filter row (`ListSearchRow`), which filters and does not search; on Windows it lives inside `widgets/sidebar` and is not exported, so it first moves to `shared/ui`, where its macOS twin already is.
+macOS appends a Ledger group to `WorkspaceCommandPalette`'s command list (`⌘K`): session IDs and titles, open questions, report summaries and bodies, baselines, from the `search` method, so bodies never have to be loaded into the palette; choosing a result opens the Ledger with the session selected and scrolls to the event. Windows has no palette, so search stays inside the Ledger page: a search field above its views that asks `search` (D11). `CodeQuickOpen` and its shortcut stay untouched. Each Ledger list also keeps the plain filter row (`ListSearchRow`), which filters and does not search; on Windows it lives inside `widgets/sidebar` and is not exported, so it first moves to `shared/ui`, where its macOS twin already is.
 
 ### 10.11 Notifications and badge
 
@@ -525,7 +527,7 @@ New questions, new sessions to clean up and new `applied` reports raise one nati
 
 ### 10.12 Settings › Ledger
 
-Use the Ledger · Track agents I start (+ give them the Ledger tools) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect Claude Code… · Import…
+Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect Claude Code… · Import…
 
 ### 10.13 Visual rules
 
@@ -560,8 +562,9 @@ Target: 1,000 sessions and 50,000 events without stutter. `state` carries sessio
 | Answer field · import sheet · connect sheet | in `Views/Ledger` and `Views/Sheets` | `features/answer-ledger-question`, `features/import-ledger-reports`, `features/connect-ledger-mcp` |
 | Navigation | `Core/WorkspaceNavigation.swift` (`.ledger`) | `entities/git/model/workspace-navigation.ts` (`"ledger"`) |
 | Settings | `Views/Settings/LedgerSettings.swift` | `widgets/settings/ui/LedgerSettings.tsx` |
-| Hooks (wave 2) | `Services/Agents.swift` (adds the ledger entries to `hooks.json`) | `entities/agent/model/agents.ts` (the same entries, and in `hooks-wsl.json`) |
-| Auto-continue screens (wave 2) | countdown on `Views/Sidebar/AgentsPanel.swift` rows; checkbox in its `StartAgentSheet` | countdown on `widgets/sidebar/ui/AgentsPanel.tsx` rows; checkbox in `features/start-agent/ui/StartAgentSheet.tsx` |
+| Hooks (wave 2) | `Services/Agents.swift` (adds the ledger entries to `hooks.json` only while **Track agents I start** is on; the existing entries unchanged) | `entities/agent/model/agents.ts` (the same, and in `hooks-wsl.json`) |
+| Auto-continue switches (wave 2) | per repository in `LedgerSettings.swift`, per session in `LedgerInspector`; the countdown in `LedgerPromptStrip` | the same in `LedgerSettings.tsx`, `LedgerInspector.tsx` and `LedgerPromptStrip.tsx` |
+| Unchanged | `Views/Sidebar/AgentsPanel.swift` and its `StartAgentSheet` | `widgets/sidebar/ui/AgentsPanel.tsx`, `features/start-agent/ui/StartAgentSheet.tsx`, `CodeQuickOpen.tsx` and its shortcut |
 | Checks | `macos/Tools/test-ledger.sh` | `windows/tests/ledger*.test.ts`, `src/app/lib/ledger-selftest.tsx` registered in `src/app/selftest.ts` |
 | Moved, not new | — | `ListSearchRow` → `shared/ui`, `visibleFileRange` → `shared/lib` (own commits) |
 
@@ -578,7 +581,7 @@ The phases are the scope; the waves are the order in which the work runs, severa
 | 1 | Auto-continue logic (P3b, part one) | `crates/gitrochi-autocontinue/**`, its workspace and lock entries | Unit tests for question detection, the never-auto-allowed rules, the count in a row, the recommended option, the answer's language and the hook output formats |
 | 1 | macOS screens with the demo backend (P2) | the macOS Ledger files, destination wiring, locales, tests | Light and dark screenshots with demo data |
 | 1 | Windows screens with the demo backend (P2) | the Windows Ledger files, destination wiring, locales, tests | Self-test step; light and dark screenshots |
-| 2 | macOS C ABI and Windows Tauri wiring; `gitrochi-ledger hook`, agent-center launch tracking and the Agents panel countdown (P3, P3b); legacy import; notifications; terminal quick launches (P4) | per item | Hook latency and never-block tests; one real Claude Code run per auto-continue path; the import round-trips a generated claude-ledger-shaped database |
+| 2 | macOS C ABI and Windows Tauri wiring; `gitrochi-ledger hook` and agent-center launch tracking behind **Track agents I start** (P3, P3b); legacy import; notifications; terminal quick launches (P4) | per item | Hook latency and never-block tests; with tracking off, the launch command, environment and hooks file byte-for-byte as before; one real Claude Code run per auto-continue path; the import round-trips a generated claude-ledger-shaped database |
 | 3 | After D2–D4: document tracker, Work log, notes, AI summary, sharing (P5) | per item | Per item |
 
 Shared documents (`docs/features.md`, the READMEs) wait for wave 2.
@@ -593,10 +596,11 @@ Per item, and reported as run or not run:
 - Windows (in `windows/`): `npm run build`, `npm test`, `cargo check --manifest-path src-tauri/Cargo.toml`; `windows/tests/ledger*.test.ts`; the Ledger self-test step.
 - Screens: demo data, light and dark, wide and narrow, opened and looked at for overlap, overflow and truncation.
 - Auto-continue: unit tests in `gitrochi-autocontinue` (question detection, reading commands against the never-auto-allowed rules, the count in a row, picking the recommended option, the template's language). The handler is tested with fake hook input (JSON on stdin): no answer → the automatic answer; a person answers during the wait → that answer; a never-auto-allowed command → no decision; app not running → no decision at once; auto-continue off → done within a few milliseconds (timed). Then each path runs once end to end with a real Claude Code and a short wait, and the pull request records what happened.
+- Additive only: wherever a Ledger change touches an existing file, a test shows that, with the Ledger off, the existing feature behaves exactly as on `main` — including a byte-for-byte check of the agent launch command, environment and hooks file with **Track agents I start** off. Ledger tests run in their own CI job; existing jobs and check names stay as they are.
 
 ## 14. Decisions
 
-The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 already assumed them. D11–D13 are working defaults that stand unless changed.
+The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 already assumed them. D11–D13 are working defaults that stand unless changed; the maintainer's additive-only rule of 2026-10-31 changed D11 and D13.
 
 | # | Topic | Recommended | Alternatives | Status |
 |---|---|---|---|---|
@@ -610,9 +614,9 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 alre
 | D8 | What auto-continue answers | Questions that end a turn, choice questions, and permission requests (never-auto-allowed ones excluded); plan approval is a setting, off by default. Questions in the Ledger are never closed automatically, whichever option is chosen | Plan approval on by default · leave permission requests to Claude Code's own `auto` permission mode | Confirmed 2026-10-31 |
 | D9 | How the automatic answer is written | The instant template; AI refinement only when a person turns it on | AI refinement by default | Confirmed 2026-10-31 |
 | D10 | When Gitrochi is not running | Synchronous hooks return at once without a decision, so the terminal's own dialog appears (the `stop_question` path works either way) | Wait and auto-continue anyway | Confirmed 2026-10-31 |
-| D11 | Windows search (no palette there yet) | Build the workspace command palette on Windows, mirroring macOS's name and shape (`features/workspace-command-palette`), with the Ledger group — its own small pull request | Search inside the Ledger page only | Working default |
+| D11 | Windows search (no palette there yet) | Search stays inside the Ledger page. A Windows workspace palette is not part of the Ledger work, and `CodeQuickOpen` and its shortcut stay untouched | A Windows workspace command palette mirroring macOS's (the earlier working default) | Changed 2026-10-31 by the maintainer's additive-only rule |
 | D12 | Commit area | Add **Ledger** to the areas in `docs/git-workflow.md` (in the core's first commit); P0 uses `Agents` | Keep using `Agents` | Working default |
-| D13 | Sessions created by "Start agent" that never report | Create them (tracking on by default), but count them in the Inbox only once their branch has commits; until then they wait under **Unreported** | Create them only after the agent's first report · never create them automatically | Working default |
+| D13 | Sessions created by "Start agent" | Tracked only while **Track agents I start** is on — off until a person turns it on, and the Ledger's empty state offers it. Unreported sessions count in the Inbox only once their branch has commits; until then they wait under **Unreported** | Tracking on by default (the earlier working default) · create sessions only after the agent's first report | Changed 2026-10-31 by the maintainer's additive-only rule |
 
 ## 15. Risks and open questions
 
