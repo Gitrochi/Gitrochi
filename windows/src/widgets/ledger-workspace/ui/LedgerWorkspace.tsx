@@ -30,7 +30,7 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
 
 /**
  * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Filters |
- * view | inspector; below 1,080 px the inspector opens as a sheet and below 700 px the filters stack above the view.
+ * view | inspector; below 1,080 px the inspector opens as a sheet and below 640 px the filters stack above the view.
  * Opens without a repository and filters to the open one's project. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
 export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null; ledger?: LedgerStore }) {

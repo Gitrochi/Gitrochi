@@ -271,7 +271,7 @@ describe("Ledger imports, undo, layout and versions", () => {
     expect(inverseOperation(done, { action: "answer", sessionId: "S", questionId: 1, text: "x" })).toBeNull();
   });
   it("lays the page out by width", () => {
-    expect([1400, 1080, 1079, 700, 699, 320].map(ledgerLayout)).toEqual(["wide", "wide", "medium", "medium", "narrow", "narrow"]);
+    expect([1400, 1080, 1079, 640, 639, 320].map(ledgerLayout)).toEqual(["wide", "wide", "medium", "medium", "narrow", "narrow"]);
   });
   it("orders versions as numbers", () => {
     expect(["1.10.0", "1.9.2", "v1.9.10", "2.0", "1.9.2-rc"].sort(compareVersions)).toEqual(["1.9.2", "1.9.2-rc", "v1.9.10", "1.10.0", "2.0"]);
