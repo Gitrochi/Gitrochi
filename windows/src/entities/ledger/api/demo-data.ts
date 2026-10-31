@@ -144,9 +144,6 @@ export function demoWorld(now: Ms, repoPath = "C:/Projects/atlas"): DemoWorld {
   event(cache.id, T - 22 * HOUR, "merged", { summary: `Merged into 1.4.2 when ${stream.id} read it`, version: "1.4.2", data: { by: stream.id, via: "sync" } });
   event(stream.id, T - 10 * HOUR, "artifact", { summary: "Key-level invalidation", artifacts: [{ name: "src/cache/store.ts", ssot: "1.4.2" }] });
   event(stream.id, T - 3 * HOUR, "progress", { summary: "Cycle report for 1.4.2", body: longReport });
-  w.questions.push({ id: w.nextQuestion++, sessionId: stream.id, text: "Which index should the migration build first?", state: "answered", answer: "Sessions by project (recommended)", answeredBy: "auto", createdAt: T - 40 * MIN, answeredAt: T - 39 * MIN });
-  event(stream.id, T - 39 * MIN, "auto_reply", { actor: "auto", summary: "Chose the recommended option: Sessions by project", data: { question: "Which index should the migration build first?" } });
-
   event(notes.id, notes.createdAt, "start", { summary: "Draft the release notes", version: "1.3.0" });
   event(notes.id, T - 13 * DAY, "artifact", { summary: "Release notes", artifacts: [{ name: "docs/releases/1.4.0.md", ssot: "1.4.0" }] });
   event(notes.id, T - 12 * DAY, "merged", { summary: "Published with 1.4.0", version: "1.4.0" });
@@ -196,16 +193,25 @@ export function demoWorld(now: Ms, repoPath = "C:/Projects/atlas"): DemoWorld {
   event(ranking.id, ranking.createdAt, "start", { summary: "Try title boosts for search", version: "1.0.0" });
   event(ranking.id, T - HOUR, "progress", { summary: "Compared three ranking rules" });
 
+  // payloads in auto-continue's PromptPayload shape (crates/gitrochi-autocontinue record.rs)
   const prompt = (p: Omit<DemoPrompt, "id">) => w.prompts.push({ id: w.nextPrompt++, ...p });
-  prompt({ sessionId: retry.id, agentId: "agent-demo-1", kind: "stop_question", payload: { question: "Should I also update the retry section of the docs?" }, createdAt: T - 20_000, deadline: T + 45_000, state: "waiting" });
-  prompt({ sessionId: limits.id, agentId: "agent-demo-2", kind: "permission", payload: { tool: "Bash", command: "npm test -- auth" }, createdAt: T - 10_000, deadline: T + 95_000, state: "waiting" });
-  prompt({ sessionId: stream.id, agentId: "agent-demo-3", kind: "ask_user_question", payload: { question: "Which cache keys should the migration rebuild first?", options: ["Session keys (recommended)", "All keys"] }, createdAt: T - 5_000, deadline: T + 4 * MIN, state: "waiting" });
-  prompt({ sessionId: ranking.id, agentId: "agent-demo-4", kind: "exit_plan_mode", payload: { plan: "Boost exact title matches\n1. Index titles separately\n2. Add a ranking test" }, createdAt: T - 2 * MIN, deadline: T + 9 * MIN, state: "waiting" });
-  prompt({ sessionId: navigation.id, kind: "permission", payload: { tool: "Bash", command: "npm run lint" }, createdAt: T - 26 * MIN, deadline: T - 25 * MIN, state: "auto", answer: { action: "allow" }, answeredBy: "auto" });
-  event(navigation.id, T - 25 * MIN, "auto_reply", { actor: "auto", summary: "Allowed npm run lint" });
+  const migration = "Which index should the migration build first?";
+  prompt({ sessionId: retry.id, agentId: "agent-demo-1", kind: "stop_question", payload: promptPayload("stop_question", "Should I also update the retry section of the docs?", 45, { type: "reply", text: "Yes, go ahead with the safest option." }, { text: "The retry matrix is done. Should I also update the retry section of the docs?" }), createdAt: T - 20_000, deadline: T + 45_000, state: "waiting" });
+  prompt({ sessionId: limits.id, agentId: "agent-demo-2", kind: "permission", payload: promptPayload("permission", "npm test -- auth", 95, { type: "allow" }, { tool: { name: "Bash", summary: "npm test -- auth" } }), createdAt: T - 10_000, deadline: T + 95_000, state: "waiting" });
+  prompt({ sessionId: stream.id, agentId: "agent-demo-3", kind: "ask_user_question", payload: promptPayload("ask_user_question", "Which cache keys should the migration rebuild first?", 240, { type: "answers", answers: { "Which cache keys should the migration rebuild first?": "Session keys" }, note: "Chosen because it was marked as recommended." }, { questions: [{ question: "Which cache keys should the migration rebuild first?", header: "Migration", multiSelect: false, options: [{ label: "Session keys", description: "Only the keys sessions read", recommended: true }, { label: "All keys", recommended: false }] }] }), createdAt: T - 5_000, deadline: T + 4 * MIN, state: "waiting" });
+  prompt({ sessionId: ranking.id, agentId: "agent-demo-4", kind: "exit_plan_mode", payload: promptPayload("exit_plan_mode", "Boost exact title matches", 540, null, { text: "1. Index titles separately\n2. Add a ranking test", tool: { name: "ExitPlanMode", summary: "Boost exact title matches" } }), createdAt: T - 2 * MIN, deadline: T + 9 * MIN, state: "waiting" });
+  prompt({ sessionId: navigation.id, kind: "permission", payload: promptPayload("permission", "npm run lint", 30, { type: "allow" }, { tool: { name: "Bash", summary: "npm run lint" } }), createdAt: T - 26 * MIN, deadline: T - 25 * MIN, state: "auto", answer: { type: "allow" }, answeredBy: "auto" });
+  event(navigation.id, T - 25 * MIN, "auto_reply", { actor: "auto", summary: "Allowed npm run lint", data: { promptId: w.nextPrompt - 1, kind: "permission", answer: { type: "allow" } } });
+  prompt({ sessionId: stream.id, agentId: "agent-demo-3", kind: "ask_user_question", payload: promptPayload("ask_user_question", migration, 30, { type: "answers", answers: { [migration]: "Sessions by project" }, note: "Chosen because it was marked as recommended." }, { questions: [{ question: migration, header: "Migration", multiSelect: false, options: [{ label: "Sessions by project", recommended: true }, { label: "Events by time", recommended: false }] }] }), createdAt: T - 40 * MIN, deadline: T - 39 * MIN, state: "auto", answer: { type: "answers", answers: { [migration]: "Sessions by project" }, note: "Chosen because it was marked as recommended." }, answeredBy: "auto" });
+  event(stream.id, T - 39 * MIN, "auto_reply", { actor: "auto", summary: "Chose the recommended option: Sessions by project", data: { promptId: w.nextPrompt - 1, kind: "ask_user_question" } });
 
   w.coupled.push({ a: flags.id, b: limits.id, paths: ["src/flags.ts", "src/auth/limits.ts"] });
   return w;
+}
+
+/** A prompt payload as auto-continue writes it; `proposed` is what it sends when nobody answers in time */
+export function promptPayload(kind: string, question: string, delaySec: number, proposed: Record<string, unknown> | null, extra: Record<string, unknown> = {}): Record<string, unknown> {
+  return { schemaVersion: 1, kind, question, language: "en", delaySec, ...(proposed ? { proposed } : {}), ...extra };
 }
 
 /** A ledger nothing has reported to yet */

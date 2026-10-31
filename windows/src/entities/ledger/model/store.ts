@@ -3,6 +3,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import type { LedgerBackend } from "../api/backend";
 import { DemoLedgerBackend } from "../api/demo-backend";
+import { type AnswerKind, describeAnswer } from "../lib/countdown";
 import { projectForRepository } from "../lib/filter";
 import { summarizeImport, type ImportSummary } from "../lib/imports";
 import { inverseOperation, operationTitle } from "../lib/undo";
@@ -339,28 +340,40 @@ export class LedgerStore extends Observable {
   }
 
   answer(question: LedgerQuestion, text: string) {
-    return this.human({ action: "answer", sessionId: question.sessionId, questionId: question.id, text: text.trim() });
+    return this.human({ action: "answer", sessionId: question.sessionId, questionId: question.id, answer: text.trim() });
   }
 
   dismiss(question: LedgerQuestion) {
     return this.human({ action: "dismiss", sessionId: question.sessionId, questionId: question.id });
   }
 
-  /** Accepts an automatic reply (it leaves the Inbox) or sends the session a correction for it */
-  reviewAuto(target: { question: LedgerQuestion } | { prompt: LedgerPendingPrompt }, correction?: string) {
-    const sessionId = "question" in target ? target.question.sessionId : target.prompt.sessionId ?? "";
-    const ref = "question" in target ? { questionId: target.question.id } : { promptId: target.prompt.id };
-    return correction === undefined ? this.human({ action: "ack", sessionId, ...ref }) : this.human({ action: "message", sessionId, text: correction.trim(), ...ref });
+  /** Accepts an automatic answer (it leaves the Inbox), or first sends the session a correction for it */
+  async reviewAuto(prompt: LedgerPendingPrompt, correction?: string): Promise<boolean> {
+    this.busy++;
+    this.emit();
+    try {
+      if (correction !== undefined && prompt.sessionId) await this.backend.call("human", { action: "message", sessionId: prompt.sessionId, text: correction.trim() });
+      await this.backend.call("prompt_review", { id: prompt.id });
+      this.showToast(correction === undefined ? t("Automatic answer confirmed") : t("Correction sent to {0}", prompt.sessionId ?? ""), null);
+      return true;
+    } catch (e) {
+      this.showToast(message(e), null, true);
+      return false;
+    } finally {
+      this.busy--;
+      await this.refresh(true);
+    }
   }
 
+  /** Answers a waiting prompt; when auto-continue was faster the answer is not taken, and the toast says so */
   async answerPrompt(prompt: LedgerPendingPrompt, answer: LedgerPromptAnswer): Promise<boolean> {
     this.busy++;
     this.emit();
     try {
-      await this.backend.call("prompt_answer", { id: prompt.id, answer });
-      const titles: Record<LedgerPromptAnswer["action"], string> = { reply: "Answer sent", allow: "Allowed", deny: "Denied", release: "Left to the terminal", hold: "No automatic answer for this prompt" };
-      this.showToast(t(titles[answer.action]), null);
-      return true;
+      const { ok } = await this.backend.call("prompt_answer", { id: prompt.id, answer });
+      const titles: Record<AnswerKind, string> = { text: "Answer sent to the agent", allow: "Allowed", deny: "Denied", approve: "Allowed", release: "Left to the terminal", hold: "Auto-continue is off for this prompt", unknown: "Answer sent to the agent" };
+      this.showToast(ok ? t(titles[describeAnswer(answer).kind]) : t("The prompt was already answered."), null);
+      return ok;
     } catch (e) {
       this.showToast(message(e), null, true);
       return false;

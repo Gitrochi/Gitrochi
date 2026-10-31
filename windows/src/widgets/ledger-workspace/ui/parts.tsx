@@ -1,6 +1,6 @@
 import { Archive, CircleCheck, CircleDot, ClockAlert, GitMerge, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
-import { type LedgerSession, type LedgerVerdict, type VerdictIcon, verdictLook } from "@/entities/ledger";
+import { type AnswerKind, type LedgerSession, type LedgerVerdict, type VerdictIcon, verdictLook } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate } from "@/shared/lib";
 import { tip } from "@/shared/ui";
@@ -47,6 +47,11 @@ export function BaseLine({ session, behind }: { session: LedgerSession; behind?:
     </span>
   );
 }
+
+const answerKinds: Record<AnswerKind, string> = { text: "", allow: "Allow", deny: "Deny", approve: "Approve the plan", release: "Left to the terminal", hold: "No automatic answer", unknown: "Continue" };
+
+/** An answer in the person's words: the reply text, or what the decision was */
+export const answerText = (answer: { kind: AnswerKind; text: string }) => (answer.kind === "text" ? answer.text : answer.text ? `${t(answerKinds[answer.kind])}: ${answer.text}` : t(answerKinds[answer.kind]));
 
 /** A small titled block in a column */
 export function Section({ title, count, actions, children, className = "" }: { title: string; count?: number; actions?: ReactNode; children: ReactNode; className?: string }) {

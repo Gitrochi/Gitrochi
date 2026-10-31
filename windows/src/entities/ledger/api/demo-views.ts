@@ -122,7 +122,7 @@ export function buildGraph(w: DemoWorld, views: Map<string, LedgerSession>, proj
       const last = i === rest.length - 1 && !open;
       const kind: LedgerGraphNode["kind"] = last && (e.type === "merged" || e.type === "release") ? "merge" : last && ENDS.has(e.type) ? "end" : "event";
       const id = `e:${e.id}`;
-      nodes.push({ id, lane, ts: e.ts, color: s.color, kind, sessionId: s.id, ...(e.version ? { version: e.version } : {}), label: `${e.type}${e.summary ? `: ${e.summary}` : ""}` });
+      nodes.push({ id, lane, ts: e.ts, color: s.color, kind, type: e.type, sessionId: s.id, ...(e.version ? { version: e.version } : {}), label: `${e.type}${e.summary ? `: ${e.summary}` : ""}` });
       ids.push(id);
       if (e.type === "sync" && e.version && has.has(baselineId(e.version))) edges.push({ from: baselineId(e.version), to: id, kind: "handoff", color: s.color });
       if (e.type === "applied" && e.version && has.has(baselineId(e.version))) edges.push({ from: id, to: baselineId(e.version), kind: "handoff", color: s.color });

@@ -1,13 +1,13 @@
 import { Archive, CircleCheck, Clock, GitMerge, MessageSquareReply, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex } from "@/entities/ledger";
+import { describeAnswer, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty } from "@/shared/ui";
 import { LedgerPromptStrip } from "./LedgerPromptStrip";
 import { mergeMenu } from "./session-actions";
-import { BaseLine, onScreen, SessionId, typing, VerdictBadge, When } from "./parts";
+import { answerText, BaseLine, onScreen, SessionId, typing, VerdictBadge, When } from "./parts";
 
 const PAGE = 50;
 const HOUR = 3_600_000;
@@ -41,8 +41,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
       if (item.kind === "question") fields.current.get(item.key)?.focus();
       else setCorrecting(item.key);
     } else if (action === "confirm") {
-      if (item.kind === "autoQuestion") void store.reviewAuto({ question: item.question });
-      else if (item.kind === "autoPrompt") void store.reviewAuto({ prompt: item.prompt });
+      if (item.kind === "autoPrompt") void store.reviewAuto(item.prompt);
       else void store.human({ action: "ack", sessionId: item.session.id });
     } else if (action === "archive") void store.human({ action: "archive", sessionId: item.session!.id });
     else if (action === "snooze") void store.human({ action: "snooze", sessionId: item.session!.id, until: Date.now() + STALE_HOURS * HOUR });
@@ -145,20 +144,18 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef }: { i
       </>
     );
   }
-  if (item.kind === "autoQuestion" || item.kind === "autoPrompt") {
-    const target = item.kind === "autoQuestion" ? { question: item.question } : { prompt: item.prompt };
-    const asked = item.kind === "autoQuestion" ? item.question.text : promptSummary(item.prompt);
-    const answer = item.kind === "autoQuestion" ? item.question.answer ?? "" : autoAnswer(item.prompt);
+  if (item.kind === "autoPrompt") {
+    const prompt = item.prompt;
     return (
       <>
-        <div className="ledger-row-text quiet selectable">{asked}</div>
-        <div className="ledger-row-text selectable"><Sparkles size={12} className="muted" /> {t("Answered automatically: {0}", answer)}</div>
+        <div className="ledger-row-text quiet selectable">{promptSummary(prompt)}</div>
+        <div className="ledger-row-text selectable"><Sparkles size={12} className="muted" /> {t("Answered automatically: {0}", answerText(describeAnswer(prompt.answer)))}</div>
         {correcting ? (
-          <LedgerAnswerField autoFocus label={t("Correction")} placeholder={t("What should the session do instead?")} submitLabel="Send correction" onSubmit={(text) => store.reviewAuto(target, text)} onCancel={() => setCorrecting(false)} />
+          <LedgerAnswerField autoFocus label={t("Correction")} placeholder={t("What should the session do instead?")} submitLabel="Send correction" onSubmit={(text) => store.reviewAuto(prompt, text)} onCancel={() => setCorrecting(false)} />
         ) : (
           <div className="ledger-row-actions">
-            <Button size="small" kind="primary" disabled={busy} onClick={() => void store.reviewAuto(target)} tip={`${t("Confirm")}||C`}><CircleCheck size={13} />{t("Confirm")}</Button>
-            <Button size="small" disabled={busy} onClick={() => setCorrecting(true)} tip={`${t("Send correction")}|${t("The session reads it with its next report.")}|A`}><MessageSquareReply size={13} />{t("Send correction")}</Button>
+            <Button size="small" kind="primary" disabled={busy} onClick={() => void store.reviewAuto(prompt)} tip={`${t("Confirm")}|${t("The automatic answer was fine; it leaves the Inbox.")}|C`}><CircleCheck size={13} />{t("Confirm")}</Button>
+            {prompt.sessionId && <Button size="small" disabled={busy} onClick={() => setCorrecting(true)} tip={`${t("Send correction")}|${t("The session reads it with its next report.")}|A`}><MessageSquareReply size={13} />{t("Send correction")}</Button>}
           </div>
         )}
       </>
@@ -181,12 +178,4 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef }: { i
       </div>
     </>
   );
-}
-
-/** What auto-continue answered, in words */
-function autoAnswer(prompt: LedgerPendingPrompt): string {
-  const a = prompt.answer ?? {};
-  if (a.action === "allow") return t("Allowed");
-  if (a.action === "deny") return t("Denied");
-  return typeof a.text === "string" ? a.text : t("Continued");
 }

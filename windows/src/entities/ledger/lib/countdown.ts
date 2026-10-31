@@ -1,4 +1,4 @@
-import type { LedgerPendingPrompt, Ms } from "../model/types";
+import type { LedgerPendingPrompt, LedgerPromptAnswer, Ms } from "../model/types";
 
 export type CountdownTone = "none" | "calm" | "soon" | "urgent" | "due";
 
@@ -41,15 +41,53 @@ export function promptActions(kind: LedgerPendingPrompt["kind"]): { reply: boole
 }
 
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+const record = (value: unknown): Record<string, unknown> => (value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {});
 
-/** The one line a prompt is about: its question, the command or tool it wants to run, or its plan */
+/**
+ * The one line a prompt is about. Payloads follow auto-continue's PromptPayload (`question`, `text`, `tool:
+ * {name, summary}`, `options`, `questions`, `proposed`); older shapes (`command`, `plan`) still read.
+ */
 export function promptSummary(prompt: LedgerPendingPrompt): string {
-  const p = prompt.payload;
-  return text(p.question) || text(p.command) || (text(p.tool) && `${text(p.tool)}${text(p.input) ? ` · ${text(p.input)}` : ""}`) || text(p.plan).split("\n")[0] || text(p.message);
+  const p = prompt.payload, tool = record(p.tool);
+  return text(p.question) || text(tool.summary) || text(p.command) || (text(tool.name) || text(p.tool)) || text(p.text).split("\n")[0] || text(p.plan).split("\n")[0] || text(p.message);
 }
 
-/** The options an AskUserQuestion prompt offers, recommended first as the agent listed them */
-export function promptOptions(prompt: LedgerPendingPrompt): string[] {
-  const options = prompt.payload.options;
-  return Array.isArray(options) ? options.map(text).filter(Boolean) : [];
+export interface PromptOption {
+  label: string;
+  recommended: boolean;
+}
+
+/** The choices a prompt offers — its own options, else the first AskUserQuestion question's — recommended first */
+export function promptOptions(prompt: LedgerPendingPrompt): PromptOption[] {
+  const p = prompt.payload;
+  const questions = Array.isArray(p.questions) ? p.questions.map(record) : [];
+  const raw = Array.isArray(p.options) && p.options.length ? p.options : questions[0] && Array.isArray(questions[0].options) ? questions[0].options : [];
+  const options = raw.map((o): PromptOption => (typeof o === "string" ? { label: o.trim(), recommended: false } : { label: text(record(o).label), recommended: record(o).recommended === true })).filter((o) => o.label);
+  return [...options.filter((o) => o.recommended), ...options.filter((o) => !o.recommended)];
+}
+
+/** An AskUserQuestion prompt is answered per question ({answers: {question: label}}); everything else with text */
+export function promptChoice(prompt: LedgerPendingPrompt, label: string): LedgerPromptAnswer {
+  const questions = Array.isArray(prompt.payload.questions) ? prompt.payload.questions.map(record) : [];
+  const question = text(questions[0]?.question);
+  return prompt.kind === "ask_user_question" && question ? { answers: { [question]: label } } : { text: label };
+}
+
+export type AnswerKind = "text" | "allow" | "deny" | "approve" | "release" | "hold" | "unknown";
+
+/**
+ * An answer in words: what auto-continue proposes or sent (`{type: "reply" | "answers" | "allow" | "approve_plan"}`)
+ * or what a person sent (LedgerPromptAnswer). The kind is for the screen to translate; `text` is the agent-facing text.
+ */
+export function describeAnswer(value: unknown): { kind: AnswerKind; text: string } {
+  const a = record(value);
+  const answers = Object.values(record(a.answers)).map(text).filter(Boolean).join(", ");
+  if (a.type === "allow" || a.decision === "allow") return { kind: "allow", text: "" };
+  if (a.decision === "deny" || a.type === "deny") return { kind: "deny", text: text(a.message) };
+  if (a.type === "approve_plan") return { kind: "approve", text: "" };
+  if (a.release === true) return { kind: "release", text: "" };
+  if (a.hold === true) return { kind: "hold", text: "" };
+  if (answers) return { kind: "text", text: answers };
+  if (text(a.text)) return { kind: "text", text: text(a.text) };
+  return { kind: "unknown", text: "" };
 }

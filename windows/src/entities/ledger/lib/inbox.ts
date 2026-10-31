@@ -5,7 +5,6 @@ export type InboxGroupId = "questions" | "auto" | "tidy" | "decide";
 
 export type InboxItem =
   | { kind: "question"; key: string; session: LedgerSession; question: LedgerQuestion }
-  | { kind: "autoQuestion"; key: string; session: LedgerSession; question: LedgerQuestion }
   | { kind: "autoPrompt"; key: string; session: LedgerSession | null; prompt: LedgerPendingPrompt }
   | { kind: "session"; key: string; session: LedgerSession };
 
@@ -22,11 +21,11 @@ export type InboxAction = "open" | "answer" | "confirm" | "archive" | "snooze";
 const titles: Record<InboxGroupId, string> = { questions: "Questions", auto: "Continued automatically — review", tidy: "To clean up", decide: "To decide" };
 
 /**
- * Only what needs a person, in four groups: open questions (answered in place, newest session first), automatic replies
- * to review, finished sessions to confirm or archive, and sessions to decide (done, or stale). Streams stay out of the
- * last group. Empty groups are left out. (macOS: LedgerInbox.groups)
+ * Only what needs a person, in four groups: open questions (answered in place, newest session first), automatic
+ * answers to review, finished sessions to confirm or clean up, and sessions to decide (done, or stale). Streams stay
+ * out of the last group. Empty groups are left out. (macOS: LedgerInbox.build in Views/Ledger/LedgerPresentation.swift)
  */
-export function inboxGroups(state: Pick<LedgerState, "sessions" | "questions" | "pendingPrompts">, project: string | null): InboxGroup[] {
+export function inboxGroups(state: Pick<LedgerState, "sessions" | "questions" | "pendingPrompts" | "autoReview">, project: string | null): InboxGroup[] {
   const byId = new Map(state.sessions.map((s) => [s.id, s]));
   const live = (id: string | undefined) => {
     const s = id ? byId.get(id) : undefined;
@@ -38,15 +37,13 @@ export function inboxGroups(state: Pick<LedgerState, "sessions" | "questions" | 
     .filter((q) => q.state === "open" && live(q.sessionId))
     .sort((a, b) => (latest.get(b.sessionId) ?? 0) - (latest.get(a.sessionId) ?? 0) || a.sessionId.localeCompare(b.sessionId) || a.createdAt - b.createdAt || a.id - b.id)
     .map((q) => ({ kind: "question", key: `q:${q.id}`, session: live(q.sessionId)!, question: q }));
-  const auto: { at: number; item: InboxItem }[] = [
-    ...state.questions
-      .filter((q) => q.state === "answered" && q.answeredBy === "auto" && live(q.sessionId))
-      .map((q) => ({ at: q.answeredAt ?? q.createdAt, item: { kind: "autoQuestion" as const, key: `aq:${q.id}`, session: live(q.sessionId)!, question: q } })),
-    ...state.pendingPrompts
-      .filter((p) => p.state === "auto" && (p.sessionId ? !!live(p.sessionId) : !project))
-      .map((p) => ({ at: p.deadline || p.createdAt, item: { kind: "autoPrompt" as const, key: `ap:${p.id}`, session: live(p.sessionId) ?? null, prompt: p } })),
-  ];
-  auto.sort((a, b) => b.at - a.at || a.item.key.localeCompare(b.item.key));
+  // automatic answers to review: the core lists them in `autoReview`; v0 kept them among the pending prompts
+  const reviewed = new Map<number, LedgerPendingPrompt>();
+  for (const p of [...(state.autoReview ?? []), ...state.pendingPrompts]) if (p.state === "auto" && !reviewed.has(p.id)) reviewed.set(p.id, p);
+  const auto = [...reviewed.values()]
+    .filter((p) => (p.sessionId ? !!live(p.sessionId) : !project))
+    .map((p) => ({ at: p.deadline || p.createdAt, item: { kind: "autoPrompt" as const, key: `ap:${p.id}`, session: live(p.sessionId) ?? null, prompt: p } }))
+    .sort((a, b) => b.at - a.at || a.item.key.localeCompare(b.item.key));
   const sessions = state.sessions.filter((s) => inProject(s, project));
   const recent = (a: LedgerSession, b: LedgerSession) => b.lastAt - a.lastAt || a.id.localeCompare(b.id);
   const tidy = sessions.filter((s) => s.verdict === "confirm" || s.verdict === "expirable").sort((a, b) => (a.verdict === b.verdict ? recent(a, b) : a.verdict === "confirm" ? -1 : 1));
@@ -77,9 +74,9 @@ export function inboxKeyAction(item: InboxItem, key: string): InboxAction | null
     case "enter":
       return item.session ? "open" : null;
     case "a":
-      return item.kind === "question" || item.kind === "autoQuestion" || item.kind === "autoPrompt" ? "answer" : null;
+      return item.kind === "question" || item.kind === "autoPrompt" ? "answer" : null;
     case "c":
-      return item.kind === "autoQuestion" || item.kind === "autoPrompt" || (item.kind === "session" && item.session.verdict === "confirm") ? "confirm" : null;
+      return item.kind === "autoPrompt" || (item.kind === "session" && item.session.verdict === "confirm") ? "confirm" : null;
     case "e":
       return item.kind === "session" && item.session.verdict === "expirable" ? "archive" : null;
     case "s":

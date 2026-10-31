@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareSessions, compareVersions, computeVerdict, countdown, countReports, emptyFilter, filterSessions, GRAPH_LANE_W, GRAPH_LEFT_PAD, GRAPH_ROW_H, inboxGroups, inboxItems, inboxKeyAction,
   inverseOperation, type LedgerGraph, ledgerLayout, type LedgerVerdict, ledgerVerdicts, matchesText, pathsInBand, plotLedgerGraph, projectForRepository, promptActions, promptOptions,
-  promptSummary, serverNow, stepIndex, streamCount, summarizeImport, verdictCounts, verdictDisplayOrder, verdictLook, visibleRows, waitingPrompts,
+  describeAnswer, promptChoice, promptSummary, serverNow, stepIndex, streamCount, summarizeImport, verdictCounts, verdictDisplayOrder, verdictLook, visibleRows, waitingPrompts,
 } from "@/entities/ledger";
 import { edgePath as edgePathForTest } from "@/entities/ledger/lib/graph";
 import { destinationEnabled, isWorkspaceDestination, previewDestinations, restoredDestination, workspaceDestinations } from "@/entities/git";
@@ -68,12 +68,24 @@ describe("Ledger countdowns and prompts", () => {
     expect(promptActions("stop_question")).toEqual({ reply: true, allow: false });
     expect(promptActions("ask_user_question")).toEqual({ reply: true, allow: false });
   });
-  it("summarizes a prompt in one line and lists its options", () => {
-    expect(promptSummary(prompt({ payload: { question: " Continue? " } }))).toBe("Continue?");
-    expect(promptSummary(prompt({ kind: "permission", payload: { tool: "Bash", command: "npm test" } }))).toBe("npm test");
-    expect(promptSummary(prompt({ kind: "permission", payload: { tool: "Edit", input: "src/a.ts" } }))).toBe("Edit · src/a.ts");
-    expect(promptSummary(prompt({ kind: "exit_plan_mode", payload: { plan: "Plan title\n1. Step" } }))).toBe("Plan title");
-    expect(promptOptions(prompt({ payload: { options: ["A (recommended)", " B ", 3] } }))).toEqual(["A (recommended)", "B"]);
+  it("reads auto-continue's prompt payload: one line, options recommended first, per-question answers", () => {
+    expect(promptSummary(prompt({ payload: { question: " Continue? ", text: "Long text" } }))).toBe("Continue?");
+    expect(promptSummary(prompt({ kind: "permission", payload: { tool: { name: "Bash", summary: "npm test" } } }))).toBe("npm test");
+    expect(promptSummary(prompt({ kind: "exit_plan_mode", payload: { text: "Plan title\n1. Step" } }))).toBe("Plan title");
+    expect(promptSummary(prompt({ kind: "permission", payload: { tool: "Bash", command: "npm run lint" } }))).toBe("npm run lint");
+    const ask = prompt({ kind: "ask_user_question", payload: { question: "Which?", questions: [{ question: "Which one?", multiSelect: false, options: [{ label: "B" }, { label: "A", recommended: true }, { label: " " }] }] } });
+    expect(promptOptions(ask)).toEqual([{ label: "A", recommended: true }, { label: "B", recommended: false }]);
+    expect(promptOptions(prompt({ payload: { options: ["Yes", { label: "No", recommended: true }] } }))).toEqual([{ label: "No", recommended: true }, { label: "Yes", recommended: false }]);
+    expect(promptChoice(ask, "A")).toEqual({ answers: { "Which one?": "A" } });
+    expect(promptChoice(prompt({ payload: { options: ["Yes"] } }), "Yes")).toEqual({ text: "Yes" });
+  });
+  it("puts automatic and personal answers into words", () => {
+    expect(describeAnswer({ type: "reply", text: "Go on" })).toEqual({ kind: "text", text: "Go on" });
+    expect(describeAnswer({ type: "answers", answers: { a: "One", b: "Two" }, note: "x" })).toEqual({ kind: "text", text: "One, Two" });
+    expect(describeAnswer({ type: "allow" }).kind).toBe("allow");
+    expect(describeAnswer({ type: "approve_plan" }).kind).toBe("approve");
+    expect(describeAnswer({ decision: "deny", message: "Not now" })).toEqual({ kind: "deny", text: "Not now" });
+    expect([describeAnswer({ release: true }).kind, describeAnswer({ hold: true }).kind, describeAnswer(undefined).kind]).toEqual(["release", "hold", "unknown"]);
   });
 });
 
@@ -124,25 +136,27 @@ describe("Ledger Inbox", () => {
     question({ id: 2, sessionId: "S-new", createdAt: NOW - HOUR }),
     question({ id: 3, sessionId: "S-old", createdAt: NOW - 4 * HOUR }),
     question({ id: 4, sessionId: "S-arch", createdAt: NOW }),
-    question({ id: 5, sessionId: "S-new", state: "answered", answeredBy: "auto", answeredAt: NOW - 2 * HOUR }),
     question({ id: 6, sessionId: "S-new", state: "answered", answeredBy: "human" }),
   ];
-  const prompts = [prompt({ id: 7, sessionId: "S-old", state: "auto", deadline: NOW - HOUR }), prompt({ id: 8, state: "auto", deadline: NOW - 3 * HOUR }), prompt({ id: 9, sessionId: "S-old" })];
+  const prompts = [prompt({ id: 7, sessionId: "S-old", state: "auto", deadline: NOW - HOUR }), prompt({ id: 9, sessionId: "S-old" })];
+  // the core lists automatic answers to review apart from the waiting prompts
+  const autoReview = [prompt({ id: 8, state: "auto", deadline: NOW - 3 * HOUR }), prompt({ id: 7, sessionId: "S-old", state: "auto", deadline: NOW - HOUR }), prompt({ id: 10, sessionId: "S-arch", state: "auto", deadline: NOW })];
+  const state = { sessions, questions, pendingPrompts: prompts, autoReview };
   it("groups only what needs a person, newest question session first", () => {
-    const groups = inboxGroups({ sessions, questions, pendingPrompts: prompts }, null);
+    const groups = inboxGroups(state, null);
     expect(groups.map((g) => g.id)).toEqual(["questions", "auto", "tidy", "decide"]);
     expect(groups[0].items.map((i) => i.key)).toEqual(["q:2", "q:1", "q:3"]);
-    expect(groups[1].items.map((i) => i.key)).toEqual(["ap:7", "aq:5", "ap:8"]);
+    expect(groups[1].items.map((i) => i.key)).toEqual(["ap:7", "ap:8"]);
     expect(groups[2].items.map((i) => i.key)).toEqual(["s:S-conf", "s:S-exp"]);
     expect(groups[3].items.map((i) => i.key)).toEqual(["s:S-done", "s:S-stale"]);
-    expect(inboxItems(groups)).toHaveLength(10);
+    expect(inboxItems(groups)).toHaveLength(9);
   });
   it("filters to one project and drops empty groups", () => {
-    const groups = inboxGroups({ sessions, questions, pendingPrompts: prompts }, "harbor");
+    const groups = inboxGroups(state, "harbor");
     expect(groups.map((g) => [g.id, g.items.length])).toEqual([["decide", 1]]);
   });
   it("maps triage keys to what each item takes", () => {
-    const [questionsGroup, auto, tidy, decide] = inboxGroups({ sessions, questions, pendingPrompts: prompts }, null);
+    const [questionsGroup, auto, tidy, decide] = inboxGroups(state, null);
     const q = questionsGroup.items[0], a = auto.items[0], conf = tidy.items[0], exp = tidy.items[1], done = decide.items[0], stale = decide.items[1];
     expect(["Enter", "a", "c", "e", "s"].map((k) => inboxKeyAction(q, k))).toEqual(["open", "answer", null, null, null]);
     expect(["Enter", "A", "C", "E", "S"].map((k) => inboxKeyAction(a, k))).toEqual(["open", "answer", "confirm", null, null]);
@@ -152,7 +166,7 @@ describe("Ledger Inbox", () => {
     expect(inboxKeyAction(exp, "c")).toBeNull();
     expect(inboxKeyAction(stale, "s")).toBe("snooze");
     expect(inboxKeyAction(done, "s")).toBeNull();
-    expect(inboxKeyAction(auto.items[2], "Enter")).toBeNull();
+    expect(inboxKeyAction(auto.items[1], "Enter")).toBeNull();
   });
   it("moves with the arrow keys inside the list", () => {
     expect(stepIndex(-1, 1, 3)).toBe(0);
@@ -243,10 +257,9 @@ describe("Ledger imports, undo, layout and versions", () => {
     const done = session({ id: "S", status: "done" });
     expect(inverseOperation(done, { action: "ack", sessionId: "S" })).toEqual([{ action: "unack", sessionId: "S" }]);
     expect(inverseOperation({ ...done, ackAt: 1 }, { action: "ack", sessionId: "S" })).toBeNull();
-    expect(inverseOperation(done, { action: "ack", sessionId: "S", questionId: 3 })).toBeNull();
     expect(inverseOperation(done, { action: "archive", sessionId: "S" })).toEqual([{ action: "unarchive", sessionId: "S" }]);
-    expect(inverseOperation(done, { action: "set_status", sessionId: "S", status: "merged", version: "1.0" })).toEqual([{ action: "set_status", sessionId: "S", status: "done" }, { action: "unack", sessionId: "S" }]);
-    expect(inverseOperation({ ...done, status: "merged", mergedInto: "1.0", ackAt: 1, archivedAt: 2 }, { action: "set_status", sessionId: "S", status: "active" })).toEqual([{ action: "set_status", sessionId: "S", status: "merged", version: "1.0" }, { action: "archive", sessionId: "S" }]);
+    expect(inverseOperation(done, { action: "set_status", sessionId: "S", status: "merged", into: "1.0" })).toEqual([{ action: "set_status", sessionId: "S", status: "done" }, { action: "unack", sessionId: "S" }]);
+    expect(inverseOperation({ ...done, status: "merged", mergedInto: "1.0", ackAt: 1, archivedAt: 2 }, { action: "set_status", sessionId: "S", status: "active" })).toEqual([{ action: "set_status", sessionId: "S", status: "merged", into: "1.0" }, { action: "archive", sessionId: "S" }]);
     expect(inverseOperation({ ...done, snoozeUntil: 5 }, { action: "snooze", sessionId: "S", until: 9 })).toEqual([{ action: "snooze", sessionId: "S", until: 5 }]);
     expect(inverseOperation(done, { action: "snooze", sessionId: "S", until: 9 })).toEqual([{ action: "snooze", sessionId: "S", until: 0 }]);
     expect(inverseOperation(done, { action: "answer", sessionId: "S", questionId: 1, text: "x" })).toBeNull();

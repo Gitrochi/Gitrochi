@@ -1,6 +1,7 @@
 import { Check, CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, SquareTerminal, Timer, TimerOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { countdown, type LedgerPendingPrompt, type LedgerStore, promptActions, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
+import { countdown, describeAnswer, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
+import { answerText } from "./parts";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -56,6 +57,7 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
   const actions = promptActions(prompt.kind);
   const options = promptOptions(prompt);
   const summary = promptSummary(prompt);
+  const proposed = prompt.payload.proposed ? describeAnswer(prompt.payload.proposed) : null;
   const busy = store.busy > 0;
   const send = (answer: Parameters<LedgerStore["answerPrompt"]>[1]) => store.answerPrompt(prompt, answer);
   return (
@@ -76,26 +78,27 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
         </span>
       </div>
       {summary && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
+      {proposed && proposed.kind !== "unknown" && left.tone !== "none" && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
       {answering ? (
         <>
           {options.length > 0 && (
             <div className="ledger-options">
-              {options.map((option) => <Button key={option} size="small" disabled={busy} onClick={() => void send({ action: "reply", text: option })}>{option}</Button>)}
+              {options.map((option) => <Button key={option.label} size="small" disabled={busy} onClick={() => void send(promptChoice(prompt, option.label))} tip={option.recommended ? t("Recommended") : undefined}>{option.label}{option.recommended ? " ★" : ""}</Button>)}
             </div>
           )}
-          <LedgerAnswerField autoFocus label={t("Answer")} placeholder={t("Write an answer…")} submitLabel="Send answer" onSubmit={(text) => send({ action: "reply", text })} onCancel={() => setAnswering(false)} />
+          <LedgerAnswerField autoFocus label={t("Answer")} placeholder={t("Write an answer…")} submitLabel="Send answer" onSubmit={(text) => send({ text })} onCancel={() => setAnswering(false)} />
         </>
       ) : (
         <div className="ledger-row-actions">
           {actions.reply && <Button size="small" kind="primary" disabled={busy} onClick={() => setAnswering(true)}>{t("Answer")}</Button>}
-          {actions.allow && <Button size="small" kind="primary" disabled={busy} onClick={() => void send({ action: "allow" })}><Check size={13} />{t("Allow")}</Button>}
-          {actions.allow && <Button size="small" disabled={busy} onClick={() => void send({ action: "deny" })}><X size={13} />{t("Deny")}</Button>}
-          <Button size="small" disabled={busy} onClick={() => { onOpenTerminal(prompt); void send({ action: "release" }); }} tip={`${t("Answer in terminal")}|${t("Stops the countdown and leaves the question to the agent's terminal.")}`}>
+          {actions.allow && <Button size="small" kind="primary" disabled={busy} onClick={() => void send({ decision: "allow" })}><Check size={13} />{t("Allow")}</Button>}
+          {actions.allow && <Button size="small" disabled={busy} onClick={() => void send({ decision: "deny" })}><X size={13} />{t("Deny")}</Button>}
+          <Button size="small" disabled={busy} onClick={() => { onOpenTerminal(prompt); void send({ release: true }); }} tip={`${t("Answer in terminal")}|${t("Stops the countdown and leaves the question to the agent's terminal.")}`}>
             <SquareTerminal size={13} />
             {t("Answer in terminal")}
           </Button>
           {prompt.deadline > 0 && (
-            <Button size="small" disabled={busy} onClick={() => void send({ action: "hold" })} tip={`${t("Not automatically this time")}|${t("Stops the countdown for this prompt only; it waits for you here.")}`}>
+            <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not automatically this time")}|${t("No automatic answer for this prompt; answer it here or in the agent's terminal.")}`}>
               <TimerOff size={13} />
               {t("Not automatically this time")}
             </Button>

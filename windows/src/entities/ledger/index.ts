@@ -1,7 +1,7 @@
 // The public API of entities/ledger: other slices import only from this file
 export { type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, nativeLedgerBackend } from "./api/backend";
 export { DemoLedgerBackend, type DemoOptions } from "./api/demo-backend";
-export { countdown, type Countdown, type CountdownTone, promptActions, promptOptions, promptSummary, serverNow, waitingPrompts } from "./lib/countdown";
+export { type AnswerKind, countdown, type Countdown, type CountdownTone, describeAnswer, promptActions, promptChoice, type PromptOption, promptOptions, promptSummary, serverNow, waitingPrompts } from "./lib/countdown";
 export { emptyFilter, filterSessions, foldText, matchesText, projectForRepository, type SessionFilter, streamCount, verdictCounts } from "./lib/filter";
 export { GRAPH_LANE_W, GRAPH_LEFT_PAD, GRAPH_ROW_H, type GraphPlot, laneX, pathsInBand, type PlacedNode, type PlacedPath, plotLedgerGraph, rowY, visibleRows } from "./lib/graph";
 export { countReports, type ImportLine, type ImportOutcome, type ImportSummary, summarizeImport } from "./lib/imports";

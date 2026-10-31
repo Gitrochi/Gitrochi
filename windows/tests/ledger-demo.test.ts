@@ -60,11 +60,11 @@ const overlap: Spec = { a: "string", b: "string", paths: ["string"], kind: enumO
 const prompt: Spec = { id: "number", "sessionId?": "string", "agentId?": "string", kind: enumOf("stop_question", "ask_user_question", "exit_plan_mode", "permission"), payload: record, createdAt: "number", deadline: "number", state: enumOf("waiting", "answered", "auto", "released", "expired"), "answer?": record, "answeredBy?": enumOf("human", "auto") };
 const state: Spec = {
   schemaVersion: enumOf(1), rev: "number", now: "number", projects: [{ key: "string", name: "string", open: "number" }], baselines: [baseline], sessions: [session], questions: [question],
-  streams: [cycle], overlaps: [overlap], pendingPrompts: [prompt], attention: { questions: "number", tidy: "number", decide: "number", autoReview: "number", total: "number" }, hiddenBefore: "number",
+  streams: [cycle], overlaps: [overlap], pendingPrompts: [prompt], "autoReview?": [prompt], attention: { questions: "number", tidy: "number", decide: "number", autoReview: "number", total: "number" }, hiddenBefore: "number",
 };
 const graph: Spec = {
   lanes: "number", from: "number", to: "number",
-  nodes: [{ id: "string", lane: "number", ts: "number", color: "number", kind: enumOf("baseline", "start", "event", "merge", "release", "end"), "sessionId?": "string", "version?": "string", "label?": "string" }],
+  nodes: [{ id: "string", lane: "number", ts: "number", color: "number", kind: enumOf("baseline", "start", "event", "merge", "release", "end"), "type?": "string", "sessionId?": "string", "version?": "string", "label?": "string" }],
   edges: [{ from: "string", to: "string", kind: enumOf("trunk", "branch", "merge", "handoff"), color: "number" }],
 };
 
@@ -80,7 +80,8 @@ describe("Ledger demo backend: contract", () => {
     expectShape(await backend.call("search", { query: "cache" }), { hits: [{ kind: enumOf("session", "question", "event", "baseline"), id: "string", "sessionId?": "string", title: "string", snippet: "string" }] });
     expectShape(await backend.call("import", { text: "{\"event\":\"note\"}" }), { results: [{ index: "number", ok: "boolean", duplicate: "boolean", "error?": "string", "sessionId?": "string" }] });
     expectShape(await backend.call("human", { action: "ack", sessionId: s.sessions[0].id }), { ok: "boolean", rev: "number" });
-    expectShape(await backend.call("prompt_answer", { id: s.pendingPrompts.find((p) => p.state === "waiting")!.id, answer: { action: "hold" } }), { ok: "boolean" });
+    expectShape(await backend.call("prompt_answer", { id: s.pendingPrompts.find((p) => p.state === "waiting")!.id, answer: { hold: true } }), { ok: "boolean", "rev?": "number", "state?": "string" });
+    expectShape(await backend.call("prompt_review", { all: true }), { ok: "boolean", rev: "number", reviewed: "number" });
     expectShape(await backend.call("backup", {}), { path: "string" });
   });
 
@@ -93,8 +94,12 @@ describe("Ledger demo backend: contract", () => {
     expect(s.streams.filter((c) => c.sessionId === stream.id).map((c) => [c.version, c.state])).toEqual([["1.4.2", "active"], ["1.4.1", "applied"], ["1.4.0", "skipped"]]);
     expect(s.streams.find((c) => c.version === "1.4.2")!.releasedBy).toBe(s.sessions.find((x) => x.title === "Cache invalidation design")!.id);
     expect(s.overlaps.map((o) => o.kind).sort()).toEqual(["coupled", "same"]);
-    expect(s.pendingPrompts.filter((p) => p.state === "waiting").map((p) => p.kind).sort()).toEqual(["ask_user_question", "exit_plan_mode", "permission", "stop_question"]);
-    expect(s.pendingPrompts.every((p) => p.state !== "waiting" || p.deadline > s.now)).toBe(true);
+    expect(s.pendingPrompts.map((p) => p.kind).sort()).toEqual(["ask_user_question", "exit_plan_mode", "permission", "stop_question"]);
+    expect(s.pendingPrompts.every((p) => p.state === "waiting" && p.deadline > s.now)).toBe(true);
+    expect(s.autoReview!.map((p) => [p.state, p.answeredBy])).toEqual([["auto", "auto"], ["auto", "auto"]]);
+    expect(s.questions.every((q) => q.state === "open")).toBe(true);
+    // payloads in auto-continue's shape
+    expect(s.pendingPrompts.every((p) => p.payload.schemaVersion === 1 && typeof p.payload.question === "string")).toBe(true);
     expect(s.attention).toEqual({ questions: 3, tidy: 4, decide: 3, autoReview: 2, total: 12 });
     expect(s.sessions.filter((x) => x.links.pr).every((x) => new URL(x.links.pr!.url).hostname === "example.com")).toBe(true);
   });
@@ -115,9 +120,11 @@ describe("Ledger demo backend: contract", () => {
   it("hides quiet sessions older than the period and counts them", async () => {
     const { backend } = demo();
     const week = await backend.call("state", { range: "7d" }), all = await backend.call("state", { range: "all" });
-    expect(week.hiddenBefore).toBe(2);
+    // as the core: only archived sessions older than the period are hidden
+    expect(week.hiddenBefore).toBe(1);
     expect(all.hiddenBefore).toBe(0);
-    expect(all.sessions.length - week.sessions.length).toBe(2);
+    expect(all.sessions.length - week.sessions.length).toBe(1);
+    expect(week.sessions.some((x) => x.verdict === "shelved")).toBe(true);
     expect(week.sessions.some((x) => x.verdict === "needs_human")).toBe(true);
     const graph = await backend.call("graph", { project: "atlas", range: "7d" });
     expect(graph.from).toBeLessThanOrEqual(START - 7 * DAY);
@@ -164,15 +171,17 @@ describe("Ledger demo backend: a person's operations", () => {
     await backend.call("human", { action: "set_status", sessionId: spike.id, status: "active" });
     const active = await find(backend, spike.title);
     expect([active.verdict, active.ackAt, active.mergedInto]).toEqual(["active", undefined, undefined]);
-    await expect(backend.call("human", { action: "set_status", sessionId: spike.id, status: "bogus" as never })).rejects.toMatchObject({ code: "INVALID" });
+    await expect(backend.call("human", { action: "set_status", sessionId: spike.id, status: "bogus" as never })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await backend.call("human", { action: "set_status", sessionId: spike.id, status: "merged", into: "1.4.1" });
+    expect((await find(backend, spike.title)).mergedInto).toBe("1.4.1");
   });
 
   it("answers and dismisses questions once, and snoozes stale sessions", async () => {
     const { backend } = demo();
     const s = await backend.call("state", {});
     const [first, second] = s.questions.filter((q) => q.state === "open" && q.sessionId === s.sessions.find((x) => x.title.startsWith("Retry"))!.id);
-    await backend.call("human", { action: "answer", sessionId: first.sessionId, questionId: first.id, text: "  Three times.  " });
-    await expect(backend.call("human", { action: "answer", sessionId: first.sessionId, questionId: first.id, text: "again" })).rejects.toMatchObject({ code: "CONFLICT" });
+    await backend.call("human", { action: "answer", sessionId: first.sessionId, questionId: first.id, answer: "  Three times.  " });
+    await expect(backend.call("human", { action: "answer", sessionId: first.sessionId, questionId: first.id, answer: "again" })).rejects.toMatchObject({ code: "CONFLICT" });
     expect((await find(backend, "Retry policy for the sign-in service")).verdict).toBe("needs_human");
     await backend.call("human", { action: "dismiss", sessionId: second.sessionId, questionId: second.id });
     expect((await find(backend, "Retry policy for the sign-in service")).verdict).toBe("active");
@@ -186,17 +195,20 @@ describe("Ledger demo backend: a person's operations", () => {
     expect((await find(backend, flags.title)).verdict).toBe("stale");
   });
 
-  it("confirms or corrects automatic replies, which then leave the Inbox", async () => {
+  it("reviews automatic answers with prompt_review, one or all, and takes messages for the session", async () => {
     const { backend } = demo();
     const s = await backend.call("state", {});
-    const autoQuestion = s.questions.find((q) => q.answeredBy === "auto")!, autoPrompt = s.pendingPrompts.find((p) => p.state === "auto")!;
-    await backend.call("human", { action: "ack", sessionId: autoQuestion.sessionId, questionId: autoQuestion.id });
-    await backend.call("human", { action: "message", sessionId: autoPrompt.sessionId!, promptId: autoPrompt.id, text: "Run the full suite next time." });
+    const [first, second] = s.autoReview!;
+    await backend.call("human", { action: "message", sessionId: first.sessionId!, text: "Run the full suite next time." });
+    expect(await backend.call("prompt_review", { id: first.id })).toMatchObject({ ok: true, reviewed: 1 });
+    expect((await backend.call("state", {})).attention.autoReview).toBe(1);
+    expect(await backend.call("prompt_review", { all: true })).toMatchObject({ ok: true, reviewed: 1 });
     const after = await backend.call("state", {});
-    expect(after.attention.autoReview).toBe(0);
-    expect(after.questions.some((q) => q.id === autoQuestion.id)).toBe(false);
-    const detail = await backend.call("session", { id: autoPrompt.sessionId! });
+    expect([after.attention.autoReview, after.autoReview!.length]).toEqual([0, 0]);
+    expect(second.state).toBe("auto");
+    const detail = await backend.call("session", { id: first.sessionId! });
     expect(detail.events.at(-1)).toMatchObject({ type: "message", actor: "human", body: "Run the full suite next time." });
+    await expect(backend.call("prompt_review", { id: 999 })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
 
@@ -208,28 +220,34 @@ describe("Ledger demo backend: waiting prompts", () => {
     const { rev } = await backend.call("rev", {});
     expect(rev).toBe(before.rev + 1);
     const after = await backend.call("state", {});
-    const question = after.pendingPrompts.find((p) => p.kind === "stop_question")!;
-    expect(question).toMatchObject({ state: "auto", answeredBy: "auto" });
+    const question = after.autoReview!.find((p) => p.kind === "stop_question")!;
+    expect(question).toMatchObject({ state: "auto", answeredBy: "auto", answer: { type: "reply", text: "Yes, go ahead with the safest option." } });
     expect(after.attention.autoReview).toBe(before.attention.autoReview + 1);
     advance(10 * MIN);
     const late = await backend.call("state", {});
-    expect(late.pendingPrompts.filter((p) => p.state === "waiting")).toEqual([]);
-    expect(late.pendingPrompts.some((p) => p.kind === "exit_plan_mode")).toBe(false);
-    expect(late.pendingPrompts.find((p) => p.kind === "ask_user_question")!.answer).toEqual({ action: "reply", text: "Session keys (recommended)" });
+    expect(late.pendingPrompts).toEqual([]);
+    expect(late.autoReview!.some((p) => p.kind === "exit_plan_mode")).toBe(false);
+    const ask = late.autoReview!.find((p) => p.kind === "ask_user_question" && p.id === before.pendingPrompts.find((x) => x.kind === "ask_user_question")!.id)!;
+    expect(ask.answer).toMatchObject({ type: "answers", answers: { "Which cache keys should the migration rebuild first?": "Session keys" } });
+    const detail = await backend.call("session", { id: ask.sessionId! });
+    expect(detail.events.filter((e) => e.type === "auto_reply").at(-1)).toMatchObject({ actor: "auto", data: { promptId: ask.id, kind: "ask_user_question" } });
   });
 
-  it("takes a person's answer, a hold or a release, once", async () => {
+  it("takes a person's answer, a hold or a release while the prompt waits, and says when it no longer does", async () => {
     const { backend, advance } = demo();
-    const waiting = (await backend.call("state", {})).pendingPrompts.filter((p) => p.state === "waiting");
+    const waiting = (await backend.call("state", {})).pendingPrompts;
     const byKind = (kind: string) => waiting.find((p) => p.kind === kind)!;
-    await backend.call("prompt_answer", { id: byKind("stop_question").id, answer: { action: "reply", text: "Yes" } });
-    await backend.call("prompt_answer", { id: byKind("permission").id, answer: { action: "hold" } });
-    await backend.call("prompt_answer", { id: byKind("exit_plan_mode").id, answer: { action: "release" } });
-    await expect(backend.call("prompt_answer", { id: byKind("stop_question").id, answer: { action: "deny" } })).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await backend.call("prompt_answer", { id: byKind("stop_question").id, answer: { text: "Yes" } })).toMatchObject({ ok: true, state: "answered" });
+    expect(await backend.call("prompt_answer", { id: byKind("permission").id, answer: { hold: true } })).toMatchObject({ ok: true });
+    expect(await backend.call("prompt_answer", { id: byKind("exit_plan_mode").id, answer: { release: true } })).toMatchObject({ ok: true });
+    expect(await backend.call("prompt_answer", { id: byKind("stop_question").id, answer: { decision: "deny" } })).toMatchObject({ ok: false, state: "answered" });
+    await expect(backend.call("prompt_answer", { id: byKind("ask_user_question").id, answer: "yes" as never })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
     advance(DAY);
     const s = await backend.call("state", {});
-    expect(s.pendingPrompts.find((p) => p.id === byKind("permission").id)).toMatchObject({ state: "waiting", deadline: 0 });
-    expect(s.pendingPrompts.some((p) => p.id === byKind("exit_plan_mode").id || p.id === byKind("stop_question").id)).toBe(false);
+    expect(s.pendingPrompts.map((p) => p.kind)).toEqual([]);
+    // the unanswered question was answered automatically; the two older automatic answers still wait for review
+    expect(s.autoReview!.map((p) => p.id)).toEqual([byKind("ask_user_question").id, 5, 6]);
+    expect(backend.world.prompts.find((p) => p.id === byKind("permission").id)).toMatchObject({ state: "answered", answer: { hold: true }, answeredBy: "human" });
   });
 });
 
@@ -243,7 +261,7 @@ describe("Ledger demo backend: import and search", () => {
     expect(results.map((r) => [r.index, r.ok, r.duplicate, r.error ?? null])).toEqual([[0, true, false, null], [1, true, false, null], [2, false, false, "Not a JSON report"], [3, false, false, "Unknown event \"teleport\""], [4, false, false, "A new session needs a project"], [5, false, false, "\"sync\" needs a version"]]);
     expect((await backend.call("rev", {})).rev).toBe(rev + 1);
     const again = await backend.call("import", { text: block("{\"question\":\"Ship it?\",\"session\":\"S1101-01\",\"event\":\"question\"}") });
-    expect(again.results).toEqual([{ index: 0, ok: false, duplicate: true, sessionId: "S1101-01" }]);
+    expect(again.results).toEqual([{ index: 0, ok: true, duplicate: true, sessionId: "S1101-01" }]);
     const s = (await backend.call("state", {})).sessions.find((x) => x.id === "S1101-01")!;
     expect([s.project, s.role, s.verdict, s.openQuestions]).toEqual(["harbor", "research", "needs_human", 1]);
     const lines = await backend.call("import", { text: "{\"event\":\"note\",\"session\":\"S1101-01\"}\nnoise\n{\"event\":\"done\",\"session\":\"S1101-01\"}", project: "harbor" });
@@ -364,6 +382,23 @@ describe("Ledger store", () => {
     await store.undo();
     expect(store.session(spike.id)!.verdict).toBe("pending_merge");
     expect(store.session(spike.id)!.ackAt).toBeUndefined();
+    store.dispose();
+  });
+
+  it("reviews automatic answers and says when auto-continue answered a prompt first", async () => {
+    const { store, advance } = counted();
+    await store.refresh(true);
+    const [auto] = store.state!.autoReview!;
+    expect(await store.reviewAuto(auto, "Use the full suite.")).toBe(true);
+    expect(store.toast?.message).toBe(`Correction sent to ${auto.sessionId}`);
+    expect(store.state!.autoReview!.some((p) => p.id === auto.id)).toBe(false);
+    const waiting = store.state!.pendingPrompts.find((p) => p.kind === "stop_question")!;
+    advance(60_000);
+    expect(await store.answerPrompt(waiting, { text: "No" })).toBe(false);
+    expect(store.toast).toMatchObject({ message: "The prompt was already answered.", error: false });
+    const permission = store.state!.pendingPrompts.find((p) => p.kind === "permission")!;
+    expect(await store.answerPrompt(permission, { decision: "allow" })).toBe(true);
+    expect(store.toast?.message).toBe("Allowed");
     store.dispose();
   });
 

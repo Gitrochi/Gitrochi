@@ -7,7 +7,7 @@ const HOUR = 3_600_000;
 /** The project's baselines to merge into, newest first, the newest one marked */
 function mergeItems(store: LedgerStore, session: LedgerSession): MenuItem[] {
   const versions = (store.state?.baselines ?? []).filter((b) => b.project === session.project).map((b) => b.version).sort(compareVersions).reverse();
-  const items: MenuItem[] = versions.slice(0, 12).map((version, i) => ({ label: i === 0 ? t("{0} (newest)", version) : version, checked: version === session.mergedInto, onClick: () => void store.human({ action: "set_status", sessionId: session.id, status: "merged", version }) }));
+  const items: MenuItem[] = versions.slice(0, 12).map((version, i) => ({ label: i === 0 ? t("{0} (newest)", version) : version, checked: version === session.mergedInto, onClick: () => void store.human({ action: "set_status", sessionId: session.id, status: "merged", into: version }) }));
   return items.length ? items : [{ label: t("No baselines yet"), disabled: true }];
 }
 

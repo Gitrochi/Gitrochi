@@ -113,7 +113,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const prompts = store.state!.pendingPrompts.filter((p) => p.state === "waiting" && store.session(p.sessionId)?.project === "atlas");
     const held = prompts.find((p) => p.kind === "stop_question")!, permission = prompts.find((p) => p.kind === "permission")!;
     button(`[data-prompt="${held.id}"]`, "Not automatically this time")!.click();
-    ensure(await until(() => $(`[data-prompt="${held.id}"] .ledger-countdown`)?.textContent?.includes(t("No automatic answer"))), "Holding a prompt did not stop its countdown");
+    ensure(await until(() => !$(`[data-prompt="${held.id}"]`) && (backend.world.prompts.find((p) => p.id === held.id)?.answer as { hold?: boolean } | undefined)?.hold === true), "Not automatically this time did not stop the automatic answer");
     button(`[data-prompt="${permission.id}"]`, "Allow")!.click();
     ensure(await until(() => !$(`[data-prompt="${permission.id}"]`) && backend.world.prompts.find((p) => p.id === permission.id)?.state === "answered"), "Allowing a prompt did not answer it");
     passed.push("waiting prompts");

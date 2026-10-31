@@ -20,6 +20,10 @@ function NodeMark({ p, highlight }: { p: PlacedNode; highlight: boolean }) {
       return <g>{ring}<circle cx={x} cy={y} r={6} fill="var(--surface)" stroke={color} strokeWidth={2} /><circle cx={x} cy={y} r={3} fill={color} /></g>;
     case "end":
       return <g>{ring}<rect x={x - 4.5} y={y - 4.5} width={9} height={9} rx={1.5} fill={color} /></g>;
+    case "event":
+      // a question waits for a person: a diamond, as in the original's legend
+      if (p.node.type === "question") return <g>{ring}<path d={`M${x},${y - 6}L${x + 6},${y}L${x},${y + 6}L${x - 6},${y}Z`} fill="var(--surface)" stroke={color} strokeWidth={2} /></g>;
+      return <g>{ring}<circle cx={x} cy={y} r={5.5} fill="var(--surface)" /><circle cx={x} cy={y} r={4} fill={color} /></g>;
     case "start":
       return <g>{ring}<circle cx={x} cy={y} r={5.5} fill="var(--surface)" /><circle cx={x} cy={y} r={4} fill="var(--surface)" stroke={color} strokeWidth={2} /></g>;
     default:
@@ -146,7 +150,8 @@ function GraphLegend({ onClose }: { onClose: () => void }) {
         {mark("baseline", 0)}<span>{t("A baseline on the trunk: a tag, folder or registered version")}</span>
         {mark("release", 0)}<span>{t("A baseline a session released")}</span>
         {mark("start")}<span>{t("A session starts from its baseline")}</span>
-        {mark("event")}<span>{t("A report: artifact, question, decision, sync")}</span>
+        {mark("event")}<span>{t("A report: artifact, decision, sync")}</span>
+        <svg width={34} height={20}><NodeMark p={{ node: { id: "q", lane: 0, ts: 0, color: 3, kind: "event", type: "question" }, row: 0, x: 17, y: 10 }} highlight={false} /></svg><span>{t("A question for a person")}</span>
         {mark("end")}<span>{t("Finished without a merge: done, closed, dropped or shelved")}</span>
         {mark("merge")}<span>{t("Merged into a baseline, joining the trunk")}</span>
         {line(true)}<span>{t("Still open, or a hand-off to the implementation side")}</span>

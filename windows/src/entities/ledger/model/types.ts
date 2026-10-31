@@ -153,6 +153,8 @@ export interface LedgerState {
   streams: LedgerStreamCycle[];
   overlaps: LedgerOverlap[];
   pendingPrompts: LedgerPendingPrompt[];
+  /** Prompts auto-continue answered that nobody has reviewed yet (the core adds this list to v0) */
+  autoReview?: LedgerPendingPrompt[];
   attention: LedgerAttention;
   hiddenBefore: number;
 }
@@ -166,6 +168,8 @@ export interface LedgerGraphNode {
   sessionId?: string;
   version?: string;
   label?: string;
+  /** The event type behind the node (the core adds it to v0); a question is drawn as a diamond */
+  type?: string;
 }
 
 export interface LedgerGraphEdge {
@@ -228,9 +232,12 @@ export type LedgerHumanAction = "ack" | "unack" | "archive" | "unarchive" | "set
 /** `human` arguments besides `action` and `sessionId` */
 export interface LedgerHumanArgs {
   status?: LedgerStatus;
-  version?: string;
+  /** set_status merged: the baseline the result went into */
+  into?: string;
   questionId?: number;
-  promptId?: number;
+  /** answer: the person's answer */
+  answer?: string;
+  /** message: a note the session reads with its next report */
   text?: string;
   /** snooze: until when the session counts as active (0 clears) */
   until?: Ms;
@@ -241,12 +248,18 @@ export interface LedgerHumanRequest extends LedgerHumanArgs {
   sessionId: string;
 }
 
+/**
+ * A person's answer to a waiting prompt, stored as given for the hook handler; the same shapes as macOS
+ * (LedgerPromptReply): a typed reply, AskUserQuestion choices (question → label), allow or deny, leave it to the
+ * agent's terminal, or no automatic answer this time.
+ */
 export type LedgerPromptAnswer =
-  | { action: "reply"; text: string }
-  | { action: "allow" }
-  | { action: "deny" }
-  | { action: "release" }
-  | { action: "hold" };
+  | { text: string }
+  | { answers: Record<string, string> }
+  | { decision: "allow" }
+  | { decision: "deny"; message?: string }
+  | { release: true }
+  | { hold: true };
 
 /** Each method's arguments and answer, so `LedgerBackend.call` is typed end to end */
 export interface LedgerMethods {
@@ -258,7 +271,10 @@ export interface LedgerMethods {
   search: { args: { query: string; project?: string; limit?: number }; result: { hits: LedgerSearchHit[] } };
   import: { args: { text: string; project?: string }; result: { results: LedgerImportResult[] } };
   human: { args: LedgerHumanRequest; result: { ok: boolean; rev: number } };
-  prompt_answer: { args: { id: number; answer: LedgerPromptAnswer }; result: { ok: boolean } };
+  /** `ok` is false when the prompt no longer waits (auto-continue answered first) */
+  prompt_answer: { args: { id: number; answer: LedgerPromptAnswer }; result: { ok: boolean; rev?: number; state?: LedgerPendingPrompt["state"] } };
+  /** Marks automatic answers as seen; they leave the Inbox */
+  prompt_review: { args: { id: number } | { all: true }; result: { ok: boolean; rev: number; reviewed: number } };
   backup: { args: Record<string, never>; result: { path: string } };
 }
 export type LedgerMethod = keyof LedgerMethods;

@@ -3,14 +3,12 @@ import type { LedgerHumanRequest, LedgerSession } from "../model/types";
 /**
  * The calls that undo a person's operation on a session, from the session as it was before; null when the operation
  * has no undo (answers, dismissals and messages are delivered to the agent). The contract has no `undo` method yet, so
- * this sends the inverse operations. (macOS: LedgerUndo.inverse)
+ * this sends the inverse operations. (macOS: LedgerUndo.inverse in Views/Ledger/LedgerPresentation.swift)
  */
 export function inverseOperation(before: LedgerSession, done: LedgerHumanRequest): LedgerHumanRequest[] | null {
   const sessionId = before.id;
   switch (done.action) {
     case "ack":
-      // confirming an automatic reply marks it reviewed; there is nothing to take back
-      if (done.questionId !== undefined || done.promptId !== undefined) return null;
       return before.ackAt ? null : [{ action: "unack", sessionId }];
     case "unack":
       return before.ackAt ? [{ action: "ack", sessionId }] : null;
@@ -20,7 +18,7 @@ export function inverseOperation(before: LedgerSession, done: LedgerHumanRequest
       return before.archivedAt ? [{ action: "archive", sessionId }] : null;
     case "set_status":
     case "shelve": {
-      const status: LedgerHumanRequest[] = [{ action: "set_status", sessionId, status: before.status, ...(before.mergedInto ? { version: before.mergedInto } : {}) }];
+      const status: LedgerHumanRequest[] = [{ action: "set_status", sessionId, status: before.status, ...(before.mergedInto ? { into: before.mergedInto } : {}) }];
       // a status a person chooses counts as confirmed; going back must not keep a confirmation that was not there
       if (!before.ackAt && before.status !== "active") status.push({ action: "unack", sessionId });
       if (before.archivedAt) status.push({ action: "archive", sessionId });
@@ -37,7 +35,7 @@ export function inverseOperation(before: LedgerSession, done: LedgerHumanRequest
 export function operationTitle(request: LedgerHumanRequest): string {
   switch (request.action) {
     case "ack":
-      return request.questionId !== undefined || request.promptId !== undefined ? "Automatic reply confirmed" : "Confirmed {0}";
+      return "Confirmed {0}";
     case "unack":
       return "Confirmation of {0} taken back";
     case "archive":
@@ -55,7 +53,7 @@ export function operationTitle(request: LedgerHumanRequest): string {
     case "dismiss":
       return "Question dismissed";
     case "message":
-      return "Correction sent to {0}";
+      return "Message sent to {0}";
     default:
       return "Changed {0}";
   }

@@ -2,7 +2,7 @@ import type { LedgerHumanRequest, LedgerImportResult, LedgerMethod, LedgerMethod
 import { inboxGroups } from "../lib/inbox";
 import { compareVersions } from "../lib/version";
 import { LedgerError, type LedgerBackend } from "./backend";
-import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld } from "./demo-data";
+import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld, promptPayload } from "./demo-data";
 import { buildGraph, isLive, overlaps, rangeStart, searchWorld, sessionViews, streamCycles } from "./demo-views";
 
 export interface DemoOptions {
@@ -97,8 +97,9 @@ export class DemoLedgerBackend implements LedgerBackend {
         this.human(args as unknown as LedgerHumanRequest);
         return { ok: true, rev: w.rev };
       case "prompt_answer":
-        this.promptAnswer(Number(args.id), args.answer as LedgerPromptAnswer);
-        return { ok: true };
+        return this.promptAnswer(Number(args.id), args.answer as LedgerPromptAnswer);
+      case "prompt_review":
+        return this.promptReview(args);
       case "backup":
         return { path: "ledger/backups/ledger-demo.sqlite3" };
       default:
@@ -110,14 +111,15 @@ export class DemoLedgerBackend implements LedgerBackend {
     const w = this.world, now = this.now(), from = rangeStart(range, now);
     const views = sessionViews(w, now);
     const all = [...views.values()].filter((s) => !project || s.project === project);
-    // quiet sessions older than the period are hidden; anything that needs a person stays whatever its age
-    const quiet = (s: (typeof all)[number]) => (s.verdict === "archived" || s.verdict === "shelved") && s.lastAt < from;
-    const sessions = all.filter((s) => !quiet(s));
+    // as the core: archived sessions older than the period are hidden and counted; everything else shows
+    const sessions = all.filter((s) => s.verdict !== "archived" || s.lastAt >= from);
     const shown = new Set(sessions.map((s) => s.id));
-    const questions = w.questions.filter((q) => shown.has(q.sessionId) && (q.state === "open" || (q.answeredBy === "auto" && !q.reviewed))).map(({ reviewed: _r, ...q }) => q);
-    const pendingPrompts = w.prompts.filter((p) => (p.state === "waiting" || (p.state === "auto" && !p.reviewed)) && (p.sessionId ? shown.has(p.sessionId) : !project)).map(({ reviewed: _r, ...p }) => p);
+    const live = (p: DemoPrompt) => (p.sessionId ? shown.has(p.sessionId) : !project);
+    const questions = w.questions.filter((q) => q.state === "open" && shown.has(q.sessionId) && views.get(q.sessionId)?.verdict !== "archived").map(({ reviewed: _r, ...q }) => q);
+    const pendingPrompts = w.prompts.filter((p) => p.state === "waiting" && live(p)).map(({ reviewed: _r, ...p }) => p);
+    const autoReview = w.prompts.filter((p) => p.state === "auto" && !p.reviewed && live(p)).map(({ reviewed: _r, ...p }) => p);
     const streams = w.sessions.filter((s) => s.stream && shown.has(s.id)).flatMap((s) => streamCycles(s, w.events.filter((e) => e.sessionId === s.id).sort((a, b) => a.ts - b.ts || a.id - b.id), w.baselines));
-    const groups = inboxGroups({ sessions, questions, pendingPrompts }, null);
+    const groups = inboxGroups({ sessions, questions, pendingPrompts, autoReview }, null);
     const count = (id: string) => groups.find((g) => g.id === id)?.items.length ?? 0;
     const attention = { questions: count("questions"), tidy: count("tidy"), decide: count("decide"), autoReview: count("auto"), total: 0 };
     attention.total = attention.questions + attention.tidy + attention.decide + attention.autoReview;
@@ -127,7 +129,7 @@ export class DemoLedgerBackend implements LedgerBackend {
       baselines: w.baselines.filter((b) => !project || b.project === project),
       sessions, questions, streams,
       overlaps: overlaps(views, w.coupled).filter((o) => shown.has(o.a) && shown.has(o.b)),
-      pendingPrompts, attention, hiddenBefore: all.length - sessions.length,
+      pendingPrompts, autoReview, attention, hiddenBefore: all.length - sessions.length,
     };
   }
 
@@ -144,22 +146,14 @@ export class DemoLedgerBackend implements LedgerBackend {
 
   private human(r: LedgerHumanRequest) {
     const w = this.world, now = this.now();
-    const prompt = r.promptId !== undefined ? w.prompts.find((p) => p.id === r.promptId) : undefined;
     const question = r.questionId !== undefined ? w.questions.find((q) => q.id === r.questionId) : undefined;
-    if (r.promptId !== undefined && !prompt) throw new LedgerError("NOT_FOUND", `No prompt ${r.promptId}`);
     if (r.questionId !== undefined && !question) throw new LedgerError("NOT_FOUND", `No question ${r.questionId}`);
-    // an automatic reply to a prompt may have no session
-    const s = r.sessionId || !prompt ? this.session(r.sessionId) : undefined;
-    const id = s?.id ?? "";
-    const need = () => {
-      if (!s) throw new LedgerError("INVALID", `"${r.action}" needs a session`);
-      return s;
-    };
+    const s = this.session(r.sessionId);
+    const id = s.id;
+    const need = () => s;
     switch (r.action) {
       case "ack":
-        if (question) question.reviewed = true;
-        else if (prompt) prompt.reviewed = true;
-        else need().ackAt = now;
+        need().ackAt = now;
         break;
       case "unack":
         delete need().ackAt;
@@ -175,9 +169,9 @@ export class DemoLedgerBackend implements LedgerBackend {
         break;
       case "set_status": {
         const status = r.status as LedgerStatus, x = need();
-        if (!["active", "done", "merged", "closed", "dropped", "shelved"].includes(status)) throw new LedgerError("INVALID", `Unknown status ${String(status)}`);
+        if (!["active", "done", "merged", "closed", "dropped", "shelved"].includes(status)) throw new LedgerError("INVALID_ARGUMENT", `Unknown status ${String(status)}`);
         x.status = status;
-        if (status === "merged") x.mergedInto = r.version ?? this.head(x.project);
+        if (status === "merged") x.mergedInto = r.into ?? this.head(x.project);
         else delete x.mergedInto;
         // a status a person chooses counts as confirmed; making it active again starts over
         if (status === "merged" || status === "closed" || status === "dropped") x.ackAt = now;
@@ -189,22 +183,19 @@ export class DemoLedgerBackend implements LedgerBackend {
         if (!question || question.state !== "open") throw new LedgerError("CONFLICT", "The question is no longer open.");
         question.state = r.action === "answer" ? "answered" : "dismissed";
         question.answeredAt = now;
-        if (r.action === "answer") { question.answer = (r.text ?? "").trim(); question.answeredBy = "human"; }
+        if (r.action === "answer") { question.answer = (r.answer ?? r.text ?? "").trim(); question.answeredBy = "human"; }
         break;
       case "snooze":
         if (r.until) need().snoozeUntil = r.until;
         else delete need().snoozeUntil;
         break;
       case "message":
-        if (question) question.reviewed = true;
-        if (prompt) prompt.reviewed = true;
-        break;
       case "link":
         break;
       default:
-        throw new LedgerError("INVALID", `Unknown action ${String(r.action)}`);
+        throw new LedgerError("INVALID_ARGUMENT", `Unknown action ${String(r.action)}`);
     }
-    if (id) this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.version ? { version: r.version } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.promptId !== undefined ? { promptId: r.promptId } : {}), ...(r.until !== undefined ? { until: r.until } : {}) }, r.action === "answer" || r.action === "message" ? r.text : undefined);
+    this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.into ? { version: r.into } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.until !== undefined ? { until: r.until } : {}) }, r.action === "answer" ? r.answer ?? r.text : r.action === "message" ? r.text : undefined);
     w.rev++;
   }
 
@@ -212,16 +203,28 @@ export class DemoLedgerBackend implements LedgerBackend {
     return this.world.baselines.filter((b) => b.project === project).map((b) => b.version).sort(compareVersions).pop();
   }
 
+  /** As the core: any answer closes a waiting prompt (the hook handler reads it); a prompt that no longer waits is left alone */
   private promptAnswer(id: number, answer: LedgerPromptAnswer) {
     const w = this.world;
     const p = w.prompts.find((x) => x.id === id);
     if (!p) throw new LedgerError("NOT_FOUND", `No prompt ${id}`);
-    if (p.state !== "waiting") throw new LedgerError("CONFLICT", "The prompt was already answered.");
-    if (answer.action === "hold") p.deadline = 0;
-    else if (answer.action === "release") p.state = "released";
-    else Object.assign(p, { state: "answered", answer: { ...answer }, answeredBy: "human" });
-    if (p.sessionId) this.record(p.sessionId, "prompt_answer", { promptId: id, answer: answer.action });
+    if (!answer || typeof answer !== "object") throw new LedgerError("INVALID_ARGUMENT", "answer must be an object");
+    if (p.state !== "waiting") return { ok: false, rev: w.rev, state: p.state };
+    Object.assign(p, { state: "answered", answer: { ...answer }, answeredBy: "human", reviewed: true });
+    if (p.sessionId) this.record(p.sessionId, "prompt_answer", { promptId: id });
     w.rev++;
+    return { ok: true, rev: w.rev, state: p.state };
+  }
+
+  /** Marks automatic answers as seen: one prompt, or all of them */
+  private promptReview(args: Record<string, unknown>) {
+    const w = this.world;
+    const all = args.all === true, id = Number(args.id);
+    if (!all && !w.prompts.some((p) => p.id === id)) throw new LedgerError("NOT_FOUND", `No prompt ${String(args.id)}`);
+    let reviewed = 0;
+    for (const p of w.prompts) if (p.state === "auto" && !p.reviewed && (all || p.id === id)) { p.reviewed = true; reviewed++; }
+    if (reviewed) w.rev++;
+    return { ok: true, rev: w.rev, reviewed };
   }
 
   /** Answers waiting prompts whose deadline passed, and in a lively demo asks a new question now and then */
@@ -229,22 +232,23 @@ export class DemoLedgerBackend implements LedgerBackend {
     const w = this.world, now = this.now();
     for (const p of w.prompts) {
       if (p.state !== "waiting" || !p.deadline || p.deadline > now) continue;
-      const options = Array.isArray(p.payload.options) ? (p.payload.options as string[]) : [];
-      // plan approval is never automatic; the agent's own terminal asks the person
-      const auto = p.kind !== "exit_plan_mode";
+      // what auto-continue proposed; plan approval is off by default, so a plan goes back to the agent's terminal
+      const proposed = p.payload.proposed && typeof p.payload.proposed === "object" ? (p.payload.proposed as Record<string, unknown>) : null;
+      const auto = p.kind !== "exit_plan_mode" && !!proposed;
       if (!auto) p.state = "released";
-      else Object.assign(p, { state: "auto", answeredBy: "auto", answer: p.kind === "permission" ? { action: "allow" } : { action: "reply", text: options[0] ?? "Continue with the safest option." } });
-      if (p.sessionId && auto) w.events.push({ id: w.nextEvent++, sessionId: p.sessionId, ts: p.deadline, type: "auto_reply", actor: "auto", summary: p.kind === "permission" ? `Allowed ${String(p.payload.command ?? p.payload.tool ?? "")}` : `Answered: ${options[0] ?? "Continue with the safest option."}` });
+      else Object.assign(p, { state: "auto", answeredBy: "auto", answer: proposed });
+      if (p.sessionId && auto) w.events.push({ id: w.nextEvent++, sessionId: p.sessionId, ts: p.deadline, type: "auto_reply", actor: "auto", summary: `Answered automatically: ${String(p.payload.question ?? p.kind)}`, data: { promptId: p.id, kind: p.kind, answer: proposed } });
       w.rev++;
     }
     if (!this.lively || now < this.nextSpawn || w.prompts.some((p) => p.state === "waiting" && p.deadline)) return;
     const live = w.sessions.filter((s) => isLive(s) && !s.archivedAt);
     if (!live.length) return;
     const s = live[this.spawned % live.length];
+    const format = "Which report format do you prefer?";
     const templates: Omit<DemoPrompt, "id" | "sessionId" | "createdAt" | "deadline" | "state">[] = [
-      { kind: "stop_question", payload: { question: "Shall I keep going with the next step of the plan?" } },
-      { kind: "permission", payload: { tool: "Bash", command: "npm run build" } },
-      { kind: "ask_user_question", payload: { question: "Which report format do you prefer?", options: ["Short summary (recommended)", "Full log"] } },
+      { kind: "stop_question", payload: promptPayload("stop_question", "Shall I keep going with the next step of the plan?", 90, { type: "reply", text: "Yes, continue with the next step." }) },
+      { kind: "permission", payload: promptPayload("permission", "npm run build", 90, { type: "allow" }, { tool: { name: "Bash", summary: "npm run build" } }) },
+      { kind: "ask_user_question", payload: promptPayload("ask_user_question", format, 90, { type: "answers", answers: { [format]: "Short summary" }, note: "Chosen because it was marked as recommended." }, { questions: [{ question: format, multiSelect: false, options: [{ label: "Short summary", recommended: true }, { label: "Full log", recommended: false }] }] }) },
     ];
     w.prompts.push({ id: w.nextPrompt++, sessionId: s.id, ...(s.links.agentId ? { agentId: s.links.agentId } : {}), ...templates[this.spawned % templates.length], createdAt: now, deadline: now + 90_000, state: "waiting" });
     this.spawned++;
@@ -264,7 +268,8 @@ export class DemoLedgerBackend implements LedgerBackend {
         return { index, ok: false, duplicate: false, error: "Not a JSON report" };
       }
       const hash = canonical(report);
-      if (this.seen.has(hash)) return { index, ok: false, duplicate: true, ...(typeof report.session === "string" ? { sessionId: report.session } : {}) };
+      // as the core, a report already imported is fine: ok and marked duplicate
+      if (this.seen.has(hash)) return { index, ok: true, duplicate: true, ...(typeof report.session === "string" ? { sessionId: report.session } : {}) };
       const type = String(report.event ?? "");
       if (!EVENTS.has(type)) return { index, ok: false, duplicate: false, error: `Unknown event "${type}"` };
       const given = typeof report.session === "string" ? report.session.trim() : "";
