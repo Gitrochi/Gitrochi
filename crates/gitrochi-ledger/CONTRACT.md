@@ -4,9 +4,9 @@ The API every Ledger client relies on: the macOS app (C ABI), the Windows app (T
 
 The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt` and `legacy-import`. The tests check real results against them.
 
-## Decisions assumed
+## Decisions
 
-Until the maintainer answers the design's questions, the recommended options hold: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1. D5 legacy claude-ledger import (wave 2). D6 baselines default to git tags. D7 re-implemented; no code or text copied. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once.
+The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14](../../docs/ledger/DESIGN.md#14-decisions)), and this contract follows them: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1. D5 a read-only import of a claude-ledger database ([`import_legacy`](#importing-a-claude-ledger-database)). D6 baselines default to git tags. D7 re-implemented, with no code or text copied, and the compatibility surface kept: the MCP tool names `ledger_overview`, `ledger_report` and `ledger_session`, the report field names, the ```` ```ledger ```` block, the session ID shape and the input aliases. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once. D11–D13 stand there as working defaults.
 
 ## Storage
 
