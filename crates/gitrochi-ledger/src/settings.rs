@@ -184,6 +184,20 @@ fn check_auto_continue(object: &Map<String, Value>) -> Result<()> {
             ));
         }
     }
+    // Per repository: the policy `track` gives the sessions of agents started there.
+    match object.get("repositories") {
+        None | Some(Value::Null) => {}
+        Some(Value::Object(repositories)) => {
+            for policy in repositories.values() {
+                session_auto_continue(policy)?;
+            }
+        }
+        Some(_) => {
+            return Err(Error::invalid(
+                "autoContinue.repositories must map repository paths to {enabled, delaySec}",
+            ))
+        }
+    }
     Ok(())
 }
 
