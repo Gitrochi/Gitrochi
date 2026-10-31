@@ -1,10 +1,10 @@
 import { ClipboardPaste, DatabaseBackup, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore } from "@/entities/ledger";
+import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
-import { displayPath } from "@/shared/config";
+import { basename, displayPath, recents, samePath, samePathKey } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Checkbox, IconButton, Spinner } from "@/shared/ui";
@@ -40,8 +40,9 @@ function TextField({ value, label, placeholder, mono, onCommit }: { value: strin
 /**
  * Settings › Ledger, shown with the Ledger preview only: how long a session may stay quiet, what each kind of session
  * means to the rules, where each project's baselines come from, backups, and the ways reports get in. The values live
- * in the ledger database, so the CLI, its MCP server and the hooks follow them too. Track agents I start, auto-continue
- * and notifications come with their own work. (macOS: Views/Settings/LedgerSettings.swift)
+ * in the ledger database, so the CLI, its MCP server and the hooks follow them too (the repositories' auto-continue
+ * switches as well, which `track` gives the sessions it creates); Track agents I start is the app's own.
+ * (macOS: Views/Settings/LedgerSettings.swift)
  */
 export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
   const store = useObserve(ledger ?? ledgerStore(null));
@@ -109,6 +110,9 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       )}
       {error && <span role="alert" className="error-text">{error}</span>}
 
+      <TrackingSection />
+      <AutoContinueSection autoContinue={settings.autoContinue} disabled={busy} onSave={(autoContinue) => void save({ autoContinue })} onInvalid={setError} />
+
       <div className="form-section">
         <span className="form-section-title">{t("Stale sessions")}</span>
         <div className="form-row">
@@ -154,6 +158,65 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
+    </div>
+  );
+}
+
+/** Track agents I start, and whether they get the Ledger's tools (docs/ledger/DESIGN.md §7.11, §10.12) */
+function TrackingSection() {
+  const tracking = useObserve(ledgerTracking);
+  return (
+    <div className="form-section" data-ledger-section="tracking">
+      <span className="form-section-title">{t("Track agents I start")}</span>
+      <Checkbox checked={tracking.chosen} onChange={(on) => tracking.setChosen(on)} label={t("Track agents I start")} />
+      <span className="hint">{t("Claude Code sessions you start from Gitrochi get a session in the Ledger before they launch, and their hooks record when they work. Other agents start as before.")}</span>
+      <Checkbox checked={tracking.tools} disabled={!tracking.chosen} onChange={(on) => tracking.setTools(on)} label={t("Give them the Ledger tools")} />
+      <span className="hint">{t("Adds the Ledger's MCP server to each of them, unless Claude Code already has one called gitrochi-ledger.")}</span>
+      {tracking.lastError && <span role="alert" className="error-text">{t("The last agent started without the Ledger: {0}", tracking.lastError)}</span>}
+    </div>
+  );
+}
+
+/** The repositories a person opened, and those with a policy of their own */
+function knownRepositories(autoContinue: Settings["autoContinue"]) {
+  const list: string[] = [];
+  for (const path of [...recents(), ...Object.keys(repositoryPolicies(autoContinue))]) if (!list.some((p) => samePath(p, path))) list.push(path);
+  return list;
+}
+
+/**
+ * Auto-continue per repository: whether it answers for the person, and after how long (§9.3). Kept in the ledger's
+ * auto-continue setting, from where `track` gives each new session of that repository its policy.
+ */
+function AutoContinueSection({ autoContinue, disabled, onSave, onInvalid }: { autoContinue: Settings["autoContinue"]; disabled: boolean; onSave: (value: Settings["autoContinue"]) => void; onInvalid: (text: string) => void }) {
+  const tracking = useObserve(ledgerTracking);
+  const repositories = knownRepositories(autoContinue);
+  const defaultWait = Number(autoContinue.delaySec) || DEFAULT_WAIT_SEC;
+  const put = (path: string, policy: LedgerAutoContinue) => onSave(withRepositoryPolicy(autoContinue, path, policy));
+  return (
+    <div className="form-section" data-ledger-section="auto-continue">
+      <span className="form-section-title">{t("Auto-continue")}</span>
+      <span className="hint">{t("When an agent you started waits for you and nobody answers in time, Gitrochi answers with a careful default and keeps it for your review. Never for sessions with the decision role, and never for requests that are hard to undo.")}</span>
+      {!tracking.chosen && <span className="hint">{t("It works for agents started while Track agents I start is on.")}</span>}
+      {repositories.length ? (
+        <div className="ledger-repositories" role="table" aria-label={t("Auto-continue")}>
+          {repositories.map((path) => {
+            const policy = repositoryPolicy(autoContinue, path), enabled = policy?.enabled ?? false, wait = policy?.delaySec ?? defaultWait, name = basename(path);
+            return (
+              <div key={samePathKey(path)} className="ledger-repository" role="row" data-repository={path}>
+                <span className="ellipsis" role="cell" data-tip={displayPath(path)}>{name}</span>
+                <Checkbox checked={enabled} disabled={disabled} onChange={(on) => put(path, { enabled: on, delaySec: wait })} label={t("Continue automatically")} />
+                <div className="row" role="cell">
+                  <NumberField value={wait} min={10} max={300} label={`${t("Wait")} · ${name}`} onCommit={(delaySec) => put(path, { enabled, delaySec })} onInvalid={onInvalid} />
+                  <span>{t("seconds")}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <span className="hint">{t("Repositories you open appear here.")}</span>
+      )}
     </div>
   );
 }

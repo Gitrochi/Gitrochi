@@ -165,6 +165,8 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAns
       <>
         <div className="ledger-row-text quiet selectable">{promptSummary(prompt)}</div>
         <div className="ledger-row-text selectable"><Sparkles size={12} className="muted" /> {t("Answered automatically: {0}", answerText(describeAnswer(prompt.answer)))}</div>
+        {prompt.answer?.outcome === "unconfirmed" && <div className="hint">{t("Not seen to apply yet: you may have answered in the terminal first.")}</div>}
+        {prompt.answer?.outcome === "unknown" && <div className="hint">{t("Gitrochi could not tell whether this answer applied.")}</div>}
         {correcting ? (
           <LedgerAnswerField autoFocus label={t("Correction")} placeholder={t("What should the session do instead?")} submitLabel="Send correction" onSubmit={(text) => store.reviewAuto(prompt, text).then(saved)} onCancel={() => setCorrecting(false)} />
         ) : (

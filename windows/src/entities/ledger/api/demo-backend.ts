@@ -355,10 +355,16 @@ export class DemoLedgerBackend implements LedgerBackend {
       case "message":
       case "link":
         break;
+      case "auto_continue":
+        // as the core: the session's own policy, both fields required; null follows the default again
+        if (!r.autoContinue) delete need().autoContinue;
+        else if (typeof r.autoContinue.enabled !== "boolean" || !Number.isInteger(r.autoContinue.delaySec) || r.autoContinue.delaySec < 1 || r.autoContinue.delaySec > 3600) throw invalid("autoContinue needs enabled and delaySec (1–3600)");
+        else need().autoContinue = { enabled: r.autoContinue.enabled, delaySec: r.autoContinue.delaySec };
+        break;
       default:
         throw new LedgerError("INVALID_ARGUMENT", `Unknown action ${String(r.action)}`);
     }
-    this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.into ? { version: r.into } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.until !== undefined ? { until: r.until } : {}) }, r.action === "answer" ? r.answer ?? r.text : r.action === "message" ? r.text : undefined);
+    this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.into ? { version: r.into } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.until !== undefined ? { until: r.until } : {}), ...(r.autoContinue !== undefined ? { autoContinue: r.autoContinue } : {}) }, r.action === "answer" ? r.answer ?? r.text : r.action === "message" ? r.text : undefined);
     w.rev++;
   }
 

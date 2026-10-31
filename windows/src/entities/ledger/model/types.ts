@@ -323,7 +323,7 @@ export interface LedgerImportResult {
 }
 
 /** A person's operations; each one is an event with actor "human" */
-export type LedgerHumanAction = "ack" | "unack" | "archive" | "unarchive" | "set_status" | "answer" | "dismiss" | "snooze" | "shelve" | "link" | "message";
+export type LedgerHumanAction = "ack" | "unack" | "archive" | "unarchive" | "set_status" | "answer" | "dismiss" | "snooze" | "shelve" | "link" | "message" | "auto_continue";
 
 /** Whether auto-continue answers for the person, and after how many seconds without an answer */
 export interface LedgerAutoContinue {
@@ -343,6 +343,8 @@ export interface LedgerHumanArgs {
   text?: string;
   /** snooze: until when the session counts as active (0 clears) */
   until?: Ms;
+  /** auto_continue: the session's own policy; null follows the default again */
+  autoContinue?: LedgerAutoContinue | null;
 }
 
 export interface LedgerHumanRequest extends LedgerHumanArgs {

@@ -26,6 +26,8 @@ export function inverseOperation(before: LedgerSession, done: LedgerHumanRequest
     }
     case "snooze":
       return [{ action: "snooze", sessionId, until: before.snoozeUntil ?? 0 }];
+    case "auto_continue":
+      return [{ action: "auto_continue", sessionId, autoContinue: before.autoContinue ?? null }];
     default:
       return null;
   }
@@ -54,6 +56,8 @@ export function operationTitle(request: LedgerHumanRequest): string {
       return "Question dismissed";
     case "message":
       return "Message sent to {0}";
+    case "auto_continue":
+      return !request.autoContinue ? "{0} follows the auto-continue default" : request.autoContinue.enabled ? "Auto-continue on for {0}" : "Auto-continue off for {0}";
     default:
       return "Changed {0}";
   }
