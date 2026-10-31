@@ -10,5 +10,6 @@ export { LEDGER_NARROW, LEDGER_WIDE, type LedgerLayout, ledgerLayout } from "./l
 export { inverseOperation, operationTitle } from "./lib/undo";
 export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictIcon, type VerdictLook, verdictDisplayOrder, verdictLook } from "./lib/verdict";
 export { compareVersions } from "./lib/version";
-export { LEDGER_POLL_MS, LedgerStore, ledgerStore, type LedgerToast, type LedgerView, ledgerViews } from "./model/store";
+export { LEDGER_POLL_MS, type LedgerToast, type LedgerView, ledgerViews } from "./model/reader";
+export { LedgerStore, ledgerStore } from "./model/store";
 export { type LedgerActor, type LedgerAttention, type LedgerBaseline, type LedgerEvent, type LedgerGraph, type LedgerGraphEdge, type LedgerGraphNode, type LedgerHumanAction, type LedgerHumanArgs, type LedgerHumanRequest, type LedgerImportResult, type LedgerInfo, type LedgerMethod, type LedgerMethods, type LedgerOverlap, type LedgerPendingPrompt, type LedgerProject, type LedgerPromptAnswer, type LedgerPromptKind, type LedgerQuestion, type LedgerRange, ledgerRanges, type LedgerRole, type LedgerSearchHit, type LedgerSearchKind, type LedgerSession, type LedgerSessionDetail, type LedgerState, type LedgerStatus, ledgerStatuses, type LedgerStreamCycle, type LedgerVerdict, ledgerVerdicts, type Ms } from "./model/types";
