@@ -33,12 +33,13 @@ const command = (k: string) => press(k, env.os === "macos" ? { metaKey: true } :
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
  * waiting prompts, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
- * the narrow sheet, Streams, and the onboarding sheets. Nothing leaves the demo backend.
+ * the narrow sheet, Streams, and the onboarding sheets. Nothing leaves the demo backend: the ledger core itself is
+ * blocked.
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
   const [{ DemoLedgerBackend, LedgerStore, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
-  const original = { preview: env.ledgerPreview, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl };
+  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
   let version = 0;
@@ -60,6 +61,9 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ipc.http = async () => { unexpected.push("network"); throw new Error("Ledger fixture blocked the network"); };
     ipc.writeText = async () => { unexpected.push("write"); throw new Error("Ledger fixture blocked a write"); };
     ipc.openUrl = async () => { unexpected.push("url"); };
+    ipc.ledgerCall = async () => { unexpected.push("ledger core"); throw new Error("Ledger fixture blocked the ledger core"); };
+    // the app's own Ledger runs on the demo too
+    env.ledgerDemo = "1";
 
     // The switch: no Ledger without GITROCHI_LEDGER_PREVIEW; with it, a Tools page that opens without a repository
     env.ledgerPreview = null;
@@ -235,7 +239,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     host.remove();
     for (const s of stores) s.dispose();
     env.ledgerPreview = original.preview;
+    env.ledgerDemo = original.demo;
     settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;
-    ipc.run = original.run; ipc.http = original.http; ipc.writeText = original.write; ipc.openUrl = original.open;
+    ipc.run = original.run; ipc.http = original.http; ipc.writeText = original.write; ipc.openUrl = original.open; ipc.ledgerCall = original.core;
   }
 }

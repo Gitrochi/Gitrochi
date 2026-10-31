@@ -35,6 +35,7 @@ if (mode === "selftest") {
 } else if (mode === "app") {
   // the real window shell: the page list with the Ledger under Tools, the page title and the Ledger on the app's demo store
   env.ledgerPreview = "1";
+  env.ledgerDemo = "1";
   ipc.openUrl = async () => {};
   const app = new RepoStore();
   app.loadGlobalIdentity = async () => {};

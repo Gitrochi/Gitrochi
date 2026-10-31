@@ -45,11 +45,13 @@ const record = (value: unknown): Record<string, unknown> => (value && typeof val
 
 /**
  * The one line a prompt is about. Payloads follow auto-continue's PromptPayload (`question`, `text`, `tool:
- * {name, summary}`, `options`, `questions`, `proposed`); older shapes (`command`, `plan`) still read.
+ * {name, summary}`, `options`, `questions`, `proposed`); older shapes (`command`, `plan`) still read, and so does a
+ * payload with only `questions`, as the core's demo writes them.
  */
 export function promptSummary(prompt: LedgerPendingPrompt): string {
   const p = prompt.payload, tool = record(p.tool);
-  return text(p.question) || text(tool.summary) || text(p.command) || (text(tool.name) || text(p.tool)) || text(p.text).split("\n")[0] || text(p.plan).split("\n")[0] || text(p.message);
+  const first = Array.isArray(p.questions) ? record(p.questions[0]) : {};
+  return text(p.question) || text(tool.summary) || text(p.command) || (text(tool.name) || text(p.tool)) || text(p.text).split("\n")[0] || text(p.plan).split("\n")[0] || text(p.message) || text(first.question);
 }
 
 export interface PromptOption {

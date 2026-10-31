@@ -185,10 +185,20 @@ export interface LedgerGraphEdge {
   color: number;
 }
 
+/** An open session's lane, drawn dashed from its newest node up to the top (the core adds it to v0) */
+export interface LedgerGraphTail {
+  sessionId: string;
+  lane: number;
+  row: number;
+  color: number;
+}
+
 export interface LedgerGraph {
   lanes: number;
   nodes: LedgerGraphNode[];
   edges: LedgerGraphEdge[];
+  /** The core says which sessions are still open; without it the plot decides from each session's newest node */
+  tails?: LedgerGraphTail[];
   from: Ms;
   to: Ms;
 }
@@ -204,6 +214,8 @@ export interface LedgerInfo {
   dbPath: string;
   rev: number;
   enabled: boolean;
+  /** The core's version (the demo has none) */
+  version?: string;
 }
 
 export interface LedgerSessionDetail {

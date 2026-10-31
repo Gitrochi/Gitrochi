@@ -134,7 +134,7 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
             </button>
           )}
           <span className="spacer" />
-          {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("The Ledger shows example sessions until its core is connected.")}`}>{t("Demo data")}</span>}
+          {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
           <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
           <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
           <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />

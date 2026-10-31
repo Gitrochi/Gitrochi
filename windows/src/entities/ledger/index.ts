@@ -1,5 +1,5 @@
 // The public API of entities/ledger: other slices import only from this file
-export { type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, nativeLedgerBackend } from "./api/backend";
+export { type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, nativeCanRun, nativeLedgerBackend } from "./api/backend";
 export { DemoLedgerBackend, type DemoOptions } from "./api/demo-backend";
 export { type AnswerKind, countdown, type Countdown, type CountdownTone, describeAnswer, promptActions, promptChoice, type PromptOption, promptOptions, promptSummary, serverNow, waitingPrompts } from "./lib/countdown";
 export { emptyFilter, filterSessions, foldText, matchesText, projectForRepository, type SessionFilter, streamCount, verdictCounts } from "./lib/filter";
@@ -12,4 +12,4 @@ export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictI
 export { compareVersions } from "./lib/version";
 export { LEDGER_POLL_MS, type LedgerToast, type LedgerView, ledgerViews } from "./model/reader";
 export { LedgerStore, ledgerStore } from "./model/store";
-export { type LedgerActor, type LedgerAttention, type LedgerBaseline, type LedgerEvent, type LedgerGraph, type LedgerGraphEdge, type LedgerGraphNode, type LedgerHumanAction, type LedgerHumanArgs, type LedgerHumanRequest, type LedgerImportResult, type LedgerInfo, type LedgerMethod, type LedgerMethods, type LedgerOverlap, type LedgerPendingPrompt, type LedgerProject, type LedgerPromptAnswer, type LedgerPromptKind, type LedgerQuestion, type LedgerRange, ledgerRanges, type LedgerRole, type LedgerSearchHit, type LedgerSearchKind, type LedgerSession, type LedgerSessionDetail, type LedgerState, type LedgerStatus, ledgerStatuses, type LedgerStreamCycle, type LedgerVerdict, ledgerVerdicts, type Ms } from "./model/types";
+export { type LedgerActor, type LedgerAttention, type LedgerBaseline, type LedgerEvent, type LedgerGraph, type LedgerGraphEdge, type LedgerGraphNode, type LedgerGraphTail, type LedgerHumanAction, type LedgerHumanArgs, type LedgerHumanRequest, type LedgerImportResult, type LedgerInfo, type LedgerMethod, type LedgerMethods, type LedgerOverlap, type LedgerPendingPrompt, type LedgerProject, type LedgerPromptAnswer, type LedgerPromptKind, type LedgerQuestion, type LedgerRange, ledgerRanges, type LedgerRole, type LedgerSearchHit, type LedgerSearchKind, type LedgerSession, type LedgerSessionDetail, type LedgerState, type LedgerStatus, ledgerStatuses, type LedgerStreamCycle, type LedgerVerdict, ledgerVerdicts, type Ms } from "./model/types";

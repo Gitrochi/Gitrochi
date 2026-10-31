@@ -1,5 +1,5 @@
 import { ipc } from "@/shared/api";
-import type { LedgerMethod, LedgerMethods } from "../model/types";
+import type { LedgerHumanRequest, LedgerMethod, LedgerMethods, Ms } from "../model/types";
 
 /** An error the backend answered with `{"error": {code, message}}` (macOS: LedgerBackendError) */
 export class LedgerError extends Error {
@@ -13,13 +13,15 @@ export class LedgerError extends Error {
 }
 
 /**
- * Where Ledger calls go: the crate through the Tauri command `ledger_call` once it exists, the demo until then.
- * (macOS: Services/LedgerBackend.swift)
+ * Where Ledger calls go: the crate through the Tauri command `ledger_call`, or the demo (GITROCHI_LEDGER_DEMO, the
+ * tests and the self-test). (macOS: Services/LedgerBackend.swift)
  */
 export interface LedgerBackend {
   /** "demo" makes the page say that it shows demo data */
   readonly kind: "demo" | "native";
   call<M extends LedgerMethod>(method: M, args: LedgerMethods[M]["args"]): Promise<LedgerMethods[M]["result"]>;
+  /** Whether a person's operation can be carried out at `now`; Undo is offered only for what can be taken back */
+  canRun?(request: LedgerHumanRequest, now: Ms): boolean;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
@@ -42,7 +44,16 @@ export function ledgerFailure(error: unknown): LedgerError {
   return new LedgerError("BACKEND", text);
 }
 
-/** The crate behind the Tauri command (wave 2 adds `ledger_call` to src-tauri) */
+/**
+ * The core takes a snooze only when it ends in the future, so ending one — what Undo sends after Still active when no
+ * snooze ran before (`until` 0 or a time that has passed) — has no call there yet.
+ */
+export const nativeCanRun = (request: LedgerHumanRequest, now: Ms) => !(request.action === "snooze" && request.until !== undefined && request.until <= now);
+
+/**
+ * The crate behind the Tauri command: the contract's methods and arguments as they are, answered as the core answers
+ * them, with `{"error"}` and a failed command both as a LedgerError.
+ */
 export const nativeLedgerBackend: LedgerBackend = {
   kind: "native",
   async call<M extends LedgerMethod>(method: M, args: LedgerMethods[M]["args"]) {
@@ -52,4 +63,5 @@ export const nativeLedgerBackend: LedgerBackend = {
       throw ledgerFailure(error);
     }
   },
+  canRun: nativeCanRun,
 };
