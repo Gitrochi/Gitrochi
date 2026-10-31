@@ -83,6 +83,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 return try encode(LedgerScanResult(results: keys.map { key in
                     LedgerScanResult.Project(project: key, source: project(key).baselineSource.rawValue, found: baselines.filter { $0.project == key }.count, added: 0)
                 }))
+            case "import_legacy": throw LedgerFailure(code: "INVALID_ARGUMENT", message: "The demo cannot import a database")
             default: throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown method: \(method)")
             }
         } catch let failure as LedgerFailure {

@@ -413,6 +413,27 @@ struct LedgerWriteResult: Codable, Hashable {
 
 struct LedgerBackupResult: Codable, Hashable { var path: String }
 
+/// `import_legacy`: what a read-only import of a claude-ledger database copied, or with `dryRun` would copy
+struct LedgerLegacyImportResult: Codable, Hashable {
+    struct Counts: Codable, Hashable {
+        var projects: Int
+        var baselines: Int
+        var baselinesUpdated: Int
+        var sessions: Int
+        var events: Int
+        var questions: Int
+        var imports: Int
+    }
+    var ok: Bool
+    var dryRun: Bool
+    var rev: Int?
+    var counts: Counts
+    /// Sessions the ledger already has; they were left as they are
+    var skipped: [String]
+    /// Rows that could not be read
+    var errors: [String]
+}
+
 /// `settings`: the rules every writer reads from the ledger's database. Only the app changes them (`settings_set`).
 struct LedgerGlobalSettings: Codable, Hashable {
     /// What a session's kind means: its role, and for the implementation role its stream line and whether its

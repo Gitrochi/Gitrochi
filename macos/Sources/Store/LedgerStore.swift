@@ -452,6 +452,13 @@ final class LedgerStore {
         return results
     }
 
+    /// A claude-ledger database, read only: `dryRun` counts what would be copied, without it the sessions are copied
+    func importLegacy(path: String, dryRun: Bool) async throws -> LedgerLegacyImportResult {
+        let result = try await client.importLegacy(path: path, dryRun: dryRun)
+        if !dryRun { await reload() }
+        return result
+    }
+
     func info() async throws -> LedgerInfo { try await client.info() }
     func backup() async throws -> String { try await client.backup() }
 

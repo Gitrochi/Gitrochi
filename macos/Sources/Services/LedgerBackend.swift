@@ -63,6 +63,11 @@ struct LedgerClient: Sendable {
 
     func backup() async throws -> String { try await call("backup", as: LedgerBackupResult.self).path }
 
+    /// Reads a claude-ledger database without writing to it; `dryRun` only counts what would be copied
+    func importLegacy(path: String, dryRun: Bool) async throws -> LedgerLegacyImportResult {
+        try await call("import_legacy", ["path": .string(path), "dryRun": .bool(dryRun)])
+    }
+
     func settings() async throws -> LedgerGlobalSettings { try await call("settings") }
 
     /// Stores settings (`.null` puts one back to its default) and answers with every setting as stored

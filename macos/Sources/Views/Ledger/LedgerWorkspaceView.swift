@@ -6,7 +6,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports
+        case connect, importReports, importLegacy
         var id: String { rawValue }
     }
 
@@ -17,6 +17,8 @@ struct LedgerWorkspaceView: View {
     @ViewState private var width: CGFloat = 1200
     @ViewState private var compactInspector = false
     @ViewState private var sheet: Sheet?
+    /// The claude-ledger database chosen for Import from claude-ledger…
+    @ViewState private var legacyPath: String?
     @AppStorage("ledgerInspectorWidth") private var inspectorWidth = 360.0
 
     /// The inspector stays a column from this width; below it, it is a sheet
@@ -58,6 +60,7 @@ struct LedgerWorkspaceView: View {
             switch sheet {
             case .connect: LedgerConnectSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
+            case .importLegacy: if let legacyPath { LedgerLegacyImportSheet(ledger: ledger, path: legacyPath) }
             }
         }
         .alert("The ledger did not take the change", isPresented: Binding(get: { ledger.actionError != nil }, set: { if !$0 { ledger.actionError = nil } })) {
@@ -136,6 +139,7 @@ struct LedgerWorkspaceView: View {
             Menu {
                 Button("Connect Claude Code…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
+                Button("Import from claude-ledger…") { importLegacy() }
                 Divider()
                 Button("Back up now") { backup() }
                 Button("Refresh") { Task { await ledger.reload() } }
@@ -167,7 +171,13 @@ struct LedgerWorkspaceView: View {
         }
     }
 
-    /// No sessions yet: what the ledger is for, and the two ways to fill it
+    private func importLegacy() {
+        guard let path = LedgerLegacyImportSheet.chooseDatabase() else { return }
+        legacyPath = path
+        sheet = .importLegacy
+    }
+
+    /// No sessions yet: what the ledger is for, and the ways to fill it
     private var onboarding: some View {
         VStack(spacing: 14) {
             WorkspaceEmptyState(title: "Keep track of your agent sessions", systemImage: WorkspaceDestination.ledger.symbol,
@@ -176,6 +186,7 @@ struct LedgerWorkspaceView: View {
             HStack(spacing: 10) {
                 Button("Connect Claude Code…") { sheet = .connect }.buttonStyle(.borderedProminent)
                 Button("Paste reports…") { sheet = .importReports }
+                Button("Import from claude-ledger…") { importLegacy() }
             }
             Text("Sessions you start from Gitrochi appear here by themselves.").font(.caption).foregroundStyle(.secondary)
         }
