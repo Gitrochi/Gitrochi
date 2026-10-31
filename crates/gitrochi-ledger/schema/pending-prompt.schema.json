@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/pending-prompt.schema.json",
+  "title": "PendingPrompt",
+  "description": "A prompt an agent waits on, for auto-continue (CONTRACT.md: PendingPrompt).",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "payload",
+    "createdAt",
+    "deadline",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "agentId": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "stop_question",
+        "ask_user_question",
+        "exit_plan_mode",
+        "permission"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "createdAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "deadline": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "state": {
+      "enum": [
+        "waiting",
+        "answered",
+        "auto",
+        "released",
+        "expired"
+      ]
+    },
+    "answer": {
+      "type": "object"
+    },
+    "answeredBy": {
+      "enum": [
+        "human",
+        "auto"
+      ]
+    },
+    "answeredAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "reviewedAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    }
+  }
+}

@@ -52,3 +52,7 @@ WASM과 네이티브 CLI는 빌드 산출물이며 소스에 넣지 않는다. `
 ## Repository index
 
 `gitrochi-index` keeps a repository's commits, per-commit file changes, change relationships (files that change together) and a search cache in SQLite, with a C++ tokenizer from `native/` for Korean, Japanese and Chinese text and code identifiers. The native static library above carries it too (`gitrochi_index_call` in `gitrochi_core.h`), so the macOS app still links one Rust runtime; the Windows backend depends on the crate directly, and the `gitrochi-index` executable serves gitch, the Python tools and the Go monitor. The WebAssembly core leaves it out. Contract and checks: [gitrochi-index/README.md](gitrochi-index/README.md).
+
+## Session ledger
+
+`gitrochi-ledger` keeps the session ledger: which baseline each agent session started from, where it stands, the questions it needs a person for, and what a person confirmed, in one SQLite database per user that only this crate writes. It compiles the same verdicts, hand-offs, stream cycles and graph layout for both apps, the `gitrochi-ledger` command line and its MCP server (`gitrochi-ledger mcp`), and exposes a C ABI (`gitrochi_ledger_call`, `include/gitrochi_ledger.h`) for the macOS app; linking it into the apps comes with the Ledger screens. Like the index, it compiles to nothing for WebAssembly. Contract, schemas and checks: [gitrochi-ledger/CONTRACT.md](gitrochi-ledger/CONTRACT.md), [gitrochi-ledger/README.md](gitrochi-ledger/README.md).

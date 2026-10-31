@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/state.schema.json",
+  "title": "State",
+  "description": "Everything the apps draw for one project or all of them (CONTRACT.md: State).",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "rev",
+    "now",
+    "projects",
+    "baselines",
+    "sessions",
+    "questions",
+    "streams",
+    "overlaps",
+    "pendingPrompts",
+    "autoReview",
+    "attention",
+    "hiddenBefore"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "rev": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "now": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    },
+    "baselines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/baseline"
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "$ref": "session.schema.json"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "question.schema.json"
+      }
+    },
+    "streams": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/streamCycle"
+      }
+    },
+    "overlaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/overlap"
+      }
+    },
+    "pendingPrompts": {
+      "type": "array",
+      "items": {
+        "$ref": "pending-prompt.schema.json"
+      }
+    },
+    "autoReview": {
+      "type": "array",
+      "items": {
+        "$ref": "pending-prompt.schema.json"
+      },
+      "description": "Automatic answers nobody has reviewed"
+    },
+    "attention": {
+      "$ref": "#/$defs/attention"
+    },
+    "hiddenBefore": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "required": [
+        "key",
+        "name",
+        "open"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "open": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "head": {
+          "type": "string"
+        },
+        "lastAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": [
+        "project",
+        "version",
+        "ts",
+        "effTs",
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "ts": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "effTs": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "source": {
+          "enum": [
+            "tag",
+            "folder",
+            "registered",
+            "release",
+            "inferred"
+          ]
+        },
+        "note": {
+          "type": "string"
+        },
+        "bySession": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      }
+    },
+    "streamCycle": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "line",
+        "version",
+        "state",
+        "eventIds",
+        "firstAt",
+        "lastAt",
+        "events",
+        "questions",
+        "artifacts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "line": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "applied",
+            "active",
+            "skipped"
+          ]
+        },
+        "syncedAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "appliedAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "releasedBy": {
+          "type": "string"
+        },
+        "eventIds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "firstAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "lastAt": {
+          "type": "integer",
+          "description": "Epoch milliseconds"
+        },
+        "events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "questions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "syncSummary": {
+          "type": "string"
+        },
+        "appliedSummary": {
+          "type": "string"
+        }
+      }
+    },
+    "overlap": {
+      "type": "object",
+      "required": [
+        "a",
+        "b",
+        "paths",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "a": {
+          "type": "string"
+        },
+        "b": {
+          "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kind": {
+          "enum": [
+            "same",
+            "coupled"
+          ]
+        }
+      }
+    },
+    "attention": {
+      "type": "object",
+      "required": [
+        "questions",
+        "tidy",
+        "decide",
+        "autoReview",
+        "total"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "questions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tidy": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decide": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "autoReview": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
