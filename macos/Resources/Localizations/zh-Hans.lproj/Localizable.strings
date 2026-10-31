@@ -1507,7 +1507,6 @@
 "Inbox" = "收件箱";
 "Inferred from a report" = "根据报告推断";
 "Its questions, reports, links and what to do with it show here." = "它的问题、报告、链接和待办会显示在这里。";
-"Keep this prompt waiting for you instead of answering it automatically" = "不自动回答，让此提示继续等你";
 "Keep track of your agent sessions" = "跟踪你的代理会话";
 "Ledger" = "账本";
 "Left to the terminal" = "已交给终端";
@@ -1583,7 +1582,6 @@
 "Started" = "开始";
 "Still active" = "仍在进行";
 "Stop filtering by %@" = "取消按%@筛选";
-"Stop waiting here and let the agent ask in its own terminal" = "不再在这里等待，让代理在自己的终端中提问";
 "Streams" = "流";
 "Synced" = "已同步";
 "Tag" = "标签";
@@ -1605,7 +1603,6 @@
 "To confirm" = "待确认";
 "To decide" = "待决定";
 "Touches" = "涉及";
-"Turn off auto this time" = "这次关闭自动";
 "Unarchive" = "取消归档";
 "Unarchived" = "已取消归档";
 "Unarchived %@" = "已取消归档 %@";
@@ -1715,3 +1712,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "此 Gitrochi 缺少账本命令：%@";
 "The ledger command did not answer the MCP handshake." = "账本命令没有响应 MCP 握手。";
 "The ledger command answers with its tools: %@." = "账本命令以其工具响应：%@。";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "跟踪我启动的代理";
+"Give them the Ledger tools" = "同时提供账本工具";
+"Agents Gitrochi starts" = "Gitrochi 启动的代理";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "从 Gitrochi 启动的 Claude Code 代理会在启动前获得一个账本会话，并记录其活动：只记录时间和 ID，从不记录任何人输入的内容。账本工具让代理可以向账本汇报；如果 Claude Code 已有名为 gitrochi-ledger 的服务器，则不添加。";
+"Continue automatically when nobody answers" = "无人回答时自动继续";
+"Wait" = "等待";
+"%lld s" = "%lld 秒";
+"Open a repository to set auto-continue for it." = "打开一个仓库来设置它的自动继续。";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "当在该仓库中启动的代理向你提问而无人及时回答时，Gitrochi 会用代理推荐的选项回答，最多连续三次。它从不回答决策会话，也不允许有风险的命令，每个回答都会在收件箱中等待审核。适用于之后在“跟踪我启动的代理”开启时启动的代理。";
+"Decision sessions never continue automatically." = "决策会话从不自动继续。";
+"Use the default" = "使用默认值";
+"Follow the repository's or the default auto-continue setting again" = "重新遵循仓库或默认的自动继续设置";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "适用于“跟踪我启动的代理”开启时由 Gitrochi 启动的 Claude Code 代理。更长的等待时间会在运行中的代理下次启动时生效。";
+"Auto-continue changed for %@" = "已更改 %@ 的自动继续";
+"Stop waiting here and answer in the agent's own terminal" = "不在这里等待，改在代理自己的终端中回答";
+"Not this time" = "这次不用";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "此请求不自动回答：它会在代理的终端中等你";
+"Recommended" = "推荐";
+"The terminal shows this request too; an answer there counts as well." = "终端也会显示此请求；在那里回答同样有效。";
+"The terminal shows this question only after the wait." = "终端要等待结束后才显示此问题。";
+"Not confirmed yet: the terminal showed its own dialog too" = "尚未确认：终端也显示了自己的对话框";
+"Unknown whether it applied: the terminal showed its own dialog too" = "不确定是否生效：终端也显示了自己的对话框";
+"Approve the plan" = "批准计划";
+"Allow once" = "允许一次";
+"%@ started without the Ledger: %@" = "%@ 已在没有账本的情况下启动：%@";

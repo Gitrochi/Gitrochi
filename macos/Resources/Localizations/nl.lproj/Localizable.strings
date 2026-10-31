@@ -1317,7 +1317,6 @@
 "Inbox" = "Inbox";
 "Inferred from a report" = "Afgeleid uit een melding";
 "Its questions, reports, links and what to do with it show here." = "Hier verschijnen vragen, meldingen, koppelingen en wat ermee moet.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Deze prompt op jou laten wachten in plaats van automatisch te antwoorden";
 "Keep track of your agent sessions" = "Houd je agentsessies bij";
 "Ledger" = "Logboek";
 "Left to the terminal" = "Aan de terminal overgelaten";
@@ -1394,7 +1393,6 @@
 "Started" = "Gestart";
 "Still active" = "Nog actief";
 "Stop filtering by %@" = "Niet meer filteren op ‘%@’";
-"Stop waiting here and let the agent ask in its own terminal" = "Hier niet meer wachten en de agent in zijn eigen terminal laten vragen";
 "Streams" = "Stromen";
 "Synced" = "Overgenomen";
 "Tag" = "Tag";
@@ -1416,7 +1414,6 @@
 "To confirm" = "Te bevestigen";
 "To decide" = "Te beslissen";
 "Touches" = "Raakt";
-"Turn off auto this time" = "Deze keer niet automatisch";
 "Unarchive" = "Uit archief halen";
 "Unarchived" = "Uit archief gehaald";
 "Unarchived %@" = "%@ uit archief gehaald";
@@ -1526,3 +1523,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "De logboekopdracht ontbreekt in deze kopie van Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "De logboekopdracht reageerde niet op de MCP-handshake.";
 "The ledger command answers with its tools: %@." = "De logboekopdracht antwoordt met zijn hulpmiddelen: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Agents volgen die ik start";
+"Give them the Ledger tools" = "Geef ze de Logboek-tools";
+"Agents Gitrochi starts" = "Agents die Gitrochi start";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Claude Code-agents die vanuit Gitrochi starten krijgen vóór de start een Logboek-sessie, en hun activiteit wordt vastgelegd: tijden en ID's, nooit wat iemand typt. Met de Logboek-tools kunnen ze erin rapporteren; ze worden weggelaten als Claude Code al een server met de naam gitrochi-ledger heeft.";
+"Continue automatically when nobody answers" = "Automatisch doorgaan als niemand antwoordt";
+"Wait" = "Wachttijd";
+"%lld s" = "%lld s";
+"Open a repository to set auto-continue for it." = "Open een repository om automatisch doorgaan ervoor in te stellen.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Als een agent die in de repository is gestart iets vraagt en niemand op tijd antwoordt, antwoordt Gitrochi met de optie die de agent aanraadt, hoogstens drie keer achter elkaar. Het antwoordt nooit aan beslissingssessies en staat geen riskante opdrachten toe, en elk antwoord wacht in de inbox op controle. Het geldt voor agents die daarna starten, met Agents volgen die ik start aan.";
+"Decision sessions never continue automatically." = "Beslissingssessies gaan nooit automatisch door.";
+"Use the default" = "Standaard gebruiken";
+"Follow the repository's or the default auto-continue setting again" = "Weer de instelling van de repository of het standaard automatisch doorgaan volgen";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Werkt voor Claude Code-agents die Gitrochi start terwijl Agents volgen die ik start aan staat. Een langere wachttijd bereikt een lopende agent pas bij de volgende start.";
+"Auto-continue changed for %@" = "Automatisch doorgaan gewijzigd voor %@";
+"Stop waiting here and answer in the agent's own terminal" = "Hier niet meer wachten en in de eigen terminal van de agent antwoorden";
+"Not this time" = "Deze keer niet";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Geen automatisch antwoord voor dit verzoek: het wacht op jou in de terminal van de agent";
+"Recommended" = "Aanbevolen";
+"The terminal shows this request too; an answer there counts as well." = "De terminal toont dit verzoek ook; een antwoord daar telt ook.";
+"The terminal shows this question only after the wait." = "De terminal toont deze vraag pas na de wachttijd.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Nog niet bevestigd: de terminal toonde ook een eigen dialoog";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Onbekend of het is toegepast: de terminal toonde ook een eigen dialoog";
+"Approve the plan" = "Plan goedkeuren";
+"Allow once" = "Eén keer toestaan";
+"%@ started without the Ledger: %@" = "%@ is gestart zonder het Logboek: %@";

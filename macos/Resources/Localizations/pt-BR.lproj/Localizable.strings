@@ -1337,7 +1337,6 @@
 "Inbox" = "Caixa de entrada";
 "Inferred from a report" = "Deduzida de um relato";
 "Its questions, reports, links and what to do with it show here." = "Perguntas, relatos, vínculos e o que fazer com ela aparecem aqui.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Deixar este prompt esperando por você em vez de respondê-lo automaticamente";
 "Keep track of your agent sessions" = "Acompanhe suas sessões de agentes";
 "Ledger" = "Registro";
 "Left to the terminal" = "Deixado para o terminal";
@@ -1414,7 +1413,6 @@
 "Started" = "Iniciada";
 "Still active" = "Ainda ativa";
 "Stop filtering by %@" = "Parar de filtrar por “%@”";
-"Stop waiting here and let the agent ask in its own terminal" = "Parar de esperar aqui e deixar o agente perguntar no próprio terminal";
 "Streams" = "Fluxos";
 "Synced" = "Sincronizada";
 "Tag" = "Tag";
@@ -1436,7 +1434,6 @@
 "To confirm" = "A confirmar";
 "To decide" = "A decidir";
 "Touches" = "Afeta";
-"Turn off auto this time" = "Sem automático desta vez";
 "Unarchive" = "Desarquivar";
 "Unarchived" = "Desarquivada";
 "Unarchived %@" = "%@ desarquivada";
@@ -1546,3 +1543,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "O comando do registro está faltando nesta cópia do Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "O comando do registro não respondeu ao handshake do MCP.";
 "The ledger command answers with its tools: %@." = "O comando do registro responde com suas ferramentas: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Acompanhar os agentes que eu inicio";
+"Give them the Ledger tools" = "Dar a eles as ferramentas do Registro";
+"Agents Gitrochi starts" = "Agentes que o Gitrochi inicia";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Agentes do Claude Code iniciados pelo Gitrochi recebem uma sessão do Registro antes de começar, e a atividade deles é registrada: horários e IDs, nunca o que alguém digita. As ferramentas do Registro permitem que eles informem nele; elas ficam de fora quando o Claude Code já tem um servidor chamado gitrochi-ledger.";
+"Continue automatically when nobody answers" = "Continuar sozinho quando ninguém responde";
+"Wait" = "Espera";
+"%lld s" = "%lld s";
+"Open a repository to set auto-continue for it." = "Abra um repositório para configurar a continuação automática dele.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Quando um agente iniciado no repositório pergunta algo e ninguém responde a tempo, o Gitrochi responde com a opção que o agente recomendou, no máximo três vezes seguidas. Ele nunca responde a sessões de decisão nem permite comandos arriscados, e cada resposta aguarda revisão na caixa de entrada. Vale para agentes iniciados depois, com Acompanhar os agentes que eu inicio ligado.";
+"Decision sessions never continue automatically." = "Sessões de decisão nunca continuam sozinhas.";
+"Use the default" = "Usar o padrão";
+"Follow the repository's or the default auto-continue setting again" = "Voltar a seguir a configuração do repositório ou a continuação automática padrão";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Funciona para agentes do Claude Code que o Gitrochi inicia enquanto Acompanhar os agentes que eu inicio estiver ligado. Uma espera maior chega a um agente em execução quando ele iniciar de novo.";
+"Auto-continue changed for %@" = "Continuação automática alterada para %@";
+"Stop waiting here and answer in the agent's own terminal" = "Parar de esperar aqui e responder no terminal do próprio agente";
+"Not this time" = "Desta vez não";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Sem resposta automática para esta solicitação: ela aguarda você no terminal do agente";
+"Recommended" = "Recomendada";
+"The terminal shows this request too; an answer there counts as well." = "O terminal também mostra esta solicitação; responder lá também vale.";
+"The terminal shows this question only after the wait." = "O terminal só mostra esta pergunta depois da espera.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Ainda não confirmada: o terminal também mostrou a própria caixa de diálogo";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Não se sabe se foi aplicada: o terminal também mostrou a própria caixa de diálogo";
+"Approve the plan" = "Aprovar o plano";
+"Allow once" = "Permitir uma vez";
+"%@ started without the Ledger: %@" = "%@ foi iniciado sem o Registro: %@";

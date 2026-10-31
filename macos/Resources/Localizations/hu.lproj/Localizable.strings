@@ -1356,7 +1356,6 @@
 "Inbox" = "Beérkezett";
 "Inferred from a report" = "Jelentésből kikövetkeztetve";
 "Its questions, reports, links and what to do with it show here." = "Itt jelennek meg a kérdések, jelentések, hivatkozások és a teendők.";
-"Keep this prompt waiting for you instead of answering it automatically" = "A kérés várjon önre automatikus válasz helyett";
 "Keep track of your agent sessions" = "Kövesse ügynökei munkameneteit";
 "Ledger" = "Napló";
 "Left to the terminal" = "A terminálra bízva";
@@ -1433,7 +1432,6 @@
 "Started" = "Elindítva";
 "Still active" = "Még aktív";
 "Stop filtering by %@" = "Szűrés megszüntetése: %@";
-"Stop waiting here and let the agent ask in its own terminal" = "Ne várjon itt, az ügynök kérdezzen a saját terminálján";
 "Streams" = "Folyamok";
 "Synced" = "Átvéve";
 "Tag" = "Címke";
@@ -1455,7 +1453,6 @@
 "To confirm" = "Megerősítendő";
 "To decide" = "Eldöntendő";
 "Touches" = "Érinti";
-"Turn off auto this time" = "Most ne automatikusan";
 "Unarchive" = "Archiválás visszavonása";
 "Unarchived" = "Archiválás visszavonva";
 "Unarchived %@" = "%@ archiválása visszavonva";
@@ -1565,3 +1562,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "A napló parancsa hiányzik a Gitrochi ezen példányából: %@";
 "The ledger command did not answer the MCP handshake." = "A napló parancsa nem válaszolt az MCP-kézfogásra.";
 "The ledger command answers with its tools: %@." = "A napló parancsa az eszközeivel válaszol: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Az általam indított ügynökök követése";
+"Give them the Ledger tools" = "A Napló eszközeinek átadása nekik";
+"Agents Gitrochi starts" = "A Gitrochi által indított ügynökök";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "A Gitrochiból indított Claude Code-ügynökök indulás előtt munkamenetet kapnak a Naplóban, és a tevékenységük rögzítésre kerül: időpontok és azonosítók, soha nem az, amit valaki begépel. A Napló eszközeivel jelenthetnek bele; ezek kimaradnak, ha a Claude Code-nak már van gitrochi-ledger nevű szervere.";
+"Continue automatically when nobody answers" = "Automatikus folytatás, ha senki sem válaszol";
+"Wait" = "Várakozás";
+"%lld s" = "%lld mp";
+"Open a repository to set auto-continue for it." = "Nyisson meg egy tárolót az automatikus folytatás beállításához.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Ha a tárolóban indított ügynök kérdez valamit, és senki sem válaszol időben, a Gitrochi az ügynök által ajánlott lehetőséggel válaszol, legfeljebb háromszor egymás után. Döntési munkamenetekre soha nem válaszol, kockázatos parancsokat nem enged, és minden válasz ellenőrzésre vár a Beérkezett elemek között. A később indított ügynökökre vonatkozik, ha Az általam indított ügynökök követése be van kapcsolva.";
+"Decision sessions never continue automatically." = "A döntési munkamenetek soha nem folytatódnak automatikusan.";
+"Use the default" = "Az alapértelmezett használata";
+"Follow the repository's or the default auto-continue setting again" = "Ismét a tároló vagy az alapértelmezett automatikus folytatás beállítását követi";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "A Gitrochi által indított Claude Code-ügynököknél működik, ha Az általam indított ügynökök követése be van kapcsolva. A hosszabb várakozás a futó ügynököt a következő indításkor éri el.";
+"Auto-continue changed for %@" = "Az automatikus folytatás módosult: %@";
+"Stop waiting here and answer in the agent's own terminal" = "Itt ne várjon tovább, válaszoljon az ügynök saját terminálján";
+"Not this time" = "Most nem";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Nincs automatikus válasz erre a kérésre: az ügynök terminálján várja Önt";
+"Recommended" = "Ajánlott";
+"The terminal shows this request too; an answer there counts as well." = "A terminál is megjeleníti ezt a kérést; az ott adott válasz is számít.";
+"The terminal shows this question only after the wait." = "A terminál csak a várakozás után jeleníti meg ezt a kérdést.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Még nincs megerősítve: a terminál saját párbeszédablakot is mutatott";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Nem tudni, érvényesült-e: a terminál saját párbeszédablakot is mutatott";
+"Approve the plan" = "Terv jóváhagyása";
+"Allow once" = "Engedélyezés egyszer";
+"%@ started without the Ledger: %@" = "A(z) %@ a Napló nélkül indult: %@";

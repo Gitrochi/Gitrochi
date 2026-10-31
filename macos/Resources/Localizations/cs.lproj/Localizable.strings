@@ -1353,7 +1353,6 @@
 "Inbox" = "Schránka";
 "Inferred from a report" = "Odvozeno z hlášení";
 "Its questions, reports, links and what to do with it show here." = "Zde se zobrazí otázky, hlášení, odkazy a co s ní dělat.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Nechat tuto výzvu čekat na vás místo automatické odpovědi";
 "Keep track of your agent sessions" = "Mějte přehled o relacích agentů";
 "Ledger" = "Evidence";
 "Left to the terminal" = "Ponecháno terminálu";
@@ -1430,7 +1429,6 @@
 "Started" = "Zahájeno";
 "Still active" = "Stále aktivní";
 "Stop filtering by %@" = "Přestat filtrovat podle „%@“";
-"Stop waiting here and let the agent ask in its own terminal" = "Přestat čekat zde a nechat agenta zeptat se ve vlastním terminálu";
 "Streams" = "Proudy";
 "Synced" = "Převzato";
 "Tag" = "Značka";
@@ -1452,7 +1450,6 @@
 "To confirm" = "K potvrzení";
 "To decide" = "K rozhodnutí";
 "Touches" = "Týká se";
-"Turn off auto this time" = "Tentokrát bez automatiky";
 "Unarchive" = "Zrušit archivaci";
 "Unarchived" = "Archivace zrušena";
 "Unarchived %@" = "Archivace %@ zrušena";
@@ -1562,3 +1559,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "V této kopii Gitrochi chybí příkaz evidence: %@";
 "The ledger command did not answer the MCP handshake." = "Příkaz evidence neodpověděl na úvodní výměnu MCP.";
 "The ledger command answers with its tools: %@." = "Příkaz evidence odpovídá svými nástroji: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Sledovat agenty, které spustím";
+"Give them the Ledger tools" = "Dát jim nástroje Evidence";
+"Agents Gitrochi starts" = "Agenti spuštění z Gitrochi";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Agenti Claude Code spuštění z Gitrochi dostanou před startem relaci v Evidenci a jejich činnost se zaznamenává: časy a ID, nikdy to, co kdo napíše. Nástroje Evidence jim umožní do ní hlásit; vynechají se, když Claude Code už má server s názvem gitrochi-ledger.";
+"Continue automatically when nobody answers" = "Pokračovat automaticky, když nikdo neodpoví";
+"Wait" = "Čekat";
+"%lld s" = "%lld s";
+"Open a repository to set auto-continue for it." = "Otevřete repozitář a nastavte pro něj automatické pokračování.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Když se agent spuštěný v repozitáři na něco zeptá a nikdo včas neodpoví, Gitrochi odpoví možností, kterou agent doporučil, nejvýše třikrát za sebou. Nikdy neodpovídá rozhodovacím relacím ani nepovolí riskantní příkazy a každá odpověď čeká na kontrolu ve Schránce. Platí pro agenty spuštěné později, se zapnutým Sledovat agenty, které spustím.";
+"Decision sessions never continue automatically." = "Rozhodovací relace nikdy nepokračují automaticky.";
+"Use the default" = "Použít výchozí";
+"Follow the repository's or the default auto-continue setting again" = "Znovu se řídit nastavením repozitáře nebo výchozím automatickým pokračováním";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím. Delší čekání se u běžícího agenta projeví po jeho dalším spuštění.";
+"Auto-continue changed for %@" = "Automatické pokračování změněno pro %@";
+"Stop waiting here and answer in the agent's own terminal" = "Přestat zde čekat a odpovědět ve vlastním terminálu agenta";
+"Not this time" = "Tentokrát ne";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Žádná automatická odpověď pro tento dotaz: počká na vás v terminálu agenta";
+"Recommended" = "Doporučeno";
+"The terminal shows this request too; an answer there counts as well." = "Terminál zobrazuje tento požadavek také; odpověď tam platí stejně.";
+"The terminal shows this question only after the wait." = "Terminál zobrazí tuto otázku až po uplynutí čekání.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Zatím nepotvrzeno: terminál zobrazil i vlastní dialog";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Není jasné, zda se uplatnilo: terminál zobrazil i vlastní dialog";
+"Approve the plan" = "Schválit plán";
+"Allow once" = "Povolit jednou";
+"%@ started without the Ledger: %@" = "%@ se spustil bez Evidence: %@";

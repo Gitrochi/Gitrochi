@@ -1331,7 +1331,6 @@
 "Inbox" = "Hộp thư đến";
 "Inferred from a report" = "Suy ra từ một báo cáo";
 "Its questions, reports, links and what to do with it show here." = "Câu hỏi, báo cáo, liên kết và việc cần làm sẽ hiện ở đây.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Giữ lời nhắc này chờ bạn thay vì tự động trả lời";
 "Keep track of your agent sessions" = "Theo dõi các phiên tác tử của bạn";
 "Ledger" = "Sổ theo dõi";
 "Left to the terminal" = "Đã để terminal xử lý";
@@ -1408,7 +1407,6 @@
 "Started" = "Đã bắt đầu";
 "Still active" = "Vẫn đang chạy";
 "Stop filtering by %@" = "Bỏ lọc theo “%@”";
-"Stop waiting here and let the agent ask in its own terminal" = "Ngừng chờ ở đây và để tác tử hỏi trong terminal của nó";
 "Streams" = "Luồng";
 "Synced" = "Đã đồng bộ";
 "Tag" = "Thẻ";
@@ -1430,7 +1428,6 @@
 "To confirm" = "Cần xác nhận";
 "To decide" = "Cần quyết định";
 "Touches" = "Ảnh hưởng";
-"Turn off auto this time" = "Lần này tắt tự động";
 "Unarchive" = "Bỏ lưu trữ";
 "Unarchived" = "Đã bỏ lưu trữ";
 "Unarchived %@" = "Đã bỏ lưu trữ %@";
@@ -1540,3 +1537,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Bản Gitrochi này thiếu lệnh của sổ theo dõi: %@";
 "The ledger command did not answer the MCP handshake." = "Lệnh của sổ theo dõi không phản hồi bước bắt tay MCP.";
 "The ledger command answers with its tools: %@." = "Lệnh của sổ theo dõi phản hồi với các công cụ: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Theo dõi agent tôi khởi động";
+"Give them the Ledger tools" = "Cho chúng công cụ Sổ theo dõi";
+"Agents Gitrochi starts" = "Agent do Gitrochi khởi động";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Agent Claude Code khởi động từ Gitrochi được tạo một phiên trong Sổ theo dõi trước khi chạy, và hoạt động của chúng được ghi lại: thời gian và ID, không bao giờ ghi nội dung ai đó gõ. Công cụ Sổ theo dõi cho phép chúng báo cáo vào đó; công cụ này được bỏ qua khi Claude Code đã có máy chủ tên gitrochi-ledger.";
+"Continue automatically when nobody answers" = "Tự động tiếp tục khi không ai trả lời";
+"Wait" = "Chờ";
+"%lld s" = "%lld giây";
+"Open a repository to set auto-continue for it." = "Mở một kho lưu trữ để cài đặt tự động tiếp tục cho nó.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Khi một agent khởi động trong kho lưu trữ hỏi bạn điều gì đó và không ai trả lời kịp, Gitrochi trả lời bằng lựa chọn mà agent đề xuất, tối đa ba lần liên tiếp. Gitrochi không bao giờ trả lời các phiên quyết định hay cho phép lệnh rủi ro, và mỗi câu trả lời chờ được xem lại trong Hộp thư đến. Áp dụng cho các agent khởi động sau đó, khi Theo dõi agent tôi khởi động đang bật.";
+"Decision sessions never continue automatically." = "Phiên quyết định không bao giờ tự động tiếp tục.";
+"Use the default" = "Dùng mặc định";
+"Follow the repository's or the default auto-continue setting again" = "Theo lại cài đặt của kho lưu trữ hoặc tự động tiếp tục mặc định";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Dùng cho các agent Claude Code do Gitrochi khởi động khi Theo dõi agent tôi khởi động đang bật. Thời gian chờ dài hơn áp dụng cho agent đang chạy khi nó khởi động lại.";
+"Auto-continue changed for %@" = "Đã đổi tự động tiếp tục cho %@";
+"Stop waiting here and answer in the agent's own terminal" = "Thôi chờ ở đây và trả lời trong terminal của agent";
+"Not this time" = "Lần này thì không";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Không tự động trả lời yêu cầu này: nó chờ bạn trong terminal của agent";
+"Recommended" = "Đề xuất";
+"The terminal shows this request too; an answer there counts as well." = "Terminal cũng hiển thị yêu cầu này; trả lời ở đó cũng được.";
+"The terminal shows this question only after the wait." = "Terminal chỉ hiển thị câu hỏi này sau thời gian chờ.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Chưa xác nhận: terminal cũng hiện hộp thoại riêng";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Không rõ đã áp dụng chưa: terminal cũng hiện hộp thoại riêng";
+"Approve the plan" = "Duyệt kế hoạch";
+"Allow once" = "Cho phép một lần";
+"%@ started without the Ledger: %@" = "%@ đã khởi động mà không có Sổ theo dõi: %@";

@@ -1373,7 +1373,6 @@
 "Inbox" = "Вхідні";
 "Inferred from a report" = "Виведено зі звіту";
 "Its questions, reports, links and what to do with it show here." = "Тут з’являться запитання, звіти, зв’язки й що з нею робити.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Залишити запит чекати на вас замість автоматичної відповіді";
 "Keep track of your agent sessions" = "Стежте за сесіями агентів";
 "Ledger" = "Журнал";
 "Left to the terminal" = "Передано терміналу";
@@ -1450,7 +1449,6 @@
 "Started" = "Розпочато";
 "Still active" = "Ще активна";
 "Stop filtering by %@" = "Зняти фільтр «%@»";
-"Stop waiting here and let the agent ask in its own terminal" = "Більше не чекати тут і дати агенту запитати у власному терміналі";
 "Streams" = "Потоки";
 "Synced" = "Підхоплено";
 "Tag" = "Тег";
@@ -1472,7 +1470,6 @@
 "To confirm" = "Підтвердити";
 "To decide" = "Вирішити";
 "Touches" = "Зачіпає";
-"Turn off auto this time" = "Цього разу без авто";
 "Unarchive" = "Повернути з архіву";
 "Unarchived" = "Повернуто з архіву";
 "Unarchived %@" = "%@ повернуто з архіву";
@@ -1582,3 +1579,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "У цій копії Gitrochi немає команди журналу: %@";
 "The ledger command did not answer the MCP handshake." = "Команда журналу не відповіла на рукостискання MCP.";
 "The ledger command answers with its tools: %@." = "Команда журналу відповідає своїми інструментами: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Відстежувати агентів, яких я запускаю";
+"Give them the Ledger tools" = "Дати їм інструменти Журналу";
+"Agents Gitrochi starts" = "Агенти, запущені з Gitrochi";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Агенти Claude Code, запущені з Gitrochi, отримують сесію в Журналі ще до старту, а їхня активність записується: час та ID, але ніколи те, що хтось вводить. Інструменти Журналу дають їм змогу звітувати в нього; їх не додають, якщо в Claude Code вже є сервер з назвою gitrochi-ledger.";
+"Continue automatically when nobody answers" = "Продовжувати автоматично, якщо ніхто не відповідає";
+"Wait" = "Очікування";
+"%lld s" = "%lld с";
+"Open a repository to set auto-continue for it." = "Відкрийте репозиторій, щоб налаштувати для нього автопродовження.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Якщо агент, запущений у репозиторії, щось питає і ніхто не відповідає вчасно, Gitrochi відповідає варіантом, який порадив агент, не більше трьох разів поспіль. Він ніколи не відповідає сесіям рішень і не дозволяє ризикованих команд, а кожна відповідь чекає на перевірку у вхідних. Діє для агентів, запущених після зміни, коли ввімкнено «Відстежувати агентів, яких я запускаю».";
+"Decision sessions never continue automatically." = "Сесії рішень ніколи не продовжуються автоматично.";
+"Use the default" = "Використовувати типове";
+"Follow the repository's or the default auto-continue setting again" = "Знову дотримуватися налаштування репозиторію або типового автопродовження";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Працює для агентів Claude Code, яких запускає Gitrochi, поки ввімкнено «Відстежувати агентів, яких я запускаю». Довше очікування дійде до запущеного агента під час його наступного запуску.";
+"Auto-continue changed for %@" = "Автопродовження для %@ змінено";
+"Stop waiting here and answer in the agent's own terminal" = "Більше не чекати тут і відповісти у власному терміналі агента";
+"Not this time" = "Не цього разу";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Без автовідповіді на цей запит: він чекає на вас у терміналі агента";
+"Recommended" = "Рекомендовано";
+"The terminal shows this request too; an answer there counts as well." = "Термінал теж показує цей запит; відповідь там теж зараховується.";
+"The terminal shows this question only after the wait." = "Термінал покаже це питання лише після очікування.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Ще не підтверджено: термінал теж показав власне вікно";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Невідомо, чи спрацювало: термінал теж показав власне вікно";
+"Approve the plan" = "Схвалити план";
+"Allow once" = "Дозволити один раз";
+"%@ started without the Ledger: %@" = "%@ запущено без Журналу: %@";

@@ -1369,7 +1369,6 @@
 "Inbox" = "กล่องขาเข้า";
 "Inferred from a report" = "อนุมานจากรายงาน";
 "Its questions, reports, links and what to do with it show here." = "คำถาม รายงาน ลิงก์ และสิ่งที่ต้องทำจะแสดงที่นี่";
-"Keep this prompt waiting for you instead of answering it automatically" = "ให้พรอมต์นี้รอคุณแทนการตอบอัตโนมัติ";
 "Keep track of your agent sessions" = "ติดตามเซสชันเอเจนต์ของคุณ";
 "Ledger" = "สมุดบันทึก";
 "Left to the terminal" = "ปล่อยให้เทอร์มินัลจัดการแล้ว";
@@ -1445,7 +1444,6 @@
 "Started" = "เริ่มแล้ว";
 "Still active" = "ยังทำงานอยู่";
 "Stop filtering by %@" = "เลิกกรองตาม “%@”";
-"Stop waiting here and let the agent ask in its own terminal" = "เลิกรอที่นี่และให้เอเจนต์ถามในเทอร์มินัลของตัวเอง";
 "Streams" = "สตรีม";
 "Synced" = "ซิงค์แล้ว";
 "Tag" = "แท็ก";
@@ -1467,7 +1465,6 @@
 "To confirm" = "รอยืนยัน";
 "To decide" = "รอตัดสินใจ";
 "Touches" = "เกี่ยวข้องกับ";
-"Turn off auto this time" = "ครั้งนี้ปิดอัตโนมัติ";
 "Unarchive" = "เลิกเก็บถาวร";
 "Unarchived" = "เลิกเก็บถาวรแล้ว";
 "Unarchived %@" = "เลิกเก็บถาวร %@ แล้ว";
@@ -1577,3 +1574,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Gitrochi ชุดนี้ไม่มีคำสั่งของสมุดบันทึก: %@";
 "The ledger command did not answer the MCP handshake." = "คำสั่งของสมุดบันทึกไม่ตอบการจับมือ MCP";
 "The ledger command answers with its tools: %@." = "คำสั่งของสมุดบันทึกตอบกลับพร้อมเครื่องมือ: %@";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "ติดตามเอเจนต์ที่ฉันเริ่ม";
+"Give them the Ledger tools" = "ให้เครื่องมือสมุดบันทึกแก่เอเจนต์ด้วย";
+"Agents Gitrochi starts" = "เอเจนต์ที่ Gitrochi เริ่ม";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "เอเจนต์ Claude Code ที่เริ่มจาก Gitrochi จะได้เซสชันในสมุดบันทึกก่อนเริ่มทำงาน และจะบันทึกกิจกรรมไว้ คือเวลาและ ID เท่านั้น ไม่บันทึกสิ่งที่ใครพิมพ์ เครื่องมือสมุดบันทึกช่วยให้เอเจนต์รายงานเข้ามาได้ และจะไม่ใส่ให้เมื่อ Claude Code มีเซิร์ฟเวอร์ชื่อ gitrochi-ledger อยู่แล้ว";
+"Continue automatically when nobody answers" = "ดำเนินการต่ออัตโนมัติเมื่อไม่มีใครตอบ";
+"Wait" = "รอ";
+"%lld s" = "%lld วินาที";
+"Open a repository to set auto-continue for it." = "เปิดรีโพสิทอรีเพื่อตั้งค่าการดำเนินการต่ออัตโนมัติให้รีโพสิทอรีนั้น";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "เมื่อเอเจนต์ที่เริ่มในรีโพสิทอรีถามบางอย่างและไม่มีใครตอบทันเวลา Gitrochi จะตอบด้วยตัวเลือกที่เอเจนต์แนะนำ ไม่เกินสามครั้งติดต่อกัน จะไม่ตอบเซสชันการตัดสินใจและไม่อนุญาตคำสั่งที่เสี่ยง และทุกคำตอบจะรอการตรวจทานในกล่องขาเข้า มีผลกับเอเจนต์ที่เริ่มหลังจากนี้ เมื่อเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้";
+"Decision sessions never continue automatically." = "เซสชันการตัดสินใจจะไม่ดำเนินการต่ออัตโนมัติ";
+"Use the default" = "ใช้ค่าเริ่มต้น";
+"Follow the repository's or the default auto-continue setting again" = "กลับไปใช้การตั้งค่าของรีโพสิทอรีหรือค่าเริ่มต้นของการดำเนินการต่ออัตโนมัติ";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้ เวลารอที่นานขึ้นจะมีผลกับเอเจนต์ที่กำลังทำงานเมื่อเริ่มใหม่";
+"Auto-continue changed for %@" = "เปลี่ยนการดำเนินการต่ออัตโนมัติของ %@ แล้ว";
+"Stop waiting here and answer in the agent's own terminal" = "เลิกรอที่นี่และตอบในเทอร์มินัลของเอเจนต์เอง";
+"Not this time" = "ไม่ใช่ครั้งนี้";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "ไม่มีคำตอบอัตโนมัติสำหรับคำขอนี้ จะรอคุณในเทอร์มินัลของเอเจนต์";
+"Recommended" = "แนะนำ";
+"The terminal shows this request too; an answer there counts as well." = "เทอร์มินัลก็แสดงคำขอนี้ด้วย ตอบที่นั่นก็ได้เช่นกัน";
+"The terminal shows this question only after the wait." = "เทอร์มินัลจะแสดงคำถามนี้หลังหมดเวลารอเท่านั้น";
+"Not confirmed yet: the terminal showed its own dialog too" = "ยังไม่ยืนยัน: เทอร์มินัลแสดงกล่องโต้ตอบของตัวเองด้วย";
+"Unknown whether it applied: the terminal showed its own dialog too" = "ไม่ทราบว่ามีผลหรือไม่: เทอร์มินัลแสดงกล่องโต้ตอบของตัวเองด้วย";
+"Approve the plan" = "อนุมัติแผน";
+"Allow once" = "อนุญาตครั้งเดียว";
+"%@ started without the Ledger: %@" = "%@ เริ่มโดยไม่มีสมุดบันทึก: %@";

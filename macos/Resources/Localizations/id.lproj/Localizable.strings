@@ -1326,7 +1326,6 @@
 "Inbox" = "Kotak Masuk";
 "Inferred from a report" = "Disimpulkan dari laporan";
 "Its questions, reports, links and what to do with it show here." = "Pertanyaan, laporan, tautan, dan tindakannya muncul di sini.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Biarkan prompt ini menunggu Anda alih-alih dijawab otomatis";
 "Keep track of your agent sessions" = "Pantau sesi agen Anda";
 "Ledger" = "Buku Log";
 "Left to the terminal" = "Diserahkan ke terminal";
@@ -1403,7 +1402,6 @@
 "Started" = "Dimulai";
 "Still active" = "Masih aktif";
 "Stop filtering by %@" = "Berhenti menyaring “%@”";
-"Stop waiting here and let the agent ask in its own terminal" = "Berhenti menunggu di sini dan biarkan agen bertanya di terminalnya sendiri";
 "Streams" = "Aliran";
 "Synced" = "Disinkronkan";
 "Tag" = "Tag";
@@ -1425,7 +1423,6 @@
 "To confirm" = "Perlu dikonfirmasi";
 "To decide" = "Perlu diputuskan";
 "Touches" = "Menyentuh";
-"Turn off auto this time" = "Kali ini tanpa otomatis";
 "Unarchive" = "Batalkan arsip";
 "Unarchived" = "Arsip dibatalkan";
 "Unarchived %@" = "Arsip %@ dibatalkan";
@@ -1535,3 +1532,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Perintah Buku Log tidak ada di salinan Gitrochi ini: %@";
 "The ledger command did not answer the MCP handshake." = "Perintah Buku Log tidak menjawab jabat tangan MCP.";
 "The ledger command answers with its tools: %@." = "Perintah Buku Log menjawab dengan alatnya: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Lacak agen yang saya mulai";
+"Give them the Ledger tools" = "Beri mereka alat Buku Log";
+"Agents Gitrochi starts" = "Agen yang dimulai Gitrochi";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Agen Claude Code yang dimulai dari Gitrochi mendapat sesi Buku Log sebelum dimulai, dan aktivitasnya dicatat: waktu dan ID, tidak pernah apa yang diketik siapa pun. Alat Buku Log membuat mereka bisa melapor ke sana; alat itu tidak disertakan jika Claude Code sudah punya server bernama gitrochi-ledger.";
+"Continue automatically when nobody answers" = "Lanjut otomatis jika tidak ada yang menjawab";
+"Wait" = "Tunggu";
+"%lld s" = "%lld dtk";
+"Open a repository to set auto-continue for it." = "Buka repositori untuk mengatur lanjut otomatis untuknya.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Jika agen yang dimulai di repositori menanyakan sesuatu dan tidak ada yang menjawab tepat waktu, Gitrochi menjawab dengan opsi yang direkomendasikan agen, paling banyak tiga kali berturut-turut. Gitrochi tidak pernah menjawab sesi keputusan atau mengizinkan perintah berisiko, dan setiap jawaban menunggu ditinjau di Kotak Masuk. Berlaku untuk agen yang dimulai sesudahnya, dengan Lacak agen yang saya mulai aktif.";
+"Decision sessions never continue automatically." = "Sesi keputusan tidak pernah lanjut otomatis.";
+"Use the default" = "Gunakan bawaan";
+"Follow the repository's or the default auto-continue setting again" = "Ikuti lagi pengaturan repositori atau lanjut otomatis bawaan";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Berlaku untuk agen Claude Code yang dimulai Gitrochi selama Lacak agen yang saya mulai aktif. Waktu tunggu yang lebih lama berlaku untuk agen yang sedang berjalan saat dimulai lagi.";
+"Auto-continue changed for %@" = "Lanjut otomatis diubah untuk %@";
+"Stop waiting here and answer in the agent's own terminal" = "Berhenti menunggu di sini dan jawab di terminal agen sendiri";
+"Not this time" = "Tidak kali ini";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Tanpa jawaban otomatis untuk permintaan ini: permintaan menunggu Anda di terminal agen";
+"Recommended" = "Direkomendasikan";
+"The terminal shows this request too; an answer there counts as well." = "Terminal juga menampilkan permintaan ini; menjawab di sana juga berlaku.";
+"The terminal shows this question only after the wait." = "Terminal baru menampilkan pertanyaan ini setelah waktu tunggu.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Belum dikonfirmasi: terminal juga menampilkan dialognya sendiri";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Tidak diketahui apakah berlaku: terminal juga menampilkan dialognya sendiri";
+"Approve the plan" = "Setujui rencana";
+"Allow once" = "Izinkan sekali";
+"%@ started without the Ledger: %@" = "%@ dimulai tanpa Buku Log: %@";

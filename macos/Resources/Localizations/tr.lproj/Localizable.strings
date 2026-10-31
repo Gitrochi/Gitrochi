@@ -1361,7 +1361,6 @@
 "Inbox" = "Gelen kutusu";
 "Inferred from a report" = "Bir rapordan çıkarıldı";
 "Its questions, reports, links and what to do with it show here." = "Soruları, raporları, bağlantıları ve yapılacaklar burada görünür.";
-"Keep this prompt waiting for you instead of answering it automatically" = "Bu istemi otomatik yanıtlamak yerine sizi beklemeye bırak";
 "Keep track of your agent sessions" = "Ajan oturumlarınızı takip edin";
 "Ledger" = "Defter";
 "Left to the terminal" = "Terminale bırakıldı";
@@ -1437,7 +1436,6 @@
 "Started" = "Başladı";
 "Still active" = "Hâlâ etkin";
 "Stop filtering by %@" = "“%@” filtresini kaldır";
-"Stop waiting here and let the agent ask in its own terminal" = "Burada beklemeyi bırak, ajan kendi terminalinde sorsun";
 "Streams" = "Akışlar";
 "Synced" = "Eşitlendi";
 "Tag" = "Etiket";
@@ -1459,7 +1457,6 @@
 "To confirm" = "Onaylanacak";
 "To decide" = "Karar verilecek";
 "Touches" = "Etkiledikleri";
-"Turn off auto this time" = "Bu sefer otomatiği kapat";
 "Unarchive" = "Arşivden çıkar";
 "Unarchived" = "Arşivden çıkarıldı";
 "Unarchived %@" = "%@ arşivden çıkarıldı";
@@ -1569,3 +1566,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Gitrochi’nin bu kopyasında defter komutu eksik: %@";
 "The ledger command did not answer the MCP handshake." = "Defter komutu MCP el sıkışmasına yanıt vermedi.";
 "The ledger command answers with its tools: %@." = "Defter komutu araçlarıyla yanıt veriyor: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "Başlattığım ajanları izle";
+"Give them the Ledger tools" = "Onlara Defter araçlarını ver";
+"Agents Gitrochi starts" = "Gitrochi'nin başlattığı ajanlar";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Gitrochi'den başlatılan Claude Code ajanları başlamadan önce bir Defter oturumu alır ve etkinlikleri kaydedilir: zamanlar ve kimlikler, asla birinin yazdıkları değil. Defter araçları onların deftere rapor vermesini sağlar; Claude Code'da zaten gitrochi-ledger adlı bir sunucu varsa eklenmez.";
+"Continue automatically when nobody answers" = "Kimse yanıtlamazsa otomatik devam et";
+"Wait" = "Bekleme";
+"%lld s" = "%lld sn";
+"Open a repository to set auto-continue for it." = "Otomatik devamı ayarlamak için bir depo açın.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "Depoda başlatılan bir ajan bir şey sorduğunda ve kimse zamanında yanıtlamadığında Gitrochi, ajanın önerdiği seçenekle yanıt verir; art arda en fazla üç kez. Karar oturumlarını asla yanıtlamaz, riskli komutlara izin vermez ve her yanıt Gelen kutusunda incelenmeyi bekler. Başlattığım ajanları izle açıkken sonradan başlatılan ajanlar için geçerlidir.";
+"Decision sessions never continue automatically." = "Karar oturumları asla otomatik devam etmez.";
+"Use the default" = "Varsayılanı kullan";
+"Follow the repository's or the default auto-continue setting again" = "Yeniden deponun ayarını veya varsayılan otomatik devamı izle";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Başlattığım ajanları izle açıkken Gitrochi'nin başlattığı Claude Code ajanlarında çalışır. Daha uzun bekleme, çalışan bir ajana yeniden başladığında ulaşır.";
+"Auto-continue changed for %@" = "%@ için otomatik devam değişti";
+"Stop waiting here and answer in the agent's own terminal" = "Burada beklemeyi bırak ve ajanın kendi terminalinde yanıtla";
+"Not this time" = "Bu sefer değil";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "Bu istek için otomatik yanıt yok: ajanın terminalinde sizi bekler";
+"Recommended" = "Önerilen";
+"The terminal shows this request too; an answer there counts as well." = "Terminal de bu isteği gösterir; orada yanıtlamak da geçerlidir.";
+"The terminal shows this question only after the wait." = "Terminal bu soruyu ancak bekleme bitince gösterir.";
+"Not confirmed yet: the terminal showed its own dialog too" = "Henüz doğrulanmadı: terminal de kendi iletişim kutusunu gösterdi";
+"Unknown whether it applied: the terminal showed its own dialog too" = "Uygulanıp uygulanmadığı bilinmiyor: terminal de kendi iletişim kutusunu gösterdi";
+"Approve the plan" = "Planı onayla";
+"Allow once" = "Bir kez izin ver";
+"%@ started without the Ledger: %@" = "%@ Defter olmadan başlatıldı: %@";

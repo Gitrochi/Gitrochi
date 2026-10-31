@@ -3189,7 +3189,6 @@
 "Imported into %@" = "%@에 가져옴";
 "Inferred from a report" = "보고에서 추정함";
 "Its questions, reports, links and what to do with it show here." = "질문, 보고, 연결, 그리고 할 일이 여기에 나타납니다.";
-"Keep this prompt waiting for you instead of answering it automatically" = "자동으로 답하지 않고 이 프롬프트를 계속 기다리게 합니다";
 "Keep track of your agent sessions" = "에이전트 세션을 한눈에 관리하세요";
 "Ledger" = "원장";
 "Left to the terminal" = "터미널에 맡겼습니다";
@@ -3261,7 +3260,6 @@
 "Started" = "시작";
 "Still active" = "미루기";
 "Stop filtering by %@" = "%@ 거르기 해제";
-"Stop waiting here and let the agent ask in its own terminal" = "여기서 기다리지 않고 에이전트가 자기 터미널에서 묻게 합니다";
 "Streams" = "스트림";
 "Synced" = "반입함";
 "The agent" = "에이전트";
@@ -3282,7 +3280,6 @@
 "To confirm" = "확인할 것";
 "To decide" = "결정할 것";
 "Touches" = "다루는 것";
-"Turn off auto this time" = "이번엔 자동 끄기";
 "Unarchive" = "정리 취소";
 "Unarchived" = "정리 취소함";
 "Unarchived %@" = "%@ 정리 취소함";
@@ -3392,3 +3389,30 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "이 Gitrochi에 원장 명령이 없습니다: %@";
 "The ledger command did not answer the MCP handshake." = "원장 명령이 MCP 연결 확인에 응답하지 않았습니다.";
 "The ledger command answers with its tools: %@." = "원장 명령이 도구 목록으로 응답합니다: %@.";
+
+/* Ledger: Track agents I start and auto-continue. */
+"Track agents I start" = "내가 시작한 에이전트 추적";
+"Give them the Ledger tools" = "원장 도구도 주기";
+"Agents Gitrochi starts" = "Gitrochi가 시작한 에이전트";
+"Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger." = "Gitrochi에서 시작한 Claude Code 에이전트는 시작하기 전에 원장 세션을 받고, 활동이 기록됩니다. 시간과 ID만 기록하고 누가 입력한 내용은 기록하지 않습니다. 원장 도구가 있으면 에이전트가 원장에 보고할 수 있습니다. Claude Code에 gitrochi-ledger라는 서버가 이미 있으면 넣지 않습니다.";
+"Continue automatically when nobody answers" = "아무도 답하지 않으면 자동으로 진행";
+"Wait" = "기다릴 시간";
+"%lld s" = "%lld초";
+"Open a repository to set auto-continue for it." = "자동 진행을 설정하려면 저장소를 여세요.";
+"When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on." = "이 저장소에서 시작한 에이전트가 무언가를 묻고 제시간에 아무도 답하지 않으면, Gitrochi가 에이전트가 추천한 선택지로 답합니다. 연속으로는 최대 세 번까지입니다. 결정 세션에는 답하지 않고 위험한 명령은 허용하지 않으며, 모든 답은 수신함에서 검토를 기다립니다. 바꾼 뒤에 시작한 에이전트부터, 내가 시작한 에이전트 추적이 켜져 있을 때 적용됩니다.";
+"Decision sessions never continue automatically." = "결정 세션은 자동으로 진행하지 않습니다.";
+"Use the default" = "기본값 따르기";
+"Follow the repository's or the default auto-continue setting again" = "저장소 설정이나 기본 자동 진행 설정을 다시 따릅니다";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "내가 시작한 에이전트 추적이 켜져 있을 때 Gitrochi가 시작한 Claude Code 에이전트에만 적용됩니다. 더 긴 대기 시간은 실행 중인 에이전트가 다시 시작할 때부터 적용됩니다.";
+"Auto-continue changed for %@" = "%@의 자동 진행을 바꿨습니다";
+"Stop waiting here and answer in the agent's own terminal" = "여기서 기다리지 않고 에이전트의 터미널에서 답합니다";
+"Not this time" = "이번만 안 함";
+"No automatic answer for this prompt: it waits for you in the agent's terminal" = "이 질문에는 자동으로 답하지 않습니다. 에이전트의 터미널에서 답을 기다립니다";
+"Recommended" = "추천";
+"The terminal shows this request too; an answer there counts as well." = "터미널에도 이 요청이 표시되며, 거기서 답해도 됩니다.";
+"The terminal shows this question only after the wait." = "터미널에는 대기가 끝난 뒤에야 이 질문이 표시됩니다.";
+"Not confirmed yet: the terminal showed its own dialog too" = "아직 확인되지 않음: 터미널에도 자체 대화상자가 표시되었습니다";
+"Unknown whether it applied: the terminal showed its own dialog too" = "적용되었는지 알 수 없음: 터미널에도 자체 대화상자가 표시되었습니다";
+"Approve the plan" = "계획 승인";
+"Allow once" = "한 번 허용";
+"%@ started without the Ledger: %@" = "%@를 원장 없이 시작했습니다: %@";
