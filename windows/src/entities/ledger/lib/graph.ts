@@ -66,7 +66,8 @@ const rowOrder = (a: LedgerGraphNode, b: LedgerGraphNode) => b.ts - a.ts || a.la
  * (macOS: LedgerGraphLayout.plot)
  */
 export function plotLedgerGraph(graph: LedgerGraph): GraphPlot {
-  const nodes = [...graph.nodes].sort(rowOrder).map((node, row) => ({ node, row, x: laneX(node.lane), y: rowY(row) }));
+  const byRow = graph.nodes.length > 0 && graph.nodes.every((n) => typeof n.row === "number");
+  const nodes = [...graph.nodes].sort(byRow ? (a, b) => a.row! - b.row! || rowOrder(a, b) : rowOrder).map((node, row) => ({ node, row, x: laneX(node.lane), y: rowY(row) }));
   const byId = new Map(nodes.map((p) => [p.node.id, p]));
   const paths: PlacedPath[] = [];
   for (const edge of graph.edges) {

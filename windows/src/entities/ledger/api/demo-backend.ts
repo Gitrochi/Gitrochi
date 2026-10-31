@@ -165,12 +165,12 @@ export class DemoLedgerBackend implements LedgerBackend {
         delete need().archivedAt;
         break;
       case "shelve":
-        need().status = "shelved";
+        need().status = this.shelvable(need());
         break;
       case "set_status": {
         const status = r.status as LedgerStatus, x = need();
         if (!["active", "done", "merged", "closed", "dropped", "shelved"].includes(status)) throw new LedgerError("INVALID_ARGUMENT", `Unknown status ${String(status)}`);
-        x.status = status;
+        x.status = status === "shelved" ? this.shelvable(x) : status;
         if (status === "merged") x.mergedInto = r.into ?? this.head(x.project);
         else delete x.mergedInto;
         // a status a person chooses counts as confirmed; making it active again starts over
@@ -197,6 +197,12 @@ export class DemoLedgerBackend implements LedgerBackend {
     }
     this.record(id, r.action, { ...(r.status ? { status: r.status } : {}), ...(r.into ? { version: r.into } : {}), ...(r.questionId !== undefined ? { questionId: r.questionId } : {}), ...(r.until !== undefined ? { until: r.until } : {}) }, r.action === "answer" ? r.answer ?? r.text : r.action === "message" ? r.text : undefined);
     w.rev++;
+  }
+
+  /** As the core: only research and documents are shelved */
+  private shelvable(s: DemoSession): "shelved" {
+    if (s.role !== "research" && s.role !== "document") throw new LedgerError("INVALID_ARGUMENT", "Only research and document sessions can be shelved.");
+    return "shelved";
   }
 
   private head(project: string) {

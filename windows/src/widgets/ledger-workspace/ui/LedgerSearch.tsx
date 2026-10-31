@@ -59,7 +59,7 @@ export function LedgerSearch({ store, onClose, onPick }: { store: LedgerStore; o
         {!loading && !error && query.trim() && !hits.length && <span className="hint" style={{ padding: 10 }}>{t("Nothing found")}</span>}
         {!query.trim() && <span className="hint" style={{ padding: 10 }}>{t("Session IDs, titles, questions, report text and versions. ↑ ↓ to move, Enter to open.")}</span>}
         {hits.map((hit, i) => {
-          const look = kinds[hit.kind];
+          const look = kinds[hit.kind] ?? kinds.event;
           return (
             <button key={`${hit.kind}:${hit.id}`} type="button" role="option" aria-selected={i === active} className={`ledger-hit${i === active ? " active" : ""}`} onMouseEnter={() => setActive(i)} onClick={() => pick(hit)}>
               <span className="ledger-hit-title"><look.icon size={13} className="muted" aria-label={t(look.label)} /><span>{hit.title}</span></span>

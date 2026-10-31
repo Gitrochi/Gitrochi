@@ -57,7 +57,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
           <section key={c.version} className="ledger-cycle">
             <button type="button" className="ledger-cycle-head" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : c.version)}>
               {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              <span className="ledger-version">{c.version}</span>
+              <span className="ledger-version">{c.version || "—"}</span>
               <span className="ledger-cycle-state" style={{ "--state": `var(${cycleColor[c.state]})` } as CSSProperties}>{t(cycleLabel[c.state])}</span>
               <span className="ledger-flow">
                 {c.syncedAt ? <span data-tip={longDate(c.syncedAt / 1000)}>{t("Read {0}", shortDate(c.syncedAt / 1000))}</span> : <span>{t("Not read")}</span>}

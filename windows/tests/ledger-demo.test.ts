@@ -174,6 +174,11 @@ describe("Ledger demo backend: a person's operations", () => {
     await expect(backend.call("human", { action: "set_status", sessionId: spike.id, status: "bogus" as never })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
     await backend.call("human", { action: "set_status", sessionId: spike.id, status: "merged", into: "1.4.1" });
     expect((await find(backend, spike.title)).mergedInto).toBe("1.4.1");
+    // as the core, only research and documents are shelved
+    const flags = await find(backend, "Clean up old feature flags");
+    await expect(backend.call("human", { action: "shelve", sessionId: flags.id })).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
+    await backend.call("human", { action: "set_status", sessionId: spike.id, status: "shelved" });
+    expect((await find(backend, spike.title)).verdict).toBe("shelved");
   });
 
   it("answers and dismisses questions once, and snoozes stale sessions", async () => {

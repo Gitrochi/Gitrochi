@@ -233,6 +233,12 @@ describe("Ledger graph coordinates", () => {
     expect(tail).toMatchObject({ dashed: true, top: 0, color: 6 });
     expect(tail.d).toBe(`M${open.byId.get("s3")!.x},${open.byId.get("s3")!.y}L${open.byId.get("s3")!.x},0`);
   });
+  it("takes the core's row order when every node has one", () => {
+    const rows = plotLedgerGraph({ ...graph, nodes: graph.nodes.map((n, i) => ({ ...n, row: graph.nodes.length - 1 - i })) });
+    expect(rows.nodes.map((p) => p.node.id)).toEqual([...graph.nodes].reverse().map((n) => n.id));
+    const partial = plotLedgerGraph({ ...graph, nodes: graph.nodes.map((n, i) => (i ? n : { ...n, row: 0 })) });
+    expect(partial.nodes.map((p) => p.node.id)).toEqual(plot.nodes.map((p) => p.node.id));
+  });
   it("draws only the rows and paths near the visible band", () => {
     expect(visibleRows(0, 300, 1000)).toEqual({ first: 0, last: 20 });
     expect(visibleRows(3000, 300, 1000)).toEqual({ first: 90, last: 120 });

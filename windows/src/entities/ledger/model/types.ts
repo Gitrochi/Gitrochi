@@ -170,6 +170,8 @@ export interface LedgerGraphNode {
   label?: string;
   /** The event type behind the node (the core adds it to v0); a question is drawn as a diamond */
   type?: string;
+  /** The core's row, 0 = newest; when every node has one it sets the order */
+  row?: number;
 }
 
 export interface LedgerGraphEdge {

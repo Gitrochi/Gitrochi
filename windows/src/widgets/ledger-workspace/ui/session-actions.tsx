@@ -26,7 +26,8 @@ export function moreMenu(store: LedgerStore, s: LedgerSession, confirmDrop: () =
     { label: t("Mark closed"), onClick: human("set_status", { status: "closed" }), disabled: s.status === "closed" },
     { label: t("Mark dropped…"), onClick: confirmDrop, danger: true, disabled: s.status === "dropped" },
     "divider",
-    { label: t("Shelve"), onClick: human("shelve"), disabled: s.status === "shelved", tip: `${t("Shelve")}|${t("Paused research or documents, kept for later. Never turns stale.")}` },
+    // only research and documents are shelved; the core refuses it for other roles
+    { label: t("Shelve"), onClick: human("shelve"), disabled: s.status === "shelved" || (s.role !== "research" && s.role !== "document"), tip: `${t("Shelve")}|${t("Paused research or documents, kept for later. Never turns stale.")}` },
     { label: t("Still active"), onClick: human("snooze", { until: Date.now() + 72 * HOUR }), disabled: finished || s.status === "shelved" },
     { label: t("Make active again"), onClick: human("set_status", { status: "active" }), disabled: s.status === "active" && !s.archivedAt },
     "divider",
