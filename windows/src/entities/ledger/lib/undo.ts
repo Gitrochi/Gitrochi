@@ -41,7 +41,7 @@ export function operationTitle(request: LedgerHumanRequest): string {
     case "unack":
       return "Confirmation of {0} taken back";
     case "archive":
-      return "Archived {0}";
+      return "Cleaned up {0}";
     case "unarchive":
       return "Restored {0}";
     case "snooze":
@@ -49,7 +49,7 @@ export function operationTitle(request: LedgerHumanRequest): string {
     case "shelve":
       return "Shelved {0}";
     case "set_status":
-      return request.status === "merged" ? "{0} marked merged" : request.status === "closed" ? "Closed {0}" : request.status === "dropped" ? "Dropped {0}" : request.status === "active" ? "{0} is active again" : request.status === "shelved" ? "Shelved {0}" : "{0} marked done";
+      return request.status === "merged" ? "{0} marked merged" : request.status === "closed" ? "{0} marked closed" : request.status === "dropped" ? "{0} marked dropped" : request.status === "active" ? "{0} is active again" : request.status === "shelved" ? "Shelved {0}" : "{0} marked done";
     case "answer":
       return "Answer saved for {0}";
     case "dismiss":
@@ -57,6 +57,6 @@ export function operationTitle(request: LedgerHumanRequest): string {
     case "message":
       return "Correction sent to {0}";
     default:
-      return "Updated {0}";
+      return "Changed {0}";
   }
 }

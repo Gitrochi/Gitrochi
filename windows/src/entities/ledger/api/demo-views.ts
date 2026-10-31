@@ -136,8 +136,9 @@ export function buildGraph(w: DemoWorld, views: Map<string, LedgerSession>, proj
   return { lanes: busyUntil.length, nodes, edges, from: low, to: now };
 }
 
+/** Report text around the match, on one line and without Markdown marks */
 function snippet(text: string, query: string, room = 90): string {
-  const flat = text.replace(/\s+/g, " ").trim();
+  const flat = text.replace(/^#+\s*/gm, "").replace(/\|?\s*:?-{3,}:?\s*/g, " ").replace(/[|*`>]+/g, " ").replace(/\s+/g, " ").trim();
   const at = foldText(flat).indexOf(foldText(query));
   if (at < 0 || flat.length <= room) return flat.slice(0, room) + (flat.length > room ? "…" : "");
   const start = Math.max(0, at - Math.floor(room / 3));

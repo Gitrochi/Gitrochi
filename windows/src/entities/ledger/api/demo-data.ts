@@ -208,6 +208,9 @@ export function demoWorld(now: Ms, repoPath = "C:/Projects/atlas"): DemoWorld {
   return w;
 }
 
+/** A ledger nothing has reported to yet */
+export const emptyWorld = (): DemoWorld => ({ rev: 1, projects: [], baselines: [], sessions: [], events: [], questions: [], prompts: [], coupled: [], nextEvent: 1, nextQuestion: 1, nextPrompt: 1 });
+
 /** A fixed pseudo-random sequence (mulberry32), so the large demo is the same every time */
 function random(seed: number) {
   let a = seed >>> 0;

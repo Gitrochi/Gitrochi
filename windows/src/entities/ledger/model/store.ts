@@ -179,6 +179,16 @@ export class LedgerStore extends Observable {
     this.emit();
   }
 
+  /** A session's detail without selecting it (stream cards) */
+  readSession(id: string) {
+    return this.backend.call("session", { id });
+  }
+
+  /** The last `rev` read; views cache what they load against it */
+  get revision() {
+    return this.rev;
+  }
+
   async loadGraph(force = false) {
     const project = this.graphProject;
     if (!project) return;
@@ -237,6 +247,14 @@ export class LedgerStore extends Observable {
     if (only) this.verdicts = this.verdicts.size === 1 && this.verdicts.has(verdict) ? new Set() : new Set([verdict]);
     else if (this.verdicts.has(verdict)) this.verdicts.delete(verdict);
     else this.verdicts.add(verdict);
+    this.emit();
+  }
+
+  /** The Board on one verdict, from the verdict list */
+  showVerdict(verdict: LedgerVerdict) {
+    this.verdicts = new Set([verdict]);
+    if (verdict === "archived") this.showArchived = true;
+    this.setView("board");
     this.emit();
   }
 

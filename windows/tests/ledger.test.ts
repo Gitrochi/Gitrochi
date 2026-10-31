@@ -5,6 +5,8 @@ import {
   promptSummary, serverNow, stepIndex, streamCount, summarizeImport, verdictCounts, verdictDisplayOrder, verdictLook, visibleRows, waitingPrompts,
 } from "@/entities/ledger";
 import { edgePath as edgePathForTest } from "@/entities/ledger/lib/graph";
+import { destinationEnabled, isWorkspaceDestination, previewDestinations, restoredDestination, workspaceDestinations } from "@/entities/git";
+import { env } from "@/shared/config";
 import { prompt, question, session } from "./ledger-fixtures";
 
 const HOUR = 3_600_000;
@@ -254,5 +256,22 @@ describe("Ledger imports, undo, layout and versions", () => {
   });
   it("orders versions as numbers", () => {
     expect(["1.10.0", "1.9.2", "v1.9.10", "2.0", "1.9.2-rc"].sort(compareVersions)).toEqual(["1.9.2", "1.9.2-rc", "v1.9.10", "1.10.0", "2.0"]);
+  });
+});
+
+describe("Ledger destination", () => {
+  it("stays hidden until GITROCHI_LEDGER_PREVIEW turns it on, then opens without a repository", () => {
+    const before = env.ledgerPreview;
+    try {
+      env.ledgerPreview = null;
+      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false)]).toEqual([false, false, "home"]);
+      expect(workspaceDestinations).not.toContain("ledger");
+      expect(previewDestinations).toEqual(["ledger"]);
+      env.ledgerPreview = "1";
+      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false), restoredDestination("ledger", true)]).toEqual([true, true, "ledger", "ledger"]);
+      expect(workspaceDestinations.every(destinationEnabled)).toBe(true);
+    } finally {
+      env.ledgerPreview = before;
+    }
   });
 });

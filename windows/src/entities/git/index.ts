@@ -1,5 +1,5 @@
 // entities/git 의 공개 API — 다른 조각은 이 파일로만 가져온다
-export { workspaceDestinations, repositoryDestinations, returnsToRepository, isWorkspaceDestination, restoredDestination, type WorkspaceDestination } from "./model/workspace-navigation";
+export { workspaceDestinations, previewDestinations, destinationEnabled, repositoryDestinations, returnsToRepository, isWorkspaceDestination, restoredDestination, type WorkspaceDestination } from "./model/workspace-navigation";
 export { choiceLines, choiceTitle, conflictProjection, type ConflictBlock, type ConflictChoice, type ConflictDocument, parseConflict, resolveConflict } from "./lib/conflict";
 export { buildPatch, canEditLines, diffSides, modeSummary, type SplitRow, splitRows } from "./lib/diff";
 export { layoutGraph, layoutGraphAsync } from "./lib/graph";

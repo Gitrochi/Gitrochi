@@ -210,6 +210,8 @@ pub struct EnvInfo {
     local_app_data: String,
     /// 앱과 함께 설치되는 파일(gitch 등)이 있는 폴더 — Windows 는 설치 폴더(Gitrochi.exe 옆)
     resource_dir: String,
+    /// GITROCHI_LEDGER_PREVIEW: shows the Ledger page on demo data until its backend is connected
+    ledger_preview: Option<String>,
 }
 
 #[tauri::command]
@@ -235,6 +237,7 @@ pub fn env_info(app: AppHandle) -> EnvInfo {
         app_data: dirs::data_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
         local_app_data: dirs::data_local_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
         resource_dir: app.path().resource_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default(),
+        ledger_preview: std::env::var("GITROCHI_LEDGER_PREVIEW").ok().filter(|s| !s.is_empty() && s != "0"),
     }
 }
 

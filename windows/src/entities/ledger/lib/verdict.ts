@@ -48,16 +48,19 @@ export interface VerdictLook {
 
 const looks: Record<LedgerVerdict, VerdictLook> = {
   needs_human: { label: "Needs you", color: "--orange", outline: false, icon: "question", hint: "Answer or dismiss its questions; the session reads the answer with its next report." },
-  pending_merge: { label: "To decide", color: "--accent", outline: false, icon: "merge", hint: "The work is done: mark it merged, close it or drop it." },
-  confirm: { label: "To confirm", color: "--accent", outline: true, icon: "confirm", hint: "The agent finished it. Confirm the outcome, then archive the conversation." },
-  expirable: { label: "Ready to archive", color: "--green", outline: false, icon: "archive", hint: "Finished and confirmed. Archive it once the conversation is closed." },
+  pending_merge: { label: "Merge pending", color: "--accent", outline: false, icon: "merge", hint: "The work is done: mark it merged, close it or drop it." },
+  confirm: { label: "To confirm", color: "--accent", outline: true, icon: "confirm", hint: "The agent finished it. Confirm the outcome, then clean up the conversation." },
+  expirable: { label: "Ready to clean up", color: "--green", outline: false, icon: "archive", hint: "Finished and confirmed. Clean it up once the conversation is closed." },
   stale: { label: "Stale", color: "--red", outline: false, icon: "stale", hint: "No report for 72 hours. Check the conversation, then close it or mark it still active." },
-  active: { label: "Active", color: "--text-2", outline: false, icon: "active", hint: "Work in progress." },
+  active: { label: "In progress", color: "--text-2", outline: false, icon: "active", hint: "Work in progress." },
   shelved: { label: "Shelved", color: "--text-3", outline: false, icon: "shelved", hint: "Paused research or documents, kept for later. Never turns stale." },
-  archived: { label: "Archived", color: "--text-3", outline: false, icon: "archived", hint: "Cleaned up. Hidden unless you show archived sessions." },
+  archived: { label: "Cleaned up", color: "--text-3", outline: false, icon: "archived", hint: "The conversation is cleaned up. Hidden unless you show cleaned-up sessions." },
 };
 
-/** How a verdict looks: label, colour token, outline and icon (macOS: LedgerVerdict.look) */
+/**
+ * How a verdict looks: label, colour token, outline and icon. Archiving reads "Clean up" on screen, so it stays apart
+ * from shelving in every language. (macOS: LedgerVerdict.look)
+ */
 export const verdictLook = (verdict: LedgerVerdict): VerdictLook => looks[verdict];
 
 /** Board order: verdict display order, then the most recent activity first, then the ID */

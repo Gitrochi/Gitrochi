@@ -2,7 +2,7 @@ import type { LedgerHumanRequest, LedgerImportResult, LedgerMethod, LedgerMethod
 import { inboxGroups } from "../lib/inbox";
 import { compareVersions } from "../lib/version";
 import { LedgerError, type LedgerBackend } from "./backend";
-import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, largeDemoWorld } from "./demo-data";
+import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld } from "./demo-data";
 import { buildGraph, isLive, overlaps, rangeStart, searchWorld, sessionViews, streamCycles } from "./demo-views";
 
 export interface DemoOptions {
@@ -14,6 +14,8 @@ export interface DemoOptions {
   large?: boolean;
   /** Keeps a waiting prompt coming so the countdown can be watched; off in tests */
   lively?: boolean;
+  /** Nothing reported yet: the onboarding state */
+  empty?: boolean;
 }
 
 const EVENTS = new Set(["start", "progress", "artifact", "question", "decision", "sync", "done", "merged", "closed", "dropped", "shelved", "release", "applied", "note", "heartbeat"]);
@@ -53,7 +55,7 @@ export class DemoLedgerBackend implements LedgerBackend {
     this.now = options.now ?? Date.now;
     this.lively = options.lively ?? false;
     const now = this.now();
-    this.world = options.large ? largeDemoWorld(now, options.repoPath) : demoWorld(now, options.repoPath);
+    this.world = options.empty ? emptyWorld() : options.large ? largeDemoWorld(now, options.repoPath) : demoWorld(now, options.repoPath);
     this.nextSpawn = now + 60_000;
   }
 

@@ -1,0 +1,5 @@
+/* features/answer-ledger-question — an answer or a correction, written in place */
+.ledger-answer { display: flex; flex-direction: column; gap: 6px; }
+.ledger-answer .textarea { min-height: 54px; }
+.ledger-answer-bar { display: flex; align-items: center; gap: 8px; }
+.ledger-answer-bar .hint { flex: 1; }

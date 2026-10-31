@@ -263,6 +263,10 @@ describe("Ledger demo backend: import and search", () => {
     const body = (await backend.call("search", { query: "1,204 keys" })).hits[0];
     expect(body.snippet).toContain("1,204 keys");
     expect(body.snippet.length).toBeLessThanOrEqual(92);
+    // snippets are one line of text, without Markdown marks
+    const table = (await backend.call("search", { query: "Retry-After" })).hits.find((h) => h.kind === "event")!;
+    expect(table.snippet).toContain("Retry-After");
+    expect(table.snippet).not.toMatch(/[|#*`]|---|\n/);
   });
 });
 
