@@ -2,6 +2,8 @@
 # The Ledger screens' logic without SwiftUI: the pure presentation rules (verdict order, countdowns, filters, Inbox
 # grouping, undo, graph rows and coordinates), every demo backend answer decoded with the app's contract models,
 # LedgerStore (polling by rev, operations, undo, prompts) and the large demo (1,000 sessions, 50,000 events) with timings.
+# With the core's command-line tool (GITROCHI_LEDGER_BIN, else crates/target/release/gitrochi-ledger) it also reads the
+# core's own demo through the app's client, Inbox, graph and store.
 #   macos/Tools/test-ledger.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,6 +34,28 @@ final class SpyBackend: LedgerBackend, @unchecked Sendable {
         return inner.call(method: method, args: args)
     }
     func count(_ method: String) -> Int { lock.lock(); defer { lock.unlock() }; return counts[method] ?? 0 }
+}
+
+/// The real core through its command-line tool, as an agent: a person's operations answer NOT_ALLOWED there
+final class CLIBackend: LedgerBackend, @unchecked Sendable {
+    let binary: String
+    let db: String
+    init(binary: String, db: String) { self.binary = binary; self.db = db }
+    func call(method: String, args: Data) -> Data { run(["call", method, String(decoding: args, as: UTF8.self)]) }
+    func run(_ arguments: [String]) -> Data {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: binary)
+        process.arguments = arguments
+        process.environment = ProcessInfo.processInfo.environment.merging(["GITROCHI_LEDGER_DB": db]) { $1 }
+        // JSON comes on standard output; standard error carries a line for people
+        let out = Pipe()
+        process.standardOutput = out
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return Data() }
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return data
+    }
 }
 
 var checks = 0
@@ -66,6 +90,9 @@ let start: LedgerMs = 1_793_400_000_000
         try demoContract()
         try await store()
         try await large()
+        if let i = CommandLine.arguments.firstIndex(of: "--core"), i + 2 < CommandLine.arguments.count {
+            try await core(binary: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2])
+        }
         print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, large demo")
     }
 
@@ -115,15 +142,16 @@ let start: LedgerMs = 1_793_400_000_000
         var before = session("S9", "x", verdict: .confirm, last: 0)
         before.status = .merged
         before.mergedInto = "v1.2.0"
-        check(LedgerUndo.inverse(of: .ack, before: before) == [.unack], "undo confirm")
-        check(LedgerUndo.inverse(of: .archive, before: before) == [.unarchive], "undo archive")
+        check(LedgerUndo.inverse(of: .ack, before: before, now: 9) == [.unack], "undo confirm")
+        check(LedgerUndo.inverse(of: .archive, before: before, now: 9) == [.unarchive], "undo archive")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 9)], "undo Still active: snoozed until now, so stale again")
         before.snoozeUntil = 77
-        check(LedgerUndo.inverse(of: .stillActive, before: before) == [.snooze(until: 77)], "undo Still active restores the old time")
-        check(LedgerUndo.inverse(of: .setStatus(.active, version: nil), before: before) == [.setStatus(.merged, version: "v1.2.0"), .unack], "undo reopen")
+        check(LedgerUndo.inverse(of: .stillActive, before: before, now: 9) == [.snooze(until: 77)], "undo Still active restores the old time")
+        check(LedgerUndo.inverse(of: .setStatus(.active, version: nil), before: before, now: 9) == [.setStatus(.merged, version: "v1.2.0"), .unack], "undo reopen")
         before.ackAt = 5
         before.archivedAt = 6
-        check(LedgerUndo.inverse(of: .setStatus(.closed, version: nil), before: before) == [.setStatus(.merged, version: "v1.2.0"), .ack, .archive], "undo restores confirm and archive")
-        check(LedgerUndo.inverse(of: .answer(questionId: 1, text: "a"), before: before) == nil && LedgerUndo.inverse(of: .message(text: "m"), before: before) == nil, "answers and messages are not undone")
+        check(LedgerUndo.inverse(of: .setStatus(.closed, version: nil), before: before, now: 9) == [.setStatus(.merged, version: "v1.2.0"), .ack, .archive], "undo restores confirm and archive")
+        check(LedgerUndo.inverse(of: .answer(questionId: 1, text: "a"), before: before, now: 9) == nil && LedgerUndo.inverse(of: .message(text: "m"), before: before, now: 9) == nil, "answers and messages are not undone")
 
         var linked = session("S7", "x", verdict: .active, last: 0)
         linked.project = "harbor"
@@ -137,10 +165,11 @@ let start: LedgerMs = 1_793_400_000_000
         linked.baseCurrent = "v1.2.0"
         check(LedgerProjects.behind(linked, baselines: baselines) == 2, "behind")
 
-        check(LedgerHumanAction.setStatus(.merged, version: "v2").arguments == ["action": "set_status", "status": "merged", "version": "v2"], "set_status shape")
-        check(LedgerHumanAction.reviewAuto(promptId: 4).arguments == ["action": "review", "promptId": 4], "review shape")
+        check(LedgerHumanAction.setStatus(.merged, version: "v2").arguments == ["action": "set_status", "status": "merged", "into": "v2"], "set_status shape")
+        check(LedgerHumanAction.answer(questionId: 3, text: "yes").arguments == ["action": "answer", "questionId": 3, "answer": "yes"], "answer shape")
+        check(LedgerHumanAction.link(field: "branch", value: nil).arguments == ["action": "link", "branch": .null], "link shape: null removes")
         check(LedgerHumanAction.stillActive.arguments == ["action": "snooze"], "Still active leaves the time to the core")
-        check(LedgerHumanAction.snooze(until: nil).arguments == ["action": "snooze", "until": .null], "undo clears with null")
+        check(LedgerHumanAction.snooze(until: 5).arguments == ["action": "snooze", "until": 5], "undo sends the old time")
         check(LedgerPromptReply.choices(["Q?": "A"]).answer == ["answers": ["Q?": "A"]] && LedgerPromptReply.holdAuto.answer == ["hold": true], "prompt answer shapes")
         check(LedgerPromptReply.deny(message: "").answer == ["decision": "deny"] && LedgerPromptReply.deny(message: "no").answer == ["decision": "deny", "message": "no"], "deny shape")
         let encoded = String(decoding: try! JSONEncoder().encode(LedgerJSON.object(["n": 3, "f": .number(1.5)])), as: UTF8.self)
@@ -182,6 +211,13 @@ let start: LedgerMs = 1_793_400_000_000
         check(has(3, seg(2, 0.5, 2, 1, 2)) && has(6, seg(2, 0, 2, 1, 2)), "a base that is not drawn: the line runs on to the bottom")
         check(has(0, seg(2, 0, 2, 1, 2, dashed: true)) && has(1, seg(2, 0, 2, 1, 2, dashed: true)) && has(2, seg(2, 0, 2, 0.5, 2, dashed: true)), "an open session continues upward, dashed")
         check(!plot.rows.flatMap(\.segments).contains { $0.dashed && $0.x1 == 1 }, "a merged session has no tail")
+        var ordered = graph
+        ordered.nodes = graph.nodes.map { n in var n = n; n.row = ["b2", "s3", "o2", "o1", "s2", "s1", "b1"].firstIndex(of: n.id); return n }
+        ordered.nodes.swapAt(0, 6)
+        ordered.tails = [LedgerGraphTail(sessionId: "B", lane: 2, row: 2, color: 2)]
+        let fromCore = LedgerGraphPlot.plot(ordered)
+        check(fromCore.rows.map(\.id) == plot.rows.map(\.id) && fromCore.rows[0].segments.contains(seg(2, 0, 2, 1, 2, dashed: true)),
+              "the core's rows and tails are used when it sends them")
         let cut = LedgerGraphPlot.plot(graph, openSessions: [], limit: 3)
         check(cut.rows.count == 3 && cut.hiddenRows == 4 && cut.rows[2].segments.contains(seg(0, 0, 0, 1, 0)), "past the limit the trunk runs to the bottom")
         let held = LedgerGraphPlot.plot(graph, openSessions: ["A"], limit: 1)
@@ -204,7 +240,7 @@ let start: LedgerMs = 1_793_400_000_000
         let decision = state.sessions.first { $0.role == .decision }!
         check(state.streams.first?.releasedBy == decision.id && decision.verdict == .confirm, "the stream's sync handed the decision session over")
         check(state.overlaps.contains { $0.kind == .same && $0.paths == ["src/auth/session.swift"] } && state.overlaps.contains { $0.kind == .coupled }, "overlaps")
-        check(state.pendingPrompts.filter { $0.state == .waiting }.count == 3 && state.pendingPrompts.filter { $0.state == .auto }.count == 1, "prompts")
+        check(state.pendingPrompts.count == 3 && state.pendingPrompts.allSatisfy { $0.state == .waiting } && state.autoReview?.count == 1, "waiting prompts, and one to review")
         let inbox = LedgerInbox.build(state)
         check(inbox.items(in: .questions).count == state.attention.questions && inbox.items(in: .tidy).count == state.attention.tidy
               && inbox.items(in: .decide).count == state.attention.decide && inbox.items(in: .autoReview).count == state.attention.autoReview
@@ -257,7 +293,7 @@ let start: LedgerMs = 1_793_400_000_000
         let first = try call(demo, "import", ["text": .string(paste)], as: LedgerImportResult.self).results
         check(first.map(\.ok) == [true, false, false] && first[1].error?.contains("version") == true && first[2].error != nil && first[0].sessionId != nil, "import blocks: \(first)")
         let again = try call(demo, "import", ["text": .string(paste)], as: LedgerImportResult.self).results
-        check(again[0].duplicate && !again[0].ok, "a block imported before is a duplicate")
+        check(again[0].duplicate && again[0].ok, "a block imported before is a duplicate, ok and skipped")
         let pastedID = first[0].sessionId!
         let jsonLines = "{\"event\": \"note\", \"session\": \"\(pastedID)\", \"summary\": \"a\"}\n{\"event\": \"progress\", \"session\": \"\(pastedID)\", \"summary\": \"b\"}"
         let lines = try call(demo, "import", ["text": .string(jsonLines)], as: LedgerImportResult.self).results
@@ -286,45 +322,50 @@ let start: LedgerMs = 1_793_400_000_000
         _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id)], as: LedgerWriteResult.self)
         let snoozed = try call(demo, "session", ["id": .string(stale.id)], as: LedgerSessionDetail.self).session
         check(snoozed.verdict == .active && snoozed.snoozeUntil == start + 72 * hour, "Still active: not stale for the stale hours")
-        _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .null], as: LedgerWriteResult.self)
-        check(try verdict(stale.id) == .stale, "a null time clears it")
+        _ = try call(demo, "human", ["action": "snooze", "sessionId": .string(stale.id), "until": .number(Double(start))], as: LedgerWriteResult.self)
+        check(try verdict(stale.id) == .stale, "snoozed until now: stale again")
         let asked = state.questions.first { $0.state == .open }!
-        _ = try call(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "text": "Yes, both."], as: LedgerWriteResult.self)
+        _ = try call(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "answer": "Yes, both."], as: LedgerWriteResult.self)
         let answered = try call(demo, "session", ["id": .string(asked.sessionId)], as: LedgerSessionDetail.self)
         check(answered.questions.first { $0.id == asked.id }?.state == .answered && answered.events.last?.type == "answer" && answered.events.last?.actor == .human, "answer recorded")
-        check(failure(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "text": "again"])?.code == "CONFLICT", "answering twice")
-        for (action, extra) in [("shelve", [String: LedgerJSON]()), ("link", ["kind": "branch", "value": "feature/x"]), ("message", ["text": "Please add tests."])] {
+        check(failure(demo, "human", ["action": "answer", "sessionId": .string(asked.sessionId), "questionId": .number(Double(asked.id)), "answer": "again"])?.code == "CONFLICT", "answering twice")
+        for (action, extra) in [("shelve", [String: LedgerJSON]()), ("link", ["branch": "feature/x"]), ("message", ["text": "Please add tests."])] {
             var args = extra
             args["action"] = .string(action)
             args["sessionId"] = .string(pending.id)
             check(try call(demo, "human", args, as: LedgerWriteResult.self).ok, action)
         }
         check(try call(demo, "session", ["id": .string(pending.id)], as: LedgerSessionDetail.self).session.links.branch == "feature/x", "link")
-        check(failure(demo, "human", ["action": "fly", "sessionId": .string(pending.id)])?.code == "BAD_REQUEST", "unknown action")
+        check(failure(demo, "human", ["action": "fly", "sessionId": .string(pending.id)])?.code == "INVALID_ARGUMENT", "unknown action")
         check(failure(demo, "human", ["action": "ack", "sessionId": "S0000-99"])?.code == "NOT_FOUND", "unknown session")
-        check(failure(demo, "nope")?.code == "UNKNOWN_METHOD", "unknown method")
+        check(failure(demo, "nope")?.code == "INVALID_ARGUMENT", "unknown method")
         check(try call(demo, "backup", as: LedgerBackupResult.self).path.hasSuffix(".sqlite3"), "backup")
         check((try? LedgerClient.decode(LedgerRev.self, from: Data(#"{"result":{"rev":7}}"#.utf8)))?.rev == 7, "a {result} envelope is unwrapped")
         check((try? LedgerClient.decode(LedgerRev.self, from: Data(#"{"rev":"x"}"#.utf8))) == nil, "a malformed answer throws")
 
         // prompts: answers, release, hold, and auto-continue when the deadline runs out
-        let prompts = try call(demo, "state", [:], as: LedgerState.self).pendingPrompts
-        let ask = prompts.first { $0.kind == .askUserQuestion && $0.state == .waiting }!
+        let before = try call(demo, "state", [:], as: LedgerState.self)
+        let prompts = before.pendingPrompts
+        let ask = prompts.first { $0.kind == .askUserQuestion }!
         let permission = prompts.first { $0.kind == .permission }!
         let plan = prompts.first { $0.kind == .exitPlanMode }!
-        let auto = prompts.first { $0.state == .auto }!
+        let auto = before.autoReview!.first!
         check(try call(demo, "prompt_answer", ["id": .number(Double(permission.id)), "answer": .object(LedgerPromptReply.holdAuto.answer)], as: LedgerWriteResult.self).ok, "hold")
         check(try call(demo, "state", [:], as: LedgerState.self).pendingPrompts.first { $0.id == permission.id }?.deadline == 0, "held: no deadline")
         _ = try call(demo, "prompt_answer", ["id": .number(Double(plan.id)), "answer": .object(LedgerPromptReply.answerInTerminal.answer)], as: LedgerWriteResult.self)
         check(!(try call(demo, "state", [:], as: LedgerState.self).pendingPrompts.contains { $0.id == plan.id }), "released to the terminal")
-        check(failure(demo, "prompt_answer", ["id": .number(Double(plan.id)), "answer": ["decision": "allow"]])?.code == "CONFLICT", "answering a released prompt")
-        _ = try call(demo, "human", ["action": "review", "sessionId": .string(auto.sessionId!), "promptId": .number(Double(auto.id))], as: LedgerWriteResult.self)
-        check(try call(demo, "state", [:], as: LedgerState.self).attention.autoReview == 0, "reviewed")
+        check(try call(demo, "prompt_answer", ["id": .number(Double(plan.id)), "answer": ["decision": "allow"]], as: LedgerWriteResult.self).ok == false,
+              "an answer to a prompt that no longer waits does not win")
+        _ = try call(demo, "prompt_review", ["id": .number(Double(auto.id))], as: LedgerWriteResult.self)
+        let reviewedState = try call(demo, "state", [:], as: LedgerState.self)
+        check(reviewedState.attention.autoReview == 0 && reviewedState.autoReview?.isEmpty == true, "reviewed")
+        check(failure(demo, "prompt_review", ["id": 999])?.code == "NOT_FOUND", "reviewing a prompt that was not auto-continued")
         rev = try call(demo, "rev", as: LedgerRev.self).rev
         clock.advance(46_000)
         let after = try call(demo, "state", [:], as: LedgerState.self)
-        let expired = after.pendingPrompts.first { $0.id == ask.id }
-        check(after.rev > rev && expired?.state == .auto && expired?.answeredBy == .auto, "the deadline ran out: auto-continue answered")
+        let expired = after.autoReview?.first { $0.id == ask.id }
+        check(after.rev > rev && expired?.state == .auto && expired?.answeredBy == .auto && !after.pendingPrompts.contains { $0.id == ask.id },
+              "the deadline ran out: auto-continue answered")
         check(expired?.answer?["answers"]?.object?.values.first?.string == "3 times (Recommended)", "the recommended option")
         check(after.attention.autoReview == 1, "to review")
         let retry = try call(demo, "session", ["id": .string(ask.sessionId!)], as: LedgerSessionDetail.self)
@@ -384,7 +425,7 @@ let start: LedgerMs = 1_793_400_000_000
         await ledger.perform(.stillActive, on: [stale.id], message: "Still active")
         check(ledger.session(stale.id)?.verdict == .active && !ledger.inbox.items.contains { $0.sessionId == stale.id }, "Still active leaves the Inbox")
         await ledger.undo()
-        check(ledger.session(stale.id)?.verdict == .stale && ledger.session(stale.id)?.snoozeUntil == nil, "undo Still active")
+        check(ledger.session(stale.id)?.verdict == .stale && ledger.inbox.items.contains { $0.sessionId == stale.id }, "undo Still active")
 
         let question = ledger.inbox.items(in: .questions).compactMap { item -> LedgerQuestion? in if case .question(let q) = item.content { return q }; return nil }.first!
         ledger.drafts[question.id] = "  "
@@ -443,6 +484,49 @@ let start: LedgerMs = 1_793_400_000_000
         ledger.filter = filter
         try await Task.sleep(for: .milliseconds(100))
         check(!ledger.boardRows.isEmpty && ledger.boardRows.allSatisfy { ($0.title + $0.id + $0.kind + ($0.links.branch ?? "") + $0.touches.joined()).localizedStandardContains("export") }, "the Board follows the filter")
+    }
+
+    /// The core's demo read by the app: every answer decodes, and the client's grouping agrees with the core's counts
+    @MainActor static func core(binary: String, folder: String) async throws {
+        let backend = CLIBackend(binary: binary, db: folder + "/ledger.sqlite3")
+        _ = backend.run(["demo", folder + "/ledger.sqlite3"])
+        let client = LedgerClient(backend: backend)
+        let info = try await client.info()
+        check(info.schemaVersion == 1 && info.enabled, "core info")
+        let rev = try await client.rev()
+        let state = try await client.state(project: nil, range: .all)
+        check(state.rev == rev && !state.sessions.isEmpty && state.autoReview != nil, "core state: \(state.sessions.count) sessions")
+        check(Set(state.sessions.map(\.verdict)).count >= 7, "the core's demo has the verdicts: \(Set(state.sessions.map(\.verdict)))")
+        let inbox = LedgerInbox.build(state)
+        check(inbox.items(in: .questions).count == state.attention.questions && inbox.items(in: .autoReview).count == state.attention.autoReview
+              && inbox.items(in: .tidy).count == state.attention.tidy && inbox.items(in: .decide).count == state.attention.decide,
+              "the app's Inbox groups agree with the core's counts: \(state.attention), app \(LedgerInbox.Group.allCases.map { inbox.items(in: $0).count })")
+        _ = try await client.state(project: nil, range: .week)
+        for s in state.sessions {
+            let detail = try await client.session(s.id)
+            check(detail.session.id == s.id, "core session \(s.id)")
+        }
+        for p in state.projects {
+            for range in LedgerRange.allCases {
+                let graph = try await client.graph(project: p.key, range: range)
+                let plot = LedgerGraphPlot.plot(graph)
+                check(plot.rows.count == graph.nodes.count && plot.lanes >= graph.lanes, "core graph \(p.key) \(range)")
+            }
+        }
+        check(!(try await client.search("v1", project: nil)).isEmpty, "core search")
+        do {
+            _ = try await client.human(.ack, sessionId: state.sessions[0].id)
+            check(false, "an agent caller cannot confirm")
+        } catch let failure as LedgerFailure {
+            check(failure.code == "NOT_ALLOWED", "a person's operation through the CLI: \(failure.code)")
+        }
+        let suite = "dev.gitrochi.ledger-core-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LedgerStore(client: client, defaults: defaults, interval: .seconds(600))
+        await store.poll()
+        check(store.state != nil && store.inbox.count == store.attentionTotal && store.loadError == nil, "the store reads the core")
+        print("Core contract: \(state.sessions.count) sessions, \(state.projects.count) projects, attention \(state.attention.total) — decoded and grouped like the core")
     }
 
     @MainActor static func large() async throws {
@@ -508,4 +592,11 @@ swiftc -O -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" -o "$TASK_TMP/test-ledger"
-"$TASK_TMP/test-ledger"
+CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/release/gitrochi-ledger}"
+if [[ -x "$CORE" ]]; then
+    mkdir -p "$TASK_TMP/core"
+    "$TASK_TMP/test-ledger" --core "$CORE" "$TASK_TMP/core"
+else
+    "$TASK_TMP/test-ledger"
+    echo "Core contract: skipped (no gitrochi-ledger binary; set GITROCHI_LEDGER_BIN to check against the core)"
+fi

@@ -1655,3 +1655,4 @@
 "Older rows not drawn yet: %lld" = "还有 %lld 行更早的记录未绘制";
 "Open questions: %lld" = "%lld 个未决问题";
 "Sessions marked still active: %lld" = "已将 %lld 个会话标记为仍在进行";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "代理已不再等待：该提示已在别处被回答或释放。";

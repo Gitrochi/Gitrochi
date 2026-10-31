@@ -53,9 +53,13 @@ struct LedgerClient: Sendable {
         return try await call("human", args)
     }
 
+    /// `ok` is false when the prompt no longer waits (answered or released elsewhere)
     func answerPrompt(_ id: Int, _ reply: LedgerPromptReply) async throws -> LedgerWriteResult {
         try await call("prompt_answer", ["id": .number(Double(id)), "answer": .object(reply.answer)])
     }
+
+    /// Marks what auto-continue sent for a prompt as seen by a person
+    func reviewPrompt(_ id: Int) async throws -> LedgerWriteResult { try await call("prompt_review", ["id": .number(Double(id))]) }
 
     func backup() async throws -> String { try await call("backup", as: LedgerBackupResult.self).path }
 

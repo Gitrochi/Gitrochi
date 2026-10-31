@@ -1466,3 +1466,4 @@
 "Older rows not drawn yet: %lld" = "%lld oudere rijen zijn nog niet getekend";
 "Open questions: %lld" = "%lld open vragen";
 "Sessions marked still active: %lld" = "%lld sessies gemarkeerd als nog actief";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "De agent wacht niet meer: de prompt is elders beantwoord of vrijgegeven.";

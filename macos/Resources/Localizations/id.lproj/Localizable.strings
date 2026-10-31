@@ -1475,3 +1475,4 @@
 "Older rows not drawn yet: %lld" = "%lld baris lama belum digambar";
 "Open questions: %lld" = "%lld pertanyaan terbuka";
 "Sessions marked still active: %lld" = "%lld sesi ditandai masih aktif";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Agen berhenti menunggu: prompt sudah dijawab atau dilepas di tempat lain.";

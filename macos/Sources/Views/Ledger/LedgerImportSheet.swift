@@ -41,7 +41,8 @@ struct LedgerImportSheet: View {
     }
 
     private func resultList(_ results: [LedgerImportResult.Block]) -> some View {
-        let imported = results.filter(\.ok).count, duplicates = results.filter(\.duplicate).count
+        // the core counts a duplicate as ok (it was skipped)
+        let duplicates = results.filter(\.duplicate).count, imported = results.filter { $0.ok && !$0.duplicate }.count
         return VStack(alignment: .leading, spacing: 6) {
             Text(results.isEmpty ? String(localized: "No report blocks found.")
                                  : String(localized: "\(imported) imported · \(duplicates) already imported · \(results.count - imported - duplicates) failed"))
@@ -50,8 +51,8 @@ struct LedgerImportSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(results) { block in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Image(systemName: block.ok ? "checkmark.circle.fill" : block.duplicate ? "equal.circle" : "xmark.octagon.fill")
-                                .foregroundStyle(block.ok ? Color(nsColor: .systemGreen) : block.duplicate ? .secondary : Color(nsColor: .systemRed))
+                            Image(systemName: block.duplicate ? "equal.circle" : block.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                                .foregroundStyle(block.duplicate ? .secondary : block.ok ? Color(nsColor: .systemGreen) : Color(nsColor: .systemRed))
                                 .accessibilityHidden(true)
                             Text("Block \(block.index + 1)").font(.caption.weight(.semibold)).monospacedDigit()
                             Text(line(block)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(2)
@@ -66,8 +67,8 @@ struct LedgerImportSheet: View {
     }
 
     private func line(_ block: LedgerImportResult.Block) -> String {
-        if block.ok { return String(localized: "Imported into \(block.sessionId ?? "")") }
         if block.duplicate { return String(localized: "Already imported") }
+        if block.ok { return String(localized: "Imported into \(block.sessionId ?? "")") }
         return block.error ?? String(localized: "Could not read this block")
     }
 

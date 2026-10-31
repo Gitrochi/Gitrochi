@@ -69,8 +69,9 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             case "import": return try encode(LedgerImportResult(results: importText(a["text"].string ?? "", project: a["project"].string, now: now)))
             case "human": return try encode(human(a, now: now))
             case "prompt_answer": return try encode(answerPrompt(a, now: now))
+            case "prompt_review": return try encode(reviewPrompts(a))
             case "backup": return try encode(LedgerBackupResult(path: "ledger-demo-" + dayFormat.string(from: date(now)) + ".sqlite3"))
-            default: throw LedgerFailure(code: "UNKNOWN_METHOD", message: "Unknown method: \(method)")
+            default: throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown method: \(method)")
             }
         } catch let failure as LedgerFailure {
             return (try? encode(LedgerErrorEnvelope(error: .init(code: failure.code, message: failure.message)))) ?? Data()
@@ -86,7 +87,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         if s.status.isFinished { return s.ackAt != nil ? .expirable : .confirm }
         if s.status == .shelved { return .shelved }
         if s.status == .done { return .pendingMerge }
-        if now > s.lastAt + staleMs, now > s.snoozeUntil ?? .min { return .stale }
+        // a snooze runs while now is before snoozeUntil
+        if now > s.lastAt + staleMs, now >= s.snoozeUntil ?? .min { return .stale }
         return .active
     }
 
@@ -134,22 +136,20 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         for id in order {
             guard let raw = sessions[id], project == nil || raw.project == project else { continue }
             let s = decorate(raw, open: open[id] ?? 0, now: now)
-            // live work and anything a person still has to do stay whatever the period
-            if s.lastAt < from, s.verdict == .archived || s.verdict == .shelved { hidden += 1; continue }
+            // only archived sessions older than the period are left out
+            if s.verdict == .archived, s.lastAt < from { hidden += 1; continue }
             included.append(s)
         }
         let ids = Set(included.map(\.id))
         let shownQuestions = questions.filter { ids.contains($0.sessionId) && $0.state == .open }
-        let shownPrompts = prompts.filter { p in
-            (p.state == .waiting || (p.state == .auto && !reviewed.contains(p.id)))
-                && (project == nil || p.sessionId.flatMap { sessions[$0]?.project } == project)
-        }
+        func inProject(_ p: LedgerPendingPrompt) -> Bool { project == nil || p.sessionId.flatMap { sessions[$0]?.project } == project }
+        let waiting = prompts.filter { $0.state == .waiting && inProject($0) }
+        let autoReview = prompts.filter { $0.state == .auto && !reviewed.contains($0.id) && inProject($0) }
         let byID = Dictionary(uniqueKeysWithValues: included.map { ($0.id, $0) })
         let openQuestions = shownQuestions.filter { $0.state == .open && byID[$0.sessionId]?.verdict != .archived }.count
         let flat = included.filter { $0.stream == nil }
         let tidy = flat.filter { $0.verdict == .confirm || $0.verdict == .expirable }.count
         let decide = flat.filter { $0.verdict == .pendingMerge || $0.verdict == .stale }.count
-        let autoReview = shownPrompts.filter { $0.state == .auto }.count
         let allLive = order.compactMap { sessions[$0] }.map { decorate($0, open: open[$0.id] ?? 0, now: now) }
         return LedgerState(
             schemaVersion: 1, rev: rev, now: now,
@@ -161,9 +161,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             questions: shownQuestions,
             streams: included.filter { $0.stream != nil }.flatMap { cycles(of: $0) },
             overlaps: overlaps(among: included),
-            pendingPrompts: shownPrompts,
-            attention: LedgerAttention(questions: openQuestions, tidy: tidy, decide: decide, autoReview: autoReview,
-                                       total: openQuestions + tidy + decide + autoReview),
+            pendingPrompts: waiting,
+            autoReview: autoReview,
+            attention: LedgerAttention(questions: openQuestions, tidy: tidy, decide: decide, autoReview: autoReview.count,
+                                       total: openQuestions + tidy + decide + autoReview.count),
             hiddenBefore: hidden)
     }
 
@@ -345,22 +346,19 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         var summary: String?
         switch action {
         case "ack": s.ackAt = now
-        case "review":
-            guard let prompt = a["promptId"].int else { throw LedgerFailure(code: "BAD_REQUEST", message: "review needs a promptId") }
-            try review(prompt)
         case "unack": s.ackAt = nil
         case "archive": s.archivedAt = now
         case "unarchive": s.archivedAt = nil
         case "set_status":
             guard let status = a["status"].string.flatMap(LedgerStatus.init(rawValue:)) else {
-                throw LedgerFailure(code: "BAD_REQUEST", message: "set_status needs a status")
+                throw LedgerFailure(code: "INVALID_ARGUMENT", message: "set_status needs a status")
             }
             s.status = status
             summary = status.rawValue
             switch status {
             // a status a person chooses counts as confirmed
             case .merged:
-                s.mergedInto = a["version"].string ?? head(of: s.project)
+                s.mergedInto = a["into"].string ?? head(of: s.project)
                 s.baseCurrent = s.mergedInto ?? s.baseCurrent
                 s.ackAt = now
                 summary = "merged " + (s.mergedInto ?? "")
@@ -374,8 +372,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             }
             guard questions[i].state == .open else { throw LedgerFailure(code: "CONFLICT", message: "The question was already answered.") }
             if action == "answer" {
-                guard let text = a["text"].string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
-                    throw LedgerFailure(code: "BAD_REQUEST", message: "An answer needs text")
+                guard let text = a["answer"].string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+                    throw LedgerFailure(code: "INVALID_ARGUMENT", message: "An answer needs text")
                 }
                 questions[i].state = .answered
                 questions[i].answer = text
@@ -386,23 +384,22 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             }
             questions[i].answeredAt = now
         case "snooze":
-            // Still active sends no time: now plus the stale hours; undo sends the old value back (null clears it)
-            if let until = a.object?["until"] { s.snoozeUntil = until.int } else { s.snoozeUntil = now + Self.staleMs }
+            // Still active sends no time: now plus the stale hours
+            s.snoozeUntil = a["until"].int ?? a["hours"].int.map { now + LedgerMs($0) * Self.hour } ?? now + Self.staleMs
         case "shelve": s.status = .shelved
         case "link":
-            let value = a["value"].string
-            switch a["kind"].string {
-            case "branch": s.links.branch = value
-            case "worktree": s.links.worktree = value
-            case "chat": s.chatUrl = value
-            default: throw LedgerFailure(code: "BAD_REQUEST", message: "Unknown link kind")
-            }
+            // each link the request names is set; null removes it
+            let fields = a.object ?? [:]
+            if let v = fields["branch"] { s.links.branch = v.string }
+            if let v = fields["worktree"] { s.links.worktree = v.string }
+            if let v = fields["repoPath"] { s.links.repoPath = v.string }
+            if let v = fields["agentId"] { s.links.agentId = v.string }
+            if let v = fields["chatUrl"] { s.chatUrl = v.string }
         case "message":
-            guard let text = a["text"].string, !text.isEmpty else { throw LedgerFailure(code: "BAD_REQUEST", message: "A message needs text") }
-            if let prompt = a["promptId"].int { try review(prompt) }
+            guard let text = a["text"].string, !text.isEmpty else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "A message needs text") }
             summary = text
         default:
-            throw LedgerFailure(code: "BAD_REQUEST", message: "Unknown action: \(action)")
+            throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown action: \(action)")
         }
         sessions[id] = s
         var data = a.object ?? [:]
@@ -413,18 +410,27 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         return LedgerWriteResult(ok: true, rev: rev)
     }
 
-    private func review(_ promptId: Int) throws {
-        guard prompts.contains(where: { $0.id == promptId && $0.state == .auto }) else {
-            throw LedgerFailure(code: "NOT_FOUND", message: "No auto-continued prompt \(promptId)")
+    /// `prompt_review {id}` or `{all: true}`
+    private func reviewPrompts(_ a: LedgerJSON) throws -> ReviewResult {
+        let ids = a["all"].bool == true ? prompts.filter { $0.state == .auto }.map(\.id) : [a["id"].int].compactMap { $0 }
+        guard !ids.isEmpty, ids.allSatisfy({ id in prompts.contains { $0.id == id && $0.state == .auto } }) else {
+            throw LedgerFailure(code: "NOT_FOUND", message: "No auto-continued prompt to review")
         }
-        reviewed.insert(promptId)
+        let new = ids.filter { !reviewed.contains($0) }
+        reviewed.formUnion(new)
+        for id in new { if let i = prompts.firstIndex(where: { $0.id == id }) { prompts[i].reviewedAt = clock() } }
+        if !new.isEmpty { rev += 1 }
+        return ReviewResult(ok: true, rev: rev, reviewed: new.count)
     }
+
+    private struct ReviewResult: Encodable { let ok: Bool; let rev: Int; let reviewed: Int }
 
     private func answerPrompt(_ a: LedgerJSON, now: LedgerMs) throws -> LedgerWriteResult {
         guard let id = a["id"].int, let i = prompts.firstIndex(where: { $0.id == id }) else {
             throw LedgerFailure(code: "NOT_FOUND", message: "No such prompt")
         }
-        guard prompts[i].state == .waiting else { throw LedgerFailure(code: "CONFLICT", message: "This prompt was already answered.") }
+        // a prompt that no longer waits is not an error: the answer just did not win
+        guard prompts[i].state == .waiting else { return LedgerWriteResult(ok: false, rev: rev) }
         let answer = a["answer"].object ?? [:]
         if answer["hold"]?.bool == true {
             prompts[i].deadline = 0
@@ -434,6 +440,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         } else {
             prompts[i].state = .answered
             prompts[i].answeredBy = .human
+            prompts[i].answeredAt = now
             prompts[i].answer = answer
             if let session = prompts[i].sessionId {
                 record(session, "prompt_answer", at: now, actor: .human, summary: Self.describe(answer), data: ["promptId": .number(Double(id))])
@@ -451,6 +458,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             let answer = Self.autoAnswer(prompts[i])
             prompts[i].state = .auto
             prompts[i].answeredBy = .auto
+            prompts[i].answeredAt = prompts[i].deadline
             prompts[i].answer = answer
             if let session = prompts[i].sessionId {
                 record(session, "auto_reply", at: prompts[i].deadline, actor: .auto, summary: Self.describe(answer),
@@ -514,7 +522,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             }
             let hash = (try? JSONEncoder.sorted.encode(json)).map { String(decoding: $0, as: UTF8.self) } ?? raw
             if importHashes.contains(hash) {
-                results.append(.init(index: index, ok: false, duplicate: true, error: nil, sessionId: object["session"]?.string))
+                // as the core does: a duplicate is ok, and skipped
+                results.append(.init(index: index, ok: true, duplicate: true, error: nil, sessionId: object["session"]?.string))
                 continue
             }
             importHashes.insert(hash)
@@ -533,7 +542,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             if let status = LedgerStatus(rawValue: event) { sessions[id]?.status = status }
             results.append(.init(index: index, ok: true, duplicate: false, error: nil, sessionId: id))
         }
-        if results.contains(where: \.ok) { rev += 1 }
+        if results.contains(where: { $0.ok && !$0.duplicate }) { rev += 1 }
         return results
     }
 
@@ -794,6 +803,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         if let i = prompts.firstIndex(where: { $0.id == auto }) {
             prompts[i].state = .auto
             prompts[i].answeredBy = .auto
+            prompts[i].answeredAt = now - 55 * m
             prompts[i].answer = Self.autoAnswer(prompts[i])
             record(drafts, "auto_reply", at: now - 55 * m, actor: .auto, summary: "7 days (Recommended)", data: ["promptId": .number(Double(auto))])
         }

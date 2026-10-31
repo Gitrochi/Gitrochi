@@ -1554,3 +1554,4 @@
 "Older rows not drawn yet: %lld" = "%lld filas más antiguas aún no se dibujan";
 "Open questions: %lld" = "%lld preguntas abiertas";
 "Sessions marked still active: %lld" = "%lld sesiones marcadas como aún activas";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "El agente ya no espera: el aviso se respondió o se liberó en otro lugar.";

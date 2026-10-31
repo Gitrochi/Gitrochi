@@ -1517,3 +1517,4 @@
 "Older rows not drawn yet: %lld" = "ยังไม่ได้วาดแถวที่เก่ากว่า %lld แถว";
 "Open questions: %lld" = "คำถามค้างอยู่ %lld ข้อ";
 "Sessions marked still active: %lld" = "ทำเครื่องหมาย %lld เซสชันว่ายังทำงานอยู่แล้ว";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "เอเจนต์เลิกรอแล้ว: พรอมต์ถูกตอบหรือปล่อยไปจากที่อื่น";

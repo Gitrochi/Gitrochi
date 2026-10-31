@@ -1522,3 +1522,4 @@
 "Older rows not drawn yet: %lld" = "Старіших рядків ще не намальовано: %lld";
 "Open questions: %lld" = "Відкритих запитань: %lld";
 "Sessions marked still active: %lld" = "Позначено як ще активні сесій: %lld";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Агент більше не чекає: на запит відповіли або його відпустили деінде.";

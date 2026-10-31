@@ -145,6 +145,8 @@ struct LedgerSession: Codable, Identifiable, Hashable {
     var verdict: LedgerVerdict
     var baseVersion: String?
     var baseCurrent: String?
+    /// Baselines newer than `baseCurrent`, when the core counts them
+    var behind: Int?
     var mergedInto: String?
     var touches: [String]
     var related: [String]
@@ -269,6 +271,8 @@ struct LedgerPendingPrompt: Codable, Identifiable, Hashable {
     var state: State
     var answer: [String: LedgerJSON]?
     var answeredBy: LedgerAnswerer?
+    var answeredAt: LedgerMs?
+    var reviewedAt: LedgerMs?
 }
 
 /// What needs a person, as the core counts it (the sidebar badge is `total`)
@@ -298,7 +302,10 @@ struct LedgerState: Codable, Hashable {
     var questions: [LedgerQuestion]
     var streams: [LedgerStreamCycle]
     var overlaps: [LedgerOverlap]
+    /// Waiting prompts only
     var pendingPrompts: [LedgerPendingPrompt]
+    /// Prompts auto-continue answered that a person has not reviewed yet (the core's contract adds this list)
+    var autoReview: [LedgerPendingPrompt]?
     var attention: LedgerAttention
     var hiddenBefore: Int
 }
@@ -320,6 +327,8 @@ struct LedgerGraphNode: Codable, Identifiable, Hashable {
 
     var id: String
     var lane: Int
+    /// The row the core placed it in, newest first
+    var row: Int?
     var ts: LedgerMs
     var color: Int
     var kind: Kind
@@ -340,13 +349,24 @@ struct LedgerGraphEdge: Codable, Hashable {
     var color: Int
 }
 
+/// A live session's dashed line from its newest node (at `row`) up to the top
+struct LedgerGraphTail: Codable, Hashable {
+    var sessionId: String
+    var lane: Int
+    var row: Int
+    var color: Int
+}
+
 /// `graph`: lanes laid out by the core; lane 0 is the baseline trunk
 struct LedgerGraph: Codable, Hashable {
     var lanes: Int
+    var rows: Int?
     var nodes: [LedgerGraphNode]
     var edges: [LedgerGraphEdge]
+    var tails: [LedgerGraphTail]?
     var from: LedgerMs
     var to: LedgerMs
+    var hiddenBefore: Int?
 }
 
 struct LedgerInfo: Codable, Hashable {
@@ -409,15 +429,12 @@ enum LedgerHumanAction: Hashable {
     case dismiss(questionId: Int)
     /// Still active: the core sets `snoozeUntil` to now plus the stale hours
     case stillActive
-    /// Puts `snoozeUntil` back to a value it had (nil clears it); what undoes Still active
-    case snooze(until: LedgerMs?)
+    /// Puts `snoozeUntil` back to a value it had; what undoes Still active
+    case snooze(until: LedgerMs)
     case shelve
-    case link(kind: String, value: String)
+    /// Sets one link (`branch`, `worktree`, `repoPath`, `agentId`, `chatUrl` …); nil removes it
+    case link(field: String, value: String?)
     case message(text: String)
-    /// Confirms what auto-continue sent for a prompt
-    case reviewAuto(promptId: Int)
-    /// A correction for what auto-continue sent, delivered to the session like a message
-    case correctAuto(promptId: Int, text: String)
 
     /// The arguments of `human`, without `sessionId`
     var arguments: [String: LedgerJSON] {
@@ -428,17 +445,15 @@ enum LedgerHumanAction: Hashable {
         case .unarchive: return ["action": "unarchive"]
         case .setStatus(let status, let version):
             var args: [String: LedgerJSON] = ["action": "set_status", "status": .string(status.rawValue)]
-            if let version { args["version"] = .string(version) }
+            if let version { args["into"] = .string(version) }
             return args
-        case .answer(let id, let text): return ["action": "answer", "questionId": .number(Double(id)), "text": .string(text)]
+        case .answer(let id, let text): return ["action": "answer", "questionId": .number(Double(id)), "answer": .string(text)]
         case .dismiss(let id): return ["action": "dismiss", "questionId": .number(Double(id))]
         case .stillActive: return ["action": "snooze"]
-        case .snooze(let until): return ["action": "snooze", "until": until.map { .number(Double($0)) } ?? .null]
+        case .snooze(let until): return ["action": "snooze", "until": .number(Double(until))]
         case .shelve: return ["action": "shelve"]
-        case .link(let kind, let value): return ["action": "link", "kind": .string(kind), "value": .string(value)]
+        case .link(let field, let value): return ["action": "link", field: value.map { .string($0) } ?? .null]
         case .message(let text): return ["action": "message", "text": .string(text)]
-        case .reviewAuto(let id): return ["action": "review", "promptId": .number(Double(id))]
-        case .correctAuto(let id, let text): return ["action": "message", "promptId": .number(Double(id)), "text": .string(text)]
         }
     }
 }

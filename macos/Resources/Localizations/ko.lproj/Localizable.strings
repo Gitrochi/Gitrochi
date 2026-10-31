@@ -3332,3 +3332,4 @@
 "Older rows not drawn yet: %lld" = "더 오래된 행 %lld개는 아직 그리지 않았습니다";
 "Open questions: %lld" = "열린 질문 %lld개";
 "Sessions marked still active: %lld" = "세션 %lld개를 아직 진행 중으로 표시함";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "에이전트가 더는 기다리지 않습니다: 프롬프트가 다른 곳에서 답해졌거나 풀렸습니다.";

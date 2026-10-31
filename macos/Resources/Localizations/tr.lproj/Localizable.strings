@@ -1509,3 +1509,4 @@
 "Older rows not drawn yet: %lld" = "%lld eski satır henüz çizilmedi";
 "Open questions: %lld" = "%lld açık soru";
 "Sessions marked still active: %lld" = "%lld oturum hâlâ etkin olarak işaretlendi";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Ajan artık beklemiyor: istem başka bir yerde yanıtlandı ya da bırakıldı.";

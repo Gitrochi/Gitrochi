@@ -182,7 +182,7 @@ struct LedgerInboxView: View {
             Image(systemName: "arrow.right").font(.caption).foregroundStyle(.tertiary).accessibilityHidden(true)
             Text("“\(sent)”").font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
         }
-        let busy = prompt.sessionId.map { ledger.working.contains($0) } ?? true
+        let busy = ledger.working.contains("p\(prompt.id)")
         if correcting == prompt.id {
             LedgerAnswerField(placeholder: String(localized: "What should the session do instead?"), text: $correction,
                               saveTitle: String(localized: "Send correction"), busy: busy, focusRequest: true,

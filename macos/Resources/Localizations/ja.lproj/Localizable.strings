@@ -2252,3 +2252,4 @@
 "Older rows not drawn yet: %lld" = "古い行 %lld 件はまだ描画していません";
 "Open questions: %lld" = "未回答の質問 %lld 件";
 "Sessions marked still active: %lld" = "%lld 件のセッションをまだ進行中にしました";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "エージェントは待機をやめました：プロンプトは別の場所で回答されたか解放されました。";

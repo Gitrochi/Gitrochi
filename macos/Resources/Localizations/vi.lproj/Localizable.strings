@@ -1480,3 +1480,4 @@
 "Older rows not drawn yet: %lld" = "Còn %lld hàng cũ hơn chưa được vẽ";
 "Open questions: %lld" = "%lld câu hỏi đang mở";
 "Sessions marked still active: %lld" = "Đã đánh dấu %lld phiên vẫn đang chạy";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Tác tử đã thôi chờ: lời nhắc đã được trả lời hoặc giải phóng ở nơi khác.";

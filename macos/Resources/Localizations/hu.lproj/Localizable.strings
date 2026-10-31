@@ -1505,3 +1505,4 @@
 "Older rows not drawn yet: %lld" = "%lld régebbi sor még nincs kirajzolva";
 "Open questions: %lld" = "%lld nyitott kérdés";
 "Sessions marked still active: %lld" = "%lld munkamenet még aktívként megjelölve";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Az ügynök már nem vár: a kérést máshol megválaszolták vagy elengedték.";

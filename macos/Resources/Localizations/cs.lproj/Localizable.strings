@@ -1502,3 +1502,4 @@
 "Older rows not drawn yet: %lld" = "Starší řádky zatím nevykreslené: %lld";
 "Open questions: %lld" = "Otevřené otázky: %lld";
 "Sessions marked still active: %lld" = "Označeno jako stále aktivní relací: %lld";
+"The agent stopped waiting: the prompt was answered or released elsewhere." = "Agent už nečeká: výzva byla zodpovězena nebo uvolněna jinde.";

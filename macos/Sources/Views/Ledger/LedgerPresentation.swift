@@ -263,7 +263,10 @@ struct LedgerInbox: Equatable {
             return a.createdAt != b.createdAt ? a.createdAt < b.createdAt : a.id < b.id
         }
         inbox.items += questions.map { Item(id: "q\($0.id)", group: .questions, sessionId: $0.sessionId, content: .question($0)) }
-        let auto = state.pendingPrompts.filter { $0.state == .auto }.sorted { $0.deadline > $1.deadline }
+        // the core lists them in `autoReview`; an older shape kept them among the pending prompts
+        var auto = state.autoReview ?? []
+        auto += state.pendingPrompts.filter { p in p.state == .auto && !auto.contains { $0.id == p.id } }
+        auto.sort { ($0.answeredAt ?? $0.deadline) > ($1.answeredAt ?? $1.deadline) }
         inbox.items += auto.map { Item(id: "p\($0.id)", group: .autoReview, sessionId: $0.sessionId, content: .autoReply($0)) }
         func byUrgency(_ verdicts: [LedgerVerdict]) -> [LedgerSession] {
             state.sessions.filter { $0.stream == nil && verdicts.contains($0.verdict) }.sorted { a, b in
@@ -279,21 +282,22 @@ struct LedgerInbox: Equatable {
 
 /// What undoes a person's operation, worked out from the session as it was before (Windows: entities/ledger/lib/undo.ts)
 enum LedgerUndo {
-    /// nil when the operation cannot be undone: answers, dismissals, messages and links are delivered as they are
-    static func inverse(of action: LedgerHumanAction, before s: LedgerSession) -> [LedgerHumanAction]? {
+    /// nil when the operation cannot be undone: answers, dismissals, messages and links are delivered as they are.
+    /// `now` stands in for "no snooze": snoozed until now is stale again at once.
+    static func inverse(of action: LedgerHumanAction, before s: LedgerSession, now: LedgerMs) -> [LedgerHumanAction]? {
         switch action {
         case .ack: return s.ackAt == nil ? [.unack] : []
         case .unack: return s.ackAt != nil ? [.ack] : []
         case .archive: return s.archivedAt == nil ? [.unarchive] : []
         case .unarchive: return s.archivedAt != nil ? [.archive] : []
-        case .stillActive, .snooze: return [.snooze(until: s.snoozeUntil)]
+        case .stillActive, .snooze: return [.snooze(until: s.snoozeUntil ?? now)]
         case .setStatus, .shelve:
             // the status first (it may confirm or clear), then confirmation and archive as they were
             var steps: [LedgerHumanAction] = [.setStatus(s.status, version: s.status == .merged ? s.mergedInto : nil)]
             steps.append(s.ackAt == nil ? .unack : .ack)
             if s.archivedAt != nil { steps.append(.archive) }
             return steps
-        case .answer, .dismiss, .link, .message, .reviewAuto, .correctAuto: return nil
+        case .answer, .dismiss, .link, .message: return nil
         }
     }
 }
@@ -315,6 +319,7 @@ enum LedgerProjects {
 
     /// How many of the project's baselines are newer than where the session is now
     static func behind(_ s: LedgerSession, baselines: [LedgerBaseline]) -> Int {
+        if let behind = s.behind { return behind }
         guard let current = s.baseCurrent ?? s.baseVersion else { return 0 }
         let key = versionKey(current)
         return baselines.filter { $0.project == s.project && key.lexicographicallyPrecedes(versionKey($0.version)) }.count

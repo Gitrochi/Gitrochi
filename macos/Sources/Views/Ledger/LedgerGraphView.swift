@@ -135,7 +135,7 @@ struct LedgerGraphView: View {
     }
 
     @ViewBuilder private var footer: some View {
-        let hiddenSessions = ledger.state?.hiddenBefore ?? 0
+        let hiddenSessions = ledger.graph?.hiddenBefore ?? ledger.state?.hiddenBefore ?? 0
         if plot.hiddenRows > 0 || (hiddenSessions > 0 && ledger.range.wider != nil) {
             HStack(spacing: 8) {
                 Text(plot.hiddenRows > 0 ? String(localized: "Older rows not drawn yet: \(plot.hiddenRows)")

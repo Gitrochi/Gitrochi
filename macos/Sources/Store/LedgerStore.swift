@@ -298,6 +298,7 @@ final class LedgerStore {
     func perform(_ action: LedgerHumanAction, on ids: [String], message: String) async {
         guard !ids.isEmpty else { return }
         let before = Dictionary(ids.compactMap { id in session(id).map { (id, $0) } }) { first, _ in first }
+        let now = Self.localNow() + clockSkew
         working.formUnion(ids)
         defer { working.subtract(ids) }
         var steps: [(session: String, actions: [LedgerHumanAction])] = []
@@ -305,7 +306,7 @@ final class LedgerStore {
         for id in ids {
             do {
                 _ = try await client.human(action, sessionId: id)
-                if let s = before[id], let inverse = LedgerUndo.inverse(of: action, before: s) {
+                if let s = before[id], let inverse = LedgerUndo.inverse(of: action, before: s, now: now) {
                     steps.append((id, inverse))
                 } else {
                     undoable = false
@@ -387,7 +388,11 @@ final class LedgerStore {
         working.insert(key)
         defer { working.remove(key) }
         do {
-            _ = try await client.answerPrompt(prompt.id, reply)
+            guard try await client.answerPrompt(prompt.id, reply).ok else {
+                actionError = String(localized: "The agent stopped waiting: the prompt was answered or released elsewhere.")
+                await reload()
+                return
+            }
             let message: String
             switch reply {
             case .answerInTerminal: message = String(localized: "Left to the terminal")
@@ -403,16 +408,25 @@ final class LedgerStore {
         await reload()
     }
 
-    /// Marks what auto-continue sent as seen, or sends a correction to the session
+    /// Marks what auto-continue sent as seen; a correction goes to the session as a message first
     func review(_ prompt: LedgerPendingPrompt, correction: String? = nil) async {
-        guard let session = prompt.sessionId else { return }
+        let key = "p\(prompt.id)"
+        guard !working.contains(key) else { return }
+        working.insert(key)
+        defer { working.remove(key) }
         let text = correction?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if text.isEmpty {
-            await perform(.reviewAuto(promptId: prompt.id), on: [session], message: String(localized: "Reviewed"))
-        } else {
-            await perform(.correctAuto(promptId: prompt.id, text: text), on: [session],
-                          message: String(localized: "Correction sent. The session receives it with its next report."))
+        do {
+            if !text.isEmpty {
+                guard let session = prompt.sessionId else { return }
+                _ = try await client.human(.message(text: text), sessionId: session)
+            }
+            _ = try await client.reviewPrompt(prompt.id)
+            toast = LedgerToast(message: text.isEmpty ? String(localized: "Reviewed")
+                                                      : String(localized: "Correction sent. The session receives it with its next report."), canUndo: false)
+        } catch {
+            actionError = error.localizedDescription
         }
+        await reload()
     }
 
     // MARK: - Search, import, connection

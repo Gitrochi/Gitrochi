@@ -28,9 +28,15 @@ struct LedgerGraphPlot: Equatable {
     /// - Edges whose older end is not drawn (outside the period or past `limit`) run on to the bottom row.
     /// - Where an edge changes lanes, its straight part runs in the session's lane — the newer end of a fork, the older
     ///   end of a merge or hand-off — and the curve sits in the other end's row, as forks and merges do in the commit graph.
-    /// - Sessions in `openSessions` continue upward from their newest node as a dashed line.
+    /// - Sessions in `openSessions`, and the core's `tails`, continue upward from their newest node as a dashed line.
+    /// - The core's `row` orders the rows when every node has one; otherwise newest first, a baseline above events.
     static func plot(_ graph: LedgerGraph, openSessions: Set<String> = [], limit: Int = .max) -> LedgerGraphPlot {
-        let sorted = graph.nodes.sorted { a, b in a.ts != b.ts ? a.ts > b.ts : a.lane != b.lane ? a.lane < b.lane : a.id < b.id }
+        let byRow = !graph.nodes.isEmpty && graph.nodes.allSatisfy { $0.row != nil }
+        let sorted = graph.nodes.sorted { a, b in
+            if byRow, a.row != b.row { return (a.row ?? 0) < (b.row ?? 0) }
+            return a.ts != b.ts ? a.ts > b.ts : a.lane != b.lane ? a.lane < b.lane : a.id < b.id
+        }
+        let openSessions = openSessions.union((graph.tails ?? []).map(\.sessionId))
         let kept = Array(sorted.prefix(max(0, limit)))
         var plot = LedgerGraphPlot(rows: kept.map { Row(node: $0, segments: []) },
                                    lanes: max(1, graph.lanes, (kept.map(\.lane).max() ?? 0) + 1),
