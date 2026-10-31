@@ -3,7 +3,9 @@
 //! `UPDATE_SNAPSHOTS=1 cargo test -p gitrochi-autocontinue --test outputs` and review the diff.
 
 use gitrochi_autocontinue::{
-    hook_settings, permission_allow, permission_deny, pre_tool_use_allow, stop_wake,
+    compose_session_context, hook_settings, is_recommended, permission_allow, permission_deny,
+    pre_tool_use_allow, pre_tool_use_deny, reply_language, session_start_context, stop_wake, Lang,
+    Language, Policy,
 };
 use serde_json::{json, Value};
 use std::io::Write;
@@ -227,6 +229,52 @@ fn builders_print_the_documented_shapes() {
         pre,
         json!({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": {"questions": []}}})
     );
+    let refused: Value =
+        serde_json::from_str(&pre_tool_use_deny("Keep planning").stdout()).unwrap();
+    assert_eq!(
+        refused,
+        json!({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Keep planning"}})
+    );
+    let start = session_start_context("Ask with AskUserQuestion");
+    assert_eq!(start.exit_code(), 0);
+    assert_eq!(
+        serde_json::from_str::<Value>(&start.stdout()).unwrap(),
+        json!({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "Ask with AskUserQuestion"}})
+    );
+}
+
+#[test]
+fn the_session_context_asks_for_a_recommended_first_option() {
+    let mut policy = Policy {
+        enabled: true,
+        delay_sec: 45,
+        ..Policy::default()
+    };
+    let en = compose_session_context(reply_language("", &policy), &policy);
+    assert!(
+        en.starts_with("[Gitrochi] Auto-continue is on for this session"),
+        "{en}"
+    );
+    assert!(en.contains("within 45 seconds") && en.contains("AskUserQuestion"));
+    assert!(en.contains("\"(Recommended)\""));
+    policy.language = Language::Ko;
+    let ko = compose_session_context(reply_language("", &policy), &policy);
+    assert!(
+        ko.contains("45초 안에") && ko.contains("\"(추천)\""),
+        "{ko}"
+    );
+    // every language names a mark the answer picker recognises
+    for (lang, mark) in [
+        (Lang::Ko, "(추천)"),
+        (Lang::En, "(Recommended)"),
+        (Lang::Ja, "(推奨)"),
+        (Lang::Zh, "(推荐)"),
+    ] {
+        let text = compose_session_context(lang, &policy);
+        assert!(text.contains(mark), "{lang:?}: {text}");
+        assert!(is_recommended(&format!("Option {mark}")), "{lang:?}");
+        assert!(text.chars().count() < 10_000);
+    }
 }
 
 #[test]

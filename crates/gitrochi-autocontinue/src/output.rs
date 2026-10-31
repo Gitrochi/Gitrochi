@@ -66,6 +66,27 @@ pub fn pre_tool_use_allow(updated_input: Value, context: Option<&str>) -> HookOu
     HookOutput::Json(json!({ "hookSpecificOutput": specific }))
 }
 
+/// PreToolUse deny, when the person turned a plan down in the app; Claude is told why.
+pub fn pre_tool_use_deny(reason: &str) -> HookOutput {
+    HookOutput::Json(json!({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }))
+}
+
+/// SessionStart context for Claude (at most 10,000 characters reach it in full).
+pub fn session_start_context(text: &str) -> HookOutput {
+    HookOutput::Json(json!({
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": text,
+        }
+    }))
+}
+
 /// PermissionRequest allow for this one call. `updatedPermissions` is never set, so no
 /// rule outlives the call.
 pub fn permission_allow() -> HookOutput {
