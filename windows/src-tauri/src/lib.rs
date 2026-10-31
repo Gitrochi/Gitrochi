@@ -5,6 +5,7 @@ mod agents;
 mod editors;
 pub mod helper;
 mod launch;
+mod ledger;
 mod local_projects;
 mod net;
 mod process;
@@ -107,6 +108,7 @@ pub fn run() {
             local_projects::local_projects_read,
             local_projects::local_projects_write,
             repo_index::index_call,
+            ledger::ledger_call,
             update::update_check,
             update::update_install,
             update::update_verify,
