@@ -69,24 +69,37 @@ fn is_busy(error: &rusqlite::Error) -> bool {
 /// app, a hook and an agent open a new file at once, all but one of them get SQLITE_BUSY
 /// immediately, whatever the busy timeout. They wait for the one switching with BEGIN
 /// IMMEDIATE, which does honour the timeout, and ask again: by then the file is in WAL mode
-/// and the pragma needs no lock.
-fn enable_wal(connection: &Connection) -> Result<()> {
-    let deadline = Instant::now() + BUSY_TIMEOUT;
+/// and the pragma needs no lock. After `patience` it gives up with an error that says so.
+fn enable_wal(connection: &Connection, path: &Path, patience: Duration) -> Result<()> {
+    let deadline = Instant::now() + patience;
+    let gave_up = || {
+        Error::new(
+            "DATABASE",
+            format!(
+                "Could not open {}: another process kept it locked for {} s while it was being set up",
+                path.display(),
+                patience.as_secs_f64()
+            ),
+        )
+    };
     loop {
         match connection.query_row("PRAGMA journal_mode = WAL", [], |r| r.get::<_, String>(0)) {
             // Network file systems can refuse WAL; the ledger then keeps working in rollback mode.
             Ok(_) => return Ok(()),
-            Err(error) if is_busy(&error) && Instant::now() < deadline => {
-                connection.execute_batch("BEGIN IMMEDIATE; ROLLBACK;")?;
-            }
-            Err(error) => return Err(error.into()),
+            Err(error) if !is_busy(&error) => return Err(error.into()),
+            Err(_) if Instant::now() >= deadline => return Err(gave_up()),
+            Err(_) => match connection.execute_batch("BEGIN IMMEDIATE; ROLLBACK;") {
+                Ok(()) => {}
+                Err(error) if is_busy(&error) => return Err(gave_up()),
+                Err(error) => return Err(error.into()),
+            },
         }
     }
 }
 
-fn configure(connection: &Connection) -> Result<()> {
+fn configure(connection: &Connection, path: &Path) -> Result<()> {
     connection.busy_timeout(BUSY_TIMEOUT)?;
-    enable_wal(connection)?;
+    enable_wal(connection, path, BUSY_TIMEOUT)?;
     connection.execute_batch(
         "PRAGMA trusted_schema = OFF;
          PRAGMA synchronous = NORMAL;
@@ -108,7 +121,7 @@ fn open_connection(path: &Path) -> Result<Connection> {
             format!("Could not open {}: {e}", path.display()),
         )
     })?;
-    configure(&connection)?;
+    configure(&connection, path)?;
     Ok(connection)
 }
 
@@ -245,4 +258,46 @@ pub fn shared(path: &Path) -> Result<Arc<Db>> {
     let db = Arc::new(Db::open(path)?);
     registry.insert(path.to_path_buf(), db.clone());
     Ok(db)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_new_file_held_too_long_is_reported_clearly_and_opens_once_free() {
+        let dir = std::env::temp_dir().join(format!("gitrochi-ledger-wal-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("new.sqlite3");
+        // Another connection holds the brand-new file, still in rollback mode.
+        let holder = Connection::open(&path).unwrap();
+        holder.execute_batch("BEGIN EXCLUSIVE").unwrap();
+        let opener = Connection::open(&path).unwrap();
+        opener.busy_timeout(Duration::from_millis(50)).unwrap();
+        let started = Instant::now();
+        let error = enable_wal(&opener, &path, Duration::from_millis(200)).unwrap_err();
+        assert_eq!(error.code, "DATABASE");
+        assert!(
+            error
+                .message
+                .contains("kept it locked for 0.2 s while it was being set up")
+                && error.message.contains("new.sqlite3"),
+            "{}",
+            error.message
+        );
+        assert!(
+            started.elapsed() < Duration::from_secs(5),
+            "it gives up, it does not hang"
+        );
+        // Once the other connection is done, the same connection switches the file.
+        holder.execute_batch("ROLLBACK").unwrap();
+        enable_wal(&opener, &path, Duration::from_millis(200)).unwrap();
+        let mode: String = opener
+            .query_row("PRAGMA journal_mode", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(mode, "wal");
+        drop((holder, opener));
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }
