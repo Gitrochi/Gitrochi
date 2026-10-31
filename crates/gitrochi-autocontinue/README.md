@@ -107,7 +107,7 @@ The first line names Gitrochi and summarizes the question (or the chosen answers
 
 `permission_deny(message)` builds `{"decision": {"behavior": "deny", "message": …}}` for when the person denies from the app. No output ever sets `updatedPermissions`, so nothing outlives the call. A background hook's decision fields have no effect, which is why the Stop answer travels as exit code 2 and stderr. The `additionalContext` note tells Claude the answer was chosen automatically, so it can say so in its summary. `tests/snapshots/` pins every output with the fixtures in `tests/fixtures/`.
 
-`hook_settings(command, delaySec)` returns the `hooks` entries the handler installs next to Gitrochi's status hooks in the app's `hooks.json` (passed with `--settings`): `Stop` with `"async": true, "asyncRewake": true`, `PreToolUse` with matcher `AskUserQuestion|ExitPlanMode`, `PermissionRequest`, each with `timeout` = delay + 15, and a `UserPromptSubmit` entry (timeout 10) that only tells the handler the person typed. Each runs `command <Event>`; [`tests/snapshots/hook-settings.json`](tests/snapshots/hook-settings.json) shows the result.
+`hook_settings(command, delaySec)` returns the `hooks` entries the handler installs next to Gitrochi's status hooks in the app's `hooks.json` (passed with `--settings`): `Stop` with `"async": true, "asyncRewake": true`, `PreToolUse` with matcher `AskUserQuestion|ExitPlanMode`, `PermissionRequest`, each with `timeout` = delay + 10 (design §9.1), and a `UserPromptSubmit` entry (timeout 10) that only tells the handler the person typed. Each runs `command <Event>`; [`tests/snapshots/hook-settings.json`](tests/snapshots/hook-settings.json) shows the result.
 
 ## What the Ledger stores
 
@@ -186,4 +186,4 @@ Not yet confirmed in a real session, because no logged-in standalone `claude` wa
 - While a PreToolUse or PermissionRequest hook waits, the terminal shows no prompt; the app's countdown is the only place to answer. An answer from the app goes back through `updatedInput` (or `permission_deny`); "answer in the terminal" ends the hook with no output.
 - Keep `SessionState` per session (or count the session's `auto_reply` events since the person's last input); call `after_prompt` on every UserPromptSubmit, `after_person` when the person answers in the app, `after_auto_reply` after sending.
 - Fill `PermissionContext` with the canonical repository root, the session's scratchpad (from the input), and the current branch and its upstream (`git rev-parse --abbrev-ref HEAD @{upstream}`, remote name removed); without them a bare push is held.
-- Finish before the hook's timeout (delay + 15 seconds).
+- Finish before the hook's timeout (delay + 10 seconds).

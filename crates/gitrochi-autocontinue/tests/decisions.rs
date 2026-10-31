@@ -429,7 +429,7 @@ fn the_policy_file_is_camel_case_and_clamped() {
     assert_eq!(p.protected(), ["main", "master", "develop"]);
     assert_eq!(p.template, None);
     assert_eq!(p.language, Language::Ko);
-    assert_eq!(p.hook_timeout(), 25);
+    assert_eq!(p.hook_timeout(), 20);
 
     let defaults = Policy::from_json("{}").unwrap();
     assert_eq!(defaults, Policy::default());

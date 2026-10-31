@@ -4,7 +4,7 @@
       "hooks": [
         {
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PermissionRequest",
-          "timeout": 45,
+          "timeout": 40,
           "type": "command"
         }
       ],
@@ -16,7 +16,7 @@
       "hooks": [
         {
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook PreToolUse",
-          "timeout": 45,
+          "timeout": 40,
           "type": "command"
         }
       ],
@@ -30,7 +30,7 @@
           "async": true,
           "asyncRewake": true,
           "command": "\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger\" hook Stop",
-          "timeout": 45,
+          "timeout": 40,
           "type": "command"
         }
       ],

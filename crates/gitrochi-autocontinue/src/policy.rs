@@ -7,8 +7,8 @@ pub const DEFAULT_MAX_CONSECUTIVE: u32 = 3;
 pub const MAX_CONSECUTIVE_LIMIT: u32 = 20;
 /// Protected whatever the settings say, so a missing setting never opens them up.
 pub const DEFAULT_PROTECTED_BRANCHES: [&str; 2] = ["main", "master"];
-/// Hook timeouts leave this much room past the delay for the handler's own work.
-pub const HOOK_TIMEOUT_MARGIN_SEC: u32 = 15;
+/// Hook timeouts leave this much room past the delay for the handler's own work (design §9.1).
+pub const HOOK_TIMEOUT_MARGIN_SEC: u32 = 10;
 
 /// Which kinds of prompts may be answered automatically.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

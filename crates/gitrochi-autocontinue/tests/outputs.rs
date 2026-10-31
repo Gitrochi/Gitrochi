@@ -239,7 +239,7 @@ fn hook_settings_add_the_delay_to_each_timeout() {
         ),
     );
     let s = hook_settings("h", 120);
-    assert_eq!(s["Stop"][0]["hooks"][0]["timeout"], 135);
+    assert_eq!(s["Stop"][0]["hooks"][0]["timeout"], 130);
     assert_eq!(s["Stop"][0]["hooks"][0]["async"], true);
     assert_eq!(s["Stop"][0]["hooks"][0]["asyncRewake"], true);
     assert_eq!(
@@ -247,12 +247,12 @@ fn hook_settings_add_the_delay_to_each_timeout() {
         "AskUserQuestion|ExitPlanMode"
     );
     assert_eq!(s["PreToolUse"][0]["hooks"][0]["command"], "h PreToolUse");
-    assert_eq!(s["PermissionRequest"][0]["hooks"][0]["timeout"], 135);
+    assert_eq!(s["PermissionRequest"][0]["hooks"][0]["timeout"], 130);
     // out-of-range delays are clamped to 10–300 seconds
-    assert_eq!(hook_settings("h", 1)["Stop"][0]["hooks"][0]["timeout"], 25);
+    assert_eq!(hook_settings("h", 1)["Stop"][0]["hooks"][0]["timeout"], 20);
     assert_eq!(
         hook_settings("h", 9999)["Stop"][0]["hooks"][0]["timeout"],
-        315
+        310
     );
 
     let (code, stdout, _) = run(&["settings", "h", "--delay", "60"], "");
