@@ -39,9 +39,10 @@ struct LedgerToast: Identifiable, Equatable {
 final class LedgerStore {
     static let shared = LedgerStore(client: LedgerClient(backend: LedgerStore.makeBackend()))
 
-    /// The demo until the core is connected (wave 2); GITROCHI_LEDGER_DEMO=large or =empty picks another demo
-    nonisolated static func makeBackend() -> LedgerBackend {
-        DemoLedgerBackend(mode: DemoLedgerBackend.Mode(rawValue: ProcessInfo.processInfo.environment["GITROCHI_LEDGER_DEMO"] ?? "") ?? .standard)
+    /// The core (the person's ledger database); GITROCHI_LEDGER_DEMO=standard, =large or =empty shows a demo instead
+    nonisolated static func makeBackend(environment: [String: String] = ProcessInfo.processInfo.environment) -> LedgerBackend {
+        guard let demo = environment["GITROCHI_LEDGER_DEMO"], !demo.isEmpty else { return NativeLedgerBackend() }
+        return DemoLedgerBackend(mode: DemoLedgerBackend.Mode(rawValue: demo) ?? .standard)
     }
 
     nonisolated static func localNow() -> LedgerMs { LedgerMs((Date().timeIntervalSince1970 * 1000).rounded()) }

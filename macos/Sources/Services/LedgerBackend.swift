@@ -2,8 +2,8 @@ import Foundation
 
 /// The ledger behind the screens: a contract method and its JSON arguments in, the contract's JSON out — the answer
 /// itself, `{"result": …}` or `{"error": {code, message}}`. A call may block, so the app makes it off the main thread.
-/// Wave 2 connects the core's C ABI (gitrochi_ledger_call / gitrochi_ledger_free) behind this; until then the screens
-/// run on DemoLedgerBackend. (Windows: entities/ledger/api/backend.ts)
+/// NativeLedgerBackend is the core's C ABI (gitrochi_ledger_call / gitrochi_ledger_free); DemoLedgerBackend keeps the
+/// demos and the tests. (Windows: entities/ledger/api/backend.ts)
 protocol LedgerBackend: AnyObject, Sendable {
     func call(method: String, args: Data) -> Data
 }

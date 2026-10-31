@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Renders the Ledger page off screen on demo data, in light and dark: Inbox, Board, Graph, Streams, the inspector, the
-# empty state, a narrow and a stacked window, the two sheets, and the large demo (1,000 sessions, 50,000 events).
+# empty state, a narrow and a stacked window, the two sheets, and the large demo (1,000 sessions, 50,000 events). Then
+# the page, Settings › Ledger and Import from claude-ledger on the core itself, through its C ABI, with the core's demo
+# in a temporary database.
 # Text recognition checks that each part is drawn (on its larger text: small labels are read unreliably), and the
 # large demo reports frame and filter timings.
 #   macos/Tools/test-ledger-layout.sh [output folder for the screenshots]
@@ -183,6 +185,26 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("empty", LedgerWorkspaceView(repositoryPath: nil, ledger: empty), width: 1200, height: 760,
                   expect: ["Keep track of your agent sessions", "Connect Claude Code", "Paste reports"])
 
+        // the core itself, through its C ABI, as the app reads it
+        let core = LedgerStore(client: LedgerClient(backend: NativeLedgerBackend(database: CommandLine.arguments[2])), defaults: defaults, interval: .seconds(600))
+        wait { await core.setRange(.all); await core.reload() }
+        let asking = core.state!.sessions.first { $0.verdict == .needsHuman }!
+        core.selection = asking.id
+        wait { try? await Task.sleep(for: .milliseconds(200)) }
+        try shoot("core-inbox", LedgerWorkspaceView(repositoryPath: nil, ledger: core), width: 1440, height: 940, expect: ["Inbox", asking.title])
+        let confirm = core.state!.sessions.first { $0.verdict == .confirm }!
+        core.page = .board
+        core.selection = confirm.id
+        wait { try? await Task.sleep(for: .milliseconds(200)) }
+        try shoot("core-board", LedgerWorkspaceView(repositoryPath: nil, ledger: core), width: 1440, height: 940, expect: ["Board", confirm.title])
+        core.page = .graph
+        wait { await core.loadGraph(); try? await Task.sleep(for: .milliseconds(200)) }
+        try shoot("core-graph", LedgerWorkspaceView(repositoryPath: nil, ledger: core), width: 1440, height: 940, expect: ["Graph", "1.4.2"])
+        try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 1560,
+                  expect: ["Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect Claude Code"])
+        try shoot("import-legacy", LedgerLegacyImportSheet(ledger: core, path: CommandLine.arguments[3]), width: 620, height: 380,
+                  expect: ["Import from claude-ledger", "Ready to import", "Sessions"])
+
         // the large demo: one frame at the top, then frames while scrolling, and the filter while typing
         let big = store(.large)
         wait { await big.setRange(.all) }
@@ -244,4 +266,9 @@ cp "$TASK_CORE" "$TASK_TMP/core.a"
 xcrun swiftc -parse-as-library -swift-version 5 -O -target "$ARCH-apple-macos15.0" \
     -I "$ST" -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
     "${SOURCES[@]}" "$TASK_TMP/LedgerLayout.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/ledger-layout"
-"$TASK_TMP/ledger-layout" "$TASK_OUTPUT"
+# The core's own demo in a temporary database, and a claude-ledger file to import; a call that names no database
+# would use another temporary one, never the person's ledger
+"$(dirname "$TASK_CORE")/gitrochi-ledger" demo "$TASK_TMP/ledger.sqlite3" > /dev/null
+sqlite3 "$TASK_TMP/claude-ledger.db" < "$ROOT/Tools/fixtures/claude-ledger.sql"
+export GITROCHI_LEDGER_DB="$TASK_TMP/default.sqlite3"
+"$TASK_TMP/ledger-layout" "$TASK_OUTPUT" "$TASK_TMP/ledger.sqlite3" "$TASK_TMP/claude-ledger.db"

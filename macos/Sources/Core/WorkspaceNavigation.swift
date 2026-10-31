@@ -14,8 +14,8 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         self = page
     }
 
-    /// Ledger stays hidden until its core is connected: GITROCHI_LEDGER_PREVIEW=1 shows it on demo data
-    /// (GITROCHI_LEDGER_DEMO=large or =empty picks the large or the empty demo)
+    /// Ledger stays hidden until it is released: GITROCHI_LEDGER_PREVIEW=1 shows it, and its Settings tab, with the
+    /// person's ledger (GITROCHI_LEDGER_DEMO=standard, =large or =empty shows a demo instead)
     static let ledgerPreview = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
     var isShown: Bool { self != .ledger || Self.ledgerPreview }
     static var shown: [WorkspaceDestination] { allCases.filter(\.isShown) }
