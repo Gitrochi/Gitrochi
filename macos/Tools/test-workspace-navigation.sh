@@ -106,6 +106,10 @@ import SwiftUI
         // Ledger is hidden until its core is connected: listed and restorable only with GITROCHI_LEDGER_PREVIEW=1
         let ledgerShown = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
         precondition(WorkspaceDestination.shown.count == (ledgerShown ? 13 : 12) && WorkspaceDestination.ledger.isShown == ledgerShown)
+        // the Ledger only adds: every page main has keeps its order, raw value and title
+        let mainPages: [WorkspaceDestination] = [.home, .repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
+        precondition(Array(WorkspaceDestination.shown.prefix(12)) == mainPages && Array(WorkspaceDestination.allCases.prefix(12)) == mainPages)
+        precondition(mainPages.allSatisfy { WorkspaceDestination(rawValue: $0.rawValue) == $0 && $0.isShown }, "Existing pages restore as before")
         precondition(!WorkspaceDestination.ledger.needsRepository, "Ledger opens without a repository")
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
