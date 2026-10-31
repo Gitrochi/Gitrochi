@@ -1546,3 +1546,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "O comando do registro está faltando nesta cópia do Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "O comando do registro não respondeu ao handshake do MCP.";
 "The ledger command answers with its tools: %@." = "O comando do registro responde com suas ferramentas: %@.";
+"Latest" = "Mais recente";
+"Latest release" = "Versão mais recente";
+"Latest stable release" = "Versão estável mais recente";
+"{0} unreleased commits" = "{0} commits não lançados";
+"Not on top of {0}" = "Não parte de {0}";
+"Compare in app" = "Comparar no app";
+"Compare in browser" = "Comparar no navegador";
+"Other files ({0})" = "Outros arquivos ({0})";
+"Tagged from {0}" = "Marcada a partir de {0}";
+"Assets: {0}" = "Arquivos: {0}";
+"Published releases" = "Versões publicadas";
+"Published, but marked as not ready for production" = "Publicada, mas marcada como não pronta para produção";
+"Saved but not published; only people with write access see it" = "Salva, mas não publicada; só quem tem acesso de escrita a vê";

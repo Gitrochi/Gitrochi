@@ -1562,3 +1562,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "V této kopii Gitrochi chybí příkaz evidence: %@";
 "The ledger command did not answer the MCP handshake." = "Příkaz evidence neodpověděl na úvodní výměnu MCP.";
 "The ledger command answers with its tools: %@." = "Příkaz evidence odpovídá svými nástroji: %@.";
+"Latest" = "Nejnovější";
+"Latest release" = "Nejnovější vydání";
+"Latest stable release" = "Nejnovější stabilní vydání";
+"{0} unreleased commits" = "Nevydané commity: {0}";
+"Not on top of {0}" = "Nevychází z {0}";
+"Compare in app" = "Porovnat v aplikaci";
+"Compare in browser" = "Porovnat v prohlížeči";
+"Other files ({0})" = "Další soubory ({0})";
+"Tagged from {0}" = "Označeno z {0}";
+"Assets: {0}" = "Soubory: {0}";
+"Published releases" = "Publikovaná vydání";
+"Published, but marked as not ready for production" = "Publikováno, ale označeno jako nepřipravené pro produkci";
+"Saved but not published; only people with write access see it" = "Uloženo, ale nepublikováno; vidí jen lidé s oprávněním k zápisu";

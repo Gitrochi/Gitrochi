@@ -1615,3 +1615,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "La commande du registre manque dans cette copie de Gitrochi : %@";
 "The ledger command did not answer the MCP handshake." = "La commande du registre n’a pas répondu à la poignée de main MCP.";
 "The ledger command answers with its tools: %@." = "La commande du registre répond avec ses outils : %@.";
+"Latest" = "Dernière";
+"Latest release" = "Dernière version";
+"Latest stable release" = "Dernière version stable";
+"{0} unreleased commits" = "{0} commits non publiés";
+"Not on top of {0}" = "Ne part pas de {0}";
+"Compare in app" = "Comparer dans l'app";
+"Compare in browser" = "Comparer dans le navigateur";
+"Other files ({0})" = "Autres fichiers ({0})";
+"Tagged from {0}" = "Étiqueté depuis {0}";
+"Assets: {0}" = "Fichiers : {0}";
+"Published releases" = "Versions publiées";
+"Published, but marked as not ready for production" = "Publiée, mais marquée comme non prête pour la production";
+"Saved but not published; only people with write access see it" = "Enregistrée mais non publiée ; seules les personnes avec accès en écriture la voient";

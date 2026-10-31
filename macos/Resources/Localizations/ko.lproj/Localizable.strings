@@ -1,21 +1,13 @@
 /* Release and issue workspace. */
 "Versions" = "버전";
 "Version" = "버전";
-"Tag at checkout" = "체크아웃 커밋의 태그";
-"No tag at checkout" = "체크아웃 커밋에 태그 없음";
-"Nearest ancestor tag" = "가장 가까운 이전 태그";
-"No ancestor tag" = "이전 태그 없음";
 "Newest loaded stable" = "불러온 정식 릴리스 중 최신";
 "Latest stable by date" = "게시일 기준 최신 정식 릴리스";
-"Newest loaded prerelease" = "불러온 사전 릴리스 중 최신";
-"Latest prerelease by date" = "게시일 기준 최신 사전 릴리스";
-"Select a package" = "패키지를 선택하세요";
 "All releases" = "모든 릴리스";
 "Stable" = "정식";
 "Release status" = "릴리스 상태";
 "Sort releases" = "릴리스 정렬";
 "Published date" = "게시일";
-"All packages" = "모든 패키지";
 "Repository releases" = "저장소 릴리스";
 "Version ordering applies to one SemVer package; other selections use published dates." = "단일 패키지의 SemVer 태그는 버전순으로, 그 외에는 게시일순으로 정렬합니다.";
 "No matching releases." = "조건에 맞는 릴리스가 없습니다.";
@@ -26,7 +18,6 @@
 "Date unavailable" = "게시일 정보 없음";
 "Release actions" = "릴리스 작업";
 "Compare from" = "비교할 이전 태그";
-"Choose a tag" = "태그를 선택하세요";
 "Compare changes" = "변경 사항 비교";
 "Select a release to read its notes and compare versions." = "릴리스를 선택해 노트를 읽고 버전을 비교하세요.";
 "Connect an account to check releases." = "계정을 연결해 릴리스를 확인하세요.";
@@ -44,9 +35,6 @@
 "Open a repository to view releases." = "저장소를 열어 릴리스를 확인하세요.";
 "Package" = "패키지";
 "Published {0}" = "{0} 게시";
-"Local working copy" = "로컬 작업 사본";
-"From local Git history" = "로컬 Git 기록 기준";
-"Preview channel" = "미리보기 채널";
 "Newest first" = "최신순";
 "Version number" = "버전순";
 "Not published" = "아직 게시되지 않음";
@@ -3392,3 +3380,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "이 Gitrochi에 원장 명령이 없습니다: %@";
 "The ledger command did not answer the MCP handshake." = "원장 명령이 MCP 연결 확인에 응답하지 않았습니다.";
 "The ledger command answers with its tools: %@." = "원장 명령이 도구 목록으로 응답합니다: %@.";
+"Latest" = "최신";
+"Latest release" = "최신 릴리스";
+"Latest stable release" = "최신 정식 릴리스";
+"{0} unreleased commits" = "릴리스 안 된 커밋 {0}개";
+"Not on top of {0}" = "{0} 위에 있지 않음";
+"Compare in app" = "앱에서 비교";
+"Compare in browser" = "브라우저에서 비교";
+"Other files ({0})" = "기타 파일 {0}개";
+"Tagged from {0}" = "{0}에서 태그";
+"Assets: {0}" = "첨부 파일 {0}개";
+"Published releases" = "게시된 릴리스";
+"Published, but marked as not ready for production" = "게시했지만 정식 사용 전 버전으로 표시됨";
+"Saved but not published; only people with write access see it" = "저장만 하고 게시하지 않음. 쓰기 권한이 있는 사람만 봅니다";

@@ -1616,5 +1616,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Claude-ledgerről vált? Hozza át a munkameneteit, kérdéseit és alapverzióit.",
   "Role": "Szerep",
   "Browse…": "Tallózás…",
-  "Choose a file": "Fájl kiválasztása"
+  "Choose a file": "Fájl kiválasztása",
+  "Latest": "Legújabb",
+  "Latest release": "Legújabb kiadás",
+  "Latest stable release": "Legújabb stabil kiadás",
+  "{0} unreleased commits": "Kiadatlan commitok: {0}",
+  "Not on top of {0}": "Nem erre épül: {0}",
+  "Compare in app": "Összehasonlítás az alkalmazásban",
+  "Compare in browser": "Összehasonlítás a böngészőben",
+  "Other files ({0})": "Egyéb fájlok ({0})",
+  "Tagged from {0}": "Címkézve innen: {0}",
+  "Assets: {0}": "Fájlok: {0}",
+  "Published releases": "Közzétett kiadások",
+  "Published, but marked as not ready for production": "Közzétéve, de nem éles használatra késznek jelölve",
+  "Saved but not published; only people with write access see it": "Mentve, de nincs közzétéve; csak írási joggal rendelkezők látják"
 }

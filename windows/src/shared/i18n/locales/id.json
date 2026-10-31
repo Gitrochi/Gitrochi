@@ -1586,5 +1586,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Pindah dari claude-ledger? Bawa sesi, pertanyaan, dan baseline-nya.",
   "Role": "Peran",
   "Browse…": "Telusuri…",
-  "Choose a file": "Pilih file"
+  "Choose a file": "Pilih file",
+  "Latest": "Terbaru",
+  "Latest release": "Rilis terbaru",
+  "Latest stable release": "Rilis stabil terbaru",
+  "{0} unreleased commits": "{0} commit belum dirilis",
+  "Not on top of {0}": "Tidak berbasis {0}",
+  "Compare in app": "Bandingkan di aplikasi",
+  "Compare in browser": "Bandingkan di browser",
+  "Other files ({0})": "File lain ({0})",
+  "Tagged from {0}": "Ditag dari {0}",
+  "Assets: {0}": "Aset: {0}",
+  "Published releases": "Rilis yang diterbitkan",
+  "Published, but marked as not ready for production": "Diterbitkan, tetapi ditandai belum siap untuk produksi",
+  "Saved but not published; only people with write access see it": "Disimpan tetapi belum diterbitkan; hanya orang dengan akses tulis yang melihatnya"
 }

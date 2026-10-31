@@ -1540,3 +1540,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Bản Gitrochi này thiếu lệnh của sổ theo dõi: %@";
 "The ledger command did not answer the MCP handshake." = "Lệnh của sổ theo dõi không phản hồi bước bắt tay MCP.";
 "The ledger command answers with its tools: %@." = "Lệnh của sổ theo dõi phản hồi với các công cụ: %@.";
+"Latest" = "Mới nhất";
+"Latest release" = "Bản phát hành mới nhất";
+"Latest stable release" = "Bản phát hành ổn định mới nhất";
+"{0} unreleased commits" = "{0} commit chưa phát hành";
+"Not on top of {0}" = "Không dựa trên {0}";
+"Compare in app" = "So sánh trong ứng dụng";
+"Compare in browser" = "So sánh trong trình duyệt";
+"Other files ({0})" = "Tệp khác ({0})";
+"Tagged from {0}" = "Gắn thẻ từ {0}";
+"Assets: {0}" = "Tệp đính kèm: {0}";
+"Published releases" = "Các bản đã phát hành";
+"Published, but marked as not ready for production" = "Đã phát hành nhưng được đánh dấu là chưa sẵn sàng cho môi trường thực tế";
+"Saved but not published; only people with write access see it" = "Đã lưu nhưng chưa phát hành; chỉ người có quyền ghi mới thấy";

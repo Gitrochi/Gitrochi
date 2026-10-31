@@ -9,8 +9,8 @@ struct CredentialAccessNotice: View { let account: HostAccount; var body: some V
 struct GitResult { let status: Int32; let output: String }
 enum Git {
     static func run(_ args: [String], in directory: URL, ok: Set<Int32>) async throws -> GitResult {
-        precondition(args.first == "describe")
-        return GitResult(status: 0, output: "v1.9.0")
+        precondition(args.first == "rev-list")
+        return GitResult(status: 0, output: args.contains("--left-right") ? "0\t42" : "12")
     }
 }
 @MainActor enum HostingHubAPI {
@@ -26,6 +26,7 @@ enum Git {
     var target: RepoTarget? = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "sample-studio/desktop")
     var tags = [Tag(name: "v1.9.0", target: "fixture-head")]
     var headHash: String? = "fixture-head"
+    var headBranch: String? = "main"
     var url: URL? = URL(fileURLWithPath: "/fixture/desktop")
     var hubAccount: HostAccount? = nil
     var hubCredentialState: FixtureCredentialState? = .ready
@@ -37,6 +38,7 @@ enum Git {
     func activateHostingHub(_ section: HostingHubSection) async { hostingHub.section = section }
     func loadHostingHub(append: Bool = false) async {}
     func selectHostingHubItem(_ item: HubItem) async { hostingHub.detail = HubDetail(item: item) }
+    func showRevisionComparison(left: String, right: String) { fatalError("Fixture opened the Compare page") }
     func hostingHubAction(expected: String, refreshList: Bool, action: @escaping (HubAccess) async throws -> Void) async { fatalError("Fixture attempted a write") }
 }
 
@@ -85,7 +87,10 @@ enum Git {
                 try VNImageRequestHandler(data: image).perform([request])
                 let text = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
                 precondition(text.contains("v1.10.0") && text.contains("A clearer release workspace"), "Release identity missing: \(name)")
-                if width > 680 { precondition(text.contains("Release highlights") && text.contains("Platform"), "Markdown missing: \(name)") }
+                if width > 680 {
+                    precondition(text.contains("Release highlights") && text.contains("Platform"), "Markdown missing: \(name)")
+                    precondition(text.contains("Latest release") && text.contains("42 unreleased commits") && text.contains("v1.9.0"), "Release timeline missing: \(name)")
+                }
                 window.orderOut(nil)
             }
         }

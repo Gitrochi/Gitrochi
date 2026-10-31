@@ -31,6 +31,12 @@ extension RepoStore {
         state.comparison = nil; state.comparisonError = nil; state.comparisonPatch = ""
         sheet = .compareRevisions
     }
+    /// Opens the Compare page on two revisions, e.g. a release tag and the checkout (Windows: showRevisionComparison).
+    func showRevisionComparison(left: String, right: String) {
+        guard navigate(.compare) else { return }
+        historyTools.left = left; historyTools.right = right; historyTools.useMergeBase = false
+        Task { await loadRevisionComparison() }
+    }
     private func resolveHistoryRevision(_ value: String, in url: URL) async throws -> String {
         guard HistoryTools.validRevision(value) else { throw HistoryToolsError.invalidRevision }
         let r = try await Git.run(["rev-parse", "--verify", "--end-of-options", value + "^{commit}"], in: url)

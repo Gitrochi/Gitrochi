@@ -1621,5 +1621,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "claude-ledger'dan mı geçiyorsunuz? Oturumlarını, sorularını ve temel sürümlerini getirin.",
   "Role": "Rol",
   "Browse…": "Gözat…",
-  "Choose a file": "Dosya seç"
+  "Choose a file": "Dosya seç",
+  "Latest": "En yeni",
+  "Latest release": "En yeni sürüm",
+  "Latest stable release": "En yeni kararlı sürüm",
+  "{0} unreleased commits": "Yayınlanmamış {0} commit",
+  "Not on top of {0}": "{0} üzerine kurulu değil",
+  "Compare in app": "Uygulamada karşılaştır",
+  "Compare in browser": "Tarayıcıda karşılaştır",
+  "Other files ({0})": "Diğer dosyalar ({0})",
+  "Tagged from {0}": "{0} üzerinden etiketlendi",
+  "Assets: {0}": "Dosyalar: {0}",
+  "Published releases": "Yayınlanmış sürümler",
+  "Published, but marked as not ready for production": "Yayınlandı, ancak üretime hazır değil olarak işaretli",
+  "Saved but not published; only people with write access see it": "Kaydedildi ama yayınlanmadı; yalnızca yazma erişimi olanlar görür"
 }

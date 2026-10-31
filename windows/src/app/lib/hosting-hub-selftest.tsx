@@ -322,6 +322,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       !host.querySelector(`select[aria-label="${t("Workspace account")}"]`),
       "Releases still offer their own account picker",
     );
+    // The fixture's only release is a draft: the status filter explains it and no version summary is invented.
+    ensure(
+      !!host.querySelector(`.release-states button[data-tip="${t("Saved but not published; only people with write access see it")}"]`) && !host.querySelector(".release-summary") && !host.querySelector(".release-package"),
+      "Draft-only releases did not show the explained status filter without a summary or package menu",
+    );
     host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
     ensure(
       await until(() => !!button("Download in browser")),

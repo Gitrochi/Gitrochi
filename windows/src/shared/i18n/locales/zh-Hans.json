@@ -1764,5 +1764,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "从 claude-ledger 迁移？把它的会话、问题和基线一起带过来。",
   "Role": "角色",
   "Browse…": "浏览…",
-  "Choose a file": "选择文件"
+  "Choose a file": "选择文件",
+  "Latest": "最新",
+  "Latest release": "最新版本",
+  "Latest stable release": "最新稳定版本",
+  "{0} unreleased commits": "{0} 个未发布的提交",
+  "Not on top of {0}": "不在 {0} 之上",
+  "Compare in app": "在应用中比较",
+  "Compare in browser": "在浏览器中比较",
+  "Other files ({0})": "其他文件（{0}）",
+  "Tagged from {0}": "从 {0} 打标签",
+  "Assets: {0}": "资源：{0}",
+  "Published releases": "已发布的版本",
+  "Published, but marked as not ready for production": "已发布，但标记为尚未可用于生产",
+  "Saved but not published; only people with write access see it": "已保存但未发布；仅有写入权限的人可见"
 }

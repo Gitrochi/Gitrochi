@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks } from "@/entities/hosting/model/releases";
+import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups } from "@/entities/hosting/model/releases";
 import { ReleasePortfolio } from "@/entities/hosting/model/release-portfolio";
 import { accounts } from "@/entities/hosting/model/accounts";
 import type { HubSource } from "@/entities/hosting/model/hub";
@@ -42,6 +42,37 @@ describe("release discovery", () => {
     const parsed = parseMarkdown("[Guide](docs/guide.md) [unsafe](javascript:alert(1))", refs);
     expect(JSON.stringify(parsed)).toContain("https://github.com/team/repo/blob/client%2Fv1.0.0/docs/guide.md");
     expect(JSON.stringify(parsed)).not.toContain('"href":"javascript:');
+  });
+});
+describe("release page summary", () => {
+  const titled = (tag: string, title: string, date: string, data: Record<string, unknown> = {}) => ({ ...item(tag, date, data), title });
+  const items = [titled("v0.3.13", "Desktop 0.3.13", "2026-10-28"), titled("v0.3.12", "Desktop 0.3.12", "2026-10-26"), titled("windows-v0.1.0", "Desktop for Windows 0.1.0", "2026-10-19")];
+  it("opens on the package released last and names packages after their newest title", () => {
+    expect(defaultReleaseFamily(items)).toBe("");
+    expect(defaultReleaseFamily([titled("v2.0.0", "Next", "2026-10-30", { draft: true }), ...items])).toBe("");
+    expect(defaultReleaseFamily([titled("cli/v2.0.0", "CLI 2.0.0", "2026-10-30"), ...items])).toBe("cli/");
+    expect(releasePackageName(items, "")).toBe("Desktop");
+    expect(releasePackageName(items, "windows-")).toBe("Desktop for Windows");
+    expect(releasePackageName([titled("v1.0.0", "Desktop (v1.0.0-rc.1)", "2026-10-01")], "")).toBe("Desktop");
+    expect(releasePackageName([titled("api@1.0.0", "api@1.0.0", "2026-10-01")], "api@")).toBe("api");
+    expect(releasePackageName([titled("v1.0.0", "v1.0.0", "2026-10-01")], "")).toBe("");
+  });
+  it("lists recent stables oldest first and adds only a prerelease newer than the latest stable", () => {
+    const line = [titled("v1.3.0-rc.1", "rc", "2026-10-09", { prerelease: true }), titled("v1.3.0", "draft", "2026-10-10", { draft: true }), titled("v1.2.0", "", "2026-10-08"), titled("v1.2.0-rc.1", "", "2026-10-07", { prerelease: true }), titled("v1.1.0", "", "2026-10-05"), titled("v1.0.0", "", "2026-10-03"), titled("v0.9.0", "", "2026-10-01"), titled("cli/v9.0.0", "", "2026-10-11")];
+    const timeline = releaseTimeline(line, "");
+    expect(timeline.path.map(x => x.id)).toEqual(["v0.9.0", "v1.0.0", "v1.1.0", "v1.2.0", "v1.3.0-rc.1"]);
+    expect(timeline.stable?.id).toBe("v1.2.0"); expect(timeline.prerelease?.id).toBe("v1.3.0-rc.1");
+    expect(releaseTimeline(line.slice(2), "").prerelease).toBeUndefined();
+    expect(releaseTimeline([line[0]], "")).toMatchObject({ stable: undefined, prerelease: { id: "v1.3.0-rc.1" } });
+    expect(releaseTimeline([], "").path).toEqual([]);
+  });
+  it("puts this version's installers first and folds checksums, signatures and helpers away", () => {
+    const names = ["Desktop-0.3.13-macOS.dmg", "Desktop-0.3.13-macOS.zip", "Desktop-0.3.13-macOS.zip.sig", "Desktop_0.3.13_x64-setup.exe", "helper-windows-x64.exe", "helper", "checksums.sha256", "latest.json"];
+    const groups = releaseAssetGroups(names.map(name => ({ name })), "v0.3.13");
+    expect(groups.primary.map(x => x.name)).toEqual(["Desktop-0.3.13-macOS.dmg", "Desktop-0.3.13-macOS.zip", "Desktop_0.3.13_x64-setup.exe"]);
+    expect(groups.other).toHaveLength(5);
+    expect(releaseAssetGroups([{ name: "Desktop.zip" }, { name: "Desktop.zip.sha256" }], "nightly").primary.map(x => x.name)).toEqual(["Desktop.zip"]);
+    expect(releaseAssetGroups([{ name: "notes.txt" }, { name: "tool" }], "v1.0.0")).toEqual({ primary: [{ name: "notes.txt" }, { name: "tool" }], other: [] });
   });
 });
 describe("release portfolio", () => {

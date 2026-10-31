@@ -1638,5 +1638,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "要從 claude-ledger 移轉嗎？把它的工作階段、問題和基準一起帶過來。",
   "Role": "角色",
   "Browse…": "瀏覽…",
-  "Choose a file": "選擇檔案"
+  "Choose a file": "選擇檔案",
+  "Latest": "最新",
+  "Latest release": "最新版本",
+  "Latest stable release": "最新穩定版本",
+  "{0} unreleased commits": "{0} 個未發布的提交",
+  "Not on top of {0}": "不在 {0} 之上",
+  "Compare in app": "在 App 中比較",
+  "Compare in browser": "在瀏覽器中比較",
+  "Other files ({0})": "其他檔案（{0}）",
+  "Tagged from {0}": "從 {0} 建立標籤",
+  "Assets: {0}": "資源：{0}",
+  "Published releases": "已發布的版本",
+  "Published, but marked as not ready for production": "已發布，但標示為尚未可用於正式環境",
+  "Saved but not published; only people with write access see it": "已儲存但未發布；僅有寫入權限的人可見"
 }

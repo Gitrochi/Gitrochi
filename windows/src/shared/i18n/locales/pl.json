@@ -1615,5 +1615,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Przechodzisz z claude-ledger? Przenieś jego sesje, pytania i wersje bazowe.",
   "Role": "Rola",
   "Browse…": "Przeglądaj…",
-  "Choose a file": "Wybierz plik"
+  "Choose a file": "Wybierz plik",
+  "Latest": "Najnowsze",
+  "Latest release": "Najnowsze wydanie",
+  "Latest stable release": "Najnowsze stabilne wydanie",
+  "{0} unreleased commits": "Niewydane commity: {0}",
+  "Not on top of {0}": "Nie bazuje na {0}",
+  "Compare in app": "Porównaj w aplikacji",
+  "Compare in browser": "Porównaj w przeglądarce",
+  "Other files ({0})": "Inne pliki ({0})",
+  "Tagged from {0}": "Otagowano z {0}",
+  "Assets: {0}": "Zasoby: {0}",
+  "Published releases": "Opublikowane wydania",
+  "Published, but marked as not ready for production": "Opublikowane, ale oznaczone jako niegotowe do produkcji",
+  "Saved but not published; only people with write access see it": "Zapisane, ale nieopublikowane; widzą je tylko osoby z prawem zapisu"
 }

@@ -2312,3 +2312,16 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "この Gitrochi には台帳のコマンドがありません：%@";
 "The ledger command did not answer the MCP handshake." = "台帳のコマンドが MCP の接続確認に応答しませんでした。";
 "The ledger command answers with its tools: %@." = "台帳のコマンドがツール一覧で応答しました：%@。";
+"Latest" = "最新";
+"Latest release" = "最新リリース";
+"Latest stable release" = "最新の安定版リリース";
+"{0} unreleased commits" = "未リリースのコミット {0} 件";
+"Not on top of {0}" = "{0} の上にありません";
+"Compare in app" = "アプリで比較";
+"Compare in browser" = "ブラウザで比較";
+"Other files ({0})" = "その他のファイル（{0}）";
+"Tagged from {0}" = "{0} からタグ付け";
+"Assets: {0}" = "アセット: {0}";
+"Published releases" = "公開済みのリリース";
+"Published, but marked as not ready for production" = "公開済みだが、本番向けではないと表示されています";
+"Saved but not published; only people with write access see it" = "保存のみで未公開。書き込み権限のあるユーザーだけが見られます";

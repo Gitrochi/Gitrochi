@@ -1632,5 +1632,18 @@
   "Moving from claude-ledger? Bring its sessions, questions and baselines along.": "Переходите с claude-ledger? Перенесите его сеансы, вопросы и базовые версии.",
   "Role": "Роль",
   "Browse…": "Обзор…",
-  "Choose a file": "Выбрать файл"
+  "Choose a file": "Выбрать файл",
+  "Latest": "Последний",
+  "Latest release": "Последний релиз",
+  "Latest stable release": "Последний стабильный релиз",
+  "{0} unreleased commits": "Невыпущенных коммитов: {0}",
+  "Not on top of {0}": "Не основано на {0}",
+  "Compare in app": "Сравнить в приложении",
+  "Compare in browser": "Сравнить в браузере",
+  "Other files ({0})": "Другие файлы ({0})",
+  "Tagged from {0}": "Тег из {0}",
+  "Assets: {0}": "Файлы: {0}",
+  "Published releases": "Опубликованные релизы",
+  "Published, but marked as not ready for production": "Опубликован, но помечен как не готовый к продакшену",
+  "Saved but not published; only people with write access see it": "Сохранён, но не опубликован; видят только люди с правом записи"
 }
