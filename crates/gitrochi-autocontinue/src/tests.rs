@@ -318,6 +318,7 @@ fn sentences_keep_file_names_and_versions() {
         plain_line("> **Use** `x` [docs](https://example.com) now_ok _it_"),
         "Use x docs now_ok it"
     );
+    assert_eq!(plain_line("Proceed? [Y/n]"), "Proceed? [Y/n]");
     assert_eq!(one_line("a\n  b\tc", 10), "a b c");
     assert_eq!(one_line("abcdefghijk", 5), "abcd…");
 }
