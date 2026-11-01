@@ -52,11 +52,11 @@ struct HostAccount: Equatable { let id: String; let provider: Provider; let user
 struct HostingError: Error { let status: Int }
 struct FixtureUser { let username: String }
 @MainActor enum Keychain {
-    static var reads: [(String, Bool)] = []
+    static var reads: [(String, Bool, Bool)] = []
     static var result = CredentialReadResult(value: "approved-fixture", status: errSecSuccess)
     static var results: [String: CredentialReadResult] = [:]
-    static func read(_ name: String, allowInteraction: Bool = false) async -> CredentialReadResult {
-        reads.append((name, allowInteraction)); return results[name] ?? result
+    static func read(_ name: String, allowInteraction: Bool = false, rememberAccess: Bool = false) async -> CredentialReadResult {
+        reads.append((name, allowInteraction, rememberAccess)); return results[name] ?? result
     }
 }
 @MainActor enum Hosting {
@@ -71,7 +71,7 @@ struct FixtureUser { let username: String }
     @MainActor static func main() async throws {
         let account = HostAccount(id: "fixture-account", provider: .github, username: "demo", apiBase: "https://api.example.com"), name = "acct:fixture-account"
         func reset() { Keychain.reads = []; Keychain.results = [:]; Keychain.result = CredentialReadResult(value: "approved-fixture", status: errSecSuccess); Hosting.calls = 0 }
-        func assertExplicitRead() { precondition(Keychain.reads.count == 1 && Keychain.reads[0].0 == name && Keychain.reads[0].1, "Only one explicit synthetic Keychain read may run") }
+        func assertExplicitRead() { precondition(Keychain.reads.count == 1 && Keychain.reads[0].0 == name && Keychain.reads[0].1 && Keychain.reads[0].2, "Only one explicit synthetic Keychain read may run, and must persist approval") }
         reset(); let accepted = AccountFixture(account, cached: "previously-verified-fixture")
         Hosting.handler = { FixtureUser(username: "DEMO") }
         try await accepted.allowStoredAccess(for: account)
@@ -129,7 +129,7 @@ struct FixtureUser { let username: String }
             let legacyLoad = await legacy.loadToken(for: legacyAccount)
             precondition(legacyLoad == nil)
             precondition(legacy.token(for: legacyAccount) == nil && legacy.credentialState(for: legacyAccount) == .unavailable)
-            precondition(Keychain.reads.map { $0.0 } == [legacyName, legacyAccount.provider.rawValue] && Keychain.reads.allSatisfy { $0.1 } && Hosting.calls == 1, "Legacy recovery must only read the explicit synthetic primary and fallback once")
+            precondition(Keychain.reads.map { $0.0 } == [legacyName, legacyAccount.provider.rawValue] && Keychain.reads.allSatisfy { $0.1 && $0.2 } && Hosting.calls == 1, "Legacy recovery must only read the explicit synthetic primary and fallback once, persisting approval")
         }
         for mismatch in [false, true] {
             let rotated = legacyFixture()
