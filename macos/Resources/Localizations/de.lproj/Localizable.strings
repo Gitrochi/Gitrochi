@@ -1140,6 +1140,7 @@
 "Open the full log" = "Vollständiges Log öffnen";
 "Failed tests" = "Fehlgeschlagene Tests";
 "Verdicts" = "Bewertungen";
+"All verdicts" = "Alle Bewertungen";
 "Output" = "Ausgabe";
 "Waiting for the engine…" = "Warte auf die Engine…";
 "Choose a step to see its output." = "Wählen Sie einen Schritt, um seine Ausgabe zu sehen.";
@@ -1611,6 +1612,28 @@
 "Agent activity" = "Agent-Aktivität";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Agenten melden, wovon sie ausgingen, was sie erstellt haben und was sie von Ihnen brauchen. Hier antworten, bestätigen und räumen Sie auf.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Agenten, die Sie aus Gitrochi starten, werden auch ohne dies erfasst. Gitrochi schreibt nichts in die Einstellungen von Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Noch keine Berichte";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Registrieren Sie die Ledger-Werkzeuge in Claude Code, indem Sie diesen Befehl in einem Terminal ausführen.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "Durch die Registrierung werden die Werkzeuge verfügbar. Bestehende Unterhaltungen werden nicht importiert und Agenten berichten dadurch nicht automatisch.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Starten Sie eine Claude-Code-Unterhaltung neu oder öffnen Sie eine neue. Bitten Sie den Agenten dann, mit ledger_report einen Startbericht über seine aktuelle Arbeit zu senden.";
+"Reporting instruction" = "Berichtsanweisung";
+"Copy reporting instruction" = "Berichtsanweisung kopieren";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Um neue, aus Gitrochi gestartete Claude-Code-Agenten automatisch zu verfolgen, aktivieren Sie Einstellungen > Logbuch > Von mir gestartete Agenten verfolgen. Die Option ist standardmäßig aus.";
+"Test Ledger" = "Ledger testen";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Prüft das Ledger dieser App, nicht die MCP-Konfiguration von Claude Code.";
+"The Ledger responds." = "Das Ledger antwortet.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Allein das Verbinden der Werkzeuge erstellt keine Sitzung. Senden Sie einen ersten Bericht, damit diese Unterhaltung hier erscheint.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Das Ledger zeigt Berichte, die Agenten über ihre Arbeit senden. Das Verbinden der Werkzeuge importiert keine Unterhaltungen.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi ändert keine Einstellungen von Claude Code.";
+"Copy MCP settings" = "MCP-Einstellungen kopieren";
+"MCP settings entry" = "MCP-Einstellungseintrag";
+"Other MCP clients: add this entry to their MCP settings." = "Andere MCP-Clients: Fügen Sie diesen Eintrag zu deren MCP-Einstellungen hinzu.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Es sind noch keine Berichte eingegangen. Registrieren Sie die Werkzeuge und bitten Sie Ihren Agenten, einen Startbericht zu senden.";
+"Command for Claude Code" = "Befehl für Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Den Fortschritt finden Sie unter Board und Streams. Der Eingang zeigt nur Fragen, Prüfungen und Entscheidungen, die Sie benötigen.";
+"View progress" = "Fortschritt anzeigen";
 "All" = "Alle";
 "All projects" = "Alle Projekte";
 "Allow" = "Erlauben";
@@ -1983,3 +2006,4 @@
 "Auto-continue reached its limit of answers in a row." = "Automatisches Fortsetzen hat die Höchstzahl an Antworten in Folge erreicht.";
 "Answer it in the agent's terminal." = "Beantworten Sie sie im Terminal des Agenten.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Das Terminal des Agenten ist in Gitrochi nicht geöffnet. Antworten Sie dort, wo der Agent läuft.";
+"Unreported" = "Ohne Bericht";

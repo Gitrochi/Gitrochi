@@ -1141,6 +1141,7 @@
 "Open the full log" = "Otevřít celý log";
 "Failed tests" = "Neúspěšné testy";
 "Verdicts" = "Výsledky";
+"All verdicts" = "Všechny verdikty";
 "Output" = "Výstup";
 "Waiting for the engine…" = "Čeká se na engine…";
 "Choose a step to see its output." = "Vyberte krok a zobrazí se jeho výstup.";
@@ -1607,6 +1608,28 @@
 "Agent activity" = "Aktivita agenta";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Agenti hlásí, z čeho vyšli, co vytvořili a co od vás potřebují. Tady odpovídáte, potvrzujete a uklízíte.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Agenti spuštění z Gitrochi se sledují i bez toho. Gitrochi nic nezapisuje do nastavení Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Zatím žádná hlášení";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Zaregistrujte nástroje Ledger v Claude Code spuštěním tohoto příkazu v terminálu.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "Registrace zpřístupní nástroje. Neimportuje stávající konverzace ani nezpůsobí automatické hlášení agentů.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Spusťte nebo restartujte konverzaci Claude Code a požádejte agenta, aby zavolal ledger_report s úvodním hlášením o aktuální práci.";
+"Reporting instruction" = "Pokyn k hlášení";
+"Copy reporting instruction" = "Kopírovat pokyn k hlášení";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Chcete-li automaticky sledovat nové agenty Claude Code spuštěné z Gitrochi, zapněte Nastavení > Evidence > Sledovat agenty, které spustím. Ve výchozím stavu je volba vypnutá.";
+"Test Ledger" = "Otestovat Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Ověří Ledger této aplikace, nikoli konfiguraci MCP v Claude Code.";
+"The Ledger responds." = "Ledger odpovídá.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Samotné připojení nástrojů nevytvoří relaci. Odešlete první hlášení, aby se zde tato konverzace zobrazila.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger zobrazuje hlášení, která agenti posílají o své práci. Samotné připojení nástrojů neimportuje konverzace.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi nemění nastavení Claude Code.";
+"Copy MCP settings" = "Kopírovat nastavení MCP";
+"MCP settings entry" = "Položka nastavení MCP";
+"Other MCP clients: add this entry to their MCP settings." = "Ostatní klienti MCP: přidejte tuto položku do jejich nastavení MCP.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Zatím nedorazila žádná hlášení. Zaregistrujte nástroje a požádejte agenta o odeslání úvodního hlášení.";
+"Command for Claude Code" = "Příkaz pro Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Průběh najdete na nástěnce a ve streamech. Doručená pošta zobrazuje jen otázky, kontroly a rozhodnutí, které vyžadují vaši pozornost.";
+"View progress" = "Zobrazit průběh";
 "All" = "Vše";
 "All projects" = "Všechny projekty";
 "Allow" = "Povolit";
@@ -1978,3 +2001,4 @@
 "Auto-continue reached its limit of answers in a row." = "Automatické pokračování dosáhlo limitu odpovědí za sebou.";
 "Answer it in the agent's terminal." = "Odpovězte v terminálu agenta.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminál agenta není v Gitrochi otevřený. Odpovězte tam, kde agent běží.";
+"Unreported" = "Nenahlášeno";

@@ -1117,6 +1117,7 @@
 "Open the full log" = "Mở toàn bộ nhật ký";
 "Failed tests" = "Kiểm thử thất bại";
 "Verdicts" = "Kết luận";
+"All verdicts" = "Tất cả kết luận";
 "Output" = "Đầu ra";
 "Waiting for the engine…" = "Đang chờ engine…";
 "Choose a step to see its output." = "Chọn một bước để xem đầu ra.";
@@ -1583,6 +1584,28 @@
 "Agent activity" = "Hoạt động của tác tử";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Tác tử báo cáo chúng bắt đầu từ đâu, đã làm gì và cần gì ở bạn. Tại đây bạn trả lời, xác nhận và dọn dẹp.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Tác tử bạn khởi chạy từ Gitrochi vẫn được theo dõi mà không cần bước này. Gitrochi không ghi gì vào cài đặt của Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Chưa có báo cáo";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Đăng ký các công cụ Ledger với Claude Code bằng cách chạy lệnh này trong thiết bị đầu cuối.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "Việc đăng ký cho phép sử dụng công cụ. Nó không nhập các cuộc trò chuyện hiện có hoặc khiến tác nhân tự động báo cáo.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Bắt đầu hoặc khởi động lại cuộc trò chuyện Claude Code, rồi yêu cầu tác nhân gọi ledger_report để gửi báo cáo bắt đầu cho công việc hiện tại.";
+"Reporting instruction" = "Hướng dẫn báo cáo";
+"Copy reporting instruction" = "Sao chép hướng dẫn báo cáo";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Để tự động theo dõi các tác nhân Claude Code mới được khởi chạy từ Gitrochi, hãy bật Cài đặt > Sổ theo dõi > Theo dõi agent tôi khởi động. Tùy chọn này mặc định tắt.";
+"Test Ledger" = "Kiểm tra Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Kiểm tra Ledger của ứng dụng này, không phải cấu hình MCP của Claude Code.";
+"The Ledger responds." = "Ledger phản hồi.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Chỉ kết nối công cụ không tạo phiên. Hãy gửi báo cáo đầu tiên để cuộc trò chuyện này xuất hiện tại đây.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger hiển thị các báo cáo mà tác nhân gửi về công việc của họ. Chỉ kết nối công cụ không nhập các cuộc trò chuyện.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi không thay đổi cài đặt của Claude Code.";
+"Copy MCP settings" = "Sao chép cài đặt MCP";
+"MCP settings entry" = "Mục cài đặt MCP";
+"Other MCP clients: add this entry to their MCP settings." = "Các ứng dụng khách MCP khác: thêm mục này vào cài đặt MCP của chúng.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Chưa nhận được báo cáo nào. Hãy đăng ký công cụ, rồi yêu cầu tác nhân gửi báo cáo bắt đầu.";
+"Command for Claude Code" = "Lệnh dành cho Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Xem tiến độ trong Bảng và Luồng. Hộp thư đến chỉ hiển thị câu hỏi, mục cần xem xét và quyết định cần bạn xử lý.";
+"View progress" = "Xem tiến độ";
 "All" = "Tất cả";
 "All projects" = "Tất cả dự án";
 "Allow" = "Cho phép";
@@ -1956,3 +1979,4 @@
 "Auto-continue reached its limit of answers in a row." = "Tự động tiếp tục đã đạt giới hạn số lần trả lời liên tiếp.";
 "Answer it in the agent's terminal." = "Hãy trả lời trong terminal của agent.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminal của agent không mở trong Gitrochi. Hãy trả lời ở nơi agent đang chạy.";
+"Unreported" = "Chưa báo cáo";

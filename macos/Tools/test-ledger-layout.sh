@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Renders the Ledger page off screen on demo data, in light and dark: Inbox, Board, Graph, Streams, a wait held for the
-# person, the inspector, the empty state, a narrow and a stacked window, the two sheets, and the large demo (1,000
+# person, the inspector, the empty state, a narrow window and wrapped compact controls, the two sheets, and the large demo (1,000
 # sessions, 50,000 events). Then
 # the page, Settings › Ledger and Import from claude-ledger on the core itself, through its C ABI, with the core's demo
 # in a temporary database.
@@ -36,6 +36,7 @@ cat > "$TASK_TMP/LedgerLayout.swift" <<'SWIFT'
 import SwiftUI
 import AppKit
 import Vision
+import ImageIO
 
 @MainActor func settle(_ seconds: Double = 0.35) { RunLoop.current.run(until: Date().addingTimeInterval(seconds)) }
 
@@ -100,11 +101,21 @@ func seen(_ label: String, in text: String) -> Bool {
 }
 
 @MainActor func text(in png: Data) throws -> String {
-    let request = VNRecognizeTextRequest()
-    request.recognitionLevel = .accurate
-    request.recognitionLanguages = ["en-US"]
-    try VNImageRequestHandler(data: png).perform([request])
-    return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    func read(_ handler: VNImageRequestHandler) throws -> String {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages = ["en-US"]
+        try handler.perform([request])
+        return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    }
+    var recognized = try read(VNImageRequestHandler(data: png))
+    // Vision reduces a tall page to fit: recognize its small navigation labels at their native size too.
+    if let source = CGImageSourceCreateWithData(png as CFData, nil), let bitmap = CGImageSourceCreateImageAtIndex(source, 0, nil),
+       bitmap.height > bitmap.width,
+       let header = bitmap.cropping(to: CGRect(x: 0, y: 0, width: CGFloat(bitmap.width), height: 500)) {
+        recognized += "\n" + (try read(VNImageRequestHandler(cgImage: header)))
+    }
+    return recognized
 }
 
 @main struct LedgerLayoutFixture {
@@ -178,9 +189,9 @@ func seen(_ label: String, in text: String) -> Bool {
 
         ledger.page = .inbox
         try shoot("narrow", LedgerWorkspaceView(repositoryPath: nil, ledger: ledger), width: 980, height: 760,
-                  expect: ["Inbox", "Retry sign-in after a timeout"], absent: ["Answer or dismiss the open questions"])
+                  expect: ["Inbox", "Board", "Graph", "All verdicts", "Retry sign-in after a timeout"], absent: ["Answer or dismiss the open questions"])
         try shoot("stacked", LedgerWorkspaceView(repositoryPath: nil, ledger: ledger), width: 620, height: 820,
-                  expect: ["Inbox", "Board", "Graph"])
+                  expect: ["Inbox", "Board", "Graph", "All verdicts"])
 
         ledger.selection = decision.id
         wait { try? await Task.sleep(for: .milliseconds(200)) }
@@ -192,13 +203,13 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("inspector-auto-continue", LedgerInspector(ledger: ledger, open: { _ in }, close: {}), width: 480, height: 1100,
                   expect: ["Retry sign-in after a timeout", "Continue automatically when nobody answers"])
 
-        try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 640, height: 330,
-                  expect: ["Connect Claude Code", "claude mcp add", "Copy command", "Test connection"])
+        try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 680, height: 700,
+                  expect: ["Connect Claude Code", "claude mcp add", "Copy reporting instruction", "Test Ledger"])
         try shoot("import", LedgerImportSheet(ledger: ledger), width: 620, height: 380, expect: ["Paste reports", "Import"])
 
         let empty = store(.empty)
         try shoot("empty", LedgerWorkspaceView(repositoryPath: nil, ledger: empty), width: 1200, height: 760,
-                  expect: ["Keep track of your agent sessions", "Connect Claude Code", "Paste reports"])
+                  expect: ["No reports yet", "Connect Claude Code", "Paste reports"])
 
         // the core itself, through its C ABI, as the app reads it
         let core = LedgerStore(client: LedgerClient(backend: NativeLedgerBackend(database: CommandLine.arguments[2])), defaults: defaults, interval: .seconds(600))

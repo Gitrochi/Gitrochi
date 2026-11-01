@@ -1157,6 +1157,7 @@
 "Open the full log" = "เปิดล็อกทั้งหมด";
 "Failed tests" = "การทดสอบที่ล้มเหลว";
 "Verdicts" = "ผลการตัดสิน";
+"All verdicts" = "ผลการประเมินทั้งหมด";
 "Output" = "เอาต์พุต";
 "Waiting for the engine…" = "กำลังรอเอนจิน…";
 "Choose a step to see its output." = "เลือกขั้นตอนเพื่อดูเอาต์พุต";
@@ -1622,6 +1623,28 @@
 "Agent activity" = "กิจกรรมของเอเจนต์";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "เอเจนต์รายงานว่าเริ่มจากอะไร ทำอะไรเสร็จ และต้องการอะไรจากคุณ คุณเพียงตอบ ยืนยัน และจัดเก็บที่นี่";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "เอเจนต์ที่เริ่มจาก Gitrochi จะถูกติดตามแม้ไม่มีขั้นตอนนี้ Gitrochi จะไม่เขียนสิ่งใดลงในการตั้งค่าของ Claude Code";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "ยังไม่มีรายงาน";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "ลงทะเบียนเครื่องมือ Ledger กับ Claude Code โดยเรียกใช้คำสั่งนี้ในเทอร์มินัล";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "การลงทะเบียนทำให้ใช้งานเครื่องมือได้ แต่จะไม่นำเข้าบทสนทนาที่มีอยู่หรือทำให้เอเจนต์ส่งรายงานโดยอัตโนมัติ";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "เริ่มบทสนทนา Claude Code ใหม่หรือเริ่มต้นอีกครั้ง แล้วขอให้เอเจนต์เรียก ledger_report เพื่อส่งรายงานเริ่มต้นเกี่ยวกับงานปัจจุบัน";
+"Reporting instruction" = "คำแนะนำการรายงาน";
+"Copy reporting instruction" = "คัดลอกคำแนะนำการรายงาน";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "หากต้องการติดตามเอเจนต์ Claude Code ใหม่ที่เปิดจาก Gitrochi โดยอัตโนมัติ ให้เปิด การตั้งค่า > สมุดบันทึก > ติดตามเอเจนต์ที่ฉันเริ่ม โดยค่าเริ่มต้นจะปิดอยู่";
+"Test Ledger" = "ทดสอบ Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "ตรวจสอบ Ledger ของแอปนี้ ไม่ใช่การตั้งค่า MCP ของ Claude Code";
+"The Ledger responds." = "Ledger ตอบสนองแล้ว";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "การเชื่อมต่อเครื่องมือเพียงอย่างเดียวจะไม่สร้างเซสชัน ส่งรายงานแรกเพื่อให้บทสนทนานี้แสดงที่นี่";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger แสดงรายงานที่เอเจนต์ส่งเกี่ยวกับงานของตน การเชื่อมต่อเครื่องมือเพียงอย่างเดียวจะไม่นำเข้าบทสนทนา";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi จะไม่เปลี่ยนแปลงการตั้งค่าของ Claude Code";
+"Copy MCP settings" = "คัดลอกการตั้งค่า MCP";
+"MCP settings entry" = "รายการการตั้งค่า MCP";
+"Other MCP clients: add this entry to their MCP settings." = "ไคลเอนต์ MCP อื่น ๆ: เพิ่มรายการนี้ในการตั้งค่า MCP ของไคลเอนต์นั้น";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "ยังไม่มีรายงานเข้ามา ลงทะเบียนเครื่องมือ แล้วขอให้เอเจนต์ส่งรายงานเริ่มต้น";
+"Command for Claude Code" = "คำสั่งสำหรับ Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "ดูความคืบหน้าได้ในกระดานและสตรีม กล่องขาเข้าแสดงเฉพาะคำถาม การตรวจทาน และการตัดสินใจที่ต้องการคุณ";
+"View progress" = "ดูความคืบหน้า";
 "All" = "ทั้งหมด";
 "All projects" = "ทุกโปรเจกต์";
 "Allow" = "อนุญาต";
@@ -1992,3 +2015,4 @@
 "Auto-continue reached its limit of answers in a row." = "การดำเนินการต่ออัตโนมัติตอบติดกันครบจำนวนสูงสุดแล้ว";
 "Answer it in the agent's terminal." = "ตอบในเทอร์มินัลของเอเจนต์";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "เทอร์มินัลของเอเจนต์ไม่ได้เปิดอยู่ใน Gitrochi โปรดตอบในที่ที่เอเจนต์รันอยู่";
+"Unreported" = "ยังไม่รายงาน";

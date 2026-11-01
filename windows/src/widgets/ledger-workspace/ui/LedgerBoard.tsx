@@ -1,5 +1,5 @@
 import { Archive, CircleCheck, Clock, X } from "lucide-react";
-import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { filterSessions, type LedgerStore, stepIndex, streamCount, verdictCounts, verdictLook, visibleRows } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -10,7 +10,7 @@ const ROW = 34;
 const HOUR = 3_600_000;
 
 /**
- * Every session of the project as a dense list: verdict chips with counts, multi-select with Shift and Ctrl (Space
+ * Every session of the project as a dense list: verdict chips, multi-select with Shift and Ctrl (Space
  * from the keyboard) and a bar of bulk actions that undo as one. Streams are listed under Streams instead.
  * Windowed, so a thousand sessions scroll as smoothly as ten. (macOS: Views/Ledger/LedgerBoard.swift)
  */
@@ -19,8 +19,8 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
   const state = store.state!;
   const project = store.project;
   const rows = useMemo(
-    () => filterSessions(state.sessions, { project, verdicts: store.verdicts, text: store.filterText, showArchived: store.showArchived }),
-    [state, project, store.verdicts, store.verdicts.size, store.filterText, store.showArchived],
+    () => filterSessions(state.sessions, { project, verdicts: store.verdicts, text: store.filterText, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly }),
+    [state, project, store.verdicts, store.verdicts.size, store.filterText, store.showArchived, store.unreportedOnly],
   );
   const counts = useMemo(() => verdictCounts(state.sessions, project), [state, project]);
   const streams = streamCount(state.sessions, project);
@@ -81,18 +81,18 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
   return (
     <div className="ledger-board">
       <div className="ledger-board-bar" role="toolbar" aria-label={t("Verdicts")}>
-        {counts.filter((c) => c.count || store.verdicts.has(c.verdict)).map(({ verdict, count }) => {
+        {counts.filter((c) => c.count || store.verdicts.has(c.verdict)).map(({ verdict }) => {
           const look = verdictLook(verdict), Icon = verdictIcon(verdict), on = store.verdicts.has(verdict);
           return (
-            <button key={verdict} type="button" className={`ledger-chip${on ? " on" : ""}`} aria-pressed={on} style={{ "--verdict": `var(${look.color})` } as CSSProperties} onClick={(e) => store.toggleVerdict(verdict, !(e.ctrlKey || e.metaKey))} data-tip={`${t(look.label)}|${t("Click to show only these; Ctrl+click to add them.")}`}>
+            <button key={verdict} type="button" className={`ledger-chip${on ? " on" : ""}`} aria-pressed={on} onClick={(e) => store.toggleVerdict(verdict, !(e.ctrlKey || e.metaKey))} data-tip={`${t(look.label)}|${t("Click to show only these; Ctrl+click to add them.")}`}>
               <Icon size={12} />
               {t(look.label)}
-              <span className="count">{count}</span>
             </button>
           );
         })}
-        {store.verdicts.size > 0 && <Button size="small" onClick={() => { store.verdicts.clear(); store.changed(); }}>{t("Show all")}</Button>}
+        {(store.verdicts.size > 0 || store.unreportedOnly) && <Button size="small" onClick={() => { store.verdicts.clear(); store.unreportedOnly = false; store.changed(); }}>{t("Show all")}</Button>}
         <span className="spacer" />
+        <Checkbox checked={store.unreportedOnly} onChange={(on) => { store.unreportedOnly = on; store.changed(); }} label={t("Unreported")} />
         <Checkbox checked={store.showArchived} onChange={(on) => { store.showArchived = on; store.changed(); }} label={t("Show cleaned up")} />
       </div>
       {checked.length > 0 && (
@@ -124,12 +124,12 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
             {rows.slice(first, last).map((s, i) => {
               const index = first + i;
               return (
-                <div key={s.id} role="row" aria-rowindex={index + 1} data-session={s.id} className={`ledger-table-row${store.checked.has(s.id) ? " checked" : ""}${index === active ? " active" : ""}${s.id === store.selectedId ? " selected" : ""}`} style={{ top: index * ROW }} onClick={(e) => { if (!(e.target as HTMLElement).closest("input")) click(index, e); }}>
+                <div key={s.id} role="row" aria-rowindex={index + 1} data-session={s.id} className={`ledger-table-row${store.checked.has(s.id) ? " checked" : ""}${index === active ? " active" : ""}${(active >= 0 ? index === active : s.id === store.selectedId) ? " selected" : ""}`} style={{ top: index * ROW }} onClick={(e) => { if (!(e.target as HTMLElement).closest("input")) click(index, e); }}>
                   <input type="checkbox" className="ledger-check" checked={store.checked.has(s.id)} aria-label={t("Select {0}", s.id)} onChange={(e) => { store.toggleChecked(s.id, e.target.checked); anchor.current = index; }} />
                   <SessionId session={s} />
                   <span className="ledger-cell" title={s.title}>{s.title}</span>
                   <span className="ledger-wide-only ledger-cell"><BaseLine session={s} /></span>
-                  <span className="ledger-cell"><VerdictBadge verdict={s.verdict} /></span>
+                  <span className="ledger-cell">{!(store.verdicts.size === 1 && store.verdicts.has(s.verdict)) && <VerdictBadge verdict={s.verdict} />}</span>
                   <span className="ledger-wide-only ledger-cell muted">{s.kind}</span>
                   <span className="ledger-cell"><When at={s.lastAt} /></span>
                 </div>

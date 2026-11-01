@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Every session of the project as a dense list: verdict filter chips (the counts are the navigation's), multi-select
+/// Every session of the project as a dense list: verdict filter chips (the counts are the verdict menu's), multi-select
 /// (⌘ or ⇧ click, Space) and bulk confirm, archive, snooze and close. Streams stay out of it.
 /// (Windows: widgets/ledger-workspace/ui/LedgerBoardView.tsx)
 struct LedgerBoardView: View {
@@ -55,6 +55,9 @@ struct LedgerBoardView: View {
                     .accessibilityAddTraits(on ? .isSelected : [])
                 }
             }
+            Toggle("Unreported", isOn: Binding(get: { ledger.filter.unreportedOnly }, set: { ledger.filter.unreportedOnly = $0 }))
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12))
             if ledger.streamCount > 0 {
                 HStack(spacing: 4) {
                     // the count is the Streams row's: a count appears once per screen

@@ -1163,6 +1163,7 @@
 "Open the full log" = "開啟完整記錄";
 "Failed tests" = "失敗的測試";
 "Verdicts" = "判定";
+"All verdicts" = "所有判定";
 "Output" = "輸出";
 "Waiting for the engine…" = "正在等待引擎…";
 "Choose a step to see its output." = "選擇步驟以查看其輸出。";
@@ -1632,6 +1633,28 @@
 "Agent activity" = "代理活動";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "代理會回報它們從哪裡開始、做了什麼、需要你做什麼。你只需在這裡回答、確認和清理。";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "從 Gitrochi 啟動的代理無需此步驟也會被追蹤。Gitrochi 不會寫入 Claude Code 的設定。";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "尚無報告";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "在終端機執行此命令，向 Claude Code 註冊 Ledger 工具。";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "註冊後即可使用工具，但不會匯入現有對話，也不會讓代理程式自動報告。";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "建立或重新啟動 Claude Code 對話，然後請它呼叫 ledger_report，傳送目前工作的開始報告。";
+"Reporting instruction" = "報告說明";
+"Copy reporting instruction" = "複製報告說明";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "若要自動追蹤從 Gitrochi 新啟動的 Claude Code 代理程式，請開啟設定 > 帳本 > 追蹤我啟動的代理程式。此選項預設關閉。";
+"Test Ledger" = "測試 Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "檢查此應用程式的 Ledger，而非 Claude Code 的 MCP 設定。";
+"The Ledger responds." = "Ledger 已回應。";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "僅連接工具不會建立工作階段。傳送第一份報告後，此對話才會顯示在這裡。";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger 顯示代理程式傳送的工作報告。僅連接工具不會匯入對話。";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi 不會變更 Claude Code 的設定。";
+"Copy MCP settings" = "複製 MCP 設定";
+"MCP settings entry" = "MCP 設定項目";
+"Other MCP clients: add this entry to their MCP settings." = "其他 MCP 用戶端：請將此項目加入其 MCP 設定。";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "尚未收到報告。請註冊工具，然後請代理程式傳送開始報告。";
+"Command for Claude Code" = "Claude Code 命令";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "在看板與串流中查看進度。收件匣僅顯示需要您處理的問題、檢閱與決定。";
+"View progress" = "查看進度";
 "All" = "全部";
 "All projects" = "所有專案";
 "Allow" = "允許";
@@ -2002,3 +2025,4 @@
 "Auto-continue reached its limit of answers in a row." = "自動繼續已達到連續回答的次數上限。";
 "Answer it in the agent's terminal." = "請在代理程式的終端機中回答。";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "此代理程式的終端機未在 Gitrochi 中開啟。請在代理程式執行的地方回答。";
+"Unreported" = "未回報";

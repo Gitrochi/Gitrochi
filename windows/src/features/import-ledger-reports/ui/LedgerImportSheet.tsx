@@ -84,11 +84,11 @@ export function LedgerImportSheet({ store, onClose, onOpenSession, onImportLegac
                 <span className="mono faint">#{line.number}</span>
                 <span className="grow ellipsis">{line.outcome === "imported" ? t("Imported") : line.outcome === "duplicate" ? t("Already imported") : line.error}</span>
                 {line.sessionId && onOpenSession && (
-                  <button type="button" className="link mono" onClick={() => onOpenSession(line.sessionId!)}>
+                  <button type="button" className="link" onClick={() => onOpenSession(line.sessionId!)}>
                     {line.sessionId}
                   </button>
                 )}
-                {line.sessionId && !onOpenSession && <span className="mono faint">{line.sessionId}</span>}
+                {line.sessionId && !onOpenSession && <span className="faint">{line.sessionId}</span>}
               </div>
             ))}
           </div>

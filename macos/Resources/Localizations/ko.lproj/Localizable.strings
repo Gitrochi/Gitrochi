@@ -2116,6 +2116,7 @@
 "Open the full log" = "전체 로그 열기";
 "Failed tests" = "실패한 테스트";
 "Verdicts" = "판정";
+"All verdicts" = "모든 판정";
 "Output" = "출력";
 "Waiting for the engine…" = "엔진을 기다리는 중…";
 "Choose a step to see its output." = "단계를 고르면 출력을 봅니다.";
@@ -3431,6 +3432,28 @@
 "Agent activity" = "에이전트 활동";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "에이전트가 무엇에서 시작했는지, 무엇을 만들었는지, 무엇이 필요한지 보고합니다. 여기서는 답하고 확인하고 정리하기만 하면 됩니다.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi에서 시작한 에이전트는 이것 없이도 추적됩니다. Gitrochi는 Claude Code 설정에 아무것도 쓰지 않습니다.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "아직 보고가 없습니다";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "터미널에서 이 명령을 실행해 원장 도구를 Claude Code에 등록하세요.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "등록하면 도구를 사용할 수 있습니다. 기존 대화를 가져오거나 에이전트가 자동으로 보고하게 하지는 않습니다.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Claude Code 대화를 새로 시작하거나 다시 시작한 다음, 현재 작업에 대한 시작 보고를 ledger_report로 보내 달라고 요청하세요.";
+"Reporting instruction" = "보고 지침";
+"Copy reporting instruction" = "보고 지침 복사";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Gitrochi에서 새로 실행하는 Claude Code 에이전트를 자동으로 추적하려면 설정 > 원장 > 내가 시작한 에이전트 추적를 켜세요. 기본값은 꺼짐입니다.";
+"Test Ledger" = "원장 테스트";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "이 앱의 원장을 확인하며, Claude Code의 MCP 설정을 확인하지는 않습니다.";
+"The Ledger responds." = "원장이 응답합니다.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "도구 연결만으로는 세션이 만들어지지 않습니다. 이 대화를 여기에 표시하려면 첫 보고를 보내세요.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "원장은 에이전트가 작업에 대해 보낸 보고를 표시합니다. 도구 연결만으로 기존 대화를 가져오지는 않습니다.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi는 Claude Code의 설정을 변경하지 않습니다.";
+"Copy MCP settings" = "MCP 설정 복사";
+"MCP settings entry" = "MCP 설정 항목";
+"Other MCP clients: add this entry to their MCP settings." = "다른 MCP 클라이언트는 이 항목을 MCP 설정에 추가하세요.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "아직 도착한 보고가 없습니다. 도구를 등록한 다음 에이전트에게 시작 보고를 보내 달라고 요청하세요.";
+"Command for Claude Code" = "Claude Code용 명령";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "보드와 스트림에서 진행 상황을 확인하세요. 받은 편지함은 사용자 확인이 필요한 질문, 검토, 결정만 표시합니다.";
+"View progress" = "진행 상황 보기";
 "All projects" = "모든 프로젝트";
 "Allow" = "허용";
 "Allowed" = "허용함";
@@ -3786,3 +3809,4 @@
 "Auto-continue reached its limit of answers in a row." = "자동 진행이 연속 답변 한도에 도달했습니다.";
 "Answer it in the agent's terminal." = "에이전트 터미널에서 답하세요.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "에이전트 터미널이 Gitrochi에 열려 있지 않습니다. 에이전트가 실행 중인 곳에서 답하세요.";
+"Unreported" = "미보고";

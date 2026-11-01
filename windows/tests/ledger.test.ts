@@ -30,12 +30,11 @@ describe("Ledger verdicts", () => {
     expect(verdict({ lastAt: NOW - 100 * HOUR, snoozeUntil: NOW + HOUR })).toBe("active");
     expect(verdict({ lastAt: NOW - 100 * HOUR, snoozeUntil: NOW - HOUR })).toBe("stale");
   });
-  it("shows every verdict once, in the Inbox's order, with the contract's colours", () => {
+  it("shows every verdict once, in the Inbox's order, with status tones independent of the accent", () => {
     expect([...verdictDisplayOrder].sort()).toEqual([...ledgerVerdicts].sort());
     expect(verdictDisplayOrder.slice(0, 5)).toEqual(["needs_human", "confirm", "expirable", "pending_merge", "stale"]);
-    const colours: Record<LedgerVerdict, string> = { needs_human: "--orange", pending_merge: "--accent", confirm: "--accent", expirable: "--green", stale: "--red", shelved: "--text-3", archived: "--text-3", active: "--text-2" };
-    for (const v of ledgerVerdicts) expect(verdictLook(v).color, v).toBe(colours[v]);
-    expect(ledgerVerdicts.filter((v) => verdictLook(v).outline)).toEqual(["confirm"]);
+    const tones: Record<LedgerVerdict, string> = { needs_human: "waiting", pending_merge: "info", confirm: "info", expirable: "passed", stale: "failed", shelved: "neutral", archived: "neutral", active: "neutral" };
+    for (const v of ledgerVerdicts) expect(verdictLook(v).tone, v).toBe(tones[v]);
   });
   it("sorts the Board by verdict, then the latest activity", () => {
     const rows = [session({ id: "A", verdict: "active", lastAt: NOW }), session({ id: "B", verdict: "needs_human", lastAt: NOW - HOUR }), session({ id: "C", verdict: "needs_human", lastAt: NOW }), session({ id: "D", verdict: "archived", lastAt: NOW })];
@@ -111,11 +110,28 @@ describe("Ledger filters", () => {
   ];
   it("keeps streams and archived sessions out unless asked, then applies chips and text", () => {
     expect(filterSessions(rows, emptyFilter()).map((s) => s.id)).toEqual(["S1031-01", "S1031-03"]);
+    expect(filterSessions(rows, { project: null, verdicts: new Set(), text: "", showArchived: false }).map((s) => s.id)).toEqual(["S1031-01", "S1031-03"]);
     expect(filterSessions(rows, { ...emptyFilter("atlas"), showArchived: true }).map((s) => s.id)).toEqual(["S1031-01", "S1031-02"]);
     expect(filterSessions(rows, { ...emptyFilter(), verdicts: new Set<LedgerVerdict>(["archived"]) }).map((s) => s.id)).toEqual(["S1031-02"]);
     expect(filterSessions(rows, { ...emptyFilter(), text: "RETRY fix/" }).map((s) => s.id)).toEqual(["S1031-01"]);
     expect(matchesText(rows[0], "auth/retry")).toBe(true);
     expect(matchesText(rows[0], "retry harbor")).toBe(false);
+  });
+  it("finds unreported launches while retaining project, verdict, archive, text and stream filters", () => {
+    const launches = [
+      session({ id: "unreported", title: "Retry launch", lastAgentAt: undefined }),
+      session({ id: "reported", lastAgentAt: 0 }),
+      session({ id: "other-project", project: "harbor" }),
+      session({ id: "stream", stream: { line: "core" } }),
+      session({ id: "closed", verdict: "expirable", status: "closed" }),
+      session({ id: "archived", verdict: "archived" }),
+    ];
+    const f = { ...emptyFilter("atlas"), unreportedOnly: true };
+    expect(filterSessions(launches, f).map((s) => s.id)).toEqual(["closed", "unreported"]);
+    expect(filterSessions(launches, { ...f, text: "retry" }).map((s) => s.id)).toEqual(["unreported"]);
+    expect(filterSessions(launches, { ...f, verdicts: new Set<LedgerVerdict>(["active"]) }).map((s) => s.id)).toEqual(["unreported"]);
+    expect(filterSessions(launches, { ...f, showArchived: true }).some((s) => s.id === "archived")).toBe(true);
+    expect(filterSessions(launches, { ...f, unreportedOnly: false }).some((s) => s.id === "reported")).toBe(true);
   });
   it("counts verdicts per project without streams, in display order", () => {
     const counts = verdictCounts(rows, "atlas");

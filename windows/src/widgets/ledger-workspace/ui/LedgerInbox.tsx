@@ -1,6 +1,6 @@
 import { Archive, CircleCheck, Clock, GitMerge, MessageSquareReply, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { describeAnswer, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex } from "@/entities/ledger";
+import { describeAnswer, filterSessions, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex, streamCount } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -81,13 +81,17 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const boardRows = filterSessions(state.sessions, { project, verdicts: store.verdicts, text, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly });
+  const progressView = boardRows.length === 0 && streamCount(state.sessions, project) > 0 ? "streams" : "board";
+  const selectedKey = activeKey ?? items.find((i) => i.session?.id === store.selectedId)?.key;
   const busy = store.busy > 0;
   return (
     <div className="ledger-inbox" role="region" aria-label={t("Inbox")} ref={self} tabIndex={-1}>
       <LedgerPromptStrip store={store} onOpen={onOpen} onOpenTerminal={onOpenTerminal} />
       {!groups.length ? (
         <div className="ledger-all-clear">
-          <Empty icon={<CircleCheck size={30} strokeWidth={1.5} />} title={t("Nothing needs you")} detail={t("Questions, finished sessions to confirm and sessions to decide show up here.")} />
+          <Empty icon={<CircleCheck size={30} strokeWidth={1.5} />} title={t("Nothing needs you")} detail={t("Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you.")} />
+          <Button onClick={() => store.setView(progressView)}>{t("View progress")}</Button>
         </div>
       ) : (
         groups.map((g) => {
@@ -104,7 +108,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
                     key={item.key}
                     role="listitem"
                     ref={(el) => { if (el) rows.current.set(item.key, el); else rows.current.delete(item.key); }}
-                    className={`ledger-row${item.key === activeKey ? " active" : ""}${item.session && item.session.id === store.selectedId ? " selected" : ""}`}
+                    className={`ledger-row${item.key === activeKey ? " active" : ""}${item.key === selectedKey ? " selected" : ""}`}
                     data-item={item.key}
                     onMouseDown={() => setActiveKey(item.key)}
                     onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, a, input") && item.session) onOpen(item.session.id); }}
@@ -184,7 +188,7 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAns
       <div className="ledger-meta">
         <span>{s.kind}</span>
         <BaseLine session={s} />
-        {s.mergedInto && <span className="mono">{t("merged into {0}", s.mergedInto)}</span>}
+        {s.mergedInto && <span>{t("merged into {0}", s.mergedInto)}</span>}
       </div>
       <div className="ledger-row-actions">
         {s.verdict === "confirm" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "ack", sessionId: s.id })} tip={`${t("Confirm")}|${t("The outcome is right; the conversation can be cleaned up next.")}|C`}><CircleCheck size={13} />{t("Confirm")}</Button>}

@@ -1125,6 +1125,7 @@
 "Open the full log" = "Abrir o log completo";
 "Failed tests" = "Testes com falha";
 "Verdicts" = "Vereditos";
+"All verdicts" = "Todos os veredictos";
 "Output" = "Saída";
 "Waiting for the engine…" = "Aguardando o mecanismo…";
 "Choose a step to see its output." = "Escolha uma etapa para ver a saída dela.";
@@ -1591,6 +1592,28 @@
 "Agent activity" = "Atividade do agente";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Os agentes informam de onde partiram, o que fizeram e do que precisam de você. Aqui você responde, confirma e organiza.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Agentes iniciados pelo Gitrochi são acompanhados sem isso. O Gitrochi não grava nada nas configurações do Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Ainda não há relatórios";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Registre as ferramentas do Ledger no Claude Code executando este comando em um terminal.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "O registro disponibiliza as ferramentas. Ele não importa conversas existentes nem faz os agentes enviarem relatórios automaticamente.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Inicie ou reinicie uma conversa do Claude Code e peça ao agente para chamar ledger_report com um relatório inicial sobre o trabalho atual.";
+"Reporting instruction" = "Instrução de relatório";
+"Copy reporting instruction" = "Copiar instrução de relatório";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Para acompanhar automaticamente novos agentes do Claude Code iniciados pelo Gitrochi, ative Configurações > Registro > Acompanhar os agentes que eu inicio. A opção vem desativada.";
+"Test Ledger" = "Testar Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Verifica o Ledger deste aplicativo, não a configuração MCP do Claude Code.";
+"The Ledger responds." = "O Ledger responde.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Apenas conectar as ferramentas não cria uma sessão. Envie um primeiro relatório para ver esta conversa aqui.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "O Ledger mostra os relatórios que os agentes enviam sobre seu trabalho. Apenas conectar as ferramentas não importa conversas.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "O Gitrochi não altera as configurações do Claude Code.";
+"Copy MCP settings" = "Copiar configurações MCP";
+"MCP settings entry" = "Entrada de configurações MCP";
+"Other MCP clients: add this entry to their MCP settings." = "Outros clientes MCP: adicione esta entrada às configurações MCP deles.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Ainda não chegaram relatórios. Registre as ferramentas e peça ao seu agente para enviar um relatório inicial.";
+"Command for Claude Code" = "Comando para o Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Veja o progresso no quadro e nos fluxos. A caixa de entrada mostra apenas perguntas, revisões e decisões que precisam de você.";
+"View progress" = "Ver progresso";
 "All" = "Tudo";
 "All projects" = "Todos os projetos";
 "Allow" = "Permitir";
@@ -1962,3 +1985,4 @@
 "Auto-continue reached its limit of answers in a row." = "A continuação automática atingiu o limite de respostas seguidas.";
 "Answer it in the agent's terminal." = "Responda no terminal do agente.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "O terminal do agente não está aberto no Gitrochi. Responda onde o agente está em execução.";
+"Unreported" = "Sem relatório";

@@ -142,7 +142,7 @@ crates/gitrochi-autocontinue/  auto-continue's pure logic, no I/O: question dete
 | Commit graph (`gitrochi-core` `graph::layout`, `Palette.lanes`/`GraphMetrics` ↔ `laneColors`/`metrics.ts`) | The core may reuse the layout to compute the Graph view's lanes; the apps draw with the commit graph's colours and metrics ([§10.5](#105-graph)). |
 | Pull/merge request pages (`PullRequestSection`, `PullRequestDetailView` on both platforms) | Untouched — no chip. The Ledger inspector links to a session's request instead (head branch, or a session ID in the request's title, branch or description) and opens it on the existing page. |
 | `WorkspaceCommandPalette` (macOS) | Adding `.ledger` to `WorkspaceDestination` gives "Go to Ledger"; a Ledger group appended to the palette's command list adds sessions, questions and baselines from `search`. |
-| `MCPConnectionSheet` (both platforms) | The Connect Claude Code sheet follows its layout (Copy configuration, Test connection) and adds the `claude mcp add` command. |
+| `MCPConnectionSheet` (both platforms) | The Connect Claude Code sheet follows its layout, adds the `claude mcp add` command and reporting instructions, and labels its own probe **Test Ledger**. |
 | AI service (`Services/AI.swift` ↔ `entities/ai`) | Auto-continue's optional refinement and P5 summaries, through `complete`, with the key Gitrochi already stores. |
 | `MarkdownView` ↔ `shared/ui/Markdown.tsx` | Report bodies and questions. |
 | Terminal panel | P4 quick launches from the Ledger page, through the terminal's existing API only. |
@@ -449,27 +449,31 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 ### 10.2 Layout
 
-Gitrochi's three columns — filters | view | inspector — built from the same parts as the repository screen (`PageHeader`, `WorkspaceColumns` on macOS, the workspace page grid on Windows). Below 1,080 pt the inspector becomes a sheet, as in the project workspace (`ProjectWorkspace.swift`; a `Modal` on Windows); below 640 pt the filter column stacks above the view, as `AdaptiveWorkbenchSplit` does. Waiting prompts sit in a strip above every view (`LedgerPromptStrip`).
+The app's existing sidebar remains the only vertical navigation. Inside Ledger, underline tabs switch **Inbox**, **Board**, **Graph** and **Streams** above the main view. A compact toolbar below them holds the project picker, session filter and verdict menu; it wraps below 640 pt. The former inner filter sidebar is removed, so the main view gains that space without changing the app's navigation or other destinations. Tabs own their view counts; verdict counts live in the compact verdict menu and the Board's filter chips use labels only.
+
+The view and inspector use `WorkspaceColumns` on macOS and the Ledger workspace grid on Windows. Below 1,080 pt the inspector becomes a sheet, as in the project workspace (`ProjectWorkspace.swift`; a `Modal` on Windows). Waiting prompts sit in a strip above every view (`LedgerPromptStrip`).
 
 ```
-┌────────────┬──────────────────────┬──────────────────────────────────────────┬──────────────────────────────┐
-│ WORKSPACE  │ ⌕ Filter sessions    │ Inbox  Board  Graph  Streams      Import │ S1031-02         ● Needs you │
-│ Home       │                      │──────────────────────────────────────────│ Fix login retry              │
-│ Repository │ PROJECT              │ QUESTIONS                             2  │ implementation · Claude Code │
-│ …          │ ● This repository    │ ▸ S1031-02  Fix login retry       2h     │ v1.4.0 → v1.4.2 · 1 behind   │
-│ TOOLS      │   All projects       │   Retry 3 or 5 times on a 503?           │ ⎇ fix/login-retry · worktree │
-│ Flows      │                      │   ┌──────────────────────────────────┐   │ ⇄ #142 open · agent idle 4m  │
-│ Ledger  5  │ VIEWS                │   │ Answer… (⌘↩ saves)               │   │──────────────────────────────│
-│            │ Inbox            5   │   └──────────────────────────────────┘   │ [Mark merged…] [Close] [⋯]   │
-│            │ Board                │ TO CLEAN UP                           1  │ QUESTIONS                    │
-│            │ Graph                │ ▸ S1030-04  Export docs  merged v1.4.2   │ #12 Retry 3 or 5 times?      │
-│            │ Streams          1   │             [Confirm C]                  │ TIMELINE                     │
-│            │                      │ TO DECIDE                             2  │ ◇ question     2h            │
-│            │ VERDICTS             │ ▸ S1029-01  Cache spike  done · 3d       │ ● artifact     5h  report.md │
-│            │ ● Needs you      2   │   [Merged… M] [Close] [Still active S]   │ ○ start        1d  from 1.4.0│
-│            │ ● To decide      2   │ RUNNING, NOT IN THE LEDGER            1  │ TOUCHES                      │
-│            │ ● To confirm     1   │ ◌ claude · app · feature/x · 12m [Track] │ src/auth/retry.ts ⚠ S1031-05 │
-└────────────┴──────────────────────┴──────────────────────────────────────────┴──────────────────────────────┘
+┌────────────┬───────────────────────────────────────────────────────────┬──────────────────────────────┐
+│ WORKSPACE  │ Inbox 5   Board   Graph   Streams 1                  [⋯]  │ S1031-02         ● Needs you │
+│ Home       │───────────────────────────────────────────────────────────│ Fix login retry              │
+│ Repository │ [This repository ▾] [⌕ Filter sessions] [All verdicts ▾]  │ implementation · Claude Code │
+│ …          │───────────────────────────────────────────────────────────│ v1.4.0 → v1.4.2 · 1 behind   │
+│ TOOLS      │ QUESTIONS                                             2   │ ⎇ fix/login-retry · worktree │
+│ Flows      │ ▸ S1031-02  Fix login retry                          2h   │ ⇄ #142 open · agent idle 4m  │
+│ Ledger  5  │   Retry 3 or 5 times on a 503?                            │──────────────────────────────│
+│            │   ┌─────────────────────────────────────────────────┐     │ [Mark merged…] [Close] [⋯]   │
+│            │   │ Answer… (⌘↩ saves)                              │     │ QUESTIONS                    │
+│            │   └─────────────────────────────────────────────────┘     │ #12 Retry 3 or 5 times?      │
+│            │ TO CLEAN UP                                           1   │ TIMELINE                     │
+│            │ ▸ S1030-04  Export docs  merged v1.4.2                    │ ◇ question     2h            │
+│            │             [Confirm C]                                   │ ● artifact     5h  report.md │
+│            │ TO DECIDE                                             2   │ ○ start        1d  from 1.4.0│
+│            │ ▸ S1029-01  Cache spike  done · 3d                        │ TOUCHES                      │
+│            │   [Merged… M] [Close] [Still active S]                    │ src/auth/retry.ts ⚠ S1031-05 │
+│            │ RUNNING, NOT IN THE LEDGER                             1  │                              │
+│            │ ◌ claude · app · feature/x · 12m [Track]                  │                              │
+└────────────┴───────────────────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
 The prompt strip, when an agent is waiting:
@@ -535,9 +539,11 @@ One card per stream (label, line, verdict, current version, last report) with it
 
 `WorkspaceEmptyState` ↔ `Empty`, with buttons below it as the pull-request page already composes them: **Track agents I start** (turns the setting on; D13), **Connect Claude Code** (the sheet below), **Paste reports** (Import), **Import from claude-ledger…** (D5). Once there are sessions, the same actions stay in the view menu.
 
+The empty Ledger says **No reports yet**. Registering MCP tools only makes them available: it neither imports existing conversations nor makes agents send reports automatically. Start or restart a Claude Code conversation after registration, then ask it to call `ledger_report` with a `start` report about its current work. New Claude Code agents launched from Gitrochi are tracked automatically only while **Settings › Ledger › Track agents I start** is on; that setting remains off by default. The **Board** shows ordinary sessions; live implementation sessions appear under **Streams** instead. The **Inbox** shows only questions, reviews and decisions needing the person, so an empty Inbox does not mean the Ledger has no sessions. Its **View progress** action opens **Streams** when there are streams and no Board sessions, and otherwise opens **Board**.
+
 ### 10.9 Sheets
 
-- **Connect Claude Code**: laid out like the existing `MCPConnectionSheet` — the `claude mcp add --scope user gitrochi-ledger -- "<bundled binary>" mcp` command and the `mcpServers` JSON for other clients, each with Copy; a short English instruction block for a project's `CLAUDE.md` (when to report, which events); **Test connection** starts the bundled binary, runs the MCP handshake and lists the tools. It never edits a client's configuration files. Sessions Gitrochi launches need none of this when tracking is on.
+- **Connect Claude Code**: laid out like the existing `MCPConnectionSheet` — the `claude mcp add --scope user gitrochi-ledger -- "<bundled binary>" mcp` command and the `mcpServers` JSON for other clients, each with Copy. Both platforms also offer a copyable English reporting instruction for the agent or the project's `CLAUDE.md`: send a `start` report through `ledger_report`, then report progress, questions and completion as the work changes. **Test Ledger** checks this app's Ledger backend; on macOS it also starts the bundled binary, runs the MCP handshake and lists its tools. A successful probe means the Ledger responds, not that Claude Code's own MCP configuration was tested, and the probe creates no session or report. The sheet never edits a client's configuration files. Sessions Gitrochi launches need no manual registration while **Track agents I start** is on; connecting tools alone does not enable that setting.
 - **Import**: a text area for pasted conversations, results per block, and **Import from claude-ledger…** (choose a database file; a preview of counts, then import).
 
 ### 10.10 Search

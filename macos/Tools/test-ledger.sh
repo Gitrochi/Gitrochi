@@ -165,6 +165,28 @@ let start: LedgerMs = 1_793_400_000_000
         check(filter.apply(list).map(\.id) == ["S2", "S5", "S1"], "several chips")
         check(LedgerSessionFilter.counts(list) == [.active: 2, .needsHuman: 1, .archived: 1], "counts leave streams out")
 
+        var unreported = session("launch", "Retry launch", verdict: .active, last: 1)
+        unreported.lastAgentAt = nil
+        var reported = unreported
+        reported.id = "reported"
+        reported.lastAgentAt = 0
+        var stream = unreported
+        stream.id = "stream"
+        stream.stream = .init(line: "core")
+        var archived = unreported
+        archived.id = "archived"
+        archived.verdict = .archived
+        let launches = [unreported, reported, stream, archived]
+        filter = LedgerSessionFilter(unreportedOnly: true)
+        check(filter.apply(launches).map(\.id) == ["launch"], "Unreported excludes reports at epoch zero, streams and archives")
+        filter.text = "missing"
+        check(filter.apply(launches).isEmpty, "Unreported retains the text filter")
+        filter.text = ""
+        filter.verdicts = [.stale]
+        check(filter.apply(launches).isEmpty, "Unreported retains the verdict filter")
+        filter.verdicts = [.archived]
+        check(filter.apply(launches).map(\.id) == ["archived"], "Unreported can show cleaned-up launches explicitly")
+
         var before = session("S9", "x", verdict: .confirm, last: 0)
         before.status = .merged
         before.mergedInto = "v1.2.0"
@@ -711,6 +733,27 @@ let start: LedgerMs = 1_793_400_000_000
     /// settings and projects, backups, both imports, several threads at once, the switch that turns it off, and the
     /// bundled command's MCP handshake. Every call names a database in `folder`.
     @MainActor static func native(cli: String, folder: String, legacy: String) async throws {
+        let connectionDB = folder + "/connection-check.sqlite3"
+        let connectionClient = LedgerClient(backend: NativeLedgerBackend(database: connectionDB))
+        let connectionSuite = "dev.gitrochi.ledger-connection-test." + UUID().uuidString
+        let connectionDefaults = UserDefaults(suiteName: connectionSuite)!
+        defer { connectionDefaults.removePersistentDomain(forName: connectionSuite) }
+        let connectionStore = LedgerStore(client: connectionClient, defaults: connectionDefaults, interval: .seconds(600))
+        await connectionStore.reload()
+        let connectedTools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
+        let connectionInfo = try await connectionStore.info()
+        await connectionStore.reload()
+        check(connectedTools.contains("ledger_report") && connectionInfo.enabled && connectionInfo.rev == 0
+              && connectionStore.state?.sessions.isEmpty == true && connectionStore.state?.rev == 0,
+              "a successful Ledger tools/info probe does not create or import sessions")
+        let firstReport = try call(CLIBackend(binary: cli, db: connectionDB), "report", ["event": .string("start"),
+            "session": .string("S1101-connection"), "project": .string("connection-check"), "kind": .string("maintenance"),
+            "title": .string("Connection check task")], as: LedgerJSON.self)
+        await connectionStore.poll()
+        check(firstReport["created"].bool == true && connectionStore.session("S1101-connection")?.title == "Connection check task"
+              && connectionStore.inbox.items.isEmpty,
+              "the first real report appears in sessions while an active session leaves the Inbox clear")
+
         let db = folder + "/ledger.sqlite3"
         _ = CLIBackend(binary: cli, db: db).run(["demo", db])
         let native = NativeLedgerBackend(database: db)

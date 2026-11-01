@@ -1144,6 +1144,7 @@
 "Open the full log" = "Teljes napló megnyitása";
 "Failed tests" = "Sikertelen tesztek";
 "Verdicts" = "Értékelések";
+"All verdicts" = "Összes értékelés";
 "Output" = "Kimenet";
 "Waiting for the engine…" = "Várakozás a motorra…";
 "Choose a step to see its output." = "Válasszon egy lépést a kimenete megtekintéséhez.";
@@ -1610,6 +1611,28 @@
 "Agent activity" = "Ügynök tevékenysége";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Az ügynökök jelentik, miből indultak, mit készítettek, és mire van szükségük öntől. Itt válaszol, megerősít és rendet tart.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "A Gitrochiból indított ügynököket enélkül is követi. A Gitrochi semmit sem ír a Claude Code beállításaiba.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Még nincsenek jelentések";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "A Ledger eszközeit e parancs terminálban való futtatásával regisztrálhatja a Claude Code-ban.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "A regisztráció elérhetővé teszi az eszközöket. Nem importálja a meglévő beszélgetéseket, és nem indít automatikus jelentést az ügynököknél.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Indítson új Claude Code-beszélgetést, vagy indítsa újra a meglévőt, majd kérje meg az ügynököt, hogy a ledger_report hívásával küldjön kezdő jelentést az aktuális munkájáról.";
+"Reporting instruction" = "Jelentési utasítás";
+"Copy reporting instruction" = "Jelentési utasítás másolása";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "A Gitrochiból indított új Claude Code-ügynökök automatikus követéséhez kapcsolja be ezt: Beállítások > Napló > Az általam indított ügynökök követése. Alapértelmezés szerint ki van kapcsolva.";
+"Test Ledger" = "Ledger tesztelése";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Az alkalmazás Ledgerét ellenőrzi, nem a Claude Code MCP-beállításait.";
+"The Ledger responds." = "A Ledger válaszol.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Az eszközök csatlakoztatása önmagában nem hoz létre munkamenetet. Küldjön első jelentést, hogy ez a beszélgetés itt megjelenjen.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "A Ledger az ügynökök munkájáról küldött jelentéseket mutatja. Az eszközök csatlakoztatása önmagában nem importál beszélgetéseket.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "A Gitrochi nem módosítja a Claude Code beállításait.";
+"Copy MCP settings" = "MCP-beállítások másolása";
+"MCP settings entry" = "MCP-beállítási bejegyzés";
+"Other MCP clients: add this entry to their MCP settings." = "Más MCP-kliensek: adja hozzá ezt a bejegyzést az MCP-beállításaikhoz.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Még nem érkezett jelentés. Regisztrálja az eszközöket, majd kérje meg az ügynököt egy kezdő jelentés elküldésére.";
+"Command for Claude Code" = "Parancs a Claude Code-hoz";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "A folyamatot a táblán és a streamekben követheti. A beérkezők csak a figyelmét igénylő kérdéseket, felülvizsgálatokat és döntéseket mutatják.";
+"View progress" = "Folyamat megtekintése";
 "All" = "Mind";
 "All projects" = "Minden projekt";
 "Allow" = "Engedélyezés";
@@ -1981,3 +2004,4 @@
 "Auto-continue reached its limit of answers in a row." = "Az automatikus folytatás elérte az egymás utáni válaszok korlátját.";
 "Answer it in the agent's terminal." = "Válaszoljon rá az ügynök termináljában.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Az ügynök terminálja nincs megnyitva a Gitrochiben. Ott válaszoljon, ahol az ügynök fut.";
+"Unreported" = "Nem jelentett";

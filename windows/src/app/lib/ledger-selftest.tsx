@@ -56,7 +56,7 @@ function leave(el: HTMLElement) {
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
-  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
+  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts, verdictLook }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
   const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, tabs: workspace.tabs, activeId: workspace.activeId, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
@@ -133,6 +133,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} launcher={launcher} />);
     ensure(await until(() => $(".ledger-page[data-layout='wide'] [data-view='inbox'] .ledger-prompts")), "The Inbox did not open with its waiting prompts");
     ensure(store.project === "atlas" && $$(".ledger-prompt").length === 3, `The Inbox must filter to this repository's project: ${store.project} prompts=${$$(".ledger-prompt").length}`);
+    ensure($$(".ledger-topbar").length === 1 && !$(".ledger-filters"), "A wide Ledger must have one compact filter bar and no second navigation column");
+    ensure(getComputedStyle($(".ledger-tabs button.on")!).borderBottomWidth === "2px", "The active view must use an underline tab");
 
     // An answer saved in place with Ctrl+Enter
     const question = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
@@ -176,10 +178,12 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !$(`[data-prompt="${permission.id}"]`) && backend.world.prompts.find((p) => p.id === permission.id)?.state === "answered"), "Allowing a prompt did not answer it");
     // A wait auto-continue left to the person says why, and only the agent's terminal can answer it
     const kept = { id: backend.world.nextPrompt++, sessionId: permission.sessionId, kind: "permission" as const, payload: { kind: "permission", question: "Bash: git push --force", tool: { name: "Bash", summary: "git push --force" }, hold: { code: "held", rule: "push", detail: "git push --force", message: "held by push" } }, createdAt: clock, deadline: 0, state: "waiting" as const };
+    const attentionBeforeHeld = store.state!.attention.total;
     backend.world.prompts.push(kept);
     backend.world.rev++;
     await store.refresh(true);
     ensure(await until(() => $(`[data-prompt="${kept.id}"]`)), "A wait held for the person did not show");
+    ensure(store.state!.attention.held === 1 && store.state!.attention.total === attentionBeforeHeld + 1, "A held wait must count in attention and its badge total");
     const keptText = $(`[data-prompt="${kept.id}"]`)!.textContent ?? "";
     ensure(keptText.includes(t("Auto-continue never answers this kind of request.")) && keptText.includes(t("Answer it in the agent's terminal.")), `A held wait must say why and where to answer it: ${keptText}`);
     ensure(!button(`[data-prompt="${kept.id}"]`, "Allow") && !button(`[data-prompt="${kept.id}"]`, "Deny") && !button(`[data-prompt="${kept.id}"]`, "Not this time"), "A held wait must offer no answer the agent would not get");
@@ -198,12 +202,36 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
     passed.push("quick launches");
 
-    // Board: chips with counts, one verdict, bulk archive undone as one
+    // Compact filters: project, text and verdict quick-jumps at every width; counts live only in the menu.
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     ensure(await until(() => $(".ledger-board .ledger-table-row")), "The Board did not open");
     const counts = verdictCounts(store.state!.sessions, "atlas").filter((c) => c.count);
-    const chips = $$(".ledger-chip .count").map((c) => Number(c.textContent));
-    ensure(JSON.stringify(chips) === JSON.stringify(counts.map((c) => c.count)), `The chips must count verdicts: ${chips} vs ${counts.map((c) => c.count)}`);
+    const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === label);
+    $<HTMLButtonElement>(".ledger-verdict-menu")!.click();
+    ensure(await until(() => menuItem(t("All verdicts"))), "The compact verdict filter did not open");
+    const menuCounts = [...document.querySelectorAll(".menu .shortcut")].map((c) => Number(c.textContent));
+    ensure(JSON.stringify(menuCounts) === JSON.stringify(counts.map((c) => c.count)) && !$$(".ledger-chip .count").length, `Verdict counts must appear once in the menu: ${menuCounts} vs ${counts.map((c) => c.count)}`);
+    menuItem(t(verdictLook(counts[0].verdict).label))!.click();
+    ensure(await until(() => store.verdicts.size === 1 && store.verdicts.has(counts[0].verdict) && $$(".ledger-table-row").length > 0 && $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A verdict menu item did not filter the Board");
+    ensure($(".ledger-verdict-menu")?.getAttribute("aria-label") === `${t("Verdicts")}: ${t(verdictLook(counts[0].verdict).label)}`, "The verdict filter must announce its selected value");
+    $<HTMLButtonElement>(".ledger-verdict-menu")!.click();
+    ensure(await until(() => menuItem(t("All verdicts"))), "The verdict filter did not reopen");
+    menuItem(t("All verdicts"))!.click();
+    ensure(await until(() => store.verdicts.size === 0 && $$(".ledger-table-row").length > 2), "All verdicts did not clear the Board's verdict filter");
+    const project = $<HTMLSelectElement>(".ledger-topbar select")!;
+    choose(project, "all");
+    ensure(await until(() => store.project === null && $$<HTMLElement>(".ledger-table-row").some((r) => store.session(r.dataset.session)?.project !== "atlas")), "The project menu did not show all projects");
+    choose(project, "repository");
+    ensure(await until(() => store.project === "atlas" && $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.project === "atlas")), "The project menu did not return to this repository");
+    const text = $<HTMLInputElement>(".ledger-topbar input")!;
+    const filtered = $<HTMLElement>(".ledger-table-row")!.dataset.session!;
+    type(text, filtered);
+    ensure(await until(() => $$(".ledger-table-row").length === 1 && $<HTMLElement>(".ledger-table-row")?.dataset.session === filtered), "The top filter did not narrow sessions by text");
+    key(text, "Escape");
+    ensure(await until(() => store.filterText === "" && $$(".ledger-table-row").length > 2), "Escape did not clear the top text filter");
+    passed.push("compact project, verdict and text filters");
+
+    // Board: one verdict, bulk archive undone as one
     const needs = $$<HTMLButtonElement>(".ledger-chip")[0];
     needs.click();
     ensure(await until(() => $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A chip did not filter the Board");
@@ -217,7 +245,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict === "archived")), "Bulk archive did not archive both sessions");
     $<HTMLButtonElement>(".ledger-toast button")!.click();
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict !== "archived")), "Undo did not restore both sessions");
-    passed.push("board chips and bulk actions");
+    store.setChecked([]);
+    const launch = await store.backend.call("track", { project: "atlas", title: "Unreported launch", kind: "other", agentId: "agent-unreported", cwd: "C:/fixture/atlas" });
+    await store.refresh(true);
+    const unreported = $$(".ledger-board-bar label").find((label) => label.textContent?.trim() === t("Unreported"))?.querySelector<HTMLInputElement>("input");
+    ensure(unreported, "The Board has no Unreported filter");
+    unreported!.click();
+    ensure(await until(() => {
+      const rows = $$<HTMLElement>(".ledger-table-row");
+      return rows.some((row) => row.dataset.session === launch.session.id) && rows.every((row) => store.session(row.dataset.session)?.lastAgentAt == null);
+    }), "Unreported must find launches without an agent report");
+    const launchRow = $<HTMLElement>(`.ledger-table-row[data-session='${launch.session.id}']`)!;
+    launchRow.querySelector<HTMLInputElement>("input")!.click();
+    ensure(await until(() => $(".ledger-bulk strong")?.textContent === t("{0} selected", 1)), "The new launch was not the only selected session");
+    button(".ledger-bulk", "Mark closed")!.click();
+    ensure(await until(() => store.session(launch.session.id)?.status === "closed"), "An unreported launch could not be closed");
+    unreported!.click();
+    passed.push("board chips, bulk actions and Unreported launches");
 
     // Graph: drawn and clickable
     $<HTMLButtonElement>(".ledger-tabs [data-view='graph']")!.click();
@@ -276,9 +320,14 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !$("input[role='combobox']") && store.session(store.selectedId)?.title.startsWith("Retry policy")), "Enter did not open the search result");
     passed.push("search");
 
-    // Narrow: the filters move above the view and the inspector becomes a sheet
+    // Narrow: the same compact filters wrap and the inspector becomes a sheet.
     host.style.width = "620px";
-    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), `A narrow page did not stack its filters: layout=${$(".ledger-page")?.dataset.layout} width=${$(".ledger-page")?.clientWidth} modal=${!!document.querySelector(".modal-backdrop")}`);
+    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), `A narrow page did not keep its filters: layout=${$(".ledger-page")?.dataset.layout} width=${$(".ledger-page")?.clientWidth} modal=${!!document.querySelector(".modal-backdrop")}`);
+    ensure($$(".ledger-topbar").length === 1 && !$(".ledger-filters"), "A narrow Ledger must keep one filter bar without a navigation column");
+    host.style.width = "360px";
+    ensure(await until(() => $(".ledger-topbar")!.clientWidth <= 360), "The compact filter bar did not follow a small window");
+    ensure($(".ledger-topbar")!.scrollWidth <= $(".ledger-topbar")!.clientWidth && $(".ledger-filter-input")!.getBoundingClientRect().top > $(".ledger-topbar select")!.getBoundingClientRect().top, "The filters must wrap inside a small window");
+    host.style.width = "620px";
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     await until(() => $(".ledger-table-row"));
     $(".ledger-table-row")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -297,11 +346,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.unmount();
     root = createRoot(host);
     const empty = new LedgerStore(new DemoLedgerBackend({ now: () => clock, empty: true }));
+    empty.setView("inbox");
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
-    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
+    ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
+    ensure($(".ledger-onboarding")?.textContent?.includes(t("No reports yet")), "The empty Ledger must explain that reports have not arrived");
+    button(".ledger-onboarding", "Connect Claude Code")!.click();
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code did not open");
+    ensure($$(".modal .ledger-code pre").some((pre) => pre.textContent?.includes("Use ledger_report to send a start report")) && $(".modal button[aria-label='" + t("Copy reporting instruction") + "']"), "Both the reporting instruction and its copy action must be available");
+    ensure($(".modal")?.textContent?.includes(t("Checks this app's Ledger, not Claude Code's MCP configuration.")), "The probe must explain what it tests");
+    const beforeProbe = empty.state!.rev;
+    button(".modal", "Test Ledger")!.click();
+    ensure(await until(() => $(".modal .card[role='status']")?.textContent?.includes(t("The Ledger responds."))), "Test Ledger did not answer");
+    ensure(empty.state!.sessions.length === 0 && empty.state!.rev === beforeProbe && $(".ledger-onboarding"), "A successful Ledger probe must leave an empty Ledger empty");
+    button(".modal", "Done")!.click();
+    await until(() => !$(".modal"));
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");
     type($<HTMLTextAreaElement>(".modal textarea")!, '```ledger\n{"event":"start","session":"S1101-01","project":"atlas","title":"Imported in the self-test"}\n```\n```ledger\n{"event":"teleport"}\n```');
@@ -309,13 +370,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $$(".ledger-result").length === 2 && empty.session("S1101-01")), "The import did not report each block and add the session");
     button(".modal-footer", "Close")!.click();
     await until(() => !$(".modal"));
-    $<HTMLButtonElement>(`.ledger-toolbar button[aria-label="${t("Connect Claude Code")}"]`)!.click();
-    ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code did not open");
-    ensure($(".modal .ledger-code pre")?.textContent?.includes("claude mcp add --scope user gitrochi-ledger"), "The connect sheet did not show the command");
-    button(".modal", "Test connection")!.click();
-    ensure(await until(() => $(".modal .card[role='status']")), "Test connection did not answer");
-    button(".modal", "Done")!.click();
-    await until(() => !$(".modal"));
+    ensure(await until(() => $(".ledger-all-clear")?.textContent?.includes(t("Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you."))), "An active reported session must explain why the Inbox has no actions");
+    button(".ledger-all-clear", "View progress")!.click();
+    ensure(await until(() => $(".ledger-board [data-session='S1101-01']")), "Open Board must show the active reported session");
+    const streamsOnlyBackend = new DemoLedgerBackend({ now: () => clock, empty: true });
+    await streamsOnlyBackend.call("import", { text: '```ledger\n{"event":"start","session":"S1101-stream","project":"atlas","kind":"implementation","title":"Stream progress"}\n```' });
+    // The demo import stores the report; the core supplies this stream classification in native state.
+    streamsOnlyBackend.world.sessions[0].stream = { line: "core" };
+    const streamsOnly = new LedgerStore(streamsOnlyBackend);
+    streamsOnly.setView("inbox");
+    stores.push(streamsOnly);
+    await streamsOnly.refresh(true);
+    root.render(<LedgerWorkspace repoPath={null} ledger={streamsOnly} />);
+    ensure(await until(() => $(".ledger-all-clear")), "A stream without questions should leave the Inbox clear");
+    button(".ledger-all-clear", "View progress")!.click();
+    ensure(await until(() => $(".ledger-stream[data-stream='S1101-stream']")), "View progress must open Streams when streams are the only sessions");
+    root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
+    await until(() => $(".ledger-board"));
     passed.push("onboarding, import and connect");
 
     // Import from claude-ledger: a dry run counts first, then the import adds the sessions
@@ -421,7 +492,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !noticeBoxes()[1].checked && !memory.has("ledgerBadge")), "The badge switch did not turn back off");
     passed.push("notification settings");
     button(".ledger-settings", "Connect Claude Code…")!.click();
-    ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code… did not open from Settings");
     button(".modal", "Done")!.click();
     button(".ledger-settings", "Import from claude-ledger…")!.click();
     ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");
