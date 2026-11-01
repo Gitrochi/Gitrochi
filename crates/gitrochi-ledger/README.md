@@ -73,6 +73,8 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
 
 `report`, `overview` and `session` print short English text for agents; `--json` prints the data instead. `call` runs any method of the contract as an agent (a person's operations answer `NOT_ALLOWED`). Exit code 0 is success, 1 a failure, 2 a usage error or invalid input.
 
+In an interactive terminal, human-readable commands add Gitrochi's small eye mark, a heading and wrapped text. Redirected output, JSON (`--json` or `--pretty`), `call`, MCP and hooks keep their original output. `NO_COLOR=1` removes colour; `GITCH_STYLE=plain`, `TERM=dumb` or `GITSW_BANNER=never` restores plain text. `GITCH_LOGO=off` hides just the eye mark. No terminal settings are changed and no animation is used.
+
 ```sh
 gitrochi-ledger report -p "Example App" -e start -k research -t "Cache study" -b 1.4.2 --touches src/cache
 gitrochi-ledger report -s S1031-02 -e artifact -m "Benchmark table" -a "benchmark@1.4.2#r2"

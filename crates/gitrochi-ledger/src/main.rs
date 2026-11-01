@@ -556,19 +556,25 @@ fn run_hook(event: &str, db: Option<PathBuf>) -> ExitCode {
     ExitCode::from(u8::try_from(result.code).unwrap_or(0))
 }
 
+mod terminal;
+
 fn main() -> ExitCode {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     if let Some((event, db)) = hook_args(&raw) {
         return run_hook(&event, db);
     }
+    let presentation = terminal::Presentation::detect(&raw);
     let invocation = match parse(raw) {
         Ok(invocation) => invocation,
         Err(message) if message.is_empty() => {
-            println!("{USAGE}");
+            println!("{}", presentation.help(USAGE));
             return ExitCode::SUCCESS;
         }
         Err(message) => {
-            eprintln!("gitrochi-ledger: {message}\n\n{USAGE}");
+            eprintln!(
+                "{}",
+                presentation.error(&format!("gitrochi-ledger: {message}\n\n{USAGE}"))
+            );
             return ExitCode::from(2);
         }
     };
@@ -602,7 +608,7 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Ok(Output::Text(text, _)) => {
-            println!("{text}");
+            println!("{}", presentation.text(&invocation.command, &text));
             ExitCode::SUCCESS
         }
         Err(error) => {
@@ -612,7 +618,10 @@ fn main() -> ExitCode {
                     invocation.flag("pretty"),
                 );
             }
-            eprintln!("gitrochi-ledger: {}", error.message);
+            eprintln!(
+                "{}",
+                presentation.error(&format!("gitrochi-ledger: {}", error.message))
+            );
             ExitCode::from(if error.code == "INVALID_ARGUMENT" {
                 2
             } else {
