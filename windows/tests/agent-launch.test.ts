@@ -3,7 +3,7 @@ import { agents } from "@/entities/agent";
 import { agentHookEvents, agentHooksJson, type HookGroup, ledgerHookGroups } from "@/entities/agent/lib/hooks";
 import { launchArguments, launchEnv } from "@/entities/agent/lib/launch";
 import { ledgerMcpConfig, ledgerTracking, repositoryPolicy, repositoryRoot, withRepositoryPolicy } from "@/entities/ledger";
-import { ipc } from "@/shared/api";
+import { ipc, type ProcOutput } from "@/shared/api";
 import { env, initEnv, settings } from "@/shared/config";
 import { AGENT_ID, type Capture, fakeClaude, fakeHost, fakeNative, FOLDER, startOnce, windowsEnv } from "./agent-launch-harness";
 import main from "./agent-launch-main.json";
@@ -50,11 +50,14 @@ function fakeLedger(calls: [string, Record<string, unknown>][], o: { projects?: 
   };
 }
 
-/** git and `claude mcp get` as a repository with a linked worktree answers them */
-function fakeRun(o: { ownServer?: boolean } = {}) {
+/** git and `claude mcp get` as a repository with a linked worktree answers them; `mcp` replaces how the check ends */
+function fakeRun(o: { ownServer?: boolean; mcp?: ProcOutput | Error } = {}) {
   return (program: string, args: string[]) => {
     if (args.includes("rev-parse")) return { status: 0, stdout: "C:/Work/example-app\nC:/Work/example-app/.git\n", stderr: "" };
-    if (args.includes("mcp")) return o.ownServer ? { status: 0, stdout: "gitrochi-ledger:\n  Scope: User config", stderr: "" } : { status: 1, stdout: "", stderr: "No MCP server found with name: gitrochi-ledger" };
+    if (args.includes("mcp")) {
+      if (o.mcp instanceof Error) throw o.mcp;
+      return o.mcp ?? (o.ownServer ? { status: 0, stdout: "gitrochi-ledger:\n  Scope: User config", stderr: "" } : { status: 1, stdout: "", stderr: "No MCP server found with name: gitrochi-ledger" });
+    }
     return { status: 1, stdout: "", stderr: `not faked: ${program}` };
   };
 }
@@ -95,7 +98,7 @@ describe("Agent launches with Track agents I start off", () => {
 });
 
 describe("Agent launches with Track agents I start on", () => {
-  async function trackedStart(where: "native" | "wsl", o: { ownServer?: boolean; tools?: boolean; kind?: "claude" | "codex"; projects?: unknown[]; autoContinue?: Record<string, unknown>; ledger?: (method: string, args: Record<string, unknown>) => unknown } = {}) {
+  async function trackedStart(where: "native" | "wsl", o: { ownServer?: boolean; mcp?: ProcOutput | Error; tools?: boolean; kind?: "claude" | "codex"; projects?: unknown[]; autoContinue?: Record<string, unknown>; ledger?: (method: string, args: Record<string, unknown>) => unknown } = {}) {
     const calls: [string, Record<string, unknown>][] = [];
     const capture = fakeNative({ exists: (path) => path === CLI, run: fakeRun(o), ledger: o.ledger ?? fakeLedger(calls, o) });
     fakeClaude(where);
@@ -157,6 +160,19 @@ describe("Agent launches with Track agents I start on", () => {
     const off = await trackedStart("native", { tools: false });
     expect(off.capture.terminals[0].spec!.args).toEqual(mainLaunches["native · task and mode"][0].spec!.args);
     expect(off.capture.runs.some((r) => r.args[0] === "mcp")).toBe(false);
+  });
+
+  it("never shadows a server the person may have: a check stopped at its timeout counts as found", async () => {
+    // run_process reports a program it stopped at the timeout as status -2 (macOS: LedgerTracking.hasLedgerServer)
+    const slow = await trackedStart("native", { mcp: { status: -2, stdout: "", stderr: "claude.exe didn't finish within 20s and was stopped." } });
+    expect(slow.capture.terminals[0].spec!.args![0]).toBe("--settings");
+    expect(slow.capture.files[`${DIR}/${AGENT_ID}.mcp.json`]).toBeUndefined();
+    // any other answer, or no Claude Code to ask, means there is none to shadow
+    for (const mcp of [{ status: 1, stdout: "", stderr: "unexpected output" }, new Error("claude.exe could not be started")]) {
+      vi.restoreAllMocks();
+      const start = await trackedStart("native", { mcp });
+      expect(start.capture.terminals[0].spec!.args!.slice(0, 2)).toEqual(["--mcp-config", `${DIR}/${AGENT_ID}.mcp.json`]);
+    }
   });
 
   it("names the project bound to the repository and its policy, whatever the case or separators", async () => {
