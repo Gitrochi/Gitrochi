@@ -135,13 +135,28 @@ fn project_for(connection: &Connection, repo: &str) -> Result<String> {
     folder_name(repo).ok_or_else(|| Error::invalid(format!("No project for {repo}")))
 }
 
+/// How a folder's path compares: `~` expanded and trailing separators dropped. A Windows
+/// path (on Windows, or one with a drive letter or a `\\server` share) also ignores case and
+/// takes `\` and `/` as one, as Windows does: a folder picked in Settings comes as
+/// `C:\Work\app`, git and the apps send `C:/Work/app`.
 fn same_path_key(path: &str) -> String {
     let home = std::env::var("HOME").unwrap_or_default();
     let path = match path.strip_prefix('~') {
         Some(rest) if !home.is_empty() => format!("{home}{rest}"),
         _ => path.to_string(),
     };
-    path.trim_end_matches(['/', '\\']).to_string()
+    let path = path.trim_end_matches(['/', '\\']);
+    if cfg!(windows) || is_windows_path(path) {
+        path.replace('\\', "/").to_lowercase()
+    } else {
+        path.to_string()
+    }
+}
+
+fn is_windows_path(path: &str) -> bool {
+    let bytes = path.as_bytes();
+    (bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':')
+        || path.starts_with(r"\\")
 }
 
 fn folder_name(path: &str) -> Option<String> {

@@ -371,6 +371,32 @@ fn outside_a_repository_the_folder_names_the_session() {
 }
 
 #[test]
+fn windows_paths_match_whatever_their_case_and_separators() {
+    let dir = TempDir::new("track-windows");
+    let db = dir.join("ledger.sqlite3");
+    // a folder picked in Settings comes as Windows spells it; git and the apps send /
+    app(
+        &db,
+        "project_set",
+        json!({"project": "atlas", "repoPath": r"C:\Work\app"}),
+    );
+    let policy = json!({"enabled": true, "delaySec": 45});
+    app(
+        &db,
+        "settings_set",
+        json!({"values": {"autoContinue": {"enabled": false, "delaySec": 30,
+                                            "repositories": {r"c:\work\App\": policy}}}}),
+    );
+    let session = &app(
+        &db,
+        "track",
+        json!({"repoPath": "C:/Work/app", "cwd": "C:/Work/app"}),
+    )["session"];
+    assert_eq!(session["project"], "atlas", "the project bound to it");
+    assert_eq!(session["autoContinue"], policy, "the repository's policy");
+}
+
+#[test]
 fn only_the_apps_track_and_reported_sessions_keep_their_rules() {
     let repo = Repo::new();
     let db = repo.db();
