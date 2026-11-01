@@ -164,6 +164,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         let flat = included.filter { $0.stream == nil }
         let tidy = flat.filter { $0.verdict == .confirm || $0.verdict == .expirable }.count
         let decide = flat.filter { $0.verdict == .pendingMerge || $0.verdict == .stale }.count
+        let held = waiting.filter { $0.deadline == 0 }.count
         let allLive = order.compactMap { sessions[$0] }.map { decorate($0, open: open[$0.id] ?? 0, now: now) }
         return LedgerState(
             schemaVersion: 1, rev: rev, now: now,
@@ -177,8 +178,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             overlaps: overlaps(among: included),
             pendingPrompts: waiting,
             autoReview: autoReview,
-            attention: LedgerAttention(questions: openQuestions, tidy: tidy, decide: decide, autoReview: autoReview.count,
-                                       total: openQuestions + tidy + decide + autoReview.count),
+            attention: LedgerAttention(questions: openQuestions, tidy: tidy, decide: decide, autoReview: autoReview.count, held: held,
+                                       total: openQuestions + tidy + decide + autoReview.count + held),
             hiddenBefore: hidden)
     }
 
@@ -617,6 +618,13 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         return payload
     }
 
+    /// A wait held for the person, as the hook handler stores it: what is asked and why (`hold`), with no `proposed`
+    static func held(_ kind: LedgerPendingPrompt.Kind, question: String, text: String? = nil, hold: LedgerJSON) -> [String: LedgerJSON] {
+        var payload: [String: LedgerJSON] = ["kind": .string(kind.rawValue), "question": .string(question), "hold": hold]
+        if let text { payload["text"] = .string(text) }
+        return payload
+    }
+
     /// An AskUserQuestion question with its options, the first one recommended
     static func question(_ text: String, header: String, _ options: [(String, String)]) -> LedgerJSON {
         ["question": .string(text), "header": .string(header), "multiSelect": false,
@@ -941,9 +949,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         addPrompt(.permission, session: drafts, created: now - 20_000, deadline: now + 160_000, payload: Self.payload(
             .permission, question: "Bash: swift test --filter DraftStoreTests", tool: ("Bash", "swift test --filter DraftStoreTests"),
             delay: 180, proposed: ["type": "allow"]))
-        // a plan waits with no countdown: plan approval is off by default (D8)
-        addPrompt(.exitPlanMode, session: glossary, created: now - 90_000, deadline: 0, payload: Self.payload(
-            .exitPlanMode, question: "Finish the glossary review", text: Self.planBody, delay: 30, proposed: ["type": "approve_plan", "note": ""]))
+        // a risky plan waits for the person: no countdown, and only the terminal answers it
+        addPrompt(.exitPlanMode, session: glossary, created: now - 90_000, deadline: 0, payload: Self.held(
+            .exitPlanMode, question: "Finish the glossary review", text: Self.planBody,
+            hold: ["code": "risky", "kind": "exit_plan_mode", "reason": "delete", "message": "the prompt is about something hard to reverse (delete)"]))
         coupled = [LedgerOverlap(a: csv, b: flaky, paths: ["src/export/formats.swift", "tests/upload_test.swift"], kind: .coupled)]
     }
 
@@ -1066,7 +1075,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     1. List every glossary term with its current definition.
     2. Mark terms that disagree with the style guide.
     3. Propose replacements in a table for review.
-    4. Update `glossary.md` only after the review.
+    4. After the review, update `glossary.md` and delete the old `terms.md`.
     """
 }
 

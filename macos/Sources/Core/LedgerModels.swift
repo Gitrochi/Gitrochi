@@ -250,7 +250,8 @@ struct LedgerOverlap: Codable, Hashable {
 }
 
 /// An agent waiting for a person (a question at the end of a turn, AskUserQuestion, a plan, a permission);
-/// auto-continue answers it at `deadline` unless a person does first
+/// auto-continue answers it at `deadline` unless a person does first. `deadline` 0 is a wait held for the person: no
+/// countdown, no hook waits on it, and `payload.hold` says why (CONTRACT.md, Hooks).
 struct LedgerPendingPrompt: Codable, Identifiable, Hashable {
     enum Kind: String, LedgerEnum {
         case stopQuestion = "stop_question"
@@ -284,6 +285,8 @@ struct LedgerAttention: Codable, Hashable {
     var tidy: Int
     var decide: Int
     var autoReview: Int
+    /// Waits held for the person, counted in `total`; an older core leaves it out
+    var held: Int? = nil
     var total: Int
 }
 

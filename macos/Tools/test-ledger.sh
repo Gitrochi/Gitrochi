@@ -119,6 +119,26 @@ let start: LedgerMs = 1_793_400_000_000
         check(LedgerCountdown.isCounting(prompt), "counting")
         prompt.deadline = 0
         check(!LedgerCountdown.isCounting(prompt), "a held prompt waits for a person")
+        // why a wait is held for the person: one translated line per code, the core's English only for an unknown one
+        let terminal = String(localized: "Answer it in the agent's terminal.")
+        check(LedgerPromptText.holdReason(prompt) == nil && LedgerPromptText.heldText(prompt) == terminal, "no hold: only where to answer")
+        let reasons: [(LedgerJSON, String)] = [
+            (["code": "held", "rule": "force-push", "detail": "git push --force", "message": "held by force-push: git push --force"],
+             String(localized: "Auto-continue never answers this kind of request.")),
+            (["code": "risky", "kind": "exit_plan_mode", "reason": "deploy", "message": "the prompt is about something hard to reverse (deploy)"],
+             String(localized: "It looks risky to answer automatically.")),
+            (["code": "no_answer", "message": "the question has no options to choose from"], String(localized: "There is nothing to choose from.")),
+            (["code": "limit_reached", "consecutive": 3, "max": 3, "message": "3 automatic answers in a row (limit 3)"],
+             String(localized: "Auto-continue reached its limit of answers in a row.")),
+            (["code": "something_new", "message": "a reason from a newer core"], "a reason from a newer core"),
+        ]
+        for (hold, line) in reasons {
+            prompt.payload = ["kind": "permission", "question": "Bash: git push --force", "hold": hold]
+            check(LedgerPromptText.holdReason(prompt) == line && LedgerPromptText.heldText(prompt) == line + " " + terminal,
+                  "held \(hold["code"].string ?? ""): \(LedgerPromptText.heldText(prompt))")
+        }
+        prompt.payload = ["hold": ["code": "something_new"]]
+        check(LedgerPromptText.holdReason(prompt) == nil && LedgerPromptText.heldText(prompt) == terminal, "an unknown code without a message")
 
         func session(_ id: String, _ title: String, verdict: LedgerVerdict, last: LedgerMs, stream: Bool = false, touches: [String] = [], branch: String? = nil) -> LedgerSession {
             LedgerSession(id: id, project: "p", title: title, kind: "fix", role: .other, status: .active, verdict: verdict, baseVersion: "v1.0.0",
@@ -325,6 +345,8 @@ let start: LedgerMs = 1_793_400_000_000
         var held = prompt
         held.id = 9_101
         held.deadline = 0
+        held.payload["proposed"] = nil
+        held.payload["hold"] = ["code": "held", "rule": "mcp", "detail": "mcp__docs__publish", "message": "held by mcp: mcp__docs__publish"]
         waiting.pendingPrompts.append(held)
         var answered = prompt
         answered.id = 9_102
@@ -334,7 +356,8 @@ let start: LedgerMs = 1_793_400_000_000
         let alerts = LedgerNotices.notices(waiting, since: seen, now: first.now)
         check(alerts.map(\.kind) == [.prompt, .prompt, .autoReply], "each waiting prompt and each automatic answer: \(alerts.map(\.kind))")
         check(alerts[0].body.hasPrefix(LedgerPromptText.summary(prompt)) && alerts[0].body.contains("0:30"), "the question and the time left: \(alerts[0].body)")
-        check(alerts[1].body.contains(String(localized: "Waits for you: no automatic answer")), "a wait with no countdown says so")
+        check(alerts[1].body == LedgerPromptText.summary(held) + "\n" + String(localized: "Auto-continue never answers this kind of request.")
+              + " " + String(localized: "Answer it in the agent's terminal."), "a held wait says why and where to answer, at once: \(alerts[1].body)")
         check(alerts[2].body.contains(LedgerPromptText.sent(answered.answer!)) && alerts[2].sessionId == answered.sessionId, "what auto-continue sent")
         check(Set(alerts.map(\.id)).count == 3, "each its own notification")
 
@@ -365,6 +388,10 @@ let start: LedgerMs = 1_793_400_000_000
               && inbox.items(in: .decide).count == state.attention.decide && inbox.items(in: .autoReview).count == state.attention.autoReview
               && inbox.count == state.attention.total, "the Inbox agrees with the core's count: \(state.attention)")
         check(inbox.prompts.map(\.kind) == [.askUserQuestion, .permission, .exitPlanMode], "counting prompts first, soonest deadline first")
+        let heldPlan = inbox.prompts[2]
+        check(inbox.held == 1 && state.attention.held == 1 && heldPlan.deadline == 0 && heldPlan.payload["proposed"] == nil
+              && LedgerPromptText.holdReason(heldPlan) == String(localized: "It looks risky to answer automatically."),
+              "a risky plan is held for the person, counted, with nothing proposed: \(heldPlan.payload)")
         let questions = inbox.items(in: .questions).compactMap { $0.sessionId }
         check(questions.count == 3 && questions[0] != questions[1] && questions[1] == questions[2], "questions stay together, the session asked last first")
         check(inbox.items(in: .tidy).first.flatMap { item in state.sessions.first { $0.id == item.sessionId } }?.verdict == .confirm, "To confirm before Ready to archive")

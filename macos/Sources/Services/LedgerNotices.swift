@@ -25,7 +25,7 @@ struct LedgerNotice: Equatable {
     enum Kind: String {
         /// new questions, sessions to clean up and applied reports of one read, grouped
         case news
-        /// an agent waiting for an answer: the question and the time left
+        /// an agent waiting for an answer: the question and the time left, or why it waits for the person
         case prompt
         /// what auto-continue sent
         case autoReply
@@ -83,7 +83,7 @@ enum LedgerNotices {
         for p in state.pendingPrompts where p.state == .waiting && !before.prompts.contains(p.id) {
             let waits = LedgerCountdown.isCounting(p)
                 ? String(localized: "Continues automatically in \(LedgerCountdown.text(deadline: p.deadline, now: now))")
-                : String(localized: "Waits for you: no automatic answer")
+                : LedgerPromptText.heldText(p)
             notices.append(.init(kind: .prompt, id: "p\(p.id)", title: String(localized: "\(label(p.sessionId)) is waiting"),
                                  body: LedgerPromptText.summary(p) + "\n" + waits, sessionId: p.sessionId))
         }

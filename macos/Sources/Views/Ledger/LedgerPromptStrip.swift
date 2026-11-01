@@ -2,8 +2,9 @@ import SwiftUI
 
 /// Agents waiting on a person right now, with the time left before auto-continue answers: in full at the top of the
 /// Inbox, one line each above the other views. Answer…, Allow, Deny, Answer in terminal and Not this time go out through
-/// `prompt_answer` (DESIGN.md §9.1). Its buttons are reached with Tab; no single key answers an agent.
-/// (Windows: widgets/ledger-workspace/ui/LedgerPromptStrip.tsx)
+/// `prompt_answer` (DESIGN.md §9.1). A wait held for the person (no countdown) only says why and offers Answer in
+/// terminal: no hook waits on it, so an answer sent from here would not reach the agent. Its buttons are reached with
+/// Tab; no single key answers an agent. (Windows: widgets/ledger-workspace/ui/LedgerPromptStrip.tsx)
 struct LedgerPromptStrip: View {
     let prompts: [LedgerPendingPrompt]
     let ledger: LedgerStore
@@ -27,20 +28,46 @@ struct LedgerPromptStrip: View {
 
 /// The buttons every waiting prompt has besides its answer: leave it to the terminal, or let this one pass without an
 /// automatic answer. Both end the hook without a decision, so the agent's own question or dialog shows in its terminal.
+/// A held wait's terminal already asks, so its Answer in terminal sends nothing; the person's answer there settles it.
 private struct LedgerPromptExits: View {
     let prompt: LedgerPendingPrompt
     let ledger: LedgerStore
     let busy: Bool
 
     var body: some View {
-        Button("Answer in terminal") { Task { await ledger.reply(prompt, .answerInTerminal) } }
+        if LedgerCountdown.isCounting(prompt) {
+            Button("Answer in terminal") {
+                LedgerAgentTerminal.focus(prompt, ledger: ledger)
+                Task { await ledger.reply(prompt, .answerInTerminal) }
+            }
             .disabled(busy)
             .help("Stop waiting here and answer in the agent's own terminal")
-        if LedgerCountdown.isCounting(prompt) {
             Button("Not this time") { Task { await ledger.reply(prompt, .holdAuto) } }
                 .disabled(busy)
                 .help("No automatic answer for this prompt: it waits for you in the agent's terminal")
+        } else {
+            Button("Answer in terminal") {
+                if !LedgerAgentTerminal.focus(prompt, ledger: ledger) {
+                    ledger.showNotice(String(localized: "The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))
+                }
+            }
+            .help("Go to terminal")
         }
+    }
+}
+
+/// The terminal of the agent that asks, when Gitrochi started it: AgentCenter knows it by GITROCHI_AGENT_ID, which the
+/// hook stores with the prompt and `track` with the session (Windows: LedgerWorkspace's openTerminal)
+private enum LedgerAgentTerminal {
+    /// Brings it forward; false when it is not an agent Gitrochi runs
+    @MainActor @discardableResult
+    static func focus(_ prompt: LedgerPendingPrompt, ledger: LedgerStore) -> Bool {
+        let center = AgentCenter.shared
+        guard let id = prompt.agentId ?? ledger.session(prompt.sessionId)?.links.agentId,
+              let agent = center.sessions.first(where: { $0.id == id }),
+              center.runsInApp(agent) || (agent.pid != nil && agent.status != .ended) else { return false }
+        center.focus(agent)
+        return true
     }
 }
 
@@ -62,12 +89,14 @@ private struct LedgerPromptLine: View {
             Spacer(minLength: 6)
             LedgerCountdownView(prompt: prompt, skew: ledger.clockSkew, inline: true)
             Group {
-                switch prompt.kind {
-                case .permission, .exitPlanMode:
-                    Button("Allow") { Task { await ledger.reply(prompt, .allow) } }
-                    Button("Deny") { Task { await ledger.reply(prompt, .deny(message: nil)) } }
-                case .stopQuestion, .askUserQuestion:
-                    Button("Answer…", action: openInbox).help("Answer in the Inbox")
+                if LedgerCountdown.isCounting(prompt) {
+                    switch prompt.kind {
+                    case .permission, .exitPlanMode:
+                        Button("Allow") { Task { await ledger.reply(prompt, .allow) } }
+                        Button("Deny") { Task { await ledger.reply(prompt, .deny(message: nil)) } }
+                    case .stopQuestion, .askUserQuestion:
+                        Button("Answer…", action: openInbox).help("Answer in the Inbox")
+                    }
                 }
                 LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy)
             }
@@ -93,6 +122,8 @@ private struct LedgerPromptCard: View {
     private var busy: Bool { ledger.working.contains("p\(prompt.id)") }
     private var session: LedgerSession? { ledger.session(prompt.sessionId) }
     private var questions: [LedgerJSON] { prompt.payload["questions"]?.array ?? [] }
+    /// Held for the person: what it asks is shown, and only the terminal answers it
+    private var held: Bool { !LedgerCountdown.isCounting(prompt) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -141,8 +172,10 @@ private struct LedgerPromptCard: View {
             ForEach(LedgerPromptText.options(prompt.payload["options"] ?? .null), id: \.self) { option in
                 optionText(option, picked: false, multiple: false)
             }
-            LedgerAnswerField(placeholder: String(localized: "Your answer…"), text: $text, saveTitle: String(localized: "Answer"), busy: busy) {
-                Task { await ledger.reply(prompt, .text(text.trimmingCharacters(in: .whitespacesAndNewlines))) }
+            if !held {
+                LedgerAnswerField(placeholder: String(localized: "Your answer…"), text: $text, saveTitle: String(localized: "Answer"), busy: busy) {
+                    Task { await ledger.reply(prompt, .text(text.trimmingCharacters(in: .whitespacesAndNewlines))) }
+                }
             }
         case .askUserQuestion:
             ForEach(Array(questions.enumerated()), id: \.offset) { _, q in choice(q) }
@@ -183,17 +216,21 @@ private struct LedgerPromptCard: View {
             }
             Text(question).font(.callout).fixedSize(horizontal: false, vertical: true)
             ForEach(LedgerPromptText.options(q["options"]), id: \.self) { option in
-                Button {
-                    var next = multiple ? picked : []
-                    if next.contains(option.label) { next.remove(option.label) } else { next.insert(option.label) }
-                    chosen[question] = next
-                } label: {
-                    optionText(option, picked: picked.contains(option.label), multiple: multiple)
-                        .contentShape(Rectangle())
+                if held {
+                    optionText(option, picked: false, multiple: multiple)
+                } else {
+                    Button {
+                        var next = multiple ? picked : []
+                        if next.contains(option.label) { next.remove(option.label) } else { next.insert(option.label) }
+                        chosen[question] = next
+                    } label: {
+                        optionText(option, picked: picked.contains(option.label), multiple: multiple)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(busy)
+                    .accessibilityAddTraits(picked.contains(option.label) ? .isSelected : [])
                 }
-                .buttonStyle(.plain)
-                .disabled(busy)
-                .accessibilityAddTraits(picked.contains(option.label) ? .isSelected : [])
             }
         }
     }
@@ -219,7 +256,16 @@ private struct LedgerPromptCard: View {
         !questions.isEmpty && questions.allSatisfy { !(chosen[$0["question"].string ?? ""] ?? []).isEmpty }
     }
 
-    private var actions: some View {
+    @ViewBuilder private var actions: some View {
+        if held {
+            HStack(spacing: 8) { LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy) }
+                .buttonStyle(.borderedProminent).controlSize(.small)
+        } else {
+            answers
+        }
+    }
+
+    private var answers: some View {
         WorkbenchFlow(spacing: 8) {
             if busy { ProgressView().controlSize(.small) }
             switch prompt.kind {
@@ -248,8 +294,9 @@ private struct LedgerPromptCard: View {
         .controlSize(.small)
     }
 
-    /// Where else the person can answer while Gitrochi waits (#171)
+    /// Where else the person can answer while Gitrochi waits (#171); for a held wait, why it waits and where to answer
     private var note: String? {
+        if held { return LedgerPromptText.heldText(prompt) }
         switch prompt.kind {
         case .permission: return String(localized: "The terminal shows this request too; an answer there counts as well.")
         case .askUserQuestion, .exitPlanMode: return String(localized: "The terminal shows this question only after the wait.")
@@ -258,7 +305,7 @@ private struct LedgerPromptCard: View {
     }
 }
 
-/// The time left until auto-continue answers, ticking every second; a held prompt says it waits for a person
+/// The time left until auto-continue answers, ticking every second; a held prompt says it waits for a person, and why
 struct LedgerCountdownView: View {
     let prompt: LedgerPendingPrompt
     let skew: LedgerMs
@@ -284,6 +331,7 @@ struct LedgerCountdownView: View {
             }
         } else {
             Label("Waiting for you", systemImage: "hand.raised").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                .help(LedgerPromptText.heldText(prompt))
         }
     }
 }
