@@ -119,10 +119,27 @@ fn state_and_graph_on_a_thousand_sessions_and_fifty_thousand_events() {
         layout(all.clone()) == layout(again),
         "the graph changed between two calls"
     );
-    let again = app(&db, "graph", json!({"project": project, "range": "7d"}));
+    // The 7-day window follows the clock too: on a slow run an event at its edge leaves it
+    // between two calls, so this layout is compared at one fixed moment.
+    let at = gitrochi_ledger::util::now_ms();
+    let week_at = || {
+        opened
+            .read(|c| {
+                let settings = gitrochi_ledger::settings::Settings::load(c)?;
+                let options = gitrochi_ledger::graph::Options {
+                    range: gitrochi_ledger::views::Range::Days(7),
+                    key_only: false,
+                    include_archived: false,
+                };
+                let graph =
+                    gitrochi_ledger::graph::graph(c, &settings, "Large Demo", &options, at)?;
+                gitrochi_ledger::views::to_value(&graph)
+            })
+            .unwrap()
+    };
     assert!(
-        layout(week.clone()) == layout(again),
-        "the 7-day graph changed between two calls"
+        week_at() == week_at(),
+        "the 7-day graph changed between two layouts at the same moment"
     );
     assert!(all["nodes"].as_array().unwrap().len() >= 50_000);
     assert!(all["lanes"].as_u64().unwrap() > 1);
