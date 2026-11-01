@@ -575,9 +575,40 @@ fn a_wait_held_for_the_person_is_settled_in_the_terminal_and_never_expires() {
     // prompt_expire leaves it: there is no deadline to pass
     assert_eq!(app(&f.db, "prompt_expire", json!({}))["expired"], 0);
     assert_eq!(held(&f).len(), 1);
+    // the agent waits in its terminal for the person, so attention counts it; a wait with a
+    // countdown resolves itself and does not count
+    let countdown = app(
+        &f.db,
+        "prompt_create",
+        json!({"kind": "stop_question", "sessionId": SESSION, "payload": {"question": "Go on?"}}),
+    )["prompt"]["id"]
+        .clone();
+    let attention = |f: &Fixture| {
+        let attention = app(&f.db, "attention", json!({}))["attention"].clone();
+        assert_eq!(
+            attention,
+            app(&f.db, "state", json!({}))["attention"],
+            "attention and state agree"
+        );
+        (attention["held"].clone(), attention["total"].clone())
+    };
+    assert_eq!(attention(&f), (json!(1), json!(1)));
+    let project = app(&f.db, "session", json!({"id": SESSION}))["session"]["project"].clone();
+    let other = app(&f.db, "attention", json!({"project": "another"}))["attention"].clone();
+    assert_eq!(other["held"], 0, "scoped by project like the rest");
+    assert_eq!(
+        app(&f.db, "attention", json!({"project": project}))["attention"]["held"],
+        1
+    );
+    app(
+        &f.db,
+        "prompt_resolve",
+        json!({"id": countdown, "state": "released"}),
+    );
     // the call running means the person allowed it in the terminal
     ran_call(&f, "git push --force origin main", Some(900), None);
     assert!(held(&f).is_empty());
+    assert_eq!(attention(&f), (json!(0), json!(0)));
     let prompt = app(&f.db, "prompt_get", json!({"id": f.prompts()[0].0}));
     assert_eq!(
         (prompt["state"].clone(), prompt["answeredBy"].clone()),
@@ -618,7 +649,7 @@ fn a_wait_held_for_the_person_is_settled_in_the_terminal_and_never_expires() {
     f.hook("PermissionRequest", bash("git push --force origin main"))
         .assert_no_decision("off");
     assert!(held(&f).is_empty());
-    assert_eq!(f.prompts().len(), 2);
+    assert_eq!(f.prompts().len(), 3, "the two held waits and the countdown");
 }
 
 #[test]

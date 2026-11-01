@@ -510,6 +510,19 @@ pub fn expire(connection: &Connection, now: Ms) -> Result<usize> {
     )?)
 }
 
+/// Open waits held for the person (`NO_COUNTDOWN` with a `hold`) of one project, or of all:
+/// agents waiting in their terminal for an answer only the person can give.
+pub fn held_count(connection: &Connection, project: Option<&str>) -> Result<i64> {
+    Ok(connection.query_row(
+        "SELECT COUNT(*) FROM pending_prompts p LEFT JOIN sessions s ON s.id = p.session_id
+         WHERE p.state = 'waiting' AND p.deadline = ?2
+           AND json_extract(p.payload, '$.hold') IS NOT NULL
+           AND (?1 IS NULL OR s.project = ?1)",
+        params![project, NO_COUNTDOWN],
+        |r| r.get(0),
+    )?)
+}
+
 /// Whether a question or plan held for the person (`NO_COUNTDOWN`) waits for this agent
 /// (`None`: the main agent).
 pub fn held_question_waiting(

@@ -490,6 +490,7 @@ Only what needs a person; the count is `attention.total`:
 - **To clean up** (`attention.tidy`) — `confirm` and `expirable`.
 - **To decide** (`attention.decide`) — non-stream `pending_merge` and `stale` (unreported sessions per D13).
 - **Auto-continued — review** (`attention.autoReview`) — automatic answers not yet looked at, with **Confirm** and **Send correction…**.
+- **Waiting in the terminal** (`attention.held`) — waits auto-continue left to the person ([§9.5](#95-data)): the agent waits in its terminal, so the badge counts them. Waits with a countdown resolve themselves and are not counted.
 - **Running, not in the Ledger** — agents found by `ExternalAgents`, with **Track** and **Hide**; not counted.
 
 Keyboard (never while typing in a field): `↑`/`↓` move, `Return` opens the inspector, `A` answers, `C` confirms, `E` archives, `S` still active, `M` mark merged…, `⌘Z`/`Ctrl+Z` undo. In answer fields `Return` is a new line and `⌘↩`/`Ctrl+Enter` saves. Every confirm, archive and status change shows a toast with **Undo**.

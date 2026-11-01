@@ -58,6 +58,9 @@ pub struct Attention {
     pub decide: i64,
     /// Prompts auto-continue answered that nobody has looked at yet.
     pub auto_review: i64,
+    /// Waits held for the person: agents waiting in their terminal. Waits with a countdown
+    /// resolve themselves and are not counted.
+    pub held: i64,
     pub total: i64,
 }
 
@@ -207,7 +210,12 @@ pub fn open_questions(connection: &Connection, project: Option<&str>) -> Result<
     Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
 }
 
-pub fn attention_of(views: &[SessionView], questions: i64, auto_review: i64) -> Attention {
+pub fn attention_of(
+    views: &[SessionView],
+    questions: i64,
+    auto_review: i64,
+    held: i64,
+) -> Attention {
     let shown = || views.iter().filter(|v| v.archived_at.is_none());
     let tidy = shown()
         .filter(|v| matches!(v.verdict, Verdict::Confirm | Verdict::Expirable))
@@ -220,7 +228,8 @@ pub fn attention_of(views: &[SessionView], questions: i64, auto_review: i64) -> 
         tidy,
         decide,
         auto_review,
-        total: questions + tidy + decide + auto_review,
+        held,
+        total: questions + tidy + decide + auto_review + held,
     }
 }
 
@@ -297,6 +306,7 @@ pub fn state(
         &snapshot.views,
         questions.len() as i64,
         auto_review.len() as i64,
+        prompts::held_count(connection, project)?,
     );
     let projects = project_entries(connection, &snapshot)?;
     // Without a project, the projects' trunks follow one another in key order.

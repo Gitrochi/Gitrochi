@@ -89,7 +89,8 @@ interface PendingPrompt { id: number; sessionId?: string; agentId?: string;
   payload: Record<string, unknown>; createdAt: Ms; deadline: Ms /* 0: held for the person, no countdown */;
   state: "waiting" | "answered" | "auto" | "released" | "expired";
   answer?: Record<string, unknown>; answeredBy?: "human" | "auto"; answeredAt?: Ms; reviewedAt?: Ms }
-interface Attention { questions: number; tidy: number; decide: number; autoReview: number; total: number }
+interface Attention { questions: number; tidy: number; decide: number; autoReview: number;
+  held: number /* waits held for the person; waits with a countdown are not counted */; total: number }
 interface State { schemaVersion: 1; rev: number; now: Ms;
   projects: { key: string; name: string; open: number; head?: string; lastAt?: Ms }[];
   baselines: Baseline[];       // every trunk of the selected project(s), ascending per project
@@ -249,7 +250,8 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - `deadline` is 0 (no countdown), and `prompt_expire` leaves it alone.
   - Its payload has the `PromptPayload` keys for what is asked, no `proposed`, `call` (as for permission prompts), and `hold`: why, as `gitrochi-autocontinue`'s pass (`code`: `held` with `rule` and `detail`, `risky` with `kind` and `reason`, `no_answer`, `limit_reached` with `consecutive` and `max`) plus an English `message`.
   - It is settled like the other waits: the person's answer in the terminal (the call running, or the same agent going on, for a permission request; the `AskUserQuestion` or `ExitPlanMode` call running, or the agent going on, for a question or plan; their own prompt for a stop question) marks it `answered` by `human`. Their prompt otherwise, and SessionStart and SessionEnd, release it.
-  - It never counts toward the limit in a row, and like other waits it is in `state.pendingPrompts`, not in `attention`.
+  - It never counts toward the limit in a row. Like other waits it is in `state.pendingPrompts`, and unlike waits with a countdown, which resolve themselves, it counts in `attention.held` and so in `total`: the agent waits in its terminal for the person.
+  - `hold.message` is English. The apps show their own translated line for each `hold.code`, and the message only for a code they do not know.
   - No hook waits on it, so an answer from the app (`prompt_answer`) does not reach the agent: the apps send the person to the terminal.
 - **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting with a countdown, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
   - a `hook` event with `data.person`, written when they type in the terminal;
@@ -290,6 +292,6 @@ Added for launch tracking (wave 2):
 
 Added for the apps' notifications (wave 2):
 
-17. Waits held for the person ([Hooks](#hooks)): a waiting prompt with `deadline` 0 and `payload.hold`, which `prompt_expire` leaves alone and the limit in a row does not count. Before, these waits stored nothing.
+17. Waits held for the person ([Hooks](#hooks)): a waiting prompt with `deadline` 0 and `payload.hold`, which `prompt_expire` leaves alone and the limit in a row does not count. Before, these waits stored nothing. `Attention` gains `held`, their count, which `total` includes.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
