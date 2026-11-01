@@ -2509,5 +2509,7 @@
   "It looks risky to answer automatically.": "自動で答えるには危険そうです。",
   "There is nothing to choose from.": "選べる選択肢がありません。",
   "Auto-continue already answered {0} times in a row.": "自動続行はすでに{0}回続けて答えました。",
-  "Answer it in the agent's terminal.": "エージェントのターミナルで答えてください。"
+  "Answer it in the agent's terminal.": "エージェントのターミナルで答えてください。",
+  "Ledger overview": "台帳の概要",
+  "What agents read about this project, in a new tab of the terminal below.": "エージェントがこのプロジェクトについて読む内容を、下のターミナルの新しいタブで開きます。"
 }

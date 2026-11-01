@@ -1680,5 +1680,7 @@
   "It looks risky to answer automatically.": "การตอบอัตโนมัติดูมีความเสี่ยง",
   "There is nothing to choose from.": "ไม่มีตัวเลือกให้เลือก",
   "Auto-continue already answered {0} times in a row.": "การดำเนินการต่ออัตโนมัติตอบไปแล้ว {0} ครั้งติดกัน",
-  "Answer it in the agent's terminal.": "ตอบในเทอร์มินัลของเอเจนต์"
+  "Answer it in the agent's terminal.": "ตอบในเทอร์มินัลของเอเจนต์",
+  "Ledger overview": "ภาพรวม Ledger",
+  "What agents read about this project, in a new tab of the terminal below.": "สิ่งที่เอเจนต์อ่านเกี่ยวกับโปรเจกต์นี้ ในแท็บใหม่ของเทอร์มินัลด้านล่าง"
 }

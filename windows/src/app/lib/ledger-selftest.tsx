@@ -48,7 +48,7 @@ function leave(el: HTMLElement) {
 /**
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
- * waiting prompts, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
+ * waiting prompts, the quick launches, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
  * the narrow sheet, Streams, the onboarding sheets with the claude-ledger import, and Settings › Ledger. Nothing leaves
  * the demo backend: the ledger core itself is blocked.
  */
@@ -115,7 +115,10 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const store = new LedgerStore(backend);
     stores.push(store);
     const find = (f: (s: LedgerSession) => boolean) => store.state!.sessions.find(f)!;
-    root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} />);
+    // the repository's tab, as the quick launches use it
+    const launches: unknown[][] = [];
+    const launcher = { newTerminal: (...args: unknown[]) => void launches.push(["terminal", ...args]), startAgent: async (...args: unknown[]) => void launches.push(["agent", ...args]) };
+    root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} launcher={launcher} />);
     ensure(await until(() => $(".ledger-page[data-layout='wide'] [data-view='inbox'] .ledger-prompts")), "The Inbox did not open with its waiting prompts");
     ensure(store.project === "atlas" && $$(".ledger-prompt").length === 3, `The Inbox must filter to this repository's project: ${store.project} prompts=${$$(".ledger-prompt").length}`);
 
@@ -172,6 +175,16 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $(".ledger-toast")?.textContent?.includes(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))), "Answer in terminal did not look for the agent's terminal");
     ensure(backend.world.prompts.find((p) => p.id === kept.id)?.state === "waiting", "Answer in terminal must leave a held wait to the terminal's answer");
     passed.push("waiting prompts");
+
+    // Quick launches: the overview is off on the demo data, and Claude Code starts as Run agent does
+    $<HTMLButtonElement>("[data-quick-launch]")!.click();
+    ensure(await until(() => document.querySelector(".menu .menu-item")), "The quick launch menu did not open");
+    const launchItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === label);
+    ensure(launchItem(t("Ledger overview"))?.classList.contains("disabled"), "The Ledger overview must be off on the demo data");
+    launchItem("Claude Code")!.click();
+    ensure(await until(() => launches.length > 0), "Claude Code did not start");
+    ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
+    passed.push("quick launches");
 
     // Board: chips with counts, one verdict, bulk archive undone as one
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
@@ -275,6 +288,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
+    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");

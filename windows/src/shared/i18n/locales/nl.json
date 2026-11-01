@@ -1638,5 +1638,7 @@
   "It looks risky to answer automatically.": "Automatisch antwoorden lijkt riskant.",
   "There is nothing to choose from.": "Er is niets om uit te kiezen.",
   "Auto-continue already answered {0} times in a row.": "Automatisch doorgaan heeft al {0} keer achter elkaar geantwoord.",
-  "Answer it in the agent's terminal.": "Beantwoord het in de terminal van de agent."
+  "Answer it in the agent's terminal.": "Beantwoord het in de terminal van de agent.",
+  "Ledger overview": "Overzicht van het register",
+  "What agents read about this project, in a new tab of the terminal below.": "Wat agents over dit project lezen, in een nieuw tabblad van de terminal onderaan."
 }

@@ -1673,5 +1673,7 @@
   "It looks risky to answer automatically.": "Otomatik yanıt vermek riskli görünüyor.",
   "There is nothing to choose from.": "Seçilecek bir şey yok.",
   "Auto-continue already answered {0} times in a row.": "Otomatik devam zaten art arda {0} kez yanıt verdi.",
-  "Answer it in the agent's terminal.": "Ajanın terminalinde yanıtlayın."
+  "Answer it in the agent's terminal.": "Ajanın terminalinde yanıtlayın.",
+  "Ledger overview": "Defter özeti",
+  "What agents read about this project, in a new tab of the terminal below.": "Ajanların bu proje hakkında okudukları, alttaki terminalin yeni bir sekmesinde."
 }
