@@ -2032,3 +2032,4 @@
 "Auto-continue reached its limit of answers in a row." = "La poursuite automatique a atteint sa limite de réponses d’affilée.";
 "Answer it in the agent's terminal." = "Répondez-y dans le terminal de l’agent.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Le terminal de l’agent n’est pas ouvert dans Gitrochi. Répondez là où l’agent s’exécute.";
+"Unreported" = "Sans rapport";

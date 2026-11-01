@@ -204,7 +204,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict === "archived")), "Bulk archive did not archive both sessions");
     $<HTMLButtonElement>(".ledger-toast button")!.click();
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict !== "archived")), "Undo did not restore both sessions");
-    passed.push("board chips and bulk actions");
+    store.setChecked([]);
+    const launch = await store.backend.call("track", { project: "atlas", title: "Unreported launch", kind: "other", agentId: "agent-unreported", cwd: "C:/fixture/atlas" });
+    await store.refresh(true);
+    const unreported = $$(".ledger-board-bar label").find((label) => label.textContent?.trim() === t("Unreported"))?.querySelector<HTMLInputElement>("input");
+    ensure(unreported, "The Board has no Unreported filter");
+    unreported!.click();
+    ensure(await until(() => {
+      const rows = $$<HTMLElement>(".ledger-table-row");
+      return rows.some((row) => row.dataset.session === launch.session.id) && rows.every((row) => store.session(row.dataset.session)?.lastAgentAt == null);
+    }), "Unreported must find launches without an agent report");
+    const launchRow = $<HTMLElement>(`.ledger-table-row[data-session='${launch.session.id}']`)!;
+    launchRow.querySelector<HTMLInputElement>("input")!.click();
+    ensure(await until(() => $(".ledger-bulk strong")?.textContent === t("{0} selected", 1)), "The new launch was not the only selected session");
+    button(".ledger-bulk", "Mark closed")!.click();
+    ensure(await until(() => store.session(launch.session.id)?.status === "closed"), "An unreported launch could not be closed");
+    unreported!.click();
+    passed.push("board chips, bulk actions and Unreported launches");
 
     // Graph: drawn and clickable
     $<HTMLButtonElement>(".ledger-tabs [data-view='graph']")!.click();

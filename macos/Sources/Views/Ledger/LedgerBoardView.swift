@@ -55,6 +55,9 @@ struct LedgerBoardView: View {
                     .accessibilityAddTraits(on ? .isSelected : [])
                 }
             }
+            Toggle("Unreported", isOn: Binding(get: { ledger.filter.unreportedOnly }, set: { ledger.filter.unreportedOnly = $0 }))
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12))
             if ledger.streamCount > 0 {
                 HStack(spacing: 4) {
                     // the count is the Streams row's: a count appears once per screen

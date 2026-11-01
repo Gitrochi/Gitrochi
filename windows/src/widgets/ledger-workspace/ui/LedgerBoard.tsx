@@ -19,8 +19,8 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
   const state = store.state!;
   const project = store.project;
   const rows = useMemo(
-    () => filterSessions(state.sessions, { project, verdicts: store.verdicts, text: store.filterText, showArchived: store.showArchived }),
-    [state, project, store.verdicts, store.verdicts.size, store.filterText, store.showArchived],
+    () => filterSessions(state.sessions, { project, verdicts: store.verdicts, text: store.filterText, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly }),
+    [state, project, store.verdicts, store.verdicts.size, store.filterText, store.showArchived, store.unreportedOnly],
   );
   const counts = useMemo(() => verdictCounts(state.sessions, project), [state, project]);
   const streams = streamCount(state.sessions, project);
@@ -90,8 +90,9 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
             </button>
           );
         })}
-        {store.verdicts.size > 0 && <Button size="small" onClick={() => { store.verdicts.clear(); store.changed(); }}>{t("Show all")}</Button>}
+        {(store.verdicts.size > 0 || store.unreportedOnly) && <Button size="small" onClick={() => { store.verdicts.clear(); store.unreportedOnly = false; store.changed(); }}>{t("Show all")}</Button>}
         <span className="spacer" />
+        <Checkbox checked={store.unreportedOnly} onChange={(on) => { store.unreportedOnly = on; store.changed(); }} label={t("Unreported")} />
         <Checkbox checked={store.showArchived} onChange={(on) => { store.showArchived = on; store.changed(); }} label={t("Show cleaned up")} />
       </div>
       {checked.length > 0 && (
