@@ -288,6 +288,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
+    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");
