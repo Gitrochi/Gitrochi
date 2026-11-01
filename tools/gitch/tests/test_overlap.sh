@@ -456,7 +456,10 @@ if [ "$*" = 1 ]; then
   count=$((count + 1))
   printf '%s\n' "$count" > "$OV_WATCH_CLOCK/count"
   touch "$OV_WATCH_CLOCK/paused-$count"
-  while [ ! -f "$OV_WATCH_CLOCK/resume-$count" ]; do "$OV_WATCH_REAL_SLEEP" 0.1; done
+  while [ ! -f "$OV_WATCH_CLOCK/resume-$count" ]; do
+    kill -0 "$PPID" 2>/dev/null || exit 1
+    "$OV_WATCH_REAL_SLEEP" 0.1
+  done
   exit 0
 fi
 exec "$OV_WATCH_REAL_SLEEP" "$@"
