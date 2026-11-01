@@ -190,6 +190,11 @@ export const ipc = {
   ledgerCall: (method: string, args: Record<string, unknown>) => invoke<unknown>("ledger_call", { method, args }),
   /** A claude-ledger database to import; null when cancelled */
   ledgerPickDatabase: (title: string) => invoke<string | null>("ledger_pick_database", { title }),
+  /** A Ledger notification; a click on it comes back through onLedgerNotification with `target` */
+  ledgerNotify: (title: string, body: string, target: Record<string, unknown>) => invoke<void>("ledger_notify", { title, body, target }),
+  onLedgerNotification: (fn: (target: Record<string, unknown> | null) => void): Promise<UnlistenFn> => listen<Record<string, unknown> | null>("ledger-notification", (e) => fn(e.payload)),
+  /** The taskbar overlay: a square RGBA image `size` pixels wide, or null to remove it (Windows) */
+  ledgerBadge: (rgba: number[] | null, size: number) => invoke<void>("ledger_badge", { rgba, size }),
   /** Saves bytes as <temp>/Gitrochi/<name> and returns the path (pasted images, dropped files); raw body, name hex-encoded in a header */
   writeTemp: (name: string, bytes: Uint8Array) =>
     tauriInvoke<string>("fs_write_temp", bytes, { headers: { "x-name-hex": Array.from(new TextEncoder().encode(name), (b) => b.toString(16).padStart(2, "0")).join("") } }).catch((e) => {

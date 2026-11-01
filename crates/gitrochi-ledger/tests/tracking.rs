@@ -10,7 +10,8 @@ use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
 
-fn git(dir: &Path, args: &[&str]) {
+/// git in the fixture with its own configuration and dates; its output, trimmed.
+fn git(dir: &Path, args: &[&str]) -> String {
     let home = dir.join(".home");
     std::fs::create_dir_all(&home).unwrap();
     let output = Command::new("git")
@@ -32,6 +33,18 @@ fn git(dir: &Path, args: &[&str]) {
         "git {args:?}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
+}
+
+/// Moves a session's last activity back by `hours`, as if it had been quiet that long.
+fn quiet(db: &Path, id: &str, hours: i64) {
+    let connection = rusqlite::Connection::open(db).unwrap();
+    connection
+        .execute(
+            "UPDATE sessions SET last_at = last_at - ?2 WHERE id = ?1",
+            rusqlite::params![id, hours * 3_600_000],
+        )
+        .unwrap();
 }
 
 /// A repository named `harbor` with v1.0.0 and v1.1.0 on main, a branch `feature/retry`
@@ -174,6 +187,11 @@ fn a_launched_session_is_set_from_the_checkout_and_stays_unreported() {
             events[0]["data"]["hook"].clone()
         ),
         (json!("hook"), json!("hook"), json!("launch"))
+    );
+    // with the commit the agent starts on, from which D13 counts the branch's own commits
+    assert_eq!(
+        events[0]["data"]["head"],
+        json!(git(&repo.dir.join("harbor-retry"), &["rev-parse", "HEAD"]))
     );
     assert_eq!(detail["waitingMessages"], 0);
 
@@ -368,6 +386,161 @@ fn outside_a_repository_the_folder_names_the_session() {
     );
     assert!(session.get("baseVersion").is_none());
     assert!(session["links"].get("branch").is_none());
+    // with no commit to count from, a quiet one goes stale like any other session
+    let id = session["id"].as_str().unwrap();
+    quiet(&db, id, 100);
+    assert_eq!(
+        app(&db, "session", json!({"id": id}))["session"]["verdict"],
+        "stale"
+    );
+}
+
+#[test]
+fn a_launch_in_the_main_checkout_has_no_worktree_link() {
+    let repo = Repo::new();
+    let session = &repo.track(json!({"cwd": repo.path("harbor")}))["session"];
+    let links = &session["links"];
+    assert_eq!(links["branch"], "main");
+    assert_eq!(links["cwd"], repo.path("harbor").as_str());
+    assert!(
+        links.get("worktree").is_none(),
+        "the main checkout is the repository itself: {links}"
+    );
+    let detail = repo.detail(session["id"].as_str().unwrap());
+    assert_eq!(
+        detail["events"][0]["data"]["head"],
+        json!(git(&repo.dir.join("harbor"), &["rev-parse", "HEAD"]))
+    );
+}
+
+#[test]
+fn an_unreported_launch_goes_stale_only_once_its_branch_has_commits() {
+    let repo = Repo::new();
+    let id = repo.track(json!({}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    // quiet for longer than the stale limit with nothing committed: it waits (D13)
+    quiet(&repo.db(), &id, 100);
+    let waiting = &repo.detail(&id)["session"];
+    assert_eq!(waiting["verdict"], "active");
+    assert!(waiting.get("lastAgentAt").is_none(), "under Unreported");
+    let attention = &app(&repo.db(), "attention", json!({}))["attention"];
+    assert_eq!(
+        (attention["decide"].clone(), attention["total"].clone()),
+        (json!(0), json!(0))
+    );
+    // main moving on is not the session's work
+    std::fs::write(repo.dir.join("harbor").join("a.txt"), "four").unwrap();
+    git(&repo.dir.join("harbor"), &["commit", "-q", "-am", "four"]);
+    assert_eq!(repo.detail(&id)["session"]["verdict"], "active");
+
+    // a commit on its branch is work a person has to decide on
+    let worktree = repo.dir.join("harbor-retry");
+    std::fs::write(worktree.join("b.txt"), "retry").unwrap();
+    git(&worktree, &["add", "b.txt"]);
+    git(&worktree, &["commit", "-q", "-m", "retry"]);
+    assert_eq!(repo.detail(&id)["session"]["verdict"], "stale");
+    let state = app(&repo.db(), "state", json!({"project": "harbor"}));
+    assert_eq!(state["attention"]["decide"], 1);
+    assert_eq!(state["sessions"][0]["verdict"], "stale");
+
+    // a session its agent reported to goes stale as before, whatever its branch
+    let reported = repo.track(json!({}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    repo.report(json!({"session": reported, "event": "progress", "summary": "working"}));
+    git(&worktree, &["reset", "-q", "--hard", "HEAD~1"]);
+    quiet(&repo.db(), &reported, 100);
+    assert_eq!(repo.detail(&reported)["session"]["verdict"], "stale");
+    assert_eq!(repo.detail(&id)["session"]["verdict"], "active");
+}
+
+#[test]
+fn launches_wait_while_their_tip_is_where_they_started() {
+    let repo = Repo::new();
+    let harbor = repo.dir.join("harbor");
+    let id = |result: Value| result["session"]["id"].as_str().unwrap().to_string();
+    // two launches on one branch, which one look at the repository's branches answers
+    let (first, second) = (id(repo.track(json!({}))), id(repo.track(json!({}))));
+    // and one on a detached HEAD, which follows its own folder
+    let detached = repo.dir.join("harbor-detached");
+    git(
+        &harbor,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            &detached.to_string_lossy(),
+            "main",
+        ],
+    );
+    let loose = id(repo.track(json!({"cwd": detached.to_string_lossy()})));
+    assert!(repo.detail(&loose)["session"]["links"]
+        .get("branch")
+        .is_none());
+    for session in [&first, &second, &loose] {
+        quiet(&repo.db(), session, 100);
+    }
+    let verdicts = || {
+        let state = app(&repo.db(), "state", json!({"project": "harbor"}));
+        [&first, &second, &loose].map(|session| {
+            state["sessions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["id"] == json!(session))
+                .unwrap()["verdict"]
+                .clone()
+        })
+    };
+    assert_eq!(
+        verdicts(),
+        [json!("active"), json!("active"), json!("active")]
+    );
+    // a commit on the detached HEAD moves that launch alone
+    std::fs::write(detached.join("c.txt"), "loose").unwrap();
+    git(&detached, &["add", "c.txt"]);
+    git(&detached, &["commit", "-q", "-m", "loose"]);
+    assert_eq!(
+        verdicts(),
+        [json!("active"), json!("active"), json!("stale")]
+    );
+    // once the branch is gone git cannot tell, so its launches count
+    git(
+        &harbor,
+        &["worktree", "remove", "--force", &repo.path("harbor-retry")],
+    );
+    git(&harbor, &["branch", "-q", "-D", "feature/retry"]);
+    assert_eq!(verdicts(), [json!("stale"), json!("stale"), json!("stale")]);
+}
+
+#[test]
+fn windows_paths_match_whatever_their_case_and_separators() {
+    let dir = TempDir::new("track-windows");
+    let db = dir.join("ledger.sqlite3");
+    // a folder picked in Settings comes as Windows spells it; git and the apps send /
+    app(
+        &db,
+        "project_set",
+        json!({"project": "atlas", "repoPath": r"C:\Work\app"}),
+    );
+    let policy = json!({"enabled": true, "delaySec": 45});
+    app(
+        &db,
+        "settings_set",
+        json!({"values": {"autoContinue": {"enabled": false, "delaySec": 30,
+                                            "repositories": {r"c:\work\App\": policy}}}}),
+    );
+    let session = &app(
+        &db,
+        "track",
+        json!({"repoPath": "C:/Work/app", "cwd": "C:/Work/app"}),
+    )["session"];
+    assert_eq!(session["project"], "atlas", "the project bound to it");
+    assert_eq!(session["autoContinue"], policy, "the repository's policy");
 }
 
 #[test]
@@ -377,6 +550,16 @@ fn only_the_apps_track_and_reported_sessions_keep_their_rules() {
     let output = cli(&db, &["call", "track", r#"{"repoPath": "/tmp/x"}"#]);
     assert!(!output.status.success());
     assert_eq!(json_of(&output)["error"]["code"], "NOT_ALLOWED");
+    let hook = gitrochi_ledger::call_as(
+        Caller::Hook,
+        "track",
+        &json!({"db": db.to_string_lossy(), "repoPath": "/tmp/x"}),
+    )
+    .unwrap_err();
+    assert_eq!(
+        hook.code, "NOT_ALLOWED",
+        "the hook handler cannot create one"
+    );
     // A session an agent started itself never takes another title or project.
     let started = repo
         .report(json!({"event": "start", "project": "harbor", "title": "Own", "base": "1.0.0"}));

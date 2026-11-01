@@ -187,7 +187,8 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
                 let snapshot = views::snapshot(c, &settings, project.as_deref(), now)?;
                 let questions = views::open_questions(c, project.as_deref())?.len() as i64;
                 let review = prompts::list(c, project.as_deref(), &["auto"], true)?.len() as i64;
-                let attention = views::attention_of(&snapshot.views, questions, review);
+                let held = prompts::held_count(c, project.as_deref())?;
+                let attention = views::attention_of(&snapshot.views, questions, review, held);
                 Ok(json!({"rev": db::rev(c)?, "attention": attention}))
             })
         }

@@ -4,7 +4,7 @@ import { agents, agentStatusTitle } from "@/entities/agent";
 import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { ipc } from "@/shared/api";
-import { displayPath, samePath } from "@/shared/config";
+import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
@@ -61,7 +61,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
         {confirmedBy && <span className="hint">{t("Confirmed by {0} (applied)", String(confirmedBy.data?.by ?? ""))}</span>}
         <div className="ledger-links">
           {s.links.branch && <span className="ledger-link mono" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
-          {s.links.worktree && !samePath(s.links.worktree, s.links.repoPath) && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
+          {s.links.worktree && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
           {s.links.pr && <button type="button" className="ledger-link" data-tip={s.links.pr.url} onClick={() => void ipc.openUrl(s.links.pr!.url)}><GitPullRequest size={12} /><span>#{s.links.pr.number}</span></button>}
           {s.links.agentId && (agent && agents.canFocus(agent)
             ? <button type="button" className="ledger-link" data-tip={t("Open the agent's terminal")} onClick={() => agents.focus(agent)}><Bot size={12} /><span>{agentStatusTitle[agent.status]}</span></button>

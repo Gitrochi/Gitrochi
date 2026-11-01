@@ -137,6 +137,8 @@ export interface LedgerAttention {
   tidy: number;
   decide: number;
   autoReview: number;
+  /** Waits held for the person: agents waiting in their terminal (#195; a core before it leaves this out) */
+  held?: number;
   total: number;
 }
 
