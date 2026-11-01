@@ -8,7 +8,7 @@ use gitrochi_autocontinue::{
     Language, Policy,
 };
 use serde_json::{json, Value};
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -36,12 +36,10 @@ fn run(args: &[&str], stdin: &str) -> (i32, String, String) {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(stdin.as_bytes())
-        .unwrap();
+    // a usage error exits without reading the input, and may have closed the pipe by now
+    if let Err(error) = child.stdin.take().unwrap().write_all(stdin.as_bytes()) {
+        assert_eq!(error.kind(), ErrorKind::BrokenPipe, "{error}");
+    }
     let out = child.wait_with_output().unwrap();
     (
         out.status.code().unwrap_or(-1),
