@@ -271,7 +271,7 @@ impl Target {
             use std::os::windows::fs::OpenOptionsExt;
             std::fs::OpenOptions::new()
                 .read(true)
-                .custom_flags(0x00200000)
+                .custom_flags(0x02000000 | 0x00200000)
                 .open(&self.path)
         };
         #[cfg(not(any(unix, windows)))]
