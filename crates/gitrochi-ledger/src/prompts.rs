@@ -21,6 +21,9 @@ pub const STATES: [&str; 5] = ["waiting", "answered", "auto", "released", "expir
 const DEFAULT_DELAY_SEC: i64 = 30;
 /// A prompt nobody resolved is expired this long after its deadline.
 pub const EXPIRE_GRACE: Ms = 10 * 60_000;
+/// The deadline of a wait held for the person: nothing answers it automatically, no hook
+/// waits on it (the terminal asks), and the person's answer there settles it.
+pub const NO_COUNTDOWN: Ms = 0;
 
 /// A waiting prompt (`PendingPrompt` in CONTRACT.md).
 #[derive(Clone, Debug, Serialize, PartialEq)]
@@ -482,25 +485,76 @@ pub fn in_a_row(connection: &Connection, session_id: &str) -> Result<u32> {
     Ok(count.clamp(0, i64::from(u32::MAX)) as u32)
 }
 
-/// The session's prompts that may still become automatic answers: those waiting, and the
-/// permission answers not confirmed yet. The limit counts them too, so two parallel
-/// requests never add up past it.
+/// The session's prompts that may still become automatic answers: those waiting with a
+/// countdown, and the permission answers not confirmed yet. The limit counts them too, so two
+/// parallel requests never add up past it.
 pub fn open_count(connection: &Connection, session_id: &str) -> Result<u32> {
     let count: i64 = connection.query_row(
         "SELECT COUNT(*) FROM pending_prompts
          WHERE session_id = ?1
-           AND (state = 'waiting' OR (state = 'auto' AND json_extract(answer, '$.outcome') = ?2))",
-        params![session_id, UNCONFIRMED],
+           AND ((state = 'waiting' AND deadline <> ?3)
+                OR (state = 'auto' AND json_extract(answer, '$.outcome') = ?2))",
+        params![session_id, UNCONFIRMED, NO_COUNTDOWN],
         |r| r.get(0),
     )?;
     Ok(count.clamp(0, i64::from(u32::MAX)) as u32)
 }
 
-/// Expires prompts nobody resolved long after their deadline; returns how many.
+/// Expires prompts nobody resolved long after their deadline; returns how many. A wait held
+/// for the person has no deadline to pass: its conversation settles or releases it.
 pub fn expire(connection: &Connection, now: Ms) -> Result<usize> {
     Ok(connection.execute(
-        "UPDATE pending_prompts SET state = 'expired' WHERE state = 'waiting' AND deadline < ?1",
-        [now - EXPIRE_GRACE],
+        "UPDATE pending_prompts SET state = 'expired'
+         WHERE state = 'waiting' AND deadline <> ?2 AND deadline < ?1",
+        params![now - EXPIRE_GRACE, NO_COUNTDOWN],
+    )?)
+}
+
+/// Open waits held for the person (`NO_COUNTDOWN` with a `hold`) of one project, or of all:
+/// agents waiting in their terminal for an answer only the person can give.
+pub fn held_count(connection: &Connection, project: Option<&str>) -> Result<i64> {
+    Ok(connection.query_row(
+        "SELECT COUNT(*) FROM pending_prompts p LEFT JOIN sessions s ON s.id = p.session_id
+         WHERE p.state = 'waiting' AND p.deadline = ?2
+           AND json_extract(p.payload, '$.hold') IS NOT NULL
+           AND (?1 IS NULL OR s.project = ?1)",
+        params![project, NO_COUNTDOWN],
+        |r| r.get(0),
+    )?)
+}
+
+/// Whether a question or plan held for the person (`NO_COUNTDOWN`) waits for this agent
+/// (`None`: the main agent).
+pub fn held_question_waiting(
+    connection: &Connection,
+    session_id: &str,
+    agent: Option<&str>,
+) -> Result<bool> {
+    Ok(connection.query_row(
+        "SELECT EXISTS (SELECT 1 FROM pending_prompts
+           WHERE session_id = ?1 AND state = 'waiting' AND deadline = ?3
+             AND kind IN ('ask_user_question', 'exit_plan_mode')
+             AND json_extract(payload, '$.call.agent') IS ?2)",
+        params![session_id, agent, NO_COUNTDOWN],
+        |r| r.get(0),
+    )?)
+}
+
+/// A question or plan held for the person was answered in the terminal: the tool ran, or the
+/// agent went on. `answered` by `human`, with nothing stored of what they chose.
+pub fn settle_held_questions(
+    connection: &Connection,
+    session_id: &str,
+    agent: Option<&str>,
+    now: Ms,
+) -> Result<usize> {
+    Ok(connection.execute(
+        "UPDATE pending_prompts SET state = 'answered', answer = NULL, answered_by = 'human',
+            answered_at = ?3, reviewed_at = ?3
+         WHERE session_id = ?1 AND state = 'waiting' AND deadline = ?4
+           AND kind IN ('ask_user_question', 'exit_plan_mode')
+           AND json_extract(payload, '$.call.agent') IS ?2",
+        params![session_id, agent, now, NO_COUNTDOWN],
     )?)
 }
 

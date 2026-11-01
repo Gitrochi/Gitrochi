@@ -40,7 +40,7 @@
     },
     "deadline": {
       "type": "integer",
-      "description": "Epoch milliseconds"
+      "description": "Epoch milliseconds; 0 for a wait held for the person, with no countdown (payload.hold says why)"
     },
     "state": {
       "enum": [

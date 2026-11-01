@@ -23,10 +23,11 @@ use crate::settings::Settings;
 use crate::util::{self, now_ms, Ms};
 use crate::vocab::Role;
 use gitrochi_autocontinue::{
-    app_alive, approve_plan, compose_session_context, decide, is_person_prompt, permission_allow,
-    permission_deny, pre_tool_use_allow, pre_tool_use_deny, reply_language, session_start_context,
-    should_wait, stop_wake, Decision, HookEvent, HookInput, HookOutput, PermissionContext, Policy,
-    PromptKind, Proposed, SessionState, Wait, REPLY_TAG,
+    app_alive, approve_plan, classify_stop, compose_session_context, decide, is_person_prompt,
+    parse_questions, permission_allow, permission_deny, pre_tool_use_allow, pre_tool_use_deny,
+    reply_language, session_start_context, should_wait, stop_wake, Decision, HookEvent, HookInput,
+    HookOutput, Pass, PermissionContext, Policy, PromptKind, Proposed, SessionState, Wait,
+    REPLY_TAG,
 };
 use rusqlite::{params, Connection};
 use serde_json::{json, Map, Value};
@@ -487,8 +488,15 @@ fn permission_context(
 /// so fields Claude Code adds to the input later do not matter; `agent` keeps a subagent's
 /// calls apart from the main agent's.
 fn call_of(input: &HookInput) -> Value {
+    let subject = call_subject(input);
+    let key = crate::sha1::hex(format!("{}\0{subject}", input.tool_name).as_bytes());
+    json!({"key": key, "agent": input.agent_id})
+}
+
+/// What a call acts on: the command, the file, the URL or the query, else the whole input.
+fn call_subject(input: &HookInput) -> String {
     let field = |key: &str| input.tool_input.get(key).and_then(Value::as_str);
-    let subject = match input.tool_name.as_str() {
+    match input.tool_name.as_str() {
         "Bash" | "PowerShell" => field("command"),
         "Edit" | "MultiEdit" | "Write" | "Read" | "NotebookEdit" => {
             field("file_path").or_else(|| field("notebook_path"))
@@ -497,9 +505,59 @@ fn call_of(input: &HookInput) -> Value {
         "WebSearch" => field("query"),
         _ => None,
     }
-    .map_or_else(|| input.tool_input.to_string(), str::to_string);
-    let key = crate::sha1::hex(format!("{}\0{subject}", input.tool_name).as_bytes());
-    json!({"key": key, "agent": input.agent_id})
+    .map_or_else(|| input.tool_input.to_string(), str::to_string)
+}
+
+/// The payload of a wait held for the person (DESIGN.md §9.4, §10.11), or `None` when the
+/// pass is not a wait: auto-continue is on for the session, but this one is never answered
+/// automatically — a request that is never auto-allowed, a risky question or plan, a
+/// question with nothing to choose, or the next one past the limit in a row. It has
+/// gitrochi-autocontinue's `PromptPayload` keys for what is asked, no `proposed`, and `hold`:
+/// the pass (`code` and its fields) and a `message` in English.
+fn held_payload(kind: PromptKind, pass: &Pass, input: &HookInput) -> Option<Value> {
+    if !matches!(
+        pass,
+        Pass::LimitReached { .. } | Pass::Risky { .. } | Pass::NoAnswer | Pass::Held { .. }
+    ) {
+        return None;
+    }
+    let mut payload = match kind {
+        PromptKind::StopQuestion => {
+            // past the limit, a turn that asks nothing waits for nothing
+            let asked = classify_stop(&input.last_assistant_message)?;
+            json!({"kind": kind.as_str(), "question": asked.summary, "text": asked.text})
+        }
+        PromptKind::AskUserQuestion => {
+            let first = parse_questions(&input.tool_input)
+                .into_iter()
+                .next()
+                .map(|q| q.question)
+                .unwrap_or_default();
+            json!({"kind": kind.as_str(), "question": util::one_line(&first, 160), "questions": input.tool_input["questions"]})
+        }
+        PromptKind::ExitPlanMode => {
+            let plan = input.tool_input["plan"].as_str().unwrap_or("");
+            let title = plan
+                .lines()
+                .map(str::trim)
+                .find(|l| !l.is_empty())
+                .unwrap_or("");
+            json!({"kind": kind.as_str(), "question": util::one_line(title.trim_start_matches('#').trim(), 160), "text": plan})
+        }
+        PromptKind::Permission => {
+            let summary = util::one_line(&call_subject(input), 160);
+            json!({
+                "kind": kind.as_str(),
+                "question": util::one_line(&format!("{}: {summary}", input.tool_name), 160),
+                "tool": {"name": input.tool_name, "summary": summary},
+            })
+        }
+    };
+    let mut hold = serde_json::to_value(pass).unwrap_or_else(|_| json!({}));
+    hold["message"] = json!(pass.message());
+    payload["hold"] = hold;
+    payload["call"] = call_of(input);
+    Some(payload)
 }
 
 /// PostToolUse and PostToolUseFailure: a call ran. While a permission hook waits, the
@@ -508,6 +566,13 @@ fn call_of(input: &HookInput) -> Value {
 /// see `prompts::settle_call`. One read when nothing waits.
 fn tool_ran(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<HookResult> {
     let agent = input.agent_id.as_deref();
+    // the person answered a question or plan held for them in the terminal
+    if matches!(input.tool_name.as_str(), "AskUserQuestion" | "ExitPlanMode")
+        && db.read(|c| prompts::held_question_waiting(c, id, agent))?
+    {
+        let now = now_ms();
+        db.write(|c| prompts::settle_held_questions(c, id, agent, now))?;
+    }
     let (_, waiting, unconfirmed) = db.read(|c| prompts::open_work(c, id, agent))?;
     if !waiting && !unconfirmed {
         return Ok(HookResult::default());
@@ -540,12 +605,18 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
         .map(str::to_string);
     // The app's countdown is the only place to answer while a synchronous hook waits.
     let alive = app_alive(heartbeat(&env.db), now_seconds());
-    let Some((row, settings, (stop_waiting, permission_waiting, unconfirmed))) = db.read(|c| {
-        Ok(match session::load(c, id)? {
-            Some(row) => Some((row, Settings::load(c)?, prompts::open_work(c, id, agent)?)),
-            None => None,
-        })
-    })?
+    let Some((row, settings, (stop_waiting, permission_waiting, unconfirmed), held_questions)) = db
+        .read(|c| {
+            Ok(match session::load(c, id)? {
+                Some(row) => Some((
+                    row,
+                    Settings::load(c)?,
+                    prompts::open_work(c, id, agent)?,
+                    prompts::held_question_waiting(c, id, agent)?,
+                )),
+                None => None,
+            })
+        })?
     else {
         return Ok(missing(id));
     };
@@ -561,7 +632,7 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
     let moved_on = permission_waiting;
     // the turn ended: automatic permission answers nothing confirmed stay unknown
     let unconfirmed_end = stop && unconfirmed;
-    if !may_wait && !stop && !supersede && !moved_on {
+    if !may_wait && !stop && !supersede && !moved_on && !held_questions {
         return Ok(HookResult::default().noted(unreadable));
     }
     let ctx = permission_context(
@@ -583,6 +654,10 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
         }
         if moved_on {
             prompts::settle_moved_on(c, id, agent, own_key.as_deref(), now)?;
+        }
+        if held_questions {
+            // the agent went on after a question or plan held for the person: it was answered
+            prompts::settle_held_questions(c, id, agent, now)?;
         }
         if unconfirmed_end {
             prompts::settle_unconfirmed(c, id, Some(None))?;
@@ -618,7 +693,22 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
                     now,
                 )?)
             }
-            Decision::Pass(_) => None,
+            // a wait held for the person: stored so the apps can show it, with no countdown;
+            // the hook does not wait, so the terminal asks at once
+            Decision::Pass(pass) => match kind.and_then(|k| held_payload(k, pass, input)) {
+                Some(payload) => Some(prompts::create(
+                    c,
+                    &json!({
+                        "kind": kind.map_or("", |k| k.as_str()),
+                        "sessionId": id,
+                        "agentId": env.agent_id,
+                        "payload": payload,
+                        "deadline": prompts::NO_COUNTDOWN,
+                    }),
+                    now,
+                )?),
+                None => None,
+            },
         };
         Ok((Some(decision), prompt))
     })?;

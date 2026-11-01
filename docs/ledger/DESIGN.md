@@ -437,7 +437,7 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 ### 9.5 Data
 
-`pending_prompts` holds the `PendingPrompt`s ([§6.1](#61-types)); their `payload` is the question, its options and, for a permission request, the tool and command. *Proposed* additions: `reviewedAt` with a `review` action (so **Confirm** on an automatic answer is stored), `rule` (the rule that blocked or allowed it), and no `deadline` for a wait that is never auto-allowed. Unlike the activity hooks, auto-continue keeps the question it waited on so the person can review it; what the person types is still never stored.
+`pending_prompts` holds the `PendingPrompt`s ([§6.1](#61-types)); their `payload` is the question, its options and, for a permission request, the tool and command. *Proposed* additions: `reviewedAt` with a `review` action (so **Confirm** on an automatic answer is stored) and `rule` (the rule that blocked or allowed it). A wait held for the person — never auto-allowed, risky, nothing to choose, or past the limit in a row — is stored with `deadline` 0 and the reason in `payload.hold`, so the apps can show it and notify about it; no hook waits on it, and the person answers in the terminal (CONTRACT.md, Hooks). Unlike the activity hooks, auto-continue keeps the question it waited on so the person can review it; what the person types is still never stored.
 
 ## 10. Screens
 
@@ -490,6 +490,7 @@ Only what needs a person; the count is `attention.total`:
 - **To clean up** (`attention.tidy`) — `confirm` and `expirable`.
 - **To decide** (`attention.decide`) — non-stream `pending_merge` and `stale` (unreported sessions per D13).
 - **Auto-continued — review** (`attention.autoReview`) — automatic answers not yet looked at, with **Confirm** and **Send correction…**.
+- **Waiting in the terminal** (`attention.held`) — waits auto-continue left to the person ([§9.5](#95-data)): the agent waits in its terminal, so the badge counts them. Waits with a countdown resolve themselves and are not counted.
 - **Running, not in the Ledger** — agents found by `ExternalAgents`, with **Track** and **Hide**; not counted.
 
 Keyboard (never while typing in a field): `↑`/`↓` move, `Return` opens the inspector, `A` answers, `C` confirms, `E` archives, `S` still active, `M` mark merged…, `⌘Z`/`Ctrl+Z` undo. In answer fields `Return` is a new line and `⌘↩`/`Ctrl+Enter` saves. Every confirm, archive and status change shows a toast with **Undo**.
