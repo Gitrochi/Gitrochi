@@ -490,6 +490,16 @@ fn only_the_apps_track_and_reported_sessions_keep_their_rules() {
     let output = cli(&db, &["call", "track", r#"{"repoPath": "/tmp/x"}"#]);
     assert!(!output.status.success());
     assert_eq!(json_of(&output)["error"]["code"], "NOT_ALLOWED");
+    let hook = gitrochi_ledger::call_as(
+        Caller::Hook,
+        "track",
+        &json!({"db": db.to_string_lossy(), "repoPath": "/tmp/x"}),
+    )
+    .unwrap_err();
+    assert_eq!(
+        hook.code, "NOT_ALLOWED",
+        "the hook handler cannot create one"
+    );
     // A session an agent started itself never takes another title or project.
     let started = repo
         .report(json!({"event": "start", "project": "harbor", "title": "Own", "base": "1.0.0"}));
