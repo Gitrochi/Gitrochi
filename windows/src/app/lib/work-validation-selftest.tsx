@@ -13,7 +13,7 @@ export async function workValidationFixture() {
   const path = `C:/work-validation-fixture-${crypto.randomUUID()}`, head = "a".repeat(40),
     store = new RepoStore(), values = new Map<string, unknown>(),
     secret = "grh_" + "x".repeat(24);
-  const original = { run: ipc.run, hubRead: ipc.hubRead, http: ipc.http, secretGet: ipc.secretGet, secretSet: ipc.secretSet, get: settings.get, set: settings.set, sessions: agents.sessions };
+  const original = { run: ipc.run, hubRead: ipc.hubRead, http: ipc.http, secretGet: ipc.secretGet, secretSet: ipc.secretSet, get: settings.get, set: settings.set, load: agents.load, sessions: Object.getOwnPropertyDescriptor(agents, "sessions")! };
   let diff = "", hubMode: "empty" | "overlap" | "error" = "empty", hubReads = 0, secretReads = 0, secretWrites = 0, unexpectedNetwork = 0, starts = 0;
   let startedCandidates: string[] = [];
   settings.get = <T,>(key: string, fallback: T): T => values.has(key) ? values.get(key) as T : fallback;
@@ -45,7 +45,10 @@ export async function workValidationFixture() {
     schemaVersion: 1, tool: "gitch graph review", scope: "staged", stamp: "staged-fixture", snapshot: "fixture", headSha: head, branch: "feature/example", stale: false,
     changed: [{ path: "src/index.ts", status: "M", analyzed: true }], direct: [], indirect: [], tests: [{ path: "tests/index.test.ts", kind: "dependency", depth: 1, heuristic: false }], coverage: { changed: 1, analyzed: 1, unsupported: 0 }, limitations: [],
   } };
-  agents.sessions = ["agent-a", "agent-b"].map((id): AgentSession => ({ id, kind: "codex", path, task: "Synthetic task", mode: "read-only", created: Date.now() / 1000, updated: Date.now() / 1000, status: "working", detail: null }));
+  // The agent center reloads its sessions from its folder every 2 s: stub the reload, and pin the list so one already under way cannot replace it.
+  const sessions = ["agent-a", "agent-b"].map((id): AgentSession => ({ id, kind: "codex", path, task: "Synthetic task", mode: "read-only", created: Date.now() / 1000, updated: Date.now() / 1000, status: "working", detail: null }));
+  agents.load = async () => {};
+  Object.defineProperty(agents, "sessions", { configurable: true, get: () => sessions, set: () => {} });
   const flows = flowStoreFor(path), stamp = (await worktreeStamp(path)).stamp,
     originalFlows = { refresh: flows.refresh, open: flows.open, startVerified: flows.startVerified };
   flows.hasFlowFile = true;
@@ -67,7 +70,7 @@ export async function workValidationFixture() {
     changedContents(value: string) { diff = value; },
     dispose() {
       ipc.run = original.run; ipc.hubRead = original.hubRead; ipc.http = original.http; ipc.secretGet = original.secretGet; ipc.secretSet = original.secretSet;
-      settings.get = original.get; settings.set = original.set; agents.sessions = original.sessions;
+      settings.get = original.get; settings.set = original.set; agents.load = original.load; Object.defineProperty(agents, "sessions", original.sessions);
       flows.refresh = originalFlows.refresh; flows.open = originalFlows.open; flows.startVerified = originalFlows.startVerified;
     },
   };
