@@ -1,14 +1,15 @@
-import { ArrowRight, ChevronDown, ChevronRight, Waves } from "lucide-react";
-import { type CSSProperties, useEffect, useState } from "react";
+import { ArrowRight, ChevronDown, ChevronRight, CircleCheck, CircleDot, SkipForward, Waves } from "lucide-react";
+import { useEffect, useState } from "react";
 import { compareVersions, type LedgerSession, type LedgerSessionDetail, type LedgerStore, type LedgerStreamCycle } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { longDate, shortDate, useObserve } from "@/shared/lib";
-import { Empty } from "@/shared/ui";
+import { Empty, StatusPill, type StatusTone } from "@/shared/ui";
 import { ReportBody } from "./LedgerTimeline";
 import { BaseLine, SessionId, VerdictBadge, When } from "./parts";
 
-const cycleColor: Record<LedgerStreamCycle["state"], string> = { applied: "--green", active: "--accent", skipped: "--text-3" };
-const cycleLabel: Record<LedgerStreamCycle["state"], string> = { applied: "Applied", active: "Active", skipped: "Skipped" };
+const cycleTone: Record<LedgerStreamCycle["state"], StatusTone> = { applied: "passed", active: "waiting", skipped: "neutral" };
+const cycleIcon = { applied: CircleCheck, active: CircleDot, skipped: SkipForward };
+const cycleLabel: Record<LedgerStreamCycle["state"], string> = { applied: "Applied", active: "In progress", skipped: "Skipped" };
 
 /**
  * Implementation streams: long-running sessions that report in cycles instead of finishing. Each card lists its
@@ -49,7 +50,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
       </header>
       {!cycles.length && <div className="ledger-cycle-body hint">{t("No cycle yet: the stream has not read a baseline.")}</div>}
       {cycles.map((c) => {
-        const expanded = open === c.version;
+        const expanded = open === c.version, Icon = cycleIcon[c.state];
         const releaser = store.session(c.releasedBy);
         const events = detail ? c.eventIds.map((id) => detail.events.find((e) => e.id === id)).filter((e) => !!e) : [];
         const latest = [...events].reverse().find((e) => e.body) ?? null;
@@ -58,7 +59,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
             <button type="button" className="ledger-cycle-head" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : c.version)}>
               {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               <span className="ledger-version">{c.version || "—"}</span>
-              <span className="ledger-cycle-state" style={{ "--state": `var(${cycleColor[c.state]})` } as CSSProperties}>{t(cycleLabel[c.state])}</span>
+              <StatusPill tone={cycleTone[c.state]} icon={<Icon size={12} />}>{t(cycleLabel[c.state])}</StatusPill>
               <span className="ledger-flow">
                 {c.syncedAt ? <span data-tip={longDate(c.syncedAt / 1000)}>{t("Read {0}", shortDate(c.syncedAt / 1000))}</span> : <span>{t("Not read")}</span>}
                 <ArrowRight size={12} />
@@ -68,7 +69,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
               {c.releasedBy && (
                 <span className="ledger-flow" data-tip={t("The session that released this version")}>
                   {t("Released by")}
-                  {releaser ? <SessionId session={releaser} /> : <span className="mono">{c.releasedBy}</span>}
+                  {releaser ? <SessionId session={releaser} /> : <span>{c.releasedBy}</span>}
                   {releaser && <VerdictBadge verdict={releaser.verdict} />}
                 </span>
               )}
@@ -78,7 +79,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
               <div className="ledger-cycle-body">
                 {events.length ? (
                   <ul className="ledger-flow" style={{ flexDirection: "column", alignItems: "flex-start", margin: 0, paddingLeft: 16 }}>
-                    {events.map((e) => <li key={e.id}><span className="mono">{e.type}</span> {e.summary} · {shortDate(e.ts / 1000)}</li>)}
+                    {events.map((e) => <li key={e.id}><span>{e.type}</span> {e.summary} · {shortDate(e.ts / 1000)}</li>)}
                   </ul>
                 ) : <span className="hint">{detail ? t("No reports in this cycle.") : t("Loading…")}</span>}
                 {latest?.body && <ReportBody key={latest.id} text={latest.body} />}

@@ -1640,5 +1640,6 @@
   "Auto-continue already answered {0} times in a row.": "Lanjut otomatis sudah menjawab {0} kali berturut-turut.",
   "Answer it in the agent's terminal.": "Jawab di terminal agen.",
   "Ledger overview": "Ikhtisar Ledger",
-  "What agents read about this project, in a new tab of the terminal below.": "Yang dibaca agen tentang proyek ini, di tab baru terminal di bawah."
+  "What agents read about this project, in a new tab of the terminal below.": "Yang dibaca agen tentang proyek ini, di tab baru terminal di bawah.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

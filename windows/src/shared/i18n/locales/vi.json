@@ -1642,5 +1642,6 @@
   "Auto-continue already answered {0} times in a row.": "Tự động tiếp tục đã trả lời {0} lần liên tiếp.",
   "Answer it in the agent's terminal.": "Hãy trả lời trong terminal của agent.",
   "Ledger overview": "Tổng quan sổ cái",
-  "What agents read about this project, in a new tab of the terminal below.": "Những gì agent đọc về dự án này, trong một tab mới của terminal bên dưới."
+  "What agents read about this project, in a new tab of the terminal below.": "Những gì agent đọc về dự án này, trong một tab mới của terminal bên dưới.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

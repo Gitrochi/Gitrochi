@@ -103,7 +103,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
         <div className="form-row">
           <label>{t("Database")}</label>
           <div className="row">
-            <span className="ellipsis grow mono" style={{ fontSize: 11.5 }} data-tip={info.dbPath}>{info.dbPath === "demo" ? t("Demo data") : displayPath(info.dbPath)}</span>
+            <span className="ellipsis grow mono" style={{ fontSize: 11 }} data-tip={info.dbPath}>{info.dbPath === "demo" ? t("Demo data") : displayPath(info.dbPath)}</span>
             {info.dbPath !== "demo" && <IconButton small icon={<FolderOpen size={14} />} tip={t("Show in Explorer")} aria-label={t("Show in Explorer")} onClick={() => void ipc.reveal(info.dbPath)} />}
           </div>
         </div>

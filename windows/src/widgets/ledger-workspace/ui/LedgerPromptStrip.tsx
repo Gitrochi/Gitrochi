@@ -73,7 +73,7 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
             <SessionId session={session} />
           </button>
         ) : prompt.agentId ? (
-          <span className="mono faint">{prompt.agentId}</span>
+          <span className="faint">{prompt.agentId}</span>
         ) : null}
         {session && <span className="ellipsis muted grow">{session.title}</span>}
         <span className={`ledger-countdown ${left.tone}`} role="timer" aria-live="off" data-tip={left.tone === "none" ? t("A person answers this one.") : t("Auto-continue answers with a careful default when the time runs out.")}>

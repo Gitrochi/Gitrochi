@@ -1669,5 +1669,6 @@
   "Auto-continue already answered {0} times in a row.": "Automatyczna kontynuacja odpowiedziała już {0} razy z rzędu.",
   "Answer it in the agent's terminal.": "Odpowiedz w terminalu agenta.",
   "Ledger overview": "Przegląd ewidencji",
-  "What agents read about this project, in a new tab of the terminal below.": "To, co agenci czytają o tym projekcie, w nowej karcie terminalu na dole."
+  "What agents read about this project, in a new tab of the terminal below.": "To, co agenci czytają o tym projekcie, w nowej karcie terminalu na dole.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

@@ -1681,5 +1681,6 @@
   "Auto-continue already answered {0} times in a row.": "Automatisches Fortsetzen hat schon {0}-mal hintereinander geantwortet.",
   "Answer it in the agent's terminal.": "Beantworten Sie sie im Terminal des Agenten.",
   "Ledger overview": "Ledger-Übersicht",
-  "What agents read about this project, in a new tab of the terminal below.": "Was Agenten über dieses Projekt lesen, in einem neuen Tab des Terminals unten."
+  "What agents read about this project, in a new tab of the terminal below.": "Was Agenten über dieses Projekt lesen, in einem neuen Tab des Terminals unten.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }
