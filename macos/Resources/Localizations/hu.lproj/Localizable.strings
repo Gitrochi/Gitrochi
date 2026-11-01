@@ -2003,3 +2003,4 @@
 "Auto-continue reached its limit of answers in a row." = "Az automatikus folytatás elérte az egymás utáni válaszok korlátját.";
 "Answer it in the agent's terminal." = "Válaszoljon rá az ügynök termináljában.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Az ügynök terminálja nincs megnyitva a Gitrochiben. Ott válaszoljon, ahol az ügynök fut.";
+"Unreported" = "Nem jelentett";

@@ -1679,6 +1679,7 @@
   "Already imported": "Уже импортировано",
   "Click to show only these; Ctrl+click to add them.": "Нажмите, чтобы показать только эти; Ctrl+щелчок — чтобы добавить их.",
   "Show cleaned up": "Показать очищенные",
+  "Unreported": "Без отчёта",
   "Selected sessions": "Выбранные сеансы",
   "{0} selected": "Выбрано: {0}",
   "Confirm": "Подтвердить",
@@ -2044,5 +2045,6 @@
   "Auto-continue already answered {0} times in a row.": "Автоматических ответов подряд уже: {0}.",
   "Answer it in the agent's terminal.": "Ответьте в терминале агента.",
   "Ledger overview": "Обзор книги учёта",
-  "What agents read about this project, in a new tab of the terminal below.": "То, что агенты читают об этом проекте, в новой вкладке терминала внизу."
+  "What agents read about this project, in a new tab of the terminal below.": "То, что агенты читают об этом проекте, в новой вкладке терминала внизу.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

@@ -1,30 +1,29 @@
 import { Archive, CircleCheck, CircleDot, ClockAlert, GitMerge, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { type AnswerKind, type LedgerSession, type LedgerVerdict, type VerdictIcon, verdictLook } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate } from "@/shared/lib";
-import { tip } from "@/shared/ui";
+import { StatusPill, tip } from "@/shared/ui";
 
 const verdictIcons: Record<VerdictIcon, LucideIcon> = { question: MessageCircleQuestion, merge: GitMerge, confirm: CircleCheck, archive: Archive, stale: ClockAlert, active: CircleDot, shelved: Library, archived: PackageCheck };
 
 export const verdictIcon = (verdict: LedgerVerdict) => verdictIcons[verdictLook(verdict).icon];
 
-/** A verdict as a pill with its symbol, label and the contract's colour; "To confirm" is an outline. (macOS: LedgerVerdictBadge) */
+/** A verdict with its icon, label and status tone. (macOS: LedgerVerdictBadge) */
 export function VerdictBadge({ verdict, count, iconOnly }: { verdict: LedgerVerdict; count?: number; iconOnly?: boolean }) {
   const look = verdictLook(verdict), Icon = verdictIcons[look.icon], label = t(look.label);
   return (
-    <span className={`ledger-verdict${look.outline ? " outline" : ""}`} style={{ "--verdict": `var(${look.color})` } as CSSProperties} data-tip={tip(label, t(look.hint))} aria-label={iconOnly ? label : undefined}>
-      <Icon size={12} strokeWidth={2.2} />
+    <StatusPill className="ledger-verdict" tone={look.tone} icon={<Icon size={12} strokeWidth={2.2} />} data-tip={tip(label, t(look.hint))} aria-label={iconOnly ? label : undefined}>
       {!iconOnly && <span>{label}</span>}
       {count !== undefined && <span className="ledger-verdict-count">{count}</span>}
-    </span>
+    </StatusPill>
   );
 }
 
 /** A session's ID next to its lane colour, as every row shows it */
 export function SessionId({ session }: { session: Pick<LedgerSession, "id" | "color"> }) {
   return (
-    <span className="ledger-id mono">
+    <span className="ledger-id">
       <span className="ledger-id-dot" style={{ background: laneColor(session.color) }} />
       {session.id}
     </span>
@@ -41,7 +40,7 @@ export function BaseLine({ session, behind }: { session: LedgerSession; behind?:
   if (!session.baseVersion && !session.baseCurrent) return null;
   const current = session.baseCurrent ?? session.baseVersion;
   return (
-    <span className="ledger-base mono" data-tip={t("Baseline it started from → the one it is on now")}>
+    <span className="ledger-base" data-tip={t("Baseline it started from → the one it is on now")}>
       {session.baseVersion && session.baseVersion !== current ? `${session.baseVersion} → ${current}` : current}
       {!!behind && <span className="ledger-behind">{t("{0} behind", behind)}</span>}
     </span>

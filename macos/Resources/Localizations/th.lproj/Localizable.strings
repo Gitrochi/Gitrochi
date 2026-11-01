@@ -2014,3 +2014,4 @@
 "Auto-continue reached its limit of answers in a row." = "การดำเนินการต่ออัตโนมัติตอบติดกันครบจำนวนสูงสุดแล้ว";
 "Answer it in the agent's terminal." = "ตอบในเทอร์มินัลของเอเจนต์";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "เทอร์มินัลของเอเจนต์ไม่ได้เปิดอยู่ใน Gitrochi โปรดตอบในที่ที่เอเจนต์รันอยู่";
+"Unreported" = "ยังไม่รายงาน";

@@ -186,12 +186,11 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
     passed.push("quick launches");
 
-    // Board: chips with counts, one verdict, bulk archive undone as one
+    // Board: verdict counts belong to navigation, one verdict, bulk archive undone as one
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     ensure(await until(() => $(".ledger-board .ledger-table-row")), "The Board did not open");
     const counts = verdictCounts(store.state!.sessions, "atlas").filter((c) => c.count);
-    const chips = $$(".ledger-chip .count").map((c) => Number(c.textContent));
-    ensure(JSON.stringify(chips) === JSON.stringify(counts.map((c) => c.count)), `The chips must count verdicts: ${chips} vs ${counts.map((c) => c.count)}`);
+    ensure(!$$(".ledger-chip .count").length && $$(".ledger-chip").length === counts.length, "Verdict chips must leave their counts in the navigation");
     const needs = $$<HTMLButtonElement>(".ledger-chip")[0];
     needs.click();
     ensure(await until(() => $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A chip did not filter the Board");
@@ -205,7 +204,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict === "archived")), "Bulk archive did not archive both sessions");
     $<HTMLButtonElement>(".ledger-toast button")!.click();
     ensure(await until(() => ids.every((id) => store.session(id)?.verdict !== "archived")), "Undo did not restore both sessions");
-    passed.push("board chips and bulk actions");
+    store.setChecked([]);
+    const launch = await store.backend.call("track", { project: "atlas", title: "Unreported launch", kind: "other", agentId: "agent-unreported", cwd: "C:/fixture/atlas" });
+    await store.refresh(true);
+    const unreported = $$(".ledger-board-bar label").find((label) => label.textContent?.trim() === t("Unreported"))?.querySelector<HTMLInputElement>("input");
+    ensure(unreported, "The Board has no Unreported filter");
+    unreported!.click();
+    ensure(await until(() => {
+      const rows = $$<HTMLElement>(".ledger-table-row");
+      return rows.some((row) => row.dataset.session === launch.session.id) && rows.every((row) => store.session(row.dataset.session)?.lastAgentAt == null);
+    }), "Unreported must find launches without an agent report");
+    const launchRow = $<HTMLElement>(`.ledger-table-row[data-session='${launch.session.id}']`)!;
+    launchRow.querySelector<HTMLInputElement>("input")!.click();
+    ensure(await until(() => $(".ledger-bulk strong")?.textContent === t("{0} selected", 1)), "The new launch was not the only selected session");
+    button(".ledger-bulk", "Mark closed")!.click();
+    ensure(await until(() => store.session(launch.session.id)?.status === "closed"), "An unreported launch could not be closed");
+    unreported!.click();
+    passed.push("board chips, bulk actions and Unreported launches");
 
     // Graph: drawn and clickable
     $<HTMLButtonElement>(".ledger-tabs [data-view='graph']")!.click();
@@ -289,7 +304,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
-    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
+    ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     ensure($(".ledger-onboarding")?.textContent?.includes(t("No reports yet")), "The empty Ledger must explain that reports have not arrived");
     button(".ledger-onboarding", "Connect Claude Code")!.click();

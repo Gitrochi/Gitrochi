@@ -1633,6 +1633,7 @@
   "Already imported": "Al geïmporteerd",
   "Click to show only these; Ctrl+click to add them.": "Klik om alleen deze sessies te tonen; Ctrl+klik om ze toe te voegen.",
   "Show cleaned up": "Opgeschoonde sessies tonen",
+  "Unreported": "Niet gerapporteerd",
   "Selected sessions": "Geselecteerde sessies",
   "{0} selected": "{0} geselecteerd",
   "Confirm": "Bevestigen",
@@ -1999,5 +2000,6 @@
   "Auto-continue already answered {0} times in a row.": "Automatisch doorgaan heeft al {0} keer achter elkaar geantwoord.",
   "Answer it in the agent's terminal.": "Beantwoord het in de terminal van de agent.",
   "Ledger overview": "Overzicht van het register",
-  "What agents read about this project, in a new tab of the terminal below.": "Wat agents over dit project lezen, in een nieuw tabblad van de terminal onderaan."
+  "What agents read about this project, in a new tab of the terminal below.": "Wat agents over dit project lezen, in een nieuw tabblad van de terminal onderaan.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

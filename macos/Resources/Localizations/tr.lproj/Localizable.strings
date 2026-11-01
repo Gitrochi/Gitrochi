@@ -2006,3 +2006,4 @@
 "Auto-continue reached its limit of answers in a row." = "Otomatik devam art arda yanıt sınırına ulaştı.";
 "Answer it in the agent's terminal." = "Ajanın terminalinde yanıtlayın.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Ajanın terminali Gitrochi'de açık değil. Ajanın çalıştığı yerde yanıtlayın.";
+"Unreported" = "Raporlanmamış";

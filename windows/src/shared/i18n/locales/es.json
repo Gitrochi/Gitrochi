@@ -1715,6 +1715,7 @@
   "Already imported": "Ya importado",
   "Click to show only these; Ctrl+click to add them.": "Haz clic para mostrar solo estas sesiones; Ctrl+clic para agregarlas.",
   "Show cleaned up": "Mostrar sesiones limpiadas",
+  "Unreported": "Sin informar",
   "Selected sessions": "Sesiones seleccionadas",
   "{0} selected": "Seleccionados: {0}",
   "Confirm": "Confirmar",
@@ -2080,5 +2081,6 @@
   "Auto-continue already answered {0} times in a row.": "La continuación automática ya respondió {0} veces seguidas.",
   "Answer it in the agent's terminal.": "Respóndela en la terminal del agente.",
   "Ledger overview": "Resumen del registro",
-  "What agents read about this project, in a new tab of the terminal below.": "Lo que los agentes leen sobre este proyecto, en una pestaña nueva de la terminal de abajo."
+  "What agents read about this project, in a new tab of the terminal below.": "Lo que los agentes leen sobre este proyecto, en una pestaña nueva de la terminal de abajo.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

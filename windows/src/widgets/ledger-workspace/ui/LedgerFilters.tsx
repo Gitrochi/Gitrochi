@@ -1,5 +1,4 @@
 import { FolderGit2, Layers, ListFilter } from "lucide-react";
-import type { CSSProperties } from "react";
 import { type LedgerStore, verdictCounts, verdictLook } from "@/entities/ledger";
 import { basename } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -23,10 +22,10 @@ function FilterInput({ store }: { store: LedgerStore }) {
 export function LedgerFilters({ store, repoPath }: { store: LedgerStore; repoPath: string | null }) {
   useObserve(store);
   const state = store.state!;
+  const repoProject = store.repositoryProject;
   const counts = verdictCounts(state.sessions, store.project).filter((c) => c.count);
   // without a repository, "This repository" means every project
   const choice = store.projectChoice === "repository" && !repoPath ? "all" : store.projectChoice;
-  const repoProject = store.repositoryProject;
   const item = (key: string, label: string, icon: React.ReactNode, count: number | null, disabled = false, tip?: string) => (
     <button key={key} type="button" className={`ledger-nav-item${choice === key ? " selected" : ""}`} aria-pressed={choice === key} disabled={disabled} data-project={key} data-tip={tip} onClick={() => store.setProjectChoice(key)}>
       {icon}
@@ -39,7 +38,7 @@ export function LedgerFilters({ store, repoPath }: { store: LedgerStore; repoPat
     <nav className="ledger-filters" aria-label={t("Ledger filters")}>
       <FilterInput store={store} />
       <div className="ledger-group-title">{t("Project")}</div>
-      {item("repository", repoPath ? t("This repository ({0})", basename(repoPath)) : t("This repository"), <FolderGit2 size={15} />, repoProject ? open(repoProject) : null, !repoPath, repoPath && !repoProject ? t("No session belongs to this repository yet.") : undefined)}
+      {item("repository", repoPath ? t("This repository ({0})", basename(repoPath)) : t("This repository"), <FolderGit2 size={15} />, null, !repoPath, repoPath && !repoProject ? t("No session belongs to this repository yet.") : undefined)}
       {item("all", t("All projects"), <Layers size={15} />, open(null))}
       {state.projects.map((p) => item(p.key, p.name, <span className="ledger-id-dot" style={{ background: "var(--text-3)" }} />, p.open))}
       <div className="ledger-group-title">{t("Verdicts")}</div>
@@ -49,7 +48,7 @@ export function LedgerFilters({ store, repoPath }: { store: LedgerStore; repoPat
         const on = store.view === "board" && store.verdicts.size === 1 && store.verdicts.has(verdict);
         return (
           <button key={verdict} type="button" className={`ledger-nav-item${on ? " selected" : ""}`} data-verdict={verdict} data-tip={`${t(look.label)}|${t(look.hint)}`} onClick={() => store.showVerdict(verdict)}>
-            <Icon size={15} style={{ color: `var(${look.color})` } as CSSProperties} />
+            <Icon size={15} className="status-tone ledger-status-icon" data-tone={look.tone} />
             <span className="grow">{t(look.label)}</span>
             <span className="ledger-nav-count">{count}</span>
           </button>

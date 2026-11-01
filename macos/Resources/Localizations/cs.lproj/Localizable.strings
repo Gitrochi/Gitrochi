@@ -2000,3 +2000,4 @@
 "Auto-continue reached its limit of answers in a row." = "Automatické pokračování dosáhlo limitu odpovědí za sebou.";
 "Answer it in the agent's terminal." = "Odpovězte v terminálu agenta.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminál agenta není v Gitrochi otevřený. Odpovězte tam, kde agent běží.";
+"Unreported" = "Nenahlášeno";
