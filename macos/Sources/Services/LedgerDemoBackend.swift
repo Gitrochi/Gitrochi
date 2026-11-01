@@ -78,6 +78,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             case "settings_set": return try encode(setSettings(a))
             case "projects": return try encode(LedgerProjectList(projects: projects.map { project($0.key) }))
             case "project_set": return try encode(setProject(a))
+            case "track": return try encode(track(a, now: now))
             case "scan":
                 let keys = a["project"].string.map { [$0] } ?? projects.map(\.key)
                 return try encode(LedgerScanResult(results: keys.map { key in
@@ -413,6 +414,15 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         case "message":
             guard let text = a["text"].string, !text.isEmpty else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "A message needs text") }
             summary = text
+        case "auto_continue":
+            let policy = a["autoContinue"]
+            if case .null = policy {
+                s.autoContinue = nil
+            } else if let enabled = policy["enabled"].bool, let delay = policy["delaySec"].int, (1...3600).contains(delay) {
+                s.autoContinue = .init(enabled: enabled, delaySec: delay)
+            } else {
+                throw LedgerFailure(code: "INVALID_ARGUMENT", message: "autoContinue needs enabled and delaySec")
+            }
         default:
             throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown action: \(action)")
         }
@@ -423,6 +433,26 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         record(id, action, at: now, actor: .human, summary: summary, data: data.isEmpty ? nil : data)
         rev += 1
         return LedgerWriteResult(ok: true, rev: rev)
+    }
+
+    /// `track`: a session for an agent Gitrochi starts, unreported, named after the folder (the demo reads no git)
+    private func track(_ a: LedgerJSON, now: LedgerMs) throws -> LedgerTrackResult {
+        let folder = a["cwd"].string ?? a["repoPath"].string
+        let repository = a["repoPath"].string ?? folder
+        guard let repository else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Give project or repoPath") }
+        let name = { (path: String) in URL(fileURLWithPath: path).lastPathComponent }
+        let project = a["project"].string ?? name(repository)
+        if !projects.contains(where: { $0.key == project }) { projects.append(LedgerProject(key: project, name: project, open: 0)) }
+        let policy = a["autoContinue"].object == nil ? settings.autoContinue(forRepository: repository)
+            : a["autoContinue"]["enabled"].bool.flatMap { enabled in a["autoContinue"]["delaySec"].int.map { .init(enabled: enabled, delaySec: $0) } }
+        let id = add(project: project, title: a["title"].string ?? a["branch"].string ?? name(folder ?? repository), kind: "",
+                     created: now, base: a["base"].string) { s in
+            s.links = .init(repoPath: repository, branch: a["branch"].string, worktree: folder, agentId: a["agentId"].string, cwd: folder)
+            s.autoContinue = policy
+        }
+        record(id, "hook", at: now, actor: .hook, summary: "Started from Gitrochi", data: ["hook": "launch"])
+        rev += 1
+        return LedgerTrackResult(ok: true, rev: rev, session: sessions[id]!)
     }
 
     /// `prompt_review {id}` or `{all: true}`
@@ -523,20 +553,14 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         }
         // a prompt that no longer waits is not an error: the answer just did not win
         guard prompts[i].state == .waiting else { return LedgerWriteResult(ok: false, rev: rev) }
+        // like the core: every answer settles the prompt; Answer in terminal and Not this time leave it to the terminal
         let answer = a["answer"].object ?? [:]
-        if answer["hold"]?.bool == true {
-            prompts[i].deadline = 0
-        } else if answer["release"]?.bool == true {
-            prompts[i].state = .released
-            prompts[i].answer = answer
-        } else {
-            prompts[i].state = .answered
-            prompts[i].answeredBy = .human
-            prompts[i].answeredAt = now
-            prompts[i].answer = answer
-            if let session = prompts[i].sessionId {
-                record(session, "prompt_answer", at: now, actor: .human, summary: Self.describe(answer), data: ["promptId": .number(Double(id))])
-            }
+        prompts[i].state = .answered
+        prompts[i].answeredBy = .human
+        prompts[i].answeredAt = now
+        prompts[i].answer = answer
+        if answer["hold"]?.bool != true, answer["release"]?.bool != true, let session = prompts[i].sessionId {
+            record(session, "prompt_answer", at: now, actor: .human, summary: Self.describe(answer), data: ["promptId": .number(Double(id))])
         }
         if nextPromptAt == nil { nextPromptAt = now + 30_000 }
         rev += 1
@@ -568,27 +592,41 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         if changed { rev += 1 }
     }
 
-    /// The answer auto-continue sends: the recommended (else first) option, an allowed permission, "carry on"
+    /// What auto-continue records when the wait runs out: the hook handler's AutoReply, whose `sent` is the prompt's
+    /// `proposed` answer; an allowed permission stays unconfirmed until the call is seen to run
     static func autoAnswer(_ p: LedgerPendingPrompt) -> [String: LedgerJSON] {
-        switch p.kind {
-        case .askUserQuestion:
-            var answers: [String: LedgerJSON] = [:]
-            for q in p.payload["questions"]?.array ?? [] {
-                let options = q["options"].array.compactMap { $0["label"].string }
-                let pick = options.first { $0.localizedCaseInsensitiveContains("recommended") } ?? options.first ?? ""
-                answers[q["question"].string ?? ""] = .string(pick)
-            }
-            return ["answers": .object(answers)]
-        case .permission, .exitPlanMode: return ["decision": "allow"]
-        case .stopQuestion: return ["text": "Go ahead with what you recommended."]
-        }
+        let sent = p.payload["proposed"] ?? ["type": "reply", "text": "Go ahead with what you recommended."]
+        var answer: [String: LedgerJSON] = [
+            "schemaVersion": 1, "kind": .string(p.kind.rawValue), "question": .string(p.payload["question"]?.string ?? ""),
+            "sent": sent, "delaySec": .number(Double(p.payload["delaySec"]?.int ?? 30)), "language": "en", "consecutive": 1,
+            "rule": .string(p.kind == .permission ? "permission:no-rule" : p.kind == .askUserQuestion ? "answers:recommended" : "question:?"),
+        ]
+        if p.kind == .permission { answer["outcome"] = "confirmed" }
+        return answer
+    }
+
+    /// gitrochi-autocontinue's PromptPayload, as the hook handler stores it with a prompt
+    static func payload(_ kind: LedgerPendingPrompt.Kind, question: String, text: String? = nil, questions: [LedgerJSON] = [],
+                        tool: (name: String, summary: String)? = nil, delay: Int, proposed: LedgerJSON) -> [String: LedgerJSON] {
+        var payload: [String: LedgerJSON] = ["schemaVersion": 1, "kind": .string(kind.rawValue), "question": .string(question),
+                                             "language": "en", "delaySec": .number(Double(delay)), "proposed": proposed]
+        if let text { payload["text"] = .string(text) }
+        if !questions.isEmpty { payload["questions"] = .array(questions) }
+        if let tool { payload["tool"] = ["name": .string(tool.name), "summary": .string(tool.summary)] }
+        return payload
+    }
+
+    /// An AskUserQuestion question with its options, the first one recommended
+    static func question(_ text: String, header: String, _ options: [(String, String)]) -> LedgerJSON {
+        ["question": .string(text), "header": .string(header), "multiSelect": false,
+         "options": .array(options.enumerated().map { i, o in
+             ["label": .string(o.0), "description": .string(o.1), "recommended": .bool(i == 0)]
+         })]
     }
 
     private static func describe(_ answer: [String: LedgerJSON]) -> String {
-        if let text = answer["text"]?.string { return text }
-        if let decision = answer["decision"]?.string { return decision == "allow" ? "Allowed" : "Denied" }
-        if let answers = answer["answers"]?.object { return answers.values.compactMap(\.string).sorted().joined(separator: ", ") }
-        return "Answered"
+        let text = LedgerPromptText.sent(answer)
+        return text.isEmpty ? "Answered" : text
     }
 
     private func importText(_ text: String, project: String?, now: LedgerMs) -> [LedgerImportResult.Block] {
@@ -727,24 +765,19 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         let deadline = now + 45_000
         switch promptCycle % 3 {
         case 0:
-            addPrompt(.stopQuestion, session: session, created: now, deadline: deadline, payload: [
-                "question": "The tests pass. Should I open the pull request now, or wait for the review notes?",
-                "autoReply": "Go ahead with what you recommended.",
-            ])
+            let question = "The tests pass. Should I open the pull request now, or wait for the review notes?"
+            addPrompt(.stopQuestion, session: session, created: now, deadline: deadline, payload: Self.payload(
+                .stopQuestion, question: question, text: question, delay: 45,
+                proposed: ["type": "reply", "text": .string(question + " No answer for 45 seconds, so this continues automatically. Go ahead with the option you recommended.")]))
         case 1:
-            addPrompt(.askUserQuestion, session: session, created: now, deadline: deadline, payload: [
-                "questions": [[
-                    "question": "Which log level should the new messages use?", "header": "Logging", "multiSelect": false,
-                    "options": [["label": "Info (Recommended)", "description": "Visible in normal runs"],
-                                ["label": "Debug", "description": "Only with verbose logging"]],
-                ]],
-                "autoReply": "Info (Recommended)",
-            ])
+            let question = "Which log level should the new messages use?"
+            addPrompt(.askUserQuestion, session: session, created: now, deadline: deadline, payload: Self.payload(
+                .askUserQuestion, question: question,
+                questions: [Self.question(question, header: "Logging", [("Info (Recommended)", "Visible in normal runs"), ("Debug", "Only with verbose logging")])],
+                delay: 45, proposed: ["type": "answers", "answers": [question: "Info (Recommended)"], "note": ""]))
         default:
-            addPrompt(.permission, session: session, created: now, deadline: deadline, payload: [
-                "toolName": "Bash", "input": ["command": "git status --short"], "description": "Show the working tree status",
-                "autoReply": "Allow",
-            ])
+            addPrompt(.permission, session: session, created: now, deadline: deadline, payload: Self.payload(
+                .permission, question: "Bash: git status --short", tool: ("Bash", "git status --short"), delay: 45, proposed: ["type": "allow"]))
         }
         promptCycle += 1
         return true
@@ -884,14 +917,12 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         record(glossary, "progress", at: now - 70 * m, summary: "Checked 120 of 180 terms")
 
         // answered by auto-continue an hour ago; a person has not looked at it yet
-        let auto = addPrompt(.askUserQuestion, session: drafts, created: now - 56 * m, deadline: now - 55 * m, payload: [
-            "questions": [[
-                "question": "How long should offline drafts be kept?", "header": "Drafts", "multiSelect": false,
-                "options": [["label": "7 days (Recommended)", "description": "Enough for a trip, small on disk"],
-                            ["label": "30 days", "description": "Keeps more, uses more space"]],
-            ]],
-            "autoReply": "7 days (Recommended)",
-        ])
+        let kept = "How long should offline drafts be kept?"
+        let auto = addPrompt(.askUserQuestion, session: drafts, created: now - 56 * m, deadline: now - 55 * m, payload: Self.payload(
+            .askUserQuestion, question: kept,
+            questions: [Self.question(kept, header: "Drafts", [("7 days (Recommended)", "Enough for a trip, small on disk"),
+                                                              ("30 days", "Keeps more, uses more space")])],
+            delay: 60, proposed: ["type": "answers", "answers": [kept: "7 days (Recommended)"], "note": ""]))
         if let i = prompts.firstIndex(where: { $0.id == auto }) {
             prompts[i].state = .auto
             prompts[i].answeredBy = .auto
@@ -899,22 +930,19 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             prompts[i].answer = Self.autoAnswer(prompts[i])
             record(drafts, "auto_reply", at: now - 55 * m, actor: .auto, summary: "7 days (Recommended)", data: ["promptId": .number(Double(auto))])
         }
-        addPrompt(.askUserQuestion, session: retry, created: now - 15_000, deadline: now + 45_000, payload: [
-            "questions": [[
-                "question": "How many times should sign-in retry after a 503?", "header": "Retries", "multiSelect": false,
-                "options": [["label": "3 times (Recommended)", "description": "Matches the other network calls"],
-                            ["label": "5 times", "description": "Slower to fail, kinder to slow servers"],
-                            ["label": "Until cancelled", "description": "Never gives up on its own"]],
-            ]],
-            "autoReply": "3 times (Recommended)",
-        ])
-        addPrompt(.permission, session: drafts, created: now - 20_000, deadline: now + 160_000, payload: [
-            "toolName": "Bash", "input": ["command": "swift test --filter DraftStoreTests"],
-            "description": "Run the draft store tests", "autoReply": "Allow",
-        ])
-        addPrompt(.exitPlanMode, session: glossary, created: now - 90_000, deadline: 0, payload: [
-            "plan": .string(Self.planBody),
-        ])
+        let retries = "How many times should sign-in retry after a 503?"
+        addPrompt(.askUserQuestion, session: retry, created: now - 15_000, deadline: now + 45_000, payload: Self.payload(
+            .askUserQuestion, question: retries,
+            questions: [Self.question(retries, header: "Retries", [("3 times (Recommended)", "Matches the other network calls"),
+                                                                    ("5 times", "Slower to fail, kinder to slow servers"),
+                                                                    ("Until cancelled", "Never gives up on its own")])],
+            delay: 60, proposed: ["type": "answers", "answers": [retries: "3 times (Recommended)"], "note": ""]))
+        addPrompt(.permission, session: drafts, created: now - 20_000, deadline: now + 160_000, payload: Self.payload(
+            .permission, question: "Bash: swift test --filter DraftStoreTests", tool: ("Bash", "swift test --filter DraftStoreTests"),
+            delay: 180, proposed: ["type": "allow"]))
+        // a plan waits with no countdown: plan approval is off by default (D8)
+        addPrompt(.exitPlanMode, session: glossary, created: now - 90_000, deadline: 0, payload: Self.payload(
+            .exitPlanMode, question: "Finish the glossary review", text: Self.planBody, delay: 30, proposed: ["type": "approve_plan", "note": ""]))
         coupled = [LedgerOverlap(a: csv, b: flaky, paths: ["src/export/formats.swift", "tests/upload_test.swift"], kind: .coupled)]
     }
 
@@ -983,9 +1011,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         }
         let live = order.filter { sessions[$0]?.status == .active && sessions[$0]?.role != .implementation }
         if let first = live.last {
-            addPrompt(.permission, session: first, created: now - 10_000, deadline: now + 50_000, payload: [
-                "toolName": "Bash", "input": ["command": "swift build"], "description": "Build the package", "autoReply": "Allow",
-            ])
+            addPrompt(.permission, session: first, created: now - 10_000, deadline: now + 50_000, payload: Self.payload(
+                .permission, question: "Bash: swift build", tool: ("Bash", "swift build"), delay: 60, proposed: ["type": "allow"]))
         }
     }
 

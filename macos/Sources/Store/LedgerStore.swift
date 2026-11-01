@@ -99,6 +99,8 @@ final class LedgerStore {
     var drafts: [Int: String] = [:]
     /// Older graph rows are drawn on request
     private(set) var graphLimit = 1_500
+    /// The auto-continue policy of sessions without their own (Settings › Ledger), once read
+    private(set) var autoContinueDefault: LedgerSession.AutoContinue?
 
     private struct UndoEntry {
         let message: String
@@ -410,6 +412,17 @@ final class LedgerStore {
         await reload()
     }
 
+    /// A session's own auto-continue switch and wait; nil follows the default again
+    func setAutoContinue(_ session: LedgerSession, _ policy: LedgerSession.AutoContinue?) async {
+        await perform(.autoContinue(policy), on: [session.id], message: String(localized: "Auto-continue changed for \(session.id)"))
+    }
+
+    /// Reads the default auto-continue policy the first time a screen needs it
+    func loadAutoContinueDefault() async {
+        guard autoContinueDefault == nil, let settings = try? await client.settings() else { return }
+        autoContinueDefault = settings.autoContinueDefault
+    }
+
     /// Marks what auto-continue sent as seen; a correction goes to the session as a message first
     func review(_ prompt: LedgerPendingPrompt, correction: String? = nil) async {
         let key = "p\(prompt.id)"
@@ -470,6 +483,7 @@ final class LedgerStore {
     /// Stores settings; verdicts and roles follow them, so a page that is open reads again
     func saveSettings(_ values: [String: LedgerJSON]) async throws -> LedgerGlobalSettings {
         let saved = try await client.setSettings(values)
+        setIfChanged(\.autoContinueDefault, saved.autoContinueDefault)
         if state != nil { await reload() }
         return saved
     }
