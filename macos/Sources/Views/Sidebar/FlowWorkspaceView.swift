@@ -10,9 +10,10 @@ struct FlowWorkspaceView: View {
     let onReview: (FlowPlan) -> Void
     let onEdit: () -> Void
     let onOpenRun: (String) -> Void
+    var onSelection: ((String?, String?) -> Void)? = nil
     @ViewState private var selectedFlow: String?
     @ViewState private var selectedNode: String?
-    @ViewState private var history = false
+    @ViewState private var page = 0
     @ViewState private var plan: FlowPlan?
     @ViewState private var planError: String?
     @ViewState private var revision = 0
@@ -26,7 +27,9 @@ struct FlowWorkspaceView: View {
             VStack(spacing: 0) {
                 toolbar
                 Divider()
-                if history {
+                if page == 2 {
+                    FlowConnectedCIView(repo: flows.repo)
+                } else if page == 1 {
                     FlowHistoryView(runs: flows.runs, onOpen: onOpenRun)
                 } else if let plan {
                     HSplitView {
@@ -48,7 +51,10 @@ struct FlowWorkspaceView: View {
                     }
                     .padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if flow == nil {
-                    ContentUnavailableView("No flows", systemImage: "point.3.connected.trianglepath.dotted", description: Text("Add a script to create your first flow."))
+                    VStack(spacing: 12) {
+                        ContentUnavailableView("No flows", systemImage: "point.3.connected.trianglepath.dotted", description: Text("Add a script to create your first flow."))
+                        Button("Set up flows…", action: onEdit).padding(.bottom, 24)
+                    }
                 } else {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -56,6 +62,8 @@ struct FlowWorkspaceView: View {
         }
         .task(id: request) { await loadPlan() }
         .onChange(of: flows.loading) { _, loading in if !loading { revision += 1 } }
+        .onChange(of: selectedNode) { _, _ in onSelection?(flow?.name, selectedNode) }
+        .onChange(of: selectedFlow) { _, _ in onSelection?(flow?.name, selectedNode) }
         .onChange(of: list.flows.map(\.name)) { _, names in
             if let selectedFlow, !names.contains(selectedFlow) { self.selectedFlow = names.first }
         }
@@ -159,11 +167,12 @@ struct FlowWorkspaceView: View {
                 }
             }
             HStack(spacing: 8) {
-                Picker("View", selection: $history) {
-                    Text("Flow").tag(false)
-                    Text("History").tag(true)
+                Picker("View", selection: $page) {
+                    Text("Flow").tag(0)
+                    Text("History").tag(1)
+                    Text("Connected CI").tag(2)
                 }
-                .labelsHidden().pickerStyle(.segmented).frame(width: 158)
+                .labelsHidden().pickerStyle(.segmented).frame(width: 270)
                 Spacer(minLength: 8)
                 if let plan {
                     Label(plan.env, systemImage: "square.stack.3d.up")

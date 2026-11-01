@@ -2,6 +2,7 @@
 //! put in a correlation ID, look before sending, never resend a trigger whose response was lost, wait within the deadline,
 //! cancel remotely on abort or deadline, treat a cancel we did not ask for as external, and take CI's conclusion only as a hint (the verdict comes from the result contract and reports).
 
+pub mod browse;
 pub mod contract;
 pub mod export;
 pub mod github;
@@ -446,6 +447,9 @@ pub fn drive(p: &dyn Provider, cx: &mut NodeCx, opts: &DriveOpts) -> Driven {
 
 /// `gitch flow ci status|logs|report|trigger`: this repository's remote CI from the command line (what the apps' CI/CD tab does).
 pub fn cmd_ci(out: &crate::cli::Out, args: &crate::cli::Args) -> i32 {
+    if args.pos.first().map(String::as_str) == Some("browse") {
+        return browse::command(out, args);
+    }
     let Some(root) = crate::cli::repo_root(args) else {
         return 1;
     };

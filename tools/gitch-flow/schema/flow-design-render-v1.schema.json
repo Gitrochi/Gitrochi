@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-design-render-v1.schema.json",
+  "title": "Read-only flow design rendering",
+  "description": "design render --json reads a complete JSON mapping from stdin and emits a YAML proposal. A semantic no-op returns originalYaml byte-for-byte. Visual changes preserve all values but normalize formatting and remove comments, reported as a warning. An error returns an empty yaml string. Saving and execution remain separate actions.",
+  "type": "object",
+  "required": ["schemaVersion", "yaml", "diagnostics", "formattingChanged"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "yaml": { "type": "string" },
+    "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
+    "formattingChanged": { "type": "boolean" }
+  },
+  "$defs": {
+    "request": { "type": "object", "required": ["document"], "additionalProperties": false, "properties": { "document": { "type": "object" }, "originalYaml": { "type": "string" } } },
+    "diagnostic": { "type": "object", "required": ["severity", "code", "message"], "additionalProperties": false, "properties": { "severity": { "enum": ["error", "warning", "info"] }, "code": { "type": "string" }, "message": { "type": "string" }, "path": { "type": "string" }, "line": { "type": "integer", "minimum": 1 } } }
+  }
+}

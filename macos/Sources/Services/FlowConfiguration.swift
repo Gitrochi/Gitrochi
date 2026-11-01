@@ -39,7 +39,8 @@ extension FlowEngine {
     /// Restores the original source after failed validation, unless another editor changed it.
     static func saveConfiguration(_ content: String, original: String?, file: String, in repo: URL) async throws {
         let allowed = configurationFiles(in: repo)
-        guard allowed.contains(file) || (file == ".gitch/flow.yml" && original == nil) else {
+        let newImport = original == nil && file.range(of: "^\\.gitch/flows/[a-z0-9][a-z0-9_-]*\\.ya?ml$", options: .regularExpression) != nil
+        guard allowed.contains(file) || (file == ".gitch/flow.yml" && original == nil) || newImport else {
             throw Failure(message: String(localized: "Choose an existing flow file to edit."))
         }
         let target = repo.appendingPathComponent(file)
@@ -49,7 +50,8 @@ extension FlowEngine {
             throw Failure(message: String(localized: "This flow file changed outside Gitrochi. Reopen the editor before saving."))
         }
         try fm.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try content.write(to: target, atomically: true, encoding: .utf8)
+        if original == nil { try Data(content.utf8).write(to: target, options: .withoutOverwriting) }
+        else { try content.write(to: target, atomically: true, encoding: .utf8) }
         do {
             let result = try await run(["validate", "--json"], in: repo)
             guard result.status == 0 else { throw failure(result) }

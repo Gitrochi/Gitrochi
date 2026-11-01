@@ -1,7 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { layoutFlowGraph } from "../src/entities/flow/model/graph";
+import { fitFlowGraph, flowZoomAnchor, layoutFlowGraph } from "../src/entities/flow/model/graph";
 
 describe("flow dependency layout", () => {
+  it("keeps the pointer anchored while zooming and clamps the supported scale", () => {
+    expect(flowZoomAnchor(1, 2, { x: 100, y: 50 }, { x: 200, y: 100 })).toEqual({ zoom: 2, x: 400, y: 200 });
+    expect(flowZoomAnchor(1, 0.01, { x: 0, y: 0 }, { x: 100, y: 100 })).toEqual({ zoom: 0.25, x: 0, y: 0 });
+    expect(flowZoomAnchor(1, 10, { x: 100, y: 100 }, { x: 0, y: 0 }).zoom).toBe(2.5);
+    expect(flowZoomAnchor(0.1, 0.08, { x: 0, y: 0 }, { x: 0, y: 0 }).zoom).toBe(0.1);
+    expect(flowZoomAnchor(0.1, 0.12, { x: 0, y: 0 }, { x: 0, y: 0 }).zoom).toBe(0.12);
+  });
+
+  it("fits every column of a wide pipeline and every row of a tall pipeline below manual zoom limits", () => {
+    const wide = layoutFlowGraph(Array.from({ length: 8 }, (_, index) => ({ id: String(index), needs: index ? [String(index - 1)] : [] })));
+    const tall = layoutFlowGraph(Array.from({ length: 80 }, (_, index) => ({ id: String(index), needs: [] })));
+    for (const graph of [wide, tall]) {
+      const scale = fitFlowGraph(graph.width, graph.height, 500, 400);
+      expect(scale).toBeLessThan(0.25);
+      expect(graph.width * scale).toBeLessThanOrEqual(476);
+      expect(graph.height * scale).toBeLessThanOrEqual(376);
+    }
+  });
   it("places unordered dependencies before fork and join steps", () => {
     const graph = layoutFlowGraph([{ id: "join", needs: ["test", "lint"] }, { id: "test", needs: ["setup"] }, { id: "setup", needs: [] }, { id: "lint", needs: ["setup"] }]);
     const columns = Object.fromEntries(graph.nodes.map((node) => [node.id, node.column]));

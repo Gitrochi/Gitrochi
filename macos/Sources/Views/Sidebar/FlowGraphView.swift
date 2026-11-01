@@ -10,6 +10,10 @@ struct FlowGraphView: View {
         let state: String?
         let subtitle: String
 
+        init(id: String, title: String, block: String, needs: [String], state: String?, subtitle: String) {
+            self.id = id; self.title = title; self.block = block; self.needs = needs; self.state = state; self.subtitle = subtitle
+        }
+
         init(_ node: FlowPlan.Node) {
             id = node.id
             title = node.title ?? node.id
@@ -32,23 +36,43 @@ struct FlowGraphView: View {
     let nodes: [Node]
     @Binding var selected: String?
     @ViewState private var zoom: CGFloat? = 1
+    @ViewState private var offsets: [String: CGSize] = [:]
+    @ViewState private var dragStarts: [String: CGSize] = [:]
+    @FocusState private var graphFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    init(nodes: [Node], selected: Binding<String?>, initialFit: Bool = false) {
+        self.nodes = nodes
+        _selected = selected
+        _zoom = ViewState(initialValue: initialFit ? nil : 1)
+    }
+
     var body: some View {
-        let layout = FlowGraphLayout.make(nodes.map { .init(id: $0.id, needs: $0.needs) })
+        let layout = positionedLayout()
         GeometryReader { geometry in
-            let fit = min(1, max(0.35, min((geometry.size.width - 12) / layout.width, (geometry.size.height - 48) / layout.height)))
+            let fit = FlowGraphLayout.fit(layout, viewport: geometry.size)
             let scale = zoom ?? fit
             VStack(spacing: 0) {
                 controls(scale: scale)
                 ScrollView([.horizontal, .vertical]) {
                     ZStack(alignment: .topLeading) {
+                        FlowCanvasInteraction(onZoom: { factor in
+                            if factor < 1, scale <= 0.1 { return }
+                            zoom = min(2.5, max(0.1, scale * factor))
+                        })
                         connections(layout)
                         ForEach(layout.items, id: \.id) { item in
                             if let node = nodes.first(where: { $0.id == item.id }) {
                                 card(node)
                                     .frame(width: FlowGraphLayout.cardWidth, height: FlowGraphLayout.cardHeight)
                                     .offset(x: item.x, y: item.y)
+                                    .simultaneousGesture(DragGesture(minimumDistance: 5).onChanged { value in
+                                        selected = item.id
+                                        graphFocused = true
+                                        if dragStarts[item.id] == nil { dragStarts[item.id] = offsets[item.id] ?? .zero }
+                                        let start = dragStarts[item.id] ?? .zero
+                                        offsets[item.id] = boundedOffset(id: item.id, x: start.width + value.translation.width / scale, y: start.height + value.translation.height / scale)
+                                    }.onEnded { _ in dragStarts[item.id] = nil })
                             }
                         }
                     }
@@ -69,22 +93,44 @@ struct FlowGraphView: View {
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
+        .focusable()
+        .focused($graphFocused)
+        .focusEffectDisabled()
+        .onKeyPress(phases: .down) { event in
+            guard event.modifiers.contains(.option), selected != nil else { return .ignored }
+            let step: CGFloat = event.modifiers.contains(.shift) ? 48 : 16
+            switch event.key {
+            case .leftArrow: moveSelected(x: -step, y: 0)
+            case .rightArrow: moveSelected(x: step, y: 0)
+            case .upArrow: moveSelected(x: 0, y: -step)
+            case .downArrow: moveSelected(x: 0, y: step)
+            default: return .ignored
+            }
+            return .handled
+        }
+        .accessibilityAction(named: Text("Move left")) { moveSelected(x: -16, y: 0) }
+        .accessibilityAction(named: Text("Move right")) { moveSelected(x: 16, y: 0) }
+        .accessibilityAction(named: Text("Move up")) { moveSelected(x: 0, y: -16) }
+        .accessibilityAction(named: Text("Move down")) { moveSelected(x: 0, y: 16) }
+        .help("Drag modules to move them. Drag the background to pan; pinch or Option-scroll to zoom. Option-arrow keys move the selected module.")
         .accessibilityIdentifier("flow-dependency-graph")
     }
 
     private func controls(scale: CGFloat) -> some View {
         HStack(spacing: 8) {
             Label("Dependency graph", systemImage: "point.3.connected.trianglepath.dotted")
-                .font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                .font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             HStack(spacing: 8) {
-                Button { zoom = max(0.25, scale - 0.15) } label: { Image(systemName: "minus.magnifyingglass") }
-                    .help("Zoom out")
+                Button { zoom = max(0.1, scale - 0.15) } label: { Image(systemName: "minus.magnifyingglass") }
+                    .help("Zoom out").disabled(scale <= 0.1)
                 Text(scale, format: .percent.precision(.fractionLength(0))).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 34)
-                Button { zoom = min(1.75, scale + 0.15) } label: { Image(systemName: "plus.magnifyingglass") }
-                    .help("Zoom in")
+                Button { zoom = min(2.5, scale + 0.15) } label: { Image(systemName: "plus.magnifyingglass") }
+                    .help("Zoom in").disabled(scale >= 2.5)
                 Divider().frame(height: 12)
                 Button("Fit") { zoom = nil }.help("Fit graph to view")
+                Button { offsets = [:]; zoom = 1 } label: { Image(systemName: "arrow.counterclockwise") }
+                    .help("Reset layout")
             }
             .padding(.horizontal, 9).padding(.vertical, 5)
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
@@ -93,6 +139,27 @@ struct FlowGraphView: View {
         .buttonStyle(.borderless)
         .padding(.horizontal, 14).padding(.vertical, 8)
         .background(Color(nsColor: .windowBackgroundColor).opacity(0.96))
+    }
+
+    private func positionedLayout() -> FlowGraphLayout.Layout {
+        let original = FlowGraphLayout.make(nodes.map { .init(id: $0.id, needs: $0.needs) })
+        let items = original.items.map { item in
+            let offset = offsets[item.id] ?? .zero
+            return FlowGraphLayout.Item(id: item.id, x: max(12, item.x + offset.width), y: max(12, item.y + offset.height))
+        }
+        return .init(items: items, width: max(original.width, (items.map(\.x).max() ?? 0) + FlowGraphLayout.cardWidth + 28),
+                     height: max(original.height, (items.map(\.y).max() ?? 0) + FlowGraphLayout.cardHeight + 28))
+    }
+
+    private func moveSelected(x: CGFloat, y: CGFloat) {
+        guard let selected else { return }
+        let current = offsets[selected] ?? .zero
+        offsets[selected] = boundedOffset(id: selected, x: current.width + x, y: current.height + y)
+    }
+
+    private func boundedOffset(id: String, x: CGFloat, y: CGFloat) -> CGSize {
+        let base = FlowGraphLayout.make(nodes.map { .init(id: $0.id, needs: $0.needs) }).items.first { $0.id == id }
+        return CGSize(width: max(12 - (base?.x ?? 28), x), height: max(12 - (base?.y ?? 28), y))
     }
 
     private func connections(_ layout: FlowGraphLayout.Layout) -> some View {
@@ -125,6 +192,7 @@ struct FlowGraphView: View {
             }
         }
         .accessibilityHidden(true)
+        .allowsHitTesting(false)
     }
 
     private func connectionColor(_ node: Node, source: String) -> Color {
@@ -137,7 +205,7 @@ struct FlowGraphView: View {
         let active = selected == node.id
         let category = FlowBlockStyle.look(node.block)
         let stateColor = node.state.map { FlowStateIcon.look($0).1 } ?? category.color
-        return Button { selected = node.id } label: {
+        return Button { selected = node.id; graphFocused = true } label: {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
                     Image(systemName: category.icon)

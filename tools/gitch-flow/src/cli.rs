@@ -234,6 +234,9 @@ pub fn main(raw: Vec<String>) -> i32 {
         pos: early.pos.iter().skip(1).cloned().collect(),
         flags: early.flags,
     };
+    if cmd == "design" {
+        return crate::design::command(&args);
+    }
     if args.has("--secrets-stdin") {
         let mut buf = String::new();
         let _ = std::io::stdin().read_to_string(&mut buf);
@@ -311,7 +314,9 @@ pub fn help() -> String {
   trust [--show|--revoke] [--yes] · hold list|release <환경> · gate prepush|status|on [--flow 흐름]|off
   blocks · block <ID> · explain <코드> · gc [--older-than 7d] [--dry-run] · schema [이름]
   export github|gitlab|jenkins [--flow F] [--out 경로] [--dry-run] · import [--dry-run]
+  design inspect|render --json             JSON stdin으로 YAML 확인 · 시각 편집 제안(읽기 전용)
   connect list|add|test|remove · ci status|logs|report|trigger
+  ci browse --connection NAME [JOB_PATH] [RUN_ID]  Jenkins 작업 · 실행 · 로그 조회(읽기 전용)
 
 종료 코드: 0 성공 · 1 실패(구분은 JSON 의 state · code) · 2 사람 확인 필요",
         "gitch flow — composable test and CI flows (.gitch/flow.yml)
@@ -330,7 +335,9 @@ pub fn help() -> String {
   trust [--show|--revoke] [--yes] · hold list|release <env> · gate prepush|status|on [--flow F]|off
   blocks · block <ID> · explain <code> · gc [--older-than 7d] [--dry-run] · schema [name]
   export github|gitlab|jenkins [--flow F] [--out path] [--dry-run] · import [--dry-run]
+  design inspect|render --json             inspect YAML or render visual edits from JSON stdin (read-only)
   connect list|add|test|remove · ci status|logs|report|trigger
+  ci browse --connection NAME [JOB_PATH] [RUN_ID]  browse Jenkins jobs, runs and logs (read-only)
 
 Exit codes: 0 success · 1 failure (see state and code in JSON) · 2 a person must confirm",
     )

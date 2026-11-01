@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-design-inspect-v1.schema.json",
+  "title": "Read-only flow design inspection",
+  "description": "design inspect --json reads one JSON request from stdin. It never reads fileName from disk, executes source, writes a file or approves trust. document preserves every parsed field. proposal is a separate remote CI dispatch proposal requiring explicit configuration and review.",
+  "type": "object",
+  "required": ["schemaVersion", "document", "yaml", "format", "diagnostics", "editable", "proposal"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "document": { "type": ["object", "null"] },
+    "yaml": { "type": "string" },
+    "format": { "enum": ["flow", "github", "gitlab", "compose", "jenkins", "unknown"] },
+    "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
+    "editable": { "type": "boolean", "description": "True only for safely parsed native flow mappings. External CI definitions are preserved separately and must not be edited as native flows." },
+    "proposal": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["document", "yaml"], "additionalProperties": false, "properties": { "document": { "type": "object" }, "yaml": { "type": "string" } } }] }
+  },
+  "$defs": {
+    "request": { "type": "object", "required": ["yaml"], "additionalProperties": false, "properties": { "yaml": { "type": "string" }, "fileName": { "type": "string", "description": "Optional source label for format recognition; never a file to open." } } },
+    "diagnostic": { "type": "object", "required": ["severity", "code", "message"], "additionalProperties": false, "properties": { "severity": { "enum": ["error", "warning", "info"] }, "code": { "type": "string" }, "message": { "type": "string" }, "path": { "type": "string" }, "line": { "type": "integer", "minimum": 1 } } }
+  }
+}

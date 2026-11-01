@@ -103,6 +103,7 @@ pub struct FileHead {
     binary: bool,
     truncated: bool,
     size: u64,
+    utf8: bool,
 }
 
 /// 파일 전체를 base64 로(이미지 diff 용, 너무 크면 None)
@@ -129,6 +130,7 @@ pub async fn fs_read_head(path: String, max: usize) -> Result<FileHead, String> 
         binary,
         truncated: (buf.len() as u64) < size,
         size,
+        utf8: std::str::from_utf8(&buf).is_ok(),
     })
 }
 
@@ -142,6 +144,48 @@ pub async fn fs_write_text(path: String, content: String) -> Result<(), String> 
     let tmp = p.with_extension("tmp-write");
     std::fs::write(&tmp, content).map_err(|e| e.to_string())?;
     std::fs::rename(&tmp, &p).map_err(|e| e.to_string())
+}
+
+/// Imported sources must never replace a file created by another editor.
+#[tauri::command]
+pub async fn fs_create_text(path: String, content: String) -> Result<(), String> {
+    use std::io::Write;
+    let p = PathBuf::from(path);
+    if let Some(parent) = p.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&p)
+        .map_err(|e| e.to_string())?;
+    file.write_all(content.as_bytes())
+        .map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod import_file_tests {
+    #[test]
+    fn imported_text_never_replaces_an_existing_file() {
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!("gitrochi-create-{stamp}"));
+        let path = directory.join("imports/source.yml");
+        let name = path.to_string_lossy().to_string();
+        assert!(tauri::async_runtime::block_on(super::fs_create_text(
+            name.clone(),
+            "original source".into()
+        ))
+        .is_ok());
+        assert!(
+            tauri::async_runtime::block_on(super::fs_create_text(name, "replacement".into()))
+                .is_err()
+        );
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "original source");
+        std::fs::remove_dir_all(directory).unwrap();
+    }
 }
 
 /// Saves what the webview got from a paste or drop (an image, a dropped file) under the temp folder and returns the path.

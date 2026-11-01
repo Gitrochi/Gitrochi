@@ -1,5 +1,5 @@
-import { ChevronRight, Clock3, Code2, GitBranch, History, Layers3, ListFilter, Play, Search, ShieldCheck, Terminal, TriangleAlert, Workflow } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ChevronRight, Clock3, Cloud, Code2, GitBranch, History, Layers3, ListFilter, Play, Search, ShieldCheck, Terminal, TriangleAlert, Workflow } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, formatDuration, runRowPresentationState } from "@/entities/flow";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -8,10 +8,10 @@ import { FlowGraph } from "./FlowGraph";
 import { FlowBlockIcon, FlowStateIcon, FlowStatePill, flowBlockKind, stateTitle } from "./FlowState";
 
 /** Flow selection, command inspection and execution history on one workspace. */
-export function FlowWorkspace({ flows, affected, busy, onRun, onOpen, onEdit, onReview }: { flows: FlowStore; affected: boolean; busy: string | null; onRun: (flow: string) => void; onOpen: (run: string) => void; onEdit: () => void; onReview: (flow: string) => void }) {
+export function FlowWorkspace({ flows, affected, busy, onRun, onOpen, onEdit, onReview, connectedCI, emptyState }: { flows: FlowStore; affected: boolean; busy: string | null; onRun: (flow: string) => void; onOpen: (run: string) => void; onEdit: (flow?: string, node?: string) => void; onReview: (flow: string) => void; connectedCI?: ReactNode; emptyState?: ReactNode }) {
   useObserve(flows);
   const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
-  const [tab, setTab] = useState<"graph" | "history">("graph");
+  const [tab, setTab] = useState<"graph" | "history" | "ci">("graph");
   const [plan, setPlan] = useState<FlowPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,26 +50,27 @@ export function FlowWorkspace({ flows, affected, busy, onRun, onOpen, onEdit, on
           <span className="flow-choice-meta"><span>{t("{0} steps", item.nodes)}{item.trigger.length ? ` · ${item.trigger.join(", ")}` : ""}</span><ChevronRight size={12} /></span>
         </button>;
       })}</div>
-      <button className="flow-library-config" onClick={onEdit}><Code2 size={15} />{t("Configure scripts")}</button>
+      <button className="flow-library-config" onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={15} />{t("Configure scripts")}</button>
     </aside>
     <main className="flow-main">
       <div className="flow-workspace-heading">
         <div className="flow-heading-emblem" aria-hidden="true"><Workflow size={24} /></div>
         <div className="flow-heading-copy"><span className="flow-eyebrow">{t("Workflow")}</span><h2>{flow?.name || t("Flows")}</h2><p>{flow?.description || t("Connect scripts into a repeatable workflow.")}</p></div>
-        {flow && <div className="flow-heading-actions"><Button className="flow-review-button" onClick={() => onReview(flow.name)}><ShieldCheck size={14} />{t("Review commands…")}</Button><Button className="flow-run-button" kind="primary" disabled={busy !== null} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <Play size={13} fill="currentColor" />}{t("Run flow")}</Button></div>}
+        {flow && <div className="flow-heading-actions"><Button onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={14} />{t("Edit modules")}</Button><Button className="flow-review-button" onClick={() => onReview(flow.name)}><ShieldCheck size={14} />{t("Review commands…")}</Button><Button className="flow-run-button" kind="primary" disabled={busy !== null} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <Play size={13} fill="currentColor" />}{t("Run flow")}</Button></div>}
       </div>
       <div className="flow-tabs" role="tablist" aria-label={t("Flows")}>
         <button role="tab" aria-label={t("Flow graph")} aria-selected={tab === "graph"} className={tab === "graph" ? "selected" : ""} onClick={() => setTab("graph")}><Workflow size={15} />{t("Flow graph")}</button>
         <button role="tab" aria-label={t("Run history")} aria-selected={tab === "history"} className={tab === "history" ? "selected" : ""} onClick={() => setTab("history")}><History size={15} />{t("Run history")}<span className="flow-count">{flows.runs.length}</span></button>
+        {connectedCI && <button role="tab" aria-label={t("Connected CI")} aria-selected={tab === "ci"} className={tab === "ci" ? "selected" : ""} onClick={() => setTab("ci")}><Cloud size={15} />{t("Connected CI")}</button>}
       </div>
-      {tab === "history" ? <FlowHistory flows={flows} onOpen={onOpen} /> : <>
+      {tab === "ci" ? connectedCI : tab === "history" ? <FlowHistory flows={flows} onOpen={onOpen} /> : !flow && emptyState ? emptyState : <>
         <div className="flow-plan-meta">
           <span><Terminal size={12} />{shownPlan?.env || flow?.env || t("Local")}</span>
           <span><Layers3 size={12} />{t("{0} steps", shownPlan?.nodes.length ?? flow?.nodes ?? 0)}</span>
           <span><GitBranch size={12} />{t("{0} connections", shownPlan?.nodes.reduce((sum, node) => sum + node.needs.length, 0) ?? 0)}</span>
           {active && <button onClick={() => onOpen(active.runId)}><FlowStateIcon state="RUNNING" />{t("View running flow")}<ChevronRight size={12} /></button>}
         </div>
-        {error ? <div className="flow-empty error-text">{error}<Button onClick={onEdit}>{t("Configure scripts")}</Button></div> : loading && !shownPlan ? <div className="flow-empty"><Spinner /></div> : <div className="flow-plan-body"><FlowGraph nodes={graphNodes} selected={selectedNode} onSelect={setSelectedNode} /><FlowInspector node={selected} /></div>}
+        {error ? <div className="flow-empty error-text">{error}<Button onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}>{t("Configure scripts")}</Button></div> : loading && !shownPlan ? <div className="flow-empty"><Spinner /></div> : <div className="flow-plan-body"><FlowGraph key={flow?.name} nodes={graphNodes} selected={selectedNode} onSelect={setSelectedNode} /><FlowInspector node={selected} /></div>}
         {!!shownPlan?.warnings.length && <div className="flow-graph-warning">{shownPlan.warnings.join("\n")}</div>}
       </>}
     </main>

@@ -52,3 +52,14 @@ export function layoutFlowGraph(nodes: readonly { id: string; needs: readonly st
     height,
   };
 }
+
+/** Keep the content under the pointer fixed while the canvas scale changes. */
+export function flowZoomAnchor(oldZoom: number, nextZoom: number, scroll: { x: number; y: number }, pointer: { x: number; y: number }) {
+  const zoom = Math.max(Math.min(0.25, oldZoom), Math.min(2.5, nextZoom));
+  return { zoom, x: Math.max(0, (scroll.x + pointer.x) / oldZoom * zoom - pointer.x), y: Math.max(0, (scroll.y + pointer.y) / oldZoom * zoom - pointer.y) };
+}
+
+/** Overview fitting has no manual-zoom floor, so wide and tall pipelines remain complete. */
+export function fitFlowGraph(width: number, height: number, viewportWidth: number, viewportHeight: number): number {
+  return Math.max(0.001, Math.min(1, (viewportWidth - 24) / Math.max(1, width), (viewportHeight - 24) / Math.max(1, height)));
+}

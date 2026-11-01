@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Read-only connected CI browser",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "connection", "jobs", "runs", "log", "truncated"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "provider": { "const": "jenkins" },
+    "connection": { "type": "string" },
+    "jobs": { "type": "array", "items": { "type": "object", "required": ["name", "path", "url", "folder"], "properties": { "name": { "type": "string" }, "path": { "type": "string" }, "url": { "type": "string" }, "folder": { "type": "boolean" } } } },
+    "runs": { "type": "array", "items": { "type": "object", "required": ["id", "title", "status", "url", "startedAt", "durationMs"], "properties": { "id": { "type": "string" }, "title": { "type": "string" }, "status": { "enum": ["pending", "running", "success", "failed", "canceled"] }, "url": { "type": "string" }, "startedAt": { "type": "integer" }, "durationMs": { "type": "integer" } } } },
+    "log": { "type": ["string", "null"] },
+    "truncated": { "type": "boolean" }
+  }
+}

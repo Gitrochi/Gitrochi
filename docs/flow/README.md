@@ -27,19 +27,44 @@ In the app it is **Flows** under Workspace tools in the sidebar (⌘K / Ctrl+K f
 
 ### Visual workspace and scripts
 
-The macOS screenshots below come from the actual built app, using an isolated demo repository and real flow runs. They show both appearances after inspecting scripts, saving valid configuration, rejecting an invalid draft and browsing successful and failed runs.
+The macOS screenshots below come from the actual built app, using an isolated demo repository and real flow runs. Both appearances were checked with four completed steps and two JUnit tests. YAML import preserved the original bytes in a new flow file and invalidated trust; adding a CI module exposed its connection, job and dependency controls without running it. The connected CI browser uses an isolated local Jenkins fixture with synthetic builds and logs.
 
 | Screen | Light | Dark |
 | --- | --- | --- |
-| Dependency graph | [Open](../screenshots/flow-workspace/macos-workspace-light.png) | [Open](../screenshots/flow-workspace/macos-workspace-dark.png) |
-| Script settings | [Open](../screenshots/flow-workspace/macos-scripts-light.png) | [Open](../screenshots/flow-workspace/macos-scripts-dark.png) |
-| Run history | [Open](../screenshots/flow-workspace/macos-history-light.png) | [Open](../screenshots/flow-workspace/macos-history-dark.png) |
+| Dependency graph | [Open](../screenshots/flow-authoring/macos-flow-light.png) | [Open](../screenshots/flow-authoring/macos-flow-dark.png) |
+| Visual script settings | [Open](../screenshots/flow-authoring/macos-designer-light.png) | [Open](../screenshots/flow-authoring/macos-designer-dark.png) |
+| Run history | [Open](../screenshots/flow-authoring/macos-history-light.png) | [Open](../screenshots/flow-authoring/macos-history-dark.png) |
+| Completed run and test output | [Open](../screenshots/flow-authoring/macos-run-light.png) | [Open](../screenshots/flow-authoring/macos-run-dark.png) |
+| Interpreted CI import | [Open](../screenshots/flow-authoring/macos-import-light.png) | [Open](../screenshots/flow-authoring/macos-import-dark.png) |
+| Jenkins build history | [Open](../screenshots/flow-authoring/macos-ci-history-light.png) | [Open](../screenshots/flow-authoring/macos-ci-history-dark.png) |
 
-Windows production components are also captured with isolated synthetic data: [light](../screenshots/flow-workspace/windows-flow-light.jpg), [dark](../screenshots/flow-workspace/windows-flow-dark.jpg), [script editor](../screenshots/flow-workspace/windows-editor-light.jpg) and [history](../screenshots/flow-workspace/windows-history-light.jpg).
+Windows production components were also inspected at 1280 × 720 with the real design CLI and synthetic repository/service data: visual editor [light](../screenshots/flow-authoring/windows-designer-light.jpg) / [dark](../screenshots/flow-authoring/windows-designer-dark.jpg), interpreted import [light](../screenshots/flow-authoring/windows-import-light.jpg) / [dark](../screenshots/flow-authoring/windows-import-dark.jpg), and [connection settings](../screenshots/flow-authoring/windows-connections-dark.jpg). These are component verification captures, not a running Windows desktop session.
 
 Select a flow to preview its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to inspect its command, undo command, executor and source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
 
-Use the configuration editor to add commands or change dependencies in the repository's flow files. Existing YAML is kept as text, including comments and advanced block settings. Saving validates the configuration with the flow engine; it does not execute commands or approve trust. If validation fails, the previous file is restored. If another editor changed the file since it was opened, reload it before saving.
+The configuration editor opens a visual module designer. Select a step to read its command, dependencies, inputs and effects, or add a module from the engine's catalogue. Docker, Compose, tests, remote CI and deployment modules use the same input schemas as execution. The YAML source remains available for advanced settings. Unknown fields are retained in the complete document; an unchanged document retains its original bytes and comments. A visual edit normalizes formatting and reports that comments will be removed before saving.
+
+Saving validates the configuration with the flow engine; it does not execute commands or approve trust. If validation fails, the previous file is restored. If another editor changed the file since it was opened, reload it before saving. Imported files are previewed before being added to the repository's flow configuration. Unsupported YAML features or values that cannot safely pass through the visual editor produce diagnostics rather than a lossy rewrite.
+
+Drag a card to arrange the diagram, drag its background to pan, or use the zoom controls and trackpad pinch to inspect it. Modified wheel scrolling also zooms the diagram. Fit and reset controls restore a useful view. Visual positions do not change execution dependencies; change dependencies in the module settings.
+
+### Connected CI/CD
+
+The **Connected CI** workspace brings the repository's GitHub Actions or GitLab runs, jobs, logs and existing run controls beside local flow history. **Manage connections** configures named Jenkins, GitHub, GitLab, HTTP CI and webhook endpoints, with a read-only connection test. Tokens stay in existing credential stores or referenced environment variables; the form accepts references such as `env:CI_TOKEN`, `app:account-id`, `gh:login` or an existing `keystore` entry. Docker and Compose use the local Docker context.
+
+Jenkins connections also expose folders, jobs, the latest 30 builds and bounded, masked log previews. Their allow list applies to browsing as well as execution. Triggering Jenkins builds and other remote operations uses reviewed `ci.*` modules, so flow trust, cancellation, verdicts and production guards continue to apply.
+
+The corresponding read-only engine contract is `gitch-flow ci browse --connection <name> [job/path] [build-number] --json`. Without a job it lists folders and jobs; with a job it lists builds; with a build number it returns a log preview of at most 256 KiB. Its `ci-browse` JSON schema is available through the engine's `schema` command. Provider-returned URLs cannot change the credential destination, and cross-origin redirects discard credential headers.
+
+| Imported source | Interpretation and execution |
+| --- | --- |
+| Native flow YAML | Editable modules and dependencies; full document retained |
+| GitHub Actions / GitLab CI | Visual inspection and an explicit remote-provider module proposal; the original workflow executes on its provider |
+| Jenkinsfile | Kept as executable Groovy source, with a remote Jenkins module proposal; never evaluated during import |
+| Docker Compose | Service and dependency preview; the complete source remains intact |
+| Other CI formats | Preserved source with diagnostics; use an HTTP CI module with explicit trigger, status, logs and cancellation endpoints |
+
+Import does not attempt to translate every provider's runner, secrets, conditions or deployment semantics into local shell commands. Review the proposed connection and workflow/job settings before saving and running.
 
 For example, this flow calls repository scripts and runs two checks in parallel before building:
 
