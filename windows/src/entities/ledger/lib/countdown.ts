@@ -104,12 +104,12 @@ const holdReasons: Record<string, string> = {
 /**
  * A wait auto-continue left to the person (`payload.hold`, crates/gitrochi-ledger/CONTRACT.md, Hooks): it has no
  * countdown and no hook waits on it, so only the agent's terminal can answer it. `reason` is for the screen to translate
- * with `count`; empty for a reason this version does not know.
+ * with `count`; for a code this version does not know it is empty, and the core's English `message` stands in.
  */
-export function promptHold(prompt: LedgerPendingPrompt): { reason: string; count: number } | null {
+export function promptHold(prompt: LedgerPendingPrompt): { reason: string; count: number; message: string } | null {
   const hold = record(prompt.payload.hold);
   const code = text(hold.code);
   if (!code) return null;
   const count = [hold.consecutive, hold.max].find((n): n is number => typeof n === "number") ?? 3;
-  return { reason: holdReasons[code] ?? "", count };
+  return { reason: holdReasons[code] ?? "", count, message: text(hold.message) };
 }

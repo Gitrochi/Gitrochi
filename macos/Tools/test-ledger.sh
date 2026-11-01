@@ -157,6 +157,8 @@ let start: LedgerMs = 1_793_400_000_000
         before.ackAt = 5
         before.archivedAt = 6
         check(LedgerUndo.inverse(of: .setStatus(.closed, version: nil), before: before, now: 9) == [.setStatus(.merged, version: "v1.2.0"), .ack, .archive], "undo restores confirm and archive")
+        check(LedgerUndo.inverse(of: .autoContinue(.init(enabled: true, delaySec: 45)), before: before, now: 9) == [.autoContinue(nil)],
+              "undo auto-continue puts the session's own policy back (here: the default)")
         check(LedgerUndo.inverse(of: .answer(questionId: 1, text: "a"), before: before, now: 9) == nil && LedgerUndo.inverse(of: .message(text: "m"), before: before, now: 9) == nil, "answers and messages are not undone")
 
         var linked = session("S7", "x", verdict: .active, last: 0)
@@ -178,6 +180,44 @@ let start: LedgerMs = 1_793_400_000_000
         check(LedgerHumanAction.snooze(until: 5).arguments == ["action": "snooze", "until": 5], "undo sends the old time")
         check(LedgerPromptReply.choices(["Q?": "A"]).answer == ["answers": ["Q?": "A"]] && LedgerPromptReply.holdAuto.answer == ["hold": true], "prompt answer shapes")
         check(LedgerPromptReply.deny(message: "").answer == ["decision": "deny"] && LedgerPromptReply.deny(message: "no").answer == ["decision": "deny", "message": "no"], "deny shape")
+        check(LedgerHumanAction.autoContinue(.init(enabled: true, delaySec: 45)).arguments == ["action": "auto_continue", "autoContinue": ["enabled": true, "delaySec": 45]]
+              && LedgerHumanAction.autoContinue(nil).arguments == ["action": "auto_continue", "autoContinue": .null], "auto_continue shape: null follows the default")
+
+        // the hook handler's PromptPayload and AutoReply (gitrochi-autocontinue's record.rs)
+        func waiting(_ kind: LedgerPendingPrompt.Kind, _ payload: [String: LedgerJSON], answer: [String: LedgerJSON]? = nil) -> LedgerPendingPrompt {
+            LedgerPendingPrompt(id: 9, sessionId: "S1", agentId: nil, kind: kind, payload: payload, createdAt: 0, deadline: 10, state: .waiting,
+                                answer: answer, answeredBy: nil)
+        }
+        let stop = waiting(.stopQuestion, ["question": "Open the pull request now?", "text": "The tests pass.\nOpen the pull request now?",
+                                           "options": [["label": "Now", "recommended": true], ["label": "Later", "description": "after review"]],
+                                           "proposed": ["type": "reply", "text": "Open the pull request now? No answer for 30 seconds.\nGo ahead."]])
+        check(LedgerPromptText.summary(stop) == "Open the pull request now?" && LedgerPromptText.body(stop)?.hasPrefix("The tests pass.") == true, "a stop question")
+        check(LedgerPromptText.options(stop.payload["options"]!) == [.init(label: "Now", description: nil, recommended: true), .init(label: "Later", description: "after review", recommended: false)],
+              "its options")
+        check(LedgerPromptText.proposed(stop) == "Open the pull request now? No answer for 30 seconds.", "what goes out, in one line")
+        let ask = waiting(.askUserQuestion, ["questions": [["question": "Which retry count?", "options": [["label": "3", "recommended": true]]]],
+                                             "proposed": ["type": "answers", "answers": ["Which retry count?": "3"], "note": ""]])
+        check(LedgerPromptText.summary(ask) == "Which retry count?" && LedgerPromptText.proposed(ask) == "3", "AskUserQuestion without a top-level question (the core's demo)")
+        let bash = waiting(.permission, ["question": "", "tool": ["name": "Bash", "summary": "npm test"], "proposed": ["type": "allow"]])
+        check(LedgerPromptText.summary(bash) == "Bash: npm test" && LedgerPromptText.tool(bash)?.summary == "npm test" && LedgerPromptText.proposed(bash) == "Allow once",
+              "a permission request")
+        check(LedgerPromptText.summary(waiting(.exitPlanMode, [:])) == LedgerPendingPrompt.Kind.exitPlanMode.title, "an empty payload")
+        let autoReply: [String: LedgerJSON] = ["sent": ["type": "allow"], "rule": "permission:no-rule", "outcome": "unconfirmed"]
+        check(LedgerPromptText.sent(autoReply) == "Allow once" && LedgerPromptText.outcome(autoReply) != nil
+              && LedgerPromptText.outcome(["sent": ["type": "allow"], "outcome": "confirmed"]) == nil, "an automatic answer, and an open outcome")
+        check(LedgerPromptText.sent(["text": "Yes, go ahead."]) == "Yes, go ahead." && LedgerPromptText.sent(["decision": "deny"]) == String(localized: "Denied")
+              && LedgerPromptText.sent(["answers": ["b": "2", "a": "1"]]) == "1, 2", "what a person sent")
+
+        var withPolicies = LedgerGlobalSettings(staleHours: 72, kinds: [:], autoContinue: ["enabled": false, "delaySec": 30, "language": "ko"], backupKeep: 14)
+        check(withPolicies.autoContinueDefault == .init(enabled: false, delaySec: 30) && withPolicies.autoContinue(forRepository: "/r") == nil, "no policy yet")
+        withPolicies.autoContinue = withPolicies.autoContinueArgument(repository: "/r", .init(enabled: true, delaySec: 45))
+        check(withPolicies.autoContinue(forRepository: "/r") == .init(enabled: true, delaySec: 45) && withPolicies.autoContinue?["language"].string == "ko",
+              "one repository's policy; auto-continue's other keys stay")
+        withPolicies.autoContinue = withPolicies.autoContinueArgument(repository: "/r", nil)
+        check(withPolicies.autoContinue?["repositories"] == .null && withPolicies.autoContinue?["delaySec"].int == 30, "removed again")
+        check(LedgerWait.choices(including: 37) == [10, 15, 20, 30, 37, 45, 60, 90, 120, 180, 300] && LedgerWait.choices(including: 900).last == 300,
+              "waits the core keeps, and the session's own")
+
         let encoded = String(decoding: try! JSONEncoder().encode(LedgerJSON.object(["n": 3, "f": .number(1.5)])), as: UTF8.self)
         check(encoded.contains("\"n\":3") && encoded.contains("1.5"), "whole numbers stay whole: \(encoded)")
         check((try? JSONDecoder().decode([LedgerVerdict].self, from: Data(#"["needs_human","from_a_newer_core"]"#.utf8))) == [.needsHuman, .active], "unknown values fall back")
@@ -361,8 +401,8 @@ let start: LedgerMs = 1_793_400_000_000
         let permission = prompts.first { $0.kind == .permission }!
         let plan = prompts.first { $0.kind == .exitPlanMode }!
         let auto = before.autoReview!.first!
-        check(try call(demo, "prompt_answer", ["id": .number(Double(permission.id)), "answer": .object(LedgerPromptReply.holdAuto.answer)], as: LedgerWriteResult.self).ok, "hold")
-        check(try call(demo, "state", [:], as: LedgerState.self).pendingPrompts.first { $0.id == permission.id }?.deadline == 0, "held: no deadline")
+        check(try call(demo, "prompt_answer", ["id": .number(Double(permission.id)), "answer": .object(LedgerPromptReply.holdAuto.answer)], as: LedgerWriteResult.self).ok, "Not this time")
+        check(!(try call(demo, "state", [:], as: LedgerState.self).pendingPrompts.contains { $0.id == permission.id }), "Not this time leaves the prompt to the terminal, as the core does")
         _ = try call(demo, "prompt_answer", ["id": .number(Double(plan.id)), "answer": .object(LedgerPromptReply.answerInTerminal.answer)], as: LedgerWriteResult.self)
         check(!(try call(demo, "state", [:], as: LedgerState.self).pendingPrompts.contains { $0.id == plan.id }), "released to the terminal")
         check(try call(demo, "prompt_answer", ["id": .number(Double(plan.id)), "answer": ["decision": "allow"]], as: LedgerWriteResult.self).ok == false,
@@ -377,7 +417,8 @@ let start: LedgerMs = 1_793_400_000_000
         let expired = after.autoReview?.first { $0.id == ask.id }
         check(after.rev > rev && expired?.state == .auto && expired?.answeredBy == .auto && !after.pendingPrompts.contains { $0.id == ask.id },
               "the deadline ran out: auto-continue answered")
-        check(expired?.answer?["answers"]?.object?.values.first?.string == "3 times (Recommended)", "the recommended option")
+        check(LedgerPromptText.sent(expired?.answer ?? [:]) == "3 times (Recommended)" && expired?.answer?["sent"]?["type"].string == "answers",
+              "the recommended option, in the hook handler's AutoReply shape")
         check(after.attention.autoReview == 1, "to review")
         let retry = try call(demo, "session", ["id": .string(ask.sessionId!)], as: LedgerSessionDetail.self)
         check(retry.events.last?.type == "auto_reply" && retry.events.last?.actor == .auto, "auto_reply event")
@@ -476,9 +517,14 @@ let start: LedgerMs = 1_793_400_000_000
 
         let prompt = ledger.inbox.prompts.first { $0.kind == .permission }!
         await ledger.reply(prompt, .holdAuto)
-        check(ledger.inbox.prompts.first { $0.id == prompt.id }.map { !LedgerCountdown.isCounting($0) } == true, "auto off for this prompt")
+        check(!ledger.inbox.prompts.contains { $0.id == prompt.id } && ledger.toast?.message == String(localized: "Auto-continue is off for this prompt"),
+              "Not this time: the prompt leaves for the agent's terminal")
         await ledger.reply(prompt, .allow)
-        check(!ledger.inbox.prompts.contains { $0.id == prompt.id } && ledger.toast?.canUndo == false, "allowed")
+        check(ledger.actionError != nil, "an answer to a prompt that no longer waits is refused")
+        ledger.actionError = nil
+        let plan = ledger.inbox.prompts.first { $0.kind == .exitPlanMode }!
+        await ledger.reply(plan, .allow)
+        check(!ledger.inbox.prompts.contains { $0.id == plan.id } && ledger.toast?.canUndo == false && ledger.actionError == nil, "allowed")
         let review = ledger.inbox.items(in: .autoReview).compactMap { item -> LedgerPendingPrompt? in if case .autoReply(let p) = item.content { return p }; return nil }.first!
         await ledger.review(review, correction: "Keep them for 30 days instead.")
         check(ledger.inbox.items(in: .autoReview).isEmpty, "a correction also counts as reviewed")
@@ -680,6 +726,41 @@ let start: LedgerMs = 1_793_400_000_000
         let all = try await client.state(project: nil, range: .all).sessions.map(\.kind)
         check(try await client.settings().unassignedKinds(among: all).contains("spike"), "an imported kind without a role is listed for Settings")
         check(failure(native, "import_legacy", ["path": .string(folder + "/missing.db")])?.code == "INVALID_ARGUMENT", "a missing file is refused")
+
+        // Track agents I start: the session for a launch, from a real checkout
+        let repo = folder + "/harbor-app"
+        try FileManager.default.createDirectory(atPath: repo, withIntermediateDirectories: true)
+        func git(_ args: [String]) throws {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+            p.arguments = ["-C", repo, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.com"] + args
+            p.environment = ["GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "PATH": "/usr/bin:/bin", "HOME": folder]
+            p.standardOutput = FileHandle.nullDevice
+            p.standardError = FileHandle.nullDevice
+            try p.run()
+            p.waitUntilExit()
+            check(p.terminationStatus == 0, "git \(args)")
+        }
+        try git(["init", "-q", "-b", "main"])
+        try Data("one".utf8).write(to: URL(fileURLWithPath: repo + "/a.txt"))
+        try git(["add", "a.txt"])
+        try git(["commit", "-q", "-m", "one"])
+        try git(["tag", "v3.1.0"])
+        try git(["switch", "-q", "-c", "feature/retry"])
+        let policies = try await client.settings()
+        _ = try await client.setSettings(["autoContinue": policies.autoContinueArgument(repository: repo, .init(enabled: true, delaySec: 40))])
+        let launched = try await client.track(cwd: repo, repository: repo, agent: "agent-native")
+        check(launched.project == "harbor-app" && launched.title == "feature/retry" && launched.baseVersion == "3.1.0" && launched.lastAgentAt == nil
+              && launched.links.agentId == "agent-native" && launched.links.branch == "feature/retry" && launched.autoContinue == .init(enabled: true, delaySec: 40),
+              "track: branch, base and the repository's policy, unreported: \(launched)")
+        let launchRecord = try await client.session(launched.id)
+        check(launchRecord.events.count == 1 && launchRecord.events[0].actor == .hook && launchRecord.events[0].data?["hook"]?.string == "launch", "the launch is on record")
+        let agentStart = try LedgerClient.decode(LedgerJSON.self, from: CLIBackend(binary: cli, db: db).call(method: "report", args: JSONEncoder().encode(LedgerJSON.object(
+            ["session": .string(launched.id), "event": "start", "project": "harbor-app", "title": "Retry sign-in", "base": "3.1.0"]))))
+        check(agentStart["event"].string == "start" && agentStart["session"]["title"].string == "Retry sign-in", "the agent's own start takes over: \(agentStart)")
+        check(failure(CLIBackend(binary: cli, db: db), "track", ["repoPath": .string(repo)])?.code == "NOT_ALLOWED", "agents cannot track")
+        _ = try await client.human(.autoContinue(nil), sessionId: launched.id)
+        check(try await client.session(launched.id).session.autoContinue == nil, "the session follows the default again")
 
         // Errors, and the switch that turns the core off
         check(failure(native, "no_such_method")?.code == "INVALID_ARGUMENT", "an unknown method")

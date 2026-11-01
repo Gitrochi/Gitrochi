@@ -27,7 +27,11 @@ function answerText(value: unknown) {
 }
 
 /** Why auto-continue left a wait to the person, and where to answer it */
-export const heldText = (hold: { reason: string; count: number }) => [hold.reason && t(hold.reason, hold.count), t("Answer it in the agent's terminal.")].filter(Boolean).join(" ");
+export const heldText = (hold: { reason: string; count: number; message: string }) => {
+  // the core's message is English: only for a reason this version cannot translate
+  const reason = hold.reason ? t(hold.reason, hold.count) : hold.message && (/[.!?]$/.test(hold.message) ? hold.message : `${hold.message}.`);
+  return [reason, t("Answer it in the agent's terminal.")].filter(Boolean).join(" ");
+};
 
 /** Who a prompt belongs to: its session, else the agent that asked */
 const owner = (p: LedgerPendingPrompt) => p.sessionId ?? p.agentId ?? "";
