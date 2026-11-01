@@ -1290,6 +1290,7 @@
   "Already imported": "Sudah diimpor",
   "Click to show only these; Ctrl+click to add them.": "Klik untuk menampilkan hanya ini; Ctrl+klik untuk menambahkannya.",
   "Show cleaned up": "Tampilkan yang dibersihkan",
+  "Unreported": "Belum dilaporkan",
   "Selected sessions": "Sesi yang dipilih",
   "{0} selected": "{0} dipilih",
   "Confirm": "Konfirmasi",
@@ -1640,6 +1641,5 @@
   "Auto-continue already answered {0} times in a row.": "Lanjut otomatis sudah menjawab {0} kali berturut-turut.",
   "Answer it in the agent's terminal.": "Jawab di terminal agen.",
   "Ledger overview": "Ikhtisar Ledger",
-  "What agents read about this project, in a new tab of the terminal below.": "Yang dibaca agen tentang proyek ini, di tab baru terminal di bawah.",
-  "Unreported": "Belum dilaporkan"
+  "What agents read about this project, in a new tab of the terminal below.": "Yang dibaca agen tentang proyek ini, di tab baru terminal di bawah."
 }

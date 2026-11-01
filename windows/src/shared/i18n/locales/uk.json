@@ -1337,6 +1337,7 @@
   "Already imported": "Уже імпортовано",
   "Click to show only these; Ctrl+click to add them.": "Клацніть, щоб показати лише ці; Ctrl+клацання — щоб додати їх.",
   "Show cleaned up": "Показати очищені",
+  "Unreported": "Без звіту",
   "Selected sessions": "Вибрані сеанси",
   "{0} selected": "Вибрано: {0}",
   "Confirm": "Підтвердити",
@@ -1686,6 +1687,5 @@
   "Auto-continue already answered {0} times in a row.": "Автоматичних відповідей поспіль уже: {0}.",
   "Answer it in the agent's terminal.": "Дайте відповідь у терміналі агента.",
   "Ledger overview": "Огляд книги обліку",
-  "What agents read about this project, in a new tab of the terminal below.": "Те, що агенти читають про цей проєкт, у новій вкладці термінала внизу.",
-  "Unreported": "Без звіту"
+  "What agents read about this project, in a new tab of the terminal below.": "Те, що агенти читають про цей проєкт, у новій вкладці термінала внизу."
 }

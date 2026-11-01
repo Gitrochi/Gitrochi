@@ -1314,6 +1314,7 @@
   "Already imported": "Già importato",
   "Click to show only these; Ctrl+click to add them.": "Fai clic per mostrare solo queste sessioni; Ctrl+clic per aggiungerle.",
   "Show cleaned up": "Mostra sessioni pulite",
+  "Unreported": "Senza rapporto",
   "Selected sessions": "Sessioni selezionate",
   "{0} selected": "Selezionati: {0}",
   "Confirm": "Conferma",
@@ -1664,6 +1665,5 @@
   "Auto-continue already answered {0} times in a row.": "La prosecuzione automatica ha già risposto {0} volte di seguito.",
   "Answer it in the agent's terminal.": "Rispondi nel terminale dell'agente.",
   "Ledger overview": "Panoramica del registro",
-  "What agents read about this project, in a new tab of the terminal below.": "Ciò che gli agenti leggono su questo progetto, in una nuova scheda del terminale in basso.",
-  "Unreported": "Senza rapporto"
+  "What agents read about this project, in a new tab of the terminal below.": "Ciò che gli agenti leggono su questo progetto, in una nuova scheda del terminale in basso."
 }

@@ -1319,6 +1319,7 @@
   "Already imported": "Již importováno",
   "Click to show only these; Ctrl+click to add them.": "Kliknutím zobrazíte jen tyto; Ctrl+kliknutím je přidáte.",
   "Show cleaned up": "Zobrazit pročištěné",
+  "Unreported": "Nenahlášeno",
   "Selected sessions": "Vybrané relace",
   "{0} selected": "Vybráno: {0}",
   "Confirm": "Potvrdit",
@@ -1668,6 +1669,5 @@
   "Auto-continue already answered {0} times in a row.": "Automatické pokračování už odpovědělo {0}× za sebou.",
   "Answer it in the agent's terminal.": "Odpovězte v terminálu agenta.",
   "Ledger overview": "Přehled evidence",
-  "What agents read about this project, in a new tab of the terminal below.": "Co o tomto projektu čtou agenti, na nové kartě terminálu dole.",
-  "Unreported": "Nenahlášeno"
+  "What agents read about this project, in a new tab of the terminal below.": "Co o tomto projektu čtou agenti, na nové kartě terminálu dole."
 }

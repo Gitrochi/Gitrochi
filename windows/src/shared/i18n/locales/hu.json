@@ -1321,6 +1321,7 @@
   "Already imported": "Már importálva",
   "Click to show only these; Ctrl+click to add them.": "Kattintással csak ezek jelennek meg; Ctrl+kattintással hozzáadhatók.",
   "Show cleaned up": "Eltakarítottak megjelenítése",
+  "Unreported": "Nem jelentett",
   "Selected sessions": "Kijelölt munkamenetek",
   "{0} selected": "{0} kijelölve",
   "Confirm": "Megerősítés",
@@ -1670,6 +1671,5 @@
   "Auto-continue already answered {0} times in a row.": "Az automatikus folytatás már {0} alkalommal válaszolt egymás után.",
   "Answer it in the agent's terminal.": "Válaszolj rá az ügynök termináljában.",
   "Ledger overview": "Nyilvántartás áttekintése",
-  "What agents read about this project, in a new tab of the terminal below.": "Amit az ügynökök erről a projektről olvasnak, az alsó terminál új lapján.",
-  "Unreported": "Nem jelentett"
+  "What agents read about this project, in a new tab of the terminal below.": "Amit az ügynökök erről a projektről olvasnak, az alsó terminál új lapján."
 }

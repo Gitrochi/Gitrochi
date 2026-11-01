@@ -1554,6 +1554,7 @@
   "Already imported": "此前已导入",
   "Click to show only these; Ctrl+click to add them.": "点击仅显示这些；Ctrl+点击可一并加入。",
   "Show cleaned up": "显示已整理",
+  "Unreported": "未报告",
   "Selected sessions": "所选会话",
   "{0} selected": "已选择 {0} 个",
   "Confirm": "确认",
@@ -1903,6 +1904,5 @@
   "Auto-continue already answered {0} times in a row.": "自动继续已连续回答了 {0} 次。",
   "Answer it in the agent's terminal.": "请在代理的终端中回答。",
   "Ledger overview": "台账概览",
-  "What agents read about this project, in a new tab of the terminal below.": "代理读到的此项目概况，在下方终端的新标签页中打开。",
-  "Unreported": "未报告"
+  "What agents read about this project, in a new tab of the terminal below.": "代理读到的此项目概况，在下方终端的新标签页中打开。"
 }
