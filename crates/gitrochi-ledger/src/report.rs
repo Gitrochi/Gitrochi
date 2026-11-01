@@ -6,11 +6,10 @@ use crate::baseline;
 use crate::error::{Error, Result};
 use crate::event::{self, Message, NewEvent};
 use crate::overlap;
-use crate::session::{self, SessionRow, SessionView};
+use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
 use crate::track;
 use crate::util::{self, arg_str, arg_str_any, clean, has, json_text, resolve_version, Ms};
-use crate::views;
 use crate::vocab::{self, Role, AGENT_EVENTS, REOPEN_EVENTS};
 use rusqlite::{params, Connection};
 use serde::Serialize;
@@ -613,14 +612,20 @@ pub fn report(
     )?;
 
     // The reply: the session as it is now, what the agent should know, a person's messages.
-    // Share the apps' D13 launch verdicts, including quiet branches with no new commits.
-    let snapshot = views::snapshot(connection, settings, Some(&project), now)?;
-    let head = snapshot
-        .trunks
-        .get(&project)
-        .and_then(|trunk| trunk.last())
-        .map(|b| b.version.clone());
-    let views = snapshot.views;
+    let trunk = baseline::trunk(connection, &project)?;
+    let head = trunk.last().map(|b| b.version.clone());
+    let viewer = Viewer {
+        settings,
+        versions: trunk.iter().map(|b| b.version.clone()).collect(),
+        now,
+    };
+    let counts = session::open_counts(connection, Some(&project))?;
+    let rows = session::list(connection, Some(&project))?;
+    let mut views: Vec<SessionView> = rows
+        .iter()
+        .map(|s| viewer.view(s, counts.get(&s.id).copied().unwrap_or(0)))
+        .collect();
+    track::apply_unreported_verdicts(connection, &rows, &mut views)?;
     let view = views
         .iter()
         .find(|v| v.id == sid)
