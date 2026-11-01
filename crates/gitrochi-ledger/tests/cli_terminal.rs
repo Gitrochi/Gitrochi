@@ -2,8 +2,7 @@
 
 mod common;
 
-use common::{app, binary, cli, stderr, stdout, TempDir};
-use serde_json::json;
+use common::{binary, stderr, stdout, TempDir};
 
 #[test]
 fn redirected_output_stays_plain_even_when_color_is_requested() {
@@ -27,6 +26,8 @@ fn redirected_output_stays_plain_even_when_color_is_requested() {
 #[cfg(unix)]
 mod tty {
     use super::*;
+    use common::{app, cli};
+    use serde_json::json;
     use std::fs::File;
     use std::io::{Read, Write};
     use std::os::fd::FromRawFd;
