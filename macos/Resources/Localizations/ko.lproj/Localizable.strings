@@ -3404,7 +3404,7 @@
 "Decision sessions never continue automatically." = "결정 세션은 자동으로 진행하지 않습니다.";
 "Use the default" = "기본값 따르기";
 "Follow the repository's or the default auto-continue setting again" = "저장소 설정이나 기본 자동 진행 설정을 다시 따릅니다";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "내가 시작한 에이전트 추적이 켜져 있을 때 Gitrochi가 시작한 Claude Code 에이전트에만 적용됩니다. 더 긴 대기 시간은 실행 중인 에이전트가 다시 시작할 때부터 적용됩니다.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "내가 시작한 에이전트 추적이 켜져 있을 때 Gitrochi가 시작한 Claude Code 에이전트에만 적용됩니다.";
 "Auto-continue changed for %@" = "%@의 자동 진행을 바꿨습니다";
 "Stop waiting here and answer in the agent's own terminal" = "여기서 기다리지 않고 에이전트의 터미널에서 답합니다";
 "Not this time" = "이번만 안 함";

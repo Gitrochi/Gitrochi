@@ -1587,7 +1587,7 @@
 "Decision sessions never continue automatically." = "Rozhodovací relace nikdy nepokračují automaticky.";
 "Use the default" = "Použít výchozí";
 "Follow the repository's or the default auto-continue setting again" = "Znovu se řídit nastavením repozitáře nebo výchozím automatickým pokračováním";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím. Delší čekání se u běžícího agenta projeví po jeho dalším spuštění.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím.";
 "Auto-continue changed for %@" = "Automatické pokračování změněno pro %@";
 "Stop waiting here and answer in the agent's own terminal" = "Přestat zde čekat a odpovědět ve vlastním terminálu agenta";
 "Not this time" = "Tentokrát ne";

@@ -1602,7 +1602,7 @@
 "Decision sessions never continue automatically." = "เซสชันการตัดสินใจจะไม่ดำเนินการต่ออัตโนมัติ";
 "Use the default" = "ใช้ค่าเริ่มต้น";
 "Follow the repository's or the default auto-continue setting again" = "กลับไปใช้การตั้งค่าของรีโพสิทอรีหรือค่าเริ่มต้นของการดำเนินการต่ออัตโนมัติ";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้ เวลารอที่นานขึ้นจะมีผลกับเอเจนต์ที่กำลังทำงานเมื่อเริ่มใหม่";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้";
 "Auto-continue changed for %@" = "เปลี่ยนการดำเนินการต่ออัตโนมัติของ %@ แล้ว";
 "Stop waiting here and answer in the agent's own terminal" = "เลิกรอที่นี่และตอบในเทอร์มินัลของเอเจนต์เอง";
 "Not this time" = "ไม่ใช่ครั้งนี้";

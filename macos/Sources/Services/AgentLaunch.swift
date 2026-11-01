@@ -10,11 +10,14 @@ enum AgentLaunch {
         var session: String
         /// The bundled gitrochi-ledger
         var command: String
-        /// The session's auto-continue wait in seconds; the hooks that wait time out 10 s after it
-        var wait: Int
         /// GITROCHI_LEDGER_DB when the app itself uses another database, so the hooks write where the app reads
         var database: String?
     }
+
+    /// How long the hooks that wait may run: the longest wait the settings allow (5 minutes) plus a 10 s margin. A person
+    /// can change a session's wait while its agent runs, and the handler keeps its own deadline at the wait it reads when
+    /// the agent asks, so every wait fits. (Windows: the same 310 s)
+    static let waitingTimeout = 300 + 10
 
     /// The events hook.sh records for the agent center
     static let statusEvents = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PermissionRequest", "Notification", "Stop", "SessionEnd"]
@@ -34,10 +37,11 @@ enum AgentLaunch {
 
     /// `gitrochi-ledger hook <event>` for activity (SessionStart, UserPromptSubmit, Stop, SessionEnd) and for
     /// auto-continue: Stop in the background so the terminal stays usable, PreToolUse for the question tools only, and
-    /// PermissionRequest, which time out at the wait plus 10 s; PostToolUse and PostToolUseFailure tell the handler which
-    /// permission answer applied. Matches gitrochi-autocontinue's hook_settings, plus SessionStart and SessionEnd.
+    /// PermissionRequest, which may run for `waitingTimeout`; PostToolUse and PostToolUseFailure tell the handler which
+    /// permission answer applied. Matches gitrochi-autocontinue's hook_settings for the longest wait, plus SessionStart
+    /// and SessionEnd.
     static func ledgerEntries(_ ledger: Ledger) -> [(event: String, group: [String: Any])] {
-        let waiting = min(max(ledger.wait, 10), 300) + 10
+        let waiting = waitingTimeout
         func entry(_ event: String, matcher: String = "", timeout: Int, background: Bool = false) -> (event: String, group: [String: Any]) {
             var hook: [String: Any] = ["type": "command", "command": "\"\(ledger.command)\" hook \(event)", "timeout": timeout]
             if background {

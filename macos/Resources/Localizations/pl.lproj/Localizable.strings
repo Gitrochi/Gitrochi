@@ -1590,7 +1590,7 @@
 "Decision sessions never continue automatically." = "Sesje decyzyjne nigdy nie kontynuują automatycznie.";
 "Use the default" = "Użyj domyślnego";
 "Follow the repository's or the default auto-continue setting again" = "Znowu stosuj ustawienie repozytorium lub domyślną automatyczną kontynuację";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Działa dla agentów Claude Code uruchamianych przez Gitrochi, gdy włączone jest Śledź agentów, których uruchamiam. Dłuższe czekanie obejmie działającego agenta przy jego następnym uruchomieniu.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Działa dla agentów Claude Code uruchamianych przez Gitrochi, gdy włączone jest Śledź agentów, których uruchamiam.";
 "Auto-continue changed for %@" = "Zmieniono automatyczną kontynuację dla %@";
 "Stop waiting here and answer in the agent's own terminal" = "Przestań tu czekać i odpowiedz we własnym terminalu agenta";
 "Not this time" = "Nie tym razem";

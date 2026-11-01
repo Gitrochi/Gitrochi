@@ -1565,7 +1565,7 @@
 "Decision sessions never continue automatically." = "Phiên quyết định không bao giờ tự động tiếp tục.";
 "Use the default" = "Dùng mặc định";
 "Follow the repository's or the default auto-continue setting again" = "Theo lại cài đặt của kho lưu trữ hoặc tự động tiếp tục mặc định";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Dùng cho các agent Claude Code do Gitrochi khởi động khi Theo dõi agent tôi khởi động đang bật. Thời gian chờ dài hơn áp dụng cho agent đang chạy khi nó khởi động lại.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Dùng cho các agent Claude Code do Gitrochi khởi động khi Theo dõi agent tôi khởi động đang bật.";
 "Auto-continue changed for %@" = "Đã đổi tự động tiếp tục cho %@";
 "Stop waiting here and answer in the agent's own terminal" = "Thôi chờ ở đây và trả lời trong terminal của agent";
 "Not this time" = "Lần này thì không";

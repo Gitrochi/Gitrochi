@@ -1607,7 +1607,7 @@
 "Decision sessions never continue automatically." = "Сесії рішень ніколи не продовжуються автоматично.";
 "Use the default" = "Використовувати типове";
 "Follow the repository's or the default auto-continue setting again" = "Знову дотримуватися налаштування репозиторію або типового автопродовження";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Працює для агентів Claude Code, яких запускає Gitrochi, поки ввімкнено «Відстежувати агентів, яких я запускаю». Довше очікування дійде до запущеного агента під час його наступного запуску.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Працює для агентів Claude Code, яких запускає Gitrochi, поки ввімкнено «Відстежувати агентів, яких я запускаю».";
 "Auto-continue changed for %@" = "Автопродовження для %@ змінено";
 "Stop waiting here and answer in the agent's own terminal" = "Більше не чекати тут і відповісти у власному терміналі агента";
 "Not this time" = "Не цього разу";

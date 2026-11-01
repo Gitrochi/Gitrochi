@@ -1580,7 +1580,7 @@
 "Decision sessions never continue automatically." = "Le sessioni di decisione non proseguono mai da sole.";
 "Use the default" = "Usa il predefinito";
 "Follow the repository's or the default auto-continue setting again" = "Torna a seguire l'impostazione del repository o la prosecuzione automatica predefinita";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Vale per gli agenti Claude Code avviati da Gitrochi mentre Segui gli agenti che avvio è attivo. Un'attesa più lunga raggiunge un agente in esecuzione al suo prossimo avvio.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Vale per gli agenti Claude Code avviati da Gitrochi mentre Segui gli agenti che avvio è attivo.";
 "Auto-continue changed for %@" = "Prosecuzione automatica cambiata per %@";
 "Stop waiting here and answer in the agent's own terminal" = "Smetti di aspettare qui e rispondi nel terminale dell'agente";
 "Not this time" = "Non questa volta";

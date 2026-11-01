@@ -1612,7 +1612,7 @@
 "Decision sessions never continue automatically." = "決策工作階段從不自動繼續。";
 "Use the default" = "使用預設值";
 "Follow the repository's or the default auto-continue setting again" = "重新遵循存放庫或預設的自動繼續設定";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "適用於「追蹤我啟動的代理程式」開啟時由 Gitrochi 啟動的 Claude Code 代理程式。較長的等待時間會在執行中的代理程式下次啟動時生效。";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "適用於「追蹤我啟動的代理程式」開啟時由 Gitrochi 啟動的 Claude Code 代理程式。";
 "Auto-continue changed for %@" = "已變更 %@ 的自動繼續";
 "Stop waiting here and answer in the agent's own terminal" = "不在這裡等待，改在代理程式自己的終端機中回答";
 "Not this time" = "這次不用";

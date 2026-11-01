@@ -2337,7 +2337,7 @@
 "Decision sessions never continue automatically." = "決定セッションは自動で続行しません。";
 "Use the default" = "既定に戻す";
 "Follow the repository's or the default auto-continue setting again" = "リポジトリの設定または既定の自動続行設定に従うよう戻します";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。待ち時間を長くすると、実行中のエージェントには次に起動したときから適用されます。";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。";
 "Auto-continue changed for %@" = "%@ の自動続行を変更しました";
 "Stop waiting here and answer in the agent's own terminal" = "ここで待つのをやめ、エージェントのターミナルで回答します";
 "Not this time" = "今回はしない";

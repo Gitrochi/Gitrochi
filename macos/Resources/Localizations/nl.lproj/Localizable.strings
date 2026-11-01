@@ -1551,7 +1551,7 @@
 "Decision sessions never continue automatically." = "Beslissingssessies gaan nooit automatisch door.";
 "Use the default" = "Standaard gebruiken";
 "Follow the repository's or the default auto-continue setting again" = "Weer de instelling van de repository of het standaard automatisch doorgaan volgen";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Werkt voor Claude Code-agents die Gitrochi start terwijl Agents volgen die ik start aan staat. Een langere wachttijd bereikt een lopende agent pas bij de volgende start.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Werkt voor Claude Code-agents die Gitrochi start terwijl Agents volgen die ik start aan staat.";
 "Auto-continue changed for %@" = "Automatisch doorgaan gewijzigd voor %@";
 "Stop waiting here and answer in the agent's own terminal" = "Hier niet meer wachten en in de eigen terminal van de agent antwoorden";
 "Not this time" = "Deze keer niet";

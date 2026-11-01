@@ -1590,7 +1590,7 @@
 "Decision sessions never continue automatically." = "A döntési munkamenetek soha nem folytatódnak automatikusan.";
 "Use the default" = "Az alapértelmezett használata";
 "Follow the repository's or the default auto-continue setting again" = "Ismét a tároló vagy az alapértelmezett automatikus folytatás beállítását követi";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "A Gitrochi által indított Claude Code-ügynököknél működik, ha Az általam indított ügynökök követése be van kapcsolva. A hosszabb várakozás a futó ügynököt a következő indításkor éri el.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "A Gitrochi által indított Claude Code-ügynököknél működik, ha Az általam indított ügynökök követése be van kapcsolva.";
 "Auto-continue changed for %@" = "Az automatikus folytatás módosult: %@";
 "Stop waiting here and answer in the agent's own terminal" = "Itt ne várjon tovább, válaszoljon az ügynök saját terminálján";
 "Not this time" = "Most nem";

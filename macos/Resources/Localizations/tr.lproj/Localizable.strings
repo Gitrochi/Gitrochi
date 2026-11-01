@@ -1594,7 +1594,7 @@
 "Decision sessions never continue automatically." = "Karar oturumları asla otomatik devam etmez.";
 "Use the default" = "Varsayılanı kullan";
 "Follow the repository's or the default auto-continue setting again" = "Yeniden deponun ayarını veya varsayılan otomatik devamı izle";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Başlattığım ajanları izle açıkken Gitrochi'nin başlattığı Claude Code ajanlarında çalışır. Daha uzun bekleme, çalışan bir ajana yeniden başladığında ulaşır.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Başlattığım ajanları izle açıkken Gitrochi'nin başlattığı Claude Code ajanlarında çalışır.";
 "Auto-continue changed for %@" = "%@ için otomatik devam değişti";
 "Stop waiting here and answer in the agent's own terminal" = "Burada beklemeyi bırak ve ajanın kendi terminalinde yanıtla";
 "Not this time" = "Bu sefer değil";

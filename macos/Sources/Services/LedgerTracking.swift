@@ -20,19 +20,18 @@ enum LedgerTracking {
         var tools: Bool
     }
 
-    /// Creates the session for an agent about to start in `folder` of `repository`. The hooks wait as long as the session's
-    /// auto-continue wait (its repository's, else the default), so a later, longer wait reaches the agent at its next start.
+    /// Creates the session for an agent about to start in `folder` of `repository`; the core gives it the repository's
+    /// auto-continue policy. Its hooks may wait as long as any wait the settings allow (`AgentLaunch.waitingTimeout`), so a
+    /// wait a person changes while the agent runs takes effect at its next question.
     static func prepare(agent: String, folder: String, repository: String?, claude: String, client: LedgerClient) async throws -> Launch {
         let command = LedgerCommandLine.bundled
         guard FileManager.default.isExecutableFile(atPath: command.path) else {
             throw LedgerFailure(code: "NOT_FOUND", message: String(localized: "The ledger command is missing from this copy of Gitrochi: \(command.path)"))
         }
         let session = try await client.track(cwd: folder, repository: repository, agent: agent)
-        var wait = session.autoContinue?.delaySec ?? 0
-        if session.autoContinue == nil { wait = try await client.settings().autoContinueDefault.delaySec }
         let database = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_DB"].flatMap { $0.isEmpty ? nil : $0 }
         let tools = givesTools ? await !hasLedgerServer(claude: claude, folder: folder) : false
-        return Launch(ledger: .init(session: session.id, command: command.path, wait: wait, database: database), tools: tools)
+        return Launch(ledger: .init(session: session.id, command: command.path, database: database), tools: tools)
     }
 
     /// `claude mcp get gitrochi-ledger` in the folder: a server of that name in the person's own configuration (user,
