@@ -64,6 +64,8 @@ Windows folder rules (`windows/tests/architecture.test.ts` fails when they are b
 
 ## Screen text and translations
 
+- **How screens look** — accent, selection, badges, dates and counts, the shared file list and diff header — is in [design.md](design.md), with reference screens in [design/](design/README.md). Follow it for every new or changed screen.
+
 - **UI text is written in English in the code**, and that English is the translation key. Keep it short, in sentence case; menus and buttons are verbs (`Stage`, `Create branch…`).
   - macOS: SwiftUI's `Text("…")`, `Button("…")` and friends are translated as they are; other strings (error messages …) use `String(localized: "…")`.
   - Windows: `t("…")`, with values as `t("Commit {0} files", n)`.
