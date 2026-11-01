@@ -1,3 +1,4 @@
+import { destinationEnabled } from "@/entities/git";
 import { workspace } from "@/entities/workspace";
 import { isMac, settings } from "@/shared/config";
 
@@ -57,6 +58,9 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
         return run(() => s.navigate("actions"));
       case "6":
         return run(() => s.navigate("flows"));
+      case "7":
+        if (destinationEnabled("ledger")) return run(() => s.navigate("ledger"));
+        break;
       case "z":
         // 입력 칸 밖에서만(입력 칸에서는 글자 되돌리기 — 위에서 걸러 짐)
         return run(() => s.path && s.confirmUndo());
