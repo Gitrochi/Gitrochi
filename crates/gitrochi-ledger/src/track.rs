@@ -65,7 +65,11 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         .or_else(|| text("worktree"))
         .or_else(|| text("repoPath"));
     if let Some(checkout) = folder.as_deref().and_then(|f| git::checkout(Path::new(f))) {
-        links.entry("worktree").or_insert(json!(checkout.root));
+        let start = folder.as_deref().and_then(|f| git::start(Path::new(f)));
+        // the main checkout is the repository itself; only a linked worktree is worth a link
+        if start.as_ref().is_none_or(|s| s.linked) {
+            links.entry("worktree").or_insert(json!(checkout.root));
+        }
         if let Some(branch) = checkout.branch {
             links.entry("branch").or_insert(json!(branch));
         }

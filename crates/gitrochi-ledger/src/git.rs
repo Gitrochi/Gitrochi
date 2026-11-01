@@ -1,5 +1,6 @@
-//! The system `git`, asked for machine-readable output. The ledger only reads tags, and
-//! the hook handler reads the agent's branch for permission checks.
+//! The system `git`, asked for machine-readable output. The ledger only reads tags, the
+//! hook handler reads the agent's branch for permission checks, and `track` reads where a
+//! launch starts.
 
 use crate::error::{Error, Result};
 use std::path::Path;
@@ -134,6 +135,34 @@ pub fn checkout(dir: &Path) -> Option<Checkout> {
         branch,
         upstream,
         default_branch,
+    })
+}
+
+/// Where a launch starts: HEAD's commit (`None` before the first commit), and whether the
+/// folder is in a linked worktree rather than the repository's main checkout.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Start {
+    pub head: Option<String>,
+    pub linked: bool,
+}
+
+/// The start of a launch in `dir`, or `None` outside a repository.
+pub fn start(dir: &Path) -> Option<Start> {
+    // a linked worktree has a git dir of its own next to the repository's common one
+    let dirs = stdout_of(command(dir).args([
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-dir",
+        "--git-common-dir",
+    ]))?;
+    let mut lines = dirs.lines().map(str::trim);
+    let (own, common) = (lines.next()?, lines.next()?);
+    let head = stdout_of(command(dir).args(["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]))
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty());
+    Some(Start {
+        head,
+        linked: own != common,
     })
 }
 

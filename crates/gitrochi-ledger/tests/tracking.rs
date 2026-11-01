@@ -371,6 +371,19 @@ fn outside_a_repository_the_folder_names_the_session() {
 }
 
 #[test]
+fn a_launch_in_the_main_checkout_has_no_worktree_link() {
+    let repo = Repo::new();
+    let session = &repo.track(json!({"cwd": repo.path("harbor")}))["session"];
+    let links = &session["links"];
+    assert_eq!(links["branch"], "main");
+    assert_eq!(links["cwd"], repo.path("harbor").as_str());
+    assert!(
+        links.get("worktree").is_none(),
+        "the main checkout is the repository itself: {links}"
+    );
+}
+
+#[test]
 fn windows_paths_match_whatever_their_case_and_separators() {
     let dir = TempDir::new("track-windows");
     let db = dir.join("ledger.sqlite3");

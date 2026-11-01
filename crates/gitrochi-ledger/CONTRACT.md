@@ -171,7 +171,7 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?}`. What the app leaves out is filled in from the checkout:
 
-- `branch` and `worktree`: what git says about `cwd` (a detached HEAD has no branch).
+- `branch`: what git says about `cwd` (a detached HEAD has no branch). `worktree`: the checkout's top folder when `cwd` is in a linked worktree; the main checkout is the repository itself and gets none.
 - `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines. Paths compare without a trailing separator, with `~` expanded; a Windows path (on Windows, or one with a drive letter or a `\\server` share) also without case, with `\` and `/` alike.
 - `title`: the branch, else the folder's name.
 - `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
@@ -282,6 +282,6 @@ Added for the hook handler (wave 2):
 
 Added for launch tracking (wave 2):
 
-16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`. Windows paths match whatever their case and separators.
+16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`. `links.worktree` is filled in for a linked worktree only, and Windows paths match whatever their case and separators.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
