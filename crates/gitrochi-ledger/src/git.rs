@@ -1,6 +1,6 @@
 //! The system `git`, asked for machine-readable output. The ledger only reads tags, the
 //! hook handler reads the agent's branch for permission checks, and `track` reads where a
-//! launch starts.
+//! launch starts and how far its branch has moved since.
 
 use crate::error::{Error, Result};
 use std::path::Path;
@@ -166,6 +166,15 @@ pub fn start(dir: &Path) -> Option<Start> {
     })
 }
 
+/// How many commits `to` has that `from` does not (`rev-list --count from..to`), or `None`
+/// when git cannot tell (a commit or branch that is gone, not a repository).
+pub fn commits_beyond(dir: &Path, from: &str, to: &str) -> Option<u64> {
+    stdout_of(command(dir).args(["rev-list", "--count", &format!("{from}..{to}"), "--"]))?
+        .trim()
+        .parse()
+        .ok()
+}
+
 /// The upstream of `branch` and origin's default branch from `checkout`'s for-each-ref.
 pub fn parse_checkout_refs(text: &str, branch: Option<&str>) -> (Option<String>, Option<String>) {
     let (mut upstream, mut default_branch) = (None, None);
@@ -320,6 +329,51 @@ pub(crate) mod tests {
         if !in_a_repository {
             assert_eq!(checkout(&outside), None);
         }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn start_tells_a_linked_worktree_and_how_far_its_branch_moved() {
+        let dir =
+            std::env::temp_dir().join(format!("gitrochi-ledger-start-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let repo = fixture_repo(&dir);
+        let main = start(&repo).unwrap();
+        assert!(!main.linked, "the main checkout");
+        let head = main.head.unwrap();
+        assert_eq!(head.len(), 40);
+        let worktree = dir.join("worktree");
+        let path = worktree.to_string_lossy().into_owned();
+        fixture_git(
+            &dir,
+            &repo,
+            &["worktree", "add", "-q", "-b", "retry", &path],
+        );
+        let linked = start(&worktree).unwrap();
+        assert_eq!(
+            (linked.linked, linked.head.as_deref()),
+            (true, Some(head.as_str()))
+        );
+        assert_eq!(commits_beyond(&repo, &head, "refs/heads/retry"), Some(0));
+        fixture_git(
+            &dir,
+            &worktree,
+            &["commit", "-q", "--allow-empty", "-m", "second"],
+        );
+        assert_eq!(commits_beyond(&repo, &head, "refs/heads/retry"), Some(1));
+        assert_eq!(commits_beyond(&repo, &head, "refs/heads/gone"), None);
+        // before the first commit there is no HEAD to start from
+        let empty = dir.join("empty");
+        std::fs::create_dir_all(&empty).unwrap();
+        fixture_git(&dir, &empty, &["init", "-q"]);
+        assert_eq!(
+            start(&empty),
+            Some(Start {
+                head: None,
+                linked: false
+            })
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 

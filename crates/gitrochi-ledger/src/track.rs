@@ -4,7 +4,8 @@
 //! and links are Gitrochi's guess from the checkout: the branch, and the newest baseline tag
 //! reachable from it. The session stays unreported (no `lastAgentAt`, D13) until its agent
 //! reports, and the agent's first report replaces the guess (`report`, through
-//! `is_unreported_launch`).
+//! `is_unreported_launch`). Until then it turns stale only once its branch has commits of
+//! its own (`waits_unreported`).
 
 use crate::baseline;
 use crate::db::Db;
@@ -16,7 +17,7 @@ use crate::session::{self, SessionRow};
 use crate::settings::{self, Settings};
 use crate::util::{self, arg_str, Ms};
 use crate::vocab;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 use std::path::Path;
 
@@ -35,6 +36,8 @@ pub struct Plan {
     pub kind: String,
     pub links: Map<String, Value>,
     pub auto_continue: Option<Value>,
+    /// The commit the agent starts on, from which D13 counts the branch's own commits.
+    pub head: Option<String>,
 }
 
 /// Reads the arguments and the checkout: `{project?, title?, base?, kind?, repoPath?,
@@ -64,6 +67,7 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
     let folder = text("cwd")
         .or_else(|| text("worktree"))
         .or_else(|| text("repoPath"));
+    let mut head = None;
     if let Some(checkout) = folder.as_deref().and_then(|f| git::checkout(Path::new(f))) {
         let start = folder.as_deref().and_then(|f| git::start(Path::new(f)));
         // the main checkout is the repository itself; only a linked worktree is worth a link
@@ -73,6 +77,7 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         if let Some(branch) = checkout.branch {
             links.entry("branch").or_insert(json!(branch));
         }
+        head = start.and_then(|s| s.head);
     }
     let text = |key: &str| links.get(key).and_then(Value::as_str).map(str::to_string);
     let project = match arg_str(args, "project") {
@@ -113,6 +118,7 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         kind: arg_str(args, "kind").map_or_else(String::new, |k| vocab::kind(&k)),
         links,
         auto_continue,
+        head,
     })
 }
 
@@ -231,6 +237,9 @@ pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRo
     if let Some(policy) = &plan.auto_continue {
         data["autoContinue"] = policy.clone();
     }
+    if let Some(head) = &plan.head {
+        data["head"] = json!(head);
+    }
     event::insert(
         connection,
         &NewEvent {
@@ -262,6 +271,45 @@ pub fn is_unreported_launch(connection: &Connection, row: &SessionRow) -> Result
         params![row.id, LAUNCH],
         |r| r.get(0),
     )?)
+}
+
+/// D13: an unreported launch waits under Unreported, and does not turn stale, until its
+/// branch has commits beyond the one its agent started on. When git cannot tell (a launch
+/// that recorded no commit, no folder left, a branch that is gone), it counts like any other
+/// session, so nothing that may need a person is hidden.
+pub fn waits_unreported(connection: &Connection, row: &SessionRow) -> Result<bool> {
+    if row.last_agent_at.is_some() {
+        return Ok(false);
+    }
+    let head: Option<String> = connection
+        .query_row(
+            "SELECT json_extract(data, '$.head') FROM events WHERE session_id = ?1
+               AND type = 'hook' AND actor = 'hook' AND json_extract(data, '$.hook') = ?2
+             ORDER BY id LIMIT 1",
+            params![row.id, LAUNCH],
+            |r| r.get(0),
+        )
+        .optional()?
+        .flatten();
+    let Some(head) = head else {
+        return Ok(false);
+    };
+    let link = |key: &str| row.links.get(key).and_then(Value::as_str);
+    let branch = link("branch");
+    // a branch is the repository's, so any of its folders can tell; HEAD only the launch's own
+    let folders = match branch {
+        Some(_) => [link("worktree"), link("cwd"), link("repoPath")],
+        None => [link("worktree"), link("cwd"), None],
+    };
+    let Some(folder) = folders
+        .into_iter()
+        .flatten()
+        .find(|f| Path::new(f).is_dir())
+    else {
+        return Ok(false);
+    };
+    let tip = branch.map_or_else(|| "HEAD".to_string(), |b| format!("refs/heads/{b}"));
+    Ok(git::commits_beyond(Path::new(folder), &head, &tip) == Some(0))
 }
 
 /// The agent named another project than Gitrochi guessed: the session moves there, with a

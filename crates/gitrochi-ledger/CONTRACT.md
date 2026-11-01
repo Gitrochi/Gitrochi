@@ -37,7 +37,7 @@ A project row appears with its first report. Scans run before reports and reads,
 ## Vocabulary
 
 - `status` (stored): `active | done | merged | closed | dropped | shelved`.
-- `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` > `active`.
+- `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` (an unreported launch only once its branch has commits of its own, [below](#sessions-for-agents-gitrochi-starts)) > `active`.
 - `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
 - **Stream**: a session whose role is `implementation` and whose status is not `merged`/`closed`/`dropped`. Streams keep their verdict but stay out of overlaps, the open-session lists, project open counts and the clean-up board; they are shown as cycles.
 - Agent events: `start progress artifact question decision sync done merged closed dropped shelved release applied note heartbeat` (a heartbeat leaves no event). Korean aliases from the original tool (`시작`, `이행` …) and `rebase`, `merge`, `close`, `drop`, `apply`, `shelve` are accepted and stored in English; so are the original's kind names (`연구`, `판정`, `구현`, `LLM구현` …) and the latest words (`latest`, `head`, `최신` …).
@@ -169,13 +169,15 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 ### Sessions for agents Gitrochi starts
 
-With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?}`. What the app leaves out is filled in from the checkout:
+With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?, head?}`; `head` is the commit `cwd` is on. What the app leaves out is filled in from the checkout:
 
 - `branch`: what git says about `cwd` (a detached HEAD has no branch). `worktree`: the checkout's top folder when `cwd` is in a linked worktree; the main checkout is the repository itself and gets none.
 - `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines. Paths compare without a trailing separator, with `~` expanded; a Windows path (on Windows, or one with a drive letter or a `\\server` share) also without case, with `\` and `/` alike.
 - `title`: the branch, else the folder's name.
 - `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
 - `autoContinue`: the policy `autoContinue.repositories` keeps for `repoPath`; `null` follows the global default.
+
+**Unreported launches (D13).** Until its agent reports, a quiet session turns `stale` only once its branch has commits beyond `head`. Until then its verdict stays `active`, so it is not in `attention`; the apps show it under the Board's **Unreported** filter (no `lastAgentAt`). When git cannot tell (no `head` recorded, the folders are gone, the branch was deleted), it goes stale like any other session.
 
 Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
 
@@ -282,6 +284,6 @@ Added for the hook handler (wave 2):
 
 Added for launch tracking (wave 2):
 
-16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`. `links.worktree` is filled in for a linked worktree only, and Windows paths match whatever their case and separators.
+16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`. The launch event's `data.head` holds the commit the agent starts on, and an unreported launch turns `stale` only once its branch has commits beyond it (D13). `links.worktree` is filled in for a linked worktree only, and Windows paths match whatever their case and separators.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

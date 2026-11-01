@@ -9,6 +9,7 @@ use crate::prompts::{self, PendingPrompt};
 use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
 use crate::streams::{self, CycleEvent, StreamCycle};
+use crate::track;
 use crate::util::{Ms, DAY};
 use crate::vocab::Verdict;
 use rusqlite::Connection;
@@ -128,6 +129,13 @@ pub fn snapshot(
                 now,
             });
         views.push(viewer.view(row, counts.get(&row.id).copied().unwrap_or(0)));
+    }
+    // D13: an unreported launch with nothing committed yet waits under Unreported instead of
+    // going stale into To decide (git runs for these alone)
+    for (row, view) in rows.iter().zip(views.iter_mut()) {
+        if view.verdict == Verdict::Stale && track::waits_unreported(connection, row)? {
+            view.verdict = Verdict::Active;
+        }
     }
     Ok(Snapshot {
         trunks,
