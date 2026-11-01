@@ -30,7 +30,7 @@ struct LedgerLegacyImportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Import from claude-ledger").font(.title3.bold())
+            Text("Import from claude-ledger").font(.title3.weight(.semibold))
             Text("Gitrochi only reads this file and never changes it. Sessions the ledger already has are left as they are.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Text(verbatim: path)
@@ -38,7 +38,7 @@ struct LedgerLegacyImportSheet: View {
                 .lineLimit(1).truncationMode(.middle)
                 .help(path)
             if let summary = result ?? preview { counts(summary) }
-            if let error { Text(error).font(.caption).foregroundStyle(Color(nsColor: .systemRed)).textSelection(.enabled) }
+            if let error { Text(error).font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
             HStack {
                 if let back, result == nil { Button("Back") { back() } }
                 if working { ProgressView().controlSize(.small) }
@@ -80,11 +80,11 @@ struct LedgerLegacyImportSheet: View {
             .font(.callout)
             if !summary.skipped.isEmpty {
                 Text("Already in the ledger, left as they are: \(Self.list(summary.skipped))")
-                    .font(.caption).foregroundStyle(.secondary).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
             }
             if !summary.errors.isEmpty {
                 Text("Could not be read: \(Self.list(summary.errors))")
-                    .font(.caption).foregroundStyle(Color(nsColor: .systemOrange)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.waiting.text).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
             }
         }
     }

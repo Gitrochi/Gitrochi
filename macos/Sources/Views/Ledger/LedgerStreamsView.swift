@@ -51,17 +51,17 @@ private struct LedgerStreamCard: View {
         Card(spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 LedgerSessionLabel(id: stream.id, color: stream.color)
-                Text(stream.title).font(.headline).lineLimit(1).truncationMode(.tail)
+                Text(stream.title).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.tail)
                 LedgerVerdictBadge(verdict: stream.verdict)
                 Spacer(minLength: 6)
                 Button("Open") { open(stream.id) }.controlSize(.small)
             }
-            Text(subtitle).font(.caption).foregroundStyle(.secondary)
+            Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
             ForEach(Array(cycles.enumerated()), id: \.element.version) { index, cycle in
                 if index > 0 { Divider() }
                 LedgerCycleRow(cycle: cycle, events: events.filter { cycle.eventIds.contains($0.id) }, newest: index == 0, ledger: ledger, open: open)
             }
-            if cycles.isEmpty { Text("No cycle yet: the stream has not synced a baseline.").font(.caption).foregroundStyle(.secondary) }
+            if cycles.isEmpty { Text("No cycle yet: the stream has not synced a baseline.").font(.system(size: 11)).foregroundStyle(.secondary) }
         }
     }
 
@@ -86,13 +86,13 @@ private struct LedgerCycleRow: View {
             HStack(spacing: 8) {
                 Label(cycle.version, systemImage: "tag").font(.callout.weight(.semibold))
                 stateChip
-                Text(times).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(times).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 Spacer(minLength: 4)
                 if let by = cycle.releasedBy {
                     let releaser = ledger.session(by)
                     Button { open(by) } label: {
                         HStack(spacing: 4) {
-                            Text("released by").font(.caption).foregroundStyle(.secondary)
+                            Text("released by").font(.system(size: 11)).foregroundStyle(.secondary)
                             LedgerSessionLabel(id: by, color: releaser?.color ?? 0)
                             if let releaser { LedgerVerdictBadge(verdict: releaser.verdict) }
                         }
@@ -103,7 +103,7 @@ private struct LedgerCycleRow: View {
             }
             if let report = events.last(where: { $0.body != nil }), let body = report.body {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(report.summary ?? LedgerEventText.title(report.type)).font(.caption.weight(.semibold))
+                    Text(report.summary ?? LedgerEventText.title(report.type)).font(.system(size: 11, weight: .semibold))
                     MarkdownView(body)
                         .frame(maxHeight: isExpanded ? nil : 140, alignment: .top)
                         .clipped()
@@ -116,16 +116,16 @@ private struct LedgerCycleRow: View {
                     VStack(alignment: .leading, spacing: 3) {
                         ForEach(events.reversed()) { e in
                             HStack(spacing: 6) {
-                                Text(LedgerEventText.title(e.type)).font(.caption.weight(.medium))
-                                Text(e.summary ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                                Text(LedgerEventText.title(e.type)).font(.system(size: 11, weight: .medium))
+                                Text(e.summary ?? "").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                                 Spacer(minLength: 4)
-                                Text(LedgerTime.short(e.ts)).font(.caption2).foregroundStyle(.tertiary)
+                                Text(LedgerTime.short(e.ts)).font(.system(size: 11)).foregroundStyle(.tertiary)
                             }
                         }
                     }
                     .padding(.top, 4)
                 } label: {
-                    Text("Reports in this cycle: \(events.count)").font(.caption).foregroundStyle(.secondary)
+                    Text("Reports in this cycle: \(events.count)").font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
         }
@@ -134,17 +134,13 @@ private struct LedgerCycleRow: View {
     /// The newest cycle starts open
     private var isExpanded: Bool { expanded ?? newest }
 
+    /// A cycle's state as a status pill: in progress is running, applied passed, and skipped needs nobody
     private var stateChip: some View {
-        let (title, color): (String, Color) = {
-            switch cycle.state {
-            case .applied: return (String(localized: "Applied"), Color(nsColor: .systemGreen))
-            case .active: return (String(localized: "In progress"), .accentColor)
-            case .skipped: return (String(localized: "Skipped"), Color(nsColor: .tertiaryLabelColor))
-            }
-        }()
-        return Text(title).font(.caption2.weight(.semibold)).foregroundStyle(color)
-            .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(Capsule().fill(color.opacity(0.15)))
+        switch cycle.state {
+        case .applied: return StatusPill(title: String(localized: "Applied"), symbol: "checkmark.circle", tone: .passed)
+        case .active: return StatusPill(title: String(localized: "In progress"), symbol: "circle.dotted", tone: .waiting)
+        case .skipped: return StatusPill(title: String(localized: "Skipped"), symbol: "forward.end", tone: .neutral)
+        }
     }
 
     private var times: String {

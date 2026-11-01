@@ -23,7 +23,7 @@ struct LedgerAnswerField: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(4)
                 .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(focused ? Color.accentColor.opacity(0.7) : Color.secondary.opacity(0.25)))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(focused ? Color.accentColor.opacity(0.4) : Color.secondary.opacity(0.25), lineWidth: focused ? 2 : 1))
                 .overlay(alignment: .topLeading) {
                     if text.isEmpty {
                         Text(placeholder).font(.callout).foregroundStyle(.tertiary).padding(.horizontal, 9).padding(.vertical, 8)
@@ -34,14 +34,14 @@ struct LedgerAnswerField: View {
                 .accessibilityLabel(placeholder)
             HStack(spacing: 8) {
                 if busy { ProgressView().controlSize(.small) }
-                Text("Return adds a line · ⌘Return saves").font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
+                Text("Return adds a line · ⌘Return saves").font(.system(size: 11)).foregroundStyle(.tertiary).lineLimit(1)
                 Spacer(minLength: 4)
                 if let dismiss {
                     Button("Dismiss", action: dismiss).disabled(busy)
                         .help("Close the question without an answer")
                 }
                 Button(saveTitle, action: save)
-                    .buttonStyle(.borderedProminent)
+                    .prominentButton(focused)
                     .disabled(busy || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     // only the field being typed in owns ⌘Return, so several answer fields can sit on one page
                     .keyboardShortcut(focused ? KeyboardShortcut(.return, modifiers: .command) : nil)

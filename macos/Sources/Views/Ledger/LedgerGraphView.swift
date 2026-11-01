@@ -140,7 +140,7 @@ struct LedgerGraphView: View {
             HStack(spacing: 8) {
                 Text(plot.hiddenRows > 0 ? String(localized: "Older rows not drawn yet: \(plot.hiddenRows)")
                                          : String(localized: "Older sessions outside this period: \(hiddenSessions)"))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
                 Button("Show more") { Task { await ledger.showMoreGraph() } }.controlSize(.small)
             }
             .padding(14)
@@ -229,18 +229,18 @@ private struct LedgerGraphLabel: View {
                 Label(node.version ?? node.label ?? "", systemImage: "tag")
                     .font(.system(size: 12, weight: .semibold)).lineLimit(1)
                 if node.kind == .release, let by = node.sessionId {
-                    Text("released by \(by)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text("released by \(by)").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 }
             } else {
                 if let session { LedgerSessionLabel(id: session.id, color: session.color) }
                 else if let id = node.sessionId { LedgerSessionLabel(id: id, color: node.color) }
                 Text(node.label ?? "").font(.system(size: 12)).lineLimit(1).truncationMode(.tail)
                 if node.kind == .start, let title = session?.title {
-                    Text(title).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                    Text(title).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                 }
             }
             Spacer(minLength: 6)
-            Text(LedgerTime.short(node.ts)).font(.caption).foregroundStyle(.secondary).lineLimit(1).fixedSize()
+            Text(LedgerTime.short(node.ts)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).fixedSize()
         }
         .frame(height: GraphMetrics.rowHeight)
     }
@@ -257,19 +257,19 @@ private struct LedgerGraphCard: View {
             if node.lane == 0 {
                 let baseline = baselines.first { $0.version == node.version }
                 Label(node.version ?? "", systemImage: "tag").font(.callout.weight(.semibold))
-                if let baseline { Text(baseline.source.title + (baseline.note.map { " · " + $0 } ?? "")).font(.caption).foregroundStyle(.secondary) }
+                if let baseline { Text(baseline.source.title + (baseline.note.map { " · " + $0 } ?? "")).font(.system(size: 11)).foregroundStyle(.secondary) }
             } else if let session {
                 HStack(spacing: 6) {
                     LedgerSessionLabel(id: session.id, color: session.color)
                     LedgerVerdictBadge(verdict: session.verdict)
                 }
                 Text(session.title).font(.callout.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
-                Text(node.label ?? "").font(.caption).fixedSize(horizontal: false, vertical: true)
+                Text(node.label ?? "").font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
                 if let base = session.baseVersion {
-                    Text(base + " → " + (session.baseCurrent ?? base)).font(.caption).foregroundStyle(.secondary)
+                    Text(base + " → " + (session.baseCurrent ?? base)).font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
-            Text(LedgerTime.long(node.ts)).font(.caption2).foregroundStyle(.secondary)
+            Text(LedgerTime.long(node.ts)).font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(10)
         .frame(width: 250, alignment: .leading)
@@ -282,7 +282,7 @@ private struct LedgerGraphCard: View {
 private struct LedgerGraphLegend: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Legend").font(.headline)
+            Text("Legend").font(.body.weight(.semibold))
             entry(.baseline, "Baseline")
             entry(.release, "Baseline a session released")
             entry(.start, "Session started")

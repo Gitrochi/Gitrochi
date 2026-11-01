@@ -1,8 +1,9 @@
 import SwiftUI
 import AppKit
 
-/// Every session of the project as a dense list: verdict chips with counts, multi-select (⌘ or ⇧ click, Space) and
-/// bulk confirm, archive, snooze and close. Streams stay out of it. (Windows: widgets/ledger-workspace/ui/LedgerBoardView.tsx)
+/// Every session of the project as a dense list: verdict filter chips (the counts are the navigation's), multi-select
+/// (⌘ or ⇧ click, Space) and bulk confirm, archive, snooze and close. Streams stay out of it.
+/// (Windows: widgets/ledger-workspace/ui/LedgerBoardView.tsx)
 struct LedgerBoardView: View {
     let ledger: LedgerStore
     let open: (String) -> Void
@@ -31,17 +32,23 @@ struct LedgerBoardView: View {
         VStack(alignment: .leading, spacing: 6) {
             WorkbenchFlow(spacing: 6) {
                 ForEach(LedgerVerdict.displayOrder, id: \.self) { verdict in
-                    let count = ledger.verdictCounts[verdict] ?? 0
                     let on = ledger.filter.verdicts.contains(verdict)
                     Button {
                         var filter = ledger.filter
                         if on { filter.verdicts.remove(verdict) } else { filter.verdicts.insert(verdict) }
                         ledger.filter = filter
                     } label: {
-                        LedgerVerdictBadge(verdict: verdict, count: count)
-                            .padding(2)
-                            .overlay(Capsule().strokeBorder(on ? Color.primary.opacity(0.55) : Color.clear, lineWidth: 1.5))
-                            .opacity(count == 0 && !on ? 0.45 : 1)
+                        // a filter, not a status: the verdict's icon carries its tone, and a chip that is on is tinted
+                        HStack(spacing: 4) {
+                            Image(systemName: verdict.symbol).foregroundStyle(verdict.tone.text).accessibilityHidden(true)
+                            Text(verdict.title).fontWeight(on ? .semibold : .regular).lineLimit(1)
+                        }
+                        .font(.system(size: 12))
+                        .padding(.horizontal, 10)
+                        .frame(height: 24)
+                        .background(Capsule().fill(on ? StudioStyle.selection : Color.clear))
+                        .overlay(Capsule().strokeBorder(on ? Color.clear : StudioStyle.border))
+                        .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
                     .help(on ? String(localized: "Stop filtering by \(verdict.title)") : String(localized: "Show only \(verdict.title)"))
@@ -50,8 +57,9 @@ struct LedgerBoardView: View {
             }
             if ledger.streamCount > 0 {
                 HStack(spacing: 4) {
-                    Text("Streams kept out of this list (they report in cycles): \(ledger.streamCount)").font(.caption).foregroundStyle(.secondary)
-                    Button("Show streams", action: showStreams).buttonStyle(.link).font(.caption)
+                    // the count is the Streams row's: a count appears once per screen
+                    Text("Streams report in cycles and stay out of this list.").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Button("Show streams", action: showStreams).buttonStyle(.link).font(.system(size: 11))
                 }
             }
         }
@@ -89,7 +97,8 @@ struct LedgerBoardView: View {
         }
         .controlSize(.small)
         .padding(.horizontal, 14).padding(.vertical, 7)
-        .background(StudioStyle.selection)
+        // a strip, not a selection: white, with the divider under it
+        .background(StudioStyle.surface)
     }
 
     private var list: some View {
@@ -98,6 +107,7 @@ struct LedgerBoardView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(rows) { session in
                         LedgerBoardRow(session: session, behind: LedgerProjects.behind(session, baselines: ledger.state?.baselines ?? []),
+                                       showsVerdict: ledger.filter.verdicts != [session.verdict],
                                        selected: ledger.selection == session.id, picked: ledger.boardSelection.contains(session.id),
                                        busy: ledger.working.contains(session.id), togglePick: { toggle(session.id) })
                             .id(session.id)
@@ -158,6 +168,8 @@ struct LedgerBoardView: View {
 private struct LedgerBoardRow: View {
     let session: LedgerSession
     let behind: Int
+    /// No badge that repeats the filter: a list filtered to one verdict leaves it out
+    let showsVerdict: Bool
     let selected: Bool
     let picked: Bool
     let busy: Bool
@@ -188,23 +200,23 @@ private struct LedgerBoardRow: View {
             .accessibilityLabel(picked ? String(localized: "Deselect") : String(localized: "Select"))
             LedgerSessionLabel(id: session.id, color: session.color)
             VStack(alignment: .leading, spacing: 2) {
-                Text(session.title).font(.system(size: 13, weight: .medium)).lineLimit(1).truncationMode(.tail)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(session.title).font(.system(size: 13, weight: selected ? .semibold : .medium)).lineLimit(1).truncationMode(.tail)
+                Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
             .layoutPriority(1)
             Spacer(minLength: 6)
             if busy { ProgressView().controlSize(.small) }
             if wide {
                 if let branch = session.links.branch {
-                    Label(branch, systemImage: "arrow.triangle.branch").font(.caption).foregroundStyle(.secondary)
+                    Label(branch, systemImage: "arrow.triangle.branch").font(.system(size: 11)).foregroundStyle(.secondary)
                         .lineLimit(1).truncationMode(.middle).frame(maxWidth: 170, alignment: .leading)
                 }
                 if let pr = session.links.pr {
-                    Text("#\(pr.number)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    Text("#\(pr.number)").font(.system(size: 11).monospacedDigit()).foregroundStyle(.secondary)
                 }
             }
-            LedgerVerdictBadge(verdict: session.verdict)
-            Text(LedgerTime.short(session.lastAt)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            if showsVerdict { LedgerVerdictBadge(verdict: session.verdict) }
+            Text(LedgerTime.short(session.lastAt)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 .frame(minWidth: wide ? 72 : 0, alignment: .trailing).fixedSize()
         }
     }
