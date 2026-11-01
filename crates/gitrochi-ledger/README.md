@@ -68,6 +68,8 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
+  observe <claude|codex> EVENT < input.json
+  integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json
 ```
 
@@ -86,6 +88,25 @@ gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
 ```
 
 `import-legacy` copies a database of the standalone claude-ledger tool, which the ledger re-implements, without ever writing to that file: projects, baselines, sessions with their events and questions, and the hashes of pasted blocks it imported. Sessions the ledger already has are skipped and listed, so running it again changes nothing; `--dry-run` only counts (see [CONTRACT.md](CONTRACT.md#importing-a-claude-ledger-database)).
+
+## Automatic local activity
+
+The separate passive observer can follow local Claude Code and Codex conversations, including ones started outside Gitrochi. Installation is opt-in:
+
+```sh
+gitrochi-ledger integrate claude --install
+gitrochi-ledger integrate codex --install
+gitrochi-ledger --json integrate claude --status
+gitrochi-ledger integrate codex --remove
+```
+
+Use a stable installed executable; `--cli FILE` registers that executable instead of the command currently running. `--config FILE` selects another settings file for an isolated trial. The defaults are the user's `.claude/settings.json` and `.codex/hooks.json`. Installation appends only owned callbacks, keeps unrelated settings and callbacks, and saves an existing file in a private adjacent backup before an atomic update. Repeating installation does not duplicate callbacks. Removal deletes only this client's marked observer callbacks.
+
+Installation creates the selected Ledger database if it is missing. Status and removal do not create one. Status is **configuration only**: it does not prove that the client loaded, trusted or ran the hooks. Start or restart the client after installation. Codex requires review of non-managed hooks in its own `/hooks` flow; this command never writes trust hashes, enables features or approves hooks. Local hooks do not cover cloud-orchestrated Codex tasks.
+
+`observe CLIENT EVENT` reads one JSON object from standard input and always exits 0. Its only context output is a bounded `SessionStart` instruction containing the Ledger session ID explicitly, so an available `ledger_report` tool can report to that same row. MCP registration remains separate. No permission decision or continuation command is emitted.
+
+The observer binds each provider/session ID atomically, reuses an app-issued `GITROCHI_LEDGER_SESSION`, and records lifecycle and tool names as `hook` events. It ignores prompts, transcripts, tool arguments/results and assistant output. New external rows use the generic `other` kind and disable auto-continue explicitly. Existing app-tracked rows keep their kind and policy. Activity advances `lastAt`; only actual agent reports advance `lastAgentAt`. `Stop` and `SessionEnd` do not mark work done, confirm, archive or close it.
 
 ## Hooks
 
@@ -119,6 +140,7 @@ A wait is a pending prompt that the apps show with a countdown and can answer (`
 | `backup.rs`, `prompts.rs`, `settings.rs` | Backups, pending prompts for auto-continue, global settings |
 | `api.rs`, `ffi.rs`, `mcp.rs`, `main.rs` | The dispatcher and its callers, the C ABI, the MCP server, the CLI |
 | `hook.rs` | The Claude Code hook handler: activity and auto-continue's waits |
+| `external.rs`, `integrations.rs` | Passive local Claude/Codex activity and reversible user-hook installation |
 | `text.rs`, `demo.rs`, `vocab.rs` | Text for agents, demo data, the vocabulary and input aliases |
 
 ## Checks

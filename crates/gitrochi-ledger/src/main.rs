@@ -3,7 +3,7 @@
 //! `hook` handles the Claude Code hooks of agents Gitrochi launched.
 
 use gitrochi_ledger::api::{self, Caller};
-use gitrochi_ledger::{backup, db, demo, hook, mcp, text, util, Error};
+use gitrochi_ledger::{backup, db, demo, external, hook, integrations, mcp, text, util, Error};
 use serde_json::{json, Map, Value};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
@@ -26,6 +26,8 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
+  observe <claude|codex> EVENT < input.json   passive local activity; always exits 0
+  integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
                                 PreToolUse, PermissionRequest, PostToolUse,
                                 PostToolUseFailure, SessionEnd); always exits 0, or 2 when
@@ -35,8 +37,19 @@ The database is GITROCHI_LEDGER_DB, else the per-user default (gitrochi-ledger c
 GITROCHI_LEDGER_SESSION is the default session for report, overview and session.
 Details: crates/gitrochi-ledger/README.md";
 
-const FLAGS: [&str; 8] = [
-    "json", "pretty", "deliver", "daily", "list", "large", "force", "dry-run",
+const FLAGS: [&str; 12] = [
+    "json",
+    "pretty",
+    "deliver",
+    "daily",
+    "list",
+    "large",
+    "force",
+    "dry-run",
+    "install",
+    "status",
+    "remove",
+    "managed-hook",
 ];
 const REPEATED: [&str; 2] = ["ask", "artifact"];
 
@@ -327,6 +340,47 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
             .ok_or_else(|| Error::invalid(format!("Missing {what}")))
     };
     match invocation.command.as_str() {
+        "integrate" => {
+            let client = external::Client::parse(&positional(0, "client")?)?;
+            if invocation.positional.len() != 1 {
+                return Err(Error::invalid("integrate takes one client"));
+            }
+            let actions: Vec<_> = [
+                ("install", integrations::Action::Install),
+                ("status", integrations::Action::Status),
+                ("remove", integrations::Action::Remove),
+            ]
+            .into_iter()
+            .filter(|(flag, _)| invocation.flag(flag))
+            .collect();
+            if actions.len() != 1 {
+                return Err(Error::invalid(
+                    "Choose exactly one of --install, --status or --remove",
+                ));
+            }
+            let action = actions[0].1;
+            let config = invocation
+                .text("config")
+                .map(PathBuf::from)
+                .map(Ok)
+                .unwrap_or_else(|| integrations::default_config(client))?;
+            let cli = invocation
+                .text("cli")
+                .map(PathBuf::from)
+                .map(Ok)
+                .unwrap_or_else(|| {
+                    std::env::current_exe().map_err(|e| Error::new("IO", e.to_string()))
+                })?;
+            if matches!(action, integrations::Action::Install) {
+                // Installation is explicit; hooks themselves never create a database.
+                let _ = open(path)?;
+            }
+            let status = integrations::configure(client, action, &config, &cli, path)?;
+            let text = format!("{} passive hooks: {} ({} / {}). Configuration only; start or restart the client and review its hook trust prompts.",
+                client.title(), if status.installed { "installed" } else { "not installed" },
+                status.owned_hook_count, status.expected_hook_count);
+            Ok(Output::Text(text, serde_json::to_value(status)?))
+        }
         "report" => {
             let db = open(path)?;
             let reply = api::report(&db, &report_args(invocation)?, "cli")?;
@@ -558,8 +612,48 @@ fn run_hook(event: &str, db: Option<PathBuf>) -> ExitCode {
 
 mod terminal;
 
+/// Recognized before usage errors: an observer must never block its client.
+fn observer_args(raw: &[String]) -> Option<(Option<external::Client>, String, Option<PathBuf>)> {
+    let (db, rest) = match raw {
+        [flag, path, rest @ ..] if flag == "--db" => (Some(PathBuf::from(path)), rest),
+        [flag, rest @ ..] if flag.starts_with("--db=") => (Some(PathBuf::from(&flag[5..])), rest),
+        _ => (None, raw),
+    };
+    if rest.first().is_none_or(|s| s != "observe") {
+        return None;
+    }
+    Some((
+        rest.get(1).and_then(|c| external::Client::parse(c).ok()),
+        rest.get(2).cloned().unwrap_or_default(),
+        db,
+    ))
+}
+
+fn run_observer(client: Option<external::Client>, event: &str, db: Option<PathBuf>) -> ExitCode {
+    let mut input = Vec::new();
+    let _ = io::stdin().take(1_048_577).read_to_end(&mut input);
+    if let Some(client) = client {
+        let result = external::run(
+            client,
+            event,
+            &String::from_utf8_lossy(&input),
+            &external::ObserverEnv::from_process(db),
+        );
+        if !result.stdout.is_empty() {
+            let _ = writeln!(io::stdout(), "{}", result.stdout);
+        }
+        if !result.stderr.is_empty() {
+            let _ = writeln!(io::stderr(), "{}", result.stderr);
+        }
+    }
+    ExitCode::SUCCESS
+}
+
 fn main() -> ExitCode {
     let raw: Vec<String> = std::env::args().skip(1).collect();
+    if let Some((client, event, db)) = observer_args(&raw) {
+        return run_observer(client, &event, db);
+    }
     if let Some((event, db)) = hook_args(&raw) {
         return run_hook(&event, db);
     }
@@ -582,6 +676,20 @@ fn main() -> ExitCode {
         .text("db")
         .map(PathBuf::from)
         .unwrap_or_else(db::default_db_path);
+    if invocation.command == "observe" {
+        return run_observer(
+            invocation
+                .positional
+                .first()
+                .and_then(|c| external::Client::parse(c).ok()),
+            invocation
+                .positional
+                .get(1)
+                .map(String::as_str)
+                .unwrap_or(""),
+            Some(path),
+        );
+    }
     if invocation.command == "hook" {
         // with other options in front; the entries Gitrochi installs never have them
         let event = invocation.positional.first().cloned().unwrap_or_default();

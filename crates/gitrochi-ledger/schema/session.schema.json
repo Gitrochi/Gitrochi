@@ -139,6 +139,20 @@
         "agentSessionId": {
           "type": "string"
         },
+        "observer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["client", "sessionId", "event"],
+          "properties": {
+            "client": { "enum": ["claude", "codex"] },
+            "sessionId": { "type": "string" },
+            "event": { "type": "string" },
+            "tool": { "type": "string" },
+            "toolUseId": { "type": "string" },
+            "turnId": { "type": "string" },
+            "agentId": { "type": "string" }
+          }
+        },
         "cwd": {
           "type": "string"
         }

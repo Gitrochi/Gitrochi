@@ -148,7 +148,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
             <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
             <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
-            <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
+            <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect agents")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect agents")} onClick={() => setSheet("connect")} />
             <div className="ledger-quick-launch">
               <IconButton icon={<SquareTerminal size={16} />} disabled={!repoPath || !launcher} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />
               {(!repoPath || !launcher) && <span className="hint">{t("Open a repository to use its terminal")}</span>}
@@ -196,9 +196,9 @@ function Onboarding({ onConnect, onImport, onImportLegacy }: { onConnect: () => 
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
       <div className="ledger-onboarding-steps">
         <div className="card">
-          <strong>{t("Connect Claude Code")}</strong>
+          <strong>{t("Connect agents")}</strong>
           <span className="hint">{t("The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations.")}</span>
-          <Button kind="primary" onClick={onConnect}><PlugZap size={14} />{t("Connect Claude Code")}</Button>
+          <Button kind="primary" onClick={onConnect}><PlugZap size={14} />{t("Connect agents")}</Button>
         </div>
         <div className="card">
           <strong>{t("Paste reports")}</strong>

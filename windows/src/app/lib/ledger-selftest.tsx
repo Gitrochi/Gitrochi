@@ -342,7 +342,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $$(".ledger-stream .ledger-cycle").length === 3), "Streams did not list the stream's cycles");
     passed.push("streams");
 
-    // Onboarding on an empty ledger: Paste reports and Connect Claude Code
+    // Onboarding on an empty ledger: Paste reports and Connect agents
     root.unmount();
     root = createRoot(host);
     const empty = new LedgerStore(new DemoLedgerBackend({ now: () => clock, empty: true }));
@@ -353,10 +353,17 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     ensure($(".ledger-onboarding")?.textContent?.includes(t("No reports yet")), "The empty Ledger must explain that reports have not arrived");
-    button(".ledger-onboarding", "Connect Claude Code")!.click();
-    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code did not open");
+    button(".ledger-onboarding", "Connect agents")!.click();
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect agents did not open");
     ensure($$(".modal .ledger-code pre").some((pre) => pre.textContent?.includes("Use ledger_report to send a start report")) && $(".modal button[aria-label='" + t("Copy reporting instruction") + "']"), "Both the reporting instruction and its copy action must be available");
-    ensure($(".modal")?.textContent?.includes(t("Checks this app's Ledger, not Claude Code's MCP configuration.")), "The probe must explain what it tests");
+    ensure($(".modal")?.textContent?.includes(t("Checks this app's Ledger, not agent configuration or hook trust.")), "The probe must explain what it tests");
+    const client = $<HTMLSelectElement>(".modal .ledger-connect-client select")!;
+    choose(client, "codex");
+    ensure(await until(() => $$(".modal .ledger-code pre").some((pre) => pre.textContent?.startsWith("codex mcp add gitrochi-ledger -- "))), "The Codex choice must offer its own MCP registration command");
+    ensure($$(".modal .ledger-code pre").some((pre) => pre.textContent?.includes("integrate codex --install")) && $$(".modal .ledger-code pre").some((pre) => pre.textContent?.startsWith("[mcp_servers.gitrochi-ledger]")), "Codex needs separate activity setup and TOML MCP configuration");
+    ensure($(".modal")?.textContent?.includes(t("After installing, open /hooks in Codex and review and trust the Ledger hooks. Installation does not trust them.")) && $(".modal")?.textContent?.includes(t("Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports.")), "Codex setup must explain hook trust and the local Desktop scope");
+    choose(client, "claude");
+    ensure(await until(() => $$(".modal .ledger-code pre").some((pre) => pre.textContent?.startsWith("claude mcp add --scope user "))), "The Claude Code choice must retain its MCP registration command");
     const beforeProbe = empty.state!.rev;
     button(".modal", "Test Ledger")!.click();
     ensure(await until(() => $(".modal .card[role='status']")?.textContent?.includes(t("The Ledger responds."))), "Test Ledger did not answer");
@@ -491,8 +498,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     noticeBoxes()[1].click();
     ensure(await until(() => !noticeBoxes()[1].checked && !memory.has("ledgerBadge")), "The badge switch did not turn back off");
     passed.push("notification settings");
-    button(".ledger-settings", "Connect Claude Code…")!.click();
-    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code… did not open from Settings");
+    button(".ledger-settings", "Connect agents…")!.click();
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect agents… did not open from Settings");
     button(".modal", "Done")!.click();
     button(".ledger-settings", "Import from claude-ledger…")!.click();
     ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");

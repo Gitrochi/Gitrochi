@@ -33,7 +33,7 @@ What Gitrochi adds on top:
 | Implementation channel and its cycles | **Streams**; which kinds have the decision role and which the implementation role is a setting | P4 | No kind names in the rules |
 | Ctrl+K search | macOS: a Ledger group appended to `WorkspaceCommandPalette`; Windows: search inside the Ledger page (D11) | P3 | No Ledger-only search window |
 | Paste import of ```` ```ledger ```` blocks | **Import** sheet; the duplicate hash is kept | P1 parser, P4 sheet | |
-| MCP tools and CLI | `gitrochi-ledger`: a CLI (short text, or JSON with `--json`) with an `mcp` stdio subcommand, bundled with both apps | P1 binary, P3 sheet | The "Connect Claude…" sheet copies a `claude mcp add …` command and a config snippet; it never edits a client's files |
+| MCP tools and CLI | `gitrochi-ledger`: a CLI (short text, or JSON with `--json`) with an `mcp` stdio subcommand, bundled with both apps | P1 binary, P3 sheet | **Connect agents** offers Claude Code/Codex registration and separate passive activity setup commands; the sheet never edits client files |
 | Tray notifications | Native notifications + Dock/taskbar badge, switchable in Settings | P3 | Neither app has system notifications yet |
 | Electron terminal and quick launch | "Ledger overview" and "Claude Code" quick launches in the Ledger page, opening tabs through the terminal's existing API | P4 | |
 | GitLab merge-request tab and merging | Nothing new, and the existing pull/merge request pages stay untouched: the Ledger inspector links to the request | P3 | Merging stays in Gitrochi's own confirmed flow |
@@ -142,7 +142,7 @@ crates/gitrochi-autocontinue/  auto-continue's pure logic, no I/O: question dete
 | Commit graph (`gitrochi-core` `graph::layout`, `Palette.lanes`/`GraphMetrics` ↔ `laneColors`/`metrics.ts`) | The core may reuse the layout to compute the Graph view's lanes; the apps draw with the commit graph's colours and metrics ([§10.5](#105-graph)). |
 | Pull/merge request pages (`PullRequestSection`, `PullRequestDetailView` on both platforms) | Untouched — no chip. The Ledger inspector links to a session's request instead (head branch, or a session ID in the request's title, branch or description) and opens it on the existing page. |
 | `WorkspaceCommandPalette` (macOS) | Adding `.ledger` to `WorkspaceDestination` gives "Go to Ledger"; a Ledger group appended to the palette's command list adds sessions, questions and baselines from `search`. |
-| `MCPConnectionSheet` (both platforms) | The Connect Claude Code sheet follows its layout, adds the `claude mcp add` command and reporting instructions, and labels its own probe **Test Ledger**. |
+| `MCPConnectionSheet` (both platforms) | The Connect agents sheet follows its layout, offers Claude Code/Codex setup and reporting instructions, and labels its own backend probe **Test Ledger**. |
 | AI service (`Services/AI.swift` ↔ `entities/ai`) | Auto-continue's optional refinement and P5 summaries, through `complete`, with the key Gitrochi already stores. |
 | `MarkdownView` ↔ `shared/ui/Markdown.tsx` | Report bodies and questions. |
 | Terminal panel | P4 quick launches from the Ledger page, through the terminal's existing API only. |
@@ -344,6 +344,16 @@ Replies to agents are short English text, because every report reply costs each 
 
 While the app runs, once a day, `VACUUM INTO` writes `ledger/backups/ledger-YYYYMMDD-HHMM.sqlite3`; the newest 14 are kept and only files with that name shape are ever removed. `backup` does the same on demand. Restoring is manual and documented.
 
+### 7.15 Tracking external agents
+
+**Connect agents** offers separate setup for Claude Code and Codex running outside Gitrochi. `gitrochi-ledger integrate <claude|codex> --install` adds passive activity hooks to that client's user configuration, preserving unrelated hooks. `--status` checks the expected configuration only; it does not establish that the client loaded it, that hooks are trusted, or that an agent is running. `--remove` removes only Gitrochi's owned entries. Setup backs up an existing file before changing it. Opening the sheet or testing the Ledger performs none of these operations.
+
+`gitrochi-ledger observe <claude|codex> <event>` receives lifecycle JSON and correlates the client's session with a Ledger session. It records starts, stops and tool names, without reading transcripts or persisting prompts, tool arguments/results or assistant messages. Repeated starts, resumes and compaction reuse the session. Activity changes `lastAt`, never `lastAgentAt`, status or completion; a session stays **Unreported** until its agent sends a real report. Session-start context supplies the Ledger ID for subsequent `ledger_report` calls. Hook failures return without a decision and never stop the agent.
+
+Codex CLI and local Desktop tasks on the same host share MCP configuration. Codex requires the person to review and trust non-managed hooks through `/hooks`; installing them never grants trust. The integration neither writes trust hashes nor bypasses review. Local command hooks do not run for cloud-orchestrated tasks, even when those tasks execute tools locally. Such tasks appear through available Ledger MCP tools when their agent sends reports. These limits follow the official [Hooks](https://learn.chatgpt.com/docs/hooks), [MCP](https://learn.chatgpt.com/docs/extend/mcp) and [configuration](https://learn.chatgpt.com/docs/config-file/config-reference) documentation.
+
+MCP registration remains separate: `claude mcp add --scope user gitrochi-ledger -- "<binary>" mcp` or `codex mcp add gitrochi-ledger -- "<binary>" mcp`. The sheet also offers Claude's JSON or Codex's TOML entry, and a reporting instruction. MCP access provides semantic progress, questions and completion; passive hooks do not infer those reports. External activity tracking does not enable auto-continue or change Gitrochi's default-off launch tracking.
+
 ## 8. Permission boundary
 
 The product rule from the original: confirming, archiving, changing a status, answering and deleting are a person's judgement. If an agent could press those buttons, the ledger would lose its reason to exist.
@@ -410,7 +420,7 @@ Not checked live: `ExitPlanMode`. It uses the same mechanism as `AskUserQuestion
   - Only these entries get a longer `timeout`: the longest wait the settings allow plus a 10 s margin (310 s), enforced for the `asyncRewake` `Stop` entry too. A person may change a session's wait while its agent runs, so the timeout cannot follow the wait at launch; the handler keeps its own deadline at the session's wait. The existing entries keep `timeout: 5`.
   - Short `PostToolUse` and `PostToolUseFailure` entries tell the handler that a call ran. Because `PermissionRequest` input has no `tool_use_id`, the call is matched on its tool and what it acts on (the command, the file, the URL or the query), for the same agent.
 - **Permission modes.** Claude Code 2.1.309 starts sessions in auto mode by default, and `PermissionRequest` hooks fire only in a prompting mode. So the permission path applies only to sessions launched in one; launch tracking decides the mode.
-- **Other agents.** Codex and Gemini have no such hooks and are left out at first. If they are needed later, the candidate is typing the answer and Enter into the Gitrochi terminal tab that runs the agent, cancelled whenever the person is typing there.
+- **Other agents.** Codex supports lifecycle hooks for passive activity tracking ([§7.15](#715-tracking-external-agents)); this does not enable auto-continue, approve permissions or answer questions. Gemini remains outside the hook integration. Any future answer channel for another agent remains an open design decision.
 
 ### 9.2 What it sends
 
@@ -537,13 +547,13 @@ One card per stream (label, line, verdict, current version, last report) with it
 
 ### 10.8 Empty state = onboarding
 
-`WorkspaceEmptyState` ↔ `Empty`, with buttons below it as the pull-request page already composes them: **Track agents I start** (turns the setting on; D13), **Connect Claude Code** (the sheet below), **Paste reports** (Import), **Import from claude-ledger…** (D5). Once there are sessions, the same actions stay in the view menu.
+`WorkspaceEmptyState` ↔ `Empty`, with buttons below it as the pull-request page already composes them: **Track agents I start** (turns the setting on; D13), **Connect agents** (the sheet below), **Paste reports** (Import), **Import from claude-ledger…** (D5). Once there are sessions, the same actions stay in the view menu.
 
 The empty Ledger says **No reports yet**. Registering MCP tools only makes them available: it neither imports existing conversations nor makes agents send reports automatically. Start or restart a Claude Code conversation after registration, then ask it to call `ledger_report` with a `start` report about its current work. New Claude Code agents launched from Gitrochi are tracked automatically only while **Settings › Ledger › Track agents I start** is on; that setting remains off by default. The **Board** shows ordinary sessions; live implementation sessions appear under **Streams** instead. The **Inbox** shows only questions, reviews and decisions needing the person, so an empty Inbox does not mean the Ledger has no sessions. Its **View progress** action opens **Streams** when there are streams and no Board sessions, and otherwise opens **Board**.
 
 ### 10.9 Sheets
 
-- **Connect Claude Code**: laid out like the existing `MCPConnectionSheet` — the `claude mcp add --scope user gitrochi-ledger -- "<bundled binary>" mcp` command and the `mcpServers` JSON for other clients, each with Copy. Both platforms also offer a copyable English reporting instruction for the agent or the project's `CLAUDE.md`: send a `start` report through `ledger_report`, then report progress, questions and completion as the work changes. **Test Ledger** checks this app's Ledger backend; on macOS it also starts the bundled binary, runs the MCP handshake and lists its tools. A successful probe means the Ledger responds, not that Claude Code's own MCP configuration was tested, and the probe creates no session or report. The sheet never edits a client's configuration files. Sessions Gitrochi launches need no manual registration while **Track agents I start** is on; connecting tools alone does not enable that setting.
+- **Connect agents**: the Claude Code/Codex selector offers that client's MCP registration command, JSON/TOML settings entry, reporting instruction, and separate passive-hook install/status/removal commands ([§7.15](#715-tracking-external-agents)). Codex shows the required `/hooks` trust review and the local Desktop/CLI scope; cloud-orchestrated tasks rely on reports. **Test Ledger** checks this app's Ledger backend; on macOS it also starts the bundled binary, runs the MCP handshake and lists its tools. It never checks a client's configuration or hook trust, and creates no session or report. The sheet itself never edits client files. **Track agents I start** remains the separate, default-off setting for Claude Code launches from Gitrochi.
 - **Import**: a text area for pasted conversations, results per block, and **Import from claude-ledger…** (choose a database file; a preview of counts, then import).
 
 ### 10.10 Search
@@ -556,7 +566,7 @@ New questions, new sessions to clean up and new `applied` reports raise one nati
 
 ### 10.12 Settings › Ledger
 
-Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect Claude Code… · Import…
+Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect agents… · Import…
 
 ### 10.13 Visual rules
 

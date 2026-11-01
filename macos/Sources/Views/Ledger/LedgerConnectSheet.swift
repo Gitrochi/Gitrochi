@@ -1,8 +1,8 @@
 import SwiftUI
 import AppKit
 
-/// Registration makes the tools available; agents still need to report. The probe checks Gitrochi's Ledger and its
-/// bundled MCP command, never Claude Code's configuration. (Windows: features/connect-ledger-mcp/LedgerConnectSheet)
+/// Local agents can send MCP reports and install passive activity hooks independently. The probe checks Gitrochi's
+/// Ledger and its bundled MCP command, never client configuration or hook trust. (Windows: features/connect-ledger-mcp)
 struct LedgerConnectSheet: View {
     let ledger: LedgerStore
     /// Where the app bundles the ledger's command-line tool
@@ -11,37 +11,57 @@ struct LedgerConnectSheet: View {
     @ViewState private var notice = ""
     @ViewState private var error: String?
     @ViewState private var testing = false
-
-    private var command: String { "claude mcp add --scope user gitrochi-ledger -- \"\(binaryPath)\" mcp" }
-    private var config: String {
-        let entry: [String: Any] = ["command": binaryPath, "args": ["mcp"]]
-        let values: [String: Any] = ["mcpServers": ["gitrochi-ledger": entry]]
-        guard let data = try? JSONSerialization.data(withJSONObject: values, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]) else { return "{}" }
-        return String(decoding: data, as: UTF8.self)
-    }
+    @ViewState private var client: LedgerSetupClient = .claude
     // Windows: LedgerConnectSheet.tsx. This is an instruction to copy, kept in English like a project's CLAUDE.md.
     private let reportingInstruction = "Use ledger_report to send a start report for this conversation and its current work. Include the project and a short title. Send progress, question and done reports as the work changes."
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Connect Claude Code").font(.title3.weight(.semibold))
+            Text("Connect agents").font(.title3.weight(.semibold))
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Register the Ledger tools with Claude Code by running this command in a terminal.")
+                    Picker("Agent", selection: $client) {
+                        ForEach(LedgerSetupClient.allCases) { client in Text(verbatim: client.title).tag(client) }
+                    }
+                    .pickerStyle(.menu).frame(maxWidth: 260)
+                    if client == .codex {
+                        Text("Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports.")
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    Text("Ledger reports").font(.system(size: 13, weight: .semibold))
+                    Text("Register the Ledger tools by running this command in a terminal.")
                         .font(.callout).fixedSize(horizontal: false, vertical: true)
-                    copyBlock(command, label: "Command for Claude Code", copyLabel: "Copy command")
+                    copyBlock(client.registration(binary: binaryPath), label: "MCP registration command", copyLabel: "Copy command")
                     Text("Registration makes the tools available. It does not import existing conversations or make agents report automatically.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
-                    Text("Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work.")
+                    Text("Start a new conversation, then ask the agent to send a start report with ledger_report.")
                         .font(.callout).fixedSize(horizontal: false, vertical: true)
                     copyBlock(reportingInstruction, label: "Reporting instruction", copyLabel: "Copy reporting instruction")
-                    DisclosureGroup("Other MCP clients: add this entry to their MCP settings.") {
-                        copyBlock(config, label: "MCP settings entry", copyLabel: "Copy MCP settings").padding(.top, 6)
+                    DisclosureGroup("MCP settings entry") {
+                        copyBlock(client.configuration(binary: binaryPath), label: "MCP settings entry", copyLabel: "Copy MCP settings").padding(.top, 6)
                     }
                     .font(.system(size: 11))
+                    Text("Automatic activity").font(.system(size: 13, weight: .semibold))
+                    Text("Install activity hooks for this agent. Existing hooks are kept. MCP registration is separate.")
+                        .font(.callout).fixedSize(horizontal: false, vertical: true)
+                    copyBlock(client.install(binary: binaryPath), label: "Activity setup command", copyLabel: "Copy command")
+                    Text("Activity records do not mark work complete. Task details still come from the agent's reports.")
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                    if client == .codex {
+                        Text("After installing, open /hooks in Codex and review and trust the Ledger hooks. Installation does not trust them.")
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    DisclosureGroup("Check or remove automatic activity") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            copyBlock(client.status(binary: binaryPath), label: "Status", copyLabel: "Copy command")
+                            Text("Setup status checks configuration only, not whether hooks are trusted or running.")
+                                .font(.system(size: 11)).foregroundStyle(.secondary)
+                            copyBlock(client.remove(binary: binaryPath), label: "Remove", copyLabel: "Copy command")
+                        }.padding(.top, 6)
+                    }.font(.system(size: 11))
                     Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
-                    Text("Nothing is written to Claude Code's settings by Gitrochi.")
+                    Text("This sheet changes no client settings. Run only the setup commands you want to enable.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
                     if !notice.isEmpty {
                         Text(notice).font(.system(size: 11)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
@@ -50,7 +70,7 @@ struct LedgerConnectSheet: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Text("Checks this app's Ledger, not Claude Code's MCP configuration.")
+            Text("Checks this app's Ledger, not agent configuration or hook trust.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             HStack {
                 Button("Test Ledger") { test() }.disabled(testing)

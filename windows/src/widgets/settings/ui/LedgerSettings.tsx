@@ -150,7 +150,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
-          <Button size="small" onClick={() => setSheet("connect")}><PlugZap size={13} />{t("Connect Claude Code…")}</Button>
+          <Button size="small" onClick={() => setSheet("connect")}><PlugZap size={13} />{t("Connect agents…")}</Button>
           <Button size="small" onClick={() => setSheet("import")}><ClipboardPaste size={13} />{t("Import…")}</Button>
           <Button size="small" onClick={() => setSheet("legacy")}><DatabaseBackup size={13} />{t("Import from claude-ledger…")}</Button>
         </div>
