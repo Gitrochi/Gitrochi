@@ -1574,6 +1574,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Gitrochi ชุดนี้ไม่มีคำสั่งของสมุดบันทึก: %@";
 "The ledger command did not answer the MCP handshake." = "คำสั่งของสมุดบันทึกไม่ตอบการจับมือ MCP";
 "The ledger command answers with its tools: %@." = "คำสั่งของสมุดบันทึกตอบกลับพร้อมเครื่องมือ: %@";
+"Latest" = "ล่าสุด";
+"Latest release" = "รีลีสล่าสุด";
+"Latest stable release" = "รีลีสเสถียรล่าสุด";
+"{0} unreleased commits" = "คอมมิตที่ยังไม่รีลีส {0} รายการ";
+"Not on top of {0}" = "ไม่ได้ต่อจาก {0}";
+"Compare in app" = "เปรียบเทียบในแอป";
+"Compare in browser" = "เปรียบเทียบในเบราว์เซอร์";
+"Other files ({0})" = "ไฟล์อื่น ({0})";
+"Tagged from {0}" = "ติดแท็กจาก {0}";
+"Assets: {0}" = "ไฟล์แนบ: {0}";
+"Published releases" = "รีลีสที่เผยแพร่แล้ว";
+"Published, but marked as not ready for production" = "เผยแพร่แล้ว แต่ระบุว่ายังไม่พร้อมใช้งานจริง";
+"Saved but not published; only people with write access see it" = "บันทึกไว้แต่ยังไม่เผยแพร่ เฉพาะผู้มีสิทธิ์เขียนเท่านั้นที่เห็น";
+"Parent folder" = "โฟลเดอร์หลัก";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "ติดตามเอเจนต์ที่ฉันเริ่ม";
@@ -1588,7 +1602,7 @@
 "Decision sessions never continue automatically." = "เซสชันการตัดสินใจจะไม่ดำเนินการต่ออัตโนมัติ";
 "Use the default" = "ใช้ค่าเริ่มต้น";
 "Follow the repository's or the default auto-continue setting again" = "กลับไปใช้การตั้งค่าของรีโพสิทอรีหรือค่าเริ่มต้นของการดำเนินการต่ออัตโนมัติ";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้ เวลารอที่นานขึ้นจะมีผลกับเอเจนต์ที่กำลังทำงานเมื่อเริ่มใหม่";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้";
 "Auto-continue changed for %@" = "เปลี่ยนการดำเนินการต่ออัตโนมัติของ %@ แล้ว";
 "Stop waiting here and answer in the agent's own terminal" = "เลิกรอที่นี่และตอบในเทอร์มินัลของเอเจนต์เอง";
 "Not this time" = "ไม่ใช่ครั้งนี้";

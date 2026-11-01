@@ -1552,6 +1552,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Il comando del registro manca in questa copia di Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "Il comando del registro non ha risposto all’handshake MCP.";
 "The ledger command answers with its tools: %@." = "Il comando del registro risponde con i suoi strumenti: %@.";
+"Latest" = "Più recente";
+"Latest release" = "Release più recente";
+"Latest stable release" = "Release stabile più recente";
+"{0} unreleased commits" = "{0} commit non rilasciati";
+"Not on top of {0}" = "Non basato su {0}";
+"Compare in app" = "Confronta nell'app";
+"Compare in browser" = "Confronta nel browser";
+"Other files ({0})" = "Altri file ({0})";
+"Tagged from {0}" = "Taggata da {0}";
+"Assets: {0}" = "Asset: {0}";
+"Published releases" = "Release pubblicate";
+"Published, but marked as not ready for production" = "Pubblicata, ma segnata come non pronta per la produzione";
+"Saved but not published; only people with write access see it" = "Salvata ma non pubblicata; la vede solo chi ha accesso in scrittura";
+"Parent folder" = "Cartella superiore";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Segui gli agenti che avvio";
@@ -1566,7 +1580,7 @@
 "Decision sessions never continue automatically." = "Le sessioni di decisione non proseguono mai da sole.";
 "Use the default" = "Usa il predefinito";
 "Follow the repository's or the default auto-continue setting again" = "Torna a seguire l'impostazione del repository o la prosecuzione automatica predefinita";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Vale per gli agenti Claude Code avviati da Gitrochi mentre Segui gli agenti che avvio è attivo. Un'attesa più lunga raggiunge un agente in esecuzione al suo prossimo avvio.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Vale per gli agenti Claude Code avviati da Gitrochi mentre Segui gli agenti che avvio è attivo.";
 "Auto-continue changed for %@" = "Prosecuzione automatica cambiata per %@";
 "Stop waiting here and answer in the agent's own terminal" = "Smetti di aspettare qui e rispondi nel terminale dell'agente";
 "Not this time" = "Non questa volta";

@@ -1559,6 +1559,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "V této kopii Gitrochi chybí příkaz evidence: %@";
 "The ledger command did not answer the MCP handshake." = "Příkaz evidence neodpověděl na úvodní výměnu MCP.";
 "The ledger command answers with its tools: %@." = "Příkaz evidence odpovídá svými nástroji: %@.";
+"Latest" = "Nejnovější";
+"Latest release" = "Nejnovější vydání";
+"Latest stable release" = "Nejnovější stabilní vydání";
+"{0} unreleased commits" = "Nevydané commity: {0}";
+"Not on top of {0}" = "Nevychází z {0}";
+"Compare in app" = "Porovnat v aplikaci";
+"Compare in browser" = "Porovnat v prohlížeči";
+"Other files ({0})" = "Další soubory ({0})";
+"Tagged from {0}" = "Označeno z {0}";
+"Assets: {0}" = "Soubory: {0}";
+"Published releases" = "Publikovaná vydání";
+"Published, but marked as not ready for production" = "Publikováno, ale označeno jako nepřipravené pro produkci";
+"Saved but not published; only people with write access see it" = "Uloženo, ale nepublikováno; vidí jen lidé s oprávněním k zápisu";
+"Parent folder" = "Nadřazená složka";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Sledovat agenty, které spustím";
@@ -1573,7 +1587,7 @@
 "Decision sessions never continue automatically." = "Rozhodovací relace nikdy nepokračují automaticky.";
 "Use the default" = "Použít výchozí";
 "Follow the repository's or the default auto-continue setting again" = "Znovu se řídit nastavením repozitáře nebo výchozím automatickým pokračováním";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím. Delší čekání se u běžícího agenta projeví po jeho dalším spuštění.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím.";
 "Auto-continue changed for %@" = "Automatické pokračování změněno pro %@";
 "Stop waiting here and answer in the agent's own terminal" = "Přestat zde čekat a odpovědět ve vlastním terminálu agenta";
 "Not this time" = "Tentokrát ne";

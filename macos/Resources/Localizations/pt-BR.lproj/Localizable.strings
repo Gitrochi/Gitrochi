@@ -1543,6 +1543,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "O comando do registro está faltando nesta cópia do Gitrochi: %@";
 "The ledger command did not answer the MCP handshake." = "O comando do registro não respondeu ao handshake do MCP.";
 "The ledger command answers with its tools: %@." = "O comando do registro responde com suas ferramentas: %@.";
+"Latest" = "Mais recente";
+"Latest release" = "Versão mais recente";
+"Latest stable release" = "Versão estável mais recente";
+"{0} unreleased commits" = "{0} commits não lançados";
+"Not on top of {0}" = "Não parte de {0}";
+"Compare in app" = "Comparar no app";
+"Compare in browser" = "Comparar no navegador";
+"Other files ({0})" = "Outros arquivos ({0})";
+"Tagged from {0}" = "Marcada a partir de {0}";
+"Assets: {0}" = "Arquivos: {0}";
+"Published releases" = "Versões publicadas";
+"Published, but marked as not ready for production" = "Publicada, mas marcada como não pronta para produção";
+"Saved but not published; only people with write access see it" = "Salva, mas não publicada; só quem tem acesso de escrita a vê";
+"Parent folder" = "Pasta pai";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Acompanhar os agentes que eu inicio";
@@ -1557,7 +1571,7 @@
 "Decision sessions never continue automatically." = "Sessões de decisão nunca continuam sozinhas.";
 "Use the default" = "Usar o padrão";
 "Follow the repository's or the default auto-continue setting again" = "Voltar a seguir a configuração do repositório ou a continuação automática padrão";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Funciona para agentes do Claude Code que o Gitrochi inicia enquanto Acompanhar os agentes que eu inicio estiver ligado. Uma espera maior chega a um agente em execução quando ele iniciar de novo.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funciona para agentes do Claude Code que o Gitrochi inicia enquanto Acompanhar os agentes que eu inicio estiver ligado.";
 "Auto-continue changed for %@" = "Continuação automática alterada para %@";
 "Stop waiting here and answer in the agent's own terminal" = "Parar de esperar aqui e responder no terminal do próprio agente";
 "Not this time" = "Desta vez não";

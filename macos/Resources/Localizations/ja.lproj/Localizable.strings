@@ -2309,6 +2309,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "この Gitrochi には台帳のコマンドがありません：%@";
 "The ledger command did not answer the MCP handshake." = "台帳のコマンドが MCP の接続確認に応答しませんでした。";
 "The ledger command answers with its tools: %@." = "台帳のコマンドがツール一覧で応答しました：%@。";
+"Latest" = "最新";
+"Latest release" = "最新リリース";
+"Latest stable release" = "最新の安定版リリース";
+"{0} unreleased commits" = "未リリースのコミット {0} 件";
+"Not on top of {0}" = "{0} の上にありません";
+"Compare in app" = "アプリで比較";
+"Compare in browser" = "ブラウザで比較";
+"Other files ({0})" = "その他のファイル（{0}）";
+"Tagged from {0}" = "{0} からタグ付け";
+"Assets: {0}" = "アセット: {0}";
+"Published releases" = "公開済みのリリース";
+"Published, but marked as not ready for production" = "公開済みだが、本番向けではないと表示されています";
+"Saved but not published; only people with write access see it" = "保存のみで未公開。書き込み権限のあるユーザーだけが見られます";
+"Parent folder" = "親フォルダ";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "自分が起動したエージェントを追跡";
@@ -2323,7 +2337,7 @@
 "Decision sessions never continue automatically." = "決定セッションは自動で続行しません。";
 "Use the default" = "既定に戻す";
 "Follow the repository's or the default auto-continue setting again" = "リポジトリの設定または既定の自動続行設定に従うよう戻します";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。待ち時間を長くすると、実行中のエージェントには次に起動したときから適用されます。";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。";
 "Auto-continue changed for %@" = "%@ の自動続行を変更しました";
 "Stop waiting here and answer in the agent's own terminal" = "ここで待つのをやめ、エージェントのターミナルで回答します";
 "Not this time" = "今回はしない";

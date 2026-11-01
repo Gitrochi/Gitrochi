@@ -3,7 +3,8 @@
 # off, the arguments for every agent, mode and task, the environment and hooks.json must be byte for byte the ones main
 # made before the Ledger: fixtures/agent-launch holds them, captured from main 827f6098's AgentKind.arguments and
 # AgentCenter.installHooks. With it on, the existing hook entries stay first and unchanged, and the ledger's entries match
-# gitrochi-autocontinue's hook_settings (DESIGN.md §5, §9.1). Also the switch, the MCP check and the heartbeat file.
+# gitrochi-autocontinue's hook_settings for the longest wait, 310 s (DESIGN.md §5, §9.1). Also the switch, the MCP check
+# and the heartbeat file.
 #   macos/Tools/test-agent-launch.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -75,7 +76,7 @@ func same(_ a: Any?, _ b: Any?) -> Bool { NSDictionary(dictionary: ["v": a ?? NS
 
     static func tracked(_ fixtures: URL, rust: URL) throws {
         let plain = object(try Data(contentsOf: fixtures.appendingPathComponent("hooks.json")))["hooks"] as! [String: [[String: Any]]]
-        let ledger = AgentLaunch.Ledger(session: "S1031-07", command: command, wait: 45, database: nil)
+        let ledger = AgentLaunch.Ledger(session: "S1031-07", command: command, database: nil)
         let with = object(AgentLaunch.hooks(script: script, ledger: ledger))["hooks"] as! [String: [[String: Any]]]
         for (event, groups) in plain {
             check(same(Array(with[event]!.prefix(groups.count)), groups), "\(event): the existing entries stay first, unchanged")
@@ -83,7 +84,8 @@ func same(_ a: Any?, _ b: Any?) -> Bool { NSDictionary(dictionary: ["v": a ?? NS
         check(Set(with.keys) == Set(plain.keys).union(["PostToolUse", "PostToolUseFailure"]), "events: \(with.keys.sorted())")
         func added(_ event: String) -> [[String: Any]] { Array(with[event]!.dropFirst(plain[event]?.count ?? 0)) }
         func hook(_ event: String) -> [String: Any] { (added(event).first?["hooks"] as? [[String: Any]])?.first ?? [:] }
-        // the events gitrochi-autocontinue's hook_settings covers, exactly as it writes them for the same command and wait
+        // the events gitrochi-autocontinue's hook_settings covers, exactly as it writes them for the same command and the
+        // longest wait: a person may lengthen a session's wait while its agent runs
         let expected = object(try Data(contentsOf: rust)) as! [String: [[String: Any]]]
         for (event, groups) in expected {
             check(same(added(event), groups), "\(event) is hook_settings' entry: \(added(event)) vs \(groups)")
@@ -92,19 +94,15 @@ func same(_ a: Any?, _ b: Any?) -> Bool { NSDictionary(dictionary: ["v": a ?? NS
             check(added(event).count == 1 && same(hook(event), ["type": "command", "command": "\"\(command)\" hook \(event)", "timeout": 10]),
                   "\(event): activity, timeout 10")
         }
-        check(hook("Stop")["async"] as? Bool == true && hook("Stop")["asyncRewake"] as? Bool == true && hook("Stop")["timeout"] as? Int == 55,
-              "Stop waits in the background and wakes the session; the wait plus 10 s")
-        check(added("PreToolUse").first?["matcher"] as? String == "AskUserQuestion|ExitPlanMode" && hook("PermissionRequest")["timeout"] as? Int == 55,
-              "the question tools only; permission requests wait as long")
-        func timeout(_ wait: Int) -> Int? {
-            let hooks = object(AgentLaunch.hooks(script: script, ledger: .init(session: "S", command: command, wait: wait)))["hooks"] as! [String: [[String: Any]]]
-            return ((hooks["Stop"]?.last?["hooks"] as? [[String: Any]])?.first)?["timeout"] as? Int
-        }
-        check(timeout(5) == 20 && timeout(900) == 310, "the wait stays within the core's 10–300 s")
+        check(hook("Stop")["async"] as? Bool == true && hook("Stop")["asyncRewake"] as? Bool == true && hook("Stop")["timeout"] as? Int == 310,
+              "Stop waits in the background and wakes the session; the longest wait plus 10 s")
+        check(added("PreToolUse").first?["matcher"] as? String == "AskUserQuestion|ExitPlanMode" && hook("PermissionRequest")["timeout"] as? Int == 310
+              && hook("PreToolUse")["timeout"] as? Int == 310, "the question tools only; every waiting hook may run as long")
+        check(AgentLaunch.waitingTimeout == 310, "5 minutes, the longest wait, plus a 10 s margin")
 
         check(AgentLaunch.environment(agent: "agent-1", ledger: ledger) == ["GITROCHI_AGENT_ID": "agent-1", "GITROCHI_LEDGER_SESSION": "S1031-07"],
               "GITROCHI_LEDGER_SESSION next to GITROCHI_AGENT_ID")
-        let elsewhere = AgentLaunch.Ledger(session: "S1031-07", command: command, wait: 45, database: "/tmp/test.sqlite3")
+        let elsewhere = AgentLaunch.Ledger(session: "S1031-07", command: command, database: "/tmp/test.sqlite3")
         check(AgentLaunch.environment(agent: "a", ledger: elsewhere)["GITROCHI_LEDGER_DB"] == "/tmp/test.sqlite3", "the app's own database override")
         let base = AgentKind.claude.arguments(hooks: "/h.json", task: "Fix it", mode: "default")
         check(AgentLaunch.arguments(.claude, hooks: "/h.json", task: "Fix it", mode: "default", mcpConfig: "/m.json") == ["--mcp-config", "/m.json"] + base,
@@ -158,9 +156,9 @@ while IFS= read -r -d '' file; do
     SOURCES+=("$file")
 done < <(find "$ROOT/Sources" -name '*.swift' -print0)
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
-# what gitrochi-autocontinue's hook_settings writes for the same command and wait
+# what gitrochi-autocontinue's hook_settings writes for the same command and the longest wait
 cargo run -q --locked --manifest-path "$ROOT/../crates/Cargo.toml" -p gitrochi-autocontinue --bin gitrochi-autocontinue -- \
-    settings '"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger" hook' --delay 45 > "$TASK_TMP/hook-settings.json"
+    settings '"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger" hook' --delay 300 > "$TASK_TMP/hook-settings.json"
 swiftc -whole-module-optimization -Onone -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ST" \
     -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
     "${SOURCES[@]}" "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/agent-launch-tests"

@@ -1532,6 +1532,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "Perintah Buku Log tidak ada di salinan Gitrochi ini: %@";
 "The ledger command did not answer the MCP handshake." = "Perintah Buku Log tidak menjawab jabat tangan MCP.";
 "The ledger command answers with its tools: %@." = "Perintah Buku Log menjawab dengan alatnya: %@.";
+"Latest" = "Terbaru";
+"Latest release" = "Rilis terbaru";
+"Latest stable release" = "Rilis stabil terbaru";
+"{0} unreleased commits" = "{0} commit belum dirilis";
+"Not on top of {0}" = "Tidak berbasis {0}";
+"Compare in app" = "Bandingkan di aplikasi";
+"Compare in browser" = "Bandingkan di browser";
+"Other files ({0})" = "File lain ({0})";
+"Tagged from {0}" = "Ditag dari {0}";
+"Assets: {0}" = "Aset: {0}";
+"Published releases" = "Rilis yang diterbitkan";
+"Published, but marked as not ready for production" = "Diterbitkan, tetapi ditandai belum siap untuk produksi";
+"Saved but not published; only people with write access see it" = "Disimpan tetapi belum diterbitkan; hanya orang dengan akses tulis yang melihatnya";
+"Parent folder" = "Folder induk";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Lacak agen yang saya mulai";
@@ -1546,7 +1560,7 @@
 "Decision sessions never continue automatically." = "Sesi keputusan tidak pernah lanjut otomatis.";
 "Use the default" = "Gunakan bawaan";
 "Follow the repository's or the default auto-continue setting again" = "Ikuti lagi pengaturan repositori atau lanjut otomatis bawaan";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Berlaku untuk agen Claude Code yang dimulai Gitrochi selama Lacak agen yang saya mulai aktif. Waktu tunggu yang lebih lama berlaku untuk agen yang sedang berjalan saat dimulai lagi.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Berlaku untuk agen Claude Code yang dimulai Gitrochi selama Lacak agen yang saya mulai aktif.";
 "Auto-continue changed for %@" = "Lanjut otomatis diubah untuk %@";
 "Stop waiting here and answer in the agent's own terminal" = "Berhenti menunggu di sini dan jawab di terminal agen sendiri";
 "Not this time" = "Tidak kali ini";

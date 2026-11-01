@@ -1712,6 +1712,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "此 Gitrochi 缺少账本命令：%@";
 "The ledger command did not answer the MCP handshake." = "账本命令没有响应 MCP 握手。";
 "The ledger command answers with its tools: %@." = "账本命令以其工具响应：%@。";
+"Latest" = "最新";
+"Latest release" = "最新版本";
+"Latest stable release" = "最新稳定版本";
+"{0} unreleased commits" = "{0} 个未发布的提交";
+"Not on top of {0}" = "不在 {0} 之上";
+"Compare in app" = "在应用中比较";
+"Compare in browser" = "在浏览器中比较";
+"Other files ({0})" = "其他文件（{0}）";
+"Tagged from {0}" = "从 {0} 打标签";
+"Assets: {0}" = "资源：{0}";
+"Published releases" = "已发布的版本";
+"Published, but marked as not ready for production" = "已发布，但标记为尚未可用于生产";
+"Saved but not published; only people with write access see it" = "已保存但未发布；仅有写入权限的人可见";
+"Parent folder" = "上级文件夹";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "跟踪我启动的代理";
@@ -1726,7 +1740,7 @@
 "Decision sessions never continue automatically." = "决策会话从不自动继续。";
 "Use the default" = "使用默认值";
 "Follow the repository's or the default auto-continue setting again" = "重新遵循仓库或默认的自动继续设置";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "适用于“跟踪我启动的代理”开启时由 Gitrochi 启动的 Claude Code 代理。更长的等待时间会在运行中的代理下次启动时生效。";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "适用于“跟踪我启动的代理”开启时由 Gitrochi 启动的 Claude Code 代理。";
 "Auto-continue changed for %@" = "已更改 %@ 的自动继续";
 "Stop waiting here and answer in the agent's own terminal" = "不在这里等待，改在代理自己的终端中回答";
 "Not this time" = "这次不用";
