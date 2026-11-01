@@ -13,6 +13,8 @@ struct LedgerWorkspaceView: View {
     /// The open repository, whose project the page shows; nil without one
     let repositoryPath: String?
     var ledger: LedgerStore = .shared
+    /// The window's repository, whose terminal panel the quick launches open tabs in; nil in previews and tests
+    @Environment(RepoStore.self) private var store: RepoStore?
     @Environment(\.controlActiveState) private var activeState
     @ViewState private var width: CGFloat = 1200
     @ViewState private var compactInspector = false
@@ -132,6 +134,7 @@ struct LedgerWorkspaceView: View {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color(nsColor: .systemOrange))
                     .help(error).accessibilityLabel(error)
             }
+            quickLaunches
             Button { sheet = .importReports } label: { Image(systemName: "doc.on.clipboard") }
                 .buttonStyle(.borderless)
                 .help("Paste reports from a conversation")
@@ -152,6 +155,36 @@ struct LedgerWorkspaceView: View {
         }
         .padding(.horizontal, 14)
         .frame(height: 40)
+    }
+
+    /// The quick launches (DESIGN.md §2, P4): a tab in the terminal panel below the page through the panel's own
+    /// newTerminal, and Claude Code the way Gitrochi's Run agent buttons start it, so Track agents I start applies
+    private var quickLaunches: some View {
+        let folder = store?.url?.path
+        return Menu {
+            Button("Ledger overview") { openOverview() }
+                .help("The overview agents read: HEAD, open sessions, streams and overlaps")
+            Button {
+                if let folder { store?.startAgent(in: folder, kind: .claude) }
+            } label: {
+                Text(verbatim: AgentKind.claude.title)
+            }
+            .help("Start Claude Code in this repository")
+        } label: {
+            Image(systemName: "apple.terminal")
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .disabled(folder == nil)
+        .help(folder == nil ? "Open a repository to use its terminal" : "Open in the terminal")
+        .accessibilityLabel("Open in the terminal")
+    }
+
+    /// `gitrochi-ledger overview` for the project shown, in a new terminal tab that keeps its text
+    private func openOverview() {
+        guard let store, let folder = store.url?.path else { return }
+        store.newTerminal(in: folder, command: .init(program: LedgerCommandLine.bundled.path,
+                                                     args: LedgerCommandLine.overviewArguments(project: ledger.project),
+                                                     title: String(localized: "Ledger overview")))
     }
 
     private var projectName: String? {

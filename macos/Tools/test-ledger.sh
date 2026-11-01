@@ -841,6 +841,13 @@ let start: LedgerMs = 1_793_400_000_000
         unsetenv("GITROCHI_LEDGER")
         check(!off.enabled && refused?.code == "DISABLED", "GITROCHI_LEDGER=0 turns the core off: \(refused?.code ?? "")")
 
+        // The Ledger page's quick launch: the overview the bundled command prints for the project shown
+        check(LedgerCommandLine.overviewArguments(project: nil) == ["overview"] && LedgerCommandLine.overviewArguments(project: "harbor") == ["overview", "--project", "harbor"],
+              "the overview's arguments")
+        let shown = try await client.state(project: nil, range: .all).projects.first!.key
+        let overview = String(decoding: CLIBackend(binary: cli, db: db).run(LedgerCommandLine.overviewArguments(project: shown)), as: UTF8.self)
+        check(overview.hasPrefix("[\(shown)]") && overview.contains("HEAD"), "the quick launch's overview: \(overview.prefix(80))")
+
         // The command Connect Claude Code points at
         let tools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
         check(tools == ["ledger_overview", "ledger_report", "ledger_session"], "the command's MCP tools: \(tools)")

@@ -6,6 +6,12 @@ import Foundation
 enum LedgerCommandLine {
     static var bundled: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/gitrochi-ledger") }
 
+    /// `gitrochi-ledger overview`, for one project or the most recently active one: the short text agents read, which the
+    /// Ledger page's quick launch opens in a terminal tab
+    static func overviewArguments(project: String?) -> [String] {
+        ["overview"] + (project.map { ["--project", $0] } ?? [])
+    }
+
     /// Starts `<binary> mcp`, sends the MCP handshake and `tools/list`, and answers with the tool names. The server
     /// exits when its input ends; one that hangs is stopped after `timeout` seconds.
     static func tools(binary: URL, timeout: TimeInterval = 10) async throws -> [String] {
