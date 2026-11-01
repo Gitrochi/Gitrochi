@@ -1564,3 +1564,22 @@
 "Approve the plan" = "Duyệt kế hoạch";
 "Allow once" = "Cho phép một lần";
 "%@ started without the Ledger: %@" = "%@ đã khởi động mà không có Sổ theo dõi: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ đang hỏi";
+"Ready to clean up" = "Có việc cần dọn dẹp";
+"%@ applied %@" = "%@ đã áp dụng %@";
+"New questions: %lld" = "Câu hỏi mới: %lld";
+"To clean up: %lld" = "Cần dọn dẹp: %lld";
+"Applied: %lld" = "Đã áp dụng: %lld";
+"The Ledger has news" = "Sổ theo dõi có tin mới";
+"Continues automatically in %@" = "Tự động tiếp tục sau %@";
+"Waits for you: no automatic answer" = "Đang chờ bạn: không tự động trả lời";
+"%@ is waiting" = "%@ đang chờ";
+"Auto-continue answered %@" = "Tự động tiếp tục đã trả lời %@";
+"Show notifications" = "Hiện thông báo";
+"Show the Inbox count on the Dock icon" = "Hiện số mục Hộp thư đến trên biểu tượng Dock";
+"Notifications for Gitrochi are turned off in System Settings." = "Thông báo của Gitrochi đang tắt trong Cài đặt hệ thống.";
+"Open System Settings" = "Mở Cài đặt hệ thống";
+"Notifications" = "Thông báo";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Câu hỏi mới, phiên cần dọn dẹp và báo cáo áp dụng được gộp theo mỗi lần đọc; mỗi yêu cầu đang chờ kèm thời gian còn lại, và mỗi câu trả lời tự động. Bấm vào sẽ mở Sổ theo dõi tại phiên đó. Không thông báo những gì đã có khi Gitrochi khởi động.";

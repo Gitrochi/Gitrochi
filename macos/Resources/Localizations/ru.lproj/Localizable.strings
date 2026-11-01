@@ -1606,3 +1606,22 @@
 "Approve the plan" = "Одобрить план";
 "Allow once" = "Разрешить один раз";
 "%@ started without the Ledger: %@" = "%@ запущен без Журнала: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ спрашивает";
+"Ready to clean up" = "Есть что убрать";
+"%@ applied %@" = "%@ применил %@";
+"New questions: %lld" = "Новые вопросы: %lld";
+"To clean up: %lld" = "Убрать: %lld";
+"Applied: %lld" = "Применено: %lld";
+"The Ledger has news" = "В Журнале новости";
+"Continues automatically in %@" = "Автопродолжение через %@";
+"Waits for you: no automatic answer" = "Ждёт вас: без автоответа";
+"%@ is waiting" = "%@ ждёт";
+"Auto-continue answered %@" = "Автопродолжение ответило: %@";
+"Show notifications" = "Показывать уведомления";
+"Show the Inbox count on the Dock icon" = "Показывать число входящих на значке в Dock";
+"Notifications for Gitrochi are turned off in System Settings." = "Уведомления Gitrochi выключены в Системных настройках.";
+"Open System Settings" = "Открыть Системные настройки";
+"Notifications" = "Уведомления";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Новые вопросы, сессии, которые нужно убрать, и отчёты о применении — одним уведомлением за чтение; каждый ожидающий запрос с оставшимся временем и каждый автоответ. Щелчок открывает Журнал на этой сессии. О том, что уже было при запуске Gitrochi, не сообщается.";

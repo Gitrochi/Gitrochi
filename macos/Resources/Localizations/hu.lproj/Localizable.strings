@@ -1589,3 +1589,22 @@
 "Approve the plan" = "Terv jóváhagyása";
 "Allow once" = "Engedélyezés egyszer";
 "%@ started without the Ledger: %@" = "A(z) %@ a Napló nélkül indult: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ kérdez";
+"Ready to clean up" = "Van mit rendezni";
+"%@ applied %@" = "%@ alkalmazta: %@";
+"New questions: %lld" = "Új kérdések: %lld";
+"To clean up: %lld" = "Rendezendő: %lld";
+"Applied: %lld" = "Alkalmazva: %lld";
+"The Ledger has news" = "A Naplóban újdonság van";
+"Continues automatically in %@" = "Automatikusan folytatódik ennyi idő múlva: %@";
+"Waits for you: no automatic answer" = "Önre vár: nincs automatikus válasz";
+"%@ is waiting" = "%@ vár";
+"Auto-continue answered %@" = "Az automatikus folytatás válaszolt: %@";
+"Show notifications" = "Értesítések megjelenítése";
+"Show the Inbox count on the Dock icon" = "A Beérkezett elemek számának megjelenítése a Dock ikonján";
+"Notifications for Gitrochi are turned off in System Settings." = "A Gitrochi értesítései ki vannak kapcsolva a Rendszerbeállításokban.";
+"Open System Settings" = "Rendszerbeállítások megnyitása";
+"Notifications" = "Értesítések";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Új kérdések, rendezendő munkamenetek és alkalmazási jelentések, olvasásonként csoportosítva; minden várakozó kérés a hátralévő idővel, és minden automatikus válasz. Kattintásra a Napló a munkamenetnél nyílik meg. A Gitrochi indításakor már meglévő dolgokról nem jön értesítés.";

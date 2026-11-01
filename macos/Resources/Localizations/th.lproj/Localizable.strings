@@ -1601,3 +1601,22 @@
 "Approve the plan" = "อนุมัติแผน";
 "Allow once" = "อนุญาตครั้งเดียว";
 "%@ started without the Ledger: %@" = "%@ เริ่มโดยไม่มีสมุดบันทึก: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ ถามคำถาม";
+"Ready to clean up" = "มีสิ่งที่รอจัดเก็บ";
+"%@ applied %@" = "%@ นำ %@ ไปใช้แล้ว";
+"New questions: %lld" = "คำถามใหม่: %lld";
+"To clean up: %lld" = "รอจัดเก็บ: %lld";
+"Applied: %lld" = "นำไปใช้แล้ว: %lld";
+"The Ledger has news" = "สมุดบันทึกมีข่าวใหม่";
+"Continues automatically in %@" = "ดำเนินการต่ออัตโนมัติใน %@";
+"Waits for you: no automatic answer" = "รอคุณอยู่: ไม่มีคำตอบอัตโนมัติ";
+"%@ is waiting" = "%@ กำลังรอ";
+"Auto-continue answered %@" = "ดำเนินการต่ออัตโนมัติตอบ %@ แล้ว";
+"Show notifications" = "แสดงการแจ้งเตือน";
+"Show the Inbox count on the Dock icon" = "แสดงจำนวนในกล่องขาเข้าบนไอคอน Dock";
+"Notifications for Gitrochi are turned off in System Settings." = "การแจ้งเตือนของ Gitrochi ถูกปิดอยู่ในการตั้งค่าระบบ";
+"Open System Settings" = "เปิดการตั้งค่าระบบ";
+"Notifications" = "การแจ้งเตือน";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "คำถามใหม่ เซสชันที่รอจัดเก็บ และรายงานการนำไปใช้ จะรวมแจ้งต่อการอ่านหนึ่งครั้ง ส่วนคำขอที่รออยู่จะแจ้งพร้อมเวลาที่เหลือ และแจ้งทุกคำตอบอัตโนมัติ คลิกเพื่อเปิดสมุดบันทึกที่เซสชันนั้น ไม่แจ้งสิ่งที่มีอยู่แล้วตอนเริ่ม Gitrochi";

@@ -1559,3 +1559,22 @@
 "Approve the plan" = "Setujui rencana";
 "Allow once" = "Izinkan sekali";
 "%@ started without the Ledger: %@" = "%@ dimulai tanpa Buku Log: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ bertanya";
+"Ready to clean up" = "Ada yang perlu dirapikan";
+"%@ applied %@" = "%@ menerapkan %@";
+"New questions: %lld" = "Pertanyaan baru: %lld";
+"To clean up: %lld" = "Untuk dirapikan: %lld";
+"Applied: %lld" = "Diterapkan: %lld";
+"The Ledger has news" = "Buku Log punya kabar baru";
+"Continues automatically in %@" = "Lanjut otomatis dalam %@";
+"Waits for you: no automatic answer" = "Menunggu Anda: tanpa jawaban otomatis";
+"%@ is waiting" = "%@ sedang menunggu";
+"Auto-continue answered %@" = "Lanjut otomatis menjawab %@";
+"Show notifications" = "Tampilkan notifikasi";
+"Show the Inbox count on the Dock icon" = "Tampilkan jumlah Kotak Masuk di ikon Dock";
+"Notifications for Gitrochi are turned off in System Settings." = "Notifikasi untuk Gitrochi dimatikan di Pengaturan Sistem.";
+"Open System Settings" = "Buka Pengaturan Sistem";
+"Notifications" = "Notifikasi";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Pertanyaan baru, sesi untuk dirapikan, dan laporan penerapan, dikelompokkan per pembacaan; setiap permintaan yang menunggu beserta sisa waktunya, dan setiap jawaban otomatis. Mengekliknya membuka Buku Log di sesinya. Tidak ada pemberitahuan untuk yang sudah ada saat Gitrochi dimulai.";

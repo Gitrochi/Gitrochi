@@ -1593,3 +1593,22 @@
 "Approve the plan" = "Planı onayla";
 "Allow once" = "Bir kez izin ver";
 "%@ started without the Ledger: %@" = "%@ Defter olmadan başlatıldı: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ soruyor";
+"Ready to clean up" = "Toparlanacak bir şey var";
+"%@ applied %@" = "%@, %@ sürümünü uyguladı";
+"New questions: %lld" = "Yeni sorular: %lld";
+"To clean up: %lld" = "Toparlanacak: %lld";
+"Applied: %lld" = "Uygulandı: %lld";
+"The Ledger has news" = "Defterde yenilik var";
+"Continues automatically in %@" = "%@ sonra otomatik devam";
+"Waits for you: no automatic answer" = "Sizi bekliyor: otomatik yanıt yok";
+"%@ is waiting" = "%@ bekliyor";
+"Auto-continue answered %@" = "Otomatik devam %@ için yanıt verdi";
+"Show notifications" = "Bildirimleri göster";
+"Show the Inbox count on the Dock icon" = "Gelen kutusu sayısını Dock simgesinde göster";
+"Notifications for Gitrochi are turned off in System Settings." = "Gitrochi bildirimleri Sistem Ayarları'nda kapalı.";
+"Open System Settings" = "Sistem Ayarları'nı aç";
+"Notifications" = "Bildirimler";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Yeni sorular, toparlanacak oturumlar ve uygulama raporları her okumada tek bildirimde toplanır; bekleyen her istek kalan süreyle, her otomatik yanıt da ayrı bildirilir. Tıklamak Defter'i o oturumda açar. Gitrochi başlarken zaten var olanlar bildirilmez.";

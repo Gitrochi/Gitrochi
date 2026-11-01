@@ -2336,3 +2336,22 @@
 "Approve the plan" = "計画を承認";
 "Allow once" = "一度だけ許可";
 "%@ started without the Ledger: %@" = "%@ を台帳なしで起動しました：%@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ が質問しています";
+"Ready to clean up" = "片付けるものがあります";
+"%@ applied %@" = "%@ が %@ を適用しました";
+"New questions: %lld" = "新しい質問: %lld";
+"To clean up: %lld" = "片付けるもの: %lld";
+"Applied: %lld" = "適用: %lld";
+"The Ledger has news" = "台帳に新しい知らせがあります";
+"Continues automatically in %@" = "%@ 後に自動続行";
+"Waits for you: no automatic answer" = "あなたを待っています: 自動では回答しません";
+"%@ is waiting" = "%@ が待っています";
+"Auto-continue answered %@" = "自動続行が %@ に回答しました";
+"Show notifications" = "通知を表示";
+"Show the Inbox count on the Dock icon" = "受信箱の件数を Dock アイコンに表示";
+"Notifications for Gitrochi are turned off in System Settings." = "システム設定で Gitrochi の通知がオフになっています。";
+"Open System Settings" = "システム設定を開く";
+"Notifications" = "通知";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "新しい質問、片付けるセッション、適用の報告は読み込みごとにまとめて通知し、待っている質問は残り時間とともに、自動続行の回答は一つずつ通知します。クリックすると台帳でそのセッションを開きます。Gitrochi の起動時に既にあったものは通知しません。";

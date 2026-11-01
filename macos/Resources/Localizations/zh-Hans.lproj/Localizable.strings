@@ -1739,3 +1739,22 @@
 "Approve the plan" = "批准计划";
 "Allow once" = "允许一次";
 "%@ started without the Ledger: %@" = "%@ 已在没有账本的情况下启动：%@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ 有问题";
+"Ready to clean up" = "有待清理的会话";
+"%@ applied %@" = "%@ 已应用 %@";
+"New questions: %lld" = "新问题：%lld";
+"To clean up: %lld" = "待清理：%lld";
+"Applied: %lld" = "已应用：%lld";
+"The Ledger has news" = "账本有新消息";
+"Continues automatically in %@" = "%@ 后自动继续";
+"Waits for you: no automatic answer" = "等你处理：不会自动回答";
+"%@ is waiting" = "%@ 正在等待";
+"Auto-continue answered %@" = "自动继续已回答 %@";
+"Show notifications" = "显示通知";
+"Show the Inbox count on the Dock icon" = "在 Dock 图标上显示收件箱数量";
+"Notifications for Gitrochi are turned off in System Settings." = "系统设置中已关闭 Gitrochi 的通知。";
+"Open System Settings" = "打开系统设置";
+"Notifications" = "通知";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "新问题、待清理的会话和应用报告按每次读取合并通知；每个等待中的请求会附上剩余时间，每个自动回答也会通知。点击会在账本中打开该会话。Gitrochi 启动时已有的内容不会通知。";
