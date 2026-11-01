@@ -620,10 +620,12 @@ pub fn report(
         now,
     };
     let counts = session::open_counts(connection, Some(&project))?;
-    let views: Vec<SessionView> = session::list(connection, Some(&project))?
+    let rows = session::list(connection, Some(&project))?;
+    let mut views: Vec<SessionView> = rows
         .iter()
         .map(|s| viewer.view(s, counts.get(&s.id).copied().unwrap_or(0)))
         .collect();
+    track::apply_unreported_verdicts(connection, &rows, &mut views)?;
     let view = views
         .iter()
         .find(|v| v.id == sid)
