@@ -40,10 +40,11 @@ struct FlowImportPreview: View {
                         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
                 }.background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 9))
             } else {
-                HSplitView {
-                    FlowGraphView(nodes: previewNodes, selected: $selected, initialFit: true).frame(minWidth: 420, minHeight: 280)
-                    importedDetails.frame(minWidth: 250, idealWidth: 290, maxWidth: 340)
-                }
+                FlowSplitView(initialFraction: 0.66, minimumLeading: 420, minimumTrailing: 280) {
+                    FlowGraphView(nodes: previewNodes, selected: $selected, initialFit: true)
+                } trailing: { importedDetails }
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.07)))
             }
             if !draft.inspection.diagnostics.isEmpty {
                 ScrollView {
@@ -152,6 +153,7 @@ struct FlowImportPreview: View {
                 Text(value.array.isEmpty ? value.fieldText : value.array.map(\.fieldText).joined(separator: "\n"))
                     .font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

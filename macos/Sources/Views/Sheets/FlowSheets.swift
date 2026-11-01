@@ -19,14 +19,11 @@ struct FlowRunSheet: View {
         VStack(spacing: 0) {
             header
             Divider()
-            HSplitView {
-                VSplitView {
+            FlowSplitView(initialFraction: 0.55, minimumLeading: 380, minimumTrailing: 340) {
+                FlowVerticalSplitView {
                     FlowGraphView(nodes: nodes.map(FlowGraphView.Node.init), selected: $selected)
-                        .frame(minHeight: 220, idealHeight: 360)
-                    nodeList.frame(minHeight: 100, idealHeight: 180)
-                }.frame(minWidth: 400, idealWidth: 640)
-                detail.frame(minWidth: 400)
-            }
+                } trailing: { nodeList }
+            } trailing: { detail }
             Divider()
             footer
         }

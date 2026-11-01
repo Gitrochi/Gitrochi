@@ -27,7 +27,8 @@ struct FlowSchemaField: View {
             } }
             input
             if let description = schema["description"].string {
-                Text(description).font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(description)).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(2)
+                    .help(Text(LocalizedStringKey(description)))
             }
         }
     }
@@ -110,7 +111,7 @@ struct FlowSchemaField: View {
             })).textFieldStyle(.roundedBorder)
         } else if name == "run" || name == "undo" || name == "script" {
             TextEditor(text: Binding(get: { value.string ?? "" }, set: { value = .string($0); onError(nil) }))
-                .font(.system(size: 11, design: .monospaced)).frame(minHeight: 100)
+                .font(.system(size: 11, design: .monospaced)).frame(minHeight: 80, idealHeight: 110, maxHeight: 180)
                 .padding(6).background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(.quaternary))
         } else {

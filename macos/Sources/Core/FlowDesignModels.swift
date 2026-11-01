@@ -56,6 +56,16 @@ struct FlowDesignRendered: Decodable {
     let formattingChanged: Bool
 }
 
+struct FlowSourceResult: Decodable {
+    let path: String
+    let content: String?
+    let fingerprint: String?
+    let exists: Bool
+    let saved: Bool
+    let diagnostics: [FlowDesignDiagnostic]
+    var hasErrors: Bool { diagnostics.contains { $0.severity == "error" } }
+}
+
 struct FlowBlockCatalog: Decodable {
     struct Block: Decodable, Identifiable {
         let id: String

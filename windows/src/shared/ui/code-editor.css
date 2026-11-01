@@ -1,0 +1,33 @@
+.code-editor { display: flex; flex: 1; min-width: 0; min-height: 180px; flex-direction: column; overflow: hidden; background: var(--surface); color: var(--text); }
+.code-editor-toolbar { display: flex; align-items: center; gap: 4px; height: 45px; min-height: 45px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.code-editor-toolbar > code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px var(--mono); color: var(--text-2); }
+.code-editor-toolbar .on { color: var(--accent); background: var(--accent-soft); }
+.code-editor-find { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 7px 9px; border-bottom: 1px solid var(--border); background: var(--sidebar); font-size: 10px; }
+.code-editor-find input { min-width: 80px; width: 145px; flex: 1; font-size: 11px; }
+.code-editor-find > button:not(.icon-btn) { border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text-2); font-size: 10px; padding: 5px 7px; cursor: pointer; }
+.code-editor-body { display: flex; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.code-editor-gutter { flex: none; width: 48px; overflow: hidden; padding: 12px 10px 30px 2px; margin: 0; text-align: right; user-select: none; color: var(--text-3); background: var(--sidebar); border-right: 1px solid var(--border); font: var(--code-font-size, 12px)/var(--code-line-height, 20px) var(--mono); }
+.code-editor-gutter > span { display: block; }
+.code-editor-surface { position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.code-editor-syntax, .code-editor-surface > textarea { box-sizing: border-box; position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 12px 16px 30px; border: 0; border-radius: 0; font: var(--code-font-size, 12px)/var(--code-line-height, 20px) var(--mono); font-weight: 400; letter-spacing: normal; tab-size: 2; white-space: pre; }
+.code-editor-syntax { pointer-events: none; overflow: hidden; background: transparent; color: var(--text); }
+.code-editor-syntax > code { font: inherit; }
+.code-editor-row { display: block; min-height: var(--code-line-height, 20px); }
+.code-editor-surface > textarea { resize: none; overflow: auto; background: transparent; color: transparent; caret-color: var(--text); -webkit-text-fill-color: transparent; box-shadow: none; outline: none; }
+.code-editor-surface > textarea::selection { background: var(--select); }
+.code-editor-surface:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.code-editor-body.wrap .code-editor-row, .code-editor-body.wrap textarea { white-space: pre-wrap; overflow-wrap: anywhere; }
+.code-token-comment { color: var(--text-2); font-style: italic; }
+.code-token-string { color: var(--green); }
+.code-token-keyword { color: var(--accent); }
+.code-token-number { color: var(--orange); }
+.code-token-type { color: color-mix(in srgb, var(--accent) 60%, var(--text)); }
+.code-editor-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 26px; border-top: 1px solid var(--border); padding: 5px 12px; background: var(--sidebar); color: var(--text-2); font-size: 9px; }
+@media (forced-colors: active) { .code-editor-syntax { display: none; } .code-editor-surface > textarea { color: CanvasText; -webkit-text-fill-color: CanvasText; } }
+
+.code-editor-status > button { color: inherit; background: transparent; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.code-editor-status .icon-btn.small { width: 18px; height: 16px; padding: 0; }
+.code-editor-go-line { display: flex; align-items: center; gap: 7px; padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--sidebar); font-size: 10px; }
+.code-editor-go-line input { width: 80px; font-size: 11px; }
+.code-editor-go-line > button { border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; background: var(--surface); color: var(--text-2); font-size: 10px; cursor: pointer; }
+.code-editor-go-line > span { color: var(--red); }

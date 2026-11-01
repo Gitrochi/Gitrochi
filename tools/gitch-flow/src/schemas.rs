@@ -9,6 +9,7 @@ pub const NAMES: &[&str] = &[
     "flow-error",
     "flow-design-inspect",
     "flow-design-render",
+    "flow-design-source",
     "ci-browse",
 ];
 
@@ -25,6 +26,9 @@ pub fn get(name: &str) -> Option<&'static str> {
         }
         "flow-design-render" | "design-render" => {
             include_str!("../schema/flow-design-render-v1.schema.json")
+        }
+        "flow-design-source" | "design-source" => {
+            include_str!("../schema/flow-design-source-v1.schema.json")
         }
         "ci-browse" => include_str!("../schema/ci-browse.schema.json"),
         _ => return None,

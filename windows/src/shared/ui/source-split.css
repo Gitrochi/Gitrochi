@@ -1,0 +1,5 @@
+.source-split { display: grid; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.source-split-first, .source-split-second { display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+.source-split-divider { position: relative; cursor: col-resize; background: var(--surface); outline: none; touch-action: none; }
+.source-split-divider::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; left: 2px; background: var(--border); }
+.source-split-divider:hover::before, .source-split-divider:focus-visible::before, .source-split-divider:active::before { width: 2px; background: var(--accent); }

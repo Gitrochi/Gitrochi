@@ -11,7 +11,10 @@ struct RepositorySourceView: NSViewRepresentable {
     let activeMatch: NSRange?
     var targetLine: Int? = nil
     var jumpID: UUID? = nil
+    var editableText: Binding<String>? = nil
+    var replaceRequest: UUID? = nil
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = NSScrollView()
@@ -23,8 +26,9 @@ struct RepositorySourceView: NSViewRepresentable {
         scroll.automaticallyAdjustsContentInsets = false
         scroll.wantsLayer = true
         scroll.layer?.masksToBounds = true
-        let view = NSTextView(frame: scroll.contentView.bounds)
-        view.isEditable = false
+        let view = RepositoryEditingTextView(frame: scroll.contentView.bounds)
+        view.isEditable = editableText != nil && isEnabled
+        view.allowsUndo = editableText != nil
         view.isSelectable = true
         view.isRichText = false
         view.importsGraphics = false
@@ -35,10 +39,11 @@ struct RepositorySourceView: NSViewRepresentable {
         view.isAutomaticTextReplacementEnabled = false
         view.isContinuousSpellCheckingEnabled = false
         view.isGrammarCheckingEnabled = false
-        view.usesFindBar = false
+        view.usesFindBar = editableText != nil
         view.textContainerInset = NSSize(width: 14, height: 14)
         view.backgroundColor = .textBackgroundColor
         view.setAccessibilityLabel(String(localized: "Source"))
+        view.delegate = context.coordinator
         view.minSize = .zero
         view.maxSize = NSSize(width: 10_000_000, height: 10_000_000)
         view.isVerticallyResizable = true
@@ -60,6 +65,11 @@ struct RepositorySourceView: NSViewRepresentable {
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         guard let view = scroll.documentView as? NSTextView else { return }
         let coordinator = context.coordinator
+        coordinator.styling = true
+        defer { coordinator.styling = false }
+        coordinator.editableText = editableText
+        view.isEditable = editableText != nil && isEnabled
+        view.allowsUndo = editableText != nil
         let changed = coordinator.text != text
         let styleChanged = changed || coordinator.fontSize != fontSize || coordinator.tokens != tokens || coordinator.lineStarts != lineStarts || coordinator.dark != (colorScheme == .dark)
         if styleChanged {
@@ -84,13 +94,35 @@ struct RepositorySourceView: NSViewRepresentable {
                 let readable = token.kind == .comment ? color : color.blended(withFraction: colorScheme == .dark ? 0.15 : 0.35, of: colorScheme == .dark ? .white : .black) ?? color
                 if NSMaxRange(token.range) <= value.length { value.addAttribute(.foregroundColor, value: readable, range: token.range) }
             }
-            view.textStorage?.setAttributedString(value)
-            if !changed { view.selectedRanges = selection }
+            if editableText != nil {
+                if view.string != text {
+                    if coordinator.loadedText {
+                        let editable = view.isEditable
+                        view.isEditable = true
+                        view.insertText(text, replacementRange: NSRange(location: 0, length: (view.string as NSString).length))
+                        view.isEditable = editable
+                    } else {
+                        view.string = text
+                        view.undoManager?.removeAllActions()
+                    }
+                }
+                view.textStorage?.beginEditing()
+                value.enumerateAttributes(in: NSRange(location: 0, length: value.length)) { attributes, range, _ in
+                    view.textStorage?.setAttributes(attributes, range: range)
+                }
+                view.textStorage?.endEditing()
+            } else { view.textStorage?.setAttributedString(value) }
+            view.typingAttributes = [.font: NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular), .foregroundColor: NSColor.textColor, .paragraphStyle: paragraph]
+            if !changed || editableText != nil {
+                let valid = selection.filter { NSMaxRange($0.rangeValue) <= value.length }
+                if !valid.isEmpty { view.selectedRanges = valid }
+            }
             coordinator.text = text
             coordinator.fontSize = fontSize
             coordinator.tokens = tokens
             coordinator.lineStarts = lineStarts
             coordinator.dark = colorScheme == .dark
+            coordinator.loadedText = true
             coordinator.ruler?.lineStarts = lineStarts
             coordinator.ruler?.fontSize = fontSize
             coordinator.ruler?.ruleThickness = gutterWidth
@@ -124,11 +156,18 @@ struct RepositorySourceView: NSViewRepresentable {
             coordinator.jumpID = jumpID
         }
         coordinator.ruler?.needsDisplay = true
+        if editableText != nil, let replaceRequest, coordinator.replaceRequest != replaceRequest {
+            coordinator.replaceRequest = replaceRequest
+            view.window?.makeFirstResponder(view)
+            let action = NSMenuItem()
+            action.tag = NSTextFinder.Action.showReplaceInterface.rawValue
+            view.performFindPanelAction(action)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    final class Coordinator {
+    final class Coordinator: NSObject, NSTextViewDelegate {
         weak var textView: NSTextView?
         fileprivate weak var ruler: RepositoryLineRuler?
         var scrollObserver: NSObjectProtocol?
@@ -141,7 +180,41 @@ struct RepositorySourceView: NSViewRepresentable {
         var activeMatch: NSRange?
         var targetLine: Int?
         var jumpID: UUID?
+        var editableText: Binding<String>?
+        var replaceRequest: UUID?
+        var styling = false
+        var loadedText = false
+        func textDidChange(_ notification: Notification) {
+            guard !styling, let view = notification.object as? NSTextView, let editableText else { return }
+            editableText.wrappedValue = view.string
+        }
         deinit { if let scrollObserver { NotificationCenter.default.removeObserver(scrollObserver) } }
+    }
+}
+
+private final class RepositoryEditingTextView: NSTextView {
+    override var textContainerOrigin: NSPoint {
+        var origin = super.textContainerOrigin
+        // TextKit can shift this origin left after the ruler changes the available width.
+        origin.x = max(textContainerInset.width, origin.x)
+        return origin
+    }
+    override func insertTab(_ sender: Any?) {
+        guard isEditable else { super.insertTab(sender); return }
+        apply(RepositoryCodeEditing.indent(string, selection: selectedRange(), outdent: false))
+    }
+    override func insertBacktab(_ sender: Any?) {
+        guard isEditable else { super.insertBacktab(sender); return }
+        apply(RepositoryCodeEditing.indent(string, selection: selectedRange(), outdent: true))
+    }
+    override func insertNewline(_ sender: Any?) {
+        guard isEditable else { super.insertNewline(sender); return }
+        apply(RepositoryCodeEditing.newline(string, selection: selectedRange()))
+    }
+    private func apply(_ edit: RepositoryCodeEditing.Edit?) {
+        guard isEditable, let edit else { return }
+        insertText(edit.replacement, replacementRange: edit.range)
+        setSelectedRange(edit.selection)
     }
 }
 

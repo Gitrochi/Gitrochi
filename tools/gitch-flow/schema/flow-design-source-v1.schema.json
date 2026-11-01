@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/tools/gitch-flow/schema/flow-design-source-v1.schema.json",
+  "title": "Repository source editing",
+  "description": "design source --json reads or explicitly saves one repository-relative UTF-8 file, at most 2 MiB. A write needs the exact SHA-256 fingerprint returned by read, or explicit null for exclusive creation. Content errors return diagnostics with content and fingerprint null and saved false. Exit status zero alone does not indicate a successful read or save. This command never interprets or executes file contents.",
+  "type": "object",
+  "required": ["schemaVersion", "path", "content", "fingerprint", "exists", "saved", "diagnostics"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "path": { "type": "string" },
+    "content": { "type": ["string", "null"] },
+    "fingerprint": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "exists": { "type": "boolean" },
+    "saved": { "type": "boolean" },
+    "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } }
+  },
+  "$defs": {
+    "request": {
+      "oneOf": [
+        { "type": "object", "required": ["operation", "path"], "additionalProperties": false, "properties": { "operation": { "const": "read" }, "path": { "type": "string", "minLength": 1, "maxLength": 4096 } } },
+        { "type": "object", "required": ["operation", "path", "content", "expected"], "additionalProperties": false, "properties": { "operation": { "const": "write" }, "path": { "type": "string", "minLength": 1, "maxLength": 4096 }, "content": { "type": "string" }, "expected": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" }, "createParents": { "type": "boolean", "default": false } }, "allOf": [{ "if": { "required": ["createParents"], "properties": { "createParents": { "const": true } } }, "then": { "properties": { "expected": { "type": "null" } } } }] }
+      ]
+    },
+    "diagnostic": { "type": "object", "required": ["severity", "code", "message"], "additionalProperties": false, "properties": { "severity": { "enum": ["error", "warning", "info"] }, "code": { "type": "string" }, "message": { "type": "string" }, "path": { "type": "string" }, "line": { "type": "integer", "minimum": 1 } } }
+  }
+}

@@ -8,13 +8,16 @@ struct FlowVisualEditor: View {
     @ViewState private var flowName = ""
     @ViewState private var removeModule = false
     @ViewState private var connections: [FlowConnection] = []
+    @ViewState private var groupingNode: String?
+    @ViewState private var visibleInputs = Set<String>()
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
+                Text("Flow").font(.caption).foregroundStyle(.secondary)
                 Picker("Flow", selection: $design.selectedFlow) {
                     ForEach(design.flowNames, id: \.self) { Text($0).tag($0) }
-                }.frame(maxWidth: 260)
+                }.labelsHidden().frame(maxWidth: 220)
                 Button { addFlow = true } label: { Label("Add flow", systemImage: "plus") }
                 Spacer()
                 Button { addModule = true } label: { Label("Add module", systemImage: "square.stack.3d.up.badge.plus") }
@@ -24,11 +27,10 @@ struct FlowVisualEditor: View {
             if design.flowNames.isEmpty {
                 ContentUnavailableView("Add a flow", systemImage: "point.3.connected.trianglepath.dotted", description: Text("Create a flow, then add modules and connect their dependencies."))
             } else {
-                HSplitView {
+                FlowSplitView(initialFraction: 0.6, minimumLeading: 380, minimumTrailing: 300) {
                     FlowGraphView(nodes: design.graphNodes, selected: $design.selectedNode, initialFit: true).id(design.selectedFlow)
                         .frame(minWidth: 380)
-                    inspector.id(design.selectedNode).frame(minWidth: 300, idealWidth: 340, maxWidth: 430)
-                }
+                } trailing: { inspector.id(design.selectedNode) }
             }
         }
         .sheet(isPresented: $addModule) { FlowModuleCatalog(design: design) }
@@ -42,7 +44,11 @@ struct FlowVisualEditor: View {
             Button("Cancel", role: .cancel) {}
         }
         .onChange(of: design.selectedFlow) { _, _ in design.selectedNode = design.nodeIDs.first; design.fieldErrors = [:] }
-        .onChange(of: design.selectedNode) { _, _ in design.fieldErrors = [:] }
+        .onChange(of: design.selectedNode, initial: true) { _, _ in
+            design.fieldErrors = [:]
+            groupingNode = design.selectedNode
+            visibleInputs = Set(design.selectedBlock?.inputs["properties"].object.keys.filter { design.nodeValue($0, inputs: true) != .null } ?? [])
+        }
         .task { connections = (try? await FlowEngine.connections(in: design.flows.repo)) ?? [] }
     }
 
@@ -76,12 +82,19 @@ struct FlowVisualEditor: View {
                         }
                     } else if let block {
                         Text("Inputs").font(.subheadline.weight(.semibold))
-                        ForEach(block.inputs["properties"].object.keys.sorted(), id: \.self) { key in
-                            let schema = inputSchema(key, block: block)
-                            FlowSchemaField(name: key, schema: schema, value: Binding(get: { design.nodeValue(key, inputs: true) }, set: {
-                                design.setNodeValue(key, $0 == .null ? nil : $0, inputs: true)
-                            }), required: block.inputs["required"].array.compactMap(\.string).contains(key), onError: { design.fieldErrors[key] = $0 })
-                            if let error = design.fieldErrors[key] { Text(error).font(.caption).foregroundStyle(.red) }
+                        let keys = block.inputs["properties"].object.keys.sorted()
+                        let required = Set(block.inputs["required"].array.compactMap(\.string))
+                        let shown = Set(keys.filter { required.contains($0) || visibleInputs.contains($0) || (groupingNode != design.selectedNode && design.nodeValue($0, inputs: true) != .null) })
+                        ForEach(keys.filter { shown.contains($0) }, id: \.self) { key in
+                            inputField(key, block: block)
+                        }
+                        let optional = keys.filter { !shown.contains($0) }
+                        if !optional.isEmpty {
+                            DisclosureGroup("Optional inputs") {
+                                VStack(alignment: .leading, spacing: 14) {
+                                    ForEach(optional, id: \.self) { key in inputField(key, block: block) }
+                                }.padding(.top, 10)
+                            }
                         }
                     } else {
                         Text("This module's advanced settings are preserved. Use YAML to edit fields outside the catalogue.").font(.caption).foregroundStyle(.secondary)
@@ -130,6 +143,13 @@ struct FlowVisualEditor: View {
         }
         return schema
     }
+
+    @ViewBuilder private func inputField(_ key: String, block: FlowBlockCatalog.Block) -> some View {
+        FlowSchemaField(name: key, schema: inputSchema(key, block: block), value: Binding(get: { design.nodeValue(key, inputs: true) }, set: {
+            design.setNodeValue(key, $0 == .null ? nil : $0, inputs: true)
+        }), required: block.inputs["required"].array.compactMap(\.string).contains(key), onError: { design.fieldErrors[key] = $0 })
+        if let error = design.fieldErrors[key] { Text(error).font(.caption).foregroundStyle(.red) }
+    }
 }
 
 struct FlowModuleEffects: View {
@@ -161,8 +181,9 @@ struct FlowModuleEffects: View {
     }
 }
 
-private struct FlowModuleCatalog: View {
+struct FlowModuleCatalog: View {
     let design: FlowAuthoringStore
+    var onInsert: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @ViewState private var search = ""
     @ViewState private var selected = "cmd"
@@ -172,7 +193,7 @@ private struct FlowModuleCatalog: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Add module").font(.title3.weight(.semibold))
             TextField("Search modules", text: $search).textFieldStyle(.roundedBorder)
-            HSplitView {
+            FlowSplitView(initialFraction: 0.4, minimumLeading: 240, minimumTrailing: 300) {
                 List(selection: $selected) {
                     ForEach(design.catalog.filter { search.isEmpty || ($0.id + $0.title + $0.category).localizedCaseInsensitiveContains(search) }) { block in
                         VStack(alignment: .leading, spacing: 3) {
@@ -181,7 +202,7 @@ private struct FlowModuleCatalog: View {
                         }.tag(block.id).padding(.vertical, 3)
                     }
                 }.frame(minWidth: 240)
-                ScrollView {
+            } trailing: { ScrollView {
                     if let block {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(block.title).font(.headline)
@@ -190,19 +211,18 @@ private struct FlowModuleCatalog: View {
                             ForEach(block.inputs["properties"].object.keys.sorted(), id: \.self) { key in
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(key).font(.caption.monospaced().weight(.medium))
-                                    if let description = block.inputs["properties"][key]["description"].string { Text(description).font(.caption).foregroundStyle(.secondary) }
+                                    if let description = block.inputs["properties"][key]["description"].string { Text(LocalizedStringKey(description)).font(.caption).foregroundStyle(.secondary) }
                                 }
                             }
                         }.padding(14)
                     }
-                }.frame(minWidth: 300)
-            }
+                } }
             TextField("Module identifier", text: $name).textFieldStyle(.roundedBorder)
             HStack {
                 if let error = design.error { Text(error).font(.caption).foregroundStyle(.red) }
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
-                Button("Add") { if let block { design.addNode(id: name, block: block); if design.selectedNode == name { dismiss() } } }
+                Button("Add") { if let block, design.addNode(id: name, block: block) { onInsert?(); dismiss() } }
                     .buttonStyle(.borderedProminent).disabled(block == nil || name.isEmpty)
             }
         }.padding(20).frame(width: 740, height: 600)

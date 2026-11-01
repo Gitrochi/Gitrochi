@@ -39,24 +39,26 @@ export function FlowWorkspace({ flows, affected, busy, onRun, onOpen, onEdit, on
   const shownPlan = plan?.flow === flow?.name ? plan : null;
   const graphNodes = shownPlan?.nodes ?? [];
   const selected = shownPlan?.nodes.find((node) => node.id === selectedNode);
+  const title = tab === "ci" ? t("Connected CI") : tab === "history" ? t("Run history") : flow?.name || t("Flows");
+  const description = tab === "ci" ? t("Review connected runs, jobs and logs for this repository.") : tab === "history" ? t("Inspect saved flow runs, their steps and results.") : flow?.description || t("Connect scripts into a repeatable workflow.");
   return <div className="flow-workspace" data-flow-workspace>
     <aside className="flow-library">
       <div className="flow-library-title"><Workflow size={16} /><strong>{t("Flows")}</strong><span className="flow-count">{items.length}</span></div>
       <div className="flow-library-list">{items.map((item) => {
         const last = flows.runs.find((run) => run.runId === item.last?.runId);
-        return <button key={item.name} className={`flow-choice ${flow?.name === item.name ? "selected" : ""}`} aria-pressed={flow?.name === item.name} onClick={() => setSelectedFlow(item.name)}>
+        return <button key={item.name} className={`flow-choice ${flow?.name === item.name ? "selected" : ""}`} aria-pressed={flow?.name === item.name} onClick={() => { setSelectedFlow(item.name); setTab("graph"); }}>
           <span className="flow-choice-heading"><span className="flow-choice-icon"><Workflow size={14} /></span><strong>{item.name}</strong><FlowStateIcon state={last ? runRowPresentationState(last) : item.last?.state ?? null} /></span>
           <span className="flow-choice-description">{item.description || t("Script workflow")}</span>
           <span className="flow-choice-meta"><span>{t("{0} steps", item.nodes)}{item.trigger.length ? ` · ${item.trigger.join(", ")}` : ""}</span><ChevronRight size={12} /></span>
         </button>;
       })}</div>
-      <button className="flow-library-config" onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={15} />{t("Configure scripts")}</button>
+      {tab === "graph" && <button className="flow-library-config" onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={15} />{t("Configure scripts")}</button>}
     </aside>
     <main className="flow-main">
       <div className="flow-workspace-heading">
-        <div className="flow-heading-emblem" aria-hidden="true"><Workflow size={24} /></div>
-        <div className="flow-heading-copy"><span className="flow-eyebrow">{t("Workflow")}</span><h2>{flow?.name || t("Flows")}</h2><p>{flow?.description || t("Connect scripts into a repeatable workflow.")}</p></div>
-        {flow && <div className="flow-heading-actions"><Button onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={14} />{t("Edit modules")}</Button><Button className="flow-review-button" onClick={() => onReview(flow.name)}><ShieldCheck size={14} />{t("Review commands…")}</Button><Button className="flow-run-button" kind="primary" disabled={busy !== null} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <Play size={13} fill="currentColor" />}{t("Run flow")}</Button></div>}
+        <div className="flow-heading-emblem" aria-hidden="true">{tab === "ci" ? <Cloud size={24} /> : tab === "history" ? <History size={24} /> : <Workflow size={24} />}</div>
+        <div className="flow-heading-copy"><span className="flow-eyebrow">{tab === "graph" ? t("Workflow") : t("Repository")}</span><h2>{title}</h2><p>{description}</p></div>
+        {flow && tab === "graph" && <div className="flow-heading-actions"><Button onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={14} />{t("Edit flow")}</Button><Button className="flow-review-button" onClick={() => onReview(flow.name)}><ShieldCheck size={14} />{t("Review commands…")}</Button><Button className="flow-run-button" kind="primary" disabled={busy !== null} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <Play size={13} fill="currentColor" />}{t("Run flow")}</Button></div>}
       </div>
       <div className="flow-tabs" role="tablist" aria-label={t("Flows")}>
         <button role="tab" aria-label={t("Flow graph")} aria-selected={tab === "graph"} className={tab === "graph" ? "selected" : ""} onClick={() => setTab("graph")}><Workflow size={15} />{t("Flow graph")}</button>
