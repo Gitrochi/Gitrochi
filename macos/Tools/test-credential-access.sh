@@ -7,7 +7,7 @@ trap 'rm -rf "$TASK_TMP"' EXIT
 python3 - "$ROOT/Sources/Services/Accounts.swift" "$TASK_TMP/Keychain.swift" <<'PY'
 import pathlib,sys
 source=pathlib.Path(sys.argv[1]).read_text().split('/// GitHub·사내 GitLab 계정')[0]
-for original,replacement in {'SecKeychainGetUserInteractionAllowed':'FixtureSecurity.getInteraction','SecKeychainSetUserInteractionAllowed':'FixtureSecurity.setInteraction','SecItemCopyMatching':'FixtureSecurity.copy','SecItemUpdate':'FixtureSecurity.update','SecItemAdd':'FixtureSecurity.add','SecItemDelete':'FixtureSecurity.delete'}.items():
+for original,replacement in {'SecKeychainGetUserInteractionAllowed':'FixtureSecurity.getInteraction','SecKeychainSetUserInteractionAllowed':'FixtureSecurity.setInteraction','SecItemCopyMatching':'FixtureSecurity.copy','SecItemUpdate':'FixtureSecurity.update','SecItemAdd':'FixtureSecurity.add','SecItemDelete':'FixtureSecurity.delete','SecKeychainItemCopyAccess':'FixtureSecurity.copyAccess','SecKeychainItemSetAccess':'FixtureSecurity.setAccess','SecKeychainItem':'FixtureKeychainItem'}.items():
  source=source.replace(original,replacement)
 pathlib.Path(sys.argv[2]).write_text(source)
 PY
@@ -17,6 +17,10 @@ import Security
 
 enum LegacyData { static let keychainService = "fixture.legacy" }
 
+final class FixtureKeychainItem: NSObject {
+    var access: SecAccess?
+}
+
 final class FixtureSecurity: @unchecked Sendable {
     static let shared = FixtureSecurity()
     private let lock = NSLock()
@@ -25,8 +29,23 @@ final class FixtureSecurity: @unchecked Sendable {
     private var holdRead = false
     private var entered = false
     private var readResult: OSStatus = errSecSuccess
+    private var approvalRequired = false
+    private var persistResult: OSStatus = errSecSuccess
+    private var legacyOnly = false
+    private let item = FixtureKeychainItem()
+    private var originalSelector = SecKeychainPromptSelector(rawValue: 0)
     let release = DispatchSemaphore(value: 0)
     func configure(hold: Bool, status: OSStatus = errSecSuccess) { lock.lock(); holdRead = hold; entered = false; readResult = status; operations = []; lock.unlock() }
+    func requireApproval(persistStatus: OSStatus = errSecSuccess, legacy: Bool = false) {
+        configure(hold: false)
+        var application: SecTrustedApplication?, access: SecAccess?
+        precondition(SecTrustedApplicationCreateFromPath("/bin/ls", &application) == errSecSuccess)
+        precondition(SecAccessCreate("Fixture credential" as CFString, [application!] as CFArray, &access) == errSecSuccess)
+        let entries = SecAccessCopyMatchingACLList(access!, kSecACLAuthorizationDecrypt) as! [SecACL]
+        var applications: CFArray?, description: CFString?, selector = SecKeychainPromptSelector(rawValue: 0)
+        precondition(SecACLCopyContents(entries[0], &applications, &description, &selector) == errSecSuccess)
+        lock.lock(); originalSelector = selector; item.access = access; approvalRequired = true; persistResult = persistStatus; legacyOnly = legacy; lock.unlock()
+    }
     var didEnter: Bool { lock.lock(); defer { lock.unlock() }; return entered }
     var events: [String] { lock.lock(); defer { lock.unlock() }; return operations }
     static func getInteraction(_ output: UnsafeMutablePointer<DarwinBoolean>) -> OSStatus {
@@ -39,10 +58,37 @@ final class FixtureSecurity: @unchecked Sendable {
     }
     static func copy(_ query: CFDictionary, _ output: UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus {
         precondition(!Thread.isMainThread)
-        let s = shared; s.lock.lock(); let hold = s.holdRead, status = s.readResult; s.entered = true; s.operations.append("read:\(s.interaction)"); s.lock.unlock()
+        let s = shared; s.lock.lock(); let hold = s.holdRead
+        let query = query as NSDictionary
+        let missing = s.legacyOnly && query[kSecAttrService] as? String != LegacyData.keychainService
+        let status = missing ? errSecItemNotFound : s.approvalRequired && !s.interaction ? errSecInteractionNotAllowed : s.readResult
+        s.entered = true; s.operations.append("read:\(s.interaction)"); s.lock.unlock()
         if hold { s.release.wait() }
-        if status == errSecSuccess { output?.pointee = Data("fixture-only".utf8) as CFData }
+        if status == errSecSuccess {
+            if query[kSecReturnRef] as? Bool == true {
+                output?.pointee = [kSecValueData as String: Data("fixture-only".utf8), kSecValueRef as String: s.item] as CFDictionary
+            } else { output?.pointee = Data("fixture-only".utf8) as CFData }
+        }
         return status
+    }
+    static func copyAccess(_ item: FixtureKeychainItem, _ output: UnsafeMutablePointer<SecAccess?>) -> OSStatus {
+        record("access"); output.pointee = item.access; return errSecSuccess
+    }
+    static func setAccess(_ item: FixtureKeychainItem, _ access: SecAccess) -> OSStatus {
+        record("remember")
+        let s = shared; s.lock.lock(); defer { s.lock.unlock() }
+        guard s.persistResult == errSecSuccess else { return s.persistResult }
+        precondition(s.interaction, "Trust changed without explicit approval")
+        item.access = access; s.approvalRequired = false; return errSecSuccess
+    }
+    var trustedApplications: [SecTrustedApplication] {
+        lock.lock(); defer { lock.unlock() }
+        let entries = SecAccessCopyMatchingACLList(item.access!, kSecACLAuthorizationDecrypt) as! [SecACL]
+        var applications: CFArray?, description: CFString?, selector = SecKeychainPromptSelector(rawValue: 0)
+        precondition(SecACLCopyContents(entries[0], &applications, &description, &selector) == errSecSuccess)
+        precondition(description as String? == "Fixture credential", "Approval replaced the credential's description")
+        precondition(selector == originalSelector, "Approval changed the credential's prompt restrictions")
+        return applications as! [SecTrustedApplication]
     }
     static func update(_ query: CFDictionary, _ attributes: CFDictionary) -> OSStatus { record("write"); return errSecSuccess }
     static func add(_ query: CFDictionary, _ output: UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus { record("add"); return errSecSuccess }
@@ -92,6 +138,44 @@ actor CacheFixture {
         let unavailable = await Keychain.read("fixture")
         precondition(unavailable.requiresAuthorization && unavailable.value == nil)
         precondition(FixtureSecurity.shared.events == ["UI:false", "read:false", "UI:true"], "Denied read retried another service or retained the silent flag")
+
+        let security = FixtureSecurity.shared
+        security.requireApproval()
+        let firstLaunch = await Keychain.read("fixture")
+        precondition(firstLaunch.requiresAuthorization && !security.events.contains("remember:true"))
+        let oneTime = await Keychain.read("fixture", allowInteraction: true)
+        precondition(oneTime.value == "fixture-only" && !security.events.contains("remember:true"), "An ordinary read changed saved permissions")
+        let invalidPolicy = await Keychain.read("fixture", rememberAccess: true)
+        precondition(invalidPolicy.status == errSecParam, "Silent access was allowed to change permissions")
+        let approved = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
+        precondition(approved.value == "fixture-only" && security.events.contains("remember:true"))
+        let trusted = security.trustedApplications
+        precondition(trusted.count == 2, "Approval removed an existing trusted app or allowed every application")
+        var priorPath: CFData?, currentPath: CFData?, expectedPath: CFData?, currentApp: SecTrustedApplication?
+        precondition(SecTrustedApplicationCreateFromPath(nil, &currentApp) == errSecSuccess)
+        precondition(SecTrustedApplicationCopyData(trusted[0], &priorPath) == errSecSuccess)
+        precondition(SecTrustedApplicationCopyData(trusted[1], &currentPath) == errSecSuccess)
+        precondition(SecTrustedApplicationCopyData(currentApp!, &expectedPath) == errSecSuccess)
+        precondition(!CFEqual(priorPath!, currentPath!) && CFEqual(currentPath!, expectedPath!), "Approval trusted a different app")
+        let relaunched = CredentialCache { await Keychain.read($0) }
+        let restored = await relaunched.awaitValue("fixture")
+        precondition(restored == "fixture-only" && relaunched.state("fixture") == .ready, "A new app session lost saved approval")
+
+        security.requireApproval(persistStatus: errSecUserCanceled)
+        let notSaved = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
+        precondition(notSaved.value == nil && notSaved.status == errSecUserCanceled, "Failed persistence was reported as saved approval")
+        let stillDenied = await Keychain.read("fixture")
+        precondition(stillDenied.requiresAuthorization, "Failed persistence changed saved trust")
+        security.requireApproval()
+        security.configure(hold: false, status: errSecUserCanceled)
+        let canceled = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
+        precondition(canceled.requiresAuthorization && !security.events.contains("access:true") && !security.events.contains("remember:true"), "A denied read changed saved permissions")
+        security.requireApproval(persistStatus: errSecUserCanceled, legacy: true)
+        let failedMigration = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
+        precondition(failedMigration.value == nil && failedMigration.status == errSecUserCanceled && !security.events.contains("write:true") && !security.events.contains("delete:true"), "Failed legacy approval migrated or deleted the credential")
+        security.requireApproval(legacy: true)
+        let migrated = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
+        precondition(migrated.value == "fixture-only" && security.events.contains("remember:true") && security.events.contains("write:true") && security.events.contains("delete:true"), "Legacy approval was not saved before migration")
 
         let source = CacheFixture(), cache = CredentialCache { _ in await source.read() }
         precondition(cache.value("approved") == nil)
@@ -180,7 +264,7 @@ actor CacheFixture {
         await source.finish("awaited-value")
         let awaited = await waited.value
         precondition(awaited == "awaited-value" && cache.value("awaited") == "awaited-value", "awaitValue did not wait for the read in flight")
-        print("Credential policy, transient-session retention, guarded prepare/retry back-off, awaited reads, coalescing and stale-result guards passed (fake Security only)")
+        print("Credential policy, persistent approval across sessions, legacy approval, failed/denied persistence, transient-session retention, guarded retries, awaited reads and stale-result guards passed (fake Keychain storage; in-memory Security ACLs)")
     }
 }
 SWIFT
