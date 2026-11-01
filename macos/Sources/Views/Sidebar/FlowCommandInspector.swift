@@ -28,6 +28,9 @@ struct FlowCommandInspector: View {
                         Spacer()
                         FlowStatusBadge(state: node.decision == "skip" ? "SKIPPED" : node.decision == "rejected" ? "REJECTED" : nil, compact: true)
                     }
+                    Button(action: onEdit) { Label("Edit step", systemImage: "square.and.pencil").frame(maxWidth: .infinity) }
+                        .buttonStyle(.bordered).controlSize(.small)
+                        .accessibilityLabel("Edit step")
                     Divider()
                     VStack(alignment: .leading, spacing: 14) {
                         if !node.needs.isEmpty { field("Dependencies", node.needs.joined(separator: ", "), icon: "arrow.triangle.branch") }
@@ -43,8 +46,6 @@ struct FlowCommandInspector: View {
                     }
                     if node.outward == true { Label("outward", systemImage: "arrow.up.forward.app").font(.caption).foregroundStyle(.orange) }
                     if node.destructive == true { Label("hard to undo", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
-                    Button(action: onEdit) { Label("Edit scripts…", systemImage: "square.and.pencil").frame(maxWidth: .infinity) }
-                        .buttonStyle(.bordered).controlSize(.small)
                 } else {
                     Image(systemName: "cursorarrow.click").font(.title2).foregroundStyle(.tertiary)
                     Text("Choose a step to inspect its script.").font(.callout).foregroundStyle(.secondary)

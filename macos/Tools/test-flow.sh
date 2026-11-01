@@ -183,3 +183,4 @@ SWIFT
 swiftc -parse-as-library "$ROOT/Sources/Core/FlowModels.swift" "$ROOT/Sources/Core/FlowDesignModels.swift" "$ROOT/Sources/Core/FlowConnectionModels.swift" "$T/main.swift" -o "$T/test-flow"
 "$T/test-flow" "$T"
 bash "$ROOT/Tools/test-flow-authoring.sh"
+bash "$ROOT/Tools/test-flow-creation.sh"

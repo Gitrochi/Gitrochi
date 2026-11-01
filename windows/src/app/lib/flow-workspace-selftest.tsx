@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { RepoStore } from "@/entities/repo";
-import { flowStoreFor } from "@/entities/flow";
+import { designModules, flowEngine, flowStoreFor } from "@/entities/flow";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -8,7 +8,7 @@ import { FlowPanel } from "@/widgets/sidebar";
 
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 60));
 
-/** Exercises source-driven diagrams, editor commands, independent file saves and history. */
+/** Exercises workspace navigation, guided creation, source-driven diagrams and independent file saves. */
 export async function flowWorkspaceSelfTest(repo: string, runId: string): Promise<[boolean, string]> {
   const host = document.createElement("div");
   Object.assign(host.style, { position: "fixed", left: "-20000px", width: "1200px", height: "800px", display: "flex" });
@@ -29,14 +29,36 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     root.render(<FlowPanel store={store} />);
     check(await until(() => host.querySelectorAll("[data-flow-node]").length === 2), "Dependency graph did not render both script steps");
     check(host.querySelectorAll(".flow-edges > path").length === 1, "Dependency connector missing");
+    const flowCount = host.querySelectorAll(".flow-choice").length;
+    const flowSearch = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Find flows")}"]`)!;
+    check(flowSearch && flowCount > 0, "Flow search or library choices are missing");
+    input(flowSearch, "no-matching-flow-selftest");
+    check(await until(() => !host.querySelector(".flow-choice") && !!host.querySelector(".flow-library")?.textContent?.includes(t("No matching flows"))), "Flow search did not explain an empty result");
+    await click("Clear search");
+    check(host.querySelectorAll(".flow-choice").length === flowCount && flowSearch.value === "", "Clearing flow search did not restore the library");
+    const graphTab = host.querySelector<HTMLButtonElement>('.flow-tabs [role="tab"][aria-selected="true"]')!;
+    graphTab.focus(); key(graphTab, "ArrowRight"); await pause();
+    const historyTab = host.querySelector<HTMLButtonElement>('.flow-tabs [role="tab"][aria-selected="true"]')!;
+    check(historyTab.textContent?.includes(t("Run history")) && document.activeElement === historyTab && graphTab.tabIndex === -1, "Arrow navigation did not select and focus the history tab");
+    const panel = host.querySelector<HTMLElement>('[role="tabpanel"]');
+    check(panel && historyTab.getAttribute("aria-controls") === panel.id && panel.getAttribute("aria-labelledby") === historyTab.id, "Workspace tab is not linked to its panel");
+    key(historyTab, "Home"); await pause();
+    check(graphTab.getAttribute("aria-selected") === "true" && document.activeElement === graphTab, "Home did not return to the graph tab");
     host.querySelector<HTMLButtonElement>('[data-flow-node="after"]')!.click(); await pause();
     check(host.querySelector(".flow-inspector")?.textContent?.includes("echo done"), "Selected node script was not shown");
+    host.querySelector<HTMLButtonElement>('.flow-choice[aria-pressed="true"]')!.click(); await pause();
+    check(host.querySelector('[data-flow-node="after"][aria-pressed="true"]'), "Reopening the selected flow cleared its selected step");
     await click("Run history");
     check(host.querySelector(`[data-flow-run="${runId}"]`), "Saved run missing from history");
+    input(host.querySelector<HTMLInputElement>(`input[aria-label="${t("Filter runs")}"]`)!, "no-matching-run-selftest");
+    check(await until(() => !host.querySelector("[data-flow-run]") && !!host.querySelector("[data-flow-history]")?.textContent?.includes(t("No matching runs"))), "History search confused an empty result with missing history");
+    await click("Clear filters");
+    check(host.querySelector(`[data-flow-run="${runId}"]`), "Clearing history filters did not restore the saved run");
     host.querySelector<HTMLButtonElement>(`[data-flow-run="${runId}"]`)!.click();
     check(await until(() => !!host.querySelector(".flow-run-graph [data-flow-node]")), "Saved run dependency graph missing");
-    await click("Done"); await click("Flow graph"); await click("Configure scripts");
+    await click("Done"); await click("Flow graph"); await click("Edit step");
     check(await until(() => !!host.querySelector("[data-flow-code-workspace]") && !!code()), "Code editor did not load by default");
+    check(await until(() => !!host.querySelector('.flow-code-preview [data-flow-node="after"][aria-pressed="true"]') && code().value.slice(code().selectionStart, code().selectionEnd).includes("after:")), "Edit step did not preserve the selected node or reveal its source");
     const path = joinPath(repo, ".gitch/flow.yml"), original = await ipc.readText(path);
     check(original, "Flow fixture is missing");
     code().focus(); code().setSelectionRange(0, 0); key(code(), "Tab"); await pause();
@@ -89,6 +111,59 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     check(await until(() => !host.querySelector(".flow-config")), "Valid code was not saved");
     check(await ipc.readText(path) === source, "Authored source formatting changed on save");
     check(flowStoreFor(repo).list?.trusted === false, "Editing did not invalidate command trust");
+    const baseBeforeCreation = await ipc.readText(path);
+    const runIDs = async () => (await flowEngine.runs(repo)).map((run) => run.runId).sort().join("\n");
+    const runsBeforeCreation = await runIDs();
+    const creation = () => host.querySelector<HTMLElement>("[data-flow-create]")!;
+    const creationSteps = () => [...creation().querySelectorAll<HTMLElement>("[data-flow-create-step]")];
+    const creationField = <T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,>(label: string, container: ParentNode = creation()) => [...container.querySelectorAll<T>("input, textarea, select")].find((element) => [...(element.labels ?? [])].some((entry) => entry.firstChild?.textContent?.trim() === t(label)))!;
+    const creationStepButton = (step: HTMLElement, label: string) => [...step.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.getAttribute("aria-label") === t(label))!;
+    const creationError = (label: string) => creation().querySelector('[role="alert"]')?.textContent?.includes(t(label));
+    await click("Create flow");
+    check(await until(() => !!creation()), "Guided flow creation did not open");
+    await click("Create flow");
+    check(creationError("Enter a flow name."), "Guided creation accepted a blank name");
+    input(creationField<HTMLInputElement>("Flow name"), "smoke"); await pause(); await click("Create flow");
+    check(creationError("A flow with this name already exists."), "Guided creation accepted an existing flow name");
+    input(creationField<HTMLInputElement>("Flow name"), "guided-check"); await pause(); await click("Create flow");
+    check(creationError("Enter a command for every step."), "Guided creation accepted a blank command");
+    input(creationField<HTMLInputElement>("Description"), "Guided creation check");
+    input(creationField<HTMLInputElement>("Step title (optional)", creationSteps()[0]), "First check");
+    input(creationField<HTMLTextAreaElement>("Command", creationSteps()[0]), "echo guided-first"); await pause();
+    await click("Add step");
+    input(creationField<HTMLInputElement>("Step title (optional)", creationSteps()[1]), "Second check");
+    input(creationField<HTMLTextAreaElement>("Command", creationSteps()[1]), "echo guided-second"); await pause();
+    await click("Add step");
+    check(creationSteps().length === 3, "Adding a guided step did not update the form");
+    creationStepButton(creationSteps()[2], "Remove step").click(); await pause();
+    check(creationSteps().length === 2, "Removing a guided step did not update the form");
+    creationStepButton(creationSteps()[0], "Move down").click(); await pause();
+    check(creationField<HTMLTextAreaElement>("Command", creationSteps()[0]).value === "echo guided-second", "Moving a guided step lost its command or failed to reorder it");
+    const execution = creationField<HTMLSelectElement>("Execution");
+    execution.value = "parallel"; execution.dispatchEvent(new Event("change", { bubbles: true })); await pause();
+    check(creation().textContent?.includes(t("Steps run independently at the same time.")), "Parallel execution did not explain its behavior");
+    execution.value = "sequential"; execution.dispatchEvent(new Event("change", { bubbles: true })); await pause();
+    check(creation().textContent?.includes(t("Each step starts after the previous step succeeds.")), "Sequential execution did not explain its behavior");
+    await click("Cancel");
+    check(host.textContent?.includes(t("Discard unsaved changes?")), "Closing a guided draft did not ask before discarding it");
+    await click("Keep editing");
+    check(creationField<HTMLInputElement>("Flow name").value === "guided-check" && creationSteps().length === 2 && creationField<HTMLTextAreaElement>("Command", creationSteps()[0]).value === "echo guided-second", "Keeping a guided draft lost its name, steps or order");
+    await click("Create flow");
+    check(await until(() => !creation() && host.querySelector(".flow-workspace-heading h2")?.textContent === "guided-check" && host.querySelectorAll("[data-flow-node]").length === 2), "Newly created flow was not selected with its diagram");
+    check([...host.querySelectorAll('[role="status"]')].some((element) => element.textContent?.includes(t("Flow created. Review its commands, then run it."))), "Creation did not explain the review and run next step");
+    const guidedPath = joinPath(repo, ".gitch/flows/guided-check.yml"), guidedYaml = await ipc.readText(guidedPath);
+    check(guidedYaml, "Guided creation did not save its own flow file");
+    const guidedInspection = await flowEngine.inspectDesign(guidedYaml!, repo, ".gitch/flows/guided-check.yml");
+    check(guidedInspection.document && !guidedInspection.diagnostics.some((diagnostic) => diagnostic.severity === "error"), "Created flow could not be parsed");
+    const guidedModules = designModules(guidedInspection.document!, "guided-check");
+    check(guidedModules.length === 2 && guidedModules[0].run === "echo guided-second" && guidedModules[0].title === "Second check" && guidedModules[0].needs.length === 0 && guidedModules[1].run === "echo guided-first" && guidedModules[1].title === "First check" && guidedModules[1].needs.length === 1 && guidedModules[1].needs[0] === guidedModules[0].id, "Guided creation did not preserve reordered commands, titles and sequential dependencies");
+    check(await ipc.readText(path) === baseBeforeCreation && await runIDs() === runsBeforeCreation, "Creating a flow changed the existing source or started a run");
+    await click("Create flow");
+    input(creationField<HTMLInputElement>("Flow name"), "guided-discard");
+    input(creationField<HTMLTextAreaElement>("Command", creationSteps()[0]), "echo discarded-draft"); await pause();
+    await click("Cancel"); await click("Discard changes");
+    check(await until(() => !creation()), "Discarding a guided draft did not close the dialog");
+    check(!(await ipc.exists(joinPath(repo, ".gitch/flows/guided-discard.yml"))) && await ipc.readText(path) === baseBeforeCreation && await runIDs() === runsBeforeCreation, "Discarding a guided draft wrote a file, changed source or started a run");
     await click("Connected CI"); check(host.querySelector("[data-flow-connected-ci]"), "Connected CI tab did not render");
     const importedSource = "version: 1\nflows:\n  imported-smoke:\n    nodes:\n      hello: {run: echo imported-preview}\n";
     const transfer = new DataTransfer(); transfer.items.add(new File([importedSource], "imported-workflow.yml", { type: "application/yaml" }));
@@ -98,7 +173,7 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     await click("Use imported modules"); check(await until(() => !!code() && code().value.includes("imported-smoke")), "Imported source did not open in Code");
     await click("Validate and save"); check(await until(() => !host.querySelector(".flow-config")), "Reviewed imported flow was not saved");
     check(await ipc.readText(joinPath(repo, ".gitch/flows/imported-workflow.yml")) === importedSource, "Imported YAML changed unexpectedly");
-    return [true, "Code-driven graph/dependencies, indentation and replace undo, split resizing, snippets, safe independent file saves/conflicts, stale preview, validation/rollback, history and reviewed imports checked"];
+    return [true, "Flow/history search reset, keyboard tabs and selected-step editing, guided creation validation/reordering/discard without execution, code-driven graph/dependencies, indentation and replace undo, split resizing, snippets, safe independent file saves/conflicts, stale preview, validation/rollback and reviewed imports checked"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); }
 }

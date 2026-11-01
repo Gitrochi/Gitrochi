@@ -9,3 +9,4 @@ export { type FlowBlock, type FlowDesignDiagnostic, type FlowDesignInspection, t
 export { browseFlowConnection, connectionProblem, listFlowConnections, saveFlowConnection, testFlowConnection, type FlowConnection, type FlowRemoteBrowse } from "./model/connections";
 export { addCodeModule, addParallelFlowExample, checkedFlowSource, flowModuleSourceLine, portableSourcePath, relatedFlowFiles } from "./model/source-authoring";
 export { type FlowDetached, type FlowEvent, type FlowGate, type FlowInitProposal, type FlowItem, type FlowList, type FlowPlan, type FlowPlanNode, type FlowRunRow, needsConfirmation, parseEngineError } from "./model/types";
+export { type FlowCreationDraft, type FlowCreationProblem, flowCreationDocument, flowCreationFile, flowCreationProblem } from "./model/creation";

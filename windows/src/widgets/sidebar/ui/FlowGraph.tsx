@@ -21,6 +21,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const graph = useMemo(() => layoutFlowGraph(nodes), [nodes]);
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(1);
+  const autoFit = useRef(fitOnMount);
   const [moved, setMoved] = useState<Record<string, { x: number; y: number }>>({});
   const [panning, setPanning] = useState(false);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -38,6 +39,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const zoomTo = (value: number, pointer?: { x: number; y: number }) => {
     const element = viewport.current;
     if (!element) return;
+    autoFit.current = false;
     const at = pointer ?? { x: element.clientWidth / 2, y: element.clientHeight / 2 };
     const anchor = flowZoomAnchor(zoomRef.current, value, { x: element.scrollLeft, y: element.scrollTop }, { x: at.x - panRef.current.x, y: at.y - panRef.current.y });
     zoomRef.current = anchor.zoom;
@@ -47,12 +49,14 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const fit = () => {
     const element = viewport.current;
     if (!element) return;
+    autoFit.current = true;
     const value = fitFlowGraph(width, height, element.clientWidth, element.clientHeight);
     zoomRef.current = value; setZoom(value);
     panRef.current = { x: 0, y: 0 }; setPan(panRef.current);
     element.scrollTo({ left: 0, top: 0 });
   };
   const reset = () => {
+    autoFit.current = false;
     setMoved({}); zoomRef.current = 1; setZoom(1); panRef.current = { x: 0, y: 0 }; setPan(panRef.current);
     viewport.current?.scrollTo({ left: 0, top: 0 });
   };
@@ -65,6 +69,14 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
       if (fitOnMount) requestAnimationFrame(fit);
     }
   }, [identity]);
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || !fitOnMount) return;
+    // macOS keeps the canvas fitted on resize until the user adjusts the view.
+    const observer = new ResizeObserver(() => { if (autoFit.current) fit(); });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [width, height, fitOnMount]);
   useEffect(() => {
     const element = viewport.current;
     if (!element) return;
@@ -90,6 +102,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
     if (!current || current.kind !== "node" || !current.id) return;
     const dx = event.clientX - current.x, dy = event.clientY - current.y;
     if (Math.abs(dx) + Math.abs(dy) < 3 && !current.moved) return;
+    autoFit.current = false;
     current.moved = true;
     setMoved((previous) => ({ ...previous, [current.id!]: { x: Math.max(24, current.startX + dx / zoomRef.current), y: Math.max(24, current.startY + dy / zoomRef.current) } }));
   };
@@ -104,6 +117,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const movePan = (event: PointerEvent<HTMLDivElement>) => {
     const current = gesture.current;
     if (current?.kind !== "pan") return;
+    autoFit.current = false;
     panRef.current = { x: current.startX + event.clientX - current.x, y: current.startY + event.clientY - current.y };
     setPan(panRef.current);
   };
@@ -144,6 +158,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
               return <button key={node.id} type="button" className={`flow-node kind-${flowBlockKind(node.block)} ${selected === node.id ? "selected" : ""} ${state?.toLowerCase() ?? ""}`} style={{ left: position.x, top: position.y }} aria-pressed={selected === node.id} data-flow-node={node.id} onPointerDown={(event) => startNode(event, node.id)} onPointerMove={moveNode} onPointerUp={endNode} onPointerCancel={endNode} onKeyDown={(event) => {
                 if (!event.altKey || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
                 event.preventDefault();
+                autoFit.current = false;
                 setMoved((previous) => ({ ...previous, [node.id]: { x: Math.max(24, position.x + (event.key === "ArrowRight" ? 16 : event.key === "ArrowLeft" ? -16 : 0)), y: Math.max(24, position.y + (event.key === "ArrowDown" ? 16 : event.key === "ArrowUp" ? -16 : 0)) } }));
               }} onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } onSelect(node.id); }}>
                 {node.needs.length > 0 && <span className="flow-node-port input" aria-hidden="true" />}

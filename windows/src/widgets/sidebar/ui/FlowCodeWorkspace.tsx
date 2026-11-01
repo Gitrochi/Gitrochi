@@ -19,6 +19,7 @@ export function FlowCodeWorkspace({ repo, file, source, inspection: initial, blo
   const [current, setCurrent] = useState(initial), [lastDocument, setLastDocument] = useState<FlowDocument | null>(initial?.document ?? null), [pending, setPending] = useState(false), [error, setError] = useState("");
   const [chosenFlow, setChosenFlow] = useState(initialFlow ?? ""), [chosenNode, setChosenNode] = useState(initialNode ?? ""), [catalogue, setCatalogue] = useState(false), [search, setSearch] = useState("");
   const [jump, setJump] = useState<{ line: number; request: number } | null>(null);
+  const initialJump = useRef<string | null>(null);
   const generation = useRef(0), report = useRef(onInspection); report.current = onInspection;
   useLayoutEffect(() => {
     const element = host.current;
@@ -42,8 +43,18 @@ export function FlowCodeWorkspace({ repo, file, source, inspection: initial, blo
   }, [source, repo, file]);
   useEffect(() => {
     setChosenFlow(initialFlow ?? ""); setChosenNode(initialNode ?? "");
-    if (initialFlow && initialNode) { const line = flowModuleSourceLine(source, initialFlow, initialNode); if (line) setJump((previous) => ({ line, request: (previous?.request ?? 0) + 1 })); }
-  }, [initialFlow, initialNode]);
+    initialJump.current = null;
+  }, [initialFlow, initialNode, repo, file]);
+  useEffect(() => {
+    if (!initialFlow || !initialNode) return;
+    const target = `${repo}:${file}:${initialFlow}:${initialNode}`;
+    if (initialJump.current === target) return;
+    const line = flowModuleSourceLine(source, initialFlow, initialNode);
+    if (line) {
+      initialJump.current = target;
+      setJump((previous) => ({ line, request: (previous?.request ?? 0) + 1 }));
+    }
+  }, [source, initialFlow, initialNode, repo, file]);
   const names = lastDocument ? designFlowNames(lastDocument) : [], flow = names.includes(chosenFlow) ? chosenFlow : names[0] ?? "";
   const modules = lastDocument ? designModules(lastDocument, flow) : [], selected = modules.find((module) => module.id === chosenNode) ?? modules[0];
   const matchesSource = current?.yaml === source && current.format === "flow" && current.editable && !current.diagnostics.some((diagnostic) => diagnostic.severity === "error") && !error;

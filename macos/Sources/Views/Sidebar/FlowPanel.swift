@@ -23,6 +23,7 @@ enum FlowSheet: Identifiable, Equatable {
     case trust(flow: String, plan: FlowPlan, thenRun: Bool)
     case setup
     case edit
+    case create
 
     var id: String {
         switch self {
@@ -30,6 +31,7 @@ enum FlowSheet: Identifiable, Equatable {
         case .trust(let f, _, _): return "trust:" + f
         case .setup: return "setup"
         case .edit: return "edit"
+        case .create: return "create"
         }
     }
 }
@@ -42,6 +44,7 @@ private struct FlowPanelBody: View {
     @ViewState private var starting: String?
     @ViewState private var editorFlow: String?
     @ViewState private var editorNode: String?
+    @ViewState private var requestedFlow: String?
     @AppStorage("flowAffectedOnly") private var affectedOnly = false
 
     var body: some View {
@@ -65,6 +68,7 @@ private struct FlowPanelBody: View {
                 }
             case .setup: FlowSetupSheet(flows: flows)
             case .edit: FlowEditorSheet(flows: flows, initialFlow: editorFlow, initialNode: editorNode)
+            case .create: FlowCreateSheet(flows: flows) { name in requestedFlow = name }
             }
         }
         .confirmationDialog(
@@ -178,7 +182,8 @@ private struct FlowPanelBody: View {
                           onRun: { name in Task { await prepare(name) } },
                           onReview: { plan in sheet = .trust(flow: plan.flow, plan: plan, thenRun: false) },
                           onEdit: { sheet = .edit }, onOpenRun: { sheet = .run($0) },
-                          onSelection: { flow, node in editorFlow = flow; editorNode = node })
+                          onSelection: { flow, node in editorFlow = flow; editorNode = node },
+                          requestedFlow: requestedFlow, onCreate: { sheet = .create })
     }
 
     private func emptyState(icon: String, text: String) -> some View {
