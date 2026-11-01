@@ -164,10 +164,12 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !$(`[data-prompt="${permission.id}"]`) && backend.world.prompts.find((p) => p.id === permission.id)?.state === "answered"), "Allowing a prompt did not answer it");
     // A wait auto-continue left to the person says why, and only the agent's terminal can answer it
     const kept = { id: backend.world.nextPrompt++, sessionId: permission.sessionId, kind: "permission" as const, payload: { kind: "permission", question: "Bash: git push --force", tool: { name: "Bash", summary: "git push --force" }, hold: { code: "held", rule: "push", detail: "git push --force", message: "held by push" } }, createdAt: clock, deadline: 0, state: "waiting" as const };
+    const attentionBeforeHeld = store.state!.attention.total;
     backend.world.prompts.push(kept);
     backend.world.rev++;
     await store.refresh(true);
     ensure(await until(() => $(`[data-prompt="${kept.id}"]`)), "A wait held for the person did not show");
+    ensure(store.state!.attention.held === 1 && store.state!.attention.total === attentionBeforeHeld + 1, "A held wait must count in attention and its badge total");
     const keptText = $(`[data-prompt="${kept.id}"]`)!.textContent ?? "";
     ensure(keptText.includes(t("Auto-continue never answers this kind of request.")) && keptText.includes(t("Answer it in the agent's terminal.")), `A held wait must say why and where to answer it: ${keptText}`);
     ensure(!button(`[data-prompt="${kept.id}"]`, "Allow") && !button(`[data-prompt="${kept.id}"]`, "Deny") && !button(`[data-prompt="${kept.id}"]`, "Not this time"), "A held wait must offer no answer the agent would not get");
