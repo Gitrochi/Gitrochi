@@ -437,7 +437,7 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 ### 9.5 Data
 
-`pending_prompts` holds the `PendingPrompt`s ([§6.1](#61-types)); their `payload` is the question, its options and, for a permission request, the tool and command. *Proposed* additions: `reviewedAt` with a `review` action (so **Confirm** on an automatic answer is stored), `rule` (the rule that blocked or allowed it), and no `deadline` for a wait that is never auto-allowed. Unlike the activity hooks, auto-continue keeps the question it waited on so the person can review it; what the person types is still never stored.
+`pending_prompts` holds the `PendingPrompt`s ([§6.1](#61-types)); their `payload` is the question, its options and, for a permission request, the tool and command. *Proposed* additions: `reviewedAt` with a `review` action (so **Confirm** on an automatic answer is stored) and `rule` (the rule that blocked or allowed it). A wait held for the person — never auto-allowed, risky, nothing to choose, or past the limit in a row — is stored with `deadline` 0 and the reason in `payload.hold`, so the apps can show it and notify about it; no hook waits on it, and the person answers in the terminal (CONTRACT.md, Hooks). Unlike the activity hooks, auto-continue keeps the question it waited on so the person can review it; what the person types is still never stored.
 
 ## 10. Screens
 

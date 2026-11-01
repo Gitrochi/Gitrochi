@@ -86,7 +86,7 @@ interface StreamCycle { sessionId: string; line: string; version: string /* "" b
 interface Overlap { a: string; b: string; paths: string[]; kind: "same" | "coupled" }
 interface PendingPrompt { id: number; sessionId?: string; agentId?: string;
   kind: "stop_question" | "ask_user_question" | "exit_plan_mode" | "permission";
-  payload: Record<string, unknown>; createdAt: Ms; deadline: Ms;
+  payload: Record<string, unknown>; createdAt: Ms; deadline: Ms /* 0: held for the person, no countdown */;
   state: "waiting" | "answered" | "auto" | "released" | "expired";
   answer?: Record<string, unknown>; answeredBy?: "human" | "auto"; answeredAt?: Ms; reviewedAt?: Ms }
 interface Attention { questions: number; tidy: number; decide: number; autoReview: number; total: number }
@@ -145,7 +145,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
-| `prompt_expire` | `{}` | `{ok, rev, expired}` — waiting prompts 10 minutes past their deadline | app, hook |
+| `prompt_expire` | `{}` | `{ok, rev, expired}` — waiting prompts 10 minutes past their deadline (a wait held for the person has none) | app, hook |
 
 Callers: **app** = the C ABI and the Tauri command (a person is at the controls); **agent** = the CLI's `call` and the MCP server; **hook** = the wave 2 hook handler. A method called by a caller it is not for answers `NOT_ALLOWED`; the caller comes from the entry point, never from the request.
 
@@ -243,11 +243,15 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
   - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
-  - the request is never auto-allowed;
-  - the question or the answer is risky;
-  - `stop_hook_active` is set and there has been no automatic answer since the person's last input;
-  - there have already been three automatic answers in a row.
-- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
+  - the turn did not end with a question;
+  - `stop_hook_active` is set and there has been no automatic answer since the person's last input.
+- **Waits held for the person.** With auto-continue on, some waits are never answered automatically: a request that is never auto-allowed, a risky question or plan, an `AskUserQuestion` with nothing to choose, and anything past the limit in a row (a stop question only when the turn asked one). The hook still ends at once with no decision, so the terminal asks, but it stores a waiting prompt the apps can show and notify about:
+  - `deadline` is 0 (no countdown), and `prompt_expire` leaves it alone.
+  - Its payload has the `PromptPayload` keys for what is asked, no `proposed`, `call` (as for permission prompts), and `hold`: why, as `gitrochi-autocontinue`'s pass (`code`: `held` with `rule` and `detail`, `risky` with `kind` and `reason`, `no_answer`, `limit_reached` with `consecutive` and `max`) plus an English `message`.
+  - It is settled like the other waits: the person's answer in the terminal (the call running, or the same agent going on, for a permission request; the `AskUserQuestion` or `ExitPlanMode` call running, or the agent going on, for a question or plan; their own prompt for a stop question) marks it `answered` by `human`. Their prompt otherwise, and SessionStart and SessionEnd, release it.
+  - It never counts toward the limit in a row, and like other waits it is in `state.pendingPrompts`, not in `attention`.
+  - No hook waits on it, so an answer from the app (`prompt_answer`) does not reach the agent: the apps send the person to the terminal.
+- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting with a countdown, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
   - a `hook` event with `data.person`, written when they type in the terminal;
   - any of their actions on the session in the app, except `link`;
   - a prompt they answered.
@@ -283,5 +287,9 @@ Added for the hook handler (wave 2):
 Added for launch tracking (wave 2):
 
 16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`.
+
+Added for the apps' notifications (wave 2):
+
+17. Waits held for the person ([Hooks](#hooks)): a waiting prompt with `deadline` 0 and `payload.hold`, which `prompt_expire` leaves alone and the limit in a row does not count. Before, these waits stored nothing.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
