@@ -20,18 +20,27 @@ struct FlowRunSheet: View {
             header
             Divider()
             HSplitView {
-                nodeList.frame(minWidth: 230, idealWidth: 270)
+                VSplitView {
+                    FlowGraphView(nodes: nodes.map(FlowGraphView.Node.init), selected: $selected)
+                        .frame(minHeight: 220, idealHeight: 360)
+                    nodeList.frame(minHeight: 100, idealHeight: 180)
+                }.frame(minWidth: 400, idealWidth: 640)
                 detail.frame(minWidth: 400)
             }
             Divider()
             footer
         }
-        .frame(minWidth: 780, idealWidth: 920, minHeight: 540, idealHeight: 640)
-        .task { await flows.open(runId) }
+        .frame(minWidth: 900, idealWidth: 1120, minHeight: 620, idealHeight: 780)
+        .task {
+            await flows.open(runId)
+            if selected == nil {
+                selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? nodes.first?.id
+            }
+        }
     }
 
     private var header: some View {
-        let state = view?.state ?? record?["state"].string
+        let state = view.map(FlowRunHistory.presentationState) ?? record?["state"].string
         return HStack(spacing: 10) {
             FlowStateIcon(state: state, size: 18)
             VStack(alignment: .leading, spacing: 2) {
@@ -87,8 +96,8 @@ struct FlowRunSheet: View {
         .listStyle(.sidebar)
         .onChange(of: nodes.map(\.state)) { _, _ in
             // Without a choice, show the node that is running (or else the first that failed).
-            if selected == nil || nodes.first(where: { $0.id == selected })?.state == .passed {
-                selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? selected
+            if selected == nil {
+                selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? nodes.first?.id
             }
         }
     }

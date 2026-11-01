@@ -61,7 +61,7 @@ enum FlowEngine {
 
     /// Whether a flow file exists (a quick check before calling the engine)
     static func hasFlowFile(in repo: URL) -> Bool {
-        FileManager.default.fileExists(atPath: repo.appendingPathComponent(".gitch/flow.yml").path)
+        configurationFiles(in: repo).contains { $0 == ".gitch/flow.yml" || $0 == ".gitch/flow.yaml" || $0.hasPrefix(".gitch/flows/") }
     }
 
     static func list(in repo: URL) async throws -> FlowList { try await json(["list"], in: repo) }

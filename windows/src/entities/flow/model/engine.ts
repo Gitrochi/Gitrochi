@@ -80,8 +80,13 @@ class FlowEngineService {
     return r.stdout;
   }
 
-  hasFlowFile(repo: string) {
-    return ipc.exists(joinPath(repo, ".gitch/flow.yml"));
+  async hasFlowFile(repo: string) {
+    if (await ipc.exists(joinPath(repo, ".gitch/flow.yml")) || await ipc.exists(joinPath(repo, ".gitch/flow.yaml"))) return true;
+    return (await ipc.list(joinPath(repo, ".gitch/flows")).catch(() => [])).some((file) => /\.ya?ml$/.test(file) && !file.startsWith("."));
+  }
+
+  validate(repo: string) {
+    return this.json<{ valid: boolean }>(["validate"], repo);
   }
 
   list(repo: string) {
