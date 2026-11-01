@@ -1640,5 +1640,7 @@
   "It looks risky to answer automatically.": "Tự động trả lời có vẻ rủi ro.",
   "There is nothing to choose from.": "Không có gì để chọn.",
   "Auto-continue already answered {0} times in a row.": "Tự động tiếp tục đã trả lời {0} lần liên tiếp.",
-  "Answer it in the agent's terminal.": "Hãy trả lời trong terminal của agent."
+  "Answer it in the agent's terminal.": "Hãy trả lời trong terminal của agent.",
+  "Ledger overview": "Tổng quan sổ cái",
+  "What agents read about this project, in a new tab of the terminal below.": "Những gì agent đọc về dự án này, trong một tab mới của terminal bên dưới."
 }

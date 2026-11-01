@@ -1684,5 +1684,7 @@
   "It looks risky to answer automatically.": "Відповідати автоматично виглядає ризиковано.",
   "There is nothing to choose from.": "Немає з чого вибирати.",
   "Auto-continue already answered {0} times in a row.": "Автоматичних відповідей поспіль уже: {0}.",
-  "Answer it in the agent's terminal.": "Дайте відповідь у терміналі агента."
+  "Answer it in the agent's terminal.": "Дайте відповідь у терміналі агента.",
+  "Ledger overview": "Огляд книги обліку",
+  "What agents read about this project, in a new tab of the terminal below.": "Те, що агенти читають про цей проєкт, у новій вкладці термінала внизу."
 }

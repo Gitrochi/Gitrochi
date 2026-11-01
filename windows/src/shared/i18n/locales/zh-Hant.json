@@ -1690,5 +1690,7 @@
   "It looks risky to answer automatically.": "自動回答看起來有風險。",
   "There is nothing to choose from.": "沒有可選的選項。",
   "Auto-continue already answered {0} times in a row.": "自動繼續已連續回答了 {0} 次。",
-  "Answer it in the agent's terminal.": "請在代理程式的終端機中回答。"
+  "Answer it in the agent's terminal.": "請在代理程式的終端機中回答。",
+  "Ledger overview": "台帳概覽",
+  "What agents read about this project, in a new tab of the terminal below.": "代理程式讀到的此專案概況，在下方終端機的新分頁中開啟。"
 }

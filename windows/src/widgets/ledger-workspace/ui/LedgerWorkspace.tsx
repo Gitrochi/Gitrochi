@@ -1,13 +1,14 @@
-import { ClipboardPaste, DatabaseBackup, Inbox, PlugZap, Search, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, Inbox, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
-import { inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, type LedgerView } from "@/entities/ledger";
+import { inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { isMac, keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, IconButton, Modal, Spinner } from "@/shared/ui";
+import { Button, Empty, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { type LedgerLauncher, quickLaunchItems } from "../lib/quick-launch";
 import { LedgerBoard } from "./LedgerBoard";
 import { LedgerFilters, LedgerTopBar } from "./LedgerFilters";
 import { LedgerGraph } from "./LedgerGraph";
@@ -31,9 +32,10 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
 /**
  * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Filters |
  * view | inspector; below 1,080 px the inspector opens as a sheet and below 640 px the filters stack above the view.
- * Opens without a repository and filters to the open one's project. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
+ * Opens without a repository and filters to the open one's project. `launcher` is the repository's tab, for the quick
+ * launches. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
-export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null; ledger?: LedgerStore }) {
+export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher }) {
   const store = useObserve(ledger ?? ledgerStore(repoPath));
   useEffect(() => store.start(), [store]);
   const root = useRef<HTMLDivElement>(null);
@@ -91,6 +93,13 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
     if (agent && agents.canFocus(agent)) agents.focus(agent);
     else store.showToast(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."), null);
   };
+  // the overview's CLI is looked up when the menu opens; the tab may have been opened before the app found it
+  const quickLaunch = async (anchor: HTMLElement) => {
+    if (!repoPath || !launcher) return;
+    const demo = store.backend.kind === "demo";
+    const cli = demo ? null : await ledgerTracking.cli();
+    showMenuBelow(anchor, quickLaunchItems({ launcher, repoPath, project: store.project, cli, demo }));
+  };
   const pick = (hit: LedgerSearchHit) => {
     if (hit.sessionId) open(hit.sessionId, hit.kind === "event" ? Number(hit.id) : null);
     else if (hit.kind === "baseline") store.setView("graph");
@@ -138,6 +147,7 @@ export function LedgerWorkspace({ repoPath, ledger }: { repoPath: string | null;
           <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
           <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
           <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
+          <IconButton icon={<SquareTerminal size={16} />} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} disabled={!repoPath || !launcher} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />
         </div>
         {store.error && <div className="ledger-banner" role="alert">{store.error}<span className="spacer" /><Button size="small" onClick={() => void store.refresh(true)}>{t("Try again")}</Button></div>}
         {empty ? (

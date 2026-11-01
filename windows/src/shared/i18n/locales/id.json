@@ -1638,5 +1638,7 @@
   "It looks risky to answer automatically.": "Menjawab otomatis tampaknya berisiko.",
   "There is nothing to choose from.": "Tidak ada pilihan.",
   "Auto-continue already answered {0} times in a row.": "Lanjut otomatis sudah menjawab {0} kali berturut-turut.",
-  "Answer it in the agent's terminal.": "Jawab di terminal agen."
+  "Answer it in the agent's terminal.": "Jawab di terminal agen.",
+  "Ledger overview": "Ikhtisar Ledger",
+  "What agents read about this project, in a new tab of the terminal below.": "Yang dibaca agen tentang proyek ini, di tab baru terminal di bawah."
 }

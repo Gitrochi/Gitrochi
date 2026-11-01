@@ -1666,5 +1666,7 @@
   "It looks risky to answer automatically.": "Automatická odpověď tu vypadá riskantně.",
   "There is nothing to choose from.": "Není z čeho vybírat.",
   "Auto-continue already answered {0} times in a row.": "Automatické pokračování už odpovědělo {0}× za sebou.",
-  "Answer it in the agent's terminal.": "Odpovězte v terminálu agenta."
+  "Answer it in the agent's terminal.": "Odpovězte v terminálu agenta.",
+  "Ledger overview": "Přehled evidence",
+  "What agents read about this project, in a new tab of the terminal below.": "Co o tomto projektu čtou agenti, na nové kartě terminálu dole."
 }

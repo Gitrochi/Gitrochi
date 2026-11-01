@@ -1662,5 +1662,7 @@
   "It looks risky to answer automatically.": "Rispondere automaticamente sembra rischioso.",
   "There is nothing to choose from.": "Non c'è nulla tra cui scegliere.",
   "Auto-continue already answered {0} times in a row.": "La prosecuzione automatica ha già risposto {0} volte di seguito.",
-  "Answer it in the agent's terminal.": "Rispondi nel terminale dell'agente."
+  "Answer it in the agent's terminal.": "Rispondi nel terminale dell'agente.",
+  "Ledger overview": "Panoramica del registro",
+  "What agents read about this project, in a new tab of the terminal below.": "Ciò che gli agenti leggono su questo progetto, in una nuova scheda del terminale in basso."
 }
