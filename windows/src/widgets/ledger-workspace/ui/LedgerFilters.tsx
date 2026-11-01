@@ -42,7 +42,7 @@ export function LedgerTopBar({ store, repoPath }: { store: LedgerStore; repoPath
         {state.projects.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
       </select>
       <FilterInput store={store} />
-      <Button size="small" className="ledger-verdict-menu" aria-label={t("Verdicts")} aria-haspopup="menu" data-verdict={selected ?? "all"} onClick={(e) => showVerdicts(e.currentTarget)}>
+      <Button size="small" className="ledger-verdict-menu" aria-label={`${t("Verdicts")}: ${label}`} aria-haspopup="menu" data-verdict={selected ?? "all"} onClick={(e) => showVerdicts(e.currentTarget)}>
         <span>{label}</span><ChevronDown size={12} />
       </Button>
     </div>

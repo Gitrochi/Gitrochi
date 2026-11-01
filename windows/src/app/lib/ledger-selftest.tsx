@@ -199,6 +199,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(JSON.stringify(menuCounts) === JSON.stringify(counts.map((c) => c.count)) && !$$(".ledger-chip .count").length, `Verdict counts must appear once in the menu: ${menuCounts} vs ${counts.map((c) => c.count)}`);
     menuItem(t(verdictLook(counts[0].verdict).label))!.click();
     ensure(await until(() => store.verdicts.size === 1 && store.verdicts.has(counts[0].verdict) && $$(".ledger-table-row").length > 0 && $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A verdict menu item did not filter the Board");
+    ensure($(".ledger-verdict-menu")?.getAttribute("aria-label") === `${t("Verdicts")}: ${t(verdictLook(counts[0].verdict).label)}`, "The verdict filter must announce its selected value");
     $<HTMLButtonElement>(".ledger-verdict-menu")!.click();
     ensure(await until(() => menuItem(t("All verdicts"))), "The verdict filter did not reopen");
     menuItem(t("All verdicts"))!.click();
