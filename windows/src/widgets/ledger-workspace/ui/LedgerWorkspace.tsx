@@ -1,7 +1,7 @@
 import { ClipboardPaste, DatabaseBackup, Inbox, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
-import { inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
+import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { isMac, keyLabel } from "@/shared/config";
@@ -10,7 +10,7 @@ import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { type LedgerLauncher, quickLaunchItems } from "../lib/quick-launch";
 import { LedgerBoard } from "./LedgerBoard";
-import { LedgerFilters, LedgerTopBar } from "./LedgerFilters";
+import { LedgerTopBar } from "./LedgerFilters";
 import { LedgerGraph } from "./LedgerGraph";
 import { LedgerInbox } from "./LedgerInbox";
 import { LedgerInspector } from "./LedgerInspector";
@@ -30,8 +30,8 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
 ];
 
 /**
- * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Filters |
- * view | inspector; below 1,080 px the inspector opens as a sheet and below 640 px the filters stack above the view.
+ * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Tabs and
+ * compact filters sit above the view; below 1,080 px the inspector opens as a sheet and below 640 px controls wrap.
  * Opens without a repository and filters to the open one's project. `launcher` is the repository's tab, for the quick
  * launches. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
@@ -115,15 +115,17 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
 
   const empty = !store.state.sessions.length && !store.state.pendingPrompts.length && !store.state.hiddenBefore;
   const groups = inboxGroups(store.state, store.project);
-  const counts: Partial<Record<LedgerView, number>> = { inbox: inboxCount(groups), streams: store.state.sessions.filter((s) => s.stream && (!store.project || s.project === store.project)).length };
+  const counts: Partial<Record<LedgerView, number>> = {
+    inbox: inboxCount(groups),
+    board: filterSessions(store.state.sessions, { project: store.project, verdicts: store.verdicts, text: store.filterText, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly }).length,
+    streams: store.state.sessions.filter((s) => s.stream && (!store.project || s.project === store.project)).length,
+  };
   const waiting = visiblePrompts(store).length;
   const selected = !!store.selectedId;
   const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
   return (
     <div className={`ledger-page ${layout}`} ref={root} data-layout={layout}>
-      {layout !== "narrow" && !empty && <LedgerFilters store={store} repoPath={repoPath} />}
       <div className="ledger-main">
-        {layout === "narrow" && !empty && <LedgerTopBar store={store} repoPath={repoPath} />}
         <div className="ledger-toolbar" role="toolbar" aria-label={t("Ledger")}>
           {!empty && (
             <div className="ledger-tabs" role="tablist" aria-label={t("Views")}>
@@ -142,14 +144,16 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
               {t("{0} waiting", waiting)}
             </button>
           )}
-          <span className="spacer" />
-          {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
-          <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
-          <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
-          <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
-          {/* only with a repository to launch in: no faded, reasonless disabled button (docs/design.md) */}
-          {repoPath && launcher && <IconButton icon={<SquareTerminal size={16} />} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />}
+          <div className="ledger-toolbar-actions">
+            {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
+            <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
+            <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
+            <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
+            {/* only with a repository to launch in: no faded, reasonless disabled button (docs/design.md) */}
+            {repoPath && launcher && <IconButton icon={<SquareTerminal size={16} />} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />}
+          </div>
         </div>
+        {!empty && <LedgerTopBar store={store} repoPath={repoPath} />}
         {store.error && <div className="ledger-banner" role="alert">{store.error}<span className="spacer" /><Button size="small" onClick={() => void store.refresh(true)}>{t("Try again")}</Button></div>}
         {empty ? (
           <Onboarding onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onImportLegacy={() => setSheet("legacy")} />

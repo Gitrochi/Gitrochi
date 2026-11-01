@@ -1161,6 +1161,7 @@
 "Open the full log" = "Открыть полный журнал";
 "Failed tests" = "Проваленные тесты";
 "Verdicts" = "Вердикты";
+"All verdicts" = "Все вердикты";
 "Output" = "Вывод";
 "Waiting for the engine…" = "Ожидание движка…";
 "Choose a step to see its output." = "Выберите шаг, чтобы увидеть его вывод.";

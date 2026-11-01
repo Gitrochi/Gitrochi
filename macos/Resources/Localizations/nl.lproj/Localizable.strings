@@ -1105,6 +1105,7 @@
 "Open the full log" = "Volledig logboek openen";
 "Failed tests" = "Mislukte tests";
 "Verdicts" = "Oordelen";
+"All verdicts" = "Alle oordelen";
 "Output" = "Uitvoer";
 "Waiting for the engine…" = "Wachten op de engine…";
 "Choose a step to see its output." = "Kies een stap om de uitvoer te zien.";

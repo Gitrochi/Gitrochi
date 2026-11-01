@@ -1173,6 +1173,7 @@
 "Open the full log" = "打开完整日志";
 "Failed tests" = "失败的测试";
 "Verdicts" = "判定";
+"All verdicts" = "所有判定";
 "Output" = "输出";
 "Waiting for the engine…" = "正在等待引擎…";
 "Choose a step to see its output." = "选择一个步骤以查看其输出。";

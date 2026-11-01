@@ -81,7 +81,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const boardRows = filterSessions(state.sessions, { project, verdicts: store.verdicts, text, showArchived: store.showArchived });
+  const boardRows = filterSessions(state.sessions, { project, verdicts: store.verdicts, text, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly });
   const progressView = boardRows.length === 0 && streamCount(state.sessions, project) > 0 ? "streams" : "board";
   const busy = store.busy > 0;
   return (

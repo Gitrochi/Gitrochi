@@ -1,38 +1,32 @@
-/* widgets/ledger-workspace — the Ledger page: filters | view | inspector (macOS: Views/Ledger) */
+/* widgets/ledger-workspace — tabs and filters above the view, with an inspector (macOS: Views/Ledger) */
 
 .ledger-page { position: relative; display: flex; flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--surface); }
 .ledger-page.narrow { flex-direction: column; }
 
-/* Left column: filter, projects, verdicts — the page list's look */
-.ledger-filters { flex: 0 0 212px; min-width: 0; display: flex; flex-direction: column; background: var(--sidebar); border-right: 1px solid var(--border); overflow-y: auto; padding: 10px 8px 14px; gap: 2px; }
-.ledger-filter-input { position: relative; display: flex; align-items: center; margin: 0 2px 4px; }
+/* One compact filter bar at every width; the app already owns the navigation column. */
+.ledger-filter-input { position: relative; display: flex; align-items: center; }
 .ledger-filter-input svg { position: absolute; left: 8px; color: var(--text-3); pointer-events: none; }
 .ledger-filter-input .input { padding-left: 27px; height: 28px; }
-.ledger-group-title { display: flex; align-items: center; gap: 9px; padding: 14px 10px 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: var(--text-2); }
-.ledger-group-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-.ledger-nav-item { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-2); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
-.ledger-nav-item svg { flex: none; }
-.ledger-nav-item:hover:not(:disabled) { background: var(--hover); color: var(--text); }
-.ledger-nav-item.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.ledger-nav-item:disabled { opacity: 0.45; cursor: default; }
-.ledger-nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.ledger-nav-item .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ledger-nav-count { flex: none; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-3); }
-.ledger-nav-item.selected .ledger-nav-count { color: var(--accent); }
-
-/* Narrow: the filters become one row above the view */
-.ledger-topbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--sidebar); flex-wrap: wrap; }
-.ledger-topbar .select { width: auto; max-width: 46%; height: 28px; }
-.ledger-topbar .ledger-filter-input { flex: 1; min-width: 140px; margin: 0; }
+.ledger-topbar { display: flex; flex: none; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.ledger-topbar .select { flex: 0 1 230px; width: auto; max-width: 40%; height: 28px; }
+.ledger-topbar .ledger-filter-input { flex: 1; min-width: 140px; max-width: 480px; }
+.ledger-topbar .ledger-verdict-menu { display: inline-flex; align-items: center; gap: 6px; height: 28px; max-width: 200px; }
+.ledger-verdict-menu span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-verdict-menu svg { flex: none; }
+.ledger-page.narrow .ledger-topbar .select { flex: 1; max-width: none; min-width: 0; }
+.ledger-page.narrow .ledger-topbar .ledger-filter-input { flex-basis: 100%; max-width: none; order: 1; }
 
 /* Center */
 .ledger-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.ledger-toolbar { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 6px 14px; border-bottom: 1px solid var(--border); flex: none; flex-wrap: wrap; }
-.ledger-tabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: color-mix(in srgb, var(--text) 7%, transparent); }
-.ledger-tabs button { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border: 0; border-radius: 6px; background: none; color: var(--text-2); font: inherit; font-size: 12.5px; cursor: pointer; }
-.ledger-tabs button.on { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); font-weight: 600; }
+.ledger-toolbar { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-bottom: 1px solid var(--border); flex: none; flex-wrap: wrap; }
+.ledger-toolbar-actions { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-left: auto; }
+.ledger-tabs { display: inline-flex; flex: none; align-items: stretch; gap: 2px; max-width: 100%; overflow-x: auto; }
+.ledger-tabs button { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 44px; padding: 0 11px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-2); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+.ledger-tabs button:hover { color: var(--text); }
+.ledger-tabs button.on { border-bottom-color: var(--accent); color: var(--text); }
 .ledger-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ledger-tabs .counter { font-weight: 600; }
+.ledger-page.narrow .ledger-tabs button { padding: 0 8px; }
 .ledger-demo-pill { font-size: 10.5px; font-weight: 600; letter-spacing: 0.3px; color: var(--text-2); border: 1px solid var(--border-strong); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
 .ledger-waiting-pill { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border: 0; border-radius: 999px; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--orange); background: color-mix(in srgb, var(--orange) 14%, transparent); cursor: pointer; white-space: nowrap; }
 .ledger-view { position: relative; flex: 1; min-height: 0; overflow: auto; }

@@ -1117,6 +1117,7 @@
 "Open the full log" = "Mở toàn bộ nhật ký";
 "Failed tests" = "Kiểm thử thất bại";
 "Verdicts" = "Kết luận";
+"All verdicts" = "Tất cả kết luận";
 "Output" = "Đầu ra";
 "Waiting for the engine…" = "Đang chờ engine…";
 "Choose a step to see its output." = "Chọn một bước để xem đầu ra.";

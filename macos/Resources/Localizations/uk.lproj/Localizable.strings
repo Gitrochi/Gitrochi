@@ -1161,6 +1161,7 @@
 "Open the full log" = "Відкрити повний журнал";
 "Failed tests" = "Провалені тести";
 "Verdicts" = "Вердикти";
+"All verdicts" = "Усі вердикти";
 "Output" = "Вивід";
 "Waiting for the engine…" = "Очікування рушія…";
 "Choose a step to see its output." = "Виберіть крок, щоб побачити його вивід.";

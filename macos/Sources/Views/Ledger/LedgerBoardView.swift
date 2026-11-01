@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Every session of the project as a dense list: verdict filter chips (the counts are the navigation's), multi-select
+/// Every session of the project as a dense list: verdict filter chips (the counts are the verdict menu's), multi-select
 /// (⌘ or ⇧ click, Space) and bulk confirm, archive, snooze and close. Streams stay out of it.
 /// (Windows: widgets/ledger-workspace/ui/LedgerBoardView.tsx)
 struct LedgerBoardView: View {

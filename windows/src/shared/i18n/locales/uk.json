@@ -1155,6 +1155,7 @@
  "Show the full log in Explorer": "Показати повний журнал у Провіднику",
  "Failed tests": "Провалені тести",
  "Verdicts": "Вердикти",
+ "All verdicts": "Усі вердикти",
  "Output": "Вивід",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Відкат не вдався. Середовище залишається заблокованим, доки людина не перевірить і не розблокує його (gitch flow hold release).",
  "The changes were undone in reverse order.": "Зміни скасовано у зворотному порядку.",

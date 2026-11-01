@@ -1183,6 +1183,7 @@
 "Open the full log" = "ログ全体を開く";
 "Failed tests" = "失敗したテスト";
 "Verdicts" = "判定";
+"All verdicts" = "すべての判定";
 "Output" = "出力";
 "Waiting for the engine…" = "エンジンを待っています…";
 "Choose a step to see its output." = "ステップを選ぶと出力を表示します。";

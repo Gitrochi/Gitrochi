@@ -43,6 +43,7 @@ export class LedgerReader extends Observable {
   filterText = "";
   verdicts = new Set<LedgerVerdict>();
   showArchived = false;
+  unreportedOnly = false;
   /** Board multi-selection */
   checked = new Set<string>();
   selectedId: string | null = null;

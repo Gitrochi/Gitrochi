@@ -2116,6 +2116,7 @@
 "Open the full log" = "전체 로그 열기";
 "Failed tests" = "실패한 테스트";
 "Verdicts" = "판정";
+"All verdicts" = "모든 판정";
 "Output" = "출력";
 "Waiting for the engine…" = "엔진을 기다리는 중…";
 "Choose a step to see its output." = "단계를 고르면 출력을 봅니다.";

@@ -1146,6 +1146,7 @@
 "Open the full log" = "Ouvrir le journal complet";
 "Failed tests" = "Tests en échec";
 "Verdicts" = "Verdicts";
+"All verdicts" = "Tous les verdicts";
 "Output" = "Sortie";
 "Waiting for the engine…" = "En attente du moteur…";
 "Choose a step to see its output." = "Choisissez une étape pour voir sa sortie.";

@@ -1,4 +1,4 @@
-/** The page's columns: filters | view | inspector when wide; the inspector becomes a sheet below 1,080 px and the filters stack above the view below 640 px */
+/** Tabs and compact filters sit above the view; the inspector becomes a sheet below 1,080 px and controls wrap below 640 px. */
 export type LedgerLayout = "wide" | "medium" | "narrow";
 
 export const LEDGER_WIDE = 1080;

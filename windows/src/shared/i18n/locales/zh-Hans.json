@@ -1166,6 +1166,7 @@
  "Show the full log in Explorer": "在文件资源管理器中显示完整日志",
  "Failed tests": "失败的测试",
  "Verdicts": "判定",
+ "All verdicts": "所有判定",
  "Output": "输出",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "回滚失败。在有人检查并解除之前（gitch flow hold release），此环境将保持锁定。",
  "The changes were undone in reverse order.": "已按相反顺序撤销更改。",

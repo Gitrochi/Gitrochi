@@ -1103,6 +1103,7 @@
  "Show the full log in Explorer": "Volledig logboek tonen in Verkenner",
  "Failed tests": "Mislukte tests",
  "Verdicts": "Oordelen",
+ "All verdicts": "Alle oordelen",
  "Output": "Uitvoer",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Terugdraaien mislukt. De omgeving blijft vergrendeld tot iemand haar controleert en vrijgeeft (gitch flow hold release).",
  "The changes were undone in reverse order.": "De wijzigingen zijn in omgekeerde volgorde teruggedraaid.",

@@ -10,7 +10,7 @@ const ROW = 34;
 const HOUR = 3_600_000;
 
 /**
- * Every session of the project as a dense list: verdict chips with counts, multi-select with Shift and Ctrl (Space
+ * Every session of the project as a dense list: verdict chips, multi-select with Shift and Ctrl (Space
  * from the keyboard) and a bar of bulk actions that undo as one. Streams are listed under Streams instead.
  * Windowed, so a thousand sessions scroll as smoothly as ten. (macOS: Views/Ledger/LedgerBoard.swift)
  */
@@ -81,13 +81,12 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
   return (
     <div className="ledger-board">
       <div className="ledger-board-bar" role="toolbar" aria-label={t("Verdicts")}>
-        {counts.filter((c) => c.count || store.verdicts.has(c.verdict)).map(({ verdict, count }) => {
+        {counts.filter((c) => c.count || store.verdicts.has(c.verdict)).map(({ verdict }) => {
           const look = verdictLook(verdict), Icon = verdictIcon(verdict), on = store.verdicts.has(verdict);
           return (
             <button key={verdict} type="button" className={`ledger-chip${on ? " on" : ""}`} aria-pressed={on} style={{ "--verdict": `var(${look.color})` } as CSSProperties} onClick={(e) => store.toggleVerdict(verdict, !(e.ctrlKey || e.metaKey))} data-tip={`${t(look.label)}|${t("Click to show only these; Ctrl+click to add them.")}`}>
               <Icon size={12} />
               {t(look.label)}
-              <span className="count">{count}</span>
             </button>
           );
         })}

@@ -1141,6 +1141,7 @@
 "Open the full log" = "Otevřít celý log";
 "Failed tests" = "Neúspěšné testy";
 "Verdicts" = "Výsledky";
+"All verdicts" = "Všechny verdikty";
 "Output" = "Výstup";
 "Waiting for the engine…" = "Čeká se na engine…";
 "Choose a step to see its output." = "Vyberte krok a zobrazí se jeho výstup.";

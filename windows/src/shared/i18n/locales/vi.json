@@ -1111,6 +1111,7 @@
  "Show the full log in Explorer": "Hiện toàn bộ nhật ký trong Chương trình Quản lý Tệp",
  "Failed tests": "Kiểm thử thất bại",
  "Verdicts": "Kết luận",
+ "All verdicts": "Tất cả kết luận",
  "Output": "Đầu ra",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Hoàn tác thất bại. Môi trường bị tạm giữ cho đến khi có người kiểm tra và giải phóng (gitch flow hold release).",
  "The changes were undone in reverse order.": "Các thay đổi đã được hoàn tác theo thứ tự ngược lại.",

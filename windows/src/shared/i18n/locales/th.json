@@ -1151,6 +1151,7 @@
  "Show the full log in Explorer": "แสดงล็อกทั้งหมดในตัวสำรวจไฟล์",
  "Failed tests": "การทดสอบที่ล้มเหลว",
  "Verdicts": "ผลการตัดสิน",
+ "All verdicts": "ผลการประเมินทั้งหมด",
  "Output": "เอาต์พุต",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "ย้อนกลับไม่สำเร็จ สภาพแวดล้อมนี้จะถูกระงับไว้จนกว่าจะมีคนตรวจสอบและปลดระงับ (gitch flow hold release)",
  "The changes were undone in reverse order.": "ย้อนการเปลี่ยนแปลงกลับตามลำดับย้อนกลับแล้ว",

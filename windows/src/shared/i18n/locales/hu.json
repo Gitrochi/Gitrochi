@@ -1139,6 +1139,7 @@
  "Show the full log in Explorer": "Teljes napló megjelenítése a Fájlkezelőben",
  "Failed tests": "Sikertelen tesztek",
  "Verdicts": "Értékelések",
+ "All verdicts": "Összes értékelés",
  "Output": "Kimenet",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "A visszaállítás sikertelen. A környezet zárolva marad, amíg valaki ellenőrzi és feloldja (gitch flow hold release).",
  "The changes were undone in reverse order.": "A módosítások fordított sorrendben visszavonva.",

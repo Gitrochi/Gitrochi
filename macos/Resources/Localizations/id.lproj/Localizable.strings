@@ -1112,6 +1112,7 @@
 "Open the full log" = "Buka log lengkap";
 "Failed tests" = "Tes yang gagal";
 "Verdicts" = "Putusan";
+"All verdicts" = "Semua putusan";
 "Output" = "Keluaran";
 "Waiting for the engine…" = "Menunggu mesin…";
 "Choose a step to see its output." = "Pilih langkah untuk melihat keluarannya.";
