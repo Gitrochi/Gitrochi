@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Renders the Ledger page off screen on demo data, in light and dark: Inbox, Board, Graph, Streams, the inspector, the
-# empty state, a narrow and a stacked window, the two sheets, and the large demo (1,000 sessions, 50,000 events). Then
+# Renders the Ledger page off screen on demo data, in light and dark: Inbox, Board, Graph, Streams, a wait held for the
+# person, the inspector, the empty state, a narrow and a stacked window, the two sheets, and the large demo (1,000
+# sessions, 50,000 events). Then
 # the page, Settings › Ledger and Import from claude-ledger on the core itself, through its C ABI, with the core's demo
 # in a temporary database.
 # Text recognition checks that each part is drawn (on its larger text: small labels are read unreliably), and the
@@ -145,6 +146,10 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("inbox", LedgerWorkspaceView(repositoryPath: nil, ledger: ledger), width: 1440, height: 2100,
                   expect: ["Inbox", "How many times should sign-in retry", "Retry sign-in after a timeout", "Outline the onboarding chapter",
                            "offline drafts be kept", "Choose the cache eviction policy", "Write the export guide", "Investigate the flaky upload test"])
+        // a wait held for the person: why and where to answer it, and no answer that would not reach the agent
+        let held = ledger.inbox.prompts.filter { !LedgerCountdown.isCounting($0) }
+        try shoot("prompt-held", LedgerPromptStrip(prompts: held, ledger: ledger), width: 720, height: 460,
+                  expect: ["Plan to approve", "Finish the glossary review", "Answer in terminal"], absent: ["Allow", "Deny", "Not this time", "Auto in"])
 
         ledger.page = .board
         ledger.selection = decision.id

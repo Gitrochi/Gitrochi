@@ -1763,7 +1763,6 @@
 "Applied: %lld" = "已应用：%lld";
 "The Ledger has news" = "账本有新消息";
 "Continues automatically in %@" = "%@ 后自动继续";
-"Waits for you: no automatic answer" = "等你处理：不会自动回答";
 "%@ is waiting" = "%@ 正在等待";
 "Auto-continue answered %@" = "自动继续已回答 %@";
 "Show notifications" = "显示通知";
@@ -1779,3 +1778,11 @@
 "Start Claude Code in this repository" = "在此仓库中启动 Claude Code";
 "Open a repository to use its terminal" = "打开一个仓库以使用它的终端";
 "Open in the terminal" = "在终端中打开";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "自动继续从不回答这类请求。";
+"It looks risky to answer automatically." = "自动回答看起来有风险。";
+"There is nothing to choose from." = "没有可选的选项。";
+"Auto-continue reached its limit of answers in a row." = "自动继续已达到连续回答的次数上限。";
+"Answer it in the agent's terminal." = "请在代理的终端中回答。";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "该代理的终端未在 Gitrochi 中打开。请在代理运行的地方回答。";

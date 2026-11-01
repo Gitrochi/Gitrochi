@@ -1594,7 +1594,6 @@
 "Applied: %lld" = "Aplicado: %lld";
 "The Ledger has news" = "O Registro tem novidades";
 "Continues automatically in %@" = "Continua sozinho em %@";
-"Waits for you: no automatic answer" = "Aguardando você: sem resposta automática";
 "%@ is waiting" = "%@ está aguardando";
 "Auto-continue answered %@" = "A continuação automática respondeu a %@";
 "Show notifications" = "Mostrar notificações";
@@ -1610,3 +1609,11 @@
 "Start Claude Code in this repository" = "Iniciar o Claude Code neste repositório";
 "Open a repository to use its terminal" = "Abra um repositório para usar o terminal dele";
 "Open in the terminal" = "Abrir no terminal";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "A continuação automática nunca responde a este tipo de solicitação.";
+"It looks risky to answer automatically." = "Responder automaticamente parece arriscado.";
+"There is nothing to choose from." = "Não há opções para escolher.";
+"Auto-continue reached its limit of answers in a row." = "A continuação automática atingiu o limite de respostas seguidas.";
+"Answer it in the agent's terminal." = "Responda no terminal do agente.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "O terminal do agente não está aberto no Gitrochi. Responda onde o agente está em execução.";

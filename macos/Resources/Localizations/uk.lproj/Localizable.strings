@@ -1630,7 +1630,6 @@
 "Applied: %lld" = "Застосовано: %lld";
 "The Ledger has news" = "У Журналі новини";
 "Continues automatically in %@" = "Автопродовження через %@";
-"Waits for you: no automatic answer" = "Чекає на вас: без автовідповіді";
 "%@ is waiting" = "%@ чекає";
 "Auto-continue answered %@" = "Автопродовження відповіло: %@";
 "Show notifications" = "Показувати сповіщення";
@@ -1646,3 +1645,11 @@
 "Start Claude Code in this repository" = "Запустити Claude Code у цьому репозиторії";
 "Open a repository to use its terminal" = "Відкрийте репозиторій, щоб користуватися його терміналом";
 "Open in the terminal" = "Відкрити в терміналі";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Автопродовження ніколи не відповідає на такі запити.";
+"It looks risky to answer automatically." = "Відповідати автоматично виглядає ризиковано.";
+"There is nothing to choose from." = "Немає з чого вибирати.";
+"Auto-continue reached its limit of answers in a row." = "Автопродовження досягло ліміту відповідей поспіль.";
+"Answer it in the agent's terminal." = "Дайте відповідь у терміналі агента.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Термінал агента не відкрито в Gitrochi. Відповідайте там, де працює агент.";

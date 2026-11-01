@@ -2360,7 +2360,6 @@
 "Applied: %lld" = "適用: %lld";
 "The Ledger has news" = "台帳に新しい知らせがあります";
 "Continues automatically in %@" = "%@ 後に自動続行";
-"Waits for you: no automatic answer" = "あなたを待っています: 自動では回答しません";
 "%@ is waiting" = "%@ が待っています";
 "Auto-continue answered %@" = "自動続行が %@ に回答しました";
 "Show notifications" = "通知を表示";
@@ -2376,3 +2375,11 @@
 "Start Claude Code in this repository" = "このリポジトリで Claude Code を起動";
 "Open a repository to use its terminal" = "ターミナルを使うにはリポジトリを開いてください";
 "Open in the terminal" = "ターミナルで開く";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "自動続行はこの種のリクエストには答えません。";
+"It looks risky to answer automatically." = "自動で答えるには危険そうです。";
+"There is nothing to choose from." = "選べる選択肢がありません。";
+"Auto-continue reached its limit of answers in a row." = "自動続行は連続で答えられる回数の上限に達しました。";
+"Answer it in the agent's terminal." = "エージェントのターミナルで回答してください。";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "エージェントのターミナルは Gitrochi で開かれていません。エージェントが実行されている場所で回答してください。";

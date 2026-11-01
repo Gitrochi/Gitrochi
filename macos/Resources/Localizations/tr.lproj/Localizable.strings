@@ -1617,7 +1617,6 @@
 "Applied: %lld" = "Uygulandı: %lld";
 "The Ledger has news" = "Defterde yenilik var";
 "Continues automatically in %@" = "%@ sonra otomatik devam";
-"Waits for you: no automatic answer" = "Sizi bekliyor: otomatik yanıt yok";
 "%@ is waiting" = "%@ bekliyor";
 "Auto-continue answered %@" = "Otomatik devam %@ için yanıt verdi";
 "Show notifications" = "Bildirimleri göster";
@@ -1633,3 +1632,11 @@
 "Start Claude Code in this repository" = "Claude Code'u bu depoda başlat";
 "Open a repository to use its terminal" = "Terminalini kullanmak için bir depo açın";
 "Open in the terminal" = "Terminalde aç";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Otomatik devam bu tür isteklere hiçbir zaman yanıt vermez.";
+"It looks risky to answer automatically." = "Otomatik yanıt vermek riskli görünüyor.";
+"There is nothing to choose from." = "Seçilecek bir şey yok.";
+"Auto-continue reached its limit of answers in a row." = "Otomatik devam art arda yanıt sınırına ulaştı.";
+"Answer it in the agent's terminal." = "Ajanın terminalinde yanıtlayın.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Ajanın terminali Gitrochi'de açık değil. Ajanın çalıştığı yerde yanıtlayın.";

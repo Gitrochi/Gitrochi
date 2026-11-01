@@ -1635,7 +1635,6 @@
 "Applied: %lld" = "已套用：%lld";
 "The Ledger has news" = "帳本有新消息";
 "Continues automatically in %@" = "%@ 後自動繼續";
-"Waits for you: no automatic answer" = "等你處理：不會自動回答";
 "%@ is waiting" = "%@ 正在等待";
 "Auto-continue answered %@" = "自動繼續已回答 %@";
 "Show notifications" = "顯示通知";
@@ -1651,3 +1650,11 @@
 "Start Claude Code in this repository" = "在此存放庫中啟動 Claude Code";
 "Open a repository to use its terminal" = "開啟一個存放庫以使用它的終端機";
 "Open in the terminal" = "在終端機中開啟";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "自動繼續從不回答這類請求。";
+"It looks risky to answer automatically." = "自動回答看起來有風險。";
+"There is nothing to choose from." = "沒有可選的選項。";
+"Auto-continue reached its limit of answers in a row." = "自動繼續已達到連續回答的次數上限。";
+"Answer it in the agent's terminal." = "請在代理程式的終端機中回答。";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "此代理程式的終端機未在 Gitrochi 中開啟。請在代理程式執行的地方回答。";

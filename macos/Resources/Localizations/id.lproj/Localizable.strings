@@ -1583,7 +1583,6 @@
 "Applied: %lld" = "Diterapkan: %lld";
 "The Ledger has news" = "Buku Log punya kabar baru";
 "Continues automatically in %@" = "Lanjut otomatis dalam %@";
-"Waits for you: no automatic answer" = "Menunggu Anda: tanpa jawaban otomatis";
 "%@ is waiting" = "%@ sedang menunggu";
 "Auto-continue answered %@" = "Lanjut otomatis menjawab %@";
 "Show notifications" = "Tampilkan notifikasi";
@@ -1599,3 +1598,11 @@
 "Start Claude Code in this repository" = "Mulai Claude Code di repositori ini";
 "Open a repository to use its terminal" = "Buka repositori untuk memakai terminalnya";
 "Open in the terminal" = "Buka di terminal";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Lanjut otomatis tidak pernah menjawab permintaan seperti ini.";
+"It looks risky to answer automatically." = "Menjawab otomatis tampaknya berisiko.";
+"There is nothing to choose from." = "Tidak ada pilihan.";
+"Auto-continue reached its limit of answers in a row." = "Lanjut otomatis sudah mencapai batas jawaban berturut-turut.";
+"Answer it in the agent's terminal." = "Jawab di terminal agen.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminal agen tidak terbuka di Gitrochi. Jawab di tempat agen berjalan.";

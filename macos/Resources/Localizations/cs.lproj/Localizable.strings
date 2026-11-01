@@ -1610,7 +1610,6 @@
 "Applied: %lld" = "Použito: %lld";
 "The Ledger has news" = "Evidence má novinky";
 "Continues automatically in %@" = "Automaticky pokračuje za %@";
-"Waits for you: no automatic answer" = "Čeká na vás: bez automatické odpovědi";
 "%@ is waiting" = "%@ čeká";
 "Auto-continue answered %@" = "Automatické pokračování odpovědělo: %@";
 "Show notifications" = "Zobrazovat oznámení";
@@ -1626,3 +1625,11 @@
 "Start Claude Code in this repository" = "Spustit Claude Code v tomto repozitáři";
 "Open a repository to use its terminal" = "Otevřete repozitář, abyste mohli použít jeho terminál";
 "Open in the terminal" = "Otevřít v terminálu";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Automatické pokračování na tento druh požadavku nikdy neodpovídá.";
+"It looks risky to answer automatically." = "Automatická odpověď tu vypadá riskantně.";
+"There is nothing to choose from." = "Není z čeho vybírat.";
+"Auto-continue reached its limit of answers in a row." = "Automatické pokračování dosáhlo limitu odpovědí za sebou.";
+"Answer it in the agent's terminal." = "Odpovězte v terminálu agenta.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminál agenta není v Gitrochi otevřený. Odpovězte tam, kde agent běží.";

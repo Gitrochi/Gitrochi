@@ -208,8 +208,9 @@ enum LedgerWait {
 }
 
 /// What a waiting prompt asks and what auto-continue sends, read from the hook handler's payload (gitrochi-autocontinue's
-/// PromptPayload: question, text, options, questions, tool, delaySec, proposed) and from the answer (its AutoReply with
-/// `sent`, or what a person sent). (Windows: entities/ledger/lib/prompt.ts)
+/// PromptPayload: question, text, options, questions, tool, delaySec, proposed; a wait held for the person has `hold`
+/// instead of `proposed`) and from the answer (its AutoReply with `sent`, or what a person sent).
+/// (Windows: entities/ledger/lib/prompt.ts)
 enum LedgerPromptText {
     struct Option: Hashable {
         var label: String
@@ -255,6 +256,27 @@ enum LedgerPromptText {
         if let decision = answer["decision"]?.string { return decision == "allow" ? String(localized: "Allowed") : String(localized: "Denied") }
         if let answers = answer["answers"]?.object { return answers.keys.sorted().compactMap { answers[$0]?.string }.joined(separator: ", ") }
         return ""
+    }
+
+    /// Why auto-continue left a wait to the person (`payload.hold`), one translated line per `code`; the core's English
+    /// `message` only for a code this version does not know. nil when nothing says why.
+    /// (Windows: entities/ledger/lib/countdown.ts promptHold)
+    static func holdReason(_ p: LedgerPendingPrompt) -> String? {
+        let hold = p.payload["hold"] ?? .null
+        guard let code = hold["code"].string, !code.isEmpty else { return nil }
+        switch code {
+        case "held": return String(localized: "Auto-continue never answers this kind of request.")
+        case "risky": return String(localized: "It looks risky to answer automatically.")
+        case "no_answer": return String(localized: "There is nothing to choose from.")
+        // the limit can be 1, and a count would need plural forms
+        case "limit_reached": return String(localized: "Auto-continue reached its limit of answers in a row.")
+        default: return hold["message"].string.flatMap { $0.isEmpty ? nil : $0 }
+        }
+    }
+
+    /// What a wait held for the person says: why, and where to answer it (Windows: entities/ledger/lib/notices.ts heldText)
+    static func heldText(_ p: LedgerPendingPrompt) -> String {
+        [holdReason(p), String(localized: "Answer it in the agent's terminal.")].compactMap { $0 }.joined(separator: " ")
     }
 
     /// An automatic permission answer whose effect is open: the terminal showed its own dialog during the wait, and the
@@ -350,7 +372,9 @@ struct LedgerInbox: Equatable {
     var items: [Item] = []
 
     func items(in group: Group) -> [Item] { items.filter { $0.group == group } }
-    var count: Int { items.count }
+    /// What the core counts in `attention.total`: the items, and the waits held for the person (`attention.held`)
+    var count: Int { items.count + held }
+    var held: Int { prompts.filter { !LedgerCountdown.isCounting($0) }.count }
 
     static func build(_ state: LedgerState) -> LedgerInbox {
         let sessions = Dictionary(state.sessions.map { ($0.id, $0) }) { first, _ in first }
