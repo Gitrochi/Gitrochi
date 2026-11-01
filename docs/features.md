@@ -110,6 +110,7 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 <details>
 <summary><b>Agents · terminal · tools · more</b></summary>
 
+- **Ledger preview**: agent reports, questions, baseline history, clean-up and opt-in tracking, auto-continue and notifications on both platforms. Hidden until launched with `GITROCHI_LEDGER_PREVIEW=1`; see [Using the Ledger preview](ledger/README.md).
 - **Agents tab**: worktree cards (new, changed and deleted files, ↑↓ against the remote) with the Claude Code · Codex · Gemini CLI sessions in them and their state (working · asking permission · waiting for input · ended). Start a session (pick a worktree or create one, the task, the permission mode — up to skipping all permission checks). Sessions run in the terminal panel below the graph; their state comes from files written by hooks that Gitrochi adds with `--settings` to the sessions it starts, so your own settings and hooks stay as they are
 - **Terminal**: shells in the repository folder in a panel below the graph (zsh on macOS · PowerShell/WSL on Windows). Several tabs, panes split right or down, adjustable height, keeps running while hidden; a tab whose agent is still running asks before closing. macOS uses [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), Windows [xterm.js](https://xtermjs.org)
 - **Tools** (Settings › Tools): git · Claude Code · Codex · Gemini CLI · gh · the terminal shell are found automatically; point to one with **Browse** when they are not. Windows finds tools inside WSL too
