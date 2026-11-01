@@ -2,7 +2,7 @@ import { Activity, Archive, ArchiveRestore, Ban, Bot, CheckCheck, CircleCheck, C
 import { useEffect, useRef, useState } from "react";
 import type { LedgerEvent } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
-import { Button, Markdown } from "@/shared/ui";
+import { Button, Markdown, StatusPill } from "@/shared/ui";
 import { When } from "./parts";
 
 const icons: Record<string, LucideIcon> = {
@@ -58,7 +58,7 @@ export function LedgerTimeline({ events, focus }: { events: LedgerEvent[]; focus
             <div className="ledger-event-text">
               <div className="ledger-event-line">
                 <span className="grow selectable">
-                  {e.actor === "auto" && <span className="chip-warn" style={{ marginRight: 6 }}>{t("Automatic")}</span>}
+                  {e.actor === "auto" && <StatusPill tone="waiting" icon={<Bot size={12} />} style={{ marginRight: 6 }}>{t("Automatic")}</StatusPill>}
                   {e.actor === "agent" && <span className="mono faint" style={{ marginRight: 6 }}>{e.type}</span>}
                   {describe(e)}
                   {e.version && e.actor !== "human" && <span className="ledger-version" style={{ marginLeft: 6 }}>{e.version}</span>}

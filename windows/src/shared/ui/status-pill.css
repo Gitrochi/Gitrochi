@@ -1,0 +1,14 @@
+/* Additive status tones; existing controls keep their styles. macOS: StudioStyle.Tone. */
+.status-tone { --status-text: #3a3a3c; --status-fill: #ececef; }
+.status-tone[data-tone="waiting"] { --status-text: #8a4600; --status-fill: #f8ecdc; }
+.status-tone[data-tone="failed"] { --status-text: #a8261f; --status-fill: #fbe7e6; }
+.status-tone[data-tone="passed"] { --status-text: #1e6b34; --status-fill: #e3f2e7; }
+.status-tone[data-tone="info"] { --status-text: #1f5a9e; --status-fill: #e4ecf7; }
+:root[data-theme="dark"] .status-tone { --status-text: #d1d1d6; --status-fill: #38383d; }
+:root[data-theme="dark"] .status-tone[data-tone="waiting"] { --status-text: #f2b35e; --status-fill: #3a2c18; }
+:root[data-theme="dark"] .status-tone[data-tone="failed"] { --status-text: #ff8f87; --status-fill: #3d2120; }
+:root[data-theme="dark"] .status-tone[data-tone="passed"] { --status-text: #6fd08f; --status-fill: #1d3324; }
+:root[data-theme="dark"] .status-tone[data-tone="info"] { --status-text: #8cb8ff; --status-fill: #1e2c42; }
+.status-pill { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--status-text); background: var(--status-fill); white-space: nowrap; flex: none; }
+.status-pill-icon { display: inline-flex; flex: none; }
+.status-pill-icon svg { width: 12px; height: 12px; }

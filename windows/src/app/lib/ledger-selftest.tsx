@@ -186,12 +186,11 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
     passed.push("quick launches");
 
-    // Board: chips with counts, one verdict, bulk archive undone as one
+    // Board: verdict counts belong to navigation, one verdict, bulk archive undone as one
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     ensure(await until(() => $(".ledger-board .ledger-table-row")), "The Board did not open");
     const counts = verdictCounts(store.state!.sessions, "atlas").filter((c) => c.count);
-    const chips = $$(".ledger-chip .count").map((c) => Number(c.textContent));
-    ensure(JSON.stringify(chips) === JSON.stringify(counts.map((c) => c.count)), `The chips must count verdicts: ${chips} vs ${counts.map((c) => c.count)}`);
+    ensure(!$$(".ledger-chip .count").length && $$(".ledger-chip").length === counts.length, "Verdict chips must leave their counts in the navigation");
     const needs = $$<HTMLButtonElement>(".ledger-chip")[0];
     needs.click();
     ensure(await until(() => $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A chip did not filter the Board");
@@ -288,7 +287,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
-    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
+    ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");

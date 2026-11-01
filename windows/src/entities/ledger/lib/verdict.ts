@@ -37,28 +37,26 @@ export type VerdictIcon = "question" | "merge" | "confirm" | "archive" | "stale"
 export interface VerdictLook {
   /** English label; the screen translates it */
   label: string;
-  /** A colour token from global.css; no new colours */
-  color: "--orange" | "--accent" | "--green" | "--red" | "--text-2" | "--text-3";
-  /** confirm is drawn as an outline in the accent colour */
-  outline: boolean;
+  /** The design's status tone, independent of the operating system accent. */
+  tone: "waiting" | "failed" | "passed" | "info" | "neutral";
   icon: VerdictIcon;
   /** What a person does about it, for tooltips */
   hint: string;
 }
 
 const looks: Record<LedgerVerdict, VerdictLook> = {
-  needs_human: { label: "Needs you", color: "--orange", outline: false, icon: "question", hint: "Answer or dismiss its questions; the session reads the answer with its next report." },
-  pending_merge: { label: "Merge pending", color: "--accent", outline: false, icon: "merge", hint: "The work is done: mark it merged, close it or drop it." },
-  confirm: { label: "To confirm", color: "--accent", outline: true, icon: "confirm", hint: "The agent finished it. Confirm the outcome, then clean up the conversation." },
-  expirable: { label: "Ready to clean up", color: "--green", outline: false, icon: "archive", hint: "Finished and confirmed. Clean it up once the conversation is closed." },
-  stale: { label: "Stale", color: "--red", outline: false, icon: "stale", hint: "No report for 72 hours. Check the conversation, then close it or mark it still active." },
-  active: { label: "In progress", color: "--text-2", outline: false, icon: "active", hint: "Work in progress." },
-  shelved: { label: "Shelved", color: "--text-3", outline: false, icon: "shelved", hint: "Paused research or documents, kept for later. Never turns stale." },
-  archived: { label: "Cleaned up", color: "--text-3", outline: false, icon: "archived", hint: "The conversation is cleaned up. Hidden unless you show cleaned-up sessions." },
+  needs_human: { label: "Needs you", tone: "waiting", icon: "question", hint: "Answer or dismiss its questions; the session reads the answer with its next report." },
+  pending_merge: { label: "Merge pending", tone: "info", icon: "merge", hint: "The work is done: mark it merged, close it or drop it." },
+  confirm: { label: "To confirm", tone: "info", icon: "confirm", hint: "The agent finished it. Confirm the outcome, then clean up the conversation." },
+  expirable: { label: "Ready to clean up", tone: "passed", icon: "archive", hint: "Finished and confirmed. Clean it up once the conversation is closed." },
+  stale: { label: "Stale", tone: "failed", icon: "stale", hint: "No report for 72 hours. Check the conversation, then close it or mark it still active." },
+  active: { label: "In progress", tone: "neutral", icon: "active", hint: "Work in progress." },
+  shelved: { label: "Shelved", tone: "neutral", icon: "shelved", hint: "Paused research or documents, kept for later. Never turns stale." },
+  archived: { label: "Cleaned up", tone: "neutral", icon: "archived", hint: "The conversation is cleaned up. Hidden unless you show cleaned-up sessions." },
 };
 
 /**
- * How a verdict looks: label, colour token, outline and icon. Archiving reads "Clean up" on screen, so it stays apart
+ * How a verdict looks: label, status tone and icon. Archiving reads "Clean up" on screen, so it stays apart
  * from shelving in every language. (macOS: LedgerVerdict.look)
  */
 export const verdictLook = (verdict: LedgerVerdict): VerdictLook => looks[verdict];

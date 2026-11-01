@@ -3901,5 +3901,6 @@
   "Auto-continue already answered {0} times in a row.": "자동 진행이 이미 {0}번 연속으로 답했습니다.",
   "Answer it in the agent's terminal.": "에이전트 터미널에서 답하세요.",
   "Ledger overview": "원장 개요",
-  "What agents read about this project, in a new tab of the terminal below.": "에이전트가 이 프로젝트에 대해 읽는 내용을 아래 터미널의 새 탭에서 엽니다."
+  "What agents read about this project, in a new tab of the terminal below.": "에이전트가 이 프로젝트에 대해 읽는 내용을 아래 터미널의 새 탭에서 엽니다.",
+  "Open a repository to use its terminal": "저장소를 열어 터미널을 사용하세요"
 }

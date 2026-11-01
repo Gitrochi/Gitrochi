@@ -55,12 +55,12 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
         <div className="ledger-meta">
           <span>{s.kind}{s.role !== s.kind ? ` · ${s.role}` : ""}</span>
           <BaseLine session={s} behind={newer} />
-          {s.mergedInto && <span className="mono">{t("merged into {0}", s.mergedInto)}</span>}
+          {s.mergedInto && <span>{t("merged into {0}", s.mergedInto)}</span>}
           <span>{t("Last report")} <When at={s.lastAt} /></span>
         </div>
         {confirmedBy && <span className="hint">{t("Confirmed by {0} (applied)", String(confirmedBy.data?.by ?? ""))}</span>}
         <div className="ledger-links">
-          {s.links.branch && <span className="ledger-link mono" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
+          {s.links.branch && <span className="ledger-link" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
           {s.links.worktree && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
           {s.links.pr && <button type="button" className="ledger-link" data-tip={s.links.pr.url} onClick={() => void ipc.openUrl(s.links.pr!.url)}><GitPullRequest size={12} /><span>#{s.links.pr.number}</span></button>}
           {s.links.agentId && (agent && agents.canFocus(agent)
@@ -103,7 +103,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
                   const other = store.session(o.a === s.id ? o.b : o.a);
                   return other && (
                     <button key={`${o.a}-${o.b}`} type="button" className="ledger-link" data-tip={o.kind === "same" ? t("Both sessions work on this.") : t("Files that usually change together")} onClick={() => store.select(other.id)}>
-                      <span className={o.kind === "same" ? "chip-warn" : "hint"}>{o.kind === "same" ? t("Overlap") : t("Likely overlap")}</span>
+                      <span className="hint">{o.kind === "same" ? t("Overlap") : t("Likely overlap")}</span>
                       <SessionId session={other} />
                     </button>
                   );
