@@ -1649,5 +1649,22 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi nedokázalo zjistit, zda se tato odpověď uplatnila.",
   "Auto-continue on for {0}": "Automatické pokračování zapnuto pro {0}",
   "Auto-continue off for {0}": "Automatické pokračování vypnuto pro {0}",
-  "{0} follows the auto-continue default": "{0} se řídí výchozím nastavením automatického pokračování"
+  "{0} follows the auto-continue default": "{0} se řídí výchozím nastavením automatického pokračování",
+  "Notifications": "Oznámení",
+  "Show notifications": "Zobrazovat oznámení",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Nové otázky, relace k pročištění, hlášení o použití, agenti čekající na odpověď a každá automatická odpověď. Kliknutí otevře Evidenci u dané položky.",
+  "Show the count on the taskbar button": "Zobrazovat počet na tlačítku na hlavním panelu",
+  "The number of items waiting for you in the Ledger.": "Počet položek, které na vás v Evidenci čekají.",
+  "Question from {0}": "Otázka od {0}",
+  "To confirm: {0}": "K potvrzení: {0}",
+  "Ready to clean up: {0}": "Připraveno k pročištění: {0}",
+  "{0} applied {1}": "{0} použila {1}",
+  "{0} new items in the Ledger": "Nové položky v Evidenci: {0}",
+  "{0} is waiting for you": "{0} na vás čeká",
+  "Answered automatically for {0}": "Automaticky zodpovězeno za {0}",
+  "Auto-continue never answers this kind of request.": "Automatické pokračování na tento druh požadavku nikdy neodpovídá.",
+  "It looks risky to answer automatically.": "Automatická odpověď tu vypadá riskantně.",
+  "There is nothing to choose from.": "Není z čeho vybírat.",
+  "Auto-continue already answered {0} times in a row.": "Automatické pokračování už odpovědělo {0}× za sebou.",
+  "Answer it in the agent's terminal.": "Odpovězte v terminálu agenta."
 }

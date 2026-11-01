@@ -2492,5 +2492,22 @@
   "Gitrochi could not tell whether this answer applied.": "この回答が適用されたかどうか、Gitrochi には判断できませんでした。",
   "Auto-continue on for {0}": "{0} の自動続行をオンにしました",
   "Auto-continue off for {0}": "{0} の自動続行をオフにしました",
-  "{0} follows the auto-continue default": "{0} は自動続行の既定に従います"
+  "{0} follows the auto-continue default": "{0} は自動続行の既定に従います",
+  "Notifications": "通知",
+  "Show notifications": "通知を表示",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "新しい質問、整理するセッション、適用の報告、回答を待つエージェント、すべての自動回答を通知します。クリックすると台帳でその項目を開きます。",
+  "Show the count on the taskbar button": "タスクバーのボタンに件数を表示",
+  "The number of items waiting for you in the Ledger.": "台帳であなたを待っている項目の数です。",
+  "Question from {0}": "{0} からの質問",
+  "To confirm: {0}": "確認待ち: {0}",
+  "Ready to clean up: {0}": "整理可能: {0}",
+  "{0} applied {1}": "{0} が {1} を適用",
+  "{0} new items in the Ledger": "台帳に新しい項目が {0} 件",
+  "{0} is waiting for you": "{0} があなたを待っています",
+  "Answered automatically for {0}": "{0} に自動で回答しました",
+  "Auto-continue never answers this kind of request.": "自動続行はこの種のリクエストには答えません。",
+  "It looks risky to answer automatically.": "自動で答えるには危険そうです。",
+  "There is nothing to choose from.": "選べる選択肢がありません。",
+  "Auto-continue already answered {0} times in a row.": "自動続行はすでに{0}回続けて答えました。",
+  "Answer it in the agent's terminal.": "エージェントのターミナルで答えてください。"
 }

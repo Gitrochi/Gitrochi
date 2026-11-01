@@ -1656,5 +1656,22 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi bu yanıtın uygulanıp uygulanmadığını anlayamadı.",
   "Auto-continue on for {0}": "{0} için otomatik devam açık",
   "Auto-continue off for {0}": "{0} için otomatik devam kapalı",
-  "{0} follows the auto-continue default": "{0} otomatik devamın varsayılanını izliyor"
+  "{0} follows the auto-continue default": "{0} otomatik devamın varsayılanını izliyor",
+  "Notifications": "Bildirimler",
+  "Show notifications": "Bildirimleri göster",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Yeni sorular, temizlenecek oturumlar, uygulama raporları, yanıt bekleyen ajanlar ve her otomatik yanıt. Tıklayınca Defter o öğede açılır.",
+  "Show the count on the taskbar button": "Sayıyı görev çubuğu düğmesinde göster",
+  "The number of items waiting for you in the Ledger.": "Defter'de sizi bekleyen öğelerin sayısı.",
+  "Question from {0}": "{0} oturumundan soru",
+  "To confirm: {0}": "Onay bekliyor: {0}",
+  "Ready to clean up: {0}": "Temizlenebilir: {0}",
+  "{0} applied {1}": "{0}, {1} sürümünü uyguladı",
+  "{0} new items in the Ledger": "Defter'de {0} yeni öğe",
+  "{0} is waiting for you": "{0} sizi bekliyor",
+  "Answered automatically for {0}": "{0} için otomatik yanıtlandı",
+  "Auto-continue never answers this kind of request.": "Otomatik devam bu tür isteklere hiçbir zaman yanıt vermez.",
+  "It looks risky to answer automatically.": "Otomatik yanıt vermek riskli görünüyor.",
+  "There is nothing to choose from.": "Seçilecek bir şey yok.",
+  "Auto-continue already answered {0} times in a row.": "Otomatik devam zaten art arda {0} kez yanıt verdi.",
+  "Answer it in the agent's terminal.": "Ajanın terminalinde yanıtlayın."
 }

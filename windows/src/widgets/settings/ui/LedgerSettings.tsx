@@ -1,6 +1,6 @@
 import { ClipboardPaste, DatabaseBackup, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
+import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
@@ -112,6 +112,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
 
       <TrackingSection />
       <AutoContinueSection autoContinue={settings.autoContinue} disabled={busy} onSave={(autoContinue) => void save({ autoContinue })} onInvalid={setError} />
+      <NotificationsSection />
 
       <div className="form-section">
         <span className="form-section-title">{t("Stale sessions")}</span>
@@ -173,6 +174,20 @@ function TrackingSection() {
       <Checkbox checked={tracking.tools} disabled={!tracking.chosen} onChange={(on) => tracking.setTools(on)} label={t("Give them the Ledger tools")} />
       <span className="hint">{t("Adds the Ledger's MCP server to each of them, unless Claude Code already has one called gitrochi-ledger.")}</span>
       {tracking.lastError && <span role="alert" className="error-text">{t("The last agent started without the Ledger: {0}", tracking.lastError)}</span>}
+    </div>
+  );
+}
+
+/** Notifications about what is new, and the count on the taskbar button (§10.11) */
+function NotificationsSection() {
+  const notifier = useObserve(ledgerNotifier);
+  return (
+    <div className="form-section" data-ledger-section="notifications">
+      <span className="form-section-title">{t("Notifications")}</span>
+      <Checkbox checked={notifier.notifications} onChange={(on) => notifier.setNotifications(on)} label={t("Show notifications")} />
+      <span className="hint">{t("New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.")}</span>
+      <Checkbox checked={notifier.badge} onChange={(on) => notifier.setBadge(on)} label={t("Show the count on the taskbar button")} />
+      <span className="hint">{t("The number of items waiting for you in the Ledger.")}</span>
     </div>
   );
 }
