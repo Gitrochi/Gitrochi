@@ -130,10 +130,17 @@ pub fn snapshot(
             });
         views.push(viewer.view(row, counts.get(&row.id).copied().unwrap_or(0)));
     }
-    // D13: an unreported launch with nothing committed yet waits under Unreported instead of
-    // going stale into To decide (git runs for these alone)
-    for (row, view) in rows.iter().zip(views.iter_mut()) {
-        if view.verdict == Verdict::Stale && track::waits_unreported(connection, row)? {
+    // D13: an unreported launch whose branch has not moved waits under Unreported instead of
+    // going stale into To decide (git runs for these alone, once per repository)
+    let quiet: Vec<&SessionRow> = rows
+        .iter()
+        .zip(&views)
+        .filter(|(row, view)| view.verdict == Verdict::Stale && row.last_agent_at.is_none())
+        .map(|(row, _)| row)
+        .collect();
+    if !quiet.is_empty() {
+        let waiting = track::waiting_unreported(connection, &quiet)?;
+        for view in views.iter_mut().filter(|v| waiting.contains(&v.id)) {
             view.verdict = Verdict::Active;
         }
     }

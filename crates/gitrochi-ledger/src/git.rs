@@ -1,8 +1,9 @@
 //! The system `git`, asked for machine-readable output. The ledger only reads tags, the
 //! hook handler reads the agent's branch for permission checks, and `track` reads where a
-//! launch starts and how far its branch has moved since.
+//! launch starts and whether its branch has moved since.
 
 use crate::error::{Error, Result};
+use std::collections::HashMap;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -157,22 +158,39 @@ pub fn start(dir: &Path) -> Option<Start> {
     ]))?;
     let mut lines = dirs.lines().map(str::trim);
     let (own, common) = (lines.next()?, lines.next()?);
-    let head = stdout_of(command(dir).args(["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]))
-        .map(|h| h.trim().to_string())
-        .filter(|h| !h.is_empty());
     Some(Start {
-        head,
+        head: head_commit(dir),
         linked: own != common,
     })
 }
 
-/// How many commits `to` has that `from` does not (`rev-list --count from..to`), or `None`
-/// when git cannot tell (a commit or branch that is gone, not a repository).
-pub fn commits_beyond(dir: &Path, from: &str, to: &str) -> Option<u64> {
-    stdout_of(command(dir).args(["rev-list", "--count", &format!("{from}..{to}"), "--"]))?
-        .trim()
-        .parse()
-        .ok()
+/// The commit HEAD is on in `dir`, or `None` before the first commit or outside a repository.
+pub fn head_commit(dir: &Path) -> Option<String> {
+    stdout_of(command(dir).args(["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]))
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty())
+}
+
+/// The tip of every local branch of `dir`'s repository by branch name, or `None` when git
+/// cannot tell (not a repository): one call for all of a repository's branches.
+pub fn branch_tips(dir: &Path) -> Option<HashMap<String, String>> {
+    let listed = stdout_of(command(dir).args([
+        "for-each-ref",
+        "--format=%(refname)%00%(objectname)",
+        "refs/heads",
+    ]))?;
+    Some(
+        listed
+            .lines()
+            .filter_map(|line| {
+                let (name, commit) = line.split_once('\0')?;
+                Some((
+                    name.strip_prefix("refs/heads/")?.to_string(),
+                    commit.to_string(),
+                ))
+            })
+            .collect(),
+    )
 }
 
 /// The upstream of `branch` and origin's default branch from `checkout`'s for-each-ref.
@@ -333,7 +351,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn start_tells_a_linked_worktree_and_how_far_its_branch_moved() {
+    fn start_tells_a_linked_worktree_and_the_tips_follow_its_branch() {
         let dir =
             std::env::temp_dir().join(format!("gitrochi-ledger-start-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -355,14 +373,20 @@ pub(crate) mod tests {
             (linked.linked, linked.head.as_deref()),
             (true, Some(head.as_str()))
         );
-        assert_eq!(commits_beyond(&repo, &head, "refs/heads/retry"), Some(0));
+        // every branch's tip in one call, from any folder of the repository
+        let tips = branch_tips(&repo).unwrap();
+        assert_eq!(tips.get("retry"), Some(&head));
+        assert_eq!(tips.get("feature/hooks"), Some(&head));
         fixture_git(
             &dir,
             &worktree,
             &["commit", "-q", "--allow-empty", "-m", "second"],
         );
-        assert_eq!(commits_beyond(&repo, &head, "refs/heads/retry"), Some(1));
-        assert_eq!(commits_beyond(&repo, &head, "refs/heads/gone"), None);
+        let moved = branch_tips(&worktree).unwrap();
+        assert_ne!(moved.get("retry"), Some(&head));
+        assert_eq!(moved.get("retry"), head_commit(&worktree).as_ref());
+        assert_eq!(moved.get("gone"), None);
+        assert_eq!(branch_tips(&dir.join("not-a-repository")), None);
         // before the first commit there is no HEAD to start from
         let empty = dir.join("empty");
         std::fs::create_dir_all(&empty).unwrap();

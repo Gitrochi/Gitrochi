@@ -458,6 +458,66 @@ fn an_unreported_launch_goes_stale_only_once_its_branch_has_commits() {
 }
 
 #[test]
+fn launches_wait_while_their_tip_is_where_they_started() {
+    let repo = Repo::new();
+    let harbor = repo.dir.join("harbor");
+    let id = |result: Value| result["session"]["id"].as_str().unwrap().to_string();
+    // two launches on one branch, which one look at the repository's branches answers
+    let (first, second) = (id(repo.track(json!({}))), id(repo.track(json!({}))));
+    // and one on a detached HEAD, which follows its own folder
+    let detached = repo.dir.join("harbor-detached");
+    git(
+        &harbor,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "--detach",
+            &detached.to_string_lossy(),
+            "main",
+        ],
+    );
+    let loose = id(repo.track(json!({"cwd": detached.to_string_lossy()})));
+    assert!(repo.detail(&loose)["session"]["links"]
+        .get("branch")
+        .is_none());
+    for session in [&first, &second, &loose] {
+        quiet(&repo.db(), session, 100);
+    }
+    let verdicts = || {
+        let state = app(&repo.db(), "state", json!({"project": "harbor"}));
+        [&first, &second, &loose].map(|session| {
+            state["sessions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["id"] == json!(session))
+                .unwrap()["verdict"]
+                .clone()
+        })
+    };
+    assert_eq!(
+        verdicts(),
+        [json!("active"), json!("active"), json!("active")]
+    );
+    // a commit on the detached HEAD moves that launch alone
+    std::fs::write(detached.join("c.txt"), "loose").unwrap();
+    git(&detached, &["add", "c.txt"]);
+    git(&detached, &["commit", "-q", "-m", "loose"]);
+    assert_eq!(
+        verdicts(),
+        [json!("active"), json!("active"), json!("stale")]
+    );
+    // once the branch is gone git cannot tell, so its launches count
+    git(
+        &harbor,
+        &["worktree", "remove", "--force", &repo.path("harbor-retry")],
+    );
+    git(&harbor, &["branch", "-q", "-D", "feature/retry"]);
+    assert_eq!(verdicts(), [json!("stale"), json!("stale"), json!("stale")]);
+}
+
+#[test]
 fn windows_paths_match_whatever_their_case_and_separators() {
     let dir = TempDir::new("track-windows");
     let db = dir.join("ledger.sqlite3");
