@@ -1,12 +1,13 @@
 import { createRoot } from "react-dom/client";
 import { destinationEnabled, isWorkspaceDestination, restoredDestination } from "@/entities/git";
-import type { LedgerSession, LedgerStore } from "@/entities/ledger";
+import type { LedgerNotice, LedgerSession, LedgerStore } from "@/entities/ledger";
 import { RepoStore } from "@/entities/repo";
 import { RepoPage } from "@/pages/repo";
 import { ipc } from "@/shared/api";
 import { env, settings, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { SettingsDialog } from "@/widgets/settings";
+import { openLedgerAt } from "./ledger-notifications";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -53,7 +54,7 @@ function leave(el: HTMLElement) {
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
-  const [{ DemoLedgerBackend, LedgerStore, ledgerStore, ledgerTracking, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
+  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
   const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
@@ -71,7 +72,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
   const button = (scope: string, label: string) => $$<HTMLButtonElement>(`${scope} button`).find((b) => b.textContent?.trim() === t(label));
   try {
     settings.get = <T,>(k: string, fallback: T): T => (memory.has(k) ? memory.get(k) : fallback) as T;
-    settings.set = (k, value) => { memory.set(k, value); version++; listeners.forEach((listener) => listener()); };
+    // like the app's settings: undefined removes a key, so reading it gives the default again
+    settings.set = (k, value) => { if (value === undefined) memory.delete(k); else memory.set(k, value); version++; listeners.forEach((listener) => listener()); };
     settings.subscribe = (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
     settings.getVersion = () => version;
     ipc.run = async () => { unexpected.push("process"); throw new Error("Ledger fixture blocked a process"); };
@@ -369,6 +371,17 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const cli = await ledgerTracking.cli();
     ensure(hooksFiles.every((f) => f.content.includes("gitrochi-ledger") === (f.tracking && !!cli)), `The hooks files did not follow Track agents I start: ${hooksFiles.map((f) => `${f.tracking}:${f.content.includes("gitrochi-ledger")}`).join(", ")}`);
     passed.push("track agents and auto-continue settings");
+    // Notifications and the taskbar badge: both on until a person turns them off
+    const noticeBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="notifications"] input[type="checkbox"]`);
+    ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => b.checked), "Notifications and the badge must start on");
+    noticeBoxes()[0].click();
+    ensure(await until(() => memory.get("ledgerNotifications") === false && !noticeBoxes()[0].checked), "Turning notifications off did not save it");
+    noticeBoxes()[0].click();
+    noticeBoxes()[1].click();
+    ensure(await until(() => memory.get("ledgerNotifications") === undefined && memory.get("ledgerBadge") === false && noticeBoxes()[0].checked && !noticeBoxes()[1].checked), "The notification switches did not follow the clicks");
+    noticeBoxes()[1].click();
+    ensure(await until(() => noticeBoxes()[1].checked), "The badge switch did not turn back on");
+    passed.push("notification settings");
     button(".ledger-settings", "Connect Claude Code…")!.click();
     ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
     button(".modal", "Done")!.click();
@@ -376,6 +389,32 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");
     button(".modal-footer", "Close")!.click();
     passed.push("settings");
+
+    // The notifier: nothing for what existed, each new item once with the time left, the overlay with the count, and a
+    // click that opens the Ledger at the item
+    let noticeClock = clock;
+    const noticeDemo = new DemoLedgerBackend({ now: () => noticeClock, repoPath: "C:/fixture/atlas" });
+    const sent: LedgerNotice[] = [], overlays: (number[] | null)[] = [];
+    const notifier = new LedgerNotifier(() => noticeDemo, { notify: async (n) => { sent.push(n); }, badge: async (rgba) => { overlays.push(rgba); } });
+    await notifier.poll();
+    ensure(!sent.length, `Notifications must not announce what already existed: ${sent.map((n) => n.title).join(", ")}`);
+    ensure(env.os !== "windows" || (overlays.length === 1 && overlays[0]?.length === 32 * 32 * 4), `The taskbar overlay did not get the count: ${overlays.map((o) => o?.length ?? "none").join(", ")}`);
+    const asker = noticeDemo.world.sessions.find((s) => s.project === "atlas" && s.status === "active" && !s.archivedAt)!;
+    noticeDemo.world.prompts.push({ id: noticeDemo.world.nextPrompt++, sessionId: asker.id, kind: "stop_question", payload: { question: "Shall I go on with the next step?", proposed: { type: "reply", text: "Yes, go on." } }, createdAt: noticeClock, deadline: noticeClock + 30_000, state: "waiting" });
+    noticeDemo.world.rev++;
+    await notifier.poll();
+    const waitingNotice = sent.find((n) => n.title === t("{0} is waiting for you", asker.id));
+    ensure(waitingNotice?.body.includes(t("Auto-answer in {0}", "0:30")), `A waiting prompt did not notify with the time left: ${sent.map((n) => `${n.title} / ${n.body}`).join(" | ")}`);
+    noticeClock += 31_000;
+    await notifier.poll();
+    ensure(sent.some((n) => n.title === t("Answered automatically for {0}", asker.id)), "An automatic answer did not notify");
+    const clickTab = new RepoStore();
+    clickTab.loadGlobalIdentity = async () => {};
+    const clickStore = new LedgerStore(noticeDemo);
+    stores.push(clickStore);
+    openLedgerAt(clickTab, clickStore, waitingNotice!.target);
+    ensure(clickTab.destination === "ledger" && clickStore.selectedId === asker.id && clickStore.view === "inbox", `A click did not open the Ledger at the item: ${clickTab.destination} ${clickStore.selectedId} ${clickStore.view}`);
+    passed.push("notifications");
 
     ensure(!unexpected.length, `The Ledger reached outside the demo: ${unexpected.join(", ")}`);
     return [true, passed.join("; ")];

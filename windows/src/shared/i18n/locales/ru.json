@@ -1667,5 +1667,17 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi не смог определить, применился ли этот ответ.",
   "Auto-continue on for {0}": "Автопродолжение включено для {0}",
   "Auto-continue off for {0}": "Автопродолжение выключено для {0}",
-  "{0} follows the auto-continue default": "{0} использует автопродолжение по умолчанию"
+  "{0} follows the auto-continue default": "{0} использует автопродолжение по умолчанию",
+  "Notifications": "Уведомления",
+  "Show notifications": "Показывать уведомления",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Новые вопросы, сеансы для очистки, отчёты о применении, агенты, ждущие ответа, и каждый автоматический ответ. Щелчок открывает книгу учёта на этом элементе.",
+  "Show the count on the taskbar button": "Показывать число на кнопке панели задач",
+  "The number of items waiting for you in the Ledger.": "Число элементов, которые ждут вас в книге учёта.",
+  "Question from {0}": "Вопрос от {0}",
+  "To confirm: {0}": "К подтверждению: {0}",
+  "Ready to clean up: {0}": "Можно очистить: {0}",
+  "{0} applied {1}": "{0} применил {1}",
+  "{0} new items in the Ledger": "Новых элементов в книге учёта: {0}",
+  "{0} is waiting for you": "{0} ждёт вас",
+  "Answered automatically for {0}": "Автоматический ответ для {0}"
 }

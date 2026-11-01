@@ -1703,5 +1703,17 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi no pudo saber si esta respuesta se aplicó.",
   "Auto-continue on for {0}": "Continuación automática activada para {0}",
   "Auto-continue off for {0}": "Continuación automática desactivada para {0}",
-  "{0} follows the auto-continue default": "{0} sigue la opción predeterminada de continuación automática"
+  "{0} follows the auto-continue default": "{0} sigue la opción predeterminada de continuación automática",
+  "Notifications": "Notificaciones",
+  "Show notifications": "Mostrar notificaciones",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Preguntas nuevas, sesiones por limpiar, informes de aplicación, agentes que esperan una respuesta y cada respuesta automática. Un clic abre el Registro en ese elemento.",
+  "Show the count on the taskbar button": "Mostrar el número en el botón de la barra de tareas",
+  "The number of items waiting for you in the Ledger.": "El número de elementos que te esperan en el Registro.",
+  "Question from {0}": "Pregunta de {0}",
+  "To confirm: {0}": "Por confirmar: {0}",
+  "Ready to clean up: {0}": "Listo para limpiar: {0}",
+  "{0} applied {1}": "{0} aplicó {1}",
+  "{0} new items in the Ledger": "{0} elementos nuevos en el Registro",
+  "{0} is waiting for you": "{0} te está esperando",
+  "Answered automatically for {0}": "Respondida automáticamente para {0}"
 }

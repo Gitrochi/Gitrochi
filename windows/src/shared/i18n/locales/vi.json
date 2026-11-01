@@ -1623,5 +1623,17 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi không xác định được câu trả lời này đã được áp dụng hay chưa.",
   "Auto-continue on for {0}": "Đã bật tự động tiếp tục cho {0}",
   "Auto-continue off for {0}": "Đã tắt tự động tiếp tục cho {0}",
-  "{0} follows the auto-continue default": "{0} theo mặc định của tự động tiếp tục"
+  "{0} follows the auto-continue default": "{0} theo mặc định của tự động tiếp tục",
+  "Notifications": "Thông báo",
+  "Show notifications": "Hiện thông báo",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Câu hỏi mới, phiên cần dọn dẹp, báo cáo áp dụng, agent đang chờ trả lời và mọi câu trả lời tự động. Nhấp để mở Sổ cái tại mục đó.",
+  "Show the count on the taskbar button": "Hiện số lượng trên nút thanh tác vụ",
+  "The number of items waiting for you in the Ledger.": "Số mục đang chờ bạn trong Sổ cái.",
+  "Question from {0}": "Câu hỏi từ {0}",
+  "To confirm: {0}": "Chờ xác nhận: {0}",
+  "Ready to clean up: {0}": "Sẵn sàng dọn dẹp: {0}",
+  "{0} applied {1}": "{0} đã áp dụng {1}",
+  "{0} new items in the Ledger": "{0} mục mới trong Sổ cái",
+  "{0} is waiting for you": "{0} đang chờ bạn",
+  "Answered automatically for {0}": "Đã tự động trả lời cho {0}"
 }

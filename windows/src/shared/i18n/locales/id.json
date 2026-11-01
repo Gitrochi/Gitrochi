@@ -1621,5 +1621,17 @@
   "Gitrochi could not tell whether this answer applied.": "Gitrochi tidak dapat memastikan apakah jawaban ini diterapkan.",
   "Auto-continue on for {0}": "Lanjut otomatis aktif untuk {0}",
   "Auto-continue off for {0}": "Lanjut otomatis nonaktif untuk {0}",
-  "{0} follows the auto-continue default": "{0} mengikuti setelan default lanjut otomatis"
+  "{0} follows the auto-continue default": "{0} mengikuti setelan default lanjut otomatis",
+  "Notifications": "Notifikasi",
+  "Show notifications": "Tampilkan notifikasi",
+  "New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.": "Pertanyaan baru, sesi yang perlu dibersihkan, laporan penerapan, agen yang menunggu jawaban, dan setiap jawaban otomatis. Klik membuka Ledger di item tersebut.",
+  "Show the count on the taskbar button": "Tampilkan jumlah pada tombol bilah tugas",
+  "The number of items waiting for you in the Ledger.": "Jumlah item yang menunggu Anda di Ledger.",
+  "Question from {0}": "Pertanyaan dari {0}",
+  "To confirm: {0}": "Perlu dikonfirmasi: {0}",
+  "Ready to clean up: {0}": "Siap dibersihkan: {0}",
+  "{0} applied {1}": "{0} menerapkan {1}",
+  "{0} new items in the Ledger": "{0} item baru di Ledger",
+  "{0} is waiting for you": "{0} menunggu Anda",
+  "Answered automatically for {0}": "Dijawab otomatis untuk {0}"
 }
