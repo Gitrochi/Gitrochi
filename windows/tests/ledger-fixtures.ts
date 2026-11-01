@@ -64,7 +64,7 @@ const overlapShape: Spec = { a: "string", b: "string", paths: ["string"], kind: 
 const promptShape: Spec = { id: "number", "sessionId?": "string", "agentId?": "string", kind: enumOf("stop_question", "ask_user_question", "exit_plan_mode", "permission"), payload: record, createdAt: "number", deadline: "number", state: enumOf("waiting", "answered", "auto", "released", "expired"), "answer?": record, "answeredBy?": enumOf("human", "auto") };
 const stateShape: Spec = {
   schemaVersion: enumOf(1), rev: "number", now: "number", projects: [{ key: "string", name: "string", open: "number" }], baselines: [baselineShape], sessions: [sessionShape], questions: [questionShape],
-  streams: [cycleShape], overlaps: [overlapShape], pendingPrompts: [promptShape], "autoReview?": [promptShape], attention: { questions: "number", tidy: "number", decide: "number", autoReview: "number", total: "number" }, hiddenBefore: "number",
+  streams: [cycleShape], overlaps: [overlapShape], pendingPrompts: [promptShape], "autoReview?": [promptShape], attention: { questions: "number", tidy: "number", decide: "number", autoReview: "number", held: "number", total: "number" }, hiddenBefore: "number",
 };
 const graphShape: Spec = {
   lanes: "number", from: "number", to: "number",

@@ -284,8 +284,10 @@ export class DemoLedgerBackend implements LedgerBackend {
     const streams = w.sessions.filter((s) => s.stream && shown.has(s.id)).flatMap((s) => streamCycles(s, w.events.filter((e) => e.sessionId === s.id).sort((a, b) => a.ts - b.ts || a.id - b.id), w.baselines));
     const groups = inboxGroups({ sessions, questions, pendingPrompts, autoReview }, null);
     const count = (id: string) => groups.find((g) => g.id === id)?.items.length ?? 0;
-    const attention = { questions: count("questions"), tidy: count("tidy"), decide: count("decide"), autoReview: count("auto"), total: 0 };
-    attention.total = attention.questions + attention.tidy + attention.decide + attention.autoReview;
+    // As prompts::held_count: held waits need a person, including ones outside the visible date range.
+    const held = w.prompts.filter((p) => p.state === "waiting" && p.deadline === 0 && p.payload.hold != null && (!project || views.get(p.sessionId ?? "")?.project === project)).length;
+    const attention = { questions: count("questions"), tidy: count("tidy"), decide: count("decide"), autoReview: count("auto"), held, total: 0 };
+    attention.total = attention.questions + attention.tidy + attention.decide + attention.autoReview + attention.held;
     return {
       schemaVersion: 1, rev: w.rev, now,
       projects: w.projects.map((p) => ({ ...p, open: [...views.values()].filter((s) => s.project === p.key && isLive(s) && !s.stream).length })),

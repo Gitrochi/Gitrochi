@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DemoLedgerBackend, type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, type LedgerMethod, type LedgerMethods, LedgerStore, ledgerVerdicts, nativeLedgerBackend, plotLedgerGraph } from "@/entities/ledger";
 import { ipc } from "@/shared/api";
-import { shapeErrors, type Spec, specs } from "./ledger-fixtures";
+import { prompt, shapeErrors, type Spec, specs } from "./ledger-fixtures";
 
 const { session, event, question, overlap, cycle, state, graph } = specs;
 
@@ -56,7 +56,7 @@ describe("Ledger demo backend: contract", () => {
     expect(s.questions.every((q) => q.state === "open")).toBe(true);
     // payloads in auto-continue's shape
     expect(s.pendingPrompts.every((p) => p.payload.schemaVersion === 1 && typeof p.payload.question === "string")).toBe(true);
-    expect(s.attention).toEqual({ questions: 3, tidy: 4, decide: 3, autoReview: 2, total: 12 });
+    expect(s.attention).toEqual({ questions: 3, tidy: 4, decide: 3, autoReview: 2, held: 0, total: 12 });
     expect(s.sessions.filter((x) => x.links.pr).every((x) => new URL(x.links.pr!.url).hostname === "example.com")).toBe(true);
   });
 
@@ -174,6 +174,26 @@ describe("Ledger demo backend: a person's operations", () => {
 });
 
 describe("Ledger demo backend: waiting prompts", () => {
+  it("counts held waits in attention by project, without counting countdowns or settled prompts", async () => {
+    const { backend, advance } = demo();
+    const before = await backend.call("state", {});
+    const atlas = before.sessions.find((s) => s.project === "atlas")!;
+    const harbor = before.sessions.find((s) => s.project === "harbor")!;
+    const hold = { code: "held", rule: "push", detail: "git push --force", message: "Answer in the terminal" };
+    const held = (sessionId?: string) => prompt({ id: backend.world.nextPrompt++, sessionId, kind: "permission", deadline: 0, payload: { hold } });
+    const first = held(atlas.id);
+    backend.world.prompts.push(first, held(harbor.id), held(), { ...held(atlas.id), state: "answered" }, { ...held(atlas.id), deadline: START + HOUR }, { ...held(atlas.id), payload: {} }, { ...held(atlas.id), payload: { hold: null } });
+    const all = await backend.call("state", {});
+    expect(all.attention).toEqual({ ...before.attention, held: 3, total: before.attention.total + 3 });
+    expect((await backend.call("state", { project: "atlas" })).attention.held).toBe(1);
+    expect((await backend.call("state", { project: "harbor" })).attention.held).toBe(1);
+    // A held wait never expires on its own, even when its archived session leaves the visible range.
+    advance(8 * DAY);
+    expect((await backend.call("state", {})).attention.held).toBe(3);
+    backend.world.prompts.find((p) => p.id === first.id)!.state = "answered";
+    expect((await backend.call("state", { project: "atlas" })).attention.held).toBe(0);
+  });
+
   it("answers a prompt automatically once its deadline passes, never a plan", async () => {
     const { backend, advance } = demo();
     const before = await backend.call("state", {});
