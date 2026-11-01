@@ -21,7 +21,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14]
 |---|---|---|
 | `staleHours` | 72 | No agent activity for this long → `stale` |
 | `kinds` | see below | kind → `{role, line?, handoff?}`; replaced as a whole |
-| `autoContinue` | `{"enabled": false, "delaySec": 30}` | The global auto-continue policy (its other fields belong to `gitrochi-autocontinue` and are stored as given) |
+| `autoContinue` | `{"enabled": false, "delaySec": 30}` | The global auto-continue policy (its other fields belong to `gitrochi-autocontinue` and are stored as given), and `repositories`: repository path → `{enabled, delaySec}`, the policy `track` gives the sessions of agents started there |
 | `backupKeep` | 14 | Backups to keep |
 
 | Per project (`projects`) | Default | Meaning |
@@ -141,6 +141,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `prompt_review` | `{id}` or `{all: true}` | `{ok, rev, reviewed}` | app only |
 | `settings_set` | `{values: {key: value \| null}}` (null = default) | `{ok, rev, settings}` | app only |
 | `project_set` | `{project, name?, repoPath?, baselineSource?, baselinePattern?, baselineDir?, scanFiles?, scanSubdirs?}` (null clears) | `{ok, rev, project}` | app only |
+| `track` | `{project?, title?, base?, kind?, repoPath?, branch?, worktree?, agentId?, cwd?, autoContinue?}` | `{ok, rev, session}` ([below](#sessions-for-agents-gitrochi-starts)) | app only |
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
@@ -165,6 +166,18 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 | `link` | `sessionId`, any of `branch, worktree, repoPath, agentId, agentSessionId, cwd, pr: {host, number, url}, chatUrl` (null removes) | Links shown in the inspector |
 | `message` | `sessionId, text` | A note for the agent, delivered once |
 | `auto_continue` | `sessionId, autoContinue: {enabled, delaySec} \| null` | The session's policy; null = the global default |
+
+### Sessions for agents Gitrochi starts
+
+With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?}`. What the app leaves out is filled in from the checkout:
+
+- `branch` and `worktree`: what git says about `cwd` (a detached HEAD has no branch).
+- `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines.
+- `title`: the branch, else the folder's name.
+- `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
+- `autoContinue`: the policy `autoContinue.repositories` keeps for `repoPath`; `null` follows the global default.
+
+Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
 
 ### Importing a claude-ledger database
 
@@ -266,5 +279,9 @@ Narrowed on purpose (the original tool was wider):
 Added for the hook handler (wave 2):
 
 15. The CLI command `hook <event>` ([Hooks](#hooks)). `lastAt` also moves with a launched agent's hook activity, as DESIGN.md §6.1 and §7.11 describe; `lastAgentAt` stays the agent's own reports. `hook` events carry `data.hook` and the fields above. The handler moves waiting prompts to `answered` (the person answered in the terminal: `answeredBy: "human"`, no `answer`) and to `released`. A permission prompt's payload has `call`; its automatic answer has `outcome` (`unconfirmed`, `confirmed`, `unknown`), and its `auto_reply` event waits for the outcome.
+
+Added for launch tracking (wave 2):
+
+16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

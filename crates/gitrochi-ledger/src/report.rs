@@ -8,7 +8,8 @@ use crate::event::{self, Message, NewEvent};
 use crate::overlap;
 use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
-use crate::util::{self, arg_str, arg_str_any, clean, json_text, resolve_version, Ms};
+use crate::track;
+use crate::util::{self, arg_str, arg_str_any, clean, has, json_text, resolve_version, Ms};
 use crate::vocab::{self, Role, AGENT_EVENTS, REOPEN_EVENTS};
 use rusqlite::{params, Connection};
 use serde::Serialize;
@@ -45,7 +46,7 @@ pub fn project_of(connection: &Connection, args: &Value) -> Result<Option<String
     }
 }
 
-fn new_id(connection: &Connection, ts: Ms) -> Result<String> {
+pub(crate) fn new_id(connection: &Connection, ts: Ms) -> Result<String> {
     let day: String = connection.query_row(
         "SELECT strftime('%m%d', ?1 / 1000, 'unixepoch', 'localtime')",
         [ts],
@@ -97,6 +98,50 @@ pub(crate) fn cut_body(text: &str) -> (String, bool) {
     (out, true)
 }
 
+/// The report's `base`: `latest` is HEAD at this moment (and remembered as such), a version
+/// the trunk lacks is added as inferred. A missing or unreadable base is noticed.
+fn resolve_base(
+    connection: &Connection,
+    project: &str,
+    args: &Value,
+    head: &Option<String>,
+    ts: Ms,
+    notices: &mut Vec<String>,
+) -> Result<(Option<String>, bool)> {
+    let (base, was_latest) = match arg_str(args, "base") {
+        None => {
+            notices.push(
+                "No base (the baseline this work started from), so the graph cannot connect the session to the trunk."
+                    .into(),
+            );
+            (None, false)
+        }
+        Some(text) => match util::parse_version(&text).as_deref() {
+            None => {
+                notices.push(format!(
+                    "Could not read base '{text}' as a version (for example 1.4.2)."
+                ));
+                (None, false)
+            }
+            Some("latest") => match head {
+                Some(head) => (Some(head.clone()), true),
+                None => {
+                    notices.push(
+                        "No baseline is known yet, so 'latest' could not be resolved; send a version number as base."
+                            .into(),
+                    );
+                    (None, false)
+                }
+            },
+            Some(version) => (Some(version.to_string()), false),
+        },
+    };
+    if let Some(base) = &base {
+        baseline::ensure(connection, project, base, ts - 1000)?;
+    }
+    Ok((base, was_latest))
+}
+
 /// Records one report. `ts` is the event's time; `now` is used for the reply's verdicts.
 pub fn report(
     connection: &Connection,
@@ -121,12 +166,19 @@ pub fn report(
     let mut summary = arg_str(args, "summary").unwrap_or_default();
     let mut notices: Vec<String> = Vec::new();
 
-    let existing = match &session_arg {
+    let mut existing = match &session_arg {
         Some(id) => session::load(connection, id)?,
         None => None,
     };
+    // Gitrochi created the session when it started the agent, and the agent has not
+    // reported yet: the title, base and project are Gitrochi's guess, and the agent's
+    // own values replace them (DESIGN.md §7.11).
+    let adopting = match &existing {
+        Some(found) => track::is_unreported_launch(connection, found)?,
+        None => false,
+    };
     if let (Some(found), Some(project)) = (&existing, &project_arg) {
-        if *project != found.project {
+        if *project != found.project && !adopting {
             return Err(Error::conflict(format!(
                 "Session {} belongs to project '{}'",
                 found.id, found.project
@@ -134,6 +186,7 @@ pub fn report(
         }
     }
     let project = match (&existing, project_arg) {
+        (Some(_), Some(project)) if adopting => project,
         (Some(found), _) => found.project.clone(),
         (None, Some(project)) => project,
         (None, None) => {
@@ -143,12 +196,27 @@ pub fn report(
         }
     };
     baseline::ensure_project(connection, &project, ts)?;
+    if let Some(found) = existing.as_mut() {
+        if adopting && found.project != project {
+            track::move_to_project(connection, found, &project)?;
+        }
+    }
     let head = baseline::head(connection, &project)?;
 
     let mut created = false;
     let mut row: SessionRow = match existing {
-        Some(found) => {
-            if event == "start" {
+        Some(mut found) => {
+            if event == "start" && adopting {
+                if has(args, "base") {
+                    let (base, was_latest) =
+                        resolve_base(connection, &project, args, &head, ts, &mut notices)?;
+                    track::set_base(connection, &mut found, base, was_latest)?;
+                }
+                notices.push(
+                    "Gitrochi created this session when it started the agent; the reported title, base and project replace the ones it set."
+                        .into(),
+                );
+            } else if event == "start" {
                 if let Some(title) = arg_str(args, "title") {
                     if title != found.title {
                         return Err(Error::conflict(format!(
@@ -176,37 +244,8 @@ pub fn report(
                 Some(id) => id.clone(),
                 None => new_id(connection, ts)?,
             };
-            let (base, was_latest) = match arg_str(args, "base") {
-                None => {
-                    notices.push(
-                        "No base (the baseline this work started from), so the graph cannot connect the session to the trunk."
-                            .into(),
-                    );
-                    (None, false)
-                }
-                Some(text) => match util::parse_version(&text).as_deref() {
-                    None => {
-                        notices.push(format!(
-                            "Could not read base '{text}' as a version (for example 1.4.2)."
-                        ));
-                        (None, false)
-                    }
-                    Some("latest") => match &head {
-                        Some(head) => (Some(head.clone()), true),
-                        None => {
-                            notices.push(
-                                "No baseline is known yet, so 'latest' could not be resolved; send a version number as base."
-                                    .into(),
-                            );
-                            (None, false)
-                        }
-                    },
-                    Some(version) => (Some(version.to_string()), false),
-                },
-            };
-            if let Some(base) = &base {
-                baseline::ensure(connection, &project, base, ts - 1000)?;
-            }
+            let (base, was_latest) =
+                resolve_base(connection, &project, args, &head, ts, &mut notices)?;
             let count: i64 = connection.query_row(
                 "SELECT COUNT(*) FROM sessions WHERE project = ?1",
                 [&project],

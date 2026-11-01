@@ -16,6 +16,7 @@ use crate::report;
 use crate::search;
 use crate::settings::{self, Settings};
 use crate::text;
+use crate::track;
 use crate::util::{self, arg_str, arg_str_any, now_ms};
 use crate::views::{self, Range, API_SCHEMA};
 use serde_json::{json, Value};
@@ -34,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 25] = [
+pub const METHODS: [(&str, &[Caller]); 26] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -56,6 +57,7 @@ pub const METHODS: [(&str, &[Caller]); 25] = [
     ("prompt_review", &[Caller::App]),
     ("settings_set", &[Caller::App]),
     ("project_set", &[Caller::App]),
+    ("track", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
     ("prompt_get", &[Caller::App, Caller::Hook]),
     ("prompt_resolve", &[Caller::App, Caller::Hook]),
@@ -273,6 +275,17 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
         "project_set" => {
             let (project, rev) = db.write(|c| baseline::set_project(c, args, now))?;
             Ok(json!({"ok": true, "rev": rev, "project": project}))
+        }
+        "track" => {
+            let plan = track::plan(db, args)?;
+            let (row, _) = db.write(|c| track::create(c, &plan, now))?;
+            // a new project's tags are scanned now, so its base is a tag rather than inferred
+            let _ = baseline::refresh(db, &row.project, false);
+            db.read(|c| {
+                let settings = Settings::load(c)?;
+                let detail = views::session_detail(c, &settings, &row.id, now)?;
+                Ok(json!({"ok": true, "rev": db::rev(c)?, "session": views::to_value(&detail.session)?}))
+            })
         }
         "prompt_create" => {
             let (prompt, rev) = db.write(|c| prompts::create(c, args, now))?;

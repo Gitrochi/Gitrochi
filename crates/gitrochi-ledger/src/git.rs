@@ -41,12 +41,25 @@ fn command(repo: &Path) -> Command {
 
 /// `git for-each-ref refs/tags` with NUL-separated fields; ref names cannot hold newlines.
 pub fn tags(repo: &Path) -> Result<Vec<Tag>> {
-    let output = command(repo)
-        .args([
-            "for-each-ref",
-            "--format=%(refname)%00%(creatordate:unix)%00%(objectname)%00%(*objectname)",
-            "refs/tags",
-        ])
+    list_tags(repo, false)
+}
+
+/// The tags reachable from the checkout's HEAD: where a new session's work starts from.
+pub fn reachable_tags(dir: &Path) -> Result<Vec<Tag>> {
+    list_tags(dir, true)
+}
+
+fn list_tags(repo: &Path, reachable: bool) -> Result<Vec<Tag>> {
+    let mut command = command(repo);
+    command.args([
+        "for-each-ref",
+        "--format=%(refname)%00%(creatordate:unix)%00%(objectname)%00%(*objectname)",
+    ]);
+    if reachable {
+        command.arg("--merged=HEAD");
+    }
+    let output = command
+        .arg("refs/tags")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()

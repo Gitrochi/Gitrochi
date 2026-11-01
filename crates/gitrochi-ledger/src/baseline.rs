@@ -355,6 +355,16 @@ pub fn scan_tags(repo: &Path, pattern: &str) -> Result<Vec<Found>> {
     Ok(sorted(found))
 }
 
+/// The newest version among the tags reachable from the checkout at `dir` that match the
+/// pattern: the baseline work started there builds on. `None` when no tag matches.
+pub fn newest_reachable(dir: &Path, pattern: &str) -> Result<Option<String>> {
+    let regex = compile(pattern)?;
+    Ok(git::reachable_tags(dir)?
+        .iter()
+        .filter_map(|tag| version_in(&regex, &util::nfc_text(&tag.name)))
+        .max_by(|a, b| compare_versions(a, b)))
+}
+
 fn system_ms(time: std::io::Result<SystemTime>) -> Option<Ms> {
     time.ok()?
         .duration_since(UNIX_EPOCH)
