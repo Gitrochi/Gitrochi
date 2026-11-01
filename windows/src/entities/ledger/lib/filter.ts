@@ -10,7 +10,7 @@ export interface SessionFilter {
   text: string;
   showArchived: boolean;
   /** Sessions whose agent has not reported yet (D13); combines with the other filters */
-  unreportedOnly: boolean;
+  unreportedOnly?: boolean;
 }
 
 export const emptyFilter = (project: string | null = null): SessionFilter => ({ project, verdicts: new Set(), text: "", showArchived: false, unreportedOnly: false });

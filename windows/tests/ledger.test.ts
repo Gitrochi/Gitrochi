@@ -111,6 +111,7 @@ describe("Ledger filters", () => {
   ];
   it("keeps streams and archived sessions out unless asked, then applies chips and text", () => {
     expect(filterSessions(rows, emptyFilter()).map((s) => s.id)).toEqual(["S1031-01", "S1031-03"]);
+    expect(filterSessions(rows, { project: null, verdicts: new Set(), text: "", showArchived: false }).map((s) => s.id)).toEqual(["S1031-01", "S1031-03"]);
     expect(filterSessions(rows, { ...emptyFilter("atlas"), showArchived: true }).map((s) => s.id)).toEqual(["S1031-01", "S1031-02"]);
     expect(filterSessions(rows, { ...emptyFilter(), verdicts: new Set<LedgerVerdict>(["archived"]) }).map((s) => s.id)).toEqual(["S1031-02"]);
     expect(filterSessions(rows, { ...emptyFilter(), text: "RETRY fix/" }).map((s) => s.id)).toEqual(["S1031-01"]);
