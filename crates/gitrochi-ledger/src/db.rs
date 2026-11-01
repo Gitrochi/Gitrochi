@@ -67,6 +67,32 @@ fn is_busy(error: &rusqlite::Error) -> bool {
     error.sqlite_error_code() == Some(rusqlite::ErrorCode::DatabaseBusy)
 }
 
+/// SQLite's disk I/O error (SQLITE_IOERR, whatever the extended code), as it reads once it
+/// is a ledger error: SQLite's own text for the code.
+fn is_disk_io(error: &Error) -> bool {
+    error.code == "DATABASE" && error.message.contains("disk I/O error")
+}
+
+/// Opens again while opening fails with a disk I/O error, until `patience` is over. On
+/// Windows, processes that open a new ledger at the same moment can get one for an instant
+/// while another process creates or sizes the `-wal` and `-shm` files; like SQLITE_BUSY in
+/// `enable_wal`, it passes. Opening, switching to WAL and migrating are all harmless to
+/// repeat. Any other failure, or one that lasts, is returned as it is.
+fn retry_disk_io<T>(patience: Duration, mut open: impl FnMut() -> Result<T>) -> Result<T> {
+    let deadline = Instant::now() + patience;
+    let mut attempt: u64 = 0;
+    loop {
+        match open() {
+            Err(error) if is_disk_io(&error) && Instant::now() < deadline => {
+                // a little longer each time, so openers that failed together retry apart
+                attempt += 1;
+                std::thread::sleep(Duration::from_millis(5 * attempt.min(20)));
+            }
+            result => return result,
+        }
+    }
+}
+
 /// Switches the file to WAL. Only the first open of a new file changes anything, and
 /// SQLite does it by turning the read lock the pragma holds into a write lock — an upgrade
 /// it never waits for, so that two connections doing the same cannot deadlock. When the
@@ -223,8 +249,11 @@ impl Db {
                 )
             })?;
         }
-        let mut writer = open_connection(path, options)?;
-        let version = migrate(&mut writer)?;
+        let (writer, version) = retry_disk_io(options.busy_timeout, || {
+            let mut writer = open_connection(path, options)?;
+            let version = migrate(&mut writer)?;
+            Ok((writer, version))
+        })?;
         Ok(Db {
             path: path.to_path_buf(),
             options,
@@ -239,11 +268,11 @@ impl Db {
         let pooled = lock(&self.readers).pop();
         let connection = match pooled {
             Some(connection) => connection,
-            None => {
+            None => retry_disk_io(self.options.busy_timeout, || {
                 let connection = open_connection(&self.path, self.options)?;
                 connection.execute_batch("PRAGMA query_only = ON")?;
-                connection
-            }
+                Ok(connection)
+            })?,
         };
         let result = (|| {
             let tx = connection.unchecked_transaction()?;
@@ -308,6 +337,43 @@ pub fn shared(path: &Path) -> Result<Arc<Db>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_disk_io_error_while_opening_is_tried_again_and_others_are_not() {
+        let io = || {
+            Error::from(rusqlite::Error::SqliteFailure(
+                rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_IOERR_SHMSIZE),
+                Some("disk I/O error".into()),
+            ))
+        };
+        assert!(is_disk_io(&io()));
+        // it passes: the open is tried again until it works
+        let mut calls = 0;
+        let opened = retry_disk_io(Duration::from_secs(5), || {
+            calls += 1;
+            if calls < 3 {
+                Err(io())
+            } else {
+                Ok(calls)
+            }
+        });
+        assert_eq!(opened, Ok(3));
+        // it lasts: the error comes back once the patience is over
+        let started = Instant::now();
+        assert_eq!(
+            retry_disk_io(Duration::from_millis(100), || Err::<(), _>(io())),
+            Err(io())
+        );
+        assert!(started.elapsed() >= Duration::from_millis(100));
+        // anything else is returned at once
+        let mut calls = 0;
+        let busy = Error::new("DATABASE", "database is locked");
+        let result = retry_disk_io(Duration::from_secs(5), || {
+            calls += 1;
+            Err::<(), _>(busy.clone())
+        });
+        assert_eq!((result, calls), (Err(busy), 1));
+    }
 
     #[test]
     fn a_new_file_held_too_long_is_reported_clearly_and_opens_once_free() {
