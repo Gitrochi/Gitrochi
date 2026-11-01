@@ -43,7 +43,8 @@ export function badgeImage(total: number, size = BADGE_SIZE): number[] | null {
 }
 
 /**
- * The Ledger's notifications and taskbar badge (docs/ledger/DESIGN.md §10.11), both switches in Settings › Ledger.
+ * The Ledger's notifications and taskbar badge (docs/ledger/DESIGN.md §10.11), both switches in Settings › Ledger that
+ * stay off until a person turns them on.
  * Polls `rev` like the page does, reads the state of every project when it moved, and tells the person what is new;
  * a click opens the Ledger at the item (`onOpen`). The badge is the overlay on the taskbar button with
  * `attention.total`. Started with the Ledger preview only. (macOS: the Dock badge and UserNotifications)
@@ -63,23 +64,23 @@ export class LedgerNotifier extends Observable {
     super();
   }
 
-  /** Notifications about what is new (on unless a person turns them off) */
+  /** Notifications about what is new (off until a person turns them on) */
   get notifications(): boolean {
-    return settings.get<boolean>("ledgerNotifications", true);
+    return settings.get<boolean>("ledgerNotifications", false);
   }
 
   setNotifications(on: boolean) {
-    settings.set("ledgerNotifications", on ? undefined : false);
+    settings.set("ledgerNotifications", on || undefined);
     this.emit();
   }
 
-  /** The count on the taskbar button (on unless a person turns it off) */
+  /** The count on the taskbar button (off until a person turns it on) */
   get badge(): boolean {
-    return settings.get<boolean>("ledgerBadge", true);
+    return settings.get<boolean>("ledgerBadge", false);
   }
 
   setBadge(on: boolean) {
-    settings.set("ledgerBadge", on ? undefined : false);
+    settings.set("ledgerBadge", on || undefined);
     this.emit();
     void this.showBadge(this.last?.attention.total ?? 0);
   }
@@ -98,6 +99,12 @@ export class LedgerNotifier extends Observable {
   /** Reads the state when `rev` moved, then notifies and updates the badge; the first read only learns what exists */
   async poll() {
     if (this.polling) return;
+    // with both switches off nothing is read; the first read after one is turned on only learns what exists
+    if (!this.notifications && !this.badge) {
+      this.last = null;
+      this.rev = -1;
+      return;
+    }
     this.polling = true;
     try {
       const backend = this.backend();

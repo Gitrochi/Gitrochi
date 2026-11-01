@@ -76,8 +76,8 @@ describe("Ledger notices", () => {
 describe("Ledger notifier", () => {
   async function demoNotifier(on: { notifications?: boolean; badge?: boolean } = {}) {
     await initEnv({ os: "windows", home: "", dataDir: "", exe: "", temp: "", shell: "", version: "", selftest: null, selftestOpen: null, appData: "", localAppData: "", resourceDir: "" });
-    settings.set("ledgerNotifications", on.notifications === false ? false : undefined);
-    settings.set("ledgerBadge", on.badge === false ? false : undefined);
+    settings.set("ledgerNotifications", on.notifications === false ? undefined : true);
+    settings.set("ledgerBadge", on.badge === false ? undefined : true);
     let now = NOW;
     const demo = new DemoLedgerBackend({ now: () => now, repoPath: "C:/fixture/atlas" });
     const sent: LedgerNotice[] = [], badges: (number | null)[] = [];
@@ -88,8 +88,27 @@ describe("Ledger notifier", () => {
       demo.world.prompts.push({ id: demo.world.nextPrompt++, sessionId: target.id, kind: "stop_question", payload: { question: "Shall I go on?", proposed: { type: "reply", text: "Yes, go on." } }, createdAt: now, deadline: now + 30_000, state: "waiting" });
       demo.world.rev++;
     };
-    return { notifier, sent, badges, target, ask, pass: (ms: number) => { now += ms; } };
+    return { demo, notifier, sent, badges, target, ask, pass: (ms: number) => { now += ms; } };
   }
+
+  it("reads nothing while both switches are off, and starts from what exists once one is on", async () => {
+    const { demo, notifier, sent, badges, target, ask } = await demoNotifier({ notifications: false, badge: false });
+    expect([notifier.notifications, notifier.badge]).toEqual([false, false]);
+    const reads = vi.spyOn(demo, "call");
+    await notifier.poll();
+    expect(reads).not.toHaveBeenCalled();
+    expect(badges).toEqual([]);
+    // what was asked while they were off is not announced afterwards
+    ask();
+    notifier.setNotifications(true);
+    await notifier.poll();
+    expect(sent).toEqual([]);
+    ask();
+    await notifier.poll();
+    expect(sent.map((n) => n.title)).toEqual([`Question from ${target.id}`, `${target.id} is waiting for you`]);
+    notifier.setNotifications(false);
+    expect(settings.get("ledgerNotifications", "unset")).toBe("unset");
+  });
 
   it("learns what exists first, then tells what is new once, and follows the switches", async () => {
     const { notifier, sent, badges, target, ask, pass } = await demoNotifier();

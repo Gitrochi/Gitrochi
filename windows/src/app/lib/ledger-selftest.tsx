@@ -383,16 +383,16 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const cli = await ledgerTracking.cli();
     ensure(hooksFiles.every((f) => f.content.includes("gitrochi-ledger") === (f.tracking && !!cli)), `The hooks files did not follow Track agents I start: ${hooksFiles.map((f) => `${f.tracking}:${f.content.includes("gitrochi-ledger")}`).join(", ")}`);
     passed.push("track agents and auto-continue settings");
-    // Notifications and the taskbar badge: both on until a person turns them off
+    // Notifications and the taskbar badge: both off until a person turns them on
     const noticeBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="notifications"] input[type="checkbox"]`);
-    ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => b.checked), "Notifications and the badge must start on");
+    ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => !b.checked), "Notifications and the badge must start off");
     noticeBoxes()[0].click();
-    ensure(await until(() => memory.get("ledgerNotifications") === false && !noticeBoxes()[0].checked), "Turning notifications off did not save it");
+    ensure(await until(() => memory.get("ledgerNotifications") === true && noticeBoxes()[0].checked), "Turning notifications on did not save it");
     noticeBoxes()[0].click();
     noticeBoxes()[1].click();
-    ensure(await until(() => memory.get("ledgerNotifications") === undefined && memory.get("ledgerBadge") === false && noticeBoxes()[0].checked && !noticeBoxes()[1].checked), "The notification switches did not follow the clicks");
+    ensure(await until(() => memory.get("ledgerNotifications") === undefined && memory.get("ledgerBadge") === true && !noticeBoxes()[0].checked && noticeBoxes()[1].checked), "The notification switches did not follow the clicks");
     noticeBoxes()[1].click();
-    ensure(await until(() => noticeBoxes()[1].checked), "The badge switch did not turn back on");
+    ensure(await until(() => !noticeBoxes()[1].checked && !memory.has("ledgerBadge")), "The badge switch did not turn back off");
     passed.push("notification settings");
     button(".ledger-settings", "Connect Claude Code…")!.click();
     ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
@@ -408,6 +408,11 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const noticeDemo = new DemoLedgerBackend({ now: () => noticeClock, repoPath: "C:/fixture/atlas" });
     const sent: LedgerNotice[] = [], overlays: (number[] | null)[] = [];
     const notifier = new LedgerNotifier(() => noticeDemo, { notify: async (n) => { sent.push(n); }, badge: async (rgba) => { overlays.push(rgba); } });
+    // off until a person turns them on: nothing is read
+    await notifier.poll();
+    ensure(!sent.length && !overlays.length, "The notifier must do nothing while both switches are off");
+    memory.set("ledgerNotifications", true);
+    memory.set("ledgerBadge", true);
     await notifier.poll();
     ensure(!sent.length, `Notifications must not announce what already existed: ${sent.map((n) => n.title).join(", ")}`);
     ensure(env.os !== "windows" || (overlays.length === 1 && overlays[0]?.length === 32 * 32 * 4), `The taskbar overlay did not get the count: ${overlays.map((o) => o?.length ?? "none").join(", ")}`);
@@ -426,6 +431,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(clickStore);
     openLedgerAt(clickTab, clickStore, waitingNotice!.target);
     ensure(clickTab.destination === "ledger" && clickStore.selectedId === asker.id && clickStore.view === "inbox", `A click did not open the Ledger at the item: ${clickTab.destination} ${clickStore.selectedId} ${clickStore.view}`);
+    memory.delete("ledgerNotifications");
+    memory.delete("ledgerBadge");
     passed.push("notifications");
 
     ensure(!unexpected.length, `The Ledger reached outside the demo: ${unexpected.join(", ")}`);
