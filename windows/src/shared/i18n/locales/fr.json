@@ -1721,5 +1721,6 @@
   "Auto-continue already answered {0} times in a row.": "La poursuite automatique a déjà répondu {0} fois de suite.",
   "Answer it in the agent's terminal.": "Répondez-y dans le terminal de l'agent.",
   "Ledger overview": "Aperçu du registre",
-  "What agents read about this project, in a new tab of the terminal below.": "Ce que les agents lisent sur ce projet, dans un nouvel onglet du terminal ci-dessous."
+  "What agents read about this project, in a new tab of the terminal below.": "Ce que les agents lisent sur ce projet, dans un nouvel onglet du terminal ci-dessous.",
+  "Unreported": "Sans rapport"
 }

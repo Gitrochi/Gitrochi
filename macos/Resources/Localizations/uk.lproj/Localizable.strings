@@ -1653,3 +1653,4 @@
 "Auto-continue reached its limit of answers in a row." = "Автопродовження досягло ліміту відповідей поспіль.";
 "Answer it in the agent's terminal." = "Дайте відповідь у терміналі агента.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Термінал агента не відкрито в Gitrochi. Відповідайте там, де працює агент.";
+"Unreported" = "Без звіту";

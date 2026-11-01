@@ -9,9 +9,11 @@ export interface SessionFilter {
   /** Free text matched against ID, title, kind, branch and touches */
   text: string;
   showArchived: boolean;
+  /** Sessions whose agent has not reported yet (D13); combines with the other filters */
+  unreportedOnly: boolean;
 }
 
-export const emptyFilter = (project: string | null = null): SessionFilter => ({ project, verdicts: new Set(), text: "", showArchived: false });
+export const emptyFilter = (project: string | null = null): SessionFilter => ({ project, verdicts: new Set(), text: "", showArchived: false, unreportedOnly: false });
 
 /** Lower case and composed, so typed and stored text compare the same */
 export const foldText = (s: string) => s.normalize("NFC").toLocaleLowerCase();
@@ -34,6 +36,7 @@ export function filterSessions(sessions: readonly LedgerSession[], f: SessionFil
   return sessions
     .filter((s) => !s.stream && inProject(s, f.project) && (f.showArchived || f.verdicts.has("archived") || s.verdict !== "archived"))
     .filter((s) => !f.verdicts.size || f.verdicts.has(s.verdict))
+    .filter((s) => !f.unreportedOnly || s.lastAgentAt == null)
     .filter((s) => matchesText(s, f.text))
     .sort(compareSessions);
 }

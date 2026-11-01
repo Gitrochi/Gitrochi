@@ -2467,3 +2467,4 @@
 "Auto-continue reached its limit of answers in a row." = "自動続行は連続で答えられる回数の上限に達しました。";
 "Answer it in the agent's terminal." = "エージェントのターミナルで回答してください。";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "エージェントのターミナルは Gitrochi で開かれていません。エージェントが実行されている場所で回答してください。";
+"Unreported" = "未報告";
