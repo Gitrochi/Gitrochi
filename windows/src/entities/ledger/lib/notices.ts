@@ -1,6 +1,6 @@
 import { t } from "@/shared/i18n";
 import type { LedgerPendingPrompt, LedgerState, LedgerStreamCycle, LedgerVerdict } from "../model/types";
-import { countdown, describeAnswer, promptSummary, waitingPrompts } from "./countdown";
+import { countdown, describeAnswer, promptHold, promptSummary, waitingPrompts } from "./countdown";
 
 /** What a click on a notification opens: a session, and the prompt or question it was about */
 export interface LedgerTarget {
@@ -25,6 +25,9 @@ function answerText(value: unknown) {
   if (answer.kind === "text") return answer.text;
   return answer.text ? `${t(answerWords[answer.kind])}: ${answer.text}` : t(answerWords[answer.kind]);
 }
+
+/** Why auto-continue left a wait to the person, and where to answer it */
+export const heldText = (hold: { reason: string; count: number }) => [hold.reason && t(hold.reason, hold.count), t("Answer it in the agent's terminal.")].filter(Boolean).join(" ");
 
 /** Who a prompt belongs to: its session, else the agent that asked */
 const owner = (p: LedgerPendingPrompt) => p.sessionId ?? p.agentId ?? "";
@@ -54,7 +57,8 @@ export function ledgerNotices(before: LedgerState | null, after: LedgerState): L
   const waiting = new Set(before.pendingPrompts.map((p) => p.id));
   for (const p of waitingPrompts(after.pendingPrompts)) {
     if (waiting.has(p.id)) continue;
-    const left = p.deadline ? t("Auto-answer in {0}", countdown(p.deadline, after.now).text) : t("No automatic answer");
+    const hold = promptHold(p);
+    const left = hold ? heldText(hold) : p.deadline ? t("Auto-answer in {0}", countdown(p.deadline, after.now).text) : t("No automatic answer");
     out.push({ title: t("{0} is waiting for you", owner(p)), body: [promptSummary(p), left].filter(Boolean).join("\n"), target: { sessionId: p.sessionId, promptId: p.id } });
   }
   const reviewed = new Set((before.autoReview ?? []).map((p) => p.id));

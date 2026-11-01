@@ -3564,5 +3564,10 @@
   "{0} applied {1}": "{0}이(가) {1} 이행",
   "{0} new items in the Ledger": "원장에 새 항목 {0}개",
   "{0} is waiting for you": "{0}이(가) 답을 기다립니다",
-  "Answered automatically for {0}": "{0}에 자동으로 답했습니다"
+  "Answered automatically for {0}": "{0}에 자동으로 답했습니다",
+  "Auto-continue never answers this kind of request.": "자동 진행은 이런 요청에 답하지 않습니다.",
+  "It looks risky to answer automatically.": "자동으로 답하기에는 위험해 보입니다.",
+  "There is nothing to choose from.": "고를 수 있는 선택지가 없습니다.",
+  "Auto-continue already answered {0} times in a row.": "자동 진행이 이미 {0}번 연속으로 답했습니다.",
+  "Answer it in the agent's terminal.": "에이전트 터미널에서 답하세요."
 }

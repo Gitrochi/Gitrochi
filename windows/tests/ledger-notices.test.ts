@@ -50,12 +50,15 @@ describe("Ledger notices", () => {
 
   it("tells about every new waiting prompt with the time left, and every automatic answer", () => {
     const waiting = prompt({ id: 4, sessionId: "S1031-03", kind: "permission", payload: { tool: { name: "Bash", summary: "npm test" } }, deadline: NOW + 45_000 });
-    const held = prompt({ id: 5, agentId: "agent-9", payload: { question: "Deploy now?" }, deadline: 0 });
-    const notices = ledgerNotices(state(), state({ pendingPrompts: [waiting, held], questions: [question()] }));
+    const quiet = prompt({ id: 5, agentId: "agent-9", payload: { question: "Deploy now?" }, deadline: 0 });
+    // a wait auto-continue left to the person: only the agent's terminal can answer it
+    const held = prompt({ id: 7, sessionId: "S1031-06", kind: "permission", payload: { tool: { name: "Bash", summary: "git push --force" }, hold: { code: "held", rule: "push", detail: "git push --force", message: "held by push" } }, deadline: 0 });
+    const notices = ledgerNotices(state(), state({ pendingPrompts: [waiting, quiet, held], questions: [question()] }));
     expect(notices).toEqual([
       { title: "Question from S1031-01", body: "Which one?", target: { sessionId: "S1031-01", questionId: 1 } },
       { title: "S1031-03 is waiting for you", body: "npm test\nAuto-answer in 0:45", target: { sessionId: "S1031-03", promptId: 4 } },
       { title: "agent-9 is waiting for you", body: "Deploy now?\nNo automatic answer", target: { sessionId: undefined, promptId: 5 } },
+      { title: "S1031-06 is waiting for you", body: "git push --force\nAuto-continue never answers this kind of request. Answer it in the agent's terminal.", target: { sessionId: "S1031-06", promptId: 7 } },
     ]);
     const answered = prompt({ id: 4, sessionId: "S1031-03", kind: "permission", payload: { tool: { name: "Bash", summary: "npm test" } }, state: "auto", answer: { type: "allow" } });
     const chosen = prompt({ id: 6, sessionId: "S1031-05", kind: "ask_user_question", payload: { question: "Which format?" }, state: "auto", answer: { answers: { "Which format?": "Short summary" } } });

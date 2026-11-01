@@ -93,3 +93,23 @@ export function describeAnswer(value: unknown): { kind: AnswerKind; text: string
   if (text(a.text)) return { kind: "text", text: text(a.text) };
   return { kind: "unknown", text: "" };
 }
+
+const holdReasons: Record<string, string> = {
+  held: "Auto-continue never answers this kind of request.",
+  risky: "It looks risky to answer automatically.",
+  no_answer: "There is nothing to choose from.",
+  limit_reached: "Auto-continue already answered {0} times in a row.",
+};
+
+/**
+ * A wait auto-continue left to the person (`payload.hold`, crates/gitrochi-ledger/CONTRACT.md, Hooks): it has no
+ * countdown and no hook waits on it, so only the agent's terminal can answer it. `reason` is for the screen to translate
+ * with `count`; empty for a reason this version does not know.
+ */
+export function promptHold(prompt: LedgerPendingPrompt): { reason: string; count: number } | null {
+  const hold = record(prompt.payload.hold);
+  const code = text(hold.code);
+  if (!code) return null;
+  const count = [hold.consecutive, hold.max].find((n): n is number => typeof n === "number") ?? 3;
+  return { reason: holdReasons[code] ?? "", count };
+}

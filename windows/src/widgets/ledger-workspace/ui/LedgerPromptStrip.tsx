@@ -1,6 +1,6 @@
 import { Check, CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, SquareTerminal, Timer, TimerOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { countdown, describeAnswer, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
+import { countdown, describeAnswer, heldText, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptHold, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
 import { answerText } from "./parts";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
@@ -59,6 +59,8 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
   const options = promptOptions(prompt);
   const summary = promptSummary(prompt);
   const proposed = prompt.payload.proposed ? describeAnswer(prompt.payload.proposed) : null;
+  // a wait auto-continue left to the person: no hook waits on it, so an answer here would not reach the agent
+  const hold = promptHold(prompt);
   const busy = store.busy > 0;
   const send = (answer: Parameters<LedgerStore["answerPrompt"]>[1]) => store.answerPrompt(prompt, answer);
   return (
@@ -80,8 +82,15 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
       </div>
       {summary && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
       {proposed && proposed.kind !== "unknown" && left.tone !== "none" && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
-      {prompt.kind === "permission" && <div className="hint">{t("The agent's terminal shows this request too; an answer there counts as well.")}</div>}
-      {answering ? (
+      {hold ? <div className="hint">{heldText(hold)}</div> : prompt.kind === "permission" && <div className="hint">{t("The agent's terminal shows this request too; an answer there counts as well.")}</div>}
+      {hold ? (
+        <div className="ledger-row-actions">
+          <Button size="small" kind="primary" onClick={() => onOpenTerminal(prompt)}>
+            <SquareTerminal size={13} />
+            {t("Answer in terminal")}
+          </Button>
+        </div>
+      ) : answering ? (
         <>
           {options.length > 0 && (
             <div className="ledger-options">

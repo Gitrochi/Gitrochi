@@ -1657,5 +1657,10 @@
   "{0} applied {1}": "{0} ha applicato {1}",
   "{0} new items in the Ledger": "{0} nuovi elementi nel Registro",
   "{0} is waiting for you": "{0} ti sta aspettando",
-  "Answered automatically for {0}": "Risposta automatica per {0}"
+  "Answered automatically for {0}": "Risposta automatica per {0}",
+  "Auto-continue never answers this kind of request.": "La prosecuzione automatica non risponde mai a questo tipo di richiesta.",
+  "It looks risky to answer automatically.": "Rispondere automaticamente sembra rischioso.",
+  "There is nothing to choose from.": "Non c'è nulla tra cui scegliere.",
+  "Auto-continue already answered {0} times in a row.": "La prosecuzione automatica ha già risposto {0} volte di seguito.",
+  "Answer it in the agent's terminal.": "Rispondi nel terminale dell'agente."
 }

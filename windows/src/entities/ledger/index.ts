@@ -1,13 +1,13 @@
 // The public API of entities/ledger: other slices import only from this file
 export { type LedgerBackend, LedgerError, ledgerFailure, ledgerResult, nativeCanRun, nativeLedgerBackend } from "./api/backend";
 export { DemoLedgerBackend, type DemoOptions } from "./api/demo-backend";
-export { type AnswerKind, countdown, type Countdown, type CountdownTone, describeAnswer, promptActions, promptChoice, type PromptOption, promptOptions, promptSummary, serverNow, waitingPrompts } from "./lib/countdown";
+export { type AnswerKind, countdown, type Countdown, type CountdownTone, describeAnswer, promptActions, promptChoice, promptHold, type PromptOption, promptOptions, promptSummary, serverNow, waitingPrompts } from "./lib/countdown";
 export { emptyFilter, filterSessions, foldText, matchesText, projectForRepository, type SessionFilter, streamCount, verdictCounts } from "./lib/filter";
 export { GRAPH_LANE_W, GRAPH_LEFT_PAD, GRAPH_ROW_H, type GraphPlot, laneX, pathsInBand, type PlacedNode, type PlacedPath, plotLedgerGraph, rowY, visibleRows } from "./lib/graph";
 export { countReports, type ImportLine, type ImportOutcome, type ImportSummary, summarizeImport } from "./lib/imports";
 export { type InboxAction, type InboxGroup, type InboxGroupId, inboxCount, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, stepIndex } from "./lib/inbox";
 export { LEDGER_NARROW, LEDGER_WIDE, type LedgerLayout, ledgerLayout } from "./lib/layout";
-export { badgeLabel, type LedgerNotice, ledgerNotices, type LedgerTarget } from "./lib/notices";
+export { badgeLabel, heldText, type LedgerNotice, ledgerNotices, type LedgerTarget } from "./lib/notices";
 export { inverseOperation, operationTitle } from "./lib/undo";
 export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictIcon, type VerdictLook, verdictDisplayOrder, verdictLook } from "./lib/verdict";
 export { compareVersions } from "./lib/version";

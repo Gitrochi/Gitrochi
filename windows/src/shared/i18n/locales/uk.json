@@ -1679,5 +1679,10 @@
   "{0} applied {1}": "{0} застосував {1}",
   "{0} new items in the Ledger": "Нових елементів у Книзі обліку: {0}",
   "{0} is waiting for you": "{0} чекає на вас",
-  "Answered automatically for {0}": "Автоматична відповідь для {0}"
+  "Answered automatically for {0}": "Автоматична відповідь для {0}",
+  "Auto-continue never answers this kind of request.": "Автопродовження ніколи не відповідає на такі запити.",
+  "It looks risky to answer automatically.": "Відповідати автоматично виглядає ризиковано.",
+  "There is nothing to choose from.": "Немає з чого вибирати.",
+  "Auto-continue already answered {0} times in a row.": "Автоматичних відповідей поспіль уже: {0}.",
+  "Answer it in the agent's terminal.": "Дайте відповідь у терміналі агента."
 }

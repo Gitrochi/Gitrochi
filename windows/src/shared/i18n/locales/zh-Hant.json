@@ -1685,5 +1685,10 @@
   "{0} applied {1}": "{0} 套用了 {1}",
   "{0} new items in the Ledger": "台帳中有 {0} 個新項",
   "{0} is waiting for you": "{0} 正在等你",
-  "Answered automatically for {0}": "已為 {0} 自動回答"
+  "Answered automatically for {0}": "已為 {0} 自動回答",
+  "Auto-continue never answers this kind of request.": "自動繼續從不回答這類請求。",
+  "It looks risky to answer automatically.": "自動回答看起來有風險。",
+  "There is nothing to choose from.": "沒有可選的選項。",
+  "Auto-continue already answered {0} times in a row.": "自動繼續已連續回答了 {0} 次。",
+  "Answer it in the agent's terminal.": "請在代理程式的終端機中回答。"
 }

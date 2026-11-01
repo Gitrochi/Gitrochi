@@ -1633,5 +1633,10 @@
   "{0} applied {1}": "{0} heeft {1} toegepast",
   "{0} new items in the Ledger": "{0} nieuwe items in het Register",
   "{0} is waiting for you": "{0} wacht op u",
-  "Answered automatically for {0}": "Automatisch beantwoord voor {0}"
+  "Answered automatically for {0}": "Automatisch beantwoord voor {0}",
+  "Auto-continue never answers this kind of request.": "Automatisch doorgaan beantwoordt dit soort verzoeken nooit.",
+  "It looks risky to answer automatically.": "Automatisch antwoorden lijkt riskant.",
+  "There is nothing to choose from.": "Er is niets om uit te kiezen.",
+  "Auto-continue already answered {0} times in a row.": "Automatisch doorgaan heeft al {0} keer achter elkaar geantwoord.",
+  "Answer it in the agent's terminal.": "Beantwoord het in de terminal van de agent."
 }

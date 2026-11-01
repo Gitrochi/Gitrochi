@@ -1633,5 +1633,10 @@
   "{0} applied {1}": "{0} menerapkan {1}",
   "{0} new items in the Ledger": "{0} item baru di Ledger",
   "{0} is waiting for you": "{0} menunggu Anda",
-  "Answered automatically for {0}": "Dijawab otomatis untuk {0}"
+  "Answered automatically for {0}": "Dijawab otomatis untuk {0}",
+  "Auto-continue never answers this kind of request.": "Lanjut otomatis tidak pernah menjawab permintaan seperti ini.",
+  "It looks risky to answer automatically.": "Menjawab otomatis tampaknya berisiko.",
+  "There is nothing to choose from.": "Tidak ada pilihan.",
+  "Auto-continue already answered {0} times in a row.": "Lanjut otomatis sudah menjawab {0} kali berturut-turut.",
+  "Answer it in the agent's terminal.": "Jawab di terminal agen."
 }

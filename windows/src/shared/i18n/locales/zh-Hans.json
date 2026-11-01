@@ -1811,5 +1811,10 @@
   "{0} applied {1}": "{0} 应用了 {1}",
   "{0} new items in the Ledger": "台账中有 {0} 个新项",
   "{0} is waiting for you": "{0} 正在等你",
-  "Answered automatically for {0}": "已为 {0} 自动回答"
+  "Answered automatically for {0}": "已为 {0} 自动回答",
+  "Auto-continue never answers this kind of request.": "自动继续从不回答这类请求。",
+  "It looks risky to answer automatically.": "自动回答看起来有风险。",
+  "There is nothing to choose from.": "没有可选的选项。",
+  "Auto-continue already answered {0} times in a row.": "自动继续已连续回答了 {0} 次。",
+  "Answer it in the agent's terminal.": "请在代理的终端中回答。"
 }

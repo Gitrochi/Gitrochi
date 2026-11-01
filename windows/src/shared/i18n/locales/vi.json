@@ -1635,5 +1635,10 @@
   "{0} applied {1}": "{0} đã áp dụng {1}",
   "{0} new items in the Ledger": "{0} mục mới trong Sổ cái",
   "{0} is waiting for you": "{0} đang chờ bạn",
-  "Answered automatically for {0}": "Đã tự động trả lời cho {0}"
+  "Answered automatically for {0}": "Đã tự động trả lời cho {0}",
+  "Auto-continue never answers this kind of request.": "Tự động tiếp tục không bao giờ trả lời loại yêu cầu này.",
+  "It looks risky to answer automatically.": "Tự động trả lời có vẻ rủi ro.",
+  "There is nothing to choose from.": "Không có gì để chọn.",
+  "Auto-continue already answered {0} times in a row.": "Tự động tiếp tục đã trả lời {0} lần liên tiếp.",
+  "Answer it in the agent's terminal.": "Hãy trả lời trong terminal của agent."
 }

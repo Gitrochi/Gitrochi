@@ -2504,5 +2504,10 @@
   "{0} applied {1}": "{0} が {1} を適用",
   "{0} new items in the Ledger": "台帳に新しい項目が {0} 件",
   "{0} is waiting for you": "{0} があなたを待っています",
-  "Answered automatically for {0}": "{0} に自動で回答しました"
+  "Answered automatically for {0}": "{0} に自動で回答しました",
+  "Auto-continue never answers this kind of request.": "自動続行はこの種のリクエストには答えません。",
+  "It looks risky to answer automatically.": "自動で答えるには危険そうです。",
+  "There is nothing to choose from.": "選べる選択肢がありません。",
+  "Auto-continue already answered {0} times in a row.": "自動続行はすでに{0}回続けて答えました。",
+  "Answer it in the agent's terminal.": "エージェントのターミナルで答えてください。"
 }

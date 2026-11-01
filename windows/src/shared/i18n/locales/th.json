@@ -1675,5 +1675,10 @@
   "{0} applied {1}": "{0} นำ {1} ไปใช้แล้ว",
   "{0} new items in the Ledger": "รายการใหม่ใน Ledger {0} รายการ",
   "{0} is waiting for you": "{0} กำลังรอคุณ",
-  "Answered automatically for {0}": "ตอบโดยอัตโนมัติให้ {0}"
+  "Answered automatically for {0}": "ตอบโดยอัตโนมัติให้ {0}",
+  "Auto-continue never answers this kind of request.": "การดำเนินการต่ออัตโนมัติจะไม่ตอบคำขอประเภทนี้",
+  "It looks risky to answer automatically.": "การตอบอัตโนมัติดูมีความเสี่ยง",
+  "There is nothing to choose from.": "ไม่มีตัวเลือกให้เลือก",
+  "Auto-continue already answered {0} times in a row.": "การดำเนินการต่ออัตโนมัติตอบไปแล้ว {0} ครั้งติดกัน",
+  "Answer it in the agent's terminal.": "ตอบในเทอร์มินัลของเอเจนต์"
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareSessions, compareVersions, computeVerdict, countdown, countReports, emptyFilter, filterSessions, GRAPH_LANE_W, GRAPH_LEFT_PAD, GRAPH_ROW_H, inboxGroups, inboxItems, inboxKeyAction,
   inverseOperation, type LedgerGraph, ledgerLayout, type LedgerVerdict, ledgerVerdicts, matchesText, pathsInBand, plotLedgerGraph, projectForRepository, promptActions, promptOptions,
-  describeAnswer, promptChoice, promptSummary, serverNow, stepIndex, streamCount, summarizeImport, verdictCounts, verdictDisplayOrder, verdictLook, visibleRows, waitingPrompts,
+  describeAnswer, promptChoice, promptHold, promptSummary, serverNow, stepIndex, streamCount, summarizeImport, verdictCounts, verdictDisplayOrder, verdictLook, visibleRows, waitingPrompts,
 } from "@/entities/ledger";
 import { edgePath as edgePathForTest } from "@/entities/ledger/lib/graph";
 import { destinationEnabled, isWorkspaceDestination, previewDestinations, restoredDestination, workspaceDestinations } from "@/entities/git";
@@ -61,6 +61,17 @@ describe("Ledger countdowns and prompts", () => {
   it("lists waiting prompts soonest first, held ones last", () => {
     const list = [prompt({ id: 1, deadline: 0 }), prompt({ id: 2, deadline: NOW + 9_000 }), prompt({ id: 3, deadline: NOW + 1_000 }), prompt({ id: 4, state: "auto" })];
     expect(waitingPrompts(list).map((p) => p.id)).toEqual([3, 2, 1]);
+  });
+  it("tells a wait auto-continue left to the person, and why", () => {
+    expect(promptHold(prompt({ deadline: NOW + 9_000 }))).toBeNull();
+    expect(promptHold(prompt({ deadline: 0, payload: { question: "Deploy?" } }))).toBeNull();
+    const held = (hold: Record<string, unknown>) => promptHold(prompt({ deadline: 0, payload: { question: "Push?", hold: { message: "held for the person", ...hold } } }));
+    expect(held({ code: "held", rule: "push", detail: "git push" })).toEqual({ reason: "Auto-continue never answers this kind of request.", count: 3 });
+    expect(held({ code: "risky", kind: "stop_question", reason: "drops a table" })?.reason).toBe("It looks risky to answer automatically.");
+    expect(held({ code: "no_answer" })?.reason).toBe("There is nothing to choose from.");
+    expect(held({ code: "limit_reached", consecutive: 4, max: 3 })).toEqual({ reason: "Auto-continue already answered {0} times in a row.", count: 4 });
+    // a reason this version does not know still sends the person to the terminal
+    expect(held({ code: "something_new" })).toEqual({ reason: "", count: 3 });
   });
   it("offers allow and deny for permissions and plans, an answer for questions", () => {
     expect(promptActions("permission")).toEqual({ reply: false, allow: true });
