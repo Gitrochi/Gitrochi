@@ -258,8 +258,9 @@ private struct LedgerPromptCard: View {
 
     @ViewBuilder private var actions: some View {
         if held {
+            // plain like the strip's other secondary buttons: one filled button per region (docs/design.md, Controls)
             HStack(spacing: 8) { LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy) }
-                .buttonStyle(.borderedProminent).controlSize(.small)
+                .controlSize(.small)
         } else {
             answers
         }
