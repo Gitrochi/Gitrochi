@@ -1497,7 +1497,7 @@
 "Sessions confirmed: %lld" = "%lld munkamenet megerősítve";
 "Reports in this cycle: %lld" = "%lld jelentés ebben a ciklusban";
 "Older sessions outside this period: %lld" = "%lld régebbi munkamenet esik kívül ezen az időszakon";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld folyam ciklusokban jelent, ezért kimarad ebből a listából.";
+"Streams report in cycles and stay out of this list." = "A folyamok ciklusokban jelentenek, ezért kimaradnak ebből a listából.";
 "Older rows not drawn yet: %lld" = "%lld régebbi sor még nincs kirajzolva";
 "Open questions: %lld" = "%lld nyitott kérdés";
 "Sessions marked still active: %lld" = "%lld munkamenet még aktívként megjelölve";

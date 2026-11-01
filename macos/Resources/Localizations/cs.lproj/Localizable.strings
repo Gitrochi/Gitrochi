@@ -1494,7 +1494,7 @@
 "Sessions confirmed: %lld" = "Potvrzeno relací: %lld";
 "Reports in this cycle: %lld" = "Hlášení v tomto cyklu: %lld";
 "Older sessions outside this period: %lld" = "Starší relace mimo toto období: %lld";
-"Streams kept out of this list (they report in cycles): %lld" = "Proudy hlásící v cyklech jsou mimo tento seznam: %lld.";
+"Streams report in cycles and stay out of this list." = "Proudy hlásí v cyklech, a proto jsou mimo tento seznam.";
 "Older rows not drawn yet: %lld" = "Starší řádky zatím nevykreslené: %lld";
 "Open questions: %lld" = "Otevřené otázky: %lld";
 "Sessions marked still active: %lld" = "Označeno jako stále aktivní relací: %lld";

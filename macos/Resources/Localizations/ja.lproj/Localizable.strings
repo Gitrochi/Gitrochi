@@ -2244,7 +2244,7 @@
 "Sessions confirmed: %lld" = "%lld 件のセッションを確認しました";
 "Reports in this cycle: %lld" = "このサイクルの報告 %lld 件";
 "Older sessions outside this period: %lld" = "これより古いセッション %lld 件は期間外です";
-"Streams kept out of this list (they report in cycles): %lld" = "ストリーム %lld 件はサイクルで報告するため、この一覧から外しています。";
+"Streams report in cycles and stay out of this list." = "ストリームはサイクルで報告するため、この一覧から外しています。";
 "Older rows not drawn yet: %lld" = "古い行 %lld 件はまだ描画していません";
 "Open questions: %lld" = "未回答の質問 %lld 件";
 "Sessions marked still active: %lld" = "%lld 件のセッションをまだ進行中にしました";

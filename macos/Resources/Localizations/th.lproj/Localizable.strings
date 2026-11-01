@@ -1509,7 +1509,7 @@
 "Sessions confirmed: %lld" = "ยืนยัน %lld เซสชันแล้ว";
 "Reports in this cycle: %lld" = "%lld รายงานในรอบนี้";
 "Older sessions outside this period: %lld" = "มี %lld เซสชันที่เก่ากว่าอยู่นอกช่วงนี้";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld สตรีมรายงานเป็นรอบจึงไม่อยู่ในรายการนี้";
+"Streams report in cycles and stay out of this list." = "สตรีมรายงานเป็นรอบจึงไม่อยู่ในรายการนี้";
 "Older rows not drawn yet: %lld" = "ยังไม่ได้วาดแถวที่เก่ากว่า %lld แถว";
 "Open questions: %lld" = "คำถามค้างอยู่ %lld ข้อ";
 "Sessions marked still active: %lld" = "ทำเครื่องหมาย %lld เซสชันว่ายังทำงานอยู่แล้ว";

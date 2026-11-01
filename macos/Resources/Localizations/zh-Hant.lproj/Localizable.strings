@@ -1519,7 +1519,7 @@
 "Sessions confirmed: %lld" = "已確認 %lld 個工作階段";
 "Reports in this cycle: %lld" = "本週期內 %lld 則回報";
 "Older sessions outside this period: %lld" = "另有 %lld 個更早的工作階段不在此時間範圍內";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld 個串流按週期回報，不在此清單中。";
+"Streams report in cycles and stay out of this list." = "串流按週期回報，不在此清單中。";
 "Older rows not drawn yet: %lld" = "還有 %lld 列更早的紀錄未繪製";
 "Open questions: %lld" = "%lld 個未決問題";
 "Sessions marked still active: %lld" = "已將 %lld 個工作階段標記為仍在進行";

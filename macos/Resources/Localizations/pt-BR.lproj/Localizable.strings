@@ -1478,7 +1478,7 @@
 "Sessions confirmed: %lld" = "%lld sessões confirmadas";
 "Reports in this cycle: %lld" = "%lld relatos neste ciclo";
 "Older sessions outside this period: %lld" = "%lld sessões mais antigas estão fora do período";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld fluxos relatam em ciclos e ficam fora desta lista.";
+"Streams report in cycles and stay out of this list." = "Os fluxos relatam em ciclos e ficam fora desta lista.";
 "Older rows not drawn yet: %lld" = "%lld linhas mais antigas ainda não foram desenhadas";
 "Open questions: %lld" = "%lld perguntas abertas";
 "Sessions marked still active: %lld" = "%lld sessões marcadas como ainda ativas";

@@ -1514,7 +1514,7 @@
 "Sessions confirmed: %lld" = "Подтверждено сессий: %lld";
 "Reports in this cycle: %lld" = "Отчётов в этом цикле: %lld";
 "Older sessions outside this period: %lld" = "Более старых сессий вне периода: %lld";
-"Streams kept out of this list (they report in cycles): %lld" = "Потоки, отчитывающиеся циклами, не входят в этот список: %lld.";
+"Streams report in cycles and stay out of this list." = "Потоки отчитываются циклами и не входят в этот список.";
 "Older rows not drawn yet: %lld" = "Старых строк ещё не нарисовано: %lld";
 "Open questions: %lld" = "Открытых вопросов: %lld";
 "Sessions marked still active: %lld" = "Отмечено как ещё активные сессий: %lld";
