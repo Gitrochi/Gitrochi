@@ -458,6 +458,55 @@ fn an_unreported_launch_goes_stale_only_once_its_branch_has_commits() {
 }
 
 #[test]
+fn report_overlap_notices_use_the_same_launch_verdict_as_the_apps() {
+    let repo = Repo::new();
+    let id = repo.track(json!({"kind": "research"}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    quiet(&repo.db(), &id, 100);
+    // Recorded paths alone do not make an agent report; the launch stays unreported.
+    rusqlite::Connection::open(repo.db())
+        .unwrap()
+        .execute(
+            "UPDATE sessions SET touches = ?2 WHERE id = ?1",
+            rusqlite::params![id, json!(["src/retry.rs"]).to_string()],
+        )
+        .unwrap();
+    let reply = repo.report(json!({
+        "project": "harbor", "event": "start", "title": "Review retry",
+        "kind": "research", "touches": ["src/retry.rs"]
+    }));
+    let overlap = |reply: &Value| {
+        reply["notices"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(Value::as_str)
+            .find(|notice| notice.starts_with(&format!("Overlap: {id} ")))
+            .unwrap()
+            .to_string()
+    };
+    assert_eq!(repo.detail(&id)["session"]["verdict"], "active");
+    assert!(overlap(&reply).contains(", Active)"), "{}", overlap(&reply));
+
+    let worktree = repo.dir.join("harbor-retry");
+    std::fs::write(worktree.join("b.txt"), "retry").unwrap();
+    git(&worktree, &["add", "b.txt"]);
+    git(&worktree, &["commit", "-q", "-m", "retry"]);
+    let reply = repo.report(json!({
+        "session": reply["sessionId"], "event": "progress", "summary": "Reviewing"
+    }));
+    assert_eq!(repo.detail(&id)["session"]["verdict"], "stale");
+    assert!(
+        overlap(&reply).contains(", Possibly abandoned)"),
+        "{}",
+        overlap(&reply)
+    );
+    assert!(repo.detail(&id)["session"].get("lastAgentAt").is_none());
+}
+
+#[test]
 fn launches_wait_while_their_tip_is_where_they_started() {
     let repo = Repo::new();
     let harbor = repo.dir.join("harbor");

@@ -13,7 +13,7 @@ use crate::error::{Error, Result};
 use crate::event::{self, NewEvent};
 use crate::git;
 use crate::report;
-use crate::session::{self, SessionRow};
+use crate::session::{self, SessionRow, SessionView};
 use crate::settings::{self, Settings};
 use crate::util::{self, arg_str, Ms};
 use crate::vocab;
@@ -259,6 +259,29 @@ pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRo
         },
     )?;
     session::require(connection, &id)
+}
+
+/// Applies D13 to matching rows and views for both app snapshots and agent replies.
+pub fn apply_unreported_verdicts(
+    connection: &Connection,
+    rows: &[SessionRow],
+    views: &mut [SessionView],
+) -> Result<()> {
+    // Only quiet unreported launches need git, once per repository. Until their branch
+    // moves, they wait under Unreported instead of going stale into To decide.
+    let quiet: Vec<&SessionRow> = rows
+        .iter()
+        .zip(views.iter())
+        .filter(|(row, view)| view.verdict == vocab::Verdict::Stale && row.last_agent_at.is_none())
+        .map(|(row, _)| row)
+        .collect();
+    if !quiet.is_empty() {
+        let waiting = waiting_unreported(connection, &quiet)?;
+        for view in views.iter_mut().filter(|v| waiting.contains(&v.id)) {
+            view.verdict = vocab::Verdict::Active;
+        }
+    }
+    Ok(())
 }
 
 /// A session `track` created whose agent has not reported yet.
