@@ -1139,6 +1139,7 @@
  "Show the full log in Explorer": "Afficher le journal complet dans l’Explorateur de fichiers",
  "Failed tests": "Tests en échec",
  "Verdicts": "Verdicts",
+ "All verdicts": "Tous les verdicts",
  "Output": "Sortie",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "La restauration a échoué. L’environnement reste bloqué jusqu’à ce qu’une personne le vérifie et le libère (gitch flow hold release).",
  "The changes were undone in reverse order.": "Les modifications ont été annulées dans l’ordre inverse.",

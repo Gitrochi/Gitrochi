@@ -10,7 +10,7 @@ const ROW = 34;
 const HOUR = 3_600_000;
 
 /**
- * Every session of the project as a dense list: verdict chips with counts, multi-select with Shift and Ctrl (Space
+ * Every session of the project as a dense list: verdict chips, multi-select with Shift and Ctrl (Space
  * from the keyboard) and a bar of bulk actions that undo as one. Streams are listed under Streams instead.
  * Windowed, so a thousand sessions scroll as smoothly as ten. (macOS: Views/Ledger/LedgerBoard.swift)
  */

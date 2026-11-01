@@ -1149,6 +1149,7 @@
 "Open the full log" = "Tam günlüğü aç";
 "Failed tests" = "Başarısız testler";
 "Verdicts" = "Kararlar";
+"All verdicts" = "Tüm kararlar";
 "Output" = "Çıktı";
 "Waiting for the engine…" = "Motor bekleniyor…";
 "Choose a step to see its output." = "Çıktısını görmek için bir adım seçin.";

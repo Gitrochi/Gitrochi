@@ -1155,6 +1155,7 @@
  "Show the full log in Explorer": "Показать полный журнал в Проводнике",
  "Failed tests": "Проваленные тесты",
  "Verdicts": "Вердикты",
+ "All verdicts": "Все вердикты",
  "Output": "Вывод",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Откат не удался. Окружение заблокировано, пока человек не проверит и не разблокирует его (gitch flow hold release).",
  "The changes were undone in reverse order.": "Изменения отменены в обратном порядке.",

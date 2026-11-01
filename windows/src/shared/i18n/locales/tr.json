@@ -1144,6 +1144,7 @@
  "Show the full log in Explorer": "Tam günlüğü Dosya Gezgini'nde göster",
  "Failed tests": "Başarısız testler",
  "Verdicts": "Kararlar",
+ "All verdicts": "Tüm kararlar",
  "Output": "Çıktı",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Geri alma başarısız oldu. Biri kontrol edip serbest bırakana kadar ortam beklemede kalır (gitch flow hold release).",
  "The changes were undone in reverse order.": "Değişiklikler ters sırayla geri alındı.",

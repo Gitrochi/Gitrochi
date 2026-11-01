@@ -1144,6 +1144,7 @@
 "Open the full log" = "Teljes napló megnyitása";
 "Failed tests" = "Sikertelen tesztek";
 "Verdicts" = "Értékelések";
+"All verdicts" = "Összes értékelés";
 "Output" = "Kimenet";
 "Waiting for the engine…" = "Várakozás a motorra…";
 "Choose a step to see its output." = "Válasszon egy lépést a kimenete megtekintéséhez.";

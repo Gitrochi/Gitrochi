@@ -1,9 +1,9 @@
-import { FolderGit2, Layers, ListFilter } from "lucide-react";
+import { ChevronDown, ListFilter } from "lucide-react";
 import { type LedgerStore, verdictCounts, verdictLook } from "@/entities/ledger";
 import { basename } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { verdictIcon } from "./parts";
+import { Button, type MenuItem, showMenuBelow } from "@/shared/ui";
 
 function FilterInput({ store }: { store: LedgerStore }) {
   return (
@@ -14,62 +14,37 @@ function FilterInput({ store }: { store: LedgerStore }) {
   );
 }
 
-/**
- * The left column: a filter that narrows the lists (it does not search; Ctrl+K does), the project — the open
- * repository's by default — and the verdicts with their counts, which open the Board on that verdict.
- * (macOS: Views/Ledger/LedgerWorkspaceView.swift, filter column)
- */
-export function LedgerFilters({ store, repoPath }: { store: LedgerStore; repoPath: string | null }) {
-  useObserve(store);
-  const state = store.state!;
-  const repoProject = store.repositoryProject;
-  const counts = verdictCounts(state.sessions, store.project).filter((c) => c.count);
-  // without a repository, "This repository" means every project
-  const choice = store.projectChoice === "repository" && !repoPath ? "all" : store.projectChoice;
-  const item = (key: string, label: string, icon: React.ReactNode, count: number | null, disabled = false, tip?: string) => (
-    <button key={key} type="button" className={`ledger-nav-item${choice === key ? " selected" : ""}`} aria-pressed={choice === key} disabled={disabled} data-project={key} data-tip={tip} onClick={() => store.setProjectChoice(key)}>
-      {icon}
-      <span className="grow">{label}</span>
-      {count !== null && <span className="ledger-nav-count">{count}</span>}
-    </button>
-  );
-  const open = (key: string | null) => state.projects.filter((p) => !key || p.key === key).reduce((n, p) => n + p.open, 0);
-  return (
-    <nav className="ledger-filters" aria-label={t("Ledger filters")}>
-      <FilterInput store={store} />
-      <div className="ledger-group-title">{t("Project")}</div>
-      {item("repository", repoPath ? t("This repository ({0})", basename(repoPath)) : t("This repository"), <FolderGit2 size={15} />, null, !repoPath, repoPath && !repoProject ? t("No session belongs to this repository yet.") : undefined)}
-      {item("all", t("All projects"), <Layers size={15} />, open(null))}
-      {state.projects.map((p) => item(p.key, p.name, <span className="ledger-id-dot" style={{ background: "var(--text-3)" }} />, p.open))}
-      <div className="ledger-group-title">{t("Verdicts")}</div>
-      {!counts.length && <span className="hint" style={{ padding: "2px 10px" }}>{t("No sessions")}</span>}
-      {counts.map(({ verdict, count }) => {
-        const look = verdictLook(verdict), Icon = verdictIcon(verdict);
-        const on = store.view === "board" && store.verdicts.size === 1 && store.verdicts.has(verdict);
-        return (
-          <button key={verdict} type="button" className={`ledger-nav-item${on ? " selected" : ""}`} data-verdict={verdict} data-tip={`${t(look.label)}|${t(look.hint)}`} onClick={() => store.showVerdict(verdict)}>
-            <Icon size={15} className="status-tone ledger-status-icon" data-tone={look.tone} />
-            <span className="grow">{t(look.label)}</span>
-            <span className="ledger-nav-count">{count}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-/** The narrow window's filters: the project and the filter in one row above the view */
+/** Compact filters below the view tabs, leaving the app's page list as the only navigation column. */
 export function LedgerTopBar({ store, repoPath }: { store: LedgerStore; repoPath: string | null }) {
   useObserve(store);
   const state = store.state!;
+  const verdicts = verdictCounts(state.sessions, store.project).filter((c) => c.count || store.verdicts.has(c.verdict));
+  const selected = store.verdicts.size === 1 ? [...store.verdicts][0] : null;
+  const label = selected ? t(verdictLook(selected).label) : t(store.verdicts.size ? "Verdicts" : "All verdicts");
+  const showVerdicts = (anchor: HTMLElement) => {
+    const items: MenuItem[] = [
+      { label: t("All verdicts"), checked: store.verdicts.size === 0, onClick: () => { store.verdicts.clear(); store.setView("board"); store.changed(); } },
+      "divider",
+      ...verdicts.map(({ verdict, count }) => {
+        const look = verdictLook(verdict);
+        return { label: t(look.label), checked: store.verdicts.has(verdict), shortcut: String(count), tip: t(look.hint), onClick: () => store.showVerdict(verdict) };
+      }),
+    ];
+    showMenuBelow(anchor, items);
+  };
+  // Without a repository, the default repository scope means all projects.
+  const choice = store.projectChoice === "repository" && !repoPath ? "all" : store.projectChoice;
   return (
-    <div className="ledger-topbar">
-      <select className="select" aria-label={t("Project")} value={store.projectChoice} onChange={(e) => store.setProjectChoice(e.target.value)}>
+    <div className="ledger-topbar" role="toolbar" aria-label={t("Ledger filters")}>
+      <select className="select" aria-label={t("Project")} data-project={choice} value={choice} onChange={(e) => store.setProjectChoice(e.target.value)}>
         <option value="repository" disabled={!repoPath}>{repoPath ? t("This repository ({0})", basename(repoPath)) : t("This repository")}</option>
         <option value="all">{t("All projects")}</option>
         {state.projects.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
       </select>
       <FilterInput store={store} />
+      <Button size="small" className="ledger-verdict-menu" aria-label={`${t("Verdicts")}: ${label}`} aria-haspopup="menu" data-verdict={selected ?? "all"} onClick={(e) => showVerdicts(e.currentTarget)}>
+        <span>{label}</span><ChevronDown size={12} />
+      </Button>
     </div>
   );
 }

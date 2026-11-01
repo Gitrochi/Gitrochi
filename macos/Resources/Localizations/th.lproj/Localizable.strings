@@ -1157,6 +1157,7 @@
 "Open the full log" = "เปิดล็อกทั้งหมด";
 "Failed tests" = "การทดสอบที่ล้มเหลว";
 "Verdicts" = "ผลการตัดสิน";
+"All verdicts" = "ผลการประเมินทั้งหมด";
 "Output" = "เอาต์พุต";
 "Waiting for the engine…" = "กำลังรอเอนจิน…";
 "Choose a step to see its output." = "เลือกขั้นตอนเพื่อดูเอาต์พุต";

@@ -1157,6 +1157,7 @@
  "Show the full log in Explorer": "在檔案總管中顯示完整記錄",
  "Failed tests": "失敗的測試",
  "Verdicts": "判定",
+ "All verdicts": "所有判定",
  "Output": "輸出",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "還原失敗。在有人檢查並解除之前（gitch flow hold release），此環境將保持鎖定。",
  "The changes were undone in reverse order.": "已依相反順序復原變更。",

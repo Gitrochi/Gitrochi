@@ -449,27 +449,31 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 ### 10.2 Layout
 
-Gitrochi's three columns — filters | view | inspector — built from the same parts as the repository screen (`PageHeader`, `WorkspaceColumns` on macOS, the workspace page grid on Windows). Below 1,080 pt the inspector becomes a sheet, as in the project workspace (`ProjectWorkspace.swift`; a `Modal` on Windows); below 640 pt the filter column stacks above the view, as `AdaptiveWorkbenchSplit` does. Waiting prompts sit in a strip above every view (`LedgerPromptStrip`).
+The app's existing sidebar remains the only vertical navigation. Inside Ledger, underline tabs switch **Inbox**, **Board**, **Graph** and **Streams** above the main view. A compact toolbar below them holds the project picker, session filter and verdict menu; it wraps below 640 pt. The former inner filter sidebar is removed, so the main view gains that space without changing the app's navigation or other destinations. Tabs own their view counts; verdict counts live in the compact verdict menu and the Board's filter chips use labels only.
+
+The view and inspector use `WorkspaceColumns` on macOS and the Ledger workspace grid on Windows. Below 1,080 pt the inspector becomes a sheet, as in the project workspace (`ProjectWorkspace.swift`; a `Modal` on Windows). Waiting prompts sit in a strip above every view (`LedgerPromptStrip`).
 
 ```
-┌────────────┬──────────────────────┬──────────────────────────────────────────┬──────────────────────────────┐
-│ WORKSPACE  │ ⌕ Filter sessions    │ Inbox  Board  Graph  Streams      Import │ S1031-02         ● Needs you │
-│ Home       │                      │──────────────────────────────────────────│ Fix login retry              │
-│ Repository │ PROJECT              │ QUESTIONS                             2  │ implementation · Claude Code │
-│ …          │ ● This repository    │ ▸ S1031-02  Fix login retry       2h     │ v1.4.0 → v1.4.2 · 1 behind   │
-│ TOOLS      │   All projects       │   Retry 3 or 5 times on a 503?           │ ⎇ fix/login-retry · worktree │
-│ Flows      │                      │   ┌──────────────────────────────────┐   │ ⇄ #142 open · agent idle 4m  │
-│ Ledger  5  │ VIEWS                │   │ Answer… (⌘↩ saves)               │   │──────────────────────────────│
-│            │ Inbox            5   │   └──────────────────────────────────┘   │ [Mark merged…] [Close] [⋯]   │
-│            │ Board                │ TO CLEAN UP                           1  │ QUESTIONS                    │
-│            │ Graph                │ ▸ S1030-04  Export docs  merged v1.4.2   │ #12 Retry 3 or 5 times?      │
-│            │ Streams          1   │             [Confirm C]                  │ TIMELINE                     │
-│            │                      │ TO DECIDE                             2  │ ◇ question     2h            │
-│            │ VERDICTS             │ ▸ S1029-01  Cache spike  done · 3d       │ ● artifact     5h  report.md │
-│            │ ● Needs you      2   │   [Merged… M] [Close] [Still active S]   │ ○ start        1d  from 1.4.0│
-│            │ ● To decide      2   │ RUNNING, NOT IN THE LEDGER            1  │ TOUCHES                      │
-│            │ ● To confirm     1   │ ◌ claude · app · feature/x · 12m [Track] │ src/auth/retry.ts ⚠ S1031-05 │
-└────────────┴──────────────────────┴──────────────────────────────────────────┴──────────────────────────────┘
+┌────────────┬───────────────────────────────────────────────────────────┬──────────────────────────────┐
+│ WORKSPACE  │ Inbox 5   Board   Graph   Streams 1                  [⋯]  │ S1031-02         ● Needs you │
+│ Home       │───────────────────────────────────────────────────────────│ Fix login retry              │
+│ Repository │ [This repository ▾] [⌕ Filter sessions] [All verdicts ▾]  │ implementation · Claude Code │
+│ …          │───────────────────────────────────────────────────────────│ v1.4.0 → v1.4.2 · 1 behind   │
+│ TOOLS      │ QUESTIONS                                             2   │ ⎇ fix/login-retry · worktree │
+│ Flows      │ ▸ S1031-02  Fix login retry                          2h   │ ⇄ #142 open · agent idle 4m  │
+│ Ledger  5  │   Retry 3 or 5 times on a 503?                            │──────────────────────────────│
+│            │   ┌─────────────────────────────────────────────────┐     │ [Mark merged…] [Close] [⋯]   │
+│            │   │ Answer… (⌘↩ saves)                              │     │ QUESTIONS                    │
+│            │   └─────────────────────────────────────────────────┘     │ #12 Retry 3 or 5 times?      │
+│            │ TO CLEAN UP                                           1   │ TIMELINE                     │
+│            │ ▸ S1030-04  Export docs  merged v1.4.2                    │ ◇ question     2h            │
+│            │             [Confirm C]                                   │ ● artifact     5h  report.md │
+│            │ TO DECIDE                                             2   │ ○ start        1d  from 1.4.0│
+│            │ ▸ S1029-01  Cache spike  done · 3d                        │ TOUCHES                      │
+│            │   [Merged… M] [Close] [Still active S]                    │ src/auth/retry.ts ⚠ S1031-05 │
+│            │ RUNNING, NOT IN THE LEDGER                             1  │                              │
+│            │ ◌ claude · app · feature/x · 12m [Track]                  │                              │
+└────────────┴───────────────────────────────────────────────────────────┴──────────────────────────────┘
 ```
 
 The prompt strip, when an agent is waiting:

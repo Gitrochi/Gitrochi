@@ -1107,6 +1107,7 @@
  "Show the full log in Explorer": "Tampilkan log lengkap di Explorer",
  "Failed tests": "Tes yang gagal",
  "Verdicts": "Putusan",
+ "All verdicts": "Semua putusan",
  "Output": "Keluaran",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Rollback gagal. Lingkungan ditahan sampai seseorang memeriksa dan melepaskannya (gitch flow hold release).",
  "The changes were undone in reverse order.": "Perubahan dibatalkan dengan urutan terbalik.",

@@ -1138,6 +1138,7 @@
  "Show the full log in Explorer": "Vollständiges Log im Explorer anzeigen",
  "Failed tests": "Fehlgeschlagene Tests",
  "Verdicts": "Bewertungen",
+ "All verdicts": "Alle Bewertungen",
  "Output": "Ausgabe",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Rollback fehlgeschlagen. Die Umgebung bleibt gesperrt, bis eine Person sie prüft und freigibt (gitch flow hold release).",
  "The changes were undone in reverse order.": "Die Änderungen wurden in umgekehrter Reihenfolge rückgängig gemacht.",

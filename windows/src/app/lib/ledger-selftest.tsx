@@ -54,7 +54,7 @@ function leave(el: HTMLElement) {
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
-  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
+  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts, verdictLook }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
   const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
@@ -121,6 +121,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} launcher={launcher} />);
     ensure(await until(() => $(".ledger-page[data-layout='wide'] [data-view='inbox'] .ledger-prompts")), "The Inbox did not open with its waiting prompts");
     ensure(store.project === "atlas" && $$(".ledger-prompt").length === 3, `The Inbox must filter to this repository's project: ${store.project} prompts=${$$(".ledger-prompt").length}`);
+    ensure($$(".ledger-topbar").length === 1 && !$(".ledger-filters"), "A wide Ledger must have one compact filter bar and no second navigation column");
+    ensure(getComputedStyle($(".ledger-tabs button.on")!).borderBottomWidth === "2px", "The active view must use an underline tab");
 
     // An answer saved in place with Ctrl+Enter
     const question = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
@@ -186,11 +188,36 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
     passed.push("quick launches");
 
-    // Board: verdict counts belong to navigation, one verdict, bulk archive undone as one
+    // Compact filters: project, text and verdict quick-jumps at every width; counts live only in the menu.
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     ensure(await until(() => $(".ledger-board .ledger-table-row")), "The Board did not open");
     const counts = verdictCounts(store.state!.sessions, "atlas").filter((c) => c.count);
-    ensure(!$$(".ledger-chip .count").length && $$(".ledger-chip").length === counts.length, "Verdict chips must leave their counts in the navigation");
+    const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === label);
+    $<HTMLButtonElement>(".ledger-verdict-menu")!.click();
+    ensure(await until(() => menuItem(t("All verdicts"))), "The compact verdict filter did not open");
+    const menuCounts = [...document.querySelectorAll(".menu .shortcut")].map((c) => Number(c.textContent));
+    ensure(JSON.stringify(menuCounts) === JSON.stringify(counts.map((c) => c.count)) && !$$(".ledger-chip .count").length, `Verdict counts must appear once in the menu: ${menuCounts} vs ${counts.map((c) => c.count)}`);
+    menuItem(t(verdictLook(counts[0].verdict).label))!.click();
+    ensure(await until(() => store.verdicts.size === 1 && store.verdicts.has(counts[0].verdict) && $$(".ledger-table-row").length > 0 && $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A verdict menu item did not filter the Board");
+    ensure($(".ledger-verdict-menu")?.getAttribute("aria-label") === `${t("Verdicts")}: ${t(verdictLook(counts[0].verdict).label)}`, "The verdict filter must announce its selected value");
+    $<HTMLButtonElement>(".ledger-verdict-menu")!.click();
+    ensure(await until(() => menuItem(t("All verdicts"))), "The verdict filter did not reopen");
+    menuItem(t("All verdicts"))!.click();
+    ensure(await until(() => store.verdicts.size === 0 && $$(".ledger-table-row").length > 2), "All verdicts did not clear the Board's verdict filter");
+    const project = $<HTMLSelectElement>(".ledger-topbar select")!;
+    choose(project, "all");
+    ensure(await until(() => store.project === null && $$<HTMLElement>(".ledger-table-row").some((r) => store.session(r.dataset.session)?.project !== "atlas")), "The project menu did not show all projects");
+    choose(project, "repository");
+    ensure(await until(() => store.project === "atlas" && $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.project === "atlas")), "The project menu did not return to this repository");
+    const text = $<HTMLInputElement>(".ledger-topbar input")!;
+    const filtered = $<HTMLElement>(".ledger-table-row")!.dataset.session!;
+    type(text, filtered);
+    ensure(await until(() => $$(".ledger-table-row").length === 1 && $<HTMLElement>(".ledger-table-row")?.dataset.session === filtered), "The top filter did not narrow sessions by text");
+    key(text, "Escape");
+    ensure(await until(() => store.filterText === "" && $$(".ledger-table-row").length > 2), "Escape did not clear the top text filter");
+    passed.push("compact project, verdict and text filters");
+
+    // Board: one verdict, bulk archive undone as one
     const needs = $$<HTMLButtonElement>(".ledger-chip")[0];
     needs.click();
     ensure(await until(() => $$<HTMLElement>(".ledger-table-row").every((r) => store.session(r.dataset.session)?.verdict === counts[0].verdict)), "A chip did not filter the Board");
@@ -279,9 +306,14 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !$("input[role='combobox']") && store.session(store.selectedId)?.title.startsWith("Retry policy")), "Enter did not open the search result");
     passed.push("search");
 
-    // Narrow: the filters move above the view and the inspector becomes a sheet
+    // Narrow: the same compact filters wrap and the inspector becomes a sheet.
     host.style.width = "620px";
-    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), `A narrow page did not stack its filters: layout=${$(".ledger-page")?.dataset.layout} width=${$(".ledger-page")?.clientWidth} modal=${!!document.querySelector(".modal-backdrop")}`);
+    ensure(await until(() => $(".ledger-page[data-layout='narrow'] .ledger-topbar")), `A narrow page did not keep its filters: layout=${$(".ledger-page")?.dataset.layout} width=${$(".ledger-page")?.clientWidth} modal=${!!document.querySelector(".modal-backdrop")}`);
+    ensure($$(".ledger-topbar").length === 1 && !$(".ledger-filters"), "A narrow Ledger must keep one filter bar without a navigation column");
+    host.style.width = "360px";
+    ensure(await until(() => $(".ledger-topbar")!.clientWidth <= 360), "The compact filter bar did not follow a small window");
+    ensure($(".ledger-topbar")!.scrollWidth <= $(".ledger-topbar")!.clientWidth && $(".ledger-filter-input")!.getBoundingClientRect().top > $(".ledger-topbar select")!.getBoundingClientRect().top, "The filters must wrap inside a small window");
+    host.style.width = "620px";
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
     await until(() => $(".ledger-table-row"));
     $(".ledger-table-row")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

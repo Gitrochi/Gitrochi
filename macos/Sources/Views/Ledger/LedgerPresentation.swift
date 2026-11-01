@@ -4,7 +4,7 @@ import Foundation
 // entities/ledger/lib (verdict.ts, countdown.ts, filter.ts, inbox.ts, undo.ts).
 
 extension LedgerVerdict {
-    /// Most urgent first: the order of the verdict chips, the Board and the filter column
+    /// Most urgent first: the order of the verdict chips, the Board and the verdict menu
     /// (Windows: entities/ledger/lib/verdict.ts VERDICT_ORDER)
     static let displayOrder: [LedgerVerdict] = [.needsHuman, .pendingMerge, .confirm, .expirable, .stale, .active, .shelved, .archived]
 

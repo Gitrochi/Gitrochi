@@ -1137,6 +1137,7 @@
  "Show the full log in Explorer": "Zobrazit celý log v Průzkumníkovi",
  "Failed tests": "Neúspěšné testy",
  "Verdicts": "Výsledky",
+ "All verdicts": "Všechny verdikty",
  "Output": "Výstup",
  "Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).": "Vrácení změn selhalo. Prostředí zůstane pozastavené, dokud ho člověk nezkontroluje a neuvolní (gitch flow hold release).",
  "The changes were undone in reverse order.": "Změny byly vráceny v opačném pořadí.",
