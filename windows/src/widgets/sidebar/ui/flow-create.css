@@ -1,0 +1,25 @@
+.flow-create { display: flex; flex-direction: column; gap: 16px; }
+.flow-create-intro { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.flow-create-emblem { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; color: var(--text-2); background: var(--sidebar); border-radius: 10px; }
+.flow-create-intro strong { font-size: 13px; font-weight: 600; }
+.flow-create-intro p { margin: 5px 0 0; color: var(--text-2); font-size: 12px; line-height: 1.5; }
+.flow-create-fields { display: flex; flex-direction: column; gap: 14px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.flow-create label { display: flex; flex-direction: column; gap: 7px; color: var(--text-2); font-size: 12px; font-weight: 500; }
+.flow-create input, .flow-create textarea, .flow-create select { width: 100%; min-width: 0; font-size: 12px; padding: 8px 10px; color: var(--text); font-weight: 400; }
+.flow-create textarea { resize: vertical; min-height: 72px; line-height: 1.6; tab-size: 2; white-space: pre-wrap; }
+.flow-create-help { margin: 0; color: var(--text-2); font-size: 11px; line-height: 1.65; }
+.flow-create-fields > label:first-child + .flow-create-help { margin-top: -8px; }
+.flow-create-order { display: flex; align-items: flex-end; gap: 14px; padding: 14px 0 2px; border-top: 1px solid var(--border); }
+.flow-create-order > label { min-width: 145px; flex: 0 0 35%; }
+.flow-create-order > p { padding-bottom: 6px; }
+.flow-create-step-list { display: flex; flex-direction: column; gap: 12px; }
+.flow-create-step { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.flow-create-step > header { display: flex; align-items: center; gap: 7px; }
+.flow-create-step > header strong { font-size: 12px; font-weight: 600; }
+.flow-create-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; color: var(--text-2); background: var(--sidebar); border-radius: 7px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.flow-create-step .icon-btn.small { min-width: 28px; min-height: 28px; }
+.flow-create-add { align-self: flex-start; min-height: 32px; }
+.flow-create-error { margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); white-space: pre-wrap; line-height: 1.6; font-size: 12px; }
+.flow-create :is(.btn, .icon-btn):disabled { opacity: 1; color: var(--text-3); background: var(--sidebar); border-color: var(--border); box-shadow: none; }
+.flow-create button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { .flow-create-order { align-items: stretch; flex-direction: column; gap: 8px; } .flow-create-order > label { flex-basis: auto; } }

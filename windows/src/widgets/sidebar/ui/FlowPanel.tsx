@@ -11,6 +11,7 @@ import { FlowRunDialog } from "./FlowRunDialog";
 import { FlowWorkspace } from "./FlowWorkspace";
 import { FlowConfigDialog } from "./FlowConfigDialog";
 import { FlowConnectedCI } from "./FlowConnectedCI";
+import { FlowCreateDialog } from "./FlowCreateDialog";
 import "./flow-workspace.css";
 
 /**
@@ -25,13 +26,14 @@ export function FlowPanel({ store }: { store: RepoStore }) {
   return <FlowPanelBody flows={flowStoreFor(store.path)} repo={store} />;
 }
 
-type Dialog = { kind: "run"; runId: string } | { kind: "trust"; flow: string; plan: FlowPlan; thenRun: boolean } | { kind: "confirm"; flow: string; plan: FlowPlan } | { kind: "setup" } | { kind: "config"; source?: FlowImportSource; flow?: string; node?: string } | { kind: "error"; message: string };
+type Dialog = { kind: "run"; runId: string } | { kind: "trust"; flow: string; plan: FlowPlan; thenRun: boolean } | { kind: "confirm"; flow: string; plan: FlowPlan } | { kind: "setup" } | { kind: "create" } | { kind: "config"; source?: FlowImportSource; flow?: string; node?: string } | { kind: "error"; message: string };
 
 function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
   useObserve(flows);
   useObserve(settings);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
+  const [requestedFlow, setRequestedFlow] = useState<string>();
   const affected = settings.get<boolean>("flowAffectedOnly", false);
 
   // Reads once, then again every 3 seconds while a run is going and every 30 seconds otherwise (so runs started elsewhere and file changes show up)
@@ -53,7 +55,7 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
 
   const fail = (e: unknown) => setDialog({ kind: "error", message: e instanceof Error ? e.message : String(e) });
   useEffect(() => {
-    if (dialog?.kind === "config") return;
+    if (dialog?.kind === "config" || dialog?.kind === "create") return;
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void ipc.onFileDrop((paths) => {
@@ -97,6 +99,7 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
   return (
     <div className="col flow-drop-surface" style={{ flex: 1, minHeight: 0 }} onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDrop={(event) => {
       event.preventDefault();
+      if (dialog?.kind === "create") return;
       if (event.dataTransfer.files.length !== 1) { fail(new Error(t("Drop one workflow file at a time."))); return; }
       const dropped = event.dataTransfer.files[0];
       if (dropped.size > 2 * 1024 * 1024) { fail(new Error(t("Choose a UTF-8 workflow file smaller than 2 MB."))); return; }
@@ -141,7 +144,8 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
         <IconButton small icon={<Wand2 size={13} />} tip={t("Detect tests and propose a flow file")} disabled={!flows.engine} onClick={() => setDialog({ kind: "setup" })} />
       </div>
       {list && !list.trusted && <div className="row" style={{ gap: 6, padding: "6px 10px", color: "var(--orange)", fontSize: 11.5 }}><Hand size={13} style={{ flex: "none" }} /><span>{t("This flow file is new or changed. Review the commands before running it.")}</span></div>}
-      <FlowWorkspace flows={flows} affected={affected} busy={starting} onRun={(flow) => void prepare(flow)} onOpen={(id) => setDialog({ kind: "run", runId: id })} onEdit={(flow, node) => setDialog({ kind: "config", flow, node })} onReview={(flow) => void flowEngine.plan(flow, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow, plan, thenRun: false }), fail)} connectedCI={<FlowConnectedCI store={repo} />} emptyState={<FlowEmptyContent flows={flows} onSetup={() => setDialog({ kind: "setup" })} onEdit={() => setDialog({ kind: "config" })} />} />
+      <FlowWorkspace flows={flows} affected={affected} busy={starting} requestedFlow={requestedFlow} onCreate={flows.engine ? () => setDialog({ kind: "create" }) : undefined} onRun={(flow) => void prepare(flow)} onOpen={(id) => setDialog({ kind: "run", runId: id })} onEdit={(flow, node) => setDialog({ kind: "config", flow, node })} onReview={(flow) => void flowEngine.plan(flow, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow, plan, thenRun: false }), fail)} connectedCI={<FlowConnectedCI store={repo} />} emptyState={<FlowEmptyContent flows={flows} onCreate={() => setDialog({ kind: "create" })} onSetup={() => setDialog({ kind: "setup" })} onEdit={() => setDialog({ kind: "config" })} />} />
+      {dialog?.kind === "create" && <FlowCreateDialog flows={flows} onClose={() => setDialog(null)} onCreated={(name) => { setRequestedFlow(name); setDialog(null); }} />}
       {dialog?.kind === "run" && <FlowRunDialog flows={flows} runId={dialog.runId} onClose={() => setDialog(null)} />}
       {dialog?.kind === "trust" && (
         <FlowTrustDialog
@@ -195,11 +199,11 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
   );
 }
 
-function FlowEmptyContent({ flows, onSetup, onEdit }: { flows: FlowStore; onSetup: () => void; onEdit: () => void }) {
+function FlowEmptyContent({ flows, onCreate, onSetup, onEdit }: { flows: FlowStore; onCreate: () => void; onSetup: () => void; onEdit: () => void }) {
   if (flows.engine === null) return <EmptyNote icon={<TriangleAlert size={26} />} text={t("The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows.")} />;
-  if (!flows.hasFlowFile) return <div className="flow-empty"><Workflow size={30} /><span>{t("Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI.")}</span><div className="row" style={{ gap: 8 }}><Button onClick={onSetup}>{t("Set up flows…")}</Button><Button onClick={onEdit}>{t("Configure scripts")}</Button></div><small>{t("Drop a workflow file here to preview its modules.")}</small></div>;
+  if (!flows.hasFlowFile) return <div className="flow-empty"><Workflow size={30} /><strong>{t("Build a flow from your commands.")}</strong><span>{t("Commands run from the repository folder.")}</span><div className="row" style={{ gap: 8 }}><Button kind="primary" onClick={onCreate}>{t("Create flow")}</Button><Button onClick={onSetup}>{t("Set up flows…")}</Button></div><small>{t("Creating a flow saves it without running commands.")}</small></div>;
   if (flows.error) return <div className="flow-empty"><span className="error-text">{flows.error.message}</span>{flows.error.action && <span>{flows.error.action}</span>}<Button onClick={onEdit}>{t("Configure scripts")}</Button><Button onClick={() => void flows.refresh()}>{t("Try again")}</Button></div>;
-  if (flows.list && !flows.list.flows.length) return <div className="flow-empty"><Workflow size={30} /><p>{t("Add a flow, then connect the modules it needs.")}</p><Button onClick={onEdit}>{t("Add flow")}</Button></div>;
+  if (flows.list && !flows.list.flows.length) return <div className="flow-empty"><Workflow size={30} /><p>{t("Build a flow from your commands.")}</p><Button kind="primary" onClick={onCreate}>{t("Create flow")}</Button></div>;
   return <div className="flow-empty"><Spinner /></div>;
 }
 

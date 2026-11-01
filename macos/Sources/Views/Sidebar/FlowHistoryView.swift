@@ -25,7 +25,11 @@ struct FlowHistoryView: View {
                 if runs.isEmpty {
                     ContentUnavailableView("No runs yet", systemImage: "clock.arrow.circlepath", description: Text("Run a flow to see its steps, output and results here."))
                 } else {
-                    ContentUnavailableView("No matching runs", systemImage: "magnifyingglass", description: Text("Try another search or filter."))
+                    VStack(spacing: 12) {
+                        ContentUnavailableView("No matching runs", systemImage: "magnifyingglass", description: Text("Try another search or filter."))
+                        Button("Clear filters") { search = ""; selectedFlow = ""; failuresOnly = false }
+                            .buttonStyle(.bordered).padding(.bottom, 24)
+                    }
                 }
             } else {
                 ScrollView {
@@ -54,7 +58,7 @@ struct FlowHistoryView: View {
                     TextField("Search runs", text: $search).textFieldStyle(.plain).font(.system(size: 11))
                     if !search.isEmpty {
                         Button { search = "" } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.secondary) }
-                            .buttonStyle(.plain).help("Clear search")
+                            .buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search")
                     }
                 }
                 .padding(.horizontal, 10).padding(.vertical, 8)
