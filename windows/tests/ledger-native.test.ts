@@ -86,9 +86,9 @@ describe("Ledger native backend: the real core", () => {
   let dir = "";
   let db = "";
   /** One method through the CLI's `call`, answered as the Tauri command would: the result or {error} */
-  const call = (method: string, args: Record<string, unknown>) => {
+  const call = (method: string, args: Record<string, unknown>, database = db) => {
     try {
-      return JSON.parse(execFileSync(cli, ["call", method, JSON.stringify(args)], { encoding: "utf8", stdio: "pipe", env: { ...process.env, GITROCHI_LEDGER_DB: db, GITROCHI_LEDGER: "1" } }));
+      return JSON.parse(execFileSync(cli, ["call", method, JSON.stringify(args)], { encoding: "utf8", stdio: "pipe", env: { ...process.env, GITROCHI_LEDGER_DB: database, GITROCHI_LEDGER: "1" } }));
     } catch (e) {
       return JSON.parse(String((e as { stdout?: string }).stdout ?? "{}"));
     }
@@ -106,6 +106,27 @@ describe("Ledger native backend: the real core", () => {
 
   it("is bundled for the app (required on CI)", () => {
     if (process.env.CI) expect(built).toBe(true);
+  });
+
+  it.skipIf(!built)("keeps a successful Ledger probe empty until an agent sends its first report", async () => {
+    const emptyDb = join(dir, "connection-check.sqlite3");
+    vi.spyOn(ipc, "ledgerCall").mockImplementation(async (method, args) => call(method, args, emptyDb));
+    const store = new LedgerStore(nativeLedgerBackend);
+    try {
+      await store.refresh(true);
+      expect(store.state?.sessions).toEqual([]);
+      expect(await store.info()).toMatchObject({ enabled: true, rev: 0 });
+      await store.refresh(true);
+      expect(store.state?.sessions).toEqual([]);
+      expect(store.state?.rev).toBe(0);
+      expect(call("report", { event: "start", session: "S1101-connection", project: "connection-check", kind: "maintenance", title: "Connection check task" }, emptyDb)).toMatchObject({ created: true });
+      await store.refresh();
+      expect(store.state?.sessions).toHaveLength(1);
+      expect(store.session("S1101-connection")).toMatchObject({ title: "Connection check task", verdict: "active" });
+      expect(inboxGroups(store.state!, null).flatMap((group) => group.items)).toEqual([]);
+    } finally {
+      store.dispose();
+    }
   });
 
   it.skipIf(!built)("reads the state, sessions, graphs, search and settings in the shapes the screens read", async () => {

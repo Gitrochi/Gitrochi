@@ -1572,6 +1572,28 @@
 "Agent activity" = "Agentactiviteit";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Agents melden waar ze van uitgingen, wat ze maakten en wat ze van je nodig hebben. Hier antwoord je, bevestig je en ruim je op.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Agents die je vanuit Gitrochi start, worden ook zonder dit gevolgd. Gitrochi schrijft niets in de instellingen van Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Nog geen rapporten";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Registreer de Ledger-tools bij Claude Code door deze opdracht in een terminal uit te voeren.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "Door registratie worden de tools beschikbaar. Bestaande gesprekken worden niet geïmporteerd en agents gaan niet automatisch rapporteren.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Start of herstart een Claude Code-gesprek en vraag de agent daarna om ledger_report aan te roepen met een startrapport over het huidige werk.";
+"Reporting instruction" = "Rapportinstructie";
+"Copy reporting instruction" = "Rapportinstructie kopiëren";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Schakel Instellingen > Logboek > Agents volgen die ik start in om nieuwe Claude Code-agents die vanuit Gitrochi worden gestart automatisch te volgen. Dit staat standaard uit.";
+"Test Ledger" = "Ledger testen";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Controleert de Ledger van deze app, niet de MCP-configuratie van Claude Code.";
+"The Ledger responds." = "De Ledger reageert.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Alleen tools verbinden maakt geen sessie aan. Stuur een eerste rapport om dit gesprek hier te zien.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "De Ledger toont rapporten die agents over hun werk sturen. Alleen tools verbinden importeert geen gesprekken.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi wijzigt geen instellingen van Claude Code.";
+"Copy MCP settings" = "MCP-instellingen kopiëren";
+"MCP settings entry" = "MCP-instellingenitem";
+"Other MCP clients: add this entry to their MCP settings." = "Andere MCP-clients: voeg dit item toe aan hun MCP-instellingen.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Er zijn nog geen rapporten ontvangen. Registreer de tools en vraag je agent daarna om een startrapport te sturen.";
+"Command for Claude Code" = "Opdracht voor Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Bekijk de voortgang op het bord en in de streams. Het postvak toont alleen vragen, beoordelingen en beslissingen die jouw aandacht nodig hebben.";
+"View progress" = "Voortgang bekijken";
 "All" = "Alles";
 "All projects" = "Alle projecten";
 "Allow" = "Toestaan";

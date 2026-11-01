@@ -1,6 +1,6 @@
 import { Archive, CircleCheck, Clock, GitMerge, MessageSquareReply, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { describeAnswer, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex } from "@/entities/ledger";
+import { describeAnswer, filterSessions, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex, streamCount } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -81,6 +81,8 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const boardRows = filterSessions(state.sessions, { project, verdicts: store.verdicts, text, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly });
+  const progressView = boardRows.length === 0 && streamCount(state.sessions, project) > 0 ? "streams" : "board";
   const selectedKey = activeKey ?? items.find((i) => i.session?.id === store.selectedId)?.key;
   const busy = store.busy > 0;
   return (
@@ -88,7 +90,8 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
       <LedgerPromptStrip store={store} onOpen={onOpen} onOpenTerminal={onOpenTerminal} />
       {!groups.length ? (
         <div className="ledger-all-clear">
-          <Empty icon={<CircleCheck size={30} strokeWidth={1.5} />} title={t("Nothing needs you")} detail={t("Questions, finished sessions to confirm and sessions to decide show up here.")} />
+          <Empty icon={<CircleCheck size={30} strokeWidth={1.5} />} title={t("Nothing needs you")} detail={t("Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you.")} />
+          <Button onClick={() => store.setView(progressView)}>{t("View progress")}</Button>
         </div>
       ) : (
         groups.map((g) => {

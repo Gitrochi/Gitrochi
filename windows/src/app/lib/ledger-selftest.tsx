@@ -300,11 +300,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.unmount();
     root = createRoot(host);
     const empty = new LedgerStore(new DemoLedgerBackend({ now: () => clock, empty: true }));
+    empty.setView("inbox");
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
     ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
+    ensure($(".ledger-onboarding")?.textContent?.includes(t("No reports yet")), "The empty Ledger must explain that reports have not arrived");
+    button(".ledger-onboarding", "Connect Claude Code")!.click();
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code did not open");
+    ensure($$(".modal .ledger-code pre").some((pre) => pre.textContent?.includes("Use ledger_report to send a start report")) && $(".modal button[aria-label='" + t("Copy reporting instruction") + "']"), "Both the reporting instruction and its copy action must be available");
+    ensure($(".modal")?.textContent?.includes(t("Checks this app's Ledger, not Claude Code's MCP configuration.")), "The probe must explain what it tests");
+    const beforeProbe = empty.state!.rev;
+    button(".modal", "Test Ledger")!.click();
+    ensure(await until(() => $(".modal .card[role='status']")?.textContent?.includes(t("The Ledger responds."))), "Test Ledger did not answer");
+    ensure(empty.state!.sessions.length === 0 && empty.state!.rev === beforeProbe && $(".ledger-onboarding"), "A successful Ledger probe must leave an empty Ledger empty");
+    button(".modal", "Done")!.click();
+    await until(() => !$(".modal"));
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");
     type($<HTMLTextAreaElement>(".modal textarea")!, '```ledger\n{"event":"start","session":"S1101-01","project":"atlas","title":"Imported in the self-test"}\n```\n```ledger\n{"event":"teleport"}\n```');
@@ -312,13 +324,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $$(".ledger-result").length === 2 && empty.session("S1101-01")), "The import did not report each block and add the session");
     button(".modal-footer", "Close")!.click();
     await until(() => !$(".modal"));
-    $<HTMLButtonElement>(`.ledger-toolbar button[aria-label="${t("Connect Claude Code")}"]`)!.click();
-    ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code did not open");
-    ensure($(".modal .ledger-code pre")?.textContent?.includes("claude mcp add --scope user gitrochi-ledger"), "The connect sheet did not show the command");
-    button(".modal", "Test connection")!.click();
-    ensure(await until(() => $(".modal .card[role='status']")), "Test connection did not answer");
-    button(".modal", "Done")!.click();
-    await until(() => !$(".modal"));
+    ensure(await until(() => $(".ledger-all-clear")?.textContent?.includes(t("Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you."))), "An active reported session must explain why the Inbox has no actions");
+    button(".ledger-all-clear", "View progress")!.click();
+    ensure(await until(() => $(".ledger-board [data-session='S1101-01']")), "Open Board must show the active reported session");
+    const streamsOnlyBackend = new DemoLedgerBackend({ now: () => clock, empty: true });
+    await streamsOnlyBackend.call("import", { text: '```ledger\n{"event":"start","session":"S1101-stream","project":"atlas","kind":"implementation","title":"Stream progress"}\n```' });
+    // The demo import stores the report; the core supplies this stream classification in native state.
+    streamsOnlyBackend.world.sessions[0].stream = { line: "core" };
+    const streamsOnly = new LedgerStore(streamsOnlyBackend);
+    streamsOnly.setView("inbox");
+    stores.push(streamsOnly);
+    await streamsOnly.refresh(true);
+    root.render(<LedgerWorkspace repoPath={null} ledger={streamsOnly} />);
+    ensure(await until(() => $(".ledger-all-clear")), "A stream without questions should leave the Inbox clear");
+    button(".ledger-all-clear", "View progress")!.click();
+    ensure(await until(() => $(".ledger-stream[data-stream='S1101-stream']")), "View progress must open Streams when streams are the only sessions");
+    root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
+    await until(() => $(".ledger-board"));
     passed.push("onboarding, import and connect");
 
     // Import from claude-ledger: a dry run counts first, then the import adds the sessions
@@ -424,7 +446,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !noticeBoxes()[1].checked && !memory.has("ledgerBadge")), "The badge switch did not turn back off");
     passed.push("notification settings");
     button(".ledger-settings", "Connect Claude Code…")!.click();
-    ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
+    ensure(await until(() => button(".modal", "Test Ledger")), "Connect Claude Code… did not open from Settings");
     button(".modal", "Done")!.click();
     button(".ledger-settings", "Import from claude-ledger…")!.click();
     ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");

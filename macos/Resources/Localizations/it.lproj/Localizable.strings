@@ -1601,6 +1601,28 @@
 "Agent activity" = "Attività dell’agente";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "Gli agenti riportano da cosa sono partiti, cosa hanno prodotto e cosa serve da te. Qui rispondi, confermi e fai ordine.";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Gli agenti avviati da Gitrochi vengono seguiti anche senza questo. Gitrochi non scrive nulla nelle impostazioni di Claude Code.";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "Ancora nessun rapporto";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "Registra gli strumenti di Ledger in Claude Code eseguendo questo comando in un terminale.";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "La registrazione rende disponibili gli strumenti. Non importa le conversazioni esistenti e non fa inviare rapporti automaticamente agli agenti.";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Avvia o riavvia una conversazione di Claude Code, poi chiedi all’agente di chiamare ledger_report per inviare un rapporto iniziale sul lavoro attuale.";
+"Reporting instruction" = "Istruzione per i rapporti";
+"Copy reporting instruction" = "Copia istruzione per i rapporti";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Per seguire automaticamente i nuovi agenti Claude Code avviati da Gitrochi, attiva Impostazioni > Registro > Segui gli agenti che avvio. L’opzione è disattivata per impostazione predefinita.";
+"Test Ledger" = "Prova Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "Controlla il Ledger di questa app, non la configurazione MCP di Claude Code.";
+"The Ledger responds." = "Ledger risponde.";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "Collegare gli strumenti non crea una sessione. Invia un primo rapporto per vedere qui questa conversazione.";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger mostra i rapporti inviati dagli agenti sul loro lavoro. Il solo collegamento degli strumenti non importa le conversazioni.";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi non modifica le impostazioni di Claude Code.";
+"Copy MCP settings" = "Copia impostazioni MCP";
+"MCP settings entry" = "Voce delle impostazioni MCP";
+"Other MCP clients: add this entry to their MCP settings." = "Altri client MCP: aggiungi questa voce alle loro impostazioni MCP.";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "Non è ancora arrivato alcun rapporto. Registra gli strumenti, poi chiedi al tuo agente di inviare un rapporto iniziale.";
+"Command for Claude Code" = "Comando per Claude Code";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "Trovi l’avanzamento nella bacheca e nei flussi. La posta in arrivo mostra solo domande, revisioni e decisioni che richiedono il tuo intervento.";
+"View progress" = "Visualizza avanzamento";
 "All" = "Tutto";
 "All projects" = "Tutti i progetti";
 "Allow" = "Consenti";

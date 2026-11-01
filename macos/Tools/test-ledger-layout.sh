@@ -192,13 +192,13 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("inspector-auto-continue", LedgerInspector(ledger: ledger, open: { _ in }, close: {}), width: 480, height: 1100,
                   expect: ["Retry sign-in after a timeout", "Continue automatically when nobody answers"])
 
-        try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 640, height: 330,
-                  expect: ["Connect Claude Code", "claude mcp add", "Copy command", "Test connection"])
+        try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 680, height: 700,
+                  expect: ["Connect Claude Code", "claude mcp add", "Copy reporting instruction", "Test Ledger"])
         try shoot("import", LedgerImportSheet(ledger: ledger), width: 620, height: 380, expect: ["Paste reports", "Import"])
 
         let empty = store(.empty)
         try shoot("empty", LedgerWorkspaceView(repositoryPath: nil, ledger: empty), width: 1200, height: 760,
-                  expect: ["Keep track of your agent sessions", "Connect Claude Code", "Paste reports"])
+                  expect: ["No reports yet", "Connect Claude Code", "Paste reports"])
 
         // the core itself, through its C ABI, as the app reads it
         let core = LedgerStore(client: LedgerClient(backend: NativeLedgerBackend(database: CommandLine.arguments[2])), defaults: defaults, interval: .seconds(600))

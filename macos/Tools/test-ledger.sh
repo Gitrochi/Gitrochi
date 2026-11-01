@@ -733,6 +733,27 @@ let start: LedgerMs = 1_793_400_000_000
     /// settings and projects, backups, both imports, several threads at once, the switch that turns it off, and the
     /// bundled command's MCP handshake. Every call names a database in `folder`.
     @MainActor static func native(cli: String, folder: String, legacy: String) async throws {
+        let connectionDB = folder + "/connection-check.sqlite3"
+        let connectionClient = LedgerClient(backend: NativeLedgerBackend(database: connectionDB))
+        let connectionSuite = "dev.gitrochi.ledger-connection-test." + UUID().uuidString
+        let connectionDefaults = UserDefaults(suiteName: connectionSuite)!
+        defer { connectionDefaults.removePersistentDomain(forName: connectionSuite) }
+        let connectionStore = LedgerStore(client: connectionClient, defaults: connectionDefaults, interval: .seconds(600))
+        await connectionStore.reload()
+        let connectedTools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
+        let connectionInfo = try await connectionStore.info()
+        await connectionStore.reload()
+        check(connectedTools.contains("ledger_report") && connectionInfo.enabled && connectionInfo.rev == 0
+              && connectionStore.state?.sessions.isEmpty == true && connectionStore.state?.rev == 0,
+              "a successful Ledger tools/info probe does not create or import sessions")
+        let firstReport = try call(CLIBackend(binary: cli, db: connectionDB), "report", ["event": .string("start"),
+            "session": .string("S1101-connection"), "project": .string("connection-check"), "kind": .string("maintenance"),
+            "title": .string("Connection check task")], as: LedgerJSON.self)
+        await connectionStore.poll()
+        check(firstReport["created"].bool == true && connectionStore.session("S1101-connection")?.title == "Connection check task"
+              && connectionStore.inbox.items.isEmpty,
+              "the first real report appears in sessions while an active session leaves the Inbox clear")
+
         let db = folder + "/ledger.sqlite3"
         _ = CLIBackend(binary: cli, db: db).run(["demo", db])
         let native = NativeLedgerBackend(database: db)

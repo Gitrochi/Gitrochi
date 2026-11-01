@@ -1771,6 +1771,28 @@
 "Agent activity" = "代理活动";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "代理会报告它们从哪里开始、做了什么、需要你做什么。你只需在这里回答、确认和清理。";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "从 Gitrochi 启动的代理无需此步骤也会被跟踪。Gitrochi 不会向 Claude Code 的设置写入任何内容。";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "尚无报告";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "在终端运行此命令，向 Claude Code 注册 Ledger 工具。";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "注册后即可使用工具，但不会导入现有对话，也不会让代理自动报告。";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "新建或重启 Claude Code 对话，然后请它调用 ledger_report，发送当前工作的开始报告。";
+"Reporting instruction" = "报告说明";
+"Copy reporting instruction" = "复制报告说明";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "要自动跟踪从 Gitrochi 新启动的 Claude Code 代理，请开启设置 > 账本 > 跟踪我启动的代理。此选项默认关闭。";
+"Test Ledger" = "测试 Ledger";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "检查此应用的 Ledger，而非 Claude Code 的 MCP 配置。";
+"The Ledger responds." = "Ledger 已响应。";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "仅连接工具不会创建会话。发送首份报告后，此对话才会在这里显示。";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger 显示代理发送的工作报告。仅连接工具不会导入对话。";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi 不会更改 Claude Code 的设置。";
+"Copy MCP settings" = "复制 MCP 设置";
+"MCP settings entry" = "MCP 设置项";
+"Other MCP clients: add this entry to their MCP settings." = "其他 MCP 客户端：请将此项添加到其 MCP 设置中。";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "尚未收到报告。请注册工具，然后让代理发送开始报告。";
+"Command for Claude Code" = "Claude Code 命令";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "在看板和流中查看进展。收件箱仅显示需要您处理的问题、审核和决定。";
+"View progress" = "查看进展";
 "All" = "全部";
 "All projects" = "所有项目";
 "Allow" = "允许";
