@@ -10,6 +10,8 @@ The session ledger. Agents report which baseline their work started from and whe
 | Scripts, terminals, pasted reports | The `gitrochi-ledger` command line |
 | Claude Code hooks of agents Gitrochi launches | `gitrochi-ledger hook <event>`: activity, and auto-continue where a person turned it on ([below](#hooks)) |
 
+For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md).
+
 [CONTRACT.md](CONTRACT.md) is the API: storage, vocabulary, verdicts, hand-offs, types, methods, callers and errors. [`schema/`](schema/) has JSON Schemas for `State`, `Session`, `LedgerEvent`, `Question`, `Graph`, `PendingPrompt`, the session detail and the result of a claude-ledger import.
 
 ## The rules in short
