@@ -90,6 +90,7 @@ let start: LedgerMs = 1_793_400_000_000
         pureLogic()
         try graphRows()
         try demoContract()
+        try notices()
         try await store()
         try await large()
         if let i = CommandLine.arguments.firstIndex(of: "--core"), i + 2 < CommandLine.arguments.count {
@@ -274,6 +275,74 @@ let start: LedgerMs = 1_793_400_000_000
         check(held.rows.count == 1 && held.rows[0].segments.contains(seg(1, 0, 1, 1, 1, dashed: true)),
               "an open session with every node past the limit keeps its lane through the drawn rows")
         check(LedgerGraphPlot.plot(LedgerGraph(lanes: 1, nodes: [], edges: [], from: 0, to: 0)).rows.isEmpty, "empty graph")
+    }
+
+    /// What a read brings that a person should hear about (Settings › Ledger › Notifications, DESIGN.md §10.11)
+    static func notices() throws {
+        let clock = TestClock(start)
+        let demo = DemoLedgerBackend(clock: { clock.now() })
+        let first = try call(demo, "state", ["range": "7d"], as: LedgerState.self)
+        let seen = LedgerSeen(first)
+        check(LedgerNotices.notices(first, since: seen, now: first.now).isEmpty, "the first read announces nothing")
+        check(seen.prompts.count == first.pendingPrompts.count && seen.questions.count == first.questions.count && !seen.tidy.isEmpty
+              && seen.autoReplies.count == first.autoReview?.count, "the first read is the baseline: \(seen)")
+
+        var next = first
+        let asker = first.sessions.first { $0.verdict == .active }!
+        next.questions.append(LedgerQuestion(id: 9_001, sessionId: asker.id, text: "Keep the old endpoint?", state: .open, answer: nil, answeredBy: nil,
+                                             createdAt: first.now, answeredAt: nil, deliveredAt: nil))
+        let one = LedgerNotices.notices(next, since: seen, now: first.now)
+        check(one.count == 1 && one[0].kind == .news && one[0].body == "Keep the old endpoint?" && one[0].sessionId == asker.id
+              && one[0].title.contains(asker.id), "one new question: \(one)")
+        check(LedgerNotices.notices(next, since: LedgerSeen(next), now: first.now).isEmpty, "announced once")
+
+        var done = next
+        let finished = done.sessions.firstIndex { $0.verdict == .active && $0.id != asker.id && $0.stream == nil }!
+        done.sessions[finished].verdict = .confirm
+        done.sessions[finished].status = .merged
+        var cycle = done.streams.first!
+        cycle.version = "9.9.9"
+        cycle.appliedAt = first.now
+        cycle.appliedSummary = "Applied 9.9.9"
+        done.streams.append(cycle)
+        let grouped = LedgerNotices.notices(done, since: seen, now: first.now)
+        check(grouped.count == 1 && grouped[0].kind == .news && grouped[0].body.contains(": 1")
+              && grouped[0].body.split(separator: "·").count == 3 && grouped[0].sessionId == asker.id,
+              "a question, a session to clean up and an applied report in one read: one notification: \(grouped)")
+        let applied = LedgerNotices.notices(done, since: LedgerSeen(next), now: first.now)
+        check(applied.count == 1 && applied[0].body.contains("·"), "two kinds still group: \(applied)")
+        var onlyApplied = first
+        onlyApplied.streams.append(cycle)
+        let report = LedgerNotices.notices(onlyApplied, since: seen, now: first.now)
+        check(report.count == 1 && report[0].title.contains("9.9.9") && report[0].body == "Applied 9.9.9" && report[0].sessionId == cycle.sessionId,
+              "an applied report: \(report)")
+
+        var waiting = first
+        var prompt = first.pendingPrompts.first { LedgerCountdown.isCounting($0) }!
+        prompt.id = 9_100
+        prompt.deadline = first.now + 30_000
+        waiting.pendingPrompts.append(prompt)
+        var held = prompt
+        held.id = 9_101
+        held.deadline = 0
+        waiting.pendingPrompts.append(held)
+        var answered = prompt
+        answered.id = 9_102
+        answered.state = .auto
+        answered.answer = DemoLedgerBackend.autoAnswer(prompt)
+        waiting.autoReview = (waiting.autoReview ?? []) + [answered]
+        let alerts = LedgerNotices.notices(waiting, since: seen, now: first.now)
+        check(alerts.map(\.kind) == [.prompt, .prompt, .autoReply], "each waiting prompt and each automatic answer: \(alerts.map(\.kind))")
+        check(alerts[0].body.hasPrefix(LedgerPromptText.summary(prompt)) && alerts[0].body.contains("0:30"), "the question and the time left: \(alerts[0].body)")
+        check(alerts[1].body.contains(String(localized: "Waits for you: no automatic answer")), "a wait with no countdown says so")
+        check(alerts[2].body.contains(LedgerPromptText.sent(answered.answer!)) && alerts[2].sessionId == answered.sessionId, "what auto-continue sent")
+        check(Set(alerts.map(\.id)).count == 3, "each its own notification")
+
+        // the demo moving on: a new prompt arrives and auto-continue answers one, as polling would see it
+        clock.advance(46_000)
+        let later = try call(demo, "state", ["range": "7d"], as: LedgerState.self)
+        let moved = LedgerNotices.notices(later, since: seen, now: later.now)
+        check(moved.contains { $0.kind == .autoReply } && !moved.contains { $0.kind == .news }, "the deadline ran out: an automatic answer is news: \(moved.map(\.kind))")
     }
 
     static func demoContract() throws {
@@ -849,7 +918,7 @@ case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-dar
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
-    "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" \
+    "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"

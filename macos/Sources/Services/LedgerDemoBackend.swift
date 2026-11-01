@@ -204,6 +204,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                                               releasedBy: baselines.first { $0.project == s.project && $0.version == v }?.bySession, eventIds: [e.id]))
             } else if e.type == "applied", let v = e.version, let i = list.lastIndex(where: { $0.version == v }) {
                 list[i].appliedAt = e.ts
+                list[i].appliedSummary = e.summary
                 list[i].state = .applied
                 list[i].eventIds.append(e.id)
             } else if !list.isEmpty {

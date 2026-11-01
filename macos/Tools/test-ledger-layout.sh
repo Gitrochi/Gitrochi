@@ -211,8 +211,9 @@ func seen(_ label: String, in text: String) -> Bool {
                 _ = try? await core.saveSettings(["autoContinue": stored.autoContinueArgument(repository: "/Volumes/Work/harbor-app", .init(enabled: true, delaySec: 45))])
             }
         }
-        try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 2000,
+        try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 2300,
                   expect: ["Track agents I start", "Agents Gitrochi starts", "Continue automatically when nobody answers", "harbor-app",
+                           "Show notifications", "Show the Inbox count on the Dock icon",
                            "Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect Claude Code"])
         try shoot("import-legacy", LedgerLegacyImportSheet(ledger: core, path: CommandLine.arguments[3]), width: 620, height: 380,
                   expect: ["Import from claude-ledger", "Ready to import", "Sessions"])
