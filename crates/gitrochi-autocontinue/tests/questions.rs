@@ -44,6 +44,15 @@ const QUESTIONS: &[&str] = &[
     "The build passes. Do you prefer a single squashed commit or separate commits?",
     "Should I open the PR? Let me know if you have any questions.",
     "Open questions:\n- Should the cache survive restarts?\n- Should we keep the old flag?",
+    // a yes/no hint after the question, or in place of its question mark
+    "Should I also add a CHANGELOG file? (yes/no)",
+    "Overwrite the existing config? [Y/n]",
+    "Should I push the branch?\n(y/n)",
+    "Run the migration now (y/n)",
+    "Proceed with the rename (yes or no):",
+    "이대로 PR을 열까요? (예/아니오)",
+    "このまま続けますか？（はい/いいえ）",
+    "要继续吗？(是/否)",
     // Japanese
     "どちらの方法で進めますか？",
     "このまま続けてもよろしいでしょうか？",
@@ -92,6 +101,9 @@ const NOT_QUESTIONS: &[&str] = &[
     "Is there anything else you'd like me to do?",
     "I wondered whether I should implement caching, and decided it was not worth it.",
     "Pushed to `feature/x`. CI is green.",
+    "The installer now asks before it overwrites files (y/n).",
+    "I opened the PR. Anything else? (yes/no)",
+    "The flag takes two values (on/off)",
     "変更をコミットしました。何かあればお知らせください。",
     "どうしてテストが失敗したのか調べました。原因はキャッシュでした。",
     "修复已完成，所有测试都通过了。如有任何问题，请告诉我。",
@@ -128,6 +140,31 @@ fn the_cue_says_why() {
     assert_eq!(cue("Merge now?"), "question-mark");
     assert_eq!(cue("要继续吗"), "zh:吗");
     assert_eq!(cue("進めますか"), "ja:ますか");
+    // the question's own wording first, the hint when there is nothing else
+    assert_eq!(cue("Should I add a CHANGELOG? (yes/no)"), "en:should i");
+    assert_eq!(cue("진행할까요? (예/아니오)"), "ko:까요");
+    assert_eq!(cue("Merge now? [Y/n]"), "question-mark");
+    assert_eq!(cue("Run the migration now (y/n)"), "answer-hint");
+}
+
+#[test]
+fn a_yes_no_hint_stays_with_its_question() {
+    let q = classify_stop("Tests pass.\n\nShould I also add a CHANGELOG file? (yes/no)").unwrap();
+    assert_eq!(q.summary, "Should I also add a CHANGELOG file? (yes/no)");
+    let q = classify_stop("Should I push the branch?\n(y/n)").unwrap();
+    assert_eq!(q.summary, "Should I push the branch? (y/n)");
+
+    // "or" in the hint does not make a list of changes before the question its choices
+    let q = classify_stop(
+        "Changes:\n- Added the parser\n- Fixed the tests\n\nShould I commit them? (yes or no)",
+    )
+    .unwrap();
+    assert!(q.options.is_empty());
+    assert_eq!(q.summary, "Should I commit them? (yes or no)");
+
+    // a recommendation with a hint asks to confirm it
+    let q = classify_stop("I recommend keeping the old flag. (yes/no)").unwrap();
+    assert_eq!(q.cue, "answer-hint");
 }
 
 #[test]

@@ -66,12 +66,20 @@ pub(crate) fn plain_line(line: &str) -> String {
                     continue;
                 }
             }
-            '[' => {}
+            // only a link's bracket goes; others are words too ("Proceed? [Y/n]")
+            '[' if opens_link(&chars, i) => {}
             _ => out.push(c),
         }
         i += 1;
     }
     out.trim().to_string()
+}
+
+fn opens_link(chars: &[char], i: usize) -> bool {
+    chars[i + 1..]
+        .iter()
+        .position(|&c| c == ']')
+        .is_some_and(|close| chars.get(i + close + 2) == Some(&'('))
 }
 
 fn is_emphasis_underscore(chars: &[char], i: usize) -> bool {
