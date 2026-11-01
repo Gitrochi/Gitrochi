@@ -24,7 +24,7 @@ if (mode === "selftest") {
   // As in the app, its own shortcuts listen on window from start-up, before the Ledger adds its keys; a Ctrl+Z
   // that reaches the repository's undo opens its confirmation
   const confirmation = Object.assign(document.createElement("div"), { className: "modal-backdrop" });
-  Object.defineProperty(workspace, "active", { get: () => ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
+  Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
   const [passed, detail] = await ledgerSelfTest();

@@ -5,7 +5,7 @@ import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
 import { isWorkspaceDestination, repositoryDestinations, restoredDestination, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
-import { settings } from "@/shared/config";
+import { env, settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
 const head = "a".repeat(40), older = "b".repeat(40);
@@ -27,6 +27,48 @@ beforeEach(() => {
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
 
 describe("workspace navigation", () => {
+  it.each([
+    ["windows", null], ["windows", "C:/fixture/first"],
+    ["macos", null], ["macos", "C:/fixture/first"],
+  ] as const)("opens the Ledger with the numbered shortcut only in preview (%s, %s)", (os, path) => {
+    const original = { os: env.os, preview: env.ledgerPreview };
+    const store = fixture(); store.path = path; store.destination = "home";
+    vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+    vi.stubGlobal("document", { querySelector: () => null });
+    const press = (extra: Partial<KeyboardEvent> = {}) => {
+      const event = { key: "7", ctrlKey: os === "windows", metaKey: os === "macos", altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn(), ...extra };
+      handleShortcut(event as unknown as KeyboardEvent, () => {});
+      return event;
+    };
+    try {
+      env.os = os;
+      env.ledgerPreview = null;
+      const hidden = press();
+      expect(store.destination).toBe("home");
+      expect(hidden.preventDefault).not.toHaveBeenCalled();
+      expect(hidden.stopPropagation).not.toHaveBeenCalled();
+      expect(settings.set).not.toHaveBeenCalled();
+      env.ledgerPreview = "1";
+      for (const extra of [{ shiftKey: true }, { altKey: true }, { ctrlKey: false, metaKey: false }, { defaultPrevented: true }]) {
+        const ignored = press(extra);
+        expect(store.destination).toBe("home");
+        expect(ignored.preventDefault).not.toHaveBeenCalled();
+        expect(ignored.stopPropagation).not.toHaveBeenCalled();
+      }
+      const opened = press();
+      expect(store.destination).toBe("ledger");
+      expect(opened.preventDefault).toHaveBeenCalledOnce();
+      expect(opened.stopPropagation).toHaveBeenCalledOnce();
+      if (path) {
+        env.ledgerPreview = null;
+        press({ key: "6" });
+        expect(store.destination).toBe("flows");
+      }
+    } finally {
+      env.os = original.os; env.ledgerPreview = original.preview;
+      vi.unstubAllGlobals();
+    }
+  });
   it("toggles the right panel with Ctrl+Alt+B only on the repository screen", () => {
     const store = fixture(); store.destination = "repository";
     memory.inspectorWidth = 410;

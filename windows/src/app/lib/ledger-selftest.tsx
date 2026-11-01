@@ -2,12 +2,14 @@ import { createRoot } from "react-dom/client";
 import { destinationEnabled, isWorkspaceDestination, restoredDestination } from "@/entities/git";
 import type { LedgerNotice, LedgerSession, LedgerStore } from "@/entities/ledger";
 import { RepoStore } from "@/entities/repo";
+import { workspace } from "@/entities/workspace";
 import { RepoPage } from "@/pages/repo";
 import { ipc } from "@/shared/api";
 import { env, settings, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { SettingsDialog } from "@/widgets/settings";
 import { openLedgerAt } from "./ledger-notifications";
+import { handleShortcut } from "./shortcuts";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -55,7 +57,7 @@ function leave(el: HTMLElement) {
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
   const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts, verdictLook }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
-  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
+  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, tabs: workspace.tabs, activeId: workspace.activeId, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
   // the agent center rewrites its hooks files when Track agents I start changes; nothing reaches the disk
@@ -94,6 +96,13 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(!isWorkspaceDestination("ledger") && !destinationEnabled("ledger") && restoredDestination("ledger", false) === "home", "The Ledger must stay hidden without the preview switch");
     const app = new RepoStore();
     app.loadGlobalIdentity = async () => {};
+    workspace.tabs = [app]; workspace.activeId = app.id;
+    const numberedShortcut = () => {
+      const event = new KeyboardEvent("keydown", { key: "7", cancelable: true, ...(env.os === "macos" ? { metaKey: true } : { ctrlKey: true }) });
+      handleShortcut(event, () => {});
+      return event.defaultPrevented;
+    };
+    ensure(!numberedShortcut() && app.destination === "home", "The Ledger shortcut changed navigation or consumed its key without the preview switch");
     root.render(<RepoPage store={app} openSettings={() => {}} />);
     await until(() => $(".workspace-nav-item[data-page='flows']"));
     ensure(!$(".workspace-nav-item[data-page='ledger']"), "The page list showed the Ledger without the switch");
@@ -102,12 +111,15 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $(".workspace-nav-item[data-page='ledger']")), "The page list did not offer the Ledger with the switch on");
     const tools = $$<HTMLButtonElement>(".workspace-nav-item").map((b) => b.dataset.page);
     ensure(tools.indexOf("ledger") === tools.indexOf("flows") + 1 && !$<HTMLButtonElement>(".workspace-nav-item[data-page='ledger']")!.disabled, `The Ledger must follow Flows and open without a repository: ${tools.join(",")}`);
+    ensure(numberedShortcut() && app.destination === "ledger", "The numbered Ledger shortcut did not open without a repository");
+    app.navigate("home");
     $<HTMLButtonElement>(".workspace-nav-item[data-page='ledger']")!.click();
     ensure(await until(() => app.destination === "ledger" && $(".page-header h1")?.textContent === t("Ledger") && $(".ledger-page")), "The Ledger page did not open with its title");
     ensure(restoredDestination("ledger", false) === "ledger", "A remembered Ledger page must reopen without a repository");
     root.unmount();
     root = createRoot(host);
-    passed.push("switch and page list");
+    workspace.tabs = original.tabs; workspace.activeId = original.activeId;
+    passed.push("switch, numbered shortcut and page list");
 
     // A demo on a fixed clock, rendered on its own
     const clock = Date.UTC(2026, 9, 31, 9);
@@ -530,6 +542,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     for (const s of stores) s.dispose();
     env.ledgerPreview = original.preview;
     env.ledgerDemo = original.demo;
+    workspace.tabs = original.tabs; workspace.activeId = original.activeId;
     settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;
     ipc.run = original.run; ipc.http = original.http; ipc.writeText = original.write; ipc.openUrl = original.open; ipc.ledgerCall = original.core; ipc.ledgerPickDatabase = original.pick;
   }
