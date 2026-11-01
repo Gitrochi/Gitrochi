@@ -1,0 +1,371 @@
+{
+  "cases" : [
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json"
+      ],
+      "kind" : "claude",
+      "mode" : null,
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : null,
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json"
+      ],
+      "kind" : "claude",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json"
+      ],
+      "kind" : "claude",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "acceptEdits"
+      ],
+      "kind" : "claude",
+      "mode" : "acceptEdits",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "acceptEdits",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "acceptEdits",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "plan"
+      ],
+      "kind" : "claude",
+      "mode" : "plan",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "plan",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "plan",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "auto"
+      ],
+      "kind" : "claude",
+      "mode" : "auto",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "auto",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "auto",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "bypassPermissions"
+      ],
+      "kind" : "claude",
+      "mode" : "bypassPermissions",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--settings",
+        "\/Gitrochi\/agents\/hooks.json",
+        "--permission-mode",
+        "bypassPermissions",
+        "Fix the login retry"
+      ],
+      "kind" : "claude",
+      "mode" : "bypassPermissions",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "codex",
+      "mode" : null,
+      "task" : ""
+    },
+    {
+      "args" : [
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : null,
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "codex",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "codex",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--sandbox",
+        "read-only"
+      ],
+      "kind" : "codex",
+      "mode" : "read-only",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--sandbox",
+        "read-only",
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : "read-only",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--sandbox",
+        "workspace-write"
+      ],
+      "kind" : "codex",
+      "mode" : "workspace-write",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--sandbox",
+        "workspace-write",
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : "workspace-write",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--dangerously-bypass-approvals-and-sandbox"
+      ],
+      "kind" : "codex",
+      "mode" : "bypass",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--dangerously-bypass-approvals-and-sandbox",
+        "Fix the login retry"
+      ],
+      "kind" : "codex",
+      "mode" : "bypass",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "gemini",
+      "mode" : null,
+      "task" : ""
+    },
+    {
+      "args" : [
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : null,
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "gemini",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+
+      ],
+      "kind" : "gemini",
+      "mode" : "",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : "",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "auto_edit"
+      ],
+      "kind" : "gemini",
+      "mode" : "auto_edit",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "auto_edit",
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : "auto_edit",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "plan"
+      ],
+      "kind" : "gemini",
+      "mode" : "plan",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "plan",
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : "plan",
+      "task" : "Fix the login retry"
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "yolo"
+      ],
+      "kind" : "gemini",
+      "mode" : "yolo",
+      "task" : ""
+    },
+    {
+      "args" : [
+        "--approval-mode",
+        "yolo",
+        "-i",
+        "Fix the login retry"
+      ],
+      "kind" : "gemini",
+      "mode" : "yolo",
+      "task" : "Fix the login retry"
+    }
+  ],
+  "environment" : {
+    "GITROCHI_AGENT_ID" : "agent-1"
+  },
+  "hooks" : "\/Gitrochi\/agents\/hooks.json"
+}

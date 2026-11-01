@@ -177,6 +177,113 @@ enum LedgerCountdown {
     }
 }
 
+extension LedgerPendingPrompt.Kind {
+    var title: String {
+        switch self {
+        case .stopQuestion: return String(localized: "Asks a question")
+        case .askUserQuestion: return String(localized: "Asks you to choose")
+        case .exitPlanMode: return String(localized: "Plan to approve")
+        case .permission: return String(localized: "Asks for permission")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .stopQuestion: return "questionmark.bubble"
+        case .askUserQuestion: return "list.bullet.circle"
+        case .exitPlanMode: return "list.clipboard"
+        case .permission: return "lock.shield"
+        }
+    }
+}
+
+/// Auto-continue's waits: the core keeps them between 10 s and 5 minutes (gitrochi-autocontinue's policy)
+enum LedgerWait {
+    static func clamped(_ seconds: Int) -> Int { min(max(seconds, 10), 300) }
+
+    /// The waits a picker offers, with the session's own among them
+    static func choices(including seconds: Int) -> [Int] {
+        Array(Set([10, 15, 20, 30, 45, 60, 90, 120, 180, 300, clamped(seconds)])).sorted()
+    }
+}
+
+/// What a waiting prompt asks and what auto-continue sends, read from the hook handler's payload (gitrochi-autocontinue's
+/// PromptPayload: question, text, options, questions, tool, delaySec, proposed) and from the answer (its AutoReply with
+/// `sent`, or what a person sent). (Windows: entities/ledger/lib/prompt.ts)
+enum LedgerPromptText {
+    struct Option: Hashable {
+        var label: String
+        var description: String?
+        var recommended: Bool
+    }
+
+    /// One line: the question, the first question asked, the plan's title or the tool call
+    static func summary(_ p: LedgerPendingPrompt) -> String {
+        if let question = p.payload["question"]?.string, !question.isEmpty { return question }
+        if let question = p.payload["questions"]?.array.first?["question"].string, !question.isEmpty { return question }
+        if let tool = tool(p) { return tool.summary.isEmpty ? tool.name : tool.name + ": " + tool.summary }
+        if let text = body(p) { return firstLine(text) }
+        return p.kind.title
+    }
+
+    /// The paragraphs that ask (a question at the end of a turn) or the plan (Markdown)
+    static func body(_ p: LedgerPendingPrompt) -> String? {
+        p.payload["text"]?.string.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
+    }
+
+    /// The tool a permission request is about, and its call in one line
+    static func tool(_ p: LedgerPendingPrompt) -> (name: String, summary: String)? {
+        let tool = p.payload["tool"] ?? .null
+        guard let name = tool["name"].string, !name.isEmpty else { return nil }
+        return (name, tool["summary"].string ?? "")
+    }
+
+    /// Choices listed with a question, or of one AskUserQuestion question
+    static func options(_ value: LedgerJSON) -> [Option] {
+        value.array.compactMap { o in
+            o["label"].string.map { Option(label: $0, description: o["description"].string, recommended: o["recommended"].bool ?? false) }
+        }
+    }
+
+    /// What goes out when nobody answers in time, in one line
+    static func proposed(_ p: LedgerPendingPrompt) -> String? { p.payload["proposed"].flatMap(describe(sent:)) }
+
+    /// What was sent: auto-continue's `sent`, else a person's text, choices or decision
+    static func sent(_ answer: [String: LedgerJSON]) -> String {
+        if let sent = answer["sent"], let text = describe(sent: sent) { return text }
+        if let text = answer["text"]?.string { return firstLine(text) }
+        if let decision = answer["decision"]?.string { return decision == "allow" ? String(localized: "Allowed") : String(localized: "Denied") }
+        if let answers = answer["answers"]?.object { return answers.keys.sorted().compactMap { answers[$0]?.string }.joined(separator: ", ") }
+        return ""
+    }
+
+    /// An automatic permission answer whose effect is open: the terminal showed its own dialog during the wait, and the
+    /// person may have answered there (#171)
+    static func outcome(_ answer: [String: LedgerJSON]?) -> String? {
+        switch answer?["outcome"]?.string {
+        case "unconfirmed": return String(localized: "Not confirmed yet: the terminal showed its own dialog too")
+        case "unknown": return String(localized: "Unknown whether it applied: the terminal showed its own dialog too")
+        default: return nil
+        }
+    }
+
+    private static func describe(sent: LedgerJSON) -> String? {
+        switch sent["type"].string {
+        case "reply": return sent["text"].string.map(firstLine)
+        case "answers":
+            guard let answers = sent["answers"].object else { return nil }
+            return answers.keys.sorted().compactMap { answers[$0]?.string }.joined(separator: ", ")
+        case "approve_plan": return String(localized: "Approve the plan")
+        case "allow": return String(localized: "Allow once")
+        default: return nil
+        }
+    }
+
+    private static func firstLine(_ text: String) -> String {
+        text.split(whereSeparator: \.isNewline).first.map { $0.trimmingCharacters(in: .whitespaces) } ?? text
+    }
+}
+
 /// The Board's filter: verdict chips, text and archived sessions (Windows: entities/ledger/lib/filter.ts)
 struct LedgerSessionFilter: Equatable {
     /// Empty: every verdict
@@ -300,6 +407,7 @@ enum LedgerUndo {
             steps.append(s.ackAt == nil ? .unack : .ack)
             if s.archivedAt != nil { steps.append(.archive) }
             return steps
+        case .autoContinue: return [.autoContinue(s.autoContinue)]
         case .answer, .dismiss, .link, .message: return nil
         }
     }
