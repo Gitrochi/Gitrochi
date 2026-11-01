@@ -1564,3 +1564,22 @@
 "Approve the plan" = "Plan goedkeuren";
 "Allow once" = "Eén keer toestaan";
 "%@ started without the Ledger: %@" = "%@ is gestart zonder het Logboek: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ vraagt iets";
+"Ready to clean up" = "Er is iets op te ruimen";
+"%@ applied %@" = "%@ heeft %@ toegepast";
+"New questions: %lld" = "Nieuwe vragen: %lld";
+"To clean up: %lld" = "Op te ruimen: %lld";
+"Applied: %lld" = "Toegepast: %lld";
+"The Ledger has news" = "Het Logboek heeft nieuws";
+"Continues automatically in %@" = "Gaat over %@ automatisch door";
+"Waits for you: no automatic answer" = "Wacht op jou: geen automatisch antwoord";
+"%@ is waiting" = "%@ wacht";
+"Auto-continue answered %@" = "Automatisch doorgaan heeft %@ beantwoord";
+"Show notifications" = "Meldingen tonen";
+"Show the Inbox count on the Dock icon" = "Het aantal in de inbox op het Dock-symbool tonen";
+"Notifications for Gitrochi are turned off in System Settings." = "Meldingen voor Gitrochi staan uit in Systeeminstellingen.";
+"Open System Settings" = "Systeeminstellingen openen";
+"Notifications" = "Meldingen";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Nieuwe vragen, sessies om op te ruimen en toepassingsrapporten, per keer lezen gebundeld; elk wachtend verzoek met de resterende tijd, en elk automatisch antwoord. Een klik opent het Logboek bij die sessie. Wat er al was toen Gitrochi startte, wordt niet gemeld.";

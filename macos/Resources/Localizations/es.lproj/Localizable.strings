@@ -1652,3 +1652,22 @@
 "Approve the plan" = "Aprobar el plan";
 "Allow once" = "Permitir una vez";
 "%@ started without the Ledger: %@" = "%@ se inició sin el Registro: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ pregunta";
+"Ready to clean up" = "Hay algo por ordenar";
+"%@ applied %@" = "%@ aplicó %@";
+"New questions: %lld" = "Preguntas nuevas: %lld";
+"To clean up: %lld" = "Por ordenar: %lld";
+"Applied: %lld" = "Aplicado: %lld";
+"The Ledger has news" = "El Registro tiene novedades";
+"Continues automatically in %@" = "Continúa automáticamente en %@";
+"Waits for you: no automatic answer" = "Te espera: sin respuesta automática";
+"%@ is waiting" = "%@ está esperando";
+"Auto-continue answered %@" = "La continuación automática respondió a %@";
+"Show notifications" = "Mostrar notificaciones";
+"Show the Inbox count on the Dock icon" = "Mostrar el número de la bandeja de entrada en el icono del Dock";
+"Notifications for Gitrochi are turned off in System Settings." = "Las notificaciones de Gitrochi están desactivadas en Ajustes del Sistema.";
+"Open System Settings" = "Abrir Ajustes del Sistema";
+"Notifications" = "Notificaciones";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Preguntas nuevas, sesiones por ordenar e informes de aplicación, agrupados en cada lectura; cada solicitud en espera con el tiempo que queda y cada respuesta automática. Al hacer clic se abre el Registro en esa sesión. No se avisa de lo que ya había al abrir Gitrochi.";

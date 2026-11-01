@@ -37,6 +37,10 @@ struct LedgerSettings: View {
     @ViewState private var saveCount = 0
     @AppStorage(LedgerTracking.trackKey) private var trackAgents = false
     @AppStorage(LedgerTracking.toolsKey) private var agentTools = true
+    @AppStorage(LedgerNotifier.notifyKey) private var notify = false
+    @AppStorage(LedgerNotifier.badgeKey) private var dockBadge = false
+    /// macOS refused notifications when they were turned on
+    @ViewState private var notificationsBlocked = false
     /// The repository whose auto-continue switch is shown
     @ViewState private var autoRepository: String?
 
@@ -45,6 +49,7 @@ struct LedgerSettings: View {
             if let settings {
                 trackingSection
                 autoContinueSection(settings)
+                notificationsSection
                 sessionsSection
                 kindsSection(settings)
                 projectsSection
@@ -116,6 +121,45 @@ struct LedgerSettings: View {
         } footer: {
             Text("When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on.")
                 .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var notificationsSection: some View {
+        Section {
+            Toggle("Show notifications", isOn: Binding(get: { notify }, set: { setNotifications($0) }))
+            Toggle("Show the Inbox count on the Dock icon", isOn: Binding(get: { dockBadge }, set: { on in
+                dockBadge = on
+                LedgerNotifier.shared.refresh()
+            }))
+            if notificationsBlocked {
+                HStack {
+                    Text("Notifications for Gitrochi are turned off in System Settings.").foregroundStyle(.secondary)
+                    Spacer(minLength: 8)
+                    Button("Open System Settings") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") { NSWorkspace.shared.open(url) }
+                    }
+                }
+            }
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text("New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Asks macOS for permission only now, when a person turns notifications on
+    private func setNotifications(_ on: Bool) {
+        guard on else {
+            notify = false
+            notificationsBlocked = false
+            return
+        }
+        Task {
+            let allowed = await LedgerNotifier.shared.requestPermission()
+            notify = allowed
+            notificationsBlocked = !allowed
+            LedgerNotifier.shared.refresh()
         }
     }
 

@@ -1600,3 +1600,22 @@
 "Approve the plan" = "Schválit plán";
 "Allow once" = "Povolit jednou";
 "%@ started without the Ledger: %@" = "%@ se spustil bez Evidence: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@ se ptá";
+"Ready to clean up" = "Je co uklidit";
+"%@ applied %@" = "%@ použil %@";
+"New questions: %lld" = "Nové otázky: %lld";
+"To clean up: %lld" = "K úklidu: %lld";
+"Applied: %lld" = "Použito: %lld";
+"The Ledger has news" = "Evidence má novinky";
+"Continues automatically in %@" = "Automaticky pokračuje za %@";
+"Waits for you: no automatic answer" = "Čeká na vás: bez automatické odpovědi";
+"%@ is waiting" = "%@ čeká";
+"Auto-continue answered %@" = "Automatické pokračování odpovědělo: %@";
+"Show notifications" = "Zobrazovat oznámení";
+"Show the Inbox count on the Dock icon" = "Zobrazit počet ve Schránce na ikoně v Docku";
+"Notifications for Gitrochi are turned off in System Settings." = "Oznámení pro Gitrochi jsou vypnutá v Nastavení systému.";
+"Open System Settings" = "Otevřít Nastavení systému";
+"Notifications" = "Oznámení";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Nové otázky, relace k úklidu a hlášení o použití, seskupené po každém čtení; každý čekající dotaz se zbývajícím časem a každá automatická odpověď. Kliknutím otevřete Evidenci u dané relace. Nic se neoznamuje o tom, co už existovalo při spuštění Gitrochi.";

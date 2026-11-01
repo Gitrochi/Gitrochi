@@ -232,6 +232,8 @@ struct LedgerStreamCycle: Codable, Hashable {
     var appliedAt: LedgerMs?
     var releasedBy: String?
     var eventIds: [Int]
+    /// The applied report's summary, when the core sends it
+    var appliedSummary: String?
 }
 
 /// Two live sessions that work on the same thing

@@ -3417,3 +3417,22 @@
 "Approve the plan" = "계획 승인";
 "Allow once" = "한 번 허용";
 "%@ started without the Ledger: %@" = "%@를 원장 없이 시작했습니다: %@";
+
+/* Ledger: notifications and the Dock badge. */
+"%@ asks" = "%@이(가) 묻습니다";
+"Ready to clean up" = "정리할 것이 생겼습니다";
+"%@ applied %@" = "%@이(가) %@을(를) 반영했습니다";
+"New questions: %lld" = "새 질문: %lld";
+"To clean up: %lld" = "정리할 것: %lld";
+"Applied: %lld" = "반영: %lld";
+"The Ledger has news" = "원장에 새 소식이 있습니다";
+"Continues automatically in %@" = "%@ 뒤 자동 진행";
+"Waits for you: no automatic answer" = "답을 기다립니다: 자동으로 답하지 않습니다";
+"%@ is waiting" = "%@이(가) 기다리는 중";
+"Auto-continue answered %@" = "자동 진행이 %@에 답했습니다";
+"Show notifications" = "알림 보이기";
+"Show the Inbox count on the Dock icon" = "Dock 아이콘에 수신함 개수 보이기";
+"Notifications for Gitrochi are turned off in System Settings." = "시스템 설정에서 Gitrochi 알림이 꺼져 있습니다.";
+"Open System Settings" = "시스템 설정 열기";
+"Notifications" = "알림";
+"New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "새 질문, 정리할 세션, 반영 보고는 한 번 읽을 때마다 묶어서 알립니다. 기다리는 질문은 남은 시간과 함께, 자동 진행의 답은 하나하나 알립니다. 알림을 누르면 원장에서 그 세션을 엽니다. Gitrochi를 켤 때 이미 있던 것은 알리지 않습니다.";
