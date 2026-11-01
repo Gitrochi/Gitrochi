@@ -21,4 +21,14 @@ extension FlowEngine {
     }
 
     static func blockCatalog(in repo: URL) async throws -> FlowBlockCatalog { try await json(["blocks"], in: repo) }
+
+    static func readSource(_ path: String, in repo: URL) async throws -> FlowSourceResult {
+        try await designJSON("source", payload: ["operation": "read", "path": path], in: repo)
+    }
+
+    static func writeSource(_ path: String, content: String, expected: String?, createParents: Bool = false, in repo: URL) async throws -> FlowSourceResult {
+        var payload: [String: Any] = ["operation": "write", "path": path, "content": content, "expected": expected as Any? ?? NSNull()]
+        if createParents, expected == nil { payload["createParents"] = true }
+        return try await designJSON("source", payload: payload, in: repo)
+    }
 }

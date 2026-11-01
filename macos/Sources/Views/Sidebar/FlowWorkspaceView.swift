@@ -22,8 +22,9 @@ struct FlowWorkspaceView: View {
     private var request: String { (flow?.name ?? "") + ":" + String(affected) + ":" + String(revision) }
 
     var body: some View {
-        HSplitView {
-            selector.frame(minWidth: 170, idealWidth: 205, maxWidth: 230)
+        FlowSplitView(initialFraction: 0.2, minimumLeading: 170, minimumTrailing: 560, maximumLeading: 230) {
+            selector
+        } trailing: {
             VStack(spacing: 0) {
                 toolbar
                 Divider()
@@ -32,11 +33,9 @@ struct FlowWorkspaceView: View {
                 } else if page == 1 {
                     FlowHistoryView(runs: flows.runs, onOpen: onOpenRun)
                 } else if let plan {
-                    HSplitView {
-                        FlowGraphView(nodes: graphNodes(plan), selected: $selectedNode).frame(minWidth: 280)
-                        inspector(plan)
-                            .frame(minWidth: 210, idealWidth: 250, maxWidth: 280)
-                    }
+                    FlowSplitView(initialFraction: 0.69, minimumLeading: 280, minimumTrailing: 240) {
+                        FlowGraphView(nodes: graphNodes(plan), selected: $selectedNode)
+                    } trailing: { inspector(plan) }
                     if !plan.warnings.isEmpty {
                         VStack(alignment: .leading, spacing: 3) {
                             ForEach(plan.warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) }
@@ -128,19 +127,24 @@ struct FlowWorkspaceView: View {
     }
 
     private var toolbar: some View {
-        VStack(spacing: 14) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "point.3.connected.trianglepath.dotted")
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: page == 2 ? "network" : page == 1 ? "clock.arrow.circlepath" : "point.3.connected.trianglepath.dotted")
                     .font(.system(size: 19, weight: .medium)).foregroundStyle(Color.accentColor)
                     .frame(width: 40, height: 40)
                     .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(flow?.name ?? String(localized: "Flows")).font(.system(size: 17, weight: .semibold)).lineLimit(1)
-                    if let description = flow?.description, !description.isEmpty {
+                    Text(page == 2 ? String(localized: "Connected CI") : page == 1 ? String(localized: "Run history") : flow?.name ?? String(localized: "Flows"))
+                        .font(.system(size: 17, weight: .semibold)).lineLimit(1)
+                    if page == 2 {
+                        Text("Browse your repository's CI runs and saved connections.").font(.caption).foregroundStyle(.secondary)
+                    } else if page == 1 {
+                        Text("Search recorded flow runs and inspect their results.").font(.caption).foregroundStyle(.secondary)
+                    } else if let description = flow?.description, !description.isEmpty {
                         Text(description).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                if let flow {
+                if page == 0, let flow {
                     HStack(spacing: 6) {
                         HStack(spacing: 2) {
                             Button(action: onEdit) { Image(systemName: "square.and.pencil").frame(width: 24, height: 24) }
@@ -166,27 +170,43 @@ struct FlowWorkspaceView: View {
                     }.controlSize(.small)
                 }
             }
-            HStack(spacing: 8) {
-                Picker("View", selection: $page) {
-                    Text("Flow").tag(0)
-                    Text("History").tag(1)
-                    Text("Connected CI").tag(2)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    workspacePicker.frame(width: 270)
+                    Spacer(minLength: 0)
+                    metadata
                 }
-                .labelsHidden().pickerStyle(.segmented).frame(width: 270)
-                Spacer(minLength: 8)
+                VStack(alignment: .leading, spacing: 9) {
+                    workspacePicker.frame(maxWidth: .infinity)
+                    metadata
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private var workspacePicker: some View {
+        Picker("View", selection: $page) {
+            Text("Flow").tag(0)
+            Text("History").tag(1)
+            Text("Connected CI").tag(2)
+        }.labelsHidden().pickerStyle(.segmented)
+    }
+
+    private var metadata: some View {
+        HStack(spacing: 8) {
+            if page == 0 {
                 if let plan {
                     Label(plan.env, systemImage: "square.stack.3d.up")
-                        .help("Environment: \(plan.env)")
-                        .modifier(FlowMetadataStyle())
+                        .help("Environment: \(plan.env)").modifier(FlowMetadataStyle())
                 }
                 if let flow { Text("\(flow.nodes) steps").modifier(FlowMetadataStyle()) }
                 if !list.trusted {
                     Label("Review required", systemImage: "hand.raised").font(.system(size: 10)).foregroundStyle(.orange)
                 }
             }
-        }
-        .padding(16)
-        .background(Color(nsColor: .windowBackgroundColor))
+        }.fixedSize(horizontal: true, vertical: false)
     }
 
     private func latestRun(_ name: String) -> FlowRunRow? { flows.runs.first { $0.flow == name } }

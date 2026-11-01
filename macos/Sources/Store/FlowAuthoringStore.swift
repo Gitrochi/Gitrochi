@@ -21,6 +21,10 @@ final class FlowAuthoringStore {
     var error: String?
     var editable = false
     var revision = 0
+    var codeRevision = 0
+    var previewing = false
+    var formatting = false
+    private var previewGeneration = UUID()
     var fieldErrors: [String: String] = [:]
     var attachments: [String: String] = [:]
 
@@ -33,6 +37,7 @@ final class FlowAuthoringStore {
     var flowNames: [String] { document["flows"].object.keys.sorted() }
     var nodes: [String: FlowJSON] { document["flows"][selectedFlow]["nodes"].object }
     var nodeIDs: [String] { nodes.keys.sorted() }
+    var sourcePreviewCurrent: Bool { editable && !formatting && document == baseline && source == yaml && !diagnostics.contains { $0.severity == "error" } }
     var selected: FlowJSON { selectedNode.flatMap { nodes[$0] } ?? .null }
     var suiteDefinition: FlowJSON { selected["suite"].string.map { document["suites"][$0] } ?? .null }
     var selectedBlock: FlowBlockCatalog.Block? {
@@ -42,8 +47,11 @@ final class FlowAuthoringStore {
     var graphNodes: [FlowGraphView.Node] {
         nodeIDs.map { id in
             let node = canonical(nodes[id] ?? .null)
-            return .init(id: id, title: node["description"].string ?? id, block: blockID(node), needs: node["needs"].dependencyIDs,
-                         state: nil, subtitle: node["run"].string?.split(separator: "\n").first.map(String.init) ?? node["use"].string ?? "")
+            let suite = node["suite"].string.map { document["suites"][$0] } ?? .null
+            let block = suite["use"].string ?? blockID(node)
+            let command = node["run"].string ?? node["with"]["run"].string ?? suite["with"]["run"].string
+            return .init(id: id, title: node["description"].string ?? id, block: block, needs: node["needs"].dependencyIDs,
+                         state: nil, subtitle: command?.split(separator: "\n").first.map(String.init) ?? block)
         }
     }
 
@@ -88,14 +96,44 @@ final class FlowAuthoringStore {
         ensureSelection()
     }
 
+    func editCode(_ value: String) {
+        guard !saving, !loading, !formatting else { return }
+        yaml = value
+        codeRevision += 1
+        previewing = true
+        error = nil
+    }
+
+    /// Parsing code updates only the preview; the source is never rewritten by a successful parse.
+    func previewCode() async {
+        guard !saving, !loading, !formatting else { return }
+        let request = UUID(); previewGeneration = request
+        let input = yaml, inputFile = file
+        previewing = true
+        defer { if previewGeneration == request { previewing = false } }
+        do {
+            try await Task.sleep(for: .milliseconds(220))
+            guard !Task.isCancelled else { return }
+            let result = try await FlowEngine.inspectDesign(input, file: inputFile, in: flows.repo)
+            guard !Task.isCancelled, previewGeneration == request, input == yaml, inputFile == file else { return }
+            let formattingWarnings = diagnostics.filter { $0.code == "FORMAT_NORMALIZED" }
+            diagnostics = result.diagnostics + formattingWarnings
+            editable = result.editable
+            guard result.editable, !result.diagnostics.contains(where: { $0.severity == "error" }), let parsed = result.document else { return }
+            document = parsed; baseline = parsed; source = input
+            fieldErrors = [:]
+            ensureSelection()
+        } catch { if !Task.isCancelled, previewGeneration == request { self.error = error.localizedDescription } }
+    }
+
     func updatePreview() async {
-        guard editable, !saving else { return }
+        guard editable, !saving, !loading, !formatting else { return }
         let expected = revision
         let expectedYaml = yaml
         let expectedSource = source
         do {
             let value = try await FlowEngine.renderDesign(document, original: source, in: flows.repo)
-            guard !Task.isCancelled, revision == expected, yaml == expectedYaml, source == expectedSource, !saving else { return }
+            guard !Task.isCancelled, revision == expected, yaml == expectedYaml, source == expectedSource, !saving, !loading, !formatting else { return }
             diagnostics = value.diagnostics
             guard !value.diagnostics.contains(where: { $0.severity == "error" }) else { return }
             yaml = value.yaml
@@ -104,10 +142,13 @@ final class FlowAuthoringStore {
 
     /// A source-mode transition waits for the current visual document, so Save cannot use an older preview.
     func prepareSource() async throws {
+        formatting = true
+        defer { formatting = false }
         let expected = document
         let expectedSource = source
+        let expectedYaml = yaml
         let rendered = try await FlowEngine.renderDesign(expected, original: expectedSource, in: flows.repo)
-        guard document == expected, source == expectedSource else { throw FlowEngine.Failure(message: String(localized: "The source changed while it was being inspected. Try again.")) }
+        guard document == expected, source == expectedSource, yaml == expectedYaml else { throw FlowEngine.Failure(message: String(localized: "The source changed while it was being inspected. Try again.")) }
         diagnostics = rendered.diagnostics
         if let problem = diagnostics.first(where: { $0.severity == "error" }) { throw FlowEngine.Failure(message: problem.message) }
         yaml = rendered.yaml
@@ -142,9 +183,9 @@ final class FlowAuthoringStore {
         selectedNode = nil
     }
 
-    func addNode(id: String, block: FlowBlockCatalog.Block) {
-        guard !saving else { return }
-        guard validID(id), nodes[id] == nil else { error = String(localized: "Choose a unique name using letters, numbers, hyphens or underscores."); return }
+    @discardableResult func addNode(id: String, block: FlowBlockCatalog.Block) -> Bool {
+        guard !saving else { return false }
+        guard validID(id), nodes[id] == nil else { error = String(localized: "Choose a unique name using letters, numbers, hyphens or underscores."); return false }
         var input: [String: FlowJSON] = [:]
         let required = block.inputs["required"].array.compactMap(\.string)
         for key in required {
@@ -154,6 +195,25 @@ final class FlowAuthoringStore {
         let node: FlowJSON = block.id == "cmd" ? .object(input) : .object(["use": .string(block.id), "with": .object(input)])
         change(["flows", selectedFlow, "nodes", id], node)
         selectedNode = id
+        return true
+    }
+
+    func addForkJoin() {
+        guard !saving, !selectedFlow.isEmpty else { return }
+        func unique(_ base: String) -> String {
+            var candidate = base, count = 2
+            while nodes[candidate] != nil { candidate = "\(base)-\(count)"; count += 1 }
+            return candidate
+        }
+        let prepare = unique("prepare"), first = unique("check-a"), second = unique("check-b"), finish = unique("finish")
+        let snippets: [(String, String, [String])] = [(prepare, "echo Preparing the workspace", []), (first, "echo Check A", [prepare]),
+                                                     (second, "echo Check B", [prepare]), (finish, "echo Flow complete", [first, second])]
+        for (id, run, needs) in snippets {
+            var node: [String: FlowJSON] = ["run": .string(run)]
+            if !needs.isEmpty { node["needs"] = .array(needs.map(FlowJSON.string)) }
+            change(["flows", selectedFlow, "nodes", id], .object(node))
+        }
+        selectedNode = prepare
     }
 
     func removeNode() {

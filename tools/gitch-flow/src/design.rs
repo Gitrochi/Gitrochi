@@ -1,4 +1,4 @@
-//! Read-only YAML authoring bridge. The apps edit complete JSON trees; the engine owns parsing and lossless rendering.
+//! Shared authoring bridge. YAML inspection/rendering is read-only; explicit source saves require a fingerprint.
 
 use crate::cli::Args;
 use serde_json::{json, Value};
@@ -7,6 +7,8 @@ use yaml_rust2::{Yaml, YamlEmitter};
 
 #[path = "design_import.rs"]
 mod imports;
+#[path = "design_source.rs"]
+mod sources;
 
 const MAX_REQUEST_BYTES: u64 = 4 * 1024 * 1024;
 const MAX_YAML_BYTES: usize = 2 * 1024 * 1024;
@@ -300,26 +302,26 @@ pub fn render(request: &Value) -> Value {
     response
 }
 
-/// Stdin/stdout transport for the read-only designer; it deliberately has no repository or filesystem access.
+/// Stdin/stdout transport. Only the explicit source operation accesses repository files.
 pub fn command(args: &Args) -> i32 {
     let operation = args.pos.first().map(String::as_str).unwrap_or("help");
     if ["help", "--help", "-h"].contains(&operation) {
-        println!("design inspect --json  < {{\"yaml\":\"...\",\"fileName\":\"flow.yml\"}}\ndesign render --json   < {{\"document\":{{...}},\"originalYaml\":\"...\"}}\nRead-only: prints proposals and diagnostics; never opens files or executes commands.");
+        println!("design inspect --json  < {{\"yaml\":\"...\",\"fileName\":\"flow.yml\"}}\ndesign render --json   < {{\"document\":{{...}},\"originalYaml\":\"...\"}}\ndesign source --json   < {{\"operation\":\"read\",\"path\":\"scripts/check.sh\"}}\nInspect/render are read-only. Source reads or explicitly saves one repository file; no design command executes source code.");
         return 0;
     }
-    let empty = if operation == "render" {
-        rendered()
-    } else {
-        inspection("", "unknown")
+    let empty = match operation {
+        "render" => rendered(),
+        "source" => sources::empty(""),
+        _ => inspection("", "unknown"),
     };
-    let invalid = if !["inspect", "render"].contains(&operation) || args.pos.len() != 1 {
-        Some("Choose design inspect or design render and pass one JSON request on stdin.")
+    let invalid = if !["inspect", "render", "source"].contains(&operation) || args.pos.len() != 1 {
+        Some("Choose design inspect, render or source and pass one JSON request on stdin.")
     } else if args
         .flags
         .keys()
         .any(|flag| !["--json", "--lang"].contains(&flag.as_str()))
     {
-        Some("Design commands are read-only and accept only --json and --lang; write, execute and output-path options are not supported.")
+        Some("Design commands accept only --json and --lang; execution and output-path options are not supported.")
     } else {
         None
     };
@@ -328,18 +330,28 @@ pub fn command(args: &Args) -> i32 {
         return 1;
     }
     let mut input = Vec::new();
+    // Escaping two MiB of valid source text can require twelve MiB on the JSON wire.
+    let request_limit = if operation == "source" {
+        16 * 1024 * 1024
+    } else {
+        MAX_REQUEST_BYTES
+    };
     if std::io::stdin()
-        .take(MAX_REQUEST_BYTES + 1)
+        .take(request_limit + 1)
         .read_to_end(&mut input)
         .is_err()
-        || input.len() as u64 > MAX_REQUEST_BYTES
+        || input.len() as u64 > request_limit
     {
         println!(
             "{}",
             reject(
                 empty,
                 "DESIGN_SIZE",
-                "The JSON request could not be read or exceeds the 4 MiB authoring limit."
+                if operation == "source" {
+                    "The source JSON request could not be read or exceeds the 16 MiB limit."
+                } else {
+                    "The JSON request could not be read or exceeds the 4 MiB authoring limit."
+                }
             )
         );
         return 1;
@@ -354,10 +366,17 @@ pub fn command(args: &Args) -> i32 {
             return 1;
         }
     };
-    let result = if operation == "render" {
-        render(&request)
-    } else {
-        inspect(&request)
+    let result = match operation {
+        "render" => render(&request),
+        "source" => match crate::cli::repo_root(args) {
+            Some(root) => sources::handle(&root, &request),
+            None => reject(
+                sources::empty(request["path"].as_str().unwrap_or("")),
+                "SOURCE_REPOSITORY",
+                "Open a Git repository before editing related source files.",
+            ),
+        },
+        _ => inspect(&request),
     };
     println!(
         "{}",

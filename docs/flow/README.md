@@ -42,11 +42,34 @@ Windows production components were also inspected at 1280 × 720 with the real d
 
 Select a flow to preview its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to inspect its command, undo command, executor and source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
 
-The configuration editor opens a visual module designer. Select a step to read its command, dependencies, inputs and effects, or add a module from the engine's catalogue. Docker, Compose, tests, remote CI and deployment modules use the same input schemas as execution. The YAML source remains available for advanced settings. Unknown fields are retained in the complete document; an unchanged document retains its original bytes and comments. A visual edit normalizes formatting and reports that comments will be removed before saving.
+The configuration editor opens in **Code**. Write commands and `needs` in YAML; the dependency diagram follows the source automatically. No connection drawing is required. A step without `needs` can run in parallel; `needs: [prepare]` waits for `prepare`, and `needs: [lint, test]` waits for both checks. Invalid source shows diagnostics and marks or hides the previous diagram instead of presenting it as the current configuration.
+
+The optional **Modules** view provides forms for the built-in catalogue. Docker, Compose, tests, remote CI and deployment modules use the same input schemas as execution. The full source remains available for advanced settings, custom composite blocks, services, suites, conditions and expressions. Unknown fields are retained in the complete document; an unchanged document retains its original bytes and comments. A form edit normalizes formatting and reports that comments will be removed before saving.
 
 Saving validates the configuration with the flow engine; it does not execute commands or approve trust. If validation fails, the previous file is restored. If another editor changed the file since it was opened, reload it before saving. Imported files are previewed before being added to the repository's flow configuration. Unsupported YAML features or values that cannot safely pass through the visual editor produce diagnostics rather than a lossy rewrite.
 
-Drag a card to arrange the diagram, drag its background to pan, or use the zoom controls and trackpad pinch to inspect it. Modified wheel scrolling also zooms the diagram. Fit and reset controls restore a useful view. Visual positions do not change execution dependencies; change dependencies in the module settings.
+Drag a card to arrange the diagram, drag its background to pan, or use the zoom controls and trackpad pinch to inspect it. Modified wheel scrolling also zooms the diagram. Fit and reset controls restore a useful view. Visual positions do not change execution dependencies; write `needs` in code or use the optional module settings.
+
+### Editing the files behind a flow
+
+Open a referenced script or enter a repository-relative path to inspect its actual source. The same editor supports flow YAML, shell scripts, application code, Compose files, Jenkinsfiles and custom modules in `.gitch/blocks/`. It provides line numbers, syntax colours, search, indentation, undo and redo, line wrapping and font controls. **New file** creates the required folders when the new source is saved; opening or previewing a file never runs it.
+
+Related files save separately from the flow definition. A save checks the file fingerprint from when it was opened and refuses to overwrite a file changed elsewhere. Reload to inspect the newer version before saving again. The editor accepts UTF-8 text up to 2 MiB, preserves line endings and untouched source, and refuses symbolic-link paths, Git metadata and paths outside the repository. These checks are shared by both apps through the engine's `design source` command.
+
+Built-in modules are ordinary code references such as `use: setup.node` or `use: test.vitest`. To reuse your own sequence, create `.gitch/blocks/project-check.yml`:
+
+```yaml
+block: project-check
+version: 1.0.0
+nodes:
+  lint:
+    run: bash scripts/lint.sh
+  test:
+    needs: [lint]
+    run: bash scripts/test.sh
+```
+
+Then call it from a flow node with `use: ./blocks/project-check`. Its internal steps are expanded when the engine plans the flow. The script files remain ordinary repository code that can be edited independently.
 
 ### Connected CI/CD
 

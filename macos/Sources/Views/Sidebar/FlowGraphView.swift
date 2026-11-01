@@ -49,11 +49,18 @@ struct FlowGraphView: View {
 
     var body: some View {
         let layout = positionedLayout()
+        let warningHeight: CGFloat = (layout.missingDependencies.isEmpty ? 0 : 26) + (layout.unresolved.isEmpty ? 0 : 26)
         GeometryReader { geometry in
-            let fit = FlowGraphLayout.fit(layout, viewport: geometry.size)
+            let fit = FlowGraphLayout.fit(layout, viewport: CGSize(width: geometry.size.width, height: geometry.size.height - warningHeight))
             let scale = zoom ?? fit
             VStack(spacing: 0) {
                 controls(scale: scale)
+                if !layout.missingDependencies.isEmpty {
+                    dependencyWarning("Some dependencies refer to missing modules.", details: layout.missingDependencies)
+                }
+                if !layout.unresolved.isEmpty {
+                    dependencyWarning("Some dependencies cannot be resolved. Check for cycles.", details: layout.unresolved)
+                }
                 ScrollView([.horizontal, .vertical]) {
                     ZStack(alignment: .topLeading) {
                         FlowCanvasInteraction(onZoom: { factor in
@@ -79,7 +86,7 @@ struct FlowGraphView: View {
                     .frame(width: layout.width, height: layout.height, alignment: .topLeading)
                     .scaleEffect(scale, anchor: .topLeading)
                     .frame(width: layout.width * scale, height: layout.height * scale, alignment: .topLeading)
-                    .frame(minWidth: max(0, geometry.size.width - 2), minHeight: max(0, geometry.size.height - 40), alignment: .center)
+                    .frame(minWidth: max(0, geometry.size.width - 2), minHeight: max(0, geometry.size.height - 44 - warningHeight), alignment: .center)
                 }
                 .background {
                     Canvas { context, size in
@@ -117,28 +124,36 @@ struct FlowGraphView: View {
     }
 
     private func controls(scale: CGFloat) -> some View {
-        HStack(spacing: 8) {
-            Label("Dependency graph", systemImage: "point.3.connected.trianglepath.dotted")
-                .font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
-            Spacer()
+        ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) {
-                Button { zoom = max(0.1, scale - 0.15) } label: { Image(systemName: "minus.magnifyingglass") }
-                    .help("Zoom out").disabled(scale <= 0.1)
-                Text(scale, format: .percent.precision(.fractionLength(0))).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 34)
-                Button { zoom = min(2.5, scale + 0.15) } label: { Image(systemName: "plus.magnifyingglass") }
-                    .help("Zoom in").disabled(scale >= 2.5)
-                Divider().frame(height: 12)
-                Button("Fit") { zoom = nil }.help("Fit graph to view")
-                Button { offsets = [:]; zoom = 1 } label: { Image(systemName: "arrow.counterclockwise") }
-                    .help("Reset layout")
+                Label("Dependency graph", systemImage: "point.3.connected.trianglepath.dotted")
+                    .font(.caption.weight(.medium)).foregroundStyle(.secondary).fixedSize()
+                Spacer(minLength: 0)
+                zoomControls(scale: scale)
             }
-            .padding(.horizontal, 9).padding(.vertical, 5)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.primary.opacity(0.06)))
+            HStack(spacing: 0) { Spacer(minLength: 0); zoomControls(scale: scale) }
         }
         .buttonStyle(.borderless)
         .padding(.horizontal, 14).padding(.vertical, 8)
         .background(Color(nsColor: .windowBackgroundColor).opacity(0.96))
+    }
+
+    private func zoomControls(scale: CGFloat) -> some View {
+        HStack(spacing: 8) {
+            Button { zoom = max(0.1, scale - 0.15) } label: { Image(systemName: "minus.magnifyingglass") }
+                .help("Zoom out").accessibilityLabel("Zoom out").disabled(scale <= 0.1)
+            Text(scale, format: .percent.precision(.fractionLength(0))).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 34)
+            Button { zoom = min(2.5, scale + 0.15) } label: { Image(systemName: "plus.magnifyingglass") }
+                .help("Zoom in").accessibilityLabel("Zoom in").disabled(scale >= 2.5)
+            Divider().frame(height: 12)
+            Button("Fit") { zoom = nil }.help("Fit graph to view")
+            Button { offsets = [:]; zoom = 1 } label: { Image(systemName: "arrow.counterclockwise") }
+                .help("Reset layout").accessibilityLabel("Reset layout")
+        }
+        .fixedSize().accessibilityElement(children: .contain).accessibilityLabel("Dependency graph")
+        .padding(.horizontal, 9).padding(.vertical, 5)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
+        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.primary.opacity(0.06)))
     }
 
     private func positionedLayout() -> FlowGraphLayout.Layout {
@@ -148,7 +163,15 @@ struct FlowGraphView: View {
             return FlowGraphLayout.Item(id: item.id, x: max(12, item.x + offset.width), y: max(12, item.y + offset.height))
         }
         return .init(items: items, width: max(original.width, (items.map(\.x).max() ?? 0) + FlowGraphLayout.cardWidth + 28),
-                     height: max(original.height, (items.map(\.y).max() ?? 0) + FlowGraphLayout.cardHeight + 28))
+                     height: max(original.height, (items.map(\.y).max() ?? 0) + FlowGraphLayout.cardHeight + 28),
+                     missingDependencies: original.missingDependencies, unresolved: original.unresolved)
+    }
+
+    private func dependencyWarning(_ title: LocalizedStringKey, details: [String]) -> some View {
+        Label(title, systemImage: "exclamationmark.triangle")
+            .font(.caption).foregroundStyle(.orange).lineLimit(1)
+            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
+            .background(Color.orange.opacity(0.05)).help(details.joined(separator: "\n"))
     }
 
     private func moveSelected(x: CGFloat, y: CGFloat) {

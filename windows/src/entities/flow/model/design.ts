@@ -12,6 +12,7 @@ export interface FlowDesignInspection {
   proposal: { document: FlowDocument; yaml: string } | null;
 }
 export interface FlowDesignRender { schemaVersion: number; yaml: string; diagnostics: FlowDesignDiagnostic[]; formattingChanged: boolean }
+export interface FlowSourceFile { schemaVersion: number; path: string; content: string | null; fingerprint: string | null; exists: boolean; saved: boolean; diagnostics: FlowDesignDiagnostic[] }
 export function checkedDesignYaml(result: FlowDesignRender): string {
   const errors = result.diagnostics.filter((diagnostic) => diagnostic.severity === "error");
   if (errors.length) throw new Error(errors.map((diagnostic) => diagnostic.message).join("\n"));

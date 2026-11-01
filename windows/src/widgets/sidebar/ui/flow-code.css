@@ -1,0 +1,42 @@
+.flow-code-workspace { display: flex; flex-direction: column; height: min(56vh, 620px); min-height: 380px; overflow: hidden; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.flow-code-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 11px; min-height: 40px; border-bottom: 1px solid var(--border); background: var(--sidebar); }
+.flow-code-toolbar > label { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-2); }
+.flow-code-toolbar select { min-width: 110px; max-width: 190px; font-size: 12px; }
+.flow-code-guidance { color: var(--text-2); font-size: 11px; line-height: 1.5; }
+.flow-config-tabs > button { font-size: 12px; font-weight: 500; }
+.flow-config-tabs > button[aria-selected=true] { color: var(--text); }
+.flow-code-preview { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.flow-code-preview > .flow-graph { border: 0; border-radius: 0; box-shadow: none; min-height: 180px; }
+.flow-code-workspace .flow-canvas-title .flow-count, .flow-code-workspace .flow-zoom { font-size: 11px; }
+.flow-code-preview.stale > .flow-graph .flow-canvas { opacity: .58; }
+.flow-code-preview-status { display: flex; align-items: center; gap: 6px; padding: 8px 12px; min-height: 30px; border-top: 1px solid var(--border); color: var(--text-2); background: var(--sidebar); font-size: 11px; line-height: 1.5; }
+.flow-code-preview-status.warning { color: color-mix(in srgb, var(--orange) 75%, var(--text)); }
+.flow-related-files { padding: 10px 11px; border-top: 1px solid var(--border); background: var(--surface); }
+.flow-related-files > header { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-2); }
+.flow-related-files > header strong { font-size: 12px; font-weight: 500; }
+.flow-related-files > header .btn { font-size: 12px; padding: 4px 8px; }
+.flow-related-files > p { color: var(--text-3); font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+.flow-related-paths { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; max-height: 55px; overflow: auto; }
+.flow-related-paths > button { font-size: 12px; color: var(--link, #0b5cad); background: var(--sidebar); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+.flow-code-error { font-size: 11px; margin: 0; padding: 8px 11px; border-top: 1px solid var(--border); }
+.flow-code-snippets { max-height: 48vh; overflow: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.flow-file-editor { display: flex; flex-direction: column; gap: 10px; height: min(58vh, 600px); min-height: 310px; }
+.flow-file-path { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.flow-file-path > input { flex: 1; min-width: 200px; font-size: 12px; }
+.flow-file-editor > .code-editor { border: 1px solid var(--border); border-radius: 8px; }
+.flow-file-error { margin: 0; font-size: 11px; max-height: 70px; overflow: auto; white-space: pre-wrap; }
+.flow-file-save-note { max-width: 58%; color: var(--text-2); font-size: 11px; line-height: 1.5; }
+.flow-file-saved { color: var(--green); font-size: 11px; }
+.modal:has(.flow-config, .flow-file-editor) :is(.btn, .icon-btn):disabled { opacity: 1; background: var(--surface-2, var(--sidebar)); border-color: var(--border); color: var(--text-3); box-shadow: none; }
+.flow-optional-inputs { margin: 0 0 12px; padding: 9px 0; border-top: 1px solid var(--border); }
+.flow-optional-inputs > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-2); font-size: 12px; margin-bottom: 10px; }
+.flow-optional-inputs > summary > span { color: var(--text-3); font-size: 11px; }
+.flow-code-workspace:is(.compact, .narrow) .flow-code-guidance { display: none; }
+.flow-code-workspace:is(.compact, .narrow) .flow-code-toolbar { gap: 6px; }
+.flow-code-workspace.narrow .source-split { display: flex; flex-direction: column; overflow: auto; }
+.flow-code-workspace.narrow .source-split-first { flex: 1 0 300px; }
+.flow-code-workspace.narrow .source-split-second { flex: 1 0 310px; border-top: 1px solid var(--border); }
+.flow-code-workspace.narrow .source-split-divider { display: none; }
+.flow-code-workspace.narrow .flow-canvas-toolbar { flex-wrap: wrap; }
+.flow-code-workspace.narrow .flow-canvas-title { flex: 1 0 100%; }
+@media (max-width: 720px) { .flow-code-snippets { grid-template-columns: 1fr; } .flow-file-save-note { display: none; } }
