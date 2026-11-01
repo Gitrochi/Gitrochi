@@ -1,0 +1,88 @@
+{
+  "hooks" : {
+    "Notification" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" Notification",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "PermissionRequest" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" PermissionRequest",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "PreToolUse" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" PreToolUse",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "SessionEnd" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" SessionEnd",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "SessionStart" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" SessionStart",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "Stop" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" Stop",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ],
+    "UserPromptSubmit" : [
+      {
+        "hooks" : [
+          {
+            "command" : "\"\/Gitrochi\/agents\/hook.sh\" UserPromptSubmit",
+            "timeout" : 5,
+            "type" : "command"
+          }
+        ],
+        "matcher" : ""
+      }
+    ]
+  }
+}
