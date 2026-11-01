@@ -28,8 +28,9 @@ export function useSecondTicker(on: boolean) {
 
 /**
  * The top of the Inbox: agents waiting for an answer, each with the time left before auto-continue answers for the
- * person. Answer, allow or deny here, answer in the agent's terminal instead, or keep this one from being answered
- * automatically. (macOS: Views/Ledger/LedgerPromptStrip.swift)
+ * person. Answer, allow or deny here (`prompt_answer`), answer in the agent's terminal instead, or keep this one from
+ * being answered automatically; the last two end the hook's wait without a decision, so the terminal asks. A permission
+ * request shows in the terminal during the wait as well (#171). (macOS: Views/Ledger/LedgerPromptStrip.swift)
  */
 export function LedgerPromptStrip({ store, onOpen, onOpenTerminal }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void }) {
   useObserve(store);
@@ -79,6 +80,7 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
       </div>
       {summary && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
       {proposed && proposed.kind !== "unknown" && left.tone !== "none" && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
+      {prompt.kind === "permission" && <div className="hint">{t("The agent's terminal shows this request too; an answer there counts as well.")}</div>}
       {answering ? (
         <>
           {options.length > 0 && (
@@ -98,9 +100,9 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
             {t("Answer in terminal")}
           </Button>
           {prompt.deadline > 0 && (
-            <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not automatically this time")}|${t("No automatic answer for this prompt; answer it here or in the agent's terminal.")}`}>
+            <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not this time")}|${t("No automatic answer for this prompt; it waits for you in the agent's terminal.")}`}>
               <TimerOff size={13} />
-              {t("Not automatically this time")}
+              {t("Not this time")}
             </Button>
           )}
         </div>

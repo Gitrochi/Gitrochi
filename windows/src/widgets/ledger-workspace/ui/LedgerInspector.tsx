@@ -1,13 +1,13 @@
 import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
-import { compareVersions, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
+import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { ipc } from "@/shared/api";
-import { displayPath } from "@/shared/config";
+import { displayPath, samePath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { LedgerTimeline } from "./LedgerTimeline";
 import { mergeMenu, moreMenu } from "./session-actions";
 import { BaseLine, SessionId, Section, VerdictBadge, When } from "./parts";
@@ -61,7 +61,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
         {confirmedBy && <span className="hint">{t("Confirmed by {0} (applied)", String(confirmedBy.data?.by ?? ""))}</span>}
         <div className="ledger-links">
           {s.links.branch && <span className="ledger-link mono" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
-          {s.links.worktree && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
+          {s.links.worktree && !samePath(s.links.worktree, s.links.repoPath) && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
           {s.links.pr && <button type="button" className="ledger-link" data-tip={s.links.pr.url} onClick={() => void ipc.openUrl(s.links.pr!.url)}><GitPullRequest size={12} /><span>#{s.links.pr.number}</span></button>}
           {s.links.agentId && (agent && agents.canFocus(agent)
             ? <button type="button" className="ledger-link" data-tip={t("Open the agent's terminal")} onClick={() => agents.focus(agent)}><Bot size={12} /><span>{agentStatusTitle[agent.status]}</span></button>
@@ -88,6 +88,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
             ))}
           </Section>
         )}
+        {s.links.agentId && <AutoContinue store={store} s={s} busy={busy} />}
         <Section title={t("Timeline")} count={detail?.events.length}>
           {detail ? <LedgerTimeline key={s.id} events={detail.events} focus={store.focusEventId} /> : <Spinner />}
         </Section>
@@ -148,6 +149,45 @@ function PrimaryActions({ store, s, busy, human }: { store: LedgerStore; s: Ledg
     default:
       return <Button size="small" disabled={busy} onClick={human("set_status", { status: "done" })} tip={`${t("Mark done")}|${t("The work is finished; whether it is merged is decided next.")}`}>{t("Mark done")}</Button>;
   }
+}
+
+/**
+ * This session's auto-continue (docs/ledger/DESIGN.md §9.3): only agents Gitrochi started carry the hooks that wait. Without
+ * a policy of its own the session follows the default in the ledger's settings.
+ */
+function AutoContinue({ store, s, busy }: { store: LedgerStore; s: LedgerSession; busy: boolean }) {
+  const [fallback, setFallback] = useState<LedgerAutoContinue>({ enabled: false, delaySec: DEFAULT_WAIT_SEC });
+  useEffect(() => {
+    let live = true;
+    void store.readSettings().then((x) => live && setFallback({ enabled: x.autoContinue.enabled === true, delaySec: Number(x.autoContinue.delaySec) || DEFAULT_WAIT_SEC }), () => {});
+    return () => { live = false; };
+  }, [store]);
+  const policy = s.autoContinue ?? fallback;
+  const decision = s.role === "decision";
+  const save = (next: LedgerAutoContinue) => void store.human({ action: "auto_continue", sessionId: s.id, autoContinue: next });
+  return (
+    <Section title={t("Auto-continue")} className="ledger-auto-continue">
+      <Checkbox checked={policy.enabled && !decision} disabled={busy || decision} onChange={(enabled) => save({ enabled, delaySec: policy.delaySec })} label={t("Continue automatically")} />
+      <div className="row">
+        <span>{t("Wait")}</span>
+        <WaitField value={policy.delaySec} disabled={busy || decision} onCommit={(delaySec) => save({ enabled: policy.enabled, delaySec })} />
+        <span>{t("seconds")}</span>
+      </div>
+      <span className="hint">{decision ? t("Sessions with the decision role never continue automatically.") : t("When nobody answers the agent in time, Gitrochi answers with a careful default. Each answer waits in the Inbox for your review.")}</span>
+    </Section>
+  );
+}
+
+/** Seconds from 10 to 300, saved when the field is left or on Enter; anything else goes back */
+function WaitField({ value, disabled, onCommit }: { value: number; disabled: boolean; onCommit: (n: number) => void }) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  const commit = () => {
+    const n = Number(draft);
+    if (Number.isInteger(n) && n >= 10 && n <= 300 && n !== value) onCommit(n);
+    else setDraft(String(value));
+  };
+  return <input className="input" type="number" min={10} max={300} value={draft} disabled={disabled} aria-label={t("Wait")} style={{ width: 72 }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />;
 }
 
 function OpenQuestion({ store, q, busy }: { store: LedgerStore; q: LedgerQuestion; busy: boolean }) {
