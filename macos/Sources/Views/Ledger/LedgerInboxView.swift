@@ -35,7 +35,8 @@ struct LedgerInboxView: View {
                     }
                     if items.isEmpty && ledger.inbox.prompts.isEmpty {
                         WorkspaceEmptyState(title: "Nothing needs you", systemImage: "tray",
-                                            description: "Questions, finished work to confirm and sessions to decide show up here.")
+                                            description: "Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you.",
+                                            actionTitle: "View progress", action: { ledger.page = ledger.boardRows.isEmpty && ledger.streamCount > 0 ? .streams : .board })
                             .frame(minHeight: 320)
                     } else {
                         Text("↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged")

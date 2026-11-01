@@ -186,11 +186,12 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
 function Onboarding({ onConnect, onImport, onImportLegacy }: { onConnect: () => void; onImport: () => void; onImportLegacy: () => void }) {
   return (
     <div className="ledger-onboarding">
-      <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No agent sessions yet")} detail={t("The Ledger keeps track of what each agent session was for, which baseline it started from and whether its result was merged. You answer, confirm and clean up.")} />
+      <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No reports yet")} detail={t("No reports have arrived yet. Register the tools, then ask your agent to send a start report.")} />
+      <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
       <div className="ledger-onboarding-steps">
         <div className="card">
           <strong>{t("Connect Claude Code")}</strong>
-          <span className="hint">{t("Agents report their sessions through the Ledger's MCP server.")}</span>
+          <span className="hint">{t("The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations.")}</span>
           <Button kind="primary" onClick={onConnect}><PlugZap size={14} />{t("Connect Claude Code")}</Button>
         </div>
         <div className="card">

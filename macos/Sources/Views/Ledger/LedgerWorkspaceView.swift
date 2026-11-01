@@ -211,15 +211,15 @@ struct LedgerWorkspaceView: View {
     /// No sessions yet: what the ledger is for, and the ways to fill it
     private var onboarding: some View {
         VStack(spacing: 14) {
-            WorkspaceEmptyState(title: "Keep track of your agent sessions", systemImage: WorkspaceDestination.ledger.symbol,
-                                description: "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here.")
+            WorkspaceEmptyState(title: "No reports yet", systemImage: WorkspaceDestination.ledger.symbol,
+                                description: "No reports have arrived yet. Register the tools, then ask your agent to send a start report.")
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
                 Button("Connect Claude Code…") { sheet = .connect }.buttonStyle(.borderedProminent)
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
             }
-            Text("Sessions you start from Gitrochi appear here by themselves.").font(.system(size: 11)).foregroundStyle(.secondary)
+            Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -2366,6 +2366,28 @@
 "Agent activity" = "エージェントの動き";
 "Agents report what they started from, what they made and what they need from you. You answer, confirm and clean up here." = "エージェントは、何から始めたか、何を作ったか、あなたに何が必要かを報告します。ここでは回答し、確認し、片付けるだけです。";
 "Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi から起動したエージェントはこれがなくても追跡されます。Gitrochi は Claude Code の設定に何も書き込みません。";
+
+/* Ledger: registration and first-report guidance. */
+"No reports yet" = "まだ報告がありません";
+"Register the Ledger tools with Claude Code by running this command in a terminal." = "ターミナルでこのコマンドを実行し、Ledger のツールを Claude Code に登録してください。";
+"Registration makes the tools available. It does not import existing conversations or make agents report automatically." = "登録するとツールを利用できるようになります。既存の会話の取り込みや、エージェントによる自動報告は行いません。";
+"Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work." = "Claude Code の会話を新しく開始するか再起動し、現在の作業の開始報告を ledger_report で送るよう依頼してください。";
+"Reporting instruction" = "報告の指示";
+"Copy reporting instruction" = "報告の指示をコピー";
+"To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default." = "Gitrochi から新しく起動する Claude Code エージェントを自動追跡するには、設定 > 台帳 > 自分が起動したエージェントを追跡をオンにしてください。初期状態ではオフです。";
+"Test Ledger" = "Ledger をテスト";
+"Checks this app's Ledger, not Claude Code's MCP configuration." = "このアプリの Ledger を確認します。Claude Code の MCP 設定は確認しません。";
+"The Ledger responds." = "Ledger は応答しています。";
+"Connecting tools alone creates no session. Send a first report to see this conversation here." = "ツールを接続するだけではセッションは作成されません。この会話をここに表示するには、最初の報告を送ってください。";
+"The Ledger shows reports agents send about their work. Connecting tools alone does not import conversations." = "Ledger はエージェントが作業について送信した報告を表示します。ツールの接続だけでは会話を取り込みません。";
+"Nothing is written to Claude Code's settings by Gitrochi." = "Gitrochi は Claude Code の設定を書き換えません。";
+"Copy MCP settings" = "MCP 設定をコピー";
+"MCP settings entry" = "MCP 設定項目";
+"Other MCP clients: add this entry to their MCP settings." = "他の MCP クライアントでは、この項目を MCP 設定に追加してください。";
+"No reports have arrived yet. Register the tools, then ask your agent to send a start report." = "まだ報告が届いていません。ツールを登録し、エージェントに開始報告を送るよう依頼してください。";
+"Command for Claude Code" = "Claude Code 用のコマンド";
+"Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you." = "進捗はボードとストリームで確認できます。受信トレイには、対応が必要な質問、確認、判断だけが表示されます。";
+"View progress" = "進捗を表示";
 "All" = "すべて";
 "All projects" = "すべてのプロジェクト";
 "Allow" = "許可";
