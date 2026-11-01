@@ -30,12 +30,11 @@ describe("Ledger verdicts", () => {
     expect(verdict({ lastAt: NOW - 100 * HOUR, snoozeUntil: NOW + HOUR })).toBe("active");
     expect(verdict({ lastAt: NOW - 100 * HOUR, snoozeUntil: NOW - HOUR })).toBe("stale");
   });
-  it("shows every verdict once, in the Inbox's order, with the contract's colours", () => {
+  it("shows every verdict once, in the Inbox's order, with status tones independent of the accent", () => {
     expect([...verdictDisplayOrder].sort()).toEqual([...ledgerVerdicts].sort());
     expect(verdictDisplayOrder.slice(0, 5)).toEqual(["needs_human", "confirm", "expirable", "pending_merge", "stale"]);
-    const colours: Record<LedgerVerdict, string> = { needs_human: "--orange", pending_merge: "--accent", confirm: "--accent", expirable: "--green", stale: "--red", shelved: "--text-3", archived: "--text-3", active: "--text-2" };
-    for (const v of ledgerVerdicts) expect(verdictLook(v).color, v).toBe(colours[v]);
-    expect(ledgerVerdicts.filter((v) => verdictLook(v).outline)).toEqual(["confirm"]);
+    const tones: Record<LedgerVerdict, string> = { needs_human: "waiting", pending_merge: "info", confirm: "info", expirable: "passed", stale: "failed", shelved: "neutral", archived: "neutral", active: "neutral" };
+    for (const v of ledgerVerdicts) expect(verdictLook(v).tone, v).toBe(tones[v]);
   });
   it("sorts the Board by verdict, then the latest activity", () => {
     const rows = [session({ id: "A", verdict: "active", lastAt: NOW }), session({ id: "B", verdict: "needs_human", lastAt: NOW - HOUR }), session({ id: "C", verdict: "needs_human", lastAt: NOW }), session({ id: "D", verdict: "archived", lastAt: NOW })];

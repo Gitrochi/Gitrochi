@@ -1,5 +1,5 @@
 import { Archive, CircleCheck, Clock, X } from "lucide-react";
-import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { filterSessions, type LedgerStore, stepIndex, streamCount, verdictCounts, verdictLook, visibleRows } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -84,7 +84,7 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
         {counts.filter((c) => c.count || store.verdicts.has(c.verdict)).map(({ verdict }) => {
           const look = verdictLook(verdict), Icon = verdictIcon(verdict), on = store.verdicts.has(verdict);
           return (
-            <button key={verdict} type="button" className={`ledger-chip${on ? " on" : ""}`} aria-pressed={on} style={{ "--verdict": `var(${look.color})` } as CSSProperties} onClick={(e) => store.toggleVerdict(verdict, !(e.ctrlKey || e.metaKey))} data-tip={`${t(look.label)}|${t("Click to show only these; Ctrl+click to add them.")}`}>
+            <button key={verdict} type="button" className={`ledger-chip${on ? " on" : ""}`} aria-pressed={on} onClick={(e) => store.toggleVerdict(verdict, !(e.ctrlKey || e.metaKey))} data-tip={`${t(look.label)}|${t("Click to show only these; Ctrl+click to add them.")}`}>
               <Icon size={12} />
               {t(look.label)}
             </button>
@@ -123,12 +123,12 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
             {rows.slice(first, last).map((s, i) => {
               const index = first + i;
               return (
-                <div key={s.id} role="row" aria-rowindex={index + 1} data-session={s.id} className={`ledger-table-row${store.checked.has(s.id) ? " checked" : ""}${index === active ? " active" : ""}${s.id === store.selectedId ? " selected" : ""}`} style={{ top: index * ROW }} onClick={(e) => { if (!(e.target as HTMLElement).closest("input")) click(index, e); }}>
+                <div key={s.id} role="row" aria-rowindex={index + 1} data-session={s.id} className={`ledger-table-row${store.checked.has(s.id) ? " checked" : ""}${index === active ? " active" : ""}${(active >= 0 ? index === active : s.id === store.selectedId) ? " selected" : ""}`} style={{ top: index * ROW }} onClick={(e) => { if (!(e.target as HTMLElement).closest("input")) click(index, e); }}>
                   <input type="checkbox" className="ledger-check" checked={store.checked.has(s.id)} aria-label={t("Select {0}", s.id)} onChange={(e) => { store.toggleChecked(s.id, e.target.checked); anchor.current = index; }} />
                   <SessionId session={s} />
                   <span className="ledger-cell" title={s.title}>{s.title}</span>
                   <span className="ledger-wide-only ledger-cell"><BaseLine session={s} /></span>
-                  <span className="ledger-cell"><VerdictBadge verdict={s.verdict} /></span>
+                  <span className="ledger-cell">{!(store.verdicts.size === 1 && store.verdicts.has(s.verdict)) && <VerdictBadge verdict={s.verdict} />}</span>
                   <span className="ledger-wide-only ledger-cell muted">{s.kind}</span>
                   <span className="ledger-cell"><When at={s.lastAt} /></span>
                 </div>

@@ -2045,5 +2045,6 @@
   "Auto-continue already answered {0} times in a row.": "Автоматичних відповідей поспіль уже: {0}.",
   "Answer it in the agent's terminal.": "Дайте відповідь у терміналі агента.",
   "Ledger overview": "Огляд книги обліку",
-  "What agents read about this project, in a new tab of the terminal below.": "Те, що агенти читають про цей проєкт, у новій вкладці термінала внизу."
+  "What agents read about this project, in a new tab of the terminal below.": "Те, що агенти читають про цей проєкт, у новій вкладці термінала внизу.",
+  "Open a repository to use its terminal": "Open a repository to use its terminal"
 }

@@ -83,6 +83,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
 
   const boardRows = filterSessions(state.sessions, { project, verdicts: store.verdicts, text, showArchived: store.showArchived, unreportedOnly: store.unreportedOnly });
   const progressView = boardRows.length === 0 && streamCount(state.sessions, project) > 0 ? "streams" : "board";
+  const selectedKey = activeKey ?? items.find((i) => i.session?.id === store.selectedId)?.key;
   const busy = store.busy > 0;
   return (
     <div className="ledger-inbox" role="region" aria-label={t("Inbox")} ref={self} tabIndex={-1}>
@@ -107,7 +108,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
                     key={item.key}
                     role="listitem"
                     ref={(el) => { if (el) rows.current.set(item.key, el); else rows.current.delete(item.key); }}
-                    className={`ledger-row${item.key === activeKey ? " active" : ""}${item.session && item.session.id === store.selectedId ? " selected" : ""}`}
+                    className={`ledger-row${item.key === activeKey ? " active" : ""}${item.key === selectedKey ? " selected" : ""}`}
                     data-item={item.key}
                     onMouseDown={() => setActiveKey(item.key)}
                     onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, a, input") && item.session) onOpen(item.session.id); }}
@@ -187,7 +188,7 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAns
       <div className="ledger-meta">
         <span>{s.kind}</span>
         <BaseLine session={s} />
-        {s.mergedInto && <span className="mono">{t("merged into {0}", s.mergedInto)}</span>}
+        {s.mergedInto && <span>{t("merged into {0}", s.mergedInto)}</span>}
       </div>
       <div className="ledger-row-actions">
         {s.verdict === "confirm" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "ack", sessionId: s.id })} tip={`${t("Confirm")}|${t("The outcome is right; the conversation can be cleaned up next.")}|C`}><CircleCheck size={13} />{t("Confirm")}</Button>}

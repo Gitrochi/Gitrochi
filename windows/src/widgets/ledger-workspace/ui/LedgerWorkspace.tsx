@@ -149,8 +149,10 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
             <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
             <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect Claude Code")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect Claude Code")} onClick={() => setSheet("connect")} />
-            {/* only with a repository to launch in: no faded, reasonless disabled button (docs/design.md) */}
-            {repoPath && launcher && <IconButton icon={<SquareTerminal size={16} />} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />}
+            <div className="ledger-quick-launch">
+              <IconButton icon={<SquareTerminal size={16} />} disabled={!repoPath || !launcher} tip={`${t("Open in the terminal below")}|${t("Ledger overview")} · Claude Code`} aria-label={t("Open in the terminal below")} data-quick-launch onClick={(e) => void quickLaunch(e.currentTarget)} />
+              {(!repoPath || !launcher) && <span className="hint">{t("Open a repository to use its terminal")}</span>}
+            </div>
           </div>
         </div>
         {!empty && <LedgerTopBar store={store} repoPath={repoPath} />}
