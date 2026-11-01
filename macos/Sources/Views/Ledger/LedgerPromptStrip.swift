@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Agents waiting on a person right now, with the time left before auto-continue answers: in full at the top of the
-/// Inbox, one line each above the other views. Its buttons are reached with Tab; no single key answers an agent.
+/// Inbox, one line each above the other views. Answer…, Allow, Deny, Answer in terminal and Not this time go out through
+/// `prompt_answer` (DESIGN.md §9.1). Its buttons are reached with Tab; no single key answers an agent.
 /// (Windows: widgets/ledger-workspace/ui/LedgerPromptStrip.tsx)
 struct LedgerPromptStrip: View {
     let prompts: [LedgerPendingPrompt]
@@ -24,6 +25,25 @@ struct LedgerPromptStrip: View {
     }
 }
 
+/// The buttons every waiting prompt has besides its answer: leave it to the terminal, or let this one pass without an
+/// automatic answer. Both end the hook without a decision, so the agent's own question or dialog shows in its terminal.
+private struct LedgerPromptExits: View {
+    let prompt: LedgerPendingPrompt
+    let ledger: LedgerStore
+    let busy: Bool
+
+    var body: some View {
+        Button("Answer in terminal") { Task { await ledger.reply(prompt, .answerInTerminal) } }
+            .disabled(busy)
+            .help("Stop waiting here and answer in the agent's own terminal")
+        if LedgerCountdown.isCounting(prompt) {
+            Button("Not this time") { Task { await ledger.reply(prompt, .holdAuto) } }
+                .disabled(busy)
+                .help("No automatic answer for this prompt: it waits for you in the agent's terminal")
+        }
+    }
+}
+
 /// One waiting prompt in a line: what it is, the time left, and the answers that need no typing
 private struct LedgerPromptLine: View {
     let prompt: LedgerPendingPrompt
@@ -34,6 +54,7 @@ private struct LedgerPromptLine: View {
 
     var body: some View {
         let session = ledger.session(prompt.sessionId)
+        let summary = LedgerPromptText.summary(prompt)
         HStack(spacing: 8) {
             Image(systemName: prompt.kind.symbol).foregroundStyle(Color(nsColor: .systemOrange)).accessibilityHidden(true)
             if let session { LedgerSessionLabel(id: session.id, color: session.color) }
@@ -48,8 +69,7 @@ private struct LedgerPromptLine: View {
                 case .stopQuestion, .askUserQuestion:
                     Button("Answer…", action: openInbox).help("Answer in the Inbox")
                 }
-                Button("Answer in terminal") { Task { await ledger.reply(prompt, .answerInTerminal) } }
-                    .help("Stop waiting here and let the agent ask in its own terminal")
+                LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy)
             }
             .disabled(busy)
             .fixedSize()
@@ -60,37 +80,6 @@ private struct LedgerPromptLine: View {
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color(nsColor: .systemOrange).opacity(0.35)))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(prompt.kind.title + ": " + summary)
-    }
-
-    private var summary: String {
-        switch prompt.kind {
-        case .stopQuestion: return prompt.payload["question"]?.string ?? prompt.payload["message"]?.string ?? prompt.kind.title
-        case .askUserQuestion: return prompt.payload["questions"]?.array.first?["question"].string ?? prompt.kind.title
-        case .exitPlanMode: return prompt.kind.title
-        case .permission:
-            let input = prompt.payload["input"] ?? .null
-            return (prompt.payload["toolName"]?.string ?? "") + ": " + (input["command"].string ?? prompt.payload["description"]?.string ?? "")
-        }
-    }
-}
-
-extension LedgerPendingPrompt.Kind {
-    var title: String {
-        switch self {
-        case .stopQuestion: return String(localized: "Asks a question")
-        case .askUserQuestion: return String(localized: "Asks you to choose")
-        case .exitPlanMode: return String(localized: "Plan to approve")
-        case .permission: return String(localized: "Asks for permission")
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .stopQuestion: return "questionmark.bubble"
-        case .askUserQuestion: return "list.bullet.circle"
-        case .exitPlanMode: return "list.clipboard"
-        case .permission: return "lock.shield"
-        }
     }
 }
 
@@ -110,6 +99,7 @@ private struct LedgerPromptCard: View {
             header
             content
             actions
+            if let note { Text(note).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,15 +132,22 @@ private struct LedgerPromptCard: View {
     @ViewBuilder private var content: some View {
         switch prompt.kind {
         case .stopQuestion:
-            Text(prompt.payload["question"]?.string ?? prompt.payload["message"]?.string ?? "")
-                .font(.callout).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+            let question = LedgerPromptText.summary(prompt)
+            Text(question).font(.callout.weight(.medium)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+            if let body = LedgerPromptText.body(prompt), body != question {
+                Text(body).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                    .lineLimit(8).fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(LedgerPromptText.options(prompt.payload["options"] ?? .null), id: \.self) { option in
+                optionText(option, picked: false, multiple: false)
+            }
             LedgerAnswerField(placeholder: String(localized: "Your answer…"), text: $text, saveTitle: String(localized: "Answer"), busy: busy) {
                 Task { await ledger.reply(prompt, .text(text.trimmingCharacters(in: .whitespacesAndNewlines))) }
             }
         case .askUserQuestion:
             ForEach(Array(questions.enumerated()), id: \.offset) { _, q in choice(q) }
         case .exitPlanMode:
-            let plan = prompt.payload["plan"]?.string ?? ""
+            let plan = LedgerPromptText.body(prompt) ?? ""
             VStack(alignment: .leading, spacing: 4) {
                 MarkdownView(plan)
                     .frame(maxHeight: showWholePlan ? nil : 110, alignment: .top)
@@ -163,17 +160,15 @@ private struct LedgerPromptCard: View {
             .padding(8)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
         case .permission:
-            let tool = prompt.payload["toolName"]?.string ?? ""
-            let input = prompt.payload["input"] ?? .null
-            VStack(alignment: .leading, spacing: 4) {
-                if let description = prompt.payload["description"]?.string { Text(description).font(.callout) }
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(tool).font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
+            let tool = LedgerPromptText.tool(prompt)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if let name = tool?.name {
+                    Text(name).font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
                         .background(RoundedRectangle(cornerRadius: 4).fill(Color.secondary.opacity(0.12)))
-                    Text(input["command"].string ?? Self.describe(input))
-                        .font(.system(.callout, design: .monospaced)).textSelection(.enabled)
-                        .lineLimit(4).truncationMode(.middle).fixedSize(horizontal: false, vertical: true)
                 }
+                Text(tool?.summary ?? LedgerPromptText.summary(prompt))
+                    .font(.system(.callout, design: .monospaced)).textSelection(.enabled)
+                    .lineLimit(4).truncationMode(.middle).fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -183,31 +178,40 @@ private struct LedgerPromptCard: View {
         let multiple = q["multiSelect"].bool ?? false
         let picked = chosen[question] ?? []
         return VStack(alignment: .leading, spacing: 5) {
-            if let header = q["header"].string { Text(header.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.6).foregroundStyle(.secondary) }
+            if let header = q["header"].string, !header.isEmpty {
+                Text(header.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.6).foregroundStyle(.secondary)
+            }
             Text(question).font(.callout).fixedSize(horizontal: false, vertical: true)
-            ForEach(Array(q["options"].array.enumerated()), id: \.offset) { _, option in
-                let label = option["label"].string ?? ""
+            ForEach(LedgerPromptText.options(q["options"]), id: \.self) { option in
                 Button {
                     var next = multiple ? picked : []
-                    if next.contains(label) { next.remove(label) } else { next.insert(label) }
+                    if next.contains(option.label) { next.remove(option.label) } else { next.insert(option.label) }
                     chosen[question] = next
                 } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 7) {
-                        Image(systemName: picked.contains(label) ? (multiple ? "checkmark.square.fill" : "largecircle.fill.circle")
-                                                                 : (multiple ? "square" : "circle"))
-                            .foregroundStyle(picked.contains(label) ? Color.accentColor : .secondary)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(label).font(.callout)
-                            if let detail = option["description"].string { Text(detail).font(.caption).foregroundStyle(.secondary) }
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .contentShape(Rectangle())
+                    optionText(option, picked: picked.contains(option.label), multiple: multiple)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(busy)
-                .accessibilityAddTraits(picked.contains(label) ? .isSelected : [])
+                .accessibilityAddTraits(picked.contains(option.label) ? .isSelected : [])
             }
+        }
+    }
+
+    private func optionText(_ option: LedgerPromptText.Option, picked: Bool, multiple: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Image(systemName: picked ? (multiple ? "checkmark.square.fill" : "largecircle.fill.circle") : (multiple ? "square" : "circle"))
+                .foregroundStyle(picked ? Color.accentColor : .secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 5) {
+                    Text(option.label).font(.callout)
+                    if option.recommended, !option.label.localizedCaseInsensitiveContains("recommended") {
+                        Text("Recommended").font(.caption2.weight(.semibold)).foregroundStyle(Color.accentColor)
+                    }
+                }
+                if let detail = option.description, !detail.isEmpty { Text(detail).font(.caption).foregroundStyle(.secondary) }
+            }
+            Spacer(minLength: 0)
         }
     }
 
@@ -224,7 +228,7 @@ private struct LedgerPromptCard: View {
                     var answers: [String: String] = [:]
                     for q in questions {
                         let question = q["question"].string ?? ""
-                        let order = q["options"].array.compactMap { $0["label"].string }
+                        let order = LedgerPromptText.options(q["options"]).map(\.label)
                         answers[question] = order.filter { (chosen[question] ?? []).contains($0) }.joined(separator: ", ")
                     }
                     Task { await ledger.reply(prompt, .choices(answers)) }
@@ -236,24 +240,21 @@ private struct LedgerPromptCard: View {
             case .stopQuestion:
                 EmptyView()
             }
-            Button("Answer in terminal") { Task { await ledger.reply(prompt, .answerInTerminal) } }
-                .disabled(busy)
-                .help("Stop waiting here and let the agent ask in its own terminal")
-            if LedgerCountdown.isCounting(prompt) {
-                Button("Turn off auto this time") { Task { await ledger.reply(prompt, .holdAuto) } }
-                    .disabled(busy)
-                    .help("Keep this prompt waiting for you instead of answering it automatically")
-            }
-            if LedgerCountdown.isCounting(prompt), let auto = prompt.payload["autoReply"]?.string {
+            LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy)
+            if LedgerCountdown.isCounting(prompt), let auto = LedgerPromptText.proposed(prompt) {
                 Text("If nobody answers: “\(auto)”").font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             }
         }
         .controlSize(.small)
     }
 
-    private static func describe(_ input: LedgerJSON) -> String {
-        guard let object = input.object else { return "" }
-        return object.keys.sorted().map { key in key + ": " + (object[key]?.string ?? "…") }.joined(separator: "  ")
+    /// Where else the person can answer while Gitrochi waits (#171)
+    private var note: String? {
+        switch prompt.kind {
+        case .permission: return String(localized: "The terminal shows this request too; an answer there counts as well.")
+        case .askUserQuestion, .exitPlanMode: return String(localized: "The terminal shows this question only after the wait.")
+        case .stopQuestion: return nil
+        }
     }
 }
 

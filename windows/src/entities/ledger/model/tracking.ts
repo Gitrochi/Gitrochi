@@ -64,14 +64,21 @@ export function ledgerMcpConfig(command: string, sessionId: string, wsl: boolean
   return JSON.stringify({ mcpServers: { "gitrochi-ledger": { command, args: ["mcp"], env: vars } } }, null, 2);
 }
 
-/** Whether Claude Code already has a server called gitrochi-ledger for this folder (user or project scope) */
+/** run_process's status for a program it stopped at its timeout (src-tauri/src/process.rs) */
+const STOPPED_AT_TIMEOUT = -2;
+
+/**
+ * Whether Claude Code already has a server called gitrochi-ledger for this folder (user, project or local scope): the
+ * launch's own would shadow it (§15). A check stopped at its timeout counts as found for the same reason; one that
+ * cannot start counts as not found. (macOS: LedgerTracking.hasLedgerServer)
+ */
 async function hasLedgerServer(claude: AgentCommand, folder: string): Promise<boolean> {
   try {
     const args = ["mcp", "get", "gitrochi-ledger"];
     const r = claude.kind === "native" ? await ipc.run(claude.exe, args, { cwd: folder, timeoutMs: 20_000 }) : await ipc.run("wsl.exe", wslArgs(claude.distro, claude.path, args, { cwd: folder }), { env: { WSL_UTF8: "1" }, timeoutMs: 30_000 });
-    return r.status === 0;
+    return r.status === 0 || r.status === STOPPED_AT_TIMEOUT;
   } catch {
-    // the check failed: adding the server for this launch is the safer guess
+    // Claude Code could not be started, so it has no server of its own to shadow
     return false;
   }
 }
