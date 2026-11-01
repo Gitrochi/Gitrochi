@@ -130,7 +130,13 @@ class AgentCenter extends Observable {
     // the Ledger's Track agents I start adds its entries to the hooks files, and takes them out again
     const tracking = await ledgerTracking();
     if (tracking) {
-      this.unsubscribeLedger ??= tracking.subscribe(() => void this.installHooks());
+      // only the switch changes the files; a launch error or the tools switch leaves them as they are
+      let on = tracking.on;
+      this.unsubscribeLedger ??= tracking.subscribe(() => {
+        if (tracking.on === on) return;
+        on = tracking.on;
+        void this.installHooks(tracking);
+      });
       void tracking.syncHeartbeat();
     }
   }
@@ -140,11 +146,11 @@ class AgentCenter extends Observable {
     return joinPath(this.dir, "hooks-wsl.json");
   }
 
-  private async installHooks() {
+  private async installHooks(tracking?: LedgerTracking) {
     // Windows 경로도 / 로 쓰면 cmd·Git Bash 어느 셸로 실행돼도 그대로 통한다
     const exe = isWindows() ? slash(env.exe) : env.exe;
     // the ledger CLI's entries only while Track agents I start is on; without them the files are as they always were
-    const ledger = (await (await ledgerTracking())?.hooksCli()) ?? null;
+    const ledger = (await (tracking ?? (await ledgerTracking()))?.hooksCli()) ?? null;
     const ledgerExe = ledger && (isWindows() ? slash(ledger) : ledger);
     await ipc.writeText(this.hooksFile, agentHooksJson((e) => `"${exe}" --agent-hook ${e}`, 5, ledgerExe ? (e) => `"${ledgerExe}" hook ${e}` : null));
     if (isWindows()) {

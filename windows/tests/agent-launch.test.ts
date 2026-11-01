@@ -3,6 +3,7 @@ import { agents } from "@/entities/agent";
 import { agentHookEvents, agentHooksJson, type HookGroup, ledgerHookGroups } from "@/entities/agent/lib/hooks";
 import { launchArguments, launchEnv } from "@/entities/agent/lib/launch";
 import { ledgerMcpConfig, ledgerTracking, repositoryPolicy, repositoryRoot, withRepositoryPolicy } from "@/entities/ledger";
+import { ipc } from "@/shared/api";
 import { env, initEnv, settings } from "@/shared/config";
 import { AGENT_ID, type Capture, fakeClaude, fakeHost, fakeNative, FOLDER, startOnce, windowsEnv } from "./agent-launch-harness";
 import main from "./agent-launch-main.json";
@@ -173,6 +174,26 @@ describe("Agent launches with Track agents I start on", () => {
     const failing = await trackedStart("native", { ledger: (method) => (method === "track" ? { error: { code: "DATABASE", message: "The ledger is locked" } } : fakeLedger([])(method, {})) });
     expect(failing.capture.terminals).toEqual(mainLaunches["native · task and mode"]);
     expect(ledgerTracking.lastError).toBe("The ledger is locked");
+  });
+
+  it("rewrites the hooks files when the switch changes, and only then", async () => {
+    const capture = fakeNative({ exists: (path) => path === CLI, run: fakeRun(), ledger: (method, args) => (method === "track" ? { error: { code: "DATABASE", message: "The ledger is busy" } } : fakeLedger([])(method, args)) });
+    fakeClaude("native");
+    await initEnv({ ...windowsEnv, ledgerPreview: "1" });
+    settings.set("ledgerTrackAgents", true);
+    await agents.init();
+    const writes = () => vi.mocked(ipc.writeText).mock.calls.filter(([path]) => path === HOOKS).length;
+    // a launch that could not be tracked and the tools switch leave them alone
+    await agents.start(fakeHost(capture), "claude", FOLDER, "", null);
+    expect(ledgerTracking.lastError).toBe("The ledger is busy");
+    ledgerTracking.setTools(false);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(writes()).toBe(1);
+    ledgerTracking.setChosen(false);
+    await vi.waitFor(() => expect(capture.files[HOOKS]).toBe(main.hooks[HOOKS as keyof typeof main.hooks]));
+    expect(capture.files[HOOKS_WSL]).toBe(main.hooks[HOOKS_WSL as keyof typeof main.hooks]);
+    expect(writes()).toBe(2);
+    agents.dispose();
   });
 
   it("touches app.alive next to the database every 5 seconds while tracking is on", async () => {
