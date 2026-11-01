@@ -89,7 +89,7 @@ struct LedgerSettings: View {
             Text("Agents Gitrochi starts")
         } footer: {
             Text("Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -120,7 +120,7 @@ struct LedgerSettings: View {
             Text("Auto-continue")
         } footer: {
             Text("When an agent started in the repository asks you something and nobody answers in time, Gitrochi answers with the agent's recommended option, at most three times in a row. It never answers decision sessions or allows risky commands, and each answer waits in the Inbox for review. It applies to agents started afterwards, with Track agents I start on.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -144,7 +144,7 @@ struct LedgerSettings: View {
             Text("Notifications")
         } footer: {
             Text("New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -192,7 +192,7 @@ struct LedgerSettings: View {
             Text("Sessions")
         } footer: {
             Text("A session with no agent activity for this long is marked Stale. Still active puts that off for the same time.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -216,7 +216,7 @@ struct LedgerSettings: View {
             Text("Roles and stream lines")
         } footer: {
             Text("A session's kind decides its role. Implementation sessions report in cycles on a stream line; on a line that hands off, syncing to or applying a version also moves the decision session that released it.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -268,7 +268,7 @@ struct LedgerSettings: View {
             Text("Projects")
         } footer: {
             Text("Baselines are the versions sessions start from. Git tags are read from the repository, folder names from the folder and the sub-folders listed (not deeper). The pattern is a regular expression whose first group is the version.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -299,7 +299,7 @@ struct LedgerSettings: View {
         }
         HStack {
             Button("Scan now") { scan(p.key) }.disabled(working)
-            if let scanNotice { Text(scanNotice).font(.caption).foregroundStyle(.secondary) }
+            if let scanNotice { Text(scanNotice).font(.system(size: 11)).foregroundStyle(.secondary) }
         }
     }
 
@@ -317,10 +317,10 @@ struct LedgerSettings: View {
                     .disabled(info.map { !FileManager.default.fileExists(atPath: $0.dbPath) } ?? true)
                 if working { ProgressView().controlSize(.small) }
             }
-            if let backupNotice { Text(backupNotice).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
+            if let backupNotice { Text(backupNotice).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled) }
             if let info {
                 LabeledContent("Database") {
-                    Text(verbatim: info.dbPath).font(.system(.caption, design: .monospaced))
+                    Text(verbatim: info.dbPath).font(.system(size: 11, design: .monospaced))
                         .textSelection(.enabled).lineLimit(2).truncationMode(.middle)
                 }
             }
@@ -328,7 +328,7 @@ struct LedgerSettings: View {
             Text("Backups")
         } footer: {
             Text("Back up now copies the ledger's database into the backups folder next to it. Only the newest are kept, and only files named like a backup are ever removed.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 
@@ -342,7 +342,7 @@ struct LedgerSettings: View {
             Text("Connect and import")
         } footer: {
             Text("Connect Claude Code to let its sessions report here. Import reads reports pasted from a conversation, or a claude-ledger database.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 

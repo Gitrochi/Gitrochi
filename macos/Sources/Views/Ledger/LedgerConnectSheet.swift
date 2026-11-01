@@ -17,7 +17,7 @@ struct LedgerConnectSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Connect Claude Code").font(.title3.bold())
+            Text("Connect Claude Code").font(.title3.weight(.semibold))
             Text("Run this once in a terminal. Claude Code then reports its sessions to the ledger: what they started from, questions, results.")
                 .font(.callout).fixedSize(horizontal: false, vertical: true)
             Text(command)
@@ -29,9 +29,9 @@ struct LedgerConnectSheet: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.25)))
                 .accessibilityLabel("Command")
             Text("Agents you start from Gitrochi are tracked without this. Nothing is written to Claude Code's settings by Gitrochi.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if !notice.isEmpty { Text(notice).font(.caption).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) }
-            if let error { Text(error).font(.caption).foregroundStyle(Color(nsColor: .systemRed)).textSelection(.enabled) }
+                .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if !notice.isEmpty { Text(notice).font(.system(size: 11)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) }
+            if let error { Text(error).font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
             HStack {
                 Button("Test connection") { test() }.disabled(testing)
                     .help("Ask the ledger for its version and database")

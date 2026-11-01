@@ -39,7 +39,7 @@ struct LedgerInboxView: View {
                             .frame(minHeight: 320)
                     } else {
                         Text("↑↓ move · Return opens · A answers · C confirms · E archives · S still active · M mark merged")
-                            .font(.caption2).foregroundStyle(.tertiary).frame(maxWidth: .infinity, alignment: .center)
+                            .font(.system(size: 11)).foregroundStyle(.tertiary).frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
                 .padding(16)
@@ -140,7 +140,7 @@ struct LedgerInboxView: View {
                     if item.group != .questions { LedgerVerdictBadge(verdict: session.verdict) }
                 }
                 Spacer(minLength: 6)
-                Text(when(item, session)).font(.caption).foregroundStyle(.secondary).lineLimit(1).fixedSize()
+                Text(when(item, session)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).fixedSize()
             }
             switch item.content {
             case .question(let question):
@@ -157,7 +157,8 @@ struct LedgerInboxView: View {
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 8).fill(highlighted == item.id ? StudioStyle.selection : Color(nsColor: .controlBackgroundColor)))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(highlighted == item.id && listFocused ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.07)))
+        // keyboard focus moves the selection: the highlighted item is tinted, with no ring (docs/design.md, Selection)
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
         .contentShape(Rectangle())
         .onTapGesture {
             highlight(item.id)
@@ -195,11 +196,11 @@ struct LedgerInboxView: View {
         let sent = LedgerPromptText.sent(prompt.answer ?? [:])
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(asked).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Image(systemName: "arrow.right").font(.caption).foregroundStyle(.tertiary).accessibilityHidden(true)
+            Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(.tertiary).accessibilityHidden(true)
             Text("“\(sent)”").font(.callout.weight(.medium)).lineLimit(3).fixedSize(horizontal: false, vertical: true)
         }
         if let outcome = LedgerPromptText.outcome(prompt.answer) {
-            Label(outcome, systemImage: "questionmark.circle").font(.caption).foregroundStyle(.secondary)
+            Label(outcome, systemImage: "questionmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         let busy = ledger.working.contains("p\(prompt.id)")
         if correcting == prompt.id {
@@ -224,7 +225,7 @@ struct LedgerInboxView: View {
     @ViewBuilder private func sessionLine(_ s: LedgerSession, group: LedgerInbox.Group) -> some View {
         let busy = ledger.working.contains(s.id)
         HStack(alignment: .center, spacing: 8) {
-            Text(summary(s)).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+            Text(summary(s)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 6)
             WorkbenchFlow(spacing: 6) {
                 if busy { ProgressView().controlSize(.small) }

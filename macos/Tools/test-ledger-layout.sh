@@ -86,12 +86,17 @@ import Vision
     func close() { window.orderOut(nil) }
 }
 
-/// Text recognition misreads a letter now and then ("flaky" as "tlaky"): a label of three words or more counts as seen
-/// when all but one of its words are
+/// Text recognition misreads a letter now and then ("flaky" as "tlaky" or "flakv"): a word of four letters or more
+/// counts as seen when the text has it with one letter wrong, and a label of three words or more when all but one of its
+/// words are seen
 func seen(_ label: String, in text: String) -> Bool {
-    let text = text.lowercased(), words = label.lowercased().split(separator: " ")
+    let text = text.lowercased(), words = label.lowercased().split(separator: " ").map(String.init)
     if text.contains(label.lowercased()) { return true }
-    return words.count > 2 && words.filter { text.contains($0) }.count >= words.count - 1
+    let read = Set(text.split { !$0.isLetter && !$0.isNumber }.map(String.init))
+    func found(_ word: String) -> Bool {
+        text.contains(word) || (word.count >= 4 && read.contains { $0.count == word.count && zip($0, word).filter { $0 != $1 }.count == 1 })
+    }
+    return words.count > 2 && words.filter(found).count >= words.count - 1
 }
 
 @MainActor func text(in png: Data) throws -> String {

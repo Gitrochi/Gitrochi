@@ -1647,7 +1647,7 @@
 "Sessions confirmed: %lld" = "已确认 %lld 个会话";
 "Reports in this cycle: %lld" = "本周期内 %lld 条报告";
 "Older sessions outside this period: %lld" = "另有 %lld 个更早的会话不在此时间段内";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld 个流按周期报告，不在此列表中。";
+"Streams report in cycles and stay out of this list." = "流按周期报告，不在此列表中。";
 "Older rows not drawn yet: %lld" = "还有 %lld 行更早的记录未绘制";
 "Open questions: %lld" = "%lld 个未决问题";
 "Sessions marked still active: %lld" = "已将 %lld 个会话标记为仍在进行";

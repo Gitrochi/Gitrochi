@@ -1458,7 +1458,7 @@
 "Sessions confirmed: %lld" = "%lld sessies bevestigd";
 "Reports in this cycle: %lld" = "%lld meldingen in deze cyclus";
 "Older sessions outside this period: %lld" = "%lld oudere sessies vallen buiten deze periode";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld stromen melden in cycli en staan niet in deze lijst.";
+"Streams report in cycles and stay out of this list." = "Stromen melden in cycli en staan niet in deze lijst.";
 "Older rows not drawn yet: %lld" = "%lld oudere rijen zijn nog niet getekend";
 "Open questions: %lld" = "%lld open vragen";
 "Sessions marked still active: %lld" = "%lld sessies gemarkeerd als nog actief";

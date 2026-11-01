@@ -1501,7 +1501,7 @@
 "Sessions confirmed: %lld" = "%lld oturum onaylandı";
 "Reports in this cycle: %lld" = "Bu döngüde %lld rapor";
 "Older sessions outside this period: %lld" = "%lld eski oturum bu dönemin dışında";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld akış döngüler halinde raporladığı için bu listede yok.";
+"Streams report in cycles and stay out of this list." = "Akışlar döngüler halinde raporladığı için bu listede yok.";
 "Older rows not drawn yet: %lld" = "%lld eski satır henüz çizilmedi";
 "Open questions: %lld" = "%lld açık soru";
 "Sessions marked still active: %lld" = "%lld oturum hâlâ etkin olarak işaretlendi";

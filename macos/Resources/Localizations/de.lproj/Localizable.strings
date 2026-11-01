@@ -1498,7 +1498,7 @@
 "Sessions confirmed: %lld" = "%lld Sitzungen bestätigt";
 "Reports in this cycle: %lld" = "%lld Berichte in diesem Zyklus";
 "Older sessions outside this period: %lld" = "%lld ältere Sitzungen liegen außerhalb dieses Zeitraums";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld Ströme berichten in Zyklen und stehen nicht in dieser Liste.";
+"Streams report in cycles and stay out of this list." = "Ströme berichten in Zyklen und stehen nicht in dieser Liste.";
 "Older rows not drawn yet: %lld" = "%lld ältere Zeilen sind noch nicht gezeichnet";
 "Open questions: %lld" = "%lld offene Fragen";
 "Sessions marked still active: %lld" = "%lld Sitzungen als noch aktiv markiert";

@@ -23,7 +23,7 @@ struct LedgerImportSheet: View {
 
     private var paste: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Paste reports").font(.title3.bold())
+            Text("Paste reports").font(.title3.weight(.semibold))
             Text("Paste a conversation or the ledger blocks from it. Every block is read on its own: one that fails does not stop the rest, and a block imported before is skipped.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             TextEditor(text: $text)
@@ -35,7 +35,7 @@ struct LedgerImportSheet: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.25)))
                 .accessibilityLabel("Reports to import")
             if let results { resultList(results) }
-            if let error { Text(error).font(.caption).foregroundStyle(Color(nsColor: .systemRed)).textSelection(.enabled) }
+            if let error { Text(error).font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
             HStack {
                 Button("Import from claude-ledger…") {
                     if let path = LedgerLegacyImportSheet.chooseDatabase() { legacyPath = path }
@@ -68,10 +68,10 @@ struct LedgerImportSheet: View {
                     ForEach(results) { block in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Image(systemName: block.duplicate ? "equal.circle" : block.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                                .foregroundStyle(block.duplicate ? .secondary : block.ok ? Color(nsColor: .systemGreen) : Color(nsColor: .systemRed))
+                                .foregroundStyle(block.duplicate ? .secondary : block.ok ? StudioStyle.Tone.passed.text : StudioStyle.Tone.failed.text)
                                 .accessibilityHidden(true)
-                            Text("Block \(block.index + 1)").font(.caption.weight(.semibold)).monospacedDigit()
-                            Text(line(block)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(2)
+                            Text("Block \(block.index + 1)").font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                            Text(line(block)).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(2)
                             Spacer(minLength: 0)
                         }
                         .accessibilityElement(children: .combine)

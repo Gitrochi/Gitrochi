@@ -124,14 +124,12 @@ struct LedgerWorkspaceView: View {
     private var centerHeader: some View {
         HStack(spacing: 8) {
             Image(systemName: ledger.page.symbol).foregroundStyle(.secondary).accessibilityHidden(true)
-            Text(ledger.page.title).font(.headline)
-            if ledger.page == .inbox, ledger.attentionTotal > 0 {
-                Text("\(ledger.attentionTotal)").font(.callout.monospacedDigit()).foregroundStyle(.secondary)
-            }
+            // the count is the navigation's: a count appears once per screen (docs/design.md, Text)
+            Text(ledger.page.title).font(.body.weight(.semibold))
             if let name = projectName { Text("· " + name).font(.callout).foregroundStyle(.secondary).lineLimit(1) }
             Spacer(minLength: 6)
             if let error = ledger.loadError {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color(nsColor: .systemOrange))
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(StudioStyle.Tone.failed.text)
                     .help(error).accessibilityLabel(error)
             }
             quickLaunches
@@ -221,7 +219,7 @@ struct LedgerWorkspaceView: View {
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
             }
-            Text("Sessions you start from Gitrochi appear here by themselves.").font(.caption).foregroundStyle(.secondary)
+            Text("Sessions you start from Gitrochi appear here by themselves.").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -261,7 +259,7 @@ private struct LedgerFilterColumn: View {
     }
 
     private func title(_ text: String) -> some View {
-        Text(text.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.8).foregroundStyle(.secondary)
+        Text(text.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.8).foregroundStyle(.secondary)
             .padding(.horizontal, 8).padding(.top, 14).padding(.bottom, 4)
             .accessibilityAddTraits(.isHeader)
     }
@@ -270,17 +268,18 @@ private struct LedgerFilterColumn: View {
                      action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                Image(systemName: symbol).font(.system(size: 13)).foregroundStyle(active ? Color.accentColor : tint).frame(width: 18)
+                Image(systemName: symbol).font(.system(size: 13)).foregroundStyle(tint).frame(width: 18)
                 Text(title).font(.system(size: 13, weight: active ? .semibold : .regular)).lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 4)
                 if let count, count > 0 {
-                    Text(count > 999 ? "999+" : "\(count)").font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    Text(count > 999 ? "999+" : "\(count)").font(.system(size: 11, weight: .semibold).monospacedDigit())
                         .padding(.horizontal, 5).padding(.vertical, 1).background(.quaternary.opacity(0.7), in: Capsule())
                 }
             }
             .padding(.horizontal, 8)
             .frame(minHeight: 28)
-            .foregroundStyle(active ? Color.accentColor : Color.primary)
+            // a selected row is tinted and its title semibold; text is never the accent
+            .foregroundStyle(Color.primary)
             .background(active ? StudioStyle.selection : Color.clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
         }
@@ -302,7 +301,8 @@ private struct LedgerFilterColumn: View {
     @ViewBuilder private var projectRows: some View {
         let projects = ledger.state?.projects ?? []
         if let mine = ledger.repositoryProject, let project = projects.first(where: { $0.key == mine }) {
-            row(String(localized: "This repository (\(project.name))"), symbol: "folder", count: project.open,
+            // its count is the project's row below: a count appears once per screen
+            row(String(localized: "This repository (\(project.name))"), symbol: "folder",
                 active: ledger.project == mine && !ledger.projectChosen) { Task { await ledger.resumeFollowing() } }
         }
         row(String(localized: "All projects"), symbol: "square.stack", active: ledger.project == nil) { Task { await ledger.choose(project: nil) } }
@@ -315,7 +315,7 @@ private struct LedgerFilterColumn: View {
 
     private func verdictRow(_ verdict: LedgerVerdict) -> some View {
         let on = ledger.page == .board && ledger.filter.verdicts == [verdict]
-        return row(verdict.title, symbol: verdict.symbol, tint: verdict.color, count: ledger.verdictCounts[verdict], active: on) {
+        return row(verdict.title, symbol: verdict.symbol, tint: verdict.tone.text, count: ledger.verdictCounts[verdict], active: on) {
             var filter = ledger.filter
             filter.verdicts = on ? [] : [verdict]
             ledger.filter = filter

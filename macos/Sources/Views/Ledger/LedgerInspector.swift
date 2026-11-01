@@ -70,21 +70,21 @@ struct LedgerInspector: View {
                 }
             }
             Text(s.title).font(.title3.weight(.semibold)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-            Text([s.kind, s.role.title, s.status.title].joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
+            Text([s.kind, s.role.title, s.status.title].joined(separator: " · ")).font(.system(size: 11)).foregroundStyle(.secondary)
             if let base = s.baseVersion {
                 let current = s.baseCurrent ?? base
                 let behind = LedgerProjects.behind(s, baselines: ledger.state?.baselines ?? [])
                 HStack(spacing: 4) {
-                    Image(systemName: "tag").font(.caption).foregroundStyle(.secondary).accessibilityHidden(true)
-                    Text(current == base ? base : base + " → " + current).font(.caption.monospaced())
+                    Image(systemName: "tag").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                    Text(current == base ? base : base + " → " + current).font(.system(size: 11))
                     if behind > 0 {
-                        Text("\(behind) behind").font(.caption2.weight(.semibold)).foregroundStyle(Color(nsColor: .systemOrange))
+                        Text("\(behind) behind").font(.system(size: 11, weight: .semibold)).foregroundStyle(StudioStyle.Tone.waiting.text)
                     }
-                    if let into = s.mergedInto { Text("merged into \(into)").font(.caption).foregroundStyle(.secondary) }
+                    if let into = s.mergedInto { Text("merged into \(into)").font(.system(size: 11)).foregroundStyle(.secondary) }
                 }
                 .accessibilityElement(children: .combine)
             }
-            Text(s.verdict.advice).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(s.verdict.advice).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             links(s)
         }
     }
@@ -170,18 +170,18 @@ struct LedgerInspector: View {
                 }
                 ForEach(closed) { q in
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(q.text).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Text(q.text).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         if q.state == .answered {
                             HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                Image(systemName: q.answeredBy == .auto ? "timer" : "person.fill").font(.caption2).foregroundStyle(.secondary)
+                                Image(systemName: q.answeredBy == .auto ? "timer" : "person.fill").font(.system(size: 11)).foregroundStyle(.secondary)
                                     .help(q.answeredBy == .auto ? String(localized: "Answered by auto-continue") : String(localized: "Answered by a person"))
-                                Text(q.answer ?? "").font(.caption).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                                Text(q.answer ?? "").font(.system(size: 11)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                             }
                             Text(q.deliveredAt == nil ? String(localized: "Waiting for the session's next report")
                                                       : String(localized: "Delivered \(LedgerTime.short(q.deliveredAt ?? 0))"))
-                                .font(.caption2).foregroundStyle(.tertiary)
+                                .font(.system(size: 11)).foregroundStyle(.tertiary)
                         } else {
-                            Text("Dismissed").font(.caption2).foregroundStyle(.tertiary)
+                            Text("Dismissed").font(.system(size: 11)).foregroundStyle(.tertiary)
                         }
                     }
                     .padding(.leading, 8)
@@ -198,7 +198,7 @@ struct LedgerInspector: View {
         VStack(alignment: .leading, spacing: 6) {
             LedgerSectionHeader(title: String(localized: "Auto-continue"))
             if s.role == .decision {
-                Text("Decision sessions never continue automatically.").font(.caption).foregroundStyle(.secondary)
+                Text("Decision sessions never continue automatically.").font(.system(size: 11)).foregroundStyle(.secondary)
             } else {
                 let policy = s.autoContinue ?? ledger.autoContinueDefault ?? .init(enabled: false, delaySec: 30)
                 let busy = ledger.working.contains(s.id)
@@ -218,7 +218,7 @@ struct LedgerInspector: View {
                     }
                 }
                 Text("Works for Claude Code agents Gitrochi starts while Track agents I start is on.")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
         .task { await ledger.loadAutoContinueDefault() }
@@ -247,25 +247,32 @@ struct LedgerInspector: View {
                 LedgerSectionHeader(title: String(localized: "Touches"), count: s.touches.count)
                 ForEach(s.touches, id: \.self) { path in
                     HStack(spacing: 6) {
-                        Image(systemName: "doc").font(.caption).foregroundStyle(.secondary).accessibilityHidden(true)
-                        Text(path).font(.caption.monospaced()).lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+                        Image(systemName: "doc").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                        // the file name whole, then its folder shortened from the start (docs/design.md, Text)
+                        Text((path as NSString).lastPathComponent).font(.system(size: 12)).lineLimit(1).fixedSize()
+                            .textSelection(.enabled)
+                        let folder = (path as NSString).deletingLastPathComponent
+                        if !folder.isEmpty {
+                            Text(folder).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
+                        }
                         Spacer(minLength: 4)
                         ForEach(detail.overlaps.filter { $0.kind == .same && $0.paths.contains(path) }, id: \.self) { o in
                             let other = o.a == s.id ? o.b : o.a
                             Button { open(other) } label: {
-                                Label(other, systemImage: "exclamationmark.triangle.fill").font(.caption2.weight(.semibold))
-                                    .foregroundStyle(Color(nsColor: .systemOrange))
+                                Label(other, systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(StudioStyle.Tone.waiting.text)
                             }
                             .buttonStyle(.plain)
                             .help(String(localized: "\(other) touches this too — open it"))
                         }
                     }
+                    .help(path)
                 }
                 ForEach(detail.overlaps.filter { $0.kind == .coupled }, id: \.self) { o in
                     let other = o.a == s.id ? o.b : o.a
                     Button { open(other) } label: {
                         Label("Likely overlap with \(other): \(o.paths.joined(separator: ", "))", systemImage: "link")
-                            .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                            .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
                     }
                     .buttonStyle(.plain)
                     .help("Files that usually change together")
@@ -295,14 +302,14 @@ private struct LedgerTimelineRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(LedgerEventText.title(event.type))
-                        .font(.caption.weight(LedgerEventText.isMilestone(event.type) ? .semibold : .medium))
+                        .font(.system(size: 11, weight: LedgerEventText.isMilestone(event.type) ? .semibold : .medium))
                         .foregroundStyle(person ? Color.secondary : Color.primary)
-                    if let version = event.version { Text(version).font(.caption.monospaced()).foregroundStyle(.secondary) }
+                    if let version = event.version { Text(version).font(.system(size: 11)).foregroundStyle(.secondary) }
                     Spacer(minLength: 4)
-                    Text(LedgerTime.short(event.ts)).font(.caption2).foregroundStyle(.tertiary).help(LedgerTime.long(event.ts))
+                    Text(LedgerTime.short(event.ts)).font(.system(size: 11)).foregroundStyle(.tertiary).help(LedgerTime.long(event.ts))
                 }
                 if let summary = event.summary, !summary.isEmpty {
-                    Text(summary).font(.caption).foregroundStyle(person ? .secondary : .primary).fixedSize(horizontal: false, vertical: true)
+                    Text(summary).font(.system(size: 11)).foregroundStyle(person ? .secondary : .primary).fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
                 }
                 if let artifacts = event.artifacts, !artifacts.isEmpty {
@@ -318,7 +325,7 @@ private struct LedgerTimelineRow: View {
                             .frame(maxHeight: long && !expanded ? 150 : nil, alignment: .top)
                             .clipped()
                         if long {
-                            Button(expanded ? String(localized: "Show less") : String(localized: "Show all")) { toggled = !expanded }.buttonStyle(.link).font(.caption)
+                            Button(expanded ? String(localized: "Show less") : String(localized: "Show all")) { toggled = !expanded }.buttonStyle(.link).font(.system(size: 11))
                         }
                     }
                     .padding(8)
@@ -331,7 +338,8 @@ private struct LedgerTimelineRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var tint: Color { LedgerEventText.isMilestone(event.type) ? .accentColor : .secondary }
+    /// Milestones stand out in the text colour; the accent is not for status (docs/design.md, Accent)
+    private var tint: Color { LedgerEventText.isMilestone(event.type) ? .primary : .secondary }
 
     private var icon: String {
         switch event.actor {

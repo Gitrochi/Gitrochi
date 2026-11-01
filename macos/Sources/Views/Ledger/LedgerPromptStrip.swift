@@ -19,7 +19,8 @@ struct LedgerPromptStrip: View {
                 if compact {
                     LedgerPromptLine(prompt: prompt, ledger: ledger, openInbox: openInbox)
                 } else {
-                    LedgerPromptCard(prompt: prompt, ledger: ledger)
+                    // the most urgent prompt has the strip's one filled button
+                    LedgerPromptCard(prompt: prompt, ledger: ledger, primary: prompt.id == prompts.first?.id)
                 }
             }
         }
@@ -83,7 +84,8 @@ private struct LedgerPromptLine: View {
         let session = ledger.session(prompt.sessionId)
         let summary = LedgerPromptText.summary(prompt)
         HStack(spacing: 8) {
-            Image(systemName: prompt.kind.symbol).foregroundStyle(Color(nsColor: .systemOrange)).accessibilityHidden(true)
+            Image(systemName: prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
+                .accessibilityHidden(true)
             if let session { LedgerSessionLabel(id: session.id, color: session.color) }
             Text(summary).font(.callout).lineLimit(1).truncationMode(.tail).layoutPriority(-1)
             Spacer(minLength: 6)
@@ -105,8 +107,8 @@ private struct LedgerPromptLine: View {
         }
         .controlSize(.small)
         .padding(.horizontal, 10).padding(.vertical, 6)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .systemOrange).opacity(0.07)))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color(nsColor: .systemOrange).opacity(0.35)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(prompt.kind.title + ": " + summary)
     }
@@ -115,6 +117,8 @@ private struct LedgerPromptLine: View {
 private struct LedgerPromptCard: View {
     let prompt: LedgerPendingPrompt
     let ledger: LedgerStore
+    /// Fills its main button
+    var primary = true
     @ViewState private var text = ""
     @ViewState private var chosen: [String: Set<String>] = [:]
     @ViewState private var showWholePlan = false
@@ -130,29 +134,29 @@ private struct LedgerPromptCard: View {
             header
             content
             actions
-            if let note { Text(note).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+            if let note { Text(note).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .systemOrange).opacity(0.07)))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: .systemOrange).opacity(0.35)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(prompt.kind.title + (session.map { ", " + $0.id + " " + $0.title } ?? ""))
     }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: prompt.kind.symbol).font(.system(size: 15)).foregroundStyle(Color(nsColor: .systemOrange))
+            Image(systemName: prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
                 .frame(width: 20).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(prompt.kind.title).font(.callout.weight(.semibold))
                 if let session {
                     HStack(spacing: 6) {
                         LedgerSessionLabel(id: session.id, color: session.color)
-                        Text(session.title).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                        Text(session.title).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                     }
                 } else if let agent = prompt.agentId {
-                    Text(agent).font(.caption).foregroundStyle(.secondary)
+                    Text(agent).font(.system(size: 11)).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
@@ -187,7 +191,7 @@ private struct LedgerPromptCard: View {
                     .clipped()
                 if plan.split(separator: "\n").count > 6 {
                     Button(showWholePlan ? String(localized: "Show less") : String(localized: "Show the whole plan")) { showWholePlan.toggle() }
-                        .buttonStyle(.link).font(.caption)
+                        .buttonStyle(.link).font(.system(size: 11))
                 }
             }
             .padding(8)
@@ -196,7 +200,7 @@ private struct LedgerPromptCard: View {
             let tool = LedgerPromptText.tool(prompt)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 if let name = tool?.name {
-                    Text(name).font(.caption.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
+                    Text(name).font(.system(size: 11, weight: .semibold)).padding(.horizontal, 5).padding(.vertical, 1)
                         .background(RoundedRectangle(cornerRadius: 4).fill(Color.secondary.opacity(0.12)))
                 }
                 Text(tool?.summary ?? LedgerPromptText.summary(prompt))
@@ -212,7 +216,7 @@ private struct LedgerPromptCard: View {
         let picked = chosen[question] ?? []
         return VStack(alignment: .leading, spacing: 5) {
             if let header = q["header"].string, !header.isEmpty {
-                Text(header.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.6).foregroundStyle(.secondary)
+                Text(header.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.6).foregroundStyle(.secondary)
             }
             Text(question).font(.callout).fixedSize(horizontal: false, vertical: true)
             ForEach(LedgerPromptText.options(q["options"]), id: \.self) { option in
@@ -243,10 +247,17 @@ private struct LedgerPromptCard: View {
                 HStack(spacing: 5) {
                     Text(option.label).font(.callout)
                     if option.recommended, !option.label.localizedCaseInsensitiveContains("recommended") {
-                        Text("Recommended").font(.caption2.weight(.semibold)).foregroundStyle(Color.accentColor)
+                        // a marker: neutral, with the accent only in its dot (docs/design.md, Badges)
+                        HStack(spacing: 4) {
+                            Circle().fill(Color.accentColor).frame(width: 6, height: 6).accessibilityHidden(true)
+                            Text("Recommended")
+                        }
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                        .padding(.horizontal, 8).frame(height: 18)
+                        .background(Capsule().fill(StudioStyle.Tone.neutral.fill))
                     }
                 }
-                if let detail = option.description, !detail.isEmpty { Text(detail).font(.caption).foregroundStyle(.secondary) }
+                if let detail = option.description, !detail.isEmpty { Text(detail).font(.system(size: 11)).foregroundStyle(.secondary) }
             }
             Spacer(minLength: 0)
         }
@@ -258,9 +269,9 @@ private struct LedgerPromptCard: View {
 
     @ViewBuilder private var actions: some View {
         if held {
-            // plain like the strip's other secondary buttons: one filled button per region (docs/design.md, Controls)
+            // filled only on the most urgent card: one filled button per region (docs/design.md, Controls)
             HStack(spacing: 8) { LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy) }
-                .controlSize(.small)
+                .prominentButton(primary).controlSize(.small)
         } else {
             answers
         }
@@ -280,16 +291,16 @@ private struct LedgerPromptCard: View {
                     }
                     Task { await ledger.reply(prompt, .choices(answers)) }
                 }
-                .buttonStyle(.borderedProminent).disabled(busy || !canAnswerChoices)
+                .prominentButton(primary).disabled(busy || !canAnswerChoices)
             case .permission, .exitPlanMode:
-                Button("Allow") { Task { await ledger.reply(prompt, .allow) } }.buttonStyle(.borderedProminent).disabled(busy)
+                Button("Allow") { Task { await ledger.reply(prompt, .allow) } }.prominentButton(primary).disabled(busy)
                 Button("Deny") { Task { await ledger.reply(prompt, .deny(message: nil)) } }.disabled(busy)
             case .stopQuestion:
                 EmptyView()
             }
             LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy)
             if LedgerCountdown.isCounting(prompt), let auto = LedgerPromptText.proposed(prompt) {
-                Text("If nobody answers: “\(auto)”").font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                Text("If nobody answers: “\(auto)”").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             }
         }
         .controlSize(.small)
@@ -319,19 +330,20 @@ struct LedgerCountdownView: View {
                 let now = LedgerMs((context.date.timeIntervalSince1970 * 1000).rounded()) + skew
                 VStack(alignment: .trailing, spacing: 4) {
                     Label("Auto in \(LedgerCountdown.text(deadline: prompt.deadline, now: now))", systemImage: "timer")
-                        .font(.caption.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(Color(nsColor: .systemOrange))
+                        .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                        .foregroundStyle(StudioStyle.Tone.waiting.text)
                         .fixedSize()
                     if !inline {
                         ProgressView(value: LedgerCountdown.fraction(created: prompt.createdAt, deadline: prompt.deadline, now: now))
-                            .progressViewStyle(.linear).tint(Color(nsColor: .systemOrange)).frame(width: 96)
+                            .progressViewStyle(.linear).tint(StudioStyle.Tone.waiting.text).frame(width: 96)
                     }
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(String(localized: "Auto-continues in \(LedgerCountdown.spoken(deadline: prompt.deadline, now: now))"))
             }
         } else {
-            Label("Waiting for you", systemImage: "hand.raised").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Label("Waiting for you", systemImage: "hand.raised").font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(StudioStyle.Tone.waiting.text)
                 .help(LedgerPromptText.heldText(prompt))
         }
     }

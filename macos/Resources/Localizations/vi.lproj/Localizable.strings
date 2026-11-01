@@ -1472,7 +1472,7 @@
 "Sessions confirmed: %lld" = "Đã xác nhận %lld phiên";
 "Reports in this cycle: %lld" = "%lld báo cáo trong chu kỳ này";
 "Older sessions outside this period: %lld" = "%lld phiên cũ hơn nằm ngoài khoảng này";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld luồng báo cáo theo chu kỳ nên không có trong danh sách này.";
+"Streams report in cycles and stay out of this list." = "Các luồng báo cáo theo chu kỳ nên không có trong danh sách này.";
 "Older rows not drawn yet: %lld" = "Còn %lld hàng cũ hơn chưa được vẽ";
 "Open questions: %lld" = "%lld câu hỏi đang mở";
 "Sessions marked still active: %lld" = "Đã đánh dấu %lld phiên vẫn đang chạy";

@@ -1467,7 +1467,7 @@
 "Sessions confirmed: %lld" = "%lld sesi dikonfirmasi";
 "Reports in this cycle: %lld" = "%lld laporan dalam siklus ini";
 "Older sessions outside this period: %lld" = "%lld sesi lama di luar periode ini";
-"Streams kept out of this list (they report in cycles): %lld" = "%lld aliran melapor per siklus dan tidak masuk daftar ini.";
+"Streams report in cycles and stay out of this list." = "Aliran melapor per siklus dan tidak masuk daftar ini.";
 "Older rows not drawn yet: %lld" = "%lld baris lama belum digambar";
 "Open questions: %lld" = "%lld pertanyaan terbuka";
 "Sessions marked still active: %lld" = "%lld sesi ditandai masih aktif";

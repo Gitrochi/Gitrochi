@@ -1,23 +1,20 @@
 import SwiftUI
 
-// Small pieces the Ledger views share. They only combine existing styles and system colours: the verdict chip is the
-// tinted capsule of GitchResultPill, lane colours come from the commit graph's Palette.
+// Small pieces the Ledger views share. They follow docs/design.md: status in the shared tones and pills, never in the
+// accent; lane colours come from the commit graph's Palette.
 
 extension LedgerVerdict {
-    /// The contract's colours: orange, the accent (outlined for To confirm), green, red, and the secondary and
-    /// tertiary text colours for what needs nobody
-    var color: Color {
+    /// The status tone (docs/design.md, Badges): Needs you asks for an action, To decide and To confirm for a review,
+    /// Ready to archive is done, Stale is overdue, and the rest need nobody
+    var tone: StudioStyle.Tone {
         switch self {
-        case .needsHuman: return Color(nsColor: .systemOrange)
-        case .pendingMerge, .confirm: return .accentColor
-        case .expirable: return Color(nsColor: .systemGreen)
-        case .stale: return Color(nsColor: .systemRed)
-        case .active: return Color(nsColor: .secondaryLabelColor)
-        case .shelved, .archived: return Color(nsColor: .tertiaryLabelColor)
+        case .needsHuman: return .waiting
+        case .pendingMerge, .confirm: return .info
+        case .expirable: return .passed
+        case .stale: return .failed
+        case .active, .shelved, .archived: return .neutral
         }
     }
-
-    var outlined: Bool { self == .confirm }
 }
 
 enum LedgerTime {
@@ -26,27 +23,11 @@ enum LedgerTime {
     static func long(_ ms: LedgerMs) -> String { Fmt.long(date(ms)) }
 }
 
-/// The verdict as a chip: symbol, label and colour together, so colour is never the only sign
+/// The verdict as a status pill: symbol, label and tone together, so colour is never the only sign
 struct LedgerVerdictBadge: View {
     let verdict: LedgerVerdict
-    var count: Int?
 
-    var body: some View {
-        HStack(spacing: 3) {
-            Image(systemName: verdict.symbol)
-            Text(verdict.title).lineLimit(1)
-            if let count { Text("\(count)").monospacedDigit() }
-        }
-        .font(.caption2.weight(.semibold))
-        .foregroundStyle(verdict.color)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(Capsule().fill(verdict.outlined ? Color.clear : verdict.color.opacity(0.15)))
-        .overlay(Capsule().strokeBorder(verdict.outlined ? verdict.color : Color.clear, lineWidth: 1))
-        .fixedSize()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(verdict.title + (count.map { ", \($0)" } ?? ""))
-    }
+    var body: some View { StatusPill(title: verdict.title, symbol: verdict.symbol, tone: verdict.tone) }
 }
 
 /// A session's ID next to its lane colour, as the graph draws it
@@ -57,7 +38,7 @@ struct LedgerSessionLabel: View {
     var body: some View {
         HStack(spacing: 5) {
             Circle().fill(Palette.lane(color)).frame(width: 8, height: 8).accessibilityHidden(true)
-            Text(id).font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
+            Text(id).font(.system(size: 11, weight: .medium).monospacedDigit()).foregroundStyle(.secondary).lineLimit(1)
         }
         .fixedSize()
     }
@@ -83,9 +64,9 @@ struct LedgerSectionHeader: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(title.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.8).lineLimit(1)
+            Text(title.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.8).lineLimit(1)
             Rectangle().frame(height: 1).opacity(0.25)
-            if let count { Text("\(count)").font(.system(size: 10, weight: .semibold, design: .monospaced)) }
+            if let count { Text("\(count)").font(.system(size: 11, weight: .semibold).monospacedDigit()) }
         }
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .combine)
@@ -101,7 +82,8 @@ struct LedgerToastView: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(Color(nsColor: .systemGreen)).accessibilityHidden(true)
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.passed.text)
+                .accessibilityHidden(true)
             Text(toast.message).font(.callout).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             if toast.canUndo {
                 Button("Undo", action: undo)
@@ -122,6 +104,13 @@ struct LedgerToastView: View {
     }
 }
 
+extension View {
+    /// One filled button per region (docs/design.md, Controls): only the button the person is working in is filled
+    @ViewBuilder func prominentButton(_ on: Bool) -> some View {
+        if on { buttonStyle(.borderedProminent) } else { self }
+    }
+}
+
 /// A link chip in the inspector header: branch, worktree, pull request, agent, chat
 struct LedgerLinkChip: View {
     let symbol: String
@@ -130,13 +119,13 @@ struct LedgerLinkChip: View {
 
     var body: some View {
         let chip = HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
+            Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
             Text(text).font(.system(size: 11, weight: .medium)).lineLimit(1).truncationMode(.middle)
         }
         .padding(.horizontal, 6).padding(.vertical, 3)
         .background(RoundedRectangle(cornerRadius: 5).fill(Color.secondary.opacity(0.1)))
         if let url {
-            Link(destination: url) { chip }.buttonStyle(.plain).foregroundStyle(Color.accentColor).help(url.absoluteString)
+            Link(destination: url) { chip }.buttonStyle(.plain).foregroundStyle(StudioStyle.link).help(url.absoluteString)
         } else {
             chip.foregroundStyle(.secondary).help(text)
         }
