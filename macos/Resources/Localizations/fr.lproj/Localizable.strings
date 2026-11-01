@@ -1612,6 +1612,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "La commande du registre manque dans cette copie de Gitrochi : %@";
 "The ledger command did not answer the MCP handshake." = "La commande du registre n’a pas répondu à la poignée de main MCP.";
 "The ledger command answers with its tools: %@." = "La commande du registre répond avec ses outils : %@.";
+"Latest" = "Dernière";
+"Latest release" = "Dernière version";
+"Latest stable release" = "Dernière version stable";
+"{0} unreleased commits" = "{0} commits non publiés";
+"Not on top of {0}" = "Ne part pas de {0}";
+"Compare in app" = "Comparer dans l'app";
+"Compare in browser" = "Comparer dans le navigateur";
+"Other files ({0})" = "Autres fichiers ({0})";
+"Tagged from {0}" = "Étiqueté depuis {0}";
+"Assets: {0}" = "Fichiers : {0}";
+"Published releases" = "Versions publiées";
+"Published, but marked as not ready for production" = "Publiée, mais marquée comme non prête pour la production";
+"Saved but not published; only people with write access see it" = "Enregistrée mais non publiée ; seules les personnes avec accès en écriture la voient";
+"Parent folder" = "Dossier parent";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Suivre les agents que je lance";
@@ -1626,7 +1640,7 @@
 "Decision sessions never continue automatically." = "Les sessions de décision ne se poursuivent jamais automatiquement.";
 "Use the default" = "Utiliser la valeur par défaut";
 "Follow the repository's or the default auto-continue setting again" = "Suivre à nouveau le réglage du dépôt ou la poursuite automatique par défaut";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Fonctionne pour les agents Claude Code que Gitrochi lance tant que Suivre les agents que je lance est activé. Une attente plus longue atteint un agent en cours à son prochain démarrage.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Fonctionne pour les agents Claude Code que Gitrochi lance tant que Suivre les agents que je lance est activé.";
 "Auto-continue changed for %@" = "Poursuite automatique modifiée pour %@";
 "Stop waiting here and answer in the agent's own terminal" = "Ne plus attendre ici et répondre dans le terminal de l’agent";
 "Not this time" = "Pas cette fois";

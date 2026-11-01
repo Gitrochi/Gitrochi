@@ -41,6 +41,41 @@ export function newestReleases(items: HubItem[]) {
   const sorted = orderedReleases(items);
   return { stable: sorted.find(item => releaseState(item) === "Stable"), prerelease: sorted.find(item => releaseState(item) === "Prerelease") };
 }
+/** The package a page opens with: the one whose release was published last. */
+export function defaultReleaseFamily(items: HubItem[]): string {
+  const newest = orderedReleases(items.filter(item => releaseState(item) !== "Draft"))[0] ?? orderedReleases(items)[0];
+  return newest ? releaseFamily(newest) : "";
+}
+/** A readable package name: its newest release's title without the version ("Desktop 1.2.0" → "Desktop"). */
+export function releasePackageName(items: HubItem[], family: string): string {
+  const newest = orderedReleases(items.filter(item => releaseFamily(item) === family))[0];
+  if (newest) {
+    const tag = releaseTag(newest), version = releaseVersion(tag);
+    let name = version ? newest.title.replace(new RegExp(`v?${version.core.join("\\.")}(?:-[\\w.-]+)?`, "gi"), " ") : newest.title;
+    name = name.split(tag).join(" ");
+    name = name.replace(/\(\s*\)|\[\s*\]/g, " ").replace(/\s+/g, " ").replace(/^[\s\-–—:·@/_]+|[\s\-–—:·@/_]+$/g, "");
+    if (name) return name;
+  }
+  return family.replace(/[@/\-_]+$/, "");
+}
+/** Recent releases of one package, oldest first: older stables, the newest stable, then a newer prerelease. */
+export function releaseTimeline(items: HubItem[], family: string, count = 4) {
+  const sorted = orderedReleases(items.filter(item => releaseFamily(item) === family && releaseState(item) !== "Draft"));
+  const index = sorted.findIndex(item => releaseState(item) === "Stable");
+  if (index < 0) return { stable: undefined, prerelease: sorted[0], path: sorted.slice(0, 1) };
+  const stable = sorted[index], prerelease = index > 0 ? sorted[0] : undefined;
+  const older = sorted.slice(index + 1).filter(item => releaseState(item) === "Stable").slice(0, count - 1).reverse();
+  return { stable, prerelease, path: [...older, stable, ...(prerelease ? [prerelease] : [])] };
+}
+const packageFile = /\.(dmg|pkg|zip|exe|msi|msix|appimage|deb|rpm|apk|tar\.gz|tgz|tar\.xz|7z)$/i;
+/** Installers and archives of this version come first; checksums, signatures and helper binaries fold away. */
+export function releaseAssetGroups<T extends { name: string }>(assets: T[], tag: string): { primary: T[]; other: T[] } {
+  const version = releaseVersion(tag), packages = assets.filter(asset => packageFile.test(asset.name));
+  const versioned = version ? packages.filter(asset => asset.name.includes(version.core.join("."))) : [];
+  const primary = versioned.length ? versioned : packages;
+  if (!primary.length || primary.length === assets.length) return { primary: assets, other: [] };
+  return { primary, other: assets.filter(asset => !primary.includes(asset)) };
+}
 export function releaseCompareURL(target: RepoTarget | null, base: string, head: string): string | null {
   if (!target || !base || !head || base === head || [base, head].some(x => /[\x00-\x20\x7f]/.test(x))) return null;
   const a = releaseVersion(base), b = releaseVersion(head);

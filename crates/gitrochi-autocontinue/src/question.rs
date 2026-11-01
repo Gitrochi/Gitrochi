@@ -284,6 +284,10 @@ const SIGN_OFFS: &[&str] = &[
     "谢谢",
 ];
 
+/// The two answers of a yes/no hint after a question: "(yes/no)", "[Y/n]", "(예/아니오)".
+const HINT_YES: &[&str] = &["yes", "y", "예", "네", "はい", "是"];
+const HINT_NO: &[&str] = &["no", "n", "아니오", "아니요", "いいえ", "否"];
+
 #[derive(Debug)]
 enum Unit {
     Sentence(String),
@@ -301,12 +305,17 @@ pub fn classify_stop(message: &str) -> Option<StopQuestion> {
         if let Some(items) = list_items(paragraph) {
             units.push(Unit::List(items));
         } else {
-            units.extend(
-                plain
-                    .iter()
-                    .flat_map(|line| sentences(line))
-                    .map(Unit::Sentence),
-            );
+            for sentence in plain.iter().flat_map(|line| sentences(line)) {
+                // "Merge now? (y/n)" splits after the mark; the hint belongs to the question
+                if without_answer_hint(&sentence) == Some("") {
+                    if let Some(Unit::Sentence(last)) = units.last_mut() {
+                        last.push(' ');
+                        last.push_str(&sentence);
+                        continue;
+                    }
+                }
+                units.push(Unit::Sentence(sentence));
+            }
         }
         texts.push(plain.join("\n"));
     }
@@ -330,12 +339,15 @@ pub fn classify_stop(message: &str) -> Option<StopQuestion> {
                 skipped += 1;
             }
             Unit::Sentence(sentence) => {
-                if is_closing(sentence) || is_recommendation(sentence) {
+                // A yes/no hint asks for an answer by itself; the rest says what is asked.
+                let hint = without_answer_hint(sentence);
+                let asked = hint.unwrap_or(sentence);
+                if is_closing(asked) || (hint.is_none() && is_recommendation(asked)) {
                     skipped += 1;
                     continue;
                 }
-                let cue = question_cue(sentence)?;
-                let options = neighbour_list(&units, i, sentence);
+                let cue = question_cue(asked).or_else(|| hint.map(|_| "answer-hint".into()))?;
+                let options = neighbour_list(&units, i, asked);
                 let mut summary = sentence.clone();
                 if !options.is_empty() {
                     let labels: Vec<&str> = options.iter().map(|o| o.label.as_str()).collect();
@@ -452,6 +464,27 @@ fn script_of(phrase: &str) -> &'static str {
         }
         _ => "en",
     }
+}
+
+/// The sentence before a yes/no hint at its very end ("Merge now? (y/n)" → "Merge now?"), or
+/// `None` without one. A full stop after the brackets makes it a statement about a prompt.
+fn without_answer_hint(sentence: &str) -> Option<&str> {
+    let end = sentence.trim_end_matches([' ', ':', '：']);
+    let close = end.chars().last()?;
+    let open = match close {
+        ')' => '(',
+        ']' => '[',
+        '）' => '（',
+        _ => return None,
+    };
+    let start = end.rfind(open)?;
+    let inner = end[start + open.len_utf8()..end.len() - close.len_utf8()]
+        .to_lowercase()
+        .replace(" or ", "/");
+    let answers: Vec<&str> = inner.split(['/', '|']).map(str::trim).collect();
+    let yes = answers.iter().filter(|a| HINT_YES.contains(a)).count();
+    let no = answers.iter().filter(|a| HINT_NO.contains(a)).count();
+    (answers.len() == 2 && yes == 1 && no == 1).then(|| end[..start].trim_end())
 }
 
 fn is_closing(sentence: &str) -> bool {

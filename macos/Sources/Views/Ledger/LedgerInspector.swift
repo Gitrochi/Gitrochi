@@ -217,7 +217,7 @@ struct LedgerInspector: View {
                             .help("Follow the repository's or the default auto-continue setting again")
                     }
                 }
-                Text("Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again.")
+                Text("Works for Claude Code agents Gitrochi starts while Track agents I start is on.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }

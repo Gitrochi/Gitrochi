@@ -1562,6 +1562,20 @@
 "The ledger command is missing from this copy of Gitrochi: %@" = "W tej kopii Gitrochi brakuje polecenia rejestru: %@";
 "The ledger command did not answer the MCP handshake." = "Polecenie rejestru nie odpowiedziało na powitanie MCP.";
 "The ledger command answers with its tools: %@." = "Polecenie rejestru odpowiada swoimi narzędziami: %@.";
+"Latest" = "Najnowsze";
+"Latest release" = "Najnowsze wydanie";
+"Latest stable release" = "Najnowsze stabilne wydanie";
+"{0} unreleased commits" = "Niewydane commity: {0}";
+"Not on top of {0}" = "Nie bazuje na {0}";
+"Compare in app" = "Porównaj w aplikacji";
+"Compare in browser" = "Porównaj w przeglądarce";
+"Other files ({0})" = "Inne pliki ({0})";
+"Tagged from {0}" = "Otagowano z {0}";
+"Assets: {0}" = "Zasoby: {0}";
+"Published releases" = "Opublikowane wydania";
+"Published, but marked as not ready for production" = "Opublikowane, ale oznaczone jako niegotowe do produkcji";
+"Saved but not published; only people with write access see it" = "Zapisane, ale nieopublikowane; widzą je tylko osoby z prawem zapisu";
+"Parent folder" = "Folder nadrzędny";
 
 /* Ledger: Track agents I start and auto-continue. */
 "Track agents I start" = "Śledź agentów, których uruchamiam";
@@ -1576,7 +1590,7 @@
 "Decision sessions never continue automatically." = "Sesje decyzyjne nigdy nie kontynuują automatycznie.";
 "Use the default" = "Użyj domyślnego";
 "Follow the repository's or the default auto-continue setting again" = "Znowu stosuj ustawienie repozytorium lub domyślną automatyczną kontynuację";
-"Works for Claude Code agents Gitrochi starts while Track agents I start is on. A longer wait reaches a running agent when it starts again." = "Działa dla agentów Claude Code uruchamianych przez Gitrochi, gdy włączone jest Śledź agentów, których uruchamiam. Dłuższe czekanie obejmie działającego agenta przy jego następnym uruchomieniu.";
+"Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Działa dla agentów Claude Code uruchamianych przez Gitrochi, gdy włączone jest Śledź agentów, których uruchamiam.";
 "Auto-continue changed for %@" = "Zmieniono automatyczną kontynuację dla %@";
 "Stop waiting here and answer in the agent's own terminal" = "Przestań tu czekać i odpowiedz we własnym terminalu agenta";
 "Not this time" = "Nie tym razem";
