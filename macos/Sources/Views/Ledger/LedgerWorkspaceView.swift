@@ -132,7 +132,7 @@ struct LedgerWorkspaceView: View {
                 .help("Paste reports from a conversation")
                 .accessibilityLabel("Paste reports")
             Menu {
-                Button("Connect Claude Code…") { sheet = .connect }
+                Button("Connect agents…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
                 Divider()
@@ -204,7 +204,7 @@ struct LedgerWorkspaceView: View {
                                 description: "No reports have arrived yet. Register the tools, then ask your agent to send a start report.")
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
-                Button("Connect Claude Code…") { sheet = .connect }.buttonStyle(.borderedProminent)
+                Button("Connect agents…") { sheet = .connect }.buttonStyle(.borderedProminent)
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
             }

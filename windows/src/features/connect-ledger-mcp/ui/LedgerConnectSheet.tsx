@@ -4,6 +4,7 @@ import type { LedgerInfo, LedgerStore } from "@/entities/ledger";
 import { env, isWindows, joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Button, IconButton, Modal, Spinner } from "@/shared/ui";
+import { type LedgerClient, ledgerSetup } from "../lib/setup";
 import "./ledger-connect-sheet.css";
 
 /** The bundled Ledger binary; agents talk to it over MCP (stdio) */
@@ -15,16 +16,16 @@ function ledgerBinary() {
 
 function CopyBlock({ text, label, copyLabel, onCopied }: { text: string; label: string; copyLabel?: string; onCopied: (ok: boolean) => void }) {
   return (
-    <div className="ledger-code">
-      <pre aria-label={label}>{text}</pre>
-      <IconButton small icon={<Copy size={14} />} tip={copyLabel ?? t("Copy")} aria-label={copyLabel ?? `${t("Copy")} · ${label}`} onClick={() => void navigator.clipboard.writeText(text).then(() => onCopied(true), () => onCopied(false))} />
+    <div className="ledger-connect-code">
+      <div className="ledger-code-head"><span>{label}</span><IconButton small icon={<Copy size={14} />} tip={copyLabel ?? t("Copy")} aria-label={copyLabel ?? `${t("Copy")} · ${label}`} onClick={() => void navigator.clipboard.writeText(text).then(() => onCopied(true), () => onCopied(false))} /></div>
+      <div className="ledger-code"><pre aria-label={label}>{text}</pre></div>
     </div>
   );
 }
 
 /**
- * Connect Claude Code: the command that registers the Ledger's MCP server with Claude Code, the same entry for other
- * MCP clients, and a probe of this app's Ledger. It never edits a client's settings; the person runs or pastes them.
+ * Connect local agents with separate commands for MCP reports and passive activity hooks. The backend probe checks
+ * this app's Ledger; no client configuration or hook trust is changed by opening or testing the sheet.
  * (macOS: Views/Ledger/LedgerConnectSheet.swift)
  */
 export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onClose: () => void }) {
@@ -32,9 +33,10 @@ export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onC
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<LedgerInfo | null>(null);
   const [testing, setTesting] = useState(false);
+  const [client, setClient] = useState<LedgerClient>("claude");
   const binary = ledgerBinary();
-  const command = `claude mcp add --scope user gitrochi-ledger -- "${binary}" mcp`;
-  const config = JSON.stringify({ mcpServers: { "gitrochi-ledger": { command: binary, args: ["mcp"] } } }, null, 2);
+  const setup = ledgerSetup(client, binary, isWindows());
+  const commandLabel = (label: string) => `${t(label)}${isWindows() ? " · PowerShell" : ""}`;
   // macOS: LedgerConnectSheet.swift. The copied instruction stays in English like a project's CLAUDE.md.
   const reportingInstruction = "Use ledger_report to send a start report for this conversation and its current work. Include the project and a short title. Send progress, question and done reports as the work changes.";
   const copied = (ok: boolean) => (ok ? (setNotice(t("Copied")), setError(null)) : setError(t("Could not copy to the clipboard.")));
@@ -53,7 +55,7 @@ export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onC
   };
   return (
     <Modal
-      title={t("Connect Claude Code")}
+      title={t("Connect agents")}
       width={680}
       onClose={onClose}
       footer={
@@ -67,18 +69,32 @@ export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onC
         </>
       }
     >
-      <span>{t("Register the Ledger tools with Claude Code by running this command in a terminal.")}</span>
-      <CopyBlock text={command} label={t("Command for Claude Code")} onCopied={copied} />
+      <label className="ledger-connect-client"><span>{t("Agent")}</span><select className="select" aria-label={t("Agent")} value={client} onChange={(e) => { setClient(e.target.value as LedgerClient); setNotice(""); }}><option value="claude">Claude Code</option><option value="codex">Codex</option></select></label>
+      {client === "codex" && <span className="hint">{t("Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports.")}</span>}
+      <strong>{t("Ledger reports")}</strong>
+      <span>{t("Register the Ledger tools by running this command in a terminal.")}</span>
+      <CopyBlock text={setup.register} label={commandLabel("MCP registration command")} onCopied={copied} />
       <span className="hint">{t("Registration makes the tools available. It does not import existing conversations or make agents report automatically.")}</span>
-      <span>{t("Start or restart a Claude Code conversation, then ask it to call ledger_report with a start report for its current work.")}</span>
+      <span>{t("Start a new conversation, then ask the agent to send a start report with ledger_report.")}</span>
       <CopyBlock text={reportingInstruction} label={t("Reporting instruction")} copyLabel={t("Copy reporting instruction")} onCopied={copied} />
       <details>
-        <summary>{t("Other MCP clients: add this entry to their MCP settings.")}</summary>
-        <CopyBlock text={config} label={t("MCP settings entry")} onCopied={copied} />
+        <summary>{t("MCP settings entry")}</summary>
+        <CopyBlock text={setup.config} label={t("MCP settings entry")} onCopied={copied} />
+      </details>
+      <strong>{t("Automatic activity")}</strong>
+      <span>{t("Install activity hooks for this agent. Existing hooks are kept. MCP registration is separate.")}</span>
+      <CopyBlock text={setup.install} label={commandLabel("Activity setup command")} onCopied={copied} />
+      <span className="hint">{t("Activity records do not mark work complete. Task details still come from the agent's reports.")}</span>
+      {client === "codex" && <span className="hint">{t("After installing, open /hooks in Codex and review and trust the Ledger hooks. Installation does not trust them.")}</span>}
+      <details>
+        <summary>{t("Check or remove automatic activity")}</summary>
+        <CopyBlock text={setup.status} label={commandLabel("Status")} onCopied={copied} />
+        <span className="hint">{t("Setup status checks configuration only, not whether hooks are trusted or running.")}</span>
+        <CopyBlock text={setup.remove} label={commandLabel("Remove")} onCopied={copied} />
       </details>
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
-      <span className="hint">{t("Nothing is written to Claude Code's settings by Gitrochi.")}</span>
-      <span className="hint">{t("Checks this app's Ledger, not Claude Code's MCP configuration.")}</span>
+      <span className="hint">{t("This sheet changes no client settings. Run only the setup commands you want to enable.")}</span>
+      <span className="hint">{t("Checks this app's Ledger, not agent configuration or hook trust.")}</span>
       {info && (
         <div className="card" role="status" style={{ gap: 4 }}>
           <strong>{info.enabled ? t("The Ledger responds.") : t("The Ledger is turned off.")}</strong>

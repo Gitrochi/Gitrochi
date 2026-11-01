@@ -30,6 +30,32 @@ The sheet also supplies configuration for other MCP clients and instructions you
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
+## Track local Claude Code and Codex activity automatically
+
+Passive hooks can put local conversations in the Ledger even when you start them outside Gitrochi. Use the setup command for the client you want to observe:
+
+```sh
+gitrochi-ledger integrate claude --install
+gitrochi-ledger integrate codex --install
+```
+
+Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
+
+```sh
+gitrochi-ledger --json integrate claude --status
+gitrochi-ledger integrate claude --remove
+gitrochi-ledger --json integrate codex --status
+gitrochi-ledger integrate codex --remove
+```
+
+Start or restart the client after installing. Codex asks you to review non-managed hooks in its own `/hooks` flow; Gitrochi does not grant that trust or change permission settings. The status command confirms configuration only. A conversation appearing in Board or Streams confirms that its activity reached this Ledger. Cloud-orchestrated Codex tasks do not run these local hooks.
+
+Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions use a generic kind and have auto-continue off. Existing Gitrochi-tracked sessions keep their own kind and policy.
+
+MCP registration remains separate. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
+
+These global hooks are independent of **Track agents I start** and observe local sessions wherever they start, including Gitrochi. The app's switch still controls its own per-launch tracking. Remove the passive hooks to stop this separate observation; the existing launch commands and off behavior are unchanged.
+
 ## Read the views
 
 Use the upper **Inbox**, **Board**, **Graph** and **Streams** tabs to switch views. The compact filter row below them holds the project picker, session text filter and verdict menu. Choose **This repository** to focus on the open repository's project, or **All projects** to see the whole local Ledger.

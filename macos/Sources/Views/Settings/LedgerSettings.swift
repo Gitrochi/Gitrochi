@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 /// Settings › Ledger: the rules the ledger core keeps in its database (when a session is stale, what each kind of
-/// session means, where a project's baselines come from), its backups, and the ways in: Connect Claude Code and Import.
+/// session means, where a project's baselines come from), its backups, and the ways in: Connect agents and Import.
 /// Changes are saved as they are made. The tab goes with the Ledger page, so for now it shows only with
 /// GITROCHI_LEDGER_PREVIEW=1. Track agents I start is this app's choice (UserDefaults); auto-continue per repository
 /// lives in the ledger's `autoContinue` setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
@@ -335,13 +335,13 @@ struct LedgerSettings: View {
     private var connectSection: some View {
         Section {
             HStack {
-                Button("Connect Claude Code…") { sheet = .connect }
+                Button("Connect agents…") { sheet = .connect }
                 Button("Import…") { sheet = .importReports }
             }
         } header: {
             Text("Connect and import")
         } footer: {
-            Text("Connect Claude Code to let its sessions report here. Import reads reports pasted from a conversation, or a claude-ledger database.")
+            Text("Connect agents to let them report here. Import reads pasted reports or a claude-ledger database.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }

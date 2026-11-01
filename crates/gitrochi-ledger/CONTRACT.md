@@ -213,6 +213,20 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 ## Hooks
 
+### Passive external observers
+
+The CLI also has an independent opt-in path for local clients: `observe <claude|codex> EVENT` reads hook JSON from standard input. It does not call the auto-continue handler or broaden any API caller's permissions. `hook EVENT` keeps its existing launch-only behavior.
+
+The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"`. Existing rows retain their kind, status and auto-continue policy. The unresolved implementation-stream default for Gitrochi launches is unchanged.
+
+Allowed activity metadata is the client/session ID, event, tool name, tool-use ID, turn ID, subagent ID and the checkout context. Prompts, transcript paths/content, tool arguments/results and assistant output are ignored. These observations advance `lastAt` and append `hook` events; they never advance `lastAgentAt`, create questions or pending permission prompts, acknowledge, archive or change a session's status. `Stop` is a turn boundary, not task completion. Only actual agent reports establish reported progress and outcomes.
+
+On `SessionStart` the handler may return bounded additional context naming the Ledger session ID and asking an available `ledger_report` tool to include it explicitly. No other event returns context or a decision. Invalid input, disabled Ledger, missing database, lock failure and unsupported events all end with exit 0. The observer opens existing databases only, with the hook lock budget.
+
+`integrate <client> --install|--status|--remove [--cli FILE] [--config FILE]` manages passive callbacks in the user's `.claude/settings.json` or `.codex/hooks.json`. Installation is explicit, initializes the selected database if needed, uses a stable executable path, preserves unrelated keys and callbacks, backs up existing bytes privately and replaces the file atomically only if it has not changed meanwhile. Owned command callbacks carry `--managed-hook`; reinstalling replaces only those callbacks and removal deletes only that client's callbacks. Status/removal never initialize a database or missing settings file.
+
+JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`, `ownedHookCount`, `expectedHookCount`, `otherHookCount`, `backupPath`, `verification: "configuration_only"`, `requiresClientTrust` and `hooksDisabled`. Installed configuration does not prove execution, MCP registration or trust. Codex trust hashes, feature flags and all permission/auto-continue settings are outside this installer. Client settings, trust, disabled hooks and local/cloud execution determine coverage.
+
 `gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on: `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PostToolUseFailure` and `SessionEnd`. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
 
 - **Activity.**
@@ -295,5 +309,9 @@ Added for launch tracking (wave 2):
 Added for the apps' notifications (wave 2):
 
 17. Waits held for the person ([Hooks](#hooks)): a waiting prompt with `deadline` 0 and `payload.hold`, which `prompt_expire` leaves alone and the limit in a row does not count. Before, these waits stored nothing. `Attention` gains `held`, their count, which `total` includes.
+
+Added for opt-in local client activity:
+
+18. Passive `observe` and reversible `integrate` CLI commands for Claude Code and Codex. External session bindings live in `links.observer`; observations are `hook` events and do not claim agent reports or change task status. Existing `hook EVENT`, app-launch tracking defaults and API caller permissions are unchanged.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

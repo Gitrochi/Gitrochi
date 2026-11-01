@@ -193,6 +193,35 @@ fn reachable_base(db: &Db, project: &str, folder: &str) -> Result<Option<String>
 /// `hook` event that says it came from a launch. A project that does not exist yet is bound
 /// to `repoPath`, so its tags become its baselines.
 pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRow> {
+    create_from(connection, plan, now, "Started from Gitrochi", "app", None)
+}
+
+/// The same launch record for a passive external client, with its origin stated explicitly.
+pub(crate) fn create_observed(
+    connection: &Connection,
+    plan: &Plan,
+    now: Ms,
+    title: &str,
+    client: &str,
+) -> Result<SessionRow> {
+    create_from(
+        connection,
+        plan,
+        now,
+        &format!("Observed {title} session"),
+        "observer",
+        Some(client),
+    )
+}
+
+fn create_from(
+    connection: &Connection,
+    plan: &Plan,
+    now: Ms,
+    summary: &str,
+    channel: &str,
+    client: Option<&str>,
+) -> Result<SessionRow> {
     connection.execute(
         "INSERT OR IGNORE INTO projects (key, name, repo_path, created_at) VALUES (?1, ?1, ?2, ?3)",
         params![
@@ -232,6 +261,11 @@ pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRo
         ],
     )?;
     let mut data = json!({"hook": LAUNCH});
+    if let Some(client) = client {
+        data["observer"] = json!(true);
+        data["client"] = json!(client);
+        data["source"] = json!("external");
+    }
     if let Some(agent) = plan.links.get("agentId") {
         data["agentId"] = agent.clone();
     }
@@ -249,12 +283,12 @@ pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRo
             ts: now,
             kind: "hook",
             actor: "hook",
-            summary: "Started from Gitrochi",
+            summary,
             body: None,
             version: base.as_deref(),
             artifacts: &json!([]),
             data: &data,
-            channel: "app",
+            channel,
             delivered_at: Some(now),
         },
     )?;

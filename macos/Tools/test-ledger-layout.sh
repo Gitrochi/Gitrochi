@@ -6,20 +6,24 @@
 # in a temporary database.
 # Text recognition checks that each part is drawn (on its larger text: small labels are read unreliably), and the
 # large demo reports frame and filter timings.
-#   macos/Tools/test-ledger-layout.sh [output folder for the screenshots]
+#   macos/Tools/test-ledger-layout.sh [--connect-only] [output folder for the screenshots]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
 trap 'rm -rf "$TASK_TMP"' EXIT
+TASK_CONNECT_ONLY=0
+TASK_CAPTURE_MODE=--all
+if [[ "${1:-}" == "--connect-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--connect-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
 ST="${GITROCHI_SWIFTTERM_DIR:-$ROOT/.build/swiftterm/$ARCH}"
 [[ -f "$ST/libSwiftTerm.a" ]] || { echo 'Run macos/build.sh once to build SwiftTerm.' >&2; exit 1; }
-python3 - "$ROOT" "$TASK_TMP" <<'PY'
+python3 - "$ROOT" "$TASK_TMP" "$TASK_CONNECT_ONLY" <<'PY'
 from pathlib import Path
 import sys
-root, target = map(Path, sys.argv[1:])
+root, target = map(Path, sys.argv[1:3])
+connect_only = sys.argv[3] == '1'
 for source in (root / 'Sources').rglob('*.swift'):
     relative = source.relative_to(root / 'Sources').as_posix()
     text = source.read_text()
@@ -28,6 +32,12 @@ for source in (root / 'Sources').rglob('*.swift'):
         start = text.index('@main\nstruct GitrochiApp: App {')
         end = text.index('/// 창(탭) 하나 = 저장소 하나', start)
         text = text[:start] + text[end:]
+    if relative == 'Views/Ledger/LedgerConnectSheet.swift':
+        # The fixture selects both agents without changing production access control.
+        text = text.replace('@ViewState private var client:', '@ViewState var client:')
+        if connect_only:
+            text = text.replace('DisclosureGroup("Check or remove automatic activity") {',
+                                'DisclosureGroup("Check or remove automatic activity", isExpanded: .constant(true)) {')
     dest = target / 'Sources' / relative
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(text)
@@ -137,6 +147,13 @@ func seen(_ label: String, in text: String) -> Bool {
             for dark in [false, true] {
                 let shot = Shot(content, width: width, height: height, dark: dark)
                 settle(0.4)
+                if CommandLine.arguments.contains("--connect-only"),
+                   let list = scrollViews(in: shot.host).max(by: { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }) {
+                    let contentHeight = list.documentView?.frame.height ?? 0
+                    list.contentView.scroll(to: NSPoint(x: 0, y: max(0, contentHeight - list.contentView.bounds.height)))
+                    list.reflectScrolledClipView(list.contentView)
+                    settle(0.2)
+                }
                 let png = shot.png()
                 let file = "ledger-\(name)-\(dark ? "dark" : "light").png"
                 try png.write(to: output.appendingPathComponent(file))
@@ -153,6 +170,18 @@ func seen(_ label: String, in text: String) -> Bool {
         }
 
         let ledger = store(.standard)
+        func connectShots() throws {
+            let focused = CommandLine.arguments.contains("--connect-only")
+            try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 680, height: 700,
+                      expect: focused ? ["Connect agents", "Status", "Remove", "integrate claude --status", "integrate claude --remove", "Test Ledger"] : ["Connect agents", "claude mcp add", "Copy reporting instruction", "Test Ledger"])
+            try shoot("connect-codex", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger", client: .codex), width: 680, height: 700,
+                      expect: focused ? ["Connect agents", "Status", "Remove", "integrate codex --status", "integrate codex --remove", "Test Ledger"] : ["Connect agents", "codex mcp add", "Copy reporting instruction", "Test Ledger"])
+        }
+        if CommandLine.arguments.contains("--connect-only") {
+            try connectShots()
+            print("PASS: \(shots) agent connection screenshots in light and dark. \(output.path)")
+            return
+        }
         let sessions = ledger.state!.sessions
         let retry = sessions.first { $0.verdict == .needsHuman && $0.project == "harbor" }!
         let decision = sessions.first { $0.role == .decision }!
@@ -203,13 +232,12 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("inspector-auto-continue", LedgerInspector(ledger: ledger, open: { _ in }, close: {}), width: 480, height: 1100,
                   expect: ["Retry sign-in after a timeout", "Continue automatically when nobody answers"])
 
-        try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 680, height: 700,
-                  expect: ["Connect Claude Code", "claude mcp add", "Copy reporting instruction", "Test Ledger"])
+        try connectShots()
         try shoot("import", LedgerImportSheet(ledger: ledger), width: 620, height: 380, expect: ["Paste reports", "Import"])
 
         let empty = store(.empty)
         try shoot("empty", LedgerWorkspaceView(repositoryPath: nil, ledger: empty), width: 1200, height: 760,
-                  expect: ["No reports yet", "Connect Claude Code", "Paste reports"])
+                  expect: ["No reports yet", "Connect agents", "Paste reports"])
 
         // the core itself, through its C ABI, as the app reads it
         let core = LedgerStore(client: LedgerClient(backend: NativeLedgerBackend(database: CommandLine.arguments[2])), defaults: defaults, interval: .seconds(600))
@@ -235,7 +263,7 @@ func seen(_ label: String, in text: String) -> Bool {
         try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 2300,
                   expect: ["Track agents I start", "Agents Gitrochi starts", "Continue automatically when nobody answers", "harbor-app",
                            "Show notifications", "Show the Inbox count on the Dock icon",
-                           "Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect Claude Code"])
+                           "Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect agents"])
         try shoot("import-legacy", LedgerLegacyImportSheet(ledger: core, path: CommandLine.arguments[3]), width: 620, height: 380,
                   expect: ["Import from claude-ledger", "Ready to import", "Sessions"])
 
@@ -297,7 +325,9 @@ SOURCES=()
 while IFS= read -r -d '' file; do SOURCES+=("$file"); done < <(find "$TASK_TMP/Sources" -name '*.swift' -print0)
 TASK_CORE="$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")"
 cp "$TASK_CORE" "$TASK_TMP/core.a"
-xcrun swiftc -parse-as-library -swift-version 5 -O -target "$ARCH-apple-macos15.0" \
+TASK_OPTIMIZATION=(-O)
+if [[ "$TASK_CONNECT_ONLY" == 1 ]]; then TASK_OPTIMIZATION=(-Onone); fi
+xcrun swiftc -parse-as-library -swift-version 5 "${TASK_OPTIMIZATION[@]}" -target "$ARCH-apple-macos15.0" \
     -I "$ST" -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
     "${SOURCES[@]}" "$TASK_TMP/LedgerLayout.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/ledger-layout"
 # The core's own demo in a temporary database, and a claude-ledger file to import; a call that names no database
@@ -305,4 +335,4 @@ xcrun swiftc -parse-as-library -swift-version 5 -O -target "$ARCH-apple-macos15.
 "$(dirname "$TASK_CORE")/gitrochi-ledger" demo "$TASK_TMP/ledger.sqlite3" > /dev/null
 sqlite3 "$TASK_TMP/claude-ledger.db" < "$ROOT/Tools/fixtures/claude-ledger.sql"
 export GITROCHI_LEDGER_DB="$TASK_TMP/default.sqlite3"
-"$TASK_TMP/ledger-layout" "$TASK_OUTPUT" "$TASK_TMP/ledger.sqlite3" "$TASK_TMP/claude-ledger.db"
+"$TASK_TMP/ledger-layout" "$TASK_OUTPUT" "$TASK_TMP/ledger.sqlite3" "$TASK_TMP/claude-ledger.db" "$TASK_CAPTURE_MODE"
