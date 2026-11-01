@@ -18,20 +18,32 @@ For Claude Code agents you start in Gitrochi:
 
 Tracking records activity times and session IDs through launch-specific hooks. Those activity hooks do not store what you type or the agent's tool input. Reports and auto-continue prompts do store the text they need to show. Turning tracking off leaves subsequent launches on the existing behavior. Codex and Gemini launches are unchanged.
 
-For Claude Code outside Gitrochi, choose **Connect Claude Code…** on the Ledger page or in its settings. Copy the command, run it yourself in a terminal, and use **Test connection** to check the MCP server. The sheet also supplies configuration for other MCP clients and instructions you can add to a project. Gitrochi does not edit a client's settings files from this sheet. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+For Claude Code outside Gitrochi:
 
-**Import…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
+1. Choose **Connect Claude Code…** on the Ledger page or in its settings. Copy the command and run it yourself in a terminal.
+2. Start or restart a Claude Code conversation so it can load the registered tools.
+3. Choose **Copy reporting instruction** in the sheet and give that instruction to the agent. Ask it to call `ledger_report` with a start report for its current work, including the project and a short title. It can then send progress, question and done reports as the work changes.
+
+**Test Ledger** checks this app's Ledger and bundled MCP command. It does not check Claude Code's MCP registration or prove that a client has loaded the tools. Registration makes the tools available; the first agent report creates a reported session. Existing conversations are not imported automatically.
+
+The sheet also supplies configuration for other MCP clients and instructions you can add to a project. Gitrochi does not edit a client's settings files from this sheet. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+
+**Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
 ## Read the views
 
-Choose **This repository** to focus on the open repository's project, or **All projects** to see the whole local Ledger. A session is a unit of agent work. A **baseline** is a version it started from, usually a Git tag; **base → current** shows which baseline it started on and which it last reported using.
+Use the upper **Inbox**, **Board**, **Graph** and **Streams** tabs to switch views. The compact filter row below them holds the project picker, session text filter and verdict menu. Choose **This repository** to focus on the open repository's project, or **All projects** to see the whole local Ledger.
+
+A session is a unit of agent work. A **baseline** is a version it started from, usually a Git tag; **base → current** shows which baseline it started on and which it last reported using.
 
 | View | Use it for |
 |---|---|
-| **Inbox** | Answer reported questions, review automatic answers, confirm finished outcomes and decide what to close or merge. Waiting prompts also appear in the strip above the views. |
+| **Inbox** | Attention only: answer reported questions, review automatic answers, confirm finished outcomes and decide what to close or merge. Waiting prompts also appear in the strip above the views. |
 | **Board** | Filter sessions by verdict, inspect them and select several for clean-up. **Show archived** (macOS) / **Show cleaned up** (Windows) reveals archived work. **Unreported** finds sessions with no agent report yet. |
 | **Graph** | Follow baseline versions and session events over 7 days, 30 days or all time. Select a node to inspect the session; **Key events only** hides routine progress and notes. |
 | **Streams** | Follow long-running implementation sessions by their cycles of sync and applied reports. |
+
+Routine progress appears in **Board** and **Streams**. When the Inbox has nothing that needs attention, **View progress** opens the Board, or Streams when only streams remain.
 
 The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
