@@ -1979,3 +1979,4 @@
 "Auto-continue reached its limit of answers in a row." = "Tự động tiếp tục đã đạt giới hạn số lần trả lời liên tiếp.";
 "Answer it in the agent's terminal." = "Hãy trả lời trong terminal của agent.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminal của agent không mở trong Gitrochi. Hãy trả lời ở nơi agent đang chạy.";
+"Unreported" = "Chưa báo cáo";

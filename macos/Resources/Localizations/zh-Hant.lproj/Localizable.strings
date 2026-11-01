@@ -2025,3 +2025,4 @@
 "Auto-continue reached its limit of answers in a row." = "自動繼續已達到連續回答的次數上限。";
 "Answer it in the agent's terminal." = "請在代理程式的終端機中回答。";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "此代理程式的終端機未在 Gitrochi 中開啟。請在代理程式執行的地方回答。";
+"Unreported" = "未回報";

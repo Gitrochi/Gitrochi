@@ -165,6 +165,28 @@ let start: LedgerMs = 1_793_400_000_000
         check(filter.apply(list).map(\.id) == ["S2", "S5", "S1"], "several chips")
         check(LedgerSessionFilter.counts(list) == [.active: 2, .needsHuman: 1, .archived: 1], "counts leave streams out")
 
+        var unreported = session("launch", "Retry launch", verdict: .active, last: 1)
+        unreported.lastAgentAt = nil
+        var reported = unreported
+        reported.id = "reported"
+        reported.lastAgentAt = 0
+        var stream = unreported
+        stream.id = "stream"
+        stream.stream = .init(line: "core")
+        var archived = unreported
+        archived.id = "archived"
+        archived.verdict = .archived
+        let launches = [unreported, reported, stream, archived]
+        filter = LedgerSessionFilter(unreportedOnly: true)
+        check(filter.apply(launches).map(\.id) == ["launch"], "Unreported excludes reports at epoch zero, streams and archives")
+        filter.text = "missing"
+        check(filter.apply(launches).isEmpty, "Unreported retains the text filter")
+        filter.text = ""
+        filter.verdicts = [.stale]
+        check(filter.apply(launches).isEmpty, "Unreported retains the verdict filter")
+        filter.verdicts = [.archived]
+        check(filter.apply(launches).map(\.id) == ["archived"], "Unreported can show cleaned-up launches explicitly")
+
         var before = session("S9", "x", verdict: .confirm, last: 0)
         before.status = .merged
         before.mergedInto = "v1.2.0"

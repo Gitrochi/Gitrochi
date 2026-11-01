@@ -1974,3 +1974,4 @@
 "Auto-continue reached its limit of answers in a row." = "Lanjut otomatis sudah mencapai batas jawaban berturut-turut.";
 "Answer it in the agent's terminal." = "Jawab di terminal agen.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminal agen tidak terbuka di Gitrochi. Jawab di tempat agen berjalan.";
+"Unreported" = "Belum dilaporkan";

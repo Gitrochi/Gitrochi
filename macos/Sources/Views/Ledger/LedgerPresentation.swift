@@ -312,10 +312,13 @@ struct LedgerSessionFilter: Equatable {
     var verdicts: Set<LedgerVerdict> = []
     var text = ""
     var showArchived = false
+    /// No agent report yet (D13); combines with verdict, text and archive filters
+    var unreportedOnly = false
 
     /// Every word has to appear in the ID, title, kind, branch or a touch (case and accents ignored)
     func matches(_ s: LedgerSession) -> Bool {
         if s.stream != nil { return false }
+        if unreportedOnly, s.lastAgentAt != nil { return false }
         if !verdicts.isEmpty, !verdicts.contains(s.verdict) { return false }
         if s.verdict == .archived, !showArchived, !verdicts.contains(.archived) { return false }
         let words = text.split(whereSeparator: \.isWhitespace)

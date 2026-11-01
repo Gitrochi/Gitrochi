@@ -2020,3 +2020,4 @@
 "Auto-continue reached its limit of answers in a row." = "Автопродолжение достигло предела ответов подряд.";
 "Answer it in the agent's terminal." = "Ответьте в терминале агента.";
 "The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Терминал агента не открыт в Gitrochi. Ответьте там, где работает агент.";
+"Unreported" = "Без отчёта";
