@@ -422,6 +422,16 @@ ov_watch_wait_for_exit() {
   OUT=$(cat "$T/watch.stdout")
 }
 
+ov_watch_wait_for_pause() {
+  local wanted=$1 deadline=$((SECONDS + 20))
+  while [ ! -f "$OV_WATCH_CLOCK/paused-$wanted" ]; do
+    if [ "$SECONDS" -ge "$deadline" ] || ! kill -0 "$OV_WATCH_PID" 2>/dev/null; then
+      fail "watch did not pause after scan $wanted: $(cat "$T/watch.stderr")"
+    fi
+    sleep 0.1
+  done
+}
+
 test_overlap_watch_emits_changes_as_ndjson_and_stops_on_signal() (
   local OV_WATCH_PID=""
   # Bash can launch and signal the same CLI process on Unix and Git Bash; native
@@ -432,15 +442,39 @@ test_overlap_watch_emits_changes_as_ndjson_and_stops_on_signal() (
   ov_commit
   ov_worktree "$T/watch-side"
   echo left > shared.txt
+  # Change the fixture only between snapshots; changing it during a scan correctly
+  # makes the scan incomplete. Gate the CLI's interval sleep instead of guessing time.
+  export OV_WATCH_REAL_SLEEP OV_WATCH_CLOCK
+  OV_WATCH_REAL_SLEEP=$(command -v sleep)
+  OV_WATCH_CLOCK="$T/watch-clock"
+  mkdir -p "$OV_WATCH_CLOCK"
+  cat > "$T/fakebin/sleep" <<'SLEEP'
+#!/bin/bash
+if [ "$*" = 1 ]; then
+  count=0
+  [ ! -f "$OV_WATCH_CLOCK/count" ] || read -r count < "$OV_WATCH_CLOCK/count"
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$OV_WATCH_CLOCK/count"
+  touch "$OV_WATCH_CLOCK/paused-$count"
+  while [ ! -f "$OV_WATCH_CLOCK/resume-$count" ]; do "$OV_WATCH_REAL_SLEEP" 0.1; done
+  exit 0
+fi
+exec "$OV_WATCH_REAL_SLEEP" "$@"
+SLEEP
+  chmod +x "$T/fakebin/sleep"
   gitch overlap --json --watch --interval 1 --no-deps > "$T/watch.stdout" 2> "$T/watch.stderr" &
   OV_WATCH_PID=$!
   ov_watch_wait_for_lines 1
   head -1 "$T/watch.stdout" | jq -e '.pairs == []' >/dev/null || fail 'first watch report'
-  sleep 1.3
+  ov_watch_wait_for_pause 1
+  touch "$OV_WATCH_CLOCK/resume-1"
+  ov_watch_wait_for_pause 2
   assert_eq "$(wc -l < "$T/watch.stdout" | tr -d '[:space:]')" 1 'unchanged watch emitted another report'
   echo right > "$OV_SIDE/shared.txt"
+  touch "$OV_WATCH_CLOCK/resume-2"
   ov_watch_wait_for_lines 2
   sed -n '2p' "$T/watch.stdout" | jq -e '.stats.overlappingPairs == 1 and .pairs[0].sameFiles == ["shared.txt"]' >/dev/null || fail 'changed watch report'
+  ov_watch_wait_for_pause 3
   kill -TERM "$OV_WATCH_PID" || fail 'cannot signal watch'
   ov_watch_wait_for_exit
   assert_rc 143 'TERM must stop watch'
