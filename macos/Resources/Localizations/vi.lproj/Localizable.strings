@@ -1597,3 +1597,10 @@
 "Open System Settings" = "Mở Cài đặt hệ thống";
 "Notifications" = "Thông báo";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Câu hỏi mới, phiên cần dọn dẹp và báo cáo áp dụng được gộp theo mỗi lần đọc; mỗi yêu cầu đang chờ kèm thời gian còn lại, và mỗi câu trả lời tự động. Bấm vào sẽ mở Sổ theo dõi tại phiên đó. Không thông báo những gì đã có khi Gitrochi khởi động.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Tổng quan Sổ theo dõi";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Bản tổng quan mà agent đọc: HEAD, các phiên đang mở, luồng và phần chồng chéo";
+"Start Claude Code in this repository" = "Khởi động Claude Code trong kho lưu trữ này";
+"Open a repository to use its terminal" = "Mở một kho lưu trữ để dùng terminal của nó";
+"Open in the terminal" = "Mở trong terminal";

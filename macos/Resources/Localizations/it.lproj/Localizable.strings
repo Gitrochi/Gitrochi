@@ -1612,3 +1612,10 @@
 "Open System Settings" = "Apri Impostazioni di Sistema";
 "Notifications" = "Notifiche";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Nuove domande, sessioni da sistemare e rapporti di applicazione, raggruppati a ogni lettura; ogni richiesta in attesa con il tempo rimasto e ogni risposta automatica. Un clic apre il Registro sulla sessione. Non viene annunciato nulla di ciò che c'era già all'avvio di Gitrochi.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Panoramica del Registro";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "La panoramica che leggono gli agenti: HEAD, sessioni aperte, flussi e sovrapposizioni";
+"Start Claude Code in this repository" = "Avvia Claude Code in questo repository";
+"Open a repository to use its terminal" = "Apri un repository per usarne il terminale";
+"Open in the terminal" = "Apri nel terminale";

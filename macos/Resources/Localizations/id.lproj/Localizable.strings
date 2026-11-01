@@ -1592,3 +1592,10 @@
 "Open System Settings" = "Buka Pengaturan Sistem";
 "Notifications" = "Notifikasi";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Pertanyaan baru, sesi untuk dirapikan, dan laporan penerapan, dikelompokkan per pembacaan; setiap permintaan yang menunggu beserta sisa waktunya, dan setiap jawaban otomatis. Mengekliknya membuka Buku Log di sesinya. Tidak ada pemberitahuan untuk yang sudah ada saat Gitrochi dimulai.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Ringkasan Buku Log";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Ringkasan yang dibaca agen: HEAD, sesi terbuka, aliran, dan tumpang tindih";
+"Start Claude Code in this repository" = "Mulai Claude Code di repositori ini";
+"Open a repository to use its terminal" = "Buka repositori untuk memakai terminalnya";
+"Open in the terminal" = "Buka di terminal";

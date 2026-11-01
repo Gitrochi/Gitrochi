@@ -1639,3 +1639,10 @@
 "Open System Settings" = "Открыть Системные настройки";
 "Notifications" = "Уведомления";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Новые вопросы, сессии, которые нужно убрать, и отчёты о применении — одним уведомлением за чтение; каждый ожидающий запрос с оставшимся временем и каждый автоответ. Щелчок открывает Журнал на этой сессии. О том, что уже было при запуске Gitrochi, не сообщается.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Обзор Журнала";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Обзор, который читают агенты: HEAD, открытые сессии, потоки и пересечения";
+"Start Claude Code in this repository" = "Запустить Claude Code в этом репозитории";
+"Open a repository to use its terminal" = "Откройте репозиторий, чтобы пользоваться его терминалом";
+"Open in the terminal" = "Открыть в терминале";

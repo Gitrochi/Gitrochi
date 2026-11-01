@@ -1626,3 +1626,10 @@
 "Open System Settings" = "Sistem Ayarları'nı aç";
 "Notifications" = "Bildirimler";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Yeni sorular, toparlanacak oturumlar ve uygulama raporları her okumada tek bildirimde toplanır; bekleyen her istek kalan süreyle, her otomatik yanıt da ayrı bildirilir. Tıklamak Defter'i o oturumda açar. Gitrochi başlarken zaten var olanlar bildirilmez.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Defter özeti";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Ajanların okuduğu özet: HEAD, açık oturumlar, akışlar ve çakışmalar";
+"Start Claude Code in this repository" = "Claude Code'u bu depoda başlat";
+"Open a repository to use its terminal" = "Terminalini kullanmak için bir depo açın";
+"Open in the terminal" = "Terminalde aç";

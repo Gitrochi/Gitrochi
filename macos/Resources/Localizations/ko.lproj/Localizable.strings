@@ -3436,3 +3436,10 @@
 "Open System Settings" = "시스템 설정 열기";
 "Notifications" = "알림";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "새 질문, 정리할 세션, 반영 보고는 한 번 읽을 때마다 묶어서 알립니다. 기다리는 질문은 남은 시간과 함께, 자동 진행의 답은 하나하나 알립니다. 알림을 누르면 원장에서 그 세션을 엽니다. Gitrochi를 켤 때 이미 있던 것은 알리지 않습니다.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "원장 개요";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "에이전트가 읽는 개요: HEAD, 열린 세션, 스트림, 겹침";
+"Start Claude Code in this repository" = "이 저장소에서 Claude Code 시작";
+"Open a repository to use its terminal" = "터미널을 쓰려면 저장소를 여세요";
+"Open in the terminal" = "터미널에서 열기";

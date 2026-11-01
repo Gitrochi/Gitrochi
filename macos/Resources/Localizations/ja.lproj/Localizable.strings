@@ -2369,3 +2369,10 @@
 "Open System Settings" = "システム設定を開く";
 "Notifications" = "通知";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "新しい質問、片付けるセッション、適用の報告は読み込みごとにまとめて通知し、待っている質問は残り時間とともに、自動続行の回答は一つずつ通知します。クリックすると台帳でそのセッションを開きます。Gitrochi の起動時に既にあったものは通知しません。";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "台帳の概要";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "エージェントが読む概要: HEAD、開いているセッション、ストリーム、重なり";
+"Start Claude Code in this repository" = "このリポジトリで Claude Code を起動";
+"Open a repository to use its terminal" = "ターミナルを使うにはリポジトリを開いてください";
+"Open in the terminal" = "ターミナルで開く";

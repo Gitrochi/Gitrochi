@@ -1622,3 +1622,10 @@
 "Open System Settings" = "Rendszerbeállítások megnyitása";
 "Notifications" = "Értesítések";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Új kérdések, rendezendő munkamenetek és alkalmazási jelentések, olvasásonként csoportosítva; minden várakozó kérés a hátralévő idővel, és minden automatikus válasz. Kattintásra a Napló a munkamenetnél nyílik meg. A Gitrochi indításakor már meglévő dolgokról nem jön értesítés.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "A Napló áttekintése";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Az ügynökök által olvasott áttekintés: HEAD, nyitott munkamenetek, folyamok és átfedések";
+"Start Claude Code in this repository" = "Claude Code indítása ebben a tárolóban";
+"Open a repository to use its terminal" = "Nyisson meg egy tárolót a terminálja használatához";
+"Open in the terminal" = "Megnyitás a terminálban";
