@@ -1620,3 +1620,10 @@
 "Open System Settings" = "เปิดการตั้งค่าระบบ";
 "Notifications" = "การแจ้งเตือน";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "คำถามใหม่ เซสชันที่รอจัดเก็บ และรายงานการนำไปใช้ จะรวมแจ้งต่อการอ่านหนึ่งครั้ง ส่วนคำขอที่รออยู่จะแจ้งพร้อมเวลาที่เหลือ และแจ้งทุกคำตอบอัตโนมัติ คลิกเพื่อเปิดสมุดบันทึกที่เซสชันนั้น ไม่แจ้งสิ่งที่มีอยู่แล้วตอนเริ่ม Gitrochi";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "ภาพรวมสมุดบันทึก";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "ภาพรวมที่เอเจนต์อ่าน: HEAD เซสชันที่เปิดอยู่ สตรีม และส่วนที่ทับซ้อน";
+"Start Claude Code in this repository" = "เริ่ม Claude Code ในรีโพสิทอรีนี้";
+"Open a repository to use its terminal" = "เปิดรีโพสิทอรีเพื่อใช้เทอร์มินัลของรีโพสิทอรีนั้น";
+"Open in the terminal" = "เปิดในเทอร์มินัล";

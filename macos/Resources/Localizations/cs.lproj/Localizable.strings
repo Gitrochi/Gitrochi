@@ -1605,3 +1605,10 @@
 "Open System Settings" = "Otevřít Nastavení systému";
 "Notifications" = "Oznámení";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "Nové otázky, relace k úklidu a hlášení o použití, seskupené po každém čtení; každý čekající dotaz se zbývajícím časem a každá automatická odpověď. Kliknutím otevřete Evidenci u dané relace. Nic se neoznamuje o tom, co už existovalo při spuštění Gitrochi.";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "Přehled Evidence";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "Přehled, který čtou agenti: HEAD, otevřené relace, proudy a překryvy";
+"Start Claude Code in this repository" = "Spustit Claude Code v tomto repozitáři";
+"Open a repository to use its terminal" = "Otevřete repozitář, abyste mohli použít jeho terminál";
+"Open in the terminal" = "Otevřít v terminálu";

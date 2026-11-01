@@ -1758,3 +1758,10 @@
 "Open System Settings" = "打开系统设置";
 "Notifications" = "通知";
 "New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts." = "新问题、待清理的会话和应用报告按每次读取合并通知；每个等待中的请求会附上剩余时间，每个自动回答也会通知。点击会在账本中打开该会话。Gitrochi 启动时已有的内容不会通知。";
+
+/* Ledger: terminal quick launches. */
+"Ledger overview" = "账本概览";
+"The overview agents read: HEAD, open sessions, streams and overlaps" = "代理读取的概览：HEAD、打开的会话、流和重叠";
+"Start Claude Code in this repository" = "在此仓库中启动 Claude Code";
+"Open a repository to use its terminal" = "打开一个仓库以使用它的终端";
+"Open in the terminal" = "在终端中打开";
