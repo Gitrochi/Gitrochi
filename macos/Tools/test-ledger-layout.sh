@@ -176,6 +176,11 @@ func seen(_ label: String, in text: String) -> Bool {
         wait { try? await Task.sleep(for: .milliseconds(200)) }
         try shoot("inspector", LedgerInspector(ledger: ledger, open: { _ in }, close: {}), width: 480, height: 900,
                   expect: ["Choose the cache eviction policy", "Decision", "200 MB"])
+        // a session that may auto-continue: its own switch and wait
+        ledger.selection = retry.id
+        wait { await ledger.loadAutoContinueDefault(); try? await Task.sleep(for: .milliseconds(200)) }
+        try shoot("inspector-auto-continue", LedgerInspector(ledger: ledger, open: { _ in }, close: {}), width: 480, height: 1100,
+                  expect: ["Retry sign-in after a timeout", "Continue automatically when nobody answers"])
 
         try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 640, height: 330,
                   expect: ["Connect Claude Code", "claude mcp add", "Copy command", "Test connection"])
@@ -200,8 +205,15 @@ func seen(_ label: String, in text: String) -> Bool {
         core.page = .graph
         wait { await core.loadGraph(); try? await Task.sleep(for: .milliseconds(200)) }
         try shoot("core-graph", LedgerWorkspaceView(repositoryPath: nil, ledger: core), width: 1440, height: 940, expect: ["Graph", "1.4.2"])
-        try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 1560,
-                  expect: ["Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect Claude Code"])
+        // a repository with its own auto-continue policy, so Settings shows the switch and the wait
+        wait {
+            if let stored = try? await core.settings() {
+                _ = try? await core.saveSettings(["autoContinue": stored.autoContinueArgument(repository: "/Volumes/Work/harbor-app", .init(enabled: true, delaySec: 45))])
+            }
+        }
+        try shoot("settings", LedgerSettings(ledger: core), width: 600, height: 2000,
+                  expect: ["Track agents I start", "Agents Gitrochi starts", "Continue automatically when nobody answers", "harbor-app",
+                           "Stale after", "Roles and stream lines", "implementation", "Version pattern", "Back up now", "Connect Claude Code"])
         try shoot("import-legacy", LedgerLegacyImportSheet(ledger: core, path: CommandLine.arguments[3]), width: 620, height: 380,
                   expect: ["Import from claude-ledger", "Ready to import", "Sessions"])
 
