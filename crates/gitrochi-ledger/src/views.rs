@@ -9,6 +9,7 @@ use crate::prompts::{self, PendingPrompt};
 use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
 use crate::streams::{self, CycleEvent, StreamCycle};
+use crate::track;
 use crate::util::{Ms, DAY};
 use crate::vocab::Verdict;
 use rusqlite::Connection;
@@ -131,6 +132,20 @@ pub fn snapshot(
                 now,
             });
         views.push(viewer.view(row, counts.get(&row.id).copied().unwrap_or(0)));
+    }
+    // D13: an unreported launch whose branch has not moved waits under Unreported instead of
+    // going stale into To decide (git runs for these alone, once per repository)
+    let quiet: Vec<&SessionRow> = rows
+        .iter()
+        .zip(&views)
+        .filter(|(row, view)| view.verdict == Verdict::Stale && row.last_agent_at.is_none())
+        .map(|(row, _)| row)
+        .collect();
+    if !quiet.is_empty() {
+        let waiting = track::waiting_unreported(connection, &quiet)?;
+        for view in views.iter_mut().filter(|v| waiting.contains(&v.id)) {
+            view.verdict = Verdict::Active;
+        }
     }
     Ok(Snapshot {
         trunks,
