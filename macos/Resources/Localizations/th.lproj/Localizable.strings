@@ -1625,7 +1625,6 @@
 "Applied: %lld" = "นำไปใช้แล้ว: %lld";
 "The Ledger has news" = "สมุดบันทึกมีข่าวใหม่";
 "Continues automatically in %@" = "ดำเนินการต่ออัตโนมัติใน %@";
-"Waits for you: no automatic answer" = "รอคุณอยู่: ไม่มีคำตอบอัตโนมัติ";
 "%@ is waiting" = "%@ กำลังรอ";
 "Auto-continue answered %@" = "ดำเนินการต่ออัตโนมัติตอบ %@ แล้ว";
 "Show notifications" = "แสดงการแจ้งเตือน";
@@ -1641,3 +1640,11 @@
 "Start Claude Code in this repository" = "เริ่ม Claude Code ในรีโพสิทอรีนี้";
 "Open a repository to use its terminal" = "เปิดรีโพสิทอรีเพื่อใช้เทอร์มินัลของรีโพสิทอรีนั้น";
 "Open in the terminal" = "เปิดในเทอร์มินัล";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "การดำเนินการต่ออัตโนมัติจะไม่ตอบคำขอประเภทนี้";
+"It looks risky to answer automatically." = "การตอบอัตโนมัติดูมีความเสี่ยง";
+"There is nothing to choose from." = "ไม่มีตัวเลือกให้เลือก";
+"Auto-continue reached its limit of answers in a row." = "การดำเนินการต่ออัตโนมัติตอบติดกันครบจำนวนสูงสุดแล้ว";
+"Answer it in the agent's terminal." = "ตอบในเทอร์มินัลของเอเจนต์";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "เทอร์มินัลของเอเจนต์ไม่ได้เปิดอยู่ใน Gitrochi โปรดตอบในที่ที่เอเจนต์รันอยู่";

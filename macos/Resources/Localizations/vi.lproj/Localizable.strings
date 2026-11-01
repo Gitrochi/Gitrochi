@@ -1588,7 +1588,6 @@
 "Applied: %lld" = "Đã áp dụng: %lld";
 "The Ledger has news" = "Sổ theo dõi có tin mới";
 "Continues automatically in %@" = "Tự động tiếp tục sau %@";
-"Waits for you: no automatic answer" = "Đang chờ bạn: không tự động trả lời";
 "%@ is waiting" = "%@ đang chờ";
 "Auto-continue answered %@" = "Tự động tiếp tục đã trả lời %@";
 "Show notifications" = "Hiện thông báo";
@@ -1604,3 +1603,11 @@
 "Start Claude Code in this repository" = "Khởi động Claude Code trong kho lưu trữ này";
 "Open a repository to use its terminal" = "Mở một kho lưu trữ để dùng terminal của nó";
 "Open in the terminal" = "Mở trong terminal";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Tự động tiếp tục không bao giờ trả lời loại yêu cầu này.";
+"It looks risky to answer automatically." = "Tự động trả lời có vẻ rủi ro.";
+"There is nothing to choose from." = "Không có gì để chọn.";
+"Auto-continue reached its limit of answers in a row." = "Tự động tiếp tục đã đạt giới hạn số lần trả lời liên tiếp.";
+"Answer it in the agent's terminal." = "Hãy trả lời trong terminal của agent.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "Terminal của agent không mở trong Gitrochi. Hãy trả lời ở nơi agent đang chạy.";

@@ -1574,7 +1574,6 @@
 "Applied: %lld" = "Toegepast: %lld";
 "The Ledger has news" = "Het Logboek heeft nieuws";
 "Continues automatically in %@" = "Gaat over %@ automatisch door";
-"Waits for you: no automatic answer" = "Wacht op jou: geen automatisch antwoord";
 "%@ is waiting" = "%@ wacht";
 "Auto-continue answered %@" = "Automatisch doorgaan heeft %@ beantwoord";
 "Show notifications" = "Meldingen tonen";
@@ -1590,3 +1589,11 @@
 "Start Claude Code in this repository" = "Claude Code in deze repository starten";
 "Open a repository to use its terminal" = "Open een repository om de terminal ervan te gebruiken";
 "Open in the terminal" = "Openen in de terminal";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "Automatisch doorgaan beantwoordt dit soort verzoeken nooit.";
+"It looks risky to answer automatically." = "Automatisch antwoorden lijkt riskant.";
+"There is nothing to choose from." = "Er is niets om uit te kiezen.";
+"Auto-continue reached its limit of answers in a row." = "Automatisch doorgaan heeft het maximum aantal antwoorden achter elkaar bereikt.";
+"Answer it in the agent's terminal." = "Beantwoord het in de terminal van de agent.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "De terminal van de agent is niet geopend in Gitrochi. Antwoord waar de agent draait.";

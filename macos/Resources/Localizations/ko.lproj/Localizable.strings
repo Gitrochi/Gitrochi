@@ -3427,7 +3427,6 @@
 "Applied: %lld" = "반영: %lld";
 "The Ledger has news" = "원장에 새 소식이 있습니다";
 "Continues automatically in %@" = "%@ 뒤 자동 진행";
-"Waits for you: no automatic answer" = "답을 기다립니다: 자동으로 답하지 않습니다";
 "%@ is waiting" = "%@이(가) 기다리는 중";
 "Auto-continue answered %@" = "자동 진행이 %@에 답했습니다";
 "Show notifications" = "알림 보이기";
@@ -3443,3 +3442,11 @@
 "Start Claude Code in this repository" = "이 저장소에서 Claude Code 시작";
 "Open a repository to use its terminal" = "터미널을 쓰려면 저장소를 여세요";
 "Open in the terminal" = "터미널에서 열기";
+
+/* Ledger: waits held for the person. */
+"Auto-continue never answers this kind of request." = "자동 진행은 이런 요청에 답하지 않습니다.";
+"It looks risky to answer automatically." = "자동으로 답하기에는 위험해 보입니다.";
+"There is nothing to choose from." = "고를 수 있는 선택지가 없습니다.";
+"Auto-continue reached its limit of answers in a row." = "자동 진행이 연속 답변 한도에 도달했습니다.";
+"Answer it in the agent's terminal." = "에이전트 터미널에서 답하세요.";
+"The agent's terminal is not open in Gitrochi. Answer it where the agent runs." = "에이전트 터미널이 Gitrochi에 열려 있지 않습니다. 에이전트가 실행 중인 곳에서 답하세요.";
