@@ -102,8 +102,11 @@ struct LedgerSettings: View {
                 Toggle("Continue automatically when nobody answers", isOn: Binding(get: { policy.enabled }, set: { on in
                     setAutoContinue(selected, .init(enabled: on, delaySec: policy.delaySec))
                 }))
-                LedgerWaitPicker(seconds: policy.delaySec) { seconds in
-                    setAutoContinue(selected, .init(enabled: policy.enabled, delaySec: seconds))
+                LabeledContent("Wait") {
+                    LedgerWaitPicker(seconds: policy.delaySec) { seconds in
+                        setAutoContinue(selected, .init(enabled: policy.enabled, delaySec: seconds))
+                    }
+                    .labelsHidden()
                 }
             } else {
                 Text("Open a repository to set auto-continue for it.").foregroundStyle(.secondary)
