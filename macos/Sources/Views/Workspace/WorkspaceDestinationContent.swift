@@ -3,7 +3,7 @@ import SwiftUI
 struct WorkspaceDestinationContent: View {
     @Environment(RepoStore.self) private var store
     /// Pages with the shared title row; Home has its own welcome and Repository is the work screen
-    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
+    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows, .ledger]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,6 +32,7 @@ struct WorkspaceDestinationContent: View {
             case .projects: HostingHubPanel(store: store, section: .projects, onClone: { store.sheet = .cloneURL($0) })
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
+            case .ledger: LedgerWorkspaceView(repositoryPath: store.url?.path)
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)

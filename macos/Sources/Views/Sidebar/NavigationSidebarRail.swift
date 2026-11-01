@@ -23,7 +23,7 @@ struct NavigationSidebarRail: View {
                     separator
                     rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     separator
-                    rows([.flows])
+                    rows([.flows, .ledger].filter(\.isShown))
                 }.padding(.horizontal, 8).padding(.bottom, 8)
             }
             Divider()
@@ -46,7 +46,8 @@ struct NavigationSidebarRail: View {
         ForEach(pages) { page in
             let active = store.destination == page
             let disabled = page.needsRepository && store.url == nil
-            let count = page == .repository ? store.status.count : page == .pullRequests ? store.pullRequests.count : 0
+            let count = page == .repository ? store.status.count : page == .pullRequests ? store.pullRequests.count
+                : page == .ledger ? LedgerStore.shared.attentionTotal : 0
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
                 Image(systemName: page.symbol).font(.system(size: 18, weight: active ? .semibold : .regular))

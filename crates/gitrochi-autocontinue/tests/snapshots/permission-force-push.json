@@ -1,0 +1,15 @@
+{
+  "decision": "pass",
+  "event": "PermissionRequest",
+  "message": "held by force-push: `git push --force` rewrites the remote branch",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "held",
+    "detail": "`git push --force` rewrites the remote branch",
+    "rule": "force-push"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/ledger-event.schema.json",
+  "title": "LedgerEvent",
+  "description": "One event in a session's history (CONTRACT.md: LedgerEvent).",
+  "type": "object",
+  "required": [
+    "id",
+    "sessionId",
+    "ts",
+    "type",
+    "actor"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "ts": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "type": {
+      "type": "string",
+      "description": "Agent events, auto_reply, hook, or a person's action"
+    },
+    "actor": {
+      "enum": [
+        "agent",
+        "human",
+        "auto",
+        "hook"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 60000
+    },
+    "version": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "ssot": {
+            "type": "string"
+          },
+          "ver": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "ssotInferred": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object"
+    },
+    "channel": {
+      "type": "string",
+      "description": "mcp, cli, import, app, hook or demo"
+    },
+    "deliveredAt": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/graph.schema.json",
+  "title": "Graph",
+  "description": "The laid-out graph of one project (CONTRACT.md: Graph). Row 0 is the newest.",
+  "type": "object",
+  "required": [
+    "lanes",
+    "rows",
+    "nodes",
+    "edges",
+    "tails",
+    "from",
+    "to",
+    "hiddenBefore"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "lanes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rows": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "lane",
+          "row",
+          "ts",
+          "color",
+          "kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lane": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "row": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ts": {
+            "type": "integer",
+            "description": "Epoch milliseconds"
+          },
+          "color": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "kind": {
+            "enum": [
+              "baseline",
+              "start",
+              "event",
+              "merge",
+              "release",
+              "end"
+            ]
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "integer"
+          },
+          "actor": {
+            "enum": [
+              "agent",
+              "human",
+              "auto",
+              "hook"
+            ]
+          },
+          "source": {
+            "enum": [
+              "tag",
+              "folder",
+              "registered",
+              "release",
+              "inferred"
+            ]
+          },
+          "head": {
+            "type": "boolean"
+          },
+          "handoff": {
+            "enum": [
+              "awaiting",
+              "synced",
+              "applied"
+            ]
+          },
+          "bySession": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "kind",
+          "color"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "trunk",
+              "branch",
+              "merge",
+              "handoff"
+            ]
+          },
+          "color": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          }
+        }
+      }
+    },
+    "tails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "lane",
+          "row",
+          "color"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "lane": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "row": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "color": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 7
+          }
+        }
+      }
+    },
+    "from": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "to": {
+      "type": "integer",
+      "description": "Epoch milliseconds"
+    },
+    "hiddenBefore": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

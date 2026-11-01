@@ -1,0 +1,68 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 30,
+    "kind": "ask_user_question",
+    "language": "ko",
+    "options": [
+      "Inbox (추천)"
+    ],
+    "question": "카운트다운은 어디에 보여 줄까요?",
+    "rule": "answers:recommended",
+    "schemaVersion": 1,
+    "sent": {
+      "answers": {
+        "카운트다운은 어디에 보여 줄까요?": "Inbox (추천)"
+      },
+      "note": "[Gitrochi] 자동 진행 — 고른 답: 카운트다운은 어디에 보여 줄까요? → Inbox (추천)\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+      "type": "answers"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 30,
+  "event": "PreToolUse",
+  "kind": "ask_user_question",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"[Gitrochi] 자동 진행 — 고른 답: 카운트다운은 어디에 보여 줄까요? → Inbox (추천)\\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.\",\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"answers\":{\"카운트다운은 어디에 보여 줄까요?\":\"Inbox (추천)\"},\"questions\":[{\"header\":\"화면\",\"multiSelect\":true,\"options\":[{\"description\":\"다른 질문과 함께\",\"label\":\"Inbox (추천)\"},{\"description\":\"세션 옆에\",\"label\":\"터미널 위\"},{\"description\":\"시스템 알림으로\",\"label\":\"알림\"}],\"question\":\"카운트다운은 어디에 보여 줄까요?\"}]}}}"
+  },
+  "payload": {
+    "delaySec": 30,
+    "kind": "ask_user_question",
+    "language": "ko",
+    "proposed": {
+      "answers": {
+        "카운트다운은 어디에 보여 줄까요?": "Inbox (추천)"
+      },
+      "note": "[Gitrochi] 자동 진행 — 고른 답: 카운트다운은 어디에 보여 줄까요? → Inbox (추천)\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+      "type": "answers"
+    },
+    "question": "카운트다운은 어디에 보여 줄까요?",
+    "questions": [
+      {
+        "header": "화면",
+        "multiSelect": true,
+        "options": [
+          {
+            "description": "다른 질문과 함께",
+            "label": "Inbox (추천)",
+            "recommended": true
+          },
+          {
+            "description": "세션 옆에",
+            "label": "터미널 위",
+            "recommended": false
+          },
+          {
+            "description": "시스템 알림으로",
+            "label": "알림",
+            "recommended": false
+          }
+        ],
+        "question": "카운트다운은 어디에 보여 줄까요?"
+      }
+    ],
+    "schemaVersion": 1
+  }
+}

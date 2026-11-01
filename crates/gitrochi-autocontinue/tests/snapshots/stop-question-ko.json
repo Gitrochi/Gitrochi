@@ -1,0 +1,50 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 30,
+    "kind": "stop_question",
+    "language": "ko",
+    "options": [
+      "기존 API를 그대로 둔다",
+      "새 API로 바꾼다 (추천)"
+    ],
+    "question": "어떻게 할까요? — 기존 API를 그대로 둔다 / 새 API로 바꾼다 (추천)",
+    "rule": "question:ko:까요",
+    "schemaVersion": 1,
+    "sent": {
+      "text": "[Gitrochi] 자동 진행 — 질문: 어떻게 할까요? — 기존 API를 그대로 둔다 / 새 API로 바꾼다 (추천)\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+      "type": "reply"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 30,
+  "event": "Stop",
+  "kind": "stop_question",
+  "output": {
+    "exitCode": 2,
+    "stderr": "[Gitrochi] 자동 진행 — 질문: 어떻게 할까요? — 기존 API를 그대로 둔다 / 새 API로 바꾼다 (추천)\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+    "stdout": ""
+  },
+  "payload": {
+    "delaySec": 30,
+    "kind": "stop_question",
+    "language": "ko",
+    "options": [
+      {
+        "label": "기존 API를 그대로 둔다",
+        "recommended": false
+      },
+      {
+        "label": "새 API로 바꾼다 (추천)",
+        "recommended": true
+      }
+    ],
+    "proposed": {
+      "text": "[Gitrochi] 자동 진행 — 질문: 어떻게 할까요? — 기존 API를 그대로 둔다 / 새 API로 바꾼다 (추천)\n30초 동안 답이 없어 자동으로 진행합니다. 당신이 추천한 안으로 진행하세요. 추천이 없었다면 되돌리기 쉬운 안을 고르세요. 되돌리기 어려운 작업(데이터 삭제, force push, main/보호 브랜치 push, 배포, 자격 증명·계정 설정 변경)은 하지 말고 멈춰서 다시 물어보세요. 고른 가정은 마지막 요약에 적으세요.",
+      "type": "reply"
+    },
+    "question": "어떻게 할까요? — 기존 API를 그대로 둔다 / 새 API로 바꾼다 (추천)",
+    "schemaVersion": 1,
+    "text": "남은 선택이 하나 있습니다.\n\n1. 기존 API를 그대로 둔다\n2. 새 API로 바꾼다 (추천)\n\n어떻게 할까요?"
+  }
+}

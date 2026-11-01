@@ -72,16 +72,17 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Hosting detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Views/Hub/ReleaseWorkspace.swift':
-        needle = 'Text("Releases").font(.title2.weight(.semibold))'
+        # The page's own top row (repository, package, Refresh, New release) is what must stay below the titlebar.
+        needle = '}.padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)'
         assert text.count(needle) == 1, 'Release heading measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-title:releases"))')
-        needle = '}.frame(maxWidth: .infinity, alignment: .leading).padding(12).contentShape(Rectangle())'
+        needle = '}.padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())'
         assert text.count(needle) == 1, 'Release list measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-item:" + item.id))')
-        needle = 'if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }'
+        needle = 'label: { Text("Load more").frame(maxWidth: .infinity) }.disabled(locked)'
         assert text.count(needle) == 1, 'Release pagination measurement attachment changed'
-        text = text.replace(needle, needle[:-2] + '.background(WindowContentProbe(identifier: "hub-pagination")) }')
-        needle = '}.frame(maxWidth: 880, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)'
+        text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-pagination"))')
+        needle = '}.frame(maxWidth: 1100, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)'
         assert text.count(needle) == 1, 'Release detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Services/Accounts.swift':

@@ -51,6 +51,10 @@ export interface EnvInfo {
   localAppData: string;
   /** 앱과 함께 설치되는 파일(gitch)이 있는 폴더 */
   resourceDir: string;
+  /** GITROCHI_LEDGER_PREVIEW: shows the Ledger page until it is turned on for everyone */
+  ledgerPreview?: string | null;
+  /** GITROCHI_LEDGER_DEMO: the Ledger on demo data instead of the ledger database ("large" or "empty" for those demos) */
+  ledgerDemo?: string | null;
 }
 
 export type PtyEvent = { kind: "data"; data: string } | { kind: "exit"; code: number | null };
@@ -186,6 +190,15 @@ export const ipc = {
   localProjectsWrite: (expected: string | null, content: string) => invoke<void>("local_projects_write", { expected, content }),
   /** Repository index (crates/gitrochi-index): one JSON command, answered with {result} or {error} */
   indexCall: (request: IndexRequest) => invoke<IndexResponse>("index_call", { request }),
+  /** Ledger (crates/gitrochi-ledger): one method with JSON arguments, answered with JSON or {error} */
+  ledgerCall: (method: string, args: Record<string, unknown>) => invoke<unknown>("ledger_call", { method, args }),
+  /** A claude-ledger database to import; null when cancelled */
+  ledgerPickDatabase: (title: string) => invoke<string | null>("ledger_pick_database", { title }),
+  /** A Ledger notification; a click on it comes back through onLedgerNotification with `target` */
+  ledgerNotify: (title: string, body: string, target: Record<string, unknown>) => invoke<void>("ledger_notify", { title, body, target }),
+  onLedgerNotification: (fn: (target: Record<string, unknown> | null) => void): Promise<UnlistenFn> => listen<Record<string, unknown> | null>("ledger-notification", (e) => fn(e.payload)),
+  /** The taskbar overlay: a square RGBA image `size` pixels wide, or null to remove it (Windows) */
+  ledgerBadge: (rgba: number[] | null, size: number) => invoke<void>("ledger_badge", { rgba, size }),
   /** Saves bytes as <temp>/Gitrochi/<name> and returns the path (pasted images, dropped files); raw body, name hex-encoded in a header */
   writeTemp: (name: string, bytes: Uint8Array) =>
     tauriInvoke<string>("fs_write_temp", bytes, { headers: { "x-name-hex": Array.from(new TextEncoder().encode(name), (b) => b.toString(16).padStart(2, "0")).join("") } }).catch((e) => {

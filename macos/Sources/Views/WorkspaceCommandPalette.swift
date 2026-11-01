@@ -18,6 +18,8 @@ struct WorkspaceCommandPalette: View {
     @Environment(\.openSettings) private var openSettings
     @ViewState private var query = ""
     @ViewState private var highlighted: String?
+    /// Ledger sessions, questions, reports and versions matching the query, found by the ledger itself
+    @ViewState private var ledgerHits: [LedgerSearchHit] = []
     @FocusState private var searchFocused: Bool
     let execute: (WorkspaceCommand) -> Void
 
@@ -58,6 +60,14 @@ struct WorkspaceCommandPalette: View {
         .tint(StudioStyle.accent)
         .onAppear { searchFocused = true; highlighted = items.first?.id }
         .onChange(of: query) { _, _ in highlighted = items.first?.id }
+        .task(id: query) {
+            guard WorkspaceDestination.ledger.isShown else { return }
+            // wait for a pause in typing before asking the ledger
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            let hits = await LedgerStore.shared.search(query)
+            if !Task.isCancelled, hits != ledgerHits { ledgerHits = hits }
+        }
         .onChange(of: items.map(\.id)) { _, ids in
             if highlighted == nil || !ids.contains(highlighted ?? "") { highlighted = ids.first }
         }
@@ -130,15 +140,28 @@ struct WorkspaceCommandPalette: View {
 
     private var items: [WorkspaceCommand] {
         let words = query.split(whereSeparator: \.isWhitespace).map(String.init)
-        return Array(commands.filter { command in
+        let matching = commands.filter { command in
             words.allSatisfy { (command.title + " " + command.subtitle + " " + command.id).localizedStandardContains($0) }
-        }.prefix(60))
+        }
+        // the ledger already matched its results; on the Ledger page they come first
+        let ledger = query.isEmpty ? [] : ledgerCommands
+        return Array((store.destination == .ledger ? ledger + matching : matching + ledger).prefix(60))
+    }
+
+    private var ledgerCommands: [WorkspaceCommand] {
+        ledgerHits.map { hit in
+            WorkspaceCommand(id: "ledger-\(hit.kind.rawValue)-\(hit.id)", title: hit.title, subtitle: hit.snippet,
+                             icon: hit.kind.symbol, group: String(localized: "Ledger")) {
+                store.navigate(.ledger)
+                LedgerStore.shared.open(hit)
+            }
+        }
     }
 
     private var commands: [WorkspaceCommand] {
         let go = String(localized: "Go to")
-        let pages = WorkspaceDestination.allCases
-        let shortcuts: [WorkspaceDestination: String] = [.home: "0", .repository: "2", .compare: "3", .pullRequests: "4", .actions: "5", .flows: "6"]
+        let pages = WorkspaceDestination.shown
+        let shortcuts: [WorkspaceDestination: String] = [.home: "0", .repository: "2", .compare: "3", .pullRequests: "4", .actions: "5", .flows: "6", .ledger: "7"]
         var result = pages.map { page in
             WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),
                              subtitle: page == .repository ? store.name : "", icon: page.symbol,

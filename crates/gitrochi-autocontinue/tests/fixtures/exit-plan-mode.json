@@ -1,0 +1,12 @@
+{
+  "session_id": "9f8e7d6c-5b4a-4321-8fed-cba987654321",
+  "cwd": "/Users/me/work/app",
+  "permission_mode": "plan",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "ExitPlanMode",
+  "tool_use_id": "toolu_01FixturePlan",
+  "tool_input": {
+    "plan": "## Add the policy crate\n1. Parse hook input\n2. Classify questions\n3. Write table tests",
+    "planFilePath": "/Users/me/.claude/plans/policy-crate.md"
+  }
+}

@@ -3,6 +3,7 @@
 For AI coding agents working in this repository — Codex, Claude Code, Gemini CLI and others. They are the same rules human contributors follow; the details are in `docs/`, read them before you change anything:
 
 - [docs/code-style.md](docs/code-style.md) — layout, both platforms together, code rules, screen text and translations, privacy, tests
+- [docs/design.md](docs/design.md) — UI rules (accent, selection, badges, text, shared components) and the reference screens; read before you change a screen
 - [docs/git-workflow.md](docs/git-workflow.md) — branches, commit messages, pull requests, what never goes into a commit
 - [CONTRIBUTING.md](CONTRIBUTING.md) — getting started; [docs/release.md](docs/release.md) — releases (maintainers only)
 
