@@ -20,7 +20,7 @@ Tracking records activity times and session IDs through launch-specific hooks. T
 
 For Claude Code outside Gitrochi:
 
-1. Choose **Connect Claude Code…** on the Ledger page or in its settings. Copy the command and run it yourself in a terminal.
+1. Choose **Connect agents…** on the Ledger page or in its settings, then select **Claude Code**. Copy the command and run it yourself in a terminal.
 2. Start or restart a Claude Code conversation so it can load the registered tools.
 3. Choose **Copy reporting instruction** in the sheet and give that instruction to the agent. Ask it to call `ledger_report` with a start report for its current work, including the project and a short title. It can then send progress, question and done reports as the work changes.
 
