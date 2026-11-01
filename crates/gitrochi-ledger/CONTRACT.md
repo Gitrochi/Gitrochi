@@ -37,7 +37,7 @@ A project row appears with its first report. Scans run before reports and reads,
 ## Vocabulary
 
 - `status` (stored): `active | done | merged | closed | dropped | shelved`.
-- `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` > `active`.
+- `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` (an unreported launch only once its branch has moved on from where it started, [below](#sessions-for-agents-gitrochi-starts)) > `active`.
 - `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
 - **Stream**: a session whose role is `implementation` and whose status is not `merged`/`closed`/`dropped`. Streams keep their verdict but stay out of overlaps, the open-session lists, project open counts and the clean-up board; they are shown as cycles.
 - Agent events: `start progress artifact question decision sync done merged closed dropped shelved release applied note heartbeat` (a heartbeat leaves no event). Korean aliases from the original tool (`시작`, `이행` …) and `rebase`, `merge`, `close`, `drop`, `apply`, `shelve` are accepted and stored in English; so are the original's kind names (`연구`, `판정`, `구현`, `LLM구현` …) and the latest words (`latest`, `head`, `최신` …).
@@ -86,10 +86,11 @@ interface StreamCycle { sessionId: string; line: string; version: string /* "" b
 interface Overlap { a: string; b: string; paths: string[]; kind: "same" | "coupled" }
 interface PendingPrompt { id: number; sessionId?: string; agentId?: string;
   kind: "stop_question" | "ask_user_question" | "exit_plan_mode" | "permission";
-  payload: Record<string, unknown>; createdAt: Ms; deadline: Ms;
+  payload: Record<string, unknown>; createdAt: Ms; deadline: Ms /* 0: held for the person, no countdown */;
   state: "waiting" | "answered" | "auto" | "released" | "expired";
   answer?: Record<string, unknown>; answeredBy?: "human" | "auto"; answeredAt?: Ms; reviewedAt?: Ms }
-interface Attention { questions: number; tidy: number; decide: number; autoReview: number; total: number }
+interface Attention { questions: number; tidy: number; decide: number; autoReview: number;
+  held: number /* waits held for the person; waits with a countdown are not counted */; total: number }
 interface State { schemaVersion: 1; rev: number; now: Ms;
   projects: { key: string; name: string; open: number; head?: string; lastAt?: Ms }[];
   baselines: Baseline[];       // every trunk of the selected project(s), ascending per project
@@ -145,7 +146,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
-| `prompt_expire` | `{}` | `{ok, rev, expired}` — waiting prompts 10 minutes past their deadline | app, hook |
+| `prompt_expire` | `{}` | `{ok, rev, expired}` — waiting prompts 10 minutes past their deadline (a wait held for the person has none) | app, hook |
 
 Callers: **app** = the C ABI and the Tauri command (a person is at the controls); **agent** = the CLI's `call` and the MCP server; **hook** = the wave 2 hook handler. A method called by a caller it is not for answers `NOT_ALLOWED`; the caller comes from the entry point, never from the request.
 
@@ -169,13 +170,15 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 ### Sessions for agents Gitrochi starts
 
-With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?}`. What the app leaves out is filled in from the checkout:
+With **Track agents I start** on, the app calls `track` before it starts an agent and passes the session's ID as `GITROCHI_LEDGER_SESSION` (DESIGN.md §7.11). The session is created active and unreported (no `lastAgentAt`), with an issued `S<MMDD>-<nn>` ID and one `hook` event, `data: {hook: "launch", agentId?, autoContinue?, head?}`; `head` is the commit `cwd` is on. What the app leaves out is filled in from the checkout:
 
-- `branch` and `worktree`: what git says about `cwd` (a detached HEAD has no branch).
-- `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines.
+- `branch`: what git says about `cwd` (a detached HEAD has no branch). `worktree`: the checkout's top folder when `cwd` is in a linked worktree; the main checkout is the repository itself and gets none.
+- `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines. Paths compare without a trailing separator, with `~` expanded; a Windows path (on Windows, or one with a drive letter or a `\\server` share) also without case, with `\` and `/` alike.
 - `title`: the branch, else the folder's name.
 - `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
 - `autoContinue`: the policy `autoContinue.repositories` keeps for `repoPath`; `null` follows the global default.
+
+**Unreported launches (D13).** Until its agent reports, a quiet session turns `stale` only once its branch's tip is no longer `head`: a commit of its own, or a reset. While the tip is still `head` its verdict stays `active`, so it is not in `attention`; the apps show it under the Board's **Unreported** filter (no `lastAgentAt`). A launch on a detached HEAD compares its folder's HEAD instead. One `git for-each-ref` per repository answers for all of its launches. When git cannot tell (no `head` recorded, the folders are gone, the branch was deleted), it goes stale like any other session.
 
 Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
 
@@ -243,11 +246,16 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
   - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
-  - the request is never auto-allowed;
-  - the question or the answer is risky;
-  - `stop_hook_active` is set and there has been no automatic answer since the person's last input;
-  - there have already been three automatic answers in a row.
-- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
+  - the turn did not end with a question;
+  - `stop_hook_active` is set and there has been no automatic answer since the person's last input.
+- **Waits held for the person.** With auto-continue on, some waits are never answered automatically: a request that is never auto-allowed, a risky question or plan, an `AskUserQuestion` with nothing to choose, and anything past the limit in a row (a stop question only when the turn asked one). The hook still ends at once with no decision, so the terminal asks, but it stores a waiting prompt the apps can show and notify about:
+  - `deadline` is 0 (no countdown), and `prompt_expire` leaves it alone.
+  - Its payload has the `PromptPayload` keys for what is asked, no `proposed`, `call` (as for permission prompts), and `hold`: why, as `gitrochi-autocontinue`'s pass (`code`: `held` with `rule` and `detail`, `risky` with `kind` and `reason`, `no_answer`, `limit_reached` with `consecutive` and `max`) plus an English `message`.
+  - It is settled like the other waits: the person's answer in the terminal (the call running, or the same agent going on, for a permission request; the `AskUserQuestion` or `ExitPlanMode` call running, or the agent going on, for a question or plan; their own prompt for a stop question) marks it `answered` by `human`. Their prompt otherwise, and SessionStart and SessionEnd, release it.
+  - It never counts toward the limit in a row. Like other waits it is in `state.pendingPrompts`, and unlike waits with a countdown, which resolve themselves, it counts in `attention.held` and so in `total`: the agent waits in its terminal for the person.
+  - `hold.message` is English. The apps show their own translated line for each `hold.code`, and the message only for a code they do not know.
+  - No hook waits on it, so an answer from the app (`prompt_answer`) does not reach the agent: the apps send the person to the terminal.
+- **In a row** counts the session's `auto_reply` events since the person's last input, plus the prompts that may still become one (waiting with a countdown, or permission answers still unconfirmed); `stop_hook_active` looks at the automatic answers alone. Events count by when they happened. The person's last input is the latest of:
   - a `hook` event with `data.person`, written when they type in the terminal;
   - any of their actions on the session in the app, except `link`;
   - a prompt they answered.
@@ -282,6 +290,10 @@ Added for the hook handler (wave 2):
 
 Added for launch tracking (wave 2):
 
-16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`.
+16. The app method `track` ([above](#sessions-for-agents-gitrochi-starts)) and its `hook` event `launch`. A `start` on a session `track` created, before its agent's first report, takes the agent's title, base and project instead of answering `CONFLICT` (DESIGN.md §7.2). The `autoContinue` setting may hold `repositories`. The launch event's `data.head` holds the commit the agent starts on, and an unreported launch turns `stale` only once its branch has moved on from it (D13). `links.worktree` is filled in for a linked worktree only, and Windows paths match whatever their case and separators.
+
+Added for the apps' notifications (wave 2):
+
+17. Waits held for the person ([Hooks](#hooks)): a waiting prompt with `deadline` 0 and `payload.hold`, which `prompt_expire` leaves alone and the limit in a row does not count. Before, these waits stored nothing. `Attention` gains `held`, their count, which `total` includes.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

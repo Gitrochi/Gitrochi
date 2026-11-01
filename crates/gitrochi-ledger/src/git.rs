@@ -1,7 +1,9 @@
-//! The system `git`, asked for machine-readable output. The ledger only reads tags, and
-//! the hook handler reads the agent's branch for permission checks.
+//! The system `git`, asked for machine-readable output. The ledger only reads tags, the
+//! hook handler reads the agent's branch for permission checks, and `track` reads where a
+//! launch starts and whether its branch has moved since.
 
 use crate::error::{Error, Result};
+use std::collections::HashMap;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -135,6 +137,60 @@ pub fn checkout(dir: &Path) -> Option<Checkout> {
         upstream,
         default_branch,
     })
+}
+
+/// Where a launch starts: HEAD's commit (`None` before the first commit), and whether the
+/// folder is in a linked worktree rather than the repository's main checkout.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Start {
+    pub head: Option<String>,
+    pub linked: bool,
+}
+
+/// The start of a launch in `dir`, or `None` outside a repository.
+pub fn start(dir: &Path) -> Option<Start> {
+    // a linked worktree has a git dir of its own next to the repository's common one
+    let dirs = stdout_of(command(dir).args([
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-dir",
+        "--git-common-dir",
+    ]))?;
+    let mut lines = dirs.lines().map(str::trim);
+    let (own, common) = (lines.next()?, lines.next()?);
+    Some(Start {
+        head: head_commit(dir),
+        linked: own != common,
+    })
+}
+
+/// The commit HEAD is on in `dir`, or `None` before the first commit or outside a repository.
+pub fn head_commit(dir: &Path) -> Option<String> {
+    stdout_of(command(dir).args(["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]))
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty())
+}
+
+/// The tip of every local branch of `dir`'s repository by branch name, or `None` when git
+/// cannot tell (not a repository): one call for all of a repository's branches.
+pub fn branch_tips(dir: &Path) -> Option<HashMap<String, String>> {
+    let listed = stdout_of(command(dir).args([
+        "for-each-ref",
+        "--format=%(refname)%00%(objectname)",
+        "refs/heads",
+    ]))?;
+    Some(
+        listed
+            .lines()
+            .filter_map(|line| {
+                let (name, commit) = line.split_once('\0')?;
+                Some((
+                    name.strip_prefix("refs/heads/")?.to_string(),
+                    commit.to_string(),
+                ))
+            })
+            .collect(),
+    )
 }
 
 /// The upstream of `branch` and origin's default branch from `checkout`'s for-each-ref.
@@ -291,6 +347,57 @@ pub(crate) mod tests {
         if !in_a_repository {
             assert_eq!(checkout(&outside), None);
         }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn start_tells_a_linked_worktree_and_the_tips_follow_its_branch() {
+        let dir =
+            std::env::temp_dir().join(format!("gitrochi-ledger-start-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let repo = fixture_repo(&dir);
+        let main = start(&repo).unwrap();
+        assert!(!main.linked, "the main checkout");
+        let head = main.head.unwrap();
+        assert_eq!(head.len(), 40);
+        let worktree = dir.join("worktree");
+        let path = worktree.to_string_lossy().into_owned();
+        fixture_git(
+            &dir,
+            &repo,
+            &["worktree", "add", "-q", "-b", "retry", &path],
+        );
+        let linked = start(&worktree).unwrap();
+        assert_eq!(
+            (linked.linked, linked.head.as_deref()),
+            (true, Some(head.as_str()))
+        );
+        // every branch's tip in one call, from any folder of the repository
+        let tips = branch_tips(&repo).unwrap();
+        assert_eq!(tips.get("retry"), Some(&head));
+        assert_eq!(tips.get("feature/hooks"), Some(&head));
+        fixture_git(
+            &dir,
+            &worktree,
+            &["commit", "-q", "--allow-empty", "-m", "second"],
+        );
+        let moved = branch_tips(&worktree).unwrap();
+        assert_ne!(moved.get("retry"), Some(&head));
+        assert_eq!(moved.get("retry"), head_commit(&worktree).as_ref());
+        assert_eq!(moved.get("gone"), None);
+        assert_eq!(branch_tips(&dir.join("not-a-repository")), None);
+        // before the first commit there is no HEAD to start from
+        let empty = dir.join("empty");
+        std::fs::create_dir_all(&empty).unwrap();
+        fixture_git(&dir, &empty, &["init", "-q"]);
+        assert_eq!(
+            start(&empty),
+            Some(Start {
+                head: None,
+                linked: false
+            })
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 

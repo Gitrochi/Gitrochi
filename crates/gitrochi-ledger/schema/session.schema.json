@@ -110,7 +110,8 @@
           "type": "string"
         },
         "worktree": {
-          "type": "string"
+          "type": "string",
+          "description": "A linked worktree the session works in; track leaves it out for the main checkout"
         },
         "pr": {
           "type": "object",

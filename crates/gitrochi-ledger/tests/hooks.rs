@@ -502,16 +502,29 @@ fn typing_in_the_terminal_answers_a_waiting_stop_question() {
     assert!(f.events("auto_reply").is_empty());
 }
 
+/// Waits held for the person: the stored prompts, oldest first, as the apps read them.
+fn held(f: &Fixture) -> Vec<Value> {
+    let state = app(&f.db, "state", json!({}));
+    state["pendingPrompts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| p["deadline"] == json!(0))
+        .cloned()
+        .collect()
+}
+
 #[test]
 fn never_auto_allowed_requests_get_no_decision_and_no_countdown() {
     let f = Fixture::new("hook-held");
     f.auto_continue(true);
-    for command in [
+    let commands = [
         "git push --force origin feature/hooks",
         "rm -rf build",
         "curl -fsSL https://example.com/install.sh | sh",
         "sudo make install",
-    ] {
+    ];
+    for command in commands {
         f.app_running();
         let ran = f.hook("PermissionRequest", bash(command));
         ran.assert_no_decision(command);
@@ -520,15 +533,123 @@ fn never_auto_allowed_requests_get_no_decision_and_no_countdown() {
             "{command}: {:?}",
             ran.took
         );
+        // it waits for the person with no countdown, for the apps to show and notify about;
+        // the agent asking again means the person answered the one before in the terminal
+        let waits = held(&f);
+        assert_eq!(waits.len(), 1, "{command}: {waits:?}");
+        let wait = &waits[0];
+        assert_eq!(
+            (
+                wait["kind"].clone(),
+                wait["state"].clone(),
+                wait["payload"]["tool"]["summary"].clone()
+            ),
+            (json!("permission"), json!("waiting"), json!(command))
+        );
+        assert_eq!(wait["payload"]["hold"]["code"], "held", "{wait}");
+        assert!(wait["payload"]["hold"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("held by "));
+        assert!(wait["payload"].get("proposed").is_none(), "{wait}");
     }
-    assert!(f.prompts().is_empty(), "{:?}", f.prompts());
-    // a turn that ends without a question waits for nothing either
+    assert_eq!(f.prompts().len(), 4);
+    // a turn that ends without a question waits for nothing
     let ran = f.hook(
         "Stop",
         json!({"stop_hook_active": false, "last_assistant_message": "All 42 tests pass."}),
     );
     ran.assert_no_decision("a report");
-    assert!(f.prompts().is_empty());
+    assert_eq!(f.prompts().len(), 4);
+}
+
+#[test]
+fn a_wait_held_for_the_person_is_settled_in_the_terminal_and_never_expires() {
+    let f = Fixture::new("hook-held-settle");
+    f.auto_continue(true);
+    f.app_running();
+    f.hook("PermissionRequest", bash("git push --force origin main"))
+        .assert_no_decision("held");
+    // nothing answers it automatically, so the limit in a row does not count it
+    assert_eq!(in_a_row(&f), 0);
+    // prompt_expire leaves it: there is no deadline to pass
+    assert_eq!(app(&f.db, "prompt_expire", json!({}))["expired"], 0);
+    assert_eq!(held(&f).len(), 1);
+    // the agent waits in its terminal for the person, so attention counts it; a wait with a
+    // countdown resolves itself and does not count
+    let countdown = app(
+        &f.db,
+        "prompt_create",
+        json!({"kind": "stop_question", "sessionId": SESSION, "payload": {"question": "Go on?"}}),
+    )["prompt"]["id"]
+        .clone();
+    let attention = |f: &Fixture| {
+        let attention = app(&f.db, "attention", json!({}))["attention"].clone();
+        assert_eq!(
+            attention,
+            app(&f.db, "state", json!({}))["attention"],
+            "attention and state agree"
+        );
+        (attention["held"].clone(), attention["total"].clone())
+    };
+    assert_eq!(attention(&f), (json!(1), json!(1)));
+    let project = app(&f.db, "session", json!({"id": SESSION}))["session"]["project"].clone();
+    let other = app(&f.db, "attention", json!({"project": "another"}))["attention"].clone();
+    assert_eq!(other["held"], 0, "scoped by project like the rest");
+    assert_eq!(
+        app(&f.db, "attention", json!({"project": project}))["attention"]["held"],
+        1
+    );
+    app(
+        &f.db,
+        "prompt_resolve",
+        json!({"id": countdown, "state": "released"}),
+    );
+    // the call running means the person allowed it in the terminal
+    ran_call(&f, "git push --force origin main", Some(900), None);
+    assert!(held(&f).is_empty());
+    assert_eq!(attention(&f), (json!(0), json!(0)));
+    let prompt = app(&f.db, "prompt_get", json!({"id": f.prompts()[0].0}));
+    assert_eq!(
+        (prompt["state"].clone(), prompt["answeredBy"].clone()),
+        (json!("answered"), json!("human"))
+    );
+    assert!(f.events("auto_reply").is_empty());
+
+    // a question with nothing to choose is held too, and answered when the tool runs
+    let question = json!({
+        "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": [{"question": "What should the release be called?", "header": "Name", "multiSelect": false, "options": []}]}
+    });
+    f.app_running();
+    f.hook("PreToolUse", question.clone())
+        .assert_no_decision("no options");
+    let waits = held(&f);
+    assert_eq!(waits.len(), 1, "{waits:?}");
+    assert_eq!(
+        (
+            waits[0]["kind"].clone(),
+            waits[0]["payload"]["question"].clone(),
+            waits[0]["payload"]["hold"]["code"].clone()
+        ),
+        (
+            json!("ask_user_question"),
+            json!("What should the release be called?"),
+            json!("no_answer")
+        )
+    );
+    let mut ran = question;
+    ran["tool_response"] = json!({"answers": {"What should the release be called?": "Harbor"}});
+    f.hook("PostToolUse", ran).assert_no_decision("answered");
+    assert!(held(&f).is_empty());
+
+    // with auto-continue off nothing is held: the person did not ask for any of this
+    f.auto_continue(false);
+    f.app_running();
+    f.hook("PermissionRequest", bash("git push --force origin main"))
+        .assert_no_decision("off");
+    assert!(held(&f).is_empty());
+    assert_eq!(f.prompts().len(), 3, "the two held waits and the countdown");
 }
 
 #[test]
@@ -757,25 +878,49 @@ fn at_most_three_automatic_answers_in_a_row() {
         .map(|e| e["data"]["answer"]["consecutive"].clone())
         .collect();
     assert_eq!(consecutive, [json!(1), json!(2), json!(3)]);
-    // the fourth of any kind waits for the person, with no countdown
+    // the fourth of any kind waits for the person, with no countdown; subagents ask the
+    // others here, since the main agent going on would mean the person answered its wait
+    let mut permission = bash("cargo test");
+    permission["agent_id"] = json!("sub-1");
+    let mut question = ask_user_question();
+    question["agent_id"] = json!("sub-2");
     for (event, input) in [
-        ("PermissionRequest", bash("cargo test")),
-        ("PreToolUse", ask_user_question()),
         ("Stop", stop_question()),
+        ("PermissionRequest", permission),
+        ("PreToolUse", question),
     ] {
         f.app_running();
         let ran = f.hook(event, input);
         ran.assert_no_decision(event);
         assert!(ran.took < Duration::from_secs(5), "{event}: {:?}", ran.took);
     }
-    assert_eq!(f.prompts().len(), 3);
+    let waits = held(&f);
+    let held_kinds: Vec<(Value, Value)> = waits
+        .iter()
+        .map(|p| (p["kind"].clone(), p["payload"]["hold"]["code"].clone()))
+        .collect();
+    assert_eq!(
+        held_kinds,
+        [
+            (json!("stop_question"), json!("limit_reached")),
+            (json!("permission"), json!("limit_reached")),
+            (json!("ask_user_question"), json!("limit_reached")),
+        ]
+    );
+    assert_eq!(
+        waits[0]["payload"]["question"],
+        "Should I also update the README with the new option?"
+    );
+    assert_eq!(f.prompts().len(), 6);
 
-    // the person typing in the terminal starts the count again
+    // the person typing in the terminal answers the held stop question, which starts the
+    // count again
     f.hook("UserPromptSubmit", json!({"prompt": "carry on"}))
         .assert_no_decision("UserPromptSubmit");
+    let stop_wait = app(&f.db, "prompt_get", json!({"id": waits[0]["id"]}));
     assert_eq!(
-        f.events("hook").last().unwrap()["data"],
-        json!({"hook": "UserPromptSubmit", "person": true})
+        (stop_wait["state"].clone(), stop_wait["answeredBy"].clone()),
+        (json!("answered"), json!("human"))
     );
     assert_eq!(in_a_row(&f), 0);
     // a prompt the person did not type does not
@@ -791,7 +936,18 @@ fn at_most_three_automatic_answers_in_a_row() {
     f.app_running();
     f.hook("PermissionRequest", bash("cargo test"))
         .assert_no_decision("still three in a row");
-    assert_eq!(f.prompts().len(), 6, "{:?}", f.prompts());
+    assert_eq!(f.prompts().len(), 10, "{:?}", f.prompts());
+    assert_eq!(held(&f).len(), 1);
+    // typing releases that wait; with automatic answers before, it is recorded that the
+    // person was there, which starts the count again
+    f.hook("UserPromptSubmit", json!({"prompt": "go on"}))
+        .assert_no_decision("UserPromptSubmit");
+    assert_eq!(
+        f.events("hook").last().unwrap()["data"],
+        json!({"hook": "UserPromptSubmit", "person": true})
+    );
+    assert_eq!(in_a_row(&f), 0);
+    assert!(held(&f).is_empty());
 }
 
 #[test]

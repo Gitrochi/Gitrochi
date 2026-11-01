@@ -269,6 +269,7 @@ private struct LedgerPromptCard: View {
 
     @ViewBuilder private var actions: some View {
         if held {
+            // filled only on the most urgent card: one filled button per region (docs/design.md, Controls)
             HStack(spacing: 8) { LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy) }
                 .prominentButton(primary).controlSize(.small)
         } else {

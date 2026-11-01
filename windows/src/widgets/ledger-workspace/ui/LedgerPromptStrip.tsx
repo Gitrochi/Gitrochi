@@ -1,6 +1,6 @@
 import { Check, CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, SquareTerminal, Timer, TimerOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { countdown, describeAnswer, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
+import { countdown, describeAnswer, heldText, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptHold, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
 import { answerText } from "./parts";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
@@ -28,8 +28,9 @@ export function useSecondTicker(on: boolean) {
 
 /**
  * The top of the Inbox: agents waiting for an answer, each with the time left before auto-continue answers for the
- * person. Answer, allow or deny here, answer in the agent's terminal instead, or keep this one from being answered
- * automatically. (macOS: Views/Ledger/LedgerPromptStrip.swift)
+ * person. Answer, allow or deny here (`prompt_answer`), answer in the agent's terminal instead, or keep this one from
+ * being answered automatically; the last two end the hook's wait without a decision, so the terminal asks. A permission
+ * request shows in the terminal during the wait as well (#171). (macOS: Views/Ledger/LedgerPromptStrip.swift)
  */
 export function LedgerPromptStrip({ store, onOpen, onOpenTerminal }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void }) {
   useObserve(store);
@@ -58,6 +59,8 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
   const options = promptOptions(prompt);
   const summary = promptSummary(prompt);
   const proposed = prompt.payload.proposed ? describeAnswer(prompt.payload.proposed) : null;
+  // a wait auto-continue left to the person: no hook waits on it, so an answer here would not reach the agent
+  const hold = promptHold(prompt);
   const busy = store.busy > 0;
   const send = (answer: Parameters<LedgerStore["answerPrompt"]>[1]) => store.answerPrompt(prompt, answer);
   return (
@@ -79,7 +82,15 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
       </div>
       {summary && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
       {proposed && proposed.kind !== "unknown" && left.tone !== "none" && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
-      {answering ? (
+      {hold ? <div className="hint">{heldText(hold)}</div> : prompt.kind === "permission" && <div className="hint">{t("The agent's terminal shows this request too; an answer there counts as well.")}</div>}
+      {hold ? (
+        <div className="ledger-row-actions">
+          <Button size="small" kind="primary" onClick={() => onOpenTerminal(prompt)}>
+            <SquareTerminal size={13} />
+            {t("Answer in terminal")}
+          </Button>
+        </div>
+      ) : answering ? (
         <>
           {options.length > 0 && (
             <div className="ledger-options">
@@ -98,9 +109,9 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
             {t("Answer in terminal")}
           </Button>
           {prompt.deadline > 0 && (
-            <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not automatically this time")}|${t("No automatic answer for this prompt; answer it here or in the agent's terminal.")}`}>
+            <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not this time")}|${t("No automatic answer for this prompt; it waits for you in the agent's terminal.")}`}>
               <TimerOff size={13} />
-              {t("Not automatically this time")}
+              {t("Not this time")}
             </Button>
           )}
         </div>

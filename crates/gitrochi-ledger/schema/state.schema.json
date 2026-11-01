@@ -282,6 +282,7 @@
         "tidy",
         "decide",
         "autoReview",
+        "held",
         "total"
       ],
       "additionalProperties": false,
@@ -301,6 +302,11 @@
         "autoReview": {
           "type": "integer",
           "minimum": 0
+        },
+        "held": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Waits held for the person (deadline 0 with payload.hold): agents waiting in their terminal"
         },
         "total": {
           "type": "integer",

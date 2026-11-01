@@ -9,6 +9,7 @@ use crate::prompts::{self, PendingPrompt};
 use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
 use crate::streams::{self, CycleEvent, StreamCycle};
+use crate::track;
 use crate::util::{Ms, DAY};
 use crate::vocab::Verdict;
 use rusqlite::Connection;
@@ -58,6 +59,9 @@ pub struct Attention {
     pub decide: i64,
     /// Prompts auto-continue answered that nobody has looked at yet.
     pub auto_review: i64,
+    /// Waits held for the person: agents waiting in their terminal. Waits with a countdown
+    /// resolve themselves and are not counted.
+    pub held: i64,
     pub total: i64,
 }
 
@@ -128,6 +132,20 @@ pub fn snapshot(
                 now,
             });
         views.push(viewer.view(row, counts.get(&row.id).copied().unwrap_or(0)));
+    }
+    // D13: an unreported launch whose branch has not moved waits under Unreported instead of
+    // going stale into To decide (git runs for these alone, once per repository)
+    let quiet: Vec<&SessionRow> = rows
+        .iter()
+        .zip(&views)
+        .filter(|(row, view)| view.verdict == Verdict::Stale && row.last_agent_at.is_none())
+        .map(|(row, _)| row)
+        .collect();
+    if !quiet.is_empty() {
+        let waiting = track::waiting_unreported(connection, &quiet)?;
+        for view in views.iter_mut().filter(|v| waiting.contains(&v.id)) {
+            view.verdict = Verdict::Active;
+        }
     }
     Ok(Snapshot {
         trunks,
@@ -207,7 +225,12 @@ pub fn open_questions(connection: &Connection, project: Option<&str>) -> Result<
     Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
 }
 
-pub fn attention_of(views: &[SessionView], questions: i64, auto_review: i64) -> Attention {
+pub fn attention_of(
+    views: &[SessionView],
+    questions: i64,
+    auto_review: i64,
+    held: i64,
+) -> Attention {
     let shown = || views.iter().filter(|v| v.archived_at.is_none());
     let tidy = shown()
         .filter(|v| matches!(v.verdict, Verdict::Confirm | Verdict::Expirable))
@@ -220,7 +243,8 @@ pub fn attention_of(views: &[SessionView], questions: i64, auto_review: i64) -> 
         tidy,
         decide,
         auto_review,
-        total: questions + tidy + decide + auto_review,
+        held,
+        total: questions + tidy + decide + auto_review + held,
     }
 }
 
@@ -297,6 +321,7 @@ pub fn state(
         &snapshot.views,
         questions.len() as i64,
         auto_review.len() as i64,
+        prompts::held_count(connection, project)?,
     );
     let projects = project_entries(connection, &snapshot)?;
     // Without a project, the projects' trunks follow one another in key order.

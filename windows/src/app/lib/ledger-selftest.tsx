@@ -1,12 +1,13 @@
 import { createRoot } from "react-dom/client";
 import { destinationEnabled, isWorkspaceDestination, restoredDestination } from "@/entities/git";
-import type { LedgerSession, LedgerStore } from "@/entities/ledger";
+import type { LedgerNotice, LedgerSession, LedgerStore } from "@/entities/ledger";
 import { RepoStore } from "@/entities/repo";
 import { RepoPage } from "@/pages/repo";
 import { ipc } from "@/shared/api";
-import { env, settings } from "@/shared/config";
+import { env, settings, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { SettingsDialog } from "@/widgets/settings";
+import { openLedgerAt } from "./ledger-notifications";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -34,20 +35,31 @@ const key = (target: EventTarget, key: string, mods: KeyboardEventInit = {}) => 
 // window itself, they would run in the order they were added, and the app's own Ctrl+Z would come first.
 const press = (k: string, mods: KeyboardEventInit = {}) => key(document.activeElement ?? document.body, k, mods);
 const command = (k: string) => press(k, env.os === "macos" ? { metaKey: true } : { ctrlKey: true });
+/** Enter leaves a number field, as in the app; a page without window focus gets no blur, so React then gets the focusout itself */
+function leave(el: HTMLElement) {
+  let left = false;
+  const mark = () => { left = true; };
+  el.addEventListener("focusout", mark);
+  key(el, "Enter");
+  el.removeEventListener("focusout", mark);
+  if (!left) el.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+}
 
 /**
  * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
- * waiting prompts, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
+ * waiting prompts, the quick launches, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
  * the narrow sheet, Streams, the onboarding sheets with the claude-ledger import, and Settings › Ledger. Nothing leaves
  * the demo backend: the ledger core itself is blocked.
  */
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
-  const [{ DemoLedgerBackend, LedgerStore, ledgerStore, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
+  const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
   const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
+  // the agent center rewrites its hooks files when Track agents I start changes; nothing reaches the disk
+  const hooksFiles: { path: string; content: string; tracking: boolean }[] = [];
   let version = 0;
   const host = document.createElement("div");
   host.style.cssText = "position:fixed;left:-10000px;top:0;width:1400px;height:900px";
@@ -60,12 +72,17 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
   const button = (scope: string, label: string) => $$<HTMLButtonElement>(`${scope} button`).find((b) => b.textContent?.trim() === t(label));
   try {
     settings.get = <T,>(k: string, fallback: T): T => (memory.has(k) ? memory.get(k) : fallback) as T;
-    settings.set = (k, value) => { memory.set(k, value); version++; listeners.forEach((listener) => listener()); };
+    // like the app's settings: undefined removes a key, so reading it gives the default again
+    settings.set = (k, value) => { if (value === undefined) memory.delete(k); else memory.set(k, value); version++; listeners.forEach((listener) => listener()); };
     settings.subscribe = (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
     settings.getVersion = () => version;
     ipc.run = async () => { unexpected.push("process"); throw new Error("Ledger fixture blocked a process"); };
     ipc.http = async () => { unexpected.push("network"); throw new Error("Ledger fixture blocked the network"); };
-    ipc.writeText = async () => { unexpected.push("write"); throw new Error("Ledger fixture blocked a write"); };
+    ipc.writeText = async (path, content) => {
+      if (/\/agents\/hooks(-wsl)?\.json$/.test(slash(path))) { hooksFiles.push({ path, content, tracking: ledgerTracking.on }); return; }
+      unexpected.push("write");
+      throw new Error("Ledger fixture blocked a write");
+    };
     ipc.openUrl = async () => { unexpected.push("url"); };
     ipc.ledgerCall = async () => { unexpected.push("ledger core"); throw new Error("Ledger fixture blocked the ledger core"); };
     ipc.ledgerPickDatabase = async () => "C:/fixture/claude-ledger/data/ledger.db";
@@ -98,7 +115,10 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const store = new LedgerStore(backend);
     stores.push(store);
     const find = (f: (s: LedgerSession) => boolean) => store.state!.sessions.find(f)!;
-    root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} />);
+    // the repository's tab, as the quick launches use it
+    const launches: unknown[][] = [];
+    const launcher = { newTerminal: (...args: unknown[]) => void launches.push(["terminal", ...args]), startAgent: async (...args: unknown[]) => void launches.push(["agent", ...args]) };
+    root.render(<LedgerWorkspace repoPath="C:/fixture/atlas" ledger={store} launcher={launcher} />);
     ensure(await until(() => $(".ledger-page[data-layout='wide'] [data-view='inbox'] .ledger-prompts")), "The Inbox did not open with its waiting prompts");
     ensure(store.project === "atlas" && $$(".ledger-prompt").length === 3, `The Inbox must filter to this repository's project: ${store.project} prompts=${$$(".ledger-prompt").length}`);
 
@@ -133,14 +153,38 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !document.querySelector(".menu")), "Escape did not close the version picker");
     passed.push("triage keys and undo");
 
-    // Waiting prompts: hold one, allow the permission
+    // Waiting prompts: hold one, allow the permission (whose dialog the terminal shows as well)
     const prompts = store.state!.pendingPrompts.filter((p) => p.state === "waiting" && store.session(p.sessionId)?.project === "atlas");
     const held = prompts.find((p) => p.kind === "stop_question")!, permission = prompts.find((p) => p.kind === "permission")!;
-    button(`[data-prompt="${held.id}"]`, "Not automatically this time")!.click();
-    ensure(await until(() => !$(`[data-prompt="${held.id}"]`) && (backend.world.prompts.find((p) => p.id === held.id)?.answer as { hold?: boolean } | undefined)?.hold === true), "Not automatically this time did not stop the automatic answer");
+    ensure($(`[data-prompt="${permission.id}"]`)?.textContent?.includes(t("The agent's terminal shows this request too; an answer there counts as well.")) && !$(`[data-prompt="${held.id}"]`)?.textContent?.includes(t("The agent's terminal shows this request too; an answer there counts as well.")), "A permission request must say that the terminal asks too");
+    ensure(/\d:\d\d/.test($(`[data-prompt="${held.id}"] [role="timer"]`)?.textContent ?? ""), `The countdown did not show the time left: ${$(`[data-prompt="${held.id}"] [role="timer"]`)?.textContent}`);
+    button(`[data-prompt="${held.id}"]`, "Not this time")!.click();
+    ensure(await until(() => !$(`[data-prompt="${held.id}"]`) && (backend.world.prompts.find((p) => p.id === held.id)?.answer as { hold?: boolean } | undefined)?.hold === true), "Not this time did not stop the automatic answer");
     button(`[data-prompt="${permission.id}"]`, "Allow")!.click();
     ensure(await until(() => !$(`[data-prompt="${permission.id}"]`) && backend.world.prompts.find((p) => p.id === permission.id)?.state === "answered"), "Allowing a prompt did not answer it");
+    // A wait auto-continue left to the person says why, and only the agent's terminal can answer it
+    const kept = { id: backend.world.nextPrompt++, sessionId: permission.sessionId, kind: "permission" as const, payload: { kind: "permission", question: "Bash: git push --force", tool: { name: "Bash", summary: "git push --force" }, hold: { code: "held", rule: "push", detail: "git push --force", message: "held by push" } }, createdAt: clock, deadline: 0, state: "waiting" as const };
+    backend.world.prompts.push(kept);
+    backend.world.rev++;
+    await store.refresh(true);
+    ensure(await until(() => $(`[data-prompt="${kept.id}"]`)), "A wait held for the person did not show");
+    const keptText = $(`[data-prompt="${kept.id}"]`)!.textContent ?? "";
+    ensure(keptText.includes(t("Auto-continue never answers this kind of request.")) && keptText.includes(t("Answer it in the agent's terminal.")), `A held wait must say why and where to answer it: ${keptText}`);
+    ensure(!button(`[data-prompt="${kept.id}"]`, "Allow") && !button(`[data-prompt="${kept.id}"]`, "Deny") && !button(`[data-prompt="${kept.id}"]`, "Not this time"), "A held wait must offer no answer the agent would not get");
+    button(`[data-prompt="${kept.id}"]`, "Answer in terminal")!.click();
+    ensure(await until(() => $(".ledger-toast")?.textContent?.includes(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))), "Answer in terminal did not look for the agent's terminal");
+    ensure(backend.world.prompts.find((p) => p.id === kept.id)?.state === "waiting", "Answer in terminal must leave a held wait to the terminal's answer");
     passed.push("waiting prompts");
+
+    // Quick launches: the overview is off on the demo data, and Claude Code starts as Run agent does
+    $<HTMLButtonElement>("[data-quick-launch]")!.click();
+    ensure(await until(() => document.querySelector(".menu .menu-item")), "The quick launch menu did not open");
+    const launchItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === label);
+    ensure(launchItem(t("Ledger overview"))?.classList.contains("disabled"), "The Ledger overview must be off on the demo data");
+    launchItem("Claude Code")!.click();
+    ensure(await until(() => launches.length > 0), "Claude Code did not start");
+    ensure(JSON.stringify(launches) === JSON.stringify([["agent", "C:/fixture/atlas", "", null, "claude"]]), `Claude Code must start as Run agent does: ${JSON.stringify(launches)}`);
+    passed.push("quick launches");
 
     // Board: chips with counts, one verdict, bulk archive undone as one
     $<HTMLButtonElement>(".ledger-tabs [data-view='board']")!.click();
@@ -188,6 +232,28 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => store.session(decide.id)?.status === "dropped"), "Confirming the drop did not drop the session");
     passed.push("inspector operations");
 
+    // Auto-continue per session: for agents Gitrochi started, never for the decision role, undone from the toast
+    const limits = find((s) => s.title.startsWith("Rate limit") && !!s.links.agentId);
+    store.select(limits.id);
+    const autoBox = () => $<HTMLInputElement>(".ledger-auto-continue input[type='checkbox']");
+    const policyOf = (id: string) => backend.world.sessions.find((s) => s.id === id)?.autoContinue;
+    ensure(await until(() => store.selectedId === limits.id && autoBox()?.checked === true && !autoBox()!.disabled), "The inspector did not show the session's auto-continue switch on");
+    autoBox()!.click();
+    ensure(await until(() => policyOf(limits.id)?.enabled === false && $(".ledger-toast button")), "Turning auto-continue off did not reach the session with an Undo toast");
+    $<HTMLButtonElement>(".ledger-toast button")!.click();
+    ensure(await until(() => policyOf(limits.id)?.enabled === true), "Undo did not turn auto-continue back on");
+    const waitField = () => $<HTMLInputElement>(`.ledger-auto-continue input[aria-label="${t("Wait")}"]`);
+    ensure(await until(() => store.busy === 0 && waitField() && !waitField()!.disabled), "The wait field stayed disabled after the undo");
+    const wait = waitField()!;
+    wait.focus();
+    type(wait, "45");
+    leave(wait);
+    ensure(await until(() => policyOf(limits.id)?.delaySec === 45), `Leaving the wait field did not save it: ${JSON.stringify(policyOf(limits.id))}`);
+    const decision = find((s) => s.role === "decision" && !!s.links.agentId && s.project === "atlas");
+    store.select(decision.id);
+    ensure(await until(() => store.selectedId === decision.id && autoBox()?.disabled === true && $(".ledger-auto-continue")?.textContent?.includes(t("Sessions with the decision role never continue automatically."))), "A decision session must not offer auto-continue");
+    passed.push("auto-continue per session");
+
     // Ctrl+K: search and open
     command("k");
     ensure(await until(() => $("input[role='combobox']")), "Ctrl+K did not open the search");
@@ -222,6 +288,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     stores.push(empty);
     root.render(<LedgerWorkspace repoPath={null} ledger={empty} />);
     ensure(await until(() => $(".ledger-onboarding .card")), "An empty ledger did not show the onboarding");
+    ensure(!$("[data-quick-launch]"), "Without a repository there is nothing to launch in, so the quick launches must not show");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     button(".ledger-onboarding", "Paste reports")!.click();
     ensure(await until(() => $(".modal textarea")), "Paste reports did not open the import sheet");
@@ -265,6 +332,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.unmount();
     root = createRoot(host);
     env.ledgerPreview = "1";
+    memory.set("recentRepositories", ["C:/fixture/atlas"]);
     root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
     ensure(await until(() => labels().includes(t("Ledger"))), "Settings did not offer the Ledger tab with the preview");
     ensure(labels().indexOf(t("Ledger")) === labels().indexOf(t("Update")) - 1, `The Ledger tab must come before Update: ${labels().join(", ")}`);
@@ -276,7 +344,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const stale = staleField()!;
     stale.focus();
     type(stale, "48");
-    key(stale, "Enter");
+    leave(stale);
     let saved = 0;
     await until(() => { void ledger.readSettings().then((x) => { saved = x.staleHours; }); return saved === 48; });
     ensure(saved === 48, `Leaving the stale hours field did not save them: ${saved}`);
@@ -299,6 +367,47 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => button(".ledger-settings", "Back up now") && !button(".ledger-settings", "Back up now")!.disabled), "Back up now stayed disabled after the project was saved");
     button(".ledger-settings", "Back up now")!.click();
     ensure(await until(() => $(".ledger-settings [role='status']")?.getAttribute("data-tip")?.startsWith("ledger/backups/ledger-")), `Back up now did not say where the copy went: ${$(".ledger-settings [role='status']")?.textContent}`);
+    // Track agents I start, and auto-continue per repository in the ledger's setting
+    const trackBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="tracking"] input[type="checkbox"]`);
+    ensure(trackBoxes().length === 2 && !trackBoxes()[0].checked && trackBoxes()[1].disabled, "Track agents I start must start off, its tools switch waiting for it");
+    trackBoxes()[0].click();
+    ensure(await until(() => memory.get("ledgerTrackAgents") === true && ledgerTracking.on && !trackBoxes()[1].disabled), "Track agents I start did not turn on");
+    trackBoxes()[1].click();
+    ensure(await until(() => memory.get("ledgerAgentTools") === false && !trackBoxes()[1].checked), "Give them the Ledger tools did not turn off");
+    trackBoxes()[1].click();
+    ensure(await until(() => trackBoxes()[1].checked), "Give them the Ledger tools did not turn back on");
+    const repository = () => $(`.ledger-repository[data-repository="C:/fixture/atlas"]`);
+    ensure(await until(() => repository()), "Auto-continue did not list the repository");
+    const policyFor = async () => ((await ledger.readSettings()).autoContinue.repositories as Record<string, { enabled: boolean; delaySec: number }> | undefined)?.["C:/fixture/atlas"];
+    repository()!.querySelector<HTMLInputElement>("input[type='checkbox']")!.click();
+    let policy: { enabled: boolean; delaySec: number } | undefined;
+    await until(() => { void policyFor().then((p) => { policy = p; }); return policy?.enabled === true && policy.delaySec === 30; });
+    ensure(policy?.enabled === true && policy.delaySec === 30, `Turning auto-continue on for the repository did not save it: ${JSON.stringify(policy)}`);
+    await until(() => !button(".ledger-settings", "Back up now")!.disabled);
+    const repoWait = repository()!.querySelector<HTMLInputElement>("input[type='number']")!;
+    repoWait.focus();
+    type(repoWait, "60");
+    leave(repoWait);
+    await until(() => { void policyFor().then((p) => { policy = p; }); return policy?.delaySec === 60; });
+    ensure(policy?.enabled === true && policy.delaySec === 60, `The repository's wait did not save: ${JSON.stringify(policy)}`);
+    trackBoxes()[0].click();
+    ensure(await until(() => !memory.get("ledgerTrackAgents") && !ledgerTracking.on && trackBoxes()[1].disabled), "Track agents I start did not turn off again");
+    // the hooks files name the ledger CLI only while tracking is on (when the app has the CLI at all)
+    await until(() => hooksFiles.some((f) => !f.tracking), 1500);
+    const cli = await ledgerTracking.cli();
+    ensure(hooksFiles.every((f) => f.content.includes("gitrochi-ledger") === (f.tracking && !!cli)), `The hooks files did not follow Track agents I start: ${hooksFiles.map((f) => `${f.tracking}:${f.content.includes("gitrochi-ledger")}`).join(", ")}`);
+    passed.push("track agents and auto-continue settings");
+    // Notifications and the taskbar badge: both off until a person turns them on
+    const noticeBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="notifications"] input[type="checkbox"]`);
+    ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => !b.checked), "Notifications and the badge must start off");
+    noticeBoxes()[0].click();
+    ensure(await until(() => memory.get("ledgerNotifications") === true && noticeBoxes()[0].checked), "Turning notifications on did not save it");
+    noticeBoxes()[0].click();
+    noticeBoxes()[1].click();
+    ensure(await until(() => memory.get("ledgerNotifications") === undefined && memory.get("ledgerBadge") === true && !noticeBoxes()[0].checked && noticeBoxes()[1].checked), "The notification switches did not follow the clicks");
+    noticeBoxes()[1].click();
+    ensure(await until(() => !noticeBoxes()[1].checked && !memory.has("ledgerBadge")), "The badge switch did not turn back off");
+    passed.push("notification settings");
     button(".ledger-settings", "Connect Claude Code…")!.click();
     ensure(await until(() => button(".modal", "Test connection")), "Connect Claude Code… did not open from Settings");
     button(".modal", "Done")!.click();
@@ -306,6 +415,39 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => button(".modal", "Choose a file")), "Import from claude-ledger… did not open from Settings");
     button(".modal-footer", "Close")!.click();
     passed.push("settings");
+
+    // The notifier: nothing for what existed, each new item once with the time left, the overlay with the count, and a
+    // click that opens the Ledger at the item
+    let noticeClock = clock;
+    const noticeDemo = new DemoLedgerBackend({ now: () => noticeClock, repoPath: "C:/fixture/atlas" });
+    const sent: LedgerNotice[] = [], overlays: (number[] | null)[] = [];
+    const notifier = new LedgerNotifier(() => noticeDemo, { notify: async (n) => { sent.push(n); }, badge: async (rgba) => { overlays.push(rgba); } });
+    // off until a person turns them on: nothing is read
+    await notifier.poll();
+    ensure(!sent.length && !overlays.length, "The notifier must do nothing while both switches are off");
+    memory.set("ledgerNotifications", true);
+    memory.set("ledgerBadge", true);
+    await notifier.poll();
+    ensure(!sent.length, `Notifications must not announce what already existed: ${sent.map((n) => n.title).join(", ")}`);
+    ensure(env.os !== "windows" || (overlays.length === 1 && overlays[0]?.length === 32 * 32 * 4), `The taskbar overlay did not get the count: ${overlays.map((o) => o?.length ?? "none").join(", ")}`);
+    const asker = noticeDemo.world.sessions.find((s) => s.project === "atlas" && s.status === "active" && !s.archivedAt)!;
+    noticeDemo.world.prompts.push({ id: noticeDemo.world.nextPrompt++, sessionId: asker.id, kind: "stop_question", payload: { question: "Shall I go on with the next step?", proposed: { type: "reply", text: "Yes, go on." } }, createdAt: noticeClock, deadline: noticeClock + 30_000, state: "waiting" });
+    noticeDemo.world.rev++;
+    await notifier.poll();
+    const waitingNotice = sent.find((n) => n.title === t("{0} is waiting for you", asker.id));
+    ensure(waitingNotice?.body.includes(t("Auto-answer in {0}", "0:30")), `A waiting prompt did not notify with the time left: ${sent.map((n) => `${n.title} / ${n.body}`).join(" | ")}`);
+    noticeClock += 31_000;
+    await notifier.poll();
+    ensure(sent.some((n) => n.title === t("Answered automatically for {0}", asker.id)), "An automatic answer did not notify");
+    const clickTab = new RepoStore();
+    clickTab.loadGlobalIdentity = async () => {};
+    const clickStore = new LedgerStore(noticeDemo);
+    stores.push(clickStore);
+    openLedgerAt(clickTab, clickStore, waitingNotice!.target);
+    ensure(clickTab.destination === "ledger" && clickStore.selectedId === asker.id && clickStore.view === "inbox", `A click did not open the Ledger at the item: ${clickTab.destination} ${clickStore.selectedId} ${clickStore.view}`);
+    memory.delete("ledgerNotifications");
+    memory.delete("ledgerBadge");
+    passed.push("notifications");
 
     ensure(!unexpected.length, `The Ledger reached outside the demo: ${unexpected.join(", ")}`);
     return [true, passed.join("; ")];

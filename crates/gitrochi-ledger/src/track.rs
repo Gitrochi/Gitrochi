@@ -4,7 +4,8 @@
 //! and links are Gitrochi's guess from the checkout: the branch, and the newest baseline tag
 //! reachable from it. The session stays unreported (no `lastAgentAt`, D13) until its agent
 //! reports, and the agent's first report replaces the guess (`report`, through
-//! `is_unreported_launch`).
+//! `is_unreported_launch`). Until then it turns stale only once its branch has moved on from
+//! where it started (`waiting_unreported`).
 
 use crate::baseline;
 use crate::db::Db;
@@ -16,8 +17,9 @@ use crate::session::{self, SessionRow};
 use crate::settings::{self, Settings};
 use crate::util::{self, arg_str, Ms};
 use crate::vocab;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 /// `data.hook` of the event `track` records: how a session is known to come from a launch.
@@ -35,6 +37,8 @@ pub struct Plan {
     pub kind: String,
     pub links: Map<String, Value>,
     pub auto_continue: Option<Value>,
+    /// The commit the agent starts on, from which D13 counts the branch's own commits.
+    pub head: Option<String>,
 }
 
 /// Reads the arguments and the checkout: `{project?, title?, base?, kind?, repoPath?,
@@ -64,11 +68,17 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
     let folder = text("cwd")
         .or_else(|| text("worktree"))
         .or_else(|| text("repoPath"));
+    let mut head = None;
     if let Some(checkout) = folder.as_deref().and_then(|f| git::checkout(Path::new(f))) {
-        links.entry("worktree").or_insert(json!(checkout.root));
+        let start = folder.as_deref().and_then(|f| git::start(Path::new(f)));
+        // the main checkout is the repository itself; only a linked worktree is worth a link
+        if start.as_ref().is_none_or(|s| s.linked) {
+            links.entry("worktree").or_insert(json!(checkout.root));
+        }
         if let Some(branch) = checkout.branch {
             links.entry("branch").or_insert(json!(branch));
         }
+        head = start.and_then(|s| s.head);
     }
     let text = |key: &str| links.get(key).and_then(Value::as_str).map(str::to_string);
     let project = match arg_str(args, "project") {
@@ -109,6 +119,7 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         kind: arg_str(args, "kind").map_or_else(String::new, |k| vocab::kind(&k)),
         links,
         auto_continue,
+        head,
     })
 }
 
@@ -135,13 +146,28 @@ fn project_for(connection: &Connection, repo: &str) -> Result<String> {
     folder_name(repo).ok_or_else(|| Error::invalid(format!("No project for {repo}")))
 }
 
+/// How a folder's path compares: `~` expanded and trailing separators dropped. A Windows
+/// path (on Windows, or one with a drive letter or a `\\server` share) also ignores case and
+/// takes `\` and `/` as one, as Windows does: a folder picked in Settings comes as
+/// `C:\Work\app`, git and the apps send `C:/Work/app`.
 fn same_path_key(path: &str) -> String {
     let home = std::env::var("HOME").unwrap_or_default();
     let path = match path.strip_prefix('~') {
         Some(rest) if !home.is_empty() => format!("{home}{rest}"),
         _ => path.to_string(),
     };
-    path.trim_end_matches(['/', '\\']).to_string()
+    let path = path.trim_end_matches(['/', '\\']);
+    if cfg!(windows) || is_windows_path(path) {
+        path.replace('\\', "/").to_lowercase()
+    } else {
+        path.to_string()
+    }
+}
+
+fn is_windows_path(path: &str) -> bool {
+    let bytes = path.as_bytes();
+    (bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':')
+        || path.starts_with(r"\\")
 }
 
 fn folder_name(path: &str) -> Option<String> {
@@ -212,6 +238,9 @@ pub fn create(connection: &Connection, plan: &Plan, now: Ms) -> Result<SessionRo
     if let Some(policy) = &plan.auto_continue {
         data["autoContinue"] = policy.clone();
     }
+    if let Some(head) = &plan.head {
+        data["head"] = json!(head);
+    }
     event::insert(
         connection,
         &NewEvent {
@@ -243,6 +272,60 @@ pub fn is_unreported_launch(connection: &Connection, row: &SessionRow) -> Result
         params![row.id, LAUNCH],
         |r| r.get(0),
     )?)
+}
+
+/// D13 for one snapshot: which of `rows` are unreported launches that wait under Unreported,
+/// and do not turn stale, while their branch's tip is still the commit their agent started on.
+/// One `for-each-ref` per repository answers for all of its launches on a branch; a launch on a
+/// detached HEAD asks its own folder. When git cannot tell (a launch that recorded no commit,
+/// its folders gone, its branch deleted), the session counts like any other, so nothing that
+/// may need a person is hidden; so does a branch reset behind where it started.
+pub fn waiting_unreported(
+    connection: &Connection,
+    rows: &[&SessionRow],
+) -> Result<HashSet<String>> {
+    let mut tips: HashMap<String, Option<HashMap<String, String>>> = HashMap::new();
+    let mut waiting = HashSet::new();
+    for row in rows.iter().filter(|r| r.last_agent_at.is_none()) {
+        let Some(head) = launch_head(connection, &row.id)? else {
+            continue;
+        };
+        let link = |key: &str| row.links.get(key).and_then(Value::as_str);
+        let folder = |keys: &[&str]| {
+            keys.iter()
+                .filter_map(|key| link(key))
+                .find(|f| Path::new(f).is_dir())
+                .map(str::to_string)
+        };
+        let tip = match link("branch") {
+            // a branch is the repository's: the repository folder first, so its launches share one call
+            Some(branch) => folder(&["repoPath", "worktree", "cwd"]).and_then(|folder| {
+                tips.entry(folder)
+                    .or_insert_with_key(|f| git::branch_tips(Path::new(f)))
+                    .as_ref()
+                    .and_then(|tips| tips.get(branch).cloned())
+            }),
+            None => folder(&["worktree", "cwd"]).and_then(|f| git::head_commit(Path::new(&f))),
+        };
+        if tip.as_deref() == Some(head.as_str()) {
+            waiting.insert(row.id.clone());
+        }
+    }
+    Ok(waiting)
+}
+
+/// The commit a launch started on (`data.head` of its `launch` event), if it recorded one.
+fn launch_head(connection: &Connection, id: &str) -> Result<Option<String>> {
+    Ok(connection
+        .query_row(
+            "SELECT json_extract(data, '$.head') FROM events WHERE session_id = ?1
+               AND type = 'hook' AND actor = 'hook' AND json_extract(data, '$.hook') = ?2
+             ORDER BY id LIMIT 1",
+            params![id, LAUNCH],
+            |r| r.get(0),
+        )
+        .optional()?
+        .flatten())
 }
 
 /// The agent named another project than Gitrochi guessed: the session moves there, with a

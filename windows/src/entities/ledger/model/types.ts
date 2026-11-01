@@ -137,6 +137,8 @@ export interface LedgerAttention {
   tidy: number;
   decide: number;
   autoReview: number;
+  /** Waits held for the person: agents waiting in their terminal (#195; a core before it leaves this out) */
+  held?: number;
   total: number;
 }
 
@@ -231,7 +233,7 @@ export interface LedgerSettings {
   staleHours: number;
   /** kind → rule, replaced as a whole */
   kinds: Record<string, LedgerKindRule>;
-  /** Auto-continue's policy, stored as given (its switches come in a later wave) */
+  /** Auto-continue's policy, stored as given: `{enabled, delaySec}` and the fields gitrochi-autocontinue reads */
   autoContinue: Record<string, unknown>;
   backupKeep: number;
 }
@@ -323,7 +325,13 @@ export interface LedgerImportResult {
 }
 
 /** A person's operations; each one is an event with actor "human" */
-export type LedgerHumanAction = "ack" | "unack" | "archive" | "unarchive" | "set_status" | "answer" | "dismiss" | "snooze" | "shelve" | "link" | "message";
+export type LedgerHumanAction = "ack" | "unack" | "archive" | "unarchive" | "set_status" | "answer" | "dismiss" | "snooze" | "shelve" | "link" | "message" | "auto_continue";
+
+/** Whether auto-continue answers for the person, and after how many seconds without an answer */
+export interface LedgerAutoContinue {
+  enabled: boolean;
+  delaySec: number;
+}
 
 /** `human` arguments besides `action` and `sessionId` */
 export interface LedgerHumanArgs {
@@ -337,6 +345,8 @@ export interface LedgerHumanArgs {
   text?: string;
   /** snooze: until when the session counts as active (0 clears) */
   until?: Ms;
+  /** auto_continue: the session's own policy; null follows the default again */
+  autoContinue?: LedgerAutoContinue | null;
 }
 
 export interface LedgerHumanRequest extends LedgerHumanArgs {
@@ -381,5 +391,26 @@ export interface LedgerMethods {
   scan: { args: { project?: string }; result: { results: LedgerScanResult[] } };
   /** A claude-ledger database, read only; `dryRun` counts without writing */
   import_legacy: { args: { path: string; dryRun?: boolean }; result: LedgerLegacyImport };
+  /** The session of an agent the app is about to launch (Track agents I start); its agent's first start names it */
+  track: { args: LedgerTrackArgs; result: { ok: boolean; rev: number; session: LedgerSession } };
+}
+
+/**
+ * `track`: where the agent runs. The core fills in what is left out from the checkout at `cwd`: the branch and
+ * worktree, the project bound to `repoPath` (else the folder's name), the branch as the title, the newest matching tag
+ * as the base, and the repository's policy from `autoContinue.repositories`.
+ */
+export interface LedgerTrackArgs {
+  cwd: string;
+  repoPath?: string;
+  agentId?: string;
+  project?: string;
+  title?: string;
+  base?: string;
+  kind?: string;
+  branch?: string;
+  worktree?: string;
+  /** null follows the global default rather than the repository's policy */
+  autoContinue?: LedgerAutoContinue | null;
 }
 export type LedgerMethod = keyof LedgerMethods;
