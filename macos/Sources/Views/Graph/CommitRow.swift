@@ -216,6 +216,8 @@ private struct RefColumn: View {
                     Text("+\(groups.count - 1)")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(tint)
+                        // keep the count whole; the pill truncates instead (Windows: .ref-more)
+                        .fixedSize()
                         .padding(.horizontal, 4)
                         .background(Capsule().fill(tint.opacity(0.15)))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))

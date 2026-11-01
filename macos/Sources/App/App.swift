@@ -24,6 +24,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
+        // Ledger preview only: tells auto-continue's hooks that a person can answer here (does nothing otherwise)
+        MainActor.assumeIsolated { LedgerHeartbeat.shared.start() }
+        // Ledger preview only: notifications and the Dock badge, when a person turned them on
+        MainActor.assumeIsolated { LedgerNotifier.shared.refresh() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             MainActor.assumeIsolated { Workspace.shared.ensureWindow() }
@@ -216,6 +220,9 @@ struct AppCommands: Commands {
             Button("Show pull requests") { store?.navigate(.pullRequests) }.keyboardShortcut("4")
             Button("Show CI/CD") { store?.navigate(.actions) }.keyboardShortcut("5")
             Button("Show flows") { store?.navigate(.flows) }.keyboardShortcut("6")
+            if WorkspaceDestination.ledger.isShown {
+                Button("Show ledger") { store?.navigate(.ledger) }.keyboardShortcut("7")
+            }
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])

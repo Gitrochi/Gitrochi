@@ -1,0 +1,83 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 30,
+    "kind": "ask_user_question",
+    "language": "en",
+    "options": [
+      "SQLite (Recommended)",
+      "macOS"
+    ],
+    "question": "Which storage should the ledger use? / Which platforms should get the screen first?",
+    "rule": "answers:mixed",
+    "schemaVersion": 1,
+    "sent": {
+      "answers": {
+        "Which platforms should get the screen first?": "macOS",
+        "Which storage should the ledger use?": "SQLite (Recommended)"
+      },
+      "note": "[Gitrochi] Auto-continue — Chosen answer: Which storage should the ledger use? → SQLite (Recommended); Which platforms should get the screen first? → macOS\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "answers"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 30,
+  "event": "PreToolUse",
+  "kind": "ask_user_question",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": "{\"hookSpecificOutput\":{\"additionalContext\":\"[Gitrochi] Auto-continue — Chosen answer: Which storage should the ledger use? → SQLite (Recommended); Which platforms should get the screen first? → macOS\\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.\",\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"answers\":{\"Which platforms should get the screen first?\":\"macOS\",\"Which storage should the ledger use?\":\"SQLite (Recommended)\"},\"questions\":[{\"header\":\"Storage\",\"multiSelect\":false,\"options\":[{\"description\":\"Simple, one file per session\",\"label\":\"JSON files\"},{\"description\":\"One database, safe for several writers\",\"label\":\"SQLite (Recommended)\"}],\"question\":\"Which storage should the ledger use?\"},{\"header\":\"Platforms\",\"multiSelect\":true,\"options\":[{\"description\":\"SwiftUI\",\"label\":\"macOS\"},{\"description\":\"Tauri\",\"label\":\"Windows\"}],\"question\":\"Which platforms should get the screen first?\"}]}}}"
+  },
+  "payload": {
+    "delaySec": 30,
+    "kind": "ask_user_question",
+    "language": "en",
+    "proposed": {
+      "answers": {
+        "Which platforms should get the screen first?": "macOS",
+        "Which storage should the ledger use?": "SQLite (Recommended)"
+      },
+      "note": "[Gitrochi] Auto-continue — Chosen answer: Which storage should the ledger use? → SQLite (Recommended); Which platforms should get the screen first? → macOS\nNo answer for 30 seconds, so this continues automatically. Go ahead with the option you recommended; if you recommended none, choose the one that is easiest to undo. Do not do anything hard to undo (deleting data, force-pushing, pushing to the main or a protected branch, deploying, changing credentials or account settings); stop and ask again instead. List the assumptions you made in your final summary.",
+      "type": "answers"
+    },
+    "question": "Which storage should the ledger use? / Which platforms should get the screen first?",
+    "questions": [
+      {
+        "header": "Storage",
+        "multiSelect": false,
+        "options": [
+          {
+            "description": "Simple, one file per session",
+            "label": "JSON files",
+            "recommended": false
+          },
+          {
+            "description": "One database, safe for several writers",
+            "label": "SQLite (Recommended)",
+            "recommended": true
+          }
+        ],
+        "question": "Which storage should the ledger use?"
+      },
+      {
+        "header": "Platforms",
+        "multiSelect": true,
+        "options": [
+          {
+            "description": "SwiftUI",
+            "label": "macOS",
+            "recommended": false
+          },
+          {
+            "description": "Tauri",
+            "label": "Windows",
+            "recommended": false
+          }
+        ],
+        "question": "Which platforms should get the screen first?"
+      }
+    ],
+    "schemaVersion": 1
+  }
+}

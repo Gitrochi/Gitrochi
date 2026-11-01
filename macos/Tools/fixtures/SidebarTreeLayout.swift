@@ -41,6 +41,10 @@ private struct TreeLayoutFixture: View {
                 }
                 .disclosureGroupStyle(SidebarTreeGroup())
             }
+            section("Worktrees 2") {
+                worktree(Self.mainWorktree, branch: "main", current: true)
+                worktree(Self.searchWorktree, branch: "feature/search")
+            }
             section("Remotes 4") {
                 DisclosureGroup(isExpanded: $state.remoteExpanded) {
                     branch("origin/main", remote: true)
@@ -89,6 +93,16 @@ private struct TreeLayoutFixture: View {
         }
     }
 
+    static let mainWorktree = NSHomeDirectory() + "/Projects/shop-web"
+    static let searchWorktree = NSHomeDirectory() + "/Projects/shop-web-search"
+
+    private func worktree(_ path: String, branch: String, current: Bool = false) -> some View {
+        WorktreeRow(worktree: Worktree(path: path, head: "fixture", branch: branch, isMain: current, locked: false, prunable: false),
+                    current: current)
+            .sidebarTreeRow()
+            .background(TreeLayoutProbe(identifier: "row:" + path))
+    }
+
     private func branch(_ name: String, label: String? = nil, current: Bool = false, remote: Bool = false) -> some View {
         let branch = Branch(name: name, target: "fixture", upstream: nil, ahead: current ? 1 : 0,
                             behind: 0, upstreamGone: false, isCurrent: current, isRemote: remote)
@@ -108,7 +122,7 @@ private struct TreeLayoutFixture: View {
                 treeLayoutViews.removeAll()
                 let state = TreeLayoutState()
                 let host = NSHostingView(rootView: TreeLayoutFixture(state: state).preferredColorScheme(dark ? .dark : .light))
-                let bounds = NSRect(x: 0, y: 0, width: width, height: 440)
+                let bounds = NSRect(x: 0, y: 0, width: width, height: 560)
                 let window = NSWindow(contentRect: NSRect(x: -4000, y: 0, width: width, height: bounds.height),
                                       styleMask: [.borderless], backing: .buffered, defer: false)
                 window.contentView = host
@@ -145,6 +159,11 @@ private struct TreeLayoutFixture: View {
                 }
                 close(abs(frame("row:origin/feature/reviews").minY - frame("row:origin/feature/checkout").minY), 26,
                       "Nested rows must have no extra disclosure spacing")
+                for path in [TreeLayoutFixture.mainWorktree, TreeLayoutFixture.searchWorktree] {
+                    close(frame("icon:" + path).minX, frame("icon:main").minX, "Worktree and branch icons must align")
+                    close(frame("label:" + path).minX, frame("label:main").minX, "Worktree and branch labels must align")
+                    precondition(frame("row:" + path).height >= 26 - 1, "Worktree rows must keep the tree row height")
+                }
 
                 guard let bitmap = host.bitmapImageRepForCachingDisplay(in: bounds) else { fatalError("No tree bitmap") }
                 host.cacheDisplay(in: bounds, to: bitmap)
@@ -162,12 +181,12 @@ private struct TreeLayoutFixture: View {
                 settle()
                 precondition(treeLayoutViews["row:origin/main"]?.window == nil, "Collapsed remotes must remove their children")
                 checks.append(["width": width, "theme": dark ? "dark" : "light", "childIndent": 18,
-                               "rowHeight": 26, "siblingsAligned": true, "collapseReopen": true, "screenshot": name])
+                               "rowHeight": 26, "siblingsAligned": true, "worktreesAligned": true, "collapseReopen": true, "screenshot": name])
                 window.orderOut(nil)
             }
         }
         try JSONSerialization.data(withJSONObject: checks, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
-        print("PASS: production branch rows and tree groups align at 240/320 points in light/dark, with 18-point nesting and compact 26-point rows. \(output.path)")
+        print("PASS: production branch rows, worktree rows and tree groups align at 240/320 points in light/dark, with 18-point nesting and compact 26-point rows. \(output.path)")
     }
 }

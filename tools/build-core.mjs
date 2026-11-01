@@ -38,3 +38,9 @@ mkdirSync(nativeDirectory, { recursive: true });
 copyFileSync(nativeSource, path.join(nativeDirectory, "gitch-core.exe"));
 // The repository index CLI for gitch, the Python tools and the Go monitor (the app links the crate).
 copyFileSync(path.join(root, "crates/target/release", process.platform === "win32" ? "gitrochi-index.exe" : "gitrochi-index"), path.join(nativeDirectory, "gitrochi-index.exe"));
+
+// The Ledger CLI and MCP server for agents (the app links the crate). A build of its own keeps the two above exactly as
+// they were: in one build, cargo would give their SQLite the ledger's extra features.
+const ledger = spawnSync(cargo, ["build", "--locked", "--release", "--bin", "gitrochi-ledger", "--manifest-path", path.join(root,"crates/Cargo.toml")], { cwd: root, stdio: "inherit", env: buildEnv });
+if (ledger.error || ledger.status !== 0) process.exit(ledger.status || 1);
+copyFileSync(path.join(root, "crates/target/release", process.platform === "win32" ? "gitrochi-ledger.exe" : "gitrochi-ledger"), path.join(nativeDirectory, "gitrochi-ledger.exe"));

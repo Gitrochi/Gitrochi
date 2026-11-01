@@ -50,6 +50,13 @@ export abstract class RepoHistoryTools extends RepoGitch {
     s.comparison = null; s.comparisonPatch = ""; s.comparisonError = null;
     this.sheet = { kind: "compareRevisions" }; this.emit();
   }
+  /** Opens the Compare page on two revisions, e.g. a release tag and the checkout (macOS: showRevisionComparison). */
+  showRevisionComparison(left: string, right: string) {
+    if (!this.navigate("compare")) return;
+    const s = this.historyTools;
+    s.left = left; s.right = right; s.useMergeBase = false;
+    void this.loadRevisionComparison();
+  }
   private async resolveHistoryRevision(value: string, path: string): Promise<string> {
     if (!validRevisionInput(value)) throw new Error(t("Enter a branch, tag or commit without spaces or leading dashes."));
     const r = await git(["rev-parse", "--verify", "--end-of-options", `${value}^{commit}`], path);

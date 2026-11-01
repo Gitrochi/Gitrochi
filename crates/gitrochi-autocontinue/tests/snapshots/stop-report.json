@@ -1,0 +1,13 @@
+{
+  "decision": "pass",
+  "event": "Stop",
+  "message": "the turn did not end with a question",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "not_a_question"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "autoReply": {
+    "consecutive": 1,
+    "delaySec": 30,
+    "kind": "permission",
+    "language": "en",
+    "question": "Bash: cargo test --locked --manifest-path crates/Cargo.toml",
+    "rule": "permission:no-rule",
+    "schemaVersion": 1,
+    "sent": {
+      "type": "allow"
+    }
+  },
+  "decision": "wait",
+  "delaySec": 30,
+  "event": "PermissionRequest",
+  "kind": "permission",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": "{\"hookSpecificOutput\":{\"decision\":{\"behavior\":\"allow\"},\"hookEventName\":\"PermissionRequest\"}}"
+  },
+  "payload": {
+    "delaySec": 30,
+    "kind": "permission",
+    "language": "en",
+    "proposed": {
+      "type": "allow"
+    },
+    "question": "Bash: cargo test --locked --manifest-path crates/Cargo.toml",
+    "schemaVersion": 1,
+    "tool": {
+      "name": "Bash",
+      "summary": "cargo test --locked --manifest-path crates/Cargo.toml"
+    }
+  }
+}

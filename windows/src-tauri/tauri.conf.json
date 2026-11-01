@@ -67,7 +67,8 @@
       "../../tools/gitch/gitch-graph-watch": "gitch-graph-watch",
       "../../tools/gitrochi-mcp/server.mjs": "gitrochi-mcp.mjs",
       "generated/gitch-core.exe": "gitch-core.exe",
-      "generated/gitrochi-index.exe": "gitrochi-index.exe"
+      "generated/gitrochi-index.exe": "gitrochi-index.exe",
+      "generated/gitrochi-ledger.exe": "gitrochi-ledger.exe"
     }
   },
   "plugins": {

@@ -1,0 +1,15 @@
+{
+  "decision": "pass",
+  "event": "Stop",
+  "message": "the prompt is about something hard to reverse (force-push)",
+  "output": {
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "reason": {
+    "code": "risky",
+    "kind": "stop_question",
+    "reason": "force-push"
+  }
+}
