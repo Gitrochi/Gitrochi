@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { RepoStore } from "@/entities/repo";
-import { repositoryDestinations, workspaceDestinations } from "@/entities/git";
+import { workspaceDestinations } from "@/entities/git";
 import { NavigationSidebar } from "@/widgets/sidebar";
 import { t } from "@/shared/i18n";
 import { settings } from "@/shared/config";
@@ -30,7 +30,10 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     root.render(<Fixture compact={false} />); await pause();
     ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows", `The sidebar must list the twelve pages in order: ${rows().map((button) => button.dataset.page).join(",")}`);
     ensure(!host.querySelector("input"), "The sidebar must not have a search box");
-    for (const page of workspaceDestinations) ensure(row(page)?.disabled === repositoryDestinations.has(page), `Incorrect empty-repository access: ${page}`);
+    for (const page of workspaceDestinations) {
+      ensure(row(page)?.disabled === false, `Navigation must remain available before opening a repository: ${page}`);
+      row(page)!.click(); await pause(); ensure(store.destination === page, `The initial menu did not select ${page}`);
+    }
     row("issues")!.click(); await pause(); ensure(store.destination === "issues" && row("issues")?.getAttribute("aria-current") === "page", "Issues must open without a repository");
     row("releases")!.click(); await pause(); ensure(store.destination === "releases", "Releases must open without a repository");
     row("projects")!.click(); await pause(); ensure(store.destination === "projects", "Projects must open without a repository");

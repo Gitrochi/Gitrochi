@@ -2208,3 +2208,6 @@
 "Tutorial" = "Výukový průvodce";
 "Guide" = "Uživatelská příručka";
 "ChatGPT browser extension" = "Rozšíření ChatGPT pro prohlížeč";
+"Git accounts" = "Git účty";
+"Manage Git accounts…" = "Spravovat Git účty…";
+"Open a repository to see its Git identity." = "Otevřete repozitář pro zobrazení jeho Git identity.";

@@ -2236,5 +2236,8 @@
   "Learn Ledger": "Poznaj Ledger",
   "Tutorial": "Samouczek",
   "Guide": "Przewodnik",
-  "ChatGPT browser extension": "Rozszerzenie ChatGPT do przeglądarki"
+  "ChatGPT browser extension": "Rozszerzenie ChatGPT do przeglądarki",
+  "Git accounts": "Konta Git",
+  "Manage Git accounts…": "Zarządzaj kontami Git…",
+  "Open a repository to see its Git identity.": "Otwórz repozytorium, aby zobaczyć jego tożsamość Git."
 }

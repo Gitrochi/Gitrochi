@@ -13,15 +13,14 @@ import { RemoteRepositorySearch } from "./RemoteRepositorySearch";
 import "./workspace-panels.css";
 
 /** Home: open, clone or create a repository, the recent list and a search of repositories on a server (macOS: WelcomeView) */
-export function WorkspaceHomePanel({ store, openSettings }: { store: RepoStore; openSettings?: () => void }) {
+export function WorkspaceHomePanel({ store, openSettings, repositoryOnly = false }: { store: RepoStore; openSettings?: () => void; repositoryOnly?: boolean }) {
   useObserve(settings);
   useObserve(tools);
   const gitMissing = !tools.path("git");
   const list = recents();
   return (
     <div className="workspace-home">
-      <WorkspacePlanningDashboard store={store} />
-      <ReleaseOverview/>
+      {repositoryOnly ? <p className="workspace-repository-required">{t("Open a repository to use this page.")}</p> : <><WorkspacePlanningDashboard store={store} /><ReleaseOverview /></>}
     <div className="welcome">
       <div className="welcome-main">
         <img src={icon} width={112} height={112} alt="" />

@@ -45,14 +45,13 @@ struct NavigationSidebarRail: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let disabled = page.needsRepository && store.url == nil
             let count = page == .repository ? store.status.count : page == .pullRequests ? store.pullRequests.count
                 : page == .ledger ? LedgerStore.shared.attentionTotal : 0
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
                 Image(systemName: page.symbol).font(.system(size: 18, weight: active ? .semibold : .regular))
                     .frame(width: 40, height: 36)
-                    .foregroundStyle(active ? Color.accentColor : disabled ? Color.secondary.opacity(0.45) : Color.primary.opacity(0.72))
+                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.72))
                     .background(active ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
                     .overlay(alignment: .topTrailing) {
                         if count > 0 {
@@ -63,8 +62,8 @@ struct NavigationSidebarRail: View {
                     }
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain).disabled(disabled)
-            .help(disabled ? String(localized: "Open a repository to use this page.") : title + (count > 0 ? " (\(count))" : ""))
+            .buttonStyle(.plain)
+            .help(title + (count > 0 ? " (\(count))" : ""))
             .accessibilityLabel(title).accessibilityValue(active ? String(localized: "Current page") : "")
             .accessibilityIdentifier("navigation-rail-" + page.rawValue)
         }

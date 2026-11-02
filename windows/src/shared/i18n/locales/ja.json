@@ -3177,5 +3177,8 @@
   "The browser host registration was removed or changed": "ブラウザ接続ホストの登録が削除または変更されました",
   "The browser registration folder is invalid": "ブラウザ接続の登録フォルダーが正しくありません",
   "Another application owns the Chrome host registration": "別のアプリがこの Chrome 接続ホストの登録を使用しています",
-  "Another application owns the browser host manifest": "別のアプリがこのブラウザ接続設定ファイルを使用しています"
+  "Another application owns the browser host manifest": "別のアプリがこのブラウザ接続設定ファイルを使用しています",
+  "Git accounts": "Gitアカウント",
+  "Manage Git accounts…": "Gitアカウントを管理…",
+  "Open a repository to see its Git identity.": "リポジトリを開くと、そのGit IDを確認できます。"
 }

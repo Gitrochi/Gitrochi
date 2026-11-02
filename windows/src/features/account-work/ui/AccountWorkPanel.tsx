@@ -12,9 +12,10 @@ import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Spinner } from "@/shared/ui";
-export function AccountWorkPanel({ inbox = false }: { inbox?: boolean }) {
+export function AccountWorkPanel({ inbox = false, selectedAccountID, onAccountChange }: { inbox?: boolean; selectedAccountID?: string; onAccountChange?: (value: string) => void }) {
   useObserve(accounts);
-  const [accountID, setAccountID] = useState("");
+  const [localAccountID, setAccountID] = useState("");
+  const accountID = selectedAccountID ?? localAccountID;
   const [kind, setKind] = useState<AccountWorkKind>(inbox ? "inbox" : "mine");
   const [items, setItems] = useState<AccountWorkItem[]>([]),
     [page, setPage] = useState(0),
@@ -140,6 +141,7 @@ export function AccountWorkPanel({ inbox = false }: { inbox?: boolean }) {
     setBusy(false);
     setError("");
     setAccountID(next);
+    onAccountChange?.(next);
   };
   const changeCategory = (next: AccountWorkKind) => {
     generation.current++;

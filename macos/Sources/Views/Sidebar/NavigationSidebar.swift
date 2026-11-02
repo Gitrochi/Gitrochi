@@ -47,7 +47,6 @@ struct NavigationSidebar: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let disabled = page.needsRepository && store.url == nil
             Button { store.navigate(page) } label: {
                 HStack(spacing: 10) {
                     Image(systemName: page.symbol).font(.system(size: 16, weight: active ? .semibold : .regular)).frame(width: 21, height: 20)
@@ -63,11 +62,11 @@ struct NavigationSidebar: View {
                     if page == .pullRequests, !store.pullRequests.isEmpty { badge(store.pullRequests.count) }
                     if page == .ledger, LedgerStore.shared.attentionTotal > 0 { badge(LedgerStore.shared.attentionTotal) }
                 }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 54 : 38)
-                    .foregroundStyle(active ? Color.accentColor : disabled ? Color.secondary.opacity(0.5) : Color.primary.opacity(0.8))
+                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.8))
                     .background(active ? Color.accentColor.opacity(0.11) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
                     .contentShape(Rectangle())
-            }.buttonStyle(.plain).disabled(disabled)
-                .help(disabled ? String(localized: "Open a repository to use this page.") : title(page))
+            }.buttonStyle(.plain)
+                .help(title(page))
                 .accessibilityLabel(title(page))
                 .accessibilityValue(active ? String(localized: "Current page") : "")
         }

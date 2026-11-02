@@ -16,7 +16,8 @@ struct WorkInboxPanel: View {
             } else {
                 RepositoryWorkInboxPanel()
             }
-        }
+        }.onAppear { if store.hostingHub.selectedAccountID?.isEmpty == false { scope = "account" } }
+        .onChange(of: store.hostingHub.selectedAccountID) { _, _ in scope = "account" }
     }
 }
 struct MyWorkPanel: View {
@@ -34,13 +35,18 @@ struct MyWorkPanel: View {
             } else {
                 RepositoryMyWorkPanel()
             }
-        }
+        }.onAppear { if store.hostingHub.selectedAccountID?.isEmpty == false { scope = "account" } }
+        .onChange(of: store.hostingHub.selectedAccountID) { _, _ in scope = "account" }
     }
 }
 private struct AccountWorkPanel: View {
     @Environment(\.openSettings) private var openSettings
+    @Environment(RepoStore.self) private var store
     let inbox: Bool
-    @ViewState private var accountID = ""
+    private var accountID: String {
+        get { store.hostingHub.selectedAccountID ?? "" }
+        nonmutating set { store.hostingHub.selectedAccountID = newValue }
+    }
     @ViewState private var kind = "mine"
     @ViewState private var items: [AccountWorkItem] = []
     @ViewState private var page = 0

@@ -5,6 +5,7 @@ struct AccountQuickControls: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var showing = false
     @ViewState private var sheet: AccountQuickSheet?
+    private var gitAccounts: [Gitch.Account] { store.gitchAccounts }
     private let accounts = AccountStore.shared
 
     private var account: HostAccount? { store.hostingAccount }
@@ -12,10 +13,15 @@ struct AccountQuickControls: View {
     private var noTarget: Bool { store.target == nil }
     /// In the order Settings lists them: GitHub first, then GitLab servers
     private var connected: [HostAccount] { accounts.accounts(for: .github) + accounts.accounts(for: .gitlab) }
-    private var shown: HostAccount? { noTarget ? connected.first : account }
+    private var shown: HostAccount? { noTarget ? connected.first { $0.id == store.hostingHub.selectedAccountID } ?? connected.first : account }
+    private var accountCount: Int {
+        let hosting = connected.map { $0.host.lowercased() + "/" + $0.username.lowercased() }
+        let git = gitAccounts.flatMap { a in a.hosts.split { $0 == "," || $0.isWhitespace }.map { $0.lowercased() + "/" + a.id.lowercased() } }
+        return Set(hosting + git).count
+    }
     private var title: String {
-        guard let shown else { return String(localized: "Connect account") }
-        return "@" + shown.username + (noTarget && connected.count > 1 ? " +\(connected.count - 1)" : "")
+        guard let shown else { return noTarget && !gitAccounts.isEmpty ? String(localized: "Git accounts") + " (\(accountCount))" : String(localized: "Connect account") }
+        return "@" + shown.username + (accountCount > 1 ? " +\(accountCount - 1)" : "")
     }
     private var candidates: [HostAccount] { store.target.map { accounts.candidates(for: $0) } ?? [] }
     private var gitAccount: String { store.gitchStatus?.lockedAccount ?? store.gitchStatus?.account ?? store.me?.name ?? String(localized: "Not configured") }
@@ -29,7 +35,10 @@ struct AccountQuickControls: View {
                         .font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     HStack(spacing: 3) {
                         if store.gitchStatus?.lockedAccount != nil { Image(systemName: "lock.fill").font(.system(size: 8)) }
-                        Text("Git: \(gitAccount)").font(.system(size: 10)).lineLimit(1).truncationMode(.middle)
+                        Group {
+                            if store.url == nil { Text("Open repository…") }
+                            else { Text("Git: \(gitAccount)") }
+                        }.font(.system(size: 10)).lineLimit(1).truncationMode(.middle)
                     }.foregroundStyle(.secondary)
                 }
                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
@@ -45,7 +54,9 @@ struct AccountQuickControls: View {
         .help("View and manage the repository account and Git identity")
         .popover(isPresented: $showing, arrowEdge: .bottom) { popover }
         .onChange(of: store.url) { _, _ in showing = false; sheet = nil }
-        .task(id: store.url) { if store.url == nil { await store.loadGlobalIdentity() } }
+        .task(id: store.url) {
+            if store.url == nil { await store.loadGlobalIdentity() }
+        }
         .sheet(item: $sheet) { request in
             switch request {
             case .connections:
@@ -58,6 +69,7 @@ struct AccountQuickControls: View {
                     Divider()
                     AccountsSettings()
                 }.frame(width: 710, height: 650)
+            case .gitAccounts: GitchGuideSheet(repo: store)
             case .login(let expected, let capability):
                 GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in
                     if candidates.contains(where: { $0.id == connected.id }), account == nil || account?.id == connected.id {
@@ -99,8 +111,32 @@ struct AccountQuickControls: View {
                     Text("Connect an account on \(target.host) to use repository services.").font(.caption).foregroundStyle(.secondary)
                 }
                 if let account, accounts.credentialState(for: account) != .ready { SavedAccountAccessNotice(account: account) }
+                Divider()
+                connectedList
                 }
                 Divider()
+                if !gitAccounts.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Git accounts").font(.callout.weight(.semibold))
+                        ForEach(gitAccounts) { a in
+                            HStack(spacing: 9) {
+                                Image(systemName: "person.crop.circle").font(.title2).foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(verbatim: a.id).font(.callout.weight(.medium))
+                                    Text(verbatim: a.hosts).font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", systemImage: "lock.fill").font(.caption) }
+                            }
+                        }
+                        Button("Manage Git accounts…") { present(.gitAccounts) }
+                    }
+                    Divider()
+                }
+                if store.url == nil {
+                    Text("Open a repository to see its Git identity.").font(.caption).foregroundStyle(.secondary)
+                    Button("Open repository…") { showing = false; store.presentOpenPanel() }
+                } else {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Git identity").font(.callout.weight(.semibold))
@@ -115,6 +151,7 @@ struct AccountQuickControls: View {
                     Button("Refresh account status") { Task { await store.refreshGitch() } }
                         .controlSize(.small).disabled(store.gitchChecking)
                 }
+                }
                 Divider()
                 if let account, account.provider == .github, account.host == "github.com" {
                     Button("Renew browser connection…") { present(.login(account.username, .standard)) }
@@ -126,7 +163,7 @@ struct AccountQuickControls: View {
         }.frame(maxHeight: 600)
     }
 
-    /// No repository account to pick: every connected account, so the window agrees with Settings > Accounts
+    /// Every connection stays visible, including accounts for another server.
     private var connectedList: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Connected accounts").font(.headline)
@@ -134,18 +171,30 @@ struct AccountQuickControls: View {
                 Text("Connect an account for repository services.").font(.callout).foregroundStyle(.secondary)
             }
             ForEach(connected) { a in
-                HStack(spacing: 9) {
+                Button { choose(a) } label: { HStack(spacing: 9) {
                     profile(a, size: 28)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(a.name ?? a.username).font(.callout.weight(.medium)).lineLimit(1)
                         Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
-                }
+                    Spacer()
+                    if a.id == shown?.id { Image(systemName: "checkmark").foregroundStyle(.secondary) }
+                }.contentShape(Rectangle()) }.buttonStyle(.plain)
                 if accounts.credentialState(for: a) != .ready { SavedAccountAccessNotice(account: a) }
             }
             Text("Open a repository with a GitHub or GitLab remote to choose the account it uses.")
                 .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    private func choose(_ value: HostAccount) {
+        if store.url != nil, candidates.contains(where: { $0.id == value.id }) {
+            store.useAccount(value)
+        } else {
+            store.hostingHub.selectedAccountID = value.id
+            store.navigate(.account)
+        }
+        showing = false
     }
 
     private func present(_ request: AccountQuickSheet) { showing = false; sheet = request }
@@ -169,10 +218,12 @@ struct AccountQuickControls: View {
 
 private enum AccountQuickSheet: Identifiable {
     case connections
+    case gitAccounts
     case login(String?, Gitch.GitHubLoginCapability)
     var id: String {
         switch self {
         case .connections: "connections"
+        case .gitAccounts: "gitAccounts"
         case .login(let expected, let capability): "login:\(expected ?? "new"):\(capability.rawValue)"
         }
     }

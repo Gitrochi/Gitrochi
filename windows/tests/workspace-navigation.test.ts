@@ -96,12 +96,12 @@ describe("workspace navigation", () => {
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);
     for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code", "changes", "commits", "branches", "repositories", "gists", "worktrees", "assistant", "operations", "inbox", "myWork"]) expect(isWorkspaceDestination(value)).toBe(false);
   });
-  it("needs a repository for every page except Home, Issues, Releases, Projects and Account", () => {
+  it("allows navigation to the repository chooser without changing saved repository pages", () => {
     expect([...repositoryDestinations].sort()).toEqual(["actions", "code", "compare", "flows", "pullRequests", "rebase", "repository"]);
     for (const page of workspaceDestinations) {
       const store = new RepoStore();
-      expect(store.navigate(page)).toBe(!repositoryDestinations.has(page));
-      expect(store.destination).toBe(repositoryDestinations.has(page) ? "home" : page);
+      expect(store.navigate(page)).toBe(true);
+      expect(store.destination).toBe(page);
     }
     expect(settings.set).not.toHaveBeenCalled();
   });

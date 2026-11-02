@@ -2387,5 +2387,8 @@
   "Learn Ledger": "学习使用 Ledger",
   "Tutorial": "教程",
   "Guide": "使用指南",
-  "ChatGPT browser extension": "ChatGPT 浏览器扩展"
+  "ChatGPT browser extension": "ChatGPT 浏览器扩展",
+  "Git accounts": "Git 账户",
+  "Manage Git accounts…": "管理 Git 账户…",
+  "Open a repository to see its Git identity.": "打开仓库以查看其 Git 身份。"
 }

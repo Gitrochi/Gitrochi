@@ -19,7 +19,7 @@ import "./repo-page.css";
 export function RepoPage({ store, openSettings, gitMissing = false }: { store: RepoStore; openSettings: () => void; gitMissing?: boolean }) {
   useObserve(store);
   useObserve(settings);
-  const repository = store.destination === "repository";
+  const repository = store.destination === "repository" && !!store.path;
   const compact = settings.get("navigationSidebarCollapsed", false);
   const navigationW = settings.get("navigationSidebarWidth", 240);
   const paneRef = useRef<HTMLDivElement>(null);

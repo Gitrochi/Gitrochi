@@ -10,7 +10,7 @@ export const previewDestinations = ["ledger"] as const;
 export type WorkspaceDestination = (typeof workspaceDestinations)[number] | (typeof previewDestinations)[number];
 /** Whether a page is offered at all; every page but the previews always is */
 export const destinationEnabled = (page: WorkspaceDestination) => page !== "ledger" || !!env.ledgerPreview;
-/** Pages that need an open repository. Home, Issues, Releases, Projects and Account work from an account alone. */
+/** Pages whose tools need a repository; navigation shows a chooser until one is open. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
 /** Pages the repository screen links to (request and issue rows, a commit's CI badge, the tags); opened from there, they offer the way back (macOS: returnsToRepository) */
 export const returnsToRepository: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["pullRequests", "issues", "actions", "releases"]);

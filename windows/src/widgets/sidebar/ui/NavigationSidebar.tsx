@@ -1,5 +1,5 @@
 import { Blocks, CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListChecks, ListOrdered, PanelLeftClose, PanelLeftOpen, PlayCircle, Settings, Tag, UserRound, Waypoints } from "lucide-react";
-import { destinationEnabled, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
+import { destinationEnabled, type WorkspaceDestination } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -25,11 +25,11 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
   useObserve(store);
   const gitlab = store.target?.provider === "gitlab";
   const row = (page: WorkspaceDestination) => {
-    const Icon = destinationIcons[page], selected = store.destination === page, disabled = repositoryDestinations.has(page) && !store.path;
+    const Icon = destinationIcons[page], selected = store.destination === page;
     const title = destinationTitle(page, gitlab);
     const count = page === "repository" ? store.wipCount : page === "pullRequests" ? store.pullRequests.length : 0;
-    return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${page === "repository" ? " repository-entry" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined} disabled={disabled}
-      onClick={() => store.navigate(page)} data-page={page} data-tip={disabled ? t("Open a repository to use this page.") : count > 0 ? `${title} (${count})` : title}>
+    return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${page === "repository" ? " repository-entry" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined}
+      onClick={() => store.navigate(page)} data-page={page} data-tip={count > 0 ? `${title} (${count})` : title}>
       <Icon size={18} strokeWidth={selected ? 2 : 1.7} />
       <span className="workspace-nav-copy"><span className="ellipsis">{title}</span>{page === "repository" && <small className="ellipsis">{store.path ? store.name : t("Open a repository to get started")}</small>}</span>
       {count > 0 && <span className="workspace-nav-badge">{count > 999 ? "999+" : count}</span>}

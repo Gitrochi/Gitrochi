@@ -114,10 +114,9 @@ import SwiftUI
         precondition(!WorkspaceDestination.ledger.needsRepository, "Ledger opens without a repository")
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
-            let previous = nav.destination
             let allowed = nav.navigate(page, prepare: false)
-            precondition(allowed == !page.needsRepository, "Repository pages need a repository; Home, Issues, Releases, Projects and Account stay available")
-            precondition(nav.destination == (page.needsRepository ? previous : page))
+            precondition(allowed, "Every page must remain reachable before opening a repository")
+            precondition(nav.destination == page, "Repository tools show the chooser for the requested page")
         }
         let firstPath = NSTemporaryDirectory() + "gitrochi-navigation-first", secondPath = NSTemporaryDirectory() + "gitrochi-navigation-second"
         nav.fixtureRepository(firstPath)
@@ -190,7 +189,7 @@ import SwiftUI
         nav.resetNavigationFixture(); nav.fixtureRepository(nil)
         workspaceNavigationFixtureDefaults.set([secondPath: "code"], forKey: "workspaceDestinations")
         nav.restoreWorkspaceDestination(); precondition(nav.destination == .home, "Without a repository the window shows Home")
-        precondition(!nav.navigate(.repository) && nav.destination == .home)
+        precondition(nav.navigate(.repository) && nav.destination == .repository, "The repository menu must reach its chooser")
         do {
         let contexts = RepoStore()
         contexts.fixtureRepository(firstPath)

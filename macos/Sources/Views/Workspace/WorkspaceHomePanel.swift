@@ -4,13 +4,18 @@ import SwiftUI
 /// Home keeps project planning alongside local repository actions.
 struct WorkspaceHomePanel: View {
     @Environment(RepoStore.self) private var store
+    var repositoryOnly = false
     @ViewState private var dropping = false
     @ViewState private var showGitSetup = false
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                WorkspacePlanningDashboard()
-                ReleaseOverview()
+                if repositoryOnly {
+                    Text("Open a repository to use this page.").font(.headline)
+                } else {
+                    WorkspacePlanningDashboard()
+                    ReleaseOverview()
+                }
                 LazyVGrid(
                     columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)],
                     alignment: .leading, spacing: 8

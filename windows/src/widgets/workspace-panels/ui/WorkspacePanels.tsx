@@ -264,6 +264,7 @@ function ScopedWorkPanel({
 }: WorkspacePanelProps & { inbox?: boolean }) {
   useObserve(store);
   const [scope, setScope] = useState("repository");
+  useEffect(() => { if (store.hostingHub.selectedAccountID) setScope("account"); }, [store, store.hostingHub.selectedAccountID]);
   const effective = store.target ? scope : "account";
   return (
     <div className="col" style={{ flex: 1, minHeight: 0 }}>
@@ -286,7 +287,7 @@ function ScopedWorkPanel({
       </div>
       {effective === "account" ? (
         <Page>
-          <AccountWorkPanel inbox={inbox} />
+          <AccountWorkPanel inbox={inbox} selectedAccountID={store.hostingHub.selectedAccountID ?? ""} onAccountChange={(value) => { store.hostingHub.selectedAccountID = value; store.changed(); }} />
         </Page>
       ) : inbox ? (
         <RepositoryWorkInboxPanel store={store} openSettings={openSettings} />

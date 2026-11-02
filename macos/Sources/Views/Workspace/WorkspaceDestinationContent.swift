@@ -18,6 +18,9 @@ struct WorkspaceDestinationContent: View {
 
     @ViewBuilder private var page: some View {
         Group {
+            if store.url == nil && (store.destination.needsRepository || [.issues, .releases].contains(store.destination)) {
+                WorkspaceHomePanel(repositoryOnly: true)
+            } else {
             switch store.destination {
             case .home: WorkspaceHomePanel()
             case .repository: RepositoryScreen()
@@ -33,6 +36,7 @@ struct WorkspaceDestinationContent: View {
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
             case .ledger: LedgerWorkspaceView(repositoryPath: store.url?.path)
+            }
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)

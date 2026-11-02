@@ -2232,3 +2232,6 @@
 "Tutorial" = "教學";
 "Guide" = "使用指南";
 "ChatGPT browser extension" = "ChatGPT 瀏覽器擴充功能";
+"Git accounts" = "Git 帳號";
+"Manage Git accounts…" = "管理 Git 帳號…";
+"Open a repository to see its Git identity." = "開啟儲存庫以查看其 Git 身分。";

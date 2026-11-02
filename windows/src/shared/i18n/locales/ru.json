@@ -2252,5 +2252,8 @@
   "Learn Ledger": "Знакомство с Ledger",
   "Tutorial": "Обучение",
   "Guide": "Руководство",
-  "ChatGPT browser extension": "Расширение ChatGPT для браузера"
+  "ChatGPT browser extension": "Расширение ChatGPT для браузера",
+  "Git accounts": "Учётные записи Git",
+  "Manage Git accounts…": "Управление учётными записями Git…",
+  "Open a repository to see its Git identity.": "Откройте репозиторий, чтобы увидеть его данные Git."
 }

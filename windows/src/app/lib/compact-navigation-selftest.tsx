@@ -37,7 +37,11 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     await settle();
     ensure(!isCompact() && toggle().getAttribute("aria-expanded") === "true", "Home must show the full page list");
     ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool"), "Home without a repository must show the welcome screen and only the account control in the toolbar");
-    ensure(row("repository")?.disabled && !row("issues")?.disabled, "The page list must keep the empty-repository access rules");
+    ensure(!row("repository")?.disabled && !row("issues")?.disabled, "Initial navigation must remain available");
+    for (const destination of ["repository", "code", "pullRequests", "actions", "flows"] as const) {
+      row(destination)!.click(); await settle();
+      ensure(store.destination === destination && !!host.querySelector(".workspace-repository-required") && !host.querySelector(".repository-screen"), `The ${destination} page must offer a repository chooser without starting local tools`);
+    }
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();
     ensure(isCompact() && nav().getBoundingClientRect().width === 56, "Opening the repository screen must fold the page list into a 56px rail");
     ensure(host.querySelector(".repository-screen > .sidebar") && host.querySelector(".repository-screen > .center") && host.querySelector(".repository-screen > .inspector"), "The repository screen must show its three columns");
