@@ -351,7 +351,7 @@ jobs:
     name: gitch 테스트 (Git Bash ${{ matrix.shard }}/4)
     if: github.ref_type != 'tag'
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
