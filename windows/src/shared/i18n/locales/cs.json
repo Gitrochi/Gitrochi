@@ -2214,5 +2214,8 @@
   "Flow created. Review its commands, then run it.": "Tok byl vytvořen. Zkontrolujte příkazy a poté jej spusťte.",
   "Edit flow": "Upravit tok",
   "Inspect saved flow runs, their steps and results.": "Prohlédněte si uložená spuštění toků, jejich kroky a výsledky.",
-  "Review connected runs, jobs and logs for this repository.": "Prohlédněte si připojená spuštění, úlohy a protokoly tohoto repozitáře."
+  "Review connected runs, jobs and logs for this repository.": "Prohlédněte si připojená spuštění, úlohy a protokoly tohoto repozitáře.",
+  "Show activity": "Zobrazit aktivitu",
+  "{0} activity events hidden": "Skryto {0} událostí aktivity",
+  "Last activity": "Poslední aktivita"
 }

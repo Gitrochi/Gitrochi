@@ -2208,3 +2208,8 @@
 "Edit flow" = "編輯流程";
 "Inspect saved flow runs, their steps and results." = "檢視已儲存的流程執行、步驟和結果。";
 "Review connected runs, jobs and logs for this repository." = "檢視此儲存庫連結的執行、工作和記錄。";
+"Show activity" = "顯示活動";
+"%lld activity events hidden" = "已隱藏 %lld 筆活動記錄";
+"Last activity" = "上次活動";
+"No reports yet." = "尚無報告。";
+"Last report" = "最近回報";

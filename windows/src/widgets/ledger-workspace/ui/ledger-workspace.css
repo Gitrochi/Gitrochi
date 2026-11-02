@@ -151,6 +151,8 @@ button.ledger-link:hover { color: var(--text); border-color: var(--border-strong
 
 /* Timeline */
 .ledger-timeline { display: flex; flex-direction: column; }
+.ledger-timeline-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 8px; }
+.ledger-timeline-controls .check { min-height: 24px; }
 .ledger-event { display: grid; grid-template-columns: 20px 1fr; gap: 8px; padding: 7px 0; border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
 .ledger-event:first-child { border-top: 0; }
 .ledger-event-icon { color: var(--text-2); display: flex; justify-content: center; padding-top: 1px; }

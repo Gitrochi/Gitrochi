@@ -97,6 +97,8 @@ export function demoWorld(now: Ms, repoPath = "C:/Projects/atlas"): DemoWorld {
   const event = (sessionId: string, ts: Ms, type: string, extra: Partial<LedgerEvent> = {}) => {
     const e: LedgerEvent = { id: w.nextEvent++, sessionId, ts, type, actor: "agent", ...extra };
     w.events.push(e);
+    const owner = w.sessions.find((s) => s.id === sessionId);
+    if (owner && e.actor === "agent") owner.lastAgentAt = Math.max(owner.lastAgentAt ?? 0, ts);
     return e;
   };
   const question = (sessionId: string, text: string, createdAt: Ms, extra: Partial<DemoQuestion> = {}) => {
@@ -279,6 +281,7 @@ export function largeDemoWorld(now: Ms, repoPath = "C:/Projects/atlas", sessions
       const ts = createdAt + (length * k) / Math.max(1, eventsPerSession - 1);
       const type = k === 0 ? "start" : k === eventsPerSession - 1 && status !== "active" ? (status === "merged" ? "merged" : status) : types[k % types.length];
       w.events.push({ id: w.nextEvent++, sessionId: s.id, ts, type, actor: "agent", summary: `${type} ${k + 1} of ${s.title}`, ...(type === "start" || type === "merged" ? { version: type === "merged" ? s.mergedInto : baseVersion } : {}) });
+      s.lastAgentAt = ts;
     }
     if (status === "active" && rnd() < 0.08) w.questions.push({ id: w.nextQuestion++, sessionId: s.id, text: `Which option should ${s.title} take?`, state: "open", createdAt: lastAt });
   }

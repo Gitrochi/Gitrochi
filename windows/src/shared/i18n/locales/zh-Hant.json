@@ -2236,5 +2236,8 @@
   "Flow created. Review its commands, then run it.": "流程已建立。請先檢查命令，再執行。",
   "Edit flow": "編輯流程",
   "Inspect saved flow runs, their steps and results.": "檢視已儲存的流程執行、步驟和結果。",
-  "Review connected runs, jobs and logs for this repository.": "檢視此儲存庫連結的執行、工作和記錄。"
+  "Review connected runs, jobs and logs for this repository.": "檢視此儲存庫連結的執行、工作和記錄。",
+  "Show activity": "顯示活動",
+  "{0} activity events hidden": "已隱藏 {0} 筆活動記錄",
+  "Last activity": "上次活動"
 }

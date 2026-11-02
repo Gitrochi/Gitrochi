@@ -2157,3 +2157,8 @@
 "Edit flow" = "Edit alur";
 "Inspect saved flow runs, their steps and results." = "Periksa eksekusi alur yang disimpan, langkah, dan hasilnya.";
 "Review connected runs, jobs and logs for this repository." = "Tinjau eksekusi, tugas, dan log yang terhubung ke repositori ini.";
+"Show activity" = "Tampilkan aktivitas";
+"%lld activity events hidden" = "%lld peristiwa aktivitas disembunyikan";
+"Last activity" = "Aktivitas terakhir";
+"No reports yet." = "Belum ada laporan.";
+"Last report" = "Laporan terakhir";

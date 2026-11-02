@@ -221,6 +221,7 @@ private struct LedgerBoardRow: View {
             if showsVerdict { LedgerVerdictBadge(verdict: session.verdict) }
             Text(LedgerTime.short(session.lastAt)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 .frame(minWidth: wide ? 72 : 0, alignment: .trailing).fixedSize()
+                .help(String(localized: "Last activity") + ": " + LedgerTime.long(session.lastAt))
         }
     }
 

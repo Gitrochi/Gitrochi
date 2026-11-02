@@ -9,6 +9,7 @@ struct LedgerInspector: View {
     /// Set when the inspector is a sheet
     var close: (() -> Void)?
     @ViewState private var confirmDrop = false
+    @ViewState private var showActivity = false
 
     var body: some View {
         Group {
@@ -43,6 +44,11 @@ struct LedgerInspector: View {
             .onChange(of: ledger.highlightedEvent, initial: true) { _, event in
                 if let event { DispatchQueue.main.async { withAnimation { proxy.scrollTo("event-\(event)", anchor: .center) } } }
             }
+            .onChange(of: detail?.events.contains { $0.id == ledger.highlightedEvent } ?? false) { _, found in
+                if found, let event = ledger.highlightedEvent {
+                    DispatchQueue.main.async { withAnimation { proxy.scrollTo("event-\(event)", anchor: .center) } }
+                }
+            }
         }
         .confirmationDialog("Drop \(s.id)?", isPresented: $confirmDrop) {
             Button("Drop", role: .destructive) {
@@ -71,6 +77,21 @@ struct LedgerInspector: View {
             }
             Text(s.title).font(.title3.weight(.semibold)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
             Text([s.kind, s.role.title, s.status.title].joined(separator: " · ")).font(.system(size: 11)).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text("Last report").foregroundStyle(.secondary)
+                    if let report = s.lastAgentAt {
+                        Text(LedgerTime.short(report)).help(LedgerTime.long(report))
+                    } else {
+                        Text("No reports yet.").foregroundStyle(.secondary)
+                    }
+                }
+                HStack(spacing: 6) {
+                    Text("Last activity").foregroundStyle(.secondary)
+                    Text(LedgerTime.short(s.lastAt)).help(LedgerTime.long(s.lastAt))
+                }
+            }
+            .font(.system(size: 11))
             if let base = s.baseVersion {
                 let current = s.baseCurrent ?? base
                 let behind = LedgerProjects.behind(s, baselines: ledger.state?.baselines ?? [])
@@ -227,13 +248,25 @@ struct LedgerInspector: View {
     // MARK: - Timeline
 
     private func timeline(_ detail: LedgerSessionDetail) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            LedgerSectionHeader(title: String(localized: "Timeline"), count: detail.events.count)
-            let events = detail.events.sorted { $0.ts != $1.ts ? $0.ts > $1.ts : $0.id > $1.id }
-            // the newest report body stays open; older long ones are folded
-            let newestBody = events.first { !($0.body ?? "").isEmpty }?.id
+        let events = LedgerTimelineFilter.events(detail.events, showActivity: showActivity, focus: ledger.highlightedEvent)
+        let hidden = detail.events.count - events.count
+        let hasActivity = detail.events.contains(where: LedgerTimelineFilter.isActivity)
+        // The newest report body stays open; a search target opens as well.
+        let newestBody = events.first { !($0.body ?? "").isEmpty }?.id
+        return VStack(alignment: .leading, spacing: 8) {
+            LedgerSectionHeader(title: String(localized: "Timeline"))
+            if hasActivity {
+                Toggle("Show activity", isOn: $showActivity)
+                    .toggleStyle(.checkbox).font(.system(size: 11))
+            }
+            if hidden > 0 {
+                Text("\(hidden) activity events hidden").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            if events.isEmpty {
+                Text("No reports yet.").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
             ForEach(events) { e in
-                LedgerTimelineRow(event: e, highlighted: ledger.highlightedEvent == e.id, startsOpen: e.id == newestBody)
+                LedgerTimelineRow(event: e, highlighted: ledger.highlightedEvent == e.id, startsOpen: e.id == newestBody || e.id == ledger.highlightedEvent)
                     .id("event-\(e.id)")
             }
         }
@@ -336,6 +369,9 @@ private struct LedgerTimelineRow: View {
         .padding(6)
         .background(RoundedRectangle(cornerRadius: 6).fill(highlighted ? StudioStyle.selection : Color.clear))
         .accessibilityElement(children: .combine)
+        .onChange(of: highlighted) { _, focused in
+            if focused { toggled = true }
+        }
     }
 
     /// Milestones stand out in the text colour; the accent is not for status (docs/design.md, Accent)

@@ -2346,3 +2346,8 @@
 "Edit flow" = "编辑流程";
 "Inspect saved flow runs, their steps and results." = "查看已保存的流程运行、步骤和结果。";
 "Review connected runs, jobs and logs for this repository." = "查看此仓库关联的运行、任务和日志。";
+"Show activity" = "显示活动";
+"%lld activity events hidden" = "已隐藏 %lld 条活动记录";
+"Last activity" = "上次活动";
+"No reports yet." = "暂无报告。";
+"Last report" = "最近报告";

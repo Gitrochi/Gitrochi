@@ -2216,5 +2216,8 @@
   "Flow created. Review its commands, then run it.": "A folyamat létrejött. Ellenőrizze a parancsokat, majd futtassa.",
   "Edit flow": "Folyamat szerkesztése",
   "Inspect saved flow runs, their steps and results.": "Tekintse meg a mentett folyamatfuttatásokat, lépéseiket és eredményeiket.",
-  "Review connected runs, jobs and logs for this repository.": "Tekintse meg a tárolóhoz kapcsolt futtatásokat, feladatokat és naplókat."
+  "Review connected runs, jobs and logs for this repository.": "Tekintse meg a tárolóhoz kapcsolt futtatásokat, feladatokat és naplókat.",
+  "Show activity": "Tevékenység megjelenítése",
+  "{0} activity events hidden": "{0} tevékenységesemény elrejtve",
+  "Last activity": "Legutóbbi tevékenység"
 }

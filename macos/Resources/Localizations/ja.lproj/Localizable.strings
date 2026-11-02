@@ -2932,3 +2932,8 @@
 "Edit flow" = "フローを編集";
 "Inspect saved flow runs, their steps and results." = "保存されたフローの実行、各ステップ、結果を確認します。";
 "Review connected runs, jobs and logs for this repository." = "このリポジトリに接続された実行、ジョブ、ログを確認します。";
+"Show activity" = "アクティビティを表示";
+"%lld activity events hidden" = "%lld 件のアクティビティを非表示";
+"Last activity" = "最終アクティビティ";
+"No reports yet." = "まだ報告はありません。";
+"Last report" = "最新の報告";

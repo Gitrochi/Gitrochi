@@ -71,7 +71,9 @@ A session is a unit of agent work. A **baseline** is a version it started from, 
 
 Routine progress appears in **Board** and **Streams**. When the Inbox has nothing that needs attention, **View progress** opens the Board, or Streams when only streams remain.
 
-The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
+The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. The timeline starts with reports and decisions; **Show activity** also reveals passive observations and agent heartbeats. The hidden activity count tells you when those records are folded away. Opening an activity event from search still reveals that event.
+
+**Last report** is the latest agent report. **Last activity** also includes observed activity, so an active but unreported conversation does not appear to have sent a report. Quiet sessions are checked again at least once a minute while the Ledger is being followed, and a **Still active** snooze is checked at its expiry on the next poll. Search ranks an exact session ID ahead of sessions that only mention it. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
 A session's verdict is computed from its state:
 

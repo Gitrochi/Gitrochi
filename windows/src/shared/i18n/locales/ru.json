@@ -2231,5 +2231,8 @@
   "Flow created. Review its commands, then run it.": "Поток создан. Проверьте команды, затем запустите его.",
   "Edit flow": "Изменить поток",
   "Inspect saved flow runs, their steps and results.": "Просмотрите сохранённые запуски потоков, их шаги и результаты.",
-  "Review connected runs, jobs and logs for this repository.": "Просмотрите связанные запуски, задания и журналы этого репозитория."
+  "Review connected runs, jobs and logs for this repository.": "Просмотрите связанные запуски, задания и журналы этого репозитория.",
+  "Show activity": "Показать активность",
+  "{0} activity events hidden": "Скрыто событий активности: {0}",
+  "Last activity": "Последняя активность"
 }

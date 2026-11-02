@@ -3050,5 +3050,8 @@
   "Flow created. Review its commands, then run it.": "フローを作成しました。コマンドを確認してから実行してください。",
   "Edit flow": "フローを編集",
   "Inspect saved flow runs, their steps and results.": "保存されたフローの実行、各ステップ、結果を確認します。",
-  "Review connected runs, jobs and logs for this repository.": "このリポジトリに接続された実行、ジョブ、ログを確認します。"
+  "Review connected runs, jobs and logs for this repository.": "このリポジトリに接続された実行、ジョブ、ログを確認します。",
+  "Show activity": "アクティビティを表示",
+  "{0} activity events hidden": "{0} 件のアクティビティを非表示",
+  "Last activity": "最終アクティビティ"
 }

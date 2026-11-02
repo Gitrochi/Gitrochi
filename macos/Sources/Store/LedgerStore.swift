@@ -32,7 +32,7 @@ struct LedgerToast: Identifiable, Equatable {
     let canUndo: Bool
 }
 
-/// One per app: the ledger as the screens show it. Reads `rev` every 2 seconds and the state only when it moved; a
+/// One per app: the ledger as the screens show it. Reads `rev` every 2 seconds and refreshes time-based verdicts; a
 /// person's operations go to the backend and come back through the same reads. Decoding, Inbox grouping, the Board's
 /// filter and the graph's rows are worked out off the main thread. (Windows: entities/ledger/model/store.ts)
 @MainActor @Observable
@@ -50,6 +50,7 @@ final class LedgerStore {
     let client: LedgerClient
     private let defaults: UserDefaults
     private let interval: Duration
+    private let now: @Sendable () -> LedgerMs
 
     private(set) var state: LedgerState?
     private(set) var inbox = LedgerInbox()
@@ -109,12 +110,15 @@ final class LedgerStore {
     private var undoStack: [UndoEntry] = []
     private var polling: Task<Void, Never>?
     private var lastRev = -1
+    private var stateReadAt: LedgerMs?
     private var generation = 0
 
-    init(client: LedgerClient, defaults: UserDefaults = .standard, interval: Duration = .seconds(2)) {
+    init(client: LedgerClient, defaults: UserDefaults = .standard, interval: Duration = .seconds(2),
+         now: @escaping @Sendable () -> LedgerMs = { LedgerStore.localNow() }) {
         self.client = client
         self.defaults = defaults
         self.interval = interval
+        self.now = now
         range = defaults.string(forKey: "ledgerRange").flatMap(LedgerRange.init(rawValue:)) ?? .week
     }
 
@@ -147,13 +151,24 @@ final class LedgerStore {
         }
     }
 
-    /// Reads `rev`, and the rest only when it moved
+    /// Reads changed state, and recomputes quiet sessions' verdicts at least once a minute.
     func poll() async {
         do {
             let rev = try await client.rev()
-            if rev != lastRev || state == nil { await reload() }
+            if rev != lastRev || loadError != nil || refreshDue { await reload() }
         } catch {
             setIfChanged(\.loadError, error.localizedDescription)
+        }
+    }
+
+    private var refreshDue: Bool {
+        guard let state, let stateReadAt else { return true }
+        let elapsed = now() - stateReadAt
+        if elapsed < 0 || elapsed >= 60_000 { return true }
+        let serverNow = state.now + elapsed
+        return state.sessions.contains { session in
+            guard let until = session.snoozeUntil else { return false }
+            return until > state.now && until <= serverNow
         }
     }
 
@@ -182,11 +197,12 @@ final class LedgerStore {
             }.value
             guard mine == generation else { return }
             lastRev = next.rev
+            stateReadAt = now()
             setIfChanged(\.state, next)
             setIfChanged(\.inbox, inbox)
             setIfChanged(\.boardRows, rows)
             setIfChanged(\.verdictCounts, counts)
-            setIfChanged(\.clockSkew, next.now - Self.localNow())
+            setIfChanged(\.clockSkew, next.now - now())
             setIfChanged(\.loadError, nil)
             let visible = Set(rows.map(\.id))
             if !boardSelection.isSubset(of: visible) { boardSelection.formIntersection(visible) }
@@ -456,7 +472,7 @@ final class LedgerStore {
     /// Opens a search result: its session, and the event or question in the inspector
     func open(_ hit: LedgerSearchHit) {
         if let id = hit.sessionId { selection = id }
-        if hit.kind == .event, let event = Int(hit.id.dropFirst()) { highlightedEvent = event }
+        if hit.kind == .event, let event = Int(hit.id) { highlightedEvent = event }
         if hit.kind == .question { page = .inbox } else if page == .inbox, hit.kind == .session { page = .board }
     }
 

@@ -2178,3 +2178,8 @@
 "Edit flow" = "Modifica flusso";
 "Inspect saved flow runs, their steps and results." = "Esamina le esecuzioni salvate dei flussi, i passaggi e i risultati.";
 "Review connected runs, jobs and logs for this repository." = "Esamina le esecuzioni, i processi e i log collegati a questo repository.";
+"Show activity" = "Mostra attività";
+"%lld activity events hidden" = "%lld eventi di attività nascosti";
+"Last activity" = "Ultima attività";
+"No reports yet." = "Nessun rapporto ancora.";
+"Last report" = "Ultimo report";

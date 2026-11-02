@@ -2226,5 +2226,8 @@
   "Flow created. Review its commands, then run it.": "สร้างโฟลว์แล้ว ตรวจสอบคำสั่งก่อนเรียกใช้",
   "Edit flow": "แก้ไขโฟลว์",
   "Inspect saved flow runs, their steps and results.": "ตรวจสอบการทำงานของโฟลว์ที่บันทึกไว้ ขั้นตอน และผลลัพธ์",
-  "Review connected runs, jobs and logs for this repository.": "ตรวจสอบการทำงาน งาน และบันทึกที่เชื่อมต่อกับที่เก็บโค้ดนี้"
+  "Review connected runs, jobs and logs for this repository.": "ตรวจสอบการทำงาน งาน และบันทึกที่เชื่อมต่อกับที่เก็บโค้ดนี้",
+  "Show activity": "แสดงกิจกรรม",
+  "{0} activity events hidden": "ซ่อนเหตุการณ์กิจกรรม {0} รายการ",
+  "Last activity": "กิจกรรมล่าสุด"
 }

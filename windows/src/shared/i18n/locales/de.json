@@ -2228,5 +2228,8 @@
   "Edit flow": "Ablauf bearbeiten",
   "Inspect saved flow runs, their steps and results.": "Gespeicherte Ausführungen von Abläufen mit Schritten und Ergebnissen prüfen.",
   "Review connected runs, jobs and logs for this repository.": "Verbundene Ausführungen, Jobs und Protokolle dieses Repositorys prüfen.",
-  "Optional": "Optional"
+  "Optional": "Optional",
+  "Show activity": "Aktivität anzeigen",
+  "{0} activity events hidden": "{0} Aktivitätsereignisse ausgeblendet",
+  "Last activity": "Letzte Aktivität"
 }

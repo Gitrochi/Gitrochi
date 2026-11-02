@@ -2188,5 +2188,8 @@
   "Flow created. Review its commands, then run it.": "Đã tạo luồng. Xem lại các lệnh rồi chạy luồng.",
   "Edit flow": "Chỉnh sửa luồng",
   "Inspect saved flow runs, their steps and results.": "Xem các lần chạy luồng đã lưu, các bước và kết quả.",
-  "Review connected runs, jobs and logs for this repository.": "Xem các lần chạy, tác vụ và nhật ký được kết nối với kho mã này."
+  "Review connected runs, jobs and logs for this repository.": "Xem các lần chạy, tác vụ và nhật ký được kết nối với kho mã này.",
+  "Show activity": "Hiển thị hoạt động",
+  "{0} activity events hidden": "Đã ẩn {0} sự kiện hoạt động",
+  "Last activity": "Hoạt động gần nhất"
 }

@@ -150,6 +150,19 @@ enum LedgerEventText {
     }
 }
 
+/// Reports and decisions stay readable when passive hooks are busy (Windows: entities/ledger/lib/timeline.ts).
+enum LedgerTimelineFilter {
+    static func isActivity(_ event: LedgerEvent) -> Bool {
+        event.actor == .hook || (event.actor == .agent && event.type == "heartbeat")
+    }
+
+    /// Search targets stay visible even when activity is hidden.
+    static func events(_ events: [LedgerEvent], showActivity: Bool, focus: Int?) -> [LedgerEvent] {
+        events.filter { showActivity || !isActivity($0) || $0.id == focus }
+            .sorted { $0.ts != $1.ts ? $0.ts > $1.ts : $0.id > $1.id }
+    }
+}
+
 /// The time left before auto-continue answers a prompt (Windows: entities/ledger/lib/countdown.ts)
 enum LedgerCountdown {
     /// "0:42", "4:05", "1:02:03"; rounds up, so "0:00" means the time is up

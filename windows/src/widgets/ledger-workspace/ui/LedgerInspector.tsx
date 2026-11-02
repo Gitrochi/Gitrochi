@@ -56,7 +56,8 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
           <span>{s.kind}{s.role !== s.kind ? ` · ${s.role}` : ""}</span>
           <BaseLine session={s} behind={newer} />
           {s.mergedInto && <span>{t("merged into {0}", s.mergedInto)}</span>}
-          <span>{t("Last report")} <When at={s.lastAt} /></span>
+          <span>{t("Last report")} {s.lastAgentAt == null ? t("No reports yet.") : <When at={s.lastAgentAt} />}</span>
+          <span>{t("Last activity")} <When at={s.lastAt} /></span>
         </div>
         {confirmedBy && <span className="hint">{t("Confirmed by {0} (applied)", String(confirmedBy.data?.by ?? ""))}</span>}
         <div className="ledger-links">
@@ -89,7 +90,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
           </Section>
         )}
         {s.links.agentId && <AutoContinue store={store} s={s} busy={busy} />}
-        <Section title={t("Timeline")} count={detail?.events.length}>
+        <Section title={t("Timeline")}>
           {detail ? <LedgerTimeline key={s.id} events={detail.events} focus={store.focusEventId} /> : <Spinner />}
         </Section>
         <Section title={t("Touches")} count={s.touches.length}>

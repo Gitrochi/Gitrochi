@@ -68,7 +68,11 @@ private struct LedgerStreamCard: View {
     private var subtitle: String {
         var parts = [stream.stream?.line ?? stream.kind]
         if let current = stream.baseCurrent { parts.append(String(localized: "on \(current)")) }
-        parts.append(String(localized: "last report \(LedgerTime.short(stream.lastAgentAt ?? stream.lastAt))"))
+        if let report = stream.lastAgentAt {
+            parts.append(String(localized: "last report \(LedgerTime.short(report))"))
+        } else {
+            parts.append(String(localized: "No reports yet."))
+        }
         return parts.joined(separator: " · ")
     }
 }
