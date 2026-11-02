@@ -2398,7 +2398,6 @@
 "Answer in terminal" = "ターミナルで回答";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "未回答の質問に回答するか閉じてください。セッションは次の報告時に回答を受け取ります。";
 "Answer saved. The session receives it with its next report." = "回答を保存しました。セッションは次の報告時に受け取ります。";
-"Answer sent to the agent" = "エージェントに回答を送りました";
 "Answered" = "回答済み";
 "Answered by a person" = "人が回答";
 "Answered by auto-continue" = "自動続行が回答";
@@ -2937,3 +2936,19 @@
 "Last activity" = "最終アクティビティ";
 "No reports yet." = "まだ報告はありません。";
 "Last report" = "最新の報告";
+"Send answer" = "回答を送信";
+"Use suggestion" = "提案を入力";
+"Tab" = "Tab";
+"Choose one" = "1つ選択";
+"Choose one or more" = "1つ以上選択";
+"Your answer can include a different choice or more detail." = "別の回答や追加の説明も入力できます。";
+"Answer every question before sending." = "すべての質問に回答してから送信してください。";
+"Time left %@" = "残り時間 %@";
+"Answer within %@" = "%@以内に回答してください";
+"Tab fills an empty answer. You can edit it before sending." = "空の回答欄でTabを押すと提案が入力されます。送信前に編集できます。";
+"The prompt was already answered." = "この質問にはすでに回答されています。";
+"Your draft was not sent." = "下書きは送信されていません。";
+"Copy answer" = "回答をコピー";
+"Delivered" = "配信済み";
+"This question needs an answer in the agent's terminal." = "この質問にはエージェントのターミナルで回答してください。";
+"Answer saved for the waiting agent" = "待機中のエージェントへの回答を保存しました";

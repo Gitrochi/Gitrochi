@@ -1646,7 +1646,6 @@
 "Answer in terminal" = "Terminalde yanıtla";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Açık soruları yanıtlayın ya da kapatın; oturum yanıtı bir sonraki raporunda alır.";
 "Answer saved. The session receives it with its next report." = "Yanıt kaydedildi. Oturum bunu bir sonraki raporunda alır.";
-"Answer sent to the agent" = "Yanıt ajana gönderildi";
 "Answered" = "Yanıtlandı";
 "Answered by a person" = "Bir kişi yanıtladı";
 "Answered by auto-continue" = "Otomatik devam yanıtladı";
@@ -2195,3 +2194,19 @@
 "Last activity" = "Son etkinlik";
 "No reports yet." = "Henüz rapor yok.";
 "Last report" = "Son rapor";
+"Send answer" = "Yanıtı gönder";
+"Use suggestion" = "Öneriyi kullan";
+"Tab" = "Tab";
+"Choose one" = "Birini seçin";
+"Choose one or more" = "Bir veya daha fazlasını seçin";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Kalan süre %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Yanıtı kopyala";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

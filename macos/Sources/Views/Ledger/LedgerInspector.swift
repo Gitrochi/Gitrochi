@@ -182,7 +182,7 @@ struct LedgerInspector: View {
                 ForEach(open) { q in
                     VStack(alignment: .leading, spacing: 6) {
                         Text(q.text).font(.callout).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-                        LedgerAnswerField(placeholder: String(localized: "Answer…"),
+                        LedgerReportedAnswerField(question: q,
                                           text: Binding(get: { ledger.drafts[q.id] ?? "" }, set: { ledger.drafts[q.id] = $0 }),
                                           busy: ledger.working.contains("q\(q.id)"),
                                           save: { Task { await ledger.answer(q) } },
@@ -201,8 +201,19 @@ struct LedgerInspector: View {
                             Text(q.deliveredAt == nil ? String(localized: "Waiting for the session's next report")
                                                       : String(localized: "Delivered \(LedgerTime.short(q.deliveredAt ?? 0))"))
                                 .font(.system(size: 11)).foregroundStyle(.tertiary)
+                            Button("Copy answer") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(q.answer ?? "", forType: .string)
+                            }
+                            .buttonStyle(.borderless).controlSize(.small)
                         } else {
                             Text("Dismissed").font(.system(size: 11)).foregroundStyle(.tertiary)
+                        }
+                        if let draft = ledger.drafts[q.id], !draft.isEmpty {
+                            Text("Your draft was not sent.").font(.system(size: 11)).foregroundStyle(.secondary)
+                            LedgerQuestionAnswerEditor(question: LedgerPromptAnswers.question(q),
+                                                       text: .constant(draft), busy: true, showsQuestion: false)
+                            Button("Close") { ledger.drafts[q.id] = nil }.buttonStyle(.borderless).controlSize(.small)
                         }
                     }
                     .padding(.leading, 8)

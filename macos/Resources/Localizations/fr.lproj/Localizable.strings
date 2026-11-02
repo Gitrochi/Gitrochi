@@ -1692,7 +1692,6 @@
 "Answer in terminal" = "Répondre dans le terminal";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Répondez aux questions ouvertes ou écartez-les ; la session reçoit la réponse avec son prochain rapport.";
 "Answer saved. The session receives it with its next report." = "Réponse enregistrée. La session la reçoit avec son prochain rapport.";
-"Answer sent to the agent" = "Réponse envoyée à l’agent";
 "Answered" = "Répondu";
 "Answered by a person" = "Répondu par une personne";
 "Answered by auto-continue" = "Répondu par la poursuite automatique";
@@ -2243,3 +2242,19 @@
 "Last activity" = "Dernière activité";
 "No reports yet." = "Aucun rapport pour le moment.";
 "Last report" = "Dernier rapport";
+"Send answer" = "Envoyer la réponse";
+"Use suggestion" = "Utiliser la suggestion";
+"Tab" = "Tab";
+"Choose one" = "Choisir une option";
+"Choose one or more" = "Choisir une ou plusieurs options";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Temps restant %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Copier la réponse";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

@@ -8,6 +8,8 @@ pub struct AskQuestion {
     pub question: String,
     pub header: String,
     pub multi_select: bool,
+    /// An editable draft for the person, never an automatic answer.
+    pub suggested_answer: Option<String>,
     pub options: Vec<AskOption>,
 }
 
@@ -15,6 +17,7 @@ pub struct AskQuestion {
 pub struct AskOption {
     pub label: String,
     pub description: String,
+    pub recommended: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,6 +99,12 @@ pub fn parse_questions(tool_input: &Value) -> Vec<AskQuestion> {
                 .get("multiSelect")
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
+            suggested_answer: q
+                .get("suggestedAnswer")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string),
             options: q
                 .get("options")
                 .and_then(Value::as_array)
@@ -107,11 +116,23 @@ pub fn parse_questions(tool_input: &Value) -> Vec<AskQuestion> {
                             Value::String(label) => AskOption {
                                 label: label.clone(),
                                 description: String::new(),
+                                recommended: is_recommended(label),
                             },
-                            _ => AskOption {
-                                label: text(o, "label"),
-                                description: text(o, "description"),
-                            },
+                            _ => {
+                                let label = text(o, "label");
+                                let description = text(o, "description");
+                                let recommended = o
+                                    .get("recommended")
+                                    .and_then(Value::as_bool)
+                                    .unwrap_or_else(|| {
+                                        is_recommended(&label) || is_recommended(&description)
+                                    });
+                                AskOption {
+                                    label,
+                                    description,
+                                    recommended,
+                                }
+                            }
                         })
                         .filter(|o| !o.label.trim().is_empty())
                         .collect()
@@ -137,11 +158,7 @@ pub fn pick_answers(tool_input: &Value) -> Option<AskAnswers> {
         {
             return None;
         }
-        let marked: Vec<&AskOption> = q
-            .options
-            .iter()
-            .filter(|o| is_recommended(&o.label) || is_recommended(&o.description))
-            .collect();
+        let marked: Vec<&AskOption> = q.options.iter().filter(|o| o.recommended).collect();
         let (labels, recommended): (Vec<&str>, bool) = match (marked.is_empty(), q.multi_select) {
             (true, _) => (vec![q.options[0].label.as_str()], false),
             (false, true) => (marked.iter().map(|o| o.label.as_str()).collect(), true),

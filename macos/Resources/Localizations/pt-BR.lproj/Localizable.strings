@@ -1623,7 +1623,6 @@
 "Answer in terminal" = "Responder no terminal";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Responda ou descarte as perguntas abertas; a sessão recebe a resposta no próximo relato.";
 "Answer saved. The session receives it with its next report." = "Resposta salva. A sessão a recebe no próximo relato.";
-"Answer sent to the agent" = "Resposta enviada ao agente";
 "Answered" = "Respondida";
 "Answered by a person" = "Respondida por uma pessoa";
 "Answered by auto-continue" = "Respondida pela continuação automática";
@@ -2173,3 +2172,19 @@
 "Last activity" = "Última atividade";
 "No reports yet." = "Nenhum relatório ainda.";
 "Last report" = "Último relatório";
+"Send answer" = "Enviar resposta";
+"Use suggestion" = "Usar sugestão";
+"Tab" = "Tab";
+"Choose one" = "Escolha uma opção";
+"Choose one or more" = "Escolha uma ou mais opções";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Tempo restante %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Copiar resposta";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

@@ -1610,7 +1610,6 @@
 "Answer in terminal" = "Jawab di terminal";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Jawab atau abaikan pertanyaan terbuka; sesi menerima jawaban pada laporan berikutnya.";
 "Answer saved. The session receives it with its next report." = "Jawaban disimpan. Sesi menerimanya pada laporan berikutnya.";
-"Answer sent to the agent" = "Jawaban dikirim ke agen";
 "Answered" = "Dijawab";
 "Answered by a person" = "Dijawab oleh seseorang";
 "Answered by auto-continue" = "Dijawab oleh lanjut otomatis";
@@ -2162,3 +2161,19 @@
 "Last activity" = "Aktivitas terakhir";
 "No reports yet." = "Belum ada laporan.";
 "Last report" = "Laporan terakhir";
+"Send answer" = "Kirim jawaban";
+"Use suggestion" = "Gunakan saran";
+"Tab" = "Tab";
+"Choose one" = "Pilih satu";
+"Choose one or more" = "Pilih satu atau lebih";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Waktu tersisa %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Salin jawaban";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

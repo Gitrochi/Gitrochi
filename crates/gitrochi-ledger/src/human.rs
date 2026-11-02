@@ -328,14 +328,17 @@ fn answer(connection: &Connection, args: &Value, action: &str, now: Ms) -> Resul
     let id = question_id(args)?;
     let found: Option<(String, String, String)> = connection
         .query_row(
-            "SELECT q.session_id, s.project, q.text FROM questions q JOIN sessions s ON s.id = q.session_id
+            "SELECT q.session_id, s.project, q.state FROM questions q JOIN sessions s ON s.id = q.session_id
              WHERE q.id = ?1",
             [id],
             |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
         )
         .optional()?;
-    let (session_id, project, _) =
+    let (session_id, project, state) =
         found.ok_or_else(|| Error::not_found(format!("No question #{id}")))?;
+    if state != "open" {
+        return Err(Error::new("CONFLICT", "The question was already answered."));
+    }
     if let Some(given) = arg_str_any(args, &["sessionId", "session"]) {
         if given != session_id {
             return Err(Error::invalid(format!(

@@ -229,9 +229,12 @@ fn every_result_matches_its_schema() {
                 }
             }
             for (key, value) in schema.as_object().into_iter().flatten() {
-                if value.is_object() {
+                if value.is_object() || value.is_array() {
                     consistent(value, &format!("{at}/{key}"));
                 }
+            }
+            for (index, value) in schema.as_array().into_iter().flatten().enumerate() {
+                consistent(value, &format!("{at}/{index}"));
             }
         }
         consistent(schema, &name);
@@ -243,6 +246,7 @@ fn every_result_matches_its_schema() {
         "question",
         "graph",
         "pending-prompt",
+        "reported-question",
     ] {
         assert!(schemas.names().contains(&format!("{required}.schema.json")));
     }
@@ -320,4 +324,73 @@ fn every_result_matches_its_schema() {
         .unwrap()
         .starts_with("[Example App] HEAD 1.4.2"));
     assert!(overview["data"]["open"].is_array());
+}
+
+#[test]
+fn reported_question_schema_accepts_text_and_forms_and_rejects_malformed_metadata() {
+    let schemas = Schemas::load();
+    for question in [
+        json!("What should the cache be called?"),
+        json!({"text": "Which cache?"}),
+        json!({"text": "Which layers?", "multiSelect": true, "suggestedAnswer": "Memory and disk",
+            "options": ["가", {"label": "Memory", "description": "Keep entries locally", "recommended": true},
+                        {"label": "Disk", "recommended": false}]}),
+    ] {
+        schemas.check("reported-question.schema.json", &question);
+    }
+    for question in [
+        json!(42),
+        json!({}),
+        json!({"text": ""}),
+        json!({"text": "Which cache?", "unknown": true}),
+        json!({"text": "Which cache?", "options": [""]}),
+        json!({"text": "Which cache?", "options": [{"label": ""}]}),
+        json!({"text": "Which cache?", "options": [{"description": "Missing label"}]}),
+        json!({"text": "Which cache?", "options": [{"label": "Memory", "recommended": "yes"}]}),
+        json!({"text": "Which cache?", "multiSelect": "yes"}),
+        json!({"text": "Which cache?", "suggestedAnswer": ["Memory"]}),
+    ] {
+        assert!(
+            !schemas
+                .errors("reported-question.schema.json", &question)
+                .is_empty(),
+            "invalid reported question accepted: {question}"
+        );
+    }
+}
+
+#[test]
+fn structured_reported_question_results_match_the_output_schema() {
+    let schemas = Schemas::load();
+    let dir = TempDir::new("structured-schema");
+    let db = dir.join("ledger.sqlite3");
+    let questions = json!([
+        "What should the cache be called?",
+        {"text": "Which layers?", "multiSelect": true, "suggestedAnswer": "Memory with a disk fallback",
+         "options": ["Memory", {"label": "Disk", "description": "Persist entries", "recommended": true}]}
+    ]);
+    for question in questions.as_array().unwrap() {
+        schemas.check("reported-question.schema.json", question);
+    }
+    app(
+        &db,
+        "report",
+        json!({"event": "start", "project": "Example App", "session": "forms",
+        "title": "Choose a cache", "questions": questions}),
+    );
+    let detail = app(&db, "session", json!({"id": "forms"}));
+    schemas.check("session-detail.schema.json", &detail);
+    for question in detail["questions"].as_array().unwrap() {
+        schemas.check("question.schema.json", question);
+    }
+    schemas.check("state.schema.json", &app(&db, "state", json!({})));
+    let form = &detail["questions"][1];
+    assert_eq!(form["suggestedAnswer"], "Memory with a disk fallback");
+    assert_eq!(form["options"][1]["recommended"], true);
+    let mut invalid = form.clone();
+    invalid["options"][0]["label"] = json!("");
+    assert!(!schemas.errors("question.schema.json", &invalid).is_empty());
+    invalid = form.clone();
+    invalid["options"][1]["recommended"] = json!("yes");
+    assert!(!schemas.errors("question.schema.json", &invalid).is_empty());
 }

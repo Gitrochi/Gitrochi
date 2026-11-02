@@ -30,6 +30,9 @@ pub struct PromptPayload {
     pub tool: Option<ToolView>,
     pub language: Lang,
     pub delay_sec: u32,
+    /// False for a live manual question; the deadline releases it without an answer.
+    #[serde(default = "yes", skip_serializing_if = "is_yes")]
+    pub auto_answer: bool,
     /// What Gitrochi will send when nobody answers in time.
     pub proposed: Proposed,
 }
@@ -50,7 +53,16 @@ pub struct QuestionView {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub header: String,
     pub multi_select: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suggested_answer: Option<String>,
     pub options: Vec<OptionView>,
+}
+
+fn yes() -> bool {
+    true
+}
+fn is_yes(value: &bool) -> bool {
+    *value
 }
 
 /// The tool a permission request or plan is about, summarized in one line.

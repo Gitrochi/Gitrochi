@@ -1,7 +1,7 @@
 //! Prompts an agent is waiting on (a question at the end of a turn, `AskUserQuestion`, a
 //! plan to approve, a permission request), for auto-continue. The hook handler creates and
 //! polls them and records what happened; the apps answer them. What to answer is decided
-//! by `gitrochi-autocontinue`; the payload and the answer are stored as given.
+//! by `gitrochi-autocontinue`; human answers are validated before a waiting prompt closes.
 
 use crate::error::{Error, Result};
 use crate::event::{self, NewEvent};
@@ -165,7 +165,19 @@ fn answer_value(args: &Value) -> Result<Value> {
 /// longer waiting, for example because auto-continue answered first.
 pub fn answer(connection: &Connection, args: &Value, now: Ms) -> Result<(bool, PendingPrompt)> {
     let id = util::arg_i64(args, "id")?.ok_or_else(|| Error::invalid("Missing id"))?;
-    let answer = answer_value(args)?;
+    let prompt = get(connection, id)?;
+    if prompt.state != "waiting" {
+        return Ok((false, prompt));
+    }
+    if prompt.deadline == NO_COUNTDOWN
+        && args["answer"]["release"] != true
+        && args["answer"]["hold"] != true
+    {
+        return Err(Error::invalid(
+            "Answer this held prompt in the agent's terminal",
+        ));
+    }
+    let answer = crate::prompt_answer::normalize(&prompt.kind, &prompt.payload, &args["answer"])?;
     let changed = connection.execute(
         "UPDATE pending_prompts SET state = 'answered', answer = ?2, answered_by = 'human',
             answered_at = ?3, reviewed_at = ?3
@@ -492,7 +504,7 @@ pub fn open_count(connection: &Connection, session_id: &str) -> Result<u32> {
     let count: i64 = connection.query_row(
         "SELECT COUNT(*) FROM pending_prompts
          WHERE session_id = ?1
-           AND ((state = 'waiting' AND deadline <> ?3)
+           AND ((state = 'waiting' AND deadline <> ?3 AND json_extract(payload, '$.autoAnswer') IS NOT 0)
                 OR (state = 'auto' AND json_extract(answer, '$.outcome') = ?2))",
         params![session_id, UNCONFIRMED, NO_COUNTDOWN],
         |r| r.get(0),
@@ -510,13 +522,13 @@ pub fn expire(connection: &Connection, now: Ms) -> Result<usize> {
     )?)
 }
 
-/// Open waits held for the person (`NO_COUNTDOWN` with a `hold`) of one project, or of all:
-/// agents waiting in their terminal for an answer only the person can give.
+/// Waits only a person can answer, in the terminal or through a live manual hook.
 pub fn held_count(connection: &Connection, project: Option<&str>) -> Result<i64> {
     Ok(connection.query_row(
         "SELECT COUNT(*) FROM pending_prompts p LEFT JOIN sessions s ON s.id = p.session_id
-         WHERE p.state = 'waiting' AND p.deadline = ?2
-           AND json_extract(p.payload, '$.hold') IS NOT NULL
+         WHERE p.state = 'waiting'
+           AND ((p.deadline = ?2 AND json_extract(p.payload, '$.hold') IS NOT NULL)
+                OR json_extract(p.payload, '$.autoAnswer') = 0)
            AND (?1 IS NULL OR s.project = ?1)",
         params![project, NO_COUNTDOWN],
         |r| r.get(0),

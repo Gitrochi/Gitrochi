@@ -9,7 +9,7 @@ use crate::overlap;
 use crate::session::{self, SessionRow, SessionView, Viewer};
 use crate::settings::Settings;
 use crate::track;
-use crate::util::{self, arg_str, arg_str_any, clean, has, json_text, resolve_version, Ms};
+use crate::util::{self, arg_str, arg_str_any, has, json_text, resolve_version, Ms};
 use crate::vocab::{self, Role, AGENT_EVENTS, REOPEN_EVENTS};
 use rusqlite::{params, Connection};
 use serde::Serialize;
@@ -64,22 +64,6 @@ pub(crate) fn new_id(connection: &Connection, ts: Ms) -> Result<String> {
         if session::load(connection, &id)?.is_none() {
             return Ok(id);
         }
-    }
-}
-
-/// `questions`: one text, or a list of texts (a single string is one question, commas and all).
-fn question_texts(value: &Value) -> Vec<String> {
-    match value {
-        Value::String(text) => clean(text).into_iter().collect(),
-        Value::Array(items) => items
-            .iter()
-            .filter_map(|v| match v {
-                Value::String(s) => clean(s),
-                Value::Number(n) => Some(n.to_string()),
-                _ => None,
-            })
-            .collect(),
-        _ => Vec::new(),
     }
 }
 
@@ -534,21 +518,31 @@ pub fn report(
     }
 
     let mut question_ids = Vec::new();
-    for text in question_texts(&args["questions"]) {
-        question_ids.push(event::add_question(connection, &sid, &text, ts)?);
+    for question in crate::question::list(&args["questions"])? {
+        question_ids.push(event::add_reported_question(
+            connection, &sid, &question, ts,
+        )?);
     }
     if !question_ids.is_empty() {
         data.insert("questionIds".into(), json!(question_ids));
     }
-    if event == "question" {
-        let text = arg_str(args, "question")
-            .or_else(|| (!summary.is_empty()).then(|| summary.clone()))
-            .ok_or_else(|| Error::invalid("A question event needs question (the text to ask)"))?;
-        let id = event::add_question(connection, &sid, &text, ts)?;
+    if event == "question" && (!args["question"].is_null() || question_ids.is_empty()) {
+        let question = if args["question"].is_object() {
+            crate::question::ReportedQuestion::parse(&args["question"])?
+        } else {
+            crate::question::ReportedQuestion::plain(
+                arg_str(args, "question")
+                    .or_else(|| (!summary.is_empty()).then(|| summary.clone()))
+                    .ok_or_else(|| {
+                        Error::invalid("A question event needs question (the text to ask)")
+                    })?,
+            )
+        };
+        let id = event::add_reported_question(connection, &sid, &question, ts)?;
         data.insert("questionId".into(), json!(id));
         question_ids.insert(0, id);
         if summary.is_empty() {
-            summary = text;
+            summary = question.text;
         }
     }
 

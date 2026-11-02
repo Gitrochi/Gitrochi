@@ -172,7 +172,7 @@ fn prompts_wait_get_answered_once_and_automatic_answers_need_review() {
         h.db.write(|c| {
             prompts::create(
                 c,
-                &json!({"sessionId": id, "kind": "ask_user_question", "payload": {"q": 1}}),
+                &json!({"sessionId": id, "kind": "ask_user_question", "payload": {"questions": [{"question": "How many retries?", "options": ["3", "5"]}]}}),
                 now,
             )
         })
@@ -187,7 +187,7 @@ fn prompts_wait_get_answered_once_and_automatic_answers_need_review() {
         h.db.write(|c| {
             prompts::answer(
                 c,
-                &json!({"id": waiting.id, "answer": {"choice": "3"}}),
+                &json!({"id": waiting.id, "answer": {"answers": {"How many retries?": "3"}}}),
                 now + 1,
             )
         })
@@ -201,7 +201,7 @@ fn prompts_wait_get_answered_once_and_automatic_answers_need_review() {
         h.db.write(|c| {
             prompts::answer(
                 c,
-                &json!({"id": waiting.id, "answer": {"choice": "5"}}),
+                &json!({"id": waiting.id, "answer": {"answers": {"How many retries?": "5"}}}),
                 now + 2,
             )
         })

@@ -53,6 +53,34 @@
     "deliveredAt": {
       "type": "integer",
       "description": "Epoch milliseconds"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "recommended": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "multiSelect": {
+      "type": "boolean"
+    },
+    "suggestedAnswer": {
+      "type": "string"
     }
   }
 }

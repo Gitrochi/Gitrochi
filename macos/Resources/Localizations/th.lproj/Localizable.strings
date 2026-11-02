@@ -1654,7 +1654,6 @@
 "Answer in terminal" = "ตอบในเทอร์มินัล";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "ตอบหรือปิดคำถามที่ค้างอยู่ เซสชันจะได้รับคำตอบในการรายงานครั้งถัดไป";
 "Answer saved. The session receives it with its next report." = "บันทึกคำตอบแล้ว เซสชันจะได้รับในการรายงานครั้งถัดไป";
-"Answer sent to the agent" = "ส่งคำตอบให้เอเจนต์แล้ว";
 "Answered" = "ตอบแล้ว";
 "Answered by a person" = "บุคคลเป็นผู้ตอบ";
 "Answered by auto-continue" = "การดำเนินการต่ออัตโนมัติเป็นผู้ตอบ";
@@ -2203,3 +2202,19 @@
 "Last activity" = "กิจกรรมล่าสุด";
 "No reports yet." = "ยังไม่มีรายงาน";
 "Last report" = "รายงานล่าสุด";
+"Send answer" = "ส่งคำตอบ";
+"Use suggestion" = "ใช้คำแนะนำ";
+"Tab" = "Tab";
+"Choose one" = "เลือกหนึ่งข้อ";
+"Choose one or more" = "เลือกอย่างน้อยหนึ่งข้อ";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "เวลาที่เหลือ %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "คัดลอกคำตอบ";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

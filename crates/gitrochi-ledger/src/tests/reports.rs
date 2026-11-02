@@ -280,6 +280,109 @@ fn messages_reach_only_their_own_session() {
 }
 
 #[test]
+fn structured_questions_keep_choices_suggestions_and_deliver_answers_once() {
+    let h = H::new();
+    let id = h.sid(json!({}));
+    let other = h.sid(json!({}));
+    let reply = h.rep(
+        &id,
+        "question",
+        json!({"questions": [
+            {"text": "Which layers?", "multiSelect": true,
+             "options": [
+                {"label": "Cache", "description": "Keep local entries", "recommended": true},
+                {"label": "Network (Recommended)", "recommended": false}
+             ], "suggestedAnswer": "Cache, with a short expiry"},
+            "How long should entries live?"
+        ]}),
+    );
+    assert_eq!(
+        reply.question_ids.len(),
+        2,
+        "no extra question made from the summary"
+    );
+    let detail = h.detail(&id);
+    let question = &detail.questions[0];
+    assert_eq!(question.text, "Which layers?");
+    assert!(question.multi_select);
+    assert_eq!(
+        question.suggested_answer.as_deref(),
+        Some("Cache, with a short expiry")
+    );
+    assert_eq!(
+        question.options[0].description.as_deref(),
+        Some("Keep local entries")
+    );
+    assert!(question.options[0].recommended);
+    assert!(
+        !question.options[1].recommended,
+        "explicit false overrides a label marker"
+    );
+    let state = serde_json::to_value(h.state(Range::All)).unwrap();
+    assert_eq!(state["questions"][0]["options"][0]["label"], "Cache");
+    h.human(json!({"action": "answer", "questionId": question.id, "answer": "Cache plus a custom fallback"})).unwrap();
+    assert_eq!(
+        h.detail(&id).waiting_messages,
+        1,
+        "app reads do not consume the answer"
+    );
+    assert!(h.rep(&other, "note", json!({})).messages.is_empty());
+    let delivered = h.rep(&id, "note", json!({})).messages;
+    assert_eq!(delivered.len(), 1);
+    assert!(delivered[0].text.contains("Cache plus a custom fallback"));
+    assert!(h.detail(&id).questions[0].delivered_at.is_some());
+    assert!(h.rep(&id, "note", json!({})).messages.is_empty());
+}
+
+#[test]
+fn malformed_structured_questions_rollback_the_whole_report() {
+    let h = H::new();
+    let id = h.sid(json!({}));
+    let rev = h.db.rev().unwrap();
+    for question in [
+        json!({"text": "Q", "options": [{"label": "A"}, {"label": "A"}]}),
+        json!({"text": "Q", "options": [{"label": "A", "recommended": "yes"}]}),
+        json!({"text": "Q", "suggestedAnswer": ["A"]}),
+        json!({"text": "  "}),
+    ] {
+        assert_eq!(
+            h.try_rep(&id, "progress", json!({"questions": ["Valid", question]}))
+                .unwrap_err()
+                .code,
+            "INVALID_ARGUMENT"
+        );
+        assert_eq!(h.db.rev().unwrap(), rev);
+        assert!(h.detail(&id).questions.is_empty());
+    }
+}
+
+#[test]
+fn a_reported_answer_cannot_overwrite_a_settled_question() {
+    let h = H::new();
+    let id = h.sid(json!({}));
+    let question = h
+        .rep(&id, "question", json!({"question": "Which cache?"}))
+        .question_ids[0];
+    h.human(json!({"action": "answer", "questionId": question, "answer": "Memory"}))
+        .unwrap();
+    let rev = h.db.rev().unwrap();
+    assert_eq!(
+        h.human(json!({"action": "answer", "questionId": question, "answer": "Disk"}))
+            .unwrap_err()
+            .code,
+        "CONFLICT"
+    );
+    assert_eq!(
+        h.human(json!({"action": "dismiss", "questionId": question}))
+            .unwrap_err()
+            .code,
+        "CONFLICT"
+    );
+    assert_eq!(h.db.rev().unwrap(), rev);
+    assert_eq!(h.detail(&id).questions[0].answer.as_deref(), Some("Memory"));
+}
+
+#[test]
 fn dismissed_questions_and_status_changes_are_delivered() {
     let h = H::new();
     let id = h.sid(json!({}));

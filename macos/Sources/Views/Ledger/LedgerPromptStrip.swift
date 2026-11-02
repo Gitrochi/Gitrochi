@@ -11,19 +11,33 @@ struct LedgerPromptStrip: View {
     var compact = false
     /// Shows the Inbox, where a question is answered in full
     var openInbox: () -> Void = {}
+    var retainedChanged: (Bool) -> Void = { _ in }
+    @ViewState private var retained: [Int: LedgerPendingPrompt] = [:]
+
+    private var shown: [LedgerPendingPrompt] {
+        prompts + retained.values.filter { saved in !prompts.contains { $0.id == saved.id } }.sorted { $0.id < $1.id }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 8) {
-            LedgerSectionHeader(title: String(localized: "Waiting now"), count: prompts.count)
-            ForEach(prompts) { prompt in
-                if compact {
-                    LedgerPromptLine(prompt: prompt, ledger: ledger, openInbox: openInbox)
-                } else {
-                    // the most urgent prompt has the strip's one filled button
-                    LedgerPromptCard(prompt: prompt, ledger: ledger, primary: prompt.id == prompts.first?.id)
+        Group {
+            if !shown.isEmpty {
+                VStack(alignment: .leading, spacing: compact ? 6 : 8) {
+                    LedgerSectionHeader(title: String(localized: "Waiting now"), count: prompts.count)
+                    ForEach(shown) { prompt in
+                        if compact {
+                            LedgerPromptLine(prompt: prompt, ledger: ledger, openInbox: openInbox)
+                        } else {
+                            LedgerPromptCard(prompt: prompt, ledger: ledger, primary: prompt.id == prompts.first?.id,
+                                             waiting: prompts.contains { $0.id == prompt.id },
+                                             draftChanged: { drafted in
+                                                 if drafted { retained[prompt.id] = prompt } else { retained[prompt.id] = nil }
+                                             }, closeDraft: { retained[prompt.id] = nil })
+                        }
+                    }
                 }
             }
         }
+        .onChange(of: retained) { _, drafts in retainedChanged(!drafts.isEmpty) }
     }
 }
 
@@ -43,9 +57,11 @@ private struct LedgerPromptExits: View {
             }
             .disabled(busy)
             .help("Stop waiting here and answer in the agent's own terminal")
-            Button("Not this time") { Task { await ledger.reply(prompt, .holdAuto) } }
-                .disabled(busy)
-                .help("No automatic answer for this prompt: it waits for you in the agent's terminal")
+            if LedgerCountdown.isAutomatic(prompt) {
+                Button("Not this time") { Task { await ledger.reply(prompt, .holdAuto) } }
+                    .disabled(busy)
+                    .help("No automatic answer for this prompt: it waits for you in the agent's terminal")
+            }
         } else {
             Button("Answer in terminal") {
                 if !LedgerAgentTerminal.focus(prompt, ledger: ledger) {
@@ -119,13 +135,15 @@ private struct LedgerPromptCard: View {
     let ledger: LedgerStore
     /// Fills its main button
     var primary = true
-    @ViewState private var text = ""
-    @ViewState private var chosen: [String: Set<String>] = [:]
+    var waiting = true
+    var draftChanged: (Bool) -> Void = { _ in }
+    var closeDraft: () -> Void = {}
+    @ViewState private var drafts: [String: String] = [:]
     @ViewState private var showWholePlan = false
 
     private var busy: Bool { ledger.working.contains("p\(prompt.id)") }
     private var session: LedgerSession? { ledger.session(prompt.sessionId) }
-    private var questions: [LedgerJSON] { prompt.payload["questions"]?.array ?? [] }
+    private var questions: [LedgerAnswerQuestion] { LedgerPromptAnswers.questions(prompt) }
     /// Held for the person: what it asks is shown, and only the terminal answers it
     private var held: Bool { !LedgerCountdown.isCounting(prompt) }
 
@@ -133,8 +151,19 @@ private struct LedgerPromptCard: View {
         VStack(alignment: .leading, spacing: 10) {
             header
             content
-            actions
-            if let note { Text(note).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+            if waiting {
+                actions
+            } else {
+                Text("Your draft was not sent.").font(.system(size: 11)).foregroundStyle(.secondary)
+                Button("Close") { drafts = [:]; closeDraft() }.controlSize(.small)
+            }
+            if waiting, !held, prompt.kind == .stopQuestion || prompt.kind == .askUserQuestion, submittedAnswers == nil {
+                Text("Answer every question before sending.").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            if waiting, !held, prompt.kind == .stopQuestion || prompt.kind == .askUserQuestion {
+                Text("Return adds a line · ⌘Return saves").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            if waiting, let note { Text(note).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,6 +171,7 @@ private struct LedgerPromptCard: View {
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(prompt.kind.title + (session.map { ", " + $0.id + " " + $0.title } ?? ""))
+        .onChange(of: drafts) { _, answers in draftChanged(answers.values.contains { !$0.isEmpty }) }
     }
 
     private var header: some View {
@@ -160,7 +190,11 @@ private struct LedgerPromptCard: View {
                 }
             }
             Spacer(minLength: 8)
-            LedgerCountdownView(prompt: prompt, skew: ledger.clockSkew)
+            if waiting {
+                LedgerCountdownView(prompt: prompt, skew: ledger.clockSkew)
+            } else {
+                Text("The prompt was already answered.").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -168,21 +202,13 @@ private struct LedgerPromptCard: View {
         switch prompt.kind {
         case .stopQuestion:
             let question = LedgerPromptText.summary(prompt)
-            Text(question).font(.callout.weight(.medium)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
             if let body = LedgerPromptText.body(prompt), body != question {
                 Text(body).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                     .lineLimit(8).fixedSize(horizontal: false, vertical: true)
             }
-            ForEach(LedgerPromptText.options(prompt.payload["options"] ?? .null), id: \.self) { option in
-                optionText(option, picked: false, multiple: false)
-            }
-            if !held {
-                LedgerAnswerField(placeholder: String(localized: "Your answer…"), text: $text, saveTitle: String(localized: "Answer"), busy: busy) {
-                    Task { await ledger.reply(prompt, .text(text.trimmingCharacters(in: .whitespacesAndNewlines))) }
-                }
-            }
+            ForEach(questions) { answerQuestion($0) }
         case .askUserQuestion:
-            ForEach(Array(questions.enumerated()), id: \.offset) { _, q in choice(q) }
+            ForEach(questions) { answerQuestion($0) }
         case .exitPlanMode:
             let plan = LedgerPromptText.body(prompt) ?? ""
             VStack(alignment: .leading, spacing: 4) {
@@ -210,32 +236,21 @@ private struct LedgerPromptCard: View {
         }
     }
 
-    private func choice(_ q: LedgerJSON) -> some View {
-        let question = q["question"].string ?? ""
-        let multiple = q["multiSelect"].bool ?? false
-        let picked = chosen[question] ?? []
-        return VStack(alignment: .leading, spacing: 5) {
-            if let header = q["header"].string, !header.isEmpty {
-                Text(header.uppercased()).font(.system(size: 11, weight: .semibold)).tracking(0.6).foregroundStyle(.secondary)
-            }
-            Text(question).font(.callout).fixedSize(horizontal: false, vertical: true)
-            ForEach(LedgerPromptText.options(q["options"]), id: \.self) { option in
-                if held {
-                    optionText(option, picked: false, multiple: multiple)
-                } else {
-                    Button {
-                        var next = multiple ? picked : []
-                        if next.contains(option.label) { next.remove(option.label) } else { next.insert(option.label) }
-                        chosen[question] = next
-                    } label: {
-                        optionText(option, picked: picked.contains(option.label), multiple: multiple)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(busy)
-                    .accessibilityAddTraits(picked.contains(option.label) ? .isSelected : [])
+    @ViewBuilder private func answerQuestion(_ question: LedgerAnswerQuestion) -> some View {
+        if held {
+            VStack(alignment: .leading, spacing: 5) {
+                if let header = question.header {
+                    Text(header).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                }
+                Text(question.question).font(.callout).fixedSize(horizontal: false, vertical: true)
+                ForEach(question.options, id: \.self) { option in
+                    optionText(option, picked: false, multiple: question.multiple)
                 }
             }
+        } else {
+            LedgerQuestionAnswerEditor(question: question,
+                                       text: Binding(get: { drafts[question.id] ?? "" }, set: { drafts[question.id] = $0 }),
+                                       busy: busy || !waiting, submit: sendAnswers)
         }
     }
 
@@ -263,8 +278,17 @@ private struct LedgerPromptCard: View {
         }
     }
 
-    private var canAnswerChoices: Bool {
-        !questions.isEmpty && questions.allSatisfy { !(chosen[$0["question"].string ?? ""] ?? []).isEmpty }
+    private var submittedAnswers: [String: String]? { LedgerPromptAnswers.answers(questions, drafts: drafts) }
+
+    private func sendAnswers() {
+        guard waiting, !held, !busy, let answers = submittedAnswers else { return }
+        Task {
+            if prompt.kind == .stopQuestion, let question = questions.first, let text = answers[question.question] {
+                if await ledger.reply(prompt, .text(text)) { drafts = [:]; closeDraft() }
+            } else {
+                if await ledger.reply(prompt, .choices(answers)) { drafts = [:]; closeDraft() }
+            }
+        }
     }
 
     @ViewBuilder private var actions: some View {
@@ -281,25 +305,15 @@ private struct LedgerPromptCard: View {
         WorkbenchFlow(spacing: 8) {
             if busy { ProgressView().controlSize(.small) }
             switch prompt.kind {
-            case .askUserQuestion:
-                Button("Answer") {
-                    var answers: [String: String] = [:]
-                    for q in questions {
-                        let question = q["question"].string ?? ""
-                        let order = LedgerPromptText.options(q["options"]).map(\.label)
-                        answers[question] = order.filter { (chosen[question] ?? []).contains($0) }.joined(separator: ", ")
-                    }
-                    Task { await ledger.reply(prompt, .choices(answers)) }
-                }
-                .prominentButton(primary).disabled(busy || !canAnswerChoices)
+            case .stopQuestion, .askUserQuestion:
+                Button("Send answer", action: sendAnswers)
+                .prominentButton(primary).disabled(busy || submittedAnswers == nil)
             case .permission, .exitPlanMode:
                 Button("Allow") { Task { await ledger.reply(prompt, .allow) } }.prominentButton(primary).disabled(busy)
                 Button("Deny") { Task { await ledger.reply(prompt, .deny(message: nil)) } }.disabled(busy)
-            case .stopQuestion:
-                EmptyView()
             }
             LedgerPromptExits(prompt: prompt, ledger: ledger, busy: busy)
-            if LedgerCountdown.isCounting(prompt), let auto = LedgerPromptText.proposed(prompt) {
+            if LedgerCountdown.isAutomatic(prompt), let auto = LedgerPromptText.proposed(prompt) {
                 Text("If nobody answers: “\(auto)”").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             }
         }
@@ -329,7 +343,9 @@ struct LedgerCountdownView: View {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let now = LedgerMs((context.date.timeIntervalSince1970 * 1000).rounded()) + skew
                 VStack(alignment: .trailing, spacing: 4) {
-                    Label("Auto in \(LedgerCountdown.text(deadline: prompt.deadline, now: now))", systemImage: "timer")
+                    Label(LedgerCountdown.isAutomatic(prompt)
+                          ? String(localized: "Auto in \(LedgerCountdown.text(deadline: prompt.deadline, now: now))")
+                          : String(localized: "Time left \(LedgerCountdown.text(deadline: prompt.deadline, now: now))"), systemImage: "timer")
                         .font(.system(size: 11, weight: .semibold).monospacedDigit())
                         .foregroundStyle(StudioStyle.Tone.waiting.text)
                         .fixedSize()
@@ -339,7 +355,9 @@ struct LedgerCountdownView: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(String(localized: "Auto-continues in \(LedgerCountdown.spoken(deadline: prompt.deadline, now: now))"))
+                .accessibilityLabel(LedgerCountdown.isAutomatic(prompt)
+                                     ? String(localized: "Auto-continues in \(LedgerCountdown.spoken(deadline: prompt.deadline, now: now))")
+                                     : String(localized: "Answer within \(LedgerCountdown.spoken(deadline: prompt.deadline, now: now))"))
             }
         } else {
             Label("Waiting for you", systemImage: "hand.raised").font(.system(size: 11, weight: .semibold))

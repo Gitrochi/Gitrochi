@@ -6,6 +6,8 @@ import { compareVersions } from "../lib/version";
 import { LedgerError, type LedgerBackend } from "./backend";
 import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld, promptPayload } from "./demo-data";
 import { buildGraph, isLive, overlaps, rangeStart, searchWorld, sessionViews, streamCycles } from "./demo-views";
+import { demoReportQuestions } from "./demo-questions";
+import { promptAnswerQuestions } from "../lib/answers";
 
 export interface DemoOptions {
   /** The clock; tests move it by hand */
@@ -432,6 +434,12 @@ export class DemoLedgerBackend implements LedgerBackend {
     if (!p) throw new LedgerError("NOT_FOUND", `No prompt ${id}`);
     if (!answer || typeof answer !== "object") throw new LedgerError("INVALID_ARGUMENT", "answer must be an object");
     if (p.state !== "waiting") return { ok: false, rev: w.rev, state: p.state };
+    if (p.kind === "ask_user_question" && !("hold" in answer) && !("release" in answer)) {
+      const questions = promptAnswerQuestions(p);
+      const values = "answers" in answer ? answer.answers : "text" in answer && questions.length === 1 ? { [questions[0].question]: answer.text } : {};
+      if (Object.keys(values).length !== questions.length || questions.some((question) => !question.question || typeof values[question.question] !== "string" || !values[question.question].trim())) throw invalid("Answer every question with non-empty text");
+      answer = { answers: Object.fromEntries(questions.map((question) => [question.question, values[question.question].trim()])) };
+    }
     Object.assign(p, { state: "answered", answer: { ...answer }, answeredBy: "human", reviewed: true });
     if (p.sessionId) this.record(p.sessionId, "prompt_answer", { promptId: id });
     w.rev++;
@@ -456,7 +464,7 @@ export class DemoLedgerBackend implements LedgerBackend {
       if (p.state !== "waiting" || !p.deadline || p.deadline > now) continue;
       // what auto-continue proposed; plan approval is off by default, so a plan goes back to the agent's terminal
       const proposed = p.payload.proposed && typeof p.payload.proposed === "object" ? (p.payload.proposed as Record<string, unknown>) : null;
-      const auto = p.kind !== "exit_plan_mode" && !!proposed;
+      const auto = p.kind !== "exit_plan_mode" && p.payload.autoAnswer !== false && !!proposed;
       if (!auto) p.state = "released";
       else Object.assign(p, { state: "auto", answeredBy: "auto", answer: proposed });
       if (p.sessionId && auto) w.events.push({ id: w.nextEvent++, sessionId: p.sessionId, ts: p.deadline, type: "auto_reply", actor: "auto", summary: `Answered automatically: ${String(p.payload.question ?? p.kind)}`, data: { promptId: p.id, kind: p.kind, answer: proposed } });
@@ -497,7 +505,10 @@ export class DemoLedgerBackend implements LedgerBackend {
       const given = typeof report.session === "string" ? report.session.trim() : "";
       if (given && !SESSION_ID.test(given)) return { index, ok: false, duplicate: false, error: `Invalid session ID "${given}"` };
       if ((type === "sync" || type === "release" || type === "applied") && typeof report.version !== "string") return { index, ok: false, duplicate: false, error: `"${type}" needs a version` };
-      if (type === "question" && typeof report.question !== "string") return { index, ok: false, duplicate: false, error: "A question needs its text" };
+      let questions: ReturnType<typeof demoReportQuestions>;
+      try { questions = demoReportQuestions(report); } catch (error) {
+        return { index, ok: false, duplicate: false, error: error instanceof Error ? error.message : String(error) };
+      }
       let s = given ? w.sessions.find((x) => x.id === given) : undefined;
       if (!s) {
         const key = typeof report.project === "string" ? report.project : project;
@@ -514,7 +525,7 @@ export class DemoLedgerBackend implements LedgerBackend {
       if (type === "merged" && typeof report.into === "string") s.mergedInto = report.into;
       if (type === "sync" && typeof report.version === "string") s.baseCurrent = report.version;
       if (type !== "note" && type !== "heartbeat") delete s.ackAt;
-      if (type === "question") w.questions.push({ id: w.nextQuestion++, sessionId: s.id, text: String(report.question), state: "open", createdAt: ts });
+      for (const question of questions) w.questions.push({ id: w.nextQuestion++, sessionId: s.id, ...question, state: "open", createdAt: ts });
       w.events.push({ id: w.nextEvent++, sessionId: s.id, ts, type, actor: "agent", ...(typeof report.summary === "string" ? { summary: report.summary } : {}), ...(typeof report.body === "string" ? { body: report.body } : {}), ...(typeof report.version === "string" ? { version: report.version } : {}) });
       this.seen.add(hash);
       return { index, ok: true, duplicate: false, sessionId: s.id };

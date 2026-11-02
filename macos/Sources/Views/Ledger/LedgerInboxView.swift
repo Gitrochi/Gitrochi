@@ -13,6 +13,7 @@ struct LedgerInboxView: View {
     @ViewState private var answering: String?
     @ViewState private var correcting: Int?
     @ViewState private var correction = ""
+    @ViewState private var hasUnsentPromptDraft = false
     /// The session M asked to mark merged; a dialog picks the version
     @ViewState private var merging: LedgerSession?
     @FocusState private var listFocused: Bool
@@ -23,7 +24,8 @@ struct LedgerInboxView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    if !ledger.inbox.prompts.isEmpty { LedgerPromptStrip(prompts: ledger.inbox.prompts, ledger: ledger) }
+                    LedgerPromptStrip(prompts: ledger.inbox.prompts, ledger: ledger,
+                                      retainedChanged: { hasUnsentPromptDraft = $0 })
                     ForEach(LedgerInbox.Group.allCases, id: \.self) { group in
                         let rows = ledger.inbox.items(in: group)
                         if !rows.isEmpty {
@@ -33,7 +35,7 @@ struct LedgerInboxView: View {
                             }
                         }
                     }
-                    if items.isEmpty && ledger.inbox.prompts.isEmpty {
+                    if items.isEmpty && ledger.inbox.prompts.isEmpty && !hasUnsentPromptDraft {
                         WorkspaceEmptyState(title: "Nothing needs you", systemImage: "tray",
                                             description: "Find progress in Board and Streams. Inbox only shows questions, reviews and decisions that need you.",
                                             actionTitle: "View progress", action: { ledger.page = ledger.boardRows.isEmpty && ledger.streamCount > 0 ? .streams : .board })
@@ -146,7 +148,7 @@ struct LedgerInboxView: View {
             switch item.content {
             case .question(let question):
                 Text(question.text).font(.callout).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                LedgerAnswerField(placeholder: String(localized: "Answer…"), text: draft(question.id),
+                LedgerReportedAnswerField(question: question, text: draft(question.id),
                                   busy: ledger.working.contains("q\(question.id)"), focusRequest: answering == item.id,
                                   save: { Task { await ledger.answer(question) } },
                                   dismiss: { Task { await ledger.dismiss(question) } })

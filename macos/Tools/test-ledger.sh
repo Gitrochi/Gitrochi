@@ -88,6 +88,7 @@ let start: LedgerMs = 1_793_400_000_000
 @main struct LedgerTests {
     @MainActor static func main() async throws {
         pureLogic()
+        try answerForms()
         try graphRows()
         try demoContract()
         try notices()
@@ -101,6 +102,78 @@ let start: LedgerMs = 1_793_400_000_000
             try await native(cli: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2], legacy: CommandLine.arguments[i + 3])
         }
         print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, settings, large demo, the core through its C ABI")
+    }
+
+    static func answerForms() throws {
+        var prompt = LedgerPendingPrompt(id: 1, sessionId: nil, agentId: nil, kind: .askUserQuestion,
+                                         payload: ["questions": [
+                                            ["question": "Runtime?", "header": "Runtime", "suggestedAnswer": "Node 24", "options": [
+                                                ["label": "Node 22", "description": "A supported version", "recommended": true], ["label": "Node 24"]]],
+                                            ["question": "Checks?", "multiSelect": true, "options": [
+                                                ["label": "Build", "recommended": true], ["label": "Tests", "recommended": true], ["label": "Lint"]]],
+                                            ["question": "Release notes?", "options": []]],
+                                            "proposed": ["answers": ["Runtime?": "Node 22", "Checks?": "Build, Tests", "Release notes?": "Describe the changes"]]],
+                                         createdAt: 0, deadline: 60_000, state: .waiting, answer: nil, answeredBy: nil)
+        let questions = LedgerPromptAnswers.questions(prompt)
+        check(questions.count == 3 && questions[0].header == "Runtime" && questions[0].options[0].description == "A supported version", "question grouping and option explanations survive")
+        check(questions[0].suggestion == "Node 24" && questions[1].suggestion == "Build, Tests" && questions[2].suggestion == "Describe the changes",
+              "per-question suggestion wins over proposed answers, and free text can have a suggestion")
+        check(LedgerPromptAnswers.answers(questions, drafts: [:]) == nil && LedgerPromptAnswers.answers(questions, drafts: ["0": "Node 24"]) == nil,
+              "a multi-question form needs every answer before sending")
+        let drafts = ["0": " Node 24 ", "1": "Build, Tests", "2": "A custom release note"]
+        let answers = LedgerPromptAnswers.answers(questions, drafts: drafts)
+        check(answers == ["Runtime?": "Node 24", "Checks?": "Build, Tests", "Release notes?": "A custom release note"],
+              "all editable drafts are sent together with their question text")
+        prompt.payload = ["questions": [["question": "Checks?", "multiSelect": true, "options": [
+            ["label": "Build", "recommended": true], ["label": "Tests", "recommended": true], ["label": "Lint"]]]]]
+        check(LedgerPromptAnswers.questions(prompt)[0].suggestion == "Build, Tests", "multi-select uses explicitly recommended choices in displayed order")
+        check(LedgerPromptAnswers.selectedText(["Tests", "Build"], options: questions[1].options) == "Build, Tests", "selection serializes in option order")
+        check(LedgerPromptAnswers.selectedOptions(text: "Build, Tests", options: questions[1].options, multiple: true) == ["Build", "Tests"],
+              "Tab and Use suggestion reconcile every checkbox in a multi-select suggestion")
+        check(LedgerPromptAnswers.selectedOptions(text: "Build plus custom detail", options: questions[1].options, multiple: true).isEmpty,
+              "custom text clears choice selections")
+        check(LedgerPromptAnswers.selectedOptions(text: "Tests, Build", options: questions[1].options, multiple: true).isEmpty
+              && LedgerPromptAnswers.selectedOptions(text: "Build, Unknown", options: questions[1].options, multiple: true).isEmpty,
+              "only a complete answer in displayed option order reconciles selections")
+        let commaChoice: [LedgerPromptText.Option] = [.init(label: "Build, Tests", recommended: false)] + questions[1].options
+        check(LedgerPromptAnswers.selectedOptions(text: "Build, Tests", options: commaChoice, multiple: true) == ["Build, Tests"],
+              "an exact label containing commas takes precedence over combined choices")
+        check(LedgerPromptAnswers.selectedOptions(text: "Build, Tests", options: questions[1].options, multiple: false).isEmpty,
+              "a single-select question never marks multiple suggested choices")
+        prompt.payload = ["questions": [["question": "Runtime?", "options": [["label": "First"], ["label": "Second"]]]]]
+        check(LedgerPromptAnswers.questions(prompt)[0].suggestion == nil, "the first choice is never an implicit suggestion")
+        prompt.payload = ["questions": [["question": "Runtime?", "options": [["label": "First (Recommended)", "recommended": false], ["label": "Second (Recommended)"]]]]]
+        check(LedgerPromptAnswers.questions(prompt)[0].suggestion == "Second (Recommended)", "explicit false overrides a recommendation marker")
+        prompt.payload = ["autoAnswer": false, "questions": [["question": "Any detail?", "options": []]]]
+        check(LedgerCountdown.isCounting(prompt) && !LedgerCountdown.isAutomatic(prompt) && LedgerPromptAnswers.questions(prompt)[0].options.isEmpty,
+              "manual-only free-text questions remain answerable without promising automatic continuation")
+        prompt.payload["hold"] = ["code": "no_answer"]
+        check(!LedgerCountdown.isCounting(prompt), "a held prompt is terminal-only even with a positive deadline")
+        prompt.kind = .stopQuestion
+        prompt.payload = ["question": "Continue?", "suggestedAnswer": "After the checks", "proposed": ["text": "Yes"], "options": [["label": "Later", "recommended": true]]]
+        check(LedgerPromptAnswers.questions(prompt)[0].suggestion == "After the checks", "stop questions follow the same suggestion priority")
+        check(LedgerPromptAnswers.canFill(text: "", suggestion: "Yes"), "Tab can fill an untouched editor")
+        check(!LedgerPromptAnswers.canFill(text: " ", suggestion: "Yes") && !LedgerPromptAnswers.canFill(text: "Custom", suggestion: "Yes"), "Tab never overwrites typed text")
+        check(!LedgerPromptAnswers.canFill(text: "", suggestion: "Yes", shifted: true)
+              && !LedgerPromptAnswers.canFill(text: "", suggestion: "Yes", composing: true)
+              && !LedgerPromptAnswers.canFill(text: "", suggestion: nil), "reverse Tab, composition and absent suggestions keep normal navigation")
+        let old = try JSONDecoder().decode(LedgerQuestion.self, from: Data(#"{"id":1,"sessionId":"s","text":"Legacy question","state":"open","createdAt":0}"#.utf8))
+        check(old.options == nil && old.suggestedAnswer == nil, "older reported questions still decode")
+        let demo = DemoLedgerBackend(mode: .empty)
+        let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
+        let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
+        check(imported.results.first?.ok == true, "structured reported questions import")
+        let state = try call(demo, "state", ["range": "all"], as: LedgerState.self)
+        check(state.questions.count == 3 && state.questions[0].options?.first?.description == "Supported"
+              && state.questions[0].suggestedAnswer == "Node 24" && state.questions[1].multiSelect == true,
+              "reported metadata survives without creating a fourth summary question")
+        let q = state.questions[0]
+        _ = try call(demo, "human", ["sessionId": "forms", "action": "answer", "questionId": .number(Double(q.id)), "answer": "Custom runtime"], as: LedgerJSON.self)
+        let queued = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
+        check(queued.questions[0].answer == "Custom runtime" && queued.questions[0].deliveredAt == nil, "reading a reported answer does not deliver it")
+        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Read the person's answer"}"#], as: LedgerImportResult.self)
+        let delivered = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
+        check(delivered.questions[0].deliveredAt != nil, "a later agent report collects the queued answer")
     }
 
     static func pureLogic() {
@@ -148,7 +221,7 @@ let start: LedgerMs = 1_793_400_000_000
              String(localized: "Auto-continue never answers this kind of request.")),
             (["code": "risky", "kind": "exit_plan_mode", "reason": "deploy", "message": "the prompt is about something hard to reverse (deploy)"],
              String(localized: "It looks risky to answer automatically.")),
-            (["code": "no_answer", "message": "the question has no options to choose from"], String(localized: "There is nothing to choose from.")),
+            (["code": "no_answer", "message": "the question has no options to choose from"], String(localized: "This question needs an answer in the agent's terminal.")),
             (["code": "limit_reached", "consecutive": 3, "max": 3, "message": "3 automatic answers in a row (limit 3)"],
              String(localized: "Auto-continue reached its limit of answers in a row.")),
             (["code": "something_new", "message": "a reason from a newer core"], "a reason from a newer core"),
@@ -655,10 +728,10 @@ let start: LedgerMs = 1_793_400_000_000
         check(!ledger.inbox.items.contains { $0.id == "q\(question.id)" }, "the question leaves the Inbox")
 
         let prompt = ledger.inbox.prompts.first { $0.kind == .permission }!
-        await ledger.reply(prompt, .holdAuto)
+        check(await ledger.reply(prompt, .holdAuto), "an accepted prompt reply returns success")
         check(!ledger.inbox.prompts.contains { $0.id == prompt.id } && ledger.toast?.message == String(localized: "Auto-continue is off for this prompt"),
               "Not this time: the prompt leaves for the agent's terminal")
-        await ledger.reply(prompt, .allow)
+        check(await !ledger.reply(prompt, .allow), "a rejected prompt reply preserves the caller's draft")
         check(ledger.actionError != nil, "an answer to a prompt that no longer waits is refused")
         ledger.actionError = nil
         let plan = ledger.inbox.prompts.first { $0.kind == .exitPlanMode }!
@@ -1061,7 +1134,7 @@ cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
-    "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
+    "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"
 [[ -x "$CORE" ]] || { echo "No gitrochi-ledger command at $CORE" >&2; exit 1; }

@@ -1658,7 +1658,6 @@
 "Answer in terminal" = "Відповісти в терміналі";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Дайте відповідь на відкриті запитання або відхиліть їх; сесія отримає відповідь із наступним звітом.";
 "Answer saved. The session receives it with its next report." = "Відповідь збережено. Сесія отримає її з наступним звітом.";
-"Answer sent to the agent" = "Відповідь надіслано агенту";
 "Answered" = "Відповідь надано";
 "Answered by a person" = "Відповіла людина";
 "Answered by auto-continue" = "Відповіло автопродовження";
@@ -2208,3 +2207,19 @@
 "Last activity" = "Остання активність";
 "No reports yet." = "Звітів поки немає.";
 "Last report" = "Останній звіт";
+"Send answer" = "Надіслати відповідь";
+"Use suggestion" = "Використати підказку";
+"Tab" = "Tab";
+"Choose one" = "Виберіть один варіант";
+"Choose one or more" = "Виберіть один або кілька варіантів";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Залишилося %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Копіювати відповідь";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

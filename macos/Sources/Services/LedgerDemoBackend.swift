@@ -655,7 +655,19 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 results.append(.init(index: index, ok: false, duplicate: false, error: "\(event) needs a version", sessionId: nil))
                 continue
             }
-            if event == "question", object["question"]?.string == nil {
+            var reported: [LedgerJSON] = []
+            if let value = object["questions"] {
+                reported = value.array.isEmpty && (value.string != nil || value.object != nil) ? [value] : value.array
+            }
+            if event == "question" {
+                if let question = object["question"] { reported.append(question) }
+                else if reported.isEmpty, let summary = object["summary"]?.string { reported.append(.string(summary)) }
+                if reported.isEmpty {
+                    results.append(.init(index: index, ok: false, duplicate: false, error: "A question needs its text", sessionId: nil))
+                    continue
+                }
+            }
+            if reported.contains(where: { ($0.string ?? $0["text"].string ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
                 results.append(.init(index: index, ok: false, duplicate: false, error: "A question needs its text", sessionId: nil))
                 continue
             }
@@ -677,7 +689,15 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                          kind: object["kind"]?.string ?? "other", created: ts, base: object["base"]?.string ?? head(of: key))
             }
             record(id, event, at: ts, summary: object["summary"]?.string, body: object["body"]?.string, version: object["version"]?.string)
-            if event == "question", let q = object["question"]?.string { addQuestion(id, q, at: ts) }
+            for i in questions.indices where questions[i].sessionId == id && questions[i].state != .open && questions[i].deliveredAt == nil {
+                questions[i].deliveredAt = ts
+            }
+            for question in reported {
+                let choices = LedgerPromptAnswers.options(question["options"])
+                addQuestion(id, question.string ?? question["text"].string ?? "", at: ts,
+                            options: choices.isEmpty ? nil : choices.map { .init(label: $0.label, description: $0.description, recommended: $0.recommended) },
+                            multiple: question["multiSelect"].bool, suggestion: question["suggestedAnswer"].string)
+            }
             if let status = LedgerStatus(rawValue: event) { sessions[id]?.status = status }
             results.append(.init(index: index, ok: true, duplicate: false, error: nil, sessionId: id))
         }
@@ -748,10 +768,12 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         return id
     }
 
-    private func addQuestion(_ session: String, _ text: String, at ts: LedgerMs, answer: String? = nil, answeredAt: LedgerMs? = nil) {
+    private func addQuestion(_ session: String, _ text: String, at ts: LedgerMs, answer: String? = nil, answeredAt: LedgerMs? = nil,
+                             options: [LedgerQuestion.Option]? = nil, multiple: Bool? = nil, suggestion: String? = nil) {
         questions.append(LedgerQuestion(id: nextQuestionID, sessionId: session, text: text, state: answer == nil ? .open : .answered,
                                         answer: answer, answeredBy: answer == nil ? nil : .human, createdAt: ts,
-                                        answeredAt: answeredAt, deliveredAt: answeredAt))
+                                        answeredAt: answeredAt, deliveredAt: answeredAt, options: options,
+                                        multiSelect: multiple, suggestedAnswer: suggestion))
         nextQuestionID += 1
     }
 

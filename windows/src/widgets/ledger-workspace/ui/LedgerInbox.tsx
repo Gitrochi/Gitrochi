@@ -155,8 +155,8 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAns
     const q = item.question;
     return (
       <>
-        <div className="ledger-row-text selectable">{q.text}</div>
-        <LedgerAnswerField fieldRef={fieldRef} label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text).then(saved)} />
+        {q.options === undefined && q.suggestedAnswer === undefined && !q.multiSelect && <div className="ledger-row-text selectable">{q.text}</div>}
+        <LedgerAnswerField question={q} initialText={store.unsentAnswers.get(q.id)} onDraftChange={(text) => store.setUnsentAnswer(q.id, text)} disabled={busy} fieldRef={fieldRef} label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text).then(saved)} />
         <div className="ledger-row-actions">
           <Button size="small" disabled={busy} onClick={() => void store.dismiss(q)} tip={`${t("Dismiss")}|${t("Closes the question without an answer; the session is told.")}`}><X size={13} />{t("Dismiss")}</Button>
         </div>

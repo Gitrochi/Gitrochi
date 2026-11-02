@@ -1658,7 +1658,6 @@
 "Answer in terminal" = "Ответить в терминале";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Ответьте на открытые вопросы или отклоните их; сессия получит ответ со следующим отчётом.";
 "Answer saved. The session receives it with its next report." = "Ответ сохранён. Сессия получит его со следующим отчётом.";
-"Answer sent to the agent" = "Ответ отправлен агенту";
 "Answered" = "Отвечено";
 "Answered by a person" = "Ответил человек";
 "Answered by auto-continue" = "Ответило автопродолжение";
@@ -2208,3 +2207,19 @@
 "Last activity" = "Последняя активность";
 "No reports yet." = "Отчётов пока нет.";
 "Last report" = "Последний отчёт";
+"Send answer" = "Отправить ответ";
+"Use suggestion" = "Использовать подсказку";
+"Tab" = "Tab";
+"Choose one" = "Выберите один вариант";
+"Choose one or more" = "Выберите один или несколько вариантов";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Осталось %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Копировать ответ";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

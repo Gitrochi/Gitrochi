@@ -40,7 +40,7 @@ fn check_schema(path: &std::path::Path) {
         .unwrap();
     assert_eq!(
         (version, mode.as_str(), rows),
-        (1, "wal", 2),
+        (gitrochi_ledger::db::DB_SCHEMA, "wal", 2),
         "{}",
         path.display()
     );

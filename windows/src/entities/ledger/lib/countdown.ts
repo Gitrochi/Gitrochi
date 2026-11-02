@@ -97,7 +97,7 @@ export function describeAnswer(value: unknown): { kind: AnswerKind; text: string
 const holdReasons: Record<string, string> = {
   held: "Auto-continue never answers this kind of request.",
   risky: "It looks risky to answer automatically.",
-  no_answer: "There is nothing to choose from.",
+  no_answer: "This question needs an answer in the agent's terminal.",
   limit_reached: "Auto-continue already answered {0} times in a row.",
 };
 

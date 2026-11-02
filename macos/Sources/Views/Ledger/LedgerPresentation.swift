@@ -179,7 +179,14 @@ enum LedgerCountdown {
     }
 
     /// Whether auto-continue will answer it: a held prompt (deadline 0) waits for a person
-    static func isCounting(_ prompt: LedgerPendingPrompt) -> Bool { prompt.state == .waiting && prompt.deadline > 0 }
+    static func isCounting(_ prompt: LedgerPendingPrompt) -> Bool {
+        prompt.state == .waiting && prompt.deadline > 0 && prompt.payload["hold"]?.object == nil
+    }
+
+    /// Manual-only waits expire to the terminal instead of sending an automatic answer.
+    static func isAutomatic(_ prompt: LedgerPendingPrompt) -> Bool {
+        isCounting(prompt) && prompt.payload["autoAnswer"]?.bool != false
+    }
 
     /// The same time for VoiceOver ("42 seconds")
     static func spoken(deadline: LedgerMs, now: LedgerMs) -> String {
@@ -280,7 +287,7 @@ enum LedgerPromptText {
         switch code {
         case "held": return String(localized: "Auto-continue never answers this kind of request.")
         case "risky": return String(localized: "It looks risky to answer automatically.")
-        case "no_answer": return String(localized: "There is nothing to choose from.")
+        case "no_answer": return String(localized: "This question needs an answer in the agent's terminal.")
         // the limit can be 1, and a count would need plural forms
         case "limit_reached": return String(localized: "Auto-continue reached its limit of answers in a row.")
         default: return hold["message"].string.flatMap { $0.isEmpty ? nil : $0 }

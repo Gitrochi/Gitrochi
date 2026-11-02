@@ -65,6 +65,28 @@ fn a_file_from_a_newer_build_is_read_but_not_written() {
 }
 
 #[test]
+fn version_one_questions_survive_the_metadata_migration() {
+    let dir = temp_dir("question-migration");
+    let path = dir.join("ledger.sqlite3");
+    let raw = rusqlite::Connection::open(&path).unwrap();
+    raw.execute_batch(include_str!("../schema.sql")).unwrap();
+    raw.execute_batch("PRAGMA user_version = 1; INSERT INTO questions(session_id,text,created_at) VALUES('old-session','Keep this question?',1);").unwrap();
+    drop(raw);
+    let db = Db::open(&path).unwrap();
+    let questions = db
+        .read(|connection| crate::event::questions_for(connection, "old-session"))
+        .unwrap();
+    assert_eq!(questions.len(), 1);
+    assert_eq!(questions[0].text, "Keep this question?");
+    assert!(questions[0].options.is_empty());
+    assert!(questions[0].suggested_answer.is_none());
+    assert!(!questions[0].multi_select);
+    assert_eq!(db.rev().unwrap(), 0);
+    drop(db);
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+#[test]
 fn only_version_folders_count_unless_files_are_scanned() {
     let h = H::new();
     assert_eq!(h.overview().head.as_deref(), Some("1.0.5"));

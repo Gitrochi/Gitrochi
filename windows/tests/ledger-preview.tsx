@@ -52,7 +52,19 @@ if (mode === "selftest") {
 } else {
   ipc.openUrl = async () => {};
   const repoPath = "C:/Projects/atlas";
-  const backend = new DemoLedgerBackend({ repoPath, lively: true, large: mode === "large", empty: mode === "empty" });
+  const backend = new DemoLedgerBackend({ repoPath, lively: mode !== "questions" && mode !== "reported", large: mode === "large", empty: mode === "empty" });
+  const demoOwner = backend.world.sessions.find((session) => session.project === "atlas" && session.status === "active" && !session.stream);
+  if (demoOwner && (mode === "questions" || mode === "reported")) {
+    backend.world.prompts = [];
+    backend.world.questions = [];
+    if (mode === "questions") backend.world.prompts.push({ id: backend.world.nextPrompt++, sessionId: demoOwner.id, kind: "ask_user_question", state: "waiting", createdAt: Date.now(), deadline: Date.now() + 15 * 60_000, payload: { autoAnswer: false, questions: [
+      { header: "Report format", question: "How should the results be presented?", options: [{ label: "Brief summary", description: "Focus on outcomes and next steps", recommended: true }, { label: "Detailed report", description: "Include the evidence and tradeoffs" }] },
+      { header: "Validation", question: "Which checks should be included?", multiSelect: true, options: [{ label: "Unit tests", description: "Check the core behavior", recommended: true }, { label: "Browser checks", description: "Exercise the complete workflow" }] },
+      { header: "Follow-up", question: "Anything else to include?", suggestedAnswer: "Include remaining risks and the next action.", options: [] },
+    ] } });
+    else backend.world.questions.push({ id: backend.world.nextQuestion++, sessionId: demoOwner.id, text: "How should the review results be shared?", options: [{ label: "Brief summary", description: "Focus on outcomes and next steps", recommended: true }, { label: "Detailed report", description: "Include the evidence and tradeoffs" }], suggestedAnswer: "Use a brief summary with links to the evidence.", state: params.has("answered") ? "answered" : "open", ...(params.has("answered") ? { answer: "Use a brief summary with links to the evidence.", answeredBy: "human" as const, answeredAt: Date.now() } : {}), createdAt: Date.now() });
+    backend.world.rev++;
+  }
   const store = new LedgerStore(backend);
   store.setView((params.get("view") as LedgerView | null) ?? "inbox");
   store.setProjectChoice(params.get("project") ?? "repository");
@@ -69,6 +81,7 @@ if (mode === "selftest") {
     }
   }
   if (select) store.select(store.state?.sessions.find((s) => s.verdict === select)?.id ?? null);
+  else if (mode === "reported" && params.has("answered") && demoOwner) store.select(demoOwner.id);
   root.style.height = "100vh";
   if (params.get("width")) root.style.width = `${params.get("width")}px`;
   createRoot(root).render(<><LedgerWorkspace repoPath={repoPath} ledger={store} /><MenuHost /><TooltipHost /></>);

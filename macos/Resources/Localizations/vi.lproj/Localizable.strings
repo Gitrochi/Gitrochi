@@ -1615,7 +1615,6 @@
 "Answer in terminal" = "Trả lời trong terminal";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Trả lời hoặc bỏ qua các câu hỏi đang mở; phiên sẽ nhận câu trả lời ở lần báo cáo tiếp theo.";
 "Answer saved. The session receives it with its next report." = "Đã lưu câu trả lời. Phiên sẽ nhận ở lần báo cáo tiếp theo.";
-"Answer sent to the agent" = "Đã gửi câu trả lời cho tác tử";
 "Answered" = "Đã trả lời";
 "Answered by a person" = "Do một người trả lời";
 "Answered by auto-continue" = "Do tự động tiếp tục trả lời";
@@ -2167,3 +2166,19 @@
 "Last activity" = "Hoạt động gần nhất";
 "No reports yet." = "Chưa có báo cáo.";
 "Last report" = "Báo cáo gần nhất";
+"Send answer" = "Gửi câu trả lời";
+"Use suggestion" = "Dùng gợi ý";
+"Tab" = "Tab";
+"Choose one" = "Chọn một";
+"Choose one or more" = "Chọn một hoặc nhiều";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Thời gian còn lại %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Sao chép câu trả lời";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";
