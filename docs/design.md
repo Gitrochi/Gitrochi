@@ -91,8 +91,20 @@ Each of these has one form. Build it once per platform and reuse it; don't draw 
 
 ![Repository: a selected commit in the graph and its inspector](design/repository-commit.png)
 
+## App shell
+
+On macOS the window, toolbar and sidebar are native: `NavigationSplitView`, a unified toolbar (`.windowToolbarStyle(.unified)`) and a `.listStyle(.sidebar)` source list. The OS owns their height, the capsules it groups toolbar items into, the sidebar selection highlight, `.badge` counts, menus and the overflow (») menu for items that do not fit. Don't redraw those; decide only what goes in them.
+
+- **Repository and branch** are the window title: `navigationTitle` (repository) and `navigationSubtitle` (branch, with `↑2 ↓5`) with `.toolbarTitleMenu`. Ahead/behind counts live only there.
+- **Always titled**: Changes N, Fetch, Pull, Push (`.labelStyle(.titleAndIcon)`). Everything else is icon-only and follows the user's toolbar setting, with branch, worktree and stash actions under Branch ▾ and the rest under ⋯.
+- **One prominent item** (`.borderedProminent`) only for the recommended action: Push when there are only commits to push, Pull when a fast-forward is possible, none when the branch has diverged.
+- **Keep visible in a narrow window**: the title, the four titled actions and the account, through `NSToolbarItem.visibilityPriority` (SwiftUI has no API for it).
+- **Sidebar**: sections Repository · GitHub · Tools · Settings, icons in `.foregroundStyle(.secondary)` so the accent stays on the selection. The OS selection highlight is the one exception to "selection is a tint"; lists inside pages keep the tint.
+- **Blocked pages** say why in one line under their section; macOS shows no `.help()` on disabled rows. The collapsed icon rail is custom: its blocked icons are drawn dimmed but stay enabled, so their `.help()` reason still shows.
+- **Windows** has no native shell, so it draws the same structure with the frame values below.
+
 ## Frames and spacing
 
-- Repository screens: a 44px toolbar, a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
+- Repository screens: a 44px page toolbar (the macOS window toolbar is the OS's, see App shell), a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
 - Spacing steps: 4, 6, 8, 10, 12, 16, 20, 24, 28, 32. Card padding 12 16.
 - Avatars: 24 in conversations, 20 in meta and side cards, 22 as graph nodes, 16 in dense rows.
