@@ -29,7 +29,7 @@ export function RemoteRepositorySearch({ store, openSettings }: { store: RepoSto
     setBusy(true);
     setError("");
     try {
-      const token = await accounts.token(a);
+      const token = await accounts.token(a, { reportReadFailure: true });
       if (!token) throw new Error(t("No token. Reconnect the account in Settings."));
       const current = () => n === generation.current && accounts.revision === revision;
       const p = append ? page + 1 : 1;

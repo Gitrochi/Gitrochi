@@ -94,11 +94,14 @@ struct CIPanel: View {
         switch store.ciState {
         case .authorizationRequired:
             if let account = store.pendingCredentialAccount {
-                CredentialAccessNotice(account: account)
+                SavedAccountAccessNotice(account: account) { Task { await store.loadCI() } }
                     .padding(12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         case .needsAccount:
+            if let account = store.hostingAccount {
+                SavedAccountAccessNotice(account: account) { Task { await store.loadCI() } }.padding(12)
+            } else {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Connect a \(target.provider == .gitlab ? String(localized: "Self-hosted GitLab (\(target.host))") : "GitHub") account to see pipelines.")
                     .font(.callout).foregroundStyle(.secondary)
@@ -106,6 +109,7 @@ struct CIPanel: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
         case .failed(let m):
             VStack(alignment: .leading, spacing: 8) {
                 Text(m).font(.caption).foregroundStyle(.red).textSelection(.enabled)

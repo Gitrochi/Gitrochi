@@ -32,7 +32,7 @@ function Page({ children, actions }: { children: ReactNode; actions?: ReactNode 
 }
 async function access(store: RepoStore): Promise<ReviewAccess> {
   const c = await store.workspaceAccess();
-  if (!c) throw new Error(t("Connect an account to load this workspace."));
+  if (!c) throw new Error(t(store.hostingAccount ? "Couldn't read the saved account credentials. Unlock your credentials, then retry." : "Connect an account to load this workspace."));
   return c;
 }
 const identity = (store: RepoStore) =>

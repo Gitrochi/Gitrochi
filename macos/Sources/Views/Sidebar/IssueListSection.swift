@@ -27,7 +27,11 @@ struct IssueListSection: View {
                 }
             }
             if store.collaborationAccess == nil {
-                Button("Connect account…") { openSettings() }.buttonStyle(.link).sidebarRow()
+                if let account = store.hostingAccount {
+                    SavedAccountAccessNotice(account: account) { Task { await store.loadIssues() } }.sidebarRow()
+                } else {
+                    Button("Connect account…") { openSettings() }.buttonStyle(.link).sidebarRow()
+                }
             }
             if let error = list.error {
                 Text(error).font(.caption).foregroundStyle(.red).lineLimit(3).textSelection(.enabled).sidebarRow()

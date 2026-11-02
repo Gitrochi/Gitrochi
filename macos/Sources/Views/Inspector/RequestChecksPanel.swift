@@ -92,10 +92,17 @@ struct RequestChecksPanel: View {
     }
     @MainActor private func load() async {
         let expected = context
-        guard !headSHA.isEmpty, var c = store.collaborationAccess else { error = String(localized: "Connect an account to load checks."); return }
-        c.isCurrent = { isCurrent(expected) }
+        guard !headSHA.isEmpty else { return }
         loading = true; error = nil
         defer { if isCurrent(expected) { loading = false } }
+        let access = await store.resolveCollaborationAccess()
+        guard isCurrent(expected), !Task.isCancelled else { return }
+        guard var c = access else {
+            error = store.hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) }
+                ?? String(localized: "Connect an account to load checks.")
+            return
+        }
+        c.isCurrent = { isCurrent(expected) }
         do {
             let value = try await RequestChecksAPI.load(c, number: number, headSHA: headSHA)
             if isCurrent(expected) && !Task.isCancelled { results = value }

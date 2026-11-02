@@ -135,7 +135,9 @@ export class CIStore extends Observable {
     if (!c) {
       if (target.provider === "gitlab") accounts.suggestedGitLabServer = `https://${target.host}`;
       this.pipelines = [];
-      this.state = { kind: "needsAccount" };
+      this.state = this.repo.hostingAccount
+        ? { kind: "failed", message: t("Couldn't read the saved account credentials. Unlock your credentials, then retry.") }
+        : { kind: "needsAccount" };
       this.emit();
       return;
     }

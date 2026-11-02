@@ -125,7 +125,7 @@ private struct PullRequestsWorkspace: View {
         } else {
             VStack(spacing: 14) {
                 ContentUnavailableView("No hosting remote", systemImage: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Connect account…") { openSettings() }
+                Button("Open repository…") { store.presentOpenPanel() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }

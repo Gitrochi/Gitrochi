@@ -74,7 +74,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
       />}
       <div style={{ padding: "0 6px" }}>
         {store.requestsWarning && <span className="muted">{store.requestsWarning}</span>}
-        {st.kind === "needsAccount" && (
+        {st.kind === "needsAccount" && !store.hostingAccount && (
           <div className="col" style={{ gap: 4, alignItems: "flex-start", padding: "2px 0 4px" }}>
             {other && (
               <button className="link" onClick={() => void store.tryExistingAccounts()} data-tip={t("If the same server is used under another address, an account you've already connected works there too")}>
@@ -85,9 +85,11 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
             </button>
           </div>
         )}
+        {st.kind === "needsAccount" && store.hostingAccount && <div className="col"><span className="hint">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void store.loadPullRequests()}>{t("Retry")}</button></div>}
         {st.kind === "failed" && (
           <div className="error-text" style={{ fontSize: 11.5 }}>
             {st.message}
+            <button className="link" onClick={() => void store.loadPullRequests()}>{t("Retry")}</button>
           </div>
         )}
         {st.kind === "loading" && !store.pullRequests.length && <Spinner size={12} />}

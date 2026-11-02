@@ -35,7 +35,7 @@ export function AccountWorkPanel({ inbox = false, selectedAccountID, onAccountCh
     setBusy(true);
     setError("");
     try {
-      const token = await accounts.token(a);
+      const token = await accounts.token(a, { reportReadFailure: true });
       const current = () =>
         generation.current === id &&
         accounts.revision === revision &&
@@ -99,7 +99,7 @@ export function AccountWorkPanel({ inbox = false, selectedAccountID, onAccountCh
     setBusy(true);
     setError("");
     try {
-      const token = await accounts.token(a),
+      const token = await accounts.token(a, { reportReadFailure: true }),
         current = () =>
           generation.current === id &&
           accounts.revision === revision &&

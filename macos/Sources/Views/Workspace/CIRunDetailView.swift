@@ -273,11 +273,7 @@ private struct CIJobLogView: View {
     }
 
     private func load() async {
-        guard let c = workspaceAccess(store) else {
-            error = String(localized: "Connect an account to load this workspace.")
-            return
-        }
-        let id = UUID()
+        let id = UUID(), expected = key
         generation = id
         if loadedJob != job.id {
             text = ""
@@ -287,6 +283,13 @@ private struct CIJobLogView: View {
         busy = true
         error = nil
         defer { if generation == id { busy = false } }
+        _ = await store.resolveCollaborationAccess()
+        guard generation == id, key == expected, !Task.isCancelled else { return }
+        guard let c = workspaceAccess(store) else {
+            error = store.hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) }
+                ?? String(localized: "Connect an account to load this workspace.")
+            return
+        }
         do {
             let result = try await WorkspaceCILog.load(c, job: job.id)
             guard generation == id, c.isCurrent?() != false else { return }

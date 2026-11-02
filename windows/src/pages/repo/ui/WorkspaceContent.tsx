@@ -50,7 +50,7 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
 /** Issues: the shared issue list on the left, the open issue on the right, like the Pull requests page (macOS: IssuesWorkspacePanel) */
 export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
-  if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={openSettings}>{t("Connect account…")}</Button></div>;
+  if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
   const detail = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail : null;
   return <div className="workspace-pr-page">
     <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
@@ -65,7 +65,7 @@ function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; open
   const target = store.target;
   const targetKey = target ? `${target.provider}:${target.host}/${target.path}` : "";
   useEffect(() => { if (store.target) void store.loadPullRequests(); }, [store, targetKey]);
-  if (!target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={openSettings}>{t("Connect account…")}</Button></div>;
+  if (!target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
   const selected = store.selection?.kind === "pullRequest";
   const diff = selected && store.diffSource?.kind === "review";
   return <div className="workspace-pr-page">

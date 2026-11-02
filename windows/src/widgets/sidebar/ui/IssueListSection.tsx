@@ -52,8 +52,9 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
         onClear={() => void store.filterIssues("open", "")}
       />}
       <div style={{ padding: "0 6px" }}>
-        {st.kind === "needsAccount" && <button className="link" onClick={openSettings}>{t("Connect account…")}</button>}
-        {st.kind === "failed" && <div className="error-text selectable" style={{ fontSize: 11.5 }}>{st.message}</div>}
+        {st.kind === "needsAccount" && !store.hostingAccount && <button className="link" onClick={openSettings}>{t("Connect account…")}</button>}
+        {st.kind === "needsAccount" && store.hostingAccount && <div className="col"><span className="hint">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void store.loadIssues()}>{t("Retry")}</button></div>}
+        {st.kind === "failed" && <div className="col"><div className="error-text selectable" style={{ fontSize: 11.5 }}>{st.message}</div><button className="link" onClick={() => void store.loadIssues()}>{t("Retry")}</button></div>}
         {st.kind === "loading" && !store.issues.length && <Spinner size={12} />}
         {st.kind === "loaded" && !store.issues.length && <div className="muted">{t("No issues match this filter.")}</div>}
       </div>
