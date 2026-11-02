@@ -9,6 +9,8 @@ export { type InboxAction, type InboxGroup, type InboxGroupId, inboxCount, type 
 export { LEDGER_NARROW, LEDGER_WIDE, type LedgerLayout, ledgerLayout } from "./lib/layout";
 export { badgeLabel, heldText, type LedgerNotice, ledgerNotices, type LedgerTarget } from "./lib/notices";
 export { timelineEvents } from "./lib/timeline";
+export { type ChatGPTQuestion, parseChatGPTQuestion } from "./lib/chatgpt-draft";
+export { advanceLearningDelivery, canAdvanceLedgerLearning, LEDGER_LEARNING_SETTING, ledgerLearningConnectBody, type LedgerLearningProgress, type LedgerLearningStep, ledgerLearningSteps, ledgerLearningTitles, ledgerLearningTopics, readLedgerLearning, searchLedgerGuide } from "./lib/learning";
 export { type AnswerDraft, type AnswerOption, type AnswerQuestion, editAnswerDraft, emptyAnswerDraft, fillsSuggestion, promptAnswerQuestions, promptDraftAnswer, reportedAnswerQuestion, selectAnswerOption, suggestedAnswerDraft } from "./lib/answers";
 export { inverseOperation, operationTitle } from "./lib/undo";
 export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictIcon, type VerdictLook, verdictDisplayOrder, verdictLook } from "./lib/verdict";

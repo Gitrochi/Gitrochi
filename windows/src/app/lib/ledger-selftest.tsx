@@ -11,6 +11,7 @@ import { SettingsDialog } from "@/widgets/settings";
 import { openLedgerAt } from "./ledger-notifications";
 import { handleShortcut } from "./shortcuts";
 import { ledgerAnswersSelfTest } from "./ledger-answers-selftest";
+import { ledgerLearningSelfTest } from "./ledger-learning-selftest";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -136,6 +137,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(store.project === "atlas" && $$(".ledger-prompt").length === 3, `The Inbox must filter to this repository's project: ${store.project} prompts=${$$(".ledger-prompt").length}`);
     ensure($$(".ledger-topbar").length === 1 && !$(".ledger-filters"), "A wide Ledger must have one compact filter bar and no second navigation column");
     ensure(getComputedStyle($(".ledger-tabs button.on")!).borderBottomWidth === "2px", "The active view must use an underline tab");
+    await ledgerLearningSelfTest(host, backend);
+    passed.push("local tutorial, persisted practice and searchable guide");
 
     // An answer saved in place with Ctrl+Enter
     const question = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
@@ -375,6 +378,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure($<HTMLButtonElement>("[data-quick-launch]")?.disabled && $(".ledger-quick-launch .hint")?.textContent === t("Open a repository to use its terminal"), "Without a repository the quick launch must be disabled with a visible reason");
     ensure($$(".ledger-onboarding .card").some((card) => card.textContent?.includes(t("Import from claude-ledger")) && card.querySelector("button")), "The onboarding did not offer the claude-ledger import");
     ensure($(".ledger-onboarding")?.textContent?.includes(t("No reports yet")), "The empty Ledger must explain that reports have not arrived");
+    ensure(button(".ledger-onboarding", "Learn Ledger"), "The empty Ledger must offer the replayable tutorial");
     button(".ledger-onboarding", "Connect agents")!.click();
     ensure(await until(() => button(".modal", "Test Ledger")), "Connect agents did not open");
     ensure($$(".modal .ledger-code pre").some((pre) => pre.textContent?.includes("Use ledger_report to send a start report")) && $(".modal button[aria-label='" + t("Copy reporting instruction") + "']"), "Both the reporting instruction and its copy action must be available");

@@ -88,7 +88,9 @@ let start: LedgerMs = 1_793_400_000_000
 @main struct LedgerTests {
     @MainActor static func main() async throws {
         pureLogic()
+        try learning()
         try answerForms()
+        try chatGPTDrafts()
         try graphRows()
         try demoContract()
         try notices()
@@ -102,6 +104,66 @@ let start: LedgerMs = 1_793_400_000_000
             try await native(cli: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2], legacy: CommandLine.arguments[i + 3])
         }
         print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, settings, large demo, the core through its C ABI")
+    }
+
+    @MainActor static func learning() throws {
+        let suite = "dev.gitrochi.ledger-learning-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let tutorial = LedgerLearning(defaults: defaults)
+        check(tutorial.step == .concepts && !tutorial.progress.completed && tutorial.canAdvance, "tutorial starts explicitly at the concepts step")
+        tutorial.next()
+        check(tutorial.step == .views, "view overview follows concepts")
+        tutorial.chosenView = 2
+        tutorial.next()
+        check(tutorial.step == .answer && !tutorial.canAdvance, "answer practice requires an actual send")
+        tutorial.next()
+        check(tutorial.step == .answer, "Next cannot skip unanswered practice")
+        tutorial.answerDraft = "  "
+        check(!tutorial.sendPracticeAnswer(), "an empty practice answer is not sent")
+        tutorial.answerDraft = "Use Stable after the checks"
+        check(!tutorial.canAdvance, "editing or accepting a suggestion does not send practice")
+        check(tutorial.sendPracticeAnswer() && tutorial.progress.answerSent && tutorial.canAdvance, "explicit Send completes the answer exercise")
+        let stored = String(decoding: defaults.data(forKey: "ledgerLearning")!, as: UTF8.self)
+        check(!stored.contains("Use Stable after the checks"), "tutorial progress does not persist draft text")
+        let restored = LedgerLearning(defaults: defaults)
+        check(restored.step == .answer && restored.progress.answerSent && restored.answerDraft.isEmpty, "reopening restores progress while keeping practice text transient")
+        restored.next()
+        check(restored.step == .delivery && restored.progress.deliveryState == .saved && !restored.canAdvance, "a saved answer is not delivered yet")
+        restored.confirm()
+        restored.archive()
+        check(restored.progress.deliveryState == .saved, "confirmation and archive cannot skip delivery")
+        restored.deliver()
+        restored.next()
+        check(restored.step == .delivery && restored.progress.deliveryState == .delivered, "delivery still needs a reviewed result")
+        restored.confirm()
+        check(restored.progress.deliveryState == .confirmed && !restored.canAdvance, "confirmation differs from archiving")
+        restored.archive()
+        check(restored.progress.deliveryState == .archived && restored.canAdvance, "cleaning up finishes the local practice sequence")
+        restored.back()
+        check(restored.step == .answer, "Back remains available after practice")
+        restored.next()
+        restored.next()
+        check(restored.step == .connect, "setup follows completed practice")
+        restored.next()
+        let complete = LedgerLearning(defaults: defaults)
+        check(complete.progress.completed && complete.step == .connect, "completion is remembered without opening a modal automatically")
+        complete.restart()
+        check(complete.step == .concepts && !complete.progress.completed && !complete.progress.answerSent
+              && complete.progress.deliveryState == .saved && complete.answerDraft.isEmpty, "Restart clears only tutorial progress and practice")
+        check(LedgerLearning(defaults: defaults).step == .concepts, "restarted progress is persisted")
+        check(LedgerGuideTopic.matching("  ").count == 9, "the guide includes every topic")
+        check(LedgerGuideTopic.matching("NEXT REPORT").contains(.delivery), "guide search matches case-insensitive body terms")
+        check(LedgerGuideTopic.matching("multiple").contains(.answers) && LedgerGuideTopic.matching("Copy answer").contains(.delivery), "search covers supplemental multiple-choice and copy instructions")
+        check(LedgerGuideTopic.matching("unreported").contains(.troubleshooting) && LedgerGuideTopic.matching("unmatched-example-word").isEmpty, "troubleshooting is searchable and misses are explicit")
+        var invalid = LedgerLearning.Progress()
+        invalid.version = 99
+        defaults.set(try JSONEncoder().encode(invalid), forKey: "ledgerLearning")
+        check(LedgerLearning(defaults: defaults).step == .concepts, "unknown tutorial state versions reset safely")
+        invalid.version = 1; invalid.step = 99; invalid.completed = true
+        defaults.set(try JSONEncoder().encode(invalid), forKey: "ledgerLearning")
+        let guarded = LedgerLearning(defaults: defaults)
+        check(guarded.step == .answer && !guarded.progress.completed, "invalid stored progress cannot skip unfinished practice")
     }
 
     static func answerForms() throws {
@@ -169,11 +231,76 @@ let start: LedgerMs = 1_793_400_000_000
               "reported metadata survives without creating a fourth summary question")
         let q = state.questions[0]
         _ = try call(demo, "human", ["sessionId": "forms", "action": "answer", "questionId": .number(Double(q.id)), "answer": "Custom runtime"], as: LedgerJSON.self)
+        _ = try call(demo, "human", ["sessionId": "forms", "action": "message", "text": "Keep a migration fallback"], as: LedgerJSON.self)
         let queued = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
         check(queued.questions[0].answer == "Custom runtime" && queued.questions[0].deliveredAt == nil, "reading a reported answer does not deliver it")
-        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Read the person's answer"}"#], as: LedgerImportResult.self)
-        let delivered = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
-        check(delivered.questions[0].deliveredAt != nil, "a later agent report collects the queued answer")
+        let pending = queued.events.filter { $0.actor == .human }
+        check(pending.count == 2 && pending.allSatisfy { $0.deliveredAt == nil }, "the answer and human note are queued for an agent")
+        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Pasted progress"}"#], as: LedgerImportResult.self)
+        _ = try call(demo, "import", ["text": #"{"event":"question","session":"forms","question":{"text":"Any release risk?","options":["Review","Proceed"]}}"#], as: LedgerImportResult.self)
+        let afterPaste = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
+        let savedAnswer = afterPaste.questions.first { $0.id == q.id }
+        check(savedAnswer?.answer == "Custom runtime" && savedAnswer?.state == .answered && savedAnswer?.deliveredAt == nil
+              && afterPaste.questions.contains { $0.text == "Any release risk?" && $0.state == .open },
+              "pasting a report or adding a manual question keeps the earlier answer undelivered")
+        let stillPending = afterPaste.events.filter { pending.map(\.id).contains($0.id) }
+        check(stillPending.count == pending.count && stillPending.allSatisfy { $0.deliveredAt == nil },
+              "imports and app session reads never consume pending human answers or notes")
+    }
+
+    static func chatGPTDrafts() throws {
+        let plain = try LedgerChatGPTDraft.parseQuestion("  Explain the cache tradeoffs.\nKeep the original context.  ")
+        check(plain.text == "Explain the cache tradeoffs.\nKeep the original context." && plain.options.isEmpty,
+              "explicit plain pasted questions keep their context without invented choices")
+        let bullets = try LedgerChatGPTDraft.parseQuestion("Which runtime?\n- Node.js: use the existing cache\n- Bun — alternative (추천)\n- Deno (Recommended)")
+        check(bullets.options.map(\.label) == ["Node.js: use the existing cache", "Bun — alternative (추천)", "Deno (Recommended)"],
+              "bullet labels keep full punctuation and recommendation markers")
+        check(bullets.options[0].recommended == nil && bullets.options[1].recommended == true && bullets.options[2].recommended == true,
+              "only explicit recommendation suffixes mark choices")
+        let numbered = try LedgerChatGPTDraft.parseQuestion("Which format?\n1. **Brief**: keep details\n2) Detailed [권장]")
+        check(numbered.options.map(\.label) == ["**Brief**: keep details", "Detailed [권장]"], "numbered choice labels remain complete")
+        let context = try LedgerChatGPTDraft.parseQuestion("Which cache?\n• Memory\n• Disk\nKeep the fallback available.")
+        check(context.text == "Which cache?\nKeep the fallback available.", "text after choices is retained")
+        let form = #"{"text":"Which cache?","multiSelect":false,"suggestedAnswer":"Keep the current cache","options":[{"label":"Memory (Recommended)","recommended":false,"description":"Existing store"},"Disk (권장)"],"session":"foreign","project":"foreign"}"#
+        let parsed = try LedgerChatGPTDraft.parseQuestion(form)
+        check(parsed.multiSelect == false && parsed.suggestedAnswer == "Keep the current cache" && parsed.options[0].recommended == false,
+              "structured paste preserves metadata and explicit false flags")
+        check(parsed.value["session"].string == nil && parsed.value["project"].string == nil, "pasted sources never choose the target")
+        let report = #"{"event":"question","session":"foreign","project":"foreign","questions":[{"text":"Which cache?","options":["Memory","Disk"],"multiSelect":true}]}"#
+        let wrapped = try LedgerChatGPTDraft.parseQuestion("```ledger\n" + report + "\n```")
+        check(wrapped.text == "Which cache?" && wrapped.multiSelect == true && wrapped.options.map(\.label) == ["Memory", "Disk"],
+              "one structured question is accepted from a pasted report fence")
+        check(try LedgerChatGPTDraft.parseQuestion(#"{"question":"Name?","session":"foreign"}"#).text == "Name?", "one report question is accepted")
+        check(try LedgerChatGPTDraft.parseQuestion(#"[{"text":"One"}]"#).text == "One", "one question array is accepted")
+        check(try LedgerChatGPTDraft.parseQuestion(#"{"question":"Which?","options":["A","B"]}"#).options.map(\.label) == ["A", "B"],
+              "question-field form choices are preserved")
+        func rejected(_ raw: String, _ message: String) {
+            do { _ = try LedgerChatGPTDraft.parseQuestion(raw); check(false, "invalid paste accepted: \(raw.prefix(40))") }
+            catch { check(error.localizedDescription == message, "pasted question error: \(error.localizedDescription)") }
+        }
+        let multiple = "Use Paste reports for multiple questions."
+        for raw in [#"[{"text":"First"},{"text":"Second"}]"#, #"{"questions":["First","Second"]}"#,
+                    #"{"question":"First","questions":["Second"]}"#, #"{"text":"First","questions":["Second"]}"#,
+                    "Which cache?\n- Memory\n- Disk\n\nWhich format?\n- Brief\n- Detailed",
+                    "```ledger\n{\"question\":\"First\"}\n```\n```ledger\n{\"question\":\"Second\"}\n```"] { rejected(raw, multiple) }
+        for raw in [#"{"text":"Q","options":[""]}"#, #"{"text":"Q","options":["A"," A "]}"#,
+                    "{\"text\":\"Q\",\"options\":[\"é\",\"e\u{301}\"]}", #"{"text":"Q","options":[{}]}"#,
+                    #"{"text":"Q","options":[false]}"#, "Which?\n- A\n- "] {
+            rejected(raw, "Question option labels must be nonempty and distinct.")
+        }
+        for raw in [#"{"text":"Q","multiSelect":1}"#, #"{"text":"Q","multiSelect":null}"#,
+                    #"{"text":"Q","options":[{"label":"A","recommended":"yes"}]}"#] { rejected(raw, "Question flags must be true or false.") }
+        for raw in [#"{"text":"Q","suggestedAnswer":["A"]}"#, #"{"text":"Q","options":[{"label":"A","description":false}]}"#] {
+            rejected(raw, "Question descriptions and suggestions must be text.")
+        }
+        rejected(#"{"text":"Q","options":null}"#, "Question options must be an array.")
+        rejected(#"{"text":1}"#, "Question text must be nonempty text.")
+        rejected(#"{"text":"#, "Could not read the pasted JSON.")
+        rejected("```json\n{\"text\":\"Q\"}\n```\nExtra content", "Could not read the pasted JSON.")
+        let boundary = String(repeating: "😀", count: 16_384)
+        check(try LedgerChatGPTDraft.parseQuestion(boundary).text == boundary, "the exact UTF-8 byte boundary preserves Unicode")
+        rejected(boundary + "a", "Pasted text is limited to 64 KiB.")
+        rejected("  \n", "Paste a question first.")
     }
 
     static func pureLogic() {
@@ -1132,7 +1259,8 @@ case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-dar
 # The library the app links (the ledger's C ABI is re-exported there) and the gitrochi-ledger command next to it
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
-    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
+    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
+    "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"

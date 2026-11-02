@@ -1,16 +1,20 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.hoisted(() => vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {} })));
 vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 let fixture = "";
 vi.mock("@/shared/api/ipc", () => ({ ipc: {
   run: async (exe: string, args: string[], o: { cwd: string; env: Record<string, string>; stdin?: string }) => {
-    const options = { cwd: o.cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: join(fixture, "empty-config"), GIT_CONFIG_NOSYSTEM: "1", ...o.env }, input: o.stdin, encoding: "utf8" as const, stdio: "pipe" as const };
-    try { return { status: 0, stdout: execFileSync(exe, args, options), stderr: "" }; }
-    catch (e) { const error = e as { status: number; stdout: string; stderr: string }; return { status: error.status, stdout: error.stdout, stderr: error.stderr }; }
+    const options = { cwd: o.cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: join(fixture, "empty-config"), GIT_CONFIG_NOSYSTEM: "1", ...o.env }, encoding: "utf8" as const, windowsHide: true };
+    // Real IPC yields while Git runs; blocking this worker starves Vitest's task-report replies on Windows.
+    const pending = promisify(execFile)(exe, args, options);
+    pending.child.stdin?.end(o.stdin);
+    try { return { status: 0, stdout: (await pending).stdout, stderr: "" }; }
+    catch (e) { const error = e as { code?: number; stdout: string; stderr: string }; return { status: error.code ?? 1, stdout: error.stdout, stderr: error.stderr }; }
   },
   readHead: async (path: string) => ({ size: lstatSync(path).size }),
   remove: async (path: string) => { rmSync(path, { force: true }); },

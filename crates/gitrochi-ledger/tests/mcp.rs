@@ -15,6 +15,62 @@ struct Server {
 }
 
 #[test]
+fn importing_a_question_keeps_replies_for_the_next_mcp_report_or_read() {
+    for recipient in ["ledger_report", "ledger_session"] {
+        let dir = TempDir::new("import-replies");
+        let db = dir.join("ledger.sqlite3");
+        let mut server = Server::start(&db);
+        server.request(1, "initialize", json!({"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "fixture", "version": "1"}}));
+        server.send(&json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
+        let (failed, _) = server.tool(2, "ledger_report", json!({
+            "event": "start", "project": "Example App", "session": "import-replies", "title": "Choose a cache",
+            "questions": ["Which cache?"]
+        }));
+        assert!(!failed);
+        let detail = app(&db, "session", json!({"id": "import-replies"}));
+        app(
+            &db,
+            "human",
+            json!({"action": "answer", "questionId": detail["questions"][0]["id"], "answer": "Memory with a custom expiry"}),
+        );
+        app(
+            &db,
+            "human",
+            json!({"action": "message", "sessionId": "import-replies", "text": "Also check the timeout"}),
+        );
+
+        let pasted = json!({
+            "session": "import-replies", "event": "question", "channel": "mcp",
+            "question": {"text": "Which expiry?", "options": [{"label": "Short", "recommended": true}, {"label": "Long"}], "suggestedAnswer": "Short"}
+        }).to_string();
+        let imported = app(&db, "import", json!({"text": pasted}));
+        assert_eq!(imported["results"][0]["ok"], true);
+        let duplicate = app(&db, "import", json!({"text": pasted}));
+        assert_eq!(duplicate["results"][0]["duplicate"], true);
+        let before = app(&db, "session", json!({"id": "import-replies"}));
+        assert_eq!(before["questions"].as_array().unwrap().len(), 2);
+        assert_eq!(before["questions"][1]["options"][0]["label"], "Short");
+        assert_eq!(before["questions"][1]["suggestedAnswer"], "Short");
+        assert_eq!(before["waitingMessages"], 2, "{recipient}");
+        assert!(before["questions"][0].get("deliveredAt").is_none());
+
+        let args = json!({"session": "import-replies", "event": "progress", "summary": "Continue"});
+        let (failed, delivered) = server.tool(3, recipient, args.clone());
+        assert!(!failed);
+        assert!(delivered.contains("Memory with a custom expiry"));
+        assert!(delivered.contains("Also check the timeout"));
+        assert_eq!(
+            app(&db, "session", json!({"id": "import-replies"}))["waitingMessages"],
+            0
+        );
+        let (failed, next) = server.tool(4, recipient, args);
+        assert!(!failed);
+        assert!(!next.contains("From a person to this session"));
+        assert!(server.finish().is_empty());
+    }
+}
+
+#[test]
 fn structured_questions_round_trip_through_mcp_without_consuming_app_reads() {
     let dir = TempDir::new("mcp-choices");
     let db = dir.join("ledger.sqlite3");

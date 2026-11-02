@@ -8,6 +8,20 @@ Start Gitrochi with `GITROCHI_LEDGER_PREVIEW=1` in its environment. The flag mus
 
 The normal preview reads your local Ledger database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
 
+## Learn the Ledger in the app
+
+Choose **Learn Ledger** in the Ledger toolbar or its empty state. The **Tutorial** has five steps:
+
+1. **Sessions and baselines:** see how an agent's unit of work relates to the version it started from.
+2. **Choose a view:** explore Inbox, Board, Graph and Streams.
+3. **Try answering a question:** select a choice or focus the empty answer and press Tab, edit the draft, then choose **Send answer**. Filling or selecting never sends it.
+4. **Follow an answer to completion:** practise **Mark delivered → Confirm → Clean up**. A saved answer has not necessarily reached the agent yet.
+5. **Connect your agent:** open connection instructions or bring a pasted ChatGPT draft into the Ledger.
+
+Practice uses local example data. It never creates a real session, sends an answer to an agent, changes tracking or archives your actual work. Only the tutorial step and completion flags are remembered; practice answer text is not saved. Close and reopen to resume, choose **Back** to revisit a step, or **Restart** to practise again. The answer and delivery steps require you to try their actions before continuing.
+
+The **Guide** tab is a searchable reference for setup, sessions, views, answering, delivery, review and cleanup, shortcuts, troubleshooting and privacy. Use it whenever you need help; completing the tutorial is optional. Korean and Japanese include the full tutorial and guide text. [Preview screenshots and validation](../screenshots/ledger-learning/README.md) show the practice screens on both platforms.
+
 ## Choose how sessions get into the Ledger
 
 For Claude Code agents you start in Gitrochi:
@@ -67,6 +81,35 @@ Question forms keep every question and its choices together. Select one option, 
 A live Claude Code question can receive the saved answer through its waiting hook. When no automatic answer is available, **Time left** is the time remaining to answer here; the hook releases the question to the terminal when it expires. Questions marked **Answer in terminal** have no live reply route from the Ledger. If a live prompt is answered elsewhere first, your draft stays visible and is not silently sent to a later question. Drafts of reported questions remain available in the session inspector if the question closes elsewhere.
 
 ChatGPT web/app conversations can supply structured questions through connected Ledger tools or pasted reports. The Ledger preserves the choices and suggestions supplied in that report; it does not read ChatGPT's private composer predictions. A saved answer waits for that conversation's next Ledger report or read, with a separate delivered state. **Copy answer** lets you paste an answer back into a conversation that has no connected tools.
+
+### Bring a ChatGPT draft or question
+
+Choose **Bring a ChatGPT draft…** in the toolbar, or from the tutorial's connection step. This is an explicit copy-and-paste handoff. It does not read another app's input box, clipboard or conversation automatically, and it does not send to ChatGPT.
+
+For an answer draft:
+
+1. If your client offers a composer prediction, accept it with Tab there without sending it. Copy the resulting draft, or copy text you wrote yourself.
+2. Open **Bring a ChatGPT draft… → Answer a question**. Select the intended open Ledger question and paste into **Copied text**.
+3. Choose **Use draft**. The Ledger opens that question with your exact pasted text as an editable draft. Review it and choose **Send answer** in the question form when ready.
+
+For a question with choices:
+
+1. Copy one complete question, including its choices. Choose **Add a question**.
+2. Choose the project and an active session, or **New session**. These controls determine the destination; pasted project and session IDs are ignored.
+3. Paste and choose **Preview**. Check the question, choices, recommendation and suggested answer. Editing the text clears the preview.
+4. Choose **Save question** to add it to Inbox. Select or edit an answer there, then send it explicitly.
+
+Plain questions, a single contiguous Markdown bullet/numbered choice list and structured Ledger question JSON are supported. An explicit `(Recommended)` or `(추천)` suffix is recognized; the first choice is never assumed to be recommended. Use structured JSON to preserve option descriptions, multiple selection or a custom `suggestedAnswer`. For example:
+
+```text
+Which release channel should we use?
+- Stable (Recommended)
+- Nightly
+```
+
+Use **Paste reports…** for several questions or complete reports. Text over 64 KiB and ambiguous or malformed structured questions are rejected without importing anything. If the chosen question closes or the session becomes inactive while you work, your text stays in the sheet and you must choose the destination again.
+
+**Pasted by you** records the actual source of the handoff. The Ledger cannot verify which app produced pasted text. OpenAI documents [composer predictions](https://learn.chatgpt.com/docs/features/composer-predictions) for eligible Codex desktop conversations; this feature does not claim that every ChatGPT web/app has them or offer a direct prediction-reading integration.
 
 For example, the `questions` field of a report can contain both plain text and structured questions:
 

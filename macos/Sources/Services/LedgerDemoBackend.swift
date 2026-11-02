@@ -706,10 +706,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 id = add(object["session"]?.string, project: key, title: object["title"]?.string ?? object["summary"]?.string ?? "Imported session",
                          kind: object["kind"]?.string ?? "other", created: ts, base: object["base"]?.string ?? head(of: key))
             }
+            // A pasted report has no agent recipient to receive queued answers or notes.
             record(id, event, at: ts, summary: object["summary"]?.string, body: object["body"]?.string, version: object["version"]?.string)
-            for i in questions.indices where questions[i].sessionId == id && questions[i].state != .open && questions[i].deliveredAt == nil {
-                questions[i].deliveredAt = ts
-            }
             for question in reported {
                 let choices = LedgerPromptAnswers.options(question["options"])
                 addQuestion(id, question.string ?? question["text"].string ?? "", at: ts,

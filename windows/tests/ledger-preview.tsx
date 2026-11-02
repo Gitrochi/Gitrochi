@@ -1,12 +1,14 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
+import { ledgerChatGPTDraftSelfTest } from "../src/app/lib/ledger-chatgpt-draft-selftest";
+import { ledgerParitySelfTest } from "../src/app/lib/ledger-parity-selftest";
 import { handleShortcut } from "../src/app/lib/shortcuts";
 import { DemoLedgerBackend, LedgerStore, type LedgerView, type LedgerVerdict } from "../src/entities/ledger";
 import { RepoStore } from "../src/entities/repo";
 import { workspace } from "../src/entities/workspace";
 import { RepoPage } from "../src/pages/repo";
 import { ipc } from "../src/shared/api";
-import { env, initEnv } from "../src/shared/config";
+import { env, initEnv, settings } from "../src/shared/config";
 import { loadLanguage } from "../src/shared/i18n";
 import { MenuHost, TooltipHost } from "../src/shared/ui";
 import { LedgerWorkspace } from "../src/widgets/ledger-workspace";
@@ -27,7 +29,9 @@ if (mode === "selftest") {
   Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
-  const [passed, detail] = await ledgerSelfTest();
+  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerParitySelfTest()];
+  const passed = checks.every(([ok]) => ok);
+  const detail = checks.map(([, message]) => message).join("\n");
   const result = document.createElement("pre");
   result.id = "ledger-selftest-result";
   result.dataset.passed = String(passed);
@@ -66,6 +70,10 @@ if (mode === "selftest") {
     backend.world.rev++;
   }
   const store = new LedgerStore(backend);
+  if (params.has("learn")) {
+    const step = Math.max(0, Math.min(4, Number(params.get("step")) || 0));
+    settings.set("ledgerLearning", { version: 1, step, completed: false, answerSent: step > 2, deliveryState: step > 3 ? "archived" : "saved" });
+  }
   store.setView((params.get("view") as LedgerView | null) ?? "inbox");
   store.setProjectChoice(params.get("project") ?? "repository");
   await store.refresh(true);
@@ -85,6 +93,14 @@ if (mode === "selftest") {
   root.style.height = "100vh";
   if (params.get("width")) root.style.width = `${params.get("width")}px`;
   createRoot(root).render(<><LedgerWorkspace repoPath={repoPath} ledger={store} /><MenuHost /><TooltipHost /></>);
+  if (params.has("learn")) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    document.querySelector<HTMLElement>("[data-learn-ledger]")?.click();
+    if (params.get("learn") === "guide") {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      document.querySelector<HTMLElement>(".ledger-learning-tabs button[id$='-guide']")?.click();
+    }
+  }
   // ?click=<selector>;<selector> opens a sheet or menu for a screenshot
   for (const selector of (params.get("click") ?? "").split(";").filter(Boolean)) {
     await new Promise((resolve) => setTimeout(resolve, 300));

@@ -132,7 +132,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `attention` | `{project?}` | `{rev, attention: Attention}` | app, agent |
 | `overview` | `{project?, session?, deliver?}` | `{text, data}` — messages are delivered only with `session` and `deliver: true` | app, agent |
 | `report` | the report fields below | `{sessionId, notices, messages: Message[], created, event, session, head?, questionIds, text}`; the session's waiting messages are delivered exactly once | app, agent |
-| `import` | `{text, project?}` | `{results: [{index, ok, duplicate, error?, sessionId?, event?, notices?}]}` — a duplicate is `ok` and skipped | app, agent |
+| `import` | `{text, project?}` | `{results: [{index, ok, duplicate, error?, sessionId?, event?, notices?}]}` — a duplicate is `ok` and skipped; waiting human messages remain for an agent report or delivering read | app, agent |
 | `import_legacy` | `{path, dryRun?}` | `{ok, dryRun, rev, counts: {projects, baselines, baselinesUpdated, sessions, events, questions, imports, workItems, notes, preservedRows}, skipped, errors}` ([below](#importing-a-claude-ledger-database)) | app, agent |
 | `work` | `{action, project?, item?, bundle?, event?, date?, text?, refs?, …}` | Independent work items, dated history, reports and import results ([below](#work-documents-and-personal-records)) | app, agent |
 | `documents` | `{action, project, id?, query?, roots?, root?, path?}` | Approved folders, source evidence, ID mentions, tasks, feedback and checksum changes | app, agent (folder changes and hold: app only) |

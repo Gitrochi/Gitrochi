@@ -126,8 +126,22 @@ fn resolve_base(
     Ok((base, was_latest))
 }
 
-/// Records one report. `ts` is the event's time; `now` is used for the reply's verdicts.
+/// Records a report and hands waiting messages to the agent receiving its reply.
 pub fn report(
+    connection: &Connection,
+    settings: &Settings,
+    args: &Value,
+    channel: &str,
+    ts: Ms,
+    now: Ms,
+) -> Result<ReportReply> {
+    let mut reply = record_without_delivery(connection, settings, args, channel, ts, now)?;
+    reply.messages = event::deliver(connection, &reply.session_id, now)?;
+    Ok(reply)
+}
+
+/// Imports have no agent recipient; their reports must leave pending replies waiting.
+pub(crate) fn record_without_delivery(
     connection: &Connection,
     settings: &Settings,
     args: &Value,
@@ -606,7 +620,7 @@ pub fn report(
         ],
     )?;
 
-    // The reply: the session as it is now, what the agent should know, a person's messages.
+    // Build the common reply before handing messages to a calling agent, when there is one.
     let trunk = baseline::trunk(connection, &project)?;
     let head = trunk.last().map(|b| b.version.clone());
     let viewer = Viewer {
@@ -627,11 +641,10 @@ pub fn report(
         .cloned()
         .ok_or_else(|| Error::not_found(format!("No session {sid}")))?;
     add_context_notices(&view, &views, event, head.as_deref(), &mut notices);
-    let messages = event::deliver(connection, &sid, now)?;
     Ok(ReportReply {
         session_id: sid,
         notices,
-        messages,
+        messages: Vec::new(),
         created,
         event,
         session: view,

@@ -5,7 +5,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports, importLegacy, workLog, documents, notebook, records
+        case connect, importReports, importLegacy, learning, chatGPTDraft, workLog, documents, notebook, records
         var id: String { rawValue }
     }
 
@@ -18,6 +18,7 @@ struct LedgerWorkspaceView: View {
     @ViewState private var width: CGFloat = 1200
     @ViewState private var compactInspector = false
     @ViewState private var sheet: Sheet?
+    @ViewState private var sessionAfterSheet: String?
     /// The claude-ledger database chosen for Import from claude-ledger…
     @ViewState private var legacyPath: String?
     @AppStorage("ledgerInspectorWidth") private var inspectorWidth = 360.0
@@ -57,11 +58,24 @@ struct LedgerWorkspaceView: View {
             LedgerInspector(ledger: ledger, open: open, close: { compactInspector = false })
                 .frame(width: 480, height: 640)
         }
-        .sheet(item: $sheet) { sheet in
+        .sheet(item: $sheet, onDismiss: {
+            if let id = sessionAfterSheet {
+                sessionAfterSheet = nil
+                open(id)
+            }
+        }) { sheet in
             switch sheet {
             case .connect: LedgerConnectSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             case .importLegacy: if let legacyPath { LedgerLegacyImportSheet(ledger: ledger, path: legacyPath) }
+            case .learning:
+                LedgerLearningSheet(openConnect: { switchSheet(to: .connect) },
+                                    bringChatGPTDraft: { switchSheet(to: .chatGPTDraft) })
+            case .chatGPTDraft:
+                LedgerChatGPTDraftSheet(ledger: ledger, onOpenQuestion: { id in
+                    sessionAfterSheet = id
+                    self.sheet = nil
+                })
             case .workLog: LedgerWorkLogSheet(ledger: ledger)
             case .documents: LedgerDocumentsSheet(ledger: ledger)
             case .notebook: LedgerNotebookSheet(ledger: ledger)
@@ -131,11 +145,16 @@ struct LedgerWorkspaceView: View {
                     .help(error).accessibilityLabel(error)
             }
             quickLaunches
+            Button { sheet = .learning } label: { Label("Learn Ledger", systemImage: "book") }
+                .buttonStyle(.borderless).font(.system(size: 12)).help("Learn Ledger")
             Button { sheet = .importReports } label: { Image(systemName: "doc.on.clipboard") }
                 .buttonStyle(.borderless)
                 .help("Paste reports from a conversation")
                 .accessibilityLabel("Paste reports")
             Menu {
+                Button("Learn Ledger") { sheet = .learning }
+                Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
+                Divider()
                 Button("Connect agents…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
@@ -206,6 +225,11 @@ struct LedgerWorkspaceView: View {
         sheet = .importLegacy
     }
 
+    private func switchSheet(to destination: Sheet) {
+        sheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { sheet = destination }
+    }
+
     /// No sessions yet: what the ledger is for, and the ways to fill it
     private var onboarding: some View {
         VStack(spacing: 14) {
@@ -216,6 +240,10 @@ struct LedgerWorkspaceView: View {
                 Button("Connect agents…") { sheet = .connect }.buttonStyle(.borderedProminent)
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
+            }
+            HStack(spacing: 10) {
+                Button("Learn Ledger") { sheet = .learning }
+                Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
             }
             Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.").font(.system(size: 11)).foregroundStyle(.secondary)
         }
