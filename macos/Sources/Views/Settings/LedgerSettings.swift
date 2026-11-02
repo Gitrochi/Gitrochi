@@ -10,7 +10,7 @@ struct LedgerSettings: View {
     static var isShown: Bool { WorkspaceDestination.ledgerPreview }
 
     enum Sheet: String, Identifiable {
-        case connect, importReports
+        case connect, importReports, browser
         var id: String { rawValue }
     }
 
@@ -69,6 +69,7 @@ struct LedgerSettings: View {
         .sheet(item: $sheet, onDismiss: { generation += 1 }) { sheet in
             switch sheet {
             case .connect: LedgerConnectSheet(ledger: ledger)
+            case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             }
         }
@@ -338,6 +339,7 @@ struct LedgerSettings: View {
         Section {
             HStack {
                 Button("Connect agents…") { sheet = .connect }
+                Button("ChatGPT browser extension") { sheet = .browser }
                 Button("Import…") { sheet = .importReports }
             }
         } header: {

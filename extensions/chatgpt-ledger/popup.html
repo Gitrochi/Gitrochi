@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gitrochi Ledger</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header><h1 data-i18n="Gitrochi Ledger">Gitrochi Ledger</h1><button id="refresh" type="button" data-i18n="Refresh">Refresh</button></header>
+    <main>
+      <form id="connection-form">
+        <h2 data-i18n="Connect this ChatGPT conversation">Connect this ChatGPT conversation</h2>
+        <label for="project" data-i18n="Project">Project</label>
+        <input id="project" list="projects" maxlength="256" required autocomplete="off" data-placeholder="Enter or choose a project">
+        <datalist id="projects"></datalist>
+        <label for="session" data-i18n="Session">Session</label>
+        <select id="session"><option value="" data-i18n="New session">New session</option></select>
+        <p id="session-warning" class="caption" hidden data-i18n="Choose an active session."></p>
+        <label class="check"><input id="sync-drafts" type="checkbox"><span data-i18n="Sync drafts accepted with Tab">Sync drafts accepted with Tab</span></label>
+        <p class="caption" data-i18n="Only text accepted with Tab in an empty supported composer is synced. Ordinary typing stays in ChatGPT."></p>
+        <div class="actions"><button id="pause" type="button" data-i18n="Pause">Pause</button><button id="connect" class="primary" type="submit" data-i18n="Connect">Connect</button></div>
+      </form>
+      <section aria-labelledby="connection-title">
+        <h2 id="connection-title" data-i18n="Connection">Connection</h2>
+        <p id="status" role="status" aria-live="polite"></p>
+        <p id="destination" class="caption"></p>
+        <p id="error" role="alert" hidden></p>
+        <p id="capabilities" class="caption"></p>
+        <p class="caption" data-i18n="Composer predictions: unavailable."></p>
+        <p class="caption" data-i18n="Answers stay in Ledger. This extension never sends a message to ChatGPT."></p>
+        <p class="caption" data-i18n="Connection ends when you switch tabs, navigate, reload or close the browser connection. Reconnect to resume."></p>
+      </section>
+      <details id="setup">
+        <summary data-i18n="Browser host setup">Browser host setup</summary>
+        <p class="caption" data-i18n="In Gitrochi, open Ledger → ChatGPT browser extension. Enter this extension ID and allow the browser connection, then return here and refresh."></p>
+        <label for="extension-id" data-i18n="Extension ID">Extension ID</label>
+        <input id="extension-id" readonly spellcheck="false">
+      </details>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

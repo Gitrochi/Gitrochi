@@ -103,10 +103,18 @@ export class DemoLedgerBackend implements LedgerBackend {
     return this.answer(method, args) as LedgerMethods[M]["result"];
   }
 
+  private browserHost = { installed: false, hostName: "com.gitrochi.ledger", manifestPath: "demo/browser-host.json", extensionId: "", hostPath: "" };
+
   private answer(method: LedgerMethod, raw: unknown): unknown {
     const args = (raw ?? {}) as Record<string, unknown>;
     const w = this.world;
     switch (method) {
+      case "browser_status": return { ...this.browserHost };
+      case "browser_install":
+        if (!/^[a-p]{32}$/.test(String(args.extensionId))) throw invalid("Invalid browser extension ID");
+        this.browserHost = { ...this.browserHost, installed: true, extensionId: String(args.extensionId), hostPath: String(args.hostPath) };
+        return { ...this.browserHost };
+      case "browser_remove": this.browserHost = { ...this.browserHost, installed: false }; return { ...this.browserHost };
       case "records": {
         if (args.action === "version_note") {
           const baseline = w.baselines.find((row) => row.project === args.project && row.version === args.version);

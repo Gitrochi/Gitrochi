@@ -89,7 +89,11 @@ mod tty {
                 Err(error) => panic!("read PTY: {error}"),
             }
         }
-        String::from_utf8(bytes).unwrap().replace("\r\n", "\n")
+        // macOS can expand a newline at the PTY output-block boundary to CRCRLF.
+        String::from_utf8(bytes)
+            .unwrap()
+            .replace("\r\r\n", "\n")
+            .replace("\r\n", "\n")
     }
 
     struct Reply {

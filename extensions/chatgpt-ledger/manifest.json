@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Gitrochi Ledger",
+  "description": "Connect the selected ChatGPT conversation to Ledger with your permission.",
+  "version": "0.1.0",
+  "minimum_chrome_version": "106",
+  "permissions": ["activeTab", "scripting", "nativeMessaging"],
+  "background": { "service_worker": "worker.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Gitrochi Ledger" }
+}

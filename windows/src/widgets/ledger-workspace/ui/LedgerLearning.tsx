@@ -17,7 +17,7 @@ const deliveryCopy = {
 };
 
 /** Replayable local practice and a searchable guide; no Ledger backend is passed to this component. */
-export function LedgerLearning({ onClose, onConnect, onImport, onBringChatGPT }: { onClose: () => void; onConnect: () => void; onImport?: () => void; onBringChatGPT?: () => void }) {
+export function LedgerLearning({ onClose, onConnect, onImport, onBringChatGPT, onBrowser }: { onClose: () => void; onConnect: () => void; onImport?: () => void; onBringChatGPT?: () => void; onBrowser?: () => void }) {
   const [tab, setTab] = useState<"tutorial" | "guide">("tutorial");
   const [progress, setProgress] = useState(() => readLedgerLearning(settings.get<unknown>(LEDGER_LEARNING_SETTING, null)));
   const [draft, setDraft] = useState<AnswerDraft>(emptyAnswerDraft);
@@ -45,6 +45,7 @@ export function LedgerLearning({ onClose, onConnect, onImport, onBringChatGPT }:
   const action = (callback: () => void) => { onClose(); callback(); };
   const actions = <div className="ledger-learning-actions">
     <Button onClick={() => action(onConnect)}>{t("Connect agents")}</Button>
+    {onBrowser && <Button onClick={() => action(onBrowser)}>{t("ChatGPT browser extension")}</Button>}
     {onBringChatGPT && <Button onClick={() => action(onBringChatGPT)}>{t("Bring a ChatGPT draft…")}</Button>}
     {onImport && <Button onClick={() => action(onImport)}>{t("Paste reports")}</Button>}
   </div>;

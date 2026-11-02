@@ -81,6 +81,14 @@
     },
     "suggestedAnswer": {
       "type": "string"
+    },
+    "browserSourceUrl": {
+      "type": "string",
+      "description": "The explicitly connected browser conversation that supplied this question."
+    },
+    "browserDraft": {
+      "type": "string",
+      "description": "An observed user composer draft after Tab; separate from model suggestions and native predictions."
     }
   }
 }

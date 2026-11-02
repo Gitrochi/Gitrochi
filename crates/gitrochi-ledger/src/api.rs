@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 30] = [
+pub const METHODS: [(&str, &[Caller]); 33] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -61,6 +61,9 @@ pub const METHODS: [(&str, &[Caller]); 30] = [
     ("prompt_review", &[Caller::App]),
     ("settings_set", &[Caller::App]),
     ("project_set", &[Caller::App]),
+    ("browser_status", &[Caller::App]),
+    ("browser_install", &[Caller::App]),
+    ("browser_remove", &[Caller::App]),
     ("track", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
     ("prompt_get", &[Caller::App, Caller::Hook]),
@@ -317,6 +320,15 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
             views::to_value(&backup::run(db, now, keep, daily)?)
         }
         "settings" => db.read(|c| Ok(Settings::load(c)?.to_json())),
+        "browser_status" => crate::browser_install::status(),
+        "browser_remove" => crate::browser_install::remove(),
+        "browser_install" => {
+            let extension = arg_str(args, "extensionId")
+                .ok_or_else(|| Error::invalid("Missing extensionId"))?;
+            let host =
+                arg_str(args, "hostPath").ok_or_else(|| Error::invalid("Missing hostPath"))?;
+            crate::browser_install::install(&db.path, &extension, std::path::Path::new(&host))
+        }
         "projects" => db.read(|c| Ok(json!({"projects": baseline::projects(c)?}))),
         "human" => {
             let (_, rev) = db.write(|c| {

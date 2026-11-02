@@ -192,13 +192,18 @@ struct LedgerInspector: View {
                 ForEach(closed) { q in
                     VStack(alignment: .leading, spacing: 3) {
                         Text(q.text).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        if let source = LedgerBrowserSetup.sourceURL(q.browserSourceUrl) {
+                            Link("Source conversation", destination: source).font(.system(size: 11))
+                        }
                         if q.state == .answered {
                             HStack(alignment: .firstTextBaseline, spacing: 5) {
                                 Image(systemName: q.answeredBy == .auto ? "timer" : "person.fill").font(.system(size: 11)).foregroundStyle(.secondary)
                                     .help(q.answeredBy == .auto ? String(localized: "Answered by auto-continue") : String(localized: "Answered by a person"))
                                 Text(q.answer ?? "").font(.system(size: 11)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                             }
-                            Text(q.deliveredAt == nil ? String(localized: "Waiting for the session's next report")
+                            Text(LedgerBrowserSetup.sourceURL(q.browserSourceUrl) != nil
+                                 ? String(localized: "Answers are saved in Ledger. They are not sent back to ChatGPT.")
+                                 : q.deliveredAt == nil ? String(localized: "Waiting for the session's next report")
                                                       : String(localized: "Delivered \(LedgerTime.short(q.deliveredAt ?? 0))"))
                                 .font(.system(size: 11)).foregroundStyle(.tertiary)
                             Button("Copy answer") {

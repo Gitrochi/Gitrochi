@@ -22,10 +22,10 @@ export const ledgerLearningTopics = [
   { id: "cleanup", title: "Review and clean up", body: "Confirm a finished result after reviewing it. Clean up archives the conversation without stopping an agent or deleting a branch. A stale session needs review; use Still active when its work continues.", terms: "confirm archive stale review cleanup merged closed" },
   { id: "shortcuts", title: "Keyboard shortcuts", body: "In Inbox, use ↑/↓ to move, Return to open, A to answer, C to confirm and E to clean up. Tab fills an empty answer only when an explicit suggestion exists. Return adds a line; use the form's send button when ready.", terms: "keyboard keys shortcut navigation" },
   { id: "troubleshooting", title: "Troubleshooting", body: "If a session is missing, check the selected project and Unreported filter. If no reports appear, verify the agent connection and ask for a report. Held prompts must be answered in the agent's terminal.", terms: "missing empty connection error held terminal privacy" },
-  { id: "privacy", title: "Privacy", body: "Practice uses local example data. Ledger stores reports and your saved answers. It does not read another app's draft automatically. Bring a ChatGPT draft only when you choose to paste it.", terms: "privacy data clipboard settings automatic permission" },
+  { id: "privacy", title: "Privacy", body: "Practice uses local example data. Ledger stores reports and saved answers. The browser extension reads only the ChatGPT conversation you connect and optional drafts accepted with Tab. It does not read other tabs or desktop predictions.", terms: "privacy data clipboard settings automatic permission" },
 ] as const;
 
-export const ledgerLearningConnectBody = "Connect Claude Code or Codex through Connect agents. For ChatGPT, bring a draft explicitly and review it before saving. Activity tracking alone is not an agent report.";
+export const ledgerLearningConnectBody = "Connect Claude Code or Codex through Connect agents. For ChatGPT web, use the browser extension to sync completed choice questions. Activity tracking alone is not an agent report.";
 
 /** Only valid versioned progress can resume the tutorial. (macOS: LedgerLearningProgress) */
 export function readLedgerLearning(value: unknown): LedgerLearningProgress {

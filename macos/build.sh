@@ -75,6 +75,7 @@ BINS=()
 CORE_BINS=()
 INDEX_BINS=()
 LEDGER_BINS=()
+BROWSER_BINS=()
 for arch in "${ARCHS[@]}"; do
     build_arch "$arch"
     BINS+=("$OBJECTS/$arch/$BIN")
@@ -82,6 +83,7 @@ for arch in "${ARCHS[@]}"; do
     CORE_BINS+=("$REPO/crates/target/$core_target/release/gitch-core")
     INDEX_BINS+=("$REPO/crates/target/$core_target/release/gitrochi-index")
     LEDGER_BINS+=("$REPO/crates/target/$core_target/release/gitrochi-ledger")
+    BROWSER_BINS+=("$REPO/crates/target/$core_target/release/gitrochi-ledger-browser")
 done
 
 rm -rf "$BUILD"
@@ -94,6 +96,8 @@ lipo -create "${INDEX_BINS[@]}" -output "$CONTENTS/MacOS/gitrochi-index"
 ln -s ../MacOS/gitrochi-index "$CONTENTS/Resources/gitrochi-index"
 # gitrochi-ledger: the session ledger's CLI and MCP server, which Connect Claude Code points at (the app links the library).
 lipo -create "${LEDGER_BINS[@]}" -output "$CONTENTS/MacOS/gitrochi-ledger"
+lipo -create "${BROWSER_BINS[@]}" -output "$CONTENTS/MacOS/gitrochi-ledger-browser"
+cp -R "$REPO/extensions/chatgpt-ledger" "$CONTENTS/Resources/chatgpt-ledger"
 cp "$ROOT/Resources/Info.plist" "$CONTENTS/Info.plist"
 cp "$ROOT/Resources/AppIcon.icns" "$CONTENTS/Resources/AppIcon.icns"
 # 화면 번역(한국어 글자가 키, <언어>.lproj/Localizable.strings)
@@ -155,6 +159,7 @@ echo "▶ 서명: ${IDENTITY:-ad-hoc}"
 sign "$CONTENTS/MacOS/gitch-core"
 sign "$CONTENTS/MacOS/gitrochi-index"
 sign "$CONTENTS/MacOS/gitrochi-ledger"
+sign "$CONTENTS/MacOS/gitrochi-ledger-browser"
 sign "$CONTENTS/MacOS/gitch-swift-index"
 [[ -f "$CONTENTS/MacOS/gitch-flow" ]] && sign "$CONTENTS/MacOS/gitch-flow"
 sign "$BUNDLE"

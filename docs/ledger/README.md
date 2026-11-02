@@ -16,7 +16,7 @@ Choose **Learn Ledger** in the Ledger toolbar or its empty state. The **Tutorial
 2. **Choose a view:** explore Inbox, Board, Graph and Streams.
 3. **Try answering a question:** select a choice or focus the empty answer and press Tab, edit the draft, then choose **Send answer**. Filling or selecting never sends it.
 4. **Follow an answer to completion:** practise **Mark delivered → Confirm → Clean up**. A saved answer has not necessarily reached the agent yet.
-5. **Connect your agent:** open connection instructions or bring a pasted ChatGPT draft into the Ledger.
+5. **Connect your agent:** open agent instructions or set up the ChatGPT browser extension.
 
 Practice uses local example data. It never creates a real session, sends an answer to an agent, changes tracking or archives your actual work. Only the tutorial step and completion flags are remembered; practice answer text is not saved. Close and reopen to resume, choose **Back** to revisit a step, or **Restart** to practise again. The answer and delivery steps require you to try their actions before continuing.
 
@@ -72,6 +72,22 @@ MCP registration remains separate. When the tools are available, session-start c
 
 These global hooks are independent of **Track agents I start** and observe local sessions wherever they start, including Gitrochi. The app's switch still controls its own per-launch tracking. Remove the passive hooks to stop this separate observation; the existing launch commands and off behavior are unchanged.
 
+## Connect ChatGPT web without copying messages
+
+Open **Ledger → ChatGPT browser extension** (also in Settings and Learn Ledger). Use **Open extension folder**, then load that folder in Chrome's `chrome://extensions` with Developer mode and **Load unpacked**. Enter Chrome's extension ID in Gitrochi and review **Allow browser connection**. Installation registers the local host; it does not start collecting a conversation.
+
+Open the intended ChatGPT conversation and the extension popup. Choose or enter a Ledger project, then an active session or **New session**, and choose **Connect**. A completed choice question now appears in Ledger automatically. Its complete option labels and explicit recommendation are preserved. The source link opens the original conversation. The extension never chooses an answer or sends a ChatGPT message.
+
+**Sync drafts accepted with Tab** is a separate option, off by default. If text appears in the verified empty browser editor immediately after a trusted Tab gesture, it is offered in Ledger as **Browser draft accepted with Tab**. Use the suggestion or press Tab in the empty Ledger answer, edit it and choose **Save answer**. Existing edits are preserved. These browser answers remain local; they are not queued for an agent or sent back to ChatGPT.
+
+The current adapter was verified on ChatGPT's anonymous `/uc/<UUID>` page. Signed-in `/c/<UUID>` routes require the same page structure and are fixture-tested; other layouts are explicitly unsupported. It reads only the last completed assistant message with one unambiguous question/list of choices. Streaming output, earlier history, code and ambiguous forms are ignored.
+
+This does **not** capture the desktop application's unaccepted composer predictions. The browser host reports that capability as unavailable. An accepted browser draft is distinct from a model recommendation and from an unread prediction. See the [extension guide](../../extensions/chatgpt-ledger/README.md) for the exact supported layout and limits.
+
+Choose **Pause** to stop. Switching tabs, changing conversations, reloading, closing the tab or losing the local connection also pauses capture; reconnect explicitly. **Remove browser connection** in Gitrochi revokes the host registration. No cookies, account credentials, background history scan or external server is used.
+
+Use the updated Gitrochi app and bundled Ledger command together before enabling the extension. Storage schema 8 adds browser provenance and drafts; an older Ledger writer can read it but refuses to write.
+
 ## Answer questions and use suggestions
 
 Question forms keep every question and its choices together. Select one option, select several when allowed, or type a custom answer. A choice fills an editable draft; it does not send anything. **Send answer** confirms the complete form. Every question needs an answer before a multi-question form can be sent.
@@ -80,11 +96,11 @@ Question forms keep every question and its choices together. Select one option, 
 
 A live Claude Code question can receive the saved answer through its waiting hook. When no automatic answer is available, **Time left** is the time remaining to answer here; the hook releases the question to the terminal when it expires. Questions marked **Answer in terminal** have no live reply route from the Ledger. If a live prompt is answered elsewhere first, your draft stays visible and is not silently sent to a later question. Drafts of reported questions remain available in the session inspector if the question closes elsewhere.
 
-ChatGPT web/app conversations can supply structured questions through connected Ledger tools or pasted reports. The Ledger preserves the choices and suggestions supplied in that report; it does not read ChatGPT's private composer predictions. A saved answer waits for that conversation's next Ledger report or read, with a separate delivered state. **Copy answer** lets you paste an answer back into a conversation that has no connected tools.
+The browser extension brings supported ChatGPT web questions and accepted Tab drafts into Ledger automatically. Browser answers stay local and use **Save answer**. A conversation using connected Ledger tools can also supply structured questions; those tool-reported answers wait for that conversation's next Ledger report or read, with a separate delivered state. Neither route reads private composer predictions.
 
-### Bring a ChatGPT draft or question
+### Optional manual import
 
-Choose **Bring a ChatGPT draft…** in the toolbar, or from the tutorial's connection step. This is an explicit copy-and-paste handoff. It does not read another app's input box, clipboard or conversation automatically, and it does not send to ChatGPT.
+For sources that the browser extension does not support, **Bring a ChatGPT draft…** remains available in the toolbar as a separate manual utility. It does not read another app's input box, clipboard or conversation automatically, and it does not send to ChatGPT. The automatic browser connection above does not require this step.
 
 For an answer draft:
 

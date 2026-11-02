@@ -1,5 +1,6 @@
 import { type Ref, useState } from "react";
 import { emptyAnswerDraft, reportedAnswerQuestion, type LedgerQuestion } from "@/entities/ledger";
+import { ipc } from "@/shared/api";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";
@@ -27,7 +28,7 @@ interface AnswerFieldProps {
 }
 
 export function LedgerAnswerField(props: AnswerFieldProps) {
-  return props.question && (props.question.options !== undefined || props.question.suggestedAnswer !== undefined || props.question.multiSelect)
+  return props.question && (props.question.options !== undefined || props.question.suggestedAnswer !== undefined || props.question.browserDraft !== undefined || props.question.multiSelect)
     ? <StructuredAnswerField {...props} question={props.question} />
     : <PlainAnswerField {...props} />;
 }
@@ -41,7 +42,12 @@ function StructuredAnswerField({ question, onSubmit, onCancel, autoFocus, fieldR
     setSaving(true);
     try { if (await onSubmit(draft.text)) { setDraft(emptyAnswerDraft()); onDraftChange?.(""); } } finally { setSaving(false); }
   };
-  return <LedgerAnswerForm questions={[item]} drafts={{ [item.id]: draft }} onChange={(_, value) => { setDraft(value); onDraftChange?.(value.text); }} onSubmit={() => void save()} onCancel={onCancel} autoFocus={autoFocus} fieldRef={fieldRef} disabled={disabled} saving={saving} deliveryHint />;
+  let source: string | undefined;
+  try { const url = new URL(question.browserSourceUrl ?? ""); if (url.protocol === "https:" && url.hostname === "chatgpt.com" && !url.username && !url.password && !url.port) source = url.href; } catch { /* A source label never opens an unvalidated destination. */ }
+  return <>
+    {item.localOnly && <div className="ledger-answer-browser-source"><span className="hint">{t("Answers are saved in Ledger. They are not sent back to ChatGPT.")}</span>{source && <Button size="small" onClick={() => void ipc.openUrl(source!)}>{t("Source conversation")}</Button>}</div>}
+    <LedgerAnswerForm questions={[item]} drafts={{ [item.id]: draft }} onChange={(_, value) => { setDraft(value); onDraftChange?.(value.text); }} onSubmit={() => void save()} onCancel={onCancel} autoFocus={autoFocus} fieldRef={fieldRef} disabled={disabled} saving={saving} submitLabel={item.localOnly ? "Save answer" : "Send answer"} deliveryHint={!item.localOnly} />
+  </>;
 }
 
 function PlainAnswerField({ onSubmit, placeholder, submitLabel = "Save answer", onCancel, autoFocus, fieldRef, label, disabled, initialText, onDraftChange }: AnswerFieldProps) {

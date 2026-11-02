@@ -76,6 +76,17 @@ describe("Ledger editable question forms", () => {
     expect(fillsSuggestion({ key: "Tab" }, "")).toBe(false);
   });
 
+  it("keeps accepted browser drafts verbatim and distinct from model recommendations", () => {
+    const raw = "  Stable with my changes.\n";
+    const item = reportedAnswerQuestion(question({ browserSourceUrl: "https://chatgpt.com/c/00000000-0000-4000-8000-000000000000", browserDraft: raw, suggestedAnswer: "Model suggestion", options: [{ label: "Nightly", recommended: true }] }));
+    expect(item.suggestedAnswer).toBe(raw);
+    expect(item.suggestionLabel).toBe("Browser draft accepted with Tab");
+    expect(item.localOnly).toBe(true);
+    expect(suggestedAnswerDraft(item).text).toBe(raw);
+    const changed = editAnswerDraft(suggestedAnswerDraft(item), "My existing edit");
+    expect(fillsSuggestion({ key: "Tab", shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, isComposing: false }, changed.text, raw)).toBe(false);
+  });
+
   it("gives reported MCP questions the same suggestions and choices without changing their text identity", () => {
     const q = reportedAnswerQuestion(question({ id: 42, text: "Which route?", multiSelect: false, suggestedAnswer: "Use the stable route", options: [{ label: "Fast" }, { label: "Stable", recommended: true, description: "Keeps compatibility" }] }));
     expect(q).toMatchObject({ id: "42", question: "Which route?", suggestedAnswer: "Use the stable route", options: [{ label: "Fast", recommended: false }, { label: "Stable", recommended: true, description: "Keeps compatibility" }] });

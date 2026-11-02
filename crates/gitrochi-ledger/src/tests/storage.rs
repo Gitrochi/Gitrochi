@@ -29,7 +29,7 @@ fn migrations_are_idempotent_and_additive() {
             |r| r.get(0),
         )
         .unwrap();
-    assert_eq!(tables, 26);
+    assert_eq!(tables, 28);
     assert_eq!(again.read(|c| baseline::trunk(c, P)).unwrap().len(), 1);
     // Re-running the first step's SQL on a migrated file is harmless (IF NOT EXISTS).
     raw.execute_batch(include_str!("../schema.sql")).unwrap();

@@ -130,6 +130,10 @@ pub struct QuestionView {
     pub multi_select: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suggested_answer: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub browser_source_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub browser_draft: Option<String>,
     pub state: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub answer: Option<String>,
@@ -147,7 +151,7 @@ pub struct QuestionView {
 }
 
 pub const QUESTION_COLUMNS: &str =
-    "id, session_id, text, state, answer, answered_by, created_at, answered_at, delivered_at, metadata";
+    "id, session_id, text, state, answer, answered_by, created_at, answered_at, delivered_at, metadata, browser_source_url, browser_draft";
 
 impl QuestionView {
     pub fn from_row(row: &Row) -> rusqlite::Result<QuestionView> {
@@ -166,6 +170,8 @@ impl QuestionView {
             options: form.options,
             multi_select: form.multi_select,
             suggested_answer: form.suggested_answer,
+            browser_source_url: row.get(10)?,
+            browser_draft: row.get(11)?,
             state: row.get(3)?,
             answer: row.get(4)?,
             answered_by,
@@ -232,6 +238,7 @@ pub fn deliver(connection: &Connection, session_id: &str, now: Ms) -> Result<Vec
         let mut statement = connection.prepare_cached(
             "SELECT id, text, state, answer, COALESCE(answered_at, created_at) FROM questions
              WHERE session_id = ?1 AND delivered_at IS NULL AND answered_by = 'human'
+               AND browser_source_url IS NULL
                AND state IN ('answered', 'dismissed')
              ORDER BY id",
         )?;
@@ -271,7 +278,7 @@ pub fn deliver(connection: &Connection, session_id: &str, now: Ms) -> Result<Vec
     }
     connection.execute(
         "UPDATE questions SET delivered_at = ?2 WHERE session_id = ?1 AND delivered_at IS NULL
-           AND answered_by = 'human' AND state IN ('answered', 'dismissed')",
+           AND browser_source_url IS NULL AND answered_by = 'human' AND state IN ('answered', 'dismissed')",
         params![session_id, now],
     )?;
     {
@@ -324,7 +331,7 @@ pub fn deliver(connection: &Connection, session_id: &str, now: Ms) -> Result<Vec
 pub fn waiting(connection: &Connection, session_id: &str) -> Result<i64> {
     Ok(connection.query_row(
         "SELECT (SELECT COUNT(*) FROM questions WHERE session_id = ?1 AND delivered_at IS NULL
-                   AND answered_by = 'human' AND state IN ('answered', 'dismissed'))
+                   AND browser_source_url IS NULL AND answered_by = 'human' AND state IN ('answered', 'dismissed'))
               + (SELECT COUNT(*) FROM events WHERE session_id = ?1 AND actor = 'human'
                    AND delivered_at IS NULL AND type IN ('message', 'set_status', 'shelve'))",
         [session_id],

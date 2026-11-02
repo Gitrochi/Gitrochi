@@ -8,6 +8,7 @@ struct LedgerAnswerQuestion: Identifiable, Hashable {
     var options: [LedgerPromptText.Option]
     var multiple: Bool
     var suggestion: String?
+    var browserDraft = false
 }
 
 /// Answer drafts remain separate from sending (Windows: entities/ledger/lib/answers.ts).
@@ -48,7 +49,8 @@ enum LedgerPromptAnswers {
         }
         let multiple = question.multiSelect ?? false
         return .init(id: String(question.id), question: question.text, options: choices, multiple: multiple,
-                     suggestion: nonempty(question.suggestedAnswer) ?? recommended(choices, multiple: multiple))
+                     suggestion: nonempty(question.browserDraft) ?? nonempty(question.suggestedAnswer) ?? recommended(choices, multiple: multiple),
+                     browserDraft: nonempty(question.browserDraft) != nil)
     }
 
     /// Every question needs a draft before the form can send a single reply.

@@ -221,6 +221,22 @@ let start: LedgerMs = 1_793_400_000_000
               && !LedgerPromptAnswers.canFill(text: "", suggestion: nil), "reverse Tab, composition and absent suggestions keep normal navigation")
         let old = try JSONDecoder().decode(LedgerQuestion.self, from: Data(#"{"id":1,"sessionId":"s","text":"Legacy question","state":"open","createdAt":0}"#.utf8))
         check(old.options == nil && old.suggestedAnswer == nil, "older reported questions still decode")
+        var browser = try JSONDecoder().decode(LedgerQuestion.self, from: Data(#"{"id":2,"sessionId":"s","text":"Runtime?","state":"open","createdAt":0,"suggestedAnswer":"Node 22","browserDraft":"Node 24 after checks","browserSourceUrl":"https://chatgpt.com/c/00000000-0000-4000-8000-000000000042"}"#.utf8))
+        let fromBrowser = LedgerPromptAnswers.question(browser)
+        check(fromBrowser.suggestion == "Node 24 after checks" && fromBrowser.browserDraft, "an accepted browser draft is preferred and labeled separately from model suggestions")
+        check(!LedgerPromptAnswers.canFill(text: "My unsent edit", suggestion: fromBrowser.suggestion), "a new browser suggestion never replaces an unsent edit")
+        browser.browserDraft = "  "
+        check(LedgerPromptAnswers.question(browser).suggestion == "Node 22" && !LedgerPromptAnswers.question(browser).browserDraft,
+              "an empty browser draft falls back to an ordinary suggestion")
+        check(old.browserSourceUrl == nil && old.browserDraft == nil, "ordinary questions omit browser metadata")
+        check(LedgerBrowserSetup.validExtensionId(String(repeating: "a", count: 32)) && LedgerBrowserSetup.validExtensionId(String(repeating: "p", count: 32)), "Chrome extension IDs accept the complete a-p alphabet")
+        check(!LedgerBrowserSetup.validExtensionId(String(repeating: "a", count: 31)) && !LedgerBrowserSetup.validExtensionId(String(repeating: "q", count: 32))
+              && !LedgerBrowserSetup.validExtensionId(String(repeating: "A", count: 32)), "Chrome extension IDs reject invalid length and alphabet")
+        check(LedgerBrowserSetup.sourceURL(browser.browserSourceUrl) != nil
+              && LedgerBrowserSetup.sourceURL("https://chatgpt.com/uc/00000000-0000-4000-8000-000000000042") != nil, "signed-in and signed-out browser conversation sources can be opened")
+        check(["https://example.com/c/example", "http://chatgpt.com/c/example", "https://chatgpt.com/c/example?next=https://example.com", "https://chatgpt.com/c/example/other", "file:///c/example", "https://user@chatgpt.com/c/example"].allSatisfy { LedgerBrowserSetup.sourceURL($0) == nil }, "source links cannot navigate to other services, paths or local files")
+        let registration = try JSONDecoder().decode(LedgerBrowserStatus.self, from: Data(#"{"installed":false,"hostName":"com.gitrochi.ledger","manifestPath":"/tmp/example.json"}"#.utf8))
+        check(!registration.installed && registration.extensionId == nil && registration.hostPath == nil, "an uninstalled host status has no imaginary connection")
         let demo = DemoLedgerBackend(mode: .empty)
         let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
         let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
@@ -1261,7 +1277,7 @@ cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
     "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
-    "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
+    "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"

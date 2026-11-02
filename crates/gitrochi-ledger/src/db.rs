@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 /// The newest schema this build writes (`PRAGMA user_version`).
-pub const DB_SCHEMA: i64 = 7;
+pub const DB_SCHEMA: i64 = 8;
 
 /// Writers wait this long for another process's transaction before giving up.
 pub const BUSY_TIMEOUT: Duration = Duration::from_secs(15);
@@ -23,7 +23,7 @@ pub const HOOK_BUSY_TIMEOUT: Duration = Duration::from_millis(1000);
 const READER_POOL: usize = 4;
 
 // Additive steps only: a later schema adds tables and columns and never edits a shipped step.
-const MIGRATIONS: [(i64, &str); 7] = [
+const MIGRATIONS: [(i64, &str); 8] = [
     (1, include_str!("schema.sql")),
     (2, include_str!("schema-v2.sql")),
     (3, include_str!("schema-v3-work.sql")),
@@ -31,6 +31,7 @@ const MIGRATIONS: [(i64, &str); 7] = [
     (5, include_str!("schema-v5-documents.sql")),
     (6, include_str!("schema-v6-legacy.sql")),
     (7, include_str!("schema-v7-documents.sql")),
+    (8, include_str!("schema-v8-browser.sql")),
 ];
 
 /// The database file: `GITROCHI_LEDGER_DB` when set, else one file per user next to the
@@ -195,6 +196,23 @@ fn user_version(connection: &Connection) -> Result<i64> {
     Ok(connection.query_row("PRAGMA user_version", [], |r| r.get(0))?)
 }
 
+fn prepare_browser_migration(connection: &Connection) -> Result<()> {
+    // The browser preview also used version 3. Its databases need the production work
+    // tables, while production databases already have them. The original step is additive.
+    connection.execute_batch(include_str!("schema-v3-work.sql"))?;
+    for column in ["browser_source_url", "browser_draft"] {
+        let exists: bool = connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM pragma_table_info('questions') WHERE name=?1)",
+            [column],
+            |row| row.get(0),
+        )?;
+        if !exists {
+            connection.execute_batch(&format!("ALTER TABLE questions ADD COLUMN {column} TEXT"))?;
+        }
+    }
+    Ok(())
+}
+
 /// Applies the steps newer than the file's `user_version`, each in its own IMMEDIATE
 /// transaction. Two processes opening a new file at once queue on the lock; the second
 /// finds the work done. Every step is written to be harmless when run twice.
@@ -207,6 +225,9 @@ pub fn migrate(connection: &mut Connection) -> Result<i64> {
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let current = user_version(&tx)?;
         if current < number {
+            if number == 8 {
+                prepare_browser_migration(&tx)?;
+            }
             tx.execute_batch(sql)?;
             tx.execute_batch(&format!("PRAGMA user_version = {number}"))?;
             tx.execute(
@@ -298,6 +319,14 @@ impl Db {
     /// The only way to change the ledger: `body` runs inside `BEGIN IMMEDIATE`, then
     /// `meta.rev` goes up by one and everything commits together. Returns the new rev.
     pub fn write<T>(&self, body: impl FnOnce(&Connection) -> Result<T>) -> Result<(T, i64)> {
+        self.write_changed(|connection| body(connection).map(|value| (value, true)))
+    }
+
+    /// An idempotent observer can acknowledge a duplicate without changing the polling revision.
+    pub fn write_changed<T>(
+        &self,
+        body: impl FnOnce(&Connection) -> Result<(T, bool)>,
+    ) -> Result<(T, i64)> {
         if let Some(found) = self.newer_schema {
             return Err(Error::new(
                 "SCHEMA_MISMATCH",
@@ -306,13 +335,17 @@ impl Db {
         }
         let mut connection = lock(&self.writer);
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let value = body(&tx)?;
-        let rev: i64 = tx.query_row(
-            "UPDATE meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rev'
+        let (value, changed) = body(&tx)?;
+        let rev: i64 = if changed {
+            tx.query_row(
+                "UPDATE meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rev'
              RETURNING CAST(value AS INTEGER)",
-            [],
-            |r| r.get(0),
-        )?;
+                [],
+                |r| r.get(0),
+            )?
+        } else {
+            rev(&tx)?
+        };
         tx.commit()?;
         Ok((value, rev))
     }

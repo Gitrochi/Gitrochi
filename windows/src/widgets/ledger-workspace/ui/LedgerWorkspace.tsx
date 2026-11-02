@@ -1,9 +1,10 @@
-import { BookOpen, ClipboardPaste, DatabaseBackup, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
+import { BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
+import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
 import { LedgerChatGPTDraftSheet } from "@/features/transfer-chatgpt-draft";
 import { isMac, keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -26,7 +27,7 @@ import { LedgerManage } from "./LedgerManage";
 import { onScreen, typing } from "./parts";
 import "./ledger-workspace.css";
 
-type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | "work" | "documents" | "notebook" | "records" | null;
+type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | "browser" | "work" | "documents" | "notebook" | "records" | null;
 
 const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -159,6 +160,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             ])} />
             {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
             <Button size="small" data-learn-ledger onClick={() => setSheet("learning")}><BookOpen size={14} />{t("Learn Ledger")}</Button>
+            <IconButton icon={<Globe size={16} />} tip={t("ChatGPT browser extension")} aria-label={t("ChatGPT browser extension")} data-chatgpt-browser onClick={() => setSheet("browser")} />
             <IconButton icon={<MessageSquare size={16} />} tip={t("Bring a ChatGPT draft…")} aria-label={t("Bring a ChatGPT draft…")} onClick={() => setSheet("chatgpt")} />
             <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
             <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
@@ -172,7 +174,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
         {!empty && <LedgerTopBar store={store} repoPath={repoPath} />}
         {store.error && <div className="ledger-banner" role="alert">{store.error}<span className="spacer" /><Button size="small" onClick={() => void store.refresh(true)}>{t("Try again")}</Button></div>}
         {empty ? (
-          <Onboarding onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onImportLegacy={() => setSheet("legacy")} onLearn={() => setSheet("learning")} />
+          <Onboarding onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onImportLegacy={() => setSheet("legacy")} onLearn={() => setSheet("learning")} onBrowser={() => setSheet("browser")} />
         ) : store.repositoryWithoutSessions && store.view !== "graph" ? (
           <div className="ledger-view"><Empty title={t("No sessions for this repository")} detail={t("Agents working here have not reported to the Ledger yet.")} /><div className="row" style={{ justifyContent: "center" }}><Button onClick={() => store.setProjectChoice("all")}>{t("Show all projects")}</Button></div></div>
         ) : (
@@ -198,7 +200,8 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "search" && <LedgerSearch store={store} onClose={() => setSheet(null)} onPick={pick} />}
-      {sheet === "learning" && <LedgerLearning onClose={() => setSheet(null)} onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onBringChatGPT={() => setSheet("chatgpt")} />}
+      {sheet === "learning" && <LedgerLearning onClose={() => setSheet(null)} onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onBringChatGPT={() => setSheet("chatgpt")} onBrowser={() => setSheet("browser")} />}
+      {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "chatgpt" && <LedgerChatGPTDraftSheet store={store} onClose={() => setSheet(null)} onOpenQuestion={(sessionId) => { store.setView("inbox"); open(sessionId); }} />}
       {sheet === "work" && <LedgerWorkLog store={store} onClose={() => setSheet(null)} />}
       {sheet === "documents" && <LedgerDocuments store={store} onClose={() => setSheet(null)} />}
@@ -209,11 +212,11 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
   );
 }
 
-function Onboarding({ onConnect, onImport, onImportLegacy, onLearn }: { onConnect: () => void; onImport: () => void; onImportLegacy: () => void; onLearn: () => void }) {
+function Onboarding({ onConnect, onImport, onImportLegacy, onLearn, onBrowser }: { onConnect: () => void; onImport: () => void; onImportLegacy: () => void; onLearn: () => void; onBrowser: () => void }) {
   return (
     <div className="ledger-onboarding">
       <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No reports yet")} detail={t("No reports have arrived yet. Register the tools, then ask your agent to send a start report.")} />
-      <Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button>
+      <div className="row"><Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button><Button onClick={onBrowser}><Globe size={14} />{t("ChatGPT browser extension")}</Button></div>
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
       <div className="ledger-onboarding-steps">
         <div className="card">

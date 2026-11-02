@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
+import { ledgerBrowserSelfTest } from "../src/app/lib/ledger-browser-selftest";
 import { ledgerChatGPTDraftSelfTest } from "../src/app/lib/ledger-chatgpt-draft-selftest";
 import { ledgerParitySelfTest } from "../src/app/lib/ledger-parity-selftest";
 import { handleShortcut } from "../src/app/lib/shortcuts";
@@ -29,7 +30,7 @@ if (mode === "selftest") {
   Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
-  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerParitySelfTest()];
+  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerParitySelfTest()];
   const passed = checks.every(([ok]) => ok);
   const detail = checks.map(([, message]) => message).join("\n");
   const result = document.createElement("pre");
@@ -67,6 +68,11 @@ if (mode === "selftest") {
       { header: "Follow-up", question: "Anything else to include?", suggestedAnswer: "Include remaining risks and the next action.", options: [] },
     ] } });
     else backend.world.questions.push({ id: backend.world.nextQuestion++, sessionId: demoOwner.id, text: "How should the review results be shared?", options: [{ label: "Brief summary", description: "Focus on outcomes and next steps", recommended: true }, { label: "Detailed report", description: "Include the evidence and tradeoffs" }], suggestedAnswer: "Use a brief summary with links to the evidence.", state: params.has("answered") ? "answered" : "open", ...(params.has("answered") ? { answer: "Use a brief summary with links to the evidence.", answeredBy: "human" as const, answeredAt: Date.now() } : {}), createdAt: Date.now() });
+    if (mode === "reported" && params.has("browser")) {
+      const question = backend.world.questions[0];
+      question.browserSourceUrl = "https://chatgpt.com/uc/00000000-0000-4000-8000-000000000042";
+      question.browserDraft = "Use a brief summary after the checks pass.";
+    }
     backend.world.rev++;
   }
   const store = new LedgerStore(backend);
