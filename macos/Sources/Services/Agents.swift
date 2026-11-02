@@ -280,7 +280,10 @@ final class AgentCenter {
     func runsInApp(_ s: AgentSession) -> Bool { inApp[s.id]?.session != nil }
 
     /// 폴더에서 에이전트를 띄운다 — host 저장소 탭 아래 터미널의 새 탭(기본) 또는 새 Terminal 창. task 가 있으면 첫 요청으로 보낸다.
-    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil) throws {
+    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil, place: Place? = nil) throws {
+        if place == .app, host == nil {
+            throw AIError.notConfigured(String(localized: "Choose an open repository before starting an in-app agent."))
+        }
         guard let exe = ToolStore.shared.path(kind.tool) else {
             throw AIError.notConfigured(String(localized: "Couldn't find \(kind.title). Locate the executable in Settings > Tools or install it."))
         }
@@ -290,23 +293,26 @@ final class AgentCenter {
                                    "created": Date().timeIntervalSince1970]
         try JSONSerialization.data(withJSONObject: meta).write(to: file(id + ".meta"))
         if kind == .claude, LedgerTracking.isOn {
-            Task { await startTracked(kind, exe: exe, id: id, in: path, task: task.trimmed, permissionMode: permissionMode, host: host) }
+            Task { await startTracked(kind, exe: exe, id: id, in: path, task: task.trimmed, permissionMode: permissionMode, host: host, place: place) }
             load()
             return
         }
         let args = AgentLaunch.arguments(kind, hooks: hooksFile.path, task: task.trimmed, mode: permissionMode)
         let env = AgentLaunch.environment(agent: id)
-        try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host)
+        try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host, place: place)
         load()
     }
 
     private func launch(_ kind: AgentKind, exe: String, id: String, in path: String, args: [String], env: [String: String],
-                        host: RepoStore?) throws {
+                        host: RepoStore?, place: Place?) throws {
         let pidFile = file(id + ".pid").path
-        if let host, Place.current == .app,
+        if let host, (place ?? Place.current) == .app,
            let session = host.newTerminal(in: path, command: .init(program: exe, args: args, env: env, title: kind.title, pidFile: pidFile)) {
             inApp[id] = TerminalLink(session, host)
         } else {
+            if place == .app {
+                throw AIError.notConfigured(String(localized: "The in-app terminal could not start. Try again."))
+            }
             try Launcher.run(exe, args: args, in: path, env: env, pidFile: pidFile)
         }
     }
@@ -315,7 +321,7 @@ final class AgentCenter {
     /// file of its own that adds the ledger's entries after the existing ones, and the Ledger tools when Claude Code has
     /// no server of that name. When the ledger cannot take the session, the agent starts untracked and the person is told.
     private func startTracked(_ kind: AgentKind, exe: String, id: String, in path: String, task: String, permissionMode: String?,
-                              host: RepoStore?) async {
+                              host: RepoStore?, place: Place?) async {
         var args = AgentLaunch.arguments(kind, hooks: hooksFile.path, task: task, mode: permissionMode)
         var env = AgentLaunch.environment(agent: id)
         var problem: String?
@@ -336,7 +342,7 @@ final class AgentCenter {
             problem = String(localized: "\(kind.title) started without the Ledger: \(error.localizedDescription)")
         }
         do {
-            try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host)
+            try launch(kind, exe: exe, id: id, in: path, args: args, env: env, host: host, place: place)
         } catch {
             problem = error.localizedDescription
         }

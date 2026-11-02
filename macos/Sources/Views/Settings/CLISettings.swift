@@ -3,6 +3,9 @@ import AppKit
 
 /// 설정 > CLI: 앱에 든 셸 명령(gitch) 설치·계정
 struct CLISettings: View {
+    @AppStorage("terminalFontSize") private var terminalFontSize = 13.0
+    @AppStorage("terminalDictationUseRepositoryWords") private var useRepositoryWords = true
+    @AppStorage("terminalDictationWords") private var recognitionWords = ""
     @ViewState private var generation = 0
     @ViewState private var logoEnabled: Bool?
     @ViewState private var logoSaving = false
@@ -11,6 +14,35 @@ struct CLISettings: View {
 
     var body: some View {
         Form {
+            Section("Terminal") {
+                TerminalBrand()
+                    .padding(.vertical, 4)
+                Stepper(value: $terminalFontSize, in: 10...22, step: 1) {
+                    HStack {
+                        Text("Text size")
+                        Spacer()
+                        Text(verbatim: "\(Int(terminalFontSize)) pt")
+                            .monospacedDigit().foregroundStyle(.secondary)
+                    }
+                }
+                Text("Quick commands fill the terminal. Review them, then press Return to run.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "waveform").foregroundStyle(Color.accentColor)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Voice workspace on macOS").font(.callout.weight(.medium))
+                        Text("Hold Control-Shift-Space to dictate, optionally clean up your words, then review the destination before sending.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Text("Microphone and Speech Recognition access are requested when you start listening.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Toggle("Use repository word hints", isOn: $useRepositoryWords)
+                TextField("Custom recognition words", text: $recognitionWords, axis: .vertical)
+                    .lineLimit(2...4)
+                Text("Separate names, tools and Korean terms with commas or new lines. Recognition uses these hints only on this Mac.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("CLI appearance") {
                 Toggle("Show the small eye logo", isOn: Binding(
                     get: { logoEnabled ?? true },
@@ -34,6 +66,9 @@ struct CLISettings: View {
             GitchSection()
         }
         .formStyle(.grouped)
+        .onChange(of: recognitionWords) { _, value in
+            if value.count > 4_000 { recognitionWords = String(value.prefix(4_000)) }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in generation += 1 }
         .task(id: generation) { await loadLogo() }
     }
