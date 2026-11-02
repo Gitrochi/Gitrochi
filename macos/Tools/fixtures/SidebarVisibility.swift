@@ -14,6 +14,7 @@ private func require(_ condition: @autoclosure () -> Bool, _ message: String = "
     var presentation = SidebarPresentationState()
     var suppressNativeVisibilityEcho = false
     var expandRequest = 0
+    var animateExpansion = true
     var visibility: NavigationSplitViewVisibility {
         get { presentation.visibility }
         set { if !suppressNativeVisibilityEcho { presentation.setVisibility(newValue) } }
@@ -69,7 +70,9 @@ private struct SidebarFixture: View {
                 Label("Pull requests", systemImage: "arrow.triangle.pull")
             }
             .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
-            .background(SidebarVisibilityObserver(expandRequest: recorder.expandRequest) { recorder.measure($0) })
+            .background(SidebarVisibilityObserver(expandRequest: recorder.expandRequest,
+                                                  animateExpansion: recorder.animateExpansion,
+                                                  expansionAllowed: recorder.presentation.visibility != .detailOnly) { recorder.measure($0) })
             .disabled(railShown)
             .accessibilityHidden(railShown)
         } detail: {
@@ -217,11 +220,11 @@ private struct SidebarFixture: View {
                            "contentWidth": host.frame.width, "measuredWidth": recorder.measuredWidth])
         }
 
-        recorder.visibility = .detailOnly
+        withAnimation(.easeInOut(duration: 0.24)) { recorder.visibility = .detailOnly }
         waitFor("binding-detail-only") { recorder.collapsed && recorder.railVisible }
         require(recorder.railVisible, "Explicit collapse must keep the icon rail visible")
         capture("binding-detail-only")
-        recorder.visibility = .all
+        withAnimation(.easeInOut(duration: 0.24)) { recorder.visibility = .all }
         waitFor("binding-expanded") { !recorder.collapsed && !recorder.railVisible }
         require(!recorder.railVisible, "Expanding the sidebar must remove the duplicate rail")
         capture("binding-expanded")
@@ -258,12 +261,36 @@ private struct SidebarFixture: View {
         recorder.presentation.expand()
         recorder.expandRequest += 1
         waitFor("rail-expands-native-only-collapse") {
-            !sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible
+            !sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible && sidebarView(split).frame.width >= 210
         }
         require(!sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible,
                      "The icon rail expansion must open the actual sidebar even when the binding was already expanded")
         recorder.suppressNativeVisibilityEcho = false
         capture("rail-expands-native-only-collapse")
+
+        recorder.animateExpansion = false
+        recorder.suppressNativeVisibilityEcho = true
+        sidebarItem.isCollapsed = true
+        waitFor("reduced-motion-native-collapse") { recorder.collapsed && recorder.railVisible }
+        recorder.presentation.expand()
+        recorder.expandRequest += 1
+        waitFor("reduced-motion-native-expand") {
+            !sidebarItem.isCollapsed && !recorder.collapsed && !recorder.railVisible && sidebarView(split).frame.width >= 210
+        }
+        recorder.suppressNativeVisibilityEcho = false
+        recorder.animateExpansion = true
+        capture("reduced-motion-native-expand")
+
+        recorder.visibility = .detailOnly
+        waitFor("collapse-before-rapid-reversal") { recorder.collapsed && recorder.railVisible }
+        recorder.presentation.expand()
+        recorder.expandRequest += 1
+        recorder.visibility = .detailOnly
+        waitFor("rapid-expansion-reversed") { sidebarItem.isCollapsed && recorder.collapsed && recorder.railVisible }
+        capture("rapid-expansion-reversed")
+        recorder.presentation.expand()
+        recorder.expandRequest += 1
+        waitFor("expand-after-rapid-reversal") { !recorder.collapsed && !recorder.railVisible && sidebarView(split).frame.width >= 210 }
 
         window.setContentSize(NSSize(width: 1100, height: 650))
         waitFor("automatic-narrow-1100") {

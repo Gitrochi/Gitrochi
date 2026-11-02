@@ -22,10 +22,18 @@ export function RepoPage({ store, openSettings, gitMissing = false }: { store: R
   const repository = store.destination === "repository" && !!store.path;
   const compact = settings.get("navigationSidebarCollapsed", false);
   const navigationW = settings.get("navigationSidebarWidth", 240);
+  const [resizingNavigation, setResizingNavigation] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   const [paneH, setPaneH] = useState(800);
   // opening the repository screen folds the page list into the rail, so the branch list takes its place
   useEffect(() => { if (repository) settings.set("navigationSidebarCollapsed", true); }, [repository]);
+  useEffect(() => {
+    if (!resizingNavigation) return;
+    const finish = () => setResizingNavigation(false);
+    window.addEventListener("mouseup", finish);
+    window.addEventListener("blur", finish);
+    return () => { window.removeEventListener("mouseup", finish); window.removeEventListener("blur", finish); };
+  }, [resizingNavigation]);
   useLayoutEffect(() => {
     const el = paneRef.current;
     if (!el) return;
@@ -38,10 +46,10 @@ export function RepoPage({ store, openSettings, gitMissing = false }: { store: R
     <div className="repo">
       <Toolbar store={store} />
       <div className="main" data-navigation-mode={compact ? "compact" : "expanded"}>
-        <div className={`navigation${compact ? " compact" : ""}`} style={{ width: compact ? 56 : navigationW }}>
+        <div className={`navigation${compact ? " compact" : ""}${resizingNavigation ? " resizing" : ""}`} style={{ width: compact ? 56 : navigationW }}>
           <NavigationSidebar store={store} openSettings={openSettings} compact={compact} onToggle={() => settings.set("navigationSidebarCollapsed", !compact)} />
         </div>
-        {!compact && <div className="splitter navigation-splitter" onMouseDown={resizeColumn("navigationSidebarWidth", navigationW, 200, 320, 1)} />}
+        {!compact && <div className="splitter navigation-splitter" onMouseDown={(event) => { setResizingNavigation(true); resizeColumn("navigationSidebarWidth", navigationW, 200, 320, 1)(event); }} />}
         <div className="workspace-main">
           {gitMissing && <div className="workspace-git-notice"><span>{t("Install Git or locate the existing executable to work with local repositories.")}</span><Button onClick={() => window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "tools" }))}>{t("Locate Git…")}</Button></div>}
           {repository ? <RepositoryScreen store={store} openSettings={openSettings} /> : <div className="workspace-pane" ref={paneRef} key={store.path ?? "empty"}>
