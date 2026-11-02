@@ -93,7 +93,10 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(host.textContent?.includes("fixture/remote"), "Remote server search did not render");
     await click("Clone…");
     check(store.sheet?.kind === "clone" && store.sheet.url === "https://github.com/fixture/remote.git", "Remote Clone did not preserve URL");
+    check(store.hostingHub.selectedAccountID === profile.id, "Home search did not preserve the selected workspace account");
     store.sheet = null;
+    // The following repository scenarios start without an account-wide scope selection.
+    store.hostingHub.selectedAccountID = null;
     reset();
     // Account: Inbox, My work and Organizations on one page; Releases and Projects have pages of their own
     settings.set("accountPageSection", "inbox");
