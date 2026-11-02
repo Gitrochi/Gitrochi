@@ -1,12 +1,16 @@
-# Using the Ledger preview
+# Using the Ledger
 
-The Ledger brings agent reports, questions and finished work into one place in Gitrochi. It keeps a record of what each session started from and what needs your attention. It is available on macOS and Windows as a preview; the existing Agents tab and terminal continue to work as before.
+The Ledger brings agent reports, questions and finished work into one place in Gitrochi. It keeps a record of what each session started from and what needs your attention. Its page is available on macOS and Windows without a preview flag; the existing Agents panel and terminal continue to work as before.
 
-## Open the preview
+<a id="open-the-preview"></a>
 
-Start Gitrochi with `GITROCHI_LEDGER_PREVIEW=1` in its environment. The flag must reach the app process when it starts; setting it in an already-open app's terminal does not reveal the page. Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. Its settings appear in **Settings › Ledger**. The preview remains hidden by default.
+## Open the Ledger
 
-The normal preview reads your local Ledger database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
+Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
+
+Optional launched-agent tracking, the app's waiting-prompt heartbeat, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` in the app process at startup, together with their relevant settings. Setting the variable in an already-open app's terminal does not change that app's environment. **Track agents I start** remains off by default. Reading reports and using the Ledger's local tools do not require this preview switch.
+
+The Ledger normally reads your local database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
 
 ## Learn the Ledger in the app
 
@@ -234,9 +238,9 @@ Use **Back up now** to create a consistent SQLite snapshot in `backups/` beside 
 
 Gitrochi also checks for a daily snapshot while it follows the Ledger, through an open Ledger view or its active notification polling. Successful checks are at most hourly; a failed attempt retries after five minutes without interrupting the page. Demo data is excluded. The optional HTTP bridge makes the same daily check while its process runs. No daily backup runs while both the app's Ledger polling and the bridge are stopped. Concurrent app, bridge and CLI snapshots use separate temporary files.
 
-Restore is manual. Close Gitrochi and stop agents and other processes using that Ledger first. Preserve the current database and any matching `-wal` and `-shm` files together, then restore a backup as `ledger.sqlite3` with no old sidecar files beside it. Reopen the preview and check its sessions before resuming agents. Keep the preserved files until you are satisfied with the restore.
+Restore is manual. Close Gitrochi and stop agents and other processes using that Ledger first. Preserve the current database and any matching `-wal` and `-shm` files together, then restore a backup as `ledger.sqlite3` with no old sidecar files beside it. Reopen the Ledger and check its sessions before resuming agents. Keep the preserved files until you are satisfied with the restore.
 
-For the exact API and unresolved design points, see the [core contract](../../crates/gitrochi-ledger/CONTRACT.md) and [Ledger design](DESIGN.md). The preview gate, launched implementation-session default and pre-prompt Claude session-ID linkage remain maintainer decisions.
+For the exact API and unresolved design points, see the [core contract](../../crates/gitrochi-ledger/CONTRACT.md) and [Ledger design](DESIGN.md). Page availability is independent of the optional tracking and background-integration switches. The design records the remaining integration decisions.
 
 ## Work, document evidence and personal notes
 

@@ -2,7 +2,7 @@
 
 Existing Claude Ledger users can bring their records into Gitrochi and keep using the reporting workflow. Installing Gitrochi does not connect the two databases automatically. Choose a **one-time import** and connect agents to Gitrochi, or start the optional **local HTTP bridge** for clients that still use the original Python command.
 
-Gitrochi's Ledger is available on macOS and Windows behind the [preview switch](README.md#open-the-preview). It implements the behavior independently in Rust, Swift and TypeScript. No Python source, interface styling or organization-specific document parser is copied from the supplied project, which has no license file.
+Gitrochi's Ledger page is available on macOS and Windows without a preview flag. [Opening the Ledger](README.md#open-the-ledger) explains the separate opt-in requirements for tracking and background integrations. It implements the behavior independently in Rust, Swift and TypeScript. No Python source, interface styling or organization-specific document parser is copied from the supplied project, which has no license file.
 
 ## Import existing records
 
