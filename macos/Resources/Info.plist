@@ -62,6 +62,10 @@
 	<string>15.0</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Claude Code 세션이 돌고 있는 Terminal 탭을 앞으로 가져오는 데 씁니다.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Gitrochi uses your microphone only when you start voice input in an app terminal.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Gitrochi transcribes your voice on this Mac so you can review and insert text into the selected app terminal.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>

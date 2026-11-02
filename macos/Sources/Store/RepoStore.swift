@@ -117,6 +117,8 @@ final class RepoStore: Identifiable {
     /// How the terminal panel is split into panes of tabs
     var terminalLayout: TerminalNode?
     var showTerminal = false
+    var terminalVoiceActionID: UUID?
+    let terminalVoice = TerminalVoiceCoordinator()
 
     // MARK: 로딩 화면
     weak var window: NSWindow?
