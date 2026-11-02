@@ -231,11 +231,21 @@ let start: LedgerMs = 1_793_400_000_000
               "reported metadata survives without creating a fourth summary question")
         let q = state.questions[0]
         _ = try call(demo, "human", ["sessionId": "forms", "action": "answer", "questionId": .number(Double(q.id)), "answer": "Custom runtime"], as: LedgerJSON.self)
+        _ = try call(demo, "human", ["sessionId": "forms", "action": "message", "text": "Keep a migration fallback"], as: LedgerJSON.self)
         let queued = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
         check(queued.questions[0].answer == "Custom runtime" && queued.questions[0].deliveredAt == nil, "reading a reported answer does not deliver it")
-        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Read the person's answer"}"#], as: LedgerImportResult.self)
-        let delivered = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
-        check(delivered.questions[0].deliveredAt != nil, "a later agent report collects the queued answer")
+        let pending = queued.events.filter { $0.actor == .human }
+        check(pending.count == 2 && pending.allSatisfy { $0.deliveredAt == nil }, "the answer and human note are queued for an agent")
+        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Pasted progress"}"#], as: LedgerImportResult.self)
+        _ = try call(demo, "import", ["text": #"{"event":"question","session":"forms","question":{"text":"Any release risk?","options":["Review","Proceed"]}}"#], as: LedgerImportResult.self)
+        let afterPaste = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
+        let savedAnswer = afterPaste.questions.first { $0.id == q.id }
+        check(savedAnswer?.answer == "Custom runtime" && savedAnswer?.state == .answered && savedAnswer?.deliveredAt == nil
+              && afterPaste.questions.contains { $0.text == "Any release risk?" && $0.state == .open },
+              "pasting a report or adding a manual question keeps the earlier answer undelivered")
+        let stillPending = afterPaste.events.filter { pending.map(\.id).contains($0.id) }
+        check(stillPending.count == pending.count && stillPending.allSatisfy { $0.deliveredAt == nil },
+              "imports and app session reads never consume pending human answers or notes")
     }
 
     static func chatGPTDrafts() throws {

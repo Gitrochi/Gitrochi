@@ -238,7 +238,14 @@ pub fn import(
                     }
                 }
             }
-            let reply = report::report(c, settings, &args, "import", now + index as Ms, now)?;
+            let reply = report::record_without_delivery(
+                c,
+                settings,
+                &args,
+                "import",
+                now + index as Ms,
+                now,
+            )?;
             c.execute(
                 "INSERT OR IGNORE INTO imports (hash, ts) VALUES (?1, ?2)",
                 rusqlite::params![digest, now],
