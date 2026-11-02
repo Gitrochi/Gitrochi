@@ -565,7 +565,7 @@ pub fn report(
     }
 
     if event != "heartbeat" {
-        event::insert(
+        let event_id = event::insert(
             connection,
             &NewEvent {
                 session_id: &sid,
@@ -582,6 +582,7 @@ pub fn report(
                 delivered_at: None,
             },
         )?;
+        crate::work::assign_session_event(connection, &project, event_id, &work, ts)?;
     }
 
     connection.execute(

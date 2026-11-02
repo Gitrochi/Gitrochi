@@ -3,7 +3,7 @@
 //! sessions, events, questions and the hashes of pasted blocks are copied in one write
 //! transaction; a session whose ID the ledger already has is skipped with its history.
 //! Only the file's table and column names are relied on — the compatibility surface that
-//! reading it needs. Work-ledger and note tables are not read (D3).
+//! reading it needs. Optional work and notebook rows are carried over independently.
 
 use crate::db::{self, Db};
 use crate::error::{Error, Result};
@@ -35,6 +35,9 @@ pub struct Counts {
     pub questions: usize,
     /// Hashes of pasted blocks, so blocks imported there count as duplicates here.
     pub imports: usize,
+    pub work_items: usize,
+    pub notes: usize,
+    pub preserved_rows: usize,
 }
 
 impl Counts {
@@ -167,6 +170,7 @@ struct Session {
 }
 
 struct Event {
+    id: Option<i64>,
     session_id: String,
     ts: Ms,
     kind: String,
@@ -203,6 +207,8 @@ struct Baseline {
 
 /// Everything the import copies, read in one snapshot and already in the contract's terms.
 struct Source {
+    key: String,
+    extra: crate::legacy_extra::Tables,
     sessions: Vec<Session>,
     /// In time order, so events at the same time keep their order.
     events: Vec<Event>,
@@ -333,6 +339,7 @@ fn read(path: &Path) -> Result<Source> {
     } else {
         Vec::new()
     };
+    let extra = crate::legacy_extra::read(&tx, &tables)?;
     tx.commit()?;
 
     // The newest report each session's own agent sent; hand-off records (`data.by` naming
@@ -351,7 +358,13 @@ fn read(path: &Path) -> Result<Source> {
         }
         s.last_at = s.last_at.max(s.last_agent_at);
     }
+    let identity = sessions
+        .first()
+        .map(|s| format!("{}:{}:{}", s.id, s.project, s.created_at))
+        .unwrap_or_else(|| path.to_string_lossy().into_owned());
     Ok(Source {
+        key: crate::sha1::hex(identity.as_bytes()),
+        extra,
         sessions,
         events,
         questions,
@@ -555,6 +568,7 @@ fn read_events(
         }
         let actor = actor(ident(row, 4)?.as_deref().unwrap_or(""));
         Ok(Some(Event {
+            id: int_at(row, 0)?,
             session_id,
             ts,
             kind: event_type(&raw_type, actor),
@@ -810,7 +824,28 @@ fn copy(c: &Connection, source: &Source, settings: &Settings, write: bool) -> Re
     let seen = sessions
         .iter()
         .map(|s| (s.project.as_str(), s.created_at))
-        .chain(source.baselines.iter().map(|b| (b.project.as_str(), b.ts)));
+        .chain(source.baselines.iter().map(|b| (b.project.as_str(), b.ts)))
+        .chain(
+            source
+                .extra
+                .iter()
+                .filter(|(table, _)| table.starts_with("work_"))
+                .flat_map(|(_, rows)| rows.iter())
+                .filter_map(|row| {
+                    row["project"]
+                        .as_str()
+                        .filter(|name| !name.trim().is_empty())
+                        .map(|project| {
+                            (
+                                project,
+                                row["created_ts"]
+                                    .as_i64()
+                                    .or(row["ts"].as_i64())
+                                    .unwrap_or(0),
+                            )
+                        })
+                }),
+        );
     for (project, ts) in seen {
         let first = first_seen.entry(project).or_insert(ts);
         *first = (*first).min(ts);
@@ -987,7 +1022,7 @@ fn copy(c: &Connection, source: &Source, settings: &Settings, write: bool) -> Re
         counts.events += 1;
         if write {
             let (data, body) = event_data(&e.data, &renumbered);
-            event::insert(
+            let event_id = event::insert(
                 c,
                 &NewEvent {
                     session_id: &e.session_id,
@@ -1004,6 +1039,10 @@ fn copy(c: &Connection, source: &Source, settings: &Settings, write: bool) -> Re
                     delivered_at: e.delivered_at,
                 },
             )?;
+            if let Some(id) = e.id {
+                c.execute("INSERT OR IGNORE INTO ledger_legacy_event_ids(source,legacy_id,event_id) VALUES (?1,?2,?3)",
+                    params![source.key, id, event_id])?;
+            }
         }
     }
 
@@ -1022,6 +1061,12 @@ fn copy(c: &Connection, source: &Source, settings: &Settings, write: bool) -> Re
             }
         }
     }
+
+    let ids = crate::legacy_extra::event_ids(c, &source.key)?;
+    counts.preserved_rows = crate::legacy_extra::preserve(c, &source.key, &source.extra, write)?;
+    counts.notes = crate::legacy_extra::notes(c, &source.key, &source.extra, write)?;
+    let work = crate::work::import_legacy(c, &source.extra, &ids, &source.key, write)?;
+    counts.work_items = work["items"].as_u64().unwrap_or(0) as usize;
 
     Ok(Outcome {
         counts,

@@ -300,7 +300,7 @@ export interface LedgerLegacyImport {
   ok: boolean;
   dryRun: boolean;
   rev: number;
-  counts: { projects: number; baselines: number; baselinesUpdated: number; sessions: number; events: number; questions: number; imports: number };
+  counts: { projects: number; baselines: number; baselinesUpdated: number; sessions: number; events: number; questions: number; imports: number; workItems?: number; notes?: number; preservedRows?: number };
   /** Sessions the ledger already has; neither they nor their history were copied */
   skipped: string[];
   /** Rows that could not be read; everything else was imported */
@@ -378,6 +378,10 @@ export type LedgerPromptAnswer =
 
 /** Each method's arguments and answer, so `LedgerBackend.call` is typed end to end */
 export interface LedgerMethods {
+  work: { args: Record<string, unknown>; result: unknown };
+  documents: { args: Record<string, unknown>; result: unknown };
+  notebook: { args: Record<string, unknown>; result: unknown };
+  records: { args: Record<string, unknown>; result: unknown };
   info: { args: Record<string, never>; result: LedgerInfo };
   rev: { args: Record<string, never>; result: { rev: number } };
   state: { args: { project?: string; range?: LedgerRange }; result: LedgerState };
@@ -390,7 +394,7 @@ export interface LedgerMethods {
   prompt_answer: { args: { id: number; answer: LedgerPromptAnswer }; result: { ok: boolean; rev?: number; state?: LedgerPendingPrompt["state"] } };
   /** Marks automatic answers as seen; they leave the Inbox */
   prompt_review: { args: { id: number } | { all: true }; result: { ok: boolean; rev: number; reviewed: number } };
-  backup: { args: { keep?: number }; result: LedgerBackupResult };
+  backup: { args: { keep?: number; daily?: boolean }; result: LedgerBackupResult };
   settings: { args: Record<string, never>; result: LedgerSettings };
   /** null restores a setting's default */
   settings_set: { args: { values: { [K in keyof LedgerSettings]?: LedgerSettings[K] | null } }; result: { ok: boolean; rev: number; settings: LedgerSettings } };

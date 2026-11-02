@@ -145,6 +145,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
           {busy && <Spinner size={12} />}
         </div>
         {backup && <span className="hint ellipsis" role="status" data-tip={backup}>{t("Backed up to {0}", displayPath(backup))}</span>}
+        <span className="hint">{t("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")}</span>
       </div>
 
       <div className="form-section">

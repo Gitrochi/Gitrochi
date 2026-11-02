@@ -80,9 +80,42 @@ fn tools() -> Value {
                     "related": list("Related session IDs"),
                     "resolves": {"type": "array", "items": {"type": "integer"}, "description": "Question numbers this session settled itself"},
                     "ssot": {"type": "string", "description": "The baseline this event refers to (optional)"},
+                    "work": list("Work item IDs to link this report to"),
                     "chatUrl": {"type": "string", "description": "A link to this conversation (optional)"}
                 },
                 "required": ["event", "summary"]
+            }
+        },
+        {
+            "name": "ledger_work",
+            "description": "Records dated work independently of conversations: bundles, items, plans, issues, completion, corrections, evidence and Markdown reports. Read with list, detail, report or unassigned. Human-only work notes and the private notebook cannot be changed here.",
+            "inputSchema": {
+                "type":"object",
+                "properties": {
+                    "action":{"type":"string","enum":["add_bundle","add_item","event","list","detail","report","unassigned","import"]},
+                    "project":{"type":"string"},"item":{"type":"string"},"bundle":{"type":"string"},
+                    "title":{"type":"string"},"output":{"type":"string"},"scope":list("IDs or paths covered"),
+                    "event":{"type":"string"},"date":{"type":"string","description":"YYYY-MM-DD; prefix ~ when estimated"},
+                    "text":{"type":"string"},"refs":list("Evidence such as E123 or document paths"),
+                    "plan":{"type":"object","properties":{"conservative":{"type":"string"},"slack":{"type":"string"}}},
+                    "stem":{"type":"string"},"from":{"type":"string"},"to":{"type":"string"},
+                    "eventId":{"type":"integer"},"of":{"type":"string"},"old":{"type":"string"},"was":{"type":"string"},
+                    "deliver":{"type":"boolean","description":"Receive pending work messages; only the work's agent uses this"},
+                    "includeRefs":{"type":"boolean"},"summary":{"type":"boolean"},
+                    "view":{"type":"string","enum":["detail","summary"]},"status":{"type":"string"}
+                }
+            }
+        },
+        {
+            "name": "ledger_lookup",
+            "description": "Reads evidence from document folders a person selected in Gitrochi: ID definitions and mentions, open tasks, notices, feedback, checksum changes and related sessions. It cannot choose folders or write documents. A summary is a cited source excerpt, without an AI call.",
+            "inputSchema": {
+                "type":"object",
+                "properties": {
+                    "project":{"type":"string"},"id":{"type":"string"},"query":{"type":"string"},
+                    "action":{"type":"string","enum":["lookup","search","list","worklist","backflow","scan"]},
+                    "summarize":{"type":"boolean"}
+                }
             }
         },
         {
@@ -153,6 +186,23 @@ impl Server {
                 })?;
                 let db = self.db()?;
                 Ok(api::session_text(&db, &id, true)?.0)
+            }
+            "ledger_work" | "ledger_lookup" => {
+                let db = self.db()?;
+                let method = if name == "ledger_work" {
+                    "work"
+                } else {
+                    "documents"
+                };
+                if name == "ledger_lookup" && args["action"].is_null() {
+                    args["action"] = json!("lookup");
+                }
+                let value = api::dispatch(&db, api::Caller::Agent, method, &args)?;
+                if let Some(markdown) = value["markdown"].as_str() {
+                    Ok(markdown.to_string())
+                } else {
+                    Ok(serde_json::to_string(&value)?)
+                }
             }
             other => Err(Error::invalid(format!("Unknown tool: {other}"))),
         }
