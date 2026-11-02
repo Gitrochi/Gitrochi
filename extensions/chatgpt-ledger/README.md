@@ -6,6 +6,8 @@ An opt-in Chrome Manifest V3 extension for the selected ChatGPT web conversation
 
 Installation and pairing are separate, explicit actions:
 
+Use the updated Gitrochi app and matching Ledger command before connecting. Storage schema 8 preserves production migrations 1–7 and upgrades earlier browser-preview databases while retaining their questions and drafts. Older Ledger writers refuse to write a newer schema, so update the app and agent commands together.
+
 1. In Gitrochi, open Ledger → **ChatGPT browser extension**, then **Open extension folder**.
 2. In Chrome, open `chrome://extensions`, enable Developer mode and choose **Load unpacked** with that folder. Review the requested permissions first.
 3. Copy the extension's 32-letter ID into Gitrochi's setup sheet. Choose **Allow browser connection** and review its confirmation. This registers only that extension ID with the local `com.gitrochi.ledger` native host.
