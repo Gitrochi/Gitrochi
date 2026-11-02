@@ -4,37 +4,18 @@ The long version of the [README](../README.md): how to get started, every featur
 
 ## Screens
 
-<table>
-  <tr>
-    <td width="50%"><img src="images/commit-diff-light.png" alt="Pick a commit for its details on the right; click a file for its diff in the middle"></td>
-    <td width="50%"><img src="images/changes-light.png" alt="Uncommitted changes: a diff per file, staging and the commit box"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Commit details and diff</b><br><sub>Pick a commit for its author, parents and changed files; click a file for its diff</sub></td>
-    <td align="center"><b>Uncommitted changes</b><br><sub>See the diff before staging, stage per file, commit</sub></td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="images/commit-diff-dark.png" alt="Dark theme"></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><b>Dark theme</b><br><sub>Settings › Appearance: system · light · dark</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="images/windows-light.png" alt="Windows — light"></td>
-    <td width="50%"><img src="images/windows-dark.png" alt="Windows — dark"></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><sub>Windows has the same screens and features: tabs inside the window, Ctrl shortcuts, PowerShell · WSL terminals, and a title bar that follows the theme</sub></td>
-  </tr>
-</table>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/workspace-dark.jpg">
+  <img src="images/workspace-light.jpg" alt="Gitrochi repository workspace with current navigation, graph and commit details; Windows components with example data">
+</picture>
 
-<sub>The repositories and authors in the screenshots are made up (reproduce them with <a href="make-demo-repo.sh"><code>docs/make-demo-repo.sh</code></a>).</sub>
+The current Windows interface is rendered from production components in a browser with example data. This is not a native Windows desktop capture. The [Flows guide](flow/README.md#visual-workspace-and-scripts) and [Ledger guide](ledger/README.md#learn-the-ledger-in-the-app) link additional feature screenshots and their verification scope.
 
 ## Usage
 
 ### First time
 
-Open **Get started with a Git account** on the welcome screen (Windows: **Set up a Git account · Get started with gitch**) or **Settings › CLI**. gitch ships with the app; there is nothing extra to download.
+You can browse the navigation before connecting an account; repository tools offer a chooser until a repository is open. Local history, staging and commits use system Git and do not require a GitHub/GitLab API login. To configure Git author and SSH details, open **Get started with a Git account** on the welcome screen (Windows: **Set up a Git account · Get started with gitch**) or **Settings › CLI**. gitch ships with the app; there is nothing extra to download.
 
 1. **Sign in to GitHub in the browser** connects the account you approve in your default browser and fills in your user name and email. It needs the official [GitHub CLI](https://cli.github.com/); if it is missing, the app opens the download instructions. For a company GitLab, enter the server address and account details yourself.
 2. Check and save the account details, then prepare an SSH key: create a dedicated key in the app or use an existing one. On GitHub, **Register the public key and connect** registers it and checks the connection in one go. The **?** next to the SSH port explains the default 22 and company server settings.
@@ -47,8 +28,9 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 3. **Commit** — pick **Uncommitted changes** at the top, stage files, write a summary or press **Write with AI**, then ⌘↩.
 4. **Work with branches** — drag a branch label onto another commit or branch for the merge · rebase · fast-forward menu. Right-click a commit for cherry-pick · revert · reset · tag.
 5. **Push and pull requests** — review the account, destination and outgoing changes before confirming Push, then create a PR/MR from the requests view. A required Push during PR creation uses the same review. Connect GitHub or self-hosted GitLab from the account controls or Settings (⌘,) › Accounts.
-6. **CI/CD** — in the sidebar's **CI/CD** tab, expand a pipeline and run a manual job with ▶, or press **Run…** for a new pipeline or workflow.
-7. **Flows** — open **Flows** under Workspace tools in the sidebar, press **Set up flows…** to have the tests found and a `.gitch/flow.yml` proposed, approve its commands once, then run a flow with ▶ and follow it node by node. Details: [flow/README.md](flow/README.md).
+6. **CI/CD** — open **Actions** for GitHub or **Pipelines** for GitLab. Select a run for its jobs and logs; use the run controls or trigger a new workflow/pipeline.
+7. **Flows** — open **Flows** under **Tools**, set up or import a flow, then edit its YAML in **Code** and inspect its dependency diagram. Review command trust before running; use history and step output to inspect results. Details: [flow/README.md](flow/README.md).
+8. **Ledger** — open **Ledger** under **Tools**, without a preview environment flag. Choose **Learn Ledger** for local practice, then connect a reporting client or import records explicitly. Optional launch tracking and background integrations have separate requirements in the [Ledger guide](ledger/README.md#open-the-ledger).
 
 | Action | macOS | Windows |
 |---|---|---|
@@ -98,7 +80,7 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 - **Accounts**: tokens (macOS Keychain / Windows Credential Manager); GitHub can take over the `gh` login, GitLab takes a self-hosted address
 - **PRs/MRs**: open list and details, review in the app (conversation · line comments · write comments · approve · request changes, diff of the changed files, Markdown), check out (forks as `pr/<number>` · `mr/<number>`), create from the current branch (pushes first if needed, draft, preview tab), search your repositories in the clone window
 - **HTTPS auth**: push, pull and clone with the connected token (an existing keychain or credential helper wins). A credential prompt fails instead of hanging (`GIT_TERMINAL_PROMPT=0`)
-- **CI/CD tab**: GitLab pipelines · GitHub Actions runs (current branch only), expanded into the jobs of each stage
+- **Actions / Pipelines page**: GitHub Actions runs or GitLab pipelines, with an optional current-branch filter, grouped jobs and selected-job logs
   - run GitLab `when: manual` · `when: delayed` jobs with ▶ (the number of waiting manual jobs shows in the list)
   - rerun jobs and pipelines (GitHub: failed jobs only, too), cancel, open in the browser, show the commit
   - **Run…**: a new GitLab pipeline (branch and variables, with the described variables from `.gitlab-ci.yml` filled in) / GitHub `workflow_dispatch` (branch and inputs)
@@ -110,11 +92,11 @@ Open **Get started with a Git account** on the welcome screen (Windows: **Set up
 <details>
 <summary><b>Agents · terminal · tools · more</b></summary>
 
-- **Ledger preview**: agent reports, questions, baseline history, clean-up and opt-in tracking, auto-continue and notifications on both platforms. Hidden until launched with `GITROCHI_LEDGER_PREVIEW=1`; see [Using the Ledger preview](ledger/README.md).
+- **Ledger**: agent reports, questions, baseline history, cleanup, Work log, Document tracker and Notebook on both platforms. The page is visible under Tools without a preview flag. Optional launched-agent tracking and background integrations still require the preview environment and relevant settings; see [Using the Ledger](ledger/README.md).
 - **Agents tab**: worktree cards (new, changed and deleted files, ↑↓ against the remote) with the Claude Code · Codex · Gemini CLI sessions in them and their state (working · asking permission · waiting for input · ended). Start a session (pick a worktree or create one, the task, the permission mode — up to skipping all permission checks). Sessions run in the terminal panel below the graph; their state comes from files written by hooks that Gitrochi adds with `--settings` to the sessions it starts, so your own settings and hooks stay as they are
 - **Terminal**: shells in the repository folder in a panel below the graph (zsh on macOS · PowerShell/WSL on Windows). Several tabs, panes split right or down, adjustable height, keeps running while hidden; a tab whose agent is still running asks before closing. macOS uses [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), Windows [xterm.js](https://xtermjs.org)
 - **Tools** (Settings › Tools): git · Claude Code · Codex · Gemini CLI · gh · the terminal shell are found automatically; point to one with **Browse** when they are not. Windows finds tools inside WSL too
-- **gitch** (macOS · Windows, Settings › CLI): a shell tool for using several Git accounts without mixing them up ships with the app (formerly gitsw). Once installed it locks an account per repository, picks the account by folder or organization rules, and blocks the wrong author, secrets and force pushes in git hooks — in the terminal, in AI agents and in Gitrochi alike. Above the commit box you see this repository's account and the checks before committing and pushing; click the account name to switch. On Windows it runs in Git for Windows' Git Bash and can be called as `gitch` from PowerShell and cmd — [tools/gitch](../tools/gitch/README.md)
+- **gitch** (macOS · Windows, Settings › CLI): a shell tool for using several Git accounts without mixing them up ships with the app (formerly gitsw). Once installed it locks an account per repository, picks the account by folder or organization rules, and blocks the wrong author, secrets and force pushes in git hooks — in the terminal, in AI agents and in Gitrochi alike. The toolbar account menu shows the repository's Git identity and hosting profiles; commit and push checks remain visible in their review flows. On Windows it runs in Git for Windows' Git Bash and can be called as `gitch` from PowerShell and cmd — [tools/gitch](../tools/gitch/README.md)
   - **CLI only** (without the app): `curl -fsSL https://raw.githubusercontent.com/Gitrochi/Gitrochi/main/tools/gitch/install.sh | bash` — verifies the release's gitch by SHA-256 and puts it in `~/.local/share/gitch/gitch`. Add accounts and run `gitch install` as the installer shows; update with `gitch self-update`
   - **Structure graph workspace** (toolbar or repository menu): pick file imports, module dependencies, files that change together or the folder structure, and `gitch graph` opens an embedded offline snapshot (no account needed). The browser remains available. **Dependencies changed on this branch** compares with the fork point from the default (or a chosen) branch or tag and shows added and removed dependencies and cycles; **Check dependency rules** shows the dependencies that break `.gitch/graph.rules`. Coverage, revision and provenance explain the snapshot's scope; keyboard navigation and relationship lists accompany the graph.
 - **Tabs**: native window tabs on macOS (drag a tab out into its own window), tabs inside the window on Windows. Tabs are restored on the next launch
@@ -142,9 +124,13 @@ These additions are implemented in both clients. Earlier fixture-based checks an
 
 ### Navigation and account access
 
-The page list on the left has **Home**, **Repository**, the workspace pages **Compare**, **Rebase** and **Code**, the hosting pages **Pull requests**, **Issues**, **Actions** and **Account**, and **Flows**. Home opens, clones or creates a repository, lists recent ones and searches repositories on a connected server. Repository is the three-column screen: branches, tags, stashes and worktrees on the left; the graph, a diff or a file history with the terminal underneath in the middle; the uncommitted changes with the commit form, or the details of the selected commit, on the right. While it is open the page list folds into an icon rail, which expands it again. Quick navigation (⌘K / Ctrl+K) reaches every page, branch and request, and each repository reopens on the page it was last on. Account gathers the inbox, your work, releases, projects and organizations (groups on GitLab) in one page. Settings keep account, SSH, AI, executable, appearance and update preferences, and open the Git account guide and the gitch setup check.
+The page list includes **Home**, **Repository**, **Compare**, **Rebase**, **Code**, **Pull requests**, **Issues**, **Actions**, **Releases**, **Projects**, **Account**, **Flows** and **Ledger**. GitLab uses **Merge requests** and **Pipelines**. All pages are navigable from the start; tools that need a repository show a chooser until one is open. Home opens or clones repositories, lists recent work, searches connected servers and presents project planning.
 
-The account control at the right end of the toolbar shows the selected hosting account and Git identity and allows account selection or reconnection without leaving the window. GitHub browser sign-in displays queued, preparing and approval states. Project access is a separate permission request for the selected account. On macOS, credential reads run away from the main thread and background reads do not display authorization prompts; explicit authorization remains a user action.
+Repository is the three-column screen: branches, tags, stashes and worktrees on the left; the graph, diff or file history with its terminal in the middle; changes and commit details on the right. Its page list folds into an icon rail. The sidebar control and **⌘B / Ctrl+B** expand or collapse it smoothly, preserve page selection and keyboard focus, and respect the system's reduced-motion setting. Dragging the expanded sidebar edge resizes it directly; reopening restores its saved width. Each repository remembers its last page.
+
+The toolbar's account menu lists connected hosting profiles and configured Git accounts with server labels and available photos; fetching follows avatar preferences and falls back to initials. It stays useful before a repository is open. A repository's hosting-account selection and its Git author/locked identity are shown separately. Choosing an account outside the current repository's server opens account-wide work for that account. **Account** contains Inbox, My work and Organizations/Groups; **Releases** and **Projects** remain separate pages.
+
+GitHub browser sign-in shows preparation and approval progress. Project access is a separate permission request for the selected account. An unreadable saved credential does not mean the account was removed: allow stored access where requested, unlock the platform credential store or retry. Reconnection remains available for genuinely missing credentials. On macOS, background credential reads run off the main thread without prompting; authorization is an explicit user action.
 
 ### Git and review tools
 
@@ -165,7 +151,7 @@ The account control at the right end of the toolbar shows the selected hosting a
 
 PR/MR lists support state, personal/review-request scope, search and pagination. Details offer title/body/base/reviewer changes, merge, close and reopen, with fresh SHA, CI, approvals, permissions and server policy checked before merging. Issues and mentions are scoped to the selected repository and connected account; supported comments, issue state and notification-read actions are available there.
 
-The Account page provides releases and assets, organizations and project boards; Home searches repositories on the server. GitHub Projects v2 supports items, single-select status fields and adding existing issues. GitLab boards expose their scope and label columns. Advanced project fields, project administration and unsupported GitLab column types continue in the browser. Release creation, editing, publishing and deletion follow the server's capabilities; GitHub draft/prerelease behaviour differs from GitLab's immediate publication.
+The Account page provides Inbox, My work and Organizations/Groups, with repository or explicitly selected account-wide scope for work lists. Releases and assets belong to **Releases**, and boards belong to **Projects**; Home provides planning and server repository search. GitHub Projects v2 supports items, single-select status fields and adding existing issues. GitLab boards expose their scope and label columns. Advanced project fields, project administration and unsupported GitLab column types continue in the browser. Release creation, editing, publishing and deletion follow the server's capabilities; GitHub draft/prerelease behaviour differs from GitLab's immediate publication.
 
 ### AI and local MCP
 

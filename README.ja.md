@@ -5,7 +5,7 @@
 <h1 align="center">Gitrochi</h1>
 
 <p align="center">
-  <b>履歴をグラフで見て、クリックで操作する Git クライアント。</b><br>
+  <b>Git の履歴、接続先の仕事、エージェントの進捗をひとつの作業画面に。</b><br>
   macOS · Windows
 </p>
 
@@ -22,56 +22,78 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Gitrochi/Gitrochi/releases/latest"><b>⬇&nbsp; ダウンロード</b></a>
-  &nbsp;·&nbsp; <a href="docs/features.md">使い方と機能（英語）</a>
-  &nbsp;·&nbsp; <a href="CONTRIBUTING.md">コントリビュート（英語）</a>
+  <a href="https://github.com/Gitrochi/Gitrochi/releases/latest"><b>ダウンロード</b></a>
+  &nbsp;·&nbsp; <a href="docs/features.md">使い方と機能</a>
+  &nbsp;·&nbsp; <a href="docs/ledger/README.md">Ledger ガイド</a>
+  &nbsp;·&nbsp; <a href="docs/flow/README.md">Flows ガイド</a>
 </p>
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-    <img src="docs/images/hero-light.png" alt="Gitrochi のメイン画面 — 左にブランチとタグ、中央にコミットグラフ、右に未コミットの変更とコミット入力">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/workspace-dark.jpg">
+    <img src="docs/images/workspace-light.jpg" alt="Gitrochi の作業画面 — ページメニュー、ブランチとコミットグラフ、変更内容、右上のアカウントメニュー">
   </picture>
 </p>
 
-Gitrochi は macOS と Windows 向けのネイティブ Git クライアントです。履歴を読みやすいコミットグラフに描き、ステージ・コミット・ブランチ・マージ・レビューをクリックで行えます。GitHub と GitLab、CI/CD、AI が書くコミットメッセージ、コーディングエージェント、ターミナルがアプリに組み込まれています。作業は Git 自身が行います。Gitrochi はシステムの `git` を呼び出します。
+<p align="center"><sub>Windows 版の画面部品をブラウザーで表示したプレビューです。リポジトリとプロフィールには架空のデータを使っています。</sub></p>
 
-## 機能
+Gitrochi は macOS と Windows 向けの Git クライアントです。コミットグラフを見ながら、変更の確認・ステージ・コミット・ブランチ操作・レビューを進められます。GitHub / GitLab の PR・Issue・プロジェクト、エージェントの報告と質問をまとめる **Ledger**、チェックと実行手順を組み立てる **Flows** も同じ画面から開けます。Git 操作にはシステムの `git` を使います。
 
-- **コミットグラフ** — すべてのブランチをレーン色で描き、ブランチとタグは専用の列に。作者のプロフィール画像と CI の状態、各ワークツリーの未コミットの変更を最上部に表示
-- **ステージとコミット** — ファイル・ハンク・行単位。統合表示と左右表示の diff（単語単位の強調、画像の比較）、コンフリクト解決、コミットの整理（squash・並べ替え・メッセージ修正）、直前の操作の取り消し
-- **ドラッグ＆ドロップでブランチ操作** — ブランチをコミットに落とすとマージ・リベース・fast-forward、コミットをブランチに落とすと cherry-pick
-- **GitHub と GitLab** — PR/MR のレビュー・承認・作成をアプリ内で（Markdown 対応）。セルフホストの GitLab にも対応
-- **CI/CD** — GitLab パイプラインと GitHub Actions：手動ジョブの実行、再実行、キャンセル、デプロイの承認、ワークフローの起動
-- **AI** — Claude Code・Codex・Gemini CLI または API キーが、チームのルールに沿ってコミットメッセージと PR の文章を書き、変更をテーマごとに分けてコミット
-- **コーディングエージェント** — Claude Code・Codex・Gemini CLI のセッションをワークツリーごとに内蔵ターミナルで起動し、状態をサイドバーに表示
-- **ターミナル** — グラフの下にリポジトリフォルダのシェルをタブと分割ペインで。git コマンドを打つとグラフがすぐ更新
-- **gitch** — 同梱の CLI がリポジトリごとに Git アカウントを固定し、誤った作者・シークレット・force push をフックで防止
-- **フロー** — リポジトリのテスト・チェック・サービス・デプロイ手順を `.gitch/flow.yml` に組み立て、アプリ・`gitch flow`・push 前・CI で同じ方法で実行：このマシン上、Docker 内、または GitLab CI・GitHub Actions・Jenkins 経由で、手順が失敗したらロールバック
+**0.3.14 の作業画面**では、起動直後からページを選べます。リポジトリが必要なページには選択画面が表示されます。右上のアカウントメニューには複数のアカウントとサーバーをまとめて表示し、プロフィール画像も確認できます。サイドバーは内容と一緒になめらかに開閉し、OS の「動きを減らす」設定に従います。
 
-統合リポジトリ画面、Push 前の確認、行コメントと一括レビュー、履歴・復旧ツール、プロジェクトボード、選択した変更への AI 質問と読み取り専用 MCP も利用できます。両アプリは Rust の計算コアを共有し、コミット履歴・ファイル変更・同時に変わるファイルの関係を SQLite のリポジトリインデックス（C++ のトークナイザーでコード識別子と日本語・韓国語・中国語を索引）に保持します。Python ツールと Go のチームハブ・モニターもこれを利用します（[言語ごとの役割](docs/architecture.md)、英語）。[実装と検証範囲](docs/complete-workflows-validation.md)（韓国語）と[共通コア](crates/README.md)（英語）を確認してください。Windows 実機へのインストール、実際の LFS ロックとサーバーへの書き込みは、利用環境での追加確認が必要です。
+## できること
 
-使い方とショートカットを含む全機能の一覧：[docs/features.md](docs/features.md)（英語）。
+- **履歴を読み、変更をコミット** — ブランチごとの色、作者画像、CI の状態、ワークツリーの変更をグラフで確認。ファイル・ハンク・行単位のステージ、左右の diff、コンフリクト解決、コミット整理、直前の操作の取り消しに対応します。
+- **ホームから仕事を探す** — 最近のリポジトリ、接続先のリポジトリ検索、プロジェクトの予定を確認。13 の移動先（Home、Repository、Compare、Rebase、Code、PR/MR、Issues、Actions/Pipelines、Releases、Projects、Account、Flows、Ledger）は最初から選択できます。ローカルのツールにはリポジトリを選んでから進みます。
+- **複数アカウントを見分ける** — 右上のメニューで接続済みプロフィールと登録済み Git アカウントを、サーバー名と画像で確認。画像の取得をオフにした場合や取得できない場合は、イニシャルなどの代替表示を使います。コミット作者・push に使う Git アカウントと、PR・Issue 用のホスティング接続は別々に確認できます。保存済み認証情報がロックされている場合は、そのアクセスを許可して再試行できます。
+- **GitHub / GitLab の仕事を進める** — PR/MR の会話・行レビュー・承認、Issue のコメントや状態変更、GitHub Actions と GitLab パイプラインを操作。Account ページには **Inbox・My work・Organizations（GitLab は Groups）**、リリースとプロジェクトにはそれぞれ **Releases・Projects** ページがあります。アカウント全体と現在のリポジトリの範囲も選べます。
+- **Ledger で報告と質問を整理** — **Tools › Ledger** からいつでも開き、セッションの開始時点、報告、回答待ち、完了確認と片付けを Inbox・Board・Graph・Streams で追えます。チュートリアルとガイドも内蔵しています。ページを開くだけで会話が自動取り込みされることはありません。任意のエージェント追跡・バックグラウンド通知・バッジには、起動時の `GITROCHI_LEDGER_PREVIEW=1` と各設定での有効化が必要です。追跡は初期状態ではオフです。[Ledger ガイド](docs/ledger/README.md)で接続方法を確認できます。
+- **Flows でチェックと実行手順をまとめる** — **Code** で `.gitch/flow.yml` を編集し、依存関係のプレビュー、実行履歴、各ステップの結果を確認。モジュールの設定や GitLab CI・GitHub Actions・Jenkins との接続も扱えます。レビューして信頼した手順を、アプリ・`gitch flow`・push 前のチェックで使います。[Flows ガイド](docs/flow/README.md)。
+- **ターミナルとエージェントを併用** — リポジトリ内のシェルをタブと分割ペインで開き、Claude Code・Codex・Gemini CLI を利用。AI にコミット文・PR 文や選択した変更について質問でき、同梱の **gitch** はリポジトリごとの Git アカウントとチェックを管理します。[CLI の使い方](docs/cli-workflows.md)。
 
-## インストール
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-ledger-dark.jpg">
+    <img src="docs/images/readme-ledger-light.jpg" alt="セッションの開始時点と判定、選択したセッションの質問を示す Ledger の Board。架空のデータを使用">
+  </picture><br>
+  <sub>Ledger で報告・質問・次の作業をまとめて確認できます。</sub>
+</p>
 
-**macOS 15 以降**（Apple Silicon・Intel）：[最新リリース](https://github.com/Gitrochi/Gitrochi/releases/latest)から `.dmg` をダウンロードし、`Gitrochi.app` をアプリケーションフォルダへ移動します。まだ公証を受けていないビルドのため、**システム設定 → プライバシーとセキュリティ → このまま開く**で許可するか、`xattr -dr com.apple.quarantine /Applications/Gitrochi.app` を実行してください。`git` が必要です（Xcode または `xcode-select --install`）。
+## はじめる
 
-**Windows 10 (1809) 以降、x64**：[最新リリース](https://github.com/Gitrochi/Gitrochi/releases/latest)から `Gitrochi_<バージョン>_x64-setup.exe` をダウンロードして実行します（`_portable.zip` はインストール不要）。SmartScreen に止められたら**詳細情報 → 実行**。[Git for Windows](https://git-scm.com/download/win) が必要です。
+1. **ローカルの Git を用意する。** macOS は Xcode Command Line Tools、Windows は Git for Windows を導入します。Settings › Tools で実行ファイルを確認できます。Git の作者や複数アカウントの設定は、同梱 gitch の案内から進められます。ローカルの履歴確認やコミットにホスティング接続は不要です。
+2. **必要ならホスティングアカウントを接続する。** 右上のアカウントメニューから GitHub またはセルフホスト GitLab を接続します。PR・Issue などのサーバー機能で使う接続です。
+3. **リポジトリを開く。** Home の **Open repository…** からローカルフォルダを選ぶか、接続先を検索してクローンします。
+4. **変更を確認してコミットする。** グラフで履歴を選び、差分を読んで必要な部分をステージします。push 前にはアカウント・送信先・変更内容を確認します。
+5. **仕事に合わせてページを選ぶ。** Compare・Code・PR・Issues・Projects、または Tools の Ledger・Flows を開きます。使い方は各ページとガイドから確認できます。
 
-どちらのアプリも自動更新します。起動時と 1 日 1 回新しいバージョンを確認し、署名とハッシュが一致したときだけインストールします。
+## ダウンロードとインストール
 
-## コントリビュート
+[最新リリース](https://github.com/Gitrochi/Gitrochi/releases/latest)から OS に合うファイルを選んでください。
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — はじめ方、ビルド、プルリクエスト
-- [docs/code-style.md](docs/code-style.md) · [docs/git-workflow.md](docs/git-workflow.md) — コード・コミット・ブランチのルール
-- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) — コーディングエージェント向けの同じルール
+| OS | ファイルと手順 | 必要なもの |
+| --- | --- | --- |
+| **macOS 15 以降** · Apple Silicon / Intel | `Gitrochi-<version>-macOS.dmg` を開き、`Gitrochi.app` をアプリケーションへ移動 | システムの `git`（Xcode または `xcode-select --install`） |
+| **Windows 10 (1809) 以降 / 11** · x64 | `Gitrochi_<version>_x64-setup.exe` を実行。インストール不要なら `_x64_portable.zip` | [Git for Windows](https://git-scm.com/download/win)。インストーラーは必要に応じて WebView2 を導入 |
 
-ドキュメントは英語で書かれています。
+macOS のビルドはまだ公証されていません。ブロックされた場合は、**システム設定 → プライバシーとセキュリティ → このまま開く**で許可するか、`xattr -dr com.apple.quarantine /Applications/Gitrochi.app` を実行します。Windows の SmartScreen に止められた場合は、**詳細情報 → 実行**から進めます。
+
+自動更新の確認は設定で変更できます。有効な場合は起動時と 1 日に 1 回確認し、公開リリースの更新を署名検証後に適用します。インストールするタイミングは自分で選べます。macOS ではダウンロードの SHA-256 も確認します。ソースからのビルド手順は [CONTRIBUTING.md](CONTRIBUTING.md) にあります。
+
+## ガイドと開発
+
+- [機能・使い方・ショートカット](docs/features.md)
+- [Ledger：接続、質問への回答、報告と完了確認](docs/ledger/README.md)
+- [Flows：YAML、依存関係、実行と CI 接続](docs/flow/README.md)
+- [gitch と CLI の作業手順](docs/cli-workflows.md)
+- [開発環境と貢献](CONTRIBUTING.md) · [アーキテクチャ](docs/architecture.md)
+- [コード規則](docs/code-style.md) · [Git と PR の規則](docs/git-workflow.md) · [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md)
+
+主な開発者向け文書は英語です。保存先・追跡・通知などの Ledger の設定はガイドに記載しています。保存された認証情報は macOS の Keychain / Windows の Credential Manager で管理します。リポジトリ AI・MCP には Node.js 22 以降、LFS 操作には Git LFS が必要です。実サーバーへの書き込み、LFS ロック、Windows 実機へのインストールは利用環境での確認が必要です。[実装と検証範囲](docs/complete-workflows-validation.md)も参照してください。
 
 ## フィードバック
 
-- 🐞 [バグ報告](https://github.com/Gitrochi/Gitrochi/issues/new?template=bug_report.yml) · ✨ [機能要望](https://github.com/Gitrochi/Gitrochi/issues/new?template=feature_request.yml) · 💬 [質問](https://github.com/Gitrochi/Gitrochi/issues/new?template=question.yml)
+- [バグ報告](https://github.com/Gitrochi/Gitrochi/issues/new?template=bug_report.yml) · [機能要望](https://github.com/Gitrochi/Gitrochi/issues/new?template=feature_request.yml) · [質問](https://github.com/Gitrochi/Gitrochi/issues/new?template=question.yml)
 - セキュリティの問題は Issue ではなく[非公開で](SECURITY.md)
 
 ## ライセンス

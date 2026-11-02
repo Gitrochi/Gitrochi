@@ -5,7 +5,7 @@
 <h1 align="center">Gitrochi</h1>
 
 <p align="center">
-  <b>A Git client that shows your history as a graph and works by clicking.</b><br>
+  <b>Git history, connected work and AI sessions in one workspace.</b><br>
   macOS · Windows
 </p>
 
@@ -29,51 +29,65 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-    <img src="docs/images/hero-light.png" alt="Gitrochi main window — branches and tags on the left, the commit graph in the middle, uncommitted changes and the commit box on the right">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/workspace-dark.jpg">
+    <img src="docs/images/workspace-light.jpg" alt="Gitrochi workspace with navigation, branch history and commit details; Windows interface with example data">
   </picture>
 </p>
 
-Gitrochi is a native Git client for macOS and Windows. It draws your history as a readable commit graph and lets you stage, commit, branch, merge and review by clicking, with GitHub and GitLab, CI/CD, AI-written commit messages, coding agents and a terminal built in. Git itself does the work: Gitrochi calls your system `git`.
+Gitrochi 0.3.14 brings Git history, connected project work and AI sessions into one workspace for macOS and Windows. Browse the graph, stage and commit changes, review requests, run checks and keep track of what your agents are doing. Gitrochi uses your system `git`.
 
-## Features
+*The screenshots show the Windows interface with example data, rendered from the app's production components in a browser.*
 
-- **Commit graph** — every branch in its lane color, branches and tags in their own column, author pictures, CI status, and the uncommitted changes of every worktree at the top
-- **Stage and commit** — by file, hunk or line; unified or side-by-side diff with word-level highlighting and image comparison; conflict resolution; tidy commits (squash, reorder, reword); undo the last operation
-- **Branches by drag and drop** — drop a branch on a commit to merge, rebase or fast-forward; drop a commit on a branch to cherry-pick
-- **GitHub and GitLab** — pull and merge requests reviewed, approved and created in the app, with Markdown; self-hosted GitLab too
-- **CI/CD** — GitLab pipelines and GitHub Actions: run manual jobs, rerun, cancel, approve deployments, trigger workflows
-- **AI** — Claude Code, Codex, Gemini CLI or an API key writes commit messages and pull request text by your team's rules, and splits changes into commits by topic
-- **Coding agents** — Claude Code, Codex and Gemini CLI sessions per worktree, running in the built-in terminal, with their state in the sidebar
-- **Terminal** — shells in the repository folder below the graph, in tabs and split panes; the graph refreshes as you run git commands
-- **gitch** — the bundled CLI keeps several Git accounts apart per repository, blocks the wrong author, secrets and force pushes in hooks, and coordinates tasks across explicit local repository groups ([CLI workflows](docs/cli-workflows.md))
-- **Flows** — assemble a repository's tests, checks, services and deploy steps in `.gitch/flow.yml` and run them the same way from the app, `gitch flow`, before a push or in CI: on this machine, in Docker, or through GitLab CI, GitHub Actions and Jenkins, rolled back when a step fails
+## What you can do
 
-- **Repository screen** — branches, the graph with the terminal underneath and the changes or commit details side by side; Compare, Rebase and Code as pages; the page list folds into an icon rail
-- **Review and advanced Git tools** — review the account, destination and outgoing changes before pushing; draft line comments and batch reviews; compare revisions, select several commits, edit three-way conflicts, browse recovery history, LFS, submodules and bisect
-- **Connected work** — PR/MR management, issues, actions and one Account page for the inbox, releases, projects and organizations; the account control in the toolbar; AI questions about selected changes, repository reading tools and a local read-only MCP server
-- **Shared Rust core** — parsing, diff, patches, conflicts and graph calculations shared by both apps, with cancellable background calculations; commit searches ignore spacing
-- **Repository index** — the whole history, each commit's file changes and which files change together, kept in SQLite by the shared Rust code with a C++ tokenizer for code identifiers and Korean, Japanese and Chinese text; the search bar answers from it, and the Python tools (AI review, analysis, test planning, runtimes) and the Go team hub and monitor build on it
+- **Plan from Home** — open or clone repositories, return to recent work, search a connected server, and see project tasks in an agenda or planning view.
+- **Work in Git** — follow branch lanes, author photos and CI status; stage by file, hunk or line; compare diffs, resolve conflicts, drag branches, and tidy or undo commits. The repository screen keeps the graph, terminal and changes together.
+- **Review connected work** — review and create GitHub pull requests or self-hosted GitLab merge requests, discuss issues, and inspect Actions or pipelines. **Releases** and **Projects** have their own pages; **Account** brings together Inbox, My work and Organizations or Groups.
+- **See every account** — the toolbar menu lists connected profiles and configured Git accounts with server labels and available photos. Choose the repository's hosting account while keeping its Git author identity clear. If saved credentials cannot be read, restore access and retry; the account stays listed. Photo fetching follows your preferences, with initials as a fallback.
+- **Follow work in the Ledger** — see session baselines, reports, questions and handoffs in Inbox, Board, Graph and Streams. Use the built-in tutorial, Work log, Document tracker and Notebook. **Ledger is visible under Tools without a preview flag.** Connecting reporting clients or importing existing records remains an explicit step. [Ledger guide](docs/ledger/README.md)
+- **Build and run Flows** — edit `.gitch/flow.yml` in Code, preview dependencies, inspect run history and test results, and configure modules or CI connections. Run through the app or `gitch flow`, locally, in Docker or through supported CI services, with configured undo steps on failure. [Flows guide](docs/flow/README.md)
+- **Use AI and your terminal** — draft commit messages and request descriptions with Claude Code, Codex, Gemini CLI or an API provider; run agent sessions in worktree terminals, and preview repository context before sending it. The bundled **gitch** CLI manages Git identities and repository checks. [CLI workflows](docs/cli-workflows.md)
 
-The full list, with usage and shortcuts: [docs/features.md](docs/features.md). The [Ledger preview guide](docs/ledger/README.md) covers the in-app tutorial, automatic ChatGPT web choice capture, answering questions, bringing ChatGPT drafts, agent reports, opt-in tracking, auto-continue and notifications.
+Optional Ledger launch tracking, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` at app startup and their settings. Tracking starts off; opening the Ledger does not import conversations or turn it on. See the guide before enabling these integrations.
 
-## Implementation and verification
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-ledger-dark.jpg">
+    <img src="docs/images/readme-ledger-light.jpg" alt="Ledger Board with example sessions, their baselines and verdicts, and questions for the selected session">
+  </picture><br>
+  <sub>Ledger keeps reports, questions and the next action together.</sub>
+</p>
 
-[Which language does what](docs/architecture.md) explains the parts and their contracts. [Review workflows](docs/review-workflows-validation.md), [extended workflows](docs/complete-workflows-validation.md), [workspace navigation](docs/navigation-workspace-validation.md) (Korean), the [shared core](crates/README.md) and the [repository index](crates/gitrochi-index/README.md) document the implementation and checks. Local fixtures and simulated services cover these flows; Windows installation on a real device, live LFS locks and real-server writes still need environment-specific verification. Repository AI and MCP require Node.js 22+; LFS operations require Git LFS.
+## Start here
 
-## Install
+1. **Open a repository.** Install Git, then use Home or the folder button to open or clone a repository. Local Git work does not require a hosting-account login.
+2. **Connect when you need hosted services.** Use the account menu at the top right or **Settings › Accounts** for GitHub or self-hosted GitLab. **Settings › CLI** guides Git author and SSH setup; these are separate from hosting API access.
+3. **Review and commit.** Select uncommitted changes, inspect the diff, stage files or lines, and write a commit. Push shows the account, destination and outgoing changes before confirmation.
+4. **Choose a workspace.** Use Projects for boards and planning, Flows for repository checks, and Ledger for agent reports and questions. Open **Learn Ledger** for guided practice.
 
-**macOS 15 or later** (Apple Silicon and Intel): download the `.dmg` from the [latest release](https://github.com/Gitrochi/Gitrochi/releases/latest) and move `Gitrochi.app` to Applications. The build is not notarized yet, so allow it under **System Settings → Privacy & Security → Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/Gitrochi.app`. Needs `git` (Xcode or `xcode-select --install`).
+The menu is available from the start. Pages that need a repository offer a chooser until one is open. Collapse or expand it with the sidebar button or **⌘B / Ctrl+B**; the transition follows your system's reduced-motion preference and preserves the selected page.
 
-**Windows 10 (1809) or later, x64**: download `Gitrochi_<version>_x64-setup.exe` from the [latest release](https://github.com/Gitrochi/Gitrochi/releases/latest) and run it (`_portable.zip` needs no install). If SmartScreen blocks it: **More info → Run anyway**. Needs [Git for Windows](https://git-scm.com/download/win).
+## Download and install
 
-Both apps update themselves: they check for a new version at launch and once a day, and install it only when its signature and hash match.
+Get the installers from the [latest public release](https://github.com/Gitrochi/Gitrochi/releases/latest).
 
-## Contributing
+| Platform | Download | Requirements |
+| --- | --- | --- |
+| macOS | `Gitrochi-<version>-macOS.dmg` — move `Gitrochi.app` to Applications | macOS 15+, Apple Silicon or Intel; system Git |
+| Windows | `Gitrochi_<version>_x64-setup.exe`, or `Gitrochi_<version>_x64_portable.zip` without installation | Windows 10 (1809)+ or 11, x64; [Git for Windows](https://git-scm.com/download/win) |
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — getting started, building, pull requests
-- [docs/code-style.md](docs/code-style.md) and [docs/git-workflow.md](docs/git-workflow.md) — the rules for code, commits and branches
-- [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) — the same rules for coding agents
+The macOS build is not notarized yet. If macOS blocks it, use **System Settings › Privacy & Security › Open Anyway**. Install Git with Xcode or `xcode-select --install` if needed. On Windows, the installer can install WebView2 when missing; if SmartScreen blocks the installer, use **More info › Run anyway**.
+
+Built-in update checks run at launch and daily when enabled in Settings. You choose when to install a verified update. Repository AI and MCP need Node.js 22+; LFS operations need Git LFS. Packaged apps do not need the source-build toolchains.
+
+## Guides and development
+
+- [Usage, features and shortcuts](docs/features.md)
+- [Ledger setup, tutorial and reporting](docs/ledger/README.md) · [Flows and connected CI](docs/flow/README.md)
+- [Building and contributing](CONTRIBUTING.md) · [Code style](docs/code-style.md) · [Git workflow](docs/git-workflow.md)
+- [Architecture](docs/architecture.md) · [Shared Rust core](crates/README.md) · [Repository index](crates/gitrochi-index/README.md)
+- [Agent instructions](AGENTS.md) · [Verification scope and limits](docs/complete-workflows-validation.md)
+
 
 ## Feedback
 
