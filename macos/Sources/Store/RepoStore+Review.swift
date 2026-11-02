@@ -13,14 +13,21 @@ extension RepoStore {
     func loadReview(_ number: Int) async {
         let loadID = UUID(), repoURL = url
         reviewLoadID = loadID
-        guard let c = reviewAccess else { reviewError = String(localized: "Connect an account to see the conversation and approvals."); return }
-        let key = ReviewAPI.repositoryKey(c.target)
+        guard let target else { return }
+        let key = ReviewAPI.repositoryKey(target)
         guard reviewSelected(number, key: key, url: repoURL) else { return }
         reviewDrafts = ReviewDraftStorage.load()
         if review?.number != number || review?.repositoryKey != key { review = nil }
         reviewLoading = true
         reviewError = nil
         defer { if reviewLoadID == loadID { reviewLoading = false } }
+        let access = await resolveCollaborationAccess()
+        guard reviewLoadID == loadID, reviewSelected(number, key: key, url: repoURL), !Task.isCancelled else { return }
+        guard let c = access else {
+            reviewError = hostingAccount.map { AccountStore.shared.savedAccessMessage(for: $0) }
+                ?? String(localized: "Connect an account to see the conversation and approvals.")
+            return
+        }
         do {
             let r = try await ReviewAPI.load(c.target, token: c.token, apiBase: c.apiBase, number: number, me: c.me)
             guard reviewLoadID == loadID, reviewSelected(number, key: key, url: repoURL) else { return }

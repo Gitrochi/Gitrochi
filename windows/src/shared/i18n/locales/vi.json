@@ -2209,5 +2209,11 @@
   "Learn Ledger": "Tìm hiểu Ledger",
   "Tutorial": "Hướng dẫn thực hành",
   "Guide": "Hướng dẫn sử dụng",
-  "ChatGPT browser extension": "Tiện ích ChatGPT cho trình duyệt"
+  "ChatGPT browser extension": "Tiện ích ChatGPT cho trình duyệt",
+  "Git accounts": "Tài khoản Git",
+  "Manage Git accounts…": "Quản lý tài khoản Git…",
+  "Open a repository to see its Git identity.": "Mở kho lưu trữ để xem danh tính Git của kho.",
+  "Open repositories": "Kho lưu trữ đang mở",
+  "Recent local repositories": "Kho lưu trữ cục bộ gần đây",
+  "Open repository": "Mở kho lưu trữ"
 }

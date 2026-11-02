@@ -3,6 +3,7 @@ import SwiftUI
 /// The repository window: the page list on the left (an icon rail once a repository is open), the page on the right.
 struct RepoView: View {
     @Environment(RepoStore.self) private var store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     @ViewState private var sidebarPresentation = SidebarPresentationState()
     @ViewState private var sidebarCollapsed = false
@@ -11,6 +12,7 @@ struct RepoView: View {
     @ViewState private var pageHeight: CGFloat = 800
 
     private var showsNavigationRail: Bool { sidebarPresentation.visibility == .detailOnly || sidebarCollapsed }
+    private var sidebarAnimation: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.24) }
 
     var body: some View {
         NavigationSplitView(columnVisibility: Binding(get: { sidebarPresentation.visibility }, set: { sidebarPresentation.setVisibility($0) })) {
@@ -18,17 +20,20 @@ struct RepoView: View {
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
                 // the page list and the rail carry their own collapse and expand buttons
                 .toolbar(removing: .sidebarToggle)
-                .background(SidebarVisibilityObserver(expandRequest: sidebarExpandRequest) { sidebarCollapsed = $0 })
+                .background(SidebarVisibilityObserver(expandRequest: sidebarExpandRequest, animateExpansion: !reduceMotion,
+                                                      expansionAllowed: sidebarPresentation.visibility != .detailOnly) {
+                    sidebarCollapsed = $0
+                })
                 .disabled(showsNavigationRail)
                 .accessibilityHidden(showsNavigationRail)
         } detail: {
             HStack(spacing: 0) {
                 if showsNavigationRail {
                     NavigationSidebarRail {
-                        sidebarPresentation.expand()
-                        sidebarExpandRequest += 1
+                        expandSidebar()
                     }
-                    Divider()
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                    Divider().transition(.opacity)
                 }
                 VStack(spacing: 0) {
                     if ToolStore.shared.path(.git) == nil {
@@ -51,6 +56,7 @@ struct RepoView: View {
             }
             // Split details must shrink with the viewport instead of centering a page's larger minimum height.
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+            .animation(sidebarAnimation, value: showsNavigationRail)
         }
         .navigationTitle(store.windowTitle)
         .navigationSubtitle(subtitle)
@@ -66,18 +72,29 @@ struct RepoView: View {
                 store.showCommandPalette = false
             }
         }
-        .onGeometryChange(for: Bool.self) { $0.size.width < 1180 } action: { sidebarPresentation.setNarrow($0) }
+        .onGeometryChange(for: Bool.self) { $0.size.width < 1180 } action: { narrow in
+            withAnimation(sidebarAnimation) { sidebarPresentation.setNarrow(narrow) }
+        }
         .onChange(of: store.sidebarToggleRequest) { _, _ in
-            if showsNavigationRail { sidebarPresentation.expand(); sidebarExpandRequest += 1 }
-            else { sidebarPresentation.setVisibility(.detailOnly) }
+            if showsNavigationRail { expandSidebar() }
+            else { withAnimation(sidebarAnimation) { sidebarPresentation.setVisibility(.detailOnly) } }
         }
         // opening the repository screen folds the page list into the rail, so the branch list takes its place
         .onChange(of: store.destination) { _, page in
-            if page == .repository { sidebarPresentation.setVisibility(.detailOnly) }
+            if page == .repository, store.url != nil {
+                withAnimation(sidebarAnimation) { sidebarPresentation.setVisibility(.detailOnly) }
+            }
         }
-        .onAppear { if store.destination == .repository { sidebarPresentation.setVisibility(.detailOnly) } }
+        .onAppear { if store.destination == .repository, store.url != nil { sidebarPresentation.setVisibility(.detailOnly) } }
         .onChange(of: AccountStore.shared.revision) { _, _ in
             Task { await store.refreshHostingAccount() }
+        }
+    }
+
+    private func expandSidebar() {
+        withAnimation(sidebarAnimation) {
+            sidebarPresentation.expand()
+            sidebarExpandRequest += 1
         }
     }
 

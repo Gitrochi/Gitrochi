@@ -30,7 +30,7 @@ describe("workspace navigation", () => {
   it.each([
     ["windows", null], ["windows", "C:/fixture/first"],
     ["macos", null], ["macos", "C:/fixture/first"],
-  ] as const)("opens the Ledger with the numbered shortcut only in preview (%s, %s)", (os, path) => {
+  ] as const)("opens the Ledger with the numbered shortcut without a preview flag (%s, %s)", (os, path) => {
     const original = { os: env.os, preview: env.ledgerPreview };
     const store = fixture(); store.path = path; store.destination = "home";
     vi.spyOn(workspace, "active", "get").mockReturnValue(store);
@@ -43,11 +43,11 @@ describe("workspace navigation", () => {
     try {
       env.os = os;
       env.ledgerPreview = null;
-      const hidden = press();
-      expect(store.destination).toBe("home");
-      expect(hidden.preventDefault).not.toHaveBeenCalled();
-      expect(hidden.stopPropagation).not.toHaveBeenCalled();
-      expect(settings.set).not.toHaveBeenCalled();
+      const defaultShortcut = press();
+      expect(store.destination).toBe("ledger");
+      expect(defaultShortcut.preventDefault).toHaveBeenCalledOnce();
+      expect(defaultShortcut.stopPropagation).toHaveBeenCalledOnce();
+      store.destination = "home";
       env.ledgerPreview = "1";
       for (const extra of [{ shiftKey: true }, { altKey: true }, { ctrlKey: false, metaKey: false }, { defaultPrevented: true }]) {
         const ignored = press(extra);
@@ -96,12 +96,12 @@ describe("workspace navigation", () => {
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);
     for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code", "changes", "commits", "branches", "repositories", "gists", "worktrees", "assistant", "operations", "inbox", "myWork"]) expect(isWorkspaceDestination(value)).toBe(false);
   });
-  it("needs a repository for every page except Home, Issues, Releases, Projects and Account", () => {
+  it("allows navigation to the repository chooser without changing saved repository pages", () => {
     expect([...repositoryDestinations].sort()).toEqual(["actions", "code", "compare", "flows", "pullRequests", "rebase", "repository"]);
     for (const page of workspaceDestinations) {
       const store = new RepoStore();
-      expect(store.navigate(page)).toBe(!repositoryDestinations.has(page));
-      expect(store.destination).toBe(repositoryDestinations.has(page) ? "home" : page);
+      expect(store.navigate(page)).toBe(true);
+      expect(store.destination).toBe(page);
     }
     expect(settings.set).not.toHaveBeenCalled();
   });

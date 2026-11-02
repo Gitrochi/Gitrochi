@@ -4,6 +4,8 @@ import AppKit
 /// SwiftUI의 열 바인딩이 갱신되지 않는 자동 접힘도 실제 분할 화면에서 확인한다.
 struct SidebarVisibilityObserver: NSViewRepresentable {
     var expandRequest = 0
+    var animateExpansion = false
+    var expansionAllowed = true
     let onChange: (Bool) -> Void
 
     func makeNSView(context: Context) -> SidebarVisibilityProbe {
@@ -12,13 +14,15 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
 
     func updateNSView(_ view: SidebarVisibilityProbe, context: Context) {
         view.onChange = onChange
-        view.requestExpansion(expandRequest)
+        view.animateExpansion = animateExpansion
+        view.requestExpansion(expandRequest, allowed: expansionAllowed)
         view.scheduleMeasurement()
     }
 }
 
 @MainActor final class SidebarVisibilityProbe: NSView {
     var onChange: (Bool) -> Void
+    var animateExpansion = false
     private var lastValue: Bool?
     private var measurementScheduled = false
     private var wasAttachedToWindow = false
@@ -73,7 +77,13 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
     }
 
     /// 바인딩이 이미 .all인 채 네이티브 화면만 접혀도 이 창의 사이드바를 펼친다.
-    func requestExpansion(_ request: Int) {
+    func requestExpansion(_ request: Int, allowed: Bool = true) {
+        // A quick collapse must cancel an expansion queued before the next layout.
+        guard allowed else {
+            lastExpandRequest = request
+            pendingExpansion = false
+            return
+        }
         guard request != lastExpandRequest else { return }
         lastExpandRequest = request
         pendingExpansion = true
@@ -81,7 +91,7 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
     }
 
     private func expandContainingSidebar() {
-        guard window != nil else { return }
+        guard pendingExpansion, window != nil else { return }
         var ancestor = superview
         while let view = ancestor {
             if let split = view as? NSSplitView, split.isVertical {
@@ -89,7 +99,16 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
                 while let current = responder {
                     if let controller = current as? NSSplitViewController,
                        let item = controller.splitViewItems.first(where: { isDescendant(of: $0.viewController.view) }) {
-                        item.isCollapsed = false
+                        if item.isCollapsed {
+                            if animateExpansion {
+                                NSAnimationContext.runAnimationGroup { context in
+                                    context.duration = 0.24
+                                    item.animator().isCollapsed = false
+                                }
+                            } else {
+                                item.isCollapsed = false
+                            }
+                        }
                         pendingExpansion = false
                         scheduleMeasurement()
                         return

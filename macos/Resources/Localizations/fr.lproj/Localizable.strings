@@ -2262,3 +2262,9 @@
 "Tutorial" = "Tutoriel";
 "Guide" = "Guide";
 "ChatGPT browser extension" = "Extension ChatGPT pour navigateur";
+"Git accounts" = "Comptes Git";
+"Manage Git accounts…" = "Gérer les comptes Git…";
+"Open a repository to see its Git identity." = "Ouvrez un dépôt pour afficher son identité Git.";
+"Open repositories" = "Dépôts ouverts";
+"Recent local repositories" = "Dépôts locaux récents";
+"Open repository" = "Ouvrir le dépôt";

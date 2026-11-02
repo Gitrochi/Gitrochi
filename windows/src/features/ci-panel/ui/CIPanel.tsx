@@ -195,7 +195,7 @@ export function CIPanel({
         />
       </div>
       <div className="side-scroll ci-run-list">
-        {st.kind === "needsAccount" && (
+        {st.kind === "needsAccount" && !store.hostingAccount && (
           <div
             className="col"
             style={{ gap: 6, padding: 8, alignItems: "flex-start" }}
@@ -213,6 +213,7 @@ export function CIPanel({
             </button>
           </div>
         )}
+        {st.kind === "needsAccount" && store.hostingAccount && <div className="col" style={{ padding: 8 }}><span className="hint">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void ci.load()}>{t("Retry")}</button></div>}
         {st.kind === "failed" && (
           <div
             className="col"

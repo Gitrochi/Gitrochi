@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.hoisted(() => vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} })));
 vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 import { RepoStore } from "@/entities/repo";
-import type { ReviewAccess } from "@/entities/hosting";
+import { accounts, type ReviewAccess } from "@/entities/hosting";
 import { settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
@@ -99,5 +99,58 @@ describe("shared issue list", () => {
     const store = fixture(); await store.prepareIssues();
     store.confirmIssueState(store.issues[0]);
     expect(store.confirm?.destructive).toBe(false); expect(store.confirm?.message).toBe("Issue 1");
+  });
+  it("keeps a connected account when saved credentials cannot be read, then reloads on retry", async () => {
+    const store = fixture();
+    const credentialError = "Couldn't read the saved account credentials. Unlock your credentials, then retry.";
+    const account = { id: "saved-alice", provider: "github" as const, server: "https://github.com", username: "alice", name: null, avatarURL: null };
+    vi.spyOn(store, "hostingAccount", "get").mockReturnValue(account);
+    vi.mocked(store.workspaceAccess).mockRejectedValueOnce(new Error(credentialError));
+    await store.loadIssues();
+    expect(store.issueState.kind).toBe("failed");
+    expect(store.hostingAccount).toBe(account);
+    expect(JSON.stringify(store.issueState)).not.toContain("Connect an account");
+    await store.loadIssues();
+    expect(store.issueState.kind).toBe("loaded");
+    vi.spyOn(accounts, "token").mockResolvedValue(null);
+    await store.loadPullRequests();
+    expect(store.prState.kind).toBe("failed");
+    await store.ci.load();
+    expect(store.ci.state.kind).toBe("failed");
+    expect(store.hostingAccount).toBe(account);
+
+    vi.mocked(internal(store).reviewAccess).mockRestore();
+    vi.mocked(accounts.token).mockRejectedValueOnce(new Error(credentialError));
+    await store.loadInbox("issue");
+    expect(accounts.token).toHaveBeenLastCalledWith(account, { reportReadFailure: true });
+    expect(store.inboxError).toBe(credentialError);
+    expect(store.inboxLoading).toBe(false);
+    vi.mocked(accounts.token).mockResolvedValue("fixture-token");
+    await store.loadInbox("issue");
+    expect(store.inboxError).toBeNull();
+    expect(store.inboxItems.map((item) => item.number)).toEqual([1, 2]);
+
+    vi.mocked(accounts.token).mockRejectedValueOnce(new Error(credentialError));
+    await store.openInboxItem(store.issues[0]);
+    expect(store.inboxError).toBe(credentialError);
+    await store.openInboxItem(store.issues[0]);
+    expect(store.inboxError).toBeNull();
+    expect(store.inboxDetail?.comments).toHaveLength(1);
+
+    store.selection = { kind: "pullRequest", number: 7 };
+    vi.mocked(accounts.token).mockRejectedValueOnce(new Error(credentialError));
+    await store.loadReview(7);
+    expect(store.reviewError).toBe(credentialError);
+    expect(store.reviewLoading).toBe(false);
+    vi.mocked(accounts.token).mockResolvedValueOnce(null);
+    await store.loadReview(7);
+    expect(store.reviewError).toBe("No token. Reconnect the account in Settings.");
+    expect(store.hostingAccount).toBe(account);
+
+    store.headBranch = "feature/review";
+    vi.mocked(accounts.token).mockRejectedValueOnce(new Error(credentialError));
+    await store.createPullRequest("Review", "Saved draft", "main", false);
+    expect(store.errorMessage).toBe(credentialError);
+    expect(store.newPullRequestDraft?.body).toBe("Saved draft");
   });
 });

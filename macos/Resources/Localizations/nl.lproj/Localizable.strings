@@ -2173,3 +2173,9 @@
 "Tutorial" = "Handleiding";
 "Guide" = "Gids";
 "ChatGPT browser extension" = "ChatGPT-browserextensie";
+"Git accounts" = "Git-accounts";
+"Manage Git accounts…" = "Git-accounts beheren…";
+"Open a repository to see its Git identity." = "Open een repository om de Git-identiteit te bekijken.";
+"Open repositories" = "Geopende repository’s";
+"Recent local repositories" = "Recente lokale repository’s";
+"Open repository" = "Repository openen";

@@ -9,8 +9,10 @@ import { Button, Spinner } from "@/shared/ui";
 /** Search repositories on a connected GitHub or GitLab account and clone one; shown on the Home page (macOS: RemoteRepositorySearch.swift) */
 export function RemoteRepositorySearch({ store, openSettings }: { store: RepoStore; openSettings?: () => void }) {
   useObserve(accounts);
+  useObserve(store);
   const [query, setQuery] = useState("");
-  const [accountID, setAccountID] = useState("");
+  const accountID = store.hostingHub.selectedAccountID ?? "";
+  const setAccountID = (value: string) => { store.hostingHub.selectedAccountID = value; store.changed(); };
   const [items, setItems] = useState<RemoteRepo[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +29,7 @@ export function RemoteRepositorySearch({ store, openSettings }: { store: RepoSto
     setBusy(true);
     setError("");
     try {
-      const token = await accounts.token(a);
+      const token = await accounts.token(a, { reportReadFailure: true });
       if (!token) throw new Error(t("No token. Reconnect the account in Settings."));
       const current = () => n === generation.current && accounts.revision === revision;
       const p = append ? page + 1 : 1;

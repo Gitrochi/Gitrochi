@@ -99,7 +99,7 @@ extension RepoStore {
 
     /// Opens the Actions page on this pipeline, from a commit's CI icon
     func openCI(_ pipeline: CIPipeline) {
-        guard navigate(.actions) else { return }
+        guard url != nil, navigate(.actions) else { return }
         ciFocus = pipeline.id
         if !ciPipelines.contains(where: { $0.id == pipeline.id }) {
             // the badge came from the commit's SHA; the list may be filtered to another branch

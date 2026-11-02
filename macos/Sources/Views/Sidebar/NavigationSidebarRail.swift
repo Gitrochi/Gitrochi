@@ -7,13 +7,14 @@ struct NavigationSidebarRail: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            NavigationBrand(compact: true).frame(width: 56, height: 42).padding(.top, 6)
             Button(action: onExpand) {
                 Image(systemName: "sidebar.left").font(.system(size: 17)).frame(width: 40, height: 36)
             }
             .buttonStyle(.plain).foregroundStyle(.secondary)
             .help("Expand sidebar").accessibilityLabel("Expand sidebar")
             .accessibilityIdentifier("navigation-rail-expand")
-            .padding(.top, 6)
+            .padding(.top, 2)
             Divider().padding(.horizontal, 10).padding(.vertical, 6)
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 4) {
@@ -45,15 +46,14 @@ struct NavigationSidebarRail: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let disabled = page.needsRepository && store.url == nil
             let count = page == .repository ? store.status.count : page == .pullRequests ? store.pullRequests.count
                 : page == .ledger ? LedgerStore.shared.attentionTotal : 0
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
                 Image(systemName: page.symbol).font(.system(size: 18, weight: active ? .semibold : .regular))
                     .frame(width: 40, height: 36)
-                    .foregroundStyle(active ? Color.accentColor : disabled ? Color.secondary.opacity(0.45) : Color.primary.opacity(0.72))
-                    .background(active ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.72))
+                    .background(active ? Color.accentColor.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
                     .overlay(alignment: .topTrailing) {
                         if count > 0 {
                             Text(count > 99 ? "99+" : String(count)).font(.system(size: 8, weight: .semibold, design: .monospaced))
@@ -63,8 +63,8 @@ struct NavigationSidebarRail: View {
                     }
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain).disabled(disabled)
-            .help(disabled ? String(localized: "Open a repository to use this page.") : title + (count > 0 ? " (\(count))" : ""))
+            .buttonStyle(.plain)
+            .help(title + (count > 0 ? " (\(count))" : ""))
             .accessibilityLabel(title).accessibilityValue(active ? String(localized: "Current page") : "")
             .accessibilityIdentifier("navigation-rail-" + page.rawValue)
         }

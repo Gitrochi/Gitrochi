@@ -32,7 +32,7 @@ function Page({ children, actions }: { children: ReactNode; actions?: ReactNode 
 }
 async function access(store: RepoStore): Promise<ReviewAccess> {
   const c = await store.workspaceAccess();
-  if (!c) throw new Error(t("Connect an account to load this workspace."));
+  if (!c) throw new Error(t(store.hostingAccount ? "Couldn't read the saved account credentials. Unlock your credentials, then retry." : "Connect an account to load this workspace."));
   return c;
 }
 const identity = (store: RepoStore) =>
@@ -264,6 +264,7 @@ function ScopedWorkPanel({
 }: WorkspacePanelProps & { inbox?: boolean }) {
   useObserve(store);
   const [scope, setScope] = useState("repository");
+  useEffect(() => { if (store.hostingHub.selectedAccountID) setScope("account"); }, [store, store.hostingHub.selectedAccountID]);
   const effective = store.target ? scope : "account";
   return (
     <div className="col" style={{ flex: 1, minHeight: 0 }}>
@@ -286,7 +287,7 @@ function ScopedWorkPanel({
       </div>
       {effective === "account" ? (
         <Page>
-          <AccountWorkPanel inbox={inbox} />
+          <AccountWorkPanel inbox={inbox} selectedAccountID={store.hostingHub.selectedAccountID ?? ""} onAccountChange={(value) => { store.hostingHub.selectedAccountID = value; store.changed(); }} />
         </Page>
       ) : inbox ? (
         <RepositoryWorkInboxPanel store={store} openSettings={openSettings} />

@@ -71,15 +71,15 @@ export abstract class RepoCore extends Observable implements AgentHost {
     return this.path ? basename(this.path) : "Gitrochi";
   }
 
-  /** Shows a page; pages that need a repository are refused until one is open. The page is remembered per repository. */
+  /** Pages without a repository show the chooser; remember the page once a repository is open. */
   navigate(page: WorkspaceDestination, prepare = true) {
-    if (!isWorkspaceDestination(page) || (repositoryDestinations.has(page) && !this.path)) return false;
+    if (!isWorkspaceDestination(page)) return false;
     // the Pull requests and Issues pages offer a way back when the repository screen opened them
     if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && returnsToRepository.has(page);
     this.destination = page;
     if (this.path) settings.set("workspaceDestinations", { ...settings.get<Record<string, string>>("workspaceDestinations", {}), [this.path]: page });
     // the Pull requests page shows one request at a time; an unrelated diff or file view would hide its list
-    if (prepare && page === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
+    if (prepare && this.path && page === "pullRequests" && this.selection?.kind !== "pullRequest") { this.closeDiff(); this.closeFileInspect(); }
     this.emit(); return true;
   }
 
@@ -95,6 +95,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
 
   /** Opens the Actions page on a run; the page selects it, loads its jobs and lets go of the focus */
   openCI(pipeline: CIPipeline) {
+    if (!this.path) return;
     if (!this.navigate("actions")) return;
     this.ciFocus = pipeline.id;
     this.emit();
@@ -363,6 +364,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.emit();
       return { kind: "failed", message: t("Couldn't verify the repository path.") };
     }
+    const requestedPage = !this.path && (repositoryDestinations.has(this.destination) || this.destination === "issues" || this.destination === "releases") ? this.destination : null;
     this.stopWatching();
     this.resetState();
     const top = lines[0].trim();
@@ -384,6 +386,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     await this.reload();
     this.selectDefault();
     this.restoreWorkspaceDestination();
+    if (requestedPage) this.navigate(requestedPage);
     if (this.worktrees.length > 1) void this.refreshWorktreeStats();
     this.worktreePoll ??= setInterval(() => {
       if (this.isActive && document.hasFocus() && this.worktrees.length > 1) void this.refreshWorktreeStats();

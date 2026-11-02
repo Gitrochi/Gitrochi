@@ -2214,3 +2214,9 @@
 "Tutorial" = "Eğitim";
 "Guide" = "Kılavuz";
 "ChatGPT browser extension" = "ChatGPT tarayıcı uzantısı";
+"Git accounts" = "Git hesapları";
+"Manage Git accounts…" = "Git hesaplarını yönet…";
+"Open a repository to see its Git identity." = "Git kimliğini görmek için bir depo açın.";
+"Open repositories" = "Açık depolar";
+"Recent local repositories" = "Son yerel depolar";
+"Open repository" = "Depoyu aç";

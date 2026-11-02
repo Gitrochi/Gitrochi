@@ -75,7 +75,9 @@ export abstract class RepoHosting extends RepoWorktrees {
     if (!current()) return;
     if (!acct || !token) {
       if (target.provider === "gitlab") accounts.suggestedGitLabServer = `https://${target.host}`;
-      this.pullRequests = []; this.prState = { kind: "needsAccount" }; this.emit(); return;
+      this.pullRequests = []; this.prState = acct
+        ? { kind: "failed", message: t("Couldn't read the saved account credentials. Unlock your credentials, then retry.") }
+        : { kind: "needsAccount" }; this.emit(); return;
     }
     this.prState = { kind: "loading" }; this.emit();
     try {
@@ -147,12 +149,13 @@ export abstract class RepoHosting extends RepoWorktrees {
 
   async loadInbox(kind: Hosting.InboxItem["kind"] = this.inboxKind, append = false) {
     const generation = this.reviewContextGeneration, token = ++this.inboxLoadToken, path = this.path;
+    const accountID = this.hostingAccount?.id, revision = accounts.revision;
     const page = append && kind === this.inboxKind ? this.inboxPageNumber + 1 : 1;
-    const current = () => generation === this.reviewContextGeneration && token === this.inboxLoadToken && path === this.path;
+    const current = () => generation === this.reviewContextGeneration && token === this.inboxLoadToken && path === this.path && this.hostingAccount?.id === accountID && accounts.revision === revision;
     this.inboxKind = kind; this.inboxLoading = true; this.inboxError = null;
     if (!append) { this.inboxItems = []; this.inboxDetail = null; this.inboxDetailToken++; } this.emit();
     try {
-      const c = await this.reviewAccess(); if (!current()) return;
+      const c = await this.reviewAccess(true); if (!current()) return;
       if (!c) throw new Error(t("Connect an account to load your inbox."));
       const result = await Hosting.inboxPage(c, kind, page); if (!current()) return;
       this.inboxItems = append ? [...this.inboxItems, ...result.items.filter((i) => !this.inboxItems.some((old) => old.id === i.id))] : result.items;
@@ -162,11 +165,12 @@ export abstract class RepoHosting extends RepoWorktrees {
   }
   async openInboxItem(item: Hosting.InboxItem, append = false) {
     const generation = this.reviewContextGeneration, token = ++this.inboxDetailToken, path = this.path;
-    const current = () => generation === this.reviewContextGeneration && token === this.inboxDetailToken && path === this.path;
+    const accountID = this.hostingAccount?.id, revision = accounts.revision;
+    const current = () => generation === this.reviewContextGeneration && token === this.inboxDetailToken && path === this.path && this.hostingAccount?.id === accountID && accounts.revision === revision;
     const previous = append && this.inboxDetail?.item.id === item.id ? this.inboxDetail : null;
     this.inboxDetail = previous ?? { item, comments: [], more: false, page: 0 }; this.inboxLoading = true; this.inboxError = null; this.emit();
     try {
-      const c = await this.reviewAccess(); if (!current()) return;
+      const c = await this.reviewAccess(true); if (!current()) return;
       if (!c) throw new Error(t("Connect an account to load your inbox."));
       const detail = await Hosting.inboxDetail(c, item, (previous?.page ?? 0) + 1); if (!current()) return;
       this.inboxDetail = previous ? { ...detail, comments: [...previous.comments, ...detail.comments.filter((i) => !previous.comments.some((old) => old.id === i.id))] } : detail;
@@ -251,13 +255,18 @@ export abstract class RepoHosting extends RepoWorktrees {
     const originalPath = this.path, originalHead = this.headHash, context = this.reviewContextGeneration;
     this.newPullRequestDraft = { branch, title, body, base, draft, issue: this.newPullRequestDraft?.branch === branch ? this.newPullRequestDraft.issue : undefined };
     const acct = this.hostingAccount;
-    const token = acct ? await accounts.token(acct) : null;
-    const current = () => context === this.reviewContextGeneration && this.path === originalPath && sameTarget(this.target, target);
-    if (!current()) return;
-    if (!acct || !token) {
+    const current = () => context === this.reviewContextGeneration && this.path === originalPath && sameTarget(this.target, target) && this.hostingAccount?.id === acct?.id;
+    if (!acct) {
       this.errorMessage = t("Connect a {0} ({1}) account first (Settings > Accounts).", providerInfo[target.provider].title, target.host);
       this.emit();
       return;
+    }
+    let token: string | null;
+    try { token = await accounts.token(acct, { reportReadFailure: true }); }
+    catch (e) { if (current()) { this.errorMessage = describe(e); this.emit(); } return; }
+    if (!current()) return;
+    if (!token) {
+      this.errorMessage = t("No token. Reconnect the account in Settings."); this.emit(); return;
     }
     if (!(await this.validatePullRequestPushTarget(target, originalPath, acct, context))) return;
     // PR 서버와 다른 pushRemote가 있어도 검토한 PR 원격으로만 게시한다.
@@ -325,12 +334,14 @@ export abstract class RepoHosting extends RepoWorktrees {
     const generation=this.reviewContextGeneration, path=this.path, target=this.target, account=this.hostingAccount, revision=accounts.revision;
     const current=()=>generation===this.reviewContextGeneration && this.path===path && this.target?.host===target?.host && this.target?.path===target?.path && accounts.revision===revision && this.hostingAccount?.id===account?.id;
     const token=account ? await accounts.token(account) : null;
+    if (target && account && !token && current()) throw new Error(t("Couldn't read the saved account credentials. Unlock your credentials, then retry."));
     return target && account && token && current() ? {target,token,apiBase:accountApiBase(account),me:account.username,stillCurrent:current} : null;
   }
 
-  protected async reviewAccess(): Promise<ReviewAccess | null> {
+  protected async reviewAccess(reportReadFailure = false): Promise<ReviewAccess | null> {
     const target = this.target, a = this.hostingAccount;
-    const token = a ? await accounts.token(a) : null;
+    const token = a ? await accounts.token(a, { reportReadFailure }) : null;
+    if (target && a && !token && reportReadFailure) throw new Error(t("No token. Reconnect the account in Settings."));
     return target && a && token ? { target, token, apiBase: accountApiBase(a), me: a.username } : null;
   }
 
@@ -343,19 +354,20 @@ export abstract class RepoHosting extends RepoWorktrees {
     const target = this.target;
     if (!target) return;
     const key = reviewRepositoryKey(target);
-    const c = await this.reviewAccess();
-    if (generation !== this.reviewLoadGeneration || !this.reviewSelected(n, key, path)) return;
-    if (!c || reviewRepositoryKey(c.target) !== key) {
-      this.reviewError = t("Connect an account to see the conversation and approvals."); this.emit(); return;
-    }
+    const accountID = this.hostingAccount?.id, revision = accounts.revision;
+    const current = () => generation === this.reviewLoadGeneration && this.reviewSelected(n, key, path) && this.hostingAccount?.id === accountID && accounts.revision === revision;
+    if (!current()) return;
     this.reviewDrafts = readReviewDrafts();
     if (this.review?.number !== n || this.review.repositoryKey !== key) this.review = null;
     this.reviewLoading = true; this.reviewError = null; this.emit();
     try {
+      const c = await this.reviewAccess(true);
+      if (!current()) return;
+      if (!c || reviewRepositoryKey(c.target) !== key) throw new Error(t("Connect an account to see the conversation and approvals."));
       const r = await ReviewAPI.load(c, n);
-      if (generation === this.reviewLoadGeneration && this.reviewSelected(n, key, path)) this.review = r;
+      if (current()) this.review = r;
     } catch (e) {
-      if (generation === this.reviewLoadGeneration && this.reviewSelected(n, key, path)) this.reviewError = describe(e);
+      if (current()) this.reviewError = describe(e);
     } finally {
       if (generation === this.reviewLoadGeneration) { this.reviewLoading = false; this.emit(); }
     }

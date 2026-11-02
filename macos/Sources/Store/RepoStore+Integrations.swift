@@ -224,8 +224,14 @@ extension RepoStore {
         let current = { self.pullRequestWorkflowID == workflow && self.url == originalURL && self.target == t }
         let originalHead = headHash
         newPullRequestDraft = NewPullRequestDraft(branch: branch, title: title, body: body, base: base, draft: draft, issue: newPullRequestDraft?.branch == branch ? newPullRequestDraft?.issue : nil)
-        guard let acct = hostingAccount, let token = AccountStore.shared.token(for: acct) else {
+        guard let acct = hostingAccount else {
             errorMessage = String(localized: "Connect a \(t.provider.title) (\(t.host)) account first (Settings > Accounts).")
+            return
+        }
+        let savedToken = await AccountStore.shared.loadToken(for: acct)
+        guard current(), hostingAccount?.id == acct.id, !Task.isCancelled else { return }
+        guard let token = savedToken else {
+            errorMessage = AccountStore.shared.savedAccessMessage(for: acct)
             return
         }
         guard await validatePullRequestPushTarget(t, in: originalURL, account: acct, workflow: workflow), current() else { return }

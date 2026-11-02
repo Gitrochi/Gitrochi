@@ -47,10 +47,16 @@ export abstract class RepoIssues extends RepoHosting {
     if (!this.target) { this.clearIssueList(); this.emit(); return; }
     if (!append) this.issueLoadedSearch = this.issueSearch;
     this.issueState = { kind: "loading" }; this.emit();
+    try {
     const c = await this.workspaceAccess();
     if (!current()) return;
-    if (!c) { this.issues = []; this.issuePage = 0; this.issuesMore = false; this.issueState = { kind: "needsAccount" }; this.emit(); return; }
-    try {
+    if (!c) {
+      this.issues = []; this.issuePage = 0; this.issuesMore = false;
+      this.issueState = this.hostingAccount
+        ? { kind: "failed", message: t("Couldn't read the saved account credentials. Unlock your credentials, then retry.") }
+        : { kind: "needsAccount" };
+      this.emit(); return;
+    }
       const result = await Hosting.issuePage(c, this.issueScope, this.issueSearch, page);
       if (!current()) return;
       this.issues = append ? [...this.issues, ...result.items.filter((i) => !this.issues.some((old) => old.id === i.id))] : result.items;

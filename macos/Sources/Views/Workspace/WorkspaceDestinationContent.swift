@@ -18,6 +18,9 @@ struct WorkspaceDestinationContent: View {
 
     @ViewBuilder private var page: some View {
         Group {
+            if store.url == nil && (store.destination.needsRepository || [.issues, .releases].contains(store.destination)) {
+                WorkspaceHomePanel(repositoryOnly: true)
+            } else {
             switch store.destination {
             case .home: WorkspaceHomePanel()
             case .repository: RepositoryScreen()
@@ -33,6 +36,7 @@ struct WorkspaceDestinationContent: View {
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
             case .ledger: LedgerWorkspaceView(repositoryPath: store.url?.path)
+            }
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
@@ -121,7 +125,7 @@ private struct PullRequestsWorkspace: View {
         } else {
             VStack(spacing: 14) {
                 ContentUnavailableView("No hosting remote", systemImage: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Connect account…") { openSettings() }
+                Button("Open repository…") { store.presentOpenPanel() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }

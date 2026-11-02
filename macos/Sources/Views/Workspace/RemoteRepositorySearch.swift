@@ -4,7 +4,10 @@ import SwiftUI
 struct RemoteRepositorySearch: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings
-    @ViewState private var accountID = ""
+    private var accountID: String {
+        get { store.hostingHub.selectedAccountID ?? "" }
+        nonmutating set { store.hostingHub.selectedAccountID = newValue }
+    }
     @ViewState private var query = ""
     @ViewState private var repos: [RemoteRepo] = []
     @ViewState private var busy = false
@@ -21,7 +24,7 @@ struct RemoteRepositorySearch: View {
                     Text("Connect a GitHub or GitLab account to search its repositories.").font(.caption).foregroundStyle(.secondary)
                     Button("Connect account…") { openSettings() }.controlSize(.small)
                 } else {
-                    Picker("Account and server", selection: $accountID) {
+                    Picker("Account and server", selection: Binding(get: { accountID }, set: { accountID = $0 })) {
                         Text("Choose an account and server").tag("")
                         ForEach(AccountStore.shared.accounts) { a in Text("\(a.host) · @\(a.username)").tag(a.id) }
                     }.labelsHidden()

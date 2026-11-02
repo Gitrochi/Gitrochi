@@ -30,6 +30,7 @@ extension RepoStore {
     }
 
     func loadIssues(append: Bool = false) async {
+        guard await resolveCollaborationAccess() != nil else { return }
         guard let c = issueAccess else { return }
         issueList.contextKey = issueContextKey
         issueList.loadedSearch = issueList.search

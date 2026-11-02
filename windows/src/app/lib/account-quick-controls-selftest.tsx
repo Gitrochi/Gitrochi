@@ -54,9 +54,9 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
   }
 }
 
-/** Without a repository or a GitHub/GitLab remote the control shows the connected accounts and the global Git author. */
+/** Initial accounts include Git identities and hosting connections without implying a failed sign-in. */
 export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[boolean, string]> {
-  const original = { accounts: accounts.accounts, run: ipc.run };
+  const original = { accounts: accounts.accounts, run: ipc.run, gitAccounts: gitch.accounts };
   const host = document.createElement("div"); host.hidden = true; document.body.append(host);
   const root = createRoot(host);
   const alice: HostAccount = { id: "bare-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
@@ -65,32 +65,38 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
   const button = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".account-quick-popover button")).find((item) => item.textContent?.trim() === t(label));
   try {
     accounts.accounts = [alice, carol];
-    // only the global identity read may run, and it answers from a fixture
+    gitch.accounts = async () => [{ id: "alice", hosts: "github.com", email: "alice@example.invalid" }, { id: "bob", hosts: "github.com", email: "bob@example.invalid" }, { id: "carol", hosts: "gitlab.example.com(port 2222)", email: "carol@example.invalid" }].map((value) => ({ ...value, rules: "", sshKey: true }));
+    // Folder-based Git rules may intentionally leave the global author unset.
     ipc.run = async (_program, args) => {
       commands.push(args);
-      if (args.includes("--global")) return { status: 0, stdout: "user.name Global Author\nuser.email global@example.invalid\n", stderr: "" };
+      if (args.includes("--global")) return { status: 1, stdout: "", stderr: "" };
       throw new Error("Unexpected process in the account fixture");
     };
-    root.render(createElement(AccountQuickControls, { store: new RepoStore() }));
-    if (!await until(() => host.textContent?.includes("@alice +1") === true && host.textContent.includes("Global Author"))) return [false, `Connected accounts or the global author are missing: ${host.textContent}`];
+    const store = new RepoStore();
+    root.render(createElement(AccountQuickControls, { store }));
+    if (!await until(() => host.textContent?.includes("@alice +2") === true && host.textContent.includes(t("Open repository…")))) return [false, `Multiple accounts or the repository action are missing: ${host.textContent}`];
     host.querySelector<HTMLButtonElement>("button")!.click();
     if (!await until(() => !!document.querySelector(".account-quick-popover .account-quick-list"))) return [false, "The popover does not list connected accounts"];
     const panel = document.querySelector(".account-quick-popover")!;
-    const listed = Array.from(panel.querySelectorAll(".account-quick-list li > span:not(.avatar)")).map((item) => item.textContent);
+    const listed = Array.from(panel.querySelectorAll(".account-quick-list li > button > span:not(.avatar)")).map((item) => item.textContent);
     if (listed.join("|") !== "@alice · github.com|@carol · gitlab.example.com" || !panel.textContent?.includes(t("Connected accounts"))) return [false, `Connected account list: ${listed.join("|")}`];
     if (panel.querySelector("select") || !button("Add or remove connected accounts…")) return [false, "Without a remote there must be no repository picker, but the account manager must stay"];
-    if (!panel.textContent?.includes("global@example.invalid") || panel.textContent.includes(t("Not configured"))) return [false, "The global Git author is not shown"];
+    if (!panel.textContent?.includes("bob") || !panel.textContent.includes(t("Git accounts")) || !panel.textContent.includes(t("Open a repository to see its Git identity.")) || panel.textContent.includes(t("Not configured"))) return [false, "Registered Git identities or the repository guidance are missing"];
     if (!commands.length || !commands.every((args) => args.includes("config") && args.includes("--global"))) return [false, `Unexpected commands: ${JSON.stringify(commands)}`];
+    const choices = panel.querySelectorAll<HTMLButtonElement>(".account-quick-list li > button");
+    choices[1].click();
+    if (!await until(() => store.hostingHub.selectedAccountID === carol.id && store.destination === "account")) return [false, "Choosing another server did not open that account's workspace"];
+    if (store.path || store.me || store.gitchStatus) return [false, "Account selection changed repository Git identity"];
     // a GitHub/GitLab remote without an account on its host still asks to connect one
     const remote = new RepoStore(); remote.path = "/fixture/bare"; remote.target = { provider: "github", host: "github.example.com", path: "team/repo", remote: "origin" };
     root.render(createElement(AccountQuickControls, { store: remote }));
     if (!await until(() => host.textContent?.includes(t("Connect account")) === true)) return [false, "A remote without an account must still offer Connect account"];
     accounts.accounts = [];
     root.render(createElement(AccountQuickControls, { store: new RepoStore() }));
-    if (!await until(() => host.textContent?.includes(t("Connect account")) === true)) return [false, "Without accounts the control must offer Connect account"];
-    return [true, "Without a remote: first account with +N, every connected account listed, no repository picker, the global Git author; a remote without an account and no accounts at all both offer Connect account"];
+    if (!await until(() => host.textContent?.includes(t("Git accounts")) === true)) return [false, "Configured Git identities must remain visible without a hosting connection"];
+    return [true, "All registered Git identities and hosting connections are visible; selecting another server opens its account workspace without changing Git identity; initial Git actions lead to a repository chooser"];
   } finally {
     root.unmount(); await sleep(25); host.remove(); document.querySelector(".account-quick-popover")?.remove();
-    accounts.accounts = original.accounts; ipc.run = original.run;
+    accounts.accounts = original.accounts; ipc.run = original.run; gitch.accounts = original.gitAccounts;
   }
 }

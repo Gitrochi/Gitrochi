@@ -295,6 +295,7 @@ final class RepoStore: Identifiable {
     @discardableResult
     /// quick: switching worktrees, so skip the minimum loading animation
     func open(_ folder: URL, quick: Bool = false) async -> OpenResult {
+        let requestedPage = url == nil && (destination.needsRepository || [.issues, .releases].contains(destination)) ? destination : nil
         let started = Date()
         loading = LoadingInfo(title: String(localized: "Opening \(folder.lastPathComponent)"), step: String(localized: "Checking repository…"))
         defer { if url == nil { loading = nil } }
@@ -345,6 +346,7 @@ final class RepoStore: Identifiable {
             }
         }
         restoreWorkspaceDestination()
+        if let requestedPage { navigate(requestedPage) }
         // 로딩 화면이 번쩍 지나가지 않게 애니메이션 한 호흡(약 0.9초)은 보여 준다
         let shown = Date().timeIntervalSince(started)
         if !quick && shown < 0.9 { try? await Task.sleep(for: .milliseconds(Int((0.9 - shown) * 1000))) }
@@ -393,10 +395,14 @@ final class RepoStore: Identifiable {
     /// Without a repository the window shows the global Git identity (Windows: entities/repo/model/layers/core.ts)
     func loadGlobalIdentity() async {
         guard url == nil else { return }
+        async let configured = Gitch.accounts()
         let home = FileManager.default.homeDirectoryForCurrentUser
-        guard let result = try? await Git.raw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], in: home), url == nil else { return }
+        let result = try? await Git.raw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], in: home)
+        let identities = await configured
+        guard url == nil else { return }
+        if gitchAccounts != identities { gitchAccounts = identities }
         var name = "", email = ""
-        for line in result.output.split(separator: "\n") {
+        for line in (result?.output ?? "").split(separator: "\n") {
             let parts = line.split(separator: " ", maxSplits: 1).map(String.init)
             guard parts.count == 2 else { continue }
             if parts[0] == "user.name" { name = parts[1] } else if parts[0] == "user.email" { email = parts[1] }

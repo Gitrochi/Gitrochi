@@ -3,11 +3,12 @@ import SwiftUI
 /// The window's pages. Once the repository screen opens, this folds into the icon rail and the branch list takes its place.
 struct NavigationSidebar: View {
     @Environment(RepoStore.self) private var store
+    @ViewState private var hovered: WorkspaceDestination?
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Workspace").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).tracking(0.6)
+                NavigationBrand()
                 Spacer()
                 Button { store.sidebarToggleRequest += 1 } label: {
                     Image(systemName: "sidebar.left").font(.system(size: 15)).frame(width: 28, height: 24)
@@ -16,16 +17,16 @@ struct NavigationSidebar: View {
                 .help("Collapse sidebar").accessibilityLabel("Collapse sidebar")
                 .accessibilityIdentifier("navigation-sidebar-collapse")
             }
-            .padding(.leading, 16).padding(.trailing, 8).padding(.top, 8)
+            .padding(.leading, 14).padding(.trailing, 8).frame(height: 56)
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
-                    rows([.home, .repository])
+                    section([.home, .repository])
                     groupTitle(String(localized: "Workspace"))
-                    rows([.compare, .rebase, .code])
+                    section([.compare, .rebase, .code])
                     groupTitle(store.target?.provider == .gitlab ? "GitLab" : "GitHub")
-                    rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
+                    section([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     groupTitle(String(localized: "Tools"))
-                    rows([.flows, .ledger].filter(\.isShown))
+                    section([.flows, .ledger].filter(\.isShown))
                 }.padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 12)
             }
             Divider()
@@ -34,12 +35,19 @@ struct NavigationSidebar: View {
         }
         .background(Color(nsColor: .windowBackgroundColor))
         // the Ledger row's badge counts what needs a person
-        .task { if WorkspaceDestination.ledger.isShown { LedgerStore.shared.activate() } }
+        .task { if WorkspaceDestination.ledgerPreview { LedgerStore.shared.activate() } }
     }
 
     private func groupTitle(_ text: String) -> some View {
-        HStack { Text(text.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(0.8).lineLimit(1); Rectangle().frame(height: 1).opacity(0.3) }
-            .foregroundStyle(.secondary).padding(.horizontal, 12).padding(.top, 18).padding(.bottom, 6)
+        HStack { Text(text.uppercased()).font(.system(size: 11, weight: .medium)).tracking(0.7).lineLimit(1); Spacer() }
+            .foregroundStyle(.secondary).padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+    }
+
+    private func section(_ pages: [WorkspaceDestination]) -> some View {
+        VStack(spacing: 3) { rows(pages) }
+            .padding(4)
+            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.05), lineWidth: 1))
     }
 
     private func title(_ page: WorkspaceDestination) -> String { page.title(gitlab: store.target?.provider == .gitlab) }
@@ -47,7 +55,6 @@ struct NavigationSidebar: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let disabled = page.needsRepository && store.url == nil
             Button { store.navigate(page) } label: {
                 HStack(spacing: 10) {
                     Image(systemName: page.symbol).font(.system(size: 16, weight: active ? .semibold : .regular)).frame(width: 21, height: 20)
@@ -55,26 +62,27 @@ struct NavigationSidebar: View {
                         Text(title(page)).font(.system(size: 13, weight: active ? .semibold : .medium)).lineLimit(1)
                         if page == .repository {
                             Text(store.url == nil ? String(localized: "Open a repository to get started") : store.name)
-                                .font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                                .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                         }
                     }
                     Spacer(minLength: 2)
                     if page == .repository, store.status.count > 0 { badge(store.status.count) }
                     if page == .pullRequests, !store.pullRequests.isEmpty { badge(store.pullRequests.count) }
                     if page == .ledger, LedgerStore.shared.attentionTotal > 0 { badge(LedgerStore.shared.attentionTotal) }
-                }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 54 : 38)
-                    .foregroundStyle(active ? Color.accentColor : disabled ? Color.secondary.opacity(0.5) : Color.primary.opacity(0.8))
-                    .background(active ? Color.accentColor.opacity(0.11) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 46 : 32)
+                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.8))
+                    .background(active ? Color.accentColor.opacity(0.16) : hovered == page ? Color.primary.opacity(0.035) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
                     .contentShape(Rectangle())
-            }.buttonStyle(.plain).disabled(disabled)
-                .help(disabled ? String(localized: "Open a repository to use this page.") : title(page))
+            }.buttonStyle(.plain)
+                .onHover { hovered = $0 ? page : nil }
+                .help(title(page))
                 .accessibilityLabel(title(page))
                 .accessibilityValue(active ? String(localized: "Current page") : "")
         }
     }
 
     private func badge(_ count: Int) -> some View {
-        Text(count > 999 ? "999+" : String(count)).font(.system(size: 10, weight: .semibold, design: .monospaced))
-            .padding(.horizontal, 5).padding(.vertical, 2).background(.quaternary.opacity(0.7), in: Capsule())
+        Text(count > 999 ? "999+" : String(count)).font(.system(size: 11, weight: .semibold))
+            .padding(.horizontal, 6).frame(height: 18).background(Color(nsColor: .windowBackgroundColor), in: Capsule())
     }
 }

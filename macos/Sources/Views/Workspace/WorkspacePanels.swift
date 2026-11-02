@@ -179,7 +179,7 @@ struct IssuesWorkspacePanel: View {
         } else {
             VStack(spacing: 14) {
                 ContentUnavailableView("No hosting remote", systemImage: "circle.dotted", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Connect account…") { openSettings() }
+                Button("Open repository…") { store.presentOpenPanel() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
@@ -206,7 +206,7 @@ struct ActionsWorkspacePanel: View {
         } else {
             VStack(spacing: 14) {
                 ContentUnavailableView("No hosting remote", systemImage: "bolt.horizontal.circle", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Connect account…") { openSettings() }
+                Button("Open repository…") { store.presentOpenPanel() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }

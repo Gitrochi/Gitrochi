@@ -166,7 +166,7 @@ struct WorkspaceCommandPalette: View {
             WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),
                              subtitle: page == .repository ? store.name : "", icon: page.symbol,
                              group: go, shortcut: shortcuts[page].map { "⌘" + $0 } ?? "",
-                             enabled: !page.needsRepository || store.url != nil) { store.navigate(page) }
+                             enabled: true) { store.navigate(page) }
         }
         let available = store.url != nil && store.busy == nil
         let waiting = String(localized: "Wait for the current operation to finish.")

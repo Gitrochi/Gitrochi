@@ -7,7 +7,7 @@ import AppKit
 /// GITROCHI_LEDGER_PREVIEW=1. Track agents I start is this app's choice (UserDefaults); auto-continue per repository
 /// lives in the ledger's `autoContinue` setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
 struct LedgerSettings: View {
-    static var isShown: Bool { WorkspaceDestination.ledgerPreview }
+    static var isShown: Bool { true }
 
     enum Sheet: String, Identifiable {
         case connect, importReports, browser
