@@ -57,18 +57,18 @@ extension RepoStore {
     }
 
     /// 보내기 전에는 AI를 호출하지 않고, 사용자가 확인할 로컬 미리보기만 준비한다.
-    func openChangeQuestion(refresh: Bool = false) async {
+    func openChangeQuestion(refresh: Bool = false, present: Bool = true) async {
         guard let url else { return }
         let origin = changeQuestionOrigin
         if !refresh, let existing = changeQuestionSession, existing.repository == url, existing.origin == origin, existing.snapshot != nil {
             existing.active = true
-            sheet = .changeQuestion
+            if present { sheet = .changeQuestion }
             return
         }
         cancelChangeQuestion()
         let session = ChangeQuestionSession(repository: url, origin: origin)
         changeQuestionSession = session
-        sheet = .changeQuestion
+        if present { sheet = .changeQuestion }
         let source = diffSource
         let selection = selection
         let document = diff

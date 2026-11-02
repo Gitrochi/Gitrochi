@@ -66,7 +66,14 @@ struct LedgerClient: Sendable {
     /// Marks what auto-continue sent for a prompt as seen by a person
     func reviewPrompt(_ id: Int) async throws -> LedgerWriteResult { try await call("prompt_review", ["id": .number(Double(id))]) }
 
-    func backup() async throws -> String { try await call("backup", as: LedgerBackupResult.self).path }
+    func backup(daily: Bool = false) async throws -> String {
+        try await call("backup", daily ? ["daily": true] : [:], as: LedgerBackupResult.self).path
+    }
+
+    func work(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("work", args) }
+    func documents(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("documents", args) }
+    func notebook(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("notebook", args) }
+    func records(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("records", args) }
 
     /// Reads a claude-ledger database without writing to it; `dryRun` only counts what would be copied
     func importLegacy(path: String, dryRun: Bool) async throws -> LedgerLegacyImportResult {

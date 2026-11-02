@@ -6,11 +6,12 @@ The session ledger. Agents report which baseline their work started from and whe
 | --- | --- |
 | macOS app | C ABI `gitrochi_ledger_call` / `gitrochi_ledger_free` ([`include/gitrochi_ledger.h`](include/gitrochi_ledger.h)); linking it into `libgitrochi_core.a` comes with the screens |
 | Windows app | Rust crate dependency, one Tauri command `ledger_call` (with the screens) |
-| Agents (Claude Code and other MCP clients) | `gitrochi-ledger mcp`: `ledger_overview`, `ledger_report`, `ledger_session` |
+| Agents (Claude Code and other MCP clients) | `gitrochi-ledger mcp`: `ledger_overview`, `ledger_report`, `ledger_session`, `ledger_work`, `ledger_lookup` |
+| Existing Python HTTP reporting clients | Explicitly started `gitrochi-ledger serve` on loopback; experimental compatibility adapter |
 | Scripts, terminals, pasted reports | The `gitrochi-ledger` command line |
 | Claude Code hooks of agents Gitrochi launches | `gitrochi-ledger hook <event>`: activity, and auto-continue where a person turned it on ([below](#hooks)) |
 
-For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md).
+For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md). [Moving from Claude Ledger](../../docs/ledger/MIGRATION.md) covers existing records and clients, Work log, Document tracker and Notebook.
 
 [CONTRACT.md](CONTRACT.md) is the API: storage, vocabulary, verdicts, hand-offs, types, methods, callers and errors. [`schema/`](schema/) has JSON Schemas for `State`, `Session`, `LedgerEvent`, `Question`, `Graph`, `PendingPrompt`, the session detail and the result of a claude-ledger import.
 
@@ -27,6 +28,8 @@ For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md
 
 One file per user: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3` on macOS, `%APPDATA%\Gitrochi\ledger\ledger.sqlite3` on Windows, `$XDG_DATA_HOME/gitrochi/ledger/ledger.sqlite3` elsewhere. Only this crate writes it, from any process: WAL, `BEGIN IMMEDIATE`, a 15-second busy timeout (one second for hooks, which also never create the file), and `meta.rev` incremented by every write so the apps reload only when something changed. Backups go to `backups/` next to it.
 
+The native apps check for a daily snapshot while they follow Ledger state; the optional HTTP bridge does the same while running. A successful check is repeated at most hourly, and a failure retries after five minutes without blocking state reads. Demo backends do not schedule backups. Retention uses `backupKeep`. Each snapshot has a privately allocated temporary filename so concurrent processes never write or remove another writer's temporary file.
+
 | Variable | Effect |
 | --- | --- |
 | `GITROCHI_LEDGER_DB` | Another database file |
@@ -38,7 +41,7 @@ One file per user: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3
 
 The bundled `gitrochi-ledger-browser` companion accepts Chrome native messages from one explicitly installed extension ID. It captures completed visible questions and, when enabled, browser drafts accepted with Tab. It does not read desktop predictions, accept arbitrary app methods, consume human messages or send to ChatGPT. Setup and the exact supported page contract are in the [extension guide](../../extensions/chatgpt-ledger/README.md).
 
-Storage schema 3 adds browser source/draft fields and source deduplication. Update the app and agent Ledger commands together before connecting the extension. The JSON API remains version 1.
+Storage schema 8 adds browser source/draft fields, source deduplication and durable session generations after the production work, notebook and document migrations. Populated schema-3 browser previews upgrade without losing questions, drafts or answers. Update the app and agent Ledger commands together before connecting the extension. The JSON API remains version 1.
 
 ## Connecting an agent
 
@@ -68,6 +71,8 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   session ID [--deliver]
   import FILE|- [-p PROJECT]
   import-legacy FILE [--dry-run]
+  work [ACTION] [JSON] [-p PROJECT]
+  lookup [ACTION] [JSON] [-p PROJECT] [--id ID]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
@@ -76,6 +81,7 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   mcp
   browser-host install --extension-id ID [--host-path FILE]
   browser-host status|remove
+  serve [--listen 127.0.0.1:8765]
   observe <claude|codex> EVENT < input.json
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json
@@ -95,7 +101,11 @@ gitrochi-ledger session S1031-02 --deliver   # only the session itself
 gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
 ```
 
-`import-legacy` copies a database of the standalone claude-ledger tool, which the ledger re-implements, without ever writing to that file: projects, baselines, sessions with their events and questions, and the hashes of pasted blocks it imported. Sessions the ledger already has are skipped and listed, so running it again changes nothing; `--dry-run` only counts (see [CONTRACT.md](CONTRACT.md#importing-a-claude-ledger-database)).
+`import-legacy` copies a database of the standalone claude-ledger tool without writing to it: projects, baselines, sessions with their events and questions, pasted-block hashes, work records and personal notes. Optional source rows are retained with provenance. Existing session IDs and their incoming histories are skipped together. Imported work references use destination event mappings; an unresolved source reference is namespaced rather than attached to an unrelated event. `--dry-run` counts without copying, and unchanged repeat imports add nothing. This is a migration, not live sync; see the [migration guide](../../docs/ledger/MIGRATION.md#import-existing-records) and [contract](CONTRACT.md#importing-a-claude-ledger-database).
+
+`work` runs independent dated work operations and builds Markdown reports; `lookup` searches the document folders selected in the app. `ledger_work` and `ledger_lookup` expose those agent operations through MCP. Notebook, session metadata/deletion and baseline-note editing remain app-only. Examples and validation rules are in the [usage guide](../../docs/ledger/MIGRATION.md#work-log).
+
+`serve` starts an optional, experimental loopback-only HTTP adapter for existing Python clients configured with `LEDGER_URL` or `client_mode: "http"`. It exposes reporting, work and document reads; it never exposes the human, Notebook, settings, paid-summary or client-download endpoints. It has no automatic startup or LAN bind mode. See the [supported endpoints and request limits](../../docs/ledger/MIGRATION.md#optional-local-http-bridge).
 
 ## Automatic local activity
 
@@ -145,6 +155,11 @@ A wait is a pending prompt that the apps show with a countdown and can answer (`
 | `graph.rs`, `search.rs` | The graph layout; search |
 | `import.rs`, `sha1.rs` | Pasted blocks and their duplicate hash (the original tool's canonical JSON) |
 | `legacy.rs` | The read-only import of a claude-ledger database |
+| `legacy_extra.rs`, `work/legacy.rs` | Original optional rows, source mappings and work/note migration |
+| `work.rs`, `work/` | Dated work, corrections, carryovers, grouping and reports |
+| `notebook.rs` | Person-only notes with optimistic updates |
+| `documents.rs`, `documents/` | Bounded read-only document scans, ID evidence and checksum checkpoints |
+| `http.rs`, `http/` | Opt-in loopback reporting bridge and legacy response aliases |
 | `backup.rs`, `prompts.rs`, `settings.rs` | Backups, pending prompts for auto-continue, global settings |
 | `api.rs`, `ffi.rs`, `mcp.rs`, `main.rs` | The dispatcher and its callers, the C ABI, the MCP server, the CLI |
 | `hook.rs` | The Claude Code hook handler: activity and auto-continue's waits |

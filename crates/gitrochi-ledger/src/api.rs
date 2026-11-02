@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 29] = [
+pub const METHODS: [(&str, &[Caller]); 33] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -47,6 +47,10 @@ pub const METHODS: [(&str, &[Caller]); 29] = [
     ("report", &[Caller::App, Caller::Agent]),
     ("import", &[Caller::App, Caller::Agent]),
     ("import_legacy", &[Caller::App, Caller::Agent]),
+    ("work", &[Caller::App, Caller::Agent]),
+    ("documents", &[Caller::App, Caller::Agent]),
+    ("notebook", &[Caller::App]),
+    ("records", &[Caller::App]),
     ("scan", &[Caller::App, Caller::Agent]),
     ("register_baseline", &[Caller::App, Caller::Agent]),
     ("backup", &[Caller::App, Caller::Agent]),
@@ -137,6 +141,10 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
     let now = now_ms();
     match method {
         "rev" => Ok(json!({"rev": db.rev()?})),
+        "work" => crate::work::call(db, args, now, caller == Caller::App),
+        "documents" => crate::documents::call(db, args, now, caller == Caller::App),
+        "notebook" => crate::notebook::call(db, args, now),
+        "records" => crate::human::manage(db, args, now),
         "state" => {
             let project = arg_str(args, "project");
             if let Some(project) = &project {
@@ -204,14 +212,71 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
                 .as_str()
                 .ok_or_else(|| Error::invalid("Missing text"))?;
             let settings = settings_of(db)?;
-            let results = import::import(
-                db,
-                &settings,
-                text,
-                arg_str(args, "project").as_deref(),
-                now,
-            )?;
-            Ok(json!({"results": results}))
+            let has_work = text
+                .lines()
+                .any(|line| line.trim().eq_ignore_ascii_case("```work"));
+            let mut in_work = false;
+            let ledger_text: String = text
+                .lines()
+                .filter(|line| {
+                    if line.trim().eq_ignore_ascii_case("```work") {
+                        in_work = true;
+                        return false;
+                    }
+                    if in_work && line.trim().starts_with("```") {
+                        in_work = false;
+                        return false;
+                    }
+                    !in_work
+                })
+                .map(|line| format!("{line}\n"))
+                .collect();
+            let results = if has_work && import::blocks(&ledger_text).is_empty() {
+                Vec::new()
+            } else {
+                import::import(
+                    db,
+                    &settings,
+                    &ledger_text,
+                    arg_str(args, "project").as_deref(),
+                    now,
+                )?
+            };
+            let mut rows = serde_json::to_value(results)?
+                .as_array()
+                .cloned()
+                .unwrap_or_default();
+            if has_work {
+                let work_project = match arg_str(args, "project") {
+                    Some(project) => Some(project),
+                    None => db.read(|c| {
+                        let mut projects = std::collections::BTreeSet::new();
+                        for row in rows.iter().filter(|row| row["ok"] == true) {
+                            if let Some(id) = row["sessionId"].as_str() {
+                                if let Some(session) = crate::session::load(c, id)? {
+                                    projects.insert(session.project);
+                                }
+                            }
+                        }
+                        Ok(if projects.len() == 1 {
+                            projects.into_iter().next()
+                        } else {
+                            None
+                        })
+                    })?,
+                };
+                let work = crate::work::call(
+                    db,
+                    &json!({"action":"import", "text":text, "project":work_project, "requireProject":true}),
+                    now,
+                    caller == Caller::App,
+                )?;
+                for row in work["results"].as_array().into_iter().flatten() {
+                    let status = row["status"].as_str().unwrap_or("error");
+                    rows.push(json!({"index":rows.len(), "ok":status!="error", "duplicate":status=="duplicate", "event":"work", "error":row["error"]["message"], "work":row}));
+                }
+            }
+            Ok(json!({"results": rows}))
         }
         "import_legacy" => {
             // Taken as given: normalising a file name could point at another file.

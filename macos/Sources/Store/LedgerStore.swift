@@ -112,6 +112,8 @@ final class LedgerStore {
     private var lastRev = -1
     private var stateReadAt: LedgerMs?
     private var generation = 0
+    private var nextBackupAt: LedgerMs = 0
+    private var backupInFlight = false
 
     init(client: LedgerClient, defaults: UserDefaults = .standard, interval: Duration = .seconds(2),
          now: @escaping @Sendable () -> LedgerMs = { LedgerStore.localNow() }) {
@@ -153,11 +155,31 @@ final class LedgerStore {
 
     /// Reads changed state, and recomputes quiet sessions' verdicts at least once a minute.
     func poll() async {
+        backupIfDue()
         do {
             let rev = try await client.rev()
             if rev != lastRev || loadError != nil || refreshDue { await reload() }
         } catch {
             setIfChanged(\.loadError, error.localizedDescription)
+        }
+    }
+
+    private func backupIfDue() {
+        let current = now()
+        let hour = 3_600_000
+        guard client.backend is NativeLedgerBackend, !backupInFlight,
+              current >= nextBackupAt || nextBackupAt - current > hour else { return }
+        backupInFlight = true
+        nextBackupAt = current + hour
+        let client = client
+        Task { [weak self] in
+            do {
+                _ = try await client.backup(daily: true)
+                if let self { nextBackupAt = now() + hour }
+            } catch {
+                if let self { nextBackupAt = now() + 300_000 }
+            }
+            self?.backupInFlight = false
         }
     }
 

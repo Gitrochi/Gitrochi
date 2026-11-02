@@ -36,6 +36,7 @@ import { navigationSelfTest } from "./lib/navigation-selftest";
 import { ledgerSelfTest } from "./lib/ledger-selftest";
 import { ledgerBrowserSelfTest } from "./lib/ledger-browser-selftest";
 import { ledgerChatGPTDraftSelfTest } from "./lib/ledger-chatgpt-draft-selftest";
+import { ledgerParitySelfTest } from "./lib/ledger-parity-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
@@ -278,6 +279,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Ledger page on the demo backend: preview switch, Inbox triage, prompts, Board, Graph, inspector, search, narrow sheet and onboarding", ledgerSelfTest);
   await step("Browser host setup confirmation, revocation and editable accepted-Tab draft provenance", ledgerBrowserSelfTest);
   await step("ChatGPT copied drafts: exact local text, explicit question preview and save, ignored source targets and closed destinations", ledgerChatGPTDraftSelfTest);
+  await step("Ledger notebook, work reports and document tracker", ledgerParitySelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);

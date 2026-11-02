@@ -59,7 +59,7 @@ struct LedgerLegacyImportSheet: View {
     /// Nothing the ledger does not have already
     static func isEmpty(_ summary: LedgerLegacyImportResult) -> Bool {
         let c = summary.counts
-        return c.projects + c.baselines + c.baselinesUpdated + c.sessions + c.events + c.questions + c.imports == 0
+        return c.projects + c.baselines + c.baselinesUpdated + c.sessions + c.events + c.questions + c.imports + (c.workItems ?? 0) + (c.notes ?? 0) + (c.preservedRows ?? 0) == 0
     }
 
     private func counts(_ summary: LedgerLegacyImportResult) -> some View {
@@ -76,6 +76,9 @@ struct LedgerLegacyImportSheet: View {
                 if c.baselinesUpdated > 0 { row("Baselines completed", c.baselinesUpdated) }
                 row("Projects", c.projects)
                 row("Pasted blocks", c.imports)
+                row("Work items", c.workItems ?? 0)
+                row("Personal notes", c.notes ?? 0)
+                row("Source records retained", c.preservedRows ?? 0)
             }
             .font(.callout)
             if !summary.skipped.isEmpty {

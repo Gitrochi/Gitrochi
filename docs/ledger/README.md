@@ -44,6 +44,8 @@ The sheet also supplies configuration for other MCP clients and instructions you
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
+Existing Claude Ledger users can also retain their work records and personal notes. See [Moving from Claude Ledger](MIGRATION.md) for import conflicts, agent reconnection, the feature map and the optional local HTTP bridge. Importing does not keep the two databases synchronized.
+
 ## Track local Claude Code and Codex activity automatically
 
 Passive hooks can put local conversations in the Ledger even when you start them outside Gitrochi. Use the setup command for the client you want to observe:
@@ -84,7 +86,7 @@ This does **not** capture the desktop application's unaccepted composer predicti
 
 Choose **Pause** to stop. Switching tabs, changing conversations, reloading, closing the tab or losing the local connection also pauses capture; reconnect explicitly. **Remove browser connection** in Gitrochi revokes the host registration. No cookies, account credentials, background history scan or external server is used.
 
-Use the updated Gitrochi app and bundled Ledger command together before enabling the extension. Storage schema 3 adds browser provenance and drafts; an older Ledger writer can read it but refuses to write.
+Use the updated Gitrochi app and bundled Ledger command together before enabling the extension. Storage schema 8 adds browser provenance and drafts; an older Ledger writer can read it but refuses to write.
 
 ## Answer questions and use suggestions
 
@@ -221,7 +223,7 @@ With a repository open, the Ledger's terminal button offers **Ledger overview** 
 
 ## Storage, settings and backups
 
-The Ledger stays on this computer; this preview does not share it between PCs. The default database is:
+The Ledger's database stays on this computer. An explicitly started [experimental loopback bridge](MIGRATION.md#optional-local-http-bridge) can connect existing reporting clients; direct LAN binding is not available. The default database is:
 
 - macOS: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3`
 - Windows: `%APPDATA%\Gitrochi\ledger\ledger.sqlite3`
@@ -230,6 +232,19 @@ Settings › Ledger shows the database location. Global rules, project baseline 
 
 Use **Back up now** to create a consistent SQLite snapshot in `backups/` beside the database. The default retention is 14 copies, adjustable in settings. **Show in Finder** / **Show in Explorer** opens the location. The CLI also supports `backup --daily` to avoid a second backup on the same day; see the [CLI guide](../../crates/gitrochi-ledger/README.md#command-line).
 
+Gitrochi also checks for a daily snapshot while it follows the Ledger, through an open Ledger view or its active notification polling. Successful checks are at most hourly; a failed attempt retries after five minutes without interrupting the page. Demo data is excluded. The optional HTTP bridge makes the same daily check while its process runs. No daily backup runs while both the app's Ledger polling and the bridge are stopped. Concurrent app, bridge and CLI snapshots use separate temporary files.
+
 Restore is manual. Close Gitrochi and stop agents and other processes using that Ledger first. Preserve the current database and any matching `-wal` and `-shm` files together, then restore a backup as `ledger.sqlite3` with no old sidecar files beside it. Reopen the preview and check its sessions before resuming agents. Keep the preserved files until you are satisfied with the restore.
 
 For the exact API and unresolved design points, see the [core contract](../../crates/gitrochi-ledger/CONTRACT.md) and [Ledger design](DESIGN.md). The preview gate, launched implementation-session default and pre-prompt Claude session-ID linkage remain maintainer decisions.
+
+## Work, document evidence and personal notes
+
+The **More ledger actions** menu adds four tools without changing the session views:
+
+- **Work log…** groups dated work across conversations. Create an item, append progress or outcomes, retain correction history, and build a Markdown report. Work records can reference session events; they do not change a session's cleanup state.
+- **Document tracker…** reads selected Markdown/text folders for IDs, definitions, tasks, notices and feedback. Evidence includes source lines and held-checksum comparisons. AI summaries use the configured provider only when requested; ordinary lookup stays local.
+- **Notebook…** keeps personal Markdown notes with pinning, search, preview and conflict protection. Notes are never returned by agent tools or reporting endpoints.
+- **Manage records…** edits session titles, kinds, touched IDs/paths and links, or a baseline's note. Deleting a session asks first and removes its own reports, questions and waiting prompts while keeping baseline and work records; a running agent can report again.
+
+The [migration and usage guide](MIGRATION.md#work-log) gives steps, CLI examples and compatibility limits for these tools.

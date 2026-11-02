@@ -17,6 +17,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     private let lock = NSLock()
     private let clock: @Sendable () -> LedgerMs
     private var rev = 1
+    private let extras = LedgerDemoExtras()
     private var projects: [LedgerProject] = []
     private var baselines: [LedgerBaseline] = []
     private var sessions: [String: LedgerSession] = [:]
@@ -62,6 +63,23 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         let a = (try? JSONDecoder().decode(LedgerJSON.self, from: args)) ?? .object([:])
         do {
             switch method {
+            case "records":
+                if a["action"].string == "version_note", let index = baselines.firstIndex(where: { $0.project == a["project"].string && $0.version == a["version"].string }) {
+                    baselines[index].note = a["note"].string
+                } else if a["action"].string == "delete", let id = a["sessionId"].string, a["confirmed"].bool == true {
+                    sessions.removeValue(forKey: id); events.removeValue(forKey: id)
+                    order.removeAll { $0 == id }; questions.removeAll { $0.sessionId == id }; prompts.removeAll { $0.sessionId == id }
+                } else if let id = a["sessionId"].string, var session = sessions[id] {
+                    if let title = a["title"].string { session.title = title }
+                    if let kind = a["kind"].string { session.kind = kind }
+                    if let url = a["chatUrl"].string { session.chatUrl = url.isEmpty ? nil : url }
+                    if case .array(let values) = a["touches"] { session.touches = values.compactMap(\.string) }
+                    if case .array(let values) = a["related"] { session.related = values.compactMap(\.string) }
+                    sessions[id] = session
+                }
+                rev += 1
+                return try encode(LedgerWriteResult(ok: true, rev: rev))
+            case "work", "documents", "notebook": return try encode(extras.call(method, a, now: now))
             case "info": return try encode(LedgerInfo(schemaVersion: 1, dbPath: "demo (in memory)", rev: rev, enabled: true))
             case "rev": return try encode(LedgerRev(rev: rev))
             case "state": return try encode(state(project: a["project"].string, range: range(a), now: now))
@@ -688,10 +706,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 id = add(object["session"]?.string, project: key, title: object["title"]?.string ?? object["summary"]?.string ?? "Imported session",
                          kind: object["kind"]?.string ?? "other", created: ts, base: object["base"]?.string ?? head(of: key))
             }
+            // A pasted report has no agent recipient to receive queued answers or notes.
             record(id, event, at: ts, summary: object["summary"]?.string, body: object["body"]?.string, version: object["version"]?.string)
-            for i in questions.indices where questions[i].sessionId == id && questions[i].state != .open && questions[i].deliveredAt == nil {
-                questions[i].deliveredAt = ts
-            }
             for question in reported {
                 let choices = LedgerPromptAnswers.options(question["options"])
                 addQuestion(id, question.string ?? question["text"].string ?? "", at: ts,

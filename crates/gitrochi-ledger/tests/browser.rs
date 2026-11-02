@@ -437,7 +437,7 @@ fn schema_two_migrates_without_adding_browser_fields_to_ordinary_questions() {
     assert_eq!(
         db.read(|c| Ok(c.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))?))
             .unwrap(),
-        3
+        db::DB_SCHEMA
     );
     assert_eq!(
         db.read(|c| Ok(
@@ -447,4 +447,118 @@ fn schema_two_migrates_without_adding_browser_fields_to_ordinary_questions() {
         .unwrap(),
         0
     );
+}
+
+#[test]
+fn deleted_or_replaced_sessions_retire_bindings_even_with_identical_ids_and_times() {
+    for replace in [false, true] {
+        let dir = TempDir::new("browser-generation");
+        let config = config(&dir);
+        let mut host = Host::default();
+        let old = bind(&mut host, &config, None);
+        let session = old["sessionId"].as_str().unwrap();
+        let db = db::shared(&config.db_path).unwrap();
+        let (created, generation): (i64, i64) = db.read(|c| Ok(c.query_row(
+            "SELECT s.created_at,g.generation FROM sessions s JOIN browser_session_generations g ON g.session_id=s.id WHERE s.id=?1",
+            [session], |row| Ok((row.get(0)?,row.get(1)?)),
+        )?)).unwrap();
+        let args = json!({"bindingId":old["bindingId"],"sourceKey":"one","question":question()});
+        handle(&mut host, &config, "capture", args.clone());
+        if replace {
+            db.write(|c| {
+                c.execute_batch("PRAGMA recursive_triggers=OFF")?;
+                c.execute("INSERT OR REPLACE INTO sessions(id,project,title,created_at,last_at) VALUES(?1,'Browser fixture','Replacement',?2,?2)",rusqlite::params![session,created])?;
+                Ok(())
+            }).unwrap();
+        } else {
+            app(
+                &config.db_path,
+                "records",
+                json!({"action":"delete","sessionId":session,"confirmed":true}),
+            );
+            assert_eq!(
+                db.read(|c| Ok(c.query_row(
+                    "SELECT COUNT(*) FROM browser_session_generations",
+                    [],
+                    |row| row.get::<_, i64>(0)
+                )?))
+                .unwrap(),
+                0
+            );
+            app(
+                &config.db_path,
+                "report",
+                json!({"event":"start","session":session,"project":"Browser fixture","title":"Replacement"}),
+            );
+            db.write(|c| {
+                c.execute(
+                    "UPDATE sessions SET created_at=?2 WHERE id=?1",
+                    rusqlite::params![session, created],
+                )?;
+                Ok(())
+            })
+            .unwrap();
+        }
+        assert_eq!(
+            db.read(|c| Ok(
+                c.query_row("SELECT COUNT(*) FROM browser_captures", [], |row| row
+                    .get::<_, i64>(0))?
+            ))
+            .unwrap(),
+            0
+        );
+        let current: i64 = db
+            .read(|c| {
+                Ok(c.query_row(
+                    "SELECT generation FROM browser_session_generations WHERE session_id=?1",
+                    [session],
+                    |row| row.get(0),
+                )?)
+            })
+            .unwrap();
+        assert!(current > generation);
+        let revision = db.rev().unwrap();
+        assert_eq!(
+            host.handle(&config.allowed_origin, &config, &request("capture", args))
+                .unwrap_err()
+                .code,
+            "CONFLICT"
+        );
+        assert_eq!(db.rev().unwrap(), revision);
+        let fresh = bind(&mut host, &config, Some(session));
+        let captured = handle(
+            &mut host,
+            &config,
+            "capture",
+            json!({"bindingId":fresh["bindingId"],"sourceKey":"one","question":question()}),
+        );
+        assert_eq!(captured["status"], "created");
+        handle(
+            &mut host,
+            &config,
+            "draft",
+            json!({"bindingId":fresh["bindingId"],"sourceKey":"one","text":"New draft"}),
+        );
+        let revision = db.rev().unwrap();
+        assert_eq!(
+            handle(
+                &mut host,
+                &config,
+                "draft",
+                json!({"bindingId":old["bindingId"],"sourceKey":"one","text":"Stale draft"})
+            )["status"],
+            "closed"
+        );
+        assert_eq!(db.rev().unwrap(), revision);
+        let draft: String = db
+            .read(|c| {
+                Ok(c.query_row(
+                    "SELECT browser_draft FROM questions WHERE id=?1",
+                    [captured["questionId"].as_i64().unwrap()],
+                    |row| row.get(0),
+                )?)
+            })
+            .unwrap();
+        assert_eq!(draft, "New draft");
+    }
 }

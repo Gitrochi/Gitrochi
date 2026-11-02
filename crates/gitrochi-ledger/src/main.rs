@@ -20,6 +20,8 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   session ID [--deliver]
   import FILE|- [-p PROJECT]
   import-legacy FILE [--dry-run]
+  work [ACTION] [JSON] [-p PROJECT]
+  lookup [ACTION] [JSON] [-p PROJECT] [--id ID]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
@@ -28,6 +30,7 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   mcp
   browser-host install --extension-id ID [--host-path FILE]
   browser-host status|remove
+  serve [--listen 127.0.0.1:8765]   optional local HTTP reporting bridge
   observe <claude|codex> EVENT < input.json   passive local activity; always exits 0
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
@@ -377,6 +380,15 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
             };
             Ok(Output::Json(result))
         }
+        "serve" => {
+            gitrochi_ledger::http::serve(
+                path.to_path_buf(),
+                &invocation
+                    .text("listen")
+                    .unwrap_or_else(|| "127.0.0.1:8765".into()),
+            )?;
+            Ok(Output::Text(String::new(), json!({"ok":true})))
+        }
         "integrate" => {
             let client = external::Client::parse(&positional(0, "client")?)?;
             if invocation.positional.len() != 1 {
@@ -484,6 +496,42 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
             });
             let result = api::call_as(Caller::Agent, "import_legacy", &args)?;
             Ok(Output::Text(legacy_text(&result), result))
+        }
+        "work" | "lookup" | "documents" => {
+            let method = if invocation.command == "work" {
+                "work"
+            } else {
+                "documents"
+            };
+            let action = invocation.positional.first().cloned().unwrap_or_else(|| {
+                if method == "work" {
+                    "list".into()
+                } else {
+                    "lookup".into()
+                }
+            });
+            let mut args = match invocation.positional.get(1) {
+                Some(raw) => serde_json::from_str::<Value>(raw)
+                    .map_err(|e| Error::invalid(format!("Invalid JSON arguments: {e}")))?,
+                None => json!({}),
+            };
+            if !args.is_object() {
+                return Err(Error::invalid("Arguments must be a JSON object"));
+            }
+            args["action"] = json!(action);
+            args["db"] = json!(path.to_string_lossy());
+            if let Some(project) = invocation.text("project") {
+                args["project"] = json!(project);
+            }
+            if let Some(id) = invocation.text("id") {
+                args["id"] = json!(id);
+            }
+            let value = api::call_as(Caller::Agent, method, &args)?;
+            let text = value["markdown"]
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| serde_json::to_string_pretty(&value).unwrap_or_default());
+            Ok(Output::Text(text, value))
         }
         "scan" => {
             let mut args = json!({"db": path.to_string_lossy()});

@@ -58,7 +58,7 @@ export function LedgerLegacyImportSheet({ store, onClose }: { store: LedgerStore
     }
   };
   const result = done ?? preview;
-  const nothing = !!preview && !preview.counts.sessions && !preview.counts.baselines && !preview.counts.baselinesUpdated && !preview.counts.imports;
+  const nothing = !!preview && !Object.values(preview.counts).some((count) => count > 0);
   return (
     <Modal
       title={t("Import from claude-ledger")}
@@ -95,6 +95,7 @@ export function LedgerLegacyImportSheet({ store, onClose }: { store: LedgerStore
         <div className="card ledger-legacy-result" role="status" style={{ gap: 4 }}>
           <strong>{done ? t("Imported") : nothing ? t("Nothing new to import.") : t("An import would copy:")}</strong>
           {!nothing && <span>{countsLine(result)}</span>}
+          <span>{t("Work items: {0} · personal notes: {1} · source records retained: {2}", result.counts.workItems ?? 0, result.counts.notes ?? 0, result.counts.preservedRows ?? 0)}</span>
           {result.skipped.length > 0 && <span className="hint">{t("Already in the Ledger, skipped with their history: {0}", result.skipped.join(", "))}</span>}
           {result.errors.length > 0 && (
             <>

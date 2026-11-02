@@ -330,6 +330,8 @@ struct LedgerSettings: View {
         } footer: {
             Text("Back up now copies the ledger's database into the backups folder next to it. Only the newest are kept, and only files named like a backup are ever removed.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
+            Text("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
 

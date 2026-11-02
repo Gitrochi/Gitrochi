@@ -5,7 +5,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports, importLegacy, learning, chatGPTDraft, browser
+        case connect, importReports, importLegacy, learning, chatGPTDraft, browser, workLog, documents, notebook, records
         var id: String { rawValue }
     }
 
@@ -78,6 +78,10 @@ struct LedgerWorkspaceView: View {
                     sessionAfterSheet = id
                     self.sheet = nil
                 })
+            case .workLog: LedgerWorkLogSheet(ledger: ledger)
+            case .documents: LedgerDocumentsSheet(ledger: ledger)
+            case .notebook: LedgerNotebookSheet(ledger: ledger)
+            case .records: LedgerManageSheet(ledger: ledger)
             }
         }
         .alert("The ledger did not take the change", isPresented: Binding(get: { ledger.actionError != nil }, set: { if !$0 { ledger.actionError = nil } })) {
@@ -157,6 +161,11 @@ struct LedgerWorkspaceView: View {
                 Button("Connect agents…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
                 Button("Import from claude-ledger…") { importLegacy() }
+                Divider()
+                Button("Work log…") { sheet = .workLog }
+                Button("Document tracker…") { sheet = .documents }
+                Button("Notebook…") { sheet = .notebook }
+                Button("Manage records…") { sheet = .records }
                 Divider()
                 Button("Back up now") { backup() }
                 Button("Refresh") { Task { await ledger.reload() } }

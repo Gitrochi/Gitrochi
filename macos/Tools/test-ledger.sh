@@ -247,11 +247,21 @@ let start: LedgerMs = 1_793_400_000_000
               "reported metadata survives without creating a fourth summary question")
         let q = state.questions[0]
         _ = try call(demo, "human", ["sessionId": "forms", "action": "answer", "questionId": .number(Double(q.id)), "answer": "Custom runtime"], as: LedgerJSON.self)
+        _ = try call(demo, "human", ["sessionId": "forms", "action": "message", "text": "Keep a migration fallback"], as: LedgerJSON.self)
         let queued = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
         check(queued.questions[0].answer == "Custom runtime" && queued.questions[0].deliveredAt == nil, "reading a reported answer does not deliver it")
-        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Read the person's answer"}"#], as: LedgerImportResult.self)
-        let delivered = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
-        check(delivered.questions[0].deliveredAt != nil, "a later agent report collects the queued answer")
+        let pending = queued.events.filter { $0.actor == .human }
+        check(pending.count == 2 && pending.allSatisfy { $0.deliveredAt == nil }, "the answer and human note are queued for an agent")
+        _ = try call(demo, "import", ["text": #"{"event":"progress","session":"forms","summary":"Pasted progress"}"#], as: LedgerImportResult.self)
+        _ = try call(demo, "import", ["text": #"{"event":"question","session":"forms","question":{"text":"Any release risk?","options":["Review","Proceed"]}}"#], as: LedgerImportResult.self)
+        let afterPaste = try call(demo, "session", ["id": "forms"], as: LedgerSessionDetail.self)
+        let savedAnswer = afterPaste.questions.first { $0.id == q.id }
+        check(savedAnswer?.answer == "Custom runtime" && savedAnswer?.state == .answered && savedAnswer?.deliveredAt == nil
+              && afterPaste.questions.contains { $0.text == "Any release risk?" && $0.state == .open },
+              "pasting a report or adding a manual question keeps the earlier answer undelivered")
+        let stillPending = afterPaste.events.filter { pending.map(\.id).contains($0.id) }
+        check(stillPending.count == pending.count && stillPending.allSatisfy { $0.deliveredAt == nil },
+              "imports and app session reads never consume pending human answers or notes")
     }
 
     static func chatGPTDrafts() throws {
@@ -1191,7 +1201,7 @@ let start: LedgerMs = 1_793_400_000_000
 
         // The command Connect Claude Code points at
         let tools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
-        check(tools == ["ledger_overview", "ledger_report", "ledger_session"], "the command's MCP tools: \(tools)")
+        check(tools == ["ledger_overview", "ledger_report", "ledger_work", "ledger_lookup", "ledger_session"], "the command's MCP tools: \(tools)")
         do {
             _ = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: folder + "/missing"))
             check(false, "a missing command is reported")
@@ -1265,7 +1275,8 @@ case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-dar
 # The library the app links (the ledger's C ABI is re-exported there) and the gitrochi-ledger command next to it
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
-    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
+    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
+    "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"

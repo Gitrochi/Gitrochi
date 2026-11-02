@@ -21,6 +21,7 @@ struct Binding {
     conversation: String,
     session: String,
     project: String,
+    generation: i64,
 }
 
 #[derive(Default)]
@@ -94,9 +95,21 @@ pub fn canonical_conversation(raw: &str) -> Result<String> {
     ))
 }
 
-fn active(connection: &Connection, id: &str, project: &str) -> Result<bool> {
-    Ok(session::load(connection, id)?
-        .is_some_and(|s| s.status == "active" && s.archived_at.is_none() && s.project == project))
+fn generation(connection: &Connection, id: &str) -> Result<i64> {
+    Ok(connection.query_row(
+        "SELECT generation FROM browser_session_generations WHERE session_id=?1",
+        [id],
+        |row| row.get(0),
+    )?)
+}
+
+fn active(connection: &Connection, binding: &Binding) -> Result<bool> {
+    Ok(connection.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sessions s JOIN browser_session_generations g ON g.session_id=s.id
+         WHERE s.id=?1 AND s.project=?2 AND s.status='active' AND s.archived_at IS NULL AND g.generation=?3)",
+        params![binding.session, binding.project, binding.generation],
+        |row| row.get(0),
+    )?)
 }
 
 impl Host {
@@ -140,7 +153,7 @@ impl Host {
                 let conversation = canonical_conversation(text(request, "conversationUrl", 2048)?)?;
                 let project = text(request, "project", 256)?.trim().to_string();
                 let now = util::now_ms();
-                let session = if request.get("sessionId").is_some() {
+                let (session, generation) = if request.get("sessionId").is_some() {
                     let id = text(request, "sessionId", 48)?.to_string();
                     db.read(|c| {
                         let row = session::require(c, &id)?;
@@ -152,14 +165,16 @@ impl Host {
                                 "Choose an active session in the selected project",
                             ));
                         }
-                        Ok(id.clone())
+                        let generation = generation(c, &id)?;
+                        Ok((id.clone(), generation))
                     })?
                 } else {
                     db.write(|c| {
                         c.execute("INSERT OR IGNORE INTO projects(key,name,baseline_source,created_at) VALUES(?1,?1,'manual',?2)",params![project,now])?;
                         let id = crate::report::new_id(c,now)?;
                         c.execute("INSERT INTO sessions(id,project,title,kind,status,chat_url,channel,created_at,last_at) VALUES(?1,?2,'ChatGPT browser conversation','other','active',?3,'browser',?4,?4)",params![id,project,conversation,now])?;
-                        Ok(id)
+                        let generation = generation(c, &id)?;
+                        Ok((id, generation))
                     })?.0
                 };
                 let seed = format!(
@@ -181,6 +196,7 @@ impl Host {
                         conversation,
                         session: session.clone(),
                         project,
+                        generation,
                     },
                 );
                 Ok(json!({"bindingId":binding_id,"sessionId":session}))
@@ -216,7 +232,7 @@ impl Host {
                     return db.write_changed(|c| {
                         let found: Option<(i64,String,Option<String>)> = c.query_row("SELECT q.id,q.state,q.browser_draft FROM browser_captures b JOIN questions q ON q.id=b.question_id WHERE b.origin=?1 AND b.conversation=?2 AND b.session_id=?3 AND b.source_key=?4",params![origin,binding.conversation,binding.session,source],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
                         let Some((id,state,old)) = found else { return Ok((json!({"questionId":null,"status":"missing"}),false)); };
-                        if state != "open" || !active(c,&binding.session,&binding.project)? { return Ok((json!({"questionId":id,"status":"closed"}),false)); }
+                        if state != "open" || !active(c,&binding)? { return Ok((json!({"questionId":id,"status":"closed"}),false)); }
                         let value = (!draft.is_empty()).then_some(draft);
                         if old.as_deref() == value { return Ok((json!({"questionId":id,"status":"unchanged"}),false)); }
                         c.execute("UPDATE questions SET browser_draft=?2 WHERE id=?1",params![id,value])?;
@@ -272,7 +288,7 @@ impl Host {
                         .as_bytes(),
                 );
                 db.write_changed(|c| {
-                    if !active(c,&binding.session,&binding.project)? { return Err(Error::conflict("The connected session is no longer active")); }
+                    if !active(c,&binding)? { return Err(Error::conflict("The connected session is no longer active")); }
                     let found: Option<(i64,String,String)> = c.query_row("SELECT b.question_id,b.digest,q.state FROM browser_captures b JOIN questions q ON q.id=b.question_id WHERE b.origin=?1 AND b.conversation=?2 AND b.session_id=?3 AND b.source_key=?4",params![origin,binding.conversation,binding.session,source],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
                     if let Some((id,original,state)) = found {
                         return Ok((json!({"questionId":id,"status":if state != "open" {"answered"} else if original == digest {"unchanged"} else {"changed"}}),false));

@@ -226,10 +226,10 @@ fn fixture(dir: &TempDir) -> Fixture {
         {"hash": "0123456789abcdef0123456789abcdef01234567", "ts": t(10)}
     ]);
     insert(&c, "imports", imports);
-    // Tables the import never reads (D3).
+    // Optional records stay outside session search and remain available in their own features.
     let work = json!([{"id": "W-EX-01", "project": "Example App", "title": "Work item zebra"}]);
     insert(&c, "work_items", work);
-    let notes = json!([{"id": 1, "title": "Private note", "body": "Never imported zebra"}]);
+    let notes = json!([{"id": 1, "title": "Private note", "body": "Private notebook zebra"}]);
     insert(&c, "notes", notes);
     drop(c);
     f
@@ -316,7 +316,7 @@ fn imports_a_claude_ledger_database_without_touching_it() {
     assert_eq!(preview["rev"], 0);
     assert_eq!(app(&db, "rev", json!({}))["rev"], 0);
     let counts = json!({"projects": 2, "baselines": 5, "baselinesUpdated": 0, "sessions": 6,
-                        "events": 21, "questions": 5, "imports": 2});
+                        "events": 21, "questions": 5, "imports": 2, "workItems": 1, "notes": 1, "preservedRows": 2});
     assert_eq!(preview["counts"], counts);
 
     let result = app(&db, "import_legacy", json!({"path": path_arg(&f.path)}));
@@ -502,7 +502,7 @@ fn imports_a_claude_ledger_database_without_touching_it() {
     assert_eq!(
         again["counts"],
         json!({"projects": 0, "baselines": 0, "baselinesUpdated": 0, "sessions": 0, "events": 0,
-               "questions": 0, "imports": 0})
+               "questions": 0, "imports": 0, "workItems": 0, "notes": 0, "preservedRows": 0})
     );
     assert_eq!(again["skipped"], json!(SESSIONS));
     assert_eq!(again["errors"], json!(ERRORS));
@@ -572,7 +572,7 @@ fn existing_sessions_are_skipped_and_question_numbers_kept_where_free() {
     assert_eq!(
         result["counts"],
         json!({"projects": 1, "baselines": 4, "baselinesUpdated": 1, "sessions": 5,
-               "events": 17, "questions": 4, "imports": 2})
+               "events": 17, "questions": 4, "imports": 2, "workItems": 1, "notes": 1, "preservedRows": 2})
     );
     assert_eq!(result["rev"], rev + 1);
 
@@ -764,7 +764,7 @@ fn files_that_are_not_claude_ledger_databases_are_refused() {
     assert_eq!(
         result["counts"],
         json!({"projects": 1, "baselines": 1, "baselinesUpdated": 0, "sessions": 1, "events": 1,
-               "questions": 1, "imports": 0})
+               "questions": 1, "imports": 0, "workItems": 0, "notes": 0, "preservedRows": 0})
     );
     let detail = app(&db, "session", json!({"id": "old-session"}));
     assert_eq!(detail["session"]["verdict"], "needs_human");
