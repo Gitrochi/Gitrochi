@@ -2203,3 +2203,8 @@
 "Edit flow" = "Редагувати потік";
 "Inspect saved flow runs, their steps and results." = "Перегляньте збережені запуски потоків, їхні кроки та результати.";
 "Review connected runs, jobs and logs for this repository." = "Перегляньте пов’язані запуски, завдання та журнали цього репозиторію.";
+"Show activity" = "Показати активність";
+"%lld activity events hidden" = "Приховано подій активності: %lld";
+"Last activity" = "Остання активність";
+"No reports yet." = "Звітів поки немає.";
+"Last report" = "Останній звіт";

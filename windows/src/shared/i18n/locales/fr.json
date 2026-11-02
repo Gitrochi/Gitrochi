@@ -2268,5 +2268,8 @@
   "Flow created. Review its commands, then run it.": "Flux créé. Vérifiez ses commandes, puis exécutez-le.",
   "Edit flow": "Modifier le flux",
   "Inspect saved flow runs, their steps and results.": "Consultez les exécutions de flux enregistrées, leurs étapes et leurs résultats.",
-  "Review connected runs, jobs and logs for this repository.": "Consultez les exécutions, tâches et journaux connectés à ce dépôt."
+  "Review connected runs, jobs and logs for this repository.": "Consultez les exécutions, tâches et journaux connectés à ce dépôt.",
+  "Show activity": "Afficher l’activité",
+  "{0} activity events hidden": "{0} événements d’activité masqués",
+  "Last activity": "Dernière activité"
 }

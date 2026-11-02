@@ -3990,3 +3990,8 @@
 "Edit flow" = "흐름 편집";
 "Inspect saved flow runs, their steps and results." = "저장된 흐름 실행과 각 단계의 결과를 확인하세요.";
 "Review connected runs, jobs and logs for this repository." = "이 저장소에 연결된 실행, 작업과 로그를 확인하세요.";
+"Show activity" = "활동 표시";
+"%lld activity events hidden" = "활동 기록 %lld개 숨김";
+"Last activity" = "마지막 활동";
+"No reports yet." = "아직 보고가 없습니다.";
+"Last report" = "마지막 보고";

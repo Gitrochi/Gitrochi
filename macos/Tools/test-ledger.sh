@@ -92,6 +92,7 @@ let start: LedgerMs = 1_793_400_000_000
         try demoContract()
         try notices()
         try await store()
+        try await temporalPolling()
         try await large()
         if let i = CommandLine.arguments.firstIndex(of: "--core"), i + 2 < CommandLine.arguments.count {
             try await core(binary: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2])
@@ -107,6 +108,26 @@ let start: LedgerMs = 1_793_400_000_000
         check(LedgerVerdict.displayOrder.first == .needsHuman && LedgerVerdict.displayOrder.last == .archived, "most urgent first")
         check(LedgerVerdict.needsHuman.rank < LedgerVerdict.pendingMerge.rank && LedgerVerdict.stale.rank < LedgerVerdict.active.rank, "rank")
         check(Set(LedgerVerdict.allCases.map(\.symbol)).count == 8 && LedgerVerdict.allCases.allSatisfy { !$0.title.isEmpty }, "symbols and titles")
+
+        func event(_ id: Int, _ ts: LedgerMs, actor: LedgerActor = .agent, type: String = "progress") -> LedgerEvent {
+            LedgerEvent(id: id, sessionId: "S1", ts: ts, type: type, actor: actor, summary: nil, body: nil,
+                        version: nil, artifacts: nil, data: nil, deliveredAt: nil)
+        }
+        let reports = [event(1, 20), event(2, 20, actor: .human, type: "message"),
+                       event(3, 30, actor: .auto, type: "auto_reply"), event(4, 40, type: "heartbeat"),
+                       event(5, 50, actor: .human, type: "heartbeat")]
+        let hooks = (10..<310).map { event($0, LedgerMs($0), actor: .hook, type: "hook") }
+        let timeline = hooks + reports
+        check(LedgerTimelineFilter.events(timeline, showActivity: false, focus: nil).map(\.id) == [5, 3, 2, 1],
+              "reports and human or automatic decisions survive busy activity; timestamps tie by event ID")
+        let focused = LedgerTimelineFilter.events(timeline, showActivity: false, focus: 123)
+        check(focused.map(\.id) == [123, 5, 3, 2, 1], "a search result reveals its focused hook without showing every hook")
+        check(LedgerTimelineFilter.events(timeline, showActivity: false, focus: 4).contains { $0.id == 4 },
+              "a focused heartbeat is visible")
+        check(LedgerTimelineFilter.events(hooks, showActivity: false, focus: nil).isEmpty,
+              "activity alone does not become a report")
+        check(LedgerTimelineFilter.events(timeline, showActivity: true, focus: nil).count == timeline.count,
+              "Show activity retains every event")
 
         check(LedgerCountdown.text(deadline: start + 42_000, now: start) == "0:42", "seconds")
         check(LedgerCountdown.text(deadline: start + 125_000, now: start) == "2:05", "minutes")
@@ -674,6 +695,9 @@ let start: LedgerMs = 1_793_400_000_000
             ledger.open(event)
             check(ledger.selection == event.sessionId && ledger.highlightedEvent != nil, "a report result opens its session at the report")
         }
+        let numericEvent = LedgerSearchHit(kind: .event, id: "123", sessionId: live.id, title: "A report", snippet: "")
+        ledger.open(numericEvent)
+        check(ledger.selection == live.id && ledger.highlightedEvent == 123, "a core search result opens its complete numeric event ID")
         check(await ledger.search("x").isEmpty, "one letter is not searched")
         let imported = try await ledger.importReports("```ledger\n{\"event\": \"start\", \"title\": \"From a paste\", \"project\": \"harbor\"}\n```")
         check(imported.first?.ok == true, "import through the store")
@@ -684,6 +708,47 @@ let start: LedgerMs = 1_793_400_000_000
         ledger.filter = filter
         try await Task.sleep(for: .milliseconds(100))
         check(!ledger.boardRows.isEmpty && ledger.boardRows.allSatisfy { ($0.title + $0.id + $0.kind + ($0.links.branch ?? "") + $0.touches.joined()).localizedStandardContains("export") }, "the Board follows the filter")
+    }
+
+    /// A quiet database still needs new time-dependent verdicts; local and backend clocks may differ.
+    @MainActor static func temporalPolling() async throws {
+        let clock = TestClock(start)
+        let local = TestClock(start + 4_000)
+        let spy = SpyBackend(DemoLedgerBackend(mode: .empty, clock: { clock.now() }))
+        let client = LedgerClient(backend: spy)
+        _ = try await client.importReports(#"{"event":"start","project":"harbor","session":"quiet","title":"Quiet work"}"#, project: nil)
+        let suite = "dev.gitrochi.ledger-time-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let ledger = LedgerStore(client: client, defaults: defaults, now: { local.now() })
+        await ledger.poll()
+        let rev = ledger.state!.rev
+        check(ledger.session("quiet")?.verdict == .active && ledger.clockSkew == -4_000, "quiet work starts active with clock skew")
+        clock.advance(59_999); local.advance(59_999)
+        await ledger.poll()
+        check(spy.count("state") == 1, "quiet polls below one minute read only the revision")
+        clock.advance(1); local.advance(1)
+        await ledger.poll()
+        check(spy.count("state") == 2 && ledger.state?.rev == rev, "a minute refreshes state without a write")
+        let beforeBoundary = start + 72 * hour - 30_000
+        local.advance(beforeBoundary - clock.now()); clock.advance(beforeBoundary - clock.now())
+        await ledger.reload()
+        check(ledger.session("quiet")?.verdict == .active, "work remains active before the stale boundary")
+        clock.advance(60_001); local.advance(60_001)
+        await ledger.poll()
+        check(ledger.session("quiet")?.verdict == .stale && ledger.state?.rev == rev,
+              "quiet work becomes stale without another database write")
+        await ledger.perform(.snooze(until: clock.now() + 5_000), on: ["quiet"], message: "Still active")
+        let snoozedRev = ledger.state!.rev
+        let reads = spy.count("state")
+        check(ledger.session("quiet")?.verdict == .active, "snoozed work is active")
+        clock.advance(4_999); local.advance(4_999)
+        await ledger.poll()
+        check(spy.count("state") == reads, "a future snooze does not trigger a state read early")
+        clock.advance(1); local.advance(1)
+        await ledger.poll()
+        check(ledger.session("quiet")?.verdict == .stale && ledger.state?.rev == snoozedRev,
+              "a snooze expiry refreshes immediately with no database write")
     }
 
     /// The core's demo read by the app: every answer decodes, and the client's grouping agrees with the core's counts

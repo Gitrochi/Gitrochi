@@ -2149,3 +2149,8 @@
 "Edit flow" = "Flow bewerken";
 "Inspect saved flow runs, their steps and results." = "Bekijk opgeslagen flowuitvoeringen, hun stappen en resultaten.";
 "Review connected runs, jobs and logs for this repository." = "Bekijk verbonden uitvoeringen, taken en logboeken voor deze repository.";
+"Show activity" = "Activiteit tonen";
+"%lld activity events hidden" = "%lld activiteitsgebeurtenissen verborgen";
+"Last activity" = "Laatste activiteit";
+"No reports yet." = "Nog geen rapporten.";
+"Last report" = "Laatste melding";

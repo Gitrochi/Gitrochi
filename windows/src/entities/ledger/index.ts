@@ -8,6 +8,7 @@ export { countReports, type ImportLine, type ImportOutcome, type ImportSummary, 
 export { type InboxAction, type InboxGroup, type InboxGroupId, inboxCount, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, stepIndex } from "./lib/inbox";
 export { LEDGER_NARROW, LEDGER_WIDE, type LedgerLayout, ledgerLayout } from "./lib/layout";
 export { badgeLabel, heldText, type LedgerNotice, ledgerNotices, type LedgerTarget } from "./lib/notices";
+export { timelineEvents } from "./lib/timeline";
 export { inverseOperation, operationTitle } from "./lib/undo";
 export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictIcon, type VerdictLook, verdictDisplayOrder, verdictLook } from "./lib/verdict";
 export { compareVersions } from "./lib/version";

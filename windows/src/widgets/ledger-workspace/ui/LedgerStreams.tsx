@@ -46,7 +46,7 @@ function StreamCard({ store, session, cycles, onOpen }: { store: LedgerStore; se
         <VerdictBadge verdict={session.verdict} />
         <span className="spacer" />
         <BaseLine session={session} />
-        <When at={session.lastAt} />
+        <span className="ledger-flow">{t("Last report")} {session.lastAgentAt == null ? t("No reports yet.") : <When at={session.lastAgentAt} />}</span>
       </header>
       {!cycles.length && <div className="ledger-cycle-body hint">{t("No cycle yet: the stream has not read a baseline.")}</div>}
       {cycles.map((c) => {

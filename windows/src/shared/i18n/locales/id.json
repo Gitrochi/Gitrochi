@@ -2186,5 +2186,8 @@
   "Flow created. Review its commands, then run it.": "Alur dibuat. Tinjau perintahnya, lalu jalankan.",
   "Edit flow": "Edit alur",
   "Inspect saved flow runs, their steps and results.": "Periksa eksekusi alur yang disimpan, langkah, dan hasilnya.",
-  "Review connected runs, jobs and logs for this repository.": "Tinjau eksekusi, tugas, dan log yang terhubung ke repositori ini."
+  "Review connected runs, jobs and logs for this repository.": "Tinjau eksekusi, tugas, dan log yang terhubung ke repositori ini.",
+  "Show activity": "Tampilkan aktivitas",
+  "{0} activity events hidden": "{0} peristiwa aktivitas disembunyikan",
+  "Last activity": "Aktivitas terakhir"
 }

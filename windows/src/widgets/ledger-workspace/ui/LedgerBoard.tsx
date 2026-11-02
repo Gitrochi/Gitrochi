@@ -114,7 +114,7 @@ export function LedgerBoard({ store, onOpen }: { store: LedgerStore; onOpen: (se
         <span className="ledger-wide-only">{t("Baseline")}</span>
         <span>{t("Verdict")}</span>
         <span className="ledger-wide-only">{t("Kind")}</span>
-        <span>{t("Last report")}</span>
+        <span>{t("Last activity")}</span>
       </div>
       <div className="ledger-table-scroll" ref={scroll} role="grid" aria-rowcount={rows.length} aria-label={t("Sessions")} onScroll={(e) => setView({ top: e.currentTarget.scrollTop, height: e.currentTarget.clientHeight })}>
         {!rows.length ? (

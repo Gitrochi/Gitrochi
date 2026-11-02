@@ -2184,3 +2184,8 @@
 "Edit flow" = "Upravit tok";
 "Inspect saved flow runs, their steps and results." = "Prohlédněte si uložená spuštění toků, jejich kroky a výsledky.";
 "Review connected runs, jobs and logs for this repository." = "Prohlédněte si připojená spuštění, úlohy a protokoly tohoto repozitáře.";
+"Show activity" = "Zobrazit aktivitu";
+"%lld activity events hidden" = "Skryto %lld událostí aktivity";
+"Last activity" = "Poslední aktivita";
+"No reports yet." = "Zatím žádné zprávy.";
+"Last report" = "Poslední hlášení";

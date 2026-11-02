@@ -73,14 +73,18 @@ pub fn search(
     values.extend(patterns.iter().cloned().map(Some));
     let mut hits = Vec::new();
 
+    // Exact IDs compare with the query itself, not an escaped LIKE pattern.
+    let exact = n + 2;
+    let mut session_values = values.clone();
+    session_values.push(Some(query));
     let session_text = "(s.id || ' ' || s.title || ' ' || s.kind || ' ' || s.touches)";
     let mut statement = connection.prepare(&format!(
         "SELECT s.id, s.title, s.kind, s.touches, s.last_at FROM sessions s
          WHERE (?1 IS NULL OR s.project = ?1) AND {}
-         ORDER BY (lower(s.id) = lower(?2)) DESC, s.last_at DESC LIMIT {limit}",
+         ORDER BY (lower(s.id) = lower(?{exact})) DESC, s.last_at DESC LIMIT {limit}",
         all_words(session_text, n, 2)
     ))?;
-    let rows = statement.query_map(params_from_iter(values.iter()), |r| {
+    let rows = statement.query_map(params_from_iter(session_values.iter()), |r| {
         Ok((
             r.get::<_, String>(0)?,
             r.get::<_, String>(1)?,

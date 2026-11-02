@@ -2238,3 +2238,8 @@
 "Edit flow" = "Modifier le flux";
 "Inspect saved flow runs, their steps and results." = "Consultez les exécutions de flux enregistrées, leurs étapes et leurs résultats.";
 "Review connected runs, jobs and logs for this repository." = "Consultez les exécutions, tâches et journaux connectés à ce dépôt.";
+"Show activity" = "Afficher l’activité";
+"%lld activity events hidden" = "%lld événements d’activité masqués";
+"Last activity" = "Dernière activité";
+"No reports yet." = "Aucun rapport pour le moment.";
+"Last report" = "Dernier rapport";

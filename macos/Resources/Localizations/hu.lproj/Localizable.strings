@@ -2187,3 +2187,8 @@
 "Edit flow" = "Folyamat szerkesztése";
 "Inspect saved flow runs, their steps and results." = "Tekintse meg a mentett folyamatfuttatásokat, lépéseiket és eredményeiket.";
 "Review connected runs, jobs and logs for this repository." = "Tekintse meg a tárolóhoz kapcsolt futtatásokat, feladatokat és naplókat.";
+"Show activity" = "Tevékenység megjelenítése";
+"%lld activity events hidden" = "%lld tevékenységesemény elrejtve";
+"Last activity" = "Legutóbbi tevékenység";
+"No reports yet." = "Még nincsenek jelentések.";
+"Last report" = "Utolsó jelentés";

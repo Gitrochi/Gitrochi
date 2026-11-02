@@ -3,6 +3,7 @@ import { isWindows, settings } from "@/shared/config";
 import { Observable } from "@/shared/lib";
 import type { LedgerBackend } from "../api/backend";
 import { badgeLabel, type LedgerNotice, ledgerNotices, type LedgerTarget } from "../lib/notices";
+import { ledgerRefreshDue } from "../lib/refresh";
 import { LEDGER_POLL_MS } from "./reader";
 import { ledgerStore } from "./store";
 import type { LedgerState } from "./types";
@@ -52,6 +53,7 @@ export function badgeImage(total: number, size = BADGE_SIZE): number[] | null {
 export class LedgerNotifier extends Observable {
   private last: LedgerState | null = null;
   private rev = -1;
+  private stateReadAt = 0;
   private shownTotal = -1;
   private timer: ReturnType<typeof setInterval> | null = null;
   private polling = false;
@@ -109,9 +111,10 @@ export class LedgerNotifier extends Observable {
     try {
       const backend = this.backend();
       const { rev } = await backend.call("rev", {});
-      if (rev === this.rev) return;
+      if (rev === this.rev && !ledgerRefreshDue(this.last, this.stateReadAt, Date.now())) return;
       const state = await backend.call("state", {});
       this.rev = state.rev;
+      this.stateReadAt = Date.now();
       const notices = ledgerNotices(this.last, state);
       this.last = state;
       if (this.notifications) {

@@ -2162,3 +2162,8 @@
 "Edit flow" = "Chỉnh sửa luồng";
 "Inspect saved flow runs, their steps and results." = "Xem các lần chạy luồng đã lưu, các bước và kết quả.";
 "Review connected runs, jobs and logs for this repository." = "Xem các lần chạy, tác vụ và nhật ký được kết nối với kho mã này.";
+"Show activity" = "Hiển thị hoạt động";
+"%lld activity events hidden" = "Đã ẩn %lld sự kiện hoạt động";
+"Last activity" = "Hoạt động gần nhất";
+"No reports yet." = "Chưa có báo cáo.";
+"Last report" = "Báo cáo gần nhất";

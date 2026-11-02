@@ -437,6 +437,37 @@ fn search_finds_sessions_questions_events_and_baselines() {
         .is_empty());
 }
 
+#[test]
+fn search_prioritizes_exact_session_ids_before_applying_the_limit() {
+    for id in ["S1102-09", "S1102_09"] {
+        let h = H::new();
+        h.sid(json!({"session": id, "title": "Cache retry policy"}));
+        let newer = h.sid(json!({"title": format!("Review {id} retry policy")}));
+        h.sid(json!({"session": "S1102X09", "title": "New retry policy"}));
+        let other = h.sid(json!({"project": "Other", "title": format!("Review {id}")}));
+        let query = format!("  {}  ", id.to_lowercase());
+        let find = |query: &str, project: &str, limit| {
+            h.db.read(|c| search::search(c, query, Some(project), limit))
+                .unwrap()
+        };
+
+        let hits = find(&query, P, 1);
+        assert_eq!(hits.len(), 1);
+        assert_eq!((hits[0].kind, hits[0].id.as_str()), ("session", id));
+        assert_eq!(
+            find(&query, P, 50)
+                .iter()
+                .map(|hit| hit.id.as_str())
+                .collect::<Vec<_>>(),
+            [id, newer.as_str()],
+            "underscores in session IDs remain literal LIKE characters"
+        );
+        assert_eq!(find(&query, "Other", 1)[0].id, other);
+        assert_eq!(find(&format!("{id} policy"), P, 1)[0].id, newer);
+        assert!(find(&format!("{id} missing"), P, 1).is_empty());
+    }
+}
+
 fn graph_of(h: &H, range: Range, key_only: bool) -> Graph {
     let now = h.now();
     h.db.read(|c| {

@@ -2219,5 +2219,8 @@
   "Flow created. Review its commands, then run it.": "Akış oluşturuldu. Komutlarını gözden geçirip çalıştırın.",
   "Edit flow": "Akışı düzenle",
   "Inspect saved flow runs, their steps and results.": "Kaydedilmiş akış çalıştırmalarını, adımlarını ve sonuçlarını inceleyin.",
-  "Review connected runs, jobs and logs for this repository.": "Bu depoya bağlı çalıştırmaları, işleri ve günlükleri inceleyin."
+  "Review connected runs, jobs and logs for this repository.": "Bu depoya bağlı çalıştırmaları, işleri ve günlükleri inceleyin.",
+  "Show activity": "Etkinliği göster",
+  "{0} activity events hidden": "{0} etkinlik olayı gizlendi",
+  "Last activity": "Son etkinlik"
 }

@@ -375,7 +375,7 @@ describe("Ledger store", () => {
     return { ...d, calls, store: new LedgerStore(backend) };
   }
 
-  it("reads the state only when rev moved", async () => {
+  it("keeps ordinary revision polls cheap", async () => {
     const { store, calls } = counted();
     await store.refresh(true);
     expect(calls).toEqual(["rev", "state"]);
@@ -383,6 +383,64 @@ describe("Ledger store", () => {
     expect(calls).toEqual(["rev", "state", "rev"]);
     await store.human({ action: "ack", sessionId: store.state!.sessions.find((s) => s.verdict === "confirm")!.id });
     expect(calls.slice(3)).toEqual(["human", "rev", "state"]);
+    store.dispose();
+  });
+
+  it("recomputes stale verdicts and selected detail within a minute without a write", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(START + DAY);
+    const { store, backend, calls, advance } = counted();
+    backend.world.prompts = [];
+    const target = backend.world.sessions.find((s) => s.status === "active" && !s.stream && !backend.world.questions.some((q) => q.sessionId === s.id && q.state === "open"))!;
+    target.lastAt = START - 72 * HOUR + 1000;
+    await store.refresh();
+    store.selectedId = target.id;
+    await store.loadDetail();
+    const rev = store.revision;
+    expect(store.session(target.id)?.verdict).toBe("active");
+    advance(MIN - 1);
+    vi.setSystemTime(START + DAY + MIN - 1);
+    await store.refresh();
+    expect(calls.filter((c) => c === "state")).toHaveLength(1);
+    advance(1);
+    vi.setSystemTime(START + DAY + MIN);
+    await store.refresh();
+    expect(store.revision).toBe(rev);
+    expect(calls.filter((c) => c === "state")).toHaveLength(2);
+    expect(store.session(target.id)?.verdict).toBe("stale");
+    expect(store.detail?.session.verdict).toBe("stale");
+    store.dispose();
+  });
+
+  it("refreshes an expiring snooze on the backend clock before the minute limit", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(START + DAY);
+    const { store, backend, calls, advance } = counted();
+    backend.world.prompts = [];
+    const target = backend.world.sessions.find((s) => s.status === "active" && !s.stream && !backend.world.questions.some((q) => q.sessionId === s.id && q.state === "open"))!;
+    target.lastAt = START - 73 * HOUR;
+    target.snoozeUntil = START + 5000;
+    await store.refresh();
+    const rev = store.revision;
+    expect(store.session(target.id)?.verdict).toBe("active");
+    advance(5000);
+    vi.setSystemTime(START + DAY + 5000);
+    await store.refresh();
+    expect(store.revision).toBe(rev);
+    expect(calls.filter((c) => c === "state")).toHaveLength(2);
+    expect(store.session(target.id)?.verdict).toBe("stale");
+    await store.refresh();
+    expect(calls.filter((c) => c === "state")).toHaveLength(2);
+    store.dispose();
+  });
+
+  it("recovers a read error without waiting for the revision or cache deadline", async () => {
+    const { store, calls } = counted();
+    await store.refresh();
+    store.error = "Temporary read failure";
+    await store.refresh();
+    expect(store.error).toBeNull();
+    expect(calls.filter((c) => c === "state")).toHaveLength(2);
     store.dispose();
   });
 

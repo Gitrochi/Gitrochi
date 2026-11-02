@@ -2203,3 +2203,8 @@
 "Edit flow" = "Изменить поток";
 "Inspect saved flow runs, their steps and results." = "Просмотрите сохранённые запуски потоков, их шаги и результаты.";
 "Review connected runs, jobs and logs for this repository." = "Просмотрите связанные запуски, задания и журналы этого репозитория.";
+"Show activity" = "Показать активность";
+"%lld activity events hidden" = "Скрыто событий активности: %lld";
+"Last activity" = "Последняя активность";
+"No reports yet." = "Отчётов пока нет.";
+"Last report" = "Последний отчёт";

@@ -2190,3 +2190,8 @@
 "Edit flow" = "Akışı düzenle";
 "Inspect saved flow runs, their steps and results." = "Kaydedilmiş akış çalıştırmalarını, adımlarını ve sonuçlarını inceleyin.";
 "Review connected runs, jobs and logs for this repository." = "Bu depoya bağlı çalıştırmaları, işleri ve günlükleri inceleyin.";
+"Show activity" = "Etkinliği göster";
+"%lld activity events hidden" = "%lld etkinlik olayı gizlendi";
+"Last activity" = "Son etkinlik";
+"No reports yet." = "Henüz rapor yok.";
+"Last report" = "Son rapor";

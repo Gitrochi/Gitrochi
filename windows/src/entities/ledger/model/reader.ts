@@ -2,6 +2,7 @@ import { settings } from "@/shared/config";
 import { Observable } from "@/shared/lib";
 import type { LedgerBackend } from "../api/backend";
 import { projectForRepository } from "../lib/filter";
+import { ledgerRefreshDue } from "../lib/refresh";
 import type { LedgerGraph, LedgerHumanRequest, LedgerRange, LedgerSession, LedgerSessionDetail, LedgerState, LedgerVerdict } from "./types";
 import { ledgerRanges } from "./types";
 
@@ -19,7 +20,7 @@ export interface LedgerToast {
   error: boolean;
 }
 
-/** Seconds between `rev` reads; the state is read again only when it moved */
+/** Milliseconds between cheap `rev` reads. */
 export const LEDGER_POLL_MS = 2000;
 const TOAST_MS = 7000;
 
@@ -99,7 +100,7 @@ export class LedgerReader extends Observable {
     this.timer = null;
   }
 
-  /** Reads `rev`, and the state (with the open detail and graph) only when it moved or `force` asks for it */
+  /** Reads state when the revision changes, a time-based verdict may expire, or the caller forces it. */
   refresh(force = false): Promise<void> {
     if (this.refreshing) {
       this.again ||= force;
@@ -108,7 +109,7 @@ export class LedgerReader extends Observable {
     this.refreshing = (async () => {
       try {
         const { rev } = await this.backend.call("rev", {});
-        if (!force && rev === this.rev && this.state) return;
+        if (!force && rev === this.rev && !this.error && !ledgerRefreshDue(this.state, this.stateReadAt, Date.now())) return;
         const state = await this.backend.call("state", { range: this.range });
         this.applyState(state);
         await Promise.all([this.selectedId ? this.loadDetail() : null, this.view === "graph" ? this.loadGraph() : null]);

@@ -325,7 +325,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             if hits.count >= limit { return hits }
         }
         for q in questions.reversed() where inProject(q.sessionId) && matches(q.text) {
-            hits.append(LedgerSearchHit(kind: .question, id: "q\(q.id)", sessionId: q.sessionId, title: q.text, snippet: q.sessionId))
+            hits.append(LedgerSearchHit(kind: .question, id: String(q.id), sessionId: q.sessionId, title: q.text, snippet: q.sessionId))
             if hits.count >= limit { return hits }
         }
         for b in baselines.reversed() where (project == nil || b.project == project) && matches(b.version + " " + (b.note ?? "")) {
@@ -337,7 +337,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             for e in (events[id] ?? []).reversed() {
                 let text = (e.summary ?? "") + "\n" + (e.body ?? "")
                 guard matches(text) else { continue }
-                hits.append(LedgerSearchHit(kind: .event, id: "e\(e.id)", sessionId: id, title: e.summary ?? e.type,
+                hits.append(LedgerSearchHit(kind: .event, id: String(e.id), sessionId: id, title: e.summary ?? e.type,
                                             snippet: Self.excerpt(text, around: words[0])))
                 if hits.count >= limit { return hits }
             }

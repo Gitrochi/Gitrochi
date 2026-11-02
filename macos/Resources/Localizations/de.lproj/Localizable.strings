@@ -2190,3 +2190,8 @@
 "Inspect saved flow runs, their steps and results." = "Gespeicherte Ausführungen von Abläufen mit Schritten und Ergebnissen prüfen.";
 "Review connected runs, jobs and logs for this repository." = "Verbundene Ausführungen, Jobs und Protokolle dieses Repositorys prüfen.";
 "Optional" = "Optional";
+"Show activity" = "Aktivität anzeigen";
+"%lld activity events hidden" = "%lld Aktivitätsereignisse ausgeblendet";
+"Last activity" = "Letzte Aktivität";
+"No reports yet." = "Noch keine Berichte.";
+"Last report" = "Letzte Meldung";

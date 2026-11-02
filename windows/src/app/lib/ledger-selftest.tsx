@@ -256,6 +256,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
       return rows.some((row) => row.dataset.session === launch.session.id) && rows.every((row) => store.session(row.dataset.session)?.lastAgentAt == null);
     }), "Unreported must find launches without an agent report");
     const launchRow = $<HTMLElement>(`.ledger-table-row[data-session='${launch.session.id}']`)!;
+    launchRow.click();
+    ensure(await until(() => $(".ledger-inspector-head")?.textContent?.includes(t("No reports yet."))), "An unreported launch must not label observed activity as a report");
     launchRow.querySelector<HTMLInputElement>("input")!.click();
     ensure(await until(() => $(".ledger-bulk strong")?.textContent === t("{0} selected", 1)), "The new launch was not the only selected session");
     button(".ledger-bulk", "Mark closed")!.click();
@@ -287,6 +289,23 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     button(".modal", "Drop session")!.click();
     ensure(await until(() => store.session(decide.id)?.status === "dropped"), "Confirming the drop did not drop the session");
     passed.push("inspector operations");
+
+    // Passive observations stay available without burying reports; a search focus reveals its own event.
+    const observed = Array.from({ length: 120 }, () => ({ id: backend.world.nextEvent++, sessionId: decide.id, actor: "hook" as const, type: "hook", ts: clock, summary: "Observed tool activity" }));
+    backend.world.events.push(...observed, { id: backend.world.nextEvent++, sessionId: decide.id, actor: "agent", type: "heartbeat", ts: clock });
+    backend.world.rev++;
+    await store.refresh(true);
+    const activityBox = () => $<HTMLInputElement>(".ledger-timeline-controls input[type='checkbox']");
+    ensure(await until(() => activityBox() && !activityBox()!.checked && !$(".ledger-timeline .ledger-event.hook")), "The timeline must start with passive activity hidden");
+    ensure($$(".ledger-timeline .ledger-event.agent").length > 0 && $(".ledger-timeline-controls")?.textContent?.includes(t("{0} activity events hidden", 121)), "Reports must remain visible with the hidden activity count");
+    activityBox()!.click();
+    ensure(await until(() => $$(".ledger-timeline .ledger-event.hook").length === 120), "Show activity did not reveal the observed events");
+    activityBox()!.click();
+    ensure(await until(() => !$(".ledger-timeline .ledger-event.hook")), "Turning Show activity off did not hide observations again");
+    store.select(decide.id, observed[0].id);
+    ensure(await until(() => $(`.ledger-timeline .ledger-event.focus[data-event='${observed[0].id}']`)), "Focusing a search result did not reveal the hidden event");
+    ensure($$(".ledger-timeline .ledger-event.hook").length === 1 && !activityBox()!.checked, "A focused observation must not reveal all activity");
+    passed.push("report-focused timeline");
 
     // Auto-continue per session: for agents Gitrochi started, never for the decision role, undone from the toast
     const limits = find((s) => s.title.startsWith("Rate limit") && !!s.links.agentId);

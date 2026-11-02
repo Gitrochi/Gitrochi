@@ -1,8 +1,8 @@
 import { Activity, Archive, ArchiveRestore, Ban, Bot, CheckCheck, CircleCheck, CirclePlay, Clock, FileText, Gavel, GitMerge, type LucideIcon, Library, MessageCircleQuestion, MessageSquareReply, RefreshCw, SquareCheck, StickyNote, Tag, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { LedgerEvent } from "@/entities/ledger";
+import { timelineEvents, type LedgerEvent } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
-import { Button, Markdown, StatusPill } from "@/shared/ui";
+import { Button, Checkbox, Markdown, StatusPill } from "@/shared/ui";
 import { When } from "./parts";
 
 const icons: Record<string, LucideIcon> = {
@@ -28,6 +28,7 @@ function describe(e: LedgerEvent): string {
 export function ReportBody({ text, open = false }: { text: string; open?: boolean }) {
   const long = text.length > 600 || text.split("\n").length > 12;
   const [unfolded, setUnfolded] = useState(open);
+  useEffect(() => { if (open) setUnfolded(true); }, [open]);
   const folded = long && !unfolded;
   return (
     <>
@@ -42,14 +43,20 @@ export function ReportBody({ text, open = false }: { text: string; open?: boolea
  * replies are marked. (macOS: Views/Ledger/LedgerInspector.swift, timeline)
  */
 export function LedgerTimeline({ events, focus }: { events: LedgerEvent[]; focus: number | null }) {
-  const list = [...events].sort((a, b) => b.ts - a.ts || b.id - a.id);
+  const [showActivity, setShowActivity] = useState(false);
+  const { events: list, hiddenActivity } = timelineEvents(events, showActivity, focus);
   const focused = useRef<HTMLDivElement>(null);
+  const focusVisible = list.some((event) => event.id === focus);
   useEffect(() => {
     focused.current?.scrollIntoView({ block: "center" });
-  }, [focus]);
-  if (!list.length) return <span className="hint">{t("No reports yet.")}</span>;
+  }, [focus, focusVisible, showActivity]);
   return (
     <div className="ledger-timeline">
+      <div className="ledger-timeline-controls">
+        <Checkbox checked={showActivity} onChange={setShowActivity} label={t("Show activity")} />
+        {hiddenActivity > 0 && <span className="hint">{t("{0} activity events hidden", hiddenActivity)}</span>}
+      </div>
+      {!list.length && <span className="hint">{t("No reports yet.")}</span>}
       {list.map((e) => {
         const Icon = icons[e.type] ?? (e.actor === "human" ? UserRound : Activity);
         return (

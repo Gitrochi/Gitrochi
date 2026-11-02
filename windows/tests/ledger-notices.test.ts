@@ -142,4 +142,23 @@ describe("Ledger notifier", () => {
     notifier.open({ sessionId: "S1031-02" });
     expect(opened).toEqual([{ sessionId: "S1031-01", promptId: 3 }]);
   });
+
+  it("refreshes quiet time-based attention without replaying notifications", async () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(NOW + 86_400_000);
+    const { notifier, demo, pass, sent } = await demoNotifier();
+    demo.world.prompts = [];
+    const calls = vi.spyOn(demo, "call");
+    await notifier.poll();
+    const rev = demo.world.rev;
+    pass(59_999);
+    clock.mockReturnValue(NOW + 86_400_000 + 59_999);
+    await notifier.poll();
+    expect(calls.mock.calls.filter(([method]) => method === "state")).toHaveLength(1);
+    pass(1);
+    clock.mockReturnValue(NOW + 86_400_000 + 60_000);
+    await notifier.poll();
+    expect(calls.mock.calls.filter(([method]) => method === "state")).toHaveLength(2);
+    expect(demo.world.rev).toBe(rev);
+    expect(sent).toEqual([]);
+  });
 });
