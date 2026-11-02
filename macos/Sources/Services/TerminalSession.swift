@@ -45,7 +45,8 @@ final class TerminalSession: Identifiable {
         self.relay = relay
         view.processDelegate = relay
         view.onOutput = { [weak self] in self?.noteOutput() }
-        view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        let savedSize = UserDefaults.standard.object(forKey: "terminalFontSize") as? Double ?? 13
+        applyFont(size: savedSize)
         view.optionAsMetaKey = false        // ⌥ 로 특수문자·한글 입력이 되도록
         applyColors(for: NSApp.effectiveAppearance)
         if let command { title = command.title }
@@ -103,6 +104,19 @@ final class TerminalSession: Identifiable {
         w.makeFirstResponder(view)
     }
 
+    /// Dictation and command shortcuts only fill the input; the user submits it in the terminal.
+    func insertText(_ text: String) {
+        let text = TerminalInput.singleLine(text)
+        guard running, !text.isEmpty else { return }
+        view.insertText(text)
+    }
+
+    func applyFont(size: Double) {
+        let size = size.isFinite ? min(22, max(10, size)) : 13
+        guard view.font.pointSize != size else { return }
+        view.font = NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+    }
+
     /// 어두운/밝은 모드에 맞춘 글자·배경색(SwiftTerm 은 색을 넣을 때 한 번만 읽는다)
     func applyColors(for appearance: NSAppearance) {
         appearance.performAsCurrentDrawingAppearance {
@@ -113,11 +127,7 @@ final class TerminalSession: Identifiable {
         }
     }
 
-    static let background = NSColor(name: "terminalBackground") { a in
-        a.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(srgbRed: 0.11, green: 0.11, blue: 0.12, alpha: 1)
-            : NSColor(srgbRed: 0.99, green: 0.99, blue: 0.99, alpha: 1)
-    }
+    static let background = NSColor.textBackgroundColor
 
     /// 실행 중인 프로그램(셸 자신이 아니면). 닫기 전에 물어볼 때 쓴다.
     var foregroundProgram: String? {
@@ -289,6 +299,11 @@ final class ShellView: LocalProcessTerminalView {
         } else {
             send(txt: text)
         }
+    }
+
+    /// Reviewed input cannot carry terminal control characters or a submit key.
+    func insertText(_ text: String) {
+        type(TerminalInput.singleLine(text))
     }
 
     private static func hasPaths(_ pb: NSPasteboard) -> Bool {

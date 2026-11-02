@@ -9,6 +9,41 @@ use rusqlite::backup::Backup;
 use rusqlite::{Connection, OpenFlags};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_TEMPORARY: AtomicU64 = AtomicU64::new(0);
+
+struct Temporary(PathBuf);
+
+impl Drop for Temporary {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+fn temporary(directory: &Path, name: &str, stamp: &str) -> Result<Temporary> {
+    // App, bridge and CLI backups can run together, including several in this process.
+    for _ in 0..100 {
+        let unique = NEXT_TEMPORARY.fetch_add(1, Ordering::Relaxed);
+        let path = directory.join(format!(
+            ".{name}-{stamp}-{}-{unique}.sqlite3.tmp",
+            std::process::id()
+        ));
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(_) => return Ok(Temporary(path)),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(Error::new("DATABASE", format!("Backup failed: {error}"))),
+        }
+    }
+    Err(Error::new(
+        "DATABASE",
+        "Could not allocate a temporary backup file",
+    ))
+}
 
 pub fn directory(db_path: &Path) -> PathBuf {
     db_path
@@ -101,20 +136,19 @@ pub fn run(db: &Db, now: Ms, keep: u32, daily: bool) -> Result<BackupResult> {
     std::fs::create_dir_all(&dir).map_err(io)?;
     let stamp = db.read(|c| local_stamp(c, now, "%Y%m%d-%H%M"))?;
     let path = dir.join(format!("{}-{stamp}.sqlite3", stem(&db.path)));
-    let temporary = dir.join(format!(".{}-{stamp}.sqlite3.tmp", stem(&db.path)));
-    let _ = std::fs::remove_file(&temporary);
+    let temporary = temporary(&dir, &stem(&db.path), &stamp)?;
     {
         let source = Connection::open_with_flags(
             &db.path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )?;
         source.busy_timeout(crate::db::BUSY_TIMEOUT)?;
-        let mut target = Connection::open(&temporary)?;
+        let mut target = Connection::open(&temporary.0)?;
         let backup = Backup::new(&source, &mut target)?;
         // All pages in one step: one consistent snapshot even while others write.
         backup.run_to_completion(i32::MAX, std::time::Duration::ZERO, None)?;
     }
-    std::fs::rename(&temporary, &path).map_err(io)?;
+    std::fs::rename(&temporary.0, &path).map_err(io)?;
     let mut removed = Vec::new();
     let all = list(&db.path);
     let excess = all.len().saturating_sub(keep.max(1) as usize);

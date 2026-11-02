@@ -1175,7 +1175,7 @@ let start: LedgerMs = 1_793_400_000_000
 
         // The command Connect Claude Code points at
         let tools = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: cli))
-        check(tools == ["ledger_overview", "ledger_report", "ledger_session"], "the command's MCP tools: \(tools)")
+        check(tools == ["ledger_overview", "ledger_report", "ledger_work", "ledger_lookup", "ledger_session"], "the command's MCP tools: \(tools)")
         do {
             _ = try await LedgerCommandLine.tools(binary: URL(fileURLWithPath: folder + "/missing"))
             check(false, "a missing command is reported")
@@ -1249,7 +1249,8 @@ case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-dar
 # The library the app links (the ledger's C ABI is re-exported there) and the gitrochi-ledger command next to it
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
-    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" \
+    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
+    "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"

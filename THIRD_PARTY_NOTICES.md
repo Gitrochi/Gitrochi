@@ -912,6 +912,40 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
   defined by the Mozilla Public License, v. 2.0.
 ```
 
+## Atticus-inspired macOS terminal dictation
+
+Source: https://github.com/SaarthurR/atticus-mac
+
+The macOS terminal dictation workflow adapts Atticus's on-device recognition,
+recording cancellation and bounded transcript finalization approach to
+Gitrochi's own terminal UI. This integration is macOS-only and app-scoped.
+It does not include Atticus's desktop automation, background agents, telemetry,
+installer or global shortcuts.
+
+```text
+MIT License
+
+Copyright (c) 2026 SaarthurR
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## Shared Rust core dependency notices
 
 The shared native and WebAssembly core and the repository index use the following Cargo.lock dependencies. These upstream notices are distributed with both application bundles through this file. This inventory covers the `crates/` workspace (`tools/generate-core-notices.py` regenerates it); the audit status of other dependencies above is unchanged. The Windows app resolves the same crates through its own lockfile.

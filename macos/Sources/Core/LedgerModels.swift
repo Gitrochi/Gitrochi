@@ -436,6 +436,9 @@ struct LedgerLegacyImportResult: Codable, Hashable {
         var events: Int
         var questions: Int
         var imports: Int
+        var workItems: Int? = nil
+        var notes: Int? = nil
+        var preservedRows: Int? = nil
     }
     var ok: Bool
     var dryRun: Bool

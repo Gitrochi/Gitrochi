@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardPaste, DatabaseBackup, Inbox, MessageSquare, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
+import { BookOpen, ClipboardPaste, DatabaseBackup, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
@@ -19,10 +19,14 @@ import { LedgerLearning } from "./LedgerLearning";
 import { visiblePrompts } from "./LedgerPromptStrip";
 import { LedgerSearch } from "./LedgerSearch";
 import { LedgerStreams } from "./LedgerStreams";
+import { LedgerWorkLog } from "./LedgerWorkLog";
+import { LedgerDocuments } from "./LedgerDocuments";
+import { LedgerNotebook } from "./LedgerNotebook";
+import { LedgerManage } from "./LedgerManage";
 import { onScreen, typing } from "./parts";
 import "./ledger-workspace.css";
 
-type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | null;
+type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | "work" | "documents" | "notebook" | "records" | null;
 
 const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -147,6 +151,12 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             </button>
           )}
           <div className="ledger-toolbar-actions">
+            <IconButton icon={<MoreHorizontal size={16} />} tip={t("More ledger actions")} aria-label={t("More ledger actions")} data-ledger-extras onClick={(e) => showMenuBelow(e.currentTarget, [
+              { label: t("Work log…"), onClick: () => setSheet("work") },
+              { label: t("Document tracker…"), onClick: () => setSheet("documents") },
+              { label: t("Notebook…"), onClick: () => setSheet("notebook") },
+              { label: t("Manage records…"), onClick: () => setSheet("records") },
+            ])} />
             {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
             <Button size="small" data-learn-ledger onClick={() => setSheet("learning")}><BookOpen size={14} />{t("Learn Ledger")}</Button>
             <IconButton icon={<MessageSquare size={16} />} tip={t("Bring a ChatGPT draft…")} aria-label={t("Bring a ChatGPT draft…")} onClick={() => setSheet("chatgpt")} />
@@ -190,6 +200,10 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
       {sheet === "search" && <LedgerSearch store={store} onClose={() => setSheet(null)} onPick={pick} />}
       {sheet === "learning" && <LedgerLearning onClose={() => setSheet(null)} onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onBringChatGPT={() => setSheet("chatgpt")} />}
       {sheet === "chatgpt" && <LedgerChatGPTDraftSheet store={store} onClose={() => setSheet(null)} onOpenQuestion={(sessionId) => { store.setView("inbox"); open(sessionId); }} />}
+      {sheet === "work" && <LedgerWorkLog store={store} onClose={() => setSheet(null)} />}
+      {sheet === "documents" && <LedgerDocuments store={store} onClose={() => setSheet(null)} />}
+      {sheet === "notebook" && <LedgerNotebook store={store} onClose={() => setSheet(null)} />}
+      {sheet === "records" && <LedgerManage store={store} onClose={() => setSheet(null)} />}
       <LedgerToast store={store} />
     </div>
   );

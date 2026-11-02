@@ -1,0 +1,8 @@
+/* Record management (macOS: LedgerManageSheet). */
+.ledger-manage-tabs { margin: -12px 0 16px; }
+.ledger-manage-form { display: flex; flex-direction: column; gap: 12px; }
+.ledger-manage-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-2); }
+.ledger-manage-form .input, .ledger-manage-form .select { width: 100%; min-width: 0; }
+.ledger-manage-form textarea { resize: vertical; min-height: 80px; font: 13px var(--mono); }
+.ledger-manage-spacer { flex: 1; }
+.ledger-manage-error { color: var(--ledger-failed); font-size: 12px; overflow-wrap: anywhere; }
