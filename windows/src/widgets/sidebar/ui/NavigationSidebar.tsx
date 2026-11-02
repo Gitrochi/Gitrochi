@@ -3,6 +3,7 @@ import { destinationEnabled, type WorkspaceDestination } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
+import icon from "@/shared/assets/icon.png";
 import "./navigation-sidebar.css";
 
 const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows", ledger: "Ledger" };
@@ -36,11 +37,11 @@ export function NavigationSidebar({ store, openSettings, compact = false, onTogg
     </button>;
   };
   return <nav className={`workspace-navigation${compact ? " compact" : ""}`} aria-label={compact ? t("Collapsed navigation") : t("Workspace navigation")}>
-    {onToggle && <div className="workspace-nav-header"><span>{t("Workspace")}</span><button type="button" className="workspace-nav-toggle" aria-label={t(compact ? "Expand sidebar" : "Collapse sidebar")} aria-expanded={!compact} onClick={onToggle} data-tip={`${t(compact ? "Expand sidebar" : "Collapse sidebar")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} B`}>{compact ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button></div>}
+    <div className="workspace-nav-header"><div className="workspace-nav-brand"><img src={icon} alt="" /><span><strong>Gitrochi</strong><small>{t("Workspace")}</small></span></div>{onToggle && <button type="button" className="workspace-nav-toggle" aria-label={t(compact ? "Expand sidebar" : "Collapse sidebar")} aria-expanded={!compact} onClick={onToggle} data-tip={`${t(compact ? "Expand sidebar" : "Collapse sidebar")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} B`}>{compact ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button>}</div>
     <div className="workspace-nav-scroll">
       {groups.map((group, i) => <div className="workspace-nav-section" key={i}>
         {group.title && <div className="workspace-nav-group"><span className="ellipsis">{group.title === "GitHub" ? (gitlab ? "GitLab" : "GitHub") : t(group.title)}</span><span /></div>}
-        {group.pages.filter(destinationEnabled).map(row)}
+        <div className="workspace-nav-card">{group.pages.filter(destinationEnabled).map(row)}</div>
       </div>)}
     </div>
     <div className="workspace-nav-footer"><button type="button" className="workspace-nav-item" aria-label={t("Settings")} data-tip={`${t("Settings")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} ,`} onClick={openSettings}><Settings size={18} strokeWidth={1.7} /><span className="workspace-nav-copy"><span className="ellipsis">{t("Settings")}</span></span></button></div>

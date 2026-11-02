@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AccountConnections, GitchBrowserLogin } from "@/features/account-connection";
 import { accountHost, providerInfo } from "@/entities/git";
-import type { GitHubLoginCapability } from "@/entities/gitch";
+import { gitAccountKey, type GitHubLoginCapability } from "@/entities/gitch";
 import { accounts } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Avatar, Button, Modal } from "@/shared/ui";
 import "./account-quick-controls.css";
+import { GitAccountAvatar } from "./GitAccountAvatar";
 
 type AccountSheet = { kind: "connections" } | { kind: "login"; expectedLogin?: string; capability: GitHubLoginCapability };
 
@@ -27,7 +28,7 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
   const connectedOnly = accounts.accounts;
   const chosen = connectedOnly.find((value) => value.id === store.hostingHub.selectedAccountID);
   const shown = account ?? (!store.target ? chosen ?? connectedOnly[0] : null) ?? null;
-  const count = new Set([...connectedOnly.map((value) => `${accountHost(value).toLowerCase()}/${value.username.toLowerCase()}`), ...gitAccounts.flatMap((value) => value.hosts.split(/[,\s]+/).filter(Boolean).map((host) => `${host.toLowerCase()}/${value.id.toLowerCase()}`))]).size;
+  const count = new Set([...connectedOnly.map((value) => gitAccountKey(accountHost(value), value.username)), ...gitAccounts.map((value) => gitAccountKey(value.hosts, value.id))]).size;
   const others = shown && count > 1 ? ` +${count - 1}` : "";
   // a repository's own identity, or the global one while no repository is open
   const identity = store.path ? store.me : store.globalIdentity;
@@ -84,7 +85,7 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
       {connectedOnly.length > 0 && <section className="account-quick-connections"><strong>{t("Connected accounts")}</strong><ul className="account-quick-list">
         {connectedOnly.map((item) => <li key={item.id}><button type="button" aria-pressed={item.id === shown?.id} onClick={() => choose(item)}><Avatar name={item.name ?? item.username} email={item.username} url={item.avatarURL} size={24} /><span>@{item.username} · {accountHost(item)}</span></button></li>)}
       </ul></section>}
-      {gitAccounts.length > 0 && <section className="account-quick-connections"><strong>{t("Git accounts")}</strong><ul className="account-quick-list account-quick-git-list">{gitAccounts.map((item) => <li key={item.id}><UserRound size={20} /><span><strong>{item.id}</strong><small>{item.hosts}</small></span></li>)}</ul><Button size="small" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" })); }}>{t("Manage Git accounts…")}</Button></section>}
+      {gitAccounts.length > 0 && <section className="account-quick-connections"><strong>{t("Git accounts")}</strong><ul className="account-quick-list account-quick-git-list">{gitAccounts.map((item) => <li key={item.id}><GitAccountAvatar account={item} /><span><strong>{item.id}</strong><small>{item.hosts}</small></span></li>)}</ul><Button size="small" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "cli" })); }}>{t("Manage Git accounts…")}</Button></section>}
       <section className="account-quick-identity">
         {!store.path ? <><p className="hint">{t("Open a repository to see its Git identity.")}</p><Button onClick={() => { setOpen(false); void store.pickAndOpen(); }}>{t("Open repository…")}</Button></> : <>
         <div className="row"><strong>{t("Git identity")}</strong><span className="spacer" />{locked && <span className="row hint"><LockKeyhole size={12} />{t("Locked")}</span>}</div>

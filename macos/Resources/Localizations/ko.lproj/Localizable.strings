@@ -4397,3 +4397,6 @@
 "Git accounts" = "Git 계정";
 "Manage Git accounts…" = "Git 계정 관리…";
 "Open a repository to see its Git identity." = "저장소를 열면 해당 저장소의 Git 계정을 확인할 수 있습니다.";
+"Open repositories" = "열린 저장소";
+"Recent local repositories" = "최근 로컬 저장소";
+"Open repository" = "저장소 열기";

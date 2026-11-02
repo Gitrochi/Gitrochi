@@ -3,3 +3,4 @@ export { countGraphRules, fromPosix, gitch, type GitchAccount, type GraphCheck, 
 export { accountAddArguments, browserLoginArguments, browserLoginTimeout, type GitHubLoginCapability, type GitchAccountInput, type GitchAccountSetup, type GitchDoctor, type GitchBrowserLogin, parseBrowserLogin, machineError, parseAccountSetup, parseDoctor } from "./model/onboarding";
 export { type GraphReview, type GraphReviewImpact, type GraphReviewStamp, parseGraphReview, parseGraphReviewStamp } from "./model/review";
 export { graphWorkspaceLink, structureGraphDocument } from "./model/workspace";
+export { gitAccountHost, gitAccountKey, gitAccountAvatarURL } from "./model/account-presentation";

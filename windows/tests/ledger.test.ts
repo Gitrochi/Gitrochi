@@ -311,11 +311,11 @@ describe("Ledger imports, undo, layout and versions", () => {
 });
 
 describe("Ledger destination", () => {
-  it("stays hidden until GITROCHI_LEDGER_PREVIEW turns it on, then opens without a repository", () => {
+  it("opens without a repository or a preview environment", () => {
     const before = env.ledgerPreview;
     try {
       env.ledgerPreview = null;
-      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false)]).toEqual([false, false, "home"]);
+      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false)]).toEqual([true, true, "ledger"]);
       expect(workspaceDestinations).not.toContain("ledger");
       expect(previewDestinations).toEqual(["ledger"]);
       env.ledgerPreview = "1";

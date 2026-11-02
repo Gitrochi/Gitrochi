@@ -2214,3 +2214,6 @@
 "Git accounts" = "Konta Git";
 "Manage Git accounts…" = "Zarządzaj kontami Git…";
 "Open a repository to see its Git identity." = "Otwórz repozytorium, aby zobaczyć jego tożsamość Git.";
+"Open repositories" = "Otwarte repozytoria";
+"Recent local repositories" = "Ostatnie lokalne repozytoria";
+"Open repository" = "Otwórz repozytorium";

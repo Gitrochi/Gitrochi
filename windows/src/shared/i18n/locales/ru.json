@@ -2255,5 +2255,8 @@
   "ChatGPT browser extension": "Расширение ChatGPT для браузера",
   "Git accounts": "Учётные записи Git",
   "Manage Git accounts…": "Управление учётными записями Git…",
-  "Open a repository to see its Git identity.": "Откройте репозиторий, чтобы увидеть его данные Git."
+  "Open a repository to see its Git identity.": "Откройте репозиторий, чтобы увидеть его данные Git.",
+  "Open repositories": "Открытые репозитории",
+  "Recent local repositories": "Недавние локальные репозитории",
+  "Open repository": "Открыть репозиторий"
 }

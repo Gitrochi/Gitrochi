@@ -2184,3 +2184,6 @@
 "Git accounts" = "Akun Git";
 "Manage Git accounts…" = "Kelola akun Git…";
 "Open a repository to see its Git identity." = "Buka repositori untuk melihat identitas Git-nya.";
+"Open repositories" = "Repositori terbuka";
+"Recent local repositories" = "Repositori lokal terbaru";
+"Open repository" = "Buka repositori";

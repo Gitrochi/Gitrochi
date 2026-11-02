@@ -8,16 +8,15 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case flows, ledger
     var id: String { rawValue }
 
-    /// A remembered page that is not shown (Ledger without its preview) reads as unknown, so the default page opens
+    /// Restore known pages, including the Ledger without a preview environment.
     init?(rawValue: String) {
         guard let page = Self.allCases.first(where: { $0.rawValue == rawValue }), page.isShown else { return nil }
         self = page
     }
 
-    /// Ledger stays hidden until it is released: GITROCHI_LEDGER_PREVIEW=1 shows it, and its Settings tab, with the
-    /// person's ledger (GITROCHI_LEDGER_DEMO=standard, =large or =empty shows a demo instead)
+    /// Optional agent tracking and notifications retain their existing preview switch; navigation is always available.
     static let ledgerPreview = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
-    var isShown: Bool { self != .ledger || Self.ledgerPreview }
+    var isShown: Bool { true }
     static var shown: [WorkspaceDestination] { allCases.filter(\.isShown) }
     /// Pages the repository screen links to (request and issue rows, a commit's CI icon, the tags); opened from there,
     /// they offer the way back

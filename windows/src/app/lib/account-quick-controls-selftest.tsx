@@ -65,7 +65,7 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
   const button = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".account-quick-popover button")).find((item) => item.textContent?.trim() === t(label));
   try {
     accounts.accounts = [alice, carol];
-    gitch.accounts = async () => [{ id: "alice", hosts: "github.com", email: "alice@example.invalid" }, { id: "bob", hosts: "github.com", email: "bob@example.invalid" }, { id: "carol", hosts: "gitlab.example.com", email: "carol@example.invalid" }].map((value) => ({ ...value, rules: "", sshKey: true }));
+    gitch.accounts = async () => [{ id: "alice", hosts: "github.com", email: "alice@example.invalid" }, { id: "bob", hosts: "github.com", email: "bob@example.invalid" }, { id: "carol", hosts: "gitlab.example.com(port 2222)", email: "carol@example.invalid" }].map((value) => ({ ...value, rules: "", sshKey: true }));
     // Folder-based Git rules may intentionally leave the global author unset.
     ipc.run = async (_program, args) => {
       commands.push(args);

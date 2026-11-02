@@ -15,8 +15,8 @@ struct AccountQuickControls: View {
     private var connected: [HostAccount] { accounts.accounts(for: .github) + accounts.accounts(for: .gitlab) }
     private var shown: HostAccount? { noTarget ? connected.first { $0.id == store.hostingHub.selectedAccountID } ?? connected.first : account }
     private var accountCount: Int {
-        let hosting = connected.map { $0.host.lowercased() + "/" + $0.username.lowercased() }
-        let git = gitAccounts.flatMap { a in a.hosts.split { $0 == "," || $0.isWhitespace }.map { $0.lowercased() + "/" + a.id.lowercased() } }
+        let hosting = connected.map { GitAccountPresentation.key(host: $0.host, username: $0.username) }
+        let git = gitAccounts.map { GitAccountPresentation.key(host: $0.hosts, username: $0.id) }
         return Set(hosting + git).count
     }
     private var title: String {
@@ -120,7 +120,7 @@ struct AccountQuickControls: View {
                         Text("Git accounts").font(.callout.weight(.semibold))
                         ForEach(gitAccounts) { a in
                             HStack(spacing: 9) {
-                                Image(systemName: "person.crop.circle").font(.title2).foregroundStyle(.secondary)
+                                GitAccountAvatar(account: a)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(verbatim: a.id).font(.callout.weight(.medium))
                                     Text(verbatim: a.hosts).font(.caption).foregroundStyle(.secondary)

@@ -28,7 +28,7 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     settings.subscribe = (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
     settings.getVersion = () => version;
     root.render(<Fixture compact={false} />); await pause();
-    ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows", `The sidebar must list the twelve pages in order: ${rows().map((button) => button.dataset.page).join(",")}`);
+    ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows,ledger", `The sidebar must include Ledger without a preview flag: ${rows().map((button) => button.dataset.page).join(",")}`);
     ensure(!host.querySelector("input"), "The sidebar must not have a search box");
     for (const page of workspaceDestinations) {
       ensure(row(page)?.disabled === false, `Navigation must remain available before opening a repository: ${page}`);
@@ -53,7 +53,7 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     ensure(rows().every((button) => !!button.getAttribute("aria-label") && !!button.dataset.tip && button.querySelector("svg")!.getBoundingClientRect().width > 0), "Rail icons lost their labels, tooltips or visible symbols");
     ensure(row("flows")?.getAttribute("aria-current") === "page", "The rail lost the current page");
     row("home")!.click(); await pause(); ensure(store.destination === "home", "Rail icons did not route to their pages");
-    return [true, "Twelve pages in order, no search box, Issues, Releases, Projects and Account without a repository, every page with one, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
+    return [true, "All thirteen pages including Ledger, available initial navigation, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

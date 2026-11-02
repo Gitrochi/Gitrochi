@@ -10,7 +10,7 @@ import { CLISettings } from "./CLISettings";
 import { RulesSettings } from "./RulesSettings";
 import { ToolsSettings } from "./ToolsSettings";
 
-// Only with the Ledger preview, and loaded on demand like the Ledger page, so the start-up bundle stays as it was
+// Load on demand like the Ledger page, keeping it out of the start-up bundle.
 const LedgerSettings = lazy(() => import("./LedgerSettings").then((module) => ({ default: module.LedgerSettings })));
 
 /** Ctrl+, 설정: 계정(GitHub·GitLab), AI, 규칙, 도구(실행 파일 위치), CLI(gitch), 화면(테마), 업데이트 */

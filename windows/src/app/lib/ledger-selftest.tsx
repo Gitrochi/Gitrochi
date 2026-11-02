@@ -50,7 +50,7 @@ function leave(el: HTMLElement) {
 }
 
 /**
- * The Ledger page on the demo backend: hidden without GITROCHI_LEDGER_PREVIEW, then opened from the page list without a
+ * The Ledger page on the demo backend: offered without GITROCHI_LEDGER_PREVIEW and opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
  * waiting prompts, the quick launches, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
  * the narrow sheet, Streams, the onboarding sheets with the claude-ledger import, and Settings › Ledger. Nothing leaves
@@ -93,9 +93,9 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     // the app's own Ledger runs on the demo too
     env.ledgerDemo = "1";
 
-    // The switch: no Ledger without GITROCHI_LEDGER_PREVIEW; with it, a Tools page that opens without a repository
+    // Ledger navigation and settings work without enabling optional background tracking.
     env.ledgerPreview = null;
-    ensure(!isWorkspaceDestination("ledger") && !destinationEnabled("ledger") && restoredDestination("ledger", false) === "home", "The Ledger must stay hidden without the preview switch");
+    ensure(isWorkspaceDestination("ledger") && destinationEnabled("ledger") && restoredDestination("ledger", false) === "ledger", "Ledger must be available without the preview switch");
     const app = new RepoStore();
     app.loadGlobalIdentity = async () => {};
     workspace.tabs = [app]; workspace.activeId = app.id;
@@ -104,10 +104,10 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
       handleShortcut(event, () => {});
       return event.defaultPrevented;
     };
-    ensure(!numberedShortcut() && app.destination === "home", "The Ledger shortcut changed navigation or consumed its key without the preview switch");
+    ensure(numberedShortcut() && app.destination === "ledger", "The Ledger shortcut must open without the preview switch");
     root.render(<RepoPage store={app} openSettings={() => {}} />);
     await until(() => $(".workspace-nav-item[data-page='flows']"));
-    ensure(!$(".workspace-nav-item[data-page='ledger']"), "The page list showed the Ledger without the switch");
+    ensure($(".workspace-nav-item[data-page='ledger']"), "The page list must show the Ledger without the switch");
     env.ledgerPreview = "1";
     app.changed();
     ensure(await until(() => $(".workspace-nav-item[data-page='ledger']")), "The page list did not offer the Ledger with the switch on");
@@ -437,14 +437,14 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     await until(() => !$(".modal"));
     passed.push("claude-ledger import");
 
-    // Settings › Ledger: no tab without the preview; with it, the app's Ledger settings on the same backend
+    // Settings include Ledger with and without optional background tracking.
     root.unmount();
     root = createRoot(host);
     const labels = () => $$<HTMLButtonElement>(".modal .segmented button").map((b) => b.textContent?.trim());
     env.ledgerPreview = null;
     root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
     ensure(await until(() => labels().length > 0), "Settings did not open");
-    ensure(!labels().includes(t("Ledger")), `Settings showed a Ledger tab without the preview: ${labels().join(", ")}`);
+    ensure(labels().includes(t("Ledger")), `Settings must include Ledger without the preview: ${labels().join(", ")}`);
     root.unmount();
     root = createRoot(host);
     env.ledgerPreview = "1";

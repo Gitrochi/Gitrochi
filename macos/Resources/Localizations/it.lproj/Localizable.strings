@@ -2205,3 +2205,6 @@
 "Git accounts" = "Account Git";
 "Manage Git accounts…" = "Gestisci account Git…";
 "Open a repository to see its Git identity." = "Apri un repository per visualizzarne l’identità Git.";
+"Open repositories" = "Repository aperti";
+"Recent local repositories" = "Repository locali recenti";
+"Open repository" = "Apri repository";

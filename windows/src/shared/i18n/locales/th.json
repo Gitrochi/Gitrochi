@@ -2250,5 +2250,8 @@
   "ChatGPT browser extension": "ส่วนขยายเบราว์เซอร์ ChatGPT",
   "Git accounts": "บัญชี Git",
   "Manage Git accounts…": "จัดการบัญชี Git…",
-  "Open a repository to see its Git identity.": "เปิดคลังเพื่อดูข้อมูลประจำตัว Git ของคลังนั้น"
+  "Open a repository to see its Git identity.": "เปิดคลังเพื่อดูข้อมูลประจำตัว Git ของคลังนั้น",
+  "Open repositories": "คลังที่เปิดอยู่",
+  "Recent local repositories": "คลังในเครื่องล่าสุด",
+  "Open repository": "เปิดคลัง"
 }

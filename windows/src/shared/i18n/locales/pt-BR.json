@@ -2226,5 +2226,8 @@
   "ChatGPT browser extension": "Extensão do ChatGPT para navegador",
   "Git accounts": "Contas Git",
   "Manage Git accounts…": "Gerenciar contas Git…",
-  "Open a repository to see its Git identity.": "Abra um repositório para ver sua identidade Git."
+  "Open a repository to see its Git identity.": "Abra um repositório para ver sua identidade Git.",
+  "Open repositories": "Repositórios abertos",
+  "Recent local repositories": "Repositórios locais recentes",
+  "Open repository": "Abrir repositório"
 }

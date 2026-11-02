@@ -3063,3 +3063,6 @@
 "Git accounts" = "Gitアカウント";
 "Manage Git accounts…" = "Gitアカウントを管理…";
 "Open a repository to see its Git identity." = "リポジトリを開くと、そのGit IDを確認できます。";
+"Open repositories" = "開いているリポジトリ";
+"Recent local repositories" = "最近使ったローカルリポジトリ";
+"Open repository" = "リポジトリを開く";

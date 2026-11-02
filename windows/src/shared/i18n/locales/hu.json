@@ -2240,5 +2240,8 @@
   "ChatGPT browser extension": "ChatGPT böngészőbővítmény",
   "Git accounts": "Git-fiókok",
   "Manage Git accounts…": "Git-fiókok kezelése…",
-  "Open a repository to see its Git identity.": "Nyisson meg egy tárolót a Git-azonosság megtekintéséhez."
+  "Open a repository to see its Git identity.": "Nyisson meg egy tárolót a Git-azonosság megtekintéséhez.",
+  "Open repositories": "Megnyitott tárolók",
+  "Recent local repositories": "Legutóbbi helyi tárolók",
+  "Open repository": "Tároló megnyitása"
 }

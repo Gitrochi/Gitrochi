@@ -7,13 +7,14 @@ struct NavigationSidebarRail: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            NavigationBrand(compact: true).frame(width: 56, height: 42).padding(.top, 6)
             Button(action: onExpand) {
                 Image(systemName: "sidebar.left").font(.system(size: 17)).frame(width: 40, height: 36)
             }
             .buttonStyle(.plain).foregroundStyle(.secondary)
             .help("Expand sidebar").accessibilityLabel("Expand sidebar")
             .accessibilityIdentifier("navigation-rail-expand")
-            .padding(.top, 6)
+            .padding(.top, 2)
             Divider().padding(.horizontal, 10).padding(.vertical, 6)
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 4) {
@@ -52,7 +53,7 @@ struct NavigationSidebarRail: View {
                 Image(systemName: page.symbol).font(.system(size: 18, weight: active ? .semibold : .regular))
                     .frame(width: 40, height: 36)
                     .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.72))
-                    .background(active ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                    .background(active ? Color.accentColor.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
                     .overlay(alignment: .topTrailing) {
                         if count > 0 {
                             Text(count > 99 ? "99+" : String(count)).font(.system(size: 8, weight: .semibold, design: .monospaced))

@@ -2230,3 +2230,6 @@
 "Git accounts" = "Облікові записи Git";
 "Manage Git accounts…" = "Керувати обліковими записами Git…";
 "Open a repository to see its Git identity." = "Відкрийте репозиторій, щоб побачити його дані Git.";
+"Open repositories" = "Відкриті репозиторії";
+"Recent local repositories" = "Нещодавні локальні репозиторії";
+"Open repository" = "Відкрити репозиторій";

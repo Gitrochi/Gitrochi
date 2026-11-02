@@ -1,15 +1,13 @@
-import { env } from "@/shared/config";
-
 /**
  * The pages of a repository window. Repository is the three-column screen (branches | graph | inspector);
  * the rest are full-width pages. (macOS: Core/WorkspaceNavigation.swift)
  */
 export const workspaceDestinations = ["home", "repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows"] as const;
-/** Pages listed and reachable only while their switch is on: the Ledger runs on demo data until its core is connected (GITROCHI_LEDGER_PREVIEW=1) */
+/** Kept separate for compatibility with existing destination lists. Ledger navigation is always available. */
 export const previewDestinations = ["ledger"] as const;
 export type WorkspaceDestination = (typeof workspaceDestinations)[number] | (typeof previewDestinations)[number];
-/** Whether a page is offered at all; every page but the previews always is */
-export const destinationEnabled = (page: WorkspaceDestination) => page !== "ledger" || !!env.ledgerPreview;
+/** All known pages are available without changing optional background agent tracking. */
+export const destinationEnabled = (_page: WorkspaceDestination) => true;
 /** Pages whose tools need a repository; navigation shows a chooser until one is open. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
 /** Pages the repository screen links to (request and issue rows, a commit's CI badge, the tags); opened from there, they offer the way back (macOS: returnsToRepository) */
