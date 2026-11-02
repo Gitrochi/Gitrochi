@@ -55,7 +55,7 @@ Gitrochi is a native Git client for macOS and Windows. It draws your history as 
 - **Shared Rust core** — parsing, diff, patches, conflicts and graph calculations shared by both apps, with cancellable background calculations; commit searches ignore spacing
 - **Repository index** — the whole history, each commit's file changes and which files change together, kept in SQLite by the shared Rust code with a C++ tokenizer for code identifiers and Korean, Japanese and Chinese text; the search bar answers from it, and the Python tools (AI review, analysis, test planning, runtimes) and the Go team hub and monitor build on it
 
-The full list, with usage and shortcuts: [docs/features.md](docs/features.md). The [Ledger preview guide](docs/ledger/README.md) covers agent reports, opt-in tracking, auto-continue and notifications.
+The full list, with usage and shortcuts: [docs/features.md](docs/features.md). The [Ledger preview guide](docs/ledger/README.md) covers the in-app tutorial, answering questions, bringing ChatGPT drafts, agent reports, opt-in tracking, auto-continue and notifications.
 
 ## Implementation and verification
 

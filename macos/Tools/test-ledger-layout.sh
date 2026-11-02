@@ -15,6 +15,8 @@ TASK_CONNECT_ONLY=0
 TASK_CAPTURE_MODE=--all
 if [[ "${1:-}" == "--connect-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--connect-only; shift; fi
 if [[ "${1:-}" == "--questions-only" ]]; then TASK_CAPTURE_MODE=--questions-only; shift; fi
+if [[ "${1:-}" == "--tutorial-only" ]]; then TASK_CAPTURE_MODE=--tutorial-only; shift; fi
+if [[ "${1:-}" == "--chatgpt-only" ]]; then TASK_CAPTURE_MODE=--chatgpt-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
@@ -39,6 +41,11 @@ for source in (root / 'Sources').rglob('*.swift'):
         if connect_only:
             text = text.replace('DisclosureGroup("Check or remove automatic activity") {',
                                 'DisclosureGroup("Check or remove automatic activity", isExpanded: .constant(true)) {')
+    if relative == 'Views/Ledger/LedgerChatGPTDraftSheet.swift':
+        # The fixture supplies local pasted text and reviewed modes without changing production visibility.
+        for field in ('mode', 'raw', 'preview'):
+            text = text.replace('@ViewState private var ' + field, '@ViewState var ' + field)
+        text = text.replace('private enum Mode:', 'enum Mode:')
     dest = target / 'Sources' / relative
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(text)
@@ -63,6 +70,20 @@ import ImageIO
 
 @MainActor func answerEditors(in view: NSView) -> [NSTextView] {
     (view as? NSTextView).map { [$0] } ?? view.subviews.flatMap(answerEditors(in:))
+}
+
+/// Rendering and editing the paste sheet may not send a report or answer by themselves.
+final class LedgerLayoutWriteProbe: LedgerBackend, @unchecked Sendable {
+    private let inner = DemoLedgerBackend(mode: .standard)
+    private let lock = NSLock()
+    private var writes = 0
+    func call(method: String, args: Data) -> Data {
+        lock.lock()
+        if ["human", "import", "prompt_answer"].contains(method) { writes += 1 }
+        lock.unlock()
+        return inner.call(method: method, args: args)
+    }
+    var count: Int { lock.lock(); defer { lock.unlock() }; return writes }
 }
 
 @MainActor final class Shot {
@@ -193,11 +214,11 @@ struct AnswerKeyboardFixture: View {
             return ledger
         }
 
-        func shoot<Content: View>(_ name: String, _ content: Content, width: CGFloat, height: CGFloat, expect: [String], absent: [String] = []) throws {
+        func shoot<Content: View>(_ name: String, _ content: Content, width: CGFloat, height: CGFloat, expect: [String], absent: [String] = [], scrollToEnd: Bool = false) throws {
             for dark in [false, true] {
                 let shot = Shot(content, width: width, height: height, dark: dark)
                 settle(0.4)
-                if CommandLine.arguments.contains("--connect-only"),
+                if scrollToEnd || CommandLine.arguments.contains("--connect-only"),
                    let list = scrollViews(in: shot.host).max(by: { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }) {
                     let contentHeight = list.documentView?.frame.height ?? 0
                     list.contentView.scroll(to: NSPoint(x: 0, y: max(0, contentHeight - list.contentView.bounds.height)))
@@ -217,6 +238,99 @@ struct AnswerKeyboardFixture: View {
                 shot.close()
                 shots += 1
             }
+        }
+
+        func chatGPTShots() throws {
+            let probe = LedgerLayoutWriteProbe()
+            let local = LedgerStore(client: LedgerClient(backend: probe), defaults: defaults, interval: .seconds(600))
+            wait { await local.reload() }
+            var opened = 0
+            let typing = Shot(LedgerChatGPTDraftSheet(ledger: local, onOpenQuestion: { _ in opened += 1 }), width: 540, height: 760, dark: false)
+            guard let editor = answerEditors(in: typing.host).first else { fatalError("The paste editor is missing") }
+            editor.insertText("Use the verified release after all checks pass.", replacementRange: NSRange(location: 0, length: 0))
+            settle(0.2)
+            guard local.drafts.isEmpty, probe.count == 0, opened == 0 else { fatalError("Pasting must not save a draft, send an answer or open a destination") }
+            typing.close()
+            let demo = store(.standard)
+            let copied = "Use the verified release after all checks pass."
+            try shoot("chatgpt-answer", LedgerChatGPTDraftSheet(ledger: demo, onOpenQuestion: { _ in }, raw: copied), width: 660, height: 700,
+                      expect: ["Bring a ChatGPT draft", "Pasted by you", "Copied text", "Use draft", "Only fills a draft"])
+            let raw = #"{"text":"Which release channel should we use?","options":[{"label":"Stable","description":"Use a verified release","recommended":true},{"label":"Nightly","description":"Try the newest changes"}],"suggestedAnswer":"Stable"}"#
+            let preview = try LedgerChatGPTDraft.parseQuestion(raw)
+            try shoot("chatgpt-question-preview", LedgerChatGPTDraftSheet(ledger: demo, onOpenQuestion: { _ in }, mode: .question, raw: raw, preview: preview), width: 540, height: 820,
+                      expect: ["Preview", "Which release channel", "Stable", "Nightly", "Suggested answer", "Save question"], scrollToEnd: true)
+            let empty = store(.empty)
+            try shoot("chatgpt-empty", LedgerChatGPTDraftSheet(ledger: empty, onOpenQuestion: { _ in }), width: 540, height: 760,
+                      expect: ["No open questions", "Add a question", "Paste text before continuing", "Use draft"])
+            try shoot("chatgpt-oversize", LedgerChatGPTDraftSheet(ledger: demo, onOpenQuestion: { _ in }, raw: String(repeating: "A", count: 65_537)), width: 540, height: 760,
+                      expect: ["Pasted text is limited to 64 KiB", "Use draft"], scrollToEnd: true)
+        }
+        if CommandLine.arguments.contains("--chatgpt-only") {
+            try chatGPTShots()
+            print("PASS: \(shots) explicit ChatGPT paste screenshots in light and dark; answer, reviewed question, empty and narrow size warning. \(output.path)")
+            return
+        }
+        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") && !CommandLine.arguments.contains("--tutorial-only") {
+            try chatGPTShots()
+        }
+
+        func tutorialShots() throws {
+            let tutorial = LedgerLearning(defaults: defaults)
+            tutorial.restart()
+            try shoot("tutorial-concepts", LedgerLearningSheet(learning: tutorial), width: 720, height: 640,
+                      expect: ["Learn Ledger", "Sessions and baselines", "Baseline", "Session"])
+            tutorial.next()
+            tutorial.chosenView = 2
+            try shoot("tutorial-views", LedgerLearningSheet(learning: tutorial), width: 720, height: 640,
+                      expect: ["Choose a view", "Inbox", "Board", "Graph", "Streams"])
+            tutorial.next()
+            try shoot("tutorial-answer", LedgerLearningSheet(learning: tutorial), width: 540, height: 760,
+                      expect: ["Try answering a question", "Which channel", "Stable", "Use suggestion", "Send answer"])
+            let practice = Shot(LedgerLearningSheet(learning: tutorial), width: 540, height: 760, dark: false)
+            guard let editor = answerEditors(in: practice.host).first else { fatalError("Tutorial must use the production answer editor") }
+            func press(_ code: UInt16, _ characters: String, _ flags: NSEvent.ModifierFlags = []) {
+                practice.window.makeFirstResponder(editor)
+                let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0,
+                                            windowNumber: practice.window.windowNumber, context: nil, characters: characters,
+                                            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: code)!
+                editor.keyDown(with: event)
+                settle(0.1)
+            }
+            tutorial.next()
+            guard tutorial.step == .answer, !tutorial.canAdvance else { fatalError("Tutorial skipped answer practice") }
+            press(48, "\t")
+            guard tutorial.answerDraft == "Stable", !tutorial.canAdvance else { fatalError("Tutorial Tab must fill without sending") }
+            editor.insertText(" after the checks", replacementRange: NSRange(location: editor.string.utf16.count, length: 0))
+            settle(0.1)
+            guard tutorial.answerDraft == "Stable after the checks" else { fatalError("Tutorial answer must remain editable") }
+            press(36, "\r", .command)
+            guard tutorial.progress.answerSent, tutorial.canAdvance else { fatalError("Tutorial send did not finish the local exercise") }
+            practice.close()
+            let restored = LedgerLearning(defaults: defaults)
+            guard restored.step == .answer, restored.progress.answerSent, restored.answerDraft.isEmpty else { fatalError("Tutorial did not restore progress without storing draft text") }
+            restored.next()
+            try shoot("tutorial-delivery", LedgerLearningSheet(learning: restored), width: 720, height: 640,
+                      expect: ["Follow an answer to completion", "Mark delivered", "saved"])
+            restored.next()
+            guard restored.step == .delivery else { fatalError("Tutorial skipped delivery practice") }
+            restored.deliver(); restored.confirm(); restored.archive(); restored.next()
+            guard restored.step == .connect else { fatalError("Delivery practice did not unlock setup") }
+            try shoot("tutorial-connect", LedgerLearningSheet(learning: restored, openConnect: {}, bringChatGPTDraft: {}), width: 720, height: 640,
+                      expect: ["Connect your agent", "Connect agents", "Bring a ChatGPT draft"])
+            restored.next()
+            guard LedgerLearning(defaults: defaults).progress.completed else { fatalError("Tutorial completion did not persist") }
+            try shoot("tutorial-guide", LedgerLearningSheet(learning: restored, initialTab: .guide, openConnect: {}, bringChatGPTDraft: {}), width: 540, height: 760,
+                      expect: ["Search the guide", "Setup", "Claude Code", "Answer delivery", "Privacy"])
+            restored.restart()
+            guard restored.step == .concepts, !restored.progress.completed else { fatalError("Tutorial Restart did not reset practice") }
+        }
+        if CommandLine.arguments.contains("--tutorial-only") {
+            try tutorialShots()
+            print("PASS: \(shots) tutorial and guide screenshots in light and dark; native Tab/edit/send, practice gates, restore and restart. \(output.path)")
+            return
+        }
+        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") {
+            try tutorialShots()
         }
 
         let ledger = store(.standard)
