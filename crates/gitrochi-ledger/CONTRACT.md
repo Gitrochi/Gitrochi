@@ -12,7 +12,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14]
 
 - One SQLite database per user. `default_db_path()`: macOS `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3`, Windows `%APPDATA%\Gitrochi\ledger\ledger.sqlite3`, elsewhere `$XDG_DATA_HOME/gitrochi/ledger/ledger.sqlite3` (or `~/.local/share/…`). `GITROCHI_LEDGER_DB` overrides it; `GITROCHI_LEDGER=0` turns the feature off (every method but `info` answers `DISABLED`, and nothing is created).
 - WAL, `BEGIN IMMEDIATE` for every write, busy timeout 15 s (1 s for the hook handler), `synchronous = NORMAL`, `trusted_schema = OFF`.
-- `PRAGMA user_version` is the storage schema (2). Schema 2 adds `questions.metadata TEXT NOT NULL DEFAULT '{}'` for optional question forms; existing question text, state, answers and delivery times stay intact. Migration steps only add tables and columns, each in its own IMMEDIATE transaction, guarded by its version and safe to open from two processes at once. A file written by a newer build is read but never written (`SCHEMA_MISMATCH`). The JSON API schema remains 1; the new question fields are optional.
+- `PRAGMA user_version` is the storage schema (3). Schema 2 adds `questions.metadata TEXT NOT NULL DEFAULT '{}'` for optional question forms; existing question text, state, answers and delivery times stay intact. Schema 3 adds `questions.browser_source_url`, `questions.browser_draft` and `browser_captures` for scoped browser observation and immutable source deduplication. Migration steps only add tables and columns, each in its own IMMEDIATE transaction, guarded by its version and safe to open from two processes at once. A file written by a newer build is read but never written (`SCHEMA_MISMATCH`). The JSON API schema remains 1; the new question fields are optional.
 - Only this crate writes the database, from any process. Every write is one transaction that also increments `meta.rev`; the apps poll `rev` and reload only when it moved. Reads run in one read transaction (one snapshot).
 - Times are epoch milliseconds (i64). Input strings are NFC-normalised and trimmed (report bodies keep their layout).
 - **Settings live in the database** (decided in wave 1): global settings in the `settings` table (key → JSON), per-project settings in the `projects` table. Every writer — the apps, the CLI, MCP and the hooks — then reads the same rules from the one file it already opens, changes reach the apps through `rev`, and there is no second file to keep in step. Only the apps change them.
@@ -76,6 +76,7 @@ interface LedgerEvent {
 interface Question { id: number; sessionId: string; text: string; state: "open" | "answered" | "dismissed";
   options?: { label: string; description?: string; recommended?: boolean }[];
   multiSelect?: boolean; suggestedAnswer?: string;
+  browserSourceUrl?: string; browserDraft?: string; // local browser observation, not a native prediction
   answer?: string; answeredBy?: "human" | "auto"; resolvedBy?: "agent";
   createdAt: Ms; answeredAt?: Ms; deliveredAt?: Ms }
 interface Baseline { project: string; version: string; ts: Ms; effTs: Ms;
@@ -283,6 +284,27 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
   - a prompt they answered.
 - **Never in the way.** Without a decision, the hook exits 0 with no output. The Stop answer is exit 2 with the text on stderr. Any failure is exit 0, no decision and one line on stderr: input that is not a JSON object, a missing database, a lock held for more than a second, or a database with a newer schema.
 
+## Browser extension boundary
+
+The companion `gitrochi-ledger-browser` is a separate Chrome native-messaging entry point. It uses native-endian u32 byte lengths followed by UTF-8 JSON, a 65,536-byte request cap and a 1 MiB response cap. It validates Chrome's caller origin against its installed, exact extension allowlist and reloads that configuration on every request. Removing registration or changing its database invalidates previous bindings.
+
+`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?}`. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
+
+Native requests have `{version:1, id:string, op, ...fields}`. Replies have `{version:1, id, ok:true, data}` or `{version:1, id, ok:false, error}`. Operations are limited to:
+
+| Operation | Fields and effect |
+|---|---|
+| `hello` | Returns `questionCapture:true`, `composerPredictions:false` and the host name. |
+| `targets` | Bounded project and active-session summaries; no reports, answers or transcripts. |
+| `bind` | `{conversationUrl, project, sessionId?}` creates a connection-scoped binding. An omitted session explicitly creates a browser session; an existing target must be active in the selected project. |
+| `capture` | `{bindingId, sourceKey, question}` stores a normalized question and its source. The existing report/delivery dispatcher is never called. |
+| `draft` | `{bindingId, sourceKey, text}` updates only the separate browser draft of the still-open captured question. Whitespace is preserved. |
+| `unbind` | `{bindingId}` removes that port's binding. |
+
+A binding pins the caller, database, canonical ChatGPT conversation and target session. Page-supplied method names, database paths and target overrides are rejected. Source deduplication is atomic by extension/conversation/session/message ID: an exact duplicate changes no revision; a settled question is not reopened, and changed content is reported for review without replacing the original question.
+
+`browserSourceUrl` and `browserDraft` appear only on captured questions. The latter means text observed after a user accepted a browser draft with Tab; it is neither a model's `suggestedAnswer` nor an unaccepted native composer prediction. Apps label it separately and preserve existing edits. Answers and dismissals for these questions are excluded from agent message delivery; normal questions retain their existing delivery behavior.
+
 ## Changes from v0
 
 Additions (optional fields and new methods; nothing renamed or removed):
@@ -321,5 +343,7 @@ Added for the apps' notifications (wave 2):
 Added for opt-in local client activity:
 
 18. Passive `observe` and reversible `integrate` CLI commands for Claude Code and Codex. External session bindings live in `links.observer`; observations are `hook` events and do not claim agent reports or change task status. Existing `hook EVENT`, app-launch tracking defaults and API caller permissions are unchanged.
+
+19. Browser observation: optional `Question.browserSourceUrl` and `browserDraft`, storage schema 3, App-only host registration and the separate scoped native protocol above. Browser answers remain local and do not change normal agent delivery.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.

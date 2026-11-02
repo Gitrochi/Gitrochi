@@ -21,6 +21,11 @@ struct LedgerClient: Sendable {
     let backend: LedgerBackend
 
     func info() async throws -> LedgerInfo { try await call("info") }
+    func browserStatus() async throws -> LedgerBrowserStatus { try await call("browser_status") }
+    func installBrowser(extensionId: String, hostPath: String) async throws -> LedgerBrowserStatus {
+        try await call("browser_install", ["extensionId": .string(extensionId), "hostPath": .string(hostPath)])
+    }
+    func removeBrowser() async throws -> LedgerBrowserStatus { try await call("browser_remove") }
     func rev() async throws -> Int { try await call("rev", as: LedgerRev.self).rev }
 
     func state(project: String?, range: LedgerRange) async throws -> LedgerState {

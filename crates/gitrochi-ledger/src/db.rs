@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 /// The newest schema this build writes (`PRAGMA user_version`).
-pub const DB_SCHEMA: i64 = 2;
+pub const DB_SCHEMA: i64 = 3;
 
 /// Writers wait this long for another process's transaction before giving up.
 pub const BUSY_TIMEOUT: Duration = Duration::from_secs(15);
@@ -23,9 +23,10 @@ pub const HOOK_BUSY_TIMEOUT: Duration = Duration::from_millis(1000);
 const READER_POOL: usize = 4;
 
 // Additive steps only: a later schema adds tables and columns and never edits a shipped step.
-const MIGRATIONS: [(i64, &str); 2] = [
+const MIGRATIONS: [(i64, &str); 3] = [
     (1, include_str!("schema.sql")),
     (2, include_str!("schema-v2.sql")),
+    (3, include_str!("schema-v3.sql")),
 ];
 
 /// The database file: `GITROCHI_LEDGER_DB` when set, else one file per user next to the
@@ -293,6 +294,14 @@ impl Db {
     /// The only way to change the ledger: `body` runs inside `BEGIN IMMEDIATE`, then
     /// `meta.rev` goes up by one and everything commits together. Returns the new rev.
     pub fn write<T>(&self, body: impl FnOnce(&Connection) -> Result<T>) -> Result<(T, i64)> {
+        self.write_changed(|connection| body(connection).map(|value| (value, true)))
+    }
+
+    /// An idempotent observer can acknowledge a duplicate without changing the polling revision.
+    pub fn write_changed<T>(
+        &self,
+        body: impl FnOnce(&Connection) -> Result<(T, bool)>,
+    ) -> Result<(T, i64)> {
         if let Some(found) = self.newer_schema {
             return Err(Error::new(
                 "SCHEMA_MISMATCH",
@@ -301,13 +310,17 @@ impl Db {
         }
         let mut connection = lock(&self.writer);
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let value = body(&tx)?;
-        let rev: i64 = tx.query_row(
-            "UPDATE meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rev'
+        let (value, changed) = body(&tx)?;
+        let rev: i64 = if changed {
+            tx.query_row(
+                "UPDATE meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rev'
              RETURNING CAST(value AS INTEGER)",
-            [],
-            |r| r.get(0),
-        )?;
+                [],
+                |r| r.get(0),
+            )?
+        } else {
+            rev(&tx)?
+        };
         tx.commit()?;
         Ok((value, rev))
     }

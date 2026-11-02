@@ -26,6 +26,8 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
+  browser-host install --extension-id ID [--host-path FILE]
+  browser-host status|remove
   observe <claude|codex> EVENT < input.json   passive local activity; always exits 0
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
@@ -340,6 +342,41 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
             .ok_or_else(|| Error::invalid(format!("Missing {what}")))
     };
     match invocation.command.as_str() {
+        "browser-host" => {
+            let result = match positional(0, "install, status or remove")?.as_str() {
+                "status" => gitrochi_ledger::browser_install::status()?,
+                "remove" => gitrochi_ledger::browser_install::remove()?,
+                "install" => {
+                    let extension = invocation
+                        .text("extension-id")
+                        .ok_or_else(|| Error::invalid("Missing --extension-id"))?;
+                    let host = invocation
+                        .text("host-path")
+                        .map(PathBuf::from)
+                        .or_else(|| {
+                            std::env::current_exe().ok().and_then(|p| {
+                                p.parent().map(|dir| {
+                                    dir.join(if cfg!(windows) {
+                                        "gitrochi-ledger-browser.exe"
+                                    } else {
+                                        "gitrochi-ledger-browser"
+                                    })
+                                })
+                            })
+                        })
+                        .ok_or_else(|| {
+                            Error::invalid("Could not locate the companion browser host")
+                        })?;
+                    gitrochi_ledger::browser_install::install(path, &extension, &host)?
+                }
+                _ => {
+                    return Err(Error::invalid(
+                        "browser-host takes install, status or remove",
+                    ))
+                }
+            };
+            Ok(Output::Json(result))
+        }
         "integrate" => {
             let client = external::Client::parse(&positional(0, "client")?)?;
             if invocation.positional.len() != 1 {

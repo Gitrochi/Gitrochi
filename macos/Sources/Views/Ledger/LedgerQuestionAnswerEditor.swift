@@ -41,6 +41,9 @@ struct LedgerQuestionAnswerEditor: View {
                     }
                 }
             if let suggestion = question.suggestion {
+                if question.browserDraft {
+                    Text("Browser draft accepted with Tab").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                }
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Button("Use suggestion") { text = suggestion }
                         .buttonStyle(.borderless).disabled(busy)
@@ -104,6 +107,11 @@ struct LedgerReportedAnswerField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if let source = LedgerBrowserSetup.sourceURL(question.browserSourceUrl) {
+                Link("Source conversation", destination: source).font(.system(size: 11))
+                Text("Answers are saved in Ledger. They are not sent back to ChatGPT.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             LedgerQuestionAnswerEditor(question: LedgerPromptAnswers.question(question), text: $text,
                                        busy: busy, showsQuestion: false, focusRequest: focusRequest,
                                        submit: { if !busy && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { save() } })

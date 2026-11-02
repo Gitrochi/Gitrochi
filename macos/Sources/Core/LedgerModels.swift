@@ -208,6 +208,8 @@ struct LedgerQuestion: Codable, Identifiable, Hashable {
     var options: [Option]? = nil
     var multiSelect: Bool? = nil
     var suggestedAnswer: String? = nil
+    var browserSourceUrl: String? = nil
+    var browserDraft: String? = nil
 }
 
 /// A version of the source of truth a project's work starts from

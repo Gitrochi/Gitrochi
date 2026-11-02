@@ -67,7 +67,7 @@ function AnswerQuestionField({ question, draft, onChange, disabled, autoFocus, o
         </div>
       </>}
       {question.suggestedAnswer && <div className="ledger-answer-suggestion">
-        <span className="hint grow selectable">{question.suggestedAnswer}</span>
+        <span className="hint grow selectable">{question.suggestionLabel && <span>{t(question.suggestionLabel)}<br /></span>}{question.suggestedAnswer}</span>
         <Button size="small" disabled={disabled} onClick={fill}>{t("Use suggestion")}</Button>
         <span className="ledger-kbd" data-tip={t("Tab fills an empty answer. You can edit it before sending.")}>{t("Tab")}</span>
       </div>}

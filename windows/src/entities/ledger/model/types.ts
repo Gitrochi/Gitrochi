@@ -81,6 +81,14 @@ export interface LedgerQuestionOption {
   recommended?: boolean;
 }
 
+export interface LedgerBrowserStatus {
+  installed: boolean;
+  hostName: string;
+  manifestPath: string;
+  extensionId?: string;
+  hostPath?: string;
+}
+
 export interface LedgerQuestion {
   id: number;
   sessionId: string;
@@ -88,6 +96,8 @@ export interface LedgerQuestion {
   options?: LedgerQuestionOption[];
   multiSelect?: boolean;
   suggestedAnswer?: string;
+  browserSourceUrl?: string;
+  browserDraft?: string;
   state: "open" | "answered" | "dismissed";
   answer?: string;
   answeredBy?: "human" | "auto";
@@ -378,6 +388,9 @@ export type LedgerPromptAnswer =
 
 /** Each method's arguments and answer, so `LedgerBackend.call` is typed end to end */
 export interface LedgerMethods {
+  browser_status: { args: Record<string, never>; result: LedgerBrowserStatus };
+  browser_install: { args: { extensionId: string; hostPath: string }; result: LedgerBrowserStatus };
+  browser_remove: { args: Record<string, never>; result: LedgerBrowserStatus };
   info: { args: Record<string, never>; result: LedgerInfo };
   rev: { args: Record<string, never>; result: { rev: number } };
   state: { args: { project?: string; range?: LedgerRange }; result: LedgerState };

@@ -1,0 +1,12 @@
+{
+  "name": "gitrochi-chatgpt-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": { "node": ">=22" }
+}

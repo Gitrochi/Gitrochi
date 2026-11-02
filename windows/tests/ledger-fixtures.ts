@@ -57,7 +57,7 @@ const sessionShape: Spec = {
   "stream?": { line: "string" }, "autoContinue?": { enabled: "boolean", delaySec: "number" },
 };
 const eventShape: Spec = { id: "number", sessionId: "string", ts: "number", type: "string", actor: enumOf("agent", "human", "auto", "hook"), "summary?": "string", "body?": "string", "version?": "string", "artifacts?": [{ name: "string", "ssot?": "string", "ver?": "string" }], "data?": record, "deliveredAt?": "number" };
-const questionShape: Spec = { id: "number", sessionId: "string", text: "string", state: enumOf("open", "answered", "dismissed"), "answer?": "string", "answeredBy?": enumOf("human", "auto"), createdAt: "number", "answeredAt?": "number", "deliveredAt?": "number" };
+const questionShape: Spec = { "options?": [{ label: "string", "description?": "string", "recommended?": "boolean" }], "multiSelect?": "boolean", "suggestedAnswer?": "string", "browserSourceUrl?": "string", "browserDraft?": "string", id: "number", sessionId: "string", text: "string", state: enumOf("open", "answered", "dismissed"), "answer?": "string", "answeredBy?": enumOf("human", "auto"), createdAt: "number", "answeredAt?": "number", "deliveredAt?": "number" };
 const baselineShape: Spec = { project: "string", version: "string", ts: "number", source: enumOf("tag", "folder", "registered", "release", "inferred"), "note?": "string", "bySession?": "string" };
 const cycleShape: Spec = { sessionId: "string", line: "string", version: "string", state: enumOf("applied", "active", "skipped"), "syncedAt?": "number", "appliedAt?": "number", "releasedBy?": "string", eventIds: ["number"] };
 const overlapShape: Spec = { a: "string", b: "string", paths: ["string"], kind: enumOf("same", "coupled") };

@@ -12,6 +12,8 @@ export interface AnswerQuestion {
   multiSelect: boolean;
   options: AnswerOption[];
   suggestedAnswer?: string;
+  suggestionLabel?: string;
+  localOnly?: boolean;
 }
 
 export interface AnswerDraft {
@@ -51,7 +53,11 @@ export function promptAnswerQuestions(prompt: LedgerPendingPrompt): AnswerQuesti
 /** Reported questions use the same editor while keeping the human-answer delivery route. */
 export function reportedAnswerQuestion(question: LedgerQuestion): AnswerQuestion {
   const choices = options(question.options), multiSelect = question.multiSelect === true;
-  return { id: String(question.id), question: question.text, options: choices, multiSelect, suggestedAnswer: text(question.suggestedAnswer) || recommendation(choices, multiSelect) || undefined };
+  const browserDraft = typeof question.browserDraft === "string" && question.browserDraft.trim() ? question.browserDraft : undefined;
+  return { id: String(question.id), question: question.text, options: choices, multiSelect,
+    suggestedAnswer: browserDraft ?? (text(question.suggestedAnswer) || recommendation(choices, multiSelect) || undefined),
+    ...(browserDraft ? { suggestionLabel: "Browser draft accepted with Tab" } : {}),
+    ...(question.browserSourceUrl ? { localOnly: true } : {}) };
 }
 
 export const emptyAnswerDraft = (): AnswerDraft => ({ text: "", selected: [] });

@@ -10,13 +10,15 @@ import SwiftUI
     @Environment(\.dismiss) private var dismiss
     var openConnect: (() -> Void)?
     var bringChatGPTDraft: (() -> Void)?
+    var openBrowser: (() -> Void)?
 
     init(learning: LedgerLearning? = nil, initialTab: Tab = .tutorial,
-         openConnect: (() -> Void)? = nil, bringChatGPTDraft: (() -> Void)? = nil) {
+         openConnect: (() -> Void)? = nil, bringChatGPTDraft: (() -> Void)? = nil, openBrowser: (() -> Void)? = nil) {
         _learning = ViewState(wrappedValue: learning ?? LedgerLearning())
         _tab = ViewState(wrappedValue: initialTab)
         self.openConnect = openConnect
         self.bringChatGPTDraft = bringChatGPTDraft
+        self.openBrowser = openBrowser
     }
 
     var body: some View {
@@ -207,6 +209,7 @@ import SwiftUI
     private var setupActions: some View {
         WorkbenchFlow(spacing: 10) {
             if let openConnect { Button("Connect agents…", action: openConnect) }
+            if let openBrowser { Button("ChatGPT browser extension", action: openBrowser) }
             if let bringChatGPTDraft { Button("Bring a ChatGPT draft…", action: bringChatGPTDraft) }
         }
     }

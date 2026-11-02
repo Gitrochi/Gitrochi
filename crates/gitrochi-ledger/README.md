@@ -19,7 +19,7 @@ For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md
 - **Verdicts** are computed, never stored, first match wins: archived → needs a person (open questions) → finished (merged, closed, dropped): ready to archive once confirmed, else waiting for confirmation → shelved → done (merge undecided) → stale (no agent activity for 72 hours) → active.
 - **Resuming.** New work on a finished, shelved or archived session makes it active again and withdraws the confirmation, so a conversation someone cleaned up but is still using cannot slip by.
 - **A person confirms.** Confirming, archiving, setting a status and answering are for the apps only; the CLI and MCP refuse them. The one exception is the hand-off: an implementation session's `applied vX` confirms the decision session that released vX (`sync vX` moves it to merged without confirming).
-- **Exactly once.** Answers, dismissals, notes and status changes reach the session's agent once, in the transaction that marks them delivered. Reading (the apps, `session` without `--deliver`) never consumes them.
+- **Exactly once.** Answers, dismissals, notes and status changes reach the session's agent once, in the transaction that marks them delivered. Browser-captured questions are local-only and excluded from agent delivery. Reading (the apps, `session` without `--deliver`) never consumes them.
 - **Streams.** Live implementation sessions report in cycles (`sync vX` → work → `applied vX`) instead of finishing, so they are shown as cycles and kept out of overlaps and clean-up.
 - **Baselines** come from git tags (the default, through the system `git`), folder or file names, registration, `release` reports, or are inferred from a report and promoted later.
 
@@ -33,6 +33,12 @@ One file per user: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3
 | `GITROCHI_LEDGER=0` | The ledger is off: every call but `info` answers `DISABLED`, nothing is created |
 | `GITROCHI_LEDGER_SESSION` | The default session of the CLI and the MCP tools (for agents Gitrochi launches) |
 | `GITROCHI_GIT` | The git to run for tag baselines (default: `git` on PATH) |
+
+## ChatGPT browser capture
+
+The bundled `gitrochi-ledger-browser` companion accepts Chrome native messages from one explicitly installed extension ID. It captures completed visible questions and, when enabled, browser drafts accepted with Tab. It does not read desktop predictions, accept arbitrary app methods, consume human messages or send to ChatGPT. Setup and the exact supported page contract are in the [extension guide](../../extensions/chatgpt-ledger/README.md).
+
+Storage schema 3 adds browser source/draft fields and source deduplication. Update the app and agent Ledger commands together before connecting the extension. The JSON API remains version 1.
 
 ## Connecting an agent
 
@@ -68,6 +74,8 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
+  browser-host install --extension-id ID [--host-path FILE]
+  browser-host status|remove
   observe <claude|codex> EVENT < input.json
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
   hook EVENT < input.json

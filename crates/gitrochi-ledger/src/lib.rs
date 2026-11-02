@@ -7,6 +7,8 @@
 pub mod api;
 pub mod backup;
 pub mod baseline;
+pub mod browser;
+pub mod browser_install;
 pub mod db;
 pub mod demo;
 mod error;

@@ -5,7 +5,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports, importLegacy, learning, chatGPTDraft
+        case connect, importReports, importLegacy, learning, chatGPTDraft, browser
         var id: String { rawValue }
     }
 
@@ -66,11 +66,13 @@ struct LedgerWorkspaceView: View {
         }) { sheet in
             switch sheet {
             case .connect: LedgerConnectSheet(ledger: ledger)
+            case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             case .importLegacy: if let legacyPath { LedgerLegacyImportSheet(ledger: ledger, path: legacyPath) }
             case .learning:
                 LedgerLearningSheet(openConnect: { switchSheet(to: .connect) },
-                                    bringChatGPTDraft: { switchSheet(to: .chatGPTDraft) })
+                                    bringChatGPTDraft: { switchSheet(to: .chatGPTDraft) },
+                                    openBrowser: { switchSheet(to: .browser) })
             case .chatGPTDraft:
                 LedgerChatGPTDraftSheet(ledger: ledger, onOpenQuestion: { id in
                     sessionAfterSheet = id
@@ -150,6 +152,7 @@ struct LedgerWorkspaceView: View {
             Menu {
                 Button("Learn Ledger") { sheet = .learning }
                 Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
+                Button("ChatGPT browser extension") { sheet = .browser }
                 Divider()
                 Button("Connect agents…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
@@ -236,6 +239,7 @@ struct LedgerWorkspaceView: View {
                 Button("Learn Ledger") { sheet = .learning }
                 Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
             }
+            Button("ChatGPT browser extension") { sheet = .browser }
             Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(24)

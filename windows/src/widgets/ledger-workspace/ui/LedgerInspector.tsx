@@ -86,7 +86,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
                 <span className="ledger-row-text quiet selectable">{q.text}</span>
                 <span className="ledger-row-text selectable">{q.state === "dismissed" ? t("Dismissed") : q.resolvedBy === "agent" ? t("Settled by the session") : q.answeredBy === "auto" ? t("Answered automatically: {0}", q.answer ?? "") : t("Answered: {0}", q.answer ?? "")}</span>
                 {q.state === "answered" && q.resolvedBy !== "agent" && q.answer && <>
-                  <span className="hint">{q.deliveredAt == null ? t("Waiting for the session's next report") : <>{t("Delivered")} <When at={q.deliveredAt} /></>}</span>
+                  <span className="hint">{q.browserSourceUrl ? t("Answers are saved in Ledger. They are not sent back to ChatGPT.") : q.deliveredAt == null ? t("Waiting for the session's next report") : <>{t("Delivered")} <When at={q.deliveredAt} /></>}</span>
                   <Button size="small" style={{ alignSelf: "flex-start" }} onClick={() => void navigator.clipboard.writeText(q.answer!).then(() => store.showToast(t("Copied"), null), () => {})}><Copy size={12} />{t("Copy answer")}</Button>
                 </>}
                 {store.unsentAnswers.has(q.id) && store.unsentAnswers.get(q.id)?.trim() !== q.answer && <div className="ledger-unsent-answer col" style={{ gap: 6 }}>

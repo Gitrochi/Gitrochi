@@ -17,6 +17,7 @@ if [[ "${1:-}" == "--connect-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MO
 if [[ "${1:-}" == "--questions-only" ]]; then TASK_CAPTURE_MODE=--questions-only; shift; fi
 if [[ "${1:-}" == "--tutorial-only" ]]; then TASK_CAPTURE_MODE=--tutorial-only; shift; fi
 if [[ "${1:-}" == "--chatgpt-only" ]]; then TASK_CAPTURE_MODE=--chatgpt-only; shift; fi
+if [[ "${1:-}" == "--browser-only" ]]; then TASK_CAPTURE_MODE=--browser-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
@@ -46,6 +47,8 @@ for source in (root / 'Sources').rglob('*.swift'):
         for field in ('mode', 'raw', 'preview'):
             text = text.replace('@ViewState private var ' + field, '@ViewState var ' + field)
         text = text.replace('private enum Mode:', 'enum Mode:')
+    if relative == 'Views/Ledger/LedgerBrowserSheet.swift':
+        text = text.replace('@ViewState private var extensionId', '@ViewState var extensionId')
     dest = target / 'Sources' / relative
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(text)
@@ -84,6 +87,45 @@ final class LedgerLayoutWriteProbe: LedgerBackend, @unchecked Sendable {
         return inner.call(method: method, args: args)
     }
     var count: Int { lock.lock(); defer { lock.unlock() }; return writes }
+}
+
+/// Browser captures use a fake registration response and never touch Chrome's configuration.
+final class BrowserLayoutBackend: LedgerBackend, @unchecked Sendable {
+    let installed: Bool
+    private let inner = DemoLedgerBackend(mode: .standard)
+    private let lock = NSLock()
+    private var writes = 0
+    init(installed: Bool) { self.installed = installed }
+    func call(method: String, args: Data) -> Data {
+        if method == "browser_status" {
+            return Data("{\"installed\":\(installed),\"hostName\":\"com.gitrochi.ledger\",\"manifestPath\":\"/tmp/demo-host.json\",\"extensionId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hostPath\":\"/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger-browser\"}".utf8)
+        }
+        if ["browser_install", "browser_remove"].contains(method) {
+            lock.lock(); writes += 1; lock.unlock()
+            return Data(#"{"error":{"code":"TEST","message":"Registration is disabled in this fixture"}}"#.utf8)
+        }
+        return inner.call(method: method, args: args)
+    }
+    var count: Int { lock.lock(); defer { lock.unlock() }; return writes }
+}
+
+@MainActor @Observable final class BrowserQuestionProbe {
+    var draft = ""
+    var sent = 0
+    var question = LedgerQuestion(id: 99004, sessionId: "demo", text: "Which release channel should I use?", state: .open,
+                                 createdAt: 0, options: [.init(label: "Stable", description: "Use the verified release", recommended: true),
+                                                         .init(label: "Nightly", description: "Try the newest changes", recommended: false)],
+                                 suggestedAnswer: "Stable", browserSourceUrl: "https://chatgpt.com/c/00000000-0000-4000-8000-000000000042", browserDraft: "Stable after checks")
+}
+
+struct BrowserQuestionFixture: View {
+    let probe: BrowserQuestionProbe
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(probe.question.text).font(.title3.weight(.semibold))
+            LedgerReportedAnswerField(question: probe.question, text: Binding(get: { probe.draft }, set: { probe.draft = $0 }), save: { probe.sent += 1 })
+        }.padding(20)
+    }
 }
 
 @MainActor final class Shot {
@@ -238,6 +280,44 @@ struct AnswerKeyboardFixture: View {
                 shot.close()
                 shots += 1
             }
+        }
+
+        func browserShots() throws {
+            for installed in [false, true] {
+                let backend = BrowserLayoutBackend(installed: installed)
+                let browser = LedgerStore(client: LedgerClient(backend: backend), defaults: defaults, interval: .seconds(600))
+                try shoot(installed ? "browser-installed" : "browser-setup", LedgerBrowserSheet(ledger: browser), width: 540, height: 760,
+                          expect: ["ChatGPT browser extension", "Open extension folder", "Extension ID", "Allow browser connection",
+                                   installed ? "Browser host installed" : "Browser host not installed"])
+                guard backend.count == 0 else { fatalError("Opening browser setup must not install or remove registration") }
+            }
+            let probe = BrowserQuestionProbe()
+            let typed = Shot(BrowserQuestionFixture(probe: probe), width: 540, height: 520, dark: false)
+            guard let editor = answerEditors(in: typed.host).first else { fatalError("Browser answer must use the production editor") }
+            typed.window.makeFirstResponder(editor)
+            func tab() {
+                let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                                            windowNumber: typed.window.windowNumber, context: nil, characters: "\t",
+                                            charactersIgnoringModifiers: "\t", isARepeat: false, keyCode: 48)!
+                editor.keyDown(with: event); settle(0.1)
+            }
+            tab()
+            guard probe.draft == "Stable after checks", probe.sent == 0 else { fatalError("Browser Tab must fill the accepted draft without sending") }
+            editor.insertText(" and review", replacementRange: NSRange(location: editor.string.utf16.count, length: 0))
+            settle(0.1)
+            probe.question.browserDraft = "Nightly instead"
+            settle(0.1)
+            typed.window.makeFirstResponder(editor)
+            tab()
+            guard probe.draft == "Stable after checks and review", probe.sent == 0 else { fatalError("A newer browser draft must preserve unsent editing") }
+            typed.close()
+            try shoot("browser-question", BrowserQuestionFixture(probe: probe), width: 540, height: 520,
+                      expect: ["Which release channel", "Source conversation", "Browser draft accepted with Tab", "Use suggestion", "Send answer"])
+        }
+        if CommandLine.arguments.contains("--browser-only") {
+            try browserShots()
+            print("PASS: \(shots) browser setup and answer screenshots in light and dark; no registration, native Tab fill and unsent edit preservation. \(output.path)")
+            return
         }
 
         func chatGPTShots() throws {

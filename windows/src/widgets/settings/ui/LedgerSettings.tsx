@@ -1,6 +1,7 @@
-import { ClipboardPaste, DatabaseBackup, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
+import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
@@ -52,7 +53,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [backup, setBackup] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<"connect" | "import" | "legacy" | null>(null);
+  const [sheet, setSheet] = useState<"connect" | "import" | "legacy" | "browser" | null>(null);
   const load = useCallback(async () => {
     try {
       const [i, s, p] = await Promise.all([store.info(), store.readSettings(), store.readProjects()]);
@@ -150,12 +151,14 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
+          <Button size="small" onClick={() => setSheet("browser")}><Globe size={13} />{t("ChatGPT browser extension")}</Button>
           <Button size="small" onClick={() => setSheet("connect")}><PlugZap size={13} />{t("Connect agents…")}</Button>
           <Button size="small" onClick={() => setSheet("import")}><ClipboardPaste size={13} />{t("Import…")}</Button>
           <Button size="small" onClick={() => setSheet("legacy")}><DatabaseBackup size={13} />{t("Import from claude-ledger…")}</Button>
         </div>
       </div>
 
+      {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
