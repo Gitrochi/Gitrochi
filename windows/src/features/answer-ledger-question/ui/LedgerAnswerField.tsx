@@ -1,7 +1,9 @@
 import { type Ref, useState } from "react";
+import { emptyAnswerDraft, reportedAnswerQuestion, type LedgerQuestion } from "@/entities/ledger";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";
+import { LedgerAnswerForm } from "./LedgerAnswerForm";
 import "./ledger-answer-field.css";
 
 /**
@@ -9,7 +11,7 @@ import "./ledger-answer-field.css";
  * The text stays when saving fails, and clears once it is saved. The session reads the answer with its next report.
  * (macOS: Views/Ledger/LedgerAnswerField.swift)
  */
-export function LedgerAnswerField({ onSubmit, placeholder, submitLabel = "Save answer", onCancel, autoFocus, fieldRef, label }: {
+interface AnswerFieldProps {
   onSubmit: (text: string) => Promise<boolean>;
   placeholder: string;
   submitLabel?: string;
@@ -18,14 +20,38 @@ export function LedgerAnswerField({ onSubmit, placeholder, submitLabel = "Save a
   fieldRef?: Ref<HTMLTextAreaElement>;
   /** Accessible name of the field */
   label: string;
-}) {
-  const [text, setText] = useState("");
+  question?: LedgerQuestion;
+  disabled?: boolean;
+  initialText?: string;
+  onDraftChange?: (text: string) => void;
+}
+
+export function LedgerAnswerField(props: AnswerFieldProps) {
+  return props.question && (props.question.options !== undefined || props.question.suggestedAnswer !== undefined || props.question.multiSelect)
+    ? <StructuredAnswerField {...props} question={props.question} />
+    : <PlainAnswerField {...props} />;
+}
+
+function StructuredAnswerField({ question, onSubmit, onCancel, autoFocus, fieldRef, disabled, initialText, onDraftChange }: AnswerFieldProps & { question: LedgerQuestion }) {
+  const [draft, setDraft] = useState(() => ({ ...emptyAnswerDraft(), text: initialText ?? "" }));
+  const [saving, setSaving] = useState(false);
+  const item = reportedAnswerQuestion(question);
+  const save = async () => {
+    if (!draft.text.trim() || saving || disabled) return;
+    setSaving(true);
+    try { if (await onSubmit(draft.text)) { setDraft(emptyAnswerDraft()); onDraftChange?.(""); } } finally { setSaving(false); }
+  };
+  return <LedgerAnswerForm questions={[item]} drafts={{ [item.id]: draft }} onChange={(_, value) => { setDraft(value); onDraftChange?.(value.text); }} onSubmit={() => void save()} onCancel={onCancel} autoFocus={autoFocus} fieldRef={fieldRef} disabled={disabled} saving={saving} deliveryHint />;
+}
+
+function PlainAnswerField({ onSubmit, placeholder, submitLabel = "Save answer", onCancel, autoFocus, fieldRef, label, disabled, initialText, onDraftChange }: AnswerFieldProps) {
+  const [text, setText] = useState(initialText ?? "");
   const [saving, setSaving] = useState(false);
   const save = async () => {
-    if (!text.trim() || saving) return;
+    if (!text.trim() || saving || disabled) return;
     setSaving(true);
     try {
-      if (await onSubmit(text)) setText("");
+      if (await onSubmit(text)) { setText(""); onDraftChange?.(""); }
     } finally {
       setSaving(false);
     }
@@ -42,10 +68,10 @@ export function LedgerAnswerField({ onSubmit, placeholder, submitLabel = "Save a
         aria-label={label}
         autoFocus={autoFocus}
         // read-only rather than disabled: a disabled field loses focus, and a failed save should leave the person in it
-        readOnly={saving}
-        onChange={(e) => setText(e.target.value)}
+        readOnly={saving || disabled}
+        onChange={(e) => { setText(e.target.value); onDraftChange?.(e.target.value); }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          if (!e.nativeEvent.isComposing && e.keyCode !== 229 && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             void save();
           } else if (e.key === "Escape" && onCancel) {
@@ -58,7 +84,7 @@ export function LedgerAnswerField({ onSubmit, placeholder, submitLabel = "Save a
       <div className="ledger-answer-bar">
         <span className="hint">{t("Enter adds a line · {0} saves", shortcut)}</span>
         {onCancel && <Button size="small" onClick={onCancel}>{t("Cancel")}</Button>}
-        <Button size="small" kind="primary" disabled={!text.trim() || saving} onClick={() => void save()} tip={`${t(submitLabel)}|${t("The session reads it with its next report.")}|Ctrl+Enter`}>
+        <Button size="small" kind="primary" disabled={!text.trim() || saving || disabled} onClick={() => void save()} tip={`${t(submitLabel)}|${t("The session reads it with its next report.")}|Ctrl+Enter`}>
           {saving && <Spinner size={11} />}
           {t(submitLabel)}
         </Button>

@@ -13,6 +13,8 @@ import type { LedgerHumanRequest, LedgerMethods, LedgerPendingPrompt, LedgerProj
  * graph and filters (LedgerReader), and a person's operations with undo. (macOS: Store/LedgerStore.swift)
  */
 export class LedgerStore extends LedgerReader {
+  /** Drafts survive polling and remain available when another client closes a question. */
+  readonly unsentAnswers = new Map<number, string>();
   // MARK: A person's operations
 
   /** One operation; confirm, archive, status changes and snoozes show a toast with Undo */
@@ -70,8 +72,24 @@ export class LedgerStore extends LedgerReader {
     }
   }
 
-  answer(question: LedgerQuestion, text: string) {
-    return this.human({ action: "answer", sessionId: question.sessionId, questionId: question.id, answer: text.trim() });
+  async answer(question: LedgerQuestion, text: string) {
+    const answer = text.trim();
+    const ok = await this.human({ action: "answer", sessionId: question.sessionId, questionId: question.id, answer });
+    if (ok) this.unsentAnswers.delete(question.id);
+    else if (text) this.unsentAnswers.set(question.id, text);
+    this.emit();
+    return ok;
+  }
+
+  discardUnsentAnswer(questionId: number) {
+    this.unsentAnswers.delete(questionId);
+    this.emit();
+  }
+
+  /** Editors render their own draft; the next state read reveals it if the question closes. */
+  setUnsentAnswer(questionId: number, text: string) {
+    if (text) this.unsentAnswers.set(questionId, text);
+    else this.unsentAnswers.delete(questionId);
   }
 
   dismiss(question: LedgerQuestion) {
@@ -102,7 +120,7 @@ export class LedgerStore extends LedgerReader {
     this.emit();
     try {
       const { ok } = await this.backend.call("prompt_answer", { id: prompt.id, answer });
-      const titles: Record<AnswerKind, string> = { text: "Answer sent to the agent", allow: "Allowed", deny: "Denied", approve: "Allowed", release: "Left to the terminal", hold: "Auto-continue is off for this prompt", unknown: "Answer sent to the agent" };
+      const titles: Record<AnswerKind, string> = { text: "Answer saved for the waiting agent", allow: "Allowed", deny: "Denied", approve: "Allowed", release: "Left to the terminal", hold: "Auto-continue is off for this prompt", unknown: "Answer saved for the waiting agent" };
       this.showToast(ok ? t(titles[describeAnswer(answer).kind]) : t("The prompt was already answered."), null);
       return ok;
     } catch (e) {

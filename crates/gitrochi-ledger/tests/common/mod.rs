@@ -109,9 +109,15 @@ impl Schemas {
 
     /// Validates `value` against a schema file; panics with every problem found.
     pub fn check(&self, name: &str, value: &Value) {
+        let errors = self.errors(name, value);
+        assert!(errors.is_empty(), "{name}:\n{}", errors.join("\n"));
+    }
+
+    /// Validation errors, for testing rejected contract shapes without catching panics.
+    pub fn errors(&self, name: &str, value: &Value) -> Vec<String> {
         let mut errors = Vec::new();
         self.walk(name, self.file(name), value, "$", &mut errors);
-        assert!(errors.is_empty(), "{name}:\n{}", errors.join("\n"));
+        errors
     }
 
     fn resolve<'a>(&'a self, current: &'a str, reference: &'a str) -> (&'a str, &'a Value) {
@@ -135,6 +141,17 @@ impl Schemas {
             let (file, target) = self.resolve(file, reference);
             self.walk(file, target, value, at, errors);
             return;
+        }
+        if let Some(variants) = schema["anyOf"].as_array() {
+            let matches = variants.iter().any(|variant| {
+                let mut branch_errors = Vec::new();
+                self.walk(file, variant, value, at, &mut branch_errors);
+                branch_errors.is_empty()
+            });
+            if !matches {
+                errors.push(format!("{at}: does not match any allowed shape"));
+                return;
+            }
         }
         if let Some(expected) = schema.get("const") {
             if expected != value {
@@ -170,9 +187,13 @@ impl Schemas {
                 errors.push(format!("{at}: {n} above the maximum"));
             }
         }
-        if let (Some(text), Some(max)) = (value.as_str(), schema["maxLength"].as_u64()) {
-            if text.chars().count() as u64 > max {
-                errors.push(format!("{at}: longer than {max}"));
+        if let Some(text) = value.as_str() {
+            let length = text.chars().count() as u64;
+            if schema["minLength"].as_u64().is_some_and(|min| length < min) {
+                errors.push(format!("{at}: shorter than {}", schema["minLength"]));
+            }
+            if schema["maxLength"].as_u64().is_some_and(|max| length > max) {
+                errors.push(format!("{at}: longer than {}", schema["maxLength"]));
             }
         }
         if let Some(object) = value.as_object() {

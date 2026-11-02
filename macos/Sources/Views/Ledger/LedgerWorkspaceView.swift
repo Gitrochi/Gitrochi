@@ -97,7 +97,7 @@ struct LedgerWorkspaceView: View {
                 Divider()
                 // agents waiting on a person show above every view; the Inbox shows them in full
                 if ledger.page != .inbox, !ledger.inbox.prompts.isEmpty {
-                    LedgerPromptStrip(prompts: ledger.inbox.prompts, ledger: ledger, compact: true) { ledger.page = .inbox }
+                    LedgerPromptStrip(prompts: ledger.inbox.prompts, ledger: ledger, compact: true, openInbox: { ledger.page = .inbox })
                         .padding(.horizontal, 14).padding(.vertical, 10)
                     Divider()
                 }

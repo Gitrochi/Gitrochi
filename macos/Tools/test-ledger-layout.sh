@@ -14,6 +14,7 @@ trap 'rm -rf "$TASK_TMP"' EXIT
 TASK_CONNECT_ONLY=0
 TASK_CAPTURE_MODE=--all
 if [[ "${1:-}" == "--connect-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--connect-only; shift; fi
+if [[ "${1:-}" == "--questions-only" ]]; then TASK_CAPTURE_MODE=--questions-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
@@ -58,6 +59,10 @@ import ImageIO
 
 @MainActor func scrollViews(in view: NSView) -> [NSScrollView] {
     (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap(scrollViews(in:))
+}
+
+@MainActor func answerEditors(in view: NSView) -> [NSTextView] {
+    (view as? NSTextView).map { [$0] } ?? view.subviews.flatMap(answerEditors(in:))
 }
 
 @MainActor final class Shot {
@@ -128,6 +133,51 @@ func seen(_ label: String, in text: String) -> Bool {
     return recognized
 }
 
+/// A reported question uses the same editable choices as live hooks, including an alternative draft.
+struct ReportedQuestionFixture: View {
+    @ViewState private var answer = "Nightly"
+    private var question: LedgerQuestion {
+        LedgerQuestion(id: 99003, sessionId: "demo", text: "Which release channel should I use?", state: .open,
+                       answer: nil, answeredBy: nil, createdAt: 0, answeredAt: nil, deliveredAt: nil,
+                       options: [.init(label: "Stable", description: "Use the latest verified release", recommended: true),
+                                 .init(label: "Nightly", description: "Try the newest changes", recommended: false)],
+                       suggestedAnswer: "Stable")
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(question.text).font(.title3.weight(.semibold))
+            LedgerReportedAnswerField(question: question, text: $answer, save: {})
+            Text("The session reads your answer with its next report.").font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+        .padding(20).frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+@MainActor final class AnswerKeyboardProbe {
+    var submitted: [String] = []
+}
+
+/// Two editors prove that only the focused form handles the explicit save shortcut.
+struct AnswerKeyboardFixture: View {
+    let probe: AnswerKeyboardProbe
+    @ViewState private var first = ""
+    @ViewState private var second = ""
+    private var question: LedgerAnswerQuestion {
+        .init(id: "keyboard", question: "Which channel?", options: [], multiple: false, suggestion: "Stable")
+    }
+    var body: some View {
+        VStack(spacing: 12) {
+            LedgerQuestionAnswerEditor(question: question, text: $first, submit: {
+                if !first.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { probe.submitted.append("first:" + first) }
+            })
+            LedgerQuestionAnswerEditor(question: question, text: $second, submit: {
+                if !second.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { probe.submitted.append("second:" + second) }
+            })
+        }
+        .padding(16)
+    }
+}
+
 @main struct LedgerLayoutFixture {
     @MainActor static func main() throws {
         NSApplication.shared.setActivationPolicy(.prohibited)
@@ -182,6 +232,68 @@ func seen(_ label: String, in text: String) -> Bool {
             print("PASS: \(shots) agent connection screenshots in light and dark. \(output.path)")
             return
         }
+        func questionShots() throws {
+            let now = LedgerStore.localNow()
+            let ask = LedgerPendingPrompt(id: 99001, sessionId: nil, agentId: nil, kind: .askUserQuestion,
+                payload: ["autoAnswer": false, "questions": [
+                    ["header": "Release channel", "question": "Which release channel should I use?", "options": [
+                        ["label": "Stable", "description": "Use the latest verified release", "recommended": true],
+                        ["label": "Nightly", "description": "Try the newest changes"]]],
+                    ["header": "Validation", "question": "Which checks should run?", "multiSelect": true, "options": [
+                        ["label": "Build", "description": "Compile both apps", "recommended": true],
+                        ["label": "Tests", "description": "Check the changed behavior", "recommended": true],
+                        ["label": "Documentation", "description": "Review the user guide"]]],
+                    ["header": "Release notes", "question": "What should the release notes mention?", "options": [],
+                     "suggestedAnswer": "Summarize user-visible changes."]]],
+                createdAt: now, deadline: now + 300_000, state: .waiting, answer: nil, answeredBy: nil)
+            let stop = LedgerPendingPrompt(id: 99002, sessionId: nil, agentId: nil, kind: .stopQuestion,
+                payload: ["question": "Should I continue with the proposed scope?", "options": [
+                    ["label": "Continue", "description": "Keep the agreed changes", "recommended": true],
+                    ["label": "Adjust the scope", "description": "Describe what should change"]],
+                    "suggestedAnswer": "Continue after the checks pass."],
+                createdAt: now, deadline: now + 300_000, state: .waiting, answer: nil, answeredBy: nil)
+            let probe = AnswerKeyboardProbe()
+            let keyboard = Shot(AnswerKeyboardFixture(probe: probe), width: 800, height: 700, dark: false)
+            let editors = answerEditors(in: keyboard.host)
+            guard editors.count == 2, let editor = editors.first else { fatalError("The answer editors are missing") }
+            func press(_ keyCode: UInt16, _ characters: String, _ modifiers: NSEvent.ModifierFlags = []) {
+                keyboard.window.makeFirstResponder(editor)
+                let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: modifiers,
+                                            timestamp: 0, windowNumber: keyboard.window.windowNumber, context: nil,
+                                            characters: characters, charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode)!
+                editor.keyDown(with: event)
+                settle(0.1)
+            }
+            press(36, "\r", .command)
+            guard probe.submitted.isEmpty else { fatalError("An empty form was sent") }
+            press(48, "\t", .shift)
+            guard editor.string.isEmpty else { fatalError("Shift-Tab filled an answer") }
+            press(48, "\t")
+            guard editor.string == "Stable", probe.submitted.isEmpty else { fatalError("Tab must fill a draft without sending it") }
+            press(48, "\t")
+            guard editor.string == "Stable" else { fatalError("Tab replaced a nonempty answer") }
+            press(36, "\r", .command)
+            guard probe.submitted == ["first:Stable"], editors[1].string.isEmpty else { fatalError("The save shortcut must send only the focused form") }
+            press(36, "\r")
+            guard probe.submitted.count == 1 else { fatalError("Plain Return sent an answer") }
+            editor.setMarkedText("編", selectedRange: NSRange(location: 1, length: 0),
+                                 replacementRange: NSRange(location: NSNotFound, length: 0))
+            guard editor.hasMarkedText() else { fatalError("The composition fixture did not begin") }
+            press(36, "\r", .command)
+            guard probe.submitted.count == 1 else { fatalError("An input-method composition submitted an answer") }
+            keyboard.close()
+            try shoot("question-choices", LedgerPromptStrip(prompts: [ask, stop], ledger: ledger).padding(16), width: 800, height: 1560,
+                      expect: ["Which release channel", "Which checks", "release notes mention", "Use suggestion", "Send answer", "Your answer", "Time left"],
+                      absent: ["Answer sent to the agent"])
+            try shoot("reported-question", ReportedQuestionFixture(), width: 720, height: 460,
+                      expect: ["Which release channel", "Stable", "Nightly", "Use suggestion", "Send answer"])
+        }
+        if CommandLine.arguments.contains("--questions-only") {
+            try questionShots()
+            print("PASS: \(shots) question-choice screenshots in light and dark. \(output.path)")
+            return
+        }
+        try questionShots()
         let sessions = ledger.state!.sessions
         let retry = sessions.first { $0.verdict == .needsHuman && $0.project == "harbor" }!
         let decision = sessions.first { $0.role == .decision }!

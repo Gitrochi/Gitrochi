@@ -402,16 +402,18 @@ final class LedgerStore {
     }
 
     /// A person's answer to a prompt an agent is waiting on
-    func reply(_ prompt: LedgerPendingPrompt, _ reply: LedgerPromptReply) async {
+    @discardableResult
+    func reply(_ prompt: LedgerPendingPrompt, _ reply: LedgerPromptReply) async -> Bool {
         let key = "p\(prompt.id)"
-        guard !working.contains(key) else { return }
+        guard !working.contains(key) else { return false }
         working.insert(key)
         defer { working.remove(key) }
+        var sent = false
         do {
             guard try await client.answerPrompt(prompt.id, reply).ok else {
                 actionError = String(localized: "The agent stopped waiting: the prompt was answered or released elsewhere.")
                 await reload()
-                return
+                return false
             }
             let message: String
             switch reply {
@@ -419,13 +421,15 @@ final class LedgerStore {
             case .holdAuto: message = String(localized: "Auto-continue is off for this prompt")
             case .allow: message = String(localized: "Allowed")
             case .deny: message = String(localized: "Denied")
-            case .text, .choices: message = String(localized: "Answer sent to the agent")
+            case .text, .choices: message = String(localized: "Answer saved for the waiting agent")
             }
             toast = LedgerToast(message: message, canUndo: false)
+            sent = true
         } catch {
             actionError = error.localizedDescription
         }
         await reload()
+        return sent
     }
 
     /// A session's own auto-continue switch and wait; nil follows the default again

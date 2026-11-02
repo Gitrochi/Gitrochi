@@ -75,10 +75,19 @@ export interface LedgerEvent {
   deliveredAt?: Ms;
 }
 
+export interface LedgerQuestionOption {
+  label: string;
+  description?: string;
+  recommended?: boolean;
+}
+
 export interface LedgerQuestion {
   id: number;
   sessionId: string;
   text: string;
+  options?: LedgerQuestionOption[];
+  multiSelect?: boolean;
+  suggestedAnswer?: string;
   state: "open" | "answered" | "dismissed";
   answer?: string;
   answeredBy?: "human" | "auto";

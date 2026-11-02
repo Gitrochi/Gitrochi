@@ -67,7 +67,7 @@ describe("Ledger countdowns and prompts", () => {
     const held = (hold: Record<string, unknown>) => promptHold(prompt({ deadline: 0, payload: { question: "Push?", hold: { message: "held for the person", ...hold } } }));
     expect(held({ code: "held", rule: "push", detail: "git push" })).toEqual({ reason: "Auto-continue never answers this kind of request.", count: 3, message: "held for the person" });
     expect(held({ code: "risky", kind: "stop_question", reason: "drops a table" })?.reason).toBe("It looks risky to answer automatically.");
-    expect(held({ code: "no_answer" })?.reason).toBe("There is nothing to choose from.");
+    expect(held({ code: "no_answer" })?.reason).toBe("This question needs an answer in the agent's terminal.");
     expect(held({ code: "limit_reached", consecutive: 4, max: 3 })).toMatchObject({ reason: "Auto-continue already answered {0} times in a row.", count: 4 });
     // a reason this version does not know: the core's English message stands in
     expect(held({ code: "something_new" })).toEqual({ reason: "", count: 3, message: "held for the person" });

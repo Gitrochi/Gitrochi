@@ -186,6 +186,11 @@ struct LedgerEvent: Codable, Identifiable, Hashable {
 }
 
 struct LedgerQuestion: Codable, Identifiable, Hashable {
+    struct Option: Codable, Hashable {
+        var label: String
+        var description: String?
+        var recommended: Bool?
+    }
     enum State: String, LedgerEnum {
         case open, answered, dismissed
         static let fallback = State.open
@@ -200,6 +205,9 @@ struct LedgerQuestion: Codable, Identifiable, Hashable {
     var createdAt: LedgerMs
     var answeredAt: LedgerMs?
     var deliveredAt: LedgerMs?
+    var options: [Option]? = nil
+    var multiSelect: Bool? = nil
+    var suggestedAnswer: String? = nil
 }
 
 /// A version of the source of truth a project's work starts from

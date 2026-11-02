@@ -1,8 +1,8 @@
 import { Check, CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, SquareTerminal, Timer, TimerOff, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { countdown, describeAnswer, heldText, type LedgerPendingPrompt, type LedgerStore, promptActions, promptChoice, promptHold, promptOptions, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
+import { useEffect, useRef, useState } from "react";
+import { countdown, describeAnswer, heldText, type AnswerDraft, type LedgerPendingPrompt, type LedgerStore, promptActions, promptAnswerQuestions, promptDraftAnswer, promptHold, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
 import { answerText } from "./parts";
-import { LedgerAnswerField } from "@/features/answer-ledger-question";
+import { LedgerAnswerForm } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button } from "@/shared/ui";
@@ -35,34 +35,56 @@ export function useSecondTicker(on: boolean) {
 export function LedgerPromptStrip({ store, onOpen, onOpenTerminal }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void }) {
   useObserve(store);
   const prompts = visiblePrompts(store);
+  const [retained, setRetained] = useState<Record<number, LedgerPendingPrompt>>({});
+  const shown = [...prompts, ...Object.values(retained).filter((prompt) => !prompts.some((live) => live.id === prompt.id))];
   useSecondTicker(prompts.some((p) => p.deadline));
-  if (!store.state || !prompts.length) return null;
+  if (!store.state || !shown.length) return null;
   const now = serverNow(store.state.now, store.stateReadAt, Date.now());
   return (
     <section className="ledger-prompts" aria-label={t("Waiting for you")}>
       <div className="ledger-prompts-head">
         <Timer size={13} />
         {t("Waiting for you")}
-        <span className="counter">{prompts.length}</span>
+        {prompts.length > 0 && <span className="counter">{prompts.length}</span>}
       </div>
-      {prompts.map((p) => <PromptRow key={p.id} store={store} prompt={p} now={now} onOpen={onOpen} onOpenTerminal={onOpenTerminal} />)}
+      {shown.map((p) => <PromptRow key={p.id} store={store} prompt={p} now={now} available={prompts.some((live) => live.id === p.id)} onRetain={(keep) => setRetained((previous) => {
+        const next = { ...previous };
+        if (keep) next[p.id] = p; else delete next[p.id];
+        return next;
+      })} onOpen={onOpen} onOpenTerminal={onOpenTerminal} />)}
     </section>
   );
 }
 
-function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: LedgerStore; prompt: LedgerPendingPrompt; now: number; onOpen: (id: string) => void; onOpenTerminal: (p: LedgerPendingPrompt) => void }) {
+function PromptRow({ store, prompt, now, available, onRetain, onOpen, onOpenTerminal }: { store: LedgerStore; prompt: LedgerPendingPrompt; now: number; available: boolean; onRetain: (keep: boolean) => void; onOpen: (id: string) => void; onOpenTerminal: (p: LedgerPendingPrompt) => void }) {
   const [answering, setAnswering] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
+  const [saving, setSaving] = useState(false);
+  const inFlight = useRef(false);
   const session = store.session(prompt.sessionId);
   const look = kindLooks[prompt.kind];
-  const left = countdown(prompt.deadline, now);
   const actions = promptActions(prompt.kind);
-  const options = promptOptions(prompt);
+  const questions = promptAnswerQuestions(prompt);
   const summary = promptSummary(prompt);
   const proposed = prompt.payload.proposed ? describeAnswer(prompt.payload.proposed) : null;
   // a wait auto-continue left to the person: no hook waits on it, so an answer here would not reach the agent
   const hold = promptHold(prompt);
-  const busy = store.busy > 0;
-  const send = (answer: Parameters<LedgerStore["answerPrompt"]>[1]) => store.answerPrompt(prompt, answer);
+  const terminalOnly = !!hold || prompt.deadline <= 0;
+  const left = countdown(terminalOnly ? 0 : prompt.deadline, now);
+  const busy = store.busy > 0 || saving;
+  const automatic = !terminalOnly && prompt.payload.autoAnswer !== false;
+  const send = async (answer: Parameters<LedgerStore["answerPrompt"]>[1]) => {
+    const ok = await store.answerPrompt(prompt, answer);
+    if (ok) onRetain(false);
+    return ok;
+  };
+  const submit = async () => {
+    const answer = promptDraftAnswer(prompt, questions, drafts);
+    if (!answer || busy || !available || inFlight.current) return;
+    inFlight.current = true;
+    setSaving(true);
+    try { await send(answer); } finally { inFlight.current = false; setSaving(false); }
+  };
   return (
     <div className="ledger-prompt" data-prompt={prompt.id}>
       <div className="ledger-prompt-head">
@@ -76,28 +98,29 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
           <span className="faint">{prompt.agentId}</span>
         ) : null}
         {session && <span className="ellipsis muted grow">{session.title}</span>}
-        <span className={`ledger-countdown ${left.tone}`} role="timer" aria-live="off" data-tip={left.tone === "none" ? t("A person answers this one.") : t("Auto-continue answers with a careful default when the time runs out.")}>
-          {left.tone === "none" ? <><TimerOff size={12} />{t("No automatic answer")}</> : left.tone === "due" ? t("Answering automatically…") : <><Timer size={12} />{t("Auto-answer in {0}", left.text)}</>}
-        </span>
+        {available && <span className={`ledger-countdown ${left.tone}`} role="timer" aria-live="off" data-tip={left.tone === "none" || !automatic ? t("A person answers this one.") : t("Auto-continue answers with a careful default when the time runs out.")}>
+          {left.tone === "none" ? <><TimerOff size={12} />{t("No automatic answer")}</> : !automatic ? <><Timer size={12} />{t("Time left {0}", left.text)}</> : left.tone === "due" ? t("Answering automatically…") : <><Timer size={12} />{t("Auto-answer in {0}", left.text)}</>}
+        </span>}
       </div>
-      {summary && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
-      {proposed && proposed.kind !== "unknown" && left.tone !== "none" && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
+      {summary && !answering && available && <div className={`ledger-prompt-text selectable${prompt.kind === "permission" ? " mono" : ""}`}>{summary}</div>}
+      {available && proposed && proposed.kind !== "unknown" && left.tone !== "none" && automatic && <div className="hint selectable">{t("If nobody answers: {0}", answerText(proposed))}</div>}
       {hold ? <div className="hint">{heldText(hold)}</div> : prompt.kind === "permission" && <div className="hint">{t("The agent's terminal shows this request too; an answer there counts as well.")}</div>}
-      {hold ? (
+      {!available && <div className="hint" role="status">{t("The prompt was already answered.")} {t("Your draft was not sent.")}</div>}
+      {terminalOnly ? (
         <div className="ledger-row-actions">
           <Button size="small" kind="primary" onClick={() => onOpenTerminal(prompt)}>
             <SquareTerminal size={13} />
             {t("Answer in terminal")}
           </Button>
         </div>
-      ) : answering ? (
+      ) : answering || !available ? (
         <>
-          {options.length > 0 && (
-            <div className="ledger-options">
-              {options.map((option) => <Button key={option.label} size="small" disabled={busy} onClick={() => void send(promptChoice(prompt, option.label))} tip={option.recommended ? t("Recommended") : undefined}>{option.label}{option.recommended ? " ★" : ""}</Button>)}
-            </div>
-          )}
-          <LedgerAnswerField autoFocus label={t("Answer")} placeholder={t("Write an answer…")} submitLabel="Send answer" onSubmit={(text) => send({ text })} onCancel={() => setAnswering(false)} />
+          <LedgerAnswerForm questions={questions} drafts={drafts} onChange={(id, value) => {
+            const next = { ...drafts, [id]: value };
+            setDrafts(next);
+            onRetain(Object.values(next).some((draft) => draft.text.length > 0));
+          }} onSubmit={() => void submit()} onCancel={available ? () => setAnswering(false) : undefined} disabled={!available || store.busy > 0} saving={saving} autoFocus={available} />
+          {!available && <div className="ledger-row-actions"><Button size="small" onClick={() => onRetain(false)}>{t("Close")}</Button></div>}
         </>
       ) : (
         <div className="ledger-row-actions">
@@ -108,7 +131,7 @@ function PromptRow({ store, prompt, now, onOpen, onOpenTerminal }: { store: Ledg
             <SquareTerminal size={13} />
             {t("Answer in terminal")}
           </Button>
-          {prompt.deadline > 0 && (
+          {prompt.deadline > 0 && automatic && (
             <Button size="small" disabled={busy} onClick={() => void send({ hold: true })} tip={`${t("Not this time")}|${t("No automatic answer for this prompt; it waits for you in the agent's terminal.")}`}>
               <TimerOff size={13} />
               {t("Not this time")}

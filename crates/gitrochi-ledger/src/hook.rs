@@ -26,8 +26,7 @@ use gitrochi_autocontinue::{
     app_alive, approve_plan, classify_stop, compose_session_context, decide, is_person_prompt,
     parse_questions, permission_allow, permission_deny, pre_tool_use_allow, pre_tool_use_deny,
     reply_language, session_start_context, should_wait, stop_wake, Decision, HookEvent, HookInput,
-    HookOutput, Pass, PermissionContext, Policy, PromptKind, Proposed, SessionState, Wait,
-    REPLY_TAG,
+    HookOutput, Pass, PermissionContext, Policy, PromptKind, SessionState, Wait, REPLY_TAG,
 };
 use rusqlite::{params, Connection};
 use serde_json::{json, Map, Value};
@@ -759,6 +758,14 @@ fn wait_for_answer(
         let left = u64::try_from(deadline - now).unwrap_or(0);
         std::thread::sleep(POLL.min(Duration::from_millis(left.max(1))));
     }
+    if !wait.payload.auto_answer {
+        return close(
+            db,
+            wait,
+            input,
+            &json!({"id": prompt.id, "state": "released"}),
+        );
+    }
     let reply = match serde_json::to_value(&wait.reply) {
         Ok(reply) => reply,
         Err(_) => return HookResult::note("the automatic answer could not be recorded"),
@@ -810,7 +817,11 @@ fn close(db: &Db, wait: &Wait, input: &HookInput, args: &Value) -> HookResult {
 /// (answer in the terminal) and `{hold}` (not this time) end the hook without a decision,
 /// and so does anything that does not fit the prompt.
 fn answered(wait: &Wait, input: &HookInput, answer: Option<&Value>) -> HookResult {
-    let Some(answer) = answer.filter(|a| a.is_object()) else {
+    let Some(answer) = answer else {
+        return HookResult::default();
+    };
+    let Ok(answer) = crate::prompt_answer::normalize(wait.kind.as_str(), &input.tool_input, answer)
+    else {
         return HookResult::default();
     };
     if answer["release"] == json!(true) || answer["hold"] == json!(true) {
@@ -826,12 +837,9 @@ fn answered(wait: &Wait, input: &HookInput, answer: Option<&Value>) -> HookResul
         PromptKind::StopQuestion => {
             text("text").map(|reply| stop_wake(&format!("{REPLY_TAG} {PERSON_ANSWER} {reply}")))
         }
-        PromptKind::AskUserQuestion => answer["answers"].as_object().map(|chosen| {
-            pre_tool_use_allow(
-                with_answers(&input.tool_input, chosen, &wait.payload.proposed),
-                None,
-            )
-        }),
+        PromptKind::AskUserQuestion => answer["answers"]
+            .as_object()
+            .map(|chosen| pre_tool_use_allow(with_answers(&input.tool_input, chosen), None)),
         PromptKind::ExitPlanMode => match text("decision") {
             Some("allow") => Some(pre_tool_use_allow(approve_plan(&input.tool_input), None)),
             Some("deny") => Some(pre_tool_use_deny(
@@ -848,39 +856,20 @@ fn answered(wait: &Wait, input: &HookInput, answer: Option<&Value>) -> HookResul
     output.map_or_else(HookResult::default, |output| HookResult::emit(&output))
 }
 
-/// `AskUserQuestion`'s input with the person's answers; a question they left open takes the
-/// answer the countdown showed.
-fn with_answers(tool_input: &Value, chosen: &Map<String, Value>, proposed: &Proposed) -> Value {
-    let shown = match proposed {
-        Proposed::Answers { answers, .. } => Some(answers),
-        _ => None,
-    };
-    let mut answers = Map::new();
-    for question in tool_input["questions"].as_array().into_iter().flatten() {
-        let Some(text) = question["question"].as_str() else {
-            continue;
-        };
-        let mine = chosen
-            .get(text)
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|a| !a.is_empty())
-            .map(str::to_string);
-        if let Some(answer) = mine.or_else(|| shown.and_then(|s| s.get(text).cloned())) {
-            answers.insert(text.to_string(), json!(answer));
-        }
-    }
+/// `AskUserQuestion`'s original input with the complete, validated human answers.
+fn with_answers(tool_input: &Value, chosen: &Map<String, Value>) -> Value {
     let mut updated = match tool_input {
         Value::Object(_) => tool_input.clone(),
         _ => json!({}),
     };
-    updated["answers"] = Value::Object(answers);
+    updated["answers"] = Value::Object(chosen.clone());
     updated
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gitrochi_autocontinue::Proposed;
 
     fn wait_for(kind: PromptKind, proposed: Proposed) -> Wait {
         Wait {
@@ -897,6 +886,7 @@ mod tests {
                 tool: None,
                 language: gitrochi_autocontinue::Lang::En,
                 delay_sec: 30,
+                auto_answer: true,
                 proposed: proposed.clone(),
             },
             reply: gitrochi_autocontinue::AutoReply {
@@ -920,7 +910,7 @@ mod tests {
     }
 
     #[test]
-    fn a_persons_answers_fill_in_the_proposed_ones() {
+    fn a_persons_complete_answers_preserve_the_original_input() {
         let questions = json!({"questions": [
             {"question": "A?", "options": [{"label": "x"}, {"label": "y"}]},
             {"question": "B?", "options": [{"label": "p"}, {"label": "q"}]},
@@ -938,7 +928,7 @@ mod tests {
         let result = answered(
             &wait,
             &input("AskUserQuestion", questions.clone()),
-            Some(&json!({"answers": {"B?": "q", "C?": "nope", "A?": " "}})),
+            Some(&json!({"answers": {"B?": "q", "A?": "  A custom answer  "}})),
         );
         let out: Value = serde_json::from_str(&result.stdout).unwrap();
         let specific = &out["hookSpecificOutput"];
@@ -949,9 +939,24 @@ mod tests {
         );
         assert_eq!(
             specific["updatedInput"]["answers"],
-            json!({"A?": "x", "B?": "q"})
+            json!({"A?": "A custom answer", "B?": "q"})
         );
         assert!(specific.get("additionalContext").is_none());
+        assert!(questions.get("answers").is_none());
+        for answer in [
+            json!({"text": "ambiguous"}),
+            json!({"answers": {"B?": "q"}}),
+            json!({"answers": {"A?": "x", "B?": "q", "C?": "nope"}}),
+        ] {
+            assert_eq!(
+                answered(
+                    &wait,
+                    &input("AskUserQuestion", questions.clone()),
+                    Some(&answer)
+                ),
+                HookResult::default()
+            );
+        }
     }
 
     #[test]

@@ -14,6 +14,45 @@ struct Server {
     output: BufReader<ChildStdout>,
 }
 
+#[test]
+fn structured_questions_round_trip_through_mcp_without_consuming_app_reads() {
+    let dir = TempDir::new("mcp-choices");
+    let db = dir.join("ledger.sqlite3");
+    let mut server = Server::start(&db);
+    server.request(1, "initialize", json!({"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "fixture", "version": "1"}}));
+    server.send(&json!({"jsonrpc": "2.0", "method": "notifications/initialized"}));
+    let tools = server.request(2, "tools/list", json!({}));
+    let report = tools["result"]["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|tool| tool["name"] == "ledger_report")
+        .unwrap();
+    assert!(report["inputSchema"]["properties"]["questions"]["items"]["anyOf"].is_array());
+    let (failed, _) = server.tool(3, "ledger_report", json!({
+        "event": "start", "summary": "Choose a cache policy", "project": "Example App", "session": "choices", "title": "Choose a cache policy",
+        "questions": [{"text": "Which cache?", "options": [{"label": "Memory", "description": "Keep entries locally", "recommended": true}, "Disk"], "suggestedAnswer": "Memory with an expiry"}]
+    }));
+    assert!(!failed);
+    let detail = app(&db, "session", json!({"id": "choices"}));
+    let question = &detail["questions"][0];
+    assert_eq!(question["options"][0]["recommended"], true);
+    assert_eq!(question["suggestedAnswer"], "Memory with an expiry");
+    app(
+        &db,
+        "human",
+        json!({"action": "answer", "questionId": question["id"], "answer": "Memory with a custom expiry"}),
+    );
+    let before = app(&db, "session", json!({"id": "choices"}));
+    assert_eq!(before["waitingMessages"], 1);
+    let (failed, delivered) = server.tool(4, "ledger_session", json!({"session": "choices"}));
+    assert!(!failed);
+    assert!(delivered.contains("Memory with a custom expiry"));
+    let (_, next) = server.tool(5, "ledger_session", json!({"session": "choices"}));
+    assert!(!next.contains("From a person to this session"));
+    assert!(server.finish().is_empty());
+}
+
 impl Server {
     fn start(db: &std::path::Path) -> Server {
         let mut child = binary()

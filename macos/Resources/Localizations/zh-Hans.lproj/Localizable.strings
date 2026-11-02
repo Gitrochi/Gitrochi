@@ -1803,7 +1803,6 @@
 "Answer in terminal" = "在终端中回答";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "回答或关闭未决问题；会话会在下次报告时收到回答。";
 "Answer saved. The session receives it with its next report." = "已保存回答。会话会在下次报告时收到。";
-"Answer sent to the agent" = "已将回答发送给代理";
 "Answered" = "已回答";
 "Answered by a person" = "由人工回答";
 "Answered by auto-continue" = "由自动继续回答";
@@ -2351,3 +2350,19 @@
 "Last activity" = "上次活动";
 "No reports yet." = "暂无报告。";
 "Last report" = "最近报告";
+"Send answer" = "发送回答";
+"Use suggestion" = "使用建议";
+"Tab" = "Tab";
+"Choose one" = "选择一项";
+"Choose one or more" = "选择一项或多项";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "剩余时间 %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "复制回答";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

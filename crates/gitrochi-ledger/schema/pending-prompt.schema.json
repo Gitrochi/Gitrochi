@@ -32,7 +32,14 @@
       ]
     },
     "payload": {
-      "type": "object"
+      "type": "object",
+      "description": "PromptPayload from gitrochi-autocontinue. Structured questions retain multiSelect, options with explicit recommended flags, and optional suggestedAnswer drafts. autoAnswer=false is a live manual question: its positive deadline releases without an automatic reply. payload.hold marks a terminal-only wait.",
+      "properties": {
+        "autoAnswer": {
+          "type": "boolean",
+          "default": true
+        }
+      }
     },
     "createdAt": {
       "type": "integer",
@@ -40,7 +47,7 @@
     },
     "deadline": {
       "type": "integer",
-      "description": "Epoch milliseconds; 0 for a wait held for the person, with no countdown (payload.hold says why)"
+      "description": "Epoch milliseconds; 0 for a terminal-only held wait (payload.hold says why). A positive deadline with payload.autoAnswer=false is a live manual wait's expiry, never an automatic answer countdown."
     },
     "state": {
       "enum": [

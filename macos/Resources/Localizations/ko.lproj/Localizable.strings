@@ -3462,7 +3462,6 @@
 "Answer in terminal" = "터미널에서 답하기";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "열린 질문에 답하거나 닫으세요. 세션은 다음 보고 때 답을 받습니다.";
 "Answer saved. The session receives it with its next report." = "답을 저장했습니다. 세션은 다음 보고 때 받습니다.";
-"Answer sent to the agent" = "에이전트에 답을 보냈습니다";
 "Answered" = "답함";
 "Answered by a person" = "사람이 답함";
 "Answered by auto-continue" = "자동 진행이 답함";
@@ -3995,3 +3994,19 @@
 "Last activity" = "마지막 활동";
 "No reports yet." = "아직 보고가 없습니다.";
 "Last report" = "마지막 보고";
+"Send answer" = "답변 보내기";
+"Use suggestion" = "추천 답변 채우기";
+"Tab" = "Tab";
+"Choose one" = "하나를 선택하세요";
+"Choose one or more" = "하나 이상 선택하세요";
+"Your answer can include a different choice or more detail." = "다른 답변이나 추가 설명을 직접 입력할 수도 있습니다.";
+"Answer every question before sending." = "모든 질문에 답한 뒤 보내세요.";
+"Time left %@" = "남은 시간 %@";
+"Answer within %@" = "%@ 안에 답변하세요";
+"Tab fills an empty answer. You can edit it before sending." = "빈 답변란에서 Tab 키를 누르면 추천 답변이 채워집니다. 보낼 때까지 수정할 수 있습니다.";
+"The prompt was already answered." = "이미 답변이 처리된 질문입니다.";
+"Your draft was not sent." = "작성한 답변은 보내지 않았습니다.";
+"Copy answer" = "답변 복사";
+"Delivered" = "전달됨";
+"This question needs an answer in the agent's terminal." = "이 질문은 에이전트의 터미널에서 답변해야 합니다.";
+"Answer saved for the waiting agent" = "대기 중인 에이전트에 보낼 답변을 저장했습니다";

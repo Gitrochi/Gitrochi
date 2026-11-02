@@ -10,6 +10,7 @@ import { t } from "@/shared/i18n";
 import { SettingsDialog } from "@/widgets/settings";
 import { openLedgerAt } from "./ledger-notifications";
 import { handleShortcut } from "./shortcuts";
+import { ledgerAnswersSelfTest } from "./ledger-answers-selftest";
 
 const pause = (ms = 40) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 async function until(f: () => unknown, ms = 4000) {
@@ -191,6 +192,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $(".ledger-toast")?.textContent?.includes(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))), "Answer in terminal did not look for the agent's terminal");
     ensure(backend.world.prompts.find((p) => p.id === kept.id)?.state === "waiting", "Answer in terminal must leave a held wait to the terminal's answer");
     passed.push("waiting prompts");
+    await ledgerAnswersSelfTest(host, store, backend, clock);
+    passed.push("editable question choices, suggestions, races and reported answers");
 
     // Quick launches: the overview is off on the demo data, and Claude Code starts as Run agent does
     $<HTMLButtonElement>("[data-quick-launch]")!.click();

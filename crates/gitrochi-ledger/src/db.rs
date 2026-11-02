@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 /// The newest schema this build writes (`PRAGMA user_version`).
-pub const DB_SCHEMA: i64 = 1;
+pub const DB_SCHEMA: i64 = 2;
 
 /// Writers wait this long for another process's transaction before giving up.
 pub const BUSY_TIMEOUT: Duration = Duration::from_secs(15);
@@ -23,7 +23,10 @@ pub const HOOK_BUSY_TIMEOUT: Duration = Duration::from_millis(1000);
 const READER_POOL: usize = 4;
 
 // Additive steps only: a later schema adds tables and columns and never edits a shipped step.
-const MIGRATIONS: [(i64, &str); 1] = [(1, include_str!("schema.sql"))];
+const MIGRATIONS: [(i64, &str); 2] = [
+    (1, include_str!("schema.sql")),
+    (2, include_str!("schema-v2.sql")),
+];
 
 /// The database file: `GITROCHI_LEDGER_DB` when set, else one file per user next to the
 /// apps' other data, so the apps, the CLI, MCP and the hooks all agree on it.

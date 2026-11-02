@@ -1639,7 +1639,6 @@
 "Answer in terminal" = "Odpovědět v terminálu";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Odpovězte na otevřené otázky nebo je zamítněte; relace dostane odpověď s dalším hlášením.";
 "Answer saved. The session receives it with its next report." = "Odpověď uložena. Relace ji dostane s dalším hlášením.";
-"Answer sent to the agent" = "Odpověď odeslána agentovi";
 "Answered" = "Zodpovězeno";
 "Answered by a person" = "Odpověděl člověk";
 "Answered by auto-continue" = "Odpověděla automatická pokračování";
@@ -2189,3 +2188,19 @@
 "Last activity" = "Poslední aktivita";
 "No reports yet." = "Zatím žádné zprávy.";
 "Last report" = "Poslední hlášení";
+"Send answer" = "Odeslat odpověď";
+"Use suggestion" = "Použít návrh";
+"Tab" = "Tab";
+"Choose one" = "Vyberte jednu možnost";
+"Choose one or more" = "Vyberte jednu nebo více možností";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Zbývá %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Kopírovat odpověď";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

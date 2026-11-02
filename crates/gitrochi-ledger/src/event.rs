@@ -124,6 +124,12 @@ pub struct QuestionView {
     pub id: i64,
     pub session_id: String,
     pub text: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub options: Vec<crate::question::QuestionOption>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub multi_select: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_answer: Option<String>,
     pub state: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub answer: Option<String>,
@@ -141,10 +147,13 @@ pub struct QuestionView {
 }
 
 pub const QUESTION_COLUMNS: &str =
-    "id, session_id, text, state, answer, answered_by, created_at, answered_at, delivered_at";
+    "id, session_id, text, state, answer, answered_by, created_at, answered_at, delivered_at, metadata";
 
 impl QuestionView {
     pub fn from_row(row: &Row) -> rusqlite::Result<QuestionView> {
+        let metadata: String = row.get(9)?;
+        let form: crate::question::QuestionForm =
+            serde_json::from_str(&metadata).unwrap_or_default();
         let by: Option<String> = row.get(5)?;
         let (answered_by, resolved_by) = match by.as_deref() {
             Some("agent") => (None, Some("agent".to_string())),
@@ -154,6 +163,9 @@ impl QuestionView {
             id: row.get(0)?,
             session_id: row.get(1)?,
             text: row.get(2)?,
+            options: form.options,
+            multi_select: form.multi_select,
+            suggested_answer: form.suggested_answer,
             state: row.get(3)?,
             answer: row.get(4)?,
             answered_by,
@@ -179,6 +191,24 @@ pub fn add_question(connection: &Connection, session_id: &str, text: &str, ts: M
         params![session_id, text, ts],
     )?;
     Ok(connection.last_insert_rowid())
+}
+
+pub(crate) fn add_reported_question(
+    connection: &Connection,
+    session_id: &str,
+    question: &crate::question::ReportedQuestion,
+    ts: Ms,
+) -> Result<i64> {
+    let id = add_question(connection, session_id, &question.text, ts)?;
+    connection.execute(
+        "UPDATE questions SET metadata = ?2 WHERE id = ?1",
+        params![
+            id,
+            serde_json::to_string(&question.form)
+                .map_err(|e| crate::error::Error::invalid(e.to_string()))?
+        ],
+    )?;
+    Ok(id)
 }
 
 /// Something a person left for the agent, handed over with its next report or read.

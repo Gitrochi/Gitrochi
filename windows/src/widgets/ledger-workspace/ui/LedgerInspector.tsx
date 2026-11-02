@@ -85,6 +85,15 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
               <div key={q.id} className="ledger-question">
                 <span className="ledger-row-text quiet selectable">{q.text}</span>
                 <span className="ledger-row-text selectable">{q.state === "dismissed" ? t("Dismissed") : q.resolvedBy === "agent" ? t("Settled by the session") : q.answeredBy === "auto" ? t("Answered automatically: {0}", q.answer ?? "") : t("Answered: {0}", q.answer ?? "")}</span>
+                {q.state === "answered" && q.resolvedBy !== "agent" && q.answer && <>
+                  <span className="hint">{q.deliveredAt == null ? t("Waiting for the session's next report") : <>{t("Delivered")} <When at={q.deliveredAt} /></>}</span>
+                  <Button size="small" style={{ alignSelf: "flex-start" }} onClick={() => void navigator.clipboard.writeText(q.answer!).then(() => store.showToast(t("Copied"), null), () => {})}><Copy size={12} />{t("Copy answer")}</Button>
+                </>}
+                {store.unsentAnswers.has(q.id) && store.unsentAnswers.get(q.id)?.trim() !== q.answer && <div className="ledger-unsent-answer col" style={{ gap: 6 }}>
+                  <span className="hint">{t("Your draft was not sent.")}</span>
+                  <textarea className="textarea" rows={2} value={store.unsentAnswers.get(q.id)} readOnly aria-label={t("Answer to {0}", q.text)} />
+                  <Button size="small" style={{ alignSelf: "flex-start" }} onClick={() => store.discardUnsentAnswer(q.id)}>{t("Close")}</Button>
+                </div>}
               </div>
             ))}
           </Section>
@@ -194,8 +203,8 @@ function WaitField({ value, disabled, onCommit }: { value: number; disabled: boo
 function OpenQuestion({ store, q, busy }: { store: LedgerStore; q: LedgerQuestion; busy: boolean }) {
   return (
     <div className="ledger-question">
-      <span className="ledger-row-text selectable" style={{ fontWeight: 600 }}>{q.text}</span>
-      <LedgerAnswerField label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text)} />
+      {q.options === undefined && q.suggestedAnswer === undefined && !q.multiSelect && <span className="ledger-row-text selectable" style={{ fontWeight: 600 }}>{q.text}</span>}
+      <LedgerAnswerField question={q} initialText={store.unsentAnswers.get(q.id)} onDraftChange={(text) => store.setUnsentAnswer(q.id, text)} disabled={busy} label={t("Answer to {0}", q.text)} placeholder={t("Answer… the session reads it with its next report")} onSubmit={(text) => store.answer(q, text)} />
       <div className="ledger-row-actions"><Button size="small" disabled={busy} onClick={() => void store.dismiss(q)}>{t("Dismiss")}</Button></div>
     </div>
   );

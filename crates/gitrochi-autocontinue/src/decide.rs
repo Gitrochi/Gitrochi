@@ -2,7 +2,7 @@
 //! The Ledger hook handler stores the payload, waits `delay_sec`, and sends `output` only
 //! if nobody answered in the meantime.
 
-use crate::answers::{approve_plan, pick_answers};
+use crate::answers::{approve_plan, parse_questions, pick_answers, AskQuestion};
 use crate::input::{HookEvent, HookInput};
 use crate::output::{permission_allow, pre_tool_use_allow, stop_wake, HookOutput};
 use crate::permission::{evaluate_permission, PermissionContext, Rule, Verdict};
@@ -194,7 +194,7 @@ pub enum Pass {
         kind: PromptKind,
         reason: String,
     },
-    /// An `AskUserQuestion` without options to choose from.
+    /// An `AskUserQuestion` without unique, nonempty question texts.
     NoAnswer,
     Held {
         rule: Rule,
@@ -223,7 +223,7 @@ impl Pass {
             Self::Risky { reason, .. } => {
                 format!("the prompt is about something hard to reverse ({reason})")
             }
-            Self::NoAnswer => "the question has no options to choose from".into(),
+            Self::NoAnswer => "This question needs an answer in the agent's terminal.".into(),
             Self::Held { rule, detail } => format!("held by {}: {detail}", rule.id()),
             Self::NotHandled { event, tool } => {
                 if tool.is_empty() {
@@ -326,6 +326,7 @@ fn payload(
         tool: None,
         language,
         delay_sec: policy.delay(),
+        auto_answer: true,
         proposed,
     }
 }
@@ -374,7 +375,41 @@ fn stop(input: &HookInput, policy: &Policy, state: SessionState) -> Result<Prepa
 }
 
 fn ask(input: &HookInput, policy: &Policy) -> Result<Prepared, Pass> {
-    let picked = pick_answers(&input.tool_input).ok_or(Pass::NoAnswer)?;
+    let Some(picked) = pick_answers(&input.tool_input) else {
+        let questions = parse_questions(&input.tool_input);
+        if questions.is_empty()
+            || questions.iter().enumerate().any(|(i, q)| {
+                q.question.trim().is_empty()
+                    || questions[..i]
+                        .iter()
+                        .any(|prior| prior.question == q.question)
+            })
+        {
+            return Err(Pass::NoAnswer);
+        }
+        // No option means no safe automatic answer, but the live hook can still carry a person's text.
+        let sent = Proposed::Answers {
+            answers: BTreeMap::new(),
+            note: String::new(),
+        };
+        let first = &questions[0].question;
+        let mut p = payload(
+            PromptKind::AskUserQuestion,
+            one_line(first, 160),
+            reply_language(first, policy),
+            policy,
+            sent.clone(),
+        );
+        p.auto_answer = false;
+        p.questions = questions.iter().map(question_view).collect();
+        return Ok((
+            p,
+            HookOutput::Silent,
+            sent,
+            "answers:manual".into(),
+            Vec::new(),
+        ));
+    };
     let protected = policy.protected();
     for (q, a) in picked.questions.iter().zip(&picked.answers) {
         let descriptions: Vec<&str> = q
@@ -423,25 +458,7 @@ fn ask(input: &HookInput, policy: &Policy) -> Result<Prepared, Pass> {
         policy,
         sent.clone(),
     );
-    p.questions = picked
-        .questions
-        .iter()
-        .map(|q| QuestionView {
-            question: q.question.clone(),
-            header: q.header.clone(),
-            multi_select: q.multi_select,
-            options: q
-                .options
-                .iter()
-                .map(|o| OptionView {
-                    label: o.label.clone(),
-                    description: o.description.clone(),
-                    recommended: crate::answers::is_recommended(&o.label)
-                        || crate::answers::is_recommended(&o.description),
-                })
-                .collect(),
-        })
-        .collect();
+    p.questions = picked.questions.iter().map(question_view).collect();
     let rule = match (
         picked.answers.iter().all(|a| a.recommended),
         picked.answers.iter().any(|a| a.recommended),
@@ -453,6 +470,24 @@ fn ask(input: &HookInput, policy: &Policy) -> Result<Prepared, Pass> {
     let labels = picked.answers.iter().map(|a| a.answer.clone()).collect();
     let output = pre_tool_use_allow(picked.updated_input, Some(&note));
     Ok((p, output, sent, rule.to_string(), labels))
+}
+
+fn question_view(q: &AskQuestion) -> QuestionView {
+    QuestionView {
+        question: q.question.clone(),
+        header: q.header.clone(),
+        multi_select: q.multi_select,
+        suggested_answer: q.suggested_answer.clone(),
+        options: q
+            .options
+            .iter()
+            .map(|o| OptionView {
+                label: o.label.clone(),
+                description: o.description.clone(),
+                recommended: o.recommended,
+            })
+            .collect(),
+    }
 }
 
 fn plan(input: &HookInput, policy: &Policy) -> Result<Prepared, Pass> {

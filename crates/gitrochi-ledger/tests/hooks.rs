@@ -421,21 +421,21 @@ fn a_persons_answer_during_the_wait_is_the_one_sent() {
     );
     assert!(ran.took < Duration::from_secs(8), "{:?}", ran.took);
 
-    // AskUserQuestion: the person's pick for one question, the proposed one for the other
+    // AskUserQuestion: the person's complete answers, including custom text.
     f.app_running();
     let running = f.spawn("PreToolUse", ask_user_question());
     let prompt = f.waiting_prompt();
     assert_eq!(prompt["kind"], "ask_user_question");
     f.answer(
         &prompt,
-        json!({"answers": {"Which platform first?": "Windows"}}),
+        json!({"answers": {"Which storage should the ledger use?": "A custom store", "Which platform first?": "Windows"}}),
     );
     let ran = running.finish();
     let specific = &ran.json()["hookSpecificOutput"];
     assert_eq!(specific["permissionDecision"], "allow");
     assert_eq!(
         specific["updatedInput"]["answers"],
-        json!({"Which storage should the ledger use?": "SQLite (Recommended)", "Which platform first?": "Windows"})
+        json!({"Which storage should the ledger use?": "A custom store", "Which platform first?": "Windows"})
     );
     assert_eq!(
         specific["updatedInput"]["questions"],
@@ -463,6 +463,104 @@ fn a_persons_answer_during_the_wait_is_the_one_sent() {
         .assert_no_decision("released to the terminal");
 
     // none of these was an automatic answer
+    assert!(f.events("auto_reply").is_empty());
+}
+
+#[test]
+fn typed_questions_use_the_live_hook_and_expire_without_automatic_answers() {
+    let f = Fixture::new("hook-typed-question");
+    f.auto_continue(true);
+    f.app_running();
+    let original = json!({"tool_name": "AskUserQuestion", "tool_input": {
+        "questions": [{"question": "What is the cache name?", "header": "Name", "options": [], "suggestedAnswer": "Cache"}],
+        "metadata": {"keep": true}
+    }});
+    let running = f.spawn("PreToolUse", original.clone());
+    let prompt = f.waiting_prompt();
+    assert_eq!(prompt["payload"]["autoAnswer"], false);
+    assert!(prompt["payload"].get("hold").is_none());
+    assert_eq!(
+        prompt["payload"]["questions"][0]["suggestedAnswer"],
+        "Cache"
+    );
+    assert_eq!(app(&f.db, "attention", json!({}))["attention"]["held"], 1);
+    let db = gitrochi_ledger::Db::open(&f.db).unwrap();
+    assert_eq!(
+        db.read(|c| gitrochi_ledger::prompts::open_count(c, SESSION))
+            .unwrap(),
+        0
+    );
+    f.answer(&prompt, json!({"text": "  Shared cache  "}));
+    let stored = app(&f.db, "prompt_get", json!({"id": prompt["id"]}));
+    assert_eq!(
+        stored["answer"],
+        json!({"answers": {"What is the cache name?": "Shared cache"}})
+    );
+    let output = running.finish().json();
+    let updated = &output["hookSpecificOutput"]["updatedInput"];
+    assert_eq!(updated["questions"], original["tool_input"]["questions"]);
+    assert_eq!(updated["metadata"], original["tool_input"]["metadata"]);
+    assert_eq!(updated["answers"], stored["answer"]["answers"]);
+
+    f.app_running();
+    let running = f.spawn("PreToolUse", original);
+    let prompt = f.waiting_prompt();
+    f.deadline_now(&prompt);
+    running
+        .finish()
+        .assert_no_decision("manual wait expired to the terminal");
+    let stored = app(&f.db, "prompt_get", json!({"id": prompt["id"]}));
+    assert_eq!(stored["state"], "released");
+    assert!(stored.get("answeredBy").is_none());
+    assert!(stored.get("answer").is_none());
+    assert!(f.events("auto_reply").is_empty());
+}
+
+#[test]
+fn invalid_or_incomplete_choices_remain_waiting_until_a_complete_custom_answer() {
+    let f = Fixture::new("hook-complete-choices");
+    f.auto_continue(true);
+    f.app_running();
+    let original = json!({"tool_name": "AskUserQuestion", "tool_input": {"questions": [
+        {"question": "Storage?", "suggestedAnswer": "A draft", "options": [{"label": "A"}, {"label": "B", "recommended": true}]},
+        {"question": "Features?", "multiSelect": true, "options": [{"label": "X", "recommended": true}, {"label": "Y"}]}
+    ]}});
+    let running = f.spawn("PreToolUse", original.clone());
+    let prompt = f.waiting_prompt();
+    assert_eq!(
+        prompt["payload"]["questions"][0]["options"][1]["recommended"],
+        true
+    );
+    for answer in [
+        json!({"text": "ambiguous"}),
+        json!({"answers": {"Storage?": "A"}}),
+        json!({"answers": {"Storage?": "A", "Features?": "X", "Unknown?": "x"}}),
+    ] {
+        let error = gitrochi_ledger::api::call_as(
+            gitrochi_ledger::Caller::App,
+            "prompt_answer",
+            &json!({"db": f.db, "id": prompt["id"], "answer": answer}),
+        )
+        .unwrap_err();
+        assert_eq!(error.code, "INVALID_ARGUMENT");
+        assert_eq!(
+            app(&f.db, "prompt_get", json!({"id": prompt["id"]}))["state"],
+            "waiting"
+        );
+    }
+    f.answer(
+        &prompt,
+        json!({"answers": {"Storage?": "A custom store", "Features?": "X, Y, custom"}}),
+    );
+    let output = running.finish().json();
+    assert_eq!(
+        output["hookSpecificOutput"]["updatedInput"]["questions"],
+        original["tool_input"]["questions"]
+    );
+    assert_eq!(
+        output["hookSpecificOutput"]["updatedInput"]["answers"],
+        json!({"Storage?": "A custom store", "Features?": "X, Y, custom"})
+    );
     assert!(f.events("auto_reply").is_empty());
 }
 
@@ -616,10 +714,13 @@ fn a_wait_held_for_the_person_is_settled_in_the_terminal_and_never_expires() {
     );
     assert!(f.events("auto_reply").is_empty());
 
-    // a question with nothing to choose is held too, and answered when the tool runs
+    // duplicate question texts cannot be keyed safely, so this malformed prompt stays in the terminal
     let question = json!({
         "tool_name": "AskUserQuestion",
-        "tool_input": {"questions": [{"question": "What should the release be called?", "header": "Name", "multiSelect": false, "options": []}]}
+        "tool_input": {"questions": [
+            {"question": "What should the release be called?", "header": "Name", "multiSelect": false, "options": []},
+            {"question": "What should the release be called?", "header": "Name", "multiSelect": false, "options": []}
+        ]}
     });
     f.app_running();
     f.hook("PreToolUse", question.clone())

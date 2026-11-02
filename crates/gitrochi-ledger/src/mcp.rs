@@ -24,6 +24,14 @@ const INSTRUCTIONS: &str = "Gitrochi's session ledger records which baseline thi
 - Confirming, archiving and answering are for the person in Gitrochi; no tool does them.";
 
 fn tools() -> Value {
+    let mut question: Value =
+        serde_json::from_str(include_str!("../schema/reported-question.schema.json"))
+            .expect("valid question schema");
+    if let Some(schema) = question.as_object_mut() {
+        for key in ["$schema", "$id", "title"] {
+            schema.remove(key);
+        }
+    }
     let artifact = json!({
         "type": "object",
         "properties": {
@@ -62,8 +70,8 @@ fn tools() -> Value {
                     "base": {"type": "string", "description": "The baseline version the work started from (for example 1.4.2); latest only when unknown"},
                     "touches": list("What the work touches: IDs, modules or paths, to warn about concurrent sessions"),
                     "artifacts": {"type": "array", "items": artifact},
-                    "question": {"type": "string", "description": "question: what to ask a person"},
-                    "questions": list("Any event: several decisions a person must make, one question each"),
+                    "question": question,
+                    "questions": {"type": "array", "items": question, "description": "Any event: questions as text or {text, options, multiSelect, suggestedAnswer}. Preserve choices and recommendations from the conversation. A person's answer arrives with this session's next report or read; this does not control the client's native input box."},
                     "body": {"type": "string", "description": "The full answer shown to the user (Markdown, up to 60,000 characters); for milestones only"},
                     "into": {"type": "string", "description": "merged: the baseline it was merged into"},
                     "version": {"type": "string", "description": "release: the new baseline / sync: the newer base / applied: the applied baseline"},

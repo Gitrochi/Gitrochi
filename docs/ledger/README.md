@@ -56,6 +56,38 @@ MCP registration remains separate. When the tools are available, session-start c
 
 These global hooks are independent of **Track agents I start** and observe local sessions wherever they start, including Gitrochi. The app's switch still controls its own per-launch tracking. Remove the passive hooks to stop this separate observation; the existing launch commands and off behavior are unchanged.
 
+## Answer questions and use suggestions
+
+Question forms keep every question and its choices together. Select one option, select several when allowed, or type a custom answer. A choice fills an editable draft; it does not send anything. **Send answer** confirms the complete form. Every question needs an answer before a multi-question form can be sent.
+
+**Use suggestion** fills the draft from the question's explicit suggestion, its proposed answer, or its recommended choice. In an empty answer field, **Tab** does the same. You can edit the result before sending. Tab keeps its normal navigation behavior when the field already contains text; Shift+Tab always moves backward. Return adds a line, and **⌘Return** / **Ctrl+Enter** sends a complete form.
+
+A live Claude Code question can receive the saved answer through its waiting hook. When no automatic answer is available, **Time left** is the time remaining to answer here; the hook releases the question to the terminal when it expires. Questions marked **Answer in terminal** have no live reply route from the Ledger. If a live prompt is answered elsewhere first, your draft stays visible and is not silently sent to a later question. Drafts of reported questions remain available in the session inspector if the question closes elsewhere.
+
+ChatGPT web/app conversations can supply structured questions through connected Ledger tools or pasted reports. The Ledger preserves the choices and suggestions supplied in that report; it does not read ChatGPT's private composer predictions. A saved answer waits for that conversation's next Ledger report or read, with a separate delivered state. **Copy answer** lets you paste an answer back into a conversation that has no connected tools.
+
+For example, the `questions` field of a report can contain both plain text and structured questions:
+
+```json
+{
+  "event": "question",
+  "session": "cache-review",
+  "project": "Example app",
+  "summary": "Choose the cache behavior",
+  "questions": [{
+    "text": "Which cache should be used?",
+    "options": [
+      {"label": "Memory", "description": "Keep entries locally", "recommended": true},
+      {"label": "Disk", "description": "Keep entries across restarts"}
+    ],
+    "multiSelect": false,
+    "suggestedAnswer": "Memory with a short expiry"
+  }]
+}
+```
+
+Existing string questions remain supported. After updating the bundled Ledger command, reconnect or restart a connected client if it still offers the old text-only tool schema.
+
 ## Read the views
 
 Use the upper **Inbox**, **Board**, **Graph** and **Streams** tabs to switch views. The compact filter row below them holds the project picker, session text filter and verdict menu. Choose **This repository** to focus on the open repository's project, or **All projects** to see the whole local Ledger.

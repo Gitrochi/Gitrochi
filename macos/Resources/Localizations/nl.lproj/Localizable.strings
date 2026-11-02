@@ -1604,7 +1604,6 @@
 "Answer in terminal" = "In terminal antwoorden";
 "Answer or dismiss the open questions; the session receives the answer with its next report." = "Beantwoord of negeer de open vragen; de sessie krijgt het antwoord bij haar volgende melding.";
 "Answer saved. The session receives it with its next report." = "Antwoord opgeslagen. De sessie krijgt het bij haar volgende melding.";
-"Answer sent to the agent" = "Antwoord naar de agent gestuurd";
 "Answered" = "Beantwoord";
 "Answered by a person" = "Door een persoon beantwoord";
 "Answered by auto-continue" = "Door automatisch doorgaan beantwoord";
@@ -2154,3 +2153,19 @@
 "Last activity" = "Laatste activiteit";
 "No reports yet." = "Nog geen rapporten.";
 "Last report" = "Laatste melding";
+"Send answer" = "Antwoord verzenden";
+"Use suggestion" = "Suggestie gebruiken";
+"Tab" = "Tab";
+"Choose one" = "Kies één optie";
+"Choose one or more" = "Kies één of meer opties";
+"Your answer can include a different choice or more detail." = "Your answer can include a different choice or more detail.";
+"Answer every question before sending." = "Answer every question before sending.";
+"Time left %@" = "Resterende tijd %@";
+"Answer within %@" = "Answer within %@";
+"Tab fills an empty answer. You can edit it before sending." = "Tab fills an empty answer. You can edit it before sending.";
+"The prompt was already answered." = "The prompt was already answered.";
+"Your draft was not sent." = "Your draft was not sent.";
+"Copy answer" = "Antwoord kopiëren";
+"Delivered" = "Delivered";
+"This question needs an answer in the agent's terminal." = "This question needs an answer in the agent's terminal.";
+"Answer saved for the waiting agent" = "Answer saved for the waiting agent";

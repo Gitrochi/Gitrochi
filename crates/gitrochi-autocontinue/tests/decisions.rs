@@ -346,6 +346,68 @@ fn answers_take_the_recommended_option_else_the_first() {
 }
 
 #[test]
+fn explicit_recommendations_and_suggested_drafts_survive_normalization() {
+    let original = json!({"questions": [{
+        "question": "Which storage?", "suggestedAnswer": "  Use the existing store  ",
+        "options": [{"label": "A (Recommended)", "recommended": false}, {"label": "B", "recommended": true}]
+    }, {
+        "question": "Which features?", "multiSelect": true,
+        "options": [{"label": "X", "recommended": true}, {"label": "Y"}, {"label": "Z", "recommended": true}]
+    }], "metadata": {"keep": true}});
+    let picked = pick_answers(&original).unwrap();
+    assert_eq!(picked.answers[0].answer, "B");
+    assert_eq!(picked.answers[1].answer, "X, Z");
+    assert_eq!(
+        picked.questions[0].suggested_answer.as_deref(),
+        Some("Use the existing store")
+    );
+    assert!(!picked.questions[0].options[0].recommended);
+    assert_eq!(picked.updated_input["questions"], original["questions"]);
+    assert_eq!(picked.updated_input["metadata"], original["metadata"]);
+    assert!(original.get("answers").is_none());
+
+    let input = input(
+        json!({"hook_event_name": "PreToolUse", "tool_name": "AskUserQuestion", "tool_input": original}),
+    );
+    let Decision::Wait(wait) = run(&input, &on(), 0, true) else {
+        panic!("live choice question");
+    };
+    let payload = serde_json::to_value(wait.payload).unwrap();
+    assert_eq!(
+        payload["questions"][0]["suggestedAnswer"],
+        "Use the existing store"
+    );
+    assert_eq!(payload["questions"][0]["options"][0]["recommended"], false);
+    assert_eq!(payload["questions"][0]["options"][1]["recommended"], true);
+}
+
+#[test]
+fn a_question_without_choices_waits_for_the_person_and_has_no_automatic_reply() {
+    let input = input(
+        json!({"hook_event_name": "PreToolUse", "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": [{"question": "What is the cache name?", "suggestedAnswer": "Cache", "options": []}]}}),
+    );
+    let Decision::Wait(wait) = run(&input, &on(), 0, true) else {
+        panic!("manual question");
+    };
+    assert!(!wait.payload.auto_answer);
+    assert_eq!(
+        wait.payload.questions[0].suggested_answer.as_deref(),
+        Some("Cache")
+    );
+    assert_eq!(wait.output.stdout(), "");
+    assert_eq!(wait.reply.rule, "answers:manual");
+    assert!(matches!(
+        run(&input, &Policy::default(), 0, true),
+        Decision::Pass(Pass::Disabled)
+    ));
+    assert!(matches!(
+        run(&input, &on(), 0, false),
+        Decision::Pass(Pass::AppClosed { .. })
+    ));
+}
+
+#[test]
 fn replies_follow_the_question_language_and_delay() {
     assert_eq!(
         detect_language("Should I update the README for 로그인 flow?"),
