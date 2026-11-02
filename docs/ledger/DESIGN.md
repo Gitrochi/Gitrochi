@@ -40,13 +40,13 @@ What Gitrochi adds on top:
 | AI "current state" summary | Gitrochi's AI service and its stored key | P5 | Off without a key or offline |
 | Daily backup, 14 kept | The same, with `VACUUM INTO` | P1 | |
 | Sharing with another PC (IP allow list) | Not in the first release; later on the hub's token authentication | — | D4 |
-| Parsers for one team's documents (open-question lists, directives, registries, notices, ID dictionary) | A general **document tracker** configured in settings, or nothing | P5 | D2 |
-| Work ledger (bundles, items, reports) | A general **Work log** | P5 | D3 |
-| Personal notes | Later | P5 | Person-only; never in agent output |
+| Parsers for one team's documents (open-question lists, directives, registries, notices, ID dictionary) | **Document tracker**: selected folders, IDs, tasks, feedback and checksum changes | P5 | D2; generic Markdown/text evidence |
+| Work ledger (bundles, items, reports) | **Work log**: bundles, dated records, corrections and reports | P5 | D3; implemented by the compatibility follow-up |
+| Personal notes | **Notebook**, with optimistic edit conflicts and Markdown preview | P5 | Person-only; never in agent output |
 | Chat link per session | Kept ("Open chat" in the inspector) | P2 | |
 | — (new) | **Auto-continue** when nobody answers an agent's question in time | P3b | [§9](#9-auto-continue); D8–D10 |
 
-Not carried over: the Python code itself ([§4](#4-architecture)), the HTTP server and its request guards (the app reads the database directly, so nothing listens on a port), the tray launcher, the Electron shell, the remote client bundle, and a reminder that one team attached to questions from certain kinds.
+Not carried over: the Python code itself ([§4](#4-architecture)), the standalone dashboard server (native apps read the database directly; an optional loopback reporting bridge is available through the CLI), the tray launcher, the Electron shell, the remote client bundle, and a reminder that one team attached to questions from certain kinds.
 
 ## 3. Vocabulary
 
@@ -234,7 +234,7 @@ These are the behaviour every client sees. P1 fixes each rule with a Rust test; 
 | `note` | for reference | | None; never reopens or un-confirms |
 | `heartbeat` | alive | | Updates the activity time only; no event |
 
-Any event may carry `body` (Markdown, up to 60,000 characters, cut with a notice), `questions[]` (one question each), `resolves[]` (question numbers the session settled itself), `touches[]` and `related[]` (merged as sets), `ssot`, `chat_url`, and `work[]` (kept in `data` until D3). Loose types are accepted where the original accepted them: a single string for a list, a number for a question list, an object for one artifact.
+Any event may carry `body` (Markdown, up to 60,000 characters, cut with a notice), `questions[]` (one question each), `resolves[]` (question numbers the session settled itself), `touches[]` and `related[]` (merged as sets), `ssot`, `chat_url`, and `work[]` (kept in `data` and atomically linked to work items). Loose types are accepted where the original accepted them: a single string for a list, a number for a question list, an object for one artifact.
 
 ### 7.2 Processing a report
 
@@ -334,7 +334,7 @@ Wave 2.
 ### 7.12 Imports
 
 - **Pasted text** (`import`): every fenced ```` ```ledger ```` block; without fences, the whole text as JSON, or each line that starts with `{` and has an `"event"` key. Each block is reported with timestamps 1 ms apart to keep the order. One bad block does not stop the rest; each gets `ok`, `duplicate` or `error`. The duplicate check and the report share one transaction (the original checked first and wrote afterwards). The hash is computed on canonical JSON the same way as the original, so blocks imported there are recognised here after D5.
-- **A claude-ledger database** (D5, wave 2): opened read-only, never written; projects, baselines, sessions, events, questions and import hashes are copied, kinds mapped through the alias table, unknown kinds kept. A session whose ID already exists is skipped and listed. Work-ledger and note tables are not read before D3.
+- **A claude-ledger database** (D5, wave 2): opened read-only, never written; projects, baselines, sessions, events, questions and import hashes are copied, kinds mapped through the alias table, unknown kinds kept. A session whose ID already exists is skipped and listed. Work items and personal notes now have separate projections; all optional source rows are retained, with source ID mappings for cross-record references.
 
 ### 7.13 Text for agents
 
@@ -672,3 +672,8 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 alre
 - **Unknown kinds.** Imported sessions may carry kinds no role knows; they map to `other` and are listed in Settings › Ledger › Roles so a person can assign them.
 - **Clock skew.** Times come from each writer's clock; all writers run on one machine until D4.
 - **Scope.** Each item stays within its row in [§12](#12-phases-and-waves); anything else becomes its own issue.
+
+
+## Compatibility follow-up (2026-11-02)
+
+The maintainer requested the remaining capabilities from the supplied standalone reference. This advances the general document tracker, Work log, Notebook and explicit evidence summaries from P5. Native equivalents keep the existing terminal, notifications, backup and pull/merge request flows. The new [migration guide](MIGRATION.md) describes the safe read-only import, the supported local HTTP reporting bridge and the remaining distinction between native features and organization-specific source formats. The bridge is manual and loopback-only; authenticated multi-computer sharing still belongs on the hub (D4). No Python source or unlicensed implementation was copied.

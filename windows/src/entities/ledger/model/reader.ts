@@ -67,6 +67,8 @@ export class LedgerReader extends Observable {
   private again = false;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private toastId = 0;
+  private nextBackupAt = 0;
+  private backupInFlight = false;
 
   constructor(readonly backend: LedgerBackend) {
     super();
@@ -102,6 +104,7 @@ export class LedgerReader extends Observable {
 
   /** Reads state when the revision changes, a time-based verdict may expire, or the caller forces it. */
   refresh(force = false): Promise<void> {
+    this.backupIfDue();
     if (this.refreshing) {
       this.again ||= force;
       return this.refreshing;
@@ -125,6 +128,25 @@ export class LedgerReader extends Observable {
       }
     })();
     return this.refreshing;
+  }
+
+  private backupIfDue() {
+    const now = Date.now();
+    const hour = 3_600_000;
+    if (this.backend.kind !== "native" || this.backupInFlight || now < this.nextBackupAt && this.nextBackupAt - now <= hour) return;
+    this.backupInFlight = true;
+    this.nextBackupAt = now + hour;
+    // A slow or failed snapshot must not delay state reads or replace their error.
+    void (async () => {
+      try {
+        await this.backend.call("backup", { daily: true });
+        this.nextBackupAt = Date.now() + hour;
+      } catch {
+        this.nextBackupAt = Date.now() + 300_000;
+      } finally {
+        this.backupInFlight = false;
+      }
+    })();
   }
 
   private applyState(state: LedgerState) {

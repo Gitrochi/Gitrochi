@@ -4,6 +4,7 @@
 //! wait there until the session's agent picks them up.
 
 use crate::baseline;
+use crate::db::Db;
 use crate::error::{Error, Result};
 use crate::event::{self, NewEvent};
 use crate::session;
@@ -380,4 +381,149 @@ fn answer(connection: &Connection, args: &Value, action: &str, now: Ms) -> Resul
         )?;
     }
     Ok(())
+}
+
+fn metadata_text(args: &Value, key: &str, maximum: usize, empty: bool) -> Result<String> {
+    let raw = args[key]
+        .as_str()
+        .ok_or_else(|| Error::invalid(format!("{key} must be text")))?;
+    let text = util::nfc_text(raw).trim().to_string();
+    if (!empty && text.is_empty())
+        || text.chars().count() > maximum
+        || text
+            .chars()
+            .any(|c| c.is_control() && c != '\n' && c != '\t')
+    {
+        return Err(Error::invalid(format!(
+            "{key} is empty, too long or contains unsupported control characters"
+        )));
+    }
+    Ok(text)
+}
+
+fn metadata_list(args: &Value, key: &str) -> Result<Vec<String>> {
+    let rows = args[key]
+        .as_array()
+        .filter(|rows| rows.len() <= 500)
+        .ok_or_else(|| {
+            Error::invalid(format!("{key} must be a list of at most 500 text values"))
+        })?;
+    let mut result = Vec::new();
+    for row in rows {
+        let text = row
+            .as_str()
+            .and_then(util::clean)
+            .filter(|s| s.chars().count() <= 1000 && !s.chars().any(char::is_control))
+            .ok_or_else(|| {
+                Error::invalid(format!(
+                    "Every {key} value must be nonempty text of at most 1000 characters"
+                ))
+            })?;
+        if key == "related" && !util::valid_session_id(&text) {
+            return Err(Error::invalid("A related session ID is invalid"));
+        }
+        if !result.contains(&text) {
+            result.push(text);
+        }
+    }
+    Ok(result)
+}
+
+fn update_metadata(connection: &Connection, args: &Value, now: Ms) -> Result<()> {
+    let id = arg_str_any(args, &["sessionId", "session"])
+        .ok_or_else(|| Error::invalid("Missing sessionId"))?;
+    let row = session::require(connection, &id)?;
+    let title = if args.get("title").is_some() {
+        metadata_text(args, "title", 500, false)?
+    } else {
+        row.title.clone()
+    };
+    let kind = if args.get("kind").is_some() {
+        vocab::kind(&metadata_text(args, "kind", 100, false)?)
+    } else {
+        row.kind.clone()
+    };
+    let touches = if args.get("touches").is_some() {
+        metadata_list(args, "touches")?
+    } else {
+        row.touches.clone()
+    };
+    let related = if args.get("related").is_some() {
+        metadata_list(args, "related")?
+    } else {
+        row.related.clone()
+    };
+    let changed = ["title", "kind", "touches", "related", "chatUrl"]
+        .into_iter()
+        .filter(|key| args.get(*key).is_some())
+        .collect::<Vec<_>>();
+    if changed.is_empty() {
+        return Err(Error::invalid("Choose session details to update"));
+    }
+    let settings = Settings::load(connection)?;
+    if row.status == "shelved" && !settings.role(&kind).may_shelve() {
+        return Err(Error::invalid(
+            "Resume the shelved session before assigning this kind",
+        ));
+    }
+    let recorder = Recorder {
+        connection,
+        session_id: row.id.clone(),
+        project: row.project.clone(),
+        now,
+    };
+    if args.get("chatUrl").is_some() {
+        link(
+            connection,
+            &recorder,
+            &row,
+            &json!({"chatUrl":args["chatUrl"]}),
+        )?;
+    }
+    connection.execute(
+        "UPDATE sessions SET title=?2,kind=?3,touches=?4,related=?5 WHERE id=?1",
+        params![
+            id,
+            title,
+            kind,
+            serde_json::to_string(&touches)?,
+            serde_json::to_string(&related)?
+        ],
+    )?;
+    recorder.record("update", "Session details updated by a person", json!({"changed":changed,"before":{"title":row.title,"kind":row.kind,"touches":row.touches,"related":row.related}}), false)?;
+    Ok(())
+}
+
+/// Edits record metadata or deletes a session; only the app dispatcher exposes this entry point.
+pub fn manage(db: &Db, args: &Value, now: Ms) -> Result<Value> {
+    let action = arg_str(args, "action").ok_or_else(|| Error::invalid("Missing record action"))?;
+    let ((), rev) = db.write(|c| {
+        match action.as_str() {
+            "update" => update_metadata(c, args, now),
+            "version_note" => {
+                let project = arg_str(args, "project").ok_or_else(|| Error::invalid("Missing project"))?;
+                let version = arg_str(args, "version").and_then(|v| util::parse_version(&v)).filter(|v| v != "latest")
+                    .ok_or_else(|| Error::invalid("Choose a baseline version"))?;
+                let note = metadata_text(args, "note", 60_000, true)?;
+                let changed = c.execute("UPDATE baselines SET note=?3 WHERE project=?1 AND version=?2", params![project,version,note])?;
+                if changed == 0 { return Err(Error::not_found("That baseline does not exist")); }
+                Ok(())
+            }
+            "delete" => {
+                if args["confirmed"] != true { return Err(Error::invalid("Confirm session deletion in the app first")); }
+                let id = arg_str_any(args, &["sessionId", "session"]).ok_or_else(|| Error::invalid("Missing sessionId"))?;
+                session::require(c, &id)?;
+                // Keep baselines and work evidence; neither can safely hand off to a deleted conversation.
+                c.execute("UPDATE baselines SET by_session=NULL WHERE by_session=?1",[&id])?;
+                c.execute("DELETE FROM ledger_legacy_event_ids WHERE event_id IN (SELECT id FROM events WHERE session_id=?1)",[&id])?;
+                c.execute("DELETE FROM pending_prompts WHERE session_id=?1",[&id])?;
+                c.execute("DELETE FROM questions WHERE session_id=?1",[&id])?;
+                c.execute("DELETE FROM events WHERE session_id=?1",[&id])?;
+                c.execute("DELETE FROM sessions WHERE id=?1",[&id])?;
+                Ok(())
+            }
+            _ => Err(Error::invalid("Unknown record action")),
+        }
+    })?;
+    Ok(json!({"ok":true,"rev":rev}))
 }

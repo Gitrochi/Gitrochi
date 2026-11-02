@@ -160,7 +160,13 @@ fn a_full_conversation() {
         .collect();
     assert_eq!(
         names,
-        ["ledger_overview", "ledger_report", "ledger_session"]
+        [
+            "ledger_overview",
+            "ledger_report",
+            "ledger_work",
+            "ledger_lookup",
+            "ledger_session"
+        ]
     );
     for tool in tools["result"]["tools"].as_array().unwrap() {
         assert_eq!(tool["inputSchema"]["type"], "object");

@@ -1,3 +1,4 @@
+import { DemoLedgerExtras } from "./demo-extras";
 import type { LedgerHumanRequest, LedgerImportResult, LedgerKindRule, LedgerMethod, LedgerMethods, LedgerProjectSettings, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerSettings, LedgerState, LedgerStatus, Ms } from "../model/types";
 import { ledgerBaselineSources, ledgerRoles } from "../model/types";
 import { inboxGroups } from "../lib/inbox";
@@ -86,6 +87,7 @@ export class DemoLedgerBackend implements LedgerBackend {
   private nextSpawn: Ms;
   private spawned = 0;
   private settings = defaultSettings();
+  private readonly extras = new DemoLedgerExtras();
   private readonly projectSettings = new Map<string, LedgerProjectSettings>();
 
   constructor(options: DemoOptions = {}) {
@@ -105,6 +107,27 @@ export class DemoLedgerBackend implements LedgerBackend {
     const args = (raw ?? {}) as Record<string, unknown>;
     const w = this.world;
     switch (method) {
+      case "records": {
+        if (args.action === "version_note") {
+          const baseline = w.baselines.find((row) => row.project === args.project && row.version === args.version);
+          if (baseline) baseline.note = String(args.note ?? "");
+        } else if (args.action === "delete") {
+          if (args.confirmed !== true) throw invalid("Confirm session deletion first");
+          w.sessions = w.sessions.filter((row) => row.id !== args.sessionId);
+          w.events = w.events.filter((row) => row.sessionId !== args.sessionId);
+          w.questions = w.questions.filter((row) => row.sessionId !== args.sessionId);
+          w.prompts = w.prompts.filter((row) => row.sessionId !== args.sessionId);
+        } else {
+          const session = w.sessions.find((row) => row.id === args.sessionId);
+          if (session) {
+            for (const key of ["title", "kind", "chatUrl"] as const) if (typeof args[key] === "string") session[key] = args[key];
+            if (Array.isArray(args.touches)) session.touches = args.touches as string[];
+            if (Array.isArray(args.related)) session.related = args.related as string[];
+          }
+        }
+        return { ok: true, rev: ++w.rev };
+      }
+      case "work": case "documents": case "notebook": return this.extras.call(method, args, this.now());
       case "info":
         return { schemaVersion: 1, dbPath: "demo", rev: w.rev, enabled: true };
       case "rev":

@@ -15,6 +15,7 @@ TASK_CONNECT_ONLY=0
 TASK_CAPTURE_MODE=--all
 if [[ "${1:-}" == "--connect-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--connect-only; shift; fi
 if [[ "${1:-}" == "--questions-only" ]]; then TASK_CAPTURE_MODE=--questions-only; shift; fi
+if [[ "${1:-}" == "--extras-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--extras-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
@@ -220,6 +221,20 @@ struct AnswerKeyboardFixture: View {
         }
 
         let ledger = store(.standard)
+        if CommandLine.arguments.contains("--extras-only") {
+            wait {
+                _ = try? await ledger.client.notebook(["action": "save", "title": "Release checklist", "body": "## Review\n\nInspect the cache policy and confirm the release notes.", "pinned": true])
+                _ = try? await ledger.client.work(["action": "add_item", "project": "harbor", "item": "W-demo-01", "title": "Review cache policy", "bundle": "Release", "date": "2026-11-02", "text": "Compared cache eviction choices"])
+                _ = try? await ledger.client.documents(["action": "set_roots", "project": "harbor", "roots": ["Demo documents"]])
+            }
+            wait { await ledger.choose(project: "harbor") }
+            try shoot("notebook", LedgerNotebookSheet(ledger: ledger), width: 980, height: 650, expect: ["Notebook", "Release checklist", "Pin note"])
+            try shoot("work-log", LedgerWorkLogSheet(ledger: ledger), width: 980, height: 680, expect: ["Work log", "Review cache policy", "Build report"])
+            try shoot("documents", LedgerDocumentsSheet(ledger: ledger), width: 1040, height: 720, expect: ["Document tracker", "Save folders and scan", "DOC-12"])
+            try shoot("records", LedgerManageSheet(ledger: ledger), width: 840, height: 720, expect: ["Manage records", "Session details", "Save session details"])
+            print("PASS: \(shots) added-feature screenshots in light and dark. \(output.path)")
+            return
+        }
         func connectShots() throws {
             let focused = CommandLine.arguments.contains("--connect-only")
             try shoot("connect", LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger"), width: 680, height: 700,
