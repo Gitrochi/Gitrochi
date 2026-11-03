@@ -272,7 +272,7 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
   - auto-continue is off for the session (the global `autoContinue` setting, with the session's own `enabled` and `delaySec` on top);
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
-  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
+  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s while its **Track agents I start** switch is on: rewriting an empty file does not change it on Windows;
   - the turn did not end with a question;
   - `stop_hook_active` is set and there has been no automatic answer since the person's last input.
 - **Waits held for the person.** With auto-continue on, some waits are never answered automatically: a request that is never auto-allowed, a risky question or plan, an `AskUserQuestion` without unique nonempty question texts, and anything past the limit in a row (a stop question only when the turn asked one). The hook still ends at once with no decision, so the terminal asks, but it stores a waiting prompt the apps can show and notify about:

@@ -30,8 +30,8 @@ describe("workspace navigation", () => {
   it.each([
     ["windows", null], ["windows", "C:/fixture/first"],
     ["macos", null], ["macos", "C:/fixture/first"],
-  ] as const)("opens the Ledger with the numbered shortcut without a preview flag (%s, %s)", (os, path) => {
-    const original = { os: env.os, preview: env.ledgerPreview };
+  ] as const)("opens the Ledger with the numbered shortcut without an environment variable (%s, %s)", (os, path) => {
+    const original = { os: env.os };
     const store = fixture(); store.path = path; store.destination = "home";
     vi.spyOn(workspace, "active", "get").mockReturnValue(store);
     vi.stubGlobal("document", { querySelector: () => null });
@@ -42,13 +42,11 @@ describe("workspace navigation", () => {
     };
     try {
       env.os = os;
-      env.ledgerPreview = null;
       const defaultShortcut = press();
       expect(store.destination).toBe("ledger");
       expect(defaultShortcut.preventDefault).toHaveBeenCalledOnce();
       expect(defaultShortcut.stopPropagation).toHaveBeenCalledOnce();
       store.destination = "home";
-      env.ledgerPreview = "1";
       for (const extra of [{ shiftKey: true }, { altKey: true }, { ctrlKey: false, metaKey: false }, { defaultPrevented: true }]) {
         const ignored = press(extra);
         expect(store.destination).toBe("home");
@@ -60,12 +58,11 @@ describe("workspace navigation", () => {
       expect(opened.preventDefault).toHaveBeenCalledOnce();
       expect(opened.stopPropagation).toHaveBeenCalledOnce();
       if (path) {
-        env.ledgerPreview = null;
         press({ key: "6" });
         expect(store.destination).toBe("flows");
       }
     } finally {
-      env.os = original.os; env.ledgerPreview = original.preview;
+      env.os = original.os;
       vi.unstubAllGlobals();
     }
   });
