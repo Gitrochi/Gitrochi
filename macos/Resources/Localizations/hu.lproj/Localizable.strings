@@ -2226,3 +2226,6 @@
 "Organization login" = "Szervezet bejelentkezési neve";
 "Open organization" = "Szervezet megnyitása";
 "No organizations found" = "Nem találhatók szervezetek";
+"View all tasks" = "Összes feladat megtekintése";
+"Show more tasks" = "További feladatok megjelenítése";
+"Project items could not be fully loaded. Retry the project." = "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet.";

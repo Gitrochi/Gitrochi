@@ -38,6 +38,7 @@ export function ProjectOverview({
   completionEnabled,
   localRepository,
   calendar,
+  viewAll,
   add,
   manageFields,
   hasDueField,
@@ -54,6 +55,7 @@ export function ProjectOverview({
   completionEnabled: boolean;
   localRepository?: string;
   calendar: () => void;
+  viewAll: () => void;
   add: () => void;
   manageFields: () => void;
   hasDueField: boolean;
@@ -153,6 +155,7 @@ export function ProjectOverview({
           </p>
         </div>
         <div className="project-overview-actions">
+        <Button size="small" onClick={viewAll}>{t("View all tasks")}<ArrowRight size={13} /></Button>
         <Button size="small" kind="primary" disabled={locked} onClick={add}><Plus size={14} />{t("New task")}</Button>
         <Button size="small" onClick={calendar}>
           <CalendarDays size={14} />

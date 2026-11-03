@@ -2238,5 +2238,8 @@
   "Other organization…": "Outra organização…",
   "Organization login": "Nome de login da organização",
   "Open organization": "Abrir organização",
-  "No organizations found": "Nenhuma organização encontrada"
+  "No organizations found": "Nenhuma organização encontrada",
+  "View all tasks": "Ver todas as tarefas",
+  "Show more tasks": "Mostrar mais tarefas",
+  "Project items could not be fully loaded. Retry the project.": "Não foi possível carregar todos os itens do projeto. Carregue o projeto novamente."
 }

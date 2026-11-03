@@ -2222,5 +2222,8 @@
   "Other organization…": "Andere organisatie…",
   "Organization login": "Inlognaam van de organisatie",
   "Open organization": "Organisatie openen",
-  "No organizations found": "Geen organisaties gevonden"
+  "No organizations found": "Geen organisaties gevonden",
+  "View all tasks": "Alle taken bekijken",
+  "Show more tasks": "Meer taken tonen",
+  "Project items could not be fully loaded. Retry the project.": "De projectitems konden niet volledig worden geladen. Laad het project opnieuw."
 }

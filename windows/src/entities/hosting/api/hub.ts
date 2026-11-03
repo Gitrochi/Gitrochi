@@ -121,7 +121,7 @@ const projectDetailQuery = `query($id:ID!,$cursor:String){node(id:$id){... on Pr
     ... on ProjectV2SingleSelectField{id name options{id name}}
     ... on ProjectV2IterationField{id name configuration{iterations{id title startDate duration} completedIterations{id title startDate duration}}}
   } pageInfo{hasNextPage}}
-  items(first:30,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
+  items(first:100,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
     ... on Issue{id title body url number state createdAt author{login} updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
     ... on PullRequest{id title body url number state createdAt author{login} updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
     ... on DraftIssue{id title body createdAt creator{login} updatedAt assignees(first:100){nodes{login}}}
@@ -143,6 +143,34 @@ function projectRow(x: J): HubProjectRow {
   for(const field of x.fieldValues?.nodes??[]){if(!field.field?.id)continue;const value=field.optionId??field.iterationId??field.text??field.number??field.date;if(value!=null)values[field.field.id]=String(value);if(field.optionId!=null)statuses[field.field.id]=field.optionId;}
   const kind=content.__typename==="PullRequest"?"pullRequest":content.__typename==="DraftIssue"?"draft":content.__typename==="Issue"?"issue":x.type==="DRAFT_ISSUE"?"draft":x.type==="PULL_REQUEST"?"pullRequest":content.id?"issue":"redacted";
   return {id:x.id,title:content.title??t("Redacted project item"),body:content.body??"",url:content.url??"",contentID:content.id??"",statuses,values,kind,number:content.number,repository:content.repository?.nameWithOwner??"",state:content.state??"",assignees:(content.assignees?.nodes??[]).map((a:J)=>a.login),labels:(content.labels?.nodes??[]).map((label:J)=>label.name),updatedAt:x.updatedAt??content.updatedAt??"",headRefName:content.headRefName??"",archived:!!x.isArchived,author:(kind==="draft"?content.creator?.login:content.author?.login)||undefined,createdAt:content.createdAt||undefined};
+}
+async function githubProjectPage(c: HubAccess, item: HubItem, cursor?: string): Promise<HubDetail> {
+  const r = await graphql<{node:J}>(c, projectDetailQuery, {id:item.id,cursor:cursor??null});
+  const x=r.node;if(!x?.id || x.id !== item.id) throw new Error(t("Project is unavailable or this account cannot access it."));
+  const d=empty({...item,title:x.title,body:x.shortDescription??"",url:x.url,data:{...item.data,...x}});
+  d.fields=(x.fields?.nodes??[]).filter((field:J)=>field.id).map(projectField);
+  d.rows=(x.items?.nodes??[]).map(projectRow);d.more=!!x.items?.pageInfo?.hasNextPage;d.cursor=x.items?.pageInfo?.endCursor;
+  if(d.rows.some(row => !row.id)) throw new Error(t("The server returned an unexpected response."));
+  if(x.fields?.pageInfo?.hasNextPage||x.items?.nodes?.some((row:J)=>row.fieldValues?.pageInfo?.hasNextPage))d.notice=t("Some project fields were truncated by the server. Only loaded fields can be edited.");
+  return d;
+}
+/** macOS: completeProjectDetail drains every item page before publishing a snapshot. */
+async function completeGithubProject(c: HubAccess, item: HubItem): Promise<HubDetail> {
+  const detail = await githubProjectPage(c, item), rows = new Map<string, HubProjectRow>();
+  for (const row of detail.rows) if (!rows.has(row.id)) rows.set(row.id, row);
+  const seen = new Set<string>();
+  let page = detail;
+  while (page.more) {
+    ensureHubCurrent(c);
+    const cursor = page.cursor;
+    if (!cursor || seen.has(cursor)) throw new Error(t("Project items could not be fully loaded. Retry the project."));
+    seen.add(cursor);
+    page = await githubProjectPage(c, item, cursor);
+    for (const row of page.rows) if (!rows.has(row.id)) rows.set(row.id, row);
+    if (page.notice) detail.notice = page.notice;
+  }
+  ensureHubCurrent(c);
+  return {...detail, rows:[...rows.values()], more:false, cursor:undefined};
 }
 export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1, cursor?: string): Promise<HubPage> {
   if(c.local){ensureHubCurrent(c);if(section!=="projects")throw new Error(t("This action requires a GitHub project."));await localProjects.load();ensureHubCurrent(c);if(localProjects.error)throw new Error(localProjects.error);return{items:localProjects.projects,more:false,notice:t("Saved on this device. Local projects do not sync with GitHub.")};}
@@ -177,13 +205,7 @@ export async function hubDetail(c: HubAccess, section: HostingHubSection, item: 
   if (section === "releases") { const x = await request<J>(c, `${repo(c)}/releases/${enc(item.id)}`); const d = empty(releaseItem(p,x)); d.assets = p === "github" ? (x.assets ?? []).map((a: J) => ({id:String(a.id),name:a.name,size:a.size,downloads:a.download_count,url:a.browser_download_url})) : [...(x.assets?.links ?? []).map((a: J) => ({id:String(a.id),name:a.name,url:a.direct_asset_url ?? a.url})), ...(x.assets?.sources ?? []).map((a: J) => ({id:a.format,name:a.format,url:a.url}))]; return d; }
   if (section === "organizations") return hubOrganizationDetail(c, item, page, tab);
   if (p === "gitlab") { const board = await request<J>(c, `${repo(c)}/boards/${enc(item.id)}`); const lists = await request<J[]>(c, `${repo(c)}/boards/${enc(item.id)}/lists?per_page=100`); const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name})); const issues = await request<J[]>(c, `${repo(c)}/issues?${hubBoardIssueQuery(board,page)}`); const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}]; d.rows=issues.map(x=>({id:String(x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",author:x.author?.username||undefined,createdAt:x.created_at||undefined,labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}})); d.more=issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d; }
-  const r = await graphql<{node:J}>(c, projectDetailQuery, {id:item.id,cursor:cursor??null});
-  const x=r.node;if(!x?.id) throw new Error(t("Project is unavailable or this account cannot access it."));
-  const d=empty({...item,title:x.title,body:x.shortDescription??"",url:x.url,data:{...item.data,...x}});
-  d.fields=(x.fields?.nodes??[]).filter((field:J)=>field.id).map(projectField);
-  d.rows=(x.items?.nodes??[]).map(projectRow);d.more=!!x.items?.pageInfo?.hasNextPage;d.cursor=x.items?.pageInfo?.endCursor;
-  if(x.fields?.pageInfo?.hasNextPage||x.items?.nodes?.some((row:J)=>row.fieldValues?.pageInfo?.hasNextPage))d.notice=t("Some project fields were truncated by the server. Only loaded fields can be edited.");
-  return d;
+  return page === 1 && cursor === undefined ? completeGithubProject(c, item) : githubProjectPage(c, item, cursor);
 }
 export async function saveHubRelease(c: HubAccess, input: HubReleaseInput, previous?: HubItem) {
   if (!input.tag.trim() || !input.name.trim()) throw new Error(t("A tag and release name are required."));

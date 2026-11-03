@@ -2222,5 +2222,8 @@
   "Other organization…": "Organisasi lain…",
   "Organization login": "Nama login organisasi",
   "Open organization": "Buka organisasi",
-  "No organizations found": "Tidak ada organisasi yang ditemukan"
+  "No organizations found": "Tidak ada organisasi yang ditemukan",
+  "View all tasks": "Lihat semua tugas",
+  "Show more tasks": "Tampilkan lebih banyak tugas",
+  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek."
 }

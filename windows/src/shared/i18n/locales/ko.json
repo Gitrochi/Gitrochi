@@ -1477,7 +1477,6 @@
   "Open a GitLab repository to browse its issue boards.": "이슈 보드를 조회하려면 GitLab 저장소를 여세요.",
   "Open a local repository or clone one to get started.": "로컬 저장소를 열거나 서버의 저장소를 복제해서 시작하세요.",
   "Open a new terminal window to start using gitch.": "새 터미널 창을 열면 gitch 를 쓸 수 있습니다.",
-  "Open a project to see its full plan.": "전체 일정을 보려면 프로젝트를 여세요.",
   "Open a repository on the selected account's server to use releases and projects.": "릴리스와 프로젝트를 사용하려면 선택한 계정 서버의 저장소를 여세요.",
   "Open a repository to get started": "저장소를 열어 시작하세요",
   "Open a repository to use flows.": "흐름을 쓰려면 저장소를 여세요.",
@@ -4397,5 +4396,8 @@
   "Other organization…": "다른 조직…",
   "Organization login": "조직 아이디",
   "Open organization": "조직 열기",
-  "No organizations found": "조직을 찾지 못했습니다"
+  "No organizations found": "조직을 찾지 못했습니다",
+  "View all tasks": "모든 작업 보기",
+  "Show more tasks": "작업 더 보기",
+  "Project items could not be fully loaded. Retry the project.": "프로젝트 항목을 모두 불러오지 못했습니다. 프로젝트를 다시 불러오세요."
 }

@@ -2262,5 +2262,8 @@
   "Other organization…": "องค์กรอื่น…",
   "Organization login": "ชื่อเข้าสู่ระบบขององค์กร",
   "Open organization": "เปิดองค์กร",
-  "No organizations found": "ไม่พบองค์กร"
+  "No organizations found": "ไม่พบองค์กร",
+  "View all tasks": "ดูงานทั้งหมด",
+  "Show more tasks": "แสดงงานเพิ่มเติม",
+  "Project items could not be fully loaded. Retry the project.": "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง"
 }

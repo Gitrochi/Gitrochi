@@ -2229,3 +2229,6 @@
 "Organization login" = "Kuruluş giriş adı";
 "Open organization" = "Kuruluşu aç";
 "No organizations found" = "Kuruluş bulunamadı";
+"View all tasks" = "Tüm görevleri görüntüle";
+"Show more tasks" = "Daha fazla görev göster";
+"Project items could not be fully loaded. Retry the project." = "Proje öğeleri tam olarak yüklenemedi. Projeyi yeniden yükleyin.";

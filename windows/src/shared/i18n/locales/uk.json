@@ -2267,5 +2267,8 @@
   "Other organization…": "Інша організація…",
   "Organization login": "Ім’я входу організації",
   "Open organization": "Відкрити організацію",
-  "No organizations found": "Організацій не знайдено"
+  "No organizations found": "Організацій не знайдено",
+  "View all tasks": "Переглянути всі завдання",
+  "Show more tasks": "Показати ще завдання",
+  "Project items could not be fully loaded. Retry the project.": "Не вдалося завантажити всі елементи проєкту. Завантажте проєкт повторно."
 }

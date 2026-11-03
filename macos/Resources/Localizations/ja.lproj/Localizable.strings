@@ -1505,7 +1505,6 @@
 "Next week" = "次の週";
 "No date" = "日付なし";
 "No scheduled work" = "予定されたタスクはありません";
-"Open a project to see its full plan." = "全体の予定を確認するにはプロジェクトを開いてください。";
 "Open project schedule" = "プロジェクトの予定を開く";
 "Planning account" = "予定管理アカウント";
 "Planning view" = "予定の表示";
@@ -3075,3 +3074,6 @@
 "Organization login" = "組織のログイン名";
 "Open organization" = "組織を開く";
 "No organizations found" = "組織が見つかりません";
+"View all tasks" = "すべてのタスクを表示";
+"Show more tasks" = "さらにタスクを表示";
+"Project items could not be fully loaded. Retry the project." = "プロジェクトの項目をすべて読み込めませんでした。プロジェクトを再読み込みしてください。";
