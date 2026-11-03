@@ -2270,5 +2270,9 @@
   "No organizations found": "Організацій не знайдено",
   "View all tasks": "Переглянути всі завдання",
   "Show more tasks": "Показати ще завдання",
-  "Project items could not be fully loaded. Retry the project.": "Не вдалося завантажити всі елементи проєкту. Завантажте проєкт повторно."
+  "Project items could not be fully loaded. Retry the project.": "Не вдалося завантажити всі елементи проєкту. Завантажте проєкт повторно.",
+  "Checks": "Перевірки",
+  "Open in Flows": "Відкрити в Потоках",
+  "Latest Flow runs recorded for this branch's head commit": "Останні запуски потоків, записані для головного коміту цієї гілки",
+  "Held": "Затримано"
 }

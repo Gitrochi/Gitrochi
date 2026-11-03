@@ -2255,5 +2255,9 @@
   "No organizations found": "Nem találhatók szervezetek",
   "View all tasks": "Összes feladat megtekintése",
   "Show more tasks": "További feladatok megjelenítése",
-  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet."
+  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet.",
+  "Checks": "Ellenőrzések",
+  "Open in Flows": "Megnyitás a Folyamatokban",
+  "Latest Flow runs recorded for this branch's head commit": "Az ág legfrissebb commitjára rögzített legutóbbi folyamatfuttatások",
+  "Held": "Visszatartva"
 }

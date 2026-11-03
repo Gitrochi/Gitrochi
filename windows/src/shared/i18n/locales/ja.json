@@ -3194,5 +3194,9 @@
   "No organizations found": "組織が見つかりません",
   "View all tasks": "すべてのタスクを表示",
   "Show more tasks": "さらにタスクを表示",
-  "Project items could not be fully loaded. Retry the project.": "プロジェクトの項目をすべて読み込めませんでした。プロジェクトを再読み込みしてください。"
+  "Project items could not be fully loaded. Retry the project.": "プロジェクトの項目をすべて読み込めませんでした。プロジェクトを再読み込みしてください。",
+  "Checks": "チェック",
+  "Open in Flows": "フローで開く",
+  "Latest Flow runs recorded for this branch's head commit": "このブランチの先頭コミットに記録された最新のフロー実行",
+  "Held": "保留"
 }

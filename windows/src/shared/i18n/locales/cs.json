@@ -2253,5 +2253,9 @@
   "No organizations found": "Nebyly nalezeny žádné organizace",
   "View all tasks": "Zobrazit všechny úkoly",
   "Show more tasks": "Zobrazit další úkoly",
-  "Project items could not be fully loaded. Retry the project.": "Položky projektu se nepodařilo načíst úplně. Načtěte projekt znovu."
+  "Project items could not be fully loaded. Retry the project.": "Položky projektu se nepodařilo načíst úplně. Načtěte projekt znovu.",
+  "Checks": "Kontroly",
+  "Open in Flows": "Otevřít v Tocích",
+  "Latest Flow runs recorded for this branch's head commit": "Nejnovější běhy toků zaznamenané pro hlavní commit této větve",
+  "Held": "Pozastaveno"
 }

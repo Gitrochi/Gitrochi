@@ -2227,5 +2227,9 @@
   "No organizations found": "Không tìm thấy tổ chức",
   "View all tasks": "Xem tất cả tác vụ",
   "Show more tasks": "Hiển thị thêm tác vụ",
-  "Project items could not be fully loaded. Retry the project.": "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án."
+  "Project items could not be fully loaded. Retry the project.": "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án.",
+  "Checks": "Kiểm tra",
+  "Open in Flows": "Mở trong Luồng",
+  "Latest Flow runs recorded for this branch's head commit": "Các lần chạy luồng mới nhất được ghi cho commit đầu của nhánh này",
+  "Held": "Tạm giữ"
 }

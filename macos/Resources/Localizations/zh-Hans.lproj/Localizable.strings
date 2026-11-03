@@ -2388,3 +2388,7 @@
 "View all tasks" = "查看所有任务";
 "Show more tasks" = "显示更多任务";
 "Project items could not be fully loaded. Retry the project." = "无法完整加载项目条目。请重新加载项目。";
+"Checks" = "检查";
+"Open in Flows" = "在流程中打开";
+"Latest Flow runs recorded for this branch's head commit" = "为此分支最新提交记录的最近流程运行";
+"Held" = "已保留";

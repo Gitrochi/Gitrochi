@@ -2225,5 +2225,9 @@
   "No organizations found": "Tidak ada organisasi yang ditemukan",
   "View all tasks": "Lihat semua tugas",
   "Show more tasks": "Tampilkan lebih banyak tugas",
-  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek."
+  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek.",
+  "Checks": "Pemeriksaan",
+  "Open in Flows": "Buka di Alur",
+  "Latest Flow runs recorded for this branch's head commit": "Jalankan alur terbaru yang tercatat untuk commit teratas cabang ini",
+  "Held": "Ditahan"
 }

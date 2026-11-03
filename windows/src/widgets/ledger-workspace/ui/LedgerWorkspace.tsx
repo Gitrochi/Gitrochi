@@ -11,6 +11,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { type LedgerLauncher, quickLaunchItems } from "../lib/quick-launch";
+import type { LedgerFlowHost } from "../model/flow-evidence";
 import { LedgerBoard } from "./LedgerBoard";
 import { LedgerTopBar } from "./LedgerFilters";
 import { LedgerGraph } from "./LedgerGraph";
@@ -40,9 +41,10 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
  * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Tabs and
  * compact filters sit above the view; below 1,080 px the inspector opens as a sheet and below 640 px controls wrap.
  * Opens without a repository and filters to the open one's project. `launcher` is the repository's tab, for the quick
- * launches. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
+ * launches; `flows`, the same tab, gives the inspector's Checks row its Flow run records and Open in Flows. Without it
+ * the inspector shows no Checks row. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
-export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher }) {
+export function LedgerWorkspace({ repoPath, ledger, launcher, flows }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher; flows?: LedgerFlowHost }) {
   const store = useObserve(ledger ?? ledgerStore(repoPath));
   useEffect(() => store.start(), [store]);
   const root = useRef<HTMLDivElement>(null);
@@ -129,7 +131,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
   };
   const waiting = visiblePrompts(store).length;
   const selected = !!store.selectedId;
-  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
+  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} flows={flows} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
   return (
     <div className={`ledger-page ${layout}`} ref={root} data-layout={layout}>
       <div className="ledger-main">

@@ -2265,5 +2265,9 @@
   "No organizations found": "ไม่พบองค์กร",
   "View all tasks": "ดูงานทั้งหมด",
   "Show more tasks": "แสดงงานเพิ่มเติม",
-  "Project items could not be fully loaded. Retry the project.": "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง"
+  "Project items could not be fully loaded. Retry the project.": "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง",
+  "Checks": "การตรวจสอบ",
+  "Open in Flows": "เปิดในโฟลว์",
+  "Latest Flow runs recorded for this branch's head commit": "การรันโฟลว์ล่าสุดที่บันทึกไว้สำหรับคอมมิตล่าสุดของแบรนช์นี้",
+  "Held": "ระงับไว้"
 }

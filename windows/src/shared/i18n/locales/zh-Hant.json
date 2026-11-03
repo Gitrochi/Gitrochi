@@ -2275,5 +2275,9 @@
   "No organizations found": "找不到組織",
   "View all tasks": "檢視所有工作",
   "Show more tasks": "顯示更多工作",
-  "Project items could not be fully loaded. Retry the project.": "無法完整載入專案項目。請重新載入專案。"
+  "Project items could not be fully loaded. Retry the project.": "無法完整載入專案項目。請重新載入專案。",
+  "Checks": "檢查",
+  "Open in Flows": "在流程中開啟",
+  "Latest Flow runs recorded for this branch's head commit": "為此分支最新提交記錄的最近流程執行",
+  "Held": "已保留"
 }

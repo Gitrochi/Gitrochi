@@ -4399,5 +4399,8 @@
   "No organizations found": "조직을 찾지 못했습니다",
   "View all tasks": "모든 작업 보기",
   "Show more tasks": "작업 더 보기",
-  "Project items could not be fully loaded. Retry the project.": "프로젝트 항목을 모두 불러오지 못했습니다. 프로젝트를 다시 불러오세요."
+  "Project items could not be fully loaded. Retry the project.": "프로젝트 항목을 모두 불러오지 못했습니다. 프로젝트를 다시 불러오세요.",
+  "Checks": "검사",
+  "Open in Flows": "흐름에서 열기",
+  "Latest Flow runs recorded for this branch's head commit": "이 브랜치의 최신 커밋에 기록된 최근 흐름 실행"
 }

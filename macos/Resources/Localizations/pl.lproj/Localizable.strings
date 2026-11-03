@@ -2229,3 +2229,7 @@
 "View all tasks" = "Pokaż wszystkie zadania";
 "Show more tasks" = "Pokaż więcej zadań";
 "Project items could not be fully loaded. Retry the project." = "Nie udało się wczytać wszystkich elementów projektu. Wczytaj projekt ponownie.";
+"Checks" = "Testy";
+"Open in Flows" = "Otwórz w Przepływach";
+"Latest Flow runs recorded for this branch's head commit" = "Najnowsze uruchomienia przepływów zapisane dla najnowszego commita tej gałęzi";
+"Held" = "Wstrzymane";
