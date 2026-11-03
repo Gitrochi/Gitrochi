@@ -465,12 +465,15 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         if !projects.contains(where: { $0.key == project }) { projects.append(LedgerProject(key: project, name: project, open: 0)) }
         let policy = a["autoContinue"].object == nil ? settings.autoContinue(forRepository: repository)
             : a["autoContinue"]["enabled"].bool.flatMap { enabled in a["autoContinue"]["delaySec"].int.map { .init(enabled: enabled, delaySec: $0) } }
-        let id = add(project: project, title: a["title"].string ?? a["branch"].string ?? name(folder ?? repository), kind: "",
-                     created: now, base: a["base"].string) { s in
+        // As the core: without a kind from the app, a launch is a task and stays on the Board
+        let chosen = a["kind"].string.map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
+        let kind = chosen ?? "task"
+        let id = add(project: project, title: a["title"].string ?? a["branch"].string ?? name(folder ?? repository), kind: kind,
+                     role: settings.kinds[kind]?.role ?? .other, created: now, base: a["base"].string) { s in
             s.links = .init(repoPath: repository, branch: a["branch"].string, worktree: folder, agentId: a["agentId"].string, cwd: folder)
             s.autoContinue = policy
         }
-        record(id, "hook", at: now, actor: .hook, summary: "Started from Gitrochi", data: ["hook": "launch"])
+        record(id, "hook", at: now, actor: .hook, summary: "Started from Gitrochi", data: chosen == nil ? ["hook": "launch", "board": .bool(true)] : ["hook": "launch"])
         rev += 1
         return LedgerTrackResult(ok: true, rev: rev, session: sessions[id]!)
     }
@@ -496,7 +499,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         kinds: ["research": .init(role: .research), "decision": .init(role: .decision),
                 "implementation": .init(role: .implementation, line: "core", handoff: true),
                 "llm-implementation": .init(role: .implementation, line: "llm", handoff: false),
-                "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "other": .init(role: .other)],
+                "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "task": .init(role: .other),
+                "other": .init(role: .other)],
         autoContinue: ["enabled": false, "delaySec": 30],
         backupKeep: 14)
     static let defaultPattern = #"^v?(\d+(?:\.\d+)+)$"#

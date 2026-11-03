@@ -189,7 +189,9 @@ Confirming acknowledges an outcome. Archiving records that the conversation is c
 
 An unreported tracked launch stays active while its branch is still at the commit it launched from. Once the branch moves, the normal stale timer applies. If its Git context cannot be read, the normal stale rule applies too. **Unreported** uses the absence of an agent report, not the absence of hook activity.
 
-Live sessions with the implementation role are **streams**. They appear in Streams and Graph, and stay out of the Board, overlap warnings and ordinary clean-up counts. This also applies to tracked launches of that kind; the default for launched implementation sessions remains an open design point. Look in Streams if such a session is absent from the Board.
+Live sessions with the implementation role are **streams**. They appear in Streams and Graph, and stay out of the Board, overlap warnings and ordinary clean-up counts. Look in Streams if such a session is absent from the Board.
+
+Agents Gitrochi starts with **Track agents I start** appear on the Board as the kind `task`, even when they report implementation work, so they count for clean-up and overlap warnings. To follow one as a stream instead, give it an implementation kind in **Manage records…**. To put every new launch in Streams, set the `task` kind's role to **Implementation** under **Settings › Ledger › Roles and stream lines**. Sessions launched before this change keep their kind.
 
 In the Inbox, **↑/↓** moves through items, **Return** opens the inspector, **A** answers, **C** confirms, **E** archives, **S** marks a stale session still active, and **M** opens the merged-version picker. These shortcuts do not act while you type in a field. In an answer field, Return adds a line; **⌘Return** / **Ctrl+Enter** saves. Confirm, archive and status changes offer **Undo**.
 

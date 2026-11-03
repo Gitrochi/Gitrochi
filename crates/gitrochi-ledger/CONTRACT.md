@@ -38,7 +38,7 @@ A project row appears with its first report. Scans run before reports and reads,
 
 - `status` (stored): `active | done | merged | closed | dropped | shelved`.
 - `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` (an unreported launch only once its branch has moved on from where it started, [below](#sessions-for-agents-gitrochi-starts)) > `active`.
-- `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
+- `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `task` (what `track` gives a launch, [below](#sessions-for-agents-gitrochi-starts)), `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
 - **Stream**: a session whose role is `implementation` and whose status is not `merged`/`closed`/`dropped`. Streams keep their verdict but stay out of overlaps, the open-session lists, project open counts and the clean-up board; they are shown as cycles.
 - Agent events: `start progress artifact question decision sync done merged closed dropped shelved release applied note heartbeat` (a heartbeat leaves no event). Korean aliases from the original tool (`시작`, `이행` …) and `rebase`, `merge`, `close`, `drop`, `apply`, `shelve` are accepted and stored in English; so are the original's kind names (`연구`, `판정`, `구현`, `LLM구현` …) and the latest words (`latest`, `head`, `최신` …).
 - Other event types: `auto_reply` (actor `auto`), `hook` (actor `hook`, wave 2), and a person's actions (actor `human`): `ack unack archive unarchive set_status answer dismiss snooze shelve link message auto_continue`.
@@ -186,12 +186,15 @@ With **Track agents I start** on, the app calls `track` before it starts an agen
 - `branch`: what git says about `cwd` (a detached HEAD has no branch). `worktree`: the checkout's top folder when `cwd` is in a linked worktree; the main checkout is the repository itself and gets none.
 - `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines. Paths compare without a trailing separator, with `~` expanded; a Windows path (on Windows, or one with a drive letter or a `\\server` share) also without case, with `\` and `/` alike.
 - `title`: the branch, else the folder's name.
+- `kind`: `task`, whose default role is `other`, so the session is on the Board and not a stream (decided 2026-11-03, DESIGN.md D14). The launch event then has `data.board: true`. A `kind` from the app is its explicit choice and has no such mark.
 - `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
 - `autoContinue`: the policy `autoContinue.repositories` keeps for `repoPath`; `null` follows the global default.
 
 **Unreported launches (D13).** Until its agent reports, a quiet session turns `stale` only once its branch's tip is no longer `head`: a commit of its own, or a reset. While the tip is still `head` its verdict stays `active`, so it is not in `attention`; the apps show it under the Board's **Unreported** filter (no `lastAgentAt`). A launch on a detached HEAD compares its folder's HEAD instead. One `git for-each-ref` per repository answers for all of its launches. When git cannot tell (no `head` recorded, the folders are gone, the branch was deleted), it goes stale like any other session.
 
 Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
+
+**On the Board (D14).** On a session whose `launch` event has `data.board`, a reported kind with the implementation role is stored as `task` while the session does not have the implementation role; the event keeps the reported kind in `data.reportedKind`, and the reply has a notice when the stored kind changes or on `start`. Other kinds apply as reported. A person moves the session to Streams with `records` (`update` with an implementation kind), after which its agent's implementation kinds apply as reported, or maps `task` to the implementation role in `settings.kinds`. Sessions created before this rule have no mark and keep the earlier behaviour.
 
 ### Importing a claude-ledger database
 
@@ -228,7 +231,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 The CLI also has an independent opt-in path for local clients: `observe <claude|codex> EVENT` reads hook JSON from standard input. It does not call the auto-continue handler or broaden any API caller's permissions. `hook EVENT` keeps its existing launch-only behavior.
 
-The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"`. Existing rows retain their kind, status and auto-continue policy. The unresolved implementation-stream default for Gitrochi launches is unchanged.
+The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"` and no `board` mark. Existing rows retain their kind, status and auto-continue policy. The Board default for Gitrochi launches (D14) does not apply to them.
 
 Allowed activity metadata is the client/session ID, event, tool name, tool-use ID, turn ID, subagent ID and the checkout context. Prompts, transcript paths/content, tool arguments/results and assistant output are ignored. These observations advance `lastAt` and append `hook` events; they never advance `lastAgentAt`, create questions or pending permission prompts, acknowledge, archive or change a session's status. `Stop` is a turn boundary, not task completion. Only actual agent reports establish reported progress and outcomes.
 
@@ -350,7 +353,9 @@ Added for opt-in local client activity:
 
 19. Browser observation: optional `Question.browserSourceUrl` and `browserDraft`, storage schema 8, App-only host registration and the separate scoped native protocol above. Browser answers remain local and do not change normal agent delivery.
 
-Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
+Requests for later waves: live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them. Settled by 20 below.
+
+20. Launched agents on the Board (DESIGN.md D14, decided 2026-11-03): `track` without `kind` stores `task`, a new default kind with the role `other`, and marks its `launch` event `data.board: true`; an implementation kind its agent reports is stored as `task` with `data.reportedKind` on the event ([Sessions for agents Gitrochi starts](#sessions-for-agents-gitrochi-starts)). The maintainer approved this change of launch behaviour; sessions launched before it keep theirs.
 
 
 ## Work, documents and personal records

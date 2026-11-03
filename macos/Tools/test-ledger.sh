@@ -1173,11 +1173,14 @@ let start: LedgerMs = 1_793_400_000_000
         check(launched.project == "harbor-app" && launched.title == "feature/retry" && launched.baseVersion == "3.1.0" && launched.lastAgentAt == nil
               && launched.links.agentId == "agent-native" && launched.links.branch == "feature/retry" && launched.autoContinue == .init(enabled: true, delaySec: 40),
               "track: branch, base and the repository's policy, unreported: \(launched)")
+        check(launched.kind == "task" && launched.role == .other && launched.stream == nil, "a launch is a task on the Board: \(launched)")
         let launchRecord = try await client.session(launched.id)
-        check(launchRecord.events.count == 1 && launchRecord.events[0].actor == .hook && launchRecord.events[0].data?["hook"]?.string == "launch", "the launch is on record")
+        check(launchRecord.events.count == 1 && launchRecord.events[0].actor == .hook && launchRecord.events[0].data?["hook"]?.string == "launch"
+              && launchRecord.events[0].data?["board"]?.bool == true, "the launch is on record")
         let agentStart = try LedgerClient.decode(LedgerJSON.self, from: CLIBackend(binary: cli, db: db).call(method: "report", args: JSONEncoder().encode(LedgerJSON.object(
-            ["session": .string(launched.id), "event": "start", "project": "harbor-app", "title": "Retry sign-in", "base": "3.1.0"]))))
+            ["session": .string(launched.id), "event": "start", "project": "harbor-app", "title": "Retry sign-in", "base": "3.1.0", "kind": "implementation"]))))
         check(agentStart["event"].string == "start" && agentStart["session"]["title"].string == "Retry sign-in", "the agent's own start takes over: \(agentStart)")
+        check(agentStart["session"]["kind"].string == "task" && agentStart["session"]["stream"] == .null, "its implementation kind keeps it on the Board: \(agentStart)")
         check(failure(CLIBackend(binary: cli, db: db), "track", ["repoPath": .string(repo)])?.code == "NOT_ALLOWED", "agents cannot track")
         _ = try await client.human(.autoContinue(nil), sessionId: launched.id)
         check(try await client.session(launched.id).session.autoContinue == nil, "the session follows the default again")
