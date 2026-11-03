@@ -6,7 +6,7 @@ export { AccountConnectionFailure, accountConnectionMessage } from "./model/conn
 export { type RequestScope, type RequestQuery, type RequestLifecycle, type MergeMethod, type InboxItem, type InboxDetail, requestPage, requestLifecycle, mergeRequest, rebaseRequest, setRequestState, updateRequest, setReviewers, inboxPage, inboxDetail, postInboxComment, setIssueState, markInboxRead } from "./api/collaboration";
 
 export { issuePage, saveWorkspaceIssue, searchWorkspaceRepositories, workspaceJobLog, redactWorkspaceLog, type IssueScope } from "./api/workspace-operations";
-export { localHubAccess, hubProjectTarget, hubProjectColumns, HubProjectPermissionError, HubProjectActionDeniedError, HubUncertainWriteError, hubBoardIssueQuery, type HostingHubSection, type HubAccess, type HubItem, type HubPage, type HubMember, type HubRepository, type HubProjectFieldKind, type HubProjectOption, type HubProjectField, type HubProjectRow, type HubDetail, type HubReleaseInput, ensureHubCurrent, hubPage, hubDetail, hubSafeURL, hubError, saveHubRelease, deleteHubItem, moveHubProjectItem, addHubProjectIssue, saveHubProjectDraft, archiveHubProjectItem, deleteHubProjectItem, updateHubProjectField, moveHubProjectItemPosition, convertHubProjectDraftToIssue } from "./api/hub";
+export { localHubAccess, hubProjectTarget, hubProjectOrganization, hubProjectColumns, HubProjectPermissionError, HubProjectActionDeniedError, HubUncertainWriteError, hubBoardIssueQuery, type HostingHubSection, type HubProjectScope, type HubAccess, type HubItem, type HubPage, type HubMember, type HubRepository, type HubProjectFieldKind, type HubProjectOption, type HubProjectField, type HubProjectRow, type HubDetail, type HubReleaseInput, ensureHubCurrent, hubPage, hubDetail, hubSafeURL, hubError, saveHubRelease, deleteHubItem, moveHubProjectItem, addHubProjectIssue, saveHubProjectDraft, archiveHubProjectItem, deleteHubProjectItem, updateHubProjectField, moveHubProjectItemPosition, convertHubProjectDraftToIssue } from "./api/hub";
 export { HostingHubStore, type HubSource } from "./model/hub";
 export { accountWorkPage, accountWorkOrigin, markAccountWorkRead, type AccountWorkKind, type AccountWorkItem } from "./api/account-work";
 export { rememberProjectBranch, projectTaskBranches, projectBranchTask, projectIssueBranches } from "./model/project-tasks";
@@ -33,3 +33,5 @@ export { releaseVersion, compareReleaseVersions, releaseTag, releaseDate, releas
 export { ReleasePortfolio, releasePortfolio, type ReleaseSummary } from "./model/release-portfolio";
 export { issueTaskReference, issueBranchName, issueRequestBody, quoteIssueComment } from "./model/issue-workflow";
 export { changeIssueComment, issueLinkedRequests, type InboxComment, type IssueLinkedRequest } from "./api/issue-workflow";
+
+export { ProjectOrganizationState } from "./model/project-organizations";

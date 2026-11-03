@@ -2187,3 +2187,12 @@
 "Open repositories" = "Repositori terbuka";
 "Recent local repositories" = "Repositori lokal terbaru";
 "Open repository" = "Buka repositori";
+"Organization: {0}" = "Organisasi: {0}";
+"Load more organizations" = "Muat lebih banyak organisasi";
+"Retry organizations" = "Coba muat organisasi lagi";
+"Loading organizations…" = "Memuat organisasi…";
+"Organizations could not be loaded. Your personal projects are still available." = "Organisasi tidak dapat dimuat. Proyek pribadi Anda tetap tersedia.";
+"Other organization…" = "Organisasi lain…";
+"Organization login" = "Nama login organisasi";
+"Open organization" = "Buka organisasi";
+"No organizations found" = "Tidak ada organisasi yang ditemukan";

@@ -20,10 +20,10 @@ extension RepoStore {
         guard let account = hubAccount, let target, AccountStore.shared.candidates(for: target).contains(where: { $0.id == account.id }) else { return nil }
         return target.path.split(separator: "/").first.map(String.init)
     }
-    var hubProjectEffectiveScope: String { hubProjectRepositoryOwner == nil ? "personal" : hostingHub.projectScope }
-    var hubProjectOwner: String { if hubIsLocalProject { return String(localized: "This device") }; return hubProjectEffectiveScope == "personal" ? hubAccount?.username ?? "" : hubProjectRepositoryOwner ?? "" }
+    var hubProjectEffectiveScope: String { HostingHubAPI.projectOrganization(scope: hostingHub.projectScope) != nil ? hostingHub.projectScope : hubProjectRepositoryOwner == nil ? "personal" : hostingHub.projectScope }
+    var hubProjectOwner: String { if hubIsLocalProject { return String(localized: "This device") }; return HostingHubAPI.projectOrganization(scope: hubProjectEffectiveScope) ?? (hubProjectEffectiveScope == "personal" ? hubAccount?.username ?? "" : hubProjectRepositoryOwner ?? "") }
     func selectHubProjectScope(_ scope: String) async {
-        guard !hostingHub.busy, ["repository", "personal"].contains(scope) else { return }
+        guard !hostingHub.busy, (["repository", "personal"].contains(scope) || HostingHubAPI.projectOrganization(scope: scope) != nil) else { return }
         hostingHub.projectScope = scope; await activateHostingHub(hostingHub.section)
     }
     func selectHubProjectSource(_ source: String) async {
@@ -38,7 +38,7 @@ extension RepoStore {
         if sectionChanged || hostingHub.context != stamp { let selected = hostingHub.selectedAccountID, projectScope = hostingHub.projectScope, projectSource = hostingHub.projectSource; hostingHub = HostingHubState(); hostingHub.selectedAccountID = selected; hostingHub.projectScope = projectScope; hostingHub.projectSource = projectSource; hostingHub.section = section; hostingHub.context = stamp; if section == .organizations { hostingHub.tab = "overview" } }
         if hostingHub.page == 0 && !hostingHub.loading { await loadHostingHub() }
     }
-    func selectHubAccount(_ id: String) async { guard !hostingHub.busy else { return }; hostingHub.selectedAccountID = id; await activateHostingHub(hostingHub.section) }
+    func selectHubAccount(_ id: String) async { guard !hostingHub.busy else { return }; if hubAccount?.id != id && HostingHubAPI.projectOrganization(scope: hostingHub.projectScope) != nil { hostingHub.projectScope = "personal" }; hostingHub.selectedAccountID = id; await activateHostingHub(hostingHub.section) }
     /// Saved credentials stay silent until the user explicitly requests Keychain access.
     func allowHubStoredAccess() async {
         guard let account = hubAccount, hubCredentialState == .authorizationRequired, !hostingHub.busy, !hostingHub.allowingCredentialAccess else { return }
@@ -68,7 +68,7 @@ extension RepoStore {
         let actual = target, candidates = actual.map { AccountStore.shared.candidates(for: $0) } ?? []
         let selectedTarget: RepoTarget
         let matchingTarget = actual.flatMap { value in candidates.contains(where: { $0.id == account.id }) ? value : nil }
-        selectedTarget = HostingHubAPI.projectTarget(matchingTarget, provider: account.provider, host: account.host, username: account.username, personal: hostingHub.section == .projects && account.provider == .github && hostingHub.projectScope == "personal")
+        selectedTarget = HostingHubAPI.projectTarget(matchingTarget, provider: account.provider, host: account.host, username: account.username, personal: hostingHub.section == .projects && account.provider == .github && hostingHub.projectScope == "personal", organization: hostingHub.section == .projects && account.provider == .github ? HostingHubAPI.projectOrganization(scope: hostingHub.projectScope) : nil)
         let token = await AccountStore.shared.loadToken(for: account)
         guard hostingHub.generation == generation, hubSelectionStamp == selection, hostingHub.section == section else {
             throw HostingHubAPI.fail(String(localized: "The repository or account changed. Reopen this action."))
@@ -78,7 +78,7 @@ extension RepoStore {
             throw HostingHubAPI.fail(message)
         }
         let stamp = hubContextStamp
-        return HubAccess(target: selectedTarget, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { [weak self] in guard let self else { return false }; return self.hostingHub.generation == generation && self.hubContextStamp == stamp })
+        return HubAccess(target: selectedTarget, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { [weak self] in guard let self else { return false }; return self.hostingHub.generation == generation && self.hubContextStamp == stamp }, projectOrganization: section == .projects && account.provider == .github ? HostingHubAPI.projectOrganization(scope: hostingHub.projectScope) : nil)
     }
     func loadHostingHub(append: Bool = false) async {
         guard !hostingHub.loading, !hostingHub.busy else { return }

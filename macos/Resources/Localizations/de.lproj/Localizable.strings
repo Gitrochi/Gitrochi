@@ -2220,3 +2220,12 @@
 "Open repositories" = "Geöffnete Repositorys";
 "Recent local repositories" = "Zuletzt geöffnete lokale Repositorys";
 "Open repository" = "Repository öffnen";
+"Organization: {0}" = "Organisation: {0}";
+"Load more organizations" = "Weitere Organisationen laden";
+"Retry organizations" = "Organisationen erneut laden";
+"Loading organizations…" = "Organisationen werden geladen…";
+"Organizations could not be loaded. Your personal projects are still available." = "Organisationen konnten nicht geladen werden. Deine persönlichen Projekte sind weiterhin verfügbar.";
+"Other organization…" = "Andere Organisation…";
+"Organization login" = "Anmeldename der Organisation";
+"Open organization" = "Organisation öffnen";
+"No organizations found" = "Keine Organisationen gefunden";

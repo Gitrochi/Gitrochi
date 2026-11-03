@@ -2268,3 +2268,12 @@
 "Open repositories" = "Dépôts ouverts";
 "Recent local repositories" = "Dépôts locaux récents";
 "Open repository" = "Ouvrir le dépôt";
+"Organization: {0}" = "Organisation : {0}";
+"Load more organizations" = "Charger plus d’organisations";
+"Retry organizations" = "Réessayer de charger les organisations";
+"Loading organizations…" = "Chargement des organisations…";
+"Organizations could not be loaded. Your personal projects are still available." = "Impossible de charger les organisations. Vos projets personnels restent disponibles.";
+"Other organization…" = "Autre organisation…";
+"Organization login" = "Identifiant de l’organisation";
+"Open organization" = "Ouvrir l’organisation";
+"No organizations found" = "Aucune organisation trouvée";

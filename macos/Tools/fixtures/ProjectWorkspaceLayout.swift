@@ -74,6 +74,14 @@ private final class ProjectFixtureNetworkBlocker: URLProtocol {
     }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
+        if request.url?.host == "api.github.com", request.httpMethod == "GET", request.url?.path == "/user/orgs" {
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json"])!
+            let payload: [[String: Any]] = [["id": 1, "login": "sample-studio", "description": "Desktop team"]]
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: try! JSONSerialization.data(withJSONObject: payload))
+            client?.urlProtocolDidFinishLoading(self)
+            return
+        }
         if request.url?.host == "api.github.com", request.httpMethod == "GET",
            ["/repos/sample-studio/desktop/issues/401", "/repos/sample-studio/desktop/issues/401/comments"].contains(request.url?.path ?? "") {
             let payload: Any

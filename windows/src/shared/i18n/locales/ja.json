@@ -3183,5 +3183,14 @@
   "Open a repository to see its Git identity.": "リポジトリを開くと、そのGit IDを確認できます。",
   "Open repositories": "開いているリポジトリ",
   "Recent local repositories": "最近使ったローカルリポジトリ",
-  "Open repository": "リポジトリを開く"
+  "Open repository": "リポジトリを開く",
+  "Organization: {0}": "組織: {0}",
+  "Load more organizations": "さらに組織を読み込む",
+  "Retry organizations": "組織の読み込みを再試行",
+  "Loading organizations…": "組織を読み込み中…",
+  "Organizations could not be loaded. Your personal projects are still available.": "組織を読み込めませんでした。個人のプロジェクトは引き続き利用できます。",
+  "Other organization…": "他の組織…",
+  "Organization login": "組織のログイン名",
+  "Open organization": "組織を開く",
+  "No organizations found": "組織が見つかりません"
 }

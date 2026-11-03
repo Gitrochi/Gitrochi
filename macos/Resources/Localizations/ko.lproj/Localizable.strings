@@ -4400,3 +4400,12 @@
 "Open repositories" = "열린 저장소";
 "Recent local repositories" = "최근 로컬 저장소";
 "Open repository" = "저장소 열기";
+"Organization: {0}" = "조직: {0}";
+"Load more organizations" = "조직 더 불러오기";
+"Retry organizations" = "조직 다시 불러오기";
+"Loading organizations…" = "조직 불러오는 중…";
+"Organizations could not be loaded. Your personal projects are still available." = "조직을 불러오지 못했습니다. 내 프로젝트는 계속 사용할 수 있습니다.";
+"Other organization…" = "다른 조직…";
+"Organization login" = "조직 아이디";
+"Open organization" = "조직 열기";
+"No organizations found" = "조직을 찾지 못했습니다";

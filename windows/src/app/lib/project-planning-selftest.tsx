@@ -8,7 +8,7 @@ const pause = (ms = 25) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 /** Home and Projects are mounted together to verify the real task handoff without remote writes. */
 export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
-  const fixture = planningFixture(),
+  const fixture = planningFixture({ organization: true }),
     host = document.createElement("div");
   host.hidden = true;
   document.body.append(host);
@@ -48,6 +48,28 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
       await until(() => !!host.querySelector(".planning-dashboard")),
       "Home planning dashboard missing",
     );
+    ensure(fixture.store.target === null && fixture.store.path === null, "Organization planning unexpectedly required a repository");
+    ensure(host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:team", "Home did not preserve its organization scope without a repository");
+    const organizationScope = host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(organizationScope, "other");
+    organizationScope.dispatchEvent(new Event("change", { bubbles: true }));
+    ensure(await until(() => !!host.querySelector(`input[aria-label="${t("Organization login")}"]`)), "Manual organization entry missing");
+    const enterOrganization = (value: string) => {
+      const organizationInput = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Organization login")}"]`)!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(organizationInput, value);
+      organizationInput.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    enterOrganization("invalid/organization"); await pause();
+    ensure(button("Open organization")!.disabled, "Invalid organization login was accepted");
+    enterOrganization("TEAM"); await pause(); button("Open organization")!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:team"), "Organization login casing changed the visible scope");
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(organizationScope, "other");
+    organizationScope.dispatchEvent(new Event("change", { bubbles: true })); await pause();
+    enterOrganization("shared-team"); await pause(); button("Open organization")!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:shared-team"), "An organization outside the membership list could not be selected");
+    const scope = host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(scope, "organization:team");
+    scope.dispatchEvent(new Event("change", { bubbles: true })); await pause();
     ensure(
       JSON.stringify(metricCounts()) === JSON.stringify([1, 1, 2, 1, 1]),
       "Home metrics did not deduplicate shared issues",
@@ -172,6 +194,7 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
       ),
       "Home did not open the exact task in Projects",
     );
+    ensure(fixture.store.hostingHub.projectScope === "organization:team", "Home lost organization scope during navigation to Projects");
     ensure(
       fixture.store.hostingHub.detail?.item.id === "QUALITY" &&
         fixture.store.hostingHub.requestedProjectRowID === null &&
@@ -204,7 +227,7 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
     ensure(fixture.writes === 0, "Home planning issued a remote mutation");
     return [
       true,
-      "Home deduplicated metrics + task/project search + assignee and overdue filters + week navigation + project selection persistence + unavailable selection removal + exact earliest-date page-2 project/task handoff + one-time inspector focus without remote writes",
+      "Organization Home without a repository + preserved organization project/task handoff + Home deduplicated metrics + task/project search + assignee and overdue filters + week navigation + project selection persistence + unavailable selection removal + exact earliest-date page-2 project/task handoff + one-time inspector focus without remote writes",
     ];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];

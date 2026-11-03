@@ -289,7 +289,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Repository release overview", releaseOverviewSelfTest);
   await step("Issue development workflow", issueWorkflowSelfTest);
   await step("Project scheduling overview, calendar, and confirmed rescheduling", projectScheduleSelfTest);
-  await step("Home portfolio scheduling and exact project task handoff", projectPlanningSelfTest);
+  await step("Organization projects without a repository, Home scheduling, and exact task handoff", projectPlanningSelfTest);
   await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
 

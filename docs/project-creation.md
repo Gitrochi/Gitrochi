@@ -2,6 +2,12 @@
 
 Home and Projects can work with a local planner or connected GitHub projects. The creation dialog offers Local, Private GitHub and Public GitHub projects, with a review of the destination and visibility before saving.
 
+## Organization projects
+
+Select a connected GitHub account and an organization in **Project scope** on Home or Projects. Opening a local repository is optional. The organization list comes from that account's GitHub memberships, and project lists include only projects the account can read. Organization and project lists have separate pagination. Use **Other organization…** to enter an organization login when a shared project belongs to an organization missing from the membership list. A failure to load organizations does not prevent using personal projects or opening an organization directly.
+
+The selected organization stays with Home-to-Projects navigation and the project creation destination. Changing accounts clears the previous account's organization list. GitHub must grant the connected credential access to both the organization and Projects; use **Connect project access** when the app requests the additional Projects permission.
+
 ## Local planning
 
 Local projects require no hosting account or token. Their tasks use the same Overview, Calendar, Board, Table and Roadmap as connected projects, including start/due dates, status, priority, assignees, descriptions, ordering, archive and bulk edits. Home can combine selected local projects into its agenda, week and project summaries. Completion and schedule preferences use a stable local namespace across account changes.
@@ -38,9 +44,13 @@ Plan information checked against GitHub's official documentation on 2026-10-27:
 
 The backend checks use isolated storage and synthetic transports. They cover local persistence and restart, corrupt-data preservation, stale revisions, atomic bulk/date changes, remote/local source boundaries, unknown plans, owner/account plan separation, Free private creation and uncertain publication recovery. UI fixtures exercise the production views in light and dark themes; remote project writes are blocked in these fixtures. Final validation passed 539 Windows tests, four browser selftests, 56 macOS workspace/navigation scenarios, eight macOS creation scenarios, three native storage tests and both application builds. The macOS build retains its existing Keychain deprecation and Rust deployment-target linker warnings.
 
+Organization discovery checks cover repository-free organization queries, project and membership pagination, retry, stale account responses, explicit organization creation and the Home-to-Projects task handoff. Validation passed 934 Windows tests, 83 integration regression checks in the existing workspace, the organization browser self-test, both application builds, and 104 native English/Korean layout scenarios with no unexpected network requests. Existing macOS dependency/Keychain warnings and the Windows bundle-size warning remain. Rust was unchanged, so `cargo check` was skipped. The separate `gitch test --affected --summary` command stopped with `TRUST-01` because its flow requires human approval; it was not counted as a pass.
+
 ## Screenshots
 
 Synthetic data, with no user accounts or projects:
+
+Organization projects without an open repository: [Light](screenshots/organization-projects/windows-home-light.jpg) · [Dark](screenshots/organization-projects/windows-home-dark.jpg).
 
 ![macOS private project on GitHub Free](screenshots/project-creation/macos-private-free-light.png)
 

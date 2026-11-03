@@ -5,7 +5,13 @@ import { hubOrganizationDetail, type HubOrganizationData, type HubOrganizationTa
 import { localProjects, isLocalProject } from "../model/local-projects";
 
 export type HostingHubSection = "releases" | "projects" | "organizations";
-export interface HubAccess { target: RepoTarget; token: string; apiBase: string; me: string; stillCurrent?: () => boolean; local?: boolean }
+export type HubProjectScope = "repository" | "personal" | `organization:${string}`;
+/** Accept a GitHub organization login without turning arbitrary input into an API owner. */
+export function hubProjectOrganization(scope: HubProjectScope): string | undefined {
+  const login = scope.startsWith("organization:") ? scope.slice("organization:".length) : "";
+  return login.length <= 39 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(login) ? login : undefined;
+}
+export interface HubAccess { target: RepoTarget; token: string; apiBase: string; me: string; stillCurrent?: () => boolean; local?: boolean; projectOrganization?: string }
 export interface HubItem { id: string; title: string; subtitle: string; body: string; url: string; avatarURL?: string | null; editable?: boolean; data: Record<string, unknown> }
 export interface HubPage { items: HubItem[]; more: boolean; cursor?: string; notice?: string }
 export interface HubMember { id: string; name: string; username: string; role: string; avatarURL: string | null; url: string }
@@ -36,8 +42,8 @@ export function ensureHubCurrent(c: HubAccess) { if (c.stillCurrent?.() === fals
 function assertAPI(c: HubAccess, url: string) { if(c.local)throw new Error(t("Local projects do not send requests to GitHub.")); const base = new URL(c.apiBase), u = new URL(url); if (u.origin !== base.origin || !u.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/")) throw new Error(t("The server returned an unsafe address.")); }
 async function request<T>(c: HubAccess, url: string, method = "GET", body?: unknown): Promise<T> { ensureHubCurrent(c); assertAPI(c, url); const value = await H.send<T>(c.target.provider, url, c.token, method, body); ensureHubCurrent(c); return value; }
 async function raw(c: HubAccess, url: string, method: string, body?: unknown) { ensureHubCurrent(c); assertAPI(c, url); await H.sendRaw(c.target.provider, url, c.token, method, body); ensureHubCurrent(c); }
-export function hubProjectTarget(repository: RepoTarget | null, provider: Provider, host: string, username: string, personal: boolean): RepoTarget {
-  return !personal && repository ? repository : {provider,host,path:`${username}/workspace`,remote:"origin"};
+export function hubProjectTarget(repository: RepoTarget | null, provider: Provider, host: string, username: string, personal: boolean, organization?: string): RepoTarget {
+  return organization ? {provider,host,path:`${organization}/workspace`,remote:"origin"} : !personal && repository ? repository : {provider,host,path:`${username}/workspace`,remote:"origin"};
 }
 export function hubProjectColumns(detail: HubDetail, fieldID?: string): { id: string; title: string; rows: HubProjectRow[] }[] {
   const groupFields = detail.fields.filter(value => value.options.length > 0);
@@ -156,10 +162,13 @@ export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1
     return {items: list.map(x => ({id: String(c.target.provider === "github" ? x.login : x.id), title: x.name || x.login || x.full_name, subtitle: x.full_path ?? x.login, body: x.description ?? "", url: x.html_url ?? x.web_url ?? `https://${c.target.host}/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x})), more: list.length === pageSize};
   }
   if (c.target.provider === "gitlab") { if (c.target.path.endsWith("/workspace")) throw new Error(t("Open a GitLab repository to browse its issue boards.")); const list = await request<J[]>(c, `${repo(c)}/boards`); return {items: list.slice((page-1)*pageSize,page*pageSize).map(x => ({id: String(x.id), title: x.name, subtitle: t("GitLab issue board"), body: "", url: `https://${c.target.host}/${c.target.path}/-/boards/${x.id}`, data: x})), more: list.length > page*pageSize}; }
-  const [owner, name] = c.target.path.split("/");
+  const [repositoryOwner, name] = c.target.path.split("/");
+  const owner = c.projectOrganization ?? repositoryOwner;
   const noRepo = name === "workspace";
-  const r = await graphql<{user?: {projectsV2: J}; repository?: {owner: {projectsV2: J}}}>(c, noRepo ? `query($owner:String!,$cursor:String){user(login:$owner){projectsV2(first:30,after:$cursor){nodes{${projectFragment}} pageInfo{hasNextPage endCursor}}}}` : `query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{projectsV2(first:30,after:$cursor){nodes{${projectFragment}} pageInfo{hasNextPage endCursor}}} ... on Organization{projectsV2(first:30,after:$cursor){nodes{${projectFragment}} pageInfo{hasNextPage endCursor}}}}}}`, noRepo ? {owner, cursor: cursor ?? null} : {owner, name, cursor: cursor ?? null});
-  const p = noRepo ? r.user?.projectsV2 : r.repository?.owner?.projectsV2; if (!p) throw new Error(t("Projects are unavailable for this repository owner."));
+  const connection = `projectsV2(first:30,after:$cursor){nodes{${projectFragment}} pageInfo{hasNextPage endCursor}}`;
+  const projectQuery = c.projectOrganization ? `query($owner:String!,$cursor:String){organization(login:$owner){${connection}}}` : noRepo ? `query($owner:String!,$cursor:String){user(login:$owner){${connection}}}` : `query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{${connection}} ... on Organization{${connection}}}}}`;
+  const r = await graphql<{user?: {projectsV2: J}; organization?: {projectsV2: J}; repository?: {owner: {projectsV2: J}}}>(c, projectQuery, c.projectOrganization || noRepo ? {owner, cursor: cursor ?? null} : {owner, name, cursor: cursor ?? null});
+  const p = c.projectOrganization ? r.organization?.projectsV2 : noRepo ? r.user?.projectsV2 : r.repository?.owner?.projectsV2; if (!p) throw new Error(t("Projects are unavailable for this repository owner."));
   return {items: p.nodes.map((x: J) => ({id: x.id, title: x.title, subtitle: `#${x.number}${x.closed ? " · closed" : ""}`, body: x.shortDescription ?? "", url: x.url, data: x})), more: p.pageInfo.hasNextPage, cursor: p.pageInfo.endCursor, notice: t("Projects sync with GitHub. Changes are saved after confirmation.")};
 }
 export async function hubDetail(c: HubAccess, section: HostingHubSection, item: HubItem, page = 1, cursor?: string, tab: HubOrganizationTab = "repositories"): Promise<HubDetail> {

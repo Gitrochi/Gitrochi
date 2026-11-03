@@ -2241,5 +2241,14 @@
   "Open a repository to see its Git identity.": "Otevřete repozitář pro zobrazení jeho Git identity.",
   "Open repositories": "Otevřené repozitáře",
   "Recent local repositories": "Nedávné místní repozitáře",
-  "Open repository": "Otevřít repozitář"
+  "Open repository": "Otevřít repozitář",
+  "Organization: {0}": "Organizace: {0}",
+  "Load more organizations": "Načíst další organizace",
+  "Retry organizations": "Zkusit znovu načíst organizace",
+  "Loading organizations…": "Načítání organizací…",
+  "Organizations could not be loaded. Your personal projects are still available.": "Organizace se nepodařilo načíst. Vaše osobní projekty jsou stále k dispozici.",
+  "Other organization…": "Jiná organizace…",
+  "Organization login": "Přihlašovací jméno organizace",
+  "Open organization": "Otevřít organizaci",
+  "No organizations found": "Nebyly nalezeny žádné organizace"
 }

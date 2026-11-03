@@ -8,7 +8,8 @@ import "../src/app/styles/global.css";
 const params = new URLSearchParams(location.search);
 await loadLanguage(params.get("lang") ?? "en");
 document.documentElement.dataset.theme = params.get("theme") ?? "light";
-const fixture = planningFixture();
+const fixture = planningFixture({ organization: params.has("organization") });
+if (params.has("project")) fixture.store.navigate("projects");
 createRoot(document.getElementById("root")!).render(
   <div
     style={{

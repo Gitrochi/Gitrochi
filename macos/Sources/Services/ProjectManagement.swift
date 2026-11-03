@@ -78,10 +78,14 @@ extension HostingHubAPI {
     /// Projects exist on Free. Billing metadata is optional and does not prove token or owner-policy permission.
     static func inspectProjectCreationCapabilities(_ c: HubAccess) async throws -> HubProjectCreationCapabilities {
         try managementCheck(c)
-        let requestedOwner = c.target.path.split(separator: "/").first.map(String.init) ?? c.me
+        let requestedOwner = c.projectOrganization ?? c.target.path.split(separator: "/").first.map(String.init) ?? c.me
         var viewer: J = [:], owner: J = [:]
         do { viewer = try await object(c, c.apiBase + "/user") } catch { try check(c) }
-        do { let data = try await graph(c, "query($owner:String!){repositoryOwner(login:$owner){__typename id login}}", ["owner": requestedOwner]); owner = obj(data, "repositoryOwner") } catch { try check(c) }
+        do {
+            let field = c.projectOrganization == nil ? "repositoryOwner" : "organization"
+            let data = try await graph(c, "query($owner:String!){\(field)(login:$owner){__typename id login}}", ["owner": requestedOwner])
+            owner = obj(data, field)
+        } catch { try check(c) }
         let viewerLogin = s(viewer, "login"), verified = !viewerLogin.isEmpty && viewerLogin.caseInsensitiveCompare(c.me) == .orderedSame
         let ownerLogin = s(owner, "login").isEmpty ? requestedOwner : s(owner, "login"), kind: HubProjectOwnerKind = s(owner, "__typename") == "Organization" ? .organization : s(owner, "__typename") == "User" ? .user : .unknown
         let unknown = HubProjectPlan(tier: .unknown, rawName: nil, source: .unavailable)
@@ -104,10 +108,11 @@ extension HostingHubAPI {
     /// Resolves the captured scope's owner and optional linked repository on the connected API.
     static func createProject(_ c: HubAccess, title: String, isPublic: Bool = false) async throws -> HubItem {
         try managementCheck(c); let cleanTitle = try managementName(title)
-        let parts = c.target.path.split(separator: "/").map(String.init), owner = parts.first ?? c.me, repository = parts.last ?? "workspace", personal = repository == "workspace"
-        let query = personal ? "query($owner:String!){repositoryOwner(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}"
+        let parts = c.target.path.split(separator: "/").map(String.init), owner = c.projectOrganization ?? parts.first ?? c.me, repository = parts.last ?? "workspace", personal = c.projectOrganization != nil || repository == "workspace"
+        let ownerField = c.projectOrganization == nil ? "repositoryOwner" : "organization"
+        let query = personal ? "query($owner:String!){\(ownerField)(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}"
         let response = try await graph(c, query, personal ? ["owner": owner] : ["owner": owner, "name": repository]), source = obj(response, "repository")
-        let ownerID = id(personal ? obj(response, "repositoryOwner") : obj(source, "owner"))
+        let ownerID = id(personal ? obj(response, ownerField) : obj(source, "owner"))
         guard !ownerID.isEmpty, personal || !id(source).isEmpty else { throw fail(String(localized: "Projects are unavailable for this repository owner.")) }
         var input: J = ["ownerId": ownerID, "title": cleanTitle]; if !personal { input["repositoryId"] = id(source) }
         return try await managementCreation(c) {

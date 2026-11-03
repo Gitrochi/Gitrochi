@@ -47,7 +47,7 @@ struct HostingHubState {
     var generation = UUID(); var listID = UUID(); var detailID = UUID(); var context = ""
     var filteredItems: [HubItem] { let q = query.trimmingCharacters(in: .whitespacesAndNewlines); return q.isEmpty ? items : items.filter { ($0.title + " " + $0.subtitle + " " + $0.body).localizedCaseInsensitiveContains(q) } }
 }
-struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)?; var local = false }
+struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)?; var local = false; var projectOrganization: String? = nil }
 
 struct HubProjectPermissionError: LocalizedError {
     var errorDescription: String? { String(localized: "Connect project access for this GitHub account to load projects.") }
@@ -170,7 +170,14 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         return result
     }
     static func error(_ e: Error, token: String? = nil) -> String { var text = e.localizedDescription; if let token, !token.isEmpty { text = text.replacingOccurrences(of: token, with: "[redacted]") }; for pattern in ["\\b(?:gh[pousr]_[\\w]+|github_pat_[\\w]+|glpat-[\\w-]+)\\b", "(?i)[?&](?:access_token|private_token|token|api_key)=[^&\\s]+"] { if let regex = try? NSRegularExpression(pattern: pattern) { text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "[redacted]") } }; return String(text.prefix(1200)) }
-    static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool) -> RepoTarget {
+    static func projectOrganization(scope: String) -> String? {
+        guard scope.hasPrefix("organization:") else { return nil }
+        let login = String(scope.dropFirst("organization:".count))
+        guard !login.isEmpty, login.count <= 39, login.range(of: "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$", options: .regularExpression) != nil else { return nil }
+        return login
+    }
+    static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool, organization: String? = nil) -> RepoTarget {
+        if let organization { return RepoTarget(provider: provider, remote: "origin", host: host, path: organization + "/workspace") }
         if !personal, let repository { return repository }
         return RepoTarget(provider: provider, remote: "origin", host: host, path: username + "/workspace")
     }
@@ -260,9 +267,10 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             if p == .gitlab { guard !c.target.path.hasSuffix("/workspace") else { throw fail(String(localized: "Open a GitLab repository to browse its issue boards.")) }; let rows = try await list(c, repo(c) + "/boards"); return HubPage(items: Array(rows.dropFirst((page - 1) * 30).prefix(30)).map { HubItem(id: id($0), title: s($0, "name"), subtitle: String(localized: "GitLab issue board"), url: "https://\(c.target.host)/\(c.target.path)/-/boards/\(id($0))", data: $0) }, more: rows.count > page * 30) }
             let parts = c.target.path.split(separator: "/").map(String.init), owner = parts.first ?? c.me, name = parts.last ?? "workspace", noRepo = name == "workspace"
             let connection = "projectsV2(first:30,after:$cursor){nodes{\(projectFields)} pageInfo{hasNextPage endCursor}}"
-            let query = noRepo ? "query($owner:String!,$cursor:String){user(login:$owner){\(connection)}}" : "query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{\(connection)} ... on Organization{\(connection)}}}}"
-            var variables: J = ["owner": owner, "cursor": cursor as Any? ?? NSNull()]; if !noRepo { variables["name"] = name }
-            let data = try await graph(c, query, variables), connectionData = obj(noRepo ? obj(data, "user") : obj(obj(data, "repository"), "owner"), "projectsV2")
+            let organization = c.projectOrganization
+            let query = organization != nil ? "query($owner:String!,$cursor:String){organization(login:$owner){\(connection)}}" : noRepo ? "query($owner:String!,$cursor:String){user(login:$owner){\(connection)}}" : "query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{\(connection)} ... on Organization{\(connection)}}}}"
+            var variables: J = ["owner": organization ?? owner, "cursor": cursor as Any? ?? NSNull()]; if organization == nil && !noRepo { variables["name"] = name }
+            let data = try await graph(c, query, variables), connectionData = obj(organization != nil ? obj(data, "organization") : noRepo ? obj(data, "user") : obj(obj(data, "repository"), "owner"), "projectsV2")
             guard !connectionData.isEmpty else { throw fail(String(localized: "Projects are unavailable for this repository owner.")) }
             return HubPage(items: arr(connectionData, "nodes").map { HubItem(id: id($0), title: s($0, "title"), subtitle: "#\(id($0, "number"))" + ($0["closed"] as? Bool == true ? " · closed" : ""), body: s($0, "shortDescription"), url: s($0, "url"), data: $0) }, more: obj(connectionData, "pageInfo")["hasNextPage"] as? Bool == true, cursor: obj(connectionData, "pageInfo")["endCursor"] as? String, notice: String(localized: "Projects sync with GitHub. Changes are saved after confirmation."))
         }

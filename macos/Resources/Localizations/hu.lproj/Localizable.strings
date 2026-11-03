@@ -2217,3 +2217,12 @@
 "Open repositories" = "Megnyitott tárolók";
 "Recent local repositories" = "Legutóbbi helyi tárolók";
 "Open repository" = "Tároló megnyitása";
+"Organization: {0}" = "Szervezet: {0}";
+"Load more organizations" = "További szervezetek betöltése";
+"Retry organizations" = "Szervezetek betöltésének újrapróbálása";
+"Loading organizations…" = "Szervezetek betöltése…";
+"Organizations could not be loaded. Your personal projects are still available." = "A szervezeteket nem sikerült betölteni. A személyes projektjei továbbra is elérhetők.";
+"Other organization…" = "Másik szervezet…";
+"Organization login" = "Szervezet bejelentkezési neve";
+"Open organization" = "Szervezet megnyitása";
+"No organizations found" = "Nem találhatók szervezetek";

@@ -27,10 +27,7 @@ struct ProjectWorkspaceHeader: View {
                         ForEach(AccountStore.shared.accounts) { account in Text(verbatim: "@" + account.username).tag(account.id) }
                     }.labelsHidden().frame(maxWidth: 180)
                     if store.hubProvider == .github {
-                        Picker("Project scope", selection: Binding(get: { store.hubProjectEffectiveScope }, set: { scope in Task { await store.selectHubProjectScope(scope) } })) {
-                            Text("My projects").tag("personal")
-                            if let owner = store.hubProjectRepositoryOwner { Text(owner).tag("repository") }
-                        }.labelsHidden().frame(maxWidth: 150)
+                        ProjectScopePicker(account: store.hubAccount, repositoryOwner: store.hubProjectRepositoryOwner, selection: Binding(get: { store.hubProjectEffectiveScope }, set: { scope in Task { await store.selectHubProjectScope(scope) } })).frame(maxWidth: 210)
                     }
                 }
                 Spacer(minLength: 8)

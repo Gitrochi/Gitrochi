@@ -2192,3 +2192,12 @@
 "Open repositories" = "Kho lưu trữ đang mở";
 "Recent local repositories" = "Kho lưu trữ cục bộ gần đây";
 "Open repository" = "Mở kho lưu trữ";
+"Organization: {0}" = "Tổ chức: {0}";
+"Load more organizations" = "Tải thêm tổ chức";
+"Retry organizations" = "Thử tải lại tổ chức";
+"Loading organizations…" = "Đang tải tổ chức…";
+"Organizations could not be loaded. Your personal projects are still available." = "Không thể tải các tổ chức. Các dự án cá nhân của bạn vẫn khả dụng.";
+"Other organization…" = "Tổ chức khác…";
+"Organization login" = "Tên đăng nhập của tổ chức";
+"Open organization" = "Mở tổ chức";
+"No organizations found" = "Không tìm thấy tổ chức";
