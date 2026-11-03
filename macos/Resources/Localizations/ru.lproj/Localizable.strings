@@ -1719,7 +1719,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI и локальные задачи приложения для компьютера используют общие настройки. Задачи под управлением облака не запускают эти хуки; они появляются только после отправки отчётов агентом.";
 "Check or remove automatic activity" = "Проверить или удалить автоматическую активность";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "Статус проверяет только конфигурацию, но не доверие к хукам и не их выполнение.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Это окно не меняет настройки клиента. Выполняйте только те команды настройки, которые хотите включить.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "«Настроить», «Исправить» и «Удалить» меняют только собственные записи Gitrochi в настройках хуков этого клиента и сначала сохраняют резервную копию. Команды MCP только показываются, чтобы вы их скопировали.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Проверяет журнал этого приложения, а не конфигурацию агента или доверие к хукам.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Подключите агентов, чтобы они могли отправлять отчёты сюда. Импорт читает вставленные отчёты или базу данных claude-ledger.";
 "Connect Claude Code" = "Подключить Claude Code";

@@ -2498,7 +2498,7 @@
   "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports.": "Codex CLI とローカルのデスクトップタスクはこの設定を共有します。クラウドで制御されるタスクはこれらのフックを実行せず、エージェントが台帳レポートを送った場合のみ表示されます。",
   "Check or remove automatic activity": "自動アクティビティの確認または削除",
   "Setup status checks configuration only, not whether hooks are trusted or running.": "設定状態は構成のみを確認し、フックが信頼されているか、実行中かは確認しません。",
-  "This sheet changes no client settings. Run only the setup commands you want to enable.": "この画面ではクライアント設定を変更しません。有効にしたい設定コマンドだけを実行してください。",
+  "Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy.": "設定・修復・削除は、そのクライアントのフック設定のうち Gitrochi 自身の項目だけを変更し、先にバックアップを作成します。MCP コマンドはコピー用に表示するだけです。",
   "Checks this app's Ledger, not agent configuration or hook trust.": "このアプリの台帳を確認します。エージェントの設定やフックの信頼状態は確認しません。",
   "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database.": "エージェントを接続すると、ここにレポートできます。インポートは貼り付けたレポートまたは claude-ledger データベースを読み取ります。",
   "Connect Claude Code": "Claude Code を接続",

@@ -1707,7 +1707,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI ve yerel masaüstü görevleri bu kurulumu paylaşır. Buluttan yönetilen görevler bu kancaları çalıştırmaz; yalnızca aracı Defter raporları gönderdiğinde görünürler.";
 "Check or remove automatic activity" = "Otomatik etkinliği denetle veya kaldır";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "Kurulum durumu yalnızca yapılandırmayı denetler; kancaların güvenilirliğini veya çalışıp çalışmadığını denetlemez.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Bu ekran istemci ayarlarını değiştirmez. Yalnızca etkinleştirmek istediğiniz kurulum komutlarını çalıştırın.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "Kur, Onar ve Kaldır yalnızca o istemcinin kanca ayarlarındaki Gitrochi’ye ait girdileri değiştirir ve önce yedek alır. MCP komutları yalnızca kopyalamanız için gösterilir.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Bu uygulamanın Defterini denetler; aracı yapılandırmasını veya kanca güvenini denetlemez.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Aracıların buraya rapor göndermesi için onları bağlayın. İçe aktarma, yapıştırılan raporları veya claude-ledger veritabanını okur.";
 "Connect Claude Code" = "Claude Code’u bağla";

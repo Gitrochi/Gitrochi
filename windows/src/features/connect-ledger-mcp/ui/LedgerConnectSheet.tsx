@@ -96,7 +96,7 @@ export function LedgerConnectSheet({ store, onClose, onOpenBrowser }: { store: L
         <CopyBlock text={setup.remove} label={commandLabel("Remove")} onCopied={copied} />
       </details>
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
-      <span className="hint">{t("This sheet changes no client settings. Run only the setup commands you want to enable.")}</span>
+      <span className="hint">{t("Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy.")}</span>
       <span className="hint">{t("Checks this app's Ledger, not agent configuration or hook trust.")}</span>
       {info && (
         <div className="card" role="status" style={{ gap: 4 }}>

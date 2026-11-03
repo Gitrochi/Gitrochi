@@ -44,7 +44,7 @@ For Claude Code outside Gitrochi:
 
 **Test Ledger** checks this app's Ledger and bundled MCP command. It does not check Claude Code's MCP registration or prove that a client has loaded the tools. Registration makes the tools available; the first agent report creates a reported session. Existing conversations are not imported automatically.
 
-The sheet also supplies configuration for other MCP clients and instructions you can add to a project. Gitrochi does not edit a client's settings files from this sheet. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+The sheet also supplies configuration for other MCP clients and instructions you can add to a project. In **Connections**, Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after backing up the file; nothing in the sheet edits a client's MCP settings, whose commands are only shown for you to copy. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 

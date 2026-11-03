@@ -1864,7 +1864,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI 和本地桌面任务共享此设置。由云端编排的任务不会运行这些钩子，只有代理发送台账报告时才会显示。";
 "Check or remove automatic activity" = "检查或移除自动活动记录";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "设置状态仅检查配置，不检查钩子是否受信任或正在运行。";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "此界面不会更改客户端设置。请仅运行您希望启用的设置命令。";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "设置、修复和移除只会更改该客户端钩子设置中 Gitrochi 自己的条目，并先保留备份。MCP 命令只显示出来供你复制。";
 "Checks this app's Ledger, not agent configuration or hook trust." = "检查此应用的台账，不检查代理配置或钩子的信任状态。";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "连接代理即可让其在此报告。导入会读取粘贴的报告或 claude-ledger 数据库。";
 "Connect Claude Code" = "连接 Claude Code";
