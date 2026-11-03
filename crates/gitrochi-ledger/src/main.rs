@@ -25,6 +25,7 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
+  release-notes -p PROJECT [VERSION]   a Markdown draft for a baseline (HEAD by default)
   restore FILE [--yes]          checks a backup; with --yes, keeps a safety copy of the
                                 current ledger and restores the backup into it
   demo DB [--large] [--force]
@@ -607,6 +608,22 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                     result["path"].as_str().unwrap_or("")
                 )
             };
+            Ok(Output::Text(text, result))
+        }
+        "release-notes" => {
+            let mut args = json!({
+                "db": path.to_string_lossy(),
+                "project": invocation.text("project").ok_or_else(|| Error::invalid("Missing --project"))?,
+            });
+            if let Some(version) = invocation.positional.first() {
+                args["version"] = json!(version);
+            }
+            let result = api::call_as(Caller::Agent, "release_notes", &args)?;
+            let text = result["markdown"]
+                .as_str()
+                .unwrap_or_default()
+                .trim_end()
+                .to_string();
             Ok(Output::Text(text, result))
         }
         "restore" => {

@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 35] = [
+pub const METHODS: [(&str, &[Caller]); 36] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -56,6 +56,7 @@ pub const METHODS: [(&str, &[Caller]); 35] = [
     ("backup", &[Caller::App, Caller::Agent]),
     ("backups", &[Caller::App, Caller::Agent]),
     ("restore", &[Caller::App]),
+    ("release_notes", &[Caller::App, Caller::Agent]),
     ("settings", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("projects", &[Caller::App, Caller::Agent]),
     ("human", &[Caller::App]),
@@ -338,6 +339,21 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
                 now,
                 dry_run,
             )?)
+        }
+        "release_notes" => {
+            let project =
+                arg_str(args, "project").ok_or_else(|| Error::invalid("Missing project"))?;
+            let _ = baseline::refresh(db, &project, false);
+            let version = arg_str(args, "version");
+            db.read(|c| {
+                let settings = Settings::load(c)?;
+                views::to_value(&crate::release_notes::build(
+                    c,
+                    &settings,
+                    &project,
+                    version.as_deref(),
+                )?)
+            })
         }
         "settings" => db.read(|c| Ok(Settings::load(c)?.to_json())),
         "browser_status" => crate::browser_install::status(),

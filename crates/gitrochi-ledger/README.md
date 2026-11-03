@@ -76,6 +76,7 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
+  release-notes -p PROJECT [VERSION]
   restore FILE [--yes]
   demo DB [--large] [--force]
   call METHOD [JSON]
@@ -100,6 +101,13 @@ gitrochi-ledger report -s S1031-05 -e release --version 1.4.3 --absorbs S1031-02
 gitrochi-ledger overview -p "Example App"
 gitrochi-ledger session S1031-02 --deliver   # only the session itself
 gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
+```
+
+`release-notes -p PROJECT [VERSION]` prints a Markdown draft for a baseline (HEAD by default): the sessions merged into it or absorbed by its release, grouped by role, each with its title, ID, one line from its done, decision or merged report, and its artifacts. Answers, a person's messages, report bodies and notebook notes are never part of it. `--json` gives the groups as data. The apps offer it as **Release notes…**; see the [contract](CONTRACT.md#release-notes).
+
+```sh
+gitrochi-ledger release-notes -p "Example App"          # HEAD
+gitrochi-ledger release-notes -p "Example App" 1.4.1
 ```
 
 `restore FILE` checks a backup without writing anything: SQLite's integrity check, a Ledger database, and a storage schema this build can write. With `--yes` it keeps the current database as `backups/<name>-before-restore-YYYYMMDD-HHMMSS.sqlite3` and copies the backup in with SQLite's online backup, so the apps, MCP servers and hooks that have the ledger open carry on with the restored one. Agents that keep running report into it; restore the safety copy the same way to undo. Retention never removes safety copies. The apps list both kinds in Settings › Ledger (`backups`); agents can list them but never restore (`restore` is for the apps and this command). See the [contract](CONTRACT.md#restoring-a-backup).
@@ -162,6 +170,7 @@ A wait is a pending prompt that the apps show with a countdown and can answer (`
 | `session.rs`, `views.rs`, `streams.rs`, `overlap.rs` | Verdicts, state, session detail, overview, cycles, overlaps |
 | `baseline.rs`, `git.rs` | The trunk: tags, folders, registration, releases, inferred versions |
 | `graph.rs`, `search.rs` | The graph layout; search |
+| `release_notes.rs` | Release-note drafts for a baseline |
 | `import.rs`, `sha1.rs` | Pasted blocks and their duplicate hash (the original tool's canonical JSON) |
 | `legacy.rs` | The read-only import of a claude-ledger database |
 | `legacy_extra.rs`, `work/legacy.rs` | Original optional rows, source mappings and work/note migration |
