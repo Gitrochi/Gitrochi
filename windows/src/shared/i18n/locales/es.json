@@ -2306,5 +2306,14 @@
   "No organizations found": "No se encontraron organizaciones",
   "View all tasks": "Ver todas las tareas",
   "Show more tasks": "Mostrar más tareas",
-  "Project items could not be fully loaded. Retry the project.": "No se pudieron cargar todos los elementos del proyecto. Vuelve a cargar el proyecto."
+  "Project items could not be fully loaded. Retry the project.": "No se pudieron cargar todos los elementos del proyecto. Vuelve a cargar el proyecto.",
+  "Restore a backup": "Restaurar una copia",
+  "No backups yet.": "Todavía no hay copias.",
+  "Show all {0} backups": "Mostrar las {0} copias",
+  "Before restore": "Antes de restaurar",
+  "Restore…": "Restaurar…",
+  "Restore is not available on demo data.": "Los datos de demostración no se pueden restaurar.",
+  "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "Al restaurar se comprueba primero la copia y el registro actual se guarda como copia «Antes de restaurar», que nunca se elimina automáticamente. Los agentes en ejecución siguen escribiendo en el registro restaurado.",
+  "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "El registro se sustituye por la copia del {0}. Su estado actual se guarda antes como copia «Antes de restaurar» en la carpeta backups, para que puedas volver a restaurarlo. Los agentes que siguen en ejecución escriben en el registro restaurado, y los informes enviados durante la restauración pueden perderse.",
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Se restauró la copia del {0}. El registro anterior se guarda como {1}."
 }

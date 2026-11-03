@@ -1,14 +1,14 @@
-import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, History, Plus, PlugZap, RefreshCw, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
+import { backupSize, BACKUPS_SHOWN, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBackupFile, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, shownBackups, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
 import { basename, displayPath, recents, samePath, samePathKey } from "@/shared/config";
-import { t } from "@/shared/i18n";
-import { useObserve } from "@/shared/lib";
-import { Button, Checkbox, IconButton, Spinner } from "@/shared/ui";
+import { language, t } from "@/shared/i18n";
+import { longDate, useObserve } from "@/shared/lib";
+import { Button, Checkbox, IconButton, Modal, Spinner, StatusPill } from "@/shared/ui";
 import "./ledger-settings.css";
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -149,6 +149,8 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
         <span className="hint">{t("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")}</span>
       </div>
 
+      <RestoreSection store={store} refreshKey={backup} onRestored={() => void load()} onError={setError} />
+
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
@@ -163,6 +165,79 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
+    </div>
+  );
+}
+
+const backupTime = (file: LedgerBackupFile) => longDate(file.modifiedAt / 1000);
+
+/**
+ * The backups `restore` can use, newest first, each with Restore… behind a confirmation that says what happens to the
+ * current ledger and to agents still running. Not on demo data. (macOS: LedgerSettings.restoreSection)
+ */
+function RestoreSection({ store, refreshKey, onRestored, onError }: { store: LedgerStore; refreshKey: unknown; onRestored: () => void; onError: (text: string) => void }) {
+  const [files, setFiles] = useState<LedgerBackupFile[] | null>(null);
+  const [all, setAll] = useState(false);
+  const [pending, setPending] = useState<LedgerBackupFile | null>(null);
+  const [restoring, setRestoring] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const demo = store.backend.kind === "demo";
+  const list = useCallback(async () => {
+    try {
+      setFiles(await store.backups());
+    } catch (e) {
+      setFiles([]);
+      onError(message(e));
+    }
+  }, [store, onError]);
+  useEffect(() => {
+    void list();
+  }, [list, refreshKey]);
+  const restore = async (file: LedgerBackupFile) => {
+    setPending(null);
+    setRestoring(file.path);
+    setNotice(null);
+    try {
+      const result = await store.restore(file.path);
+      setNotice(t("Restored the backup from {0}. The previous ledger is kept as {1}.", backupTime(file), basename(result.safety?.path ?? "")));
+      onRestored();
+      await list();
+    } catch (e) {
+      onError(message(e));
+    } finally {
+      setRestoring(null);
+    }
+  };
+  return (
+    <div className="form-section ledger-restore" data-ledger-section="restore">
+      <span className="form-section-title">{t("Restore a backup")}</span>
+      {files === null ? <Spinner size={12} /> : files.length ? (
+        <div className="ledger-backups" role="list" aria-label={t("Restore a backup")}>
+          {shownBackups(files, all).map((file) => (
+            <div key={file.path} className="ledger-backup" role="listitem" data-kind={file.kind} data-tip={file.name}>
+              <div className="ledger-backup-text">
+                <span>{backupTime(file)}</span>
+                <span className="hint">{backupSize(file.size, language)}</span>
+              </div>
+              {file.kind === "safety" && <StatusPill tone="neutral" icon={<Undo2 size={11} />}>{t("Before restore")}</StatusPill>}
+              <span className="spacer" />
+              {restoring === file.path && <Spinner size={12} />}
+              <Button size="small" disabled={demo || !!restoring} aria-label={`${t("Restore…")} · ${backupTime(file)}`} onClick={() => setPending(file)}><History size={13} />{t("Restore…")}</Button>
+            </div>
+          ))}
+        </div>
+      ) : <span className="hint">{t("No backups yet.")}</span>}
+      {files && files.length > BACKUPS_SHOWN && (
+        <div className="row"><Button size="small" onClick={() => setAll(!all)}>{all ? t("Show less") : t("Show all {0} backups", files.length)}</Button></div>
+      )}
+      {demo && <span className="hint">{t("Restore is not available on demo data.")}</span>}
+      {notice && <span className="hint" role="status">{notice}</span>}
+      <span className="hint">{t("Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.")}</span>
+      {pending && (
+        <Modal title={t("Restore this backup?")} onClose={() => setPending(null)} footer={<><Button onClick={() => setPending(null)}>{t("Cancel")}</Button><Button kind="danger" onClick={() => void restore(pending)}>{t("Restore")}</Button></>}>
+          <p className="ledger-restore-confirm">{t("The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.", backupTime(pending))}</p>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -2220,3 +2220,12 @@
 "View all tasks" = "Visualizza tutte le attività";
 "Show more tasks" = "Mostra altre attività";
 "Project items could not be fully loaded. Retry the project." = "Impossibile caricare tutti gli elementi del progetto. Ricarica il progetto.";
+"Restore a backup" = "Ripristina un backup";
+"No backups yet." = "Ancora nessun backup.";
+"Show all %lld backups" = "Mostra tutti i %lld backup";
+"Before restore" = "Prima del ripristino";
+"Restore…" = "Ripristina…";
+"Restore is not available on demo data." = "Il ripristino non è disponibile con i dati demo.";
+"Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Il ripristino controlla prima il backup e conserva il registro attuale come copia «Prima del ripristino», che non viene mai rimossa automaticamente. Gli agenti in esecuzione continuano a scrivere nel registro ripristinato.";
+"The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Il registro viene sostituito dal backup del %@. Il suo stato attuale viene prima conservato come copia «Prima del ripristino» nella cartella backups, così puoi ripristinarlo di nuovo. Gli agenti ancora in esecuzione continuano a scrivere nel registro ripristinato e i rapporti inviati durante il ripristino possono andare persi.";
+"Restored the backup from %@. The previous ledger is kept as %@." = "Il backup del %@ è stato ripristinato. Il registro precedente è conservato come %@.";

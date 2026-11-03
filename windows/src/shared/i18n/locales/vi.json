@@ -2227,5 +2227,14 @@
   "No organizations found": "Không tìm thấy tổ chức",
   "View all tasks": "Xem tất cả tác vụ",
   "Show more tasks": "Hiển thị thêm tác vụ",
-  "Project items could not be fully loaded. Retry the project.": "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án."
+  "Project items could not be fully loaded. Retry the project.": "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án.",
+  "Restore a backup": "Khôi phục bản sao lưu",
+  "No backups yet.": "Chưa có bản sao lưu.",
+  "Show all {0} backups": "Hiện tất cả {0} bản sao lưu",
+  "Before restore": "Trước khi khôi phục",
+  "Restore…": "Khôi phục…",
+  "Restore is not available on demo data.": "Không thể khôi phục dữ liệu mẫu.",
+  "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "Khi khôi phục, bản sao lưu được kiểm tra trước và sổ cái hiện tại được giữ lại dưới dạng bản sao “Trước khi khôi phục”, không bao giờ bị xóa tự động. Các tác nhân đang chạy vẫn tiếp tục ghi vào sổ cái đã khôi phục.",
+  "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Sổ cái sẽ được thay bằng bản sao lưu từ {0}. Trạng thái hiện tại được giữ trước dưới dạng bản sao “Trước khi khôi phục” trong thư mục backups, nên bạn có thể khôi phục lại. Các tác nhân vẫn đang chạy tiếp tục ghi vào sổ cái đã khôi phục, và báo cáo gửi trong lúc khôi phục có thể bị mất.",
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Đã khôi phục bản sao lưu từ {0}. Sổ cái trước đó được giữ dưới tên {1}."
 }

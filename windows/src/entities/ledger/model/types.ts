@@ -305,6 +305,27 @@ export interface LedgerBackupResult {
   removed: string[];
 }
 
+/** `backups`: a file `restore` can use. A safety copy is the ledger as it was before a restore; retention never removes it. (macOS: LedgerBackupFile) */
+export interface LedgerBackupFile {
+  path: string;
+  name: string;
+  /** Bytes */
+  size: number;
+  /** When the file was written */
+  modifiedAt: Ms;
+  kind: "backup" | "safety";
+}
+
+/** `restore`: the backup that was checked and, unless `dryRun`, restored, with the safety copy of the ledger it replaced */
+export interface LedgerRestoreResult {
+  ok: boolean;
+  dryRun: boolean;
+  path: string;
+  contents: { schema: number; rev: number; sessions: number; events: number };
+  safety?: LedgerBackupResult;
+  rev: number;
+}
+
 /** What an import of a claude-ledger database copied, or with a dry run would copy */
 export interface LedgerLegacyImport {
   ok: boolean;
@@ -408,6 +429,10 @@ export interface LedgerMethods {
   /** Marks automatic answers as seen; they leave the Inbox */
   prompt_review: { args: { id: number } | { all: true }; result: { ok: boolean; rev: number; reviewed: number } };
   backup: { args: { keep?: number; daily?: boolean }; result: LedgerBackupResult };
+  /** Backups and the safety copies restores kept, newest first */
+  backups: { args: Record<string, never>; result: { directory: string; backups: LedgerBackupFile[] } };
+  /** Checks a backup read-only; without `dryRun` keeps a safety copy of the ledger and restores the backup into it */
+  restore: { args: { path: string; dryRun?: boolean }; result: LedgerRestoreResult };
   settings: { args: Record<string, never>; result: LedgerSettings };
   /** null restores a setting's default */
   settings_set: { args: { values: { [K in keyof LedgerSettings]?: LedgerSettings[K] | null } }; result: { ok: boolean; rev: number; settings: LedgerSettings } };

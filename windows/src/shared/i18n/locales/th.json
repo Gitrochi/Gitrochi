@@ -2265,5 +2265,14 @@
   "No organizations found": "ไม่พบองค์กร",
   "View all tasks": "ดูงานทั้งหมด",
   "Show more tasks": "แสดงงานเพิ่มเติม",
-  "Project items could not be fully loaded. Retry the project.": "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง"
+  "Project items could not be fully loaded. Retry the project.": "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง",
+  "Restore a backup": "กู้คืนข้อมูลสำรอง",
+  "No backups yet.": "ยังไม่มีข้อมูลสำรอง",
+  "Show all {0} backups": "แสดงข้อมูลสำรองทั้งหมด {0} รายการ",
+  "Before restore": "ก่อนกู้คืน",
+  "Restore…": "กู้คืน…",
+  "Restore is not available on demo data.": "ข้อมูลตัวอย่างกู้คืนไม่ได้",
+  "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "การกู้คืนจะตรวจสอบข้อมูลสำรองก่อน และเก็บ Ledger ปัจจุบันไว้เป็นสำเนา “ก่อนกู้คืน” ซึ่งจะไม่ถูกลบโดยอัตโนมัติ เอเจนต์ที่ทำงานอยู่จะยังเขียนลง Ledger ที่กู้คืนแล้ว",
+  "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Ledger จะถูกแทนที่ด้วยข้อมูลสำรองจาก {0} สถานะปัจจุบันจะถูกเก็บไว้ก่อนเป็นสำเนา “ก่อนกู้คืน” ในโฟลเดอร์ backups เพื่อให้กู้คืนกลับได้ เอเจนต์ที่ยังทำงานอยู่จะเขียนลง Ledger ที่กู้คืนแล้วต่อไป และรายงานที่ส่งมาระหว่างกู้คืนอาจสูญหาย",
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "กู้คืนข้อมูลสำรองจาก {0} แล้ว Ledger ก่อนหน้าเก็บไว้เป็น {1}"
 }

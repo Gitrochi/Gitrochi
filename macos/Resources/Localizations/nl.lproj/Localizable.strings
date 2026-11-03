@@ -2191,3 +2191,12 @@
 "View all tasks" = "Alle taken bekijken";
 "Show more tasks" = "Meer taken tonen";
 "Project items could not be fully loaded. Retry the project." = "De projectitems konden niet volledig worden geladen. Laad het project opnieuw.";
+"Restore a backup" = "Back-up terugzetten";
+"No backups yet." = "Nog geen back-ups.";
+"Show all %lld backups" = "Alle %lld back-ups tonen";
+"Before restore" = "Vóór terugzetten";
+"Restore…" = "Terugzetten…";
+"Restore is not available on demo data." = "Demogegevens kunnen niet worden teruggezet.";
+"Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Terugzetten controleert eerst de back-up en bewaart het huidige register als kopie ‘Vóór terugzetten’, die nooit automatisch wordt verwijderd. Agents die draaien, blijven naar het teruggezette register schrijven.";
+"The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Het register wordt vervangen door de back-up van %@. De huidige staat wordt eerst als kopie ‘Vóór terugzetten’ in de map backups bewaard, zodat je die weer kunt terugzetten. Agents die nog draaien, blijven naar het teruggezette register schrijven, en rapporten die tijdens het terugzetten binnenkomen, kunnen verloren gaan.";
+"Restored the backup from %@. The previous ledger is kept as %@." = "De back-up van %@ is teruggezet. Het vorige register is bewaard als %@.";

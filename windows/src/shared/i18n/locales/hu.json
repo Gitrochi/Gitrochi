@@ -2255,5 +2255,14 @@
   "No organizations found": "Nem találhatók szervezetek",
   "View all tasks": "Összes feladat megtekintése",
   "Show more tasks": "További feladatok megjelenítése",
-  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet."
+  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet.",
+  "Restore a backup": "Biztonsági mentés visszaállítása",
+  "No backups yet.": "Még nincs biztonsági mentés.",
+  "Show all {0} backups": "Mind a(z) {0} mentés megjelenítése",
+  "Before restore": "Visszaállítás előtt",
+  "Restore…": "Visszaállítás…",
+  "Restore is not available on demo data.": "Bemutató adatoknál a visszaállítás nem érhető el.",
+  "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "A visszaállítás először ellenőrzi a mentést, és a jelenlegi nyilvántartást „Visszaállítás előtt” másolatként megőrzi, amelyet sosem töröl automatikusan. A futó ügynökök tovább írnak a visszaállított nyilvántartásba.",
+  "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "A nyilvántartás helyére a(z) {0} mentés kerül. A jelenlegi állapot előbb „Visszaállítás előtt” másolatként a backups mappába kerül, így később visszaállíthatod. A még futó ügynökök tovább írnak a visszaállított nyilvántartásba, a visszaállítás közben küldött jelentések pedig elveszhetnek.",
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "A(z) {0} mentés visszaállítva. Az előző nyilvántartás {1} néven megmaradt."
 }

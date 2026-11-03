@@ -428,6 +428,42 @@ struct LedgerWriteResult: Codable, Hashable {
 
 struct LedgerBackupResult: Codable, Hashable { var path: String }
 
+/// `backups`: a file `restore` can use, newest first. A safety copy is the ledger as it was before a restore; retention
+/// never removes it. (Windows: LedgerBackupFile in entities/ledger/model/types.ts)
+struct LedgerBackupFile: Codable, Hashable, Identifiable {
+    enum Kind: String, LedgerEnum {
+        case backup, safety
+        static let fallback = Kind.backup
+    }
+    var path: String
+    var name: String
+    var size: Int
+    var modifiedAt: LedgerMs
+    var kind: Kind
+    var id: String { path }
+}
+
+struct LedgerBackupList: Codable, Hashable {
+    var directory: String
+    var backups: [LedgerBackupFile]
+}
+
+/// `restore`: the backup that was checked and, unless `dryRun`, restored, with the safety copy of the ledger it replaced
+struct LedgerRestoreResult: Codable, Hashable {
+    struct Contents: Codable, Hashable {
+        var schema: Int
+        var rev: Int
+        var sessions: Int
+        var events: Int
+    }
+    var ok: Bool
+    var dryRun: Bool
+    var path: String
+    var contents: Contents
+    var safety: LedgerBackupResult?
+    var rev: Int
+}
+
 /// `import_legacy`: what a read-only import of a claude-ledger database copied, or with `dryRun` would copy
 struct LedgerLegacyImportResult: Codable, Hashable {
     struct Counts: Codable, Hashable {

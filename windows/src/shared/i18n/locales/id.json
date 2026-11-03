@@ -2225,5 +2225,14 @@
   "No organizations found": "Tidak ada organisasi yang ditemukan",
   "View all tasks": "Lihat semua tugas",
   "Show more tasks": "Tampilkan lebih banyak tugas",
-  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek."
+  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek.",
+  "Restore a backup": "Pulihkan cadangan",
+  "No backups yet.": "Belum ada cadangan.",
+  "Show all {0} backups": "Tampilkan semua {0} cadangan",
+  "Before restore": "Sebelum pemulihan",
+  "Restore…": "Pulihkan…",
+  "Restore is not available on demo data.": "Data demo tidak dapat dipulihkan.",
+  "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "Pemulihan memeriksa cadangan terlebih dahulu dan menyimpan ledger saat ini sebagai salinan Sebelum pemulihan, yang tidak pernah dihapus otomatis. Agen yang sedang berjalan tetap menulis ke ledger yang dipulihkan.",
+  "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Ledger diganti dengan cadangan dari {0}. Keadaannya saat ini disimpan dulu sebagai salinan Sebelum pemulihan di folder backups, sehingga Anda dapat memulihkannya lagi. Agen yang masih berjalan tetap menulis ke ledger yang dipulihkan, dan laporan yang dikirim selama pemulihan dapat hilang.",
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Cadangan dari {0} dipulihkan. Ledger sebelumnya disimpan sebagai {1}."
 }

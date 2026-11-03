@@ -92,6 +92,15 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
             case "prompt_answer": return try encode(answerPrompt(a, now: now))
             case "prompt_review": return try encode(reviewPrompts(a))
             case "backup": return try encode(LedgerBackupResult(path: "ledger-demo-" + dayFormat.string(from: date(now)) + ".sqlite3"))
+            case "backups":
+                // examples so the list can be seen; the demo has no file to restore
+                let files = [(0, LedgerBackupFile.Kind.backup), (1, .backup), (2, .safety)].map { days, kind in
+                    let at = now - LedgerMs(days) * Self.day - 3 * Self.hour
+                    let name = kind == .safety ? "ledger-before-restore-demo-\(days).sqlite3" : "ledger-demo-\(days).sqlite3"
+                    return LedgerBackupFile(path: "demo/backups/" + name, name: name, size: 4096 * (40 + days), modifiedAt: at, kind: kind)
+                }
+                return try encode(LedgerBackupList(directory: "demo/backups", backups: files))
+            case "restore": throw LedgerFailure(code: "NOT_ALLOWED", message: "The demo cannot restore a backup")
             case "settings": return try encode(settings)
             case "settings_set": return try encode(setSettings(a))
             case "projects": return try encode(LedgerProjectList(projects: projects.map { project($0.key) }))
