@@ -55,6 +55,9 @@ if (mode === "selftest") {
   env.ledgerDemo = "1";
   ipc.ledgerPickDatabase = async () => "C:/Tools/claude-ledger/data/ledger.db";
   createRoot(root).render(<><SettingsDialog onClose={() => {}} initialTab="ledger" /><MenuHost /><TooltipHost /></>);
+  // ?scroll=<selector> brings a settings section into view for a screenshot
+  const section = params.get("scroll");
+  if (section) setTimeout(() => document.querySelector(section)?.scrollIntoView({ block: "start" }), 800);
 } else {
   ipc.openUrl = async () => {};
   const repoPath = "C:/Projects/atlas";
@@ -112,5 +115,11 @@ if (mode === "selftest") {
   for (const selector of (params.get("click") ?? "").split(";").filter(Boolean)) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     document.querySelector<HTMLElement>(selector)?.click();
+  }
+  // ?hover=<selector> shows a toolbar button's tooltip for a screenshot
+  const hover = params.get("hover");
+  if (hover) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    document.querySelector(hover)?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
   }
 }
