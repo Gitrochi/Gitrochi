@@ -405,3 +405,81 @@ fn codex_mcp_registration_is_read_from_toml_and_another_database_needs_repair() 
     assert_eq!(current["mcp"]["registered"], false);
     assert_eq!(current["health"], "not_installed");
 }
+
+#[test]
+fn app_setup_runs_hooks_from_the_stable_command_and_keeps_it_current() {
+    let dir = TempDir::new("integration-app");
+    let db = dir.join("ledger.sqlite3");
+    let stable = dir
+        .join("data")
+        .join("bin")
+        .join(format!("gitrochi-ledger{}", std::env::consts::EXE_SUFFIX));
+    let bundled = this_cli();
+    let base = json!({"client": "claude", "config": dir.join("settings.json"),
+                      "mcpConfig": dir.join("claude.json"), "path": stable});
+    let with = |extra: Value| {
+        let mut args = base.clone();
+        args.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        args
+    };
+    let schemas = Schemas::load();
+
+    let status = app(&db, "integration_status", base.clone());
+    schemas.check("integration-status.schema.json", &status);
+    assert_eq!(status["health"], "not_installed");
+    let command = json!({"bundled": bundled, "path": stable});
+    let refreshed = app(&db, "integration_command", command.clone());
+    assert_eq!(refreshed["exists"], false);
+    assert!(
+        !stable.exists(),
+        "a refresh never creates the stable command"
+    );
+
+    let installed = app(
+        &db,
+        "integration_install",
+        with(json!({"bundled": bundled})),
+    );
+    schemas.check("integration-status.schema.json", &installed);
+    assert_eq!(installed["installed"], true);
+    assert_eq!(installed["cliPath"], json!(stable));
+    assert_eq!(installed["hookCommand"]["path"], json!(stable));
+    assert_eq!(installed["hookCommand"]["canWrite"], true);
+    assert_eq!(installed["health"], "no_data_yet");
+    assert_eq!(
+        std::fs::read(&stable).unwrap(),
+        std::fs::read(&bundled).unwrap()
+    );
+
+    let outdated = b"#!/bin/sh\nexit 0\n";
+    std::fs::write(&stable, outdated).unwrap();
+    let refreshed = app(&db, "integration_command", command.clone());
+    assert_eq!(
+        (refreshed["refreshed"].clone(), refreshed["current"].clone()),
+        (json!(true), json!(true))
+    );
+    assert_eq!(
+        std::fs::read(&stable).unwrap(),
+        std::fs::read(&bundled).unwrap()
+    );
+    let again = app(&db, "integration_command", command);
+    assert_eq!(again["refreshed"], false);
+
+    let removed = app(&db, "integration_remove", base.clone());
+    assert_eq!(removed["installed"], false);
+    assert!(
+        stable.exists(),
+        "MCP entries may still name the stable command"
+    );
+    for method in [
+        "integration_command",
+        "integration_status",
+        "integration_install",
+        "integration_remove",
+    ] {
+        let refused = gitrochi_ledger::call_as(gitrochi_ledger::Caller::Agent, method, &base);
+        assert_eq!(refused.unwrap_err().code, "NOT_ALLOWED", "{method}");
+    }
+}

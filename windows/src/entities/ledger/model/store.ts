@@ -5,8 +5,9 @@ import { DemoLedgerBackend } from "../api/demo-backend";
 import { type AnswerKind, describeAnswer, serverNow } from "../lib/countdown";
 import { summarizeImport, type ImportSummary } from "../lib/imports";
 import { inverseOperation, operationTitle } from "../lib/undo";
+import { bundledLedgerCommand } from "./command";
 import { LedgerReader, message } from "./reader";
-import type { LedgerHumanRequest, LedgerMethods, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
+import type { LedgerHumanRequest, LedgerIntegrationStatus, LedgerMethods, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
 
 /**
  * The Ledger page's state, one per app: the contract `State` read when `rev` moves, the selected session's detail, the
@@ -15,6 +16,45 @@ import type { LedgerHumanRequest, LedgerMethods, LedgerPendingPrompt, LedgerProj
 export class LedgerStore extends LedgerReader {
   /** Drafts survive polling and remain available when another client closes a question. */
   readonly unsentAnswers = new Map<number, string>();
+  private stableChecked = false;
+
+  override start() {
+    this.refreshStableCommand();
+    return super.start();
+  }
+
+  /**
+   * When the Ledger opens, an existing stable command follows this app's bundled one, so hooks that run it can write
+   * the database this app may have just upgraded. It is never created here. (macOS: LedgerStore.refreshStableCommand)
+   */
+  private refreshStableCommand() {
+    const bundled = bundledLedgerCommand();
+    if (this.stableChecked || this.backend.kind !== "native" || !bundled) return;
+    this.stableChecked = true;
+    this.backend.call("integration_command", { bundled }).catch(() => {});
+  }
+
+  // MARK: Local connections
+
+  /** Whether a client's hooks and MCP entry reach this ledger (read only) */
+  integrationStatus(client: LedgerIntegrationStatus["client"]) {
+    return this.backend.call("integration_status", { client });
+  }
+
+  /** Set up and Repair: refreshes or creates the stable command and installs hooks that run it */
+  installIntegration(client: LedgerIntegrationStatus["client"]) {
+    const bundled = bundledLedgerCommand() ?? "";
+    return this.backend.call("integration_install", { client, bundled });
+  }
+
+  removeIntegration(client: LedgerIntegrationStatus["client"]) {
+    return this.backend.call("integration_remove", { client });
+  }
+
+  /** The stable command's path, refreshed when it exists; never created */
+  stableCommand() {
+    return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "" });
+  }
   // MARK: A person's operations
 
   /** One operation; confirm, archive, status changes and snoozes show a toast with Undo */

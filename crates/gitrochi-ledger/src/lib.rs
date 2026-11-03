@@ -37,6 +37,7 @@ pub mod search;
 pub mod session;
 pub mod settings;
 mod sha1;
+pub mod stable_command;
 pub mod streams;
 pub mod text;
 mod toml_lite;

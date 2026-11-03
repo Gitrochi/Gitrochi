@@ -293,6 +293,11 @@ impl Db {
         })
     }
 
+    /// The schema of a database a newer build wrote; this build then only reads it.
+    pub fn newer_schema(&self) -> Option<i64> {
+        self.newer_schema
+    }
+
     /// Runs `body` in one read transaction, so every query sees the same snapshot.
     pub fn read<T>(&self, body: impl FnOnce(&Connection) -> Result<T>) -> Result<T> {
         let pooled = lock(&self.readers).pop();

@@ -59,7 +59,7 @@ gitrochi-ledger integrate claude --install
 gitrochi-ledger integrate codex --install
 ```
 
-Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
+Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. That command lives at `~/Library/Application Support/Gitrochi/bin/gitrochi-ledger` on macOS and `%APPDATA%\Gitrochi\bin\gitrochi-ledger.exe` on Windows. Once it exists, Gitrochi replaces it with its own bundled command whenever the two differ, each time the Ledger opens, so hooks and MCP entries that name it keep working after the app moves or updates. Gitrochi creates it only when you set up or repair a connection in the app. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
 
 ```sh
 gitrochi-ledger --json integrate claude --status

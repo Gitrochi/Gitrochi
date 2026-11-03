@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 33] = [
+pub const METHODS: [(&str, &[Caller]); 37] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -64,6 +64,10 @@ pub const METHODS: [(&str, &[Caller]); 33] = [
     ("browser_status", &[Caller::App]),
     ("browser_install", &[Caller::App]),
     ("browser_remove", &[Caller::App]),
+    ("integration_command", &[Caller::App]),
+    ("integration_status", &[Caller::App]),
+    ("integration_install", &[Caller::App]),
+    ("integration_remove", &[Caller::App]),
     ("track", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
     ("prompt_get", &[Caller::App, Caller::Hook]),
@@ -328,6 +332,23 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
             let host =
                 arg_str(args, "hostPath").ok_or_else(|| Error::invalid("Missing hostPath"))?;
             crate::browser_install::install(&db.path, &extension, std::path::Path::new(&host))
+        }
+        "integration_command" => {
+            // Without a bundled command (a development run) an existing copy is only reported.
+            let bundled = arg_str(args, "bundled").unwrap_or_default();
+            let path = arg_str(args, "path")
+                .map(PathBuf::from)
+                .unwrap_or_else(crate::stable_command::default_path);
+            let create = util::arg_bool(args, "create").unwrap_or(false);
+            views::to_value(&crate::stable_command::refresh(
+                std::path::Path::new(&bundled),
+                &path,
+                create,
+                db.newer_schema().is_some(),
+            )?)
+        }
+        "integration_status" | "integration_install" | "integration_remove" => {
+            crate::integrations::app_call(&db.path, method, args, db.newer_schema().is_some())
         }
         "projects" => db.read(|c| Ok(json!({"projects": baseline::projects(c)?}))),
         "human" => {

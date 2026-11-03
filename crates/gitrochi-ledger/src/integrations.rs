@@ -244,6 +244,40 @@ fn remove_owned(value: &mut Value, client: Client) {
     }
 }
 
+/// The apps' `integration_status`, `integration_install` and `integration_remove`
+/// (`{client, bundled?, path?, config?, mcpConfig?}`). Hooks the apps install run the stable
+/// command, refreshed from the app's `bundled` one first, so moving or updating the app keeps
+/// them working; `older` is set when this build cannot write the database.
+pub fn app_call(database: &Path, method: &str, args: &Value, older: bool) -> Result<Value> {
+    use crate::util::arg_str;
+    let client = Client::parse(&arg_str(args, "client").unwrap_or_default())?;
+    let path = |key: &str, default: fn(Client) -> Result<PathBuf>| {
+        arg_str(args, key)
+            .map(|p| Ok(PathBuf::from(p)))
+            .unwrap_or_else(|| default(client))
+    };
+    let config = path("config", default_config)?;
+    let mcp_config = path("mcpConfig", default_mcp_config)?;
+    let stable = path("path", |_| Ok(crate::stable_command::default_path()))?;
+    let action = match method {
+        "integration_install" => Action::Install,
+        "integration_remove" => Action::Remove,
+        _ => Action::Status,
+    };
+    if let Action::Install = action {
+        let bundled = arg_str(args, "bundled").ok_or_else(|| Error::invalid("Missing bundled"))?;
+        crate::stable_command::refresh(Path::new(&bundled), &stable, true, older)?;
+    }
+    Ok(serde_json::to_value(configure(
+        client,
+        action,
+        &config,
+        &mcp_config,
+        &stable,
+        database,
+    )?)?)
+}
+
 /// Update only owned handlers. No MCP entries, permissions, feature flags or trust hashes change;
 /// `mcp_config` is only read.
 pub fn configure(
