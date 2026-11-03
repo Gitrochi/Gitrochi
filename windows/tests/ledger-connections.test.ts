@@ -4,7 +4,7 @@ import { DemoLedgerBackend } from "../src/entities/ledger";
 import { agentConnection, browserConnection, mcpCommand } from "../src/features/connect-ledger-mcp/lib/connections";
 
 const command = (over: Partial<LedgerConnectionCommand> = {}): LedgerConnectionCommand => ({ path: "/data/bin/gitrochi-ledger", exists: true, executable: true, writesSchema: 8, version: "0.1.0", canWrite: true, dbPath: "/data/ledger.sqlite3", sameDatabase: true, ...over });
-const status = (over: Partial<LedgerIntegrationStatus> = {}): LedgerIntegrationStatus => ({ client: "claude", installed: true, cliPath: "/data/bin/gitrochi-ledger", ownedHookCount: 8, expectedHookCount: 8, requiresClientTrust: false, hooksDisabled: false, hookCommand: command(), mcp: { configPath: "/home/.claude.json", registered: false, command: null }, databaseSchema: 8, lastObservedAt: 1_000, lastReportAt: 2_000, health: "ok", ...over });
+const status = (over: Partial<LedgerIntegrationStatus> = {}): LedgerIntegrationStatus => ({ client: "claude", installed: true, cliPath: "/data/bin/gitrochi-ledger", ownedHookCount: 8, expectedHookCount: 8, requiresClientTrust: false, hooksDisabled: false, hookCommand: command(), mcp: { configPath: "/Users/me/.claude.json", registered: false, command: null }, databaseSchema: 8, lastObservedAt: 1_000, lastReportAt: 2_000, health: "ok", ...over });
 
 describe("Ledger connections", () => {
   it("maps every health to one of the five row states with its actions", () => {
