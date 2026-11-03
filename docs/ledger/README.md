@@ -207,13 +207,14 @@ When a supported question or permission request waits past the countdown, Gitroc
 
 The terminal's permission dialog may remain visible during the countdown. An answer there counts too. Permission answers are recorded as confirmed only when the handler can tell the automatic answer applied; an unknown outcome is shown for review rather than assumed to have succeeded.
 
-Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval is not enabled by default and has not been checked live.
+Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval stays off by default. A non-interactive check with Claude Code 2.1.316 showed that an automatic approval goes through, but the hook does not receive the plan, so the Ledger cannot show what it would approve; interactive mode has not been checked.
 
 A **held wait** has a reason and no countdown. Choose **Answer in terminal** to bring forward the terminal Gitrochi started, then answer there. If that terminal is no longer available, answer wherever the agent runs. An answer entered into the Ledger cannot reach a held prompt because no hook is waiting on it.
 
 Every automatic answer appears in the Inbox for review. **Confirm** marks that answer reviewed. **Send correction…** queues a correction for the next agent report or read; open the terminal to say it immediately when needed. Reviewing an automatic answer is separate from confirming a session's outcome.
 
 If Gitrochi is not running, or **Track agents I start** has been turned off since the agent started, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+
 
 ## Notifications and terminal quick launches
 
