@@ -1988,6 +1988,22 @@
 "Open a repository to use its terminal" = "Mở một kho lưu trữ để dùng terminal của nó";
 "Open in the terminal" = "Mở trong terminal";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Hub nhóm";
+"Share this computer's Ledger sessions with the team hub" = "Chia sẻ các phiên Sổ cái của máy tính này với hub nhóm";
+"What is shared" = "Những gì được chia sẻ";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Với mỗi phiên đang hoạt động: ID, dự án, tiêu đề, loại và vai trò, nhánh, kết luận, phạm vi làm việc và hoạt động gần nhất, theo remote của kho lưu trữ. Không bao giờ chia sẻ câu hỏi, câu trả lời, báo cáo, tin nhắn, ghi chú, sổ tay, tài liệu, liên kết trò chuyện hay đường dẫn thư mục. Các kênh triển khai và phiên đã lưu trữ ở lại trên máy tính này.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Khi tắt, các phiên của bạn sẽ được rút lại; phần còn lại hết hạn trên hub trong vài phút. Phần chồng chéo với phiên của thành viên khác hiển thị ở Phạm vi làm việc trong bảng chi tiết.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Hãy kết nối hub nhóm trong Work validation › Team overlap evidence trước.";
+"Connecting to %@…" = "Đang kết nối tới %@…";
+"Sessions shared with %@: %lld" = "Số phiên đã chia sẻ với %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Giữ lại trên máy tính này vì không có remote: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Hub này chỉ lưu nhánh và phạm vi làm việc; tiêu đề và kết luận cần hub mới hơn.";
+"Couldn't reach %@. Gitrochi tries again later." = "Không thể kết nối tới %@. Gitrochi sẽ thử lại sau.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Token hub cho %@ không được chấp nhận hoặc không đọc được. Hãy kết nối lại trong Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Dữ liệu mẫu không bao giờ được chia sẻ.";
+"Also touched on another computer by %@ · %@" = "Cũng đang làm trên máy tính khác: %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Tự động tiếp tục không bao giờ trả lời loại yêu cầu này.";
 "It looks risky to answer automatically." = "Tự động trả lời có vẻ rủi ro.";

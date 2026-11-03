@@ -2029,6 +2029,22 @@
 "Open a repository to use its terminal" = "Відкрийте репозиторій, щоб користуватися його терміналом";
 "Open in the terminal" = "Відкрити в терміналі";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Хаб команди";
+"Share this computer's Ledger sessions with the team hub" = "Ділитися сеансами Книги обліку з цього комп'ютера з хабом команди";
+"What is shared" = "Що передається";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Для кожного активного сеансу: ID, проєкт, назва, вид і роль, гілка, вердикт, що він зачіпає, і час останньої активності — під віддаленою адресою його репозиторію. Ніколи не передаються запитання, відповіді, звіти, повідомлення, нотатки, блокнот, документи, посилання на чати та шляхи до тек. Канали й архівовані сеанси залишаються на цьому комп'ютері.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Якщо вимкнути, ваші сеанси буде відкликано; решта спливе на хабі протягом кількох хвилин. Перетини із сеансами інших учасників показано в інспекторі в розділі «Зачіпає».";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Спершу під'єднайте хаб команди в Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Під'єднання до %@…";
+"Sessions shared with %@: %lld" = "Сеансів передано в %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Залишилися на цьому комп'ютері, немає віддаленого репозиторію: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Цей хаб зберігає лише гілки й те, що зачіпають сеанси; для назв і вердиктів потрібен новіший хаб.";
+"Couldn't reach %@. Gitrochi tries again later." = "Не вдалося зв'язатися з %@. Gitrochi спробує пізніше.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Токен хаба для %@ не прийнято або його не вдалося прочитати. Під'єднайтеся знову в Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Демодані ніколи не передаються.";
+"Also touched on another computer by %@ · %@" = "Зачіпається й на іншому комп'ютері: %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Автопродовження ніколи не відповідає на такі запити.";
 "It looks risky to answer automatically." = "Відповідати автоматично виглядає ризиковано.";

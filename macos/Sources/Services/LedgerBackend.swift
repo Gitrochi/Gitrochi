@@ -104,6 +104,12 @@ struct LedgerClient: Sendable {
         return try await call("track", args, as: LedgerTrackResult.self).session
     }
 
+    /// What sharing with the team hub posts for this computer's live sessions; reads only. `computer` is the app's random
+    /// name for this computer.
+    func hubShare(computer: String) async throws -> LedgerHubShareResult {
+        try await call("hub_share", ["client": .string(computer)])
+    }
+
     /// Looks for baselines now, for one project or all of them
     func scan(project: String?) async throws -> [LedgerScanResult.Project] {
         try await call("scan", project.map { ["project": .string($0)] } ?? [:], as: LedgerScanResult.self).results

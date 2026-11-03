@@ -2759,6 +2759,22 @@
 "Open a repository to use its terminal" = "ターミナルを使うにはリポジトリを開いてください";
 "Open in the terminal" = "ターミナルで開く";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "チームハブ";
+"Share this computer's Ledger sessions with the team hub" = "このコンピューターの台帳セッションをチームハブと共有";
+"What is shared" = "共有される内容";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "進行中の各セッションの ID、プロジェクト、タイトル、種類と役割、ブランチ、判定、作業範囲、最終アクティビティを、リポジトリのリモートごとに共有します。質問、回答、報告、メッセージ、メモ、ノートブック、ドキュメント、チャットリンク、フォルダーのパスは共有しません。ストリームとアーカイブ済みのセッションはこのコンピューターに残ります。";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "オフにすると共有したセッションを取り下げます。残ったものも数分以内にハブから消えます。ほかのメンバーのセッションとの重複はインスペクターの作業範囲に表示されます。";
+"Connect a team hub under Work validation › Team overlap evidence first." = "先に 作業の検証 › チーム作業の重複根拠 でチームハブに接続してください。";
+"Connecting to %@…" = "%@ に接続中…";
+"Sessions shared with %@: %lld" = "%1$@ と共有しているセッション: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "リモートがないためこのコンピューターに残したセッション: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "このハブはブランチと作業範囲だけを保持します。タイトルと判定には新しいハブが必要です。";
+"Couldn't reach %@. Gitrochi tries again later." = "%@ に接続できませんでした。Gitrochi が後でもう一度試します。";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@ のハブトークンが受け付けられなかったか、読み取れませんでした。作業の検証 › チーム作業の重複根拠 で接続し直してください。";
+"Demo data is never shared." = "デモデータは共有されません。";
+"Also touched on another computer by %@ · %@" = "別のコンピューターでも作業中: %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "自動続行はこの種のリクエストには答えません。";
 "It looks risky to answer automatically." = "自動で答えるには危険そうです。";

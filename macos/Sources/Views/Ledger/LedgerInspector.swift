@@ -326,8 +326,33 @@ struct LedgerInspector: View {
                     .buttonStyle(.plain)
                     .help("Files that usually change together")
                 }
+                // other computers' sessions, as the team hub reports them while sharing is on (Settings › Ledger › Team hub)
+                ForEach(LedgerHubSharing.shared.overlaps[s.id] ?? []) { o in LedgerHubOverlapRow(overlap: o) }
             }
         }
+    }
+}
+
+/// Another computer's session touching the same things, from the team hub: who, and what is shared between them.
+/// (Windows: widgets/ledger-workspace/ui/LedgerInspector.tsx, HubOverlaps)
+private struct LedgerHubOverlapRow: View {
+    let overlap: LedgerHubOverlap
+
+    var body: some View {
+        let title = String(localized: "Also touched on another computer by \(overlap.session) · \(overlap.member)")
+        VStack(alignment: .leading, spacing: 3) {
+            // the whole sentence when the inspector is wide enough, the session and member alone when it is narrow
+            ViewThatFits(in: .horizontal) {
+                StatusPill(title: title, symbol: "desktopcomputer", tone: .waiting)
+                StatusPill(title: overlap.session + " · " + overlap.member, symbol: "desktopcomputer", tone: .waiting)
+            }
+            Text(overlap.paths.joined(separator: ", "))
+                .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(3).textSelection(.enabled)
+        }
+        .padding(.top, 2)
+        .help(overlap.branch.isEmpty ? title : title + "\n" + overlap.branch)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title + ": " + overlap.paths.joined(separator: ", "))
     }
 }
 

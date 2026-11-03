@@ -2024,6 +2024,22 @@
 "Open a repository to use its terminal" = "เปิดรีโพสิทอรีเพื่อใช้เทอร์มินัลของรีโพสิทอรีนั้น";
 "Open in the terminal" = "เปิดในเทอร์มินัล";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "ฮับของทีม";
+"Share this computer's Ledger sessions with the team hub" = "แชร์เซสชัน Ledger ของคอมพิวเตอร์เครื่องนี้กับฮับของทีม";
+"What is shared" = "สิ่งที่แชร์";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "สำหรับแต่ละเซสชันที่ทำงานอยู่: ID โปรเจกต์ ชื่อ ชนิดและบทบาท สาขา ผลการตัดสิน ขอบเขตงาน และกิจกรรมล่าสุด ภายใต้รีโมตของรีโพสิทอรี ไม่แชร์คำถาม คำตอบ รายงาน ข้อความ บันทึก สมุดบันทึก เอกสาร ลิงก์แชต หรือพาธโฟลเดอร์ สตรีมและเซสชันที่เก็บถาวรจะอยู่บนคอมพิวเตอร์เครื่องนี้เท่านั้น";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "เมื่อปิด ระบบจะถอนเซสชันของคุณ ส่วนที่เหลือจะหมดอายุบนฮับภายในไม่กี่นาที การทับซ้อนกับเซสชันของสมาชิกคนอื่นจะแสดงในขอบเขตงานของแผงรายละเอียด";
+"Connect a team hub under Work validation › Team overlap evidence first." = "เชื่อมต่อฮับของทีมใน Work validation › Team overlap evidence ก่อน";
+"Connecting to %@…" = "กำลังเชื่อมต่อกับ %@…";
+"Sessions shared with %@: %lld" = "เซสชันที่แชร์กับ %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "เก็บไว้บนคอมพิวเตอร์เครื่องนี้ ไม่มีรีโมตของรีโพสิทอรี: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "ฮับนี้เก็บเฉพาะสาขาและขอบเขตงาน ชื่อและผลการตัดสินต้องใช้ฮับที่ใหม่กว่า";
+"Couldn't reach %@. Gitrochi tries again later." = "ติดต่อ %@ ไม่ได้ Gitrochi จะลองใหม่ภายหลัง";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "โทเค็นฮับสำหรับ %@ ไม่ได้รับการยอมรับหรืออ่านไม่ได้ เชื่อมต่อใหม่ใน Work validation › Team overlap evidence";
+"Demo data is never shared." = "ไม่แชร์ข้อมูลตัวอย่างเด็ดขาด";
+"Also touched on another computer by %@ · %@" = "มีการทำงานบนคอมพิวเตอร์เครื่องอื่นด้วย โดย %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "การดำเนินการต่ออัตโนมัติจะไม่ตอบคำขอประเภทนี้";
 "It looks risky to answer automatically." = "การตอบอัตโนมัติดูมีความเสี่ยง";

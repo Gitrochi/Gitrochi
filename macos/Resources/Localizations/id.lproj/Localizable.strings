@@ -1983,6 +1983,22 @@
 "Open a repository to use its terminal" = "Buka repositori untuk memakai terminalnya";
 "Open in the terminal" = "Buka di terminal";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Hub tim";
+"Share this computer's Ledger sessions with the team hub" = "Bagikan sesi Ledger komputer ini ke hub tim";
+"What is shared" = "Yang dibagikan";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Untuk setiap sesi aktif: ID, proyek, judul, jenis dan peran, branch, putusan, cakupan kerja, dan aktivitas terakhir, di bawah remote repositorinya. Tidak pernah pertanyaan, jawaban, laporan, pesan, catatan, buku catatan, dokumen, tautan obrolan, atau jalur folder. Stream dan sesi yang diarsipkan tetap di komputer ini.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Mematikannya menarik kembali sesi Anda; sisanya kedaluwarsa di hub dalam beberapa menit. Tumpang tindih dengan sesi anggota lain tampil di Cakupan kerja pada panel detail.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Hubungkan hub tim terlebih dahulu di Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Menghubungkan ke %@…";
+"Sessions shared with %@: %lld" = "Sesi yang dibagikan ke %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Disimpan di komputer ini, tanpa remote repositori: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Hub ini hanya menyimpan branch dan cakupan kerja; judul dan putusan memerlukan hub yang lebih baru.";
+"Couldn't reach %@. Gitrochi tries again later." = "Tidak dapat menjangkau %@. Gitrochi akan mencoba lagi nanti.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Token hub untuk %@ tidak diterima atau tidak dapat dibaca. Hubungkan lagi di Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Data demo tidak pernah dibagikan.";
+"Also touched on another computer by %@ · %@" = "Juga dikerjakan di komputer lain oleh %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Lanjut otomatis tidak pernah menjawab permintaan seperti ini.";
 "It looks risky to answer automatically." = "Menjawab otomatis tampaknya berisiko.";

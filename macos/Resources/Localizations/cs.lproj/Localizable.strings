@@ -2010,6 +2010,22 @@
 "Open a repository to use its terminal" = "Otevřete repozitář, abyste mohli použít jeho terminál";
 "Open in the terminal" = "Otevřít v terminálu";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Týmový hub";
+"Share this computer's Ledger sessions with the team hub" = "Sdílet relace Evidence z tohoto počítače s týmovým hubem";
+"What is shared" = "Co se sdílí";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "U každé aktivní relace ID, projekt, název, druh a role, větev, výsledek, čeho se týká a poslední aktivita, pod vzdáleným repozitářem. Nikdy otázky, odpovědi, hlášení, zprávy, poznámky, zápisník, dokumenty, odkazy na chaty ani cesty ke složkám. Kanály a archivované relace zůstávají na tomto počítači.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Vypnutím se vaše relace stáhnou; co zbude, na hubu během několika minut vyprší. Překryvy s relacemi ostatních členů se zobrazí v inspektoru v části Týká se.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Nejprve připojte týmový hub v Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Připojování k %@…";
+"Sessions shared with %@: %lld" = "Relace sdílené s %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Ponecháno na tomto počítači, bez vzdáleného repozitáře: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Tento hub uchovává jen větve a to, čeho se relace týkají; názvy a výsledky vyžadují novější hub.";
+"Couldn't reach %@. Gitrochi tries again later." = "Nelze se spojit s %@. Gitrochi to zkusí znovu později.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Token hubu pro %@ nebyl přijat nebo ho nelze přečíst. Připojte se znovu v Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Ukázková data se nikdy nesdílejí.";
+"Also touched on another computer by %@ · %@" = "Týká se i jiného počítače: %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Automatické pokračování na tento druh požadavku nikdy neodpovídá.";
 "It looks risky to answer automatically." = "Automatická odpověď tu vypadá riskantně.";

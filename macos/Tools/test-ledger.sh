@@ -88,6 +88,7 @@ let start: LedgerMs = 1_793_400_000_000
 @main struct LedgerTests {
     @MainActor static func main() async throws {
         pureLogic()
+        hubShare()
         try learning()
         try answerForms()
         try chatGPTDrafts()
@@ -104,6 +105,55 @@ let start: LedgerMs = 1_793_400_000_000
             try await native(cli: CommandLine.arguments[i + 1], folder: CommandLine.arguments[i + 2], legacy: CommandLine.arguments[i + 3])
         }
         print("PASS: \(checks) checks — verdict order, countdowns, filters, Inbox groups, undo, graph rows and coordinates, every demo answer decoded, errors, deadlines, store polling by rev, operations with undo, prompts, settings, large demo, the core through its C ABI")
+    }
+
+    /// Team hub sharing's pure rules, as windows/tests/ledger-hub-share.test.ts checks its twin
+    static func hubShare() {
+        typealias H = LedgerHubShare
+        check(H.outcome(status: 200, body: "") == .accepted && H.outcome(status: 204, body: "") == .accepted, "2xx is accepted")
+        check(H.outcome(status: 400, body: #"{"error":{"code":"INVALID_ARGUMENT","message":"invalid JSON body: unknown field \"ledger\""}}"#) == .plainBodyNeeded,
+              "an older hub asks for the body without ledger")
+        check(H.outcome(status: 400, body: "{}") == .skipped && H.outcome(status: 401, body: "") == .rejected && H.outcome(status: 403, body: "") == .rejected
+              && H.outcome(status: 429, body: "") == .limited && H.outcome(status: 503, body: "") == .unreachable && H.outcome(status: 0, body: "") == .unreachable,
+              "hub answers map to outcomes")
+        check([1, 2, 3, 4, 5, 6, 7, 20].map(H.backoff) == [30_000, 60_000, 120_000, 240_000, 480_000, 600_000, 600_000, 600_000], "backoff doubles to ten minutes")
+        check(H.parseClient("ledger/a1b2/S1103-01").map { [$0.computer, $0.session] } == ["a1b2", "S1103-01"]
+              && ["laptop", "ledger/a1b2", "ledger//S1", "ledger/a1b2/", "ledger/a/b/c"].allSatisfy { H.parseClient($0) == nil }, "only Ledger client names parse")
+        let computer = "a1b2c3d4e5f6"
+        func item(_ id: String, _ changed: [String] = ["src/retry.ts"], repo: String = "example.com/team/app") -> LedgerHubShareResult.Item {
+            let presence: LedgerJSON = .object(["repo": .string(repo), "branch": .string("feature/" + id), "changed": .array(changed.map(LedgerJSON.string)),
+                                                "related": .array([]), "client": .string("ledger/\(computer)/\(id)"),
+                                                "ledger": .object(["session": .string(id), "title": .string("Retry policy"), "verdict": .string("active")])])
+            return .init(sessionId: id, repo: repo, client: "ledger/\(computer)/\(id)", presence: presence)
+        }
+        let plainBody = (try? JSONSerialization.jsonObject(with: H.body(item("S1").presence, plain: true))) as? [String: Any]
+        check(plainBody.map { Set($0.keys) } == ["branch", "changed", "client", "related", "repo"], "the plain body drops only ledger")
+        check(String(decoding: H.body(.object(["b": .number(1), "a": .object(["d": .number(2), "c": .number(3)])]), plain: false), as: UTF8.self) == #"{"a":{"c":3,"d":2},"b":1}"#,
+              "bodies have sorted keys")
+        var published: [String: H.Published] = [:]
+        let first = H.plan([item("S1"), item("S2")], published: published, plain: false, full: false)
+        check(first.post.map(\.client) == ["ledger/\(computer)/S1", "ledger/\(computer)/S2"] && first.withdraw.isEmpty, "new sessions are posted")
+        for post in first.post { published[post.client] = .init(repo: post.repo, body: post.body, accepted: true) }
+        check(H.plan([item("S1"), item("S2")], published: published, plain: false, full: false).post.isEmpty, "unchanged sessions are not posted again")
+        check(H.plan([item("S1"), item("S2")], published: published, plain: false, full: true).post.count == 2, "a refresh posts everything")
+        check(H.plan([item("S1", ["src/other.ts"]), item("S2")], published: published, plain: false, full: false).post.map(\.client) == ["ledger/\(computer)/S1"],
+              "a change is posted")
+        check(H.plan([item("S1")], published: published, plain: false, full: false).withdraw == [.init(client: "ledger/\(computer)/S2", repo: "example.com/team/app")],
+              "a session that is no longer shared is withdrawn")
+        let moved = H.plan([item("S1", repo: "example.com/team/lib"), item("S2")], published: published, plain: false, full: false)
+        check(moved.post.map(\.repo) == ["example.com/team/lib"] && moved.withdraw == [.init(client: "ledger/\(computer)/S1", repo: "example.com/team/app")],
+              "a session that moved leaves its old repository")
+        func pair(_ a: (String, String), _ b: (String, String), _ paths: [String]) -> H.Pair {
+            .init(a: .init(member: a.0, client: a.1, branch: "a"), b: .init(member: b.0, client: b.1, branch: "b"), paths: paths)
+        }
+        let rows = [pair(("alex", "ledger/\(computer)/S1"), ("sam", "ledger/f00dfeed/S9"), ["src/retry.ts"]),
+                    pair(("sam", "ledger/f00dfeed/S9"), ("alex", "ledger/\(computer)/S1"), ["REQ-12"]),
+                    pair(("alex", "laptop"), ("sam", "ledger/f00dfeed/S9"), ["src/retry.ts"]),
+                    pair(("alex", "ledger/\(computer)/S1"), ("sam", "desk"), ["src/retry.ts"]),
+                    pair(("alex", "ledger/0ther0ther/S4"), ("sam", "ledger/f00dfeed/S9"), ["src/retry.ts"])]
+        check(H.overlaps(rows, member: "alex", computer: computer) == ["S1": [LedgerHubOverlap(session: "S9", member: "sam", branch: "b", paths: ["src/retry.ts", "REQ-12"])]]
+              && H.overlaps(rows, member: "nobody", computer: computer).isEmpty,
+              "only this computer's sessions against other members' sessions overlap")
     }
 
     @MainActor static func learning() throws {
@@ -1034,6 +1084,11 @@ let start: LedgerMs = 1_793_400_000_000
         check(firstReport["created"].bool == true && connectionStore.session("S1101-connection")?.title == "Connection check task"
               && connectionStore.inbox.items.isEmpty,
               "the first real report appears in sessions while an active session leaves the Inbox clear")
+        let shared = try await connectionClient.hubShare(computer: "a1b2c3d4e5f6")
+        check(shared.sessions.isEmpty && shared.unshared.map(\.sessionId) == ["S1101-connection"] && shared.unshared.first?.reason == "no_remote",
+              "hub_share answers through the C ABI and keeps a session without a repository remote on this computer")
+        check(failure(CLIBackend(binary: cli, db: connectionDB), "hub_share", ["client": .string("a1b2c3d4e5f6")])?.code == "NOT_ALLOWED",
+              "agents cannot ask what would be shared with the team hub")
 
         let db = folder + "/ledger.sqlite3"
         _ = CLIBackend(binary: cli, db: db).run(["demo", db])
@@ -1275,7 +1330,7 @@ case "$ARCH" in arm64) TRIPLE=aarch64-apple-darwin ;; *) TRIPLE=x86_64-apple-dar
 # The library the app links (the ledger's C ABI is re-exported there) and the gitrochi-ledger command next to it
 cp "$(bash "$ROOT/../tools/build-core-native.sh" "$ARCH")" "$TASK_TMP/core.a"
 swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
-    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
+    "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" "$ROOT/Sources/Core/LedgerHubShare.swift" \
     "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \

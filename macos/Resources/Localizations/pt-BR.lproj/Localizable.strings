@@ -1994,6 +1994,22 @@
 "Open a repository to use its terminal" = "Abra um repositório para usar o terminal dele";
 "Open in the terminal" = "Abrir no terminal";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Hub da equipe";
+"Share this computer's Ledger sessions with the team hub" = "Compartilhar as sessões do Registro deste computador com o hub da equipe";
+"What is shared" = "O que é compartilhado";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "De cada sessão ativa: ID, projeto, título, tipo e papel, branch, veredito, itens afetados e última atividade, sob o remoto do seu repositório. Nunca perguntas, respostas, relatórios, mensagens, notas, o caderno, documentos, links de chat ou caminhos de pastas. As frentes e as sessões arquivadas ficam neste computador.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Ao desativar, suas sessões são retiradas; o que restar expira no hub em poucos minutos. Sobreposições com sessões de outros membros aparecem nos itens afetados do inspetor.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Conecte primeiro um hub da equipe em Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Conectando a %@…";
+"Sessions shared with %@: %lld" = "Sessões compartilhadas com %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Mantidas neste computador, sem remoto de repositório: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Este hub guarda apenas branches e itens afetados; títulos e vereditos precisam de um hub mais recente.";
+"Couldn't reach %@. Gitrochi tries again later." = "Não foi possível acessar %@. O Gitrochi tentará de novo mais tarde.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "O token do hub para %@ não foi aceito ou não pôde ser lido. Conecte-se de novo em Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Dados de demonstração nunca são compartilhados.";
+"Also touched on another computer by %@ · %@" = "Também afetado em outro computador por %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "A continuação automática nunca responde a este tipo de solicitação.";
 "It looks risky to answer automatically." = "Responder automaticamente parece arriscado.";
