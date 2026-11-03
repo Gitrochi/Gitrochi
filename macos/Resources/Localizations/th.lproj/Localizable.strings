@@ -2240,3 +2240,9 @@
 "View all tasks" = "ดูงานทั้งหมด";
 "Show more tasks" = "แสดงงานเพิ่มเติม";
 "Project items could not be fully loaded. Retry the project." = "ไม่สามารถโหลดรายการในโปรเจกต์ได้ครบถ้วน โปรดโหลดโปรเจกต์อีกครั้ง";
+"%lld passing" = "ผ่าน %lld";
+"%lld failing" = "ล้มเหลว %lld";
+"%lld pending" = "รอ %lld";
+"Checks on the request's latest commit" = "การตรวจสอบบนคอมมิตล่าสุดของคำขอ";
+"Request merged — mark merged?" = "คำขอรวมแล้ว — ทำเครื่องหมายว่ารวมแล้วไหม?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "คำขอถูกรวมบนเซิร์ฟเวอร์แล้ว เลือกเวอร์ชันที่งานนี้ถูกรวมเข้าไป สมุดบันทึกจะเปลี่ยนเมื่อคุณเลือกเท่านั้น";

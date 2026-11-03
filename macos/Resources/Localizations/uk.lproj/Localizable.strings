@@ -2245,3 +2245,9 @@
 "View all tasks" = "Переглянути всі завдання";
 "Show more tasks" = "Показати ще завдання";
 "Project items could not be fully loaded. Retry the project." = "Не вдалося завантажити всі елементи проєкту. Завантажте проєкт повторно.";
+"%lld passing" = "Пройдено: %lld";
+"%lld failing" = "З помилкою: %lld";
+"%lld pending" = "Очікують: %lld";
+"Checks on the request's latest commit" = "Перевірки останнього коміту запиту";
+"Request merged — mark merged?" = "Запит злито — позначити як влиту?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Запит злито на сервері. Виберіть версію, до якої увійшла ця робота; Журнал зміниться лише після вашого вибору.";

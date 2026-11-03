@@ -2204,3 +2204,9 @@
 "View all tasks" = "Xem tất cả tác vụ";
 "Show more tasks" = "Hiển thị thêm tác vụ";
 "Project items could not be fully loaded. Retry the project." = "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án.";
+"%lld passing" = "%lld đạt";
+"%lld failing" = "%lld lỗi";
+"%lld pending" = "%lld đang chờ";
+"Checks on the request's latest commit" = "Kiểm tra trên commit mới nhất của yêu cầu";
+"Request merged — mark merged?" = "Yêu cầu đã hợp nhất — đánh dấu đã gộp?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Yêu cầu đã được hợp nhất trên máy chủ. Hãy chọn phiên bản đã nhận công việc này; Sổ theo dõi chỉ thay đổi khi bạn chọn.";

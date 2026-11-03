@@ -3077,3 +3077,9 @@
 "View all tasks" = "すべてのタスクを表示";
 "Show more tasks" = "さらにタスクを表示";
 "Project items could not be fully loaded. Retry the project." = "プロジェクトの項目をすべて読み込めませんでした。プロジェクトを再読み込みしてください。";
+"%lld passing" = "%lld 件成功";
+"%lld failing" = "%lld 件失敗";
+"%lld pending" = "%lld 件待機中";
+"Checks on the request's latest commit" = "リクエストの最新コミットのチェック";
+"Request merged — mark merged?" = "リクエストはマージ済み — 取り込み済みにしますか?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "サーバーでリクエストがマージされました。この作業が取り込まれたバージョンを選んでください。選ぶまで台帳は変わりません。";

@@ -2278,3 +2278,9 @@
 "View all tasks" = "Ver todas las tareas";
 "Show more tasks" = "Mostrar más tareas";
 "Project items could not be fully loaded. Retry the project." = "No se pudieron cargar todos los elementos del proyecto. Vuelve a cargar el proyecto.";
+"%lld passing" = "%lld superadas";
+"%lld failing" = "%lld fallidas";
+"%lld pending" = "%lld pendientes";
+"Checks on the request's latest commit" = "Comprobaciones del último commit de la solicitud";
+"Request merged — mark merged?" = "Solicitud fusionada — ¿marcar como integrada?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "La solicitud se fusionó en el servidor. Elige la versión en la que entró este trabajo; el Registro solo cambia cuando lo haces.";

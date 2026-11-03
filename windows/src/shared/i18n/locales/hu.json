@@ -2255,5 +2255,11 @@
   "No organizations found": "Nem találhatók szervezetek",
   "View all tasks": "Összes feladat megtekintése",
   "Show more tasks": "További feladatok megjelenítése",
-  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet."
+  "Project items could not be fully loaded. Retry the project.": "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet.",
+  "{0} passing": "{0} sikeres",
+  "{0} failing": "{0} sikertelen",
+  "{0} pending": "{0} függőben",
+  "Checks on the request's latest commit": "A kérés legújabb commitjának ellenőrzései",
+  "Request merged — mark merged?": "A kérés egyesítve — megjelöli beolvasztottként?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "A kérést a szerveren egyesítették. Válassza ki a verziót, amelybe ez a munka bekerült; a Napló csak ekkor változik."
 }

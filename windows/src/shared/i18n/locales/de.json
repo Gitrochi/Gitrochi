@@ -2267,5 +2267,11 @@
   "No organizations found": "Keine Organisationen gefunden",
   "View all tasks": "Alle Aufgaben anzeigen",
   "Show more tasks": "Weitere Aufgaben anzeigen",
-  "Project items could not be fully loaded. Retry the project.": "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut."
+  "Project items could not be fully loaded. Retry the project.": "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut.",
+  "{0} passing": "{0} erfolgreich",
+  "{0} failing": "{0} fehlgeschlagen",
+  "{0} pending": "{0} ausstehend",
+  "Checks on the request's latest commit": "Prüfungen des neuesten Commits der Anfrage",
+  "Request merged — mark merged?": "Anfrage zusammengeführt — als übernommen markieren?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Die Anfrage wurde auf dem Server zusammengeführt. Wählen Sie die Version, in die diese Arbeit eingeflossen ist; das Logbuch ändert sich erst dann."
 }

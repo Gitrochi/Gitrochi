@@ -2232,3 +2232,9 @@
 "View all tasks" = "Alle Aufgaben anzeigen";
 "Show more tasks" = "Weitere Aufgaben anzeigen";
 "Project items could not be fully loaded. Retry the project." = "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut.";
+"%lld passing" = "%lld erfolgreich";
+"%lld failing" = "%lld fehlgeschlagen";
+"%lld pending" = "%lld ausstehend";
+"Checks on the request's latest commit" = "Prüfungen des neuesten Commits der Anfrage";
+"Request merged — mark merged?" = "Anfrage zusammengeführt — als übernommen markieren?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Die Anfrage wurde auf dem Server zusammengeführt. Wählen Sie die Version, in die diese Arbeit eingeflossen ist; das Logbuch ändert sich erst dann.";

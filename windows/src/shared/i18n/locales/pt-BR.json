@@ -2241,5 +2241,11 @@
   "No organizations found": "Nenhuma organização encontrada",
   "View all tasks": "Ver todas as tarefas",
   "Show more tasks": "Mostrar mais tarefas",
-  "Project items could not be fully loaded. Retry the project.": "Não foi possível carregar todos os itens do projeto. Carregue o projeto novamente."
+  "Project items could not be fully loaded. Retry the project.": "Não foi possível carregar todos os itens do projeto. Carregue o projeto novamente.",
+  "{0} passing": "{0} aprovadas",
+  "{0} failing": "{0} com falha",
+  "{0} pending": "{0} pendentes",
+  "Checks on the request's latest commit": "Verificações do commit mais recente da solicitação",
+  "Request merged — mark merged?": "Solicitação mesclada — marcar como integrada?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "A solicitação foi mesclada no servidor. Escolha a versão que recebeu este trabalho; o Registro só muda quando você escolher."
 }

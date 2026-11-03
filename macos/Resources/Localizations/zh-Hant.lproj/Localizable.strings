@@ -2250,3 +2250,9 @@
 "View all tasks" = "檢視所有工作";
 "Show more tasks" = "顯示更多工作";
 "Project items could not be fully loaded. Retry the project." = "無法完整載入專案項目。請重新載入專案。";
+"%lld passing" = "%lld 項通過";
+"%lld failing" = "%lld 項失敗";
+"%lld pending" = "%lld 項等待中";
+"Checks on the request's latest commit" = "請求最新提交上的檢查";
+"Request merged — mark merged?" = "請求已合併 — 標記為已合併?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "請求已在伺服器上合併。請選擇此工作併入的版本；在你選擇之前帳本不會改變。";
