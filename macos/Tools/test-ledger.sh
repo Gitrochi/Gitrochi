@@ -1278,6 +1278,7 @@ swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I 
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
     "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
+    "$ROOT/Sources/Services/LedgerConnectionSetup.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"
