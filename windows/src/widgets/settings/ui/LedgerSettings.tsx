@@ -1,6 +1,6 @@
 import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
+import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, type LedgerHubSharing, ledgerHubSharing, type LedgerHubStatus, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
 import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
@@ -114,6 +114,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       <TrackingSection />
       <AutoContinueSection autoContinue={settings.autoContinue} disabled={busy} onSave={(autoContinue) => void save({ autoContinue })} onInvalid={setError} />
       <NotificationsSection />
+      <HubSharingSection />
 
       <div className="form-section">
         <span className="form-section-title">{t("Stale sessions")}</span>
@@ -192,6 +193,46 @@ function NotificationsSection() {
       <span className="hint">{t("New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.")}</span>
       <Checkbox checked={notifier.badge} onChange={(on) => notifier.setBadge(on)} label={t("Show the count on the taskbar button")} />
       <span className="hint">{t("The number of items waiting for you in the Ledger.")}</span>
+    </div>
+  );
+}
+
+/** The hub's state as one quiet line; nothing while sharing is off */
+function hubStatusText(status: LedgerHubStatus): string | null {
+  switch (status.kind) {
+    case "off": return null;
+    case "demo": return t("Demo data is never shared.");
+    case "noHub": return t("Connect a team hub under Work validation › Team overlap evidence first.");
+    case "connecting": return t("Connecting to {0}…", status.host);
+    case "unreachable": return t("Couldn't reach {0}. Gitrochi tries again later.", status.host);
+    case "rejected": return t("The hub token for {0} was not accepted or could not be read. Connect again under Work validation › Team overlap evidence.", status.host);
+    case "sharing": return [
+      t("Sessions shared with {0}: {1}", status.host, status.count),
+      ...(status.unshared ? [t("Kept on this computer, no repository remote: {0}", status.unshared)] : []),
+      ...(status.plain ? [t("This hub keeps branches and touches only; titles and verdicts need a newer hub.")] : []),
+    ].join("\n");
+  }
+}
+
+/**
+ * Sharing this computer's sessions with the team hub (docs/ledger/DESIGN.md §14 D4): off until a person turns it on, with
+ * what is shared spelled out next to the switch. (macOS: Views/Settings/LedgerSettings.swift, hubSection)
+ */
+export function HubSharingSection({ sharing = ledgerHubSharing }: { sharing?: LedgerHubSharing }) {
+  useObserve(sharing);
+  const connected = !!sharing.hubEndpoint;
+  const line = connected && sharing.on ? hubStatusText(sharing.status) : null;
+  return (
+    <div className="form-section" data-ledger-section="team-hub">
+      <span className="form-section-title">{t("Team hub")}</span>
+      <Checkbox checked={sharing.on} disabled={!connected && !sharing.on} onChange={(on) => void sharing.setOn(on)} label={t("Share this computer's Ledger sessions with the team hub")} />
+      {!connected && <span className="hint">{t("Connect a team hub under Work validation › Team overlap evidence first.")}</span>}
+      {line && <span className="hint" role="status" style={{ whiteSpace: "pre-line" }}>{line}</span>}
+      <div className="col" style={{ gap: 2 }} data-ledger-hub="what-is-shared">
+        <strong style={{ fontSize: 12 }}>{t("What is shared")}</strong>
+        <span className="hint">{t("Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer.")}</span>
+      </div>
+      <span className="hint">{t("Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches.")}</span>
     </div>
   );
 }

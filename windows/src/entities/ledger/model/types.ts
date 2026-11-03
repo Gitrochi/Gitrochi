@@ -1,3 +1,5 @@
+import type { LedgerHubShareResult } from "../lib/hub-share";
+
 /**
  * The Ledger contract (v0): what the backend answers and the screens read. Times are epoch milliseconds.
  * (macOS: Core/LedgerModels.swift)
@@ -419,6 +421,8 @@ export interface LedgerMethods {
   import_legacy: { args: { path: string; dryRun?: boolean }; result: LedgerLegacyImport };
   /** The session of an agent the app is about to launch (Track agents I start); its agent's first start names it */
   track: { args: LedgerTrackArgs; result: { ok: boolean; rev: number; session: LedgerSession } };
+  /** What sharing with the team hub posts for this computer's live sessions; reads only. `client` names this computer. */
+  hub_share: { args: { client: string }; result: LedgerHubShareResult };
 }
 
 /**

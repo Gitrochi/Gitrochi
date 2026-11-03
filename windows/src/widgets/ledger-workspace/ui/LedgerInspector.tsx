@@ -1,13 +1,13 @@
-import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, X } from "lucide-react";
+import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, Monitor, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
-import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
+import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerHubSharing, ledgerHubSharing, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 import { LedgerTimeline } from "./LedgerTimeline";
 import { mergeMenu, moreMenu } from "./session-actions";
 import { BaseLine, SessionId, Section, VerdictBadge, When } from "./parts";
@@ -130,6 +130,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
               </div>
             );
           })}
+          <HubOverlaps sessionId={s.id} />
         </Section>
       </div>
       {dropping && (
@@ -198,6 +199,27 @@ function WaitField({ value, disabled, onCommit }: { value: number; disabled: boo
     else setDraft(String(value));
   };
   return <input className="input" type="number" min={10} max={300} value={draft} disabled={disabled} aria-label={t("Wait")} style={{ width: 72 }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />;
+}
+
+/**
+ * Other computers' sessions touching the same things, as the team hub reports them while sharing is on (Settings › Ledger ›
+ * Team hub). (macOS: Views/Ledger/LedgerInspector.swift, LedgerHubOverlapRow)
+ */
+export function HubOverlaps({ sessionId, sharing = ledgerHubSharing }: { sessionId: string; sharing?: LedgerHubSharing }) {
+  useObserve(sharing);
+  return (
+    <>
+      {sharing.overlapsFor(sessionId).map((o) => {
+        const title = t("Also touched on another computer by {0} · {1}", o.session, o.member);
+        return (
+          <div key={`${o.member}-${o.session}`} className="ledger-hub-overlap" role="group" aria-label={`${title}: ${o.paths.join(", ")}`} data-tip={o.branch ? `${title}|${o.branch}` : title}>
+            <StatusPill tone="waiting" icon={<Monitor size={12} />}><span className="ledger-hub-overlap-text">{title}</span></StatusPill>
+            <span className="hint selectable">{o.paths.join(", ")}</span>
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 function OpenQuestion({ store, q, busy }: { store: LedgerStore; q: LedgerQuestion; busy: boolean }) {
