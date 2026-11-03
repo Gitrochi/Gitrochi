@@ -43,13 +43,26 @@ export async function ledgerParitySelfTest(): Promise<[boolean, string]> {
     ensure(document.querySelector(".ledger-document-evidence"), "Document tracker did not open");
     ensure(!document.querySelector(".ledger-document-detail .markdown"), "An AI summary ran without a request");
     button("Close")!.click(); await pause();
+    await open("Release notes…");
+    const release = () => document.querySelector<HTMLElement>("[data-ledger-release] .ledger-release-body");
+    for (let i = 0; i < 40 && !release(); i++) await pause();
+    ensure(release()?.textContent?.includes("Cache invalidation design"), `Release notes did not draft HEAD: ${release()?.textContent}`);
+    ensure(!document.querySelector<HTMLButtonElement>("[data-release-copy]")?.disabled, "Copy Markdown stayed disabled with a draft");
+    button("Markdown")!.click(); await pause();
+    ensure(release()?.querySelector("pre")?.textContent?.startsWith("# atlas 1.4.2"), "The Markdown view did not show the source");
+    const baseline = document.querySelector<HTMLSelectElement>(`[data-ledger-release] select[aria-label="${t("Baseline")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(baseline, "1.4.1");
+    baseline.dispatchEvent(new Event("change", { bubbles: true }));
+    for (let i = 0; i < 40 && !release()?.textContent?.startsWith("# atlas 1.4.1"); i++) await pause();
+    ensure(release()?.textContent?.startsWith("# atlas 1.4.1"), `Choosing a baseline did not draft it: ${release()?.textContent?.slice(0, 40)}`);
+    button("Close")!.click(); await pause();
     await open("Manage records…");
     const sessionTitle = [...document.querySelectorAll(".ledger-manage-form label")].find((row) => row.textContent?.startsWith(t("Title")))?.querySelector<HTMLInputElement>("input");
     ensure(sessionTitle, "Session metadata editor did not open");
     input(sessionTitle!, "Reviewed cache policy"); await pause(); button("Save session details")!.click(); await pause();
     ensure((await store.backend.call("state", { range: "all" })).sessions.some((row) => row.title === "Reviewed cache policy"), "Session metadata was not saved");
     button("Close")!.click();
-    return [true, "Notebook save, dated work item, Markdown report, document tracker and metadata editing through Ledger actions"];
+    return [true, "Notebook save, dated work item, Markdown report, document tracker, release notes and metadata editing through Ledger actions"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); }
 }

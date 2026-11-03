@@ -2279,5 +2279,15 @@
   "Restore is not available on demo data.": "Демодані не можна відновити.",
   "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "Під час відновлення спершу перевіряється копія, а поточна книга обліку зберігається як копія «До відновлення», яка ніколи не видаляється автоматично. Запущені агенти й далі пишуть у відновлену книгу обліку.",
   "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Книгу обліку буде замінено копією від {0}. Її поточний стан спершу зберігається як копія «До відновлення» в теці backups, тож його можна буде відновити. Агенти, які ще працюють, і далі пишуть у відновлену книгу обліку, а звіти, надіслані під час відновлення, можуть загубитися.",
-  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Копію від {0} відновлено. Попередню книгу обліку збережено як {1}."
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Копію від {0} відновлено. Попередню книгу обліку збережено як {1}.",
+  "Release notes…": "Примітки до випуску…",
+  "Markdown": "Markdown",
+  "Copy Markdown": "Копіювати Markdown",
+  "{0} (HEAD)": "{0} (HEAD)",
+  "No release notes for this baseline": "Для цієї базової версії немає приміток до випуску",
+  "A draft from what agents reported. Answers, messages and notebook notes are never included.": "Чернетка зі звітів агентів. Відповіді, повідомлення й нотатки з нотатника ніколи не включаються.",
+  "No projects yet": "Проєктів поки немає",
+  "Release notes are drafted from sessions merged into a baseline.": "Примітки до випуску складаються із сеансів, влитих у базову версію.",
+  "No sessions were merged into {0}.": "У {0} не влито жодного сеансу.",
+  "Sessions merged into {0}: {1}": "Сеансів влито в {0}: {1}"
 }

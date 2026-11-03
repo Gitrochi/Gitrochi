@@ -2259,3 +2259,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "還原時會先檢查備份，並將目前的台帳保存為「還原前」副本，此副本不會自動刪除。執行中的代理程式會繼續寫入還原後的台帳。";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "台帳將被取代為 %@ 的備份。目前狀態會先以「還原前」副本保存在 backups 資料夾中，之後可以再還原。仍在執行的代理程式會繼續寫入還原後的台帳，還原期間送出的報告可能會遺失。";
 "Restored the backup from %@. The previous ledger is kept as %@." = "已還原 %@ 的備份。先前的台帳保存為 %@。";
+"Release notes…" = "版本說明…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "複製 Markdown";
+"%@ (HEAD)" = "%@（HEAD）";
+"No release notes for this baseline" = "此基準沒有版本說明";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "根據代理程式報告產生的草稿。不會包含回答、訊息或筆記本中的筆記。";
+"No projects yet" = "尚無專案";
+"Release notes are drafted from sessions merged into a baseline." = "版本說明根據合併到基準的工作階段起草。";
+"No sessions were merged into %@." = "沒有工作階段合併到 %@。";
+"Sessions merged into %@: %lld" = "合併到 %@ 的工作階段：%lld";

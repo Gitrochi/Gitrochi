@@ -5,7 +5,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports, importLegacy, learning, chatGPTDraft, browser, workLog, documents, notebook, records
+        case connect, importReports, importLegacy, learning, chatGPTDraft, browser, workLog, documents, notebook, records, releaseNotes
         var id: String { rawValue }
     }
 
@@ -21,6 +21,8 @@ struct LedgerWorkspaceView: View {
     @ViewState private var sessionAfterSheet: String?
     /// The claude-ledger database chosen for Import from claude-ledger…
     @ViewState private var legacyPath: String?
+    /// The project and baseline Release notes… opens with; nil follows the page
+    @ViewState private var releaseTarget: (project: String, version: String)?
     @AppStorage("ledgerInspectorWidth") private var inspectorWidth = 360.0
 
     /// The inspector stays a column from this width; below it, it is a sheet
@@ -82,6 +84,7 @@ struct LedgerWorkspaceView: View {
             case .documents: LedgerDocumentsSheet(ledger: ledger)
             case .notebook: LedgerNotebookSheet(ledger: ledger)
             case .records: LedgerManageSheet(ledger: ledger)
+            case .releaseNotes: LedgerReleaseNotesSheet(ledger: ledger, project: releaseTarget?.project, version: releaseTarget?.version)
             }
         }
         .alert("The ledger did not take the change", isPresented: Binding(get: { ledger.actionError != nil }, set: { if !$0 { ledger.actionError = nil } })) {
@@ -133,7 +136,7 @@ struct LedgerWorkspaceView: View {
         switch ledger.page {
         case .inbox: LedgerInboxView(ledger: ledger, open: open)
         case .board: LedgerBoardView(ledger: ledger, open: open, showStreams: { ledger.page = .streams })
-        case .graph: LedgerGraphView(ledger: ledger, open: open)
+        case .graph: LedgerGraphView(ledger: ledger, open: open, releaseNotes: { openReleaseNotes(($0, $1)) })
         case .streams: LedgerStreamsView(ledger: ledger, open: open)
         }
     }
@@ -166,6 +169,7 @@ struct LedgerWorkspaceView: View {
                 Button("Document tracker…") { sheet = .documents }
                 Button("Notebook…") { sheet = .notebook }
                 Button("Manage records…") { sheet = .records }
+                Button("Release notes…") { openReleaseNotes(nil) }
                 Divider()
                 Button("Back up now") { backup() }
                 Button("Refresh") { Task { await ledger.reload() } }
@@ -220,6 +224,11 @@ struct LedgerWorkspaceView: View {
                 ledger.actionError = error.localizedDescription
             }
         }
+    }
+
+    private func openReleaseNotes(_ target: (project: String, version: String)?) {
+        releaseTarget = target
+        sheet = .releaseNotes
     }
 
     private func importLegacy() {

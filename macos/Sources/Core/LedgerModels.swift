@@ -448,6 +448,41 @@ struct LedgerBackupList: Codable, Hashable {
     var backups: [LedgerBackupFile]
 }
 
+/// `release_notes`: a Markdown draft for one baseline from the sessions merged into it or absorbed by its release, with the
+/// trunk's versions newest first for choosing another. (Windows: LedgerReleaseNotes in entities/ledger/model/types.ts)
+struct LedgerReleaseNotes: Codable, Hashable {
+    struct Artifact: Codable, Hashable {
+        var name: String
+        var ver: String?
+        var path: String?
+    }
+    struct Entry: Codable, Hashable, Identifiable {
+        var id: String
+        var title: String
+        var kind: String
+        /// `absorbed` by the release report, else `merged` into the version
+        var how: String
+        var summary: String?
+        var artifacts: [Artifact]
+    }
+    struct Group: Codable, Hashable {
+        var role: LedgerRole
+        var title: String
+        var sessions: [Entry]
+    }
+    var project: String
+    var version: String
+    var previous: String?
+    var releasedAt: LedgerMs
+    var releasedBy: String?
+    var note: String?
+    var versions: [String]
+    var groups: [Group]
+    var markdown: String
+
+    var sessionCount: Int { groups.reduce(0) { $0 + $1.sessions.count } }
+}
+
 /// `restore`: the backup that was checked and, unless `dryRun`, restored, with the safety copy of the ledger it replaced
 struct LedgerRestoreResult: Codable, Hashable {
     struct Contents: Codable, Hashable {

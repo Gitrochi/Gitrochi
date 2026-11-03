@@ -2279,5 +2279,15 @@
   "Restore is not available on demo data.": "Демоданные нельзя восстановить.",
   "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "При восстановлении сначала проверяется копия, а текущая книга учёта сохраняется как копия «До восстановления», которая никогда не удаляется автоматически. Работающие агенты продолжают писать в восстановленную книгу учёта.",
   "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Книга учёта будет заменена копией от {0}. Её текущее состояние сначала сохраняется как копия «До восстановления» в папке backups, чтобы его можно было восстановить. Ещё работающие агенты продолжают писать в восстановленную книгу учёта, а отчёты, отправленные во время восстановления, могут потеряться.",
-  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Копия от {0} восстановлена. Прежняя книга учёта сохранена как {1}."
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "Копия от {0} восстановлена. Прежняя книга учёта сохранена как {1}.",
+  "Release notes…": "Примечания к выпуску…",
+  "Markdown": "Markdown",
+  "Copy Markdown": "Копировать Markdown",
+  "{0} (HEAD)": "{0} (HEAD)",
+  "No release notes for this baseline": "Для этой базовой версии нет примечаний к выпуску",
+  "A draft from what agents reported. Answers, messages and notebook notes are never included.": "Черновик по отчётам агентов. Ответы, сообщения и заметки из блокнота в него никогда не попадают.",
+  "No projects yet": "Проектов пока нет",
+  "Release notes are drafted from sessions merged into a baseline.": "Примечания к выпуску составляются из сессий, влитых в базовую версию.",
+  "No sessions were merged into {0}.": "В {0} не влито ни одной сессии.",
+  "Sessions merged into {0}: {1}": "Сессий влито в {0}: {1}"
 }

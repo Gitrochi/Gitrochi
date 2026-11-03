@@ -2234,5 +2234,15 @@
   "Restore is not available on demo data.": "Demogegevens kunnen niet worden teruggezet.",
   "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "Terugzetten controleert eerst de back-up en bewaart het huidige register als kopie ‘Vóór terugzetten’, die nooit automatisch wordt verwijderd. Agents die draaien, blijven naar het teruggezette register schrijven.",
   "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "Het register wordt vervangen door de back-up van {0}. De huidige staat wordt eerst als kopie ‘Vóór terugzetten’ in de map backups bewaard, zodat je die weer kunt terugzetten. Agents die nog draaien, blijven naar het teruggezette register schrijven, en rapporten die tijdens het terugzetten binnenkomen, kunnen verloren gaan.",
-  "Restored the backup from {0}. The previous ledger is kept as {1}.": "De back-up van {0} is teruggezet. Het vorige register is bewaard als {1}."
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "De back-up van {0} is teruggezet. Het vorige register is bewaard als {1}.",
+  "Release notes…": "Releaseopmerkingen…",
+  "Markdown": "Markdown",
+  "Copy Markdown": "Markdown kopiëren",
+  "{0} (HEAD)": "{0} (HEAD)",
+  "No release notes for this baseline": "Geen releaseopmerkingen voor deze baseline",
+  "A draft from what agents reported. Answers, messages and notebook notes are never included.": "Een concept op basis van wat agents rapporteerden. Antwoorden, berichten en notitieblokaantekeningen worden nooit opgenomen.",
+  "No projects yet": "Nog geen projecten",
+  "Release notes are drafted from sessions merged into a baseline.": "Releaseopmerkingen worden opgesteld uit sessies die in een baseline zijn samengevoegd.",
+  "No sessions were merged into {0}.": "Er zijn geen sessies samengevoegd in {0}.",
+  "Sessions merged into {0}: {1}": "Sessies samengevoegd in {0}: {1}"
 }

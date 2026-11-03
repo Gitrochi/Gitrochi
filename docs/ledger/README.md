@@ -246,11 +246,12 @@ For the exact API and unresolved design points, see the [core contract](../../cr
 
 ## Work, document evidence and personal notes
 
-The **More ledger actions** menu adds four tools without changing the session views:
+The **More ledger actions** menu adds these tools without changing the session views:
 
 - **Work log…** groups dated work across conversations. Create an item, append progress or outcomes, retain correction history, and build a Markdown report. Work records can reference session events; they do not change a session's cleanup state.
 - **Document tracker…** reads selected Markdown/text folders for IDs, definitions, tasks, notices and feedback. Evidence includes source lines and held-checksum comparisons. AI summaries use the configured provider only when requested; ordinary lookup stays local.
 - **Notebook…** keeps personal Markdown notes with pinning, search, preview and conflict protection. Notes are never returned by agent tools or reporting endpoints.
 - **Manage records…** edits session titles, kinds, touched IDs/paths and links, or a baseline's note. Deleting a session asks first and removes its own reports, questions and waiting prompts while keeping baseline and work records; a running agent can report again.
+- **Release notes…** drafts Markdown notes for a baseline, HEAD by default: the sessions merged into it or absorbed by its release, grouped by role, each with its title, ID, one line from its agent's done, decision or merged report, and its artifacts. Choose the project and baseline, switch between **Preview** and **Markdown**, and use **Copy Markdown**. In **Graph**, right-click a baseline for its notes. The draft never includes question answers, your messages, report bodies or notebook notes. `gitrochi-ledger release-notes -p PROJECT [VERSION]` prints the same draft.
 
 The [migration and usage guide](MIGRATION.md#work-log) gives steps, CLI examples and compatibility limits for these tools.

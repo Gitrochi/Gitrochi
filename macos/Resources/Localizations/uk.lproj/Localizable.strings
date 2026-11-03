@@ -2254,3 +2254,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Під час відновлення спершу перевіряється копія, а поточна книга обліку зберігається як копія «До відновлення», яка ніколи не видаляється автоматично. Запущені агенти й далі пишуть у відновлену книгу обліку.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Книгу обліку буде замінено копією від %@. Її поточний стан спершу зберігається як копія «До відновлення» в теці backups, тож його можна буде відновити. Агенти, які ще працюють, і далі пишуть у відновлену книгу обліку, а звіти, надіслані під час відновлення, можуть загубитися.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Копію від %@ відновлено. Попередню книгу обліку збережено як %@.";
+"Release notes…" = "Примітки до випуску…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Копіювати Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Для цієї базової версії немає приміток до випуску";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Чернетка зі звітів агентів. Відповіді, повідомлення й нотатки з нотатника ніколи не включаються.";
+"No projects yet" = "Проєктів поки немає";
+"Release notes are drafted from sessions merged into a baseline." = "Примітки до випуску складаються із сеансів, влитих у базову версію.";
+"No sessions were merged into %@." = "У %@ не влито жодного сеансу.";
+"Sessions merged into %@: %lld" = "Сеансів влито в %@: %lld";

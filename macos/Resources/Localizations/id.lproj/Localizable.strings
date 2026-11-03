@@ -2208,3 +2208,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Pemulihan memeriksa cadangan terlebih dahulu dan menyimpan ledger saat ini sebagai salinan Sebelum pemulihan, yang tidak pernah dihapus otomatis. Agen yang sedang berjalan tetap menulis ke ledger yang dipulihkan.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Ledger diganti dengan cadangan dari %@. Keadaannya saat ini disimpan dulu sebagai salinan Sebelum pemulihan di folder backups, sehingga Anda dapat memulihkannya lagi. Agen yang masih berjalan tetap menulis ke ledger yang dipulihkan, dan laporan yang dikirim selama pemulihan dapat hilang.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Cadangan dari %@ dipulihkan. Ledger sebelumnya disimpan sebagai %@.";
+"Release notes…" = "Catatan rilis…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Salin Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Tidak ada catatan rilis untuk baseline ini";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Draf dari laporan agen. Jawaban, pesan, dan catatan buku catatan tidak pernah disertakan.";
+"No projects yet" = "Belum ada proyek";
+"Release notes are drafted from sessions merged into a baseline." = "Catatan rilis disusun dari sesi yang digabungkan ke baseline.";
+"No sessions were merged into %@." = "Tidak ada sesi yang digabungkan ke %@.";
+"Sessions merged into %@: %lld" = "Sesi yang digabungkan ke %@: %lld";

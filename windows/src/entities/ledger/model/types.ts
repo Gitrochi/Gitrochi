@@ -326,6 +326,33 @@ export interface LedgerRestoreResult {
   rev: number;
 }
 
+/** One session in release notes: `absorbed` by the release report, else `merged` into the version */
+export interface LedgerReleaseNotesEntry {
+  id: string;
+  title: string;
+  kind: string;
+  how: "merged" | "absorbed";
+  /** One line from its agent's newest done, decision or merged report */
+  summary?: string;
+  artifacts: { name: string; ver?: string; path?: string }[];
+}
+
+/**
+ * `release_notes`: a Markdown draft for one baseline from the sessions merged into it or absorbed by its release, with
+ * the trunk's versions newest first for choosing another. (macOS: LedgerReleaseNotes)
+ */
+export interface LedgerReleaseNotes {
+  project: string;
+  version: string;
+  previous?: string;
+  releasedAt: Ms;
+  releasedBy?: string;
+  note?: string;
+  versions: string[];
+  groups: { role: LedgerRole; title: string; sessions: LedgerReleaseNotesEntry[] }[];
+  markdown: string;
+}
+
 /** What an import of a claude-ledger database copied, or with a dry run would copy */
 export interface LedgerLegacyImport {
   ok: boolean;
@@ -433,6 +460,8 @@ export interface LedgerMethods {
   backups: { args: Record<string, never>; result: { directory: string; backups: LedgerBackupFile[] } };
   /** Checks a backup read-only; without `dryRun` keeps a safety copy of the ledger and restores the backup into it */
   restore: { args: { path: string; dryRun?: boolean }; result: LedgerRestoreResult };
+  /** A Markdown draft for one baseline; no version is HEAD */
+  release_notes: { args: { project: string; version?: string }; result: LedgerReleaseNotes };
   settings: { args: Record<string, never>; result: LedgerSettings };
   /** null restores a setting's default */
   settings_set: { args: { values: { [K in keyof LedgerSettings]?: LedgerSettings[K] | null } }; result: { ok: boolean; rev: number; settings: LedgerSettings } };

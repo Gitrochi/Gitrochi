@@ -2238,3 +2238,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "A visszaállítás először ellenőrzi a mentést, és a jelenlegi nyilvántartást „Visszaállítás előtt” másolatként megőrzi, amelyet sosem töröl automatikusan. A futó ügynökök tovább írnak a visszaállított nyilvántartásba.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "A nyilvántartás helyére a(z) %@ mentés kerül. A jelenlegi állapot előbb „Visszaállítás előtt” másolatként a backups mappába kerül, így később visszaállíthatod. A még futó ügynökök tovább írnak a visszaállított nyilvántartásba, a visszaállítás közben küldött jelentések pedig elveszhetnek.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "A(z) %@ mentés visszaállítva. Az előző nyilvántartás %@ néven megmaradt.";
+"Release notes…" = "Kiadási megjegyzések…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Markdown másolása";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Ehhez az alapverzióhoz nincsenek kiadási megjegyzések";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Vázlat az ügynökök jelentéseiből. Válaszokat, üzeneteket és jegyzetfüzet-jegyzeteket sosem tartalmaz.";
+"No projects yet" = "Még nincs projekt";
+"Release notes are drafted from sessions merged into a baseline." = "A kiadási megjegyzések az alapverzióba beolvasztott munkamenetekből készülnek.";
+"No sessions were merged into %@." = "A(z) %@ verzióba nem került munkamenet.";
+"Sessions merged into %@: %lld" = "A(z) %@ verzióba beolvasztott munkamenetek: %lld";

@@ -2219,3 +2219,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "A restauração verifica o backup primeiro e guarda o registro atual como uma cópia “Antes de restaurar”, que nunca é removida automaticamente. Agentes em execução continuam gravando no registro restaurado.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "O registro é substituído pelo backup de %@. O estado atual é guardado antes como uma cópia “Antes de restaurar” na pasta backups, para que você possa restaurá-lo de novo. Agentes ainda em execução continuam gravando no registro restaurado, e relatórios enviados durante a restauração podem ser perdidos.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "O backup de %@ foi restaurado. O registro anterior foi guardado como %@.";
+"Release notes…" = "Notas da versão…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Copiar Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Não há notas da versão para esta linha de base";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Um rascunho feito a partir do que os agentes relataram. Respostas, mensagens e notas do caderno nunca são incluídas.";
+"No projects yet" = "Ainda não há projetos";
+"Release notes are drafted from sessions merged into a baseline." = "As notas da versão são redigidas a partir das sessões mescladas em uma linha de base.";
+"No sessions were merged into %@." = "Nenhuma sessão foi mesclada em %@.";
+"Sessions merged into %@: %lld" = "Sessões mescladas em %@: %lld";

@@ -2414,5 +2414,15 @@
   "Restore is not available on demo data.": "演示数据无法恢复。",
   "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.": "恢复时会先检查备份，并把当前台账保存为“恢复前”副本，该副本不会被自动删除。正在运行的代理会继续写入恢复后的台账。",
   "The ledger is replaced with the backup from {0}. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.": "台账将被替换为 {0} 的备份。当前状态会先作为“恢复前”副本保存在 backups 文件夹中，之后可以再恢复它。仍在运行的代理会继续写入恢复后的台账，恢复期间发送的报告可能会丢失。",
-  "Restored the backup from {0}. The previous ledger is kept as {1}.": "已恢复 {0} 的备份。之前的台账保存为 {1}。"
+  "Restored the backup from {0}. The previous ledger is kept as {1}.": "已恢复 {0} 的备份。之前的台账保存为 {1}。",
+  "Release notes…": "发行说明…",
+  "Markdown": "Markdown",
+  "Copy Markdown": "复制 Markdown",
+  "{0} (HEAD)": "{0}（HEAD）",
+  "No release notes for this baseline": "此基线没有发行说明",
+  "A draft from what agents reported. Answers, messages and notebook notes are never included.": "根据代理报告生成的草稿。不会包含回答、消息或笔记本中的笔记。",
+  "No projects yet": "还没有项目",
+  "Release notes are drafted from sessions merged into a baseline.": "发行说明根据合并到基线的会话起草。",
+  "No sessions were merged into {0}.": "没有会话合并到 {0}。",
+  "Sessions merged into {0}: {1}": "合并到 {0} 的会话：{1}"
 }

@@ -2213,3 +2213,13 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Khi khôi phục, bản sao lưu được kiểm tra trước và sổ cái hiện tại được giữ lại dưới dạng bản sao “Trước khi khôi phục”, không bao giờ bị xóa tự động. Các tác nhân đang chạy vẫn tiếp tục ghi vào sổ cái đã khôi phục.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Sổ cái sẽ được thay bằng bản sao lưu từ %@. Trạng thái hiện tại được giữ trước dưới dạng bản sao “Trước khi khôi phục” trong thư mục backups, nên bạn có thể khôi phục lại. Các tác nhân vẫn đang chạy tiếp tục ghi vào sổ cái đã khôi phục, và báo cáo gửi trong lúc khôi phục có thể bị mất.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Đã khôi phục bản sao lưu từ %@. Sổ cái trước đó được giữ dưới tên %@.";
+"Release notes…" = "Ghi chú phát hành…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Sao chép Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Không có ghi chú phát hành cho bản cơ sở này";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Bản nháp từ những gì tác nhân đã báo cáo. Không bao giờ gồm câu trả lời, tin nhắn hay ghi chú trong sổ tay.";
+"No projects yet" = "Chưa có dự án";
+"Release notes are drafted from sessions merged into a baseline." = "Ghi chú phát hành được soạn từ các phiên đã gộp vào một bản cơ sở.";
+"No sessions were merged into %@." = "Không có phiên nào được gộp vào %@.";
+"Sessions merged into %@: %lld" = "Số phiên đã gộp vào %@: %lld";
