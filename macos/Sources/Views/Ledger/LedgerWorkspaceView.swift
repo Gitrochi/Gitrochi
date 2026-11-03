@@ -5,7 +5,7 @@ import SwiftUI
 /// (Windows: widgets/ledger-workspace/ui/LedgerWorkspace.tsx)
 struct LedgerWorkspaceView: View {
     enum Sheet: String, Identifiable {
-        case connect, importReports, importLegacy, learning, chatGPTDraft, browser, workLog, documents, notebook, records, releaseNotes
+        case connect, importReports, importLegacy, learning, chatGPTDraft, browser, workLog, documents, notebook, records, releaseNotes, insights
         var id: String { rawValue }
     }
 
@@ -84,6 +84,7 @@ struct LedgerWorkspaceView: View {
             case .documents: LedgerDocumentsSheet(ledger: ledger)
             case .notebook: LedgerNotebookSheet(ledger: ledger)
             case .records: LedgerManageSheet(ledger: ledger)
+            case .insights: LedgerInsightsSheet(ledger: ledger)
             case .releaseNotes: LedgerReleaseNotesSheet(ledger: ledger, project: releaseTarget?.project, version: releaseTarget?.version)
             }
         }
@@ -170,6 +171,7 @@ struct LedgerWorkspaceView: View {
                 Button("Notebook…") { sheet = .notebook }
                 Button("Manage records…") { sheet = .records }
                 Button("Release notes…") { openReleaseNotes(nil) }
+                Button("Insights…") { sheet = .insights }
                 Divider()
                 Button("Back up now") { backup() }
                 Button("Refresh") { Task { await ledger.reload() } }

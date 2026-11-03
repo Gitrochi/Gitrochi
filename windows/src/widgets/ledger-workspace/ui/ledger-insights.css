@@ -1,0 +1,37 @@
+/* widgets/ledger-workspace — Insights…: stat tiles and plain bars in the design's status tones (macOS: LedgerInsightsSheet) */
+.ledger-insights { display: flex; flex-direction: column; gap: 14px; min-height: 320px; }
+.ledger-insights-title { display: inline-flex; align-items: center; gap: 8px; }
+.ledger-insights-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ledger-insights-controls .select { max-width: 240px; }
+.ledger-insights-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.ledger-insights-report { display: flex; flex-direction: column; gap: 20px; }
+.ledger-insight-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ledger-insight-tile { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); min-width: 0; }
+.ledger-insight-tile-title { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: var(--text-2); }
+.ledger-insight-tile-title svg { color: var(--text-2); flex: none; }
+.ledger-insight-tile-title.toned svg { color: var(--status-text); }
+.ledger-insight-tile-value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ledger-insight-tile .hint { font-size: 11px; }
+.ledger-insight-section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ledger-insight-section h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.ledger-insight-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.ledger-insight-chart { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.ledger-insight-columns { display: flex; align-items: flex-end; gap: 3px; height: 96px; }
+.ledger-insight-columns[data-days="90"] { gap: 1px; }
+.ledger-insight-columns > span { flex: 1; min-width: 1px; border-radius: 2px; background: var(--status-text); }
+.ledger-insight-columns > span.zero { background: var(--border); }
+.ledger-insight-axis { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; }
+.ledger-insight-bar { display: grid; grid-template-columns: 150px 1fr 36px; gap: 8px; align-items: center; min-height: 22px; font-size: 12px; }
+.ledger-insight-bar-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-insight-bar-label svg { flex: none; color: var(--status-text); }
+.ledger-insight-track, .ledger-insight-stack { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--border); }
+.ledger-insight-track > span { border-radius: 3px; background: var(--status-text); }
+.ledger-insight-stack { gap: 1px; }
+.ledger-insight-stack > span { background: var(--status-text); }
+.ledger-insight-count { text-align: right; font-variant-numeric: tabular-nums; }
+.ledger-insight-legend { display: flex; gap: 12px; font-size: 11px; }
+.ledger-insight-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.ledger-insight-legend i { width: 10px; height: 10px; border-radius: 2px; background: var(--status-text); }
+.ledger-insight-facts { display: flex; gap: 18px; flex-wrap: wrap; }
+.ledger-insight-facts > span { display: flex; flex-direction: column; gap: 2px; }
+.ledger-insight-facts strong { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }

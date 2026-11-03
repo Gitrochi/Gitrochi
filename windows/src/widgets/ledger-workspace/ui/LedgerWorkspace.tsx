@@ -23,12 +23,13 @@ import { LedgerStreams } from "./LedgerStreams";
 import { LedgerWorkLog } from "./LedgerWorkLog";
 import { LedgerDocuments } from "./LedgerDocuments";
 import { LedgerNotebook } from "./LedgerNotebook";
+import { LedgerInsights } from "./LedgerInsights";
 import { LedgerManage } from "./LedgerManage";
 import { LedgerReleaseNotes } from "./LedgerReleaseNotes";
 import { onScreen, typing } from "./parts";
 import "./ledger-workspace.css";
 
-type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | "browser" | "work" | "documents" | "notebook" | "records" | "release" | null;
+type Sheet = "import" | "legacy" | "connect" | "search" | "learning" | "chatgpt" | "browser" | "work" | "documents" | "notebook" | "records" | "release" | "insights" | null;
 
 const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -165,6 +166,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
               { label: t("Notebook…"), onClick: () => setSheet("notebook") },
               { label: t("Manage records…"), onClick: () => setSheet("records") },
               { label: t("Release notes…"), onClick: () => releaseNotes(null) },
+              { label: t("Insights…"), onClick: () => setSheet("insights") },
             ])} />
             {store.backend.kind === "demo" && <span className="ledger-demo-pill" data-tip={`${t("Demo data")}|${t("GITROCHI_LEDGER_DEMO is set, so the Ledger shows example sessions instead of the ledger database.")}`}>{t("Demo data")}</span>}
             <Button size="small" data-learn-ledger onClick={() => setSheet("learning")}><BookOpen size={14} />{t("Learn Ledger")}</Button>
@@ -215,6 +217,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
       {sheet === "documents" && <LedgerDocuments store={store} onClose={() => setSheet(null)} />}
       {sheet === "notebook" && <LedgerNotebook store={store} onClose={() => setSheet(null)} />}
       {sheet === "records" && <LedgerManage store={store} onClose={() => setSheet(null)} />}
+      {sheet === "insights" && <LedgerInsights store={store} onClose={() => setSheet(null)} />}
       {sheet === "release" && <LedgerReleaseNotes store={store} project={releaseTarget?.project} version={releaseTarget?.version} onClose={() => setSheet(null)} />}
       <LedgerToast store={store} />
     </div>

@@ -326,6 +326,27 @@ export interface LedgerRestoreResult {
   rev: number;
 }
 
+/** Durations: nearest-rank median and 90th percentile, and the longest; absent without values */
+export interface LedgerSpread {
+  count: number;
+  medianMs?: number;
+  p90Ms?: number;
+  maxMs?: number;
+}
+
+/** `insights`: counts and durations over a period, never the text of a question, answer or report. (macOS: LedgerInsights) */
+export interface LedgerInsights {
+  project?: string;
+  range: LedgerRange;
+  from?: Ms;
+  to: Ms;
+  questions: { asked: number; answered: number; dismissed: number; resolvedByAgent: number; wait: LedgerSpread; open: LedgerSpread };
+  autoAnswers: { total: number; reviewed: number; corrected: number; unreviewed: number; byKind: { kind: string; total: number; reviewed: number; corrected: number; unreviewed: number }[] };
+  sessions: { total: number; byVerdict: Record<LedgerVerdict, number>; byRole: Record<LedgerRole, number>; stale: number; staleUnreported: number; unreported: number };
+  reports: number;
+  reportsPerDay: { day: string; reports: number }[];
+}
+
 /** One session in release notes: `absorbed` by the release report, else `merged` into the version */
 export interface LedgerReleaseNotesEntry {
   id: string;
@@ -460,6 +481,8 @@ export interface LedgerMethods {
   backups: { args: Record<string, never>; result: { directory: string; backups: LedgerBackupFile[] } };
   /** Checks a backup read-only; without `dryRun` keeps a safety copy of the ledger and restores the backup into it */
   restore: { args: { path: string; dryRun?: boolean }; result: LedgerRestoreResult };
+  /** Question waits, automatic answers, sessions and reports over a period; no project is every project */
+  insights: { args: { project?: string; range?: LedgerRange }; result: LedgerInsights };
   /** A Markdown draft for one baseline; no version is HEAD */
   release_notes: { args: { project: string; version?: string }; result: LedgerReleaseNotes };
   settings: { args: Record<string, never>; result: LedgerSettings };
