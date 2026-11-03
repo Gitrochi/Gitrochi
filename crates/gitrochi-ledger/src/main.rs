@@ -25,6 +25,8 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
+  restore FILE [--yes]          checks a backup; with --yes, keeps a safety copy of the
+                                current ledger and restores the backup into it
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
@@ -42,7 +44,7 @@ The database is GITROCHI_LEDGER_DB, else the per-user default (gitrochi-ledger c
 GITROCHI_LEDGER_SESSION is the default session for report, overview and session.
 Details: crates/gitrochi-ledger/README.md";
 
-const FLAGS: [&str; 12] = [
+const FLAGS: [&str; 13] = [
     "json",
     "pretty",
     "deliver",
@@ -55,6 +57,7 @@ const FLAGS: [&str; 12] = [
     "status",
     "remove",
     "managed-hook",
+    "yes",
 ];
 const REPEATED: [&str; 2] = ["ask", "artifact"];
 
@@ -605,6 +608,24 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                 )
             };
             Ok(Output::Text(text, result))
+        }
+        "restore" => {
+            let file = PathBuf::from(positional(0, "the backup file to restore")?);
+            let db = open(path)?;
+            let dry_run = !invocation.flag("yes");
+            let result = backup::restore(&db, &file, util::now_ms(), dry_run)?;
+            let contents = &result.contents;
+            let text = match &result.safety {
+                Some(safety) => format!(
+                    "Restored ✓ {} ({} sessions, {} events)\nThe ledger as it was is kept in {}",
+                    result.path, contents.sessions, contents.events, safety.path
+                ),
+                None => format!(
+                    "{} is a sound Ledger backup: schema {}, {} sessions, {} events.\nRun again with --yes to restore it. The current ledger is kept in a safety copy first; agents that are running keep writing to the restored ledger.",
+                    result.path, contents.schema, contents.sessions, contents.events
+                ),
+            };
+            Ok(Output::Text(text, serde_json::to_value(&result)?))
         }
         "demo" => {
             let target = PathBuf::from(positional(0, "a database path for the demo")?);

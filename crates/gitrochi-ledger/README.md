@@ -76,6 +76,7 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
+  restore FILE [--yes]
   demo DB [--large] [--force]
   call METHOD [JSON]
   mcp
@@ -99,6 +100,14 @@ gitrochi-ledger report -s S1031-05 -e release --version 1.4.3 --absorbs S1031-02
 gitrochi-ledger overview -p "Example App"
 gitrochi-ledger session S1031-02 --deliver   # only the session itself
 gitrochi-ledger demo /tmp/ledger-demo.sqlite3 --large
+```
+
+`restore FILE` checks a backup without writing anything: SQLite's integrity check, a Ledger database, and a storage schema this build can write. With `--yes` it keeps the current database as `backups/<name>-before-restore-YYYYMMDD-HHMMSS.sqlite3` and copies the backup in with SQLite's online backup, so the apps, MCP servers and hooks that have the ledger open carry on with the restored one. Agents that keep running report into it; restore the safety copy the same way to undo. Retention never removes safety copies. The apps list both kinds in Settings › Ledger (`backups`); agents can list them but never restore (`restore` is for the apps and this command). See the [contract](CONTRACT.md#restoring-a-backup).
+
+```sh
+gitrochi-ledger backup --list
+gitrochi-ledger restore /path/to/backups/ledger-20261102-0930.sqlite3         # checks only
+gitrochi-ledger restore /path/to/backups/ledger-20261102-0930.sqlite3 --yes   # restores
 ```
 
 `import-legacy` copies a database of the standalone claude-ledger tool without writing to it: projects, baselines, sessions with their events and questions, pasted-block hashes, work records and personal notes. Optional source rows are retained with provenance. Existing session IDs and their incoming histories are skipped together. Imported work references use destination event mappings; an unresolved source reference is namespaced rather than attached to an unrelated event. `--dry-run` counts without copying, and unchanged repeat imports add nothing. This is a migration, not live sync; see the [migration guide](../../docs/ledger/MIGRATION.md#import-existing-records) and [contract](CONTRACT.md#importing-a-claude-ledger-database).
@@ -160,7 +169,7 @@ A wait is a pending prompt that the apps show with a countdown and can answer (`
 | `notebook.rs` | Person-only notes with optimistic updates |
 | `documents.rs`, `documents/` | Bounded read-only document scans, ID evidence and checksum checkpoints |
 | `http.rs`, `http/` | Opt-in loopback reporting bridge and legacy response aliases |
-| `backup.rs`, `prompts.rs`, `settings.rs` | Backups, pending prompts for auto-continue, global settings |
+| `backup.rs`, `prompts.rs`, `settings.rs` | Backups and restoring them, pending prompts for auto-continue, global settings |
 | `api.rs`, `ffi.rs`, `mcp.rs`, `main.rs` | The dispatcher and its callers, the C ABI, the MCP server, the CLI |
 | `hook.rs` | The Claude Code hook handler: activity and auto-continue's waits |
 | `external.rs`, `integrations.rs` | Passive local Claude/Codex activity and reversible user-hook installation |

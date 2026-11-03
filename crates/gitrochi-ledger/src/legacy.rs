@@ -118,8 +118,9 @@ fn file_uri(path: &Path, query: &str) -> String {
 /// Opens the file without ever writing to it. With nothing next to it nobody has it open,
 /// so `immutable=1` reads it with no locks and creates no files. A `-wal`, `-shm` or
 /// `-journal` file means the tool has it open or stopped mid-write: then `mode=ro` with
-/// SQLite's usual locking reads the newest committed data consistently.
-fn open(path: &Path) -> Result<Connection> {
+/// SQLite's usual locking reads the newest committed data consistently. Restoring a
+/// backup opens its file the same way.
+pub(crate) fn open(path: &Path) -> Result<Connection> {
     let absolute = std::path::absolute(path)
         .map_err(|e| Error::invalid(format!("Could not read {}: {e}", path.display())))?;
     if !absolute.is_file() {

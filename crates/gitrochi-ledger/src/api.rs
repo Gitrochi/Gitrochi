@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 33] = [
+pub const METHODS: [(&str, &[Caller]); 35] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -54,6 +54,8 @@ pub const METHODS: [(&str, &[Caller]); 33] = [
     ("scan", &[Caller::App, Caller::Agent]),
     ("register_baseline", &[Caller::App, Caller::Agent]),
     ("backup", &[Caller::App, Caller::Agent]),
+    ("backups", &[Caller::App, Caller::Agent]),
+    ("restore", &[Caller::App]),
     ("settings", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("projects", &[Caller::App, Caller::Agent]),
     ("human", &[Caller::App]),
@@ -318,6 +320,24 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
             };
             let daily = util::arg_bool(args, "daily").unwrap_or(false);
             views::to_value(&backup::run(db, now, keep, daily)?)
+        }
+        "backups" => Ok(json!({
+            "directory": backup::directory(&db.path).to_string_lossy(),
+            "backups": backup::snapshots(&db.path),
+        })),
+        "restore" => {
+            // Taken as given, like import_legacy: normalising a file name could point elsewhere.
+            let path = args["path"]
+                .as_str()
+                .filter(|p| !p.trim().is_empty())
+                .ok_or_else(|| Error::invalid("Missing path (the backup to restore)"))?;
+            let dry_run = util::arg_bool(args, "dryRun").unwrap_or(false);
+            views::to_value(&backup::restore(
+                db,
+                std::path::Path::new(path),
+                now,
+                dry_run,
+            )?)
         }
         "settings" => db.read(|c| Ok(Settings::load(c)?.to_json())),
         "browser_status" => crate::browser_install::status(),
