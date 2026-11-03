@@ -2232,3 +2232,9 @@
 "View all tasks" = "Tüm görevleri görüntüle";
 "Show more tasks" = "Daha fazla görev göster";
 "Project items could not be fully loaded. Retry the project." = "Proje öğeleri tam olarak yüklenemedi. Projeyi yeniden yükleyin.";
+"%lld passing" = "%lld başarılı";
+"%lld failing" = "%lld başarısız";
+"%lld pending" = "%lld bekliyor";
+"Checks on the request's latest commit" = "İsteğin en son commit'indeki denetimler";
+"Request merged — mark merged?" = "İstek birleştirildi — birleştirildi olarak işaretlensin mi?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "İstek sunucuda birleştirildi. Bu işin girdiği sürümü seçin; Defter yalnızca siz seçtiğinizde değişir.";

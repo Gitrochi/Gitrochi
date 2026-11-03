@@ -2270,5 +2270,11 @@
   "No organizations found": "Организации не найдены",
   "View all tasks": "Посмотреть все задачи",
   "Show more tasks": "Показать ещё задачи",
-  "Project items could not be fully loaded. Retry the project.": "Не удалось загрузить все элементы проекта. Загрузите проект повторно."
+  "Project items could not be fully loaded. Retry the project.": "Не удалось загрузить все элементы проекта. Загрузите проект повторно.",
+  "{0} passing": "Пройдено: {0}",
+  "{0} failing": "С ошибкой: {0}",
+  "{0} pending": "Ожидают: {0}",
+  "Checks on the request's latest commit": "Проверки последнего коммита запроса",
+  "Request merged — mark merged?": "Запрос слит — отметить как влитую?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Запрос слит на сервере. Выберите версию, в которую вошла эта работа; Журнал изменится только после вашего выбора."
 }

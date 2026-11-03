@@ -2226,3 +2226,9 @@
 "View all tasks" = "Zobrazit všechny úkoly";
 "Show more tasks" = "Zobrazit další úkoly";
 "Project items could not be fully loaded. Retry the project." = "Položky projektu se nepodařilo načíst úplně. Načtěte projekt znovu.";
+"%lld passing" = "Úspěšné: %lld";
+"%lld failing" = "Neúspěšné: %lld";
+"%lld pending" = "Čekající: %lld";
+"Checks on the request's latest commit" = "Kontroly nejnovějšího commitu požadavku";
+"Request merged — mark merged?" = "Požadavek sloučen — označit jako začleněné?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Požadavek byl na serveru sloučen. Vyberte verzi, do které tato práce vešla; Evidence se změní, až když to uděláte.";

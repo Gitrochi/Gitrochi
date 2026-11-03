@@ -2225,5 +2225,11 @@
   "No organizations found": "Tidak ada organisasi yang ditemukan",
   "View all tasks": "Lihat semua tugas",
   "Show more tasks": "Tampilkan lebih banyak tugas",
-  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek."
+  "Project items could not be fully loaded. Retry the project.": "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek.",
+  "{0} passing": "{0} lulus",
+  "{0} failing": "{0} gagal",
+  "{0} pending": "{0} menunggu",
+  "Checks on the request's latest commit": "Pemeriksaan pada commit terbaru permintaan",
+  "Request merged — mark merged?": "Permintaan sudah digabung — tandai sudah digabung?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Permintaan sudah digabung di server. Pilih versi yang memuat pekerjaan ini; Buku Log hanya berubah saat Anda memilih."
 }

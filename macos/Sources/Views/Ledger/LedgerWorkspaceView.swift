@@ -57,6 +57,8 @@ struct LedgerWorkspaceView: View {
         .sheet(isPresented: $compactInspector) {
             LedgerInspector(ledger: ledger, open: open, close: { compactInspector = false })
                 .frame(width: 480, height: 640)
+                // the sheet reads the linked request through the window's repository, as the column does
+                .environment(store)
         }
         .sheet(item: $sheet, onDismiss: {
             if let id = sessionAfterSheet {

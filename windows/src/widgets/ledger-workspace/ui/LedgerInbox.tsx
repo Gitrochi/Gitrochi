@@ -5,7 +5,10 @@ import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty } from "@/shared/ui";
+import { suggestsRequestMerged } from "../lib/request-status";
+import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerPromptStrip } from "./LedgerPromptStrip";
+import { RequestMergedSuggestion, useLedgerRequest } from "./RequestStatus";
 import { mergeMenu } from "./session-actions";
 import { answerText, BaseLine, onScreen, SessionId, typing, VerdictBadge, When } from "./parts";
 
@@ -15,9 +18,10 @@ const HOUR = 3_600_000;
 /**
  * The first screen: only what needs a person. Waiting prompts on top, then questions answered in place, automatic
  * replies to review, sessions to clean up and sessions to decide. Works from the keyboard alone (↑ ↓ Enter A C E S),
- * and confirming or archiving shows a toast with Undo. (macOS: Views/Ledger/LedgerInbox.swift)
+ * and confirming or archiving shows a toast with Undo. With `requests`, the repository's tab, a session to decide whose
+ * linked request was merged offers the version picker. (macOS: Views/Ledger/LedgerInbox.swift)
  */
-export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void }) {
+export function LedgerInbox({ store, onOpen, onOpenTerminal, requests }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void; requests?: LedgerRequestHost }) {
   useObserve(store);
   const state = store.state!;
   const project = store.project, text = store.filterText;
@@ -114,7 +118,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal }: { store: LedgerSt
                     onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, a, input") && item.session) onOpen(item.session.id); }}
                   >
                     {!(item.kind === "question" && i > 0 && shown[i - 1].kind === "question" && shown[i - 1].session?.id === item.session.id) && <RowHead session={item.session} />}
-                    <RowBody item={item} store={store} busy={busy} correcting={correcting === item.key} setCorrecting={(on) => setCorrecting(on ? item.key : null)} fieldRef={(el) => { if (el) fields.current.set(item.key, el); else fields.current.delete(item.key); }} onAnswered={() => answered(item.key)} />
+                    <RowBody item={item} store={store} busy={busy} requests={g.id === "decide" ? requests : undefined} correcting={correcting === item.key} setCorrecting={(on) => setCorrecting(on ? item.key : null)} fieldRef={(el) => { if (el) fields.current.set(item.key, el); else fields.current.delete(item.key); }} onAnswered={() => answered(item.key)} />
                   </div>
                 ))}
               </div>
@@ -146,7 +150,7 @@ function RowHead({ session }: { session: LedgerSession | null }) {
   );
 }
 
-function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAnswered }: { item: InboxItem; store: LedgerStore; busy: boolean; correcting: boolean; setCorrecting: (on: boolean) => void; fieldRef: (el: HTMLTextAreaElement | null) => void; onAnswered: () => void }) {
+function RowBody({ item, store, busy, requests, correcting, setCorrecting, fieldRef, onAnswered }: { item: InboxItem; store: LedgerStore; busy: boolean; requests?: LedgerRequestHost; correcting: boolean; setCorrecting: (on: boolean) => void; fieldRef: (el: HTMLTextAreaElement | null) => void; onAnswered: () => void }) {
   const saved = (ok: boolean) => {
     if (ok) onAnswered();
     return ok;
@@ -197,6 +201,13 @@ function RowBody({ item, store, busy, correcting, setCorrecting, fieldRef, onAns
         {s.verdict === "stale" && <Button size="small" kind="primary" disabled={busy} onClick={() => void store.human({ action: "snooze", sessionId: s.id, until: Date.now() + STALE_HOURS * HOUR })} tip={`${t("Still active")}|${t("Keeps it off the stale list for another 72 hours.")}|S`}><Clock size={13} />{t("Still active")}</Button>}
         {(s.verdict === "pending_merge" || s.verdict === "stale") && <Button size="small" disabled={busy} onClick={() => void store.human({ action: "set_status", sessionId: s.id, status: "closed" })} tip={`${t("Mark closed")}|${t("Finished without a merge.")}`}>{t("Mark closed")}</Button>}
       </div>
+      {requests && <MergedRequest store={store} session={s} host={requests} busy={busy} />}
     </>
   );
+}
+
+/** A session to decide whose linked request was merged: the same version picker as Mark merged…, never a change by itself */
+function MergedRequest({ store, session, host, busy }: { store: LedgerStore; session: LedgerSession; host: LedgerRequestHost; busy: boolean }) {
+  const { status } = useLedgerRequest(session, store, host, false);
+  return suggestsRequestMerged(session, status) ? <RequestMergedSuggestion disabled={busy} onChoose={(anchor) => mergeMenu(anchor, store, session)} /> : null;
 }

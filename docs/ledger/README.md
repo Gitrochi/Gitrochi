@@ -170,6 +170,10 @@ Routine progress appears in **Board** and **Streams**. When the Inbox has nothin
 
 The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. The timeline starts with reports and decisions; **Show activity** also reveals passive observations and agent heartbeats. The hidden activity count tells you when those records are folded away. Opening an activity event from search still reveals that event.
 
+When the session belongs to the open repository and that repository has a GitHub or GitLab account connected, its linked pull or merge request also shows where it stands: **Open**, **Draft**, **Merged** or **Closed**, and its checks on the latest commit as **N passing**, **N failing** or **N pending**. Gitrochi reads them with the repository's existing account, the same way the request pages do; nothing is read for other repositories or without an account, and the chip then looks as before. A value is reused for a minute. While the inspector shows the request it is read again every 20 seconds while checks run, every two minutes while it is open, and not at all once it is merged or closed.
+
+If the request was merged but the session is not finished, the inspector and the Inbox's **To decide** group suggest **Request merged — mark merged?**. It opens the usual **Mark merged…** version picker with the newest version marked. The Ledger never changes a session's status by itself; only the version you pick does.
+
 **Last report** is the latest agent report. **Last activity** also includes observed activity, so an active but unreported conversation does not appear to have sent a report. Quiet sessions are checked again at least once a minute while the Ledger is being followed, and a **Still active** snooze is checked at its expiry on the next poll. Search ranks an exact session ID ahead of sessions that only mention it. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
 A session's verdict is computed from its state:

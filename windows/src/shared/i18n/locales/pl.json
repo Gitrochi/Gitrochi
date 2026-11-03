@@ -2254,5 +2254,11 @@
   "No organizations found": "Nie znaleziono organizacji",
   "View all tasks": "Pokaż wszystkie zadania",
   "Show more tasks": "Pokaż więcej zadań",
-  "Project items could not be fully loaded. Retry the project.": "Nie udało się wczytać wszystkich elementów projektu. Wczytaj projekt ponownie."
+  "Project items could not be fully loaded. Retry the project.": "Nie udało się wczytać wszystkich elementów projektu. Wczytaj projekt ponownie.",
+  "{0} passing": "Zaliczone: {0}",
+  "{0} failing": "Niezaliczone: {0}",
+  "{0} pending": "Oczekujące: {0}",
+  "Checks on the request's latest commit": "Testy najnowszego commita żądania",
+  "Request merged — mark merged?": "Żądanie scalone — oznaczyć jako scaloną?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Żądanie zostało scalone na serwerze. Wybierz wersję, do której trafiła ta praca; Rejestr zmieni się dopiero wtedy."
 }

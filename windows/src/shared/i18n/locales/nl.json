@@ -2225,5 +2225,11 @@
   "No organizations found": "Geen organisaties gevonden",
   "View all tasks": "Alle taken bekijken",
   "Show more tasks": "Meer taken tonen",
-  "Project items could not be fully loaded. Retry the project.": "De projectitems konden niet volledig worden geladen. Laad het project opnieuw."
+  "Project items could not be fully loaded. Retry the project.": "De projectitems konden niet volledig worden geladen. Laad het project opnieuw.",
+  "{0} passing": "{0} geslaagd",
+  "{0} failing": "{0} mislukt",
+  "{0} pending": "{0} in afwachting",
+  "Checks on the request's latest commit": "Controles op de nieuwste commit van het verzoek",
+  "Request merged — mark merged?": "Verzoek samengevoegd — markeren als samengevoegd?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Het verzoek is op de server samengevoegd. Kies de versie waarin dit werk is opgenomen; het Logboek verandert pas als u dat doet."
 }
