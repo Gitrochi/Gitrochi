@@ -539,6 +539,7 @@ One card per stream (label, line, verdict, current version, last report) with it
 ### 10.7 Inspector
 
 - **Header**: ID, title, kind and role, agent, base → current (behind), verdict chip, chips for branch, worktree, pull request, the running agent (live state from the agent center, **Open terminal**) and the chat link.
+- **Linked request** (additive): when the session belongs to the open repository and it has a hosting account, the request chip carries the request's state (open · draft · merged · closed) and a check summary (passing · failing · pending, with a count) as status pills, read through the repository's existing request APIs (macOS `CollaborationAPI.requestState` and `RequestChecksAPI` in `LedgerRequestStatusStore`; Windows `requestState` and `CIAPI` in `widgets/ledger-workspace/model/request-status.ts`), cached for a minute and re-read no faster than the request checks panel. A merged request of an unfinished session adds **Request merged — mark merged?** here and in the Inbox's To decide rows; it opens the existing Mark merged… picker and never sets a status itself.
 - **Actions** by verdict: Confirm · Archive · Mark merged… (version picker defaulting to HEAD) · Close · Drop · Shelve (research and document roles) · Still active · Reopen · Unconfirm · Unarchive · Message… — and, if adopted, Edit… and Delete…
 - **Questions** with answer fields (`⌘↩`/`Ctrl+Enter`) and Dismiss.
 - **Auto-continue**: this session's switch and wait ([§9.3](#93-turning-it-on)).
