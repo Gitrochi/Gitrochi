@@ -232,7 +232,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 The CLI also has an independent opt-in path for local clients: `observe <claude|codex> EVENT` reads hook JSON from standard input. It does not call the auto-continue handler or broaden any API caller's permissions. `hook EVENT` keeps its existing launch-only behavior.
 
-The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"`. Existing rows retain their kind, status and auto-continue policy. The unresolved implementation-stream default for Gitrochi launches is unchanged.
+The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a title of the provider and the checkout's branch (`Claude Code · feature/x`; the worktree or folder name for a detached checkout or outside a repository, also when the checkout cannot be read within 800 ms), `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"`. Existing rows retain their kind, status and auto-continue policy. The unresolved implementation-stream default for Gitrochi launches is unchanged.
 
 Allowed activity metadata is the client/session ID, event, tool name, tool-use ID, turn ID, subagent ID and the checkout context. Prompts, transcript paths/content, tool arguments/results and assistant output are ignored. These observations advance `lastAt` and append `hook` events; they never advance `lastAgentAt`, create questions or pending permission prompts, acknowledge, archive or change a session's status. `Stop` is a turn boundary, not task completion. Only actual agent reports establish reported progress and outcomes.
 
@@ -363,6 +363,8 @@ Added for opt-in local client activity:
 21. The stable command and the App-only methods `integration_command`, `integration_status`, `integration_install` and `integration_remove`.
 
 22. `browser_status`, `browser_install` and `browser_remove` add `hostExists` and `lastDataAt`, for the apps' Connections list.
+
+23. New observed sessions are titled `<client> · <branch>` instead of `<client>: <folder>`. Existing titles are not changed, and a `start` report still replaces an unreported observed session's title.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
 
