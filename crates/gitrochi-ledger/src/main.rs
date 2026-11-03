@@ -25,6 +25,7 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   scan [-p PROJECT]
   register VERSION -p PROJECT [--note TEXT]
   backup [--daily] [--keep N] [--list]
+  insights [-p PROJECT] [--range 7d|30d|all]   question waits, automatic answers, sessions, reports
   release-notes -p PROJECT [VERSION]   a Markdown draft for a baseline (HEAD by default)
   restore FILE [--yes]          checks a backup; with --yes, keeps a safety copy of the
                                 current ledger and restores the backup into it
@@ -609,6 +610,20 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                 )
             };
             Ok(Output::Text(text, result))
+        }
+        "insights" => {
+            let mut args = json!({"db": path.to_string_lossy()});
+            if let Some(project) = invocation.text("project") {
+                args["project"] = json!(project);
+            }
+            if let Some(range) = invocation.text("range") {
+                args["range"] = json!(range);
+            }
+            let result = api::call_as(Caller::Agent, "insights", &args)?;
+            Ok(Output::Text(
+                gitrochi_ledger::insights::text(&result),
+                result,
+            ))
         }
         "release-notes" => {
             let mut args = json!({

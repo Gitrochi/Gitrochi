@@ -2,7 +2,7 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `backups`, `restore` and `release-notes`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `backups`, `restore`, `release-notes` and `insights`. The tests check real results against them.
 
 ## Decisions
 
@@ -143,6 +143,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `register_baseline` | `{project, version, note?}` | `{ok, rev, project, version}` | app, agent |
 | `backup` | `{daily?, keep?}` | `{path, created, size, removed}` | app, agent |
 | `backups` | `{}` | `{directory, backups: [{path, name, size, modifiedAt, kind: "backup" \| "safety"}]}`, newest first ([below](#restoring-a-backup)) | app, agent |
+| `insights` | `{project?, range?: "7d" \| "30d" \| "all"}` (default 7d; no project = all) | `{project?, range, from?, to, questions: {asked, answered, dismissed, resolvedByAgent, wait, open}, autoAnswers: {total, reviewed, corrected, unreviewed, byKind}, sessions: {total, byVerdict, byRole, stale, staleUnreported, unreported}, reports, reportsPerDay: [{day, reports}]}` ([below](#insights)) | app, agent |
 | `release_notes` | `{project, version?}` (default HEAD; `latest`/`head` accepted) | `{project, version, previous?, releasedAt, releasedBy?, note?, versions, groups: [{role, title, sessions: [{id, title, kind, how: "merged" \| "absorbed", summary?, artifacts: [{name, ver?, path?}]}]}], markdown}` ([below](#release-notes)) | app, agent |
 | `restore` | `{path, dryRun?}` | `{ok, dryRun, path, contents: {schema, rev, sessions, events}, safety?: {path, created, size, removed}, rev}` ([below](#restoring-a-backup)) | app |
 | `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep}` with defaults | all |
@@ -234,6 +235,16 @@ The backup file is never written. Reports written between steps 3 and 4 are in n
 
 Only the baseline, sessions and agent events are read. Questions and their answers, a person's messages, set-status reasons, report bodies, notebook notes and work records never appear. It writes nothing.
 
+### Insights
+
+`insights` counts what happened in a period (`from` = now minus 7 or 30 days; none for `all`) for one project or all of them. It returns counts and durations only, never the text of a question, answer, report or note, and writes nothing.
+
+- **Questions**: `asked` in the period; `answered` and `dismissed` in the period by a person (or auto-continue's earlier rules), with `wait` from asked to answered or dismissed; `resolvedByAgent`, closed by their own agent (`resolves`), is not a wait for a person. `open` is about now: the ages of the open questions of sessions that are not archived.
+- A **spread** is `{count, medianMs?, p90Ms?, maxMs?}`: nearest-rank percentiles, absent without values.
+- **Automatic answers**: pending prompts auto-continue answered in the period (`state: "auto"`), overall and per prompt kind. `reviewed` has `reviewedAt`; `corrected` is reviewed after a person's message to the session between the automatic answer and the review, which **Send correction…** sends; `unreviewed` still waits in the Inbox.
+- **Sessions**: the sessions the Board shows for the period (not archived, or archived inside it), with every verdict and role present, zeros included; `stale` and `staleUnreported` (stale with no agent report), and `unreported`.
+- **Reports**: agent events in the period, and per local day, oldest first with zero days included: 7, 30, or the last 90 days for `all`.
+
 ### Errors
 
 `INVALID_ARGUMENT` (bad or missing input), `NOT_FOUND`, `CONFLICT` (a session ID with another title or project), `NOT_ALLOWED` (wrong caller), `DISABLED` (`GITROCHI_LEDGER=0`), `DATABASE`, `SCHEMA_MISMATCH`, `GIT_FAILED` (scans report it in their result instead).
@@ -242,7 +253,7 @@ Only the baseline, sessions and agent events are read. Questions and their answe
 
 - **C ABI** (macOS): `char *gitrochi_ledger_call(const char *method, const char *json)` and `void gitrochi_ledger_free(char *)` in [`include/gitrochi_ledger.h`](include/gitrochi_ledger.h). NULL `json` means `{}`; the result is never NULL; safe from several threads; panics become `DATABASE` errors. Linking it into `libgitrochi_core.a` is wave 2.
 - **Windows**: one Tauri command `ledger_call(method: String, args: serde_json::Value) -> Result<serde_json::Value, String>` calling `gitrochi_ledger::call` (wave 2).
-- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `release-notes -p <project> [version]`, `restore <file> [--yes]` (a person at a terminal: without `--yes` it only checks the file), `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`, `hook <event>` ([below](#hooks)). See the [README](README.md).
+- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `insights [-p <project>] [--range 7d|30d|all]`, `release-notes -p <project> [version]`, `restore <file> [--yes]` (a person at a terminal: without `--yes` it only checks the file), `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`, `hook <event>` ([below](#hooks)). See the [README](README.md).
 - **MCP** (`gitrochi-ledger mcp`): `ledger_overview`, `ledger_report`, `ledger_session`; delivery only for the caller's own session; no person's operations. Protocol versions as `tools/gitrochi-mcp`: `2025-11-25`, `2025-06-18`, `2024-11-05`.
 - `GITROCHI_LEDGER_SESSION` is the default session of the CLI and the MCP tools (for agents Gitrochi launches).
 
@@ -381,6 +392,8 @@ Added for opt-in local client activity:
 20. Restoring a backup: the methods `backups` (app, agent) and `restore` (app only), the CLI command `restore`, safety copies named `<name>-before-restore-…` that retention leaves alone, and the schemas `backups` and `restore`. `backup` and its file names are unchanged.
 
 21. Release notes: the method `release_notes` (app, agent), the CLI command `release-notes` and the schema `release-notes`.
+
+22. Insights: the method `insights` (app, agent), the CLI command `insights` and the schema `insights`.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
 

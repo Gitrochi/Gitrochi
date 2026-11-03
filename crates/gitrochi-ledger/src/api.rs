@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 36] = [
+pub const METHODS: [(&str, &[Caller]); 37] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -57,6 +57,7 @@ pub const METHODS: [(&str, &[Caller]); 36] = [
     ("backups", &[Caller::App, Caller::Agent]),
     ("restore", &[Caller::App]),
     ("release_notes", &[Caller::App, Caller::Agent]),
+    ("insights", &[Caller::App, Caller::Agent]),
     ("settings", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("projects", &[Caller::App, Caller::Agent]),
     ("human", &[Caller::App]),
@@ -339,6 +340,20 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
                 now,
                 dry_run,
             )?)
+        }
+        "insights" => {
+            let project = arg_str(args, "project");
+            let range = range(args)?;
+            db.read(|c| {
+                let settings = Settings::load(c)?;
+                views::to_value(&crate::insights::build(
+                    c,
+                    &settings,
+                    project.as_deref(),
+                    range,
+                    now,
+                )?)
+            })
         }
         "release_notes" => {
             let project =
