@@ -42,6 +42,7 @@ pub mod track;
 pub mod util;
 pub mod views;
 pub mod vocab;
+pub mod wake;
 pub mod work;
 
 pub use api::{call, call_as, Caller};

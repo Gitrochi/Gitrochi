@@ -53,6 +53,8 @@ export interface LedgerSession {
   behind?: number;
   stream?: { line: string };
   autoContinue?: { enabled: boolean; delaySec: number };
+  /** With Wake waiting agents with my answers on, its agent's Stop hook waits until then: an answer or message sent now wakes it */
+  wakeUntil?: Ms;
 }
 
 export interface LedgerArtifact {
@@ -255,6 +257,13 @@ export interface LedgerSettings {
   /** Auto-continue's policy, stored as given: `{enabled, delaySec}` and the fields gitrochi-autocontinue reads */
   autoContinue: Record<string, unknown>;
   backupKeep: number;
+  /** Wake waiting agents with my answers: off by default; how long a tracked agent's Stop hook keeps waiting (10–300 s) */
+  wakeAgents?: LedgerWakeAgents;
+}
+
+export interface LedgerWakeAgents {
+  enabled: boolean;
+  waitSec: number;
 }
 
 export const ledgerBaselineSources = ["tags", "folder", "manual"] as const;

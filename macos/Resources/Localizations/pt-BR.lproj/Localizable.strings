@@ -1955,6 +1955,11 @@
 "Decision sessions never continue automatically." = "Sessões de decisão nunca continuam sozinhas.";
 "Use the default" = "Usar o padrão";
 "Follow the repository's or the default auto-continue setting again" = "Voltar a seguir a configuração do repositório ou a continuação automática padrão";
+"Delivering answers" = "Entrega de respostas";
+"Wake waiting agents with my answers" = "Acordar agentes em espera com minhas respostas";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Um agente que você iniciou continua escutando por este tempo depois de terminar a vez dele. Uma resposta ou mensagem enviada à sessão dele no Registro chega na hora, em vez de com o próximo relatório.";
+"Answer wakes the agent" = "A resposta acorda o agente";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "O agente está esperando em segundo plano: uma resposta ou mensagem enviada agora chega na hora.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funciona para agentes do Claude Code que o Gitrochi inicia enquanto Acompanhar os agentes que eu inicio estiver ligado.";
 "Auto-continue changed for %@" = "Continuação automática alterada para %@";
 "Stop waiting here and answer in the agent's own terminal" = "Parar de esperar aqui e responder no terminal do próprio agente";

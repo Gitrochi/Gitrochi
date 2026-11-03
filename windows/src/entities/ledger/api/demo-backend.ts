@@ -4,6 +4,7 @@ import { ledgerBaselineSources, ledgerRoles } from "../model/types";
 import { inboxGroups } from "../lib/inbox";
 import { STALE_HOURS } from "../lib/verdict";
 import { compareVersions } from "../lib/version";
+import { DEFAULT_WAKE, WAKE_MAX_SEC, WAKE_MIN_SEC } from "../lib/wake";
 import { LedgerError, type LedgerBackend } from "./backend";
 import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld, promptPayload } from "./demo-data";
 import { buildGraph, isLive, overlaps, rangeStart, searchWorld, sessionViews, streamCycles } from "./demo-views";
@@ -38,6 +39,7 @@ function defaultSettings(): LedgerSettings {
     kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" } },
     autoContinue: { enabled: false, delaySec: 30 },
     backupKeep: 14,
+    wakeAgents: { ...DEFAULT_WAKE },
   };
 }
 
@@ -195,7 +197,7 @@ export class DemoLedgerBackend implements LedgerBackend {
 
   /** As the core: each value is checked, null restores the default, kinds are replaced as a whole */
   private settingsSet(values: unknown) {
-    if (!isRecord(values)) throw invalid("Give values: {staleHours?, kinds?, autoContinue?, backupKeep?}");
+    if (!isRecord(values)) throw invalid("Give values: {staleHours?, kinds?, autoContinue?, backupKeep?, wakeAgents?}");
     const next = structuredClone(this.settings), defaults = defaultSettings();
     for (const [key, value] of Object.entries(values)) {
       if (key === "staleHours") {
@@ -209,7 +211,12 @@ export class DemoLedgerBackend implements LedgerBackend {
       } else if (key === "autoContinue") {
         if (value !== null && !isRecord(value)) throw invalid("autoContinue must be an object");
         next.autoContinue = (value as Record<string, unknown> | null) ?? defaults.autoContinue;
-      } else throw invalid(`Unknown setting ${key} (known: staleHours, kinds, autoContinue, backupKeep)`);
+      } else if (key === "wakeAgents") {
+        // as the core: a missing field takes its default
+        const wait = isRecord(value) ? value.waitSec : undefined, enabled = isRecord(value) ? value.enabled : undefined;
+        if (value !== null && (!isRecord(value) || (enabled !== undefined && typeof enabled !== "boolean") || (wait !== undefined && !(Number.isInteger(wait) && (wait as number) >= WAKE_MIN_SEC && (wait as number) <= WAKE_MAX_SEC)))) throw invalid(`wakeAgents takes enabled and waitSec (${WAKE_MIN_SEC}–${WAKE_MAX_SEC} seconds)`);
+        next.wakeAgents = value === null ? defaults.wakeAgents : { enabled: (enabled as boolean | undefined) ?? DEFAULT_WAKE.enabled, waitSec: (wait as number | undefined) ?? DEFAULT_WAKE.waitSec };
+      } else throw invalid(`Unknown setting ${key} (known: staleHours, kinds, autoContinue, backupKeep, wakeAgents)`);
     }
     this.settings = next;
     this.world.staleHours = next.staleHours;

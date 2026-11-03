@@ -48,6 +48,7 @@ struct LedgerSettings: View {
         Form {
             if let settings {
                 trackingSection
+                wakeSection(settings)
                 autoContinueSection(settings)
                 notificationsSection
                 sessionsSection
@@ -92,6 +93,30 @@ struct LedgerSettings: View {
             Text("Claude Code agents started from Gitrochi get a ledger session before they start, and their activity is recorded: times and IDs, never what anyone types. The Ledger tools let them report to it; they are left out when Claude Code already has a server named gitrochi-ledger.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
+    }
+
+    /// Wake waiting agents with my answers (DESIGN.md §7.6): kept in the ledger's `wakeAgents` setting, which the agents'
+    /// Stop hooks read, so it applies to tracked agents already running too. Off until a person turns it on.
+    private func wakeSection(_ settings: LedgerGlobalSettings) -> some View {
+        let wake = settings.wake
+        return Section {
+            Toggle("Wake waiting agents with my answers", isOn: Binding(get: { wake.enabled }, set: { setWake(.init(enabled: $0, waitSec: wake.waitSec)) }))
+            LabeledContent("Wait") {
+                LedgerWaitPicker(seconds: wake.waitSec) { setWake(.init(enabled: wake.enabled, waitSec: $0)) }
+                    .labelsHidden()
+            }
+            .disabled(!wake.enabled)
+        } header: {
+            Text("Delivering answers")
+        } footer: {
+            Text("After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func setWake(_ wake: LedgerGlobalSettings.WakeAgents) {
+        settings?.wakeAgents = wake
+        save(["wakeAgents": .object(["enabled": .bool(wake.enabled), "waitSec": .number(Double(LedgerWait.clamped(wake.waitSec)))])])
     }
 
     private func autoContinueSection(_ settings: LedgerGlobalSettings) -> some View {

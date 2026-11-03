@@ -1985,6 +1985,11 @@
 "Decision sessions never continue automatically." = "เซสชันการตัดสินใจจะไม่ดำเนินการต่ออัตโนมัติ";
 "Use the default" = "ใช้ค่าเริ่มต้น";
 "Follow the repository's or the default auto-continue setting again" = "กลับไปใช้การตั้งค่าของรีโพสิทอรีหรือค่าเริ่มต้นของการดำเนินการต่ออัตโนมัติ";
+"Delivering answers" = "การส่งคำตอบ";
+"Wake waiting agents with my answers" = "ปลุกเอเจนต์ที่รออยู่ด้วยคำตอบของฉัน";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "เอเจนต์ที่คุณเริ่มจะยังคงรอฟังต่อไปเป็นเวลานี้หลังจบรอบของมัน คำตอบหรือข้อความที่คุณส่งถึงเซสชันของมันใน Ledger จะไปถึงทันที แทนที่จะรอรายงานครั้งถัดไป";
+"Answer wakes the agent" = "คำตอบจะปลุกเอเจนต์";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "เอเจนต์กำลังรออยู่เบื้องหลัง: คำตอบหรือข้อความที่คุณส่งตอนนี้จะไปถึงทันที";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้";
 "Auto-continue changed for %@" = "เปลี่ยนการดำเนินการต่ออัตโนมัติของ %@ แล้ว";
 "Stop waiting here and answer in the agent's own terminal" = "เลิกรอที่นี่และตอบในเทอร์มินัลของเอเจนต์เอง";

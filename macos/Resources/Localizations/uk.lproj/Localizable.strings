@@ -1990,6 +1990,11 @@
 "Decision sessions never continue automatically." = "Сесії рішень ніколи не продовжуються автоматично.";
 "Use the default" = "Використовувати типове";
 "Follow the repository's or the default auto-continue setting again" = "Знову дотримуватися налаштування репозиторію або типового автопродовження";
+"Delivering answers" = "Доставлення відповідей";
+"Wake waiting agents with my answers" = "Будити агентів, що чекають, моїми відповідями";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Запущений вами агент після завершення свого ходу ще стільки чекає. Відповідь або повідомлення, надіслані його сеансу в Книзі обліку, доходять до нього одразу, а не з наступним звітом.";
+"Answer wakes the agent" = "Відповідь розбудить агента";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Агент чекає у фоні: відповідь або повідомлення, надіслані зараз, дійдуть до нього одразу.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Працює для агентів Claude Code, яких запускає Gitrochi, поки ввімкнено «Відстежувати агентів, яких я запускаю».";
 "Auto-continue changed for %@" = "Автопродовження для %@ змінено";
 "Stop waiting here and answer in the agent's own terminal" = "Більше не чекати тут і відповісти у власному терміналі агента";

@@ -141,6 +141,7 @@ struct LedgerInboxView: View {
                     LedgerSessionLabel(id: session.id, color: session.color)
                     Text(session.title).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.tail)
                     if item.group != .questions { LedgerVerdictBadge(verdict: session.verdict) }
+                    if LedgerWake.waits(session, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 }
                 Spacer(minLength: 6)
                 Text(when(item, session)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).fixedSize()

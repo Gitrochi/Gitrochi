@@ -7,6 +7,9 @@
 //! PostToolUse and PostToolUseFailure tell it which permission answers applied: the terminal
 //! shows its own dialog while a PermissionRequest hook waits (Claude Code 2.1.309, #171).
 //!
+//! With **Wake waiting agents with my answers** on, the Stop hook then goes on waiting for a
+//! person's answer or message in the Ledger and wakes the agent with it (`wake`).
+//!
 //! A hook must never get in the agent's way. Every failure — bad input, no database, a
 //! locked file — ends with exit 0, no decision and one short line on stderr; the only other
 //! exit code is the 2 that wakes Claude from the Stop hook. The handler writes activity, the
@@ -22,6 +25,7 @@ use crate::session::{self, SessionRow};
 use crate::settings::Settings;
 use crate::util::{self, now_ms, Ms};
 use crate::vocab::Role;
+use crate::wake;
 use gitrochi_autocontinue::{
     app_alive, approve_plan, classify_stop, compose_session_context, decide, is_person_prompt,
     parse_questions, permission_allow, permission_deny, pre_tool_use_allow, pre_tool_use_deny,
@@ -342,6 +346,7 @@ fn session_start(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<Ho
         )?;
         prompts::settle_unconfirmed(c, id, None)?;
         prompts::release_session(c, id)?;
+        wake::release(c, id)?;
         Ok(())
     });
     let failed = written
@@ -376,6 +381,8 @@ fn prompt_submitted(db: &Db, id: &str, input: &HookInput) -> Result<HookResult> 
         touch(c, &row, now)?;
         link(c, &row, "UserPromptSubmit", &input.session_id, None, now)?;
         prompts::settle_stop_questions(c, id, person, now)?;
+        // the agent works again, whoever submitted the prompt
+        wake::release(c, id)?;
         if person {
             prompts::settle_unconfirmed(c, id, None)?;
             prompts::release_session(c, id)?;
@@ -410,6 +417,7 @@ fn session_end(db: &Db, id: &str, input: &HookInput, raw: &Value) -> Result<Hook
         touch(c, &row, now)?;
         prompts::settle_unconfirmed(c, id, None)?;
         prompts::release_session(c, id)?;
+        wake::release(c, id)?;
         let mut data = json!({"hook": "SessionEnd"});
         if let Some(reason) = &reason {
             data["reason"] = json!(reason);
@@ -641,12 +649,19 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
         may_wait && kind == Some(PromptKind::Permission),
     );
     let now = now_ms();
+    // with wakeAgents on, this Stop holds the session's wake-up; it replaces an older one
+    let claim = if stop {
+        wake::Claim::new(settings.wake_agents, now)
+    } else {
+        None
+    };
     let ((decision, prompt), _) = db.write(|c| {
         let Some(row) = session::load(c, id)? else {
             return Ok((None, None));
         };
         if stop {
             touch(c, &row, now)?;
+            wake::stopped(c, id, claim.as_ref())?;
         }
         if supersede {
             prompts::settle_stop_questions(c, id, false, now)?;
@@ -711,11 +726,33 @@ fn auto_continue(db: &Db, env: &HookEnv, id: &str, input: &HookInput) -> Result<
         };
         Ok((Some(decision), prompt))
     })?;
-    match (decision, prompt) {
+    let result = match (decision, prompt) {
         (Some(Decision::Wait(wait)), Some(prompt)) => {
-            Ok(wait_for_answer(db, env, input, &wait, &prompt).noted(unreadable))
+            wait_for_answer(db, env, input, &wait, &prompt).noted(unreadable)
         }
-        _ => Ok(HookResult::default().noted(unreadable)),
+        _ => HookResult::default().noted(unreadable),
+    };
+    Ok(match &claim {
+        Some(claim) => wake_after(db, id, claim, result),
+        None => result,
+    })
+}
+
+/// With `wakeAgents` on, the Stop hook goes on waiting once the turn's own wait sent nothing:
+/// a person's answer or message in the Ledger then wakes the agent (`wake`). An answer to the
+/// stop question wakes it already, so its claim ends. Failures end quietly.
+fn wake_after(db: &Db, id: &str, claim: &wake::Claim, result: HookResult) -> HookResult {
+    if result.code != 0 {
+        let _ = db.write(|c| wake::release_own(c, id, claim));
+        return result;
+    }
+    match wake::wait(db, id, claim) {
+        Ok(wake::Woken::Wake(text)) => HookResult::emit(&stop_wake(&text)),
+        Ok(wake::Woken::Quiet) => result,
+        Err(error) if result.stderr.is_empty() => {
+            HookResult::note(&format!("{}; no wake-up", error.message))
+        }
+        Err(_) => result,
     }
 }
 

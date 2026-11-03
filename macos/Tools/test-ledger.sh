@@ -383,6 +383,11 @@ let start: LedgerMs = 1_793_400_000_000
                           createdAt: 0, lastAt: last, lastAgentAt: last, ackAt: nil, snoozeUntil: nil, archivedAt: nil, openQuestions: 0,
                           stream: stream ? .init(line: "Implementation") : nil, autoContinue: nil)
         }
+        // Wake waiting agents with my answers: the hint lasts while the Stop hook's claim does, on the core's clock
+        var waking = session("S9", "Waiting agent", verdict: .needsHuman, last: 1)
+        check(!LedgerWake.waits(waking, now: 1_000), "no claim, no hint")
+        waking.wakeUntil = 2_000
+        check(LedgerWake.waits(waking, now: 1_999) && !LedgerWake.waits(waking, now: 2_000), "the hint ends with the wait")
         let list = [session("S1", "Retry sign-in after a timeout", verdict: .active, last: 5),
                     session("S2", "Add CSV export", verdict: .needsHuman, last: 1, touches: ["src/export/csv.swift"]),
                     session("S3", "Old work", verdict: .archived, last: 9),
@@ -1092,6 +1097,10 @@ let start: LedgerMs = 1_793_400_000_000
         // Settings: the demo's defaults are the core's; verdicts follow the stale hours
         let initial = try await client.settings()
         check(initial == DemoLedgerBackend.defaultSettings, "the demo's default settings are the core's: \(initial)")
+        check(initial.wake == .init(enabled: false, waitSec: 300), "waking agents starts off: \(initial)")
+        let woken = try await client.setSettings(["wakeAgents": .object(["enabled": .bool(true), "waitSec": .number(120)])])
+        check(woken.wake == .init(enabled: true, waitSec: 120), "the wake-up setting is kept: \(woken)")
+        check(try await client.setSettings(["wakeAgents": .null]).wake == initial.wake, "null turns the wake-up back off")
         let now = try await client.state(project: nil, range: .all)
         let quiet = now.sessions.first { $0.verdict == .active && $0.stream == nil && $0.lastAt < now.now - 2 * hour && ($0.snoozeUntil ?? 0) < now.now }
         let hourly = try await client.setSettings(["staleHours": 1])

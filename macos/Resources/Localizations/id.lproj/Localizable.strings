@@ -1944,6 +1944,11 @@
 "Decision sessions never continue automatically." = "Sesi keputusan tidak pernah lanjut otomatis.";
 "Use the default" = "Gunakan bawaan";
 "Follow the repository's or the default auto-continue setting again" = "Ikuti lagi pengaturan repositori atau lanjut otomatis bawaan";
+"Delivering answers" = "Pengiriman jawaban";
+"Wake waiting agents with my answers" = "Bangunkan agen yang menunggu dengan jawaban saya";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Agen yang Anda mulai tetap mendengarkan selama waktu ini setelah gilirannya selesai. Jawaban atau pesan yang Anda kirim ke sesinya di Ledger lalu langsung sampai, bukan bersama laporan berikutnya.";
+"Answer wakes the agent" = "Jawaban membangunkan agen";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Agen sedang menunggu di latar belakang: jawaban atau pesan yang Anda kirim sekarang langsung sampai.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Berlaku untuk agen Claude Code yang dimulai Gitrochi selama Lacak agen yang saya mulai aktif.";
 "Auto-continue changed for %@" = "Lanjut otomatis diubah untuk %@";
 "Stop waiting here and answer in the agent's own terminal" = "Berhenti menunggu di sini dan jawab di terminal agen sendiri";

@@ -195,6 +195,24 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $(".ledger-toast")?.textContent?.includes(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))), "Answer in terminal did not look for the agent's terminal");
     ensure(backend.world.prompts.find((p) => p.id === kept.id)?.state === "waiting", "Answer in terminal must leave a held wait to the terminal's answer");
     passed.push("waiting prompts");
+
+    // Wake waiting agents with my answers: while a session's Stop hook waits, its Inbox row and inspector say an answer
+    // wakes the agent; once the wait is over they say nothing again
+    const asking = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
+    ensure(asking && !$(".ledger-wake"), "No agent waits yet, so nothing may say an answer wakes it");
+    const waker = backend.world.sessions.find((s) => s.id === asking.sessionId)!, selectedBefore = store.selectedId;
+    waker.wakeUntil = clock + 120_000;
+    backend.world.rev++;
+    await store.refresh(true);
+    ensure(await until(() => $(`[data-item="q:${asking.id}"] .ledger-wake`)?.textContent === t("Answer wakes the agent")), "A waiting agent's question did not say that an answer wakes it");
+    store.select(waker.id);
+    ensure(await until(() => store.selectedId === waker.id && $(".ledger-inspector-head .ledger-wake")), "The inspector did not say that an answer wakes the waiting agent");
+    waker.wakeUntil = undefined;
+    backend.world.rev++;
+    await store.refresh(true);
+    ensure(await until(() => !$(".ledger-wake")), "The wake-up hint stayed after the agent stopped waiting");
+    store.select(selectedBefore);
+    passed.push("wake-up hint");
     await ledgerAnswersSelfTest(host, store, backend, clock);
     passed.push("editable question choices, suggestions, races and reported answers");
 
@@ -513,6 +531,26 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const cli = await ledgerTracking.cli();
     ensure(hooksFiles.every((f) => f.content.includes("gitrochi-ledger") === (f.tracking && !!cli)), `The hooks files did not follow Track agents I start: ${hooksFiles.map((f) => `${f.tracking}:${f.content.includes("gitrochi-ledger")}`).join(", ")}`);
     passed.push("track agents and auto-continue settings");
+    // Wake waiting agents with my answers: off until a person turns it on, kept in the ledger's setting for the hooks
+    const wakeBox = () => $<HTMLInputElement>(`.ledger-settings [data-ledger-section="wake"] input[type="checkbox"]`);
+    const wakeOf = async () => (await ledger.readSettings()).wakeAgents;
+    ensure(wakeBox() && !wakeBox()!.checked, "Wake waiting agents with my answers must start off");
+    wakeBox()!.click();
+    let wake: { enabled: boolean; waitSec: number } | undefined;
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.enabled === true; });
+    ensure(wake?.enabled === true && wake.waitSec === 300, `Turning the wake-up on did not save it: ${JSON.stringify(wake)}`);
+    await until(() => !button(".ledger-settings", "Back up now")!.disabled);
+    const wakeWait = $<HTMLInputElement>(`.ledger-settings [data-ledger-section="wake"] input[type="number"]`)!;
+    wakeWait.focus();
+    type(wakeWait, "120");
+    leave(wakeWait);
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.waitSec === 120; });
+    ensure(wake?.enabled === true && wake.waitSec === 120, `The wake-up's wait did not save: ${JSON.stringify(wake)}`);
+    await until(() => !button(".ledger-settings", "Back up now")!.disabled);
+    wakeBox()!.click();
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.enabled === false; });
+    ensure(wake?.enabled === false && wake.waitSec === 120, `Turning the wake-up off did not save it: ${JSON.stringify(wake)}`);
+    passed.push("wake-up setting");
     // Notifications and the taskbar badge: both off until a person turns them on
     const noticeBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="notifications"] input[type="checkbox"]`);
     ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => !b.checked), "Notifications and the badge must start off");

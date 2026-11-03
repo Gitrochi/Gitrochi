@@ -2,7 +2,7 @@
 
 > **Status: P0 design; the maintainer confirmed decisions D1–D10 on 2026-10-31.** The code is being built in parallel ([§12](#12-phases-and-waves)) against **contract v0** ([§6](#6-contract-v0)): the shared types and methods, owned by the core crate `crates/gitrochi-ledger`, whose JSON Schema is their authoritative form. This document follows contract v0; where it describes more than v0 covers, the text says *proposed*. Decisions ([§14](#14-decisions)): D1–D10 confirmed as recommended, and D7's compatibility surface is kept; D11–D13 are working defaults, and the additive-only rule below changed D11 and D13. To change a decision or the contract, change the schema and this document together.
 
-Agents report which baseline their work started from and where it stands. Gitrochi draws the sessions as branches off a baseline trunk, and a person only answers, confirms and cleans up. Information flows one way — **agent → ledger → screen**. The screens never drive an agent: what a person writes (an answer, a message, a status) waits in the ledger until that session's next report or read picks it up. The one exception is opt-in: when a person turns on auto-continue, Gitrochi answers an agent that has waited too long for them, within fixed limits, and records it for review ([§9](#9-auto-continue)).
+Agents report which baseline their work started from and where it stands. Gitrochi draws the sessions as branches off a baseline trunk, and a person only answers, confirms and cleans up. Information flows one way — **agent → ledger → screen**. The screens never drive an agent: what a person writes (an answer, a message, a status) waits in the ledger until that session's next report or read picks it up. The exceptions are opt-in: when a person turns on auto-continue, Gitrochi answers an agent that has waited too long for them, within fixed limits, and records it for review ([§9](#9-auto-continue)); when a person turns on **Wake waiting agents with my answers**, an agent Gitrochi launched that ended its turn receives a person's answer or message as soon as it is written ([§7.6](#76-delivery)).
 
 This document is the contract for phases P1–P5: the feature map, the shared types, the rules (verdicts, resuming, hand-offs), the permission boundary, auto-continue, the screens and the open decisions.
 
@@ -294,6 +294,12 @@ Through `human {action, sessionId, …}`, apps only:
 
 A person's answers, dismissals, messages and status changes are delivered **exactly once**, in the same transaction that marks them delivered: with the session's next `report` reply, or with `overview` for that session and `deliver`. The MCP tool `ledger_session`, which an agent calls for its own session, delivers as in the original; the CLI delivers only with `--deliver`. Reading for maintenance — the apps, the `session` method, `overview` without a session — never consumes messages. Undoing a status change that was already delivered queues a new message.
 
+**Waking a waiting agent** (opt-in, the global `wakeAgents` setting, off by default; Settings › Ledger › **Wake waiting agents with my answers**). An idle agent never reports or reads, so without it a person's answer waits until the agent works again. With it on, the `Stop` hook of a Claude Code agent Gitrochi launched with tracking on (the `hook` path; the passive `observe` path never waits) keeps running in the background after the turn ends, for the setting's wait (10–300 s, default 300; the `asyncRewake` `Stop` entry's timeout of 310 s bounds it). As soon as the session has an answered or dismissed Ledger question or a message from a person that was not delivered, the hook delivers everything waiting for the session, in the same transaction that marks it delivered, exactly as a report reply would, and wakes the agent with it: exit 2 with the text on stderr, the wake-up auto-continue's `stop_question` already uses ([§9.1](#91-where-an-agent-waits), #171). The text is the report reply's "From a person to this session" block, tagged `[Gitrochi]`. A status change alone wakes no one; it travels with the next delivery.
+
+- The waiting hook holds a claim in `meta` (`wake:<session>` → `{token, until}`); a newer `Stop` replaces it, and `SessionStart`, every `UserPromptSubmit` (the person's prompt, a task notification, the wake-up's own) and `SessionEnd` delete it. A wait whose claim is gone, whose time is up, or whose setting a person turned off ends quietly. The apps read the claim as `Session.wakeUntil` and show **Answer wakes the agent** on the session's Inbox rows and inspector while it lasts.
+- When auto-continue waits on the same `Stop` for a stop question, that wait comes first; if it sends an answer, that answer wakes the agent and the claim ends, and the Ledger's messages wait for the agent's next report as before.
+- The hook never blocks the agent (it runs in the background), polls `rev` every 250 ms and reads the rest only when it moved, and ends quietly with exit 0 on every failure. With the setting off, `Stop` behaves byte for byte as before and stays within milliseconds (a timed test). Waking an agent sends it the person's words as a system reminder; it never types into a terminal.
+
 ### 7.7 Hand-offs (sync and applied)
 
 The only paths by which an agent's report changes another session. They keep the original's scope and do not widen without a decision recorded here:
@@ -363,7 +369,7 @@ The product rule from the original: confirming, archiving, changing a status, an
 | `report`, including the `sync` and `applied` hand-offs | — | ✓ `ledger_report` | ✓ | — |
 | `overview` | — | ✓ `ledger_overview` | ✓ | — |
 | `state`, `session`, `graph`, `search`, `info`, `rev` | ✓ | — | ✓ through `call` | — |
-| Delivery of a person's messages | — | own session (`ledger_session`, `ledger_overview` with it) | `--deliver` | — |
+| Delivery of a person's messages | — | own session (`ledger_session`, `ledger_overview` with it) | `--deliver` | own session, waking its waiting agent with `wakeAgents` on ([§7.6](#76-delivery)) |
 | `import`, `backup`, `scan`, `demo` | ✓ | — | ✓ | — |
 | `human` — every person's action | ✓ | — | — | — |
 | Answering a pending prompt | ✓ `prompt_answer` | — | — | automatically, after the wait, within [§9.4](#94-safety) |
@@ -540,7 +546,7 @@ One card per stream (label, line, verdict, current version, last report) with it
 
 - **Header**: ID, title, kind and role, agent, base → current (behind), verdict chip, chips for branch, worktree, pull request, the running agent (live state from the agent center, **Open terminal**) and the chat link.
 - **Actions** by verdict: Confirm · Archive · Mark merged… (version picker defaulting to HEAD) · Close · Drop · Shelve (research and document roles) · Still active · Reopen · Unconfirm · Unarchive · Message… — and, if adopted, Edit… and Delete…
-- **Questions** with answer fields (`⌘↩`/`Ctrl+Enter`) and Dismiss.
+- **Questions** with answer fields (`⌘↩`/`Ctrl+Enter`) and Dismiss. While the session's agent waits to be woken (`wakeUntil`, [§7.6](#76-delivery)) the header shows **Answer wakes the agent** (info tone, bell symbol), as its Inbox rows do.
 - **Auto-continue**: this session's switch and wait ([§9.3](#93-turning-it-on)).
 - **Timeline**: events newest first; bodies through `MarkdownView` ↔ `Markdown.tsx`, collapsed except the newest; a person's actions, hook records and automatic answers in quieter styles; the hand-off source ("Confirmed by S… (applied)").
 - **Touches**: declared and changed files, overlap and likely-overlap badges that select the other session; **Commits (n)** opens the branch in the repository graph.
@@ -566,7 +572,7 @@ New questions, new sessions to clean up and new `applied` reports raise one nati
 
 ### 10.12 Settings › Ledger
 
-Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect agents… · Import…
+Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Delivering answers (Wake waiting agents with my answers, off by default; wait in seconds) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connect agents… · Import…
 
 ### 10.13 Visual rules
 

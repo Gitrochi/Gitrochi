@@ -1,7 +1,7 @@
 import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
-import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
+import { agentWaits, compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore, serverNow } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
@@ -10,7 +10,7 @@ import { useObserve } from "@/shared/lib";
 import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { LedgerTimeline } from "./LedgerTimeline";
 import { mergeMenu, moreMenu } from "./session-actions";
-import { BaseLine, SessionId, Section, VerdictBadge, When } from "./parts";
+import { BaseLine, SessionId, Section, VerdictBadge, WakePill, When } from "./parts";
 
 const HOUR = 3_600_000;
 
@@ -48,8 +48,9 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
           <SessionId session={s} />
           <IconButton small icon={<Copy size={13} />} tip={t("Copy the session ID")} aria-label={t("Copy the session ID")} onClick={() => void navigator.clipboard.writeText(s.id).then(() => store.showToast(t("Copied"), null), () => {})} />
           <span className="spacer" />
+          {agentWaits(s, store.state ? serverNow(store.state.now, store.stateReadAt, Date.now()) : Date.now()) && <WakePill />}
           <VerdictBadge verdict={s.verdict} />
-          {onClose && <IconButton small icon={<X size={15} />} tip={t("Close")} aria-label={t("Close")} onClick={onClose} />}
+          {onClose &&<IconButton small icon={<X size={15} />} tip={t("Close")} aria-label={t("Close")} onClick={onClose} />}
         </div>
         <h2 className="selectable">{s.title}</h2>
         <div className="ledger-meta">

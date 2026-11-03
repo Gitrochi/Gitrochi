@@ -498,7 +498,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 "llm-implementation": .init(role: .implementation, line: "llm", handoff: false),
                 "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "other": .init(role: .other)],
         autoContinue: ["enabled": false, "delaySec": 30],
-        backupKeep: 14)
+        backupKeep: 14,
+        wakeAgents: .init(enabled: false, waitSec: 300))
     static let defaultPattern = #"^v?(\d+(?:\.\d+)+)$"#
 
     private func project(_ key: String) -> LedgerProjectSettings {
@@ -535,6 +536,14 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 }
                 next.backupKeep = value.int ?? Self.defaultSettings.backupKeep
             case "autoContinue": next.autoContinue = reset ? Self.defaultSettings.autoContinue : value
+            case "wakeAgents":
+                if reset { next.wakeAgents = Self.defaultSettings.wakeAgents; continue }
+                guard value.object != nil, value["enabled"] == .null || value["enabled"].bool != nil,
+                      value["waitSec"] == .null || value["waitSec"].int.map({ (10...300).contains($0) }) == true else {
+                    throw LedgerFailure(code: "INVALID_ARGUMENT", message: "wakeAgents takes enabled and waitSec (10–300 seconds)")
+                }
+                // as the core: a missing field keeps its default
+                next.wakeAgents = .init(enabled: value["enabled"].bool ?? false, waitSec: value["waitSec"].int ?? 300)
             default: throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Unknown setting \(key)")
             }
         }

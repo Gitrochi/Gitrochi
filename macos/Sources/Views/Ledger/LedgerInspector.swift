@@ -68,6 +68,7 @@ struct LedgerInspector: View {
                 LedgerSessionLabel(id: s.id, color: s.color)
                     .textSelection(.enabled)
                 Spacer(minLength: 4)
+                if LedgerWake.waits(s, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 LedgerVerdictBadge(verdict: s.verdict)
                 if let close {
                     Button(action: close) { Image(systemName: "xmark") }
