@@ -12,6 +12,7 @@ import {
   localHubAccess,
   hubError,
   hubProjectTarget,
+  hubProjectOrganization,
   localScheduleToday,
   portfolioTasks,
   ProjectPortfolioState,
@@ -21,6 +22,7 @@ import {
   scheduleAddDays,
   scheduleSummary,
   type ProjectPortfolioTask,
+  type HubProjectScope,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -47,7 +49,7 @@ export function WorkspacePlanningDashboard({
   const [owned] = useState(() => new ProjectPortfolioState()),
     data = useObserve(fixture ?? owned);
   const [accountID, setAccountID] = useState(""),
-    [scope, setScope] = useState<"personal" | "repository">("personal");
+    [scope, setScope] = useState<HubProjectScope>(() => hubProjectOrganization(store.hostingHub.projectScope) ? store.hostingHub.projectScope : "personal");
   const [focus, setFocus] = useState("focus"),
     [query, setQuery] = useState(""),
     [onlyMine, setOnlyMine] = useState(false);
@@ -72,20 +74,26 @@ export function WorkspacePlanningDashboard({
     !!store.target &&
     !!account &&
     accounts.candidates(store.target).some((value) => value.id === account.id);
-  const effectiveScope = repositoryScope ? scope : "personal";
+  const effectiveScope: HubProjectScope = hubProjectOrganization(scope) || repositoryScope ? scope : "personal";
+  const organization = hubProjectOrganization(effectiveScope);
   const selectionContext = local
     ? "local"
-    : JSON.stringify([account?.id, effectiveScope, store.path, store.target]);
+    : JSON.stringify([account?.id, effectiveScope, ...(effectiveScope === "repository" ? [store.path, store.target] : [])]);
   const context = JSON.stringify([
     source,
     selectionContext,
     local ? 0 : accounts.revision,
   ]);
+  const savedSelection = readProjectPortfolioSelection(selectionContext);
+  const legacySelection = effectiveScope === "personal" && !local ? readProjectPortfolioSelection(JSON.stringify([account?.id, effectiveScope, store.path, store.target])) : null;
+  useEffect(() => {
+    if (savedSelection === null && legacySelection !== null) saveProjectPortfolioSelection(selectionContext, legacySelection);
+  }, [selectionContext]);
   const { readError, setReadError, isCurrent, readAccess, load, refresh } =
     usePlanningPortfolio(
       data,
       context,
-      readProjectPortfolioSelection(selectionContext),
+      savedSelection ?? legacySelection,
       local || !!account,
       !!fixture,
       async (stillCurrent) => {
@@ -110,7 +118,9 @@ export function WorkspacePlanningDashboard({
             accountHost(account),
             account.username,
             effectiveScope === "personal",
+            organization,
           ),
+          projectOrganization: organization,
           token,
           me: account.username,
           apiBase: accountApiBase(account),
@@ -256,9 +266,9 @@ export function WorkspacePlanningDashboard({
             local={local}
             available={available}
             accountID={account?.id ?? ""}
-            chooseAccount={setAccountID}
-            repositoryScope={repositoryScope}
-            scope={scope}
+            chooseAccount={id => { setAccountID(id); setScope("personal"); }}
+            repositoryOwner={repositoryScope ? store.target!.path.split("/")[0] : null}
+            scope={effectiveScope}
             chooseScope={setScope}
             data={data}
             chooseProject={chooseProject}

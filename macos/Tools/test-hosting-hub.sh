@@ -50,6 +50,18 @@ enum Hosting {
         let githubOrganizationDetail = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationItem)
         precondition(githubOrganizationDetail.item.title == "Octo team" && githubOrganizationDetail.item.avatarURL?.absoluteString == "https://avatars.githubusercontent.com/u/77?v=5")
         precondition(organizationPaths == ["/user/orgs", "/orgs/octo", "/user/memberships/orgs/octo", "/orgs/octo/repos"])
+        Hosting.handler = { request in
+            precondition(request.url!.path == "/user/orgs" && request.url!.query!.contains("page=2"))
+            return try json((0..<30).map { ["id": 100 + $0, "login": "team-\($0)"] })
+        }
+        let organizationDiscoveryPage = try await HostingHubAPI.page(gh, section: .organizations, page: 2)
+        precondition(organizationDiscoveryPage.items.count == 30 && organizationDiscoveryPage.more)
+        Hosting.handler = { request in
+            precondition(request.url!.path == "/user/memberships/orgs" && request.url!.query!.contains("page=3"))
+            return try json([["organization": ["id": 201, "login": "membership-team"]]])
+        }
+        let membershipDiscoveryPage = try await HostingHubAPI.page(gh, section: .organizations, page: 3, cursor: "organizationMemberships")
+        precondition(membershipDiscoveryPage.items.first?.id == "membership-team" && !membershipDiscoveryPage.more && membershipDiscoveryPage.cursor == "organizationMemberships")
         Hosting.handler = { request in try json(request.url!.path == "/orgs/octo" ? ["description": "Updated team"] : [] as [Any]) }
         let sparseGithubOrganization = try await HostingHubAPI.detail(gh, section: .organizations, item: githubOrganizationDetail.item)
         precondition(sparseGithubOrganization.item.id == "octo" && sparseGithubOrganization.item.title == "Octo team" && sparseGithubOrganization.item.subtitle == "octo")
@@ -84,6 +96,31 @@ enum Hosting {
         }
         let personalPage = try await HostingHubAPI.page(HubAccess(target: myTarget, token: "fixture", apiBase: gh.apiBase, me: "me"), section: .projects)
         precondition(personalPage.items.first?.id == "personal")
+        precondition(HostingHubAPI.projectOrganization(scope: "organization:demo-team") == "demo-team")
+        for invalid in ["organization:", "organization:../team", "organization:team/path", "organization:team name", "organization:team-", "organization:two--hyphens", "personal", "organization:" + String(repeating: "a", count: 40)] {
+            precondition(HostingHubAPI.projectOrganization(scope: invalid) == nil)
+        }
+        let organizationTarget = HostingHubAPI.projectTarget(nil, provider: .github, host: "github.com", username: "me", personal: false, organization: "demo-team")
+        precondition(organizationTarget.path == "demo-team/workspace")
+        // An explicit organization never resolves through a local repository or personal-project query.
+        var organizationAccess = HubAccess(target: myTarget, token: "fixture", apiBase: gh.apiBase, me: "me", projectOrganization: "demo-team")
+        var organizationPageCalls = 0
+        Hosting.handler = { request in
+            organizationPageCalls += 1
+            let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any], variables = body["variables"] as! [String: Any], query = body["query"] as! String
+            precondition(query.contains("organization(login:$owner)") && !query.contains("repository(owner:") && !query.contains("user(login:"))
+            precondition(variables["owner"] as? String == "demo-team" && variables["name"] == nil)
+            if organizationPageCalls == 1 { precondition(variables["cursor"] is NSNull) }
+            else { precondition(variables["cursor"] as? String == "organization-next") }
+            return try json(["data": ["organization": ["projectsV2": ["nodes": [["id": "ORG-\(organizationPageCalls)", "title": "Team roadmap"]], "pageInfo": ["hasNextPage": organizationPageCalls == 1, "endCursor": "organization-next"]]]]])
+        }
+        let firstOrganizationPage = try await HostingHubAPI.page(organizationAccess, section: .projects)
+        let secondOrganizationPage = try await HostingHubAPI.page(organizationAccess, section: .projects, page: 2, cursor: firstOrganizationPage.cursor)
+        precondition(firstOrganizationPage.more && firstOrganizationPage.items.first?.id == "ORG-1")
+        precondition(!secondOrganizationPage.more && secondOrganizationPage.items.first?.id == "ORG-2")
+        organizationAccess.isCurrent = { false }
+        do { _ = try await HostingHubAPI.page(organizationAccess, section: .projects); fatalError("Stale organization request") } catch {}
+        precondition(organizationPageCalls == 2)
         var stale = gh; stale.isCurrent = { false }
         let n = calls.count
         do { try await HostingHubAPI.saveRelease(stale, HubReleaseInput(tag: "v1", name: "One")); fatalError("Stale write") } catch {}

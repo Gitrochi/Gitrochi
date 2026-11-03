@@ -2233,3 +2233,12 @@
 "Open repositories" = "Відкриті репозиторії";
 "Recent local repositories" = "Нещодавні локальні репозиторії";
 "Open repository" = "Відкрити репозиторій";
+"Organization: {0}" = "Організація: {0}";
+"Load more organizations" = "Завантажити ще організації";
+"Retry organizations" = "Повторити завантаження організацій";
+"Loading organizations…" = "Завантаження організацій…";
+"Organizations could not be loaded. Your personal projects are still available." = "Не вдалося завантажити організації. Ваші особисті проєкти досі доступні.";
+"Other organization…" = "Інша організація…";
+"Organization login" = "Ім’я входу організації";
+"Open organization" = "Відкрити організацію";
+"No organizations found" = "Організацій не знайдено";

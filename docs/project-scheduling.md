@@ -4,7 +4,7 @@ Home and Projects use the same GitHub Projects items and date-field settings. Sc
 
 ## Home
 
-Choose a connected GitHub account, a personal or repository-owner scope, and the projects to include. The selection is remembered on this device for that account and scope. Home initially loads three projects; add others with **Choose projects** and **Load more projects**.
+Choose a connected GitHub account, a personal, organization or repository-owner scope, and the projects to include. Organization projects work without opening a repository: select an organization from **Project scope** to load its accessible projects. Use **Load more organizations** when the account belongs to more organizations than the first page shows. The selection is remembered on this device for that account and scope. Home initially loads three projects; add others with **Choose projects** and **Load more projects**.
 
 The agenda groups attention around overdue, today, next seven days, unscheduled and completed work. Search titles, projects, repositories and assignees, or limit the agenda to work assigned to you. Week and Projects views show dated work and each project's loaded progress. Opening a task takes you to its project inspector and local development actions.
 

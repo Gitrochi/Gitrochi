@@ -31,6 +31,14 @@ describe("ProjectV2 native management contract", () => {
     expect(requestBody(http.mock.calls[0][3]).query).toContain("repositoryOwner(login:$owner)");
     expect(requestBody(http.mock.calls[1][3]).variables.input).toEqual({ ownerId: "USER", title: "Plan" });
   });
+  it("creates under the selected organization even when the supplied repository target belongs to someone else", async () => {
+    const c = access(); c.projectOrganization = "shared-team";
+    const http = vi.spyOn(ipc, "http").mockImplementation(async (_m, _u, _h, body) => response({ data: requestBody(body).query.startsWith("query") ? { organization: { id: "ORGANIZATION" } } : { createProjectV2: { projectV2: metadata } } }));
+    await createHubProject(c, "Team plan");
+    expect(requestBody(http.mock.calls[0][3]).query).toContain("organization(login:$owner)");
+    expect(requestBody(http.mock.calls[0][3]).variables).toEqual({ owner: "shared-team" });
+    expect(requestBody(http.mock.calls[1][3]).variables.input).toEqual({ ownerId: "ORGANIZATION", title: "Team plan" });
+  });
   it("sends exactly the documented project settings and rejects collaborator changes", async () => {
     const http = vi.spyOn(ipc, "http").mockResolvedValue(response({ data: { node: metadata } }));
     const input = { title: "  Release  ", shortDescription: "Summary", readme: "Guide", public: true, closed: true };

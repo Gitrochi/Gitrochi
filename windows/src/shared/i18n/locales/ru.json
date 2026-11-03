@@ -2258,5 +2258,14 @@
   "Open a repository to see its Git identity.": "Откройте репозиторий, чтобы увидеть его данные Git.",
   "Open repositories": "Открытые репозитории",
   "Recent local repositories": "Недавние локальные репозитории",
-  "Open repository": "Открыть репозиторий"
+  "Open repository": "Открыть репозиторий",
+  "Organization: {0}": "Организация: {0}",
+  "Load more organizations": "Загрузить ещё организации",
+  "Retry organizations": "Повторить загрузку организаций",
+  "Loading organizations…": "Загрузка организаций…",
+  "Organizations could not be loaded. Your personal projects are still available.": "Не удалось загрузить организации. Ваши личные проекты по-прежнему доступны.",
+  "Other organization…": "Другая организация…",
+  "Organization login": "Имя входа организации",
+  "Open organization": "Открыть организацию",
+  "No organizations found": "Организации не найдены"
 }

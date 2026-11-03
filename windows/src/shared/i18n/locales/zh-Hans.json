@@ -2393,5 +2393,14 @@
   "Open a repository to see its Git identity.": "打开仓库以查看其 Git 身份。",
   "Open repositories": "已打开的仓库",
   "Recent local repositories": "最近使用的本地仓库",
-  "Open repository": "打开仓库"
+  "Open repository": "打开仓库",
+  "Organization: {0}": "组织：{0}",
+  "Load more organizations": "加载更多组织",
+  "Retry organizations": "重新加载组织",
+  "Loading organizations…": "正在加载组织…",
+  "Organizations could not be loaded. Your personal projects are still available.": "无法加载组织。你的个人项目仍然可用。",
+  "Other organization…": "其他组织…",
+  "Organization login": "组织登录名",
+  "Open organization": "打开组织",
+  "No organizations found": "未找到组织"
 }

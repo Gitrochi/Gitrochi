@@ -2238,3 +2238,12 @@
 "Open repositories" = "已開啟的儲存庫";
 "Recent local repositories" = "最近使用的本機儲存庫";
 "Open repository" = "開啟儲存庫";
+"Organization: {0}" = "組織：{0}";
+"Load more organizations" = "載入更多組織";
+"Retry organizations" = "重新載入組織";
+"Loading organizations…" = "正在載入組織…";
+"Organizations could not be loaded. Your personal projects are still available." = "無法載入組織。你的個人專案仍可使用。";
+"Other organization…" = "其他組織…";
+"Organization login" = "組織登入名稱";
+"Open organization" = "開啟組織";
+"No organizations found" = "找不到組織";

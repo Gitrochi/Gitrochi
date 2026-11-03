@@ -2294,5 +2294,14 @@
   "Open a repository to see its Git identity.": "Abre un repositorio para ver su identidad de Git.",
   "Open repositories": "Repositorios abiertos",
   "Recent local repositories": "Repositorios locales recientes",
-  "Open repository": "Abrir repositorio"
+  "Open repository": "Abrir repositorio",
+  "Organization: {0}": "Organización: {0}",
+  "Load more organizations": "Cargar más organizaciones",
+  "Retry organizations": "Volver a cargar organizaciones",
+  "Loading organizations…": "Cargando organizaciones…",
+  "Organizations could not be loaded. Your personal projects are still available.": "No se pudieron cargar las organizaciones. Tus proyectos personales siguen disponibles.",
+  "Other organization…": "Otra organización…",
+  "Organization login": "Nombre de usuario de la organización",
+  "Open organization": "Abrir organización",
+  "No organizations found": "No se encontraron organizaciones"
 }

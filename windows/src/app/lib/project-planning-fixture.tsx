@@ -13,7 +13,7 @@ import { WorkspacePlanningDashboard } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 
 /** Isolated demo data for the real Home and Projects components. */
-export function planningFixture() {
+export function planningFixture({ organization = false }: { organization?: boolean } = {}) {
   const today = localScheduleToday(),
     date = (days: number) => scheduleAddDays(today, days)!,
     fields: HubDetail["fields"] = [
@@ -129,6 +129,7 @@ export function planningFixture() {
     path: "team/repo",
     remote: "origin",
   };
+  if (organization) { store.path = null; store.target = null; store.hostingHub.projectScope = "organization:team"; }
   store.navigate = (destination) => {
     store.destination = destination;
     store.changed();
@@ -152,12 +153,7 @@ export function planningFixture() {
     },
   ];
   accounts.token = async () => "fixture-only";
-  const selectionContext = JSON.stringify([
-    "planning-fixture",
-    "personal",
-    store.path,
-    store.target,
-  ]);
+  const selectionContext = JSON.stringify(["planning-fixture", organization ? "organization:team" : "personal"]);
   data.reset(JSON.stringify(["remote", selectionContext, accounts.revision]));
   data.projects = details.map((detail) => detail.item);
   data.details = details;
@@ -210,7 +206,8 @@ export function planningFixture() {
       },
     },
   });
-  ipc.http = async (_method, _url, _headers, body) => {
+  ipc.http = async (_method, url, _headers, body) => {
+    if (new URL(url).pathname === "/user/orgs") return { status: 200, body: JSON.stringify([{login:"team", name:"Demo team"}]) };
     const payload = JSON.parse(body ?? "{}"),
       query = String(payload.query ?? ""),
       id = payload.variables?.id;
@@ -235,6 +232,7 @@ export function planningFixture() {
           }
         : {
             user: { projectsV2: { nodes, pageInfo: { hasNextPage: false } } },
+            organization: { projectsV2: { nodes, pageInfo: { hasNextPage: false } } },
             repository: {
               owner: {
                 projectsV2: { nodes, pageInfo: { hasNextPage: false } },

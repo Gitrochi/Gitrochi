@@ -4388,5 +4388,14 @@
   "Another application owns the browser host manifest": "다른 앱이 이 브라우저 연결 설정 파일을 사용 중입니다",
   "Git accounts": "Git 계정",
   "Manage Git accounts…": "Git 계정 관리…",
-  "Open a repository to see its Git identity.": "저장소를 열면 해당 저장소의 Git 계정을 확인할 수 있습니다."
+  "Open a repository to see its Git identity.": "저장소를 열면 해당 저장소의 Git 계정을 확인할 수 있습니다.",
+  "Organization: {0}": "조직: {0}",
+  "Load more organizations": "조직 더 불러오기",
+  "Retry organizations": "조직 다시 불러오기",
+  "Loading organizations…": "조직 불러오는 중…",
+  "Organizations could not be loaded. Your personal projects are still available.": "조직을 불러오지 못했습니다. 내 프로젝트는 계속 사용할 수 있습니다.",
+  "Other organization…": "다른 조직…",
+  "Organization login": "조직 아이디",
+  "Open organization": "조직 열기",
+  "No organizations found": "조직을 찾지 못했습니다"
 }

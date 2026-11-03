@@ -1,3 +1,4 @@
+import { ProjectScopePicker } from "@/features/select-project-scope";
 import { useEffect, useRef, useState } from "react";
 import {
   accounts,
@@ -295,27 +296,7 @@ export function ProjectCreateDialog({
             </select>
           </label>
           {account && (
-            <label>
-              <span>{t("Project owner")}</span>
-              <select
-                className="select"
-                aria-label={t("Project creation owner")}
-                value={hub.projectEffectiveScope}
-                disabled={busy}
-                onChange={(event) =>
-                  void hub.selectProjectScope(
-                    event.target.value as "personal" | "repository",
-                  )
-                }
-              >
-                {hub.projectRepositoryOwner && (
-                  <option value="repository">
-                    {hub.projectRepositoryOwner}
-                  </option>
-                )}
-                <option value="personal">{account.username}</option>
-              </select>
-            </label>
+            <ProjectScopePicker account={account} repositoryOwner={hub.projectRepositoryOwner} scope={hub.projectEffectiveScope} disabled={busy} label="Project owner" ariaLabel="Project creation owner" onChange={scope => void hub.selectProjectScope(scope)}/>
           )}
           {!choices.length && (
             <Button

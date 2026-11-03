@@ -28,8 +28,16 @@ struct WorkspacePlanningDashboard: View {
     }
     private var account: HostAccount? { accounts.first { $0.id == accountID } ?? accounts.first { $0.id == store.hubAccount?.id } ?? accounts.first }
     private var repositoryScope: Bool { guard let target = store.target, let account else { return false }; return AccountStore.shared.candidates(for: target).contains { $0.id == account.id } }
-    private var effectiveScope: String { repositoryScope ? scope : "personal" }
-    private var selectionContext: String { isLocal ? "local" : [account?.id ?? "", effectiveScope, store.url?.path ?? "", store.target?.provider.rawValue ?? "", store.target?.host ?? "", store.target?.path ?? ""].joined(separator: "\0") }
+    private var effectiveScope: String { HostingHubAPI.projectOrganization(scope: scope) != nil ? scope : repositoryScope ? scope : "personal" }
+    private var selectionContext: String {
+        if isLocal { return "local" }
+        let repository = effectiveScope == "repository" ? [store.url?.path ?? "", store.target?.provider.rawValue ?? "", store.target?.host ?? "", store.target?.path ?? ""] : []
+        return ([account?.id ?? "", effectiveScope] + repository).joined(separator: "\0")
+    }
+    private var legacySelectionContext: String? {
+        guard !isLocal, effectiveScope == "personal" else { return nil }
+        return [account?.id ?? "", effectiveScope, store.url?.path ?? "", store.target?.provider.rawValue ?? "", store.target?.host ?? "", store.target?.path ?? ""].joined(separator: "\0")
+    }
     private var context: String { selectionContext + "\0" + String(isLocal ? LocalProjectStore.shared.revision : AccountStore.shared.revision) }
     private var tasks: [ProjectPortfolioTask] {
         let settings = Dictionary(uniqueKeysWithValues: data.details.map { ($0.item.id, ProjectSchedulePreferences.load(accountID: account?.id ?? "", projectID: $0.item.id)) })
@@ -62,7 +70,7 @@ struct WorkspacePlanningDashboard: View {
                     Text("Bring project deadlines and your next actions into one place.").font(.callout).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 if data.loading { ProgressView().controlSize(.small) }
-                Button("New project") { creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
+                Button("New project") { store.hostingHub.selectedAccountID = account?.id; store.hostingHub.projectScope = effectiveScope; creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
                 Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
             }
             if fixture == nil && portfolioContext != context {
@@ -106,7 +114,8 @@ struct WorkspacePlanningDashboard: View {
             if fixture == nil {
                 data.reset(context: context)
                 portfolioContext = context
-                if let saved = ProjectPortfolioPreferences.load(context: selectionContext) { data.setSelected(saved) }
+                let saved = ProjectPortfolioPreferences.load(context: selectionContext) ?? legacySelectionContext.flatMap { ProjectPortfolioPreferences.load(context: $0) }
+                if let saved { data.setSelected(saved) }
                 await load()
             }
         }
@@ -138,7 +147,7 @@ struct WorkspacePlanningDashboard: View {
             Picker("Project source", selection: Binding(get: { isLocal ? "local" : "remote" }, set: { projectSource = $0 })) { Text("Local projects").tag("local"); Text("GitHub projects").tag("remote") }.labelsHidden().frame(width: 185)
             if !isLocal {
                 Picker("Planning account", selection: Binding(get: { account?.id ?? "" }, set: { accountID = $0 })) { ForEach(accounts) { Text("@\($0.username) · \($0.host)").tag($0.id) } }.labelsHidden().frame(maxWidth: 250)
-                if repositoryScope { Picker("Project scope", selection: $scope) { Text("My projects").tag("personal"); Text("Repository owner projects").tag("repository") }.labelsHidden().frame(width: 195) }
+                ProjectScopePicker(account: account, repositoryOwner: repositoryScope ? store.target?.path.split(separator: "/").first.map(String.init) : nil, selection: $scope).frame(width: 225)
             }
             Menu {
                 ForEach(data.projects) { item in
@@ -260,8 +269,8 @@ struct WorkspacePlanningDashboard: View {
         guard !Task.isCancelled, selectionContext == selected, store.destination == .home else { throw CancellationError() }
         guard let token else { throw HostingHubAPI.fail(AccountStore.shared.savedAccessMessage(for: account)) }
         let expected = context
-        let target = HostingHubAPI.projectTarget(repositoryScope ? store.target : nil, provider: .github, host: account.host, username: account.username, personal: effectiveScope == "personal")
-        return HubAccess(target: target, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { context == expected && store.destination == .home })
+        let target = HostingHubAPI.projectTarget(repositoryScope ? store.target : nil, provider: .github, host: account.host, username: account.username, personal: effectiveScope == "personal", organization: HostingHubAPI.projectOrganization(scope: effectiveScope))
+        return HubAccess(target: target, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { context == expected && store.destination == .home }, projectOrganization: HostingHubAPI.projectOrganization(scope: effectiveScope))
     }
     private func load(append: Bool = false) async {
         guard fixture == nil, isLocal || account != nil else { return }

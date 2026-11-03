@@ -22,7 +22,7 @@ struct ProjectCreationSheet: View {
     private var account: HostAccount? { accounts.first { $0.id == accountID } ?? accounts.first }
     private var matchingRepository: RepoTarget? { guard let account, let target = store.target, AccountStore.shared.candidates(for: target).contains(where: { $0.id == account.id }) else { return nil }; return target }
     private var context: String { [mode == "local" ? "local" : "remote", account?.id ?? "", scope, store.url?.path ?? "", store.target?.host ?? "", store.target?.provider.rawValue ?? "", store.target?.path ?? "", String(AccountStore.shared.revision)].joined(separator: "|") }
-    private var owner: String { scope == "repository" ? matchingRepository?.path.split(separator: "/").first.map(String.init) ?? "" : account?.username ?? "" }
+    private var owner: String { HostingHubAPI.projectOrganization(scope: scope) ?? (scope == "repository" ? matchingRepository?.path.split(separator: "/").first.map(String.init) ?? "" : account?.username ?? "") }
     private var ready: Bool { (scope != "repository" || matchingRepository != nil || mode == "local") && !title.trimmed.isEmpty && !saving && !probing && !uncertain && (mode == "local" || capabilities?.viewerVerified == true && capabilities?.ownerID.isEmpty == false && capabilities?.canCreate != false && (mode != "public" || capabilities?.canPublish != false)) }
     private var modeTitle: String { mode == "local" ? String(localized: "Local project") : mode == "private" ? String(localized: "Private GitHub project") : String(localized: "Public GitHub project") }
 
@@ -76,7 +76,7 @@ struct ProjectCreationSheet: View {
             }.controlSize(.large).padding(.horizontal, 24).padding(.vertical, 16)
         }.frame(width: 760, height: review ? 520 : 680).background(Color(nsColor: .windowBackgroundColor))
         .interactiveDismissDisabled(saving)
-        .onAppear { accountID = store.hubAccount?.id ?? accounts.first?.id ?? "" }
+        .onAppear { accountID = store.hubAccount?.id ?? accounts.first?.id ?? ""; scope = store.hubProjectEffectiveScope }
         .task(id: context) {
             if scope == "repository", matchingRepository == nil { scope = "personal"; return }
             restoreAttempt()
@@ -160,7 +160,7 @@ struct ProjectCreationSheet: View {
             else {
                 HStack {
                     Picker("GitHub account", selection: $accountID) { ForEach(accounts) { account in Text("@" + account.username + " · " + account.host).tag(account.id) } }
-                    Picker("Project owner", selection: $scope) { Text("My projects").tag("personal"); if let matchingRepository { Text(matchingRepository.path.split(separator: "/").first.map(String.init) ?? "").tag("repository") } }
+                    ProjectScopePicker(account: account, repositoryOwner: matchingRepository?.path.split(separator: "/").first.map(String.init), selection: $scope)
                 }.disabled(saving || uncertain)
                 if let account, AccountStore.shared.credentialState(for: account) != .ready {
                     SavedAccountAccessNotice(account: account).disabled(saving || probing || uncertain)
@@ -183,8 +183,8 @@ struct ProjectCreationSheet: View {
         guard let token = AccountStore.shared.token(for: account) else { throw HostingHubAPI.fail(AccountStore.shared.savedAccessMessage(for: account)) }
         guard scope != "repository" || matchingRepository != nil else { throw HostingHubAPI.fail(String(localized: "The repository or account changed. Reopen this action.")) }
         let expected = context
-        let target = HostingHubAPI.projectTarget(scope == "repository" ? matchingRepository : nil, provider: .github, host: account.host, username: account.username, personal: scope != "repository")
-        return HubAccess(target: target, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { active && context == expected })
+        let target = HostingHubAPI.projectTarget(scope == "repository" ? matchingRepository : nil, provider: .github, host: account.host, username: account.username, personal: scope != "repository", organization: HostingHubAPI.projectOrganization(scope: scope))
+        return HubAccess(target: target, token: token, apiBase: account.apiBase, me: account.username, isCurrent: { active && context == expected }, projectOrganization: HostingHubAPI.projectOrganization(scope: scope))
     }
     private func inspect() async {
         capabilities = nil; error = nil

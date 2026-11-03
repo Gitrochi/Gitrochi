@@ -2253,5 +2253,14 @@
   "Open a repository to see its Git identity.": "เปิดคลังเพื่อดูข้อมูลประจำตัว Git ของคลังนั้น",
   "Open repositories": "คลังที่เปิดอยู่",
   "Recent local repositories": "คลังในเครื่องล่าสุด",
-  "Open repository": "เปิดคลัง"
+  "Open repository": "เปิดคลัง",
+  "Organization: {0}": "องค์กร: {0}",
+  "Load more organizations": "โหลดองค์กรเพิ่มเติม",
+  "Retry organizations": "ลองโหลดองค์กรอีกครั้ง",
+  "Loading organizations…": "กำลังโหลดองค์กร…",
+  "Organizations could not be loaded. Your personal projects are still available.": "ไม่สามารถโหลดองค์กรได้ โปรเจกต์ส่วนตัวของคุณยังใช้งานได้อยู่",
+  "Other organization…": "องค์กรอื่น…",
+  "Organization login": "ชื่อเข้าสู่ระบบขององค์กร",
+  "Open organization": "เปิดองค์กร",
+  "No organizations found": "ไม่พบองค์กร"
 }

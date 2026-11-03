@@ -2220,3 +2220,12 @@
 "Open repositories" = "Açık depolar";
 "Recent local repositories" = "Son yerel depolar";
 "Open repository" = "Depoyu aç";
+"Organization: {0}" = "Kuruluş: {0}";
+"Load more organizations" = "Daha fazla kuruluş yükle";
+"Retry organizations" = "Kuruluşları yeniden yükle";
+"Loading organizations…" = "Kuruluşlar yükleniyor…";
+"Organizations could not be loaded. Your personal projects are still available." = "Kuruluşlar yüklenemedi. Kişisel projeleriniz hâlâ kullanılabilir.";
+"Other organization…" = "Başka kuruluş…";
+"Organization login" = "Kuruluş giriş adı";
+"Open organization" = "Kuruluşu aç";
+"No organizations found" = "Kuruluş bulunamadı";
