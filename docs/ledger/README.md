@@ -64,7 +64,7 @@ Existing Claude Ledger users can also retain their work records and personal not
 
 **Repair** installs the hooks again with the stable command, which Gitrochi keeps current. When the MCP entry is the problem, Repair also copies an MCP command that replaces the registration; run it in a terminal. **Copy MCP command** does the same at any time. Gitrochi never edits a client's MCP settings itself. **Remove** removes only Gitrochi's hooks for that client. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
 
-Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does.
+Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does. [Screenshots](../screenshots/ledger-connection/README.md) show the list on both platforms.
 
 ## Track local Claude Code and Codex activity automatically
 
