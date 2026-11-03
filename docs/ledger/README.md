@@ -8,7 +8,7 @@ The Ledger brings agent reports, questions and finished work into one place in G
 
 Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
 
-Optional launched-agent tracking, the app's waiting-prompt heartbeat, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` in the app process at startup, together with their relevant settings. Setting the variable in an already-open app's terminal does not change that app's environment. **Track agents I start** remains off by default. Reading reports and using the Ledger's local tools do not require this preview switch.
+Optional launched-agent tracking, background notifications and the Dock/taskbar count each follow their own switch in **Settings › Ledger**, and all of them start off. No environment variable is needed: `GITROCHI_LEDGER_PREVIEW` is no longer read. The app's waiting-prompt heartbeat, which tells auto-continue's hooks that you can answer in Gitrochi, runs only while **Track agents I start** is on. Reading reports and using the Ledger's local tools need none of these switches.
 
 The Ledger normally reads your local database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
 
@@ -217,7 +217,8 @@ A **held wait** has a reason and no countdown. Choose **Answer in terminal** to 
 
 Every automatic answer appears in the Inbox for review. **Confirm** marks that answer reviewed. **Send correction…** queues a correction for the next agent report or read; open the terminal to say it immediately when needed. Reviewing an automatic answer is separate from confirming a session's outcome.
 
-If Gitrochi is not running, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309, and plan approval against 2.1.316 without a terminal. Tracking does not depend on every auto-continue path working.
+If Gitrochi is not running, or **Track agents I start** has been turned off since the agent started, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+
 
 ## Notifications and terminal quick launches
 
