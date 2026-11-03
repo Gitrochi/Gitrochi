@@ -324,14 +324,29 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
             views::to_value(&backup::run(db, now, keep, daily)?)
         }
         "settings" => db.read(|c| Ok(Settings::load(c)?.to_json())),
-        "browser_status" => crate::browser_install::status(),
-        "browser_remove" => crate::browser_install::remove(),
-        "browser_install" => {
-            let extension = arg_str(args, "extensionId")
-                .ok_or_else(|| Error::invalid("Missing extensionId"))?;
-            let host =
-                arg_str(args, "hostPath").ok_or_else(|| Error::invalid("Missing hostPath"))?;
-            crate::browser_install::install(&db.path, &extension, std::path::Path::new(&host))
+        "browser_status" | "browser_remove" | "browser_install" => {
+            let mut status = match method {
+                "browser_status" => crate::browser_install::status()?,
+                "browser_remove" => crate::browser_install::remove()?,
+                _ => {
+                    let extension = arg_str(args, "extensionId")
+                        .ok_or_else(|| Error::invalid("Missing extensionId"))?;
+                    let host = arg_str(args, "hostPath")
+                        .ok_or_else(|| Error::invalid("Missing hostPath"))?;
+                    crate::browser_install::install(
+                        &db.path,
+                        &extension,
+                        std::path::Path::new(&host),
+                    )?
+                }
+            };
+            // When a captured question last arrived, for the apps' Connections list
+            status["lastDataAt"] = json!(db.read(|c| Ok(c.query_row(
+                "SELECT MAX(created_at) FROM questions WHERE browser_source_url IS NOT NULL",
+                [],
+                |r| r.get::<_, Option<i64>>(0)
+            )?))?);
+            Ok(status)
         }
         "integration_command" => {
             // Without a bundled command (a development run) an existing copy is only reported.

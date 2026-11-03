@@ -5,6 +5,7 @@ import { env, isWindows, joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Button, IconButton, Modal, Spinner } from "@/shared/ui";
 import { type LedgerClient, ledgerSetup } from "../lib/setup";
+import { LedgerConnections } from "./LedgerConnections";
 import "./ledger-connect-sheet.css";
 
 /** The bundled Ledger binary; agents talk to it over MCP (stdio) */
@@ -28,7 +29,7 @@ function CopyBlock({ text, label, copyLabel, onCopied }: { text: string; label: 
  * this app's Ledger; no client configuration or hook trust is changed by opening or testing the sheet.
  * (macOS: Views/Ledger/LedgerConnectSheet.swift)
  */
-export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onClose: () => void }) {
+export function LedgerConnectSheet({ store, onClose, onOpenBrowser }: { store: LedgerStore; onClose: () => void; onOpenBrowser?: () => void }) {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<LedgerInfo | null>(null);
@@ -69,6 +70,8 @@ export function LedgerConnectSheet({ store, onClose }: { store: LedgerStore; onC
         </>
       }
     >
+      <strong>{t("Connections")}</strong>
+      <LedgerConnections store={store} onOpenBrowser={onOpenBrowser ?? (() => {})} />
       <label className="ledger-connect-client"><span>{t("Agent")}</span><select className="select" aria-label={t("Agent")} value={client} onChange={(e) => { setClient(e.target.value as LedgerClient); setNotice(""); }}><option value="claude">Claude Code</option><option value="codex">Codex</option></select></label>
       {client === "codex" && <span className="hint">{t("Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports.")}</span>}
       <strong>{t("Ledger reports")}</strong>

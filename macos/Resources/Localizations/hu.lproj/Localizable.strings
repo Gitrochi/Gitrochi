@@ -2229,3 +2229,35 @@
 "View all tasks" = "Összes feladat megtekintése";
 "Show more tasks" = "További feladatok megjelenítése";
 "Project items could not be fully loaded. Retry the project." = "A projekt elemeit nem sikerült teljesen betölteni. Töltse be újra a projektet.";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Kapcsolatok";
+"Not set up" = "Nincs beállítva";
+"Connected · last data %@" = "Csatlakozva · utolsó adat %@";
+"Connected · no data yet" = "Csatlakozva · még nincs adat";
+"Needs repair" = "Javítás szükséges";
+"Command missing" = "Hiányzik a parancs";
+"Set up" = "Beállítás";
+"Set up…" = "Beállítás…";
+"Repair" = "Javítás";
+"Repair…" = "Javítás…";
+"Copy MCP command" = "MCP-parancs másolása";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Nincs kapcsolat. A beállítás olyan tevékenységhookokat telepít, amelyek a Gitrochi állandó Ledger-parancsát futtatják.";
+"Activity and reports reach this Ledger." = "A tevékenység és a jelentések megérkeznek ebbe a Ledgerbe.";
+"The MCP server is registered. Set up also records activity." = "Az MCP-kiszolgáló regisztrálva van. A beállítás a tevékenységet is rögzíti.";
+"Start or restart %@ to send activity." = "Indítsa el vagy indítsa újra a(z) %@ alkalmazást a tevékenység küldéséhez.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Indítsa el vagy indítsa újra a Codexet, majd a /hooks alatt tekintse át és jelölje megbízhatónak a Ledger hookjait.";
+"Hooks are turned off in this client's settings." = "A hookok ki vannak kapcsolva ennek a kliensnek a beállításaiban.";
+"Some activity hooks are missing." = "Néhány tevékenységhook hiányzik.";
+"The hook command is older than this Ledger and cannot write to it." = "A hookparancs régebbi ennél a Ledgernél, és nem tud bele írni.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Az MCP-parancs régebbi ennél a Ledgernél, és nem tud bele írni. Másolja ki az MCP-parancsot, és futtassa.";
+"The hook command no longer exists." = "A hookparancs már nem létezik.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Az MCP-parancs már nem létezik. Másolja ki az MCP-parancsot, és futtassa.";
+"The hooks write to a different Ledger database." = "A hookok egy másik Ledger-adatbázisba írnak.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Az MCP-kiszolgáló egy másik Ledger-adatbázist használ. Másolja ki az MCP-parancsot, és futtassa.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Nincs kapcsolat. Töltse be a bővítményt a Chrome-ban, és engedélyezze a kapcsolódást.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "A párosított ChatGPT-beszélgetések kérdései megérkeznek ebbe a Ledgerbe.";
+"Pair a conversation from the extension's popup to send questions." = "Párosítson egy beszélgetést a bővítmény felugró ablakában a kérdések küldéséhez.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Hiányzik a böngésző-gazdaprogram. A javítás ezt a Gitrochi-példányt regisztrálja.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Kimásolva. Futtassa egy terminálban a Ledger-eszközök regisztrálásához.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "A hookok a Ledger-parancs egy állandó másolatát futtatják, amelyet a Gitrochi naprakészen tart, így az alkalmazás áthelyezése vagy frissítése után is működnek. A Gitrochi soha nem módosítja az MCP-beállításokat; másolja ki az MCP-parancsot, és futtassa saját maga.";

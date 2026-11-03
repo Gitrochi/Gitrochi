@@ -310,9 +310,15 @@ fn installed(paths: &Layout, registry: &impl Registry, use_registry: bool) -> Re
 fn status_at(paths: &Layout, registry: &impl Registry, use_registry: bool) -> Value {
     match installed(paths, registry, use_registry) {
         Ok(config) => {
-            json!({"installed":true,"extensionId":config.extension_id,"hostName":HOST_NAME,"manifestPath":paths.manifest,"hostPath":config.host_path})
+            json!({"installed":true,"extensionId":config.extension_id,"hostName":HOST_NAME,"manifestPath":paths.manifest,"hostPath":config.host_path,"hostExists":true})
         }
-        Err(_) => json!({"installed":false,"hostName":HOST_NAME,"manifestPath":paths.manifest}),
+        // A registration whose host moved with the app (or was deleted) needs a repair, not a new setup.
+        Err(_) => match read_config(paths) {
+            Ok(config) if paths.manifest.exists() && !config.host_path.is_file() => {
+                json!({"installed":false,"extensionId":config.extension_id,"hostName":HOST_NAME,"manifestPath":paths.manifest,"hostPath":config.host_path,"hostExists":false})
+            }
+            _ => json!({"installed":false,"hostName":HOST_NAME,"manifestPath":paths.manifest}),
+        },
     }
 }
 fn write_json(path: &Path, value: &impl Serialize) -> Result<()> {
@@ -500,9 +506,18 @@ mod tests {
             status["manifestPath"],
             paths.manifest.to_string_lossy().as_ref()
         );
+        assert_eq!(status["hostExists"], true);
         let config = installed(&paths, &registry, true).unwrap();
         assert_eq!(config.db_path, root.join("ledger.db"));
         assert_eq!(config.allowed_origin, format!("chrome-extension://{id}/"));
+        // a host that moved with the app is a registration to repair, with its extension ID kept
+        let moved = root.join("moved");
+        std::fs::rename(&host, &moved).unwrap();
+        let status = status_at(&paths, &registry, true);
+        assert_eq!(status["installed"], false);
+        assert_eq!(status["hostExists"], false);
+        assert_eq!(status["extensionId"], id);
+        std::fs::rename(&moved, &host).unwrap();
         *registry.0.borrow_mut() = Some(root.join("foreign.json"));
         assert!(remove_at(&paths, &registry, true).is_err());
         assert!(paths.manifest.exists());

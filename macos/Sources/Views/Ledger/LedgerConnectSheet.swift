@@ -7,6 +7,8 @@ struct LedgerConnectSheet: View {
     let ledger: LedgerStore
     /// Where the app bundles the ledger's command-line tool
     var binaryPath = LedgerCommandLine.bundled.path
+    /// Opens the browser extension's setup from its Connections row
+    var openBrowser: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
     @ViewState private var notice = ""
     @ViewState private var error: String?
@@ -20,6 +22,9 @@ struct LedgerConnectSheet: View {
             Text("Connect agents").font(.title3.weight(.semibold))
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
+                    Text("Connections").font(.system(size: 13, weight: .semibold))
+                    LedgerConnectionsSection(ledger: ledger, openBrowser: openBrowser)
+                    Divider()
                     Picker("Agent", selection: $client) {
                         ForEach(LedgerSetupClient.allCases) { client in Text(verbatim: client.title).tag(client) }
                     }

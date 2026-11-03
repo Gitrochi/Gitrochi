@@ -2226,3 +2226,35 @@
 "View all tasks" = "Zobrazit všechny úkoly";
 "Show more tasks" = "Zobrazit další úkoly";
 "Project items could not be fully loaded. Retry the project." = "Položky projektu se nepodařilo načíst úplně. Načtěte projekt znovu.";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Připojení";
+"Not set up" = "Nenastaveno";
+"Connected · last data %@" = "Připojeno · poslední data %@";
+"Connected · no data yet" = "Připojeno · zatím žádná data";
+"Needs repair" = "Vyžaduje opravu";
+"Command missing" = "Chybí příkaz";
+"Set up" = "Nastavit";
+"Set up…" = "Nastavit…";
+"Repair" = "Opravit";
+"Repair…" = "Opravit…";
+"Copy MCP command" = "Kopírovat příkaz MCP";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Nepřipojeno. Nastavení nainstaluje hooky aktivity, které spouštějí stálý příkaz Ledger z Gitrochi.";
+"Activity and reports reach this Ledger." = "Aktivita a hlášení se dostávají do tohoto Ledgeru.";
+"The MCP server is registered. Set up also records activity." = "Server MCP je zaregistrovaný. Nastavení zaznamená i aktivitu.";
+"Start or restart %@ to send activity." = "Spusťte nebo restartujte %@, aby se odesílala aktivita.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Spusťte nebo restartujte Codex a potom v /hooks zkontrolujte hooky Ledgeru a označte je jako důvěryhodné.";
+"Hooks are turned off in this client's settings." = "Hooky jsou v nastavení tohoto klienta vypnuté.";
+"Some activity hooks are missing." = "Některé hooky aktivity chybí.";
+"The hook command is older than this Ledger and cannot write to it." = "Příkaz hooků je starší než tento Ledger a nemůže do něj zapisovat.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Příkaz MCP je starší než tento Ledger a nemůže do něj zapisovat. Zkopírujte příkaz MCP a spusťte ho.";
+"The hook command no longer exists." = "Příkaz hooků už neexistuje.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Příkaz MCP už neexistuje. Zkopírujte příkaz MCP a spusťte ho.";
+"The hooks write to a different Ledger database." = "Hooky zapisují do jiné databáze Ledgeru.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Server MCP používá jinou databázi Ledgeru. Zkopírujte příkaz MCP a spusťte ho.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Nepřipojeno. Načtěte rozšíření v Chromu a povolte mu připojení.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Otázky ze spárovaných konverzací ChatGPT se dostávají do tohoto Ledgeru.";
+"Pair a conversation from the extension's popup to send questions." = "Spárujte konverzaci v okně rozšíření, aby se odesílaly otázky.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Chybí hostitel prohlížeče. Oprava zaregistruje tuto kopii Gitrochi.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Zkopírováno. Spusťte ho v terminálu a zaregistrujte nástroje Ledgeru.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooky spouštějí stálou kopii příkazu Ledger, kterou Gitrochi udržuje aktuální, takže fungují i po přesunutí nebo aktualizaci aplikace. Gitrochi nikdy neupravuje nastavení MCP; zkopírujte příkaz MCP a spusťte ho sami.";

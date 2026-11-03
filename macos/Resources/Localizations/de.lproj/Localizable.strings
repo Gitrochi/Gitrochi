@@ -2232,3 +2232,35 @@
 "View all tasks" = "Alle Aufgaben anzeigen";
 "Show more tasks" = "Weitere Aufgaben anzeigen";
 "Project items could not be fully loaded. Retry the project." = "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut.";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Verbindungen";
+"Not set up" = "Nicht eingerichtet";
+"Connected · last data %@" = "Verbunden · letzte Daten %@";
+"Connected · no data yet" = "Verbunden · noch keine Daten";
+"Needs repair" = "Reparatur nötig";
+"Command missing" = "Befehl fehlt";
+"Set up" = "Einrichten";
+"Set up…" = "Einrichten…";
+"Repair" = "Reparieren";
+"Repair…" = "Reparieren…";
+"Copy MCP command" = "MCP-Befehl kopieren";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Nicht verbunden. Beim Einrichten werden Aktivitäts-Hooks installiert, die den festen Ledger-Befehl von Gitrochi ausführen.";
+"Activity and reports reach this Ledger." = "Aktivität und Berichte erreichen diesen Ledger.";
+"The MCP server is registered. Set up also records activity." = "Der MCP-Server ist registriert. Einrichten zeichnet auch Aktivität auf.";
+"Start or restart %@ to send activity." = "Starte %@ oder starte es neu, um Aktivität zu senden.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Starte Codex oder starte es neu, prüfe dann die Ledger-Hooks unter /hooks und vertraue ihnen.";
+"Hooks are turned off in this client's settings." = "Hooks sind in den Einstellungen dieses Clients ausgeschaltet.";
+"Some activity hooks are missing." = "Einige Aktivitäts-Hooks fehlen.";
+"The hook command is older than this Ledger and cannot write to it." = "Der Hook-Befehl ist älter als dieser Ledger und kann nicht in ihn schreiben.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Der MCP-Befehl ist älter als dieser Ledger und kann nicht in ihn schreiben. Kopiere den MCP-Befehl und führe ihn aus.";
+"The hook command no longer exists." = "Der Hook-Befehl existiert nicht mehr.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Der MCP-Befehl existiert nicht mehr. Kopiere den MCP-Befehl und führe ihn aus.";
+"The hooks write to a different Ledger database." = "Die Hooks schreiben in eine andere Ledger-Datenbank.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Der MCP-Server verwendet eine andere Ledger-Datenbank. Kopiere den MCP-Befehl und führe ihn aus.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Nicht verbunden. Lade die Erweiterung in Chrome und erlaube ihr die Verbindung.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Fragen aus gekoppelten ChatGPT-Unterhaltungen erreichen diesen Ledger.";
+"Pair a conversation from the extension's popup to send questions." = "Kopple eine Unterhaltung im Pop-up der Erweiterung, um Fragen zu senden.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Der Browser-Host fehlt. Reparieren registriert diese Kopie von Gitrochi.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Kopiert. Führe ihn in einem Terminal aus, um die Ledger-Werkzeuge zu registrieren.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooks führen eine feste Kopie des Ledger-Befehls aus, die Gitrochi aktuell hält, damit sie weiter funktionieren, wenn die App verschoben oder aktualisiert wird. Gitrochi bearbeitet nie MCP-Einstellungen; kopiere den MCP-Befehl und führe ihn selbst aus.";

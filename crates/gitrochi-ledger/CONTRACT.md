@@ -300,7 +300,7 @@ Connection fields ([`integration-status`](schema/integration-status.schema.json)
 
 The companion `gitrochi-ledger-browser` is a separate Chrome native-messaging entry point. It uses native-endian u32 byte lengths followed by UTF-8 JSON, a 65,536-byte request cap and a 1 MiB response cap. It validates Chrome's caller origin against its installed, exact extension allowlist and reloads that configuration on every request. Removing registration or changing its database invalidates previous bindings.
 
-`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?}`. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
+`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?, hostExists?, lastDataAt}`: `hostExists` is false for a registration whose host program moved or was deleted (then `installed` is false and the extension ID is kept for a repair), and `lastDataAt` is when the newest browser-captured question arrived, or null. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
 
 Native requests have `{version:1, id:string, op, ...fields}`. Replies have `{version:1, id, ok:true, data}` or `{version:1, id, ok:false, error}`. Operations are limited to:
 
@@ -361,6 +361,8 @@ Added for opt-in local client activity:
 20. Connection health on the `integrate` status: `hookCommand`, `mcp`, `databaseSchema`, `lastObservedAt`, `lastReportAt` and `health`, the schema `integration-status`, and the CLI option `--mcp-config`. Existing status fields keep their meaning.
 
 21. The stable command and the App-only methods `integration_command`, `integration_status`, `integration_install` and `integration_remove`.
+
+22. `browser_status`, `browser_install` and `browser_remove` add `hostExists` and `lastDataAt`, for the apps' Connections list.
 
 Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
 

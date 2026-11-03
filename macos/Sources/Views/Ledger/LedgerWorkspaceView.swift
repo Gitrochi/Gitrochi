@@ -65,7 +65,7 @@ struct LedgerWorkspaceView: View {
             }
         }) { sheet in
             switch sheet {
-            case .connect: LedgerConnectSheet(ledger: ledger)
+            case .connect: LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
             case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             case .importLegacy: if let legacyPath { LedgerLegacyImportSheet(ledger: ledger, path: legacyPath) }
@@ -157,6 +157,7 @@ struct LedgerWorkspaceView: View {
                 Button("Learn Ledger") { sheet = .learning }
                 Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
                 Button("ChatGPT browser extension") { sheet = .browser }
+                Button("Connect Claude Code…") { sheet = .connect }
                 Divider()
                 Button("Connect agents…") { sheet = .connect }
                 Button("Paste reports…") { sheet = .importReports }
@@ -248,7 +249,10 @@ struct LedgerWorkspaceView: View {
                 Button("Learn Ledger") { sheet = .learning }
                 Button("Bring a ChatGPT draft…") { sheet = .chatGPTDraft }
             }
-            Button("ChatGPT browser extension") { sheet = .browser }
+            HStack(spacing: 10) {
+                Button("ChatGPT browser extension") { sheet = .browser }
+                Button("Connect Claude Code…") { sheet = .connect }
+            }
             Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(24)

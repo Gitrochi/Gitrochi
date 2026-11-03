@@ -50,6 +50,22 @@ The sheet also supplies configuration for other MCP clients and instructions you
 
 Existing Claude Ledger users can also retain their work records and personal notes. See [Moving from Claude Ledger](MIGRATION.md) for import conflicts, agent reconnection, the feature map and the optional local HTTP bridge. Importing does not keep the two databases synchronized.
 
+## See and repair your connections
+
+**Connections** lists Claude Code, Codex and the ChatGPT browser extension side by side, at the top of the **Connect agents** sheet and in **Settings › Ledger**. On macOS, **Connect Claude Code…** in the Ledger's **More ledger actions** menu opens it; on Windows, the Claude Code button in the Ledger toolbar does. Each row shows one status:
+
+| Status | Meaning |
+|---|---|
+| **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
+| **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
+
+**Repair** installs the hooks again with the stable command, which Gitrochi keeps current. When the MCP entry is the problem, Repair also copies an MCP command that replaces the registration; run it in a terminal. **Copy MCP command** does the same at any time. Gitrochi never edits a client's MCP settings itself. **Remove** removes only Gitrochi's hooks for that client. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
+
+Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does.
+
 ## Track local Claude Code and Codex activity automatically
 
 Passive hooks can put local conversations in the Ledger even when you start them outside Gitrochi. Use the setup command for the client you want to observe:

@@ -2232,3 +2232,35 @@
 "View all tasks" = "Tüm görevleri görüntüle";
 "Show more tasks" = "Daha fazla görev göster";
 "Project items could not be fully loaded. Retry the project." = "Proje öğeleri tam olarak yüklenemedi. Projeyi yeniden yükleyin.";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Bağlantılar";
+"Not set up" = "Kurulmadı";
+"Connected · last data %@" = "Bağlı · son veri %@";
+"Connected · no data yet" = "Bağlı · henüz veri yok";
+"Needs repair" = "Onarım gerekli";
+"Command missing" = "Komut eksik";
+"Set up" = "Kur";
+"Set up…" = "Kur…";
+"Repair" = "Onar";
+"Repair…" = "Onar…";
+"Copy MCP command" = "MCP komutunu kopyala";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Bağlı değil. Kurulum, Gitrochi’nin sabit Ledger komutunu çalıştıran etkinlik kancalarını yükler.";
+"Activity and reports reach this Ledger." = "Etkinlik ve raporlar bu Ledger’a ulaşıyor.";
+"The MCP server is registered. Set up also records activity." = "MCP sunucusu kayıtlı. Kurulum etkinliği de kaydeder.";
+"Start or restart %@ to send activity." = "Etkinlik göndermek için %@ uygulamasını başlatın veya yeniden başlatın.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Codex’i başlatın veya yeniden başlatın, ardından /hooks içinde Ledger kancalarını inceleyip güvenin.";
+"Hooks are turned off in this client's settings." = "Kancalar bu istemcinin ayarlarında kapalı.";
+"Some activity hooks are missing." = "Bazı etkinlik kancaları eksik.";
+"The hook command is older than this Ledger and cannot write to it." = "Kanca komutu bu Ledger’dan eski ve ona yazamıyor.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "MCP komutu bu Ledger’dan eski ve ona yazamıyor. MCP komutunu kopyalayıp çalıştırın.";
+"The hook command no longer exists." = "Kanca komutu artık yok.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "MCP komutu artık yok. MCP komutunu kopyalayıp çalıştırın.";
+"The hooks write to a different Ledger database." = "Kancalar başka bir Ledger veritabanına yazıyor.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "MCP sunucusu başka bir Ledger veritabanı kullanıyor. MCP komutunu kopyalayıp çalıştırın.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Bağlı değil. Uzantıyı Chrome’a yükleyin ve bağlanmasına izin verin.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Eşleştirilmiş ChatGPT sohbetlerindeki sorular bu Ledger’a ulaşıyor.";
+"Pair a conversation from the extension's popup to send questions." = "Soru göndermek için uzantının açılır penceresinden bir sohbet eşleştirin.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Tarayıcı ana bilgisayarı eksik. Onarım, Gitrochi’nin bu kopyasını kaydeder.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Kopyalandı. Ledger araçlarını kaydetmek için bir terminalde çalıştırın.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Kancalar, Gitrochi’nin güncel tuttuğu Ledger komutunun sabit bir kopyasını çalıştırır; bu yüzden uygulama taşındığında veya güncellendiğinde çalışmaya devam eder. Gitrochi MCP ayarlarını asla düzenlemez; MCP komutunu kopyalayıp kendiniz çalıştırın.";

@@ -55,6 +55,11 @@ export class LedgerStore extends LedgerReader {
   stableCommand() {
     return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "" });
   }
+
+  /** Repairing an MCP entry: the stable command it will name, created from the bundled one */
+  createStableCommand() {
+    return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "", create: true });
+  }
   // MARK: A person's operations
 
   /** One operation; confirm, archive, status changes and snoozes show a toast with Undo */

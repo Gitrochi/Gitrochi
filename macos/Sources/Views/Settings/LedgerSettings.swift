@@ -54,6 +54,7 @@ struct LedgerSettings: View {
                 kindsSection(settings)
                 projectsSection
                 backupsSection
+                connectionsSection
                 connectSection
             } else if let loadError {
                 Section {
@@ -68,7 +69,7 @@ struct LedgerSettings: View {
         .task(id: generation) { await load() }
         .sheet(item: $sheet, onDismiss: { generation += 1 }) { sheet in
             switch sheet {
-            case .connect: LedgerConnectSheet(ledger: ledger)
+            case .connect: LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
             case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             }
@@ -333,6 +334,23 @@ struct LedgerSettings: View {
             Text("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
+    }
+
+    /// Claude Code, Codex and the browser extension, each with whether its data reaches this Ledger
+    private var connectionsSection: some View {
+        Section {
+            LedgerConnectionsSection(ledger: ledger, openBrowser: { sheet = .browser })
+        } header: {
+            Text("Connections")
+        } footer: {
+            Text("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func switchSheet(to destination: Sheet) {
+        sheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { sheet = destination }
     }
 
     private var connectSection: some View {

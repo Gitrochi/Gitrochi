@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
 import { ledgerBrowserSelfTest } from "../src/app/lib/ledger-browser-selftest";
+import { ledgerConnectionsSelfTest } from "../src/app/lib/ledger-connections-selftest";
 import { ledgerChatGPTDraftSelfTest } from "../src/app/lib/ledger-chatgpt-draft-selftest";
 import { ledgerParitySelfTest } from "../src/app/lib/ledger-parity-selftest";
 import { handleShortcut } from "../src/app/lib/shortcuts";
@@ -30,7 +31,7 @@ if (mode === "selftest") {
   Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
-  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerParitySelfTest()];
+  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerConnectionsSelfTest(), await ledgerParitySelfTest()];
   const passed = checks.every(([ok]) => ok);
   const detail = checks.map(([, message]) => message).join("\n");
   const result = document.createElement("pre");

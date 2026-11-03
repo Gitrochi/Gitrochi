@@ -87,6 +87,10 @@ export interface LedgerBrowserStatus {
   manifestPath: string;
   extensionId?: string;
   hostPath?: string;
+  /** False when a registration's host moved with the app or was deleted */
+  hostExists?: boolean;
+  /** When the newest browser-captured question arrived */
+  lastDataAt?: Ms | null;
 }
 
 /** The stable ledger command hooks and MCP entries name; the app keeps it equal to its bundled one */

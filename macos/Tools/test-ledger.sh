@@ -238,6 +238,11 @@ let start: LedgerMs = 1_793_400_000_000
         let registration = try JSONDecoder().decode(LedgerBrowserStatus.self, from: Data(#"{"installed":false,"hostName":"com.gitrochi.ledger","manifestPath":"/tmp/example.json"}"#.utf8))
         check(!registration.installed && registration.extensionId == nil && registration.hostPath == nil, "an uninstalled host status has no imaginary connection")
         let demo = DemoLedgerBackend(mode: .empty)
+        let codex = try call(demo, "integration_status", ["client": "codex"], as: LedgerIntegrationStatus.self)
+        let stableCommand = try call(demo, "integration_command", ["bundled": "x"], as: LedgerStableCommand.self)
+        let repaired = try call(demo, "integration_install", ["client": "codex", "bundled": "x"], as: LedgerIntegrationStatus.self)
+        check(codex.health == "outdated_command" && codex.hookCommand?.canWrite == false && !stableCommand.refreshed && repaired.health == "no_data_yet",
+              "demo connections decode, and Repair replaces an outdated hook command")
         let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
         let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
         check(imported.results.first?.ok == true, "structured reported questions import")
@@ -1278,7 +1283,7 @@ swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I 
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" \
     "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
-    "$ROOT/Sources/Services/LedgerConnectionSetup.swift" \
+    "$ROOT/Sources/Services/LedgerConnectionSetup.swift" "$ROOT/Sources/Services/LedgerDemoConnections.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"

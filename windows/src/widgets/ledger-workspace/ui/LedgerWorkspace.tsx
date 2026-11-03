@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
+import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
@@ -162,6 +162,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             <Button size="small" data-learn-ledger onClick={() => setSheet("learning")}><BookOpen size={14} />{t("Learn Ledger")}</Button>
             <IconButton icon={<Globe size={16} />} tip={t("ChatGPT browser extension")} aria-label={t("ChatGPT browser extension")} data-chatgpt-browser onClick={() => setSheet("browser")} />
             <IconButton icon={<MessageSquare size={16} />} tip={t("Bring a ChatGPT draft…")} aria-label={t("Bring a ChatGPT draft…")} onClick={() => setSheet("chatgpt")} />
+            <IconButton icon={<Bot size={16} />} tip={t("Connect Claude Code…")} aria-label={t("Connect Claude Code…")} data-connect-claude onClick={() => setSheet("connect")} />
             <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
             <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
             <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect agents")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect agents")} onClick={() => setSheet("connect")} />
@@ -198,7 +199,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
       )}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onOpenSession={(id) => { setSheet(null); open(id); }} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} onOpenBrowser={() => setSheet("browser")} />}
       {sheet === "search" && <LedgerSearch store={store} onClose={() => setSheet(null)} onPick={pick} />}
       {sheet === "learning" && <LedgerLearning onClose={() => setSheet(null)} onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onBringChatGPT={() => setSheet("chatgpt")} onBrowser={() => setSheet("browser")} />}
       {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
@@ -216,7 +217,7 @@ function Onboarding({ onConnect, onImport, onImportLegacy, onLearn, onBrowser }:
   return (
     <div className="ledger-onboarding">
       <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No reports yet")} detail={t("No reports have arrived yet. Register the tools, then ask your agent to send a start report.")} />
-      <div className="row"><Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button><Button onClick={onBrowser}><Globe size={14} />{t("ChatGPT browser extension")}</Button></div>
+      <div className="row"><Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button><Button onClick={onBrowser}><Globe size={14} />{t("ChatGPT browser extension")}</Button><Button data-connect-claude onClick={onConnect}><Bot size={14} />{t("Connect Claude Code…")}</Button></div>
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
       <div className="ledger-onboarding-steps">
         <div className="card">
