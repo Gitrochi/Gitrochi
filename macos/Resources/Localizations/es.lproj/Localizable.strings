@@ -2275,3 +2275,6 @@
 "Organization login" = "Nombre de usuario de la organización";
 "Open organization" = "Abrir organización";
 "No organizations found" = "No se encontraron organizaciones";
+"View all tasks" = "Ver todas las tareas";
+"Show more tasks" = "Mostrar más tareas";
+"Project items could not be fully loaded. Retry the project." = "No se pudieron cargar todos los elementos del proyecto. Vuelve a cargar el proyecto.";

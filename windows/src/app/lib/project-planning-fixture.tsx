@@ -13,7 +13,7 @@ import { WorkspacePlanningDashboard } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 
 /** Isolated demo data for the real Home and Projects components. */
-export function planningFixture({ organization = false }: { organization?: boolean } = {}) {
+export function planningFixture({ organization = false, complete = false }: { organization?: boolean; complete?: boolean } = {}) {
   const today = localScheduleToday(),
     date = (days: number) => scheduleAddDays(today, days)!,
     fields: HubDetail["fields"] = [
@@ -110,7 +110,17 @@ export function planningFixture({ organization = false }: { organization?: boole
         more: false,
       },
     ];
-  const data = new ProjectPortfolioState({
+  if (complete) {
+    const archived = Array.from({length:100}, (_, index) => ({...row(`ARCHIVE${index}`, `Archived delivery ${index + 1}`, undefined, "reviewer", `ARCHIVE${index}`), archived:true}));
+    const issues = Array.from({length:100}, (_, index) => ({...row(`ITEM${index}`, `Delivery task ${index + 1}`, index % 7, "planner", `COMPLETE${index}`), state:index % 3 === 0 ? "CLOSED" : "OPEN"}));
+    details.splice(1);
+    details[0].rows = [...archived, ...issues,
+      {...draft, id:"LAST_DRAFT", title:"Final planning draft", contentID:"LAST_DRAFT"},
+      {...row("LAST_PR", "Merged delivery change", 1, "reviewer", "LAST_PR"), kind:"pullRequest", state:"MERGED"},
+      {...row("REDACTED", "Restricted item"), kind:"redacted", contentID:"", url:""},
+    ];
+  }
+  const data = complete ? new ProjectPortfolioState() : new ProjectPortfolioState({
     page: async () => ({
       items: details.map((detail) => detail.item),
       more: false,
@@ -158,7 +168,10 @@ export function planningFixture({ organization = false }: { organization?: boole
   data.projects = details.map((detail) => detail.item);
   data.details = details;
   data.selectedIDs = data.projects.map((item) => item.id);
-  const graphNode = (detail: HubDetail, later = false) => ({
+  const graphNode = (detail: HubDetail, cursor?: string) => {
+    const later = !!cursor, offset = complete ? Number(cursor?.replace("COMPLETE_", "") ?? 0) : 0;
+    const pageRows = complete ? detail.rows.slice(offset, offset + 100) : detail.item.id === "QUALITY" ? detail.rows.filter(row => later ? row.id === "B1" : row.id !== "B1") : detail.rows;
+    return ({
     ...detail.item,
     title: detail.item.title,
     fields: {
@@ -169,16 +182,11 @@ export function planningFixture({ organization = false }: { organization?: boole
       pageInfo: { hasNextPage: false },
     },
     items: {
-      nodes: (detail.item.id === "QUALITY"
-        ? detail.rows.filter((row) =>
-            later ? row.id === "B1" : row.id !== "B1",
-          )
-        : detail.rows
-      ).map((row) => ({
+      nodes: pageRows.map((row) => ({
         id: row.id,
-        isArchived: false,
-        content: {
-          __typename: row.kind === "draft" ? "DraftIssue" : "Issue",
+        isArchived: !!row.archived,
+        content: row.kind === "redacted" ? null : {
+          __typename: row.kind === "draft" ? "DraftIssue" : row.kind === "pullRequest" ? "PullRequest" : "Issue",
           id: row.contentID,
           title: row.title,
           body: row.body,
@@ -200,12 +208,12 @@ export function planningFixture({ organization = false }: { organization?: boole
         },
       })),
       pageInfo: {
-        hasNextPage: detail.item.id === "QUALITY" && !later,
-        endCursor:
-          detail.item.id === "QUALITY" && !later ? "QUALITY_PAGE_2" : null,
+        hasNextPage: complete ? offset + 100 < detail.rows.length : detail.item.id === "QUALITY" && !later,
+        endCursor: complete ? offset + 100 < detail.rows.length ? `COMPLETE_${offset + 100}` : null : detail.item.id === "QUALITY" && !later ? "QUALITY_PAGE_2" : null,
       },
     },
   });
+  };
   ipc.http = async (_method, url, _headers, body) => {
     if (new URL(url).pathname === "/user/orgs") return { status: 200, body: JSON.stringify([{login:"team", name:"Demo team"}]) };
     const payload = JSON.parse(body ?? "{}"),
@@ -220,14 +228,14 @@ export function planningFixture({ organization = false }: { organization?: boole
       number: detail.item.id === "RELEASE" ? 1 : 2,
       shortDescription: detail.item.body,
     }));
-    if (payload.variables?.cursor === "QUALITY_PAGE_2") itemPages++;
+    if (payload.variables?.cursor) itemPages++;
     const value = query.includes("views(first")
       ? { node: { id, views: { nodes: [], pageInfo: { hasNextPage: false } } } }
       : id
         ? {
             node: graphNode(
               details.find((detail) => detail.item.id === id)!,
-              !!payload.variables?.cursor,
+              payload.variables?.cursor ?? undefined,
             ),
           }
         : {
@@ -246,6 +254,12 @@ export function planningFixture({ organization = false }: { organization?: boole
     store,
     details,
     selectionContext,
+    load: async () => {
+      if (complete) {
+        data.reset(JSON.stringify(["remote", selectionContext, accounts.revision]));
+        await data.load({target:{provider:"github",host:"github.com",path:"team/workspace",remote:"origin"}, token:"fixture-only",apiBase:"https://api.github.com",me:"planner",projectOrganization:organization ? "team" : undefined}, JSON.stringify(["remote", selectionContext, accounts.revision]));
+      }
+    },
     get writes() {
       return writes;
     },

@@ -2385,3 +2385,6 @@
 "Organization login" = "组织登录名";
 "Open organization" = "打开组织";
 "No organizations found" = "未找到组织";
+"View all tasks" = "查看所有任务";
+"Show more tasks" = "显示更多任务";
+"Project items could not be fully loaded. Retry the project." = "无法完整加载项目条目。请重新加载项目。";

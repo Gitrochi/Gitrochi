@@ -18,6 +18,7 @@ struct WorkspacePlanningDashboard: View {
     @ViewState private var opening = false
     @ViewState private var navigationID = UUID()
     @ViewState private var portfolioContext = ""
+    @ViewState private var visibleTaskCount = 16
     var fixture: ProjectPortfolioState? = nil
     private var data: ProjectPortfolioState { fixture ?? portfolio }
     private var accounts: [HostAccount] { AccountStore.shared.accounts.filter { $0.provider == .github } }
@@ -137,7 +138,10 @@ struct WorkspacePlanningDashboard: View {
             }
         }
         .accessibilityElement(children: .contain).accessibilityLabel("Home planning dashboard")
-        .onChange(of: context) { _, _ in navigationID = UUID(); opening = false }
+        .onChange(of: context) { _, _ in navigationID = UUID(); opening = false; visibleTaskCount = 16 }
+        .onChange(of: focus) { _, _ in visibleTaskCount = 16 }
+        .onChange(of: query) { _, _ in visibleTaskCount = 16 }
+        .onChange(of: onlyMine) { _, _ in visibleTaskCount = 16 }
         .onChange(of: projectSource) { _, value in UserDefaults.standard.set(value, forKey: "planningHome.projectSource"); onlyMine = false }
         .onDisappear { navigationID = UUID(); opening = false }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
@@ -191,8 +195,8 @@ struct WorkspacePlanningDashboard: View {
         VStack(alignment: .leading, spacing: 9) {
             HStack { Text("Your next actions").font(.headline); Spacer(); if focus != "focus" { Button("Clear filter") { focus = "focus" }.font(.caption) } }
             if agenda.isEmpty { Text(data.loading ? "Loading project schedules…" : "No tasks in this view. Choose projects or adjust your filters.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 18) }
-            ForEach(agenda.prefix(16)) { task in taskRow(task) }
-            if agenda.count > 16 { Text("Open a project to see its full plan.").font(.caption).foregroundStyle(.secondary) }
+            ForEach(agenda.prefix(visibleTaskCount)) { task in taskRow(task) }
+            if agenda.count > visibleTaskCount { Button("Show more tasks") { visibleTaskCount += 16 }.font(.caption) }
         }
     }
     private func taskRow(_ task: ProjectPortfolioTask) -> some View {

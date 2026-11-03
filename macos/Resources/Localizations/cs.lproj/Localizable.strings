@@ -2223,3 +2223,6 @@
 "Organization login" = "Přihlašovací jméno organizace";
 "Open organization" = "Otevřít organizaci";
 "No organizations found" = "Nebyly nalezeny žádné organizace";
+"View all tasks" = "Zobrazit všechny úkoly";
+"Show more tasks" = "Zobrazit další úkoly";
+"Project items could not be fully loaded. Retry the project." = "Položky projektu se nepodařilo načíst úplně. Načtěte projekt znovu.";

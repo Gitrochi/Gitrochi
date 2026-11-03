@@ -937,7 +937,6 @@
   "Only whitespace changed (turn off Ignore whitespace to see it).": "空白のみ変更されています (「空白を無視」をオフにすると表示されます)。",
   "Open": "開く",
   "Open a new terminal window to start using gitch.": "新しいターミナルウィンドウを開くと gitch を使えます。",
-  "Open a project to see its full plan.": "全体の予定を確認するにはプロジェクトを開いてください。",
   "Open a repository to use flows.": "フローを使うにはリポジトリを開いてください。",
   "Open account settings": "アカウント設定を開く",
   "Open anyway": "それでも開く",
@@ -3192,5 +3191,8 @@
   "Other organization…": "他の組織…",
   "Organization login": "組織のログイン名",
   "Open organization": "組織を開く",
-  "No organizations found": "組織が見つかりません"
+  "No organizations found": "組織が見つかりません",
+  "View all tasks": "すべてのタスクを表示",
+  "Show more tasks": "さらにタスクを表示",
+  "Project items could not be fully loaded. Retry the project.": "プロジェクトの項目をすべて読み込めませんでした。プロジェクトを再読み込みしてください。"
 }

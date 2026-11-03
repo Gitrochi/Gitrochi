@@ -70,7 +70,7 @@ export function ProjectWorkspace({
 }) {
   const localProject = detail.item.data.localProject === true;
   const [layout, setLayout] = useState<ProjectLayout>(
-      gitlab ? "board" : "overview",
+      gitlab ? "board" : localProject ? "overview" : "list",
     ),
     [group, setGroup] = useState("");
   const [filters, setFilters] = useState(emptyProjectFilters),
@@ -288,6 +288,11 @@ export function ProjectWorkspace({
               }
               localRepository={local?.repository}
               calendar={() => changeLayout("calendar")}
+              viewAll={() => {
+                setFilters({...emptyProjectFilters, archived:true});
+                setViewID("");
+                changeLayout("list");
+              }}
               add={() => setComposing(true)}
               manageFields={() => setSettings("fields")}
               hasDueField={!!scheduleFields.due}

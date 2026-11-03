@@ -2201,3 +2201,6 @@
 "Organization login" = "Tên đăng nhập của tổ chức";
 "Open organization" = "Mở tổ chức";
 "No organizations found" = "Không tìm thấy tổ chức";
+"View all tasks" = "Xem tất cả tác vụ";
+"Show more tasks" = "Hiển thị thêm tác vụ";
+"Project items could not be fully loaded. Retry the project." = "Không thể tải đầy đủ các mục của dự án. Hãy tải lại dự án.";

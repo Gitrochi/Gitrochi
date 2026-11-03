@@ -2304,5 +2304,8 @@
   "Other organization…": "Autre organisation…",
   "Organization login": "Identifiant de l’organisation",
   "Open organization": "Ouvrir l’organisation",
-  "No organizations found": "Aucune organisation trouvée"
+  "No organizations found": "Aucune organisation trouvée",
+  "View all tasks": "Afficher toutes les tâches",
+  "Show more tasks": "Afficher plus de tâches",
+  "Project items could not be fully loaded. Retry the project.": "Impossible de charger tous les éléments du projet. Rechargez le projet."
 }

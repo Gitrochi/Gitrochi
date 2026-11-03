@@ -244,3 +244,36 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
     }
   }
 }
+
+/** Exercises a real three-page organization project through Home and the complete task table. */
+export async function projectItemCompletenessSelfTest(): Promise<[boolean, string]> {
+  const fixture = planningFixture({organization:true,complete:true}), host = document.createElement("div");
+  host.hidden = true; document.body.append(host);
+  const root = createRoot(host), ensure = (condition:boolean,message:string) => {if(!condition)throw new Error(message);};
+  const until = async (test:() => boolean) => {for(let i=0;i<160;i++){if(test())return true;await pause();}return false;};
+  const button = (label:string) => [...host.querySelectorAll<HTMLButtonElement>("button")].find(item => item.textContent?.trim() === t(label));
+  try {
+    await fixture.load();
+    ensure(fixture.store.target === null && fixture.data.details[0].rows.length === 203 && !fixture.data.details[0].more, "Organization project did not load every issue, draft, archived item and restricted placeholder");
+    ensure(fixture.itemPages === 2, "Home did not read all three project pages");
+    root.render(<PlanningFixtureShell fixture={fixture}/>);
+    ensure(await until(() => host.querySelectorAll(".planning-agenda .planning-task").length === 16), "Home agenda preview missing");
+    let expanded = 0;
+    while (button("Show more tasks") && expanded < 10) {button("Show more tasks")!.click();expanded++;await pause();}
+    ensure(host.querySelectorAll(".planning-agenda .planning-task").length === 67 && !button("Show more tasks"), "Home agenda could not expose every active task after its first sixteen");
+    ensure(host.querySelector(".planning-agenda")?.textContent?.includes("Final planning draft") === true, "The later-page draft remained hidden in Home");
+    fixture.store.navigate("projects");
+    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 103), "Fresh GitHub Projects did not open the complete unarchived task table");
+    ensure(fixture.store.hostingHub.detail?.rows.length === 203 && fixture.store.hostingHub.projectScope === "organization:team", "Projects lost the complete organization snapshot");
+    ensure(host.querySelector(".project-list")?.textContent?.includes("Delivery task 1") === true && host.querySelector(".project-list")?.textContent?.includes("Final planning draft") === true, "Closed issues or later drafts were absent from the task table");
+    button("Overview")!.click(); await pause();
+    const search = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Search project items")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(search,"does-not-match"); search.dispatchEvent(new Event("input",{bubbles:true}));await pause();
+    button("View all tasks")!.click();
+    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 203), "View all tasks did not clear filters and include archived items");
+    ensure(search.value === "", "View all tasks retained the prior search");
+    ensure(fixture.writes === 0, "Reading the complete project or changing views mutated GitHub");
+    return [true,"Three project pages + 203 mixed items without a repository + expandable Home agenda + fresh full task table including closed issues and late draft + View all tasks clears filters and includes archived items"];
+  } catch (error) {return [false,error instanceof Error ? error.message : String(error)];}
+  finally {root.unmount();host.remove();fixture.restore();}
+}
