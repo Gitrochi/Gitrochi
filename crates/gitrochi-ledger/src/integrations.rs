@@ -1,5 +1,6 @@
 //! Reversible user-level passive-hook configuration. Client trust is never written here.
 
+use crate::connection::{self, Health};
 use crate::external::Client;
 use crate::{Error, Result};
 use serde::Serialize;
@@ -30,7 +31,8 @@ impl Action {
     }
 }
 
-/// Counts describe configuration only, never trusted or active hook execution.
+/// Counts describe configuration only, never trusted or active hook execution; the connection
+/// fields say whether the configured executables can still write this database.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
@@ -46,15 +48,21 @@ pub struct Status {
     pub verification: &'static str,
     pub requires_client_trust: bool,
     pub hooks_disabled: bool,
+    #[serde(flatten)]
+    pub connection: Health,
+}
+
+fn home() -> Result<PathBuf> {
+    std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .ok_or_else(|| Error::invalid("No user home folder"))
 }
 
 /// Per-user hooks only; project and managed settings are never changed.
 pub fn default_config(client: Client) -> Result<PathBuf> {
-    let home = std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .filter(|v| !v.is_empty())
-        .ok_or_else(|| Error::invalid("No user home folder"))?;
-    Ok(PathBuf::from(home)
+    Ok(home()?
         .join(match client {
             Client::Claude => ".claude",
             Client::Codex => ".codex",
@@ -63,6 +71,11 @@ pub fn default_config(client: Client) -> Result<PathBuf> {
             Client::Claude => "settings.json",
             Client::Codex => "hooks.json",
         }))
+}
+
+/// The client's user-level MCP settings, read only for status.
+pub fn default_mcp_config(client: Client) -> Result<PathBuf> {
+    Ok(connection::default_mcp_config(client, &home()?))
 }
 
 fn io(error: std::io::Error) -> Error {
@@ -132,6 +145,28 @@ fn owned(handler: &Value, client: Client) -> bool {
                     && command.contains(&format!(" observe {} ", client.key()))
             })
         })
+}
+
+/// The commands of the owned handlers, as this platform's client runs them.
+fn owned_commands(value: &Value, client: Client) -> Vec<String> {
+    let mut commands = Vec::new();
+    let Some(hooks) = value.get("hooks").and_then(Value::as_object) else {
+        return commands;
+    };
+    for group in hooks.values().filter_map(Value::as_array).flatten() {
+        for hook in group["hooks"].as_array().into_iter().flatten() {
+            if !owned(hook, client) {
+                continue;
+            }
+            let native = cfg!(windows)
+                .then(|| hook["commandWindows"].as_str())
+                .flatten();
+            if let Some(command) = native.or_else(|| hook["command"].as_str()) {
+                commands.push(command.to_string());
+            }
+        }
+    }
+    commands
 }
 
 fn inspect(value: &Value, client: Client) -> Result<(usize, usize, bool)> {
@@ -209,15 +244,18 @@ fn remove_owned(value: &mut Value, client: Client) {
     }
 }
 
-/// Update only owned handlers. No MCP entries, permissions, feature flags or trust hashes change.
+/// Update only owned handlers. No MCP entries, permissions, feature flags or trust hashes change;
+/// `mcp_config` is only read.
 pub fn configure(
     client: Client,
     action: Action,
     config: &Path,
+    mcp_config: &Path,
     cli: &Path,
     database: &Path,
 ) -> Result<Status> {
     let config = absolute(config)?;
+    let mcp_config = absolute(mcp_config)?;
     let cli = absolute(cli)?;
     let database = absolute(database)?;
     let before = match fs::read(&config) {
@@ -266,6 +304,13 @@ pub fn configure(
         None
     };
     let (owned_hook_count, other_hook_count, installed) = inspect(&value, client)?;
+    let connection = connection::check(
+        client,
+        &owned_commands(&value, client),
+        installed,
+        &mcp_config,
+        &database,
+    );
     Ok(Status {
         client,
         action: action.key(),
@@ -279,6 +324,7 @@ pub fn configure(
         verification: "configuration_only",
         requires_client_trust: client == Client::Codex,
         hooks_disabled: value["disableAllHooks"].as_bool().unwrap_or(false),
+        connection,
     })
 }
 

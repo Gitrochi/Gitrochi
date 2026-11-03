@@ -70,6 +70,8 @@ gitrochi-ledger integrate codex --remove
 
 Start or restart the client after installing. Codex asks you to review non-managed hooks in its own `/hooks` flow; Gitrochi does not grant that trust or change permission settings. The status command confirms configuration only. A conversation appearing in Board or Streams confirms that its activity reached this Ledger. Cloud-orchestrated Codex tasks do not run these local hooks.
 
+The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself.
+
 Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions use a generic kind and have auto-continue off. Existing Gitrochi-tracked sessions keep their own kind and policy.
 
 MCP registration remains separate. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
