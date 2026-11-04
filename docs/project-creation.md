@@ -8,6 +8,10 @@ Select a connected GitHub account and an organization in **Project scope** on Ho
 
 The selected organization stays with Home-to-Projects navigation and the project creation destination. Changing accounts clears the previous account's organization list. GitHub must grant the connected credential access to both the organization and Projects; use **Connect project access** when the app requests the additional Projects permission.
 
+## GitLab group boards
+
+With a connected GitLab account, including a self-managed server, **Project scope** in Projects lists the account's groups by full path, subgroups included. Choosing a group shows the group's issue boards without opening a repository; an open repository's own boards stay under its entry. Use **Other group…** to enter a group path missing from the list. Board lists and the issues in a board's scope load completely, 100 per request, rather than stopping at the server's first page. Moving a card updates the issue in its own project, and a group board accepts issues only from projects inside that group. Home planning still covers GitHub Projects only.
+
 ## Local planning
 
 Local projects require no hosting account or token. Their tasks use the same Overview, Calendar, Board, Table and Roadmap as connected projects, including start/due dates, status, priority, assignees, descriptions, ordering, archive and bulk edits. Home can combine selected local projects into its agenda, week and project summaries. Completion and schedule preferences use a stable local namespace across account changes.

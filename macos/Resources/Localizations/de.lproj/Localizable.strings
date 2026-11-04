@@ -2344,3 +2344,11 @@
 "Checks on the request's latest commit" = "Prüfungen des neuesten Commits der Anfrage";
 "Request merged — mark merged?" = "Anfrage zusammengeführt — als übernommen markieren?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Die Anfrage wurde auf dem Server zusammengeführt. Wählen Sie die Version, in die diese Arbeit eingeflossen ist; das Logbuch ändert sich erst dann.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Gruppe auswählen oder GitLab-Repository öffnen, um seine Issue-Boards anzuzeigen.";
+"Select an issue from a repository in this group." = "Ein Issue aus einem Repository dieser Gruppe auswählen.";
+"Group: {0}" = "Gruppe: {0}";
+"Choose a group" = "Gruppe auswählen";
+"No groups found" = "Keine Gruppen gefunden";
+"Other group…" = "Andere Gruppe…";
+"Group path" = "Gruppenpfad";
+"Groups could not be loaded. Repository boards are still available." = "Gruppen konnten nicht geladen werden. Repository-Boards sind weiterhin verfügbar.";

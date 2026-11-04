@@ -2362,3 +2362,11 @@
 "Checks on the request's latest commit" = "請求最新提交上的檢查";
 "Request merged — mark merged?" = "請求已合併 — 標記為已合併?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "請求已在伺服器上合併。請選擇此工作併入的版本；在你選擇之前帳本不會改變。";
+"Choose a group or open a GitLab repository to browse its issue boards." = "選擇一個群組或開啟 GitLab 存放庫以瀏覽其議題看板。";
+"Select an issue from a repository in this group." = "請從此群組中的存放庫選擇議題。";
+"Group: {0}" = "群組：{0}";
+"Choose a group" = "選擇群組";
+"No groups found" = "找不到群組";
+"Other group…" = "其他群組…";
+"Group path" = "群組路徑";
+"Groups could not be loaded. Repository boards are still available." = "無法載入群組。存放庫看板仍可使用。";

@@ -2390,3 +2390,11 @@
 "Checks on the request's latest commit" = "Comprobaciones del último commit de la solicitud";
 "Request merged — mark merged?" = "Solicitud fusionada — ¿marcar como integrada?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "La solicitud se fusionó en el servidor. Elige la versión en la que entró este trabajo; el Registro solo cambia cuando lo haces.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Elige un grupo o abre un repositorio de GitLab para ver sus tableros de incidencias.";
+"Select an issue from a repository in this group." = "Selecciona una incidencia de un repositorio de este grupo.";
+"Group: {0}" = "Grupo: {0}";
+"Choose a group" = "Elige un grupo";
+"No groups found" = "No se encontraron grupos";
+"Other group…" = "Otro grupo…";
+"Group path" = "Ruta del grupo";
+"Groups could not be loaded. Repository boards are still available." = "No se pudieron cargar los grupos. Los tableros del repositorio siguen disponibles.";

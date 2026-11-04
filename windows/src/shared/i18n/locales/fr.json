@@ -2414,5 +2414,14 @@
   "{0} pending": "{0} en attente",
   "Checks on the request's latest commit": "Vérifications du dernier commit de la demande",
   "Request merged — mark merged?": "Demande fusionnée — marquer comme intégrée ?",
-  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "La demande a été fusionnée sur le serveur. Choisissez la version qui intègre ce travail ; le Registre ne change que lorsque vous le faites."
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "La demande a été fusionnée sur le serveur. Choisissez la version qui intègre ce travail ; le Registre ne change que lorsque vous le faites.",
+  "Choose a group or open a GitLab repository to browse its issue boards.": "Choisissez un groupe ou ouvrez un dépôt GitLab pour parcourir ses tableaux de tickets.",
+  "Select an issue from a repository in this group.": "Sélectionnez un ticket d’un dépôt de ce groupe.",
+  "Group: {0}": "Groupe : {0}",
+  "Choose a group": "Choisir un groupe",
+  "No groups found": "Aucun groupe trouvé",
+  "Other group…": "Autre groupe…",
+  "Group path": "Chemin du groupe",
+  "Groups could not be loaded. Repository boards are still available.": "Impossible de charger les groupes. Les tableaux du dépôt restent disponibles.",
+  "Repository: {0}": "Dépôt : {0}"
 }

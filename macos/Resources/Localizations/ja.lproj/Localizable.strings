@@ -1408,7 +1408,6 @@
 "Enter an issue URL from the connected server." = "接続先サーバーの Issue の URL を入力してください。";
 "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels." = "GitLab ボードの範囲フィルターが適用されます。ここで移動できるのはラベル列のみです。担当者、マイルストーン、イテレーション、カスタム状態の列はブラウザーで管理してください。Open に移動すると Issue が再開され、ボード列のラベルが削除されます。";
 "GitLab issue board" = "GitLab Issue ボード";
-"Open a GitLab repository to browse its issue boards." = "Issue ボードを表示するには GitLab リポジトリを開いてください。";
 "Projects" = "プロジェクト";
 "Projects could not be loaded. Retry or open GitHub in your browser." = "プロジェクトを読み込めませんでした。再試行するか、ブラウザーで GitHub を開いてください。";
 "Projects sync with GitHub. Changes are saved after confirmation." = "プロジェクトは GitHub と同期されます。変更は確認後に保存されます。";
@@ -3189,3 +3188,11 @@
 "Checks on the request's latest commit" = "リクエストの最新コミットのチェック";
 "Request merged — mark merged?" = "リクエストはマージ済み — 取り込み済みにしますか?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "サーバーでリクエストがマージされました。この作業が取り込まれたバージョンを選んでください。選ぶまで台帳は変わりません。";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Issue ボードを表示するには、グループを選ぶか GitLab リポジトリを開いてください。";
+"Select an issue from a repository in this group." = "このグループ内のリポジトリの Issue を選択してください。";
+"Group: {0}" = "グループ: {0}";
+"Choose a group" = "グループを選択";
+"No groups found" = "グループが見つかりません";
+"Other group…" = "他のグループ…";
+"Group path" = "グループのパス";
+"Groups could not be loaded. Repository boards are still available." = "グループを読み込めませんでした。リポジトリのボードは引き続き利用できます。";

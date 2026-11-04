@@ -2357,3 +2357,11 @@
 "Checks on the request's latest commit" = "Перевірки останнього коміту запиту";
 "Request merged — mark merged?" = "Запит злито — позначити як влиту?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Запит злито на сервері. Виберіть версію, до якої увійшла ця робота; Журнал зміниться лише після вашого вибору.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Щоб переглядати дошки задач, виберіть групу або відкрийте репозиторій GitLab.";
+"Select an issue from a repository in this group." = "Виберіть задачу з репозиторію цієї групи.";
+"Group: {0}" = "Група: {0}";
+"Choose a group" = "Виберіть групу";
+"No groups found" = "Групи не знайдено";
+"Other group…" = "Інша група…";
+"Group path" = "Шлях групи";
+"Groups could not be loaded. Repository boards are still available." = "Не вдалося завантажити групи. Дошки репозиторію досі доступні.";

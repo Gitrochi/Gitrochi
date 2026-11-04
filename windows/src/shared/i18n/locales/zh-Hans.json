@@ -2512,5 +2512,14 @@
   "{0} pending": "{0} 项等待中",
   "Checks on the request's latest commit": "请求最新提交上的检查",
   "Request merged — mark merged?": "请求已合并 — 标记为已合并?",
-  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "请求已在服务器上合并。请选择此工作并入的版本；在你选择之前账本不会改变。"
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "请求已在服务器上合并。请选择此工作并入的版本；在你选择之前账本不会改变。",
+  "Choose a group or open a GitLab repository to browse its issue boards.": "选择一个群组或打开 GitLab 仓库以浏览其议题看板。",
+  "Select an issue from a repository in this group.": "请从此群组中的仓库选择议题。",
+  "Group: {0}": "群组：{0}",
+  "Choose a group": "选择群组",
+  "No groups found": "未找到群组",
+  "Other group…": "其他群组…",
+  "Group path": "群组路径",
+  "Groups could not be loaded. Repository boards are still available.": "无法加载群组。仓库看板仍然可用。",
+  "Repository: {0}": "仓库：{0}"
 }
