@@ -36,7 +36,7 @@ function defaultSettings(): LedgerSettings {
   const implementation = (line: string, handoff: boolean): LedgerKindRule => ({ role: "implementation", line, handoff });
   return {
     staleHours: STALE_HOURS,
-    kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" } },
+    kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" }, task: { role: "other" } },
     autoContinue: { enabled: false, delaySec: 30 },
     backupKeep: 14,
   };
@@ -440,14 +440,17 @@ export class DemoLedgerBackend implements LedgerBackend {
     }
     if (policy && (typeof policy.enabled !== "boolean" || !Number.isInteger(policy.delaySec))) throw invalid("autoContinue needs enabled and delaySec");
     const base = typeof args.base === "string" ? /^v?(\d+(?:\.\d+)+)$/i.exec(args.base.trim())?.[1] : undefined;
-    const kind = typeof args.kind === "string" ? args.kind.trim() : "";
+    // As the core: without a kind from the app, a launch is a task and stays on the Board
+    const chosen = typeof args.kind === "string" && args.kind.trim() ? args.kind.trim() : undefined;
+    const kind = chosen ?? "task";
     const d = new Date(now), day = `S${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-`;
     let n = w.sessions.filter((x) => x.id.startsWith(day)).length + 1;
     while (w.sessions.some((x) => x.id === `${day}${String(n).padStart(2, "0")}`)) n++;
     const id = `${day}${String(n).padStart(2, "0")}`;
     const title = typeof args.title === "string" && args.title.trim() ? args.title.trim() : links.branch ?? name(folder) ?? "(untitled)";
-    w.sessions.push({ id, project, title, kind, role: roleOf(kind), status: "active", ...(base ? { baseVersion: base, baseCurrent: base } : {}), touches: [], related: [], links, color: w.sessions.filter((x) => x.project === project).length % 8, createdAt: now, lastAt: now, ...(policy ? { autoContinue: { enabled: policy.enabled, delaySec: policy.delaySec } } : {}) });
-    w.events.push({ id: w.nextEvent++, sessionId: id, ts: now, type: "hook", actor: "hook", summary: "Started from Gitrochi", ...(base ? { version: base } : {}), data: { hook: "launch", ...(links.agentId ? { agentId: links.agentId } : {}), ...(policy ? { autoContinue: policy } : {}) } });
+    const rule = this.settings.kinds[kind], role = rule?.role ?? roleOf(kind);
+    w.sessions.push({ id, project, title, kind, role, ...(role === "implementation" ? { stream: { line: rule?.line ?? "core" } } : {}), status: "active", ...(base ? { baseVersion: base, baseCurrent: base } : {}), touches: [], related: [], links, color: w.sessions.filter((x) => x.project === project).length % 8, createdAt: now, lastAt: now, ...(policy ? { autoContinue: { enabled: policy.enabled, delaySec: policy.delaySec } } : {}) });
+    w.events.push({ id: w.nextEvent++, sessionId: id, ts: now, type: "hook", actor: "hook", summary: "Started from Gitrochi", ...(base ? { version: base } : {}), data: { hook: "launch", ...(chosen ? {} : { board: true }), ...(links.agentId ? { agentId: links.agentId } : {}), ...(policy ? { autoContinue: policy } : {}) } });
     w.rev++;
     return { ok: true, rev: w.rev, session: sessionViews(w, now).get(id)! };
   }

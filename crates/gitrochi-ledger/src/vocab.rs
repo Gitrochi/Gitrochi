@@ -50,7 +50,7 @@ pub const HUMAN_ACTIONS: [&str; 12] = [
 ];
 
 /// Kinds with a role by default. Unknown kinds are kept as typed and have the role `other`.
-pub const DEFAULT_KINDS: [&str; 8] = [
+pub const DEFAULT_KINDS: [&str; 9] = [
     "research",
     "decision",
     "implementation",
@@ -58,6 +58,7 @@ pub const DEFAULT_KINDS: [&str; 8] = [
     "review",
     "document",
     "baseline",
+    "task",
     "other",
 ];
 
@@ -273,6 +274,7 @@ mod tests {
         assert_eq!(kind("구현"), "implementation");
         assert_eq!(kind("Implementation"), "implementation");
         assert_eq!(kind("LLM_Implementation"), "llm-implementation");
+        assert_eq!(kind("Task"), "task");
         assert_eq!(kind("spike"), "spike");
         assert_eq!(kind(""), "");
     }
