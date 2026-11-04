@@ -47,7 +47,7 @@ Gitrochi は macOS と Windows 向けの Git クライアントです。コミ�
 - **ホームから仕事を探す** — 最近のリポジトリ、接続先のリポジトリ検索、プロジェクトの予定を確認。13 の移動先（Home、Repository、Compare、Rebase、Code、PR/MR、Issues、Actions/Pipelines、Releases、Projects、Account、Flows、Ledger）は最初から選択できます。ローカルのツールにはリポジトリを選んでから進みます。
 - **複数アカウントを見分ける** — 右上のメニューで接続済みプロフィールと登録済み Git アカウントを、サーバー名と画像で確認。画像の取得をオフにした場合や取得できない場合は、イニシャルなどの代替表示を使います。コミット作者・push に使う Git アカウントと、PR・Issue 用のホスティング接続は別々に確認できます。保存済み認証情報がロックされている場合は、そのアクセスを許可して再試行できます。
 - **GitHub / GitLab の仕事を進める** — PR/MR の会話・行レビュー・承認、Issue のコメントや状態変更、GitHub Actions と GitLab パイプラインを操作。Account ページには **Inbox・My work・Organizations（GitLab は Groups）**、リリースとプロジェクトにはそれぞれ **Releases・Projects** ページがあります。アカウント全体と現在のリポジトリの範囲も選べます。
-- **Ledger で報告と質問を整理** — **Tools › Ledger** からいつでも開き、セッションの開始時点、報告、回答待ち、完了確認と片付けを Inbox・Board・Graph・Streams で追えます。チュートリアルとガイドも内蔵しています。ページを開くだけで会話が自動取り込みされることはありません。任意のエージェント追跡・バックグラウンド通知・バッジには、起動時の `GITROCHI_LEDGER_PREVIEW=1` と各設定での有効化が必要です。追跡は初期状態ではオフです。[Ledger ガイド](docs/ledger/README.md)で接続方法を確認できます。
+- **Ledger で報告と質問を整理** — **Tools › Ledger** からいつでも開き、セッションの開始時点、報告、回答待ち、完了確認と片付けを Inbox・Board・Graph・Streams で追えます。チュートリアルとガイドも内蔵しています。ページを開くだけで会話が自動取り込みされることはありません。任意のエージェント追跡・バックグラウンド通知・バッジは、Settings › Ledger のそれぞれのスイッチで有効にします。どれも初期状態ではオフで、環境変数は不要です。[Ledger ガイド](docs/ledger/README.md)で接続方法を確認できます。
 - **Flows でチェックと実行手順をまとめる** — **Code** で `.gitch/flow.yml` を編集し、依存関係のプレビュー、実行履歴、各ステップの結果を確認。モジュールの設定や GitLab CI・GitHub Actions・Jenkins との接続も扱えます。レビューして信頼した手順を、アプリ・`gitch flow`・push 前のチェックで使います。[Flows ガイド](docs/flow/README.md)。
 - **ターミナルとエージェントを併用** — リポジトリ内のシェルをタブと分割ペインで開き、Claude Code・Codex・Gemini CLI を利用。AI にコミット文・PR 文や選択した変更について質問でき、同梱の **gitch** はリポジトリごとの Git アカウントとチェックを管理します。[CLI の使い方](docs/cli-workflows.md)。
 

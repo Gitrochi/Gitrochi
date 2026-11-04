@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/hub-share.schema.json",
+  "title": "HubShare",
+  "description": "The hub_share result: one team hub presence body per shared session (CONTRACT.md: Sharing with the team hub). Closed objects: nothing else may be shared.",
+  "type": "object",
+  "required": [
+    "rev",
+    "sessions",
+    "unshared"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "rev": {
+      "type": "integer"
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sharedSession"
+      }
+    },
+    "unshared": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "no_remote",
+              "limit"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sharedSession": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "repo",
+        "client",
+        "presence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 512
+        },
+        "client": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "presence": {
+          "$ref": "#/$defs/presence"
+        }
+      }
+    },
+    "presence": {
+      "description": "The body of POST /api/v1/presence (services/hub README: Presence and overlaps).",
+      "type": "object",
+      "required": [
+        "repo",
+        "branch",
+        "changed",
+        "related",
+        "client",
+        "ledger"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "changed": {
+          "description": "The session's touches that are repository-relative paths or identifiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "client": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "ledger": {
+          "$ref": "#/$defs/ledger"
+        }
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "required": [
+        "session",
+        "project",
+        "title",
+        "kind",
+        "role",
+        "verdict",
+        "lastActivity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "session": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 48
+        },
+        "project": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "kind": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "role": {
+          "enum": [
+            "decision",
+            "implementation",
+            "research",
+            "document",
+            "other"
+          ]
+        },
+        "verdict": {
+          "enum": [
+            "archived",
+            "needs_human",
+            "expirable",
+            "confirm",
+            "shelved",
+            "pending_merge",
+            "stale",
+            "active"
+          ]
+        },
+        "lastActivity": {
+          "description": "RFC 3339 in UTC, to the minute.",
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 20
+        }
+      }
+    }
+  }
+}

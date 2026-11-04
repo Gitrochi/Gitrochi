@@ -171,6 +171,20 @@ pub fn head_commit(dir: &Path) -> Option<String> {
         .filter(|h| !h.is_empty())
 }
 
+/// The URL of `dir`'s `origin` remote, else of its first remote; `None` without one or
+/// outside a repository. For the team hub's repository key only; never shown or stored.
+pub fn remote_url(dir: &Path) -> Option<String> {
+    let url = |name: &str| {
+        stdout_of(command(dir).args(["remote", "get-url", name]))
+            .map(|u| u.trim().to_string())
+            .filter(|u| !u.is_empty())
+    };
+    url("origin").or_else(|| {
+        let names = stdout_of(command(dir).arg("remote"))?;
+        url(names.lines().next()?.trim())
+    })
+}
+
 /// The tip of every local branch of `dir`'s repository by branch name, or `None` when git
 /// cannot tell (not a repository): one call for all of a repository's branches.
 pub fn branch_tips(dir: &Path) -> Option<HashMap<String, String>> {

@@ -7,6 +7,8 @@ struct LedgerConnectSheet: View {
     let ledger: LedgerStore
     /// Where the app bundles the ledger's command-line tool
     var binaryPath = LedgerCommandLine.bundled.path
+    /// Opens the browser extension's setup from its Connections row
+    var openBrowser: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
     @ViewState private var notice = ""
     @ViewState private var error: String?
@@ -20,6 +22,9 @@ struct LedgerConnectSheet: View {
             Text("Connect agents").font(.title3.weight(.semibold))
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
+                    Text("Connections").font(.system(size: 13, weight: .semibold))
+                    LedgerConnectionsSection(ledger: ledger, openBrowser: openBrowser)
+                    Divider()
                     Picker("Agent", selection: $client) {
                         ForEach(LedgerSetupClient.allCases) { client in Text(verbatim: client.title).tag(client) }
                     }
@@ -61,7 +66,7 @@ struct LedgerConnectSheet: View {
                     }.font(.system(size: 11))
                     Text("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
-                    Text("This sheet changes no client settings. Run only the setup commands you want to enable.")
+                    Text("Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
                     if !notice.isEmpty {
                         Text(notice).font(.system(size: 11)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)

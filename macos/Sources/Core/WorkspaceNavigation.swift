@@ -14,8 +14,6 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         self = page
     }
 
-    /// Optional agent tracking and notifications retain their existing preview switch; navigation is always available.
-    static let ledgerPreview = ProcessInfo.processInfo.environment["GITROCHI_LEDGER_PREVIEW"] == "1"
     var isShown: Bool { true }
     static var shown: [WorkspaceDestination] { allCases.filter(\.isShown) }
     /// Pages the repository screen links to (request and issue rows, a commit's CI icon, the tags); opened from there,

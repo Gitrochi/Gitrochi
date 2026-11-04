@@ -4,11 +4,18 @@
 use crate::error::{Error, Result};
 use crate::util::Ms;
 use crate::vocab::{self, Role};
+use crate::wake::WakeSetting;
 use rusqlite::{params, Connection};
 use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 
-pub const KEYS: [&str; 4] = ["staleHours", "kinds", "autoContinue", "backupKeep"];
+pub const KEYS: [&str; 5] = [
+    "staleHours",
+    "kinds",
+    "autoContinue",
+    "backupKeep",
+    "wakeAgents",
+];
 pub const DEFAULT_LINE: &str = "core";
 
 /// What a kind means to the rules: its role, and for implementation kinds the stream line
@@ -26,6 +33,8 @@ pub struct Settings {
     pub kinds: BTreeMap<String, KindRule>,
     pub auto_continue: Value,
     pub backup_keep: u32,
+    /// Wake waiting agents with my answers (`wake`): off by default.
+    pub wake_agents: WakeSetting,
 }
 
 fn rule(role: Role) -> KindRule {
@@ -62,12 +71,15 @@ impl Default for Settings {
         kinds.insert("review".into(), rule(Role::Other));
         kinds.insert("document".into(), rule(Role::Document));
         kinds.insert("baseline".into(), rule(Role::Other));
+        // What the agents Gitrochi starts are (track's default): on the Board, not a stream.
+        kinds.insert("task".into(), rule(Role::Other));
         kinds.insert("other".into(), rule(Role::Other));
         Settings {
             stale_hours: 72.0,
             kinds,
             auto_continue: json!({"enabled": false, "delaySec": 30}),
             backup_keep: 14,
+            wake_agents: WakeSetting::default(),
         }
     }
 }
@@ -114,6 +126,7 @@ impl Settings {
                     .ok_or_else(|| Error::invalid("backupKeep must be a whole number (1–365)"))?;
                 self.backup_keep = keep as u32;
             }
+            "wakeAgents" => self.wake_agents = WakeSetting::parse(value)?,
             other => {
                 return Err(Error::invalid(format!(
                     "Unknown setting {other} (known: {})",
@@ -167,6 +180,7 @@ impl Settings {
             "kinds": kinds,
             "autoContinue": self.auto_continue,
             "backupKeep": self.backup_keep,
+            "wakeAgents": self.wake_agents.to_json(),
         })
     }
 }

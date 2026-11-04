@@ -30,6 +30,15 @@ struct LedgerVerdictBadge: View {
     var body: some View { StatusPill(title: verdict.title, symbol: verdict.symbol, tone: verdict.tone) }
 }
 
+/// The session's agent waits to be woken (Wake waiting agents with my answers): an answer or message sent now reaches it
+/// at once instead of with its next report. Shown only while its Stop hook waits. (Windows: WakePill in ui/parts.tsx)
+struct LedgerWakePill: View {
+    var body: some View {
+        StatusPill(title: String(localized: "Answer wakes the agent"), symbol: "bell.badge", tone: .info)
+            .help(String(localized: "The agent is waiting in the background: an answer or message you send now reaches it at once."))
+    }
+}
+
 /// A session's ID next to its lane colour, as the graph draws it
 struct LedgerSessionLabel: View {
     let id: String

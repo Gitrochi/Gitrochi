@@ -33,7 +33,7 @@
     },
     "kind": {
       "type": "string",
-      "description": "A known kind (research, decision, implementation, llm-implementation, review, document, baseline, other) or one kept as typed"
+      "description": "A known kind (research, decision, implementation, llm-implementation, review, document, baseline, task, other) or one kept as typed; task is what track gives a launch when the app names no kind"
     },
     "role": {
       "enum": [
@@ -220,6 +220,10 @@
         }
       },
       "description": "This session's policy; absent means the global default"
+    },
+    "wakeUntil": {
+      "type": "integer",
+      "description": "Epoch milliseconds: with the wakeAgents setting on, its agent's Stop hook waits until then and wakes the agent with a person's answer or message"
     }
   }
 }
