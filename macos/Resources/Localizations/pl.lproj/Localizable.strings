@@ -2259,6 +2259,16 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Przywracanie najpierw sprawdza kopię i zachowuje bieżącą ewidencję jako kopię „Przed przywróceniem”, która nigdy nie jest usuwana automatycznie. Działający agenci dalej zapisują do przywróconej ewidencji.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Ewidencja zostanie zastąpiona kopią z %@. Jej bieżący stan zostanie najpierw zachowany jako kopia „Przed przywróceniem” w folderze backups, więc możesz go znowu przywrócić. Wciąż działający agenci zapisują dalej do przywróconej ewidencji, a raporty wysłane w trakcie przywracania mogą zostać utracone.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Przywrócono kopię z %@. Poprzednia ewidencja jest zachowana jako %@.";
+"Release notes…" = "Informacje o wydaniu…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Kopiuj Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Brak informacji o wydaniu dla tej wersji bazowej";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Szkic na podstawie raportów agentów. Odpowiedzi, wiadomości i notatki z notatnika nigdy nie są dołączane.";
+"No projects yet" = "Nie ma jeszcze projektów";
+"Release notes are drafted from sessions merged into a baseline." = "Informacje o wydaniu powstają z sesji scalonych z wersją bazową.";
+"No sessions were merged into %@." = "Żadna sesja nie została scalona z %@.";
+"Sessions merged into %@: %lld" = "Sesje scalone z %@: %lld";
 "Checks" = "Testy";
 "Open in Flows" = "Otwórz w Przepływach";
 "Latest Flow runs recorded for this branch's head commit" = "Najnowsze uruchomienia przepływów zapisane dla najnowszego commita tej gałęzi";

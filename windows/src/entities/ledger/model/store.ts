@@ -231,6 +231,11 @@ export class LedgerStore extends LedgerReader {
     return (await this.backend.call("backups", {})).backups;
   }
 
+  /** A Markdown draft for one baseline of `project`; null `version` is HEAD */
+  releaseNotes(project: string, version: string | null) {
+    return this.backend.call("release_notes", { project, ...(version ? { version } : {}) });
+  }
+
   /** Replaces the ledger with a backup after a safety copy; what the restored ledger lacks cannot stay selected or be undone */
   async restore(path: string) {
     const result = await this.backend.call("restore", { path });

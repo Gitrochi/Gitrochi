@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { GRAPH_ROW_H, type LedgerGraphNode, type LedgerRange, type LedgerSession, type LedgerStore, pathsInBand, type PlacedNode, plotLedgerGraph, visibleRows } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
 import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
-import { Button, Empty, IconButton, Modal, Segmented } from "@/shared/ui";
+import { Button, Empty, IconButton, Modal, Segmented, showContextMenu } from "@/shared/ui";
 import { SessionId, VerdictBadge } from "./parts";
 
 const ranges: { value: LedgerRange; label: string }[] = [{ value: "7d", label: "7 days" }, { value: "30d", label: "30 days" }, { value: "all", label: "All" }];
@@ -36,7 +36,7 @@ function NodeMark({ p, highlight }: { p: PlacedNode; highlight: boolean }) {
  * a session forks from its base and joins the version it merged into; open sessions continue upward, dashed. Only
  * the rows on screen are drawn. (macOS: Views/Ledger/LedgerGraph.swift)
  */
-export function LedgerGraph({ store, onOpen }: { store: LedgerStore; onOpen: (sessionId: string) => void }) {
+export function LedgerGraph({ store, onOpen, onReleaseNotes }: { store: LedgerStore; onOpen: (sessionId: string) => void; onReleaseNotes?: (project: string, version: string) => void }) {
   useObserve(store);
   const graph = store.graph;
   const plot = useMemo(() => (graph ? plotLedgerGraph(graph) : null), [graph]);
@@ -101,7 +101,7 @@ export function LedgerGraph({ store, onOpen }: { store: LedgerStore; onOpen: (se
             {rows.map((p) => {
               const s = sessionOf(p.node), baseline = p.node.lane === 0;
               return (
-                <div key={p.node.id} role="listitem" data-node={p.node.id} className={`ledger-graph-row${s && s.id === store.selectedId ? " selected" : ""}`} style={{ top: p.y - GRAPH_ROW_H / 2, left: plot.width }} onMouseEnter={(e) => enter(p, e)} onClick={() => open(p.node)}>
+                <div key={p.node.id} role="listitem" data-node={p.node.id} className={`ledger-graph-row${s && s.id === store.selectedId ? " selected" : ""}`} style={{ top: p.y - GRAPH_ROW_H / 2, left: plot.width }} onMouseEnter={(e) => enter(p, e)} onClick={() => open(p.node)} onContextMenu={baseline && p.node.version && project && onReleaseNotes ? (e) => showContextMenu(e, [{ label: t("Release notes…"), onClick: () => onReleaseNotes(project, p.node.version!) }]) : undefined}>
                   {baseline ? <span className="ledger-version">{p.node.version}</span> : s ? <SessionId session={s} /> : null}
                   <span className={`label${baseline ? "" : " quiet"}`}>{baseline ? baselineLabel(store, project, p.node) : p.node.label}</span>
                   <span className="ledger-when" title={longDate(p.node.ts / 1000)}>{shortDate(p.node.ts / 1000)}</span>

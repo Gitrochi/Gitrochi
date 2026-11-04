@@ -33,6 +33,7 @@ pub mod overlap;
 mod prompt_answer;
 pub mod prompts;
 mod question;
+pub mod release_notes;
 pub mod report;
 pub mod search;
 pub mod session;

@@ -2256,6 +2256,16 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Obnovení nejprve zkontroluje zálohu a současnou evidenci uchová jako kopii „Před obnovením“, která se nikdy neodstraní automaticky. Spuštění agenti dál zapisují do obnovené evidence.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Evidence se nahradí zálohou z %@. Její současný stav se nejprve uloží jako kopie „Před obnovením“ do složky backups, takže ho můžete znovu obnovit. Agenti, kteří stále běží, dál zapisují do obnovené evidence a hlášení odeslaná během obnovení se mohou ztratit.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Záloha z %@ byla obnovena. Předchozí evidence je uložena jako %@.";
+"Release notes…" = "Poznámky k vydání…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Kopírovat Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Pro tuto základní verzi nejsou poznámky k vydání";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Koncept z hlášení agentů. Odpovědi, zprávy ani poznámky z poznámkového bloku nejsou nikdy zahrnuty.";
+"No projects yet" = "Zatím žádné projekty";
+"Release notes are drafted from sessions merged into a baseline." = "Poznámky k vydání vznikají ze sezení začleněných do základní verze.";
+"No sessions were merged into %@." = "Do %@ nebyla začleněna žádná sezení.";
+"Sessions merged into %@: %lld" = "Sezení začleněná do %@: %lld";
 "Checks" = "Kontroly";
 "Open in Flows" = "Otevřít v Tocích";
 "Latest Flow runs recorded for this branch's head commit" = "Nejnovější běhy toků zaznamenané pro hlavní commit této větve";

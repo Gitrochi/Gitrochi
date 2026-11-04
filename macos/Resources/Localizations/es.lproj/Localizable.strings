@@ -2308,6 +2308,16 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Al restaurar se comprueba primero la copia y el registro actual se guarda como copia «Antes de restaurar», que nunca se elimina automáticamente. Los agentes en ejecución siguen escribiendo en el registro restaurado.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "El registro se sustituye por la copia del %@. Su estado actual se guarda antes como copia «Antes de restaurar» en la carpeta backups, para que puedas volver a restaurarlo. Los agentes que siguen en ejecución escriben en el registro restaurado, y los informes enviados durante la restauración pueden perderse.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "Se restauró la copia del %@. El registro anterior se guarda como %@.";
+"Release notes…" = "Notas de la versión…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Copiar Markdown";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "No hay notas de la versión para esta línea base";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Un borrador a partir de lo que informaron los agentes. Nunca incluye respuestas, mensajes ni notas del cuaderno.";
+"No projects yet" = "Todavía no hay proyectos";
+"Release notes are drafted from sessions merged into a baseline." = "Las notas de la versión se redactan a partir de las sesiones integradas en una línea base.";
+"No sessions were merged into %@." = "No se integró ninguna sesión en %@.";
+"Sessions merged into %@: %lld" = "Sesiones integradas en %@: %lld";
 "Checks" = "Comprobaciones";
 "Open in Flows" = "Abrir en Flujos";
 "Latest Flow runs recorded for this branch's head commit" = "Últimas ejecuciones de flujos registradas para el commit principal de esta rama";

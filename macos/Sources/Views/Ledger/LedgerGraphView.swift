@@ -6,6 +6,8 @@ import SwiftUI
 struct LedgerGraphView: View {
     let ledger: LedgerStore
     let open: (String) -> Void
+    /// Release notes for a baseline row (project, version); nil offers none
+    var releaseNotes: ((String, String) -> Void)?
     @ViewState private var laneOffset: CGFloat = 0
     @ViewState private var hovered: String?
     @ViewState private var cursor: String?
@@ -96,6 +98,12 @@ struct LedgerGraphView: View {
                             focused = true
                             cursor = row.id
                             if let session { open(session) }
+                        }
+                        .contextMenu {
+                            // a baseline on the trunk: its release notes
+                            if row.node.lane == 0, let version = row.node.version, let project = ledger.graphProject, let releaseNotes {
+                                Button("Release notes…") { releaseNotes(project, version) }
+                            }
                         }
                         .id(row.id)
                         .accessibilityElement(children: .combine)

@@ -1,5 +1,6 @@
 import { DemoConnections } from "./demo-connections";
 import { DemoLedgerExtras } from "./demo-extras";
+import { demoReleaseNotes } from "./demo-reports";
 import type { LedgerHumanRequest, LedgerImportResult, LedgerKindRule, LedgerMethod, LedgerMethods, LedgerProjectSettings, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerSettings, LedgerState, LedgerStatus, Ms } from "../model/types";
 import { ledgerBaselineSources, ledgerRoles } from "../model/types";
 import { inboxGroups } from "../lib/inbox";
@@ -189,6 +190,9 @@ export class DemoLedgerBackend implements LedgerBackend {
       }
       case "restore":
         throw new LedgerError("NOT_ALLOWED", "The demo cannot restore a backup");
+      case "release_notes":
+        if (typeof args.project !== "string") throw invalid("Missing project");
+        return demoReleaseNotes(w, args.project, typeof args.version === "string" ? args.version : undefined);
       case "settings":
         return structuredClone(this.settings);
       case "settings_set":

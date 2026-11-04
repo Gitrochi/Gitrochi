@@ -2262,6 +2262,16 @@
 "Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Geri yükleme önce yedeği denetler ve mevcut defteri hiçbir zaman otomatik silinmeyen bir “Geri yüklemeden önce” kopyası olarak saklar. Çalışan aracılar geri yüklenen deftere yazmaya devam eder.";
 "The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Defter, %@ tarihli yedekle değiştirilir. Mevcut durumu önce backups klasöründe bir “Geri yüklemeden önce” kopyası olarak saklanır; böylece onu yeniden geri yükleyebilirsin. Hâlâ çalışan aracılar geri yüklenen deftere yazmaya devam eder ve geri yükleme sırasında gönderilen raporlar kaybolabilir.";
 "Restored the backup from %@. The previous ledger is kept as %@." = "%@ tarihli yedek geri yüklendi. Önceki defter %@ olarak saklandı.";
+"Release notes…" = "Sürüm notları…";
+"Markdown" = "Markdown";
+"Copy Markdown" = "Markdown'ı kopyala";
+"%@ (HEAD)" = "%@ (HEAD)";
+"No release notes for this baseline" = "Bu temel sürüm için sürüm notu yok";
+"A draft from what agents reported. Answers, messages and notebook notes are never included." = "Aracıların raporlarından hazırlanmış bir taslak. Yanıtlar, mesajlar ve not defteri notları asla eklenmez.";
+"No projects yet" = "Henüz proje yok";
+"Release notes are drafted from sessions merged into a baseline." = "Sürüm notları, bir temel sürüme birleştirilen oturumlardan hazırlanır.";
+"No sessions were merged into %@." = "%@ sürümüne birleştirilen oturum yok.";
+"Sessions merged into %@: %lld" = "%@ sürümüne birleştirilen oturumlar: %lld";
 "Checks" = "Denetimler";
 "Open in Flows" = "Akışlarda aç";
 "Latest Flow runs recorded for this branch's head commit" = "Bu dalın en son commit'i için kaydedilen son akış çalıştırmaları";
