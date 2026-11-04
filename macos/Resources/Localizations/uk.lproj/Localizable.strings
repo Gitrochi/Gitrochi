@@ -88,10 +88,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... пропущено ще символів: %1$lld ...]";
 "  (fork)" = "  (форк)";
 " %lld files that aren't committed stay as they are." = " Файли, що не потрапили в коміти (%1$lld), залишаться як є.";
-" %lld stashes saved." = " Збережених схованок: %1$lld.";
 " (current)" = " (поточна)";
 " (on)" = " (увімкнено)";
-" Choose Stash or Pop from ▾." = " У ▾ можна вибрати «Сховати» або «Дістати».";
 " Choose merge or rebase from ▾." = " У ▾ можна вибрати злиття або перебазування.";
 " Force push from ▾." = " Примусове надсилання — у ▾.";
 " · %@ stages" = " · етапів: %1$@";
@@ -174,7 +172,6 @@
 "Another account's token" = "Токен іншого облікового запису";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Підійде будь-який сервер, що приймає формат OpenAI (/chat/completions). Приклад: Ollama http://localhost:11434/v1";
 "Appearance" = "Вигляд";
-"Applies the most recently stashed changes (Pop)." = "Застосовує останні сховані зміни (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Діє для всіх функцій AI разом із правилами, заданими нижче для кожної функції.";
 "Apply" = "Застосувати";
 "Applying stash…" = "Застосування схованки…";
@@ -394,7 +391,6 @@
 "Create worktree" = "Створити робоче дерево";
 "Create worktree from here…" = "Створити робоче дерево звідси…";
 "Created" = "Створено";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Створює %1$@ з поточної гілки (%2$@). За потреби спершу надсилає її.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Створює нову гілку в поточній позиції. У ▾: нове робоче дерево, запуск агента (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Створення %1$@…";
 "Creating branch…" = "Створення гілки…";
@@ -609,6 +605,7 @@
 "Name" = "Назва";
 "Needs permission" = "Запитувати дозвіл";
 "New %@" = "Новий %1$@";
+"New %@…" = "Новий %1$@…";
 "New %@ from the current branch" = "Новий %1$@ з поточної гілки";
 "New branch" = "Нова гілка";
 "New branch from here…" = "Нова гілка звідси…";
@@ -660,7 +657,6 @@
 "Not installed" = "Не встановлено";
 "Not managed by gitch" = "Не керується gitch";
 "Nothing to draw" = "Нічого малювати";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Нічого відміняти. Тут можна відмінити такі операції, як коміт, злиття, перебазування, перехід на гілку й видалення гілки.";
 "Off" = "Вимк.";
 "On" = "Увімк.";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Одна зі сторін видалила файл, або це двійковий файл. Виберіть, залишити його чи видалити.";
@@ -682,7 +678,6 @@
 "Open in Terminal" = "Відкрити в Терміналі";
 "Open in browser" = "Відкрити в браузері";
 "Open in the terminal below" = "Відкрити в терміналі внизу";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Відкрити або клонувати інший репозиторій, недавні репозиторії, граф структури, закриття вкладок";
 "Open releases page" = "Відкрити сторінку випусків";
 "Open repository…" = "Відкрити репозиторій…";
 "Open that one instead? The disk image will be ejected." = "Відкрити ту копію замість цієї? Образ диска буде виштовхнуто.";
@@ -824,7 +819,6 @@
 "Save an API key first." = "Спершу збережіть ключ API.";
 "Save and mark as resolved" = "Зберегти й позначити як розв’язане";
 "Saves the file as chosen and stages it" = "Зберігає файл із вибраним варіантом та індексує його";
-"Saves uncommitted changes for later." = "Відкладає незакомічені зміни на потім.";
 "Scheduled" = "Заплановано";
 "Search" = "Пошук";
 "Search commits" = "Пошук комітів";
@@ -973,7 +967,6 @@
 "Undo “%@”?" = "Відмінити «%1$@»?";
 "Undo: %@" = "Відмінити: %1$@";
 "Undoes the commit and leaves its changes staged." = "Відміняє коміт і залишає його зміни в індексі.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Відміняє останню операцію «%1$@». Під час відміни коміту його зміни зберігаються.";
 "Undoing…" = "Відміна…";
 "Unified view" = "Об’єднаний вигляд";
 "Unknown" = "Невідомо";

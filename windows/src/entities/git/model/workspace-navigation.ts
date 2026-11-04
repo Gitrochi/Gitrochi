@@ -12,6 +12,16 @@ export const destinationEnabled = (_page: WorkspaceDestination) => true;
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
 /** Pages the repository screen links to (request and issue rows, a commit's CI badge, the tags); opened from there, they offer the way back (macOS: returnsToRepository) */
 export const returnsToRepository: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["pullRequests", "issues", "actions", "releases"]);
+/** The toolbar items a window shows (docs/design.md › App shell). (macOS: ToolbarSet) */
+export type ToolbarSet = "repository" | "page" | "noRepository";
+export const toolbarSet = (destination: WorkspaceDestination, hasRepository: boolean): ToolbarSet => (!hasRepository ? "noRepository" : destination === "repository" ? "repository" : "page");
+/** The one sync action drawn prominent: Push with only commits to push, Pull when a fast-forward is possible. (macOS: RecommendedSync) */
+export function recommendedSync(ahead: number, behind: number, hasUpstream: boolean): "push" | "pull" | "none" {
+  if (!hasUpstream) return "none";
+  if (ahead > 0 && behind === 0) return "push";
+  if (behind > 0 && ahead === 0) return "pull";
+  return "none";
+}
 export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination {
   if (typeof value !== "string") return false;
   if ((workspaceDestinations as readonly string[]).includes(value)) return true;

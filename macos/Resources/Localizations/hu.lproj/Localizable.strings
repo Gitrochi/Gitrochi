@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nA futtatáshoz a tokennek írási jogosultság kell az Actions szolgáltatáshoz (klasszikus token: repo; fine-grained token: Actions: Read and write). Próbálja újra csatlakoztatni a fiókot a Beállításokban.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... további %1$lld karakter kihagyva ...]";
 " %lld files that aren't committed stay as they are." = " A commitba nem kerülő fájlok (%1$lld) változatlanok maradnak.";
-" %lld stashes saved." = " Mentett stash-ek: %1$lld.";
 " (current)" = " (aktuális)";
 " (on)" = " (bekapcsolva)";
-" Choose Stash or Pop from ▾." = " A ▾ menüben: Stash vagy Pop.";
 " Choose merge or rebase from ▾." = " A ▾ menüben választhat az egyesítés és a rebase között.";
 " Force push from ▾." = " Force push a ▾ menüben.";
 " · %@ stages" = " · szakasz: %1$@";
@@ -172,7 +170,6 @@
 "Another account's token" = "Másik fiók tokenje";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Bármely szerver használható, amely elfogadja az OpenAI formátumot (/chat/completions). Példa: Ollama http://localhost:11434/v1";
 "Appearance" = "Megjelenés";
-"Applies the most recently stashed changes (Pop)." = "Alkalmazza a legutóbbi stash módosításait (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Minden AI-funkcióra vonatkozik, az alább funkciónként megadott szabályokkal együtt.";
 "Apply" = "Alkalmazás";
 "Applying stash…" = "Stash alkalmazása…";
@@ -388,7 +385,6 @@
 "Create worktree" = "Worktree létrehozása";
 "Create worktree from here…" = "Worktree létrehozása innen…";
 "Created" = "Létrehozva";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Új %1$@ az aktuális ágból (%2$@). Szükség esetén előbb feltölti az ágat (push).";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Új ágat hoz létre az aktuális pozíción. A ▾ menüben: új worktree, ügynök futtatása (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ létrehozása…";
 "Creating branch…" = "Ág létrehozása…";
@@ -600,6 +596,7 @@
 "Name" = "Név";
 "Needs permission" = "Engedélyre vár";
 "New %@" = "Új %1$@";
+"New %@…" = "Új %1$@…";
 "New %@ from the current branch" = "Új %1$@ az aktuális ágból";
 "New branch" = "Új ág";
 "New branch from here…" = "Új ág innen…";
@@ -651,7 +648,6 @@
 "Not installed" = "Nincs telepítve";
 "Not managed by gitch" = "Nem a gitch kezeli";
 "Nothing to draw" = "Nincs mit megrajzolni";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Nincs visszavonható művelet. Itt vonhatók vissza például a commit, egyesítés, rebase, átváltás és ágtörlés műveletek.";
 "Off" = "Ki";
 "On" = "Be";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Az egyik oldal törölte a fájlt, vagy bináris fájlról van szó. Válassza ki, hogy megtartja vagy törli.";
@@ -673,7 +669,6 @@
 "Open in Terminal" = "Megnyitás a Terminálban";
 "Open in browser" = "Megnyitás böngészőben";
 "Open in the terminal below" = "Megnyitás az alsó terminálban";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Másik tároló megnyitása vagy klónozása, legutóbbi tárolók, szerkezeti gráf, lapok bezárása";
 "Open releases page" = "Kiadások oldalának megnyitása";
 "Open repository…" = "Tároló megnyitása…";
 "Open that one instead? The disk image will be ejected." = "Inkább azt nyitja meg? A lemezkép ki lesz adva.";
@@ -811,7 +806,6 @@
 "Save an API key first." = "Előbb mentsen el egy API-kulcsot.";
 "Save and mark as resolved" = "Mentés és megjelölés feloldottként";
 "Saves the file as chosen and stages it" = "A választás szerint menti a fájlt, és előkészíti";
-"Saves uncommitted changes for later." = "Későbbre félreteszi a nem commitolt módosításokat.";
 "Scheduled" = "Ütemezett";
 "Search" = "Keresés";
 "Search commits" = "Commitok keresése";
@@ -958,7 +952,6 @@
 "Undo “%@”?" = "Visszavonja ezt: „%1$@”?";
 "Undo: %@" = "Visszavonás: %1$@";
 "Undoes the commit and leaves its changes staged." = "Visszavonja a commitot; a módosításai előkészítve maradnak.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Visszavonja az utolsó műveletet: „%1$@”. A commit visszavonásakor a módosítások megmaradnak.";
 "Undoing…" = "Visszavonás…";
 "Unified view" = "Egyesített nézet";
 "Unknown" = "Ismeretlen";

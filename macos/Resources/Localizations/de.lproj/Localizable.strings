@@ -100,10 +100,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... weitere Zeichen ausgelassen: %1$lld ...]";
 "  (fork)" = "  (Fork)";
 " %lld files that aren't committed stay as they are." = " Dateien, die nicht committet werden, bleiben unverändert (%1$lld).";
-" %lld stashes saved." = " Gespeicherte Stashes: %1$lld.";
 " (current)" = " (aktuell)";
 " (on)" = " (ein)";
-" Choose Stash or Pop from ▾." = " Stash oder Pop über ▾ wählen.";
 " Choose merge or rebase from ▾." = " Merge oder Rebase über ▾ wählen.";
 " Force push from ▾." = " Force-Push über ▾.";
 " · %@ stages" = " · Stage %1$@";
@@ -186,7 +184,6 @@
 "Another account's token" = "Token eines anderen Kontos";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Jeder Server, der das OpenAI-Format (/chat/completions) akzeptiert, funktioniert. Beispiel: Ollama http://localhost:11434/v1";
 "Appearance" = "Darstellung";
-"Applies the most recently stashed changes (Pop)." = "Wendet die zuletzt gestashten Änderungen an (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Gilt für alle KI-Funktionen, zusätzlich zu den Regeln, die unten für die einzelnen Funktionen festgelegt sind.";
 "Apply" = "Anwenden";
 "Applying stash…" = "Stash wird angewendet…";
@@ -396,7 +393,6 @@
 "Create worktree" = "Worktree erstellen";
 "Create worktree from here…" = "Worktree ab hier erstellen…";
 "Created" = "Erstellt";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Erstellt einen %1$@ aus dem aktuellen Branch (%2$@). Pusht vorher, falls nötig.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Erstellt einen neuen Branch an der aktuellen Position. Über ▾: neuer Worktree, Agent ausführen (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ wird erstellt…";
 "Creating branch…" = "Branch wird erstellt…";
@@ -608,6 +604,7 @@
 "My repositories" = "Meine Repositorys";
 "Needs permission" = "Benötigt Berechtigung";
 "New %@" = "Neuer %1$@";
+"New %@…" = "Neuer %1$@…";
 "New %@ from the current branch" = "Neuer %1$@ aus dem aktuellen Branch";
 "New branch" = "Neuer Branch";
 "New branch from here…" = "Neuer Branch ab hier…";
@@ -659,7 +656,6 @@
 "Not installed" = "Nicht installiert";
 "Not managed by gitch" = "Nicht von gitch verwaltet";
 "Nothing to draw" = "Nichts zu zeichnen";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Nichts rückgängig zu machen. Vorgänge wie Commit, Merge, Rebase, Checkout und das Löschen von Branches lassen sich hier rückgängig machen.";
 "Off" = "Aus";
 "On" = "Ein";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Eine Seite hat die Datei gelöscht, oder es handelt sich um eine Binärdatei. Wählen Sie, ob sie behalten oder gelöscht werden soll.";
@@ -681,7 +677,6 @@
 "Open in Terminal" = "Im Terminal öffnen";
 "Open in browser" = "Im Browser öffnen";
 "Open in the terminal below" = "Im Terminal unten öffnen";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Anderes Repository öffnen oder klonen, zuletzt verwendete Repositorys, Strukturgraph, Tabs schließen";
 "Open releases page" = "Release-Seite öffnen";
 "Open repository…" = "Repository öffnen…";
 "Open that one instead? The disk image will be ejected." = "Stattdessen das in „Programme“ öffnen? Das Disk-Image wird ausgeworfen.";
@@ -813,7 +808,6 @@
 "Save an API key first." = "Speichern Sie zuerst einen API-Schlüssel.";
 "Save and mark as resolved" = "Speichern und als gelöst markieren";
 "Saves the file as chosen and stages it" = "Speichert die Datei gemäß Auswahl und stagt sie";
-"Saves uncommitted changes for later." = "Speichert nicht committete Änderungen für später.";
 "Scheduled" = "Geplant";
 "Search" = "Suchen";
 "Search commits" = "Commits durchsuchen";
@@ -953,7 +947,6 @@
 "Undo “%@”?" = "„%1$@“ rückgängig machen?";
 "Undo: %@" = "Rückgängig: %1$@";
 "Undoes the commit and leaves its changes staged." = "Macht den Commit rückgängig; seine Änderungen bleiben gestagt.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Macht den letzten Vorgang „%1$@“ rückgängig. Wird ein Commit rückgängig gemacht, bleiben seine Änderungen erhalten.";
 "Undoing…" = "Wird rückgängig gemacht…";
 "Unified view" = "Einheitliche Ansicht";
 "Unknown" = "Unbekannt";

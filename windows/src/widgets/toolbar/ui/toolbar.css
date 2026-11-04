@@ -22,6 +22,59 @@
   line-height: 1.2;
 }
 
+/* the title is the repository menu (macOS: .toolbarTitleMenu) */
+.toolbar .title-menu {
+  align-items: flex-start;
+  flex-grow: 0;
+  max-width: 320px;
+  margin-right: auto;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.toolbar .title-menu:hover {
+  background: var(--hover);
+}
+
+.toolbar .title-menu .name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-back {
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  gap: 2px;
+  padding: 0 8px 0 4px;
+}
+
+/* Changes, Fetch, Pull and Push always show their title */
+.tool.titled {
+  gap: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* the recommended sync action gets the one filled capsule */
+.tool-group.prominent {
+  border-color: var(--accent);
+}
+
+.tool-group.prominent .tool {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.tool-group.prominent .tool + .tool {
+  border-left-color: color-mix(in srgb, var(--accent) 70%, #ffffff);
+}
+
 .toolbar .title .name {
   font-weight: 600;
   font-size: 13.5px;

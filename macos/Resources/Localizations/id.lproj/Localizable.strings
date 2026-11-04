@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nUntuk menjalankannya, token Anda memerlukan akses tulis ke Actions (token klasik: repo; token fine-grained: Actions: Read and write). Coba hubungkan ulang akun di Pengaturan.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... %1$lld karakter lainnya dihilangkan ...]";
 " %lld files that aren't committed stay as they are." = " %1$lld file yang tidak di-commit tetap seperti semula.";
-" %lld stashes saved." = " %1$lld stash tersimpan.";
 " (current)" = " (saat ini)";
 " (on)" = " (aktif)";
-" Choose Stash or Pop from ▾." = " Pilih Stash atau Pop dari ▾.";
 " Choose merge or rebase from ▾." = " Pilih merge atau rebase dari ▾.";
 " Force push from ▾." = " Force push dari ▾.";
 " · %@ stages" = " · %1$@ tahap";
@@ -169,7 +167,6 @@
 "Another account's token" = "Token akun lain";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Server apa pun yang menerima format OpenAI (/chat/completions) dapat digunakan. Contoh: Ollama http://localhost:11434/v1";
 "Appearance" = "Tampilan";
-"Applies the most recently stashed changes (Pop)." = "Menerapkan perubahan yang terakhir di-stash (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Berlaku untuk semua fitur AI, bersama aturan yang ditulis untuk masing-masing fitur di bawah.";
 "Apply" = "Terapkan";
 "Applying stash…" = "Menerapkan stash…";
@@ -378,7 +375,6 @@
 "Create worktree" = "Buat worktree";
 "Create worktree from here…" = "Buat worktree dari sini…";
 "Created" = "Dibuat";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Membuat %1$@ dari branch saat ini (%2$@). Melakukan push terlebih dahulu jika perlu.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Membuat branch baru di posisi saat ini. Dari ▾: worktree baru, jalankan agen (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Membuat %1$@…";
 "Creating branch…" = "Membuat branch…";
@@ -580,6 +576,7 @@
 "Name" = "Nama";
 "Needs permission" = "Perlu izin";
 "New %@" = "%1$@ baru";
+"New %@…" = "%1$@ baru…";
 "New %@ from the current branch" = "%1$@ baru dari branch saat ini";
 "New branch" = "Branch baru";
 "New branch from here…" = "Branch baru dari sini…";
@@ -631,7 +628,6 @@
 "Not installed" = "Belum diinstal";
 "Not managed by gitch" = "Tidak dikelola gitch";
 "Nothing to draw" = "Tidak ada yang bisa digambar";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Tidak ada yang bisa diurungkan. Operasi seperti commit, merge, rebase, checkout, dan penghapusan branch dapat diurungkan di sini.";
 "Off" = "Mati";
 "On" = "Aktif";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Salah satu pihak menghapus file ini, atau ini file biner. Pilih apakah file dipertahankan atau dihapus.";
@@ -653,7 +649,6 @@
 "Open in Terminal" = "Buka di Terminal";
 "Open in browser" = "Buka di browser";
 "Open in the terminal below" = "Buka di terminal di bawah";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Buka atau klon repositori lain, repositori terbaru, grafik struktur, tutup tab";
 "Open releases page" = "Buka halaman rilis";
 "Open repository…" = "Buka repositori…";
 "Open that one instead? The disk image will be ejected." = "Buka yang itu saja? Image disk akan dikeluarkan.";
@@ -784,7 +779,6 @@
 "Save an API key first." = "Simpan kunci API terlebih dahulu.";
 "Save and mark as resolved" = "Simpan dan tandai selesai";
 "Saves the file as chosen and stages it" = "Menyimpan file sesuai pilihan dan melakukan stage";
-"Saves uncommitted changes for later." = "Menyimpan perubahan yang belum di-commit untuk nanti.";
 "Scheduled" = "Terjadwal";
 "Search" = "Cari";
 "Search commits" = "Cari commit";
@@ -927,7 +921,6 @@
 "Undo “%@”?" = "Urungkan “%1$@”?";
 "Undo: %@" = "Urungkan: %1$@";
 "Undoes the commit and leaves its changes staged." = "Mengurungkan commit dan membiarkan perubahannya tetap di-stage.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Mengurungkan operasi terakhir, “%1$@”. Mengurungkan commit tetap mempertahankan perubahannya.";
 "Undoing…" = "Mengurungkan…";
 "Unified view" = "Tampilan gabungan";
 "Unknown" = "Tidak diketahui";

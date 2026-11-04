@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nÇalıştırmak için token'ınızın Actions'a yazma erişimi olmalıdır (klasik token: repo; ayrıntılı token: Actions: Read and write). Hesabı Ayarlar'da yeniden bağlamayı deneyin.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... %1$lld karakter daha çıkarıldı ...]";
 " %lld files that aren't committed stay as they are." = " Commit edilmemiş %1$lld dosya olduğu gibi kalır.";
-" %lld stashes saved." = " Kayıtlı %1$lld stash var.";
 " (current)" = " (geçerli)";
 " (on)" = " (açık)";
-" Choose Stash or Pop from ▾." = " ▾ menüsünden Stash veya Pop'u seçin.";
 " Choose merge or rebase from ▾." = " ▾ menüsünden birleştirme veya rebase'i seçin.";
 " Force push from ▾." = " Zorla göndermek için ▾ menüsünü kullanın.";
 " · %@ stages" = " · %1$@ aşama";
@@ -170,7 +168,6 @@
 "Another account's token" = "Başka bir hesabın token'ı";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "OpenAI biçimini (/chat/completions) kabul eden her sunucu çalışır. Örnek: Ollama http://localhost:11434/v1";
 "Appearance" = "Görünüm";
-"Applies the most recently stashed changes (Pop)." = "En son stash'e kaydedilen değişiklikleri uygular (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Aşağıda her özellik için yazılan kurallarla birlikte tüm yapay zeka özelliklerine uygulanır.";
 "Apply" = "Uygula";
 "Applying stash…" = "Stash uygulanıyor…";
@@ -384,7 +381,6 @@
 "Create worktree" = "Worktree oluştur";
 "Create worktree from here…" = "Buradan worktree oluştur…";
 "Created" = "Oluşturuldu";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Geçerli daldan (%2$@) yeni bir %1$@ oluşturur. Gerekirse önce gönderir.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Geçerli konumda yeni bir dal oluşturur. ▾ menüsünden: yeni worktree, ajan çalıştırma (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ oluşturuluyor…";
 "Creating branch…" = "Dal oluşturuluyor…";
@@ -598,6 +594,7 @@
 "Name" = "Ad";
 "Needs permission" = "İzin bekliyor";
 "New %@" = "Yeni %1$@";
+"New %@…" = "Yeni %1$@…";
 "New %@ from the current branch" = "Geçerli daldan yeni %1$@";
 "New branch" = "Yeni dal";
 "New branch from here…" = "Buradan yeni dal…";
@@ -649,7 +646,6 @@
 "Not installed" = "Yüklü değil";
 "Not managed by gitch" = "gitch tarafından yönetilmiyor";
 "Nothing to draw" = "Çizilecek bir şey yok";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Geri alınacak bir şey yok. Commit, birleştirme, rebase, dal geçişi ve dal silme gibi işlemler burada geri alınabilir.";
 "OK" = "Tamam";
 "Off" = "Kapalı";
 "On" = "Açık";
@@ -672,7 +668,6 @@
 "Open in Terminal" = "Terminal'de aç";
 "Open in browser" = "Tarayıcıda aç";
 "Open in the terminal below" = "Alttaki terminalde aç";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Başka bir depo aç veya klonla, son depolar, yapı grafiği, sekmeleri kapat";
 "Open releases page" = "Sürümler sayfasını aç";
 "Open repository…" = "Depo aç…";
 "Open that one instead? The disk image will be ejected." = "Onun yerine oradakini açmak ister misiniz? Disk görüntüsü çıkarılacak.";
@@ -813,7 +808,6 @@
 "Save an API key first." = "Önce bir API anahtarı kaydedin.";
 "Save and mark as resolved" = "Kaydet ve çözüldü olarak işaretle";
 "Saves the file as chosen and stages it" = "Dosyayı seçtiğiniz şekilde kaydeder ve hazırlar";
-"Saves uncommitted changes for later." = "Commit edilmemiş değişiklikleri daha sonra kullanmak üzere saklar.";
 "Scheduled" = "Zamanlanmış";
 "Search" = "Ara";
 "Search commits" = "Commit'lerde ara";
@@ -959,7 +953,6 @@
 "Undo “%@”?" = "“%1$@” geri alınsın mı?";
 "Undo: %@" = "Geri al: %1$@";
 "Undoes the commit and leaves its changes staged." = "Commit'i geri alır ve değişikliklerini hazırlanmış olarak bırakır.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Son işlemi (“%1$@”) geri alır. Bir commit geri alındığında değişiklikleri korunur.";
 "Undoing…" = "Geri alınıyor…";
 "Unified view" = "Birleşik görünüm";
 "Unknown" = "Bilinmiyor";

@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nKe spuštění potřebuje token oprávnění k zápisu do Actions (klasický token: repo; token fine-grained: Actions: Read and write). Zkuste účet v Nastavení znovu připojit.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... vynecháno dalších znaků: %1$lld ...]";
 " %lld files that aren't committed stay as they are." = " Necommitnuté soubory (%1$lld) zůstanou beze změny.";
-" %lld stashes saved." = " Uložené stashe: %1$lld.";
 " (current)" = " (aktuální)";
 " (on)" = " (zapnuto)";
-" Choose Stash or Pop from ▾." = " V nabídce ▾ zvolte Stash nebo Pop.";
 " Choose merge or rebase from ▾." = " V nabídce ▾ zvolte sloučení nebo rebase.";
 " Force push from ▾." = " Vynucený push najdete v nabídce ▾.";
 " · %@ stages" = " · fáze %1$@";
@@ -170,7 +168,6 @@
 "Another account's token" = "Token jiného účtu";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Funguje jakýkoli server, který přijímá formát OpenAI (/chat/completions). Příklad: Ollama http://localhost:11434/v1";
 "Appearance" = "Vzhled";
-"Applies the most recently stashed changes (Pop)." = "Použije naposledy odložené změny (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Platí pro všechny funkce AI, spolu s pravidly zadanými níže pro jednotlivé funkce.";
 "Apply" = "Použít";
 "Applying stash…" = "Aplikování stashe…";
@@ -383,7 +380,6 @@
 "Create worktree" = "Vytvořit worktree";
 "Create worktree from here…" = "Vytvořit worktree odsud…";
 "Created" = "Vytvořeno";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Vytvoří %1$@ z aktuální větve (%2$@). V případě potřeby nejprve provede push.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Vytvoří novou větev na aktuální pozici. V nabídce ▾: nový worktree, spuštění agenta (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Vytváří se %1$@…";
 "Creating branch…" = "Vytváření větve…";
@@ -595,6 +591,7 @@
 "Name" = "Název";
 "Needs permission" = "Žádá o oprávnění";
 "New %@" = "Nový %1$@";
+"New %@…" = "Nový %1$@…";
 "New %@ from the current branch" = "Nový %1$@ z aktuální větve";
 "New branch" = "Nová větev";
 "New branch from here…" = "Nová větev odsud…";
@@ -646,7 +643,6 @@
 "Not installed" = "Nenainstalováno";
 "Not managed by gitch" = "Nespravováno gitch";
 "Nothing to draw" = "Není co kreslit";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Není co vrátit zpět. Zde lze vrátit operace jako commit, sloučení, rebase, přepnutí větve a smazání větve.";
 "Off" = "Vypnuto";
 "On" = "Zapnuto";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Jedna strana soubor smazala, nebo jde o binární soubor. Zvolte, zda ho ponechat, nebo smazat.";
@@ -668,7 +664,6 @@
 "Open in Terminal" = "Otevřít v Terminálu";
 "Open in browser" = "Otevřít v prohlížeči";
 "Open in the terminal below" = "Otevřít v terminálu dole";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Otevřít nebo klonovat jiný repozitář, nedávné repozitáře, graf struktury, zavřít karty";
 "Open releases page" = "Otevřít stránku vydání";
 "Open repository…" = "Otevřít repozitář…";
 "Open that one instead? The disk image will be ejected." = "Otevřít místo toho tamten? Obraz disku bude vysunut.";
@@ -806,7 +801,6 @@
 "Save an API key first." = "Nejprve uložte klíč API.";
 "Save and mark as resolved" = "Uložit a označit jako vyřešené";
 "Saves the file as chosen and stages it" = "Uloží soubor podle volby a připraví ho k commitu";
-"Saves uncommitted changes for later." = "Odloží necommitnuté změny na později.";
 "Scheduled" = "Naplánováno";
 "Search" = "Hledat";
 "Search commits" = "Hledat commity";
@@ -952,7 +946,6 @@
 "Undo “%@”?" = "Vrátit zpět „%1$@“?";
 "Undo: %@" = "Zpět: %1$@";
 "Undoes the commit and leaves its changes staged." = "Zruší commit a jeho změny ponechá připravené.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Vrátí zpět poslední operaci „%1$@“. Při vrácení commitu zůstanou jeho změny zachovány.";
 "Undoing…" = "Vracení zpět…";
 "Unified view" = "Jednotné zobrazení";
 "Unknown" = "Neznámé";

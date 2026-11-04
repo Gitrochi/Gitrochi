@@ -194,7 +194,7 @@ struct AppCommands: Commands {
             Button("Create new repository…") { store?.presentInitPanel() }
         }
         CommandMenu("Repository") {
-            Button(store?.undoStack.last.map { "Undo: \($0.title)" } ?? "Undo") { store?.confirmUndo() }
+            Button(store?.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store?.confirmUndo() }
                 .keyboardShortcut("z", modifiers: [.command, .option])
                 .disabled(store?.undoStack.isEmpty ?? true)
             Divider()

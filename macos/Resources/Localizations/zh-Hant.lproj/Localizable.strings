@@ -88,10 +88,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... 已省略其餘 %1$lld 個字元 ...]";
 "  (fork)" = "  (分叉)";
 " %lld files that aren't committed stay as they are." = " 未提交的 %1$lld 個檔案會維持原狀。";
-" %lld stashes saved." = " 已儲存 %1$lld 個擱置項目。";
 " (current)" = " (目前)";
 " (on)" = " (開啟)";
-" Choose Stash or Pop from ▾." = " 可從 ▾ 選擇擱置或取回。";
 " Choose merge or rebase from ▾." = " 可從 ▾ 選擇合併或重訂基底。";
 " Force push from ▾." = " 可從 ▾ 強制推送。";
 " · %@ stages" = " · %1$@ 個階段";
@@ -174,7 +172,6 @@
 "Another account's token" = "其他帳號的權杖";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "任何支援 OpenAI 格式 (/chat/completions) 的伺服器皆可使用。範例：Ollama http://localhost:11434/v1";
 "Appearance" = "外觀";
-"Applies the most recently stashed changes (Pop)." = "取回最近一次擱置的變更 (Pop)。";
 "Applies to every AI feature, together with the rules written for each feature below." = "與下方各功能個別撰寫的規則一起，套用至所有 AI 功能。";
 "Apply" = "套用";
 "Applying stash…" = "正在套用擱置…";
@@ -395,7 +392,6 @@
 "Create worktree" = "建立工作樹";
 "Create worktree from here…" = "從這裡建立工作樹…";
 "Created" = "已建立";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "從目前分支 (%2$@) 建立 %1$@。必要時會先推送。";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "在目前位置建立新分支。從 ▾ 可以建立新工作樹，或執行代理程式（Claude Code、Codex、Gemini）。";
 "Creating %@…" = "正在建立 %1$@…";
 "Creating branch…" = "正在建立分支…";
@@ -610,6 +606,7 @@
 "Name" = "名稱";
 "Needs permission" = "需要權限";
 "New %@" = "新的 %1$@";
+"New %@…" = "新的 %1$@…";
 "New %@ from the current branch" = "從目前分支建立新的 %1$@";
 "New branch" = "新分支";
 "New branch from here…" = "從這裡建立新分支…";
@@ -661,7 +658,6 @@
 "Not installed" = "未安裝";
 "Not managed by gitch" = "不受 gitch 管理";
 "Nothing to draw" = "沒有可繪製的內容";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "沒有可復原的操作。提交、合併、重訂基底、簽出、刪除分支等操作都可以在這裡復原。";
 "OK" = "確定";
 "Off" = "關閉";
 "On" = "開啟";
@@ -684,7 +680,6 @@
 "Open in Terminal" = "在終端機中開啟";
 "Open in browser" = "在瀏覽器中開啟";
 "Open in the terminal below" = "在下方終端機中開啟";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "開啟或複製其他存放庫、最近使用的存放庫、結構圖、關閉分頁";
 "Open releases page" = "開啟發行版本頁面";
 "Open repository…" = "開啟存放庫…";
 "Open that one instead? The disk image will be ejected." = "改為開啟那一個嗎？磁碟映像檔將會退出。";
@@ -826,7 +821,6 @@
 "Save an API key first." = "請先儲存 API 金鑰。";
 "Save and mark as resolved" = "儲存並標示為已解決";
 "Saves the file as chosen and stages it" = "依選擇儲存檔案並暫存";
-"Saves uncommitted changes for later." = "擱置未提交的變更，以便稍後使用。";
 "Scheduled" = "已排程";
 "Search" = "搜尋";
 "Search commits" = "搜尋提交";
@@ -975,7 +969,6 @@
 "Undo “%@”?" = "要復原「%1$@」嗎？";
 "Undo: %@" = "復原：%1$@";
 "Undoes the commit and leaves its changes staged." = "復原提交，並將其變更保留為已暫存。";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "復原上一個操作「%1$@」。復原提交時會保留其變更。";
 "Undoing…" = "正在復原…";
 "Unified view" = "單欄檢視";
 "Unknown" = "不明";

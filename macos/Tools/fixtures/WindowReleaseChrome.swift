@@ -362,7 +362,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         let attempts = windowFixtureNetworkAttempts()
         if ok { try require(attempts == 0, "The isolated WindowGroup requested remote data") }
         var result: [String: Any] = ["ok": ok, "actualWindowGroup": true, "networkAttempts": attempts,
-                                    "actualViews": ["RepoContainer", "RepoView", "PageHeader", "HostingHubPanel", "ReleaseWorkspace", "NavigationSidebarRail"], "checks": checks]
+                                    "actualViews": ["RepoContainer", "RepoView", "WorkspaceDestinationContent", "HostingHubPanel", "ReleaseWorkspace", "NavigationSidebarRail"], "checks": checks]
         if let error { result["error"] = error }
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         if let output {

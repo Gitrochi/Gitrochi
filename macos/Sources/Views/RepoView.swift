@@ -60,6 +60,7 @@ struct RepoView: View {
         }
         .navigationTitle(store.windowTitle)
         .navigationSubtitle(subtitle)
+        .toolbarTitleMenu { repositoryMenu }
         .toolbar { toolbar }
         .background(ToolbarTitles.Observer())
         .sheet(isPresented: Binding(get: { store.showCommandPalette }, set: { store.showCommandPalette = $0 }), onDismiss: {
@@ -132,154 +133,70 @@ struct RepoView: View {
         }
     }
 
+    private var toolbarSet: ToolbarSet { ToolbarSet(destination: store.destination, hasRepository: store.url != nil) }
+    private var recommendedSync: RecommendedSync {
+        RecommendedSync(ahead: store.status.ahead, behind: store.status.behind, hasUpstream: store.status.upstream != nil)
+    }
+
+    /// Repository pages get the Git actions, other pages More and the terminal, a window without a repository only the
+    /// account (docs/design.md › App shell). Ahead/behind counts live in the subtitle, not on the buttons.
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .navigation) {
-            Menu {
-                ForEach(store.recents.filter { $0 != store.url }, id: \.self) { u in
-                    Button(u.lastPathComponent) { Task { await store.openOrReport(u) } }
-                }
-                if store.recents.count > 1 { Divider() }
-                Button("Open repository…") { store.presentOpenPanel() }
-                Button("Clone repository…") { store.sheet = .clone }
-                Divider()
-                StructureGraphMenu(store: store)
-                Button("Repository tools…") { store.sheet = .localWorkflows }.disabled(store.url == nil)
-                Button("Work validation…") { store.sheet = .workValidation }.disabled(store.url == nil)
-                Divider()
-                Button("Ask AI about changes…") { Task { await store.openChangeQuestion() } }.disabled(store.url == nil)
-                Button("Repository assistant…") { Task { await store.openRepositoryAssistant() } }.disabled(store.url == nil)
-                Button("Connect external AI with MCP…") { store.sheet = .mcpConnection }.disabled(store.url == nil)
-                Divider()
-                Button("Close tab") { NSApp.keyWindow?.performClose(nil) }
-            } label: {
-                ToolLabel(title: String(localized: "Repository"), icon: "folder")
+        if store.cameFromRepository, store.destination.returnsToRepository {
+            ToolbarItem(placement: .navigation) {
+                Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back to the repository screen (⌘[)")
+                    .accessibilityLabel("Back to the repository screen")
             }
-            .hoverTip(String(localized: "Repository"), String(localized: "Open or clone another repository, recent repositories, structure graph, close tabs"))
         }
 
-        // flexible space: the title and repository menu stay leading, the actions move to the trailing edge
+        // flexible space: the title stays leading, the actions move to the trailing edge
         ToolbarItem(placement: .primaryAction) { Spacer() }
 
-        ToolbarItemGroup(placement: .primaryAction) {
-            Button { store.confirmUndo() } label: {
-                ToolLabel(title: String(localized: "Undo"), icon: "arrow.uturn.backward")
-            }
-            .disabled(store.undoStack.isEmpty || store.busy != nil)
-            .hoverTip(String(localized: "Undo"),
-                      store.undoStack.last.map { String(localized: "Undoes the last operation, “\($0.title)”. Undoing a commit keeps its changes.") }
-                        ?? String(localized: "Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here."),
-                      shortcut: "⌥⌘Z")
-
-            Button { store.navigate(.repository); store.showArea(.changes) } label: {
-                ToolLabel(title: store.status.isEmpty ? String(localized: "Changes") : String(localized: "Changes \(store.status.count)"), icon: "square.and.pencil")
-            }
-            .disabled(store.url == nil)
-            .hoverTip(String(localized: "Uncommitted changes"),
-                      store.status.isEmpty ? String(localized: "No modified files. When you edit files, you can stage and commit them here.")
-                                           : String(localized: "\(store.status.count) modified files — stage and commit them."),
-                      shortcut: "⌘1")
-
-            Button { Task { await store.fetch() } } label: {
-                ToolLabel(title: "Fetch", icon: "arrow.triangle.2.circlepath")
-            }
-            .disabled(store.busy != nil || store.remotes.isEmpty)
-            .hoverTip("Fetch", String(localized: "Fetches new commits and branches from all remotes. Your branches aren't changed."), shortcut: "⇧⌘F")
-
-            Menu {
-                Button("Pull (as configured in git)") { Task { await store.pull(.standard) } }
-                Button("Pull — fast-forward only") { Task { await store.pull(.fastForward) } }
-                Button("Pull — merge") { Task { await store.pull(.merge) } }
-                Button("Pull — rebase") { Task { await store.pull(.rebase) } }
-            } label: {
-                ToolLabel(title: store.status.behind > 0 ? "Pull ↓\(store.status.behind)" : "Pull", icon: "arrow.down")
-            } primaryAction: {
-                Task { await store.pull() }
-            }
-            .disabled(store.busy != nil || store.status.upstream == nil)
-            .hoverTip("Pull",
-                      store.status.upstream == nil ? String(localized: "This branch has no remote tracking branch to pull from (push it first to create one).")
-                      : (store.status.behind > 0 ? String(localized: "Brings \(store.status.behind) new commits from the remote into the current branch.") : String(localized: "Syncs the current branch with the remote (no commits to pull right now)."))
-                        + String(localized: " Choose merge or rebase from ▾."),
-                      shortcut: "⇧⌘L")
-
-            Menu {
-                Button("Push") { Task { await store.push() } }
-                Button("Force push (with lease)…") { Task { await store.push(force: true) } }
-            } label: {
-                ToolLabel(title: store.status.ahead > 0 ? "Push ↑\(store.status.ahead)" : "Push", icon: "arrow.up")
-            } primaryAction: {
-                Task { await store.push() }
-            }
-            .disabled(store.busy != nil || store.remotes.isEmpty || store.headBranch == nil || store.headHash == nil)
-            .hoverTip("Push",
-                      (store.status.upstream == nil ? String(localized: "Pushes the current branch to the remote for the first time and sets up tracking.")
-                       : (store.status.ahead > 0 ? String(localized: "Pushes \(store.status.ahead) unpushed commits to the remote.") : String(localized: "Pushes the current branch to the remote (no commits to push right now).")))
-                        + String(localized: " Force push from ▾."),
-                      shortcut: "⇧⌘P")
-
-            Menu {
-                Button("New branch…") { store.requestNewBranch() }
-                Button("New worktree…") { store.sheet = .addWorktree(branch: nil, start: nil) }
-                Button("Compare revisions…") { store.navigate(.compare) }
-                if let url = store.url {
-                    Divider()
-                    Button("Run \(AgentCenter.shared.defaultKind.title) here") { store.startAgent(in: url.path) }
-                    Button("Start agent session…") { store.sheet = .startAgent(path: url.path) }
+        if toolbarSet == .repository {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Toggle(isOn: Binding(get: { store.area == .changes }, set: { store.showArea($0 ? .changes : .history) })) {
+                    TitledToolLabel(title: store.status.isEmpty ? String(localized: "Changes") : String(localized: "Changes \(store.status.count)"), icon: "square.and.pencil")
                 }
-            } label: {
-                ToolLabel(title: String(localized: "Branch"), icon: "arrow.triangle.branch")
-            } primaryAction: {
-                store.requestNewBranch()
+                .hoverTip(String(localized: "Uncommitted changes"),
+                          store.status.isEmpty ? String(localized: "No modified files. When you edit files, you can stage and commit them here.")
+                                               : String(localized: "\(store.status.count) modified files — stage and commit them."),
+                          shortcut: "⌘1")
             }
-            .disabled(store.url == nil)
-            .hoverTip(String(localized: "Branch"), String(localized: "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)."), shortcut: "⇧⌘B")
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button { Task { await store.fetch() } } label: { TitledToolLabel(title: "Fetch", icon: "arrow.triangle.2.circlepath") }
+                    .disabled(store.busy != nil || store.remotes.isEmpty)
+                    .hoverTip("Fetch", String(localized: "Fetches new commits and branches from all remotes. Your branches aren't changed."), shortcut: "⇧⌘F")
+                pullMenu
+                pushMenu
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
+                branchMenu
+                moreMenu
+            }
+        } else if toolbarSet == .page {
+            ToolbarItem(placement: .primaryAction) { moreMenu }
+        }
 
-            if let t = store.target {
-                Button { store.sheet = .createPullRequest } label: {
-                    ToolLabel(title: String(localized: "New \(t.provider.requestShort)"), icon: "arrow.triangle.pull")
+        if toolbarSet != .noRepository {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Toggle(isOn: Binding(get: { store.showTerminal }, set: { if $0 != store.showTerminal { store.toggleTerminal() } })) {
+                    ToolLabel(title: store.showTerminal ? String(localized: "Hide terminal") : String(localized: "Terminal"),
+                              icon: store.showTerminal ? "apple.terminal.fill" : "apple.terminal")
                 }
-                .disabled(store.headBranch == nil)
-                .hoverTip(String(localized: "New \(t.provider.requestShort)"), String(localized: "Creates a \(t.provider.requestName) from the current branch (\(store.headBranch ?? "-")). Pushes first if needed."))
-            }
+                .hoverTip(String(localized: "Terminal"),
+                          store.showTerminal ? String(localized: "Hides the terminal panel below. Shells keep running.")
+                                             : String(localized: "Opens a terminal in this repository's folder below the graph. The graph updates as soon as you run git commands."),
+                          shortcut: "⌃`")
 
-            Menu {
-                Button("Stash… (save changes for later)") { store.sheet = .stash }
-                    .disabled(store.status.isEmpty)
-                Button("Pop (apply the latest stash)") { Task { await store.stashPop() } }
-                    .disabled(store.stashes.isEmpty)
-            } label: {
-                ToolLabel(title: store.stashes.isEmpty ? "Stash" : "Stashes \(store.stashes.count)", icon: "tray.and.arrow.down")
-            } primaryAction: {
-                if !store.status.isEmpty { store.sheet = .stash } else { Task { await store.stashPop() } }
-            }
-            .disabled(store.status.isEmpty && store.stashes.isEmpty)
-            .hoverTip("Stash",
-                      (store.status.isEmpty ? String(localized: "Applies the most recently stashed changes (Pop).") : String(localized: "Saves uncommitted changes for later."))
-                        + (store.stashes.isEmpty ? "" : String(localized: " \(store.stashes.count) stashes saved.")) + String(localized: " Choose Stash or Pop from ▾."),
-                      shortcut: "⇧⌘S")
-
-            Button { Task { await store.openStructureGraph(.files) } } label: {
-                ToolLabel(title: String(localized: "Structure graph workspace"), icon: "network")
-            }
-            .disabled(store.url == nil || store.graphJob != nil || Gitch.graphUnavailableReason != nil)
-            .help("Structure graph workspace")
-
-            Button { store.toggleTerminal() } label: {
-                ToolLabel(title: String(localized: "Terminal"), icon: store.showTerminal ? "apple.terminal.fill" : "apple.terminal")
-            }
-            .disabled(store.url == nil)
-            .hoverTip(String(localized: "Terminal"),
-                      store.showTerminal ? String(localized: "Hides the terminal panel below. Shells keep running.")
-                                         : String(localized: "Opens a terminal in this repository's folder below the graph. The graph updates as soon as you run git commands."),
-                      shortcut: "⌃`")
-
-            if store.destination == .repository {
-                Button { inspectorCollapsed.toggle() } label: {
-                    ToolLabel(title: inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"),
-                              icon: "sidebar.right")
+                if toolbarSet == .repository {
+                    Toggle(isOn: Binding(get: { !inspectorCollapsed }, set: { inspectorCollapsed = !$0 })) {
+                        ToolLabel(title: inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"),
+                                  icon: "sidebar.right")
+                    }
+                    .accessibilityLabel(inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"))
+                    .help((inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel")) + " (⌥⌘B)")
                 }
-                .accessibilityLabel(inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel"))
-                .help((inspectorCollapsed ? String(localized: "Show right panel") : String(localized: "Hide right panel")) + " (⌥⌘B)")
             }
         }
         // the hosting account and Git identity stay in the toolbar's trailing corner, in a capsule of their own:
@@ -287,13 +204,118 @@ struct RepoView: View {
         if #available(macOS 26.0, *) {
             ToolbarSpacer(.fixed, placement: .primaryAction)
         }
-        if #available(macOS 26.0, *) {
-            // Keep the account control separate from the terminal's shared glass background.
-            ToolbarSpacer(.fixed, placement: .primaryAction)
-        }
         ToolbarItem(placement: .primaryAction) {
             AccountQuickControls()
         }
+    }
+
+    /// The title menu: other repositories, open and clone, and the repository-wide tools
+    @ViewBuilder private var repositoryMenu: some View {
+        ForEach(store.recents.filter { $0 != store.url }, id: \.self) { u in
+            Button(u.lastPathComponent) { Task { await store.openOrReport(u) } }
+        }
+        if store.recents.count > 1 { Divider() }
+        Button("Open repository…") { store.presentOpenPanel() }
+        Button("Clone repository…") { store.sheet = .clone }
+        Divider()
+        StructureGraphMenu(store: store)
+        Button("Repository tools…") { store.sheet = .localWorkflows }.disabled(store.url == nil)
+        Button("Work validation…") { store.sheet = .workValidation }.disabled(store.url == nil)
+        Divider()
+        Button("Ask AI about changes…") { Task { await store.openChangeQuestion() } }.disabled(store.url == nil)
+        Button("Repository assistant…") { Task { await store.openRepositoryAssistant() } }.disabled(store.url == nil)
+        Button("Connect external AI with MCP…") { store.sheet = .mcpConnection }.disabled(store.url == nil)
+        Divider()
+        Button("Close tab") { NSApp.keyWindow?.performClose(nil) }
+    }
+
+    private var pullMenu: some View {
+        Menu {
+            Button("Pull (as configured in git)") { Task { await store.pull(.standard) } }
+            Button("Pull — fast-forward only") { Task { await store.pull(.fastForward) } }
+            Button("Pull — merge") { Task { await store.pull(.merge) } }
+            Button("Pull — rebase") { Task { await store.pull(.rebase) } }
+        } label: {
+            TitledToolLabel(title: "Pull", icon: "arrow.down")
+        } primaryAction: {
+            Task { await store.pull() }
+        }
+        .prominentToolbarItem(recommendedSync == .pull)
+        .disabled(store.busy != nil || store.status.upstream == nil)
+        .hoverTip("Pull",
+                  store.status.upstream == nil ? String(localized: "This branch has no remote tracking branch to pull from (push it first to create one).")
+                  : (store.status.behind > 0 ? String(localized: "Brings \(store.status.behind) new commits from the remote into the current branch.") : String(localized: "Syncs the current branch with the remote (no commits to pull right now)."))
+                    + String(localized: " Choose merge or rebase from ▾."),
+                  shortcut: "⇧⌘L")
+    }
+
+    private var pushMenu: some View {
+        Menu {
+            Button("Push") { Task { await store.push() } }
+            Button("Force push (with lease)…") { Task { await store.push(force: true) } }
+        } label: {
+            TitledToolLabel(title: "Push", icon: "arrow.up")
+        } primaryAction: {
+            Task { await store.push() }
+        }
+        .prominentToolbarItem(recommendedSync == .push)
+        .disabled(store.busy != nil || store.remotes.isEmpty || store.headBranch == nil || store.headHash == nil)
+        .hoverTip("Push",
+                  (store.status.upstream == nil ? String(localized: "Pushes the current branch to the remote for the first time and sets up tracking.")
+                   : (store.status.ahead > 0 ? String(localized: "Pushes \(store.status.ahead) unpushed commits to the remote.") : String(localized: "Pushes the current branch to the remote (no commits to push right now).")))
+                    + String(localized: " Force push from ▾."),
+                  shortcut: "⇧⌘P")
+    }
+
+    /// Branch, worktree and stash actions
+    private var branchMenu: some View {
+        Menu {
+            Button("New branch…") { store.requestNewBranch() }
+            Button("New worktree…") { store.sheet = .addWorktree(branch: nil, start: nil) }
+            Button("Compare revisions…") { store.navigate(.compare) }
+            Divider()
+            Button("Stash… (save changes for later)") { store.sheet = .stash }
+                .disabled(store.status.isEmpty)
+            Button("Pop (apply the latest stash)") { Task { await store.stashPop() } }
+                .disabled(store.stashes.isEmpty)
+            if let url = store.url {
+                Divider()
+                Button("Run \(AgentCenter.shared.defaultKind.title) here") { store.startAgent(in: url.path) }
+                Button("Start agent session…") { store.sheet = .startAgent(path: url.path) }
+            }
+        } label: {
+            ToolLabel(title: String(localized: "Branch"), icon: "arrow.triangle.branch")
+        } primaryAction: {
+            store.requestNewBranch()
+        }
+        .disabled(store.url == nil)
+        .hoverTip(String(localized: "Branch"), String(localized: "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)."), shortcut: "⇧⌘B")
+    }
+
+    /// The same menu on every page: sync first, then Undo naming what it undoes, then the rest
+    private var moreMenu: some View {
+        Menu {
+            Button("Fetch") { Task { await store.fetch() } }
+                .disabled(store.busy != nil || store.remotes.isEmpty)
+            Button("Pull") { Task { await store.pull() } }
+                .disabled(store.busy != nil || store.status.upstream == nil)
+            Button("Push") { Task { await store.push() } }
+                .disabled(store.busy != nil || store.remotes.isEmpty || store.headBranch == nil || store.headHash == nil)
+            Divider()
+            Button(store.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store.confirmUndo() }
+                .disabled(store.undoStack.isEmpty || store.busy != nil)
+            Divider()
+            if let t = store.target {
+                Button(String(localized: "New \(t.provider.requestShort)…")) { store.sheet = .createPullRequest }
+                    .disabled(store.headBranch == nil)
+            }
+            Button("Structure graph workspace") { Task { await store.openStructureGraph(.files) } }
+                .disabled(store.graphJob != nil || Gitch.graphUnavailableReason != nil)
+        } label: {
+            ToolLabel(title: String(localized: "More"), icon: "ellipsis")
+        }
+        .menuIndicator(.hidden)
+        .help(String(localized: "More"))
     }
 }
 
@@ -329,5 +351,26 @@ struct ToolLabel: View {
         } else {
             Label(title, systemImage: icon).labelStyle(.iconOnly)
         }
+    }
+}
+
+/// Changes, Fetch, Pull and Push always show their title (docs/design.md › App shell)
+struct TitledToolLabel: View {
+    let title: String
+    let icon: String
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+            Text(title).font(.system(size: 12))
+        }
+        .fixedSize()
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private extension View {
+    /// The recommended sync action gets its own filled capsule
+    @ViewBuilder func prominentToolbarItem(_ prominent: Bool) -> some View {
+        if prominent { buttonStyle(.borderedProminent) } else { self }
     }
 }

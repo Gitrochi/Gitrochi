@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nAby to uruchomić, token musi mieć uprawnienia zapisu do Actions (token klasyczny: repo; token fine-grained: Actions: Read and write). Spróbuj ponownie połączyć konto w Ustawieniach.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... pominięto kolejne znaki: %1$lld ...]";
 " %lld files that aren't committed stay as they are." = " Pliki pominięte w commitach (%1$lld) pozostaną bez zmian.";
-" %lld stashes saved." = " Zapisane stashe: %1$lld.";
 " (current)" = " (bieżąca)";
 " (on)" = " (włączone)";
-" Choose Stash or Pop from ▾." = " Wybierz Stash lub Pop z menu ▾.";
 " Choose merge or rebase from ▾." = " Wybierz scalanie lub rebase z menu ▾.";
 " Force push from ▾." = " Wymuszone wypchnięcie w menu ▾.";
 " · %@ stages" = " · etap %1$@";
@@ -170,7 +168,6 @@
 "Another account's token" = "Token innego konta";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Działa każdy serwer obsługujący format OpenAI (/chat/completions). Przykład: Ollama http://localhost:11434/v1";
 "Appearance" = "Wygląd";
-"Applies the most recently stashed changes (Pop)." = "Stosuje zmiany ostatnio zapisane w stashu (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Dotyczy wszystkich funkcji AI, razem z regułami wpisanymi poniżej dla poszczególnych funkcji.";
 "Apply" = "Zastosuj";
 "Applying stash…" = "Stosowanie stasha…";
@@ -383,7 +380,6 @@
 "Create worktree" = "Utwórz worktree";
 "Create worktree from here…" = "Utwórz worktree od tego miejsca…";
 "Created" = "Utworzono";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Tworzy %1$@ z bieżącej gałęzi (%2$@). W razie potrzeby najpierw ją wypycha.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Tworzy nową gałąź w bieżącym miejscu. W menu ▾: nowy worktree, uruchomienie agenta (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Tworzenie: %1$@…";
 "Creating branch…" = "Tworzenie gałęzi…";
@@ -596,6 +592,7 @@
 "Name" = "Nazwa";
 "Needs permission" = "Wymaga zgody";
 "New %@" = "Nowy %1$@";
+"New %@…" = "Nowy %1$@…";
 "New %@ from the current branch" = "Nowy %1$@ z bieżącej gałęzi";
 "New branch" = "Nowa gałąź";
 "New branch from here…" = "Nowa gałąź od tego miejsca…";
@@ -647,7 +644,6 @@
 "Not installed" = "Nie zainstalowano";
 "Not managed by gitch" = "Poza zarządzaniem gitch";
 "Nothing to draw" = "Nie ma czego rysować";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Nie ma czego cofnąć. Tutaj można cofać operacje takie jak commit, scalanie, rebase, przełączanie i usuwanie gałęzi.";
 "Off" = "Wyłączone";
 "On" = "Włączone";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Jedna ze stron usunęła plik lub jest to plik binarny. Wybierz, czy go zachować, czy usunąć.";
@@ -669,7 +665,6 @@
 "Open in Terminal" = "Otwórz w Terminalu";
 "Open in browser" = "Otwórz w przeglądarce";
 "Open in the terminal below" = "Otwórz w terminalu na dole";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Otwórz lub sklonuj inne repozytorium, ostatnie repozytoria, graf struktury, zamykanie kart";
 "Open releases page" = "Otwórz stronę wydań";
 "Open repository…" = "Otwórz repozytorium…";
 "Open that one instead? The disk image will be ejected." = "Otworzyć zamiast tego tamtą kopię? Obraz dysku zostanie wysunięty.";
@@ -810,7 +805,6 @@
 "Save an API key first." = "Najpierw zapisz klucz API.";
 "Save and mark as resolved" = "Zapisz i oznacz jako rozwiązane";
 "Saves the file as chosen and stages it" = "Zapisuje plik zgodnie z wyborem i go przygotowuje";
-"Saves uncommitted changes for later." = "Odkłada niezatwierdzone zmiany na później.";
 "Scheduled" = "Zaplanowano";
 "Search" = "Szukaj";
 "Search commits" = "Szukaj commitów";
@@ -955,7 +949,6 @@
 "Undo “%@”?" = "Cofnąć „%1$@”?";
 "Undo: %@" = "Cofnij: %1$@";
 "Undoes the commit and leaves its changes staged." = "Cofa commit i pozostawia jego zmiany jako przygotowane.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Cofa ostatnią operację: „%1$@”. Cofnięcie commita zachowuje jego zmiany.";
 "Undoing…" = "Cofanie…";
 "Unified view" = "Widok ujednolicony";
 "Unknown" = "Nieznane";

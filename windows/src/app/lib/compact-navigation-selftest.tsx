@@ -76,9 +76,9 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     ensure(host.querySelector(".repository-screen > .sidebar"), "The branch rail must expand the branch list again");
     // Issues needs no repository process; the Code page would read the tree
     row("issues")!.click(); await settle();
-    const pane = host.querySelector<HTMLElement>(".workspace-pane"), page = host.querySelector<HTMLElement>(".workspace-pane > .workspace-titled");
+    const pane = host.querySelector<HTMLElement>(".workspace-pane"), page = host.querySelector<HTMLElement>(".workspace-pane > .workspace-page");
     const paneWidth = pane?.getBoundingClientRect().width ?? 0, pageWidth = page?.getBoundingClientRect().width ?? 0;
-    ensure(store.destination === "issues" && !host.querySelector(".repository-screen") && page?.querySelector(".workspace-titled-body") && paneWidth > 0 && pageWidth > 0 && Math.abs(pageWidth - paneWidth) <= 1, `Other pages must be full-width: destination=${store.destination}; pane=${paneWidth}; page=${pageWidth}`);
+    ensure(store.destination === "issues" && !host.querySelector(".repository-screen") && !page?.querySelector(".page-header") && page?.getAttribute("aria-label") === t("Issues") && paneWidth > 0 && pageWidth > 0 && Math.abs(pageWidth - paneWidth) <= 1, `Other pages must be full-width: destination=${store.destination}; pane=${paneWidth}; page=${pageWidth}`);
     store.showTerminal = true; store.changed(); await settle();
     ensure(host.querySelector(".workspace-pane > .term-panel"), "The terminal must sit below a full-width page");
     row("repository")!.click(); await settle();

@@ -7,6 +7,7 @@ import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
+import { Toolbar } from "@/widgets/toolbar";
 import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
 import { keyLabel, settings } from "@/shared/config";
@@ -140,8 +141,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLElement>('.side-row[data-issue="7"]')!.click(); await pause();
     check(store.destination === "issues" && store.inboxDetail?.item.number === 7, "A sidebar issue did not open on the Issues page");
     reset();
-    // the page keeps the issue that was just opened and shows it like a pull request
-    await mount(<WorkspaceContent store={store} openSettings={() => {}} />);
+    // the page keeps the issue that was just opened and shows it like a pull request; the way back is in the toolbar
+    await mount(<><Toolbar store={store} /><WorkspaceContent store={store} openSettings={() => {}} /></>);
     check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
     check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
     check(writes === 1, `Navigation performed an unexpected mutation: ${writeDetails()}`);
@@ -174,8 +175,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
     check(await editIn(sheet(), "Edited fixture issue") && await until(() => writes === before + 3), `Editing an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null; dialog.remove();
-    // opened from the repository screen, the page offers the way back; from another page it does not
-    const back = () => host.querySelector<HTMLButtonElement>(`.page-header button[aria-label="${t("Back to the repository screen")}"]`);
+    // opened from the repository screen, the toolbar offers the way back; from another page it does not
+    const back = () => host.querySelector<HTMLButtonElement>(`.toolbar button[aria-label="${t("Back to the repository screen")}"]`);
     check(back()?.textContent?.includes(t("Repository")), "The Issues page opened from the repository screen must offer the way back");
     check(back()?.dataset.tip === keyLabel(t("Back to the repository screen (Ctrl+[)")), "The back button's tooltip must name its shortcut");
     back()!.click(); await pause();

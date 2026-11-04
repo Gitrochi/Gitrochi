@@ -87,10 +87,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nĐể chạy, token cần quyền ghi đối với Actions (token classic: repo; token fine-grained: Actions: Read and write). Hãy thử kết nối lại tài khoản trong Cài đặt.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... đã lược bỏ thêm %1$lld ký tự ...]";
 " %lld files that aren't committed stay as they are." = " %1$lld tệp không được commit sẽ giữ nguyên.";
-" %lld stashes saved." = " Có %1$lld stash đã lưu.";
 " (current)" = " (hiện tại)";
 " (on)" = " (bật)";
-" Choose Stash or Pop from ▾." = " Chọn Stash hoặc Pop từ ▾.";
 " Choose merge or rebase from ▾." = " Chọn merge hoặc rebase từ ▾.";
 " Force push from ▾." = " Force push từ ▾.";
 " · %@ stages" = " · %1$@ giai đoạn";
@@ -169,7 +167,6 @@
 "Another account's token" = "Token của tài khoản khác";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Dùng được với mọi máy chủ chấp nhận định dạng OpenAI (/chat/completions). Ví dụ: Ollama http://localhost:11434/v1";
 "Appearance" = "Giao diện";
-"Applies the most recently stashed changes (Pop)." = "Áp dụng các thay đổi được stash gần nhất (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Áp dụng cho mọi tính năng AI, cùng với các quy tắc viết riêng cho từng tính năng bên dưới.";
 "Apply" = "Áp dụng";
 "Applying stash…" = "Đang áp dụng stash…";
@@ -381,7 +378,6 @@
 "Create worktree" = "Tạo worktree";
 "Create worktree from here…" = "Tạo worktree từ đây…";
 "Created" = "Đã tạo";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Tạo %1$@ từ nhánh hiện tại (%2$@). Sẽ push trước nếu cần.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Tạo nhánh mới tại vị trí hiện tại. Từ ▾: worktree mới, chạy agent (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Đang tạo %1$@…";
 "Creating branch…" = "Đang tạo nhánh…";
@@ -586,6 +582,7 @@
 "Name" = "Tên";
 "Needs permission" = "Cần cấp quyền";
 "New %@" = "%1$@ mới";
+"New %@…" = "%1$@ mới…";
 "New %@ from the current branch" = "%1$@ mới từ nhánh hiện tại";
 "New branch" = "Nhánh mới";
 "New branch from here…" = "Nhánh mới từ đây…";
@@ -637,7 +634,6 @@
 "Not installed" = "Chưa cài";
 "Not managed by gitch" = "Không do gitch quản lý";
 "Nothing to draw" = "Không có gì để vẽ";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Không có gì để hoàn tác. Các thao tác như commit, merge, rebase, checkout và xóa nhánh có thể được hoàn tác tại đây.";
 "Off" = "Tắt";
 "On" = "Bật";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Một bên đã xóa tệp, hoặc đây là tệp nhị phân. Hãy chọn giữ hoặc xóa tệp.";
@@ -659,7 +655,6 @@
 "Open in Terminal" = "Mở trong Terminal";
 "Open in browser" = "Mở trong trình duyệt";
 "Open in the terminal below" = "Mở trong terminal bên dưới";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Mở hoặc clone kho lưu trữ khác, kho lưu trữ gần đây, đồ thị cấu trúc, đóng tab";
 "Open releases page" = "Mở trang phát hành";
 "Open repository…" = "Mở kho lưu trữ…";
 "Open that one instead? The disk image will be ejected." = "Mở bản đó thay vì bản này? Ảnh đĩa sẽ được đẩy ra.";
@@ -791,7 +786,6 @@
 "Save an API key first." = "Hãy lưu khóa API trước.";
 "Save and mark as resolved" = "Lưu và đánh dấu đã giải quyết";
 "Saves the file as chosen and stages it" = "Lưu tệp theo lựa chọn và stage tệp đó";
-"Saves uncommitted changes for later." = "Cất các thay đổi chưa commit để dùng sau.";
 "Scheduled" = "Đã lên lịch";
 "Search" = "Tìm kiếm";
 "Search commits" = "Tìm commit";
@@ -934,7 +928,6 @@
 "Undo “%@”?" = "Hoàn tác “%1$@”?";
 "Undo: %@" = "Hoàn tác: %1$@";
 "Undoes the commit and leaves its changes staged." = "Hoàn tác commit và giữ các thay đổi ở trạng thái đã stage.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Hoàn tác thao tác gần nhất, “%1$@”. Hoàn tác commit vẫn giữ lại các thay đổi.";
 "Undoing…" = "Đang hoàn tác…";
 "Unified view" = "Chế độ xem hợp nhất";
 "Unknown" = "Không xác định";

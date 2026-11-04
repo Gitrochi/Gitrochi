@@ -517,9 +517,10 @@
   padding: 0 3px;
 }
 
+/* a toolbar toggle that is on: a neutral fill, not the selection tint (docs/design.md › App shell) */
 .tool.on {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--card) 88%, var(--text));
+  color: var(--text);
 }
 
 .tool .badge-num {

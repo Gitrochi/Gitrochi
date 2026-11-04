@@ -88,10 +88,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... пропущено символов: %1$lld ...]";
 "  (fork)" = "  (форк)";
 " %lld files that aren't committed stay as they are." = " Файлы, которые не войдут в коммиты, останутся как есть (%1$lld).";
-" %lld stashes saved." = " Сохранено наборов спрятанных изменений: %1$lld.";
 " (current)" = " (текущая)";
 " (on)" = " (вкл.)";
-" Choose Stash or Pop from ▾." = " Выберите «Спрятать» или «Достать» в меню ▾.";
 " Choose merge or rebase from ▾." = " Выберите слияние или перебазирование в меню ▾.";
 " Force push from ▾." = " Принудительная отправка — в меню ▾.";
 " · %@ stages" = " · этап %1$@";
@@ -174,7 +172,6 @@
 "Another account's token" = "Токен другой учётной записи";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Подойдёт любой сервер, принимающий формат OpenAI (/chat/completions). Пример: Ollama http://localhost:11434/v1";
 "Appearance" = "Оформление";
-"Applies the most recently stashed changes (Pop)." = "Применяет последние спрятанные изменения («Достать»).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Применяется ко всем функциям ИИ вместе с правилами, заданными ниже для каждой функции.";
 "Apply" = "Применить";
 "Applying stash…" = "Применение спрятанных изменений…";
@@ -394,7 +391,6 @@
 "Create worktree" = "Создать рабочее дерево";
 "Create worktree from here…" = "Создать рабочее дерево отсюда…";
 "Created" = "Создано";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Создаёт %1$@ из текущей ветки (%2$@). При необходимости сначала выполняет отправку.";
 "Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Создаёт новую ветку в текущей позиции. В меню ▾: новое рабочее дерево, запуск агента (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Создание %1$@…";
 "Creating branch…" = "Создание ветки…";
@@ -609,6 +605,7 @@
 "Name" = "Имя";
 "Needs permission" = "Нужно разрешение";
 "New %@" = "Новый %1$@";
+"New %@…" = "Новый %1$@…";
 "New %@ from the current branch" = "Новый %1$@ из текущей ветки";
 "New branch" = "Новая ветка";
 "New branch from here…" = "Новая ветка отсюда…";
@@ -660,7 +657,6 @@
 "Not installed" = "Не установлено";
 "Not managed by gitch" = "Не управляется gitch";
 "Nothing to draw" = "Нечего рисовать";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Нечего отменять. Здесь можно отменить такие операции, как коммит, слияние, перебазирование, переключение и удаление ветки.";
 "Off" = "Выкл.";
 "On" = "Вкл.";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Одна из сторон удалила файл, или это двоичный файл. Выберите, оставить его или удалить.";
@@ -682,7 +678,6 @@
 "Open in Terminal" = "Открыть в Терминале";
 "Open in browser" = "Открыть в браузере";
 "Open in the terminal below" = "Открыть в терминале внизу";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Открыть или клонировать другой репозиторий, недавние репозитории, граф структуры, закрытие вкладок";
 "Open releases page" = "Открыть страницу релизов";
 "Open repository…" = "Открыть репозиторий…";
 "Open that one instead? The disk image will be ejected." = "Открыть ту копию вместо этой? Образ диска будет извлечён.";
@@ -824,7 +819,6 @@
 "Save an API key first." = "Сначала сохраните ключ API.";
 "Save and mark as resolved" = "Сохранить и отметить как разрешённый";
 "Saves the file as chosen and stages it" = "Сохраняет файл с выбранными вариантами и индексирует его";
-"Saves uncommitted changes for later." = "Откладывает незакоммиченные изменения на потом.";
 "Scheduled" = "По расписанию";
 "Search" = "Поиск";
 "Search commits" = "Поиск коммитов";
@@ -973,7 +967,6 @@
 "Undo “%@”?" = "Отменить «%1$@»?";
 "Undo: %@" = "Отменить: %1$@";
 "Undoes the commit and leaves its changes staged." = "Отмена коммита; его изменения останутся в индексе.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Отменяет последнюю операцию: «%1$@». При отмене коммита его изменения сохраняются.";
 "Undoing…" = "Отмена…";
 "Unified view" = "Единый вид";
 "Unknown" = "Неизвестно";
