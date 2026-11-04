@@ -56,13 +56,23 @@ export async function ledgerParitySelfTest(): Promise<[boolean, string]> {
     for (let i = 0; i < 40 && !release()?.textContent?.startsWith("# atlas 1.4.1"); i++) await pause();
     ensure(release()?.textContent?.startsWith("# atlas 1.4.1"), `Choosing a baseline did not draft it: ${release()?.textContent?.slice(0, 40)}`);
     button("Close")!.click(); await pause();
+    await open("Insights…");
+    const tiles = () => document.querySelectorAll("[data-ledger-insights] .ledger-insight-tile");
+    for (let i = 0; i < 40 && tiles().length < 5; i++) await pause();
+    ensure(tiles().length === 5, `Insights did not show its stat tiles: ${tiles().length}`);
+    ensure(document.querySelectorAll(`[data-ledger-insights] [data-insight="verdicts"] [role="listitem"]`).length === 8, "Insights did not draw a bar for every verdict");
+    const days = () => document.querySelector("[data-ledger-insights] .ledger-insight-columns")?.getAttribute("data-days");
+    [...document.querySelectorAll<HTMLButtonElement>("[data-ledger-insights] .segmented button")].find((b) => b.textContent?.trim() === t("All"))!.click();
+    for (let i = 0; i < 40 && days() !== "90"; i++) await pause();
+    ensure(days() === "90", `Choosing All did not chart the last 90 days: ${days()}`);
+    button("Close")!.click(); await pause();
     await open("Manage records…");
     const sessionTitle = [...document.querySelectorAll(".ledger-manage-form label")].find((row) => row.textContent?.startsWith(t("Title")))?.querySelector<HTMLInputElement>("input");
     ensure(sessionTitle, "Session metadata editor did not open");
     input(sessionTitle!, "Reviewed cache policy"); await pause(); button("Save session details")!.click(); await pause();
     ensure((await store.backend.call("state", { range: "all" })).sessions.some((row) => row.title === "Reviewed cache policy"), "Session metadata was not saved");
     button("Close")!.click();
-    return [true, "Notebook save, dated work item, Markdown report, document tracker, release notes and metadata editing through Ledger actions"];
+    return [true, "Notebook save, dated work item, Markdown report, document tracker, release notes, insights and metadata editing through Ledger actions"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); }
 }

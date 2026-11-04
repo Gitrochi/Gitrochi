@@ -1,4 +1,5 @@
-import type { LedgerEvent, LedgerReleaseNotes, LedgerReleaseNotesEntry, LedgerRole } from "../model/types";
+import type { LedgerEvent, LedgerInsights, LedgerRange, LedgerReleaseNotes, LedgerReleaseNotesEntry, LedgerRole, LedgerSession } from "../model/types";
+import { ledgerRoles } from "../model/types";
 import { compareVersions } from "../lib/version";
 import { LedgerError } from "./backend";
 import type { DemoWorld } from "./demo-data";
@@ -73,4 +74,50 @@ export function demoReleaseNotes(w: DemoWorld, project: string, version?: string
   }
   notes.markdown = `${lines.join("\n")}\n`;
   return notes;
+}
+
+const DAY_MS = 86_400_000;
+
+/** Nearest-rank percentiles of durations, as the core's insights.rs computes them */
+function spread(values: number[]): LedgerInsights["questions"]["wait"] {
+  const sorted = values.filter((v) => v >= 0).sort((a, b) => a - b);
+  const rank = (p: number) => sorted[Math.min(sorted.length - 1, Math.max(1, Math.ceil((p * sorted.length) / 100)) - 1)];
+  return sorted.length ? { count: sorted.length, medianMs: rank(50), p90Ms: rank(90), maxMs: sorted[sorted.length - 1] } : { count: 0 };
+}
+
+/** The core's `insights` on the demo world: counts and durations only */
+export function demoInsights(w: DemoWorld, views: Map<string, LedgerSession>, project: string | undefined, range: LedgerRange, now: number): LedgerInsights {
+  const from = range === "7d" ? now - 7 * DAY_MS : range === "30d" ? now - 30 * DAY_MS : undefined;
+  const inProject = (sessionId?: string) => !project || views.get(sessionId ?? "")?.project === project;
+  const inRange = (at?: number) => from === undefined || (at ?? 0) >= from;
+  const questions = w.questions.filter((q) => inProject(q.sessionId));
+  const settled = questions.filter((q) => q.state !== "open" && q.answeredAt !== undefined && inRange(q.answeredAt));
+  const people = settled.filter((q) => q.resolvedBy !== "agent");
+  const open = questions.filter((q) => q.state === "open" && !views.get(q.sessionId)?.archivedAt);
+  const prompts = w.prompts.filter((p) => p.state === "auto" && inProject(p.sessionId) && inRange(p.createdAt));
+  const corrected = (p: (typeof prompts)[number]) => !!p.reviewed && w.events.some((e) => e.sessionId === p.sessionId && e.type === "message" && e.actor === "human" && e.ts >= p.createdAt);
+  const kinds = [...new Set(prompts.map((p) => p.kind))].sort().map((kind) => {
+    const rows = prompts.filter((p) => p.kind === kind);
+    return { kind, total: rows.length, reviewed: rows.filter((p) => p.reviewed).length, corrected: rows.filter(corrected).length, unreviewed: rows.filter((p) => !p.reviewed).length };
+  });
+  const sessions = [...views.values()].filter((s) => (!project || s.project === project) && (!s.archivedAt || inRange(s.archivedAt)));
+  const byVerdict = Object.fromEntries(["needs_human", "confirm", "expirable", "pending_merge", "stale", "active", "shelved", "archived"].map((v) => [v, sessions.filter((s) => s.verdict === v).length])) as LedgerInsights["sessions"]["byVerdict"];
+  const byRole = Object.fromEntries(ledgerRoles.map((r) => [r, sessions.filter((s) => s.role === r).length])) as LedgerInsights["sessions"]["byRole"];
+  const stale = sessions.filter((s) => s.verdict === "stale");
+  const reports = w.events.filter((e) => e.actor === "agent" && inProject(e.sessionId) && e.ts <= now);
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+  const today = new Date(now);
+  const perDay = Array.from({ length: days }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (days - 1 - i));
+    const start = d.getTime(), end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+    return { day: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, reports: reports.filter((e) => e.ts >= start && e.ts < end).length };
+  });
+  return {
+    ...(project ? { project } : {}), range, ...(from !== undefined ? { from } : {}), to: now,
+    questions: { asked: questions.filter((q) => inRange(q.createdAt)).length, answered: people.filter((q) => q.state === "answered").length, dismissed: people.filter((q) => q.state === "dismissed").length, resolvedByAgent: settled.length - people.length, wait: spread(people.map((q) => (q.answeredAt ?? 0) - q.createdAt)), open: spread(open.map((q) => now - q.createdAt)) },
+    autoAnswers: { total: prompts.length, reviewed: kinds.reduce((n, k) => n + k.reviewed, 0), corrected: kinds.reduce((n, k) => n + k.corrected, 0), unreviewed: kinds.reduce((n, k) => n + k.unreviewed, 0), byKind: kinds },
+    sessions: { total: sessions.length, byVerdict, byRole, stale: stale.length, staleUnreported: stale.filter((s) => !s.lastAgentAt).length, unreported: sessions.filter((s) => !s.lastAgentAt).length },
+    reports: reports.filter((e) => inRange(e.ts)).length,
+    reportsPerDay: perDay,
+  };
 }

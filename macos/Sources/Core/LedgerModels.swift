@@ -486,6 +486,68 @@ struct LedgerReleaseNotes: Codable, Hashable {
     var sessionCount: Int { groups.reduce(0) { $0 + $1.sessions.count } }
 }
 
+/// `insights`: counts and durations over a period, never the text of a question, answer or report.
+/// (Windows: LedgerInsights in entities/ledger/model/types.ts)
+struct LedgerInsights: Codable, Hashable {
+    /// Durations: nearest-rank median and 90th percentile, and the longest; absent without values
+    struct Spread: Codable, Hashable {
+        var count: Int
+        var medianMs: LedgerMs?
+        var p90Ms: LedgerMs?
+        var maxMs: LedgerMs?
+    }
+    struct Questions: Codable, Hashable {
+        var asked: Int
+        var answered: Int
+        var dismissed: Int
+        var resolvedByAgent: Int
+        var wait: Spread
+        var open: Spread
+    }
+    struct AutoKind: Codable, Hashable, Identifiable {
+        var kind: String
+        var total: Int
+        var reviewed: Int
+        var corrected: Int
+        var unreviewed: Int
+        var id: String { kind }
+    }
+    struct AutoAnswers: Codable, Hashable {
+        var total: Int
+        var reviewed: Int
+        var corrected: Int
+        var unreviewed: Int
+        var byKind: [AutoKind]
+    }
+    struct Sessions: Codable, Hashable {
+        var total: Int
+        var byVerdict: [String: Int]
+        var byRole: [String: Int]
+        var stale: Int
+        var staleUnreported: Int
+        var unreported: Int
+    }
+    struct Day: Codable, Hashable, Identifiable {
+        var day: String
+        var reports: Int
+        var id: String { day }
+    }
+    var project: String?
+    var range: LedgerRange
+    var from: LedgerMs?
+    var to: LedgerMs
+    var questions: Questions
+    var autoAnswers: AutoAnswers
+    var sessions: Sessions
+    var reports: Int
+    var reportsPerDay: [Day]
+
+    /// Nothing happened in the period: the sheet shows its empty state instead of zeros
+    var isEmpty: Bool {
+        sessions.total == 0 && reports == 0 && questions.asked == 0 && questions.open.count == 0 && autoAnswers.total == 0
+    }
+}
+
 /// `restore`: the backup that was checked and, unless `dryRun`, restored, with the safety copy of the ledger it replaced
 struct LedgerRestoreResult: Codable, Hashable {
     struct Contents: Codable, Hashable {

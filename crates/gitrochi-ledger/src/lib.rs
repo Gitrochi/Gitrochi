@@ -24,6 +24,7 @@ pub mod http;
 pub mod hub;
 pub mod human;
 pub mod import;
+pub mod insights;
 pub mod integrations;
 pub mod legacy;
 mod legacy_extra;

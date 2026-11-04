@@ -106,6 +106,11 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 }
                 return try encode(LedgerBackupList(directory: "demo/backups", backups: files))
             case "restore": throw LedgerFailure(code: "NOT_ALLOWED", message: "The demo cannot restore a backup")
+            case "insights":
+                let open = openCounts()
+                let decorated = order.compactMap { sessions[$0] }.map { decorate($0, open: open[$0.id] ?? 0, now: now) }
+                return try encode(LedgerDemoReports.insights(project: a["project"].string, range: range(a), now: now, sessions: decorated,
+                                                             questions: questions, prompts: prompts, events: events))
             case "release_notes":
                 guard let key = a["project"].string else { throw LedgerFailure(code: "INVALID_ARGUMENT", message: "Missing project") }
                 let rows = order.compactMap { sessions[$0] }

@@ -94,6 +94,13 @@ struct LedgerClient: Sendable {
         try await call("restore", ["path": .string(path), "dryRun": .bool(dryRun)])
     }
 
+    /// Question waits, automatic answers, sessions and reports over a period; nil `project` is every project
+    func insights(project: String?, range: LedgerRange) async throws -> LedgerInsights {
+        var args: [String: LedgerJSON] = ["range": .string(range.rawValue)]
+        if let project { args["project"] = .string(project) }
+        return try await call("insights", args)
+    }
+
     /// A Markdown draft for one baseline of `project`; nil `version` is HEAD
     func releaseNotes(project: String, version: String?) async throws -> LedgerReleaseNotes {
         var args: [String: LedgerJSON] = ["project": .string(project)]

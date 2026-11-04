@@ -100,6 +100,95 @@ enum LedgerDemoReports {
     }
 }
 
+extension LedgerDemoReports {
+    /// Nearest-rank percentiles, as the core's insights.rs computes them
+    static func spread(_ values: [LedgerMs]) -> LedgerInsights.Spread {
+        let sorted = values.filter { $0 >= 0 }.sorted()
+        guard let last = sorted.last else { return .init(count: 0) }
+        func rank(_ p: Int) -> LedgerMs {
+            let at = max(1, (p * sorted.count + 99) / 100)
+            return sorted[min(sorted.count, at) - 1]
+        }
+        return .init(count: sorted.count, medianMs: rank(50), p90Ms: rank(90), maxMs: last)
+    }
+
+    /// The core's `insights` on the demo's records: counts and durations only. `sessions` carry their verdicts.
+    static func insights(project: String?, range: LedgerRange, now: LedgerMs, sessions: [LedgerSession], questions: [LedgerQuestion],
+                         prompts: [LedgerPendingPrompt], events: [String: [LedgerEvent]]) -> LedgerInsights {
+        let from: LedgerMs? = range == .all ? nil : range.start(now: now)
+        let projectOf = Dictionary(sessions.map { ($0.id, $0.project) }, uniquingKeysWith: { first, _ in first })
+        func inProject(_ id: String?) -> Bool { project == nil || projectOf[id ?? ""] == project }
+        func inRange(_ at: LedgerMs?) -> Bool { from.map { (at ?? 0) >= $0 } ?? true }
+
+        let asked = questions.filter { inProject($0.sessionId) }
+        var answered = 0, dismissed = 0
+        var waits: [LedgerMs] = []
+        for q in asked where q.state != .open && inRange(q.answeredAt) {
+            guard let at = q.answeredAt else { continue }
+            if q.state == .dismissed { dismissed += 1 } else { answered += 1 }
+            waits.append(at - q.createdAt)
+        }
+        let archived = Set(sessions.filter { $0.archivedAt != nil }.map(\.id))
+        let openAges = asked.filter { $0.state == .open && !archived.contains($0.sessionId) }.map { now - $0.createdAt }
+        let questionStats = LedgerInsights.Questions(asked: asked.filter { inRange($0.createdAt) }.count, answered: answered,
+                                                     dismissed: dismissed, resolvedByAgent: 0, wait: spread(waits), open: spread(openAges))
+
+        var kinds: [String: LedgerInsights.AutoKind] = [:]
+        for prompt in prompts where prompt.state == .auto && inProject(prompt.sessionId) && inRange(prompt.answeredAt ?? prompt.createdAt) {
+            let key = prompt.kind.rawValue
+            var kind = kinds[key] ?? .init(kind: key, total: 0, reviewed: 0, corrected: 0, unreviewed: 0)
+            kind.total += 1
+            if let reviewedAt = prompt.reviewedAt {
+                kind.reviewed += 1
+                let sent = prompt.answeredAt ?? prompt.createdAt
+                let messages = (events[prompt.sessionId ?? ""] ?? []).filter { $0.type == "message" && $0.actor == .human }
+                if messages.contains(where: { $0.ts >= sent && $0.ts <= reviewedAt }) { kind.corrected += 1 }
+            } else {
+                kind.unreviewed += 1
+            }
+            kinds[key] = kind
+        }
+        let byKind = kinds.values.sorted { $0.kind < $1.kind }
+        let auto = LedgerInsights.AutoAnswers(total: byKind.reduce(0) { $0 + $1.total }, reviewed: byKind.reduce(0) { $0 + $1.reviewed },
+                                              corrected: byKind.reduce(0) { $0 + $1.corrected },
+                                              unreviewed: byKind.reduce(0) { $0 + $1.unreviewed }, byKind: byKind)
+
+        var byVerdict = Dictionary(uniqueKeysWithValues: LedgerVerdict.allCases.map { ($0.rawValue, 0) })
+        var byRole = Dictionary(uniqueKeysWithValues: LedgerRole.allCases.map { ($0.rawValue, 0) })
+        var total = 0, stale = 0, staleUnreported = 0, unreported = 0
+        for session in sessions where (project == nil || session.project == project) && (session.archivedAt == nil || inRange(session.archivedAt)) {
+            total += 1
+            byVerdict[session.verdict.rawValue, default: 0] += 1
+            byRole[session.role.rawValue, default: 0] += 1
+            if session.lastAgentAt == nil { unreported += 1 }
+            if session.verdict == .stale {
+                stale += 1
+                if session.lastAgentAt == nil { staleUnreported += 1 }
+            }
+        }
+        let sessionStats = LedgerInsights.Sessions(total: total, byVerdict: byVerdict, byRole: byRole, stale: stale,
+                                                   staleUnreported: staleUnreported, unreported: unreported)
+
+        let reports = sessions.filter { project == nil || $0.project == project }
+            .flatMap { events[$0.id] ?? [] }
+            .filter { $0.actor == .agent && $0.ts <= now }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date(timeIntervalSince1970: Double(now) / 1000))
+        let count = range == .week ? 7 : range == .month ? 30 : 90
+        var days: [LedgerInsights.Day] = []
+        for back in stride(from: count - 1, through: 0, by: -1) {
+            guard let start = calendar.date(byAdding: .day, value: -back, to: today),
+                  let end = calendar.date(byAdding: .day, value: 1, to: start) else { continue }
+            let low = LedgerMs(start.timeIntervalSince1970 * 1000), high = LedgerMs(end.timeIntervalSince1970 * 1000)
+            let parts = calendar.dateComponents([.year, .month, .day], from: start)
+            let day = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+            days.append(.init(day: day, reports: reports.filter { $0.ts >= low && $0.ts < high }.count))
+        }
+        return LedgerInsights(project: project, range: range, from: from, to: now, questions: questionStats, autoAnswers: auto,
+                              sessions: sessionStats, reports: reports.filter { inRange($0.ts) }.count, reportsPerDay: days)
+    }
+}
+
 private extension String {
     var nilIfEmpty: String? { isEmpty ? nil : self }
 }

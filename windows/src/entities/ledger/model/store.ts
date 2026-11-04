@@ -7,7 +7,7 @@ import { summarizeImport, type ImportSummary } from "../lib/imports";
 import { inverseOperation, operationTitle } from "../lib/undo";
 import { bundledLedgerCommand } from "./command";
 import { LedgerReader, message } from "./reader";
-import type { LedgerHumanRequest, LedgerIntegrationStatus, LedgerMethods, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
+import type { LedgerHumanRequest, LedgerIntegrationStatus, LedgerMethods, LedgerRange, LedgerPendingPrompt, LedgerProjectChange, LedgerPromptAnswer, LedgerQuestion, LedgerSearchHit } from "./types";
 
 /**
  * The Ledger page's state, one per app: the contract `State` read when `rev` moves, the selected session's detail, the
@@ -229,6 +229,11 @@ export class LedgerStore extends LedgerReader {
 
   async backups() {
     return (await this.backend.call("backups", {})).backups;
+  }
+
+  /** Question waits, automatic answers, sessions and reports over a period; null `project` is every project */
+  insights(project: string | null, range: LedgerRange) {
+    return this.backend.call("insights", { range, ...(project ? { project } : {}) });
   }
 
   /** A Markdown draft for one baseline of `project`; null `version` is HEAD */
