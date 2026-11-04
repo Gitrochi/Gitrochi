@@ -315,7 +315,9 @@
   color: var(--text-2);
 }
 
-.graph-header > .head-opt {
+.graph-header > .head-opt,
+.graph-header > .head-ref,
+.graph-header > .graph-head-cell {
   position: relative;
   overflow: visible;
 }
@@ -326,7 +328,7 @@
   text-overflow: ellipsis;
 }
 
-/* drag an optional column's left edge to change its width */
+/* drag a column header's edge to change its width */
 .graph-header .col-resizer {
   position: absolute;
   top: 0;
@@ -334,6 +336,14 @@
   left: -4px;
   width: 8px;
   cursor: col-resize;
+  /* above the next column's label, which a right-edge handle overlaps */
+  z-index: 1;
+}
+
+/* the branch and graph columns are dragged by their right edge */
+.graph-header .col-resizer.right {
+  left: auto;
+  right: -4px;
 }
 
 .graph-header .col-resizer::before {

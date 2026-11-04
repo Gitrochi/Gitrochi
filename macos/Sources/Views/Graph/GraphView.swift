@@ -17,6 +17,11 @@ enum GraphMetrics {
         max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
     }
 
+    /// The graph column's width: the one the user dragged it to, never wider than every lane, or else the lane count's
+    static func width(lanes: Int, dragged: CGFloat?) -> CGFloat {
+        dragged.map { min($0, contentWidth(lanes: lanes)) } ?? width(lanes: lanes)
+    }
+
     /// Every lane side by side; past maxVisibleLanes the graph column scrolls sideways over this width
     static func contentWidth(lanes: Int) -> CGFloat {
         max(44, CGFloat(lanes) * laneWidth + leftPad + rightPad)
@@ -38,21 +43,25 @@ enum GraphMetrics {
 
     /// The optional columns after the message, in order; the user drags their header edges to change their widths
     static let optionalColumns = ["author", "time", "sha"]
+    /// The branch and graph columns are dragged by their right edges; the graph has no stored default, it follows the lane count until dragged
+    static let resizableColumns = ["ref", "graph"] + optionalColumns
     static let defaultWidths: [String: CGFloat] = ["author": 120, "time": 84, "sha": 72]
     static func widthRange(_ id: String) -> ClosedRange<CGFloat> {
         switch id {
+        case "ref": return 80...420
+        case "graph": return 44...1200
         case "author": return 60...320
         case "time": return 60...220
         default: return 50...140
         }
     }
 
-    /// Reads "author:140,sha:80" (what the header's drags store) into widths inside each column's range
+    /// Reads "ref:240,author:140,sha:80" (what the header's drags store) into widths inside each column's range
     static func widths(_ stored: String) -> [String: CGFloat] {
         var widths = defaultWidths
         for pair in stored.split(separator: ",") {
             let parts = pair.split(separator: ":")
-            guard parts.count == 2, let id = parts.first.map(String.init), let value = Double(parts[1]), defaultWidths[id] != nil else { continue }
+            guard parts.count == 2, let id = parts.first.map(String.init), let value = Double(parts[1]), resizableColumns.contains(id) else { continue }
             widths[id] = min(max(CGFloat(value), widthRange(id).lowerBound), widthRange(id).upperBound)
         }
         return widths
@@ -85,14 +94,15 @@ enum GraphMetrics {
     static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = [],
                         widths: [String: CGFloat] = defaultWidths) -> Columns {
         func optional(_ id: String) -> CGFloat { shown.contains(id) ? widths[id] ?? defaultWidths[id] ?? 0 : 0 }
-        var c = Columns(graph: hidden.contains("graph") ? 0 : graph, author: optional("author"), time: optional("time"), sha: optional("sha"))
+        var c = Columns(ref: widths["ref"] ?? refWidth, graph: hidden.contains("graph") ? 0 : graph,
+                        author: optional("author"), time: optional("time"), sha: optional("sha"))
         if hidden.contains("ref") { c.ref = 0 }
         // 메시지 앞 막대·여백 20, 행 오른쪽 여백 12, 오른쪽 칸과 그 위 머리의 메뉴 자리
         func short() -> CGFloat { messageMin - (width - (c.ref + c.graph + 32 + c.trailing + (c.trailing > 0 ? headerToolsWidth : 0))) }
         if short() > 0 { c.sha = 0 }
         if short() > 0 { c.time = 0 }
         if short() > 0 { c.author = 0 }
-        if short() > 0, c.ref > 0 { c.ref = max(110, c.ref - short()) }
+        if short() > 0, c.ref > 0 { c.ref = max(min(c.ref, 110), c.ref - short()) }
         if short() > 0, c.graph > 0 { c.graph = max(min(graph, 66), c.graph - short()) }
         return c
     }
@@ -106,18 +116,19 @@ struct GraphView: View {
     @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
     /// Optional columns the user turned on ("author,time,sha"); off by default
     @AppStorage("graphShownColumns") private var shownColumns = ""
-    /// Widths the user dragged the optional columns to ("author:140,sha:80")
+    /// Widths the user dragged the columns to ("ref:240,graph:120,author:140")
     @AppStorage("graphColumnWidths") private var columnWidths = ""
     /// How far the lanes are scrolled sideways when there are more than fit
     @ViewState private var laneOffset: CGFloat = 0
 
     var body: some View {
-        let graphWidth = GraphMetrics.width(lanes: store.maxLanes)
+        let widths = GraphMetrics.widths(columnWidths)
+        let graphWidth = GraphMetrics.width(lanes: store.maxLanes, dragged: widths["graph"])
         let contentWidth = GraphMetrics.contentWidth(lanes: store.maxLanes)
         // 좁은 화면에서는 작성자·시간 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
         let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)),
                                            shown: Set(shownColumns.split(separator: ",").map(String.init)),
-                                           widths: GraphMetrics.widths(columnWidths))
+                                           widths: widths)
         let offset = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
         VStack(spacing: 0) {
             if store.showSearchBar || store.isSearching {
@@ -332,7 +343,11 @@ private struct GraphHeader: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            if columns.ref > 0 { Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading) }
+            if columns.ref > 0 {
+                Text("Branch / Tag").padding(.leading, 10).frame(width: columns.ref, alignment: .leading)
+                    .overlay(alignment: .trailing) { trailingResizer("ref", width: columns.ref, range: GraphMetrics.widthRange("ref")) }
+                    .zIndex(1)
+            }
             if columns.graph > 0 {
                 // with more lanes than fit, a scrollbar sits under the label
                 VStack(alignment: .leading, spacing: 1) {
@@ -342,6 +357,9 @@ private struct GraphHeader: View {
                     }
                 }
                 .frame(width: columns.graph, alignment: .leading)
+                // dragging past every lane would only add empty room
+                .overlay(alignment: .trailing) { trailingResizer("graph", width: columns.graph, range: 44...max(44, contentWidth)) }
+                .zIndex(1)
             }
             Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             if columns.author > 0 { label("Author", id: "author", width: columns.author) }
@@ -379,11 +397,18 @@ private struct GraphHeader: View {
             }
     }
 
+    /// The branch and graph columns' right edge: dragging right widens them and leaves the message less room
+    private func trailingResizer(_ id: String, width: CGFloat, range: ClosedRange<CGFloat>) -> some View {
+        ColumnResizer(width: width, range: range, edge: .trailing) { resize(id, to: $0) }
+            .offset(x: 4)
+    }
+
     private func resize(_ id: String, to width: CGFloat) {
         var current = GraphMetrics.widths(widths)
         current[id] = width.rounded()
-        widths = GraphMetrics.optionalColumns.compactMap { key in
-            current[key].flatMap { $0 == GraphMetrics.defaultWidths[key] ? nil : "\(key):\(Int($0))" }
+        let defaults = GraphMetrics.defaultWidths.merging(["ref": GraphMetrics.refWidth]) { $1 }
+        widths = GraphMetrics.resizableColumns.compactMap { key in
+            current[key].flatMap { $0 == defaults[key] ? nil : "\(key):\(Int($0))" }
         }.joined(separator: ",")
     }
 
@@ -413,10 +438,12 @@ private struct GraphHeader: View {
     }
 }
 
-/// The left edge of an optional column's label: drag it sideways to change the column's width
+/// A column header's edge: drag it sideways to change the column's width. Optional columns have it on their left,
+/// the branch and graph columns on their right
 private struct ColumnResizer: View {
     let width: CGFloat
     let range: ClosedRange<CGFloat>
+    var edge: HorizontalEdge = .leading
     let onResize: (CGFloat) -> Void
     @ViewState private var start: CGFloat?
 
@@ -430,8 +457,9 @@ private struct ColumnResizer: View {
             .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global).onChanged { value in
                 let origin = start ?? width
                 if start == nil { start = origin }
-                // the handle is on the column's left, so dragging left widens it
-                onResize(min(max(origin - value.translation.width, range.lowerBound), range.upperBound))
+                // a handle on the column's left widens it when dragged left, one on its right when dragged right
+                let delta = edge == .leading ? -value.translation.width : value.translation.width
+                onResize(min(max(origin + delta, range.lowerBound), range.upperBound))
             }.onEnded { _ in start = nil })
             .help("Drag to resize the column")
     }

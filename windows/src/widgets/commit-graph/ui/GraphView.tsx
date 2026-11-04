@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, DEFAULT_WIDTHS, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphFullWidth, graphWidth, laneOffsetForThumb, laneThumb, OPTIONAL_COLUMNS, type OptionalColumnId, revealLaneOffset, ROW_H, toggleColumn } from "../lib/metrics";
+import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphColumnWidth, graphFullWidth, isDefaultWidth, laneOffsetForThumb, laneThumb, OPTIONAL_COLUMNS, type OptionalColumnId, RESIZABLE_COLUMNS, type ResizableColumnId, revealLaneOffset, ROW_H, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -14,7 +14,6 @@ export function GraphView({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(store.ci);
   useObserve(settings);
-  const gw = graphWidth(store.maxLanes);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000, scrollbar: 0 });
 
@@ -52,23 +51,24 @@ export function GraphView({ store }: { store: RepoStore }) {
   const hiddenColumns = settings.get<GraphColumnId[]>("graphHiddenColumns", []);
   const shownColumns = settings.get<OptionalColumnId[]>("graphShownColumns", []);
   const hiddenKey = hiddenColumns.join(","), shownKey = shownColumns.join(",");
-  // the widths the optional columns were dragged to; while a drag is on, its width shows before it is stored
+  // the widths the columns were dragged to; while a drag is on, its width shows before it is stored
   const storedWidths = settings.get<Partial<ColumnWidths>>("graphColumnWidths", {});
   const [dragWidth, setDragWidth] = useState<Partial<ColumnWidths> | null>(null);
   const widths = columnWidths({ ...storedWidths, ...dragWidth });
-  const widthsKey = OPTIONAL_COLUMNS.map((id) => widths[id]).join(",");
+  const widthsKey = RESIZABLE_COLUMNS.map((id) => widths[id]).join(",");
+  const gw = graphColumnWidth(store.maxLanes, widths.graph);
   const cols = useMemo(
     () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths),
     // the widths are read through their key, so a new object with the same widths leaves the rows alone
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [viewport.width, gw, hiddenKey, shownKey, widthsKey],
   );
-  const resizeColumn = (id: OptionalColumnId, width: number, done: boolean) => {
+  const resizeColumn = (id: ResizableColumnId, width: number, done: boolean) => {
     if (!done) return setDragWidth({ [id]: width });
     setDragWidth(null);
     const next: Partial<ColumnWidths> = { ...columnWidths(storedWidths), [id]: width };
     // only the widths that differ from the default are kept, so a reset or a new default reaches the rest
-    settings.set("graphColumnWidths", Object.fromEntries(OPTIONAL_COLUMNS.filter((key) => next[key] !== DEFAULT_WIDTHS[key]).map((key) => [key, next[key]])));
+    settings.set("graphColumnWidths", Object.fromEntries(RESIZABLE_COLUMNS.flatMap((key) => (next[key] === undefined || isDefaultWidth(key, next[key]) ? [] : [[key, next[key]]]))));
   };
   // lanes beyond the column scroll sideways, all rows together, with one offset clamped to what does not fit
   const fullWidth = graphFullWidth(store.maxLanes);
@@ -145,8 +145,18 @@ export function GraphView({ store }: { store: RepoStore }) {
     <div className="col grow" style={{ background: "var(--surface)" }}>
       {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
       <div className="graph-header" style={{ paddingRight: 12 + viewport.scrollbar }} onContextMenu={(e) => showContextMenu(e, columnMenu())}>
-        {cols.ref > 0 && <span style={{ width: cols.ref, paddingLeft: 10 }}>{t("Branch / Tag")}</span>}
-        {cols.graph > 0 && <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))} />}
+        {cols.ref > 0 && (
+          <span className="head-ref" style={{ width: cols.ref, paddingLeft: 10 }}>
+            <span className="head-opt-label">{t("Branch / Tag")}</span>
+            <ColumnResizer id="ref" edge="right" width={cols.ref} onResize={(width, done) => resizeColumn("ref", width, done)} />
+          </span>
+        )}
+        {cols.graph > 0 && (
+          <LaneHeader width={cols.graph} total={fullWidth} offset={laneOffset} onOffset={(value) => setLaneOffset(clampLaneOffset(value, laneOverflow))}>
+            {/* dragging past every lane would only add empty room */}
+            <ColumnResizer id="graph" edge="right" width={cols.graph} max={fullWidth} onResize={(width, done) => resizeColumn("graph", width, done)} />
+          </LaneHeader>
+        )}
         <span className="graph-head-message">
           <span className="graph-head-label">{t("Commit message")}</span>
         </span>
@@ -219,7 +229,7 @@ export function GraphView({ store }: { store: RepoStore }) {
  * The graph column's header cell. When the lanes are wider than the column it carries a thin scrollbar
  * (thumb sized visible/total); dragging it, or scrolling sideways or with Shift+wheel over the cell, moves every row's lanes.
  */
-function LaneHeader({ width, total, offset, onOffset }: { width: number; total: number; offset: number; onOffset: (offset: number) => void }) {
+function LaneHeader({ width, total, offset, onOffset, children }: { width: number; total: number; offset: number; onOffset: (offset: number) => void; children?: React.ReactNode }) {
   const cell = useRef<HTMLSpanElement>(null);
   const latest = useRef({ offset, onOffset });
   latest.current = { offset, onOffset };
@@ -277,6 +287,7 @@ function LaneHeader({ width, total, offset, onOffset }: { width: number; total: 
           <span className="lane-scrollbar-thumb" style={{ width: thumb.size, left: thumb.start }} onPointerDown={(e) => dragFrom(e, thumb.start)} />
         </span>
       )}
+      {children}
     </span>
   );
 }
@@ -387,19 +398,22 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
   );
 }
 
-/** The left edge of an optional column's label: drag it sideways to change the column's width (macOS: ColumnResizer) */
-function ColumnResizer({ id, width, onResize }: { id: OptionalColumnId; width: number; onResize: (width: number, done: boolean) => void }) {
+/**
+ * A column header's edge: drag it sideways to change the column's width (macOS: ColumnResizer).
+ * Optional columns have it on their left, the branch and graph columns on their right.
+ */
+function ColumnResizer({ id, width, edge = "left", max, onResize }: { id: ResizableColumnId; width: number; edge?: "left" | "right"; max?: number; onResize: (width: number, done: boolean) => void }) {
   return (
     <span
-      className="col-resizer"
+      className={`col-resizer ${edge}`}
       data-tip={t("Drag to resize the column")}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
         const startX = e.clientX;
-        // the handle is on the column's left, so dragging left widens it
-        const at = (x: number) => clampColumnWidth(id, width - (x - startX));
+        // a handle on the column's left widens it when dragged left, one on its right when dragged right
+        const at = (x: number) => clampColumnWidth(id, width + (edge === "left" ? startX - x : x - startX), max);
         const move = (ev: PointerEvent) => onResize(at(ev.clientX), false);
         const up = (ev: PointerEvent) => {
           window.removeEventListener("pointermove", move);

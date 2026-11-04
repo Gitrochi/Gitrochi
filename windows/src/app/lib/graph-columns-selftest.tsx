@@ -8,7 +8,8 @@ const pause = (ms = 60) => new Promise<void>((resolve) => setTimeout(resolve, ms
 
 /**
  * The optional author, time and SHA columns: off by default, turned on from the header's column menu, aligned with the row cells,
- * dropped SHA-time-author on narrow widths, widened by dragging a label's left edge, and put back by the menu's reset.
+ * dropped SHA-time-author on narrow widths, widened by dragging a label's left edge, the branch and graph columns resized by their right edge,
+ * and put back by the menu's reset.
  */
 export async function graphColumnsSelfTest(): Promise<[boolean, string]> {
   const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-10000px;top:0;width:1100px;height:520px;display:flex"; document.body.append(host);
@@ -57,10 +58,27 @@ export async function graphColumnsSelfTest(): Promise<[boolean, string]> {
     window.dispatchEvent(new PointerEvent("pointerup", { clientX: x - 40 })); await pause();
     const widths = settings.get<Record<string, number>>("graphColumnWidths", {});
     ensure(widths.author === 160 && q(".head-author")?.offsetWidth === 160 && q(".commit-row .col-author")?.offsetWidth === 160, `Dragging must widen the author column and store it: ${JSON.stringify(widths)} ${q(".head-author")?.offsetWidth}`);
+    // the branch and graph columns' right edges: dragging right widens, left narrows, and the message takes up the difference
+    const dragRight = async (selector: string, dx: number) => {
+      const edge = q(selector)!, x0 = edge.getBoundingClientRect().left + 4;
+      edge.dispatchEvent(new PointerEvent("pointerdown", { clientX: x0, button: 0, bubbles: true }));
+      window.dispatchEvent(new PointerEvent("pointermove", { clientX: x0 + dx })); await pause();
+      window.dispatchEvent(new PointerEvent("pointerup", { clientX: x0 + dx })); await pause();
+    };
+    const message = () => q(".graph-head-message")!.offsetWidth;
+    const before = message();
+    await dragRight(".head-ref .col-resizer", 30);
+    ensure(q(".head-ref")?.offsetWidth === 220 && q(".commit-row .ref-col")?.offsetWidth === 220 && settings.get<Record<string, number>>("graphColumnWidths", {}).ref === 220,
+      `Dragging the branch column's right edge must widen it in the header and rows and store it: ${q(".head-ref")?.offsetWidth} ${q(".commit-row .ref-col")?.offsetWidth}`);
+    const graph = q(".graph-head-cell")!.offsetWidth;
+    await dragRight(".graph-head-cell .col-resizer", -60);
+    ensure(q(".graph-head-cell")?.offsetWidth === graph - 60 && q(".commit-row .graph-cell")?.offsetWidth === graph - 60 && q(".lane-scrollbar"),
+      `Dragging the graph column's right edge left must narrow it, with the lanes scrolling: ${graph} → ${q(".graph-head-cell")?.offsetWidth}`);
+    ensure(near(message(), before - 30 + 60), `The message column must take up the difference: ${before} → ${message()}`);
     await openMenu();
     menuItem(t("Reset to default layout"))!.click(); await pause();
     ensure(!q(".head-opt") && settings.get<string[]>("graphShownColumns", []).length === 0 && Object.keys(settings.get<object>("graphColumnWidths", {})).length === 0, "Reset must put back the default columns and widths");
-    return [true, "Off by default and unchecked in the menu, turned on from the menu and stored, header labels line up with the row cells, time and then author drop on narrow widths, SHA shows the short id, a drag widens a column and the reset puts the default layout back"];
+    return [true, "Off by default and unchecked in the menu, turned on from the menu and stored, header labels line up with the row cells, time and then author drop on narrow widths, SHA shows the short id, a drag widens a column, the branch and graph columns resize by their right edge, and the reset puts the default layout back"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); keys.forEach((key, i) => settings.set(key, saved[i])); window.dispatchEvent(new MouseEvent("mousedown")); }
 }

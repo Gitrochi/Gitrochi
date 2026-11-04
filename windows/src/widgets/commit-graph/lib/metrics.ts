@@ -19,6 +19,9 @@ export const graphWidth = (lanes: number) => Math.max(44, Math.min(lanes, MAX_LA
 /** The width every lane needs, without the visible-lane cap; what does not fit the column scrolls sideways */
 export const graphFullWidth = (lanes: number) => Math.max(44, lanes * LANE_W + LEFT_PAD + RIGHT_PAD);
 
+/** The graph column's width: the one the user dragged it to, never wider than every lane, or else the lane count's (macOS: GraphMetrics.width(lanes:dragged:)) */
+export const graphColumnWidth = (lanes: number, dragged?: number) => (dragged === undefined ? graphWidth(lanes) : Math.min(dragged, graphFullWidth(lanes)));
+
 /** A lane scroll offset kept between 0 and the width that does not fit */
 export const clampLaneOffset = (offset: number, overflow: number) => Math.min(Math.max(0, Math.round(offset)), Math.max(0, Math.round(overflow)));
 
@@ -60,18 +63,27 @@ export type GraphColumnId = "ref" | "graph";
 /** The columns the user can turn on (settings graphShownColumns), so they stay off until chosen; in this order after the message */
 export type OptionalColumnId = "author" | "time" | "sha";
 export const OPTIONAL_COLUMNS: OptionalColumnId[] = ["author", "time", "sha"];
-/** Widths the user can drag the optional columns to (settings graphColumnWidths) (macOS: GraphMetrics.defaultWidths, widthRange) */
-export type ColumnWidths = Record<OptionalColumnId, number>;
+/** The columns whose header edge the user drags: the branch and graph columns by their right edge, the optional ones by their left */
+export type ResizableColumnId = GraphColumnId | OptionalColumnId;
+export const RESIZABLE_COLUMNS: ResizableColumnId[] = ["ref", "graph", ...OPTIONAL_COLUMNS];
+/**
+ * Widths the user can drag the columns to (settings graphColumnWidths) (macOS: GraphMetrics.defaultWidths, widthRange).
+ * The branch column defaults to REF_W; the graph has no default, it follows the lane count until dragged.
+ */
+export type ColumnWidths = Record<OptionalColumnId, number> & Partial<Record<GraphColumnId, number>>;
 export const DEFAULT_WIDTHS: ColumnWidths = { author: 120, time: 84, sha: 72 };
-const WIDTH_RANGE: Record<OptionalColumnId, [number, number]> = { author: [60, 320], time: [60, 220], sha: [50, 140] };
-/** A width kept inside the column's range */
-export const clampColumnWidth = (id: OptionalColumnId, width: number) => Math.round(Math.min(Math.max(width, WIDTH_RANGE[id][0]), WIDTH_RANGE[id][1]));
+const WIDTH_RANGE: Record<ResizableColumnId, [number, number]> = { ref: [80, 420], graph: [44, 1200], author: [60, 320], time: [60, 220], sha: [50, 140] };
+/** A width kept inside the column's range, and under max when given */
+export const clampColumnWidth = (id: ResizableColumnId, width: number, max = Infinity) =>
+  Math.round(Math.min(Math.max(width, WIDTH_RANGE[id][0]), WIDTH_RANGE[id][1], Math.max(WIDTH_RANGE[id][0], max)));
+/** Whether a width is the column's default, so it need not be stored */
+export const isDefaultWidth = (id: ResizableColumnId, width: number) => width === (id === "ref" ? REF_W : id === "graph" ? undefined : DEFAULT_WIDTHS[id]);
 
 /** The stored widths over the defaults, each kept inside its range; anything else stored is ignored */
 export function columnWidths(stored: unknown): ColumnWidths {
-  const widths = { ...DEFAULT_WIDTHS };
+  const widths: ColumnWidths = { ...DEFAULT_WIDTHS };
   if (stored && typeof stored === "object")
-    for (const id of OPTIONAL_COLUMNS) {
+    for (const id of RESIZABLE_COLUMNS) {
       const value = (stored as Record<string, unknown>)[id];
       if (typeof value === "number" && Number.isFinite(value)) widths[id] = clampColumnWidth(id, value);
     }
@@ -84,13 +96,13 @@ export function columnWidths(stored: unknown): ColumnWidths {
  */
 export function graphColumns(width: number, graph: number, hidden: ReadonlySet<string> = new Set(), shown: ReadonlySet<string> = new Set(), widths: ColumnWidths = DEFAULT_WIDTHS): GraphColumns {
   const optional = (id: OptionalColumnId) => (shown.has(id) ? widths[id] : 0);
-  const c: GraphColumns = { ref: hidden.has("ref") ? 0 : REF_W, graph: hidden.has("graph") ? 0 : graph, author: optional("author"), time: optional("time"), sha: optional("sha") };
+  const c: GraphColumns = { ref: hidden.has("ref") ? 0 : (widths.ref ?? REF_W), graph: hidden.has("graph") ? 0 : graph, author: optional("author"), time: optional("time"), sha: optional("sha") };
   // 20 for the bar and space before the message, 12 at the row's right end, the optional columns and the header's menus above them
   const short = () => MESSAGE_MIN - (width - (c.ref + c.graph + 32 + trailingWidth(c)));
   if (short() > 0) c.sha = 0;
   if (short() > 0) c.time = 0;
   if (short() > 0) c.author = 0;
-  if (short() > 0 && c.ref > 0) c.ref = Math.max(REF_MIN, c.ref - short());
+  if (short() > 0 && c.ref > 0) c.ref = Math.max(Math.min(c.ref, REF_MIN), c.ref - short());
   if (short() > 0 && c.graph > 0) c.graph = Math.max(Math.min(graph, GRAPH_MIN), c.graph - short());
   return c;
 }
