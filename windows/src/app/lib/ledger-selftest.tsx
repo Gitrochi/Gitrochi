@@ -50,7 +50,7 @@ function leave(el: HTMLElement) {
 }
 
 /**
- * The Ledger page on the demo backend: offered without GITROCHI_LEDGER_PREVIEW and opened from the page list without a
+ * The Ledger page on the demo backend: offered without an environment variable and opened from the page list without a
  * repository, and every view driven like a person would — an answer saved with Ctrl+Enter, triage keys with undo, the
  * waiting prompts, the quick launches, Board chips and bulk actions, the Graph, inspector operations with the drop confirmation, Ctrl+K,
  * the narrow sheet, Streams, the onboarding sheets with the claude-ledger import, and Settings › Ledger. Nothing leaves
@@ -59,7 +59,7 @@ function leave(el: HTMLElement) {
 export async function ledgerSelfTest(): Promise<[boolean, string]> {
   // loaded on demand, like the page itself, so the Ledger stays out of the start-up bundle
   const [{ DemoLedgerBackend, LedgerNotifier, LedgerStore, ledgerStore, ledgerTracking, verdictCounts, verdictLook }, { LedgerWorkspace }] = await Promise.all([import("@/entities/ledger"), import("@/widgets/ledger-workspace")]);
-  const original = { preview: env.ledgerPreview, demo: env.ledgerDemo, tabs: workspace.tabs, activeId: workspace.activeId, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
+  const original = { demo: env.ledgerDemo, tabs: workspace.tabs, activeId: workspace.activeId, get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion, run: ipc.run, http: ipc.http, write: ipc.writeText, open: ipc.openUrl, core: ipc.ledgerCall, pick: ipc.ledgerPickDatabase };
   const memory = new Map<string, unknown>([["avatarFetch", false], ["recentRepositories", []]]);
   const listeners = new Set<() => void>(), unexpected: string[] = [], passed: string[] = [];
   // the agent center rewrites its hooks files when Track agents I start changes; nothing reaches the disk
@@ -94,8 +94,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     env.ledgerDemo = "1";
 
     // Ledger navigation and settings work without enabling optional background tracking.
-    env.ledgerPreview = null;
-    ensure(isWorkspaceDestination("ledger") && destinationEnabled("ledger") && restoredDestination("ledger", false) === "ledger", "Ledger must be available without the preview switch");
+    ensure(isWorkspaceDestination("ledger") && destinationEnabled("ledger") && restoredDestination("ledger", false) === "ledger", "Ledger must be available without an environment variable");
     const app = new RepoStore();
     app.loadGlobalIdentity = async () => {};
     workspace.tabs = [app]; workspace.activeId = app.id;
@@ -104,13 +103,10 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
       handleShortcut(event, () => {});
       return event.defaultPrevented;
     };
-    ensure(numberedShortcut() && app.destination === "ledger", "The Ledger shortcut must open without the preview switch");
+    ensure(numberedShortcut() && app.destination === "ledger", "The Ledger shortcut must open without an environment variable");
     root.render(<RepoPage store={app} openSettings={() => {}} />);
     await until(() => $(".workspace-nav-item[data-page='flows']"));
-    ensure($(".workspace-nav-item[data-page='ledger']"), "The page list must show the Ledger without the switch");
-    env.ledgerPreview = "1";
-    app.changed();
-    ensure(await until(() => $(".workspace-nav-item[data-page='ledger']")), "The page list did not offer the Ledger with the switch on");
+    ensure($(".workspace-nav-item[data-page='ledger']"), "The page list must show the Ledger");
     const tools = $$<HTMLButtonElement>(".workspace-nav-item").map((b) => b.dataset.page);
     ensure(tools.indexOf("ledger") === tools.indexOf("flows") + 1 && !$<HTMLButtonElement>(".workspace-nav-item[data-page='ledger']")!.disabled, `The Ledger must follow Flows and open without a repository: ${tools.join(",")}`);
     ensure(numberedShortcut() && app.destination === "ledger", "The numbered Ledger shortcut did not open without a repository");
@@ -195,6 +191,24 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => $(".ledger-toast")?.textContent?.includes(t("The agent's terminal is not open in Gitrochi. Answer it where the agent runs."))), "Answer in terminal did not look for the agent's terminal");
     ensure(backend.world.prompts.find((p) => p.id === kept.id)?.state === "waiting", "Answer in terminal must leave a held wait to the terminal's answer");
     passed.push("waiting prompts");
+
+    // Wake waiting agents with my answers: while a session's Stop hook waits, its Inbox row and inspector say an answer
+    // wakes the agent; once the wait is over they say nothing again
+    const asking = store.state!.questions.find((q) => q.state === "open" && store.session(q.sessionId)?.project === "atlas")!;
+    ensure(asking && !$(".ledger-wake"), "No agent waits yet, so nothing may say an answer wakes it");
+    const waker = backend.world.sessions.find((s) => s.id === asking.sessionId)!, selectedBefore = store.selectedId;
+    waker.wakeUntil = clock + 120_000;
+    backend.world.rev++;
+    await store.refresh(true);
+    ensure(await until(() => $(`[data-item="q:${asking.id}"] .ledger-wake`)?.textContent === t("Answer wakes the agent")), "A waiting agent's question did not say that an answer wakes it");
+    store.select(waker.id);
+    ensure(await until(() => store.selectedId === waker.id && $(".ledger-inspector-head .ledger-wake")), "The inspector did not say that an answer wakes the waiting agent");
+    waker.wakeUntil = undefined;
+    backend.world.rev++;
+    await store.refresh(true);
+    ensure(await until(() => !$(".ledger-wake")), "The wake-up hint stayed after the agent stopped waiting");
+    store.select(selectedBefore);
+    passed.push("wake-up hint");
     await ledgerAnswersSelfTest(host, store, backend, clock);
     passed.push("editable question choices, suggestions, races and reported answers");
 
@@ -437,20 +451,14 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     await until(() => !$(".modal"));
     passed.push("claude-ledger import");
 
-    // Settings include Ledger with and without optional background tracking.
+    // Settings include Ledger whether or not any of its optional switches is on.
     root.unmount();
     root = createRoot(host);
     const labels = () => $$<HTMLButtonElement>(".modal .segmented button").map((b) => b.textContent?.trim());
-    env.ledgerPreview = null;
-    root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
-    ensure(await until(() => labels().length > 0), "Settings did not open");
-    ensure(labels().includes(t("Ledger")), `Settings must include Ledger without the preview: ${labels().join(", ")}`);
-    root.unmount();
-    root = createRoot(host);
-    env.ledgerPreview = "1";
     memory.set("recentRepositories", ["C:/fixture/atlas"]);
     root.render(<SettingsDialog onClose={() => {}} initialTab="appearance" />);
-    ensure(await until(() => labels().includes(t("Ledger"))), "Settings did not offer the Ledger tab with the preview");
+    ensure(await until(() => labels().length > 0), "Settings did not open");
+    ensure(await until(() => labels().includes(t("Ledger"))), `Settings must include Ledger: ${labels().join(", ")}`);
     ensure(labels().indexOf(t("Ledger")) === labels().indexOf(t("Update")) - 1, `The Ledger tab must come before Update: ${labels().join(", ")}`);
     $$<HTMLButtonElement>(".modal .segmented button").find((b) => b.textContent?.trim() === t("Ledger"))!.click();
     const ledger = ledgerStore(null);
@@ -513,6 +521,26 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     const cli = await ledgerTracking.cli();
     ensure(hooksFiles.every((f) => f.content.includes("gitrochi-ledger") === (f.tracking && !!cli)), `The hooks files did not follow Track agents I start: ${hooksFiles.map((f) => `${f.tracking}:${f.content.includes("gitrochi-ledger")}`).join(", ")}`);
     passed.push("track agents and auto-continue settings");
+    // Wake waiting agents with my answers: off until a person turns it on, kept in the ledger's setting for the hooks
+    const wakeBox = () => $<HTMLInputElement>(`.ledger-settings [data-ledger-section="wake"] input[type="checkbox"]`);
+    const wakeOf = async () => (await ledger.readSettings()).wakeAgents;
+    ensure(wakeBox() && !wakeBox()!.checked, "Wake waiting agents with my answers must start off");
+    wakeBox()!.click();
+    let wake: { enabled: boolean; waitSec: number } | undefined;
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.enabled === true; });
+    ensure(wake?.enabled === true && wake.waitSec === 300, `Turning the wake-up on did not save it: ${JSON.stringify(wake)}`);
+    await until(() => !button(".ledger-settings", "Back up now")!.disabled);
+    const wakeWait = $<HTMLInputElement>(`.ledger-settings [data-ledger-section="wake"] input[type="number"]`)!;
+    wakeWait.focus();
+    type(wakeWait, "120");
+    leave(wakeWait);
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.waitSec === 120; });
+    ensure(wake?.enabled === true && wake.waitSec === 120, `The wake-up's wait did not save: ${JSON.stringify(wake)}`);
+    await until(() => !button(".ledger-settings", "Back up now")!.disabled);
+    wakeBox()!.click();
+    await until(() => { void wakeOf().then((w) => { wake = w; }); return wake?.enabled === false; });
+    ensure(wake?.enabled === false && wake.waitSec === 120, `Turning the wake-up off did not save it: ${JSON.stringify(wake)}`);
+    passed.push("wake-up setting");
     // Notifications and the taskbar badge: both off until a person turns them on
     const noticeBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="notifications"] input[type="checkbox"]`);
     ensure(noticeBoxes().length === 2 && noticeBoxes().every((b) => !b.checked), "Notifications and the badge must start off");
@@ -573,7 +601,6 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     root.unmount();
     host.remove();
     for (const s of stores) s.dispose();
-    env.ledgerPreview = original.preview;
     env.ledgerDemo = original.demo;
     workspace.tabs = original.tabs; workspace.activeId = original.activeId;
     settings.get = original.get; settings.set = original.set; settings.subscribe = original.subscribe; settings.getVersion = original.version;

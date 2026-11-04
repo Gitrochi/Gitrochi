@@ -53,6 +53,8 @@ export interface LedgerSession {
   behind?: number;
   stream?: { line: string };
   autoContinue?: { enabled: boolean; delaySec: number };
+  /** With Wake waiting agents with my answers on, its agent's Stop hook waits until then: an answer or message sent now wakes it */
+  wakeUntil?: Ms;
 }
 
 export interface LedgerArtifact {
@@ -87,6 +89,51 @@ export interface LedgerBrowserStatus {
   manifestPath: string;
   extensionId?: string;
   hostPath?: string;
+  /** False when a registration's host moved with the app or was deleted */
+  hostExists?: boolean;
+  /** When the newest browser-captured question arrived */
+  lastDataAt?: Ms | null;
+}
+
+/** The stable ledger command hooks and MCP entries name; the app keeps it equal to its bundled one */
+export interface LedgerStableCommand {
+  path: string;
+  exists: boolean;
+  current: boolean;
+  refreshed: boolean;
+  /** This app is older than the database, so it kept the existing copy */
+  held: boolean;
+}
+
+/** An executable a client runs for this ledger (crates/gitrochi-ledger/schema/integration-status.schema.json) */
+export interface LedgerConnectionCommand {
+  path: string;
+  exists: boolean;
+  executable: boolean;
+  writesSchema: number | null;
+  version: string | null;
+  canWrite: boolean | null;
+  dbPath: string | null;
+  sameDatabase: boolean | null;
+}
+
+export type LedgerConnectionHealth = "not_installed" | "ok" | "no_data_yet" | "incomplete" | "outdated_command" | "missing_command" | "other_database";
+
+/** `integration_status` and friends: the passive hooks, the MCP entry and whether they still reach this ledger */
+export interface LedgerIntegrationStatus {
+  client: "claude" | "codex";
+  installed: boolean;
+  cliPath: string;
+  ownedHookCount: number;
+  expectedHookCount: number;
+  requiresClientTrust: boolean;
+  hooksDisabled: boolean;
+  hookCommand: LedgerConnectionCommand | null;
+  mcp: { configPath: string; registered: boolean; command: LedgerConnectionCommand | null };
+  databaseSchema: number | null;
+  lastObservedAt: Ms | null;
+  lastReportAt: Ms | null;
+  health: LedgerConnectionHealth;
 }
 
 export interface LedgerQuestion {
@@ -255,6 +302,13 @@ export interface LedgerSettings {
   /** Auto-continue's policy, stored as given: `{enabled, delaySec}` and the fields gitrochi-autocontinue reads */
   autoContinue: Record<string, unknown>;
   backupKeep: number;
+  /** Wake waiting agents with my answers: off by default; how long a tracked agent's Stop hook keeps waiting (10–300 s) */
+  wakeAgents?: LedgerWakeAgents;
+}
+
+export interface LedgerWakeAgents {
+  enabled: boolean;
+  waitSec: number;
 }
 
 export const ledgerBaselineSources = ["tags", "folder", "manual"] as const;
@@ -391,6 +445,12 @@ export interface LedgerMethods {
   browser_status: { args: Record<string, never>; result: LedgerBrowserStatus };
   browser_install: { args: { extensionId: string; hostPath: string }; result: LedgerBrowserStatus };
   browser_remove: { args: Record<string, never>; result: LedgerBrowserStatus };
+  /** Refreshes an existing stable command from `bundled`; `create` only for Set up and Repair */
+  integration_command: { args: { bundled: string; create?: boolean }; result: LedgerStableCommand };
+  integration_status: { args: { client: LedgerIntegrationStatus["client"] }; result: LedgerIntegrationStatus };
+  /** Copies `bundled` to the stable command when needed and installs hooks that run it */
+  integration_install: { args: { client: LedgerIntegrationStatus["client"]; bundled: string }; result: LedgerIntegrationStatus };
+  integration_remove: { args: { client: LedgerIntegrationStatus["client"] }; result: LedgerIntegrationStatus };
   work: { args: Record<string, unknown>; result: unknown };
   documents: { args: Record<string, unknown>; result: unknown };
   notebook: { args: Record<string, unknown>; result: unknown };

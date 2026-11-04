@@ -5,7 +5,7 @@
 
 mod common;
 
-use common::{app, binary, TempDir};
+use common::{app, binary, Schemas, TempDir};
 use gitrochi_ledger::hook::{self, HookEnv, HookResult};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Value};
@@ -1515,4 +1515,285 @@ fn a_hook_interrupted_by_esc_leaves_nothing_waiting_once_the_person_types() {
     assert_eq!(prompt_of(&f, &prompt)["state"], "released");
     let state = app(&f.db, "state", json!({}));
     assert!(state["pendingPrompts"].as_array().unwrap().is_empty());
+}
+
+/// Wake waiting agents with my answers: on, with the given wait.
+fn wake_agents(f: &Fixture, enabled: bool, wait_sec: u64) {
+    app(
+        &f.db,
+        "settings_set",
+        json!({"values": {"wakeAgents": {"enabled": enabled, "waitSec": wait_sec}}}),
+    );
+}
+
+/// The session asks a Ledger question through a report, as an agent with the tools does.
+fn ledger_question(f: &Fixture, text: &str) -> i64 {
+    let reply = app(
+        &f.db,
+        "report",
+        json!({"session": SESSION, "event": "question", "question": text}),
+    );
+    reply["questionIds"][0].as_i64().unwrap()
+}
+
+/// The claim of a waiting Stop hook, once it is stored: `Session.wakeUntil` in the app's state.
+fn waking_until(f: &Fixture) -> i64 {
+    let until = Instant::now() + Duration::from_secs(20);
+    loop {
+        let state = app(&f.db, "state", json!({}));
+        if let Some(at) = state["sessions"][0]["wakeUntil"].as_i64() {
+            return at;
+        }
+        assert!(Instant::now() < until, "no Stop hook claimed the wake-up");
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
+fn done_turn() -> Value {
+    json!({"stop_hook_active": false, "last_assistant_message": "The parser handles both formats now; I asked in the Ledger which default to keep."})
+}
+
+#[test]
+fn an_answer_in_the_ledger_wakes_the_waiting_agent_and_is_delivered_once() {
+    let f = Fixture::new("hook-wake");
+    wake_agents(&f, true, 60);
+    let question = ledger_question(&f, "Which default should the parser keep?");
+    let running = f.spawn("Stop", done_turn());
+    let until = waking_until(&f);
+    let left = until - now_ms();
+    assert!((50_000..=60_000).contains(&left), "{left}");
+    let state = app(&f.db, "state", json!({}));
+    Schemas::load().check("session.schema.json", &state["sessions"][0]);
+
+    // the person answers in the app; the hook delivers it at once
+    let answered = Instant::now();
+    app(
+        &f.db,
+        "human",
+        json!({"action": "answer", "questionId": question, "answer": "Keep the strict one"}),
+    );
+    let ran = running.finish();
+    assert_eq!(ran.code, 2, "{}", ran.stderr);
+    assert!(ran.stdout.is_empty());
+    assert_eq!(
+        ran.stderr,
+        format!("[Gitrochi] From a person to this session (act on these):\n  - [Answer to question #{question}] Q: Which default should the parser keep? → A: Keep the strict one")
+    );
+    // well inside the 60 s wait: at once, not at its end
+    assert!(
+        answered.elapsed() < Duration::from_secs(20),
+        "{:?}",
+        answered.elapsed()
+    );
+
+    // delivered exactly as a report would have, so the app shows it delivered
+    let detail = f.session();
+    assert!(
+        detail["questions"][0]["deliveredAt"].is_number(),
+        "{detail}"
+    );
+    assert_eq!(detail["waitingMessages"], 0);
+    assert!(detail["session"].get("wakeUntil").is_none());
+    let next = app(
+        &f.db,
+        "report",
+        json!({"session": SESSION, "event": "progress", "summary": "Keeping the strict default"}),
+    );
+    assert_eq!(next["messages"], json!([]), "never twice");
+    // the wake-up's own prompt is not the person's, and finds nothing to release
+    f.hook(
+        "UserPromptSubmit",
+        json!({"prompt": "<task-notification>\n<status>completed</status>\n</task-notification>"}),
+    )
+    .assert_no_decision("the wake-up's prompt");
+}
+
+#[test]
+fn a_message_left_while_the_agent_worked_wakes_it_when_its_turn_ends() {
+    let f = Fixture::new("hook-wake-message");
+    wake_agents(&f, true, 60);
+    app(
+        &f.db,
+        "human",
+        json!({"action": "message", "sessionId": SESSION, "text": "Also run the slow tests"}),
+    );
+    let ran = f.hook("Stop", done_turn());
+    assert_eq!(ran.code, 2, "{}", ran.stderr);
+    assert!(
+        ran.stderr
+            .ends_with("[Note from a person] Also run the slow tests"),
+        "{}",
+        ran.stderr
+    );
+    assert!(ran.took < Duration::from_secs(20), "{:?}", ran.took);
+    assert_eq!(f.session()["waitingMessages"], 0);
+}
+
+#[test]
+fn a_newer_prompt_stop_or_end_releases_the_wait() {
+    let f = Fixture::new("hook-wake-release");
+    wake_agents(&f, true, 60);
+    let quiet = |running: Running, what: &str| {
+        let ran = running.finish();
+        ran.assert_no_decision(what);
+        assert!(ran.took < Duration::from_secs(10), "{what}: {:?}", ran.took);
+    };
+    // the person types in the terminal
+    let first = f.spawn("Stop", done_turn());
+    waking_until(&f);
+    f.hook("UserPromptSubmit", json!({"prompt": "go on"}))
+        .assert_no_decision("UserPromptSubmit");
+    quiet(first, "released by the person's prompt");
+    // a newer Stop takes over; only it is woken
+    let older = f.spawn("Stop", done_turn());
+    let first_until = waking_until(&f);
+    let newer = f.spawn("Stop", done_turn());
+    quiet(older, "released by a newer Stop");
+    assert!(waking_until(&f) >= first_until);
+    // SessionStart (resume, /clear) and SessionEnd release it too
+    f.hook("SessionStart", json!({"source": "resume"}))
+        .assert_no_decision("SessionStart");
+    quiet(newer, "released by SessionStart");
+    let last = f.spawn("Stop", done_turn());
+    waking_until(&f);
+    f.hook("SessionEnd", json!({"reason": "other"}))
+        .assert_no_decision("SessionEnd");
+    quiet(last, "released by SessionEnd");
+    assert!(app(&f.db, "state", json!({}))["sessions"][0]
+        .get("wakeUntil")
+        .is_none());
+    // a person's message afterwards waits for the next report, as without the setting
+    app(
+        &f.db,
+        "human",
+        json!({"action": "message", "sessionId": SESSION, "text": "Later"}),
+    );
+    assert_eq!(f.session()["waitingMessages"], 1);
+}
+
+#[test]
+fn the_wait_ends_with_its_time_or_the_setting() {
+    let f = Fixture::new("hook-wake-time");
+    wake_agents(&f, true, 60);
+    // its time runs out: the stored end is brought forward, as the handler re-reads it
+    let running = f.spawn("Stop", done_turn());
+    waking_until(&f);
+    let connection = sql(&f.db);
+    connection
+        .execute(
+            "UPDATE meta SET value = json_set(value, '$.until', ?1) WHERE key = 'wake:' || ?2",
+            params![now_ms(), SESSION],
+        )
+        .unwrap();
+    connection
+        .execute("UPDATE meta SET value = value + 1 WHERE key = 'rev'", [])
+        .unwrap();
+    running.finish().assert_no_decision("the wait ran out");
+    assert!(app(&f.db, "state", json!({}))["sessions"][0]
+        .get("wakeUntil")
+        .is_none());
+    // the person turns the setting off while an agent waits: the wait ends
+    let running = f.spawn("Stop", done_turn());
+    waking_until(&f);
+    wake_agents(&f, false, 60);
+    running.finish().assert_no_decision("the setting went off");
+    // an automatic answer to the stop question wakes the agent already and ends the claim
+    wake_agents(&f, true, 60);
+    f.auto_continue(true);
+    let running = f.spawn("Stop", stop_question());
+    let prompt = f.waiting_prompt();
+    f.deadline_now(&prompt);
+    let ran = running.finish();
+    assert_eq!(ran.code, 2);
+    assert!(
+        ran.stderr.starts_with("[Gitrochi] Auto-continue"),
+        "{}",
+        ran.stderr
+    );
+    assert!(app(&f.db, "state", json!({}))["sessions"][0]
+        .get("wakeUntil")
+        .is_none());
+}
+
+#[test]
+fn with_the_wake_setting_off_stop_is_unchanged_and_fast() {
+    let f = Fixture::new("hook-wake-off");
+    let question = ledger_question(&f, "Which default should the parser keep?");
+    app(
+        &f.db,
+        "human",
+        json!({"action": "answer", "questionId": question, "answer": "Strict"}),
+    );
+    let env = HookEnv {
+        db: f.db.clone(),
+        session: Some(SESSION.into()),
+        agent_id: None,
+        home: f.dir.join("home").to_string_lossy().into_owned(),
+        enabled: true,
+    };
+    let limit = if cfg!(debug_assertions) {
+        Duration::from_millis(60)
+    } else {
+        Duration::from_millis(10)
+    };
+    // the default, and the setting stored as off, are the same path
+    for stored in [None, Some(false)] {
+        if let Some(enabled) = stored {
+            wake_agents(&f, enabled, 120);
+        }
+        let input = f.input("Stop", done_turn()).to_string();
+        let mut runs = Vec::new();
+        for _ in 0..21 {
+            let started = Instant::now();
+            let result = hook::run("Stop", &input, &env);
+            runs.push(started.elapsed());
+            assert_eq!(result, HookResult::default(), "byte for byte as before");
+        }
+        let median = median(runs);
+        eprintln!(
+            "wake off ({stored:?}), Stop in the handler: {:>6.2} ms (median of 21)",
+            ms(median)
+        );
+        assert!(median < limit, "Stop took {median:?} (limit {limit:?})");
+    }
+    // the answer still waits for the next report
+    let detail = f.session();
+    assert!(detail["questions"][0].get("deliveredAt").is_none());
+    assert_eq!(detail["waitingMessages"], 1);
+    assert!(detail["session"].get("wakeUntil").is_none());
+}
+
+#[test]
+fn the_wake_setting_is_checked_and_defaults_to_off() {
+    let dir = TempDir::new("wake-settings");
+    let db = dir.join("ledger.sqlite3");
+    let settings = app(&db, "settings", json!({}));
+    assert_eq!(
+        settings["wakeAgents"],
+        json!({"enabled": false, "waitSec": 300})
+    );
+    for bad in [
+        json!({"enabled": "yes"}),
+        json!({"waitSec": 5}),
+        json!({"waitSec": 301}),
+        json!({"waitSec": 30.5}),
+        json!(true),
+    ] {
+        let result = gitrochi_ledger::call(
+            "settings_set",
+            &json!({"db": db.to_string_lossy(), "values": {"wakeAgents": bad}}),
+        );
+        assert_eq!(result["error"]["code"], "INVALID_ARGUMENT", "{bad}");
+    }
+    let saved = app(
+        &db,
+        "settings_set",
+        json!({"values": {"wakeAgents": {"enabled": true}}}),
+    );
+    assert_eq!(
+        saved["settings"]["wakeAgents"],
+        json!({"enabled": true, "waitSec": 300})
+    );
+    let restored = app(&db, "settings_set", json!({"values": {"wakeAgents": null}}));
+    assert_eq!(restored["settings"]["wakeAgents"]["enabled"], false);
 }

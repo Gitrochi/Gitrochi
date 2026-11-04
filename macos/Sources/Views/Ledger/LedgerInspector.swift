@@ -10,8 +10,10 @@ struct LedgerInspector: View {
     var close: (() -> Void)?
     @ViewState private var confirmDrop = false
     @ViewState private var showActivity = false
-    /// The window's repository: the Checks row reads its Flow run records
+    /// The window's repository: a linked request is read through its hosting account, and the Checks row reads its
+    /// Flow run records
     @Environment(RepoStore.self) private var repo: RepoStore?
+    private let requests = LedgerRequestStatusStore.shared
     private let flows = LedgerFlowEvidenceStore.shared
 
     var body: some View {
@@ -73,6 +75,7 @@ struct LedgerInspector: View {
                 LedgerSessionLabel(id: s.id, color: s.color)
                     .textSelection(.enabled)
                 Spacer(minLength: 4)
+                if LedgerWake.waits(s, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 LedgerVerdictBadge(verdict: s.verdict)
                 if let close {
                     Button(action: close) { Image(systemName: "xmark") }
@@ -112,18 +115,47 @@ struct LedgerInspector: View {
             }
             Text(s.verdict.advice).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             links(s)
+            requestSuggestion(s)
         }
+        .task(id: requestLink(s)) { await followRequest(requestLink(s)) }
     }
 
     private func links(_ s: LedgerSession) -> some View {
         WorkbenchFlow(spacing: 6) {
             if let branch = s.links.branch { LedgerLinkChip(symbol: "arrow.triangle.branch", text: branch) }
             if let worktree = s.links.worktree { LedgerLinkChip(symbol: "folder", text: (worktree as NSString).lastPathComponent) }
-            if let pr = s.links.pr { LedgerLinkChip(symbol: "arrow.triangle.pull", text: "#\(pr.number)", url: URL(string: pr.url)) }
+            if let pr = s.links.pr { LedgerRequestChip(pr: pr, status: requests.status(requestLink(s))) }
             if let agent = s.links.agentId { LedgerLinkChip(symbol: "cpu", text: agent) }
             if let chat = s.chatUrl, let url = URL(string: chat) { LedgerLinkChip(symbol: "bubble.left.and.bubble.right", text: String(localized: "Open chat"), url: url) }
             if let auto = s.autoContinue, auto.enabled {
                 LedgerLinkChip(symbol: "timer", text: String(localized: "Auto-continue after \(auto.delaySec) s"))
+            }
+        }
+    }
+
+    // MARK: - Linked request
+
+    private func requestLink(_ s: LedgerSession) -> LedgerRequestLink? {
+        LedgerRequestStatusStore.link(s, repository: repo, project: ledger.repositoryProject)
+    }
+
+    /// Reads the request while it is on screen: again after 20 s while checks run, two minutes while it is open, and
+    /// not at all once it is merged or closed (LedgerRequestRules.pollSeconds)
+    private func followRequest(_ link: LedgerRequestLink?) async {
+        guard let link, let repo else { return }
+        await requests.refresh(link, in: repo)
+        while !Task.isCancelled, let wait = LedgerRequestRules.pollSeconds(requests.status(link)) {
+            do { try await Task.sleep(for: .seconds(wait)) } catch { return }
+            await requests.refresh(link, in: repo, maxAge: LedgerMs(wait) * 1000)
+        }
+    }
+
+    /// The merged request's suggestion opens the existing picker; nothing is marked until a version is chosen
+    @ViewBuilder private func requestSuggestion(_ s: LedgerSession) -> some View {
+        if LedgerRequestRules.suggestsMerged(s, requests.status(requestLink(s))) {
+            LedgerRequestMergedSuggestion {
+                LedgerMergeMenu(session: s, ledger: ledger, title: String(localized: "Request merged — mark merged?"))
+                    .controlSize(.small).disabled(ledger.working.contains(s.id))
             }
         }
     }

@@ -186,7 +186,7 @@ Checked with a real Claude Code 2.1.309 in [#171](https://github.com/Gitrochi/Gi
 - The AskUserQuestion answer holds: `allow` with `updatedInput` answers it, and `allow` alone does not. The question dialog stays hidden during the wait and comes back when the hook gives no decision.
 - The PermissionRequest allow holds, for this once only. **Its dialog is shown during the wait**, though: the person can answer in the terminal, and a later decision from the hook is then ignored. The handler therefore confirms an automatic allow only by the call that ran after it.
 - The timeout is enforced for `asyncRewake` hooks, not for plain `async` ones, and a hook that times out gives no decision.
-- ExitPlanMode was not checked; it stays off by default.
+- ExitPlanMode was checked on 2026-11-03 with Claude Code 2.1.316, non-interactively only (design §9.1): in the SDK's streaming mode `allow` with `updatedInput` approves the plan and leaves plan mode; plain `-p` does not offer the tool; the hook's `tool_input` is `{}`, without the plan, which lives in a plan file named only in `PostToolUse`. It stays off by default.
 - Input also carries `prompt_id`, `effort` and `scratchpad_dir`; unknown fields are ignored.
 - Still to check: the exact separator Claude Code's own picker uses for multi-select answers (`, ` here; the documentation says "commas").
 

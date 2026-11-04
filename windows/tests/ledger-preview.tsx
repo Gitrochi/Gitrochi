@@ -1,8 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
 import { ledgerBrowserSelfTest } from "../src/app/lib/ledger-browser-selftest";
+import { ledgerConnectionsSelfTest } from "../src/app/lib/ledger-connections-selftest";
 import { ledgerChatGPTDraftSelfTest } from "../src/app/lib/ledger-chatgpt-draft-selftest";
 import { ledgerParitySelfTest } from "../src/app/lib/ledger-parity-selftest";
+import { ledgerRequestSelfTest } from "../src/app/lib/ledger-request-selftest";
 import { ledgerFlowSelfTest } from "../src/app/lib/ledger-flow-selftest";
 import { handleShortcut } from "../src/app/lib/shortcuts";
 import { DemoLedgerBackend, LedgerStore, type LedgerView, type LedgerVerdict } from "../src/entities/ledger";
@@ -31,7 +33,7 @@ if (mode === "selftest") {
   Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
-  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerParitySelfTest(), await ledgerFlowSelfTest()];
+  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerConnectionsSelfTest(), await ledgerParitySelfTest(), await ledgerRequestSelfTest(), await ledgerFlowSelfTest()];
   const passed = checks.every(([ok]) => ok);
   const detail = checks.map(([, message]) => message).join("\n");
   const result = document.createElement("pre");
@@ -41,7 +43,6 @@ if (mode === "selftest") {
   document.body.append(result);
 } else if (mode === "app") {
   // the real window shell: the page list with the Ledger under Tools, the page title and the Ledger on the app's demo store
-  env.ledgerPreview = "1";
   env.ledgerDemo = "1";
   ipc.openUrl = async () => {};
   const app = new RepoStore();
@@ -51,10 +52,12 @@ if (mode === "selftest") {
   createRoot(root).render(<><RepoPage store={app} openSettings={() => {}} /><MenuHost /><TooltipHost /></>);
 } else if (mode === "settings") {
   // Settings › Ledger on the app's demo store
-  env.ledgerPreview = "1";
   env.ledgerDemo = "1";
   ipc.ledgerPickDatabase = async () => "C:/Tools/claude-ledger/data/ledger.db";
   createRoot(root).render(<><SettingsDialog onClose={() => {}} initialTab="ledger" /><MenuHost /><TooltipHost /></>);
+  // ?scroll=<selector> brings a settings section into view for a screenshot
+  const section = params.get("scroll");
+  if (section) setTimeout(() => document.querySelector(section)?.scrollIntoView({ block: "start" }), 800);
 } else {
   ipc.openUrl = async () => {};
   const repoPath = "C:/Projects/atlas";
@@ -112,5 +115,11 @@ if (mode === "selftest") {
   for (const selector of (params.get("click") ?? "").split(";").filter(Boolean)) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     document.querySelector<HTMLElement>(selector)?.click();
+  }
+  // ?hover=<selector> shows a toolbar button's tooltip for a screenshot
+  const hover = params.get("hover");
+  if (hover) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    document.querySelector(hover)?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
   }
 }

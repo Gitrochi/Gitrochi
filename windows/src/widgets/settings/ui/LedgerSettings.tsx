@@ -1,8 +1,8 @@
 import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, Plus, PlugZap, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
+import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, type LedgerWakeAgents, repositoryPolicies, repositoryPolicy, WAKE_MAX_SEC, WAKE_MIN_SEC, wakeSetting, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
-import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
+import { LedgerConnections, LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
 import { basename, displayPath, recents, samePath, samePathKey } from "@/shared/config";
@@ -112,6 +112,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       {error && <span role="alert" className="error-text">{error}</span>}
 
       <TrackingSection />
+      <WakeAgentsSection wake={wakeSetting(settings)} disabled={busy} onSave={(wakeAgents) => void save({ wakeAgents })} onInvalid={setError} />
       <AutoContinueSection autoContinue={settings.autoContinue} disabled={busy} onSave={(autoContinue) => void save({ autoContinue })} onInvalid={setError} />
       <NotificationsSection />
 
@@ -149,6 +150,12 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
         <span className="hint">{t("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")}</span>
       </div>
 
+      <div className="form-section" data-ledger-section="connections">
+        <span className="form-section-title">{t("Connections")}</span>
+        <LedgerConnections store={store} onOpenBrowser={() => setSheet("browser")} />
+        <span className="hint">{t("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")}</span>
+      </div>
+
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
@@ -160,7 +167,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       </div>
 
       {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} onOpenBrowser={() => setSheet("browser")} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
     </div>
@@ -178,6 +185,29 @@ function TrackingSection() {
       <Checkbox checked={tracking.tools} disabled={!tracking.chosen} onChange={(on) => tracking.setTools(on)} label={t("Give them the Ledger tools")} />
       <span className="hint">{t("Adds the Ledger's MCP server to each of them, unless Claude Code already has one called gitrochi-ledger.")}</span>
       {tracking.lastError && <span role="alert" className="error-text">{t("The last agent started without the Ledger: {0}", tracking.lastError)}</span>}
+    </div>
+  );
+}
+
+/**
+ * Wake waiting agents with my answers (§7.6): a tracked agent's Stop hook keeps waiting for this long, and an answer or
+ * message for its session wakes it at once. Kept in the ledger's `wakeAgents` setting, which the hooks read.
+ */
+function WakeAgentsSection({ wake, disabled, onSave, onInvalid }: { wake: LedgerWakeAgents; disabled: boolean; onSave: (value: LedgerWakeAgents) => void; onInvalid: (text: string) => void }) {
+  const tracking = useObserve(ledgerTracking);
+  return (
+    <div className="form-section" data-ledger-section="wake">
+      <span className="form-section-title">{t("Delivering answers")}</span>
+      <Checkbox checked={wake.enabled} disabled={disabled} onChange={(on) => onSave({ ...wake, enabled: on })} label={t("Wake waiting agents with my answers")} />
+      <div className="form-row">
+        <label>{t("Wait")}</label>
+        <div className="row">
+          <NumberField value={wake.waitSec} min={WAKE_MIN_SEC} max={WAKE_MAX_SEC} label={t("Wait")} onCommit={(waitSec) => onSave({ ...wake, waitSec })} onInvalid={onInvalid} />
+          <span>{t("seconds")}</span>
+        </div>
+      </div>
+      <span className="hint">{t("After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report.")}</span>
+      {!tracking.chosen && <span className="hint">{t("It works for agents started while Track agents I start is on.")}</span>}
     </div>
   );
 }

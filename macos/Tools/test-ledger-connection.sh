@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# The copied setup status command must never uninstall tracking.
+# The copied setup status command must never uninstall tracking, and the Connections rows map each connection health
+# to the same states and actions as Windows (windows/tests/ledger-connections.test.ts).
 set -euo pipefail
 TASK_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -22,6 +23,34 @@ for client in LedgerSetupClient.allCases {
     expect(status.contains("Team'\\''s $Tools"), "Paths must remain literal shell arguments")
 }
 print("PASS: separate status and removal commands for both Ledger clients")
+
+func status(_ fields: String) -> LedgerIntegrationStatus {
+    let base = #"""
+        {"client":"claude","installed":true,"ownedHookCount":8,"requiresClientTrust":false,"hooksDisabled":false,
+        "hookCommand":{"path":"/data/bin/gitrochi-ledger","exists":true,"executable":true,"writesSchema":8,"canWrite":true,"sameDatabase":true},
+        "mcp":{"configPath":"/c","registered":false,"command":null},"databaseSchema":8,"lastObservedAt":1000,"lastReportAt":2000,"health":"ok"}
+        """#
+    var value = try! JSONSerialization.jsonObject(with: Data(base.utf8)) as! [String: Any]
+    for (key, item) in try! JSONSerialization.jsonObject(with: Data(fields.utf8)) as! [String: Any] { value[key] = item }
+    return try! JSONDecoder().decode(LedgerIntegrationStatus.self, from: JSONSerialization.data(withJSONObject: value))
+}
+let connected = LedgerConnectionLook.agent(status("{}"), stableExists: true)
+expect(connected.state == .connected && connected.lastDataAt == 2000 && connected.actions == [.remove, .copy], "A delivering connection shows its last data")
+let missing = LedgerConnectionLook.agent(status(#"{"health":"not_installed","ownedHookCount":0,"hookCommand":null}"#), stableExists: false)
+expect(missing.state == .notSetUp && missing.actions == [.setUp], "No hooks and no MCP entry is Not set up")
+let stale = LedgerConnectionLook.agent(status(#"{"health":"outdated_command","hookCommand":{"path":"/old","exists":true,"executable":true,"canWrite":false}}"#), stableExists: true)
+expect(stale.state == .repair && !stale.repairsMcp && stale.actions == [.repair, .remove, .copy], "An outdated hook command needs repair")
+let mcp = LedgerConnectionLook.agent(status(#"{"health":"missing_command","ownedHookCount":0,"hookCommand":null,"mcp":{"configPath":"/c","registered":true,"command":{"path":"/moved","exists":false,"executable":false}}}"#), stableExists: false)
+expect(mcp.state == .missing && mcp.repairsMcp && mcp.actions == [.repair], "A moved MCP command is repaired by copying a new registration")
+let codex = LedgerConnectionLook.agent(status(#"{"client":"codex","requiresClientTrust":true,"health":"no_data_yet"}"#), stableExists: false)
+expect(codex.state == .noData && codex.explanation.contains("/hooks"), "Codex says its hooks need trust")
+expect(LedgerConnectionLook.browser(installed: false, hostExists: false, lastDataAt: nil).state == .missing, "A moved browser host needs repair")
+expect(LedgerConnectionLook.browser(installed: true, hostExists: true, lastDataAt: 5).lastDataAt == 5, "Browser data time is shown")
+expect(LedgerSetupClient.codex.mcpCommand(stable: "/a b", registered: true) == "codex mcp remove gitrochi-ledger; codex mcp add gitrochi-ledger -- '/a b' mcp",
+       "An existing registration is replaced")
+expect(LedgerSetupClient.claude.mcpCommand(stable: "/a", registered: false) == "claude mcp add --scope user gitrochi-ledger -- '/a' mcp", "A new registration is added")
+print("PASS: Connections states, actions and MCP commands")
 SWIFT
-swiftc -module-cache-path "$TASK_TMP/cache" "$TASK_ROOT/macos/Sources/Services/LedgerConnectionSetup.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/check"
+swiftc -module-cache-path "$TASK_TMP/cache" "$TASK_ROOT/macos/Sources/Services/LedgerConnectionSetup.swift" \
+    "$TASK_ROOT/macos/Sources/Services/LedgerConnections.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/check"
 "$TASK_TMP/check"

@@ -60,6 +60,22 @@ function matchesQuery(c: ReviewAccess, p: GHPull, scope: RequestScope, search: s
   return [p.title, `#${p.number}`, p.user.login ?? "", p.head.ref].some((s) => s.toLowerCase().includes(needle));
 }
 
+/** A request's state, draft flag and head commit; GitLab's head pipeline comes along in the same response */
+export interface RequestState { number: number; state: "open" | "merged" | "closed"; draft: boolean; headSHA: string; headPipeline: { id: number; projectID?: number; status: string } | null }
+/**
+ * One request's state, read on its own: unlike `requestLifecycle`, for places that only show where a request stands.
+ * macOS: CollaborationAPI.requestState.
+ */
+export async function requestState(c: ReviewAccess, n: number): Promise<RequestState> {
+  if (c.target.provider === "github") {
+    const p = await send<GHPull>(c, reqURL(c, n));
+    return { number: n, state: p.merged || p.merged_at ? "merged" : p.state === "open" ? "open" : "closed", draft: !!p.draft, headSHA: p.head.sha, headPipeline: null };
+  }
+  const p = await send<GLMerge & { work_in_progress?: boolean; head_pipeline?: { id?: number; project_id?: number; status: string } | null }>(c, reqURL(c, n));
+  const pipeline = p.head_pipeline?.id ? { id: p.head_pipeline.id, projectID: p.head_pipeline.project_id, status: p.head_pipeline.status } : null;
+  return { number: n, state: p.state === "merged" ? "merged" : p.state === "opened" || p.state === "locked" ? "open" : "closed", draft: !!p.draft || !!p.work_in_progress, headSHA: p.sha ?? "", headPipeline: pipeline };
+}
+
 /** 병합 권한·프로젝트 정책·최신 커밋 상태를 확인한다. 알 수 없는 상태는 병합하지 않는다. */
 export async function requestLifecycle(c: ReviewAccess, n: number): Promise<RequestLifecycle> {
   if (c.target.provider === "github") {
