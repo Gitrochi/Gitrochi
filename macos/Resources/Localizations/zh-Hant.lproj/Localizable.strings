@@ -2039,6 +2039,22 @@
 "Open a repository to use its terminal" = "開啟一個存放庫以使用它的終端機";
 "Open in the terminal" = "在終端機中開啟";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "團隊中心服務";
+"Share this computer's Ledger sessions with the team hub" = "與團隊中心服務分享此電腦的台帳工作階段";
+"What is shared" = "分享的內容";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "每個進行中工作階段的 ID、專案、標題、類型與角色、分支、判定、涉及範圍和最近活動時間，依其存放庫的遠端位址分享。絕不分享問題、回答、報告、訊息、備註、筆記本、文件、聊天連結或資料夾路徑。實作流和已封存的工作階段只保留在此電腦上。";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "關閉後會撤回已分享的工作階段；剩下的內容會在幾分鐘內從中心服務過期。與其他成員工作階段的重疊會顯示在檢閱器的涉及範圍中。";
+"Connect a team hub under Work validation › Team overlap evidence first." = "請先在 Work validation › Team overlap evidence 中連線團隊中心服務。";
+"Connecting to %@…" = "正在連線 %@…";
+"Sessions shared with %@: %lld" = "已與 %1$@ 分享的工作階段：%2$lld";
+"Kept on this computer, no repository remote: %lld" = "沒有存放庫遠端位址、只保留在此電腦上的工作階段：%lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "此中心服務只保存分支和涉及範圍；標題和判定需要較新版本的中心服務。";
+"Couldn't reach %@. Gitrochi tries again later." = "無法連線 %@。Gitrochi 稍後會重試。";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@ 的中心服務權杖未被接受或無法讀取。請在 Work validation › Team overlap evidence 中重新連線。";
+"Demo data is never shared." = "示範資料從不分享。";
+"Also touched on another computer by %@ · %@" = "另一台電腦也涉及：%1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "自動繼續從不回答這類請求。";
 "It looks risky to answer automatically." = "自動回答看起來有風險。";

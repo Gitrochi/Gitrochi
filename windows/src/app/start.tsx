@@ -13,6 +13,7 @@ import { runSelfTest } from "./selftest";
 import { App } from "./ui/App";
 import { startAppLaunches } from "./lib/app-launch";
 import { startLedgerNotifications } from "./lib/ledger-notifications";
+import { startLedgerHubSharing } from "./lib/ledger-hub-sharing";
 import { selfTestProgress } from "./lib/selftest-report";
 import { SelfTestBoundary } from "./lib/selftest-boundary";
 // 웹뷰 기본 우클릭 메뉴(새로 고침·검사 등)는 끄고, 앱 메뉴만 쓴다(입력 칸은 그대로)
@@ -39,6 +40,8 @@ export async function start() {
   updater.start();
   // the Ledger's notifications and badge, once a person turns one of them on
   void startLedgerNotifications();
+  // the Ledger's team hub sharing, only when a person turned it on
+  void startLedgerHubSharing();
   // 윈도에서 못 찾은 AI CLI 는 WSL 에서 한 번 찾아 둔다(WSL 을 깨우느라 몇 초 걸릴 수 있어 뒤에서)
   if (!env.selftest) setTimeout(() => void tools.probeWsl(), 6000);
   window.addEventListener("beforeunload", () => void settings.flush());

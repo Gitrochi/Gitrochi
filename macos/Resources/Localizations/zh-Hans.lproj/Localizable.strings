@@ -2178,6 +2178,22 @@
 "Open a repository to use its terminal" = "打开一个仓库以使用它的终端";
 "Open in the terminal" = "在终端中打开";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "团队中心服务";
+"Share this computer's Ledger sessions with the team hub" = "与团队中心服务共享此电脑的台账会话";
+"What is shared" = "共享的内容";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "每个进行中会话的 ID、项目、标题、类型与角色、分支、判定、涉及范围和最近活动时间，按其仓库的远程地址共享。绝不共享问题、回答、报告、消息、备注、笔记本、文档、聊天链接或文件夹路径。实现流和已归档的会话只保留在此电脑上。";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "关闭后会撤回已共享的会话；剩余内容会在几分钟内从中心服务过期。与其他成员会话的重叠显示在检查器的涉及范围中。";
+"Connect a team hub under Work validation › Team overlap evidence first." = "请先在 工作验证 › 团队工作重叠依据 中连接团队中心服务。";
+"Connecting to %@…" = "正在连接 %@…";
+"Sessions shared with %@: %lld" = "已与 %1$@ 共享的会话：%2$lld";
+"Kept on this computer, no repository remote: %lld" = "没有仓库远程地址、只保留在此电脑上的会话：%lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "此中心服务只保存分支和涉及范围；标题和判定需要更新版本的中心服务。";
+"Couldn't reach %@. Gitrochi tries again later." = "无法连接 %@。Gitrochi 稍后会重试。";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@ 的中心服务令牌未被接受或无法读取。请在 工作验证 › 团队工作重叠依据 中重新连接。";
+"Demo data is never shared." = "演示数据从不共享。";
+"Also touched on another computer by %@ · %@" = "另一台电脑也涉及：%1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "自动继续从不回答这类请求。";
 "It looks risky to answer automatically." = "自动回答看起来有风险。";

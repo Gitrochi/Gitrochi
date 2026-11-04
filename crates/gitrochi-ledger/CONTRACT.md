@@ -2,11 +2,11 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import` and `integration-status`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `integration-status` and `hub-share`. The tests check real results against them.
 
 ## Decisions
 
-The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14](../../docs/ledger/DESIGN.md#14-decisions)), and this contract follows them: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1. D5 a read-only import of a claude-ledger database ([`import_legacy`](#importing-a-claude-ledger-database)). D6 baselines default to git tags. D7 re-implemented, with no code or text copied, and the compatibility surface kept: the MCP tool names `ledger_overview`, `ledger_report` and `ledger_session`, the report field names, the ```` ```ledger ```` block, the session ID shape and the input aliases. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once. D11–D13 stand there as working defaults.
+The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14](../../docs/ledger/DESIGN.md#14-decisions)), and this contract follows them: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1; since 2026-11-03 an opt-in, default-off sharing of live sessions with the team hub ([`hub_share`](#sharing-with-the-team-hub)). D5 a read-only import of a claude-ledger database ([`import_legacy`](#importing-a-claude-ledger-database)). D6 baselines default to git tags. D7 re-implemented, with no code or text copied, and the compatibility surface kept: the MCP tool names `ledger_overview`, `ledger_report` and `ledger_session`, the report field names, the ```` ```ledger ```` block, the session ID shape and the input aliases. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once. D11–D13 stand there as working defaults.
 
 ## Storage
 
@@ -156,6 +156,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `integration_status` | `{client, path?, config?, mcpConfig?}` | The `integrate --status` result ([`integration-status`](schema/integration-status.schema.json)) | app only |
 | `integration_install` | `{client, bundled, path?, config?, mcpConfig?}` | The same, after installing hooks that run the stable command | app only |
 | `integration_remove` | `{client, path?, config?, mcpConfig?}` | The same, after removing the client's owned hooks | app only |
+| `hub_share` | `{client}` (4–32 letters, digits or `-`: the app's random name for this computer) | `{rev, sessions: [{sessionId, repo, client, presence}], unshared: [{sessionId, reason: "no_remote" \| "limit"}]}` ([below](#sharing-with-the-team-hub)); reads only | app only |
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
@@ -201,6 +202,15 @@ With **Track agents I start** on, the app calls `track` before it starts an agen
 Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
 
 **On the Board (D14).** On a session whose `launch` event has `data.board`, a reported kind with the implementation role is stored as `task` while the session does not have the implementation role; the event keeps the reported kind in `data.reportedKind`, and the reply has a notice when the stored kind changes or on `start`. Other kinds apply as reported. A person moves the session to Streams with `records` (`update` with an implementation kind), after which its agent's implementation kinds apply as reported, or maps `task` to the implementation role in `settings.kinds`. Sessions created before this rule have no mark and keep the earlier behaviour.
+
+### Sharing with the team hub
+
+`hub_share` builds what an app posts to the team hub (`services/hub`, `POST /api/v1/presence`) when a person turns on **Share this computer's Ledger sessions** (D4, opt-in, off by default). It only reads; the apps do the HTTP with the hub token they already keep in the system credential store. This method is the one definition of what leaves the computer, and `schema/hub-share.schema.json` closes every object in it.
+
+- **Which sessions**: live and not streams — the sessions overlaps count ([Vocabulary](#vocabulary)) — most recently active first, at most 100 (`unshared` reason `limit` for the rest). A session needs a repository: the first of `links.repoPath`, `links.worktree`, `links.cwd` and its project's `repoPath` whose `origin` remote (else its first remote) gives a hub repository key; without one it is listed with reason `no_remote` and stays here. Keys are made as the hub's `repokey` makes them, so a user name or token in the remote URL never leaves the computer; they are read again after five minutes.
+- **The body** (`presence`): `repo` (the key), `branch` (`links.branch`, else empty), `changed` (the touches that are repository-relative paths or identifiers — absolute, home and Windows paths, URLs, `..` and control characters are left out; at most 500), `related` (empty), `client` (`ledger/<client>/<session ID>`, one hub entry per session) and `ledger`: `session`, `project`, `title` (one line, at most 200 characters), `kind`, `role`, `verdict` and `lastActivity` (`lastAt` as RFC 3339 UTC, to the minute).
+- **Never**: questions, answers, report summaries and bodies, messages, notes, the notebook, work and document records, artifacts, chat links, agent and Claude session IDs, folder paths, baselines and auto-continue policies.
+- The hub computes overlaps between members from `changed`, as it does for the monitor; the apps read the session IDs of other computers' entries from their `client`. A hub older than the `ledger` field answers `400` for it; the apps then send the same body without `ledger`.
 
 ### Importing a claude-ledger database
 
@@ -383,6 +393,10 @@ Requests for later waves: live `implementation` sessions are streams by contract
 Added for waking waiting agents:
 
 25. The global setting `wakeAgents` (`{enabled, waitSec}`), `Session.wakeUntil` and the `meta` rows `wake:<session>` ([Hooks](#hooks)). With the setting off nothing changes; no storage schema change.
+
+Added for team hub sharing (D4, opt-in, 2026-11-03):
+
+26. The app method `hub_share` ([above](#sharing-with-the-team-hub)) and the schema `hub-share`. It reads only: no storage schema change, no new setting in the database (the switch is the app's own), and nothing changes while it is off.
 
 
 ## Work, documents and personal records

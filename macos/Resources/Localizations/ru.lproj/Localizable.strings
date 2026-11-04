@@ -2034,6 +2034,22 @@
 "Open a repository to use its terminal" = "Откройте репозиторий, чтобы пользоваться его терминалом";
 "Open in the terminal" = "Открыть в терминале";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Хаб команды";
+"Share this computer's Ledger sessions with the team hub" = "Делиться сеансами книги учёта с этого компьютера с хабом команды";
+"What is shared" = "Что передаётся";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Для каждого активного сеанса: ID, проект, название, вид и роль, ветка, вердикт, что он затрагивает, и время последней активности — под удалённым адресом его репозитория. Никогда не передаются вопросы, ответы, отчёты, сообщения, заметки, блокнот, документы, ссылки на чаты и пути к папкам. Каналы и архивированные сеансы остаются на этом компьютере.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Если выключить, ваши сеансы будут отозваны; оставшееся истечёт на хабе в течение нескольких минут. Пересечения с сеансами других участников показываются в инспекторе в разделе «Затрагивает».";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Сначала подключите хаб команды в Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Подключение к %@…";
+"Sessions shared with %@: %lld" = "Сеансов передано в %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Остались на этом компьютере, нет удалённого репозитория: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Этот хаб хранит только ветки и то, что затрагивают сеансы; для названий и вердиктов нужен более новый хаб.";
+"Couldn't reach %@. Gitrochi tries again later." = "Не удалось связаться с %@. Gitrochi попробует позже.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Токен хаба для %@ не принят или его не удалось прочитать. Подключитесь заново в Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Демоданные никогда не передаются.";
+"Also touched on another computer by %@ · %@" = "Затрагивается и на другом компьютере: %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Автопродолжение никогда не отвечает на такие запросы.";
 "It looks risky to answer automatically." = "Отвечать автоматически выглядит рискованно.";

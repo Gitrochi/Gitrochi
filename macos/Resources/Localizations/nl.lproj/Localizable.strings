@@ -1980,6 +1980,22 @@
 "Open a repository to use its terminal" = "Open een repository om de terminal ervan te gebruiken";
 "Open in the terminal" = "Openen in de terminal";
 
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Teamhub";
+"Share this computer's Ledger sessions with the team hub" = "Registersessies van deze computer delen met de teamhub";
+"What is shared" = "Wat er wordt gedeeld";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Van elke actieve sessie de ID, het project, de titel, het soort en de rol, de branch, het oordeel, de betrokken items en de laatste activiteit, onder de remote van de repository. Nooit vragen, antwoorden, rapporten, berichten, notities, het notitieboek, documenten, chatlinks of mappaden. Streams en gearchiveerde sessies blijven op deze computer.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Uitschakelen trekt uw sessies in; wat overblijft verloopt binnen enkele minuten op de hub. Overlap met sessies van andere leden staat in de inspector bij Betrokken items.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Verbind eerst een teamhub onder Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Verbinden met %@…";
+"Sessions shared with %@: %lld" = "Sessies gedeeld met %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Op deze computer gehouden, geen repository-remote: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Deze hub bewaart alleen branches en betrokken items; titels en oordelen vereisen een nieuwere hub.";
+"Couldn't reach %@. Gitrochi tries again later." = "Kan %@ niet bereiken. Gitrochi probeert het later opnieuw.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Het hubtoken voor %@ is niet geaccepteerd of kon niet worden gelezen. Verbind opnieuw onder Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Demogegevens worden nooit gedeeld.";
+"Also touched on another computer by %@ · %@" = "Ook op een andere computer betrokken door %1$@ · %2$@";
+
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Automatisch doorgaan beantwoordt dit soort verzoeken nooit.";
 "It looks risky to answer automatically." = "Automatisch antwoorden lijkt riskant.";

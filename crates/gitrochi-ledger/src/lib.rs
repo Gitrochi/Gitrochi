@@ -21,6 +21,7 @@ mod git;
 pub mod graph;
 pub mod hook;
 pub mod http;
+pub mod hub;
 pub mod human;
 pub mod import;
 pub mod integrations;

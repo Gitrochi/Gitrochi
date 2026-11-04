@@ -41,6 +41,10 @@ struct LedgerSettings: View {
     @AppStorage(LedgerNotifier.badgeKey) private var dockBadge = false
     /// macOS refused notifications when they were turned on
     @ViewState private var notificationsBlocked = false
+    var hubSharing: LedgerHubSharing = .shared
+    @AppStorage(LedgerHubSharing.enabledKey) private var shareWithHub = false
+    /// The hub connected under Work validation › Team overlap evidence
+    @AppStorage(LedgerHubSharing.endpointKey) private var hubEndpoint = ""
     /// The repository whose auto-continue switch is shown
     @ViewState private var autoRepository: String?
 
@@ -51,6 +55,7 @@ struct LedgerSettings: View {
                 wakeSection(settings)
                 autoContinueSection(settings)
                 notificationsSection
+                hubSection
                 sessionsSection
                 kindsSection(settings)
                 projectsSection
@@ -173,6 +178,52 @@ struct LedgerSettings: View {
         } footer: {
             Text("New questions, sessions to clean up and applied reports, grouped per read; every waiting prompt with the time left, and every automatic answer. Clicking one opens the Ledger at its session. Nothing is announced for what is already there when Gitrochi starts.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Sharing this computer's sessions with the team hub (DESIGN.md §14 D4): off until a person turns it on, with what is
+    /// shared spelled out next to the switch and the hub's state as one quiet line
+    private var hubSection: some View {
+        Section {
+            Toggle("Share this computer's Ledger sessions with the team hub", isOn: Binding(get: { shareWithHub }, set: { on in
+                shareWithHub = on
+                Task { await hubSharing.setOn(on) }
+            }))
+            .disabled(hubEndpoint.isEmpty && !shareWithHub)
+            if hubEndpoint.isEmpty {
+                Text("Connect a team hub under Work validation › Team overlap evidence first.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            } else if shareWithHub, let line = hubStatusText(hubSharing.status) {
+                Text(line).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("What is shared").font(.system(size: 12, weight: .semibold))
+                Text("Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .combine)
+        } header: {
+            Text("Team hub")
+        } footer: {
+            Text("Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func hubStatusText(_ status: LedgerHubSharing.Status) -> String? {
+        switch status {
+        case .off: return nil
+        case .demo: return String(localized: "Demo data is never shared.")
+        case .noHub: return String(localized: "Connect a team hub under Work validation › Team overlap evidence first.")
+        case .connecting(let host): return String(localized: "Connecting to \(host)…")
+        case .unreachable(let host): return String(localized: "Couldn't reach \(host). Gitrochi tries again later.")
+        case .rejected(let host):
+            return String(localized: "The hub token for \(host) was not accepted or could not be read. Connect again under Work validation › Team overlap evidence.")
+        case .sharing(let host, let count, let unshared, let plain):
+            var lines = [String(localized: "Sessions shared with \(host): \(count)")]
+            if unshared > 0 { lines.append(String(localized: "Kept on this computer, no repository remote: \(unshared)")) }
+            if plain { lines.append(String(localized: "This hub keeps branches and touches only; titles and verdicts need a newer hub.")) }
+            return lines.joined(separator: "\n")
         }
     }
 

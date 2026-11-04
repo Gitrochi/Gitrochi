@@ -39,7 +39,7 @@ What Gitrochi adds on top:
 | GitLab merge-request tab and merging | Nothing new, and the existing pull/merge request pages stay untouched: the Ledger inspector links to the request | P3 | Merging stays in Gitrochi's own confirmed flow |
 | AI "current state" summary | Gitrochi's AI service and its stored key | P5 | Off without a key or offline |
 | Daily backup, 14 kept | The same, with `VACUUM INTO` | P1 | |
-| Sharing with another PC (IP allow list) | Not in the first release; later on the hub's token authentication | — | D4 |
+| Sharing with another PC (IP allow list) | **Team hub sharing** (opt-in, off by default): live sessions as presence entries on the existing Go hub, with its token authentication; overlaps with other members' sessions in the inspector | 2026-11-03 | D4; [§7.10](#710-overlaps) |
 | Parsers for one team's documents (open-question lists, directives, registries, notices, ID dictionary) | **Document tracker**: selected folders, IDs, tasks, feedback and checksum changes | P5 | D2; generic Markdown/text evidence |
 | Work ledger (bundles, items, reports) | **Work log**: bundles, dated records, corrections and reports | P5 | D3; implemented by the compatibility follow-up |
 | Personal notes | **Notebook**, with optimistic edit conflicts and Markdown preview | P5 | Person-only; never in agent output |
@@ -147,7 +147,7 @@ crates/gitrochi-autocontinue/  auto-continue's pure logic, no I/O: question dete
 | `MarkdownView` ↔ `shared/ui/Markdown.tsx` | Report bodies and questions. |
 | Terminal panel | P4 quick launches from the Ledger page, through the terminal's existing API only. |
 | `tools/gitrochi-mcp` (read-only) | Untouched. Ledger's writing tools live in their own server so the read-only server stays read-only. |
-| `services/hub` | Only if D4 asks for sharing later. |
+| `services/hub` | Settings › Ledger › Team hub (D4, off by default) posts each live, non-stream session as a presence entry through the hub's existing API, with the URL and token Work validation › Team overlap evidence already keeps; the hub's answers carry overlaps with other members' sessions. The hub gained an optional `ledger` object on presence (older hubs get the body without it). |
 
 ## 6. Contract v0
 
@@ -327,6 +327,8 @@ The only paths by which an agent's report changes another session. They keep the
 
 Two live, non-stream sessions in the same project overlap (`kind: same`) when their touches share an entry. When both have changed files in the same repository, the repository index's `coupled` relation adds a weaker overlap (`kind: coupled`, "files that usually change together"). Shelved sessions are not warned about but are mentioned once, as material, to a session that starts on the same touches.
 
+**Across computers** (D4, opt-in, 2026-11-03). With Settings › Ledger › Team hub on, the app posts what the core's `hub_share` builds for each such session — ID, project, title, kind and role, branch, verdict, shareable touches and last activity, under its repository's remote key, as client `ledger/<random computer name>/<session ID>` — and withdraws sessions that close, archive or become streams, or all of them when sharing is turned off. Questions, answers, report bodies, messages, notes, the notebook, documents, chat links and folder paths are never sent. The hub computes overlaps from the touches (`same-file`) exactly as it does for its monitors, only between different members; the inspector's Touches shows them as "Also touched on another computer by S… · member". Sending happens when `rev` moves (read every 15 s) and every four minutes, below the hub's presence lifetime; an unreachable hub backs off from 30 s to 10 minutes and only changes a status line.
+
 ### 7.11 Tracking launched agents
 
 Wave 2.
@@ -376,6 +378,7 @@ The product rule from the original: confirming, archiving, changing a status, an
 | Answering a pending prompt | ✓ `prompt_answer` | — | — | automatically, after the wait, within [§9.4](#94-safety) |
 | Settings: roles, lines, stale hours, baseline sources, auto-continue defaults | ✓ | — | — | — |
 | Activity and the Claude session link | — | — | — | ✓ |
+| `hub_share` (what team hub sharing sends; the app does the HTTP) | ✓ | — | — | — |
 
 - `api.rs` takes the caller (`app` or `agent`) from the entry point, not from the request: the C ABI and the Tauri command are `app`; the CLI (including `call`), MCP and the hook are `agent`. `human` and `prompt_answer` answer `NOT_ALLOWED` to an agent caller, and no flag turns the CLI into an app caller.
 - The database file is not a security boundary — anything running as the user can open it. The boundary is about the tools Gitrochi hands to agents. gitch is not changed.
@@ -602,7 +605,7 @@ New questions, new sessions to clean up and new `applied` reports raise one nati
 
 ### 10.12 Settings › Ledger
 
-Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Delivering answers (Wake waiting agents with my answers, off by default; wait in seconds) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connections (the same list as the sheet) · Connect agents… · Import…
+Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Delivering answers (Wake waiting agents with my answers, off by default; wait in seconds) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Team hub (off until a person turns it on; what is shared next to the switch; one status line) · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connections (the same list as the sheet) · Connect agents… · Import…
 
 ### 10.13 Visual rules
 
@@ -682,7 +685,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 alre
 | D1 | Name and place | Workspace destination `ledger`, "Ledger", in the Tools group | A tab in the Agents panel | Confirmed 2026-10-31 |
 | D2 | Parsers for one team's documents | None in the first release; later a general **document tracker** in settings (path glob, ID pattern, table-column mapping) in this repository | A private add-on pack outside this repository · leave out for good | Confirmed 2026-10-31 |
 | D3 | Work ledger | A general **Work log**, later (P5) | In the first release · leave out | Confirmed 2026-10-31 |
-| D4 | Sharing with another PC | Not in the first release; later on the hub's token authentication | The original's IP allow-list HTTP server | Confirmed 2026-10-31 |
+| D4 | Sharing with another PC | Not in the first release; later on the hub's token authentication | The original's IP allow-list HTTP server | Confirmed 2026-10-31; implemented 2026-11-03 as opt-in, off by default: team hub sharing ([§7.10](#710-overlaps)) |
 | D5 | Importing a claude-ledger database | A read-only import (wave 2) | No import | Confirmed 2026-10-31 |
 | D6 | Default baseline source | Git tags | Folder scan | Confirmed 2026-10-31 |
 | D7 | Rights to the original | Treat it as unlicensed: re-implement, copy nothing — but keep the compatibility surface (MCP tool names `ledger_overview` · `ledger_report` · `ledger_session`, report field names, the ```` ```ledger ```` block, the session ID shape, the input aliases) so existing instructions and pasted blocks keep working | Rename (`gitrochi_ledger_*`) and drop pasted-block compatibility | Confirmed 2026-10-31; the maintainer chose to keep the compatibility surface |
@@ -708,7 +711,8 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31; contract v0 alre
 - **Inherited environment.** The default session for MCP assumes the MCP server inherits `GITROCHI_LEDGER_SESSION` from the launched agent, which the documentation does not promise. It does promise `CLAUDE_CODE_SESSION_ID` and `CLAUDE_PROJECT_DIR` for stdio MCP servers, so once a hook has linked the Claude session ID, reports find their session either way ([§7.2](#72-processing-a-report)).
 - **WSL.** Agents in WSL already call the Windows executable through `/mnt/c` (`hooks-wsl.json`); the ledger write runs as a Windows process, so the database is never opened from both sides. `WSLENV` must carry `GITROCHI_LEDGER_SESSION` as it carries `GITROCHI_AGENT_ID`.
 - **Unknown kinds.** Imported sessions may carry kinds no role knows; they map to `other` and are listed in Settings › Ledger › Roles so a person can assign them.
-- **Clock skew.** Times come from each writer's clock; all writers run on one machine until D4.
+- **Clock skew.** Times come from each writer's clock; all writers run on one machine. Team hub sharing (D4) sends only `lastAt` to the minute; the hub moves a time more than 5 minutes in the future to its own clock.
+- **Team hub sharing.** The hub never overlaps one member's own entries, so a person's two computers do not warn each other. A session whose repository has no remote is not shared. Entries left behind when the app quits expire with the hub's presence lifetime (10 minutes by default).
 - **Scope.** Each item stays within its row in [§12](#12-phases-and-waves); anything else becomes its own issue.
 
 

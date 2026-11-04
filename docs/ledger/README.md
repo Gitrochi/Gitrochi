@@ -254,9 +254,22 @@ The count includes open questions, clean-up and decision items, automatic answer
 
 With a repository open, the Ledger's terminal button offers **Ledger overview** and **Claude Code**. Both open tabs in the existing terminal panel. The overview prints the current project context for agents; the Claude Code option uses the existing agent-launch path, so tracking applies when enabled. The overview is unavailable on demo data. Open a repository to use the terminal quick launches.
 
+## Share sessions with the team hub
+
+Sharing is off by default, and nothing leaves this computer until you turn it on. It uses the team hub Gitrochi already reads under **Work validation › Team overlap evidence**: connect there first (the hub's URL, and its token, which stays in the Keychain or the Credential Manager). Then open **Settings › Ledger › Team hub** and turn on **Share this computer's Ledger sessions with the team hub**.
+
+**What is shared**, for each active session (not archived, not a stream), under its repository's remote: the session ID, project, title, kind and role, branch, verdict, the touches that are repository-relative paths or identifiers, and the last activity time to the minute. **Never shared**: questions, answers, report summaries and bodies, messages, notes, the notebook, work and document records, chat links, agent IDs and folder paths. A session whose repository has no remote stays on this computer; the status line counts them. Demo data is never shared.
+
+- Gitrochi sends what changed when the Ledger changes, checking every 15 seconds, and everything again every four minutes so the hub keeps it. Closing or archiving a session withdraws it; turning sharing off withdraws all of them, and whatever could not be withdrawn expires on the hub within its presence lifetime (10 minutes by default).
+- When another member's session on another computer touches the same thing, the inspector's **Touches** shows **Also touched on another computer by S… · member** with the touches you share. The hub never compares one member's own entries, so your other computers do not appear there.
+- An unreachable hub only changes the status line; Gitrochi waits longer after each failure (up to ten minutes) and never shows a dialog. A refused or unreadable token stops sharing until you connect again.
+- A hub older than this feature does not keep titles and verdicts; Gitrochi then shares branches and touches only and says so.
+
+The hub's side is described in [services/hub](../../services/hub/README.md#presence-and-overlaps), and the exact contents in the [core contract](../../crates/gitrochi-ledger/CONTRACT.md#sharing-with-the-team-hub).
+
 ## Storage, settings and backups
 
-The Ledger's database stays on this computer. An explicitly started [experimental loopback bridge](MIGRATION.md#optional-local-http-bridge) can connect existing reporting clients; direct LAN binding is not available. The default database is:
+The Ledger's database stays on this computer. An explicitly started [experimental loopback bridge](MIGRATION.md#optional-local-http-bridge) can connect existing reporting clients; direct LAN binding is not available. Only the opt-in [team hub sharing](#share-sessions-with-the-team-hub) sends a summary of active sessions elsewhere. The default database is:
 
 - macOS: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3`
 - Windows: `%APPDATA%\Gitrochi\ledger\ledger.sqlite3`

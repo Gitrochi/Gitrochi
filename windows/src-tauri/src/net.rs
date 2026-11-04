@@ -105,6 +105,92 @@ pub async fn team_hub_read(url: String, token: String) -> Result<HttpResponse, S
     Ok(HttpResponse { status, body })
 }
 
+/// `<hub>/api/v1/presence` on the configured origin: no query for a report, exactly `repo` and `client` to withdraw.
+fn team_hub_presence_url(value: &str, withdraw: bool) -> Result<url::Url, String> {
+    let url = url::Url::parse(value).map_err(|_| "Invalid team hub URL.")?;
+    let loopback = matches!(
+        url.host_str(),
+        Some("localhost" | "127.0.0.1" | "[::1]" | "::1")
+    );
+    let mut keys: Vec<String> = url.query_pairs().map(|(k, _)| k.into_owned()).collect();
+    keys.sort();
+    let query_ok = if withdraw {
+        keys == ["client", "repo"]
+    } else {
+        url.query().is_none()
+    };
+    if !url.username().is_empty()
+        || url.password().is_some()
+        || url.fragment().is_some()
+        || !(url.scheme() == "https" || url.scheme() == "http" && loopback)
+        || !url.path().ends_with("/api/v1/presence")
+        || !query_ok
+    {
+        return Err("Unsupported team hub presence URL.".into());
+    }
+    Ok(url)
+}
+
+/// Sends one presence request without redirects, so the token never leaves the configured origin, and reads at most
+/// 2 MB of the answer.
+async fn team_hub_presence_send(request: reqwest::RequestBuilder) -> Result<HttpResponse, String> {
+    let mut response = request
+        .timeout(Duration::from_secs(15))
+        .send()
+        .await
+        .map_err(|_| "The team hub is unavailable. Check the connection and try again.")?;
+    let status = response.status().as_u16();
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|_| "Could not read the team hub response.")?
+    {
+        if bytes.len() + chunk.len() > 2_000_000 {
+            return Err("The team hub response is too large.".into());
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    let body = String::from_utf8(bytes).map_err(|_| "The team hub response is not text.")?;
+    Ok(HttpResponse { status, body })
+}
+
+fn team_hub_presence_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|_| "Could not prepare the team hub request.".into())
+}
+
+/// Reports one Ledger session to the team hub (Settings › Ledger › Team hub). The body is the ledger core's
+/// `hub_share` presence, sent as it is.
+#[tauri::command]
+pub async fn team_hub_publish(
+    url: String,
+    token: String,
+    body: String,
+) -> Result<HttpResponse, String> {
+    let url = team_hub_presence_url(&url, false)?;
+    if body.len() > 1_000_000 {
+        return Err("The team hub request is too large.".into());
+    }
+    team_hub_presence_send(
+        team_hub_presence_client()?
+            .post(url)
+            .bearer_auth(token)
+            .header("Content-Type", "application/json")
+            .body(body),
+    )
+    .await
+}
+
+/// Withdraws one Ledger session's entry from the team hub.
+#[tauri::command]
+pub async fn team_hub_withdraw(url: String, token: String) -> Result<HttpResponse, String> {
+    let url = team_hub_presence_url(&url, true)?;
+    team_hub_presence_send(team_hub_presence_client()?.delete(url).bearer_auth(token)).await
+}
+
 /// 이미지를 받아 data: 주소로(사내 GitLab 의 프로필 사진은 토큰이 있어야 열리기도 해서 웹뷰 대신 여기서 받는다)
 #[tauri::command]
 pub async fn http_image(url: String, headers: HashMap<String, String>) -> Option<String> {
@@ -330,6 +416,28 @@ mod ci_log_tests {
             "https://hub.example.com/api/v1/repos/a/b/overlaps?token=secret",
         ] {
             assert!(team_hub_url(value).is_err());
+        }
+    }
+    #[test]
+    fn team_hub_presence_boundaries() {
+        let post = "https://hub.example.com/api/v1/presence";
+        assert!(team_hub_presence_url(post, false).is_ok());
+        assert!(team_hub_presence_url("http://127.0.0.1:7420/api/v1/presence", false).is_ok());
+        let delete = "https://hub.example.com/api/v1/presence?repo=example.com/team/app&client=ledger/a1b2/S1103-01";
+        assert!(team_hub_presence_url(delete, true).is_ok());
+        for (value, withdraw) in [
+            (delete, false),
+            (post, true),
+            ("http://hub.example.com/api/v1/presence", false),
+            ("https://token@hub.example.com/api/v1/presence", false),
+            ("https://hub.example.com/api/v1/tokens", false),
+            ("https://hub.example.com/api/v1/presence#x", false),
+            (
+                "https://hub.example.com/api/v1/presence?repo=a/b&client=c&token=secret",
+                true,
+            ),
+        ] {
+            assert!(team_hub_presence_url(value, withdraw).is_err(), "{value}");
         }
     }
     #[test]

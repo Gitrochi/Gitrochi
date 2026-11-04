@@ -14,6 +14,8 @@ export { type ChatGPTQuestion, parseChatGPTQuestion } from "./lib/chatgpt-draft"
 export { advanceLearningDelivery, canAdvanceLedgerLearning, LEDGER_LEARNING_SETTING, ledgerLearningConnectBody, type LedgerLearningProgress, type LedgerLearningStep, ledgerLearningSteps, ledgerLearningTitles, ledgerLearningTopics, readLedgerLearning, searchLedgerGuide } from "./lib/learning";
 export { type AnswerDraft, type AnswerOption, type AnswerQuestion, editAnswerDraft, emptyAnswerDraft, fillsSuggestion, promptAnswerQuestions, promptDraftAnswer, reportedAnswerQuestion, selectAnswerOption, suggestedAnswerDraft } from "./lib/answers";
 export { inverseOperation, operationTitle } from "./lib/undo";
+export { HUB_REFRESH_MS, HUB_TICK_MS, hubBackoff, hubBody, type HubOutcome, hubOutcome, hubOverlaps, hubPlan, type HubPublished, type LedgerHubOverlap, type LedgerHubShareItem, type LedgerHubShareResult, parseHubClient } from "./lib/hub-share";
+export { hubSecretName, LEDGER_HUB_SETTING, LedgerHubSharing, ledgerHubSharing, type LedgerHubStatus, type LedgerHubTransport } from "./model/hub-sharing";
 export { compareSessions, computeVerdict, isFinished, STALE_HOURS, type VerdictIcon, type VerdictLook, verdictDisplayOrder, verdictLook } from "./lib/verdict";
 export { compareVersions } from "./lib/version";
 export { LEDGER_POLL_MS, type LedgerToast, type LedgerView, ledgerViews } from "./model/reader";
