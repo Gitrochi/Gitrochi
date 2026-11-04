@@ -20,8 +20,8 @@ struct ProjectWorkspaceHeader: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
                 Picker("Project source", selection: Binding(get: { hub.projectSource }, set: { source in Task { await store.selectHubProjectSource(source) } })) {
-                    Text("Local").tag("local"); Text("GitHub").tag("remote")
-                }.labelsHidden().pickerStyle(.segmented).frame(width: 152)
+                    Text("Local").tag("local"); Text("GitHub / GitLab").tag("remote")
+                }.labelsHidden().pickerStyle(.segmented).frame(width: 200)
                 if !local {
                     Picker("Workspace account", selection: Binding(get: { store.hubAccount?.id ?? "" }, set: { id in Task { await store.selectHubAccount(id) } })) {
                         ForEach(AccountStore.shared.accounts) { account in Text(verbatim: "@" + account.username).tag(account.id) }

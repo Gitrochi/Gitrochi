@@ -75,7 +75,8 @@ struct ProjectWorkspace: View {
                     else { Text("Choose a project above, or change the account and project scope.") }
                 } actions: {
                     if store.hubProvider == .github { Button("New project") { manage(.newProject) } }
-                    if !isLocal { Button("Show my projects") { Task { await store.selectHubProjectScope("personal"); await selectInitialProject() } } }
+                    // GitLab has no personal boards; its scope menu offers groups instead.
+                    if !isLocal, store.hubProvider == .github { Button("Show my projects") { Task { await store.selectHubProjectScope("personal"); await selectInitialProject() } } }
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
             } else { Spacer(minLength: 20) }
         }
