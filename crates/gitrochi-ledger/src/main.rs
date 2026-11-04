@@ -37,6 +37,7 @@ const USAGE: &str = "gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [
   serve [--listen 127.0.0.1:8765]   optional local HTTP reporting bridge
   observe <claude|codex> EVENT < input.json   passive local activity; always exits 0
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
+            [--mcp-config FILE]
   hook EVENT < input.json       a Claude Code hook (SessionStart, UserPromptSubmit, Stop,
                                 PreToolUse, PermissionRequest, PostToolUse,
                                 PostToolUseFailure, SessionEnd); always exits 0, or 2 when
@@ -418,6 +419,11 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                 .map(PathBuf::from)
                 .map(Ok)
                 .unwrap_or_else(|| integrations::default_config(client))?;
+            let mcp_config = invocation
+                .text("mcp-config")
+                .map(PathBuf::from)
+                .map(Ok)
+                .unwrap_or_else(|| integrations::default_mcp_config(client))?;
             let cli = invocation
                 .text("cli")
                 .map(PathBuf::from)
@@ -429,10 +435,14 @@ fn run(invocation: &Invocation, path: &Path) -> Result<Output, Error> {
                 // Installation is explicit; hooks themselves never create a database.
                 let _ = open(path)?;
             }
-            let status = integrations::configure(client, action, &config, &cli, path)?;
-            let text = format!("{} passive hooks: {} ({} / {}). Configuration only; start or restart the client and review its hook trust prompts.",
+            let status = integrations::configure(client, action, &config, &mcp_config, &cli, path)?;
+            let mut text = format!("{} passive hooks: {} ({} / {}). Configuration only; start or restart the client and review its hook trust prompts.",
                 client.title(), if status.installed { "installed" } else { "not installed" },
                 status.owned_hook_count, status.expected_hook_count);
+            if let Some(problem) = gitrochi_ledger::connection::describe(&status.connection) {
+                text.push('\n');
+                text.push_str(&problem);
+            }
             Ok(Output::Text(text, serde_json::to_value(status)?))
         }
         "report" => {

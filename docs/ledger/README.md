@@ -8,7 +8,7 @@ The Ledger brings agent reports, questions and finished work into one place in G
 
 Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
 
-Optional launched-agent tracking, the app's waiting-prompt heartbeat, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` in the app process at startup, together with their relevant settings. Setting the variable in an already-open app's terminal does not change that app's environment. **Track agents I start** remains off by default. Reading reports and using the Ledger's local tools do not require this preview switch.
+Optional launched-agent tracking, background notifications and the Dock/taskbar count each follow their own switch in **Settings › Ledger**, and all of them start off. No environment variable is needed: `GITROCHI_LEDGER_PREVIEW` is no longer read. The app's waiting-prompt heartbeat, which tells auto-continue's hooks that you can answer in Gitrochi, runs only while **Track agents I start** is on. Reading reports and using the Ledger's local tools need none of these switches.
 
 The Ledger normally reads your local database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
 
@@ -44,11 +44,27 @@ For Claude Code outside Gitrochi:
 
 **Test Ledger** checks this app's Ledger and bundled MCP command. It does not check Claude Code's MCP registration or prove that a client has loaded the tools. Registration makes the tools available; the first agent report creates a reported session. Existing conversations are not imported automatically.
 
-The sheet also supplies configuration for other MCP clients and instructions you can add to a project. Gitrochi does not edit a client's settings files from this sheet. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+The sheet also supplies configuration for other MCP clients and instructions you can add to a project. In **Connections**, Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after backing up the file; nothing in the sheet edits a client's MCP settings, whose commands are only shown for you to copy. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
 Existing Claude Ledger users can also retain their work records and personal notes. See [Moving from Claude Ledger](MIGRATION.md) for import conflicts, agent reconnection, the feature map and the optional local HTTP bridge. Importing does not keep the two databases synchronized.
+
+## See and repair your connections
+
+**Connections** lists Claude Code, Codex and the ChatGPT browser extension side by side, at the top of the **Connect agents** sheet and in **Settings › Ledger**. On macOS, **Connect Claude Code…** in the Ledger's **More ledger actions** menu opens it; on Windows, the Claude Code button in the Ledger toolbar does. Each row shows one status:
+
+| Status | Meaning |
+|---|---|
+| **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
+| **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
+
+**Repair** installs the hooks again with the stable command, which Gitrochi keeps current. When the MCP entry is the problem, Repair also copies an MCP command that replaces the registration; run it in a terminal. **Copy MCP command** does the same at any time. Gitrochi never edits a client's MCP settings itself. **Remove** removes only Gitrochi's hooks for that client. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
+
+Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does. [Screenshots](../screenshots/ledger-connection/README.md) show the list on both platforms.
 
 ## Track local Claude Code and Codex activity automatically
 
@@ -59,7 +75,7 @@ gitrochi-ledger integrate claude --install
 gitrochi-ledger integrate codex --install
 ```
 
-Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
+Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. That command lives at `~/Library/Application Support/Gitrochi/bin/gitrochi-ledger` on macOS and `%APPDATA%\Gitrochi\bin\gitrochi-ledger.exe` on Windows. Once it exists, Gitrochi replaces it with its own bundled command whenever the two differ, each time the Ledger opens, so hooks and MCP entries that name it keep working after the app moves or updates. Gitrochi creates it only when you set up or repair a connection in the app. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
 
 ```sh
 gitrochi-ledger --json integrate claude --status
@@ -70,7 +86,9 @@ gitrochi-ledger integrate codex --remove
 
 Start or restart the client after installing. Codex asks you to review non-managed hooks in its own `/hooks` flow; Gitrochi does not grant that trust or change permission settings. The status command confirms configuration only. A conversation appearing in Board or Streams confirms that its activity reached this Ledger. Cloud-orchestrated Codex tasks do not run these local hooks.
 
-Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions use a generic kind and have auto-continue off. Existing Gitrochi-tracked sessions keep their own kind and policy.
+The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself.
+
+Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions are titled by the client and the branch they started on, such as **Claude Code · feature/login** (the worktree folder for a detached checkout), use a generic kind and have auto-continue off. Sessions observed before keep their titles, and the agent's first start report replaces the title as before. Existing Gitrochi-tracked sessions keep their own kind and policy.
 
 MCP registration remains separate. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
 
@@ -170,6 +188,12 @@ Routine progress appears in **Board** and **Streams**. When the Inbox has nothin
 
 The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. The timeline starts with reports and decisions; **Show activity** also reveals passive observations and agent heartbeats. The hidden activity count tells you when those records are folded away. Opening an activity event from search still reveals that event.
 
+When the session belongs to the open repository and that repository has a GitHub or GitLab account connected, its linked pull or merge request also shows where it stands: **Open**, **Draft**, **Merged** or **Closed**, and its checks on the latest commit as **N passing**, **N failing** or **N pending**. Gitrochi reads them with the repository's existing account, the same way the request pages do; nothing is read for other repositories or without an account, and the chip then looks as before. A value is reused for a minute. While the inspector shows the request it is read again every 20 seconds while checks run, every two minutes while it is open, and not at all once it is merged or closed.
+
+If the request was merged but the session is not finished, the inspector and the Inbox's **To decide** group suggest **Request merged — mark merged?**. It opens the usual **Mark merged…** version picker with the newest version marked. The Ledger never changes a session's status by itself; only the version you pick does.
+
+When the session's branch belongs to the open repository and a Flow run was recorded for the commit that branch points at, the inspector adds a read-only **Checks** section: the latest result of each flow on that commit (**Passed**, **Failed**, **Held** or **Canceled**), when it finished, and **Open in Flows** to go to the Flows workspace. Held means the run was refused before running or its rollback failed and the environment is on hold. The section reads the same run records as the Flows workspace, in the repository and in worktrees that have the branch checked out, and refreshes every 30 seconds while shown. It never starts a run or changes flow files, trust or records, and it is hidden when there is no repository, no branch or no run for that commit.
+
 **Last report** is the latest agent report. **Last activity** also includes observed activity, so an active but unreported conversation does not appear to have sent a report. Quiet sessions are checked again at least once a minute while the Ledger is being followed, and a **Still active** snooze is checked at its expiry on the next poll. Search ranks an exact session ID ahead of sessions that only mention it. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
 A session's verdict is computed from its state:
@@ -189,11 +213,15 @@ Confirming acknowledges an outcome. Archiving records that the conversation is c
 
 An unreported tracked launch stays active while its branch is still at the commit it launched from. Once the branch moves, the normal stale timer applies. If its Git context cannot be read, the normal stale rule applies too. **Unreported** uses the absence of an agent report, not the absence of hook activity.
 
-Live sessions with the implementation role are **streams**. They appear in Streams and Graph, and stay out of the Board, overlap warnings and ordinary clean-up counts. This also applies to tracked launches of that kind; the default for launched implementation sessions remains an open design point. Look in Streams if such a session is absent from the Board.
+Live sessions with the implementation role are **streams**. They appear in Streams and Graph, and stay out of the Board, overlap warnings and ordinary clean-up counts. Look in Streams if such a session is absent from the Board.
+
+Agents Gitrochi starts with **Track agents I start** appear on the Board as the kind `task`, even when they report implementation work, so they count for clean-up and overlap warnings. To follow one as a stream instead, give it an implementation kind in **Manage records…**. To put every new launch in Streams, set the `task` kind's role to **Implementation** under **Settings › Ledger › Roles and stream lines**. Sessions launched before this change keep their kind.
 
 In the Inbox, **↑/↓** moves through items, **Return** opens the inspector, **A** answers, **C** confirms, **E** archives, **S** marks a stale session still active, and **M** opens the merged-version picker. These shortcuts do not act while you type in a field. In an answer field, Return adds a line; **⌘Return** / **Ctrl+Enter** saves. Confirm, archive and status changes offer **Undo**.
 
 Your Ledger answers and messages wait for the agent's next report or read. Writing one does not type into its terminal or immediately resume it.
+
+To deliver them sooner to Claude Code agents Gitrochi starts with **Track agents I start**, turn on **Settings › Ledger › Delivering answers › Wake waiting agents with my answers** (off by default) and choose the wait. After such an agent ends its turn, it keeps listening in the background for that long. An answer to one of its Ledger questions, a dismissal or a message you send its session then reaches it at once, and the question shows as delivered. **Answer wakes the agent** marks its Inbox rows and inspector while it listens. A newer prompt, a restart or the end of the conversation stops the listening; after the wait, answers again wait for the next report. The agent receives your words as a notice from Gitrochi; nothing is typed into its terminal. The setting applies to running tracked agents too, but not to sessions tracked only through the passive hooks.
 
 ## Turn on auto-continue deliberately
 
@@ -207,13 +235,14 @@ When a supported question or permission request waits past the countdown, Gitroc
 
 The terminal's permission dialog may remain visible during the countdown. An answer there counts too. Permission answers are recorded as confirmed only when the handler can tell the automatic answer applied; an unknown outcome is shown for review rather than assumed to have succeeded.
 
-Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval is not enabled by default and has not been checked live.
+Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval stays off by default. A non-interactive check with Claude Code 2.1.316 showed that an automatic approval goes through, but the hook does not receive the plan, so the Ledger cannot show what it would approve; interactive mode has not been checked.
 
 A **held wait** has a reason and no countdown. Choose **Answer in terminal** to bring forward the terminal Gitrochi started, then answer there. If that terminal is no longer available, answer wherever the agent runs. An answer entered into the Ledger cannot reach a held prompt because no hook is waiting on it.
 
 Every automatic answer appears in the Inbox for review. **Confirm** marks that answer reviewed. **Send correction…** queues a correction for the next agent report or read; open the terminal to say it immediately when needed. Reviewing an automatic answer is separate from confirming a session's outcome.
 
-If Gitrochi is not running, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+If Gitrochi is not running, or **Track agents I start** has been turned off since the agent started, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+
 
 ## Notifications and terminal quick launches
 
@@ -225,9 +254,22 @@ The count includes open questions, clean-up and decision items, automatic answer
 
 With a repository open, the Ledger's terminal button offers **Ledger overview** and **Claude Code**. Both open tabs in the existing terminal panel. The overview prints the current project context for agents; the Claude Code option uses the existing agent-launch path, so tracking applies when enabled. The overview is unavailable on demo data. Open a repository to use the terminal quick launches.
 
+## Share sessions with the team hub
+
+Sharing is off by default, and nothing leaves this computer until you turn it on. It uses the team hub Gitrochi already reads under **Work validation › Team overlap evidence**: connect there first (the hub's URL, and its token, which stays in the Keychain or the Credential Manager). Then open **Settings › Ledger › Team hub** and turn on **Share this computer's Ledger sessions with the team hub**.
+
+**What is shared**, for each active session (not archived, not a stream), under its repository's remote: the session ID, project, title, kind and role, branch, verdict, the touches that are repository-relative paths or identifiers, and the last activity time to the minute. **Never shared**: questions, answers, report summaries and bodies, messages, notes, the notebook, work and document records, chat links, agent IDs and folder paths. A session whose repository has no remote stays on this computer; the status line counts them. Demo data is never shared.
+
+- Gitrochi sends what changed when the Ledger changes, checking every 15 seconds, and everything again every four minutes so the hub keeps it. Closing or archiving a session withdraws it; turning sharing off withdraws all of them, and whatever could not be withdrawn expires on the hub within its presence lifetime (10 minutes by default).
+- When another member's session on another computer touches the same thing, the inspector's **Touches** shows **Also touched on another computer by S… · member** with the touches you share. The hub never compares one member's own entries, so your other computers do not appear there.
+- An unreachable hub only changes the status line; Gitrochi waits longer after each failure (up to ten minutes) and never shows a dialog. A refused or unreadable token stops sharing until you connect again.
+- A hub older than this feature does not keep titles and verdicts; Gitrochi then shares branches and touches only and says so.
+
+The hub's side is described in [services/hub](../../services/hub/README.md#presence-and-overlaps), and the exact contents in the [core contract](../../crates/gitrochi-ledger/CONTRACT.md#sharing-with-the-team-hub).
+
 ## Storage, settings and backups
 
-The Ledger's database stays on this computer. An explicitly started [experimental loopback bridge](MIGRATION.md#optional-local-http-bridge) can connect existing reporting clients; direct LAN binding is not available. The default database is:
+The Ledger's database stays on this computer. An explicitly started [experimental loopback bridge](MIGRATION.md#optional-local-http-bridge) can connect existing reporting clients; direct LAN binding is not available. Only the opt-in [team hub sharing](#share-sessions-with-the-team-hub) sends a summary of active sessions elsewhere. The default database is:
 
 - macOS: `~/Library/Application Support/Gitrochi/ledger/ledger.sqlite3`
 - Windows: `%APPDATA%\Gitrochi\ledger\ledger.sqlite3`

@@ -1700,7 +1700,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI a místní úlohy desktopové aplikace sdílejí toto nastavení. Úlohy řízené z cloudu tyto hooky nespouštějí; zobrazí se pouze tehdy, když agent odešle zprávu do registru.";
 "Check or remove automatic activity" = "Zkontrolovat nebo odebrat automatickou aktivitu";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "Stav kontroluje pouze konfiguraci, nikoli důvěryhodnost nebo běh hooků.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Toto okno nemění nastavení klienta. Spouštějte pouze příkazy nastavení, které chcete povolit.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "Nastavit, Opravit a Odebrat mění jen vlastní položky Gitrochi v nastavení hooků daného klienta a předtím vytvoří zálohu. Příkazy MCP se jen zobrazí, abyste je zkopírovali.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Kontroluje registr této aplikace, nikoli konfiguraci agenta nebo důvěryhodnost hooků.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Připojte agenty, aby zde mohli podávat zprávy. Import čte vložené zprávy nebo databázi claude-ledger.";
 "Connect Claude Code" = "Připojit Claude Code";
@@ -1971,6 +1971,11 @@
 "Decision sessions never continue automatically." = "Rozhodovací relace nikdy nepokračují automaticky.";
 "Use the default" = "Použít výchozí";
 "Follow the repository's or the default auto-continue setting again" = "Znovu se řídit nastavením repozitáře nebo výchozím automatickým pokračováním";
+"Delivering answers" = "Doručování odpovědí";
+"Wake waiting agents with my answers" = "Probouzet čekající agenty mými odpověďmi";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Agent, kterého jste spustili, po skončení svého tahu ještě tak dlouho naslouchá. Odpověď nebo zpráva, kterou jeho relaci pošlete v Evidenci, mu pak dorazí hned, ne až s další zprávou o průběhu.";
+"Answer wakes the agent" = "Odpověď probudí agenta";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Agent čeká na pozadí: odpověď nebo zpráva, kterou pošlete teď, mu dorazí hned.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím.";
 "Auto-continue changed for %@" = "Automatické pokračování změněno pro %@";
 "Stop waiting here and answer in the agent's own terminal" = "Přestat zde čekat a odpovědět ve vlastním terminálu agenta";
@@ -2009,6 +2014,22 @@
 "Start Claude Code in this repository" = "Spustit Claude Code v tomto repozitáři";
 "Open a repository to use its terminal" = "Otevřete repozitář, abyste mohli použít jeho terminál";
 "Open in the terminal" = "Otevřít v terminálu";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Týmový hub";
+"Share this computer's Ledger sessions with the team hub" = "Sdílet relace Evidence z tohoto počítače s týmovým hubem";
+"What is shared" = "Co se sdílí";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "U každé aktivní relace ID, projekt, název, druh a role, větev, výsledek, čeho se týká a poslední aktivita, pod vzdáleným repozitářem. Nikdy otázky, odpovědi, hlášení, zprávy, poznámky, zápisník, dokumenty, odkazy na chaty ani cesty ke složkám. Kanály a archivované relace zůstávají na tomto počítači.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Vypnutím se vaše relace stáhnou; co zbude, na hubu během několika minut vyprší. Překryvy s relacemi ostatních členů se zobrazí v inspektoru v části Týká se.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Nejprve připojte týmový hub v Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Připojování k %@…";
+"Sessions shared with %@: %lld" = "Relace sdílené s %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Ponecháno na tomto počítači, bez vzdáleného repozitáře: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Tento hub uchovává jen větve a to, čeho se relace týkají; názvy a výsledky vyžadují novější hub.";
+"Couldn't reach %@. Gitrochi tries again later." = "Nelze se spojit s %@. Gitrochi to zkusí znovu později.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Token hubu pro %@ nebyl přijat nebo ho nelze přečíst. Připojte se znovu v Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Ukázková data se nikdy nesdílejí.";
+"Also touched on another computer by %@ · %@" = "Týká se i jiného počítače: %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Automatické pokračování na tento druh požadavku nikdy neodpovídá.";
@@ -2275,3 +2296,45 @@
 "Insights appear once agents report in this period. Choose a longer period or another project." = "Přehledy se zobrazí, jakmile agenti v tomto období něco nahlásí. Zvolte delší období nebo jiný projekt.";
 "The period the numbers cover" = "Období, za které čísla platí";
 "%lld reports" = "Hlášení: %lld";
+"Checks" = "Kontroly";
+"Open in Flows" = "Otevřít v Tocích";
+"Latest Flow runs recorded for this branch's head commit" = "Nejnovější běhy toků zaznamenané pro hlavní commit této větve";
+"Held" = "Pozastaveno";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Připojení";
+"Not set up" = "Nenastaveno";
+"Connected · last data %@" = "Připojeno · poslední data %@";
+"Connected · no data yet" = "Připojeno · zatím žádná data";
+"Needs repair" = "Vyžaduje opravu";
+"Command missing" = "Chybí příkaz";
+"Set up" = "Nastavit";
+"Set up…" = "Nastavit…";
+"Repair" = "Opravit";
+"Repair…" = "Opravit…";
+"Copy MCP command" = "Kopírovat příkaz MCP";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Nepřipojeno. Nastavení nainstaluje hooky aktivity, které spouštějí stálý příkaz Ledger z Gitrochi.";
+"Activity and reports reach this Ledger." = "Aktivita a hlášení se dostávají do tohoto Ledgeru.";
+"The MCP server is registered. Set up also records activity." = "Server MCP je zaregistrovaný. Nastavení zaznamená i aktivitu.";
+"Start or restart %@ to send activity." = "Spusťte nebo restartujte %@, aby se odesílala aktivita.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Spusťte nebo restartujte Codex a potom v /hooks zkontrolujte hooky Ledgeru a označte je jako důvěryhodné.";
+"Hooks are turned off in this client's settings." = "Hooky jsou v nastavení tohoto klienta vypnuté.";
+"Some activity hooks are missing." = "Některé hooky aktivity chybí.";
+"The hook command is older than this Ledger and cannot write to it." = "Příkaz hooků je starší než tento Ledger a nemůže do něj zapisovat.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Příkaz MCP je starší než tento Ledger a nemůže do něj zapisovat. Zkopírujte příkaz MCP a spusťte ho.";
+"The hook command no longer exists." = "Příkaz hooků už neexistuje.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Příkaz MCP už neexistuje. Zkopírujte příkaz MCP a spusťte ho.";
+"The hooks write to a different Ledger database." = "Hooky zapisují do jiné databáze Ledgeru.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Server MCP používá jinou databázi Ledgeru. Zkopírujte příkaz MCP a spusťte ho.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Nepřipojeno. Načtěte rozšíření v Chromu a povolte mu připojení.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Otázky ze spárovaných konverzací ChatGPT se dostávají do tohoto Ledgeru.";
+"Pair a conversation from the extension's popup to send questions." = "Spárujte konverzaci v okně rozšíření, aby se odesílaly otázky.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Chybí hostitel prohlížeče. Oprava zaregistruje tuto kopii Gitrochi.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Zkopírováno. Spusťte ho v terminálu a zaregistrujte nástroje Ledgeru.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooky spouštějí stálou kopii příkazu Ledger, kterou Gitrochi udržuje aktuální, takže fungují i po přesunutí nebo aktualizaci aplikace. Gitrochi nikdy neupravuje nastavení MCP; zkopírujte příkaz MCP a spusťte ho sami.";
+"%lld passing" = "Úspěšné: %lld";
+"%lld failing" = "Neúspěšné: %lld";
+"%lld pending" = "Čekající: %lld";
+"Checks on the request's latest commit" = "Kontroly nejnovějšího commitu požadavku";
+"Request merged — mark merged?" = "Požadavek sloučen — označit jako začleněné?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Požadavek byl na serveru sloučen. Vyberte verzi, do které tato práce vešla; Evidence se změní, až když to uděláte.";

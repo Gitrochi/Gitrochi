@@ -1,8 +1,8 @@
 import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, History, Plus, PlugZap, RefreshCw, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { backupSize, BACKUPS_SHOWN, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBackupFile, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, shownBackups, withRepositoryPolicy } from "@/entities/ledger";
+import { backupSize, BACKUPS_SHOWN, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBackupFile, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, type LedgerHubSharing, ledgerHubSharing, type LedgerHubStatus, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, type LedgerWakeAgents, repositoryPolicies, repositoryPolicy, shownBackups, WAKE_MAX_SEC, WAKE_MIN_SEC, wakeSetting, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
-import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
+import { LedgerConnections, LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
 import { basename, displayPath, recents, samePath, samePathKey } from "@/shared/config";
@@ -112,8 +112,10 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       {error && <span role="alert" className="error-text">{error}</span>}
 
       <TrackingSection />
+      <WakeAgentsSection wake={wakeSetting(settings)} disabled={busy} onSave={(wakeAgents) => void save({ wakeAgents })} onInvalid={setError} />
       <AutoContinueSection autoContinue={settings.autoContinue} disabled={busy} onSave={(autoContinue) => void save({ autoContinue })} onInvalid={setError} />
       <NotificationsSection />
+      <HubSharingSection />
 
       <div className="form-section">
         <span className="form-section-title">{t("Stale sessions")}</span>
@@ -151,6 +153,12 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
 
       <RestoreSection store={store} refreshKey={backup} onRestored={() => void load()} onError={setError} />
 
+      <div className="form-section" data-ledger-section="connections">
+        <span className="form-section-title">{t("Connections")}</span>
+        <LedgerConnections store={store} onOpenBrowser={() => setSheet("browser")} />
+        <span className="hint">{t("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")}</span>
+      </div>
+
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
@@ -162,7 +170,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       </div>
 
       {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} onOpenBrowser={() => setSheet("browser")} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
     </div>
@@ -257,6 +265,29 @@ function TrackingSection() {
   );
 }
 
+/**
+ * Wake waiting agents with my answers (§7.6): a tracked agent's Stop hook keeps waiting for this long, and an answer or
+ * message for its session wakes it at once. Kept in the ledger's `wakeAgents` setting, which the hooks read.
+ */
+function WakeAgentsSection({ wake, disabled, onSave, onInvalid }: { wake: LedgerWakeAgents; disabled: boolean; onSave: (value: LedgerWakeAgents) => void; onInvalid: (text: string) => void }) {
+  const tracking = useObserve(ledgerTracking);
+  return (
+    <div className="form-section" data-ledger-section="wake">
+      <span className="form-section-title">{t("Delivering answers")}</span>
+      <Checkbox checked={wake.enabled} disabled={disabled} onChange={(on) => onSave({ ...wake, enabled: on })} label={t("Wake waiting agents with my answers")} />
+      <div className="form-row">
+        <label>{t("Wait")}</label>
+        <div className="row">
+          <NumberField value={wake.waitSec} min={WAKE_MIN_SEC} max={WAKE_MAX_SEC} label={t("Wait")} onCommit={(waitSec) => onSave({ ...wake, waitSec })} onInvalid={onInvalid} />
+          <span>{t("seconds")}</span>
+        </div>
+      </div>
+      <span className="hint">{t("After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report.")}</span>
+      {!tracking.chosen && <span className="hint">{t("It works for agents started while Track agents I start is on.")}</span>}
+    </div>
+  );
+}
+
 /** Notifications about what is new, and the count on the taskbar button (§10.11) */
 function NotificationsSection() {
   const notifier = useObserve(ledgerNotifier);
@@ -267,6 +298,46 @@ function NotificationsSection() {
       <span className="hint">{t("New questions, sessions to clean up, applied reports, agents waiting for an answer and every automatic answer. A click opens the Ledger at that item.")}</span>
       <Checkbox checked={notifier.badge} onChange={(on) => notifier.setBadge(on)} label={t("Show the count on the taskbar button")} />
       <span className="hint">{t("The number of items waiting for you in the Ledger.")}</span>
+    </div>
+  );
+}
+
+/** The hub's state as one quiet line; nothing while sharing is off */
+function hubStatusText(status: LedgerHubStatus): string | null {
+  switch (status.kind) {
+    case "off": return null;
+    case "demo": return t("Demo data is never shared.");
+    case "noHub": return t("Connect a team hub under Work validation › Team overlap evidence first.");
+    case "connecting": return t("Connecting to {0}…", status.host);
+    case "unreachable": return t("Couldn't reach {0}. Gitrochi tries again later.", status.host);
+    case "rejected": return t("The hub token for {0} was not accepted or could not be read. Connect again under Work validation › Team overlap evidence.", status.host);
+    case "sharing": return [
+      t("Sessions shared with {0}: {1}", status.host, status.count),
+      ...(status.unshared ? [t("Kept on this computer, no repository remote: {0}", status.unshared)] : []),
+      ...(status.plain ? [t("This hub keeps branches and touches only; titles and verdicts need a newer hub.")] : []),
+    ].join("\n");
+  }
+}
+
+/**
+ * Sharing this computer's sessions with the team hub (docs/ledger/DESIGN.md §14 D4): off until a person turns it on, with
+ * what is shared spelled out next to the switch. (macOS: Views/Settings/LedgerSettings.swift, hubSection)
+ */
+export function HubSharingSection({ sharing = ledgerHubSharing }: { sharing?: LedgerHubSharing }) {
+  useObserve(sharing);
+  const connected = !!sharing.hubEndpoint;
+  const line = connected && sharing.on ? hubStatusText(sharing.status) : null;
+  return (
+    <div className="form-section" data-ledger-section="team-hub">
+      <span className="form-section-title">{t("Team hub")}</span>
+      <Checkbox checked={sharing.on} disabled={!connected && !sharing.on} onChange={(on) => void sharing.setOn(on)} label={t("Share this computer's Ledger sessions with the team hub")} />
+      {!connected && <span className="hint">{t("Connect a team hub under Work validation › Team overlap evidence first.")}</span>}
+      {line && <span className="hint" role="status" style={{ whiteSpace: "pre-line" }}>{line}</span>}
+      <div className="col" style={{ gap: 2 }} data-ledger-hub="what-is-shared">
+        <strong style={{ fontSize: 12 }}>{t("What is shared")}</strong>
+        <span className="hint">{t("Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer.")}</span>
+      </div>
+      <span className="hint">{t("Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches.")}</span>
     </div>
   );
 }

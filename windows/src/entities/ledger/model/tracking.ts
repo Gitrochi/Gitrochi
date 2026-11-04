@@ -88,8 +88,8 @@ async function hasLedgerServer(claude: AgentCommand, folder: string): Promise<bo
  * center starts, the core's `track` registers a ledger session before launch, working out the project, title, base and
  * the repository's auto-continue policy from the checkout; the agent gets its ID as GITROCHI_LEDGER_SESSION, the ledger
  * CLI's hooks and the Ledger's tools. While tracking is on, the app touches `ledger/app.alive` so waiting hooks know a
- * person can answer here (docs/ledger/DESIGN.md §7.11, §9). Only with the Ledger preview; without it nothing here runs.
- * (macOS: Services/Agents.swift)
+ * person can answer here (docs/ledger/DESIGN.md §7.11, §9). The switch alone decides; with it off nothing here runs.
+ * (macOS: Services/Agents.swift, LedgerHeartbeat)
  */
 export class LedgerTracking extends Observable {
   /** Why the last launch could not be tracked; it started untracked */
@@ -98,9 +98,9 @@ export class LedgerTracking extends Observable {
   private cliPath: Promise<string | null> | null = null;
   private cliFolder = "";
 
-  /** Tracking applies: the Ledger preview is on and a person turned it on */
+  /** Tracking applies: a person turned it on (agents.ts reads the same setting before it loads the Ledger) */
   get on(): boolean {
-    return !!env.ledgerPreview && settings.get<boolean>("ledgerTrackAgents", false);
+    return this.chosen;
   }
 
   /** The switch itself, as Settings shows it */

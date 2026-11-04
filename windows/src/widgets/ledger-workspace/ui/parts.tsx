@@ -1,4 +1,4 @@
-import { Archive, CircleCheck, CircleDot, ClockAlert, GitMerge, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
+import { Archive, BellRing, CircleCheck, CircleDot, ClockAlert, GitMerge, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { type AnswerKind, type LedgerSession, type LedgerVerdict, type VerdictIcon, verdictLook } from "@/entities/ledger";
 import { t } from "@/shared/i18n";
@@ -16,6 +16,19 @@ export function VerdictBadge({ verdict, count, iconOnly }: { verdict: LedgerVerd
     <StatusPill className="ledger-verdict" tone={look.tone} icon={<Icon size={12} strokeWidth={2.2} />} data-tip={tip(label, t(look.hint))} aria-label={iconOnly ? label : undefined}>
       {!iconOnly && <span>{label}</span>}
       {count !== undefined && <span className="ledger-verdict-count">{count}</span>}
+    </StatusPill>
+  );
+}
+
+/**
+ * The session's agent waits to be woken (Wake waiting agents with my answers): an answer or message sent now reaches it at
+ * once instead of with its next report. Shown only while its Stop hook waits. (macOS: LedgerWakePill)
+ */
+export function WakePill() {
+  const label = t("Answer wakes the agent");
+  return (
+    <StatusPill className="ledger-wake" tone="info" icon={<BellRing size={12} strokeWidth={2.2} />} data-tip={tip(label, t("The agent is waiting in the background: an answer or message you send now reaches it at once."))}>
+      <span>{label}</span>
     </StatusPill>
   );
 }

@@ -2453,7 +2453,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI とローカルのデスクトップタスクはこの設定を共有します。クラウドで制御されるタスクはこれらのフックを実行せず、エージェントが台帳レポートを送った場合のみ表示されます。";
 "Check or remove automatic activity" = "自動アクティビティの確認または削除";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "設定状態は構成のみを確認し、フックが信頼されているか、実行中かは確認しません。";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "この画面ではクライアント設定を変更しません。有効にしたい設定コマンドだけを実行してください。";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "設定・修復・削除は、そのクライアントのフック設定のうち Gitrochi 自身の項目だけを変更し、先にバックアップを作成します。MCP コマンドはコピー用に表示するだけです。";
 "Checks this app's Ledger, not agent configuration or hook trust." = "このアプリの台帳を確認します。エージェントの設定やフックの信頼状態は確認しません。";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "エージェントを接続すると、ここにレポートできます。インポートは貼り付けたレポートまたは claude-ledger データベースを読み取ります。";
 "Connect Claude Code" = "Claude Code を接続";
@@ -2720,6 +2720,11 @@
 "Decision sessions never continue automatically." = "決定セッションは自動で続行しません。";
 "Use the default" = "既定に戻す";
 "Follow the repository's or the default auto-continue setting again" = "リポジトリの設定または既定の自動続行設定に従うよう戻します";
+"Delivering answers" = "回答の配信";
+"Wake waiting agents with my answers" = "待機中のエージェントを自分の回答で起こす";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "起動したエージェントはターンを終えた後もこの時間だけ待ち受けます。その間に台帳でそのセッションへ送った回答やメッセージは、次の報告を待たずにすぐ届きます。";
+"Answer wakes the agent" = "回答でエージェントが再開";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "エージェントはバックグラウンドで待機中です。今送る回答やメッセージはすぐに届きます。";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。";
 "Auto-continue changed for %@" = "%@ の自動続行を変更しました";
 "Stop waiting here and answer in the agent's own terminal" = "ここで待つのをやめ、エージェントのターミナルで回答します";
@@ -2758,6 +2763,22 @@
 "Start Claude Code in this repository" = "このリポジトリで Claude Code を起動";
 "Open a repository to use its terminal" = "ターミナルを使うにはリポジトリを開いてください";
 "Open in the terminal" = "ターミナルで開く";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "チームハブ";
+"Share this computer's Ledger sessions with the team hub" = "このコンピューターの台帳セッションをチームハブと共有";
+"What is shared" = "共有される内容";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "進行中の各セッションの ID、プロジェクト、タイトル、種類と役割、ブランチ、判定、作業範囲、最終アクティビティを、リポジトリのリモートごとに共有します。質問、回答、報告、メッセージ、メモ、ノートブック、ドキュメント、チャットリンク、フォルダーのパスは共有しません。ストリームとアーカイブ済みのセッションはこのコンピューターに残ります。";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "オフにすると共有したセッションを取り下げます。残ったものも数分以内にハブから消えます。ほかのメンバーのセッションとの重複はインスペクターの作業範囲に表示されます。";
+"Connect a team hub under Work validation › Team overlap evidence first." = "先に 作業の検証 › チーム作業の重複根拠 でチームハブに接続してください。";
+"Connecting to %@…" = "%@ に接続中…";
+"Sessions shared with %@: %lld" = "%1$@ と共有しているセッション: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "リモートがないためこのコンピューターに残したセッション: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "このハブはブランチと作業範囲だけを保持します。タイトルと判定には新しいハブが必要です。";
+"Couldn't reach %@. Gitrochi tries again later." = "%@ に接続できませんでした。Gitrochi が後でもう一度試します。";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@ のハブトークンが受け付けられなかったか、読み取れませんでした。作業の検証 › チーム作業の重複根拠 で接続し直してください。";
+"Demo data is never shared." = "デモデータは共有されません。";
+"Also touched on another computer by %@ · %@" = "別のコンピューターでも作業中: %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "自動続行はこの種のリクエストには答えません。";
@@ -3126,3 +3147,45 @@
 "Insights appear once agents report in this period. Choose a longer period or another project." = "この期間にエージェントが報告するとインサイトが表示されます。期間を長くするか、別のプロジェクトを選んでください。";
 "The period the numbers cover" = "数値の対象期間";
 "%lld reports" = "報告 %lld 件";
+"Checks" = "チェック";
+"Open in Flows" = "フローで開く";
+"Latest Flow runs recorded for this branch's head commit" = "このブランチの先頭コミットに記録された最新のフロー実行";
+"Held" = "保留";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "接続";
+"Not set up" = "未設定";
+"Connected · last data %@" = "接続済み · 最終データ %@";
+"Connected · no data yet" = "接続済み · データなし";
+"Needs repair" = "修復が必要";
+"Command missing" = "コマンドがありません";
+"Set up" = "設定";
+"Set up…" = "設定…";
+"Repair" = "修復";
+"Repair…" = "修復…";
+"Copy MCP command" = "MCP コマンドをコピー";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "未接続です。設定すると、Gitrochi の固定 Ledger コマンドを実行するアクティビティフックがインストールされます。";
+"Activity and reports reach this Ledger." = "アクティビティとレポートはこの Ledger に届いています。";
+"The MCP server is registered. Set up also records activity." = "MCP サーバーは登録済みです。設定するとアクティビティも記録します。";
+"Start or restart %@ to send activity." = "%@ を起動または再起動すると、アクティビティが送信されます。";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Codex を起動または再起動し、/hooks で Ledger のフックを確認して信頼してください。";
+"Hooks are turned off in this client's settings." = "このクライアントの設定でフックがオフになっています。";
+"Some activity hooks are missing." = "一部のアクティビティフックがありません。";
+"The hook command is older than this Ledger and cannot write to it." = "フックのコマンドがこの Ledger より古いため、書き込めません。";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "MCP コマンドがこの Ledger より古いため、書き込めません。MCP コマンドをコピーして実行してください。";
+"The hook command no longer exists." = "フックのコマンドが見つかりません。";
+"The MCP command no longer exists. Copy the MCP command and run it." = "MCP コマンドが見つかりません。MCP コマンドをコピーして実行してください。";
+"The hooks write to a different Ledger database." = "フックは別の Ledger データベースに書き込んでいます。";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "MCP サーバーは別の Ledger データベースを使っています。MCP コマンドをコピーして実行してください。";
+"Not connected. Load the extension in Chrome and allow it to connect." = "未接続です。Chrome に拡張機能を読み込み、接続を許可してください。";
+"Questions from paired ChatGPT conversations reach this Ledger." = "ペアリングした ChatGPT の会話の質問がこの Ledger に届いています。";
+"Pair a conversation from the extension's popup to send questions." = "拡張機能のポップアップで会話をペアリングすると、質問が送信されます。";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "ブラウザホストが見つかりません。修復すると、この Gitrochi で登録し直します。";
+"Copied. Run it in a terminal to register the Ledger tools." = "コピーしました。ターミナルで実行して Ledger ツールを登録してください。";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "フックは Gitrochi が最新に保つ Ledger コマンドの固定コピーを実行するため、アプリを移動・更新しても動作し続けます。Gitrochi は MCP 設定を編集しません。MCP コマンドをコピーしてご自身で実行してください。";
+"%lld passing" = "%lld 件成功";
+"%lld failing" = "%lld 件失敗";
+"%lld pending" = "%lld 件待機中";
+"Checks on the request's latest commit" = "リクエストの最新コミットのチェック";
+"Request merged — mark merged?" = "リクエストはマージ済み — 取り込み済みにしますか?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "サーバーでリクエストがマージされました。この作業が取り込まれたバージョンを選んでください。選ぶまで台帳は変わりません。";

@@ -100,8 +100,10 @@ export interface TerminalAgent {
   host: AgentHost;
 }
 
-/** The Ledger's Track agents I start, loaded with the Ledger preview only, so without it the Ledger stays out of the start-up bundle */
-const ledgerTracking = (): Promise<LedgerTracking | null> => (env.ledgerPreview ? import("@/entities/ledger").then((m) => m.ledgerTracking) : Promise.resolve(null));
+/** Track agents I start, read without loading the Ledger (LedgerTracking.on reads the same setting) */
+const trackingChosen = () => settings.get<boolean>("ledgerTrackAgents", false);
+/** The Ledger's Track agents I start, imported only while its switch is on, so with it off nothing of the Ledger runs here */
+const ledgerTracking = (): Promise<LedgerTracking | null> => (trackingChosen() ? import("@/entities/ledger").then((m) => m.ledgerTracking) : Promise.resolve(null));
 
 /**
  * Gitrochi 가 띄운 에이전트(Claude Code·Codex·Gemini CLI) 세션 추적. (맥 버전 AgentCenter)
@@ -127,18 +129,16 @@ class AgentCenter extends Observable {
     for (const name of await ipc.list(this.dir)) if (/\.(meta|state|tmp|mcp\.json)$/.test(name)) await ipc.remove(joinPath(this.dir, name));
     await this.installHooks();
     this.timer = setInterval(() => void this.load(), 2000);
-    // the Ledger's Track agents I start adds its entries to the hooks files, and takes them out again
-    const tracking = await ledgerTracking();
-    if (tracking) {
-      // only the switch changes the files; a launch error or the tools switch leaves them as they are
-      let on = tracking.on;
-      this.unsubscribeLedger ??= tracking.subscribe(() => {
-        if (tracking.on === on) return;
-        on = tracking.on;
-        void this.installHooks(tracking);
-      });
-      void tracking.syncHeartbeat();
-    }
+    // the Ledger's Track agents I start adds its entries to the hooks files, and takes them out again; only the switch
+    // changes the files, a launch error or the tools switch leaves them as they are
+    let on = trackingChosen();
+    this.unsubscribeLedger ??= settings.subscribe(() => {
+      if (trackingChosen() === on) return;
+      on = trackingChosen();
+      void this.installHooks();
+    });
+    // the heartbeat follows the switch from here on (LedgerTracking.setChosen)
+    if (on) void (await ledgerTracking())?.syncHeartbeat();
   }
 
   /** WSL 안의 Claude Code 가 읽는 훅 설정(윈도 실행 파일을 /mnt/c/… 경로로 부른다) */
@@ -146,11 +146,11 @@ class AgentCenter extends Observable {
     return joinPath(this.dir, "hooks-wsl.json");
   }
 
-  private async installHooks(tracking?: LedgerTracking) {
+  private async installHooks() {
     // Windows 경로도 / 로 쓰면 cmd·Git Bash 어느 셸로 실행돼도 그대로 통한다
     const exe = isWindows() ? slash(env.exe) : env.exe;
     // the ledger CLI's entries only while Track agents I start is on; without them the files are as they always were
-    const ledger = (await (tracking ?? (await ledgerTracking()))?.hooksCli()) ?? null;
+    const ledger = (await (await ledgerTracking())?.hooksCli()) ?? null;
     const ledgerExe = ledger && (isWindows() ? slash(ledger) : ledger);
     await ipc.writeText(this.hooksFile, agentHooksJson((e) => `"${exe}" --agent-hook ${e}`, 5, ledgerExe ? (e) => `"${ledgerExe}" hook ${e}` : null));
     if (isWindows()) {

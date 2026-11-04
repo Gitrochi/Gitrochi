@@ -257,3 +257,82 @@ fn bad_missing_disabled_and_nonpassive_hooks_never_block_or_create_data() {
     assert_eq!(result.code, 0);
     assert!(result.stdout.is_empty() && result.stderr.is_empty());
 }
+
+fn run_git(dir: &Path, args: &[&str]) {
+    let home = dir.join(".fixture-home");
+    std::fs::create_dir_all(&home).unwrap();
+    let output = std::process::Command::new("git")
+        .current_dir(dir)
+        .args(args)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", home.join("gitconfig"))
+        .env("HOME", &home)
+        .env("GIT_AUTHOR_NAME", "Fixture")
+        .env("GIT_AUTHOR_EMAIL", "fixture@example.com")
+        .env("GIT_COMMITTER_NAME", "Fixture")
+        .env("GIT_COMMITTER_EMAIL", "fixture@example.com")
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "git {args:?}: {}", stderr(&output));
+}
+
+fn observed(db: &Path, client_session: &str) -> Value {
+    sessions(db)
+        .into_iter()
+        .find(|s| s["links"]["observer"]["sessionId"] == client_session)
+        .unwrap()
+}
+
+#[test]
+fn new_observed_sessions_are_titled_by_client_and_branch_and_older_titles_stay() {
+    let dir = TempDir::new("observer-titles");
+    let db = dir.join("ledger.sqlite3");
+    app(&db, "info", json!({}));
+    let repo = dir.join("harbor");
+    std::fs::create_dir_all(&repo).unwrap();
+    run_git(&repo, &["init", "-q", "-b", "main"]);
+    run_git(&repo, &["commit", "-q", "--allow-empty", "-m", "Start"]);
+    run_git(&repo, &["switch", "-q", "-c", "feature/foo"]);
+    run_git(
+        &repo,
+        &["worktree", "add", "-q", "--detach", "../harbor-review"],
+    );
+    let notes = dir.join("notes");
+    std::fs::create_dir_all(&notes).unwrap();
+    let start = |client: &str, id: &str, cwd: &Path| {
+        let input = json!({"session_id": id, "cwd": cwd});
+        let output = observe(&db, client, "SessionStart", input, None);
+        assert!(output.status.success(), "{}", stderr(&output));
+    };
+
+    start("claude", "title-branch", &repo);
+    assert_eq!(
+        observed(&db, "title-branch")["title"],
+        "Claude Code · feature/foo"
+    );
+    start("codex", "title-detached", &dir.join("harbor-review"));
+    assert_eq!(
+        observed(&db, "title-detached")["title"],
+        "Codex · harbor-review"
+    );
+    start("claude", "title-folder", &notes);
+    assert_eq!(
+        observed(&db, "title-folder")["title"],
+        "Claude Code · notes"
+    );
+
+    // A session titled before this change keeps its title: observing never renames.
+    let id = observed(&db, "title-branch")["id"].clone();
+    let old = json!({"action": "update", "sessionId": id, "title": "Claude Code: harbor"});
+    app(&db, "records", old);
+    run_git(&repo, &["switch", "-q", "main"]);
+    start("claude", "title-branch", &repo);
+    let tool = json!({"session_id": "title-branch", "cwd": repo, "tool_name": "Read"});
+    assert!(observe(&db, "claude", "PostToolUse", tool, None)
+        .status
+        .success());
+    assert_eq!(
+        observed(&db, "title-branch")["title"],
+        "Claude Code: harbor"
+    );
+}

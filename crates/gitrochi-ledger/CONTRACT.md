@@ -2,11 +2,11 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `backups`, `restore`, `release-notes` and `insights`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `integration-status`, `hub-share`, `backups`, `restore`, `release-notes` and `insights`. The tests check real results against them.
 
 ## Decisions
 
-The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14](../../docs/ledger/DESIGN.md#14-decisions)), and this contract follows them: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1. D5 a read-only import of a claude-ledger database ([`import_legacy`](#importing-a-claude-ledger-database)). D6 baselines default to git tags. D7 re-implemented, with no code or text copied, and the compatibility surface kept: the MCP tool names `ledger_overview`, `ledger_report` and `ledger_session`, the report field names, the ```` ```ledger ```` block, the session ID shape and the input aliases. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once. D11–D13 stand there as working defaults.
+The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14](../../docs/ledger/DESIGN.md#14-decisions)), and this contract follows them: D1 Ledger is a workspace destination `ledger`, titled "Ledger". D2 no document-format parsers in v1. D3 work log later. D4 no multi-PC sharing in v1; since 2026-11-03 an opt-in, default-off sharing of live sessions with the team hub ([`hub_share`](#sharing-with-the-team-hub)). D5 a read-only import of a claude-ledger database ([`import_legacy`](#importing-a-claude-ledger-database)). D6 baselines default to git tags. D7 re-implemented, with no code or text copied, and the compatibility surface kept: the MCP tool names `ledger_overview`, `ledger_report` and `ledger_session`, the report field names, the ```` ```ledger ```` block, the session ID shape and the input aliases. D8 auto-continue covers questions at the end of a turn, `AskUserQuestion` and permission requests; `ExitPlanMode` is a setting, off by default; Ledger questions are never closed automatically. D9 instant template replies. D10 app not running → synchronous hooks return no decision at once. D11–D13 stand there as working defaults.
 
 ## Storage
 
@@ -23,6 +23,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14]
 | `kinds` | see below | kind → `{role, line?, handoff?}`; replaced as a whole |
 | `autoContinue` | `{"enabled": false, "delaySec": 30}` | The global auto-continue policy (its other fields belong to `gitrochi-autocontinue` and are stored as given), and `repositories`: repository path → `{enabled, delaySec}`, the policy `track` gives the sessions of agents started there |
 | `backupKeep` | 14 | Backups to keep |
+| `wakeAgents` | `{"enabled": false, "waitSec": 300}` | Wake waiting agents with my answers: how long a launched agent's `Stop` hook waits for a person's answer or message (10–300 s), [Hooks](#hooks). A missing field takes its default |
 
 | Per project (`projects`) | Default | Meaning |
 |---|---|---|
@@ -38,7 +39,7 @@ A project row appears with its first report. Scans run before reports and reads,
 
 - `status` (stored): `active | done | merged | closed | dropped | shelved`.
 - `verdict` (computed, first match wins): `archived` (archivedAt set) > `needs_human` (open questions) > `merged`/`closed`/`dropped` → `expirable` if acknowledged else `confirm` > `shelved` > `done` → `pending_merge` > no agent activity for `staleHours` and no running snooze → `stale` (an unreported launch only once its branch has moved on from where it started, [below](#sessions-for-agents-gitrochi-starts)) > `active`.
-- `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
+- `role` (from `kind` through `settings.kinds`): `decision | implementation | research | document | other`. Default kinds: `research` → research, `decision` → decision, `implementation` → implementation (line `core`, hands off), `llm-implementation` → implementation (line `llm`, no hand-off; the original tool's second channel), `document` → document, `review`, `baseline`, `task` (what `track` gives a launch, [below](#sessions-for-agents-gitrochi-starts)), `other` → other. Unknown kinds are kept as typed and have the role `other`. Known kinds are matched without case, spaces, `-`, `_` or `·`.
 - **Stream**: a session whose role is `implementation` and whose status is not `merged`/`closed`/`dropped`. Streams keep their verdict but stay out of overlaps, the open-session lists, project open counts and the clean-up board; they are shown as cycles.
 - Agent events: `start progress artifact question decision sync done merged closed dropped shelved release applied note heartbeat` (a heartbeat leaves no event). Korean aliases from the original tool (`시작`, `이행` …) and `rebase`, `merge`, `close`, `drop`, `apply`, `shelve` are accepted and stored in English; so are the original's kind names (`연구`, `판정`, `구현`, `LLM구현` …) and the latest words (`latest`, `head`, `최신` …).
 - Other event types: `auto_reply` (actor `auto`), `hook` (actor `hook`, wave 2), and a person's actions (actor `human`): `ack unack archive unarchive set_status answer dismiss snooze shelve link message auto_continue`.
@@ -66,6 +67,7 @@ interface Session {
   openQuestions: number;
   stream?: { line: string };  // live implementation sessions only
   autoContinue?: { enabled: boolean; delaySec: number };  // absent: the global default
+  wakeUntil?: Ms;             // its agent's Stop hook waits until then to wake it with a person's answer (wakeAgents)
 }
 interface LedgerEvent {
   id: number; sessionId: string; ts: Ms; type: string; actor: "agent" | "human" | "auto" | "hook";
@@ -146,7 +148,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `insights` | `{project?, range?: "7d" \| "30d" \| "all"}` (default 7d; no project = all) | `{project?, range, from?, to, questions: {asked, answered, dismissed, resolvedByAgent, wait, open}, autoAnswers: {total, reviewed, corrected, unreviewed, byKind}, sessions: {total, byVerdict, byRole, stale, staleUnreported, unreported}, reports, reportsPerDay: [{day, reports}]}` ([below](#insights)) | app, agent |
 | `release_notes` | `{project, version?}` (default HEAD; `latest`/`head` accepted) | `{project, version, previous?, releasedAt, releasedBy?, note?, versions, groups: [{role, title, sessions: [{id, title, kind, how: "merged" \| "absorbed", summary?, artifacts: [{name, ver?, path?}]}]}], markdown}` ([below](#release-notes)) | app, agent |
 | `restore` | `{path, dryRun?}` | `{ok, dryRun, path, contents: {schema, rev, sessions, events}, safety?: {path, created, size, removed}, rev}` ([below](#restoring-a-backup)) | app |
-| `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep}` with defaults | all |
+| `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep, wakeAgents}` with defaults | all |
 | `projects` | `{}` | `{projects: [{key, name, repoPath?, baselineSource, baselinePattern, baselineDir?, scanFiles, scanSubdirs}]}` | app, agent |
 | `human` | `{action, sessionId, …}` (below) | `{ok, rev}` | app only |
 | `prompt_answer` | `{id, answer: {…}}` | `{ok, rev, state, prompt}` — `ok: false` when the prompt no longer waits | app only |
@@ -154,6 +156,11 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `settings_set` | `{values: {key: value \| null}}` (null = default) | `{ok, rev, settings}` | app only |
 | `project_set` | `{project, name?, repoPath?, baselineSource?, baselinePattern?, baselineDir?, scanFiles?, scanSubdirs?}` (null clears) | `{ok, rev, project}` | app only |
 | `track` | `{project?, title?, base?, kind?, repoPath?, branch?, worktree?, agentId?, cwd?, autoContinue?}` | `{ok, rev, session}` ([below](#sessions-for-agents-gitrochi-starts)) | app only |
+| `integration_command` | `{bundled?, create?, path?}` | `{path, exists, current, refreshed, held}` — the stable command ([below](#passive-external-observers)) | app only |
+| `integration_status` | `{client, path?, config?, mcpConfig?}` | The `integrate --status` result ([`integration-status`](schema/integration-status.schema.json)) | app only |
+| `integration_install` | `{client, bundled, path?, config?, mcpConfig?}` | The same, after installing hooks that run the stable command | app only |
+| `integration_remove` | `{client, path?, config?, mcpConfig?}` | The same, after removing the client's owned hooks | app only |
+| `hub_share` | `{client}` (4–32 letters, digits or `-`: the app's random name for this computer) | `{rev, sessions: [{sessionId, repo, client, presence}], unshared: [{sessionId, reason: "no_remote" \| "limit"}]}` ([below](#sharing-with-the-team-hub)); reads only | app only |
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
@@ -167,7 +174,7 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 `question` accepts text or `{text, options?, multiSelect?, suggestedAnswer?}`; `questions` accepts an array of those entries through MCP, and the CLI/import parser also preserves a single text or question object. Each option is a label string or `{label, description?, recommended?}`. Text and labels are normalized and trimmed, labels must be nonempty and distinct, booleans must be booleans, and suggestions must be text. Explicit `recommended` overrides inferred bracketed markers. Malformed structured entries reject the entire report without writing questions or advancing the revision. Existing plain-text lists remain valid. A question event supplied only with `questions` creates those questions without adding another from the summary.
 
-Reported questions are the provider-neutral path for Claude and ChatGPT agents using the Ledger MCP tools or pasted reports. Options and suggestions survive storage and appear in app state and session detail. A person's selected or custom answer remains a text answer, queued for that session's next report/read and delivered once. Reading through the apps never consumes it. This path neither controls a client's native question dialog nor reads or fills its native composer prediction. Answering or dismissing a question that is already settled returns `CONFLICT` and preserves the existing answer.
+Reported questions are the provider-neutral path for Claude and ChatGPT agents using the Ledger MCP tools or pasted reports. Options and suggestions survive storage and appear in app state and session detail. A person's selected or custom answer remains a text answer, queued for that session's next report/read and delivered once (or, with `wakeAgents` on, by a launched agent's waiting `Stop` hook; [Hooks](#hooks)). Reading through the apps never consumes it. This path neither controls a client's native question dialog nor reads or fills its native composer prediction. Answering or dismissing a question that is already settled returns `CONFLICT` and preserves the existing answer.
 
 ### A person's operations (`human`)
 
@@ -190,12 +197,24 @@ With **Track agents I start** on, the app calls `track` before it starts an agen
 - `branch`: what git says about `cwd` (a detached HEAD has no branch). `worktree`: the checkout's top folder when `cwd` is in a linked worktree; the main checkout is the repository itself and gets none.
 - `project`: the project whose `repoPath` is `repoPath`, else the repository folder's name. A project that does not exist yet is created bound to `repoPath`, so its tags become its baselines. Paths compare without a trailing separator, with `~` expanded; a Windows path (on Windows, or one with a drive letter or a `\\server` share) also without case, with `\` and `/` alike.
 - `title`: the branch, else the folder's name.
+- `kind`: `task`, whose default role is `other`, so the session is on the Board and not a stream (decided 2026-11-03, DESIGN.md D14). The launch event then has `data.board: true`. A `kind` from the app is its explicit choice and has no such mark.
 - `base`: the newest tag reachable from `cwd`'s HEAD that matches the project's pattern, when its baselines come from tags; `latest` is HEAD.
 - `autoContinue`: the policy `autoContinue.repositories` keeps for `repoPath`; `null` follows the global default.
 
 **Unreported launches (D13).** Until its agent reports, a quiet session turns `stale` only once its branch's tip is no longer `head`: a commit of its own, or a reset. While the tip is still `head` its verdict stays `active`, so it is not in `attention`; the apps show it under the Board's **Unreported** filter (no `lastAgentAt`). A launch on a detached HEAD compares its folder's HEAD instead. One `git for-each-ref` per repository answers for all of its launches. When git cannot tell (no `head` recorded, the folders are gone, the branch was deleted), it goes stale like any other session.
 
 Until the agent reports, those values are Gitrochi's guess. The agent's first report replaces them: a `start` sets the title, kind and base it gives and is recorded as `start`, and a report naming another project moves the session there (its guessed base, from the other trunk, is dropped). After that report the usual rules hold, so another title on `start` or another project is a `CONFLICT` again.
+
+**On the Board (D14).** On a session whose `launch` event has `data.board`, a reported kind with the implementation role is stored as `task` while the session does not have the implementation role; the event keeps the reported kind in `data.reportedKind`, and the reply has a notice when the stored kind changes or on `start`. Other kinds apply as reported. A person moves the session to Streams with `records` (`update` with an implementation kind), after which its agent's implementation kinds apply as reported, or maps `task` to the implementation role in `settings.kinds`. Sessions created before this rule have no mark and keep the earlier behaviour.
+
+### Sharing with the team hub
+
+`hub_share` builds what an app posts to the team hub (`services/hub`, `POST /api/v1/presence`) when a person turns on **Share this computer's Ledger sessions** (D4, opt-in, off by default). It only reads; the apps do the HTTP with the hub token they already keep in the system credential store. This method is the one definition of what leaves the computer, and `schema/hub-share.schema.json` closes every object in it.
+
+- **Which sessions**: live and not streams — the sessions overlaps count ([Vocabulary](#vocabulary)) — most recently active first, at most 100 (`unshared` reason `limit` for the rest). A session needs a repository: the first of `links.repoPath`, `links.worktree`, `links.cwd` and its project's `repoPath` whose `origin` remote (else its first remote) gives a hub repository key; without one it is listed with reason `no_remote` and stays here. Keys are made as the hub's `repokey` makes them, so a user name or token in the remote URL never leaves the computer; they are read again after five minutes.
+- **The body** (`presence`): `repo` (the key), `branch` (`links.branch`, else empty), `changed` (the touches that are repository-relative paths or identifiers — absolute, home and Windows paths, URLs, `..` and control characters are left out; at most 500), `related` (empty), `client` (`ledger/<client>/<session ID>`, one hub entry per session) and `ledger`: `session`, `project`, `title` (one line, at most 200 characters), `kind`, `role`, `verdict` and `lastActivity` (`lastAt` as RFC 3339 UTC, to the minute).
+- **Never**: questions, answers, report summaries and bodies, messages, notes, the notebook, work and document records, artifacts, chat links, agent and Claude session IDs, folder paths, baselines and auto-continue policies.
+- The hub computes overlaps between members from `changed`, as it does for the monitor; the apps read the session IDs of other computers' entries from their `client`. A hub older than the `ledger` field answers `400` for it; the apps then send the same body without `ledger`.
 
 ### Importing a claude-ledger database
 
@@ -267,7 +286,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 The CLI also has an independent opt-in path for local clients: `observe <claude|codex> EVENT` reads hook JSON from standard input. It does not call the auto-continue handler or broaden any API caller's permissions. `hook EVENT` keeps its existing launch-only behavior.
 
-The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"`. Existing rows retain their kind, status and auto-continue policy. The unresolved implementation-stream default for Gitrochi launches is unchanged.
+The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a title of the provider and the checkout's branch (`Claude Code · feature/x`; the worktree or folder name for a detached checkout or outside a repository, also when the checkout cannot be read within 800 ms), `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"` and no `board` mark. Existing rows retain their kind, status and auto-continue policy. The Board default for Gitrochi launches (D14) does not apply to them.
 
 Allowed activity metadata is the client/session ID, event, tool name, tool-use ID, turn ID, subagent ID and the checkout context. Prompts, transcript paths/content, tool arguments/results and assistant output are ignored. These observations advance `lastAt` and append `hook` events; they never advance `lastAgentAt`, create questions or pending permission prompts, acknowledge, archive or change a session's status. `Stop` is a turn boundary, not task completion. Only actual agent reports establish reported progress and outcomes.
 
@@ -276,6 +295,10 @@ On `SessionStart` the handler may return bounded additional context naming the L
 `integrate <client> --install|--status|--remove [--cli FILE] [--config FILE]` manages passive callbacks in the user's `.claude/settings.json` or `.codex/hooks.json`. Installation is explicit, initializes the selected database if needed, uses a stable executable path, preserves unrelated keys and callbacks, backs up existing bytes privately and replaces the file atomically only if it has not changed meanwhile. Owned command callbacks carry `--managed-hook`; reinstalling replaces only those callbacks and removal deletes only that client's callbacks. Status/removal never initialize a database or missing settings file.
 
 JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`, `ownedHookCount`, `expectedHookCount`, `otherHookCount`, `backupPath`, `verification: "configuration_only"`, `requiresClientTrust` and `hooksDisabled`. Installed configuration does not prove execution, MCP registration or trust. Codex trust hashes, feature flags and all permission/auto-continue settings are outside this installer. Client settings, trust, disabled hooks and local/cloud execution determine coverage.
+
+Connection fields ([`integration-status`](schema/integration-status.schema.json)) say whether the configuration can still deliver. `hookCommand` is the executable the owned callbacks run, parsed from their commands (the worst one when they differ); `mcp` is `{configPath, registered, command}` for the client's user-level entry named `gitrochi-ledger` (Claude Code `~/.claude.json` `mcpServers`, Codex `~/.codex/config.toml` `[mcp_servers]`, or `--mcp-config FILE`), read only. Each command is `{path, exists, executable, writesSchema, version, canWrite, dbPath, sameDatabase}`: `writesSchema` and `version` come from the executable's own `call info` run with `GITROCHI_LEDGER=0` (which never opens a database) and a three-second limit; `canWrite` compares `writesSchema` with `databaseSchema`, this database's `PRAGMA user_version` read through a read-only connection; `dbPath` is its `--db` (for MCP, the entry's `GITROCHI_LEDGER_DB` or the per-user default). Unknown values are null. `lastObservedAt` is the newest `observer` event and `lastReportAt` the newest `lastAgentAt` of sessions whose `links.observer.client` is the client. `health` is the most urgent of `missing_command`, `outdated_command`, `other_database`, then `incomplete` (owned callbacks missing for some events), `no_data_yet` (hooks installed, nothing observed or reported) and `ok`; `not_installed` when neither hooks nor an MCP entry exist. MCP reports carry no client, so an MCP-only connection is `ok` rather than `no_data_yet`. Checking never creates, migrates or writes a file.
+
+**The stable command.** Hooks and MCP entries the apps set up name one stable copy of the ledger command instead of the one inside the app, which moves with the app and changes with every update: macOS `~/Library/Application Support/Gitrochi/bin/gitrochi-ledger`, Windows `%APPDATA%\Gitrochi\bin\gitrochi-ledger.exe` (`path` overrides it for tests). `integration_command` replaces that copy with the app's `bundled` command whenever their bytes differ, through a new file renamed over the old one (on Windows a running copy is renamed aside first), and reports `{path, exists, current, refreshed, held}`. Without `create` it never makes a missing copy; the apps call it so when the Ledger opens. With a database newer than the app (`held`), an existing copy is kept, so an older app never puts back a command that cannot write. `integration_install` creates or refreshes the copy (a person chose Set up or Repair) and installs hooks with it as `--cli`; `integration_status` and `integration_remove` are the CLI's `--status` and `--remove` for that command. No method edits a client's MCP settings.
 
 `gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on: `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PostToolUseFailure` and `SessionEnd`. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
 
@@ -311,7 +334,7 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
   - auto-continue is off for the session (the global `autoContinue` setting, with the session's own `enabled` and `delaySec` on top);
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
-  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
+  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s while its **Track agents I start** switch is on: rewriting an empty file does not change it on Windows;
   - the turn did not end with a question;
   - `stop_hook_active` is set and there has been no automatic answer since the person's last input.
 - **Waits held for the person.** With auto-continue on, some waits are never answered automatically: a request that is never auto-allowed, a risky question or plan, an `AskUserQuestion` without unique nonempty question texts, and anything past the limit in a row (a stop question only when the turn asked one). The hook still ends at once with no decision, so the terminal asks, but it stores a waiting prompt the apps can show and notify about:
@@ -325,13 +348,18 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
   - a `hook` event with `data.person`, written when they type in the terminal;
   - any of their actions on the session in the app, except `link`;
   - a prompt they answered.
+- **Waking a waiting agent** (`wakeAgents.enabled`, off by default; DESIGN.md §7.6). After the rest of `Stop` sent nothing, the hook goes on waiting, in the background, until `waitSec` after the `Stop`:
+  - The `Stop` write stores a claim in `meta` under `wake:<session>`: `{token, until}`, replacing an older one. With the setting off it deletes the key instead, so an older wait ends. `SessionStart`, every `UserPromptSubmit` and `SessionEnd` delete it too.
+  - The hook reads `rev` every 250 ms; when it moved, it checks its claim (gone or another token: it ends; a stored `until` can only bring the end forward), the setting (off: it ends) and the session's undelivered answers, dismissals and `message`s. With any, one write checks the claim again, delivers everything waiting (`deliver`, the same delivery as a report, status changes included), deletes the claim and exits 2 with `[Gitrochi] From a person to this session (act on these):` and the messages, one per line, on stderr. At `until` it deletes its claim and exits 0.
+  - When the stop question's own wait sent an answer (exit 2), the claim is deleted and nothing else is sent.
+  - `state` and `session` carry the claim as `Session.wakeUntil` while `until` is ahead.
 - **Never in the way.** Without a decision, the hook exits 0 with no output. The Stop answer is exit 2 with the text on stderr. Any failure is exit 0, no decision and one line on stderr: input that is not a JSON object, a missing database, a lock held for more than a second, or a database with a newer schema.
 
 ## Browser extension boundary
 
 The companion `gitrochi-ledger-browser` is a separate Chrome native-messaging entry point. It uses native-endian u32 byte lengths followed by UTF-8 JSON, a 65,536-byte request cap and a 1 MiB response cap. It validates Chrome's caller origin against its installed, exact extension allowlist and reloads that configuration on every request. Removing registration or changing its database invalidates previous bindings.
 
-`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?}`. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
+`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?, hostExists?, lastDataAt}`: `hostExists` is false for a registration whose host program moved or was deleted (then `installed` is false and the extension ID is kept for a repair), and `lastDataAt` is when the newest browser-captured question arrived, or null. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
 
 Native requests have `{version:1, id:string, op, ...fields}`. Replies have `{version:1, id, ok:true, data}` or `{version:1, id, ok:false, error}`. Operations are limited to:
 
@@ -389,13 +417,37 @@ Added for opt-in local client activity:
 
 19. Browser observation: optional `Question.browserSourceUrl` and `browserDraft`, storage schema 8, App-only host registration and the separate scoped native protocol above. Browser answers remain local and do not change normal agent delivery.
 
-20. Restoring a backup: the methods `backups` (app, agent) and `restore` (app only), the CLI command `restore`, safety copies named `<name>-before-restore-…` that retention leaves alone, and the schemas `backups` and `restore`. `backup` and its file names are unchanged.
+20. Connection health on the `integrate` status: `hookCommand`, `mcp`, `databaseSchema`, `lastObservedAt`, `lastReportAt` and `health`, the schema `integration-status`, and the CLI option `--mcp-config`. Existing status fields keep their meaning.
 
-21. Release notes: the method `release_notes` (app, agent), the CLI command `release-notes` and the schema `release-notes`.
+21. The stable command and the App-only methods `integration_command`, `integration_status`, `integration_install` and `integration_remove`.
 
-22. Insights: the method `insights` (app, agent), the CLI command `insights` and the schema `insights`.
+22. `browser_status`, `browser_install` and `browser_remove` add `hostExists` and `lastDataAt`, for the apps' Connections list.
 
-Requests for later waves (not changed here): live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them — wave 2 may want launched agents to use another kind, or a different default in `settings.kinds`.
+23. New observed sessions are titled `<client> · <branch>` instead of `<client>: <folder>`. Existing titles are not changed, and a `start` report still replaces an unreported observed session's title.
+
+Requests for later waves: live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them. Settled by 24 below.
+
+24. Launched agents on the Board (DESIGN.md D14, decided 2026-11-03): `track` without `kind` stores `task`, a new default kind with the role `other`, and marks its `launch` event `data.board: true`; an implementation kind its agent reports is stored as `task` with `data.reportedKind` on the event ([Sessions for agents Gitrochi starts](#sessions-for-agents-gitrochi-starts)). The maintainer approved this change of launch behaviour; sessions launched before it keep theirs.
+
+Added for waking waiting agents:
+
+25. The global setting `wakeAgents` (`{enabled, waitSec}`), `Session.wakeUntil` and the `meta` rows `wake:<session>` ([Hooks](#hooks)). With the setting off nothing changes; no storage schema change.
+
+Added for team hub sharing (D4, opt-in, 2026-11-03):
+
+26. The app method `hub_share` ([above](#sharing-with-the-team-hub)) and the schema `hub-share`. It reads only: no storage schema change, no new setting in the database (the switch is the app's own), and nothing changes while it is off.
+
+Added for restoring backups:
+
+27. Restoring a backup: the methods `backups` (app, agent) and `restore` (app only), the CLI command `restore`, safety copies named `<name>-before-restore-…` that retention leaves alone, and the schemas `backups` and `restore`. `backup` and its file names are unchanged.
+
+Added for release notes:
+
+28. Release notes: the method `release_notes` (app, agent), the CLI command `release-notes` and the schema `release-notes`.
+
+Added for insights:
+
+29. Insights: the method `insights` (app, agent), the CLI command `insights` and the schema `insights`.
 
 
 ## Work, documents and personal records

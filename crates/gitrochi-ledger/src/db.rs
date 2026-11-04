@@ -49,7 +49,8 @@ fn env_dir(name: &str) -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-fn data_dir() -> PathBuf {
+/// The per-user folder of Gitrochi's data, shared by the ledger and the stable command.
+pub(crate) fn data_dir() -> PathBuf {
     let home = || env_dir("HOME").unwrap_or_else(|| PathBuf::from("."));
     if cfg!(target_os = "macos") {
         home()
@@ -290,6 +291,11 @@ impl Db {
             readers: Mutex::new(Vec::new()),
             newer_schema: (version > DB_SCHEMA).then_some(version),
         })
+    }
+
+    /// The schema of a database a newer build wrote; this build then only reads it.
+    pub fn newer_schema(&self) -> Option<i64> {
+        self.newer_schema
     }
 
     /// Runs `body` in one read transaction, so every query sees the same snapshot.
