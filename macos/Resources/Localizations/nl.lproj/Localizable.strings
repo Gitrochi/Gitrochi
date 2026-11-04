@@ -1936,6 +1936,11 @@
 "Decision sessions never continue automatically." = "Beslissingssessies gaan nooit automatisch door.";
 "Use the default" = "Standaard gebruiken";
 "Follow the repository's or the default auto-continue setting again" = "Weer de instelling van de repository of het standaard automatisch doorgaan volgen";
+"Delivering answers" = "Antwoorden bezorgen";
+"Wake waiting agents with my answers" = "Wachtende agents wekken met mijn antwoorden";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Een agent die je hebt gestart, blijft na het einde van zijn beurt nog zo lang luisteren. Een antwoord of bericht dat je zijn sessie in het Register stuurt, bereikt hem dan meteen in plaats van bij zijn volgende rapport.";
+"Answer wakes the agent" = "Antwoord wekt de agent";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "De agent wacht op de achtergrond: een antwoord of bericht dat je nu stuurt, bereikt hem meteen.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Werkt voor Claude Code-agents die Gitrochi start terwijl Agents volgen die ik start aan staat.";
 "Auto-continue changed for %@" = "Automatisch doorgaan gewijzigd voor %@";
 "Stop waiting here and answer in the agent's own terminal" = "Hier niet meer wachten en in de eigen terminal van de agent antwoorden";

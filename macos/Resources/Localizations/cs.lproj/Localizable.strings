@@ -1971,6 +1971,11 @@
 "Decision sessions never continue automatically." = "Rozhodovací relace nikdy nepokračují automaticky.";
 "Use the default" = "Použít výchozí";
 "Follow the repository's or the default auto-continue setting again" = "Znovu se řídit nastavením repozitáře nebo výchozím automatickým pokračováním";
+"Delivering answers" = "Doručování odpovědí";
+"Wake waiting agents with my answers" = "Probouzet čekající agenty mými odpověďmi";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Agent, kterého jste spustili, po skončení svého tahu ještě tak dlouho naslouchá. Odpověď nebo zpráva, kterou jeho relaci pošlete v Evidenci, mu pak dorazí hned, ne až s další zprávou o průběhu.";
+"Answer wakes the agent" = "Odpověď probudí agenta";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Agent čeká na pozadí: odpověď nebo zpráva, kterou pošlete teď, mu dorazí hned.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Funguje pro agenty Claude Code, které Gitrochi spustí, když je zapnuto Sledovat agenty, které spustím.";
 "Auto-continue changed for %@" = "Automatické pokračování změněno pro %@";
 "Stop waiting here and answer in the agent's own terminal" = "Přestat zde čekat a odpovědět ve vlastním terminálu agenta";

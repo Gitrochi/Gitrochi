@@ -227,6 +227,12 @@ enum LedgerWait {
     }
 }
 
+/// Wake waiting agents with my answers: whether the session's agent waits for a person's answer or message right now,
+/// on the core's clock. (Windows: entities/ledger/lib/wake.ts)
+enum LedgerWake {
+    static func waits(_ session: LedgerSession, now: LedgerMs) -> Bool { (session.wakeUntil ?? 0) > now }
+}
+
 /// What a waiting prompt asks and what auto-continue sends, read from the hook handler's payload (gitrochi-autocontinue's
 /// PromptPayload: question, text, options, questions, tool, delaySec, proposed; a wait held for the person has `hold`
 /// instead of `proposed`) and from the answer (its AutoReply with `sent`, or what a person sent).

@@ -23,6 +23,7 @@ The maintainer confirmed D1–D10 as recommended on 2026-10-31 ([DESIGN.md §14]
 | `kinds` | see below | kind → `{role, line?, handoff?}`; replaced as a whole |
 | `autoContinue` | `{"enabled": false, "delaySec": 30}` | The global auto-continue policy (its other fields belong to `gitrochi-autocontinue` and are stored as given), and `repositories`: repository path → `{enabled, delaySec}`, the policy `track` gives the sessions of agents started there |
 | `backupKeep` | 14 | Backups to keep |
+| `wakeAgents` | `{"enabled": false, "waitSec": 300}` | Wake waiting agents with my answers: how long a launched agent's `Stop` hook waits for a person's answer or message (10–300 s), [Hooks](#hooks). A missing field takes its default |
 
 | Per project (`projects`) | Default | Meaning |
 |---|---|---|
@@ -66,6 +67,7 @@ interface Session {
   openQuestions: number;
   stream?: { line: string };  // live implementation sessions only
   autoContinue?: { enabled: boolean; delaySec: number };  // absent: the global default
+  wakeUntil?: Ms;             // its agent's Stop hook waits until then to wake it with a person's answer (wakeAgents)
 }
 interface LedgerEvent {
   id: number; sessionId: string; ts: Ms; type: string; actor: "agent" | "human" | "auto" | "hook";
@@ -142,7 +144,7 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `scan` | `{project?}` | `{results: [{project, source, found, added, error?}]}` (forced, all projects without one) | app, agent |
 | `register_baseline` | `{project, version, note?}` | `{ok, rev, project, version}` | app, agent |
 | `backup` | `{daily?, keep?}` | `{path, created, size, removed}` | app, agent |
-| `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep}` with defaults | all |
+| `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep, wakeAgents}` with defaults | all |
 | `projects` | `{}` | `{projects: [{key, name, repoPath?, baselineSource, baselinePattern, baselineDir?, scanFiles, scanSubdirs}]}` | app, agent |
 | `human` | `{action, sessionId, …}` (below) | `{ok, rev}` | app only |
 | `prompt_answer` | `{id, answer: {…}}` | `{ok, rev, state, prompt}` — `ok: false` when the prompt no longer waits | app only |
@@ -167,7 +169,7 @@ Callers: **app** = the C ABI and the Tauri command (a person is at the controls)
 
 `question` accepts text or `{text, options?, multiSelect?, suggestedAnswer?}`; `questions` accepts an array of those entries through MCP, and the CLI/import parser also preserves a single text or question object. Each option is a label string or `{label, description?, recommended?}`. Text and labels are normalized and trimmed, labels must be nonempty and distinct, booleans must be booleans, and suggestions must be text. Explicit `recommended` overrides inferred bracketed markers. Malformed structured entries reject the entire report without writing questions or advancing the revision. Existing plain-text lists remain valid. A question event supplied only with `questions` creates those questions without adding another from the summary.
 
-Reported questions are the provider-neutral path for Claude and ChatGPT agents using the Ledger MCP tools or pasted reports. Options and suggestions survive storage and appear in app state and session detail. A person's selected or custom answer remains a text answer, queued for that session's next report/read and delivered once. Reading through the apps never consumes it. This path neither controls a client's native question dialog nor reads or fills its native composer prediction. Answering or dismissing a question that is already settled returns `CONFLICT` and preserves the existing answer.
+Reported questions are the provider-neutral path for Claude and ChatGPT agents using the Ledger MCP tools or pasted reports. Options and suggestions survive storage and appear in app state and session detail. A person's selected or custom answer remains a text answer, queued for that session's next report/read and delivered once (or, with `wakeAgents` on, by a launched agent's waiting `Stop` hook; [Hooks](#hooks)). Reading through the apps never consumes it. This path neither controls a client's native question dialog nor reads or fills its native composer prediction. Answering or dismissing a question that is already settled returns `CONFLICT` and preserves the existing answer.
 
 ### A person's operations (`human`)
 
@@ -297,6 +299,11 @@ Connection fields ([`integration-status`](schema/integration-status.schema.json)
   - a `hook` event with `data.person`, written when they type in the terminal;
   - any of their actions on the session in the app, except `link`;
   - a prompt they answered.
+- **Waking a waiting agent** (`wakeAgents.enabled`, off by default; DESIGN.md §7.6). After the rest of `Stop` sent nothing, the hook goes on waiting, in the background, until `waitSec` after the `Stop`:
+  - The `Stop` write stores a claim in `meta` under `wake:<session>`: `{token, until}`, replacing an older one. With the setting off it deletes the key instead, so an older wait ends. `SessionStart`, every `UserPromptSubmit` and `SessionEnd` delete it too.
+  - The hook reads `rev` every 250 ms; when it moved, it checks its claim (gone or another token: it ends; a stored `until` can only bring the end forward), the setting (off: it ends) and the session's undelivered answers, dismissals and `message`s. With any, one write checks the claim again, delivers everything waiting (`deliver`, the same delivery as a report, status changes included), deletes the claim and exits 2 with `[Gitrochi] From a person to this session (act on these):` and the messages, one per line, on stderr. At `until` it deletes its claim and exits 0.
+  - When the stop question's own wait sent an answer (exit 2), the claim is deleted and nothing else is sent.
+  - `state` and `session` carry the claim as `Session.wakeUntil` while `until` is ahead.
 - **Never in the way.** Without a decision, the hook exits 0 with no output. The Stop answer is exit 2 with the text on stderr. Any failure is exit 0, no decision and one line on stderr: input that is not a JSON object, a missing database, a lock held for more than a second, or a database with a newer schema.
 
 ## Browser extension boundary
@@ -372,6 +379,10 @@ Added for opt-in local client activity:
 Requests for later waves: live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them. Settled by 24 below.
 
 24. Launched agents on the Board (DESIGN.md D14, decided 2026-11-03): `track` without `kind` stores `task`, a new default kind with the role `other`, and marks its `launch` event `data.board: true`; an implementation kind its agent reports is stored as `task` with `data.reportedKind` on the event ([Sessions for agents Gitrochi starts](#sessions-for-agents-gitrochi-starts)). The maintainer approved this change of launch behaviour; sessions launched before it keep theirs.
+
+Added for waking waiting agents:
+
+25. The global setting `wakeAgents` (`{enabled, waitSec}`), `Session.wakeUntil` and the `meta` rows `wake:<session>` ([Hooks](#hooks)). With the setting off nothing changes; no storage schema change.
 
 
 ## Work, documents and personal records

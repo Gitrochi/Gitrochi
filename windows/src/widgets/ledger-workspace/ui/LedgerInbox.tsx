@@ -1,6 +1,6 @@
 import { Archive, CircleCheck, Clock, GitMerge, MessageSquareReply, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { describeAnswer, filterSessions, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, STALE_HOURS, stepIndex, streamCount } from "@/entities/ledger";
+import { agentWaits, describeAnswer, filterSessions, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, serverNow, STALE_HOURS, stepIndex, streamCount } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
@@ -10,7 +10,7 @@ import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerPromptStrip } from "./LedgerPromptStrip";
 import { RequestMergedSuggestion, useLedgerRequest } from "./RequestStatus";
 import { mergeMenu } from "./session-actions";
-import { answerText, BaseLine, onScreen, SessionId, typing, VerdictBadge, When } from "./parts";
+import { answerText, BaseLine, onScreen, SessionId, typing, VerdictBadge, WakePill, When } from "./parts";
 
 const PAGE = 50;
 const HOUR = 3_600_000;
@@ -24,6 +24,7 @@ const HOUR = 3_600_000;
 export function LedgerInbox({ store, onOpen, onOpenTerminal, requests }: { store: LedgerStore; onOpen: (sessionId: string) => void; onOpenTerminal: (prompt: LedgerPendingPrompt) => void; requests?: LedgerRequestHost }) {
   useObserve(store);
   const state = store.state!;
+  const now = serverNow(state.now, store.stateReadAt, Date.now());
   const project = store.project, text = store.filterText;
   const groups = useMemo(
     () => inboxGroups(state, project).map((g) => ({ ...g, items: g.items.filter((i) => !i.session || matchesText(i.session, text)) })).filter((g) => g.items.length),
@@ -117,7 +118,7 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal, requests }: { store
                     onMouseDown={() => setActiveKey(item.key)}
                     onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, a, input") && item.session) onOpen(item.session.id); }}
                   >
-                    {!(item.kind === "question" && i > 0 && shown[i - 1].kind === "question" && shown[i - 1].session?.id === item.session.id) && <RowHead session={item.session} />}
+                    {!(item.kind === "question" && i > 0 && shown[i - 1].kind === "question" && shown[i - 1].session?.id === item.session.id) && <RowHead session={item.session} waking={!!item.session && agentWaits(item.session, now)} />}
                     <RowBody item={item} store={store} busy={busy} requests={g.id === "decide" ? requests : undefined} correcting={correcting === item.key} setCorrecting={(on) => setCorrecting(on ? item.key : null)} fieldRef={(el) => { if (el) fields.current.set(item.key, el); else fields.current.delete(item.key); }} onAnswered={() => answered(item.key)} />
                   </div>
                 ))}
@@ -138,12 +139,13 @@ export function LedgerInbox({ store, onOpen, onOpenTerminal, requests }: { store
   );
 }
 
-function RowHead({ session }: { session: LedgerSession | null }) {
+function RowHead({ session, waking = false }: { session: LedgerSession | null; waking?: boolean }) {
   if (!session) return <div className="ledger-row-head"><span className="ledger-row-title muted">{t("An agent outside the Ledger")}</span></div>;
   return (
     <div className="ledger-row-head">
       <SessionId session={session} />
       <span className="ledger-row-title grow">{session.title}</span>
+      {waking && <WakePill />}
       <VerdictBadge verdict={session.verdict} />
       <When at={session.lastAt} />
     </div>

@@ -163,6 +163,9 @@ struct LedgerSession: Codable, Identifiable, Hashable {
     var openQuestions: Int
     var stream: Stream?
     var autoContinue: AutoContinue?
+    /// Its agent's Stop hook waits until then, with Wake waiting agents with my answers on: an answer or message sent now
+    /// wakes it at once (the core's `wake`)
+    var wakeUntil: LedgerMs? = nil
 }
 
 struct LedgerEvent: Codable, Identifiable, Hashable {
@@ -466,6 +469,16 @@ struct LedgerGlobalSettings: Codable, Hashable {
     /// Auto-continue's defaults; their settings arrive with auto-continue
     var autoContinue: LedgerJSON?
     var backupKeep: Int
+    /// Wake waiting agents with my answers: off by default, and how long an agent's Stop hook keeps waiting (10–300 s)
+    var wakeAgents: WakeAgents? = nil
+
+    struct WakeAgents: Codable, Hashable {
+        var enabled: Bool
+        var waitSec: Int
+    }
+
+    /// `wakeAgents` as stored, or the core's default
+    var wake: WakeAgents { wakeAgents ?? .init(enabled: false, waitSec: 300) }
 
     /// `kinds` as `settings_set` takes it, replaced as a whole: line and hand-off only for the implementation role
     static func kindsArgument(_ kinds: [String: KindRule]) -> LedgerJSON {

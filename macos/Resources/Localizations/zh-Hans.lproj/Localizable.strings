@@ -2134,6 +2134,11 @@
 "Decision sessions never continue automatically." = "决策会话从不自动继续。";
 "Use the default" = "使用默认值";
 "Follow the repository's or the default auto-continue setting again" = "重新遵循仓库或默认的自动继续设置";
+"Delivering answers" = "答复送达";
+"Wake waiting agents with my answers" = "用我的答复唤醒等待中的代理";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "你启动的代理结束本轮后，仍会在这段时间内继续等待。期间你在台账中发给该会话的答复或消息会立即送达，而不必等到它下一次报告。";
+"Answer wakes the agent" = "答复会唤醒代理";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "代理正在后台等待：你现在发送的答复或消息会立即送达。";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "适用于“跟踪我启动的代理”开启时由 Gitrochi 启动的 Claude Code 代理。";
 "Auto-continue changed for %@" = "已更改 %@ 的自动继续";
 "Stop waiting here and answer in the agent's own terminal" = "不在这里等待，改在代理自己的终端中回答";

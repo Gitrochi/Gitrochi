@@ -1995,6 +1995,11 @@
 "Decision sessions never continue automatically." = "決策工作階段從不自動繼續。";
 "Use the default" = "使用預設值";
 "Follow the repository's or the default auto-continue setting again" = "重新遵循存放庫或預設的自動繼續設定";
+"Delivering answers" = "答覆送達";
+"Wake waiting agents with my answers" = "用我的答覆喚醒等待中的代理程式";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "你啟動的代理程式結束本輪後，仍會在這段時間內繼續等待。期間你在台帳中傳給該工作階段的答覆或訊息會立即送達，不必等到它下一次回報。";
+"Answer wakes the agent" = "答覆會喚醒代理程式";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "代理程式正在背景等待：你現在傳送的答覆或訊息會立即送達。";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "適用於「追蹤我啟動的代理程式」開啟時由 Gitrochi 啟動的 Claude Code 代理程式。";
 "Auto-continue changed for %@" = "已變更 %@ 的自動繼續";
 "Stop waiting here and answer in the agent's own terminal" = "不在這裡等待，改在代理程式自己的終端機中回答";

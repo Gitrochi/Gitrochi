@@ -1965,6 +1965,11 @@
 "Decision sessions never continue automatically." = "Le sessioni di decisione non proseguono mai da sole.";
 "Use the default" = "Usa il predefinito";
 "Follow the repository's or the default auto-continue setting again" = "Torna a seguire l'impostazione del repository o la prosecuzione automatica predefinita";
+"Delivering answers" = "Consegna delle risposte";
+"Wake waiting agents with my answers" = "Risveglia gli agenti in attesa con le mie risposte";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Un agente che hai avviato resta in ascolto per questo tempo dopo la fine del suo turno. Una risposta o un messaggio inviato alla sua sessione nel Registro gli arriva allora subito, invece che con il suo prossimo rapporto.";
+"Answer wakes the agent" = "La risposta risveglia l'agente";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "L'agente è in attesa in background: una risposta o un messaggio inviato ora gli arriva subito.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Vale per gli agenti Claude Code avviati da Gitrochi mentre Segui gli agenti che avvio è attivo.";
 "Auto-continue changed for %@" = "Prosecuzione automatica cambiata per %@";
 "Stop waiting here and answer in the agent's own terminal" = "Smetti di aspettare qui e rispondi nel terminale dell'agente";

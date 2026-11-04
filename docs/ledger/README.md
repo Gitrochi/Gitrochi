@@ -219,6 +219,8 @@ In the Inbox, **↑/↓** moves through items, **Return** opens the inspector, *
 
 Your Ledger answers and messages wait for the agent's next report or read. Writing one does not type into its terminal or immediately resume it.
 
+To deliver them sooner to Claude Code agents Gitrochi starts with **Track agents I start**, turn on **Settings › Ledger › Delivering answers › Wake waiting agents with my answers** (off by default) and choose the wait. After such an agent ends its turn, it keeps listening in the background for that long. An answer to one of its Ledger questions, a dismissal or a message you send its session then reaches it at once, and the question shows as delivered. **Answer wakes the agent** marks its Inbox rows and inspector while it listens. A newer prompt, a restart or the end of the conversation stops the listening; after the wait, answers again wait for the next report. The agent receives your words as a notice from Gitrochi; nothing is typed into its terminal. The setting applies to running tracked agents too, but not to sessions tracked only through the passive hooks.
+
 ## Turn on auto-continue deliberately
 
 Auto-continue is off by default and currently works through Claude Code hooks on agents Gitrochi starts with tracking enabled.

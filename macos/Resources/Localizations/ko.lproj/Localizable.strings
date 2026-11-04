@@ -3778,6 +3778,11 @@
 "Decision sessions never continue automatically." = "결정 세션은 자동으로 진행하지 않습니다.";
 "Use the default" = "기본값 따르기";
 "Follow the repository's or the default auto-continue setting again" = "저장소 설정이나 기본 자동 진행 설정을 다시 따릅니다";
+"Delivering answers" = "답 전달";
+"Wake waiting agents with my answers" = "기다리는 에이전트를 내 답으로 깨우기";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "시작한 에이전트는 차례를 마친 뒤에도 이 시간 동안 귀를 기울입니다. 그동안 원장에서 그 세션에 보낸 답이나 메시지는 다음 보고를 기다리지 않고 바로 전달됩니다.";
+"Answer wakes the agent" = "답하면 에이전트가 깨어남";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "에이전트가 백그라운드에서 기다리는 중입니다. 지금 보내는 답이나 메시지는 바로 전달됩니다.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "내가 시작한 에이전트 추적이 켜져 있을 때 Gitrochi가 시작한 Claude Code 에이전트에만 적용됩니다.";
 "Auto-continue changed for %@" = "%@의 자동 진행을 바꿨습니다";
 "Stop waiting here and answer in the agent's own terminal" = "여기서 기다리지 않고 에이전트의 터미널에서 답합니다";

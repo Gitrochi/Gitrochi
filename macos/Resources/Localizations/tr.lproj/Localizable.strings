@@ -1977,6 +1977,11 @@
 "Decision sessions never continue automatically." = "Karar oturumları asla otomatik devam etmez.";
 "Use the default" = "Varsayılanı kullan";
 "Follow the repository's or the default auto-continue setting again" = "Yeniden deponun ayarını veya varsayılan otomatik devamı izle";
+"Delivering answers" = "Yanıtların iletilmesi";
+"Wake waiting agents with my answers" = "Bekleyen ajanları yanıtlarımla uyandır";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Başlattığınız bir ajan, sırası bittikten sonra bu süre boyunca dinlemeyi sürdürür. Bu sırada Defter'de oturumuna gönderdiğiniz yanıt veya ileti, bir sonraki raporunu beklemeden hemen ulaşır.";
+"Answer wakes the agent" = "Yanıt ajanı uyandırır";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Ajan arka planda bekliyor: şimdi göndereceğiniz yanıt veya ileti ona hemen ulaşır.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Başlattığım ajanları izle açıkken Gitrochi'nin başlattığı Claude Code ajanlarında çalışır.";
 "Auto-continue changed for %@" = "%@ için otomatik devam değişti";
 "Stop waiting here and answer in the agent's own terminal" = "Burada beklemeyi bırak ve ajanın kendi terminalinde yanıtla";

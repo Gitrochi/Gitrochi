@@ -2720,6 +2720,11 @@
 "Decision sessions never continue automatically." = "決定セッションは自動で続行しません。";
 "Use the default" = "既定に戻す";
 "Follow the repository's or the default auto-continue setting again" = "リポジトリの設定または既定の自動続行設定に従うよう戻します";
+"Delivering answers" = "回答の配信";
+"Wake waiting agents with my answers" = "待機中のエージェントを自分の回答で起こす";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "起動したエージェントはターンを終えた後もこの時間だけ待ち受けます。その間に台帳でそのセッションへ送った回答やメッセージは、次の報告を待たずにすぐ届きます。";
+"Answer wakes the agent" = "回答でエージェントが再開";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "エージェントはバックグラウンドで待機中です。今送る回答やメッセージはすぐに届きます。";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "自分が起動したエージェントを追跡がオンのときに Gitrochi が起動する Claude Code エージェントで有効です。";
 "Auto-continue changed for %@" = "%@ の自動続行を変更しました";
 "Stop waiting here and answer in the agent's own terminal" = "ここで待つのをやめ、エージェントのターミナルで回答します";

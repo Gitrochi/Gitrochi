@@ -1949,6 +1949,11 @@
 "Decision sessions never continue automatically." = "Phiên quyết định không bao giờ tự động tiếp tục.";
 "Use the default" = "Dùng mặc định";
 "Follow the repository's or the default auto-continue setting again" = "Theo lại cài đặt của kho lưu trữ hoặc tự động tiếp tục mặc định";
+"Delivering answers" = "Gửi câu trả lời";
+"Wake waiting agents with my answers" = "Đánh thức agent đang chờ bằng câu trả lời của tôi";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Agent bạn khởi chạy vẫn tiếp tục lắng nghe trong khoảng thời gian này sau khi hết lượt. Câu trả lời hoặc tin nhắn bạn gửi cho phiên của nó trong Sổ cái khi đó sẽ đến ngay, thay vì đợi báo cáo tiếp theo.";
+"Answer wakes the agent" = "Câu trả lời sẽ đánh thức agent";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Agent đang chờ ở chế độ nền: câu trả lời hoặc tin nhắn bạn gửi bây giờ sẽ đến ngay.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Dùng cho các agent Claude Code do Gitrochi khởi động khi Theo dõi agent tôi khởi động đang bật.";
 "Auto-continue changed for %@" = "Đã đổi tự động tiếp tục cho %@";
 "Stop waiting here and answer in the agent's own terminal" = "Thôi chờ ở đây và trả lời trong terminal của agent";
