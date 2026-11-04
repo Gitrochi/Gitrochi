@@ -8,6 +8,8 @@ import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import type { LedgerFlowHost } from "../model/flow-evidence";
+import { FlowChecks } from "./FlowChecks";
 import { suggestsRequestMerged } from "../lib/request-status";
 import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerTimeline } from "./LedgerTimeline";
@@ -20,9 +22,10 @@ const HOUR = 3_600_000;
 /**
  * One session: what it is and where it stands, its links, the operations a person may take, its questions, its
  * timeline and what it touches. Dropping asks once; the rest is undone from the toast. With `requests`, the repository's
- * tab, a request linked in that repository shows its state and checks. (macOS: Views/Ledger/LedgerInspector.swift)
+ * tab, a request linked in that repository shows its state and checks; with `flows`, the same tab, Checks shows the
+ * Flow results recorded for the session's branch head. (macOS: Views/Ledger/LedgerInspector.swift)
  */
-export function LedgerInspector({ store, onClose, requests }: { store: LedgerStore; onClose?: () => void; requests?: LedgerRequestHost }) {
+export function LedgerInspector({ store, onClose, requests, flows }: { store: LedgerStore; onClose?: () => void; requests?: LedgerRequestHost; flows?: LedgerFlowHost }) {
   useObserve(store);
   useObserve(agents);
   const [dropping, setDropping] = useState(false);
@@ -105,6 +108,7 @@ export function LedgerInspector({ store, onClose, requests }: { store: LedgerSto
             ))}
           </Section>
         )}
+        <FlowChecks store={store} session={s} host={flows} />
         {s.links.agentId && <AutoContinue store={store} s={s} busy={busy} />}
         <Section title={t("Timeline")}>
           {detail ? <LedgerTimeline key={s.id} events={detail.events} focus={store.focusEventId} /> : <Spinner />}

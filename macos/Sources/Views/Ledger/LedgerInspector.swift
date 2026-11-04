@@ -10,9 +10,11 @@ struct LedgerInspector: View {
     var close: (() -> Void)?
     @ViewState private var confirmDrop = false
     @ViewState private var showActivity = false
-    /// The window's repository: a linked request is read through its hosting account
+    /// The window's repository: a linked request is read through its hosting account, and the Checks row reads its
+    /// Flow run records
     @Environment(RepoStore.self) private var repo: RepoStore?
     private let requests = LedgerRequestStatusStore.shared
+    private let flows = LedgerFlowEvidenceStore.shared
 
     var body: some View {
         Group {
@@ -36,6 +38,7 @@ struct LedgerInspector: View {
                     actions(s)
                     if let detail {
                         questions(detail)
+                        flowChecks(s)
                         autoContinue(s)
                         timeline(detail)
                         touches(s, detail: detail)
@@ -43,6 +46,7 @@ struct LedgerInspector: View {
                         ProgressView().frame(maxWidth: .infinity)
                     }
                 }
+                .task(id: flowKey(s)) { await followFlows(s) }
             }
             .onChange(of: ledger.highlightedEvent, initial: true) { _, event in
                 if let event { DispatchQueue.main.async { withAnimation { proxy.scrollTo("event-\(event)", anchor: .center) } } }
@@ -258,6 +262,39 @@ struct LedgerInspector: View {
                     .overlay(alignment: .leading) { Rectangle().fill(Color.secondary.opacity(0.3)).frame(width: 2) }
                 }
             }
+        }
+    }
+
+    // MARK: - Checks
+
+    /// The repository, branch and run-record folders for the Checks row; nil (no row) without a repository the session
+    /// belongs to or without a branch
+    private func flowContext(_ s: LedgerSession) -> (repository: URL, branch: String, folders: [URL])? {
+        guard let repo, let url = repo.url, let branch = s.links.branch, !branch.isEmpty,
+              LedgerFlowEvidence.belongs(s, repositoryPath: url.path, worktrees: repo.worktrees.map(\.path), repositoryProject: ledger.repositoryProject) else { return nil }
+        return (url, branch, LedgerFlowEvidenceStore.folders(repository: url, worktrees: repo.worktrees, branch: branch, sessionWorktree: s.links.worktree))
+    }
+
+    private func flowKey(_ s: LedgerSession) -> String? {
+        flowContext(s).map { ([$0.repository.path, $0.branch] + $0.folders.map(\.path)).joined(separator: "\0") }
+    }
+
+    /// Reads the records while the session is on screen, again every 30 s, the Flows panel's pace when nothing runs
+    private func followFlows(_ s: LedgerSession) async {
+        guard let context = flowContext(s) else { return }
+        while !Task.isCancelled {
+            await flows.refresh(repository: context.repository, branch: context.branch, folders: context.folders)
+            do { try await Task.sleep(for: .seconds(30)) } catch { return }
+        }
+    }
+
+    /// Read-only evidence; Open in Flows goes to the existing Flows workspace and never starts a run
+    @ViewBuilder private func flowChecks(_ s: LedgerSession) -> some View {
+        if let context = flowContext(s), let evidence = flows.evidence(repository: context.repository.path, branch: context.branch), !evidence.results.isEmpty {
+            LedgerFlowChecks(branch: context.branch, evidence: evidence, openFlows: {
+                close?()
+                repo?.navigate(.flows)
+            })
         }
     }
 

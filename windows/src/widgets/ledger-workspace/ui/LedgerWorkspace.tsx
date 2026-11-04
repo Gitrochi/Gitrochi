@@ -11,6 +11,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { type LedgerLauncher, quickLaunchItems } from "../lib/quick-launch";
+import type { LedgerFlowHost } from "../model/flow-evidence";
 import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerBoard } from "./LedgerBoard";
 import { LedgerTopBar } from "./LedgerFilters";
@@ -42,9 +43,10 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
  * compact filters sit above the view; below 1,080 px the inspector opens as a sheet and below 640 px controls wrap.
  * Opens without a repository and filters to the open one's project. `launcher` is the repository's tab, for the quick
  * launches; `requests`, the same tab, reads the state and checks of requests linked in that repository through its
- * hosting account. Without it the request chips show as before. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
+ * hosting account, and `flows` gives the inspector's Checks row its Flow run records and Open in Flows. Without them
+ * the request chips show as before and there is no Checks row. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
-export function LedgerWorkspace({ repoPath, ledger, launcher, requests }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher; requests?: LedgerRequestHost }) {
+export function LedgerWorkspace({ repoPath, ledger, launcher, requests, flows }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher; requests?: LedgerRequestHost; flows?: LedgerFlowHost }) {
   const store = useObserve(ledger ?? ledgerStore(repoPath));
   useEffect(() => store.start(), [store]);
   const root = useRef<HTMLDivElement>(null);
@@ -131,7 +133,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher, requests }: { repo
   };
   const waiting = visiblePrompts(store).length;
   const selected = !!store.selectedId;
-  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} requests={requests} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
+  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} requests={requests} flows={flows} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
   return (
     <div className={`ledger-page ${layout}`} ref={root} data-layout={layout}>
       <div className="ledger-main">

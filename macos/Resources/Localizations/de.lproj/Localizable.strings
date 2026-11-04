@@ -2237,6 +2237,10 @@
 "View all tasks" = "Alle Aufgaben anzeigen";
 "Show more tasks" = "Weitere Aufgaben anzeigen";
 "Project items could not be fully loaded. Retry the project." = "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut.";
+"Checks" = "Prüfungen";
+"Open in Flows" = "In Abläufen öffnen";
+"Latest Flow runs recorded for this branch's head commit" = "Neueste Ablaufläufe für den Kopf-Commit dieses Branches";
+"Held" = "Angehalten";
 
 /* Ledger: connection health, repair and the stable command. */
 "Connections" = "Verbindungen";

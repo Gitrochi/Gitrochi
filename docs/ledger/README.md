@@ -192,6 +192,8 @@ When the session belongs to the open repository and that repository has a GitHub
 
 If the request was merged but the session is not finished, the inspector and the Inbox's **To decide** group suggest **Request merged — mark merged?**. It opens the usual **Mark merged…** version picker with the newest version marked. The Ledger never changes a session's status by itself; only the version you pick does.
 
+When the session's branch belongs to the open repository and a Flow run was recorded for the commit that branch points at, the inspector adds a read-only **Checks** section: the latest result of each flow on that commit (**Passed**, **Failed**, **Held** or **Canceled**), when it finished, and **Open in Flows** to go to the Flows workspace. Held means the run was refused before running or its rollback failed and the environment is on hold. The section reads the same run records as the Flows workspace, in the repository and in worktrees that have the branch checked out, and refreshes every 30 seconds while shown. It never starts a run or changes flow files, trust or records, and it is hidden when there is no repository, no branch or no run for that commit.
+
 **Last report** is the latest agent report. **Last activity** also includes observed activity, so an active but unreported conversation does not appear to have sent a report. Quiet sessions are checked again at least once a minute while the Ledger is being followed, and a **Still active** snooze is checked at its expiry on the next poll. Search ranks an exact session ID ahead of sessions that only mention it. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
 A session's verdict is computed from its state:

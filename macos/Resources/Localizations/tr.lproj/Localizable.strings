@@ -2237,6 +2237,10 @@
 "View all tasks" = "Tüm görevleri görüntüle";
 "Show more tasks" = "Daha fazla görev göster";
 "Project items could not be fully loaded. Retry the project." = "Proje öğeleri tam olarak yüklenemedi. Projeyi yeniden yükleyin.";
+"Checks" = "Denetimler";
+"Open in Flows" = "Akışlarda aç";
+"Latest Flow runs recorded for this branch's head commit" = "Bu dalın en son commit'i için kaydedilen son akış çalıştırmaları";
+"Held" = "Bekletiliyor";
 
 /* Ledger: connection health, repair and the stable command. */
 "Connections" = "Bağlantılar";
