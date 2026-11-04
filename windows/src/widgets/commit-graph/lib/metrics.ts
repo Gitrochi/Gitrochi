@@ -63,21 +63,22 @@ export type GraphColumnId = "ref" | "graph";
 /** The columns the user can turn on (settings graphShownColumns), so they stay off until chosen; in this order after the message */
 export type OptionalColumnId = "author" | "time" | "sha";
 export const OPTIONAL_COLUMNS: OptionalColumnId[] = ["author", "time", "sha"];
-/** The columns whose header edge the user drags: the branch and graph columns by their right edge, the optional ones by their left */
-export type ResizableColumnId = GraphColumnId | OptionalColumnId;
-export const RESIZABLE_COLUMNS: ResizableColumnId[] = ["ref", "graph", ...OPTIONAL_COLUMNS];
+/** The columns whose header edge the user drags: the branch, graph and message columns by their right edge, the optional ones by their left */
+export type ResizableColumnId = GraphColumnId | "message" | OptionalColumnId;
+export const RESIZABLE_COLUMNS: ResizableColumnId[] = ["ref", "graph", "message", ...OPTIONAL_COLUMNS];
 /**
  * Widths the user can drag the columns to (settings graphColumnWidths) (macOS: GraphMetrics.defaultWidths, widthRange).
- * The branch column defaults to REF_W; the graph has no default, it follows the lane count until dragged.
+ * The branch column defaults to REF_W. The graph and the message have no default: the graph follows the lane count and the message
+ * takes the room left over until they are dragged.
  */
-export type ColumnWidths = Record<OptionalColumnId, number> & Partial<Record<GraphColumnId, number>>;
+export type ColumnWidths = Record<OptionalColumnId, number> & Partial<Record<GraphColumnId | "message", number>>;
 export const DEFAULT_WIDTHS: ColumnWidths = { author: 120, time: 84, sha: 72 };
-const WIDTH_RANGE: Record<ResizableColumnId, [number, number]> = { ref: [80, 420], graph: [44, 1200], author: [60, 320], time: [60, 220], sha: [50, 140] };
+const WIDTH_RANGE: Record<ResizableColumnId, [number, number]> = { ref: [80, 420], graph: [44, 1200], message: [200, 4000], author: [60, 320], time: [60, 220], sha: [50, 140] };
 /** A width kept inside the column's range, and under max when given */
 export const clampColumnWidth = (id: ResizableColumnId, width: number, max = Infinity) =>
   Math.round(Math.min(Math.max(width, WIDTH_RANGE[id][0]), WIDTH_RANGE[id][1], Math.max(WIDTH_RANGE[id][0], max)));
 /** Whether a width is the column's default, so it need not be stored */
-export const isDefaultWidth = (id: ResizableColumnId, width: number) => width === (id === "ref" ? REF_W : id === "graph" ? undefined : DEFAULT_WIDTHS[id]);
+export const isDefaultWidth = (id: ResizableColumnId, width: number) => width === (id === "ref" ? REF_W : id === "graph" || id === "message" ? undefined : DEFAULT_WIDTHS[id]);
 
 /** The stored widths over the defaults, each kept inside its range; anything else stored is ignored */
 export function columnWidths(stored: unknown): ColumnWidths {
@@ -106,6 +107,16 @@ export function graphColumns(width: number, graph: number, hidden: ReadonlySet<s
   if (short() > 0 && c.graph > 0) c.graph = Math.max(Math.min(graph, GRAPH_MIN), c.graph - short());
   return c;
 }
+
+/** The width the rows are laid out at: the window's, or wider when the message column was dragged past it, and then they scroll sideways (macOS: GraphMetrics.tableWidth) */
+export function tableWidth(width: number, graph: number, hidden: ReadonlySet<string> = new Set(), shown: ReadonlySet<string> = new Set(), widths: ColumnWidths = DEFAULT_WIDTHS): number {
+  if (widths.message === undefined) return width;
+  const c = graphColumns(Infinity, graph, hidden, shown, widths);
+  return Math.max(width, c.ref + c.graph + widths.message + c.author + c.time + c.sha + HEADER_TOOLS_W + 12);
+}
+
+/** The message header's width in rows laid out `width` wide: what is left after the other columns, the menus and the right margin */
+export const messageWidth = (width: number, c: GraphColumns) => Math.max(0, width - (c.ref + c.graph + c.author + c.time + c.sha + HEADER_TOOLS_W + 12));
 
 /** The room the optional columns take at the row's right end, with the header's menus above them when any shows */
 export function trailingWidth(c: GraphColumns) {

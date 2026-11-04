@@ -6,7 +6,7 @@ import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
-import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphColumnWidth, graphFullWidth, isDefaultWidth, laneOffsetForThumb, laneThumb, OPTIONAL_COLUMNS, type OptionalColumnId, RESIZABLE_COLUMNS, type ResizableColumnId, revealLaneOffset, ROW_H, toggleColumn } from "../lib/metrics";
+import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphColumnWidth, graphFullWidth, isDefaultWidth, laneOffsetForThumb, laneThumb, messageWidth, OPTIONAL_COLUMNS, type OptionalColumnId, RESIZABLE_COLUMNS, type ResizableColumnId, revealLaneOffset, ROW_H, tableWidth, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
 
@@ -15,13 +15,14 @@ export function GraphView({ store }: { store: RepoStore }) {
   useObserve(store.ci);
   useObserve(settings);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1000, scrollbar: 0 });
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ top: 0, left: 0, height: 800, width: 1000, scrollbar: 0 });
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     // the list's vertical scrollbar narrows the rows but not the header; the header pads by it so columns line up
-    const update = () => setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth, scrollbar: el.offsetWidth - el.clientWidth });
+    const update = () => setViewport({ top: el.scrollTop, left: el.scrollLeft, height: el.clientHeight, width: el.clientWidth, scrollbar: el.offsetWidth - el.clientWidth });
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -57,13 +58,23 @@ export function GraphView({ store }: { store: RepoStore }) {
   const widths = columnWidths({ ...storedWidths, ...dragWidth });
   const widthsKey = RESIZABLE_COLUMNS.map((id) => widths[id]).join(",");
   const gw = graphColumnWidth(store.maxLanes, widths.graph);
+  // a message column dragged past the window lays the rows out wider, and the list and the header scroll sideways together
+  const table = tableWidth(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths);
+  const wide = table > viewport.width;
   const cols = useMemo(
-    () => graphColumns(viewport.width, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths),
+    () => graphColumns(table, gw, new Set(hiddenKey.split(",").filter(Boolean)), new Set(shownKey.split(",").filter(Boolean)), widths),
     // the widths are read through their key, so a new object with the same widths leaves the rows alone
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [viewport.width, gw, hiddenKey, shownKey, widthsKey],
+    [table, gw, hiddenKey, shownKey, widthsKey],
   );
-  const resizeColumn = (id: ResizableColumnId, width: number, done: boolean) => {
+  const messageFit = messageWidth(viewport.width, cols);
+  useLayoutEffect(() => {
+    if (headerRef.current) headerRef.current.scrollLeft = wide ? viewport.left : 0;
+  }, [wide, viewport.left, table]);
+  const wideRef = useRef({ wide, cols });
+  wideRef.current = { wide, cols };
+  /** undefined drops the stored width */
+  const resizeColumn = (id: ResizableColumnId, width: number | undefined, done: boolean) => {
     if (!done) return setDragWidth({ [id]: width });
     setDragWidth(null);
     const next: Partial<ColumnWidths> = { ...columnWidths(storedWidths), [id]: width };
@@ -89,6 +100,9 @@ export function GraphView({ store }: { store: RepoStore }) {
       if (laneOverflowRef.current <= 0) return;
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
       if (!delta) return;
+      // with the rows wider than the window, only a swipe over the graph column moves its lanes; anywhere else scrolls the rows
+      const { wide, cols } = wideRef.current, x = e.clientX - el.getBoundingClientRect().left + el.scrollLeft;
+      if (wide && (x < cols.ref || x >= cols.ref + cols.graph)) return;
       e.preventDefault();
       setLaneOffset(clampLaneOffset(laneOffsetRef.current + delta, laneOverflowRef.current));
     };
@@ -144,7 +158,7 @@ export function GraphView({ store }: { store: RepoStore }) {
   return (
     <div className="col grow" style={{ background: "var(--surface)" }}>
       {(store.showSearchBar || store.isSearching) && <SearchBar store={store} />}
-      <div className="graph-header" style={{ paddingRight: 12 + viewport.scrollbar }} onContextMenu={(e) => showContextMenu(e, columnMenu())}>
+      <div ref={headerRef} className={`graph-header${wide ? " wide" : ""}`} style={{ paddingRight: 12 + viewport.scrollbar }} onContextMenu={(e) => showContextMenu(e, columnMenu())}>
         {cols.ref > 0 && (
           <span className="head-ref" style={{ width: cols.ref, paddingLeft: 10 }}>
             <span className="head-opt-label">{t("Branch / Tag")}</span>
@@ -157,8 +171,22 @@ export function GraphView({ store }: { store: RepoStore }) {
             <ColumnResizer id="graph" edge="right" width={cols.graph} max={fullWidth} onResize={(width, done) => resizeColumn("graph", width, done)} />
           </LaneHeader>
         )}
-        <span className="graph-head-message">
+        <span className="graph-head-message" style={wide ? { flex: "none", width: messageWidth(table, cols) } : undefined}>
           <span className="graph-head-label">{t("Commit message")}</span>
+          {/* dragged past the window, the message gets longer and the rows scroll sideways; an optional column's handle already sits on this edge when one follows */}
+          {cols.author + cols.time + cols.sha === 0 && (
+            <ColumnResizer
+              id="message"
+              edge="right"
+              width={messageWidth(table, cols)}
+              clamp={(width) => Math.round(Math.min(Math.max(width, messageFit), Math.max(messageFit, 4000)))}
+              onResize={(width, done) => {
+                resizeColumn("message", width > messageFit + 1 ? width : undefined, done);
+                // the rows stay scrolled to their end while the edge is dragged, so it stays under the pointer
+                requestAnimationFrame(() => { const el = scrollRef.current; if (el) el.scrollLeft = el.scrollWidth; });
+              }}
+            />
+          )}
         </span>
         {OPTIONAL_COLUMNS.map((id) =>
           cols[id] > 0 ? (
@@ -191,7 +219,7 @@ export function GraphView({ store }: { store: RepoStore }) {
         {entries.length === 0 ? (
           <Empty icon={<CircleDashed size={34} strokeWidth={1.4} />} title={t("No commits yet")} detail={t("Create a file and make your first commit on the right.")} />
         ) : (
-          <div style={{ height: entries.length * ROW_H + (store.hasMore ? 56 : 0), position: "relative" }}>
+          <div style={{ height: entries.length * ROW_H + (store.hasMore ? 56 : 0), position: "relative", width: wide ? table : undefined }}>
             {entries.slice(first, last).map((e, k) => {
               const i = first + k;
               return (
@@ -402,7 +430,7 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
  * A column header's edge: drag it sideways to change the column's width (macOS: ColumnResizer).
  * Optional columns have it on their left, the branch and graph columns on their right.
  */
-function ColumnResizer({ id, width, edge = "left", max, onResize }: { id: ResizableColumnId; width: number; edge?: "left" | "right"; max?: number; onResize: (width: number, done: boolean) => void }) {
+function ColumnResizer({ id, width, edge = "left", max, clamp, onResize }: { id: ResizableColumnId; width: number; edge?: "left" | "right"; max?: number; clamp?: (width: number) => number; onResize: (width: number, done: boolean) => void }) {
   return (
     <span
       className={`col-resizer ${edge}`}
@@ -413,7 +441,7 @@ function ColumnResizer({ id, width, edge = "left", max, onResize }: { id: Resiza
         e.stopPropagation();
         const startX = e.clientX;
         // a handle on the column's left widens it when dragged left, one on its right when dragged right
-        const at = (x: number) => clampColumnWidth(id, width + (edge === "left" ? startX - x : x - startX), max);
+        const at = (x: number) => (clamp ?? ((w: number) => clampColumnWidth(id, w, max)))(width + (edge === "left" ? startX - x : x - startX));
         const move = (ev: PointerEvent) => onResize(at(ev.clientX), false);
         const up = (ev: PointerEvent) => {
           window.removeEventListener("pointermove", move);

@@ -317,7 +317,8 @@
 
 .graph-header > .head-opt,
 .graph-header > .head-ref,
-.graph-header > .graph-head-cell {
+.graph-header > .graph-head-cell,
+.graph-header > .graph-head-message {
   position: relative;
   overflow: visible;
 }
@@ -362,6 +363,19 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* rows wider than the window: the header scrolls with the list, and its menus stay at its right end */
+.graph-header.wide {
+  overflow: hidden;
+}
+
+.graph-header.wide > .graph-head-tools {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  height: 100%;
+  background: inherit;
 }
 
 /* the message header: its label, taking the room left over */

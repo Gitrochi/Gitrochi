@@ -43,13 +43,15 @@ enum GraphMetrics {
 
     /// The optional columns after the message, in order; the user drags their header edges to change their widths
     static let optionalColumns = ["author", "time", "sha"]
-    /// The branch and graph columns are dragged by their right edges; the graph has no stored default, it follows the lane count until dragged
-    static let resizableColumns = ["ref", "graph"] + optionalColumns
+    /// The branch, graph and message columns are dragged by their right edges. The graph and the message have no stored default:
+    /// the graph follows the lane count and the message takes the room left over until they are dragged
+    static let resizableColumns = ["ref", "graph", "message"] + optionalColumns
     static let defaultWidths: [String: CGFloat] = ["author": 120, "time": 84, "sha": 72]
     static func widthRange(_ id: String) -> ClosedRange<CGFloat> {
         switch id {
         case "ref": return 80...420
         case "graph": return 44...1200
+        case "message": return 200...4000
         case "author": return 60...320
         case "time": return 60...220
         default: return 50...140
@@ -89,6 +91,19 @@ enum GraphMetrics {
 
     private static let messageMin: CGFloat = 200
 
+    /// The width the rows are laid out at: the window's, or wider when the message column was dragged past it, and then they scroll sideways
+    static func tableWidth(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = [],
+                           widths: [String: CGFloat] = defaultWidths) -> CGFloat {
+        guard let message = widths["message"] else { return width }
+        let c = columns(width: .greatestFiniteMagnitude, graph: graph, hidden: hidden, shown: shown, widths: widths)
+        return max(width, c.ref + c.graph + message + c.trailing + headerToolsWidth + 12)
+    }
+
+    /// The message header's width in rows laid out `width` wide: what is left after the other columns, the menus and the right margin
+    static func messageWidth(width: CGFloat, columns c: Columns) -> CGFloat {
+        max(0, width - (c.ref + c.graph + c.trailing + headerToolsWidth + 12))
+    }
+
     /// hidden: the columns the user turned off ("ref", "graph"); shown: the optional ones turned on ("author", "time", "sha"),
     /// which are off by default. The message column always shows.
     static func columns(width: CGFloat, graph: CGFloat, hidden: Set<String> = [], shown: Set<String> = [],
@@ -120,15 +135,19 @@ struct GraphView: View {
     @AppStorage("graphColumnWidths") private var columnWidths = ""
     /// How far the lanes are scrolled sideways when there are more than fit
     @ViewState private var laneOffset: CGFloat = 0
+    /// How far the rows are scrolled sideways when the message column was dragged wider than the window
+    @ViewState private var tableOffset: CGFloat = 0
 
     var body: some View {
         let widths = GraphMetrics.widths(columnWidths)
         let graphWidth = GraphMetrics.width(lanes: store.maxLanes, dragged: widths["graph"])
         let contentWidth = GraphMetrics.contentWidth(lanes: store.maxLanes)
+        let hidden = Set(hiddenColumns.split(separator: ",").map(String.init)), shown = Set(shownColumns.split(separator: ",").map(String.init))
+        let tableWidth = GraphMetrics.tableWidth(width: width, graph: graphWidth, hidden: hidden, shown: shown, widths: widths)
+        let wide = tableWidth > width
+        let table = GraphMetrics.clampOffset(tableOffset, content: tableWidth, visible: width)
         // 좁은 화면에서는 작성자·시간 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
-        let columns = GraphMetrics.columns(width: width, graph: graphWidth, hidden: Set(hiddenColumns.split(separator: ",").map(String.init)),
-                                           shown: Set(shownColumns.split(separator: ",").map(String.init)),
-                                           widths: widths)
+        let columns = GraphMetrics.columns(width: tableWidth, graph: graphWidth, hidden: hidden, shown: shown, widths: widths)
         let offset = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
         VStack(spacing: 0) {
             if store.showSearchBar || store.isSearching {
@@ -136,7 +155,12 @@ struct GraphView: View {
                 Divider()
             }
             GraphHeader(columns: columns, hidden: $hiddenColumns, shown: $shownColumns, widths: $columnWidths,
-                        contentWidth: contentWidth, offset: offset) { laneOffset = GraphMetrics.clampOffset($0, content: contentWidth, visible: columns.graph) }
+                        contentWidth: contentWidth, offset: offset,
+                        tableWidth: wide ? tableWidth : nil, tableOffset: wide ? table : 0,
+                        messageWidth: GraphMetrics.messageWidth(width: tableWidth, columns: columns),
+                        messageFit: GraphMetrics.messageWidth(width: width, columns: columns),
+                        // while the message edge is dragged the rows stay scrolled to their end, so the edge stays under the pointer
+                        onMessageResize: { tableOffset = .greatestFiniteMagnitude }) { laneOffset = GraphMetrics.clampOffset($0, content: contentWidth, visible: columns.graph) }
             Divider()
             ScrollViewReader { proxy in
                 ScrollView {
@@ -173,6 +197,17 @@ struct GraphView: View {
                                 .padding(12)
                         }
                     }
+                    .frame(width: wide ? tableWidth : nil, alignment: .leading)
+                    .offset(x: wide ? -table : 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .overlay(alignment: .bottom) {
+                    if wide {
+                        LaneScroller(visible: width, content: tableWidth, offset: table) {
+                            tableOffset = GraphMetrics.clampOffset($0, content: tableWidth, visible: width)
+                        }
+                        .padding(.bottom, 2)
+                    }
                 }
                 .focusable()
                 .focused($focused)
@@ -197,10 +232,17 @@ struct GraphView: View {
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-        .background(SideScrollMonitor(active: contentWidth > columns.graph) { delta in
-            // read the stored offset, not the one from the last render: several wheel events can arrive in between
-            let current = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
-            laneOffset = GraphMetrics.clampOffset(current - delta, content: contentWidth, visible: columns.graph)
+        .background(SideScrollMonitor(active: contentWidth > columns.graph || wide) { delta, x in
+            // with the rows wider than the window, a swipe over the graph column still moves its lanes and anywhere else moves the rows
+            let overGraph = (columns.ref..<(columns.ref + columns.graph)).contains(x + table)
+            if contentWidth > columns.graph, !wide || overGraph {
+                // read the stored offset, not the one from the last render: several wheel events can arrive in between
+                let current = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
+                laneOffset = GraphMetrics.clampOffset(current - delta, content: contentWidth, visible: columns.graph)
+            } else if wide {
+                let current = GraphMetrics.clampOffset(tableOffset, content: tableWidth, visible: width)
+                tableOffset = GraphMetrics.clampOffset(current - delta, content: tableWidth, visible: width)
+            }
         })
         .overlay {
             if store.entries.isEmpty {
@@ -338,6 +380,13 @@ private struct GraphHeader: View {
     @Binding var widths: String
     let contentWidth: CGFloat
     let offset: CGFloat
+    /// The rows' width and sideways scroll when they are wider than the window; nil and 0 otherwise
+    let tableWidth: CGFloat?
+    let tableOffset: CGFloat
+    /// The message header's width, and its width when the rows fit the window, below which its drag stops
+    let messageWidth: CGFloat
+    let messageFit: CGFloat
+    let onMessageResize: () -> Void
     let onScroll: (CGFloat) -> Void
     private var scrolls: Bool { columns.graph > 0 && contentWidth > columns.graph }
 
@@ -362,9 +411,32 @@ private struct GraphHeader: View {
                 .zIndex(1)
             }
             Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                // dragged past the window, the message gets longer and the rows scroll sideways; an optional column's
+                // handle already sits on this edge when one follows
+                .overlay(alignment: .trailing) {
+                    if columns.trailing == 0 {
+                        ColumnResizer(width: messageWidth, range: messageFit...max(messageFit, GraphMetrics.widthRange("message").upperBound),
+                                      edge: .trailing) { value in
+                            resize("message", to: value > messageFit + 1 ? value : nil)
+                            onMessageResize()
+                        }
+                        .offset(x: 4)
+                    }
+                }
+                .zIndex(1)
             if columns.author > 0 { label("Author", id: "author", width: columns.author) }
             if columns.time > 0 { label("Date", id: "time", width: columns.time) }
             if columns.sha > 0 { label("SHA", id: "sha", width: columns.sha) }
+            // the menus sit over this room, pinned to the header's right end while the rows scroll sideways
+            Color.clear.frame(width: GraphMetrics.headerToolsWidth)
+        }
+        .contextMenu { toggles }
+        .padding(.trailing, 12)
+        .frame(width: tableWidth)
+        .offset(x: -tableOffset)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .clipped()
+        .overlay(alignment: .trailing) {
             // the graph filter lives here so it stays reachable while the search bar is hidden
             HStack(spacing: 10) {
                 GraphFilterMenu()
@@ -376,12 +448,13 @@ private struct GraphHeader: View {
                     .accessibilityLabel("Columns")
             }
             .frame(width: GraphMetrics.headerToolsWidth, alignment: .trailing)
+            .padding(.trailing, 12)
+            .frame(maxHeight: .infinity)
+            .background(tableWidth == nil ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.bar))
         }
-        .contextMenu { toggles }
         .lineLimit(1)
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
-        .padding(.trailing, 12)
         .frame(height: GraphMetrics.headerHeight)
         .background(.bar)
     }
@@ -403,9 +476,10 @@ private struct GraphHeader: View {
             .offset(x: 4)
     }
 
-    private func resize(_ id: String, to width: CGFloat) {
+    /// nil drops the stored width
+    private func resize(_ id: String, to width: CGFloat?) {
         var current = GraphMetrics.widths(widths)
-        current[id] = width.rounded()
+        current[id] = width?.rounded()
         let defaults = GraphMetrics.defaultWidths.merging(["ref": GraphMetrics.refWidth]) { $1 }
         widths = GraphMetrics.resizableColumns.compactMap { key in
             current[key].flatMap { $0 == defaults[key] ? nil : "\(key):\(Int($0))" }
@@ -501,14 +575,15 @@ private struct LaneScroller: View {
 /// to the list's vertical scrolling.
 private struct SideScrollMonitor: NSViewRepresentable {
     let active: Bool
-    let onScroll: (CGFloat) -> Void
+    /// The sideways delta and the pointer's x in this view
+    let onScroll: (CGFloat, CGFloat) -> Void
     func makeNSView(context: Context) -> MonitorView { MonitorView() }
     func updateNSView(_ view: MonitorView, context: Context) { view.active = active; view.onScroll = onScroll }
     static func dismantleNSView(_ view: MonitorView, coordinator: ()) { view.stop() }
 
     final class MonitorView: NSView {
         var active = false
-        var onScroll: ((CGFloat) -> Void)?
+        var onScroll: ((CGFloat, CGFloat) -> Void)?
         private var monitor: Any?
 
         override func viewDidMoveToWindow() {
@@ -521,7 +596,7 @@ private struct SideScrollMonitor: NSViewRepresentable {
                 let shift = event.modifierFlags.contains(.shift)
                 let dx = shift && event.scrollingDeltaX == 0 ? event.scrollingDeltaY : event.scrollingDeltaX
                 guard dx != 0, shift || abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) else { return event }
-                self.onScroll?(dx)
+                self.onScroll?(dx, self.convert(event.locationInWindow, from: nil).x)
                 return nil
             }
         }
