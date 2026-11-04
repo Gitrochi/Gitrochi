@@ -3224,5 +3224,11 @@
   "Pair a conversation from the extension's popup to send questions.": "拡張機能のポップアップで会話をペアリングすると、質問が送信されます。",
   "The browser host is missing. Repair registers this copy of Gitrochi.": "ブラウザホストが見つかりません。修復すると、この Gitrochi で登録し直します。",
   "Copied. Run it in a terminal to register the Ledger tools.": "コピーしました。ターミナルで実行して Ledger ツールを登録してください。",
-  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "フックは Gitrochi が最新に保つ Ledger コマンドの固定コピーを実行するため、アプリを移動・更新しても動作し続けます。Gitrochi は MCP 設定を編集しません。MCP コマンドをコピーしてご自身で実行してください。"
+  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "フックは Gitrochi が最新に保つ Ledger コマンドの固定コピーを実行するため、アプリを移動・更新しても動作し続けます。Gitrochi は MCP 設定を編集しません。MCP コマンドをコピーしてご自身で実行してください。",
+  "{0} passing": "{0} 件成功",
+  "{0} failing": "{0} 件失敗",
+  "{0} pending": "{0} 件待機中",
+  "Checks on the request's latest commit": "リクエストの最新コミットのチェック",
+  "Request merged — mark merged?": "リクエストはマージ済み — 取り込み済みにしますか?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "サーバーでリクエストがマージされました。この作業が取り込まれたバージョンを選んでください。選ぶまで台帳は変わりません。"
 }

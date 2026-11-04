@@ -18,7 +18,7 @@ const mainLaunches = main.launches as Record<string, Capture["terminals"]>;
 const mainFiles = main.files as Record<string, Record<string, string>>;
 
 function resetLedgerSettings() {
-  for (const key of ["ledgerTrackAgents", "ledgerAgentTools", "agentKind"]) settings.set(key, undefined);
+  for (const key of ["ledgerTrackAgents", "ledgerAgentTools", "ledgerNotifications", "ledgerBadge", "agentKind"]) settings.set(key, undefined);
 }
 
 beforeEach(() => resetLedgerSettings());
@@ -79,21 +79,19 @@ describe("Agent launches with Track agents I start off", () => {
     }
   }
 
-  it("stays as main when only one of the two switches is on", async () => {
-    for (const [preview, chosen] of [["1", false], [null, true]] as const) {
-      const capture = fakeNative({ exists: () => true, run: fakeRun(), ledger: fakeLedger([]) });
-      fakeClaude("native");
-      await initEnv({ ...windowsEnv, ledgerPreview: preview });
-      settings.set("ledgerTrackAgents", chosen || undefined);
-      await agents.init();
-      await agents.start(fakeHost(capture), "claude", FOLDER, "fix the login retry", "plan");
-      agents.dispose();
-      expect(capture.files[HOOKS]).toBe(main.hooks[HOOKS as keyof typeof main.hooks]);
-      expect(capture.files[HOOKS_WSL]).toBe(main.hooks[HOOKS_WSL as keyof typeof main.hooks]);
-      expect(capture.terminals).toEqual(mainLaunches["native · task and mode"]);
-      expect(capture.runs).toEqual([]);
-      vi.restoreAllMocks();
-    }
+  it("stays as main with only the Ledger's other switches on", async () => {
+    // notifications, the badge and the tools switch do not track a launch: only Track agents I start does
+    const capture = fakeNative({ exists: () => true, run: fakeRun(), ledger: fakeLedger([]) });
+    fakeClaude("native");
+    await initEnv(windowsEnv);
+    for (const key of ["ledgerNotifications", "ledgerBadge", "ledgerAgentTools"]) settings.set(key, true);
+    await agents.init();
+    await agents.start(fakeHost(capture), "claude", FOLDER, "fix the login retry", "plan");
+    agents.dispose();
+    expect(capture.files[HOOKS]).toBe(main.hooks[HOOKS as keyof typeof main.hooks]);
+    expect(capture.files[HOOKS_WSL]).toBe(main.hooks[HOOKS_WSL as keyof typeof main.hooks]);
+    expect(capture.terminals).toEqual(mainLaunches["native · task and mode"]);
+    expect(capture.runs).toEqual([]);
   });
 });
 
@@ -102,7 +100,8 @@ describe("Agent launches with Track agents I start on", () => {
     const calls: [string, Record<string, unknown>][] = [];
     const capture = fakeNative({ exists: (path) => path === CLI, run: fakeRun(o), ledger: o.ledger ?? fakeLedger(calls, o) });
     fakeClaude(where);
-    await initEnv({ ...windowsEnv, ledgerPreview: "1" });
+    // the switch alone: no environment variable is needed any more
+    await initEnv(windowsEnv);
     settings.set("ledgerTrackAgents", true);
     if (o.tools === false) settings.set("ledgerAgentTools", false);
     await agents.init();
@@ -195,7 +194,7 @@ describe("Agent launches with Track agents I start on", () => {
   it("rewrites the hooks files when the switch changes, and only then", async () => {
     const capture = fakeNative({ exists: (path) => path === CLI, run: fakeRun(), ledger: (method, args) => (method === "track" ? { error: { code: "DATABASE", message: "The ledger is busy" } } : fakeLedger([])(method, args)) });
     fakeClaude("native");
-    await initEnv({ ...windowsEnv, ledgerPreview: "1" });
+    await initEnv(windowsEnv);
     settings.set("ledgerTrackAgents", true);
     await agents.init();
     const writes = () => vi.mocked(ipc.writeText).mock.calls.filter(([path]) => path === HOOKS).length;
@@ -212,10 +211,26 @@ describe("Agent launches with Track agents I start on", () => {
     agents.dispose();
   });
 
+  it("adds its entries when the switch is turned on after start-up, and takes them out again", async () => {
+    const capture = fakeNative({ exists: (path) => path === CLI, run: fakeRun(), ledger: fakeLedger([]) });
+    fakeClaude("native");
+    await initEnv(windowsEnv);
+    await agents.init();
+    expect(capture.files[HOOKS]).toBe(main.hooks[HOOKS as keyof typeof main.hooks]);
+    const commands = (file: string) => Object.values(parse(capture.files[file])).flat().map((g) => g.hooks[0].command);
+    ledgerTracking.setChosen(true);
+    await vi.waitFor(() => expect(commands(HOOKS)).toContain(`"${CLI}" hook PreToolUse`));
+    expect(commands(HOOKS_WSL)).toContain(`'/mnt/c/Program Files/Gitrochi'\\''s tools/gitrochi-ledger.exe' hook PreToolUse`);
+    ledgerTracking.setChosen(false);
+    await vi.waitFor(() => expect(capture.files[HOOKS]).toBe(main.hooks[HOOKS as keyof typeof main.hooks]));
+    expect(capture.files[HOOKS_WSL]).toBe(main.hooks[HOOKS_WSL as keyof typeof main.hooks]);
+    agents.dispose();
+  });
+
   it("touches app.alive next to the database every 5 seconds while tracking is on", async () => {
     vi.useFakeTimers();
     const capture = fakeNative({ ledger: fakeLedger([]) });
-    await initEnv({ ...windowsEnv, ledgerPreview: "1" });
+    await initEnv(windowsEnv);
     settings.set("ledgerTrackAgents", true);
     await ledgerTracking.syncHeartbeat();
     const alive = "C:/Users/example/AppData/Roaming/Gitrochi/ledger/app.alive";
@@ -228,7 +243,7 @@ describe("Agent launches with Track agents I start on", () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(Number(capture.files[alive])).toBe(Number(first) + 5);
     // the demo has no database to stand next to
-    await initEnv({ ...windowsEnv, ledgerPreview: "1", ledgerDemo: "1" });
+    await initEnv({ ...windowsEnv, ledgerDemo: "1" });
     settings.set("ledgerTrackAgents", true);
     delete capture.files[alive];
     await ledgerTracking.syncHeartbeat();
@@ -285,14 +300,13 @@ describe("Ledger launch pieces", () => {
     expect(JSON.parse(ledgerMcpConfig("/mnt/c/Tools/gitrochi-ledger.exe", "S1031-02", true)).mcpServers["gitrochi-ledger"].env).toEqual({ GITROCHI_LEDGER_SESSION: "S1031-02", WSLENV: "GITROCHI_LEDGER_SESSION" });
   });
 
-  it("keeps the switches only with the Ledger preview", async () => {
-    await initEnv({ ...windowsEnv, ledgerPreview: null });
+  it("follows Track agents I start alone, off by default", async () => {
+    await initEnv(windowsEnv);
+    expect([ledgerTracking.chosen, ledgerTracking.on, ledgerTracking.tools]).toEqual([false, false, true]);
     settings.set("ledgerTrackAgents", true);
-    expect(ledgerTracking.chosen).toBe(true);
-    expect(ledgerTracking.on).toBe(false);
-    await initEnv({ ...windowsEnv, ledgerPreview: "1" });
-    expect(ledgerTracking.on).toBe(true);
-    expect(env.ledgerPreview).toBe("1");
-    expect(ledgerTracking.tools).toBe(true);
+    expect([ledgerTracking.chosen, ledgerTracking.on]).toEqual([true, true]);
+    ledgerTracking.setChosen(false);
+    expect([ledgerTracking.on, settings.get("ledgerTrackAgents", "unset")]).toEqual([false, "unset"]);
+    expect(env.ledgerDemo).toBeUndefined();
   });
 });

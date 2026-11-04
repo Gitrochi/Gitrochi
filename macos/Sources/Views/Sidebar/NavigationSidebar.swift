@@ -34,8 +34,6 @@ struct NavigationSidebar: View {
                 .buttonStyle(.plain).padding(8).keyboardShortcut(",", modifiers: .command).accessibilityLabel("Settings")
         }
         .background(Color(nsColor: .windowBackgroundColor))
-        // the Ledger row's badge counts what needs a person
-        .task { if WorkspaceDestination.ledgerPreview { LedgerStore.shared.activate() } }
     }
 
     private func groupTitle(_ text: String) -> some View {

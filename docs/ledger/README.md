@@ -8,7 +8,7 @@ The Ledger brings agent reports, questions and finished work into one place in G
 
 Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
 
-Optional launched-agent tracking, the app's waiting-prompt heartbeat, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` in the app process at startup, together with their relevant settings. Setting the variable in an already-open app's terminal does not change that app's environment. **Track agents I start** remains off by default. Reading reports and using the Ledger's local tools do not require this preview switch.
+Optional launched-agent tracking, background notifications and the Dock/taskbar count each follow their own switch in **Settings › Ledger**, and all of them start off. No environment variable is needed: `GITROCHI_LEDGER_PREVIEW` is no longer read. The app's waiting-prompt heartbeat, which tells auto-continue's hooks that you can answer in Gitrochi, runs only while **Track agents I start** is on. Reading reports and using the Ledger's local tools need none of these switches.
 
 The Ledger normally reads your local database. `GITROCHI_LEDGER_DEMO=standard`, `large` or `empty` selects example data instead; the page identifies it as **Demo data**. Remove that variable before tracking real work. `GITROCHI_LEDGER=0` disables the core, and `GITROCHI_LEDGER_DB` selects another database file for an isolated trial.
 
@@ -188,6 +188,10 @@ Routine progress appears in **Board** and **Streams**. When the Inbox has nothin
 
 The inspector shows the session's questions, timeline, touched files and available branch, worktree, request, chat and terminal links. The timeline starts with reports and decisions; **Show activity** also reveals passive observations and agent heartbeats. The hidden activity count tells you when those records are folded away. Opening an activity event from search still reveals that event.
 
+When the session belongs to the open repository and that repository has a GitHub or GitLab account connected, its linked pull or merge request also shows where it stands: **Open**, **Draft**, **Merged** or **Closed**, and its checks on the latest commit as **N passing**, **N failing** or **N pending**. Gitrochi reads them with the repository's existing account, the same way the request pages do; nothing is read for other repositories or without an account, and the chip then looks as before. A value is reused for a minute. While the inspector shows the request it is read again every 20 seconds while checks run, every two minutes while it is open, and not at all once it is merged or closed.
+
+If the request was merged but the session is not finished, the inspector and the Inbox's **To decide** group suggest **Request merged — mark merged?**. It opens the usual **Mark merged…** version picker with the newest version marked. The Ledger never changes a session's status by itself; only the version you pick does.
+
 **Last report** is the latest agent report. **Last activity** also includes observed activity, so an active but unreported conversation does not appear to have sent a report. Quiet sessions are checked again at least once a minute while the Ledger is being followed, and a **Still active** snooze is checked at its expiry on the next poll. Search ranks an exact session ID ahead of sessions that only mention it. On macOS, the workspace command palette includes Ledger results. On Windows, search stays inside the Ledger page.
 
 A session's verdict is computed from its state:
@@ -225,13 +229,14 @@ When a supported question or permission request waits past the countdown, Gitroc
 
 The terminal's permission dialog may remain visible during the countdown. An answer there counts too. Permission answers are recorded as confirmed only when the handler can tell the automatic answer applied; an unknown outcome is shown for review rather than assumed to have succeeded.
 
-Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval is not enabled by default and has not been checked live.
+Auto-continue never answers sessions with the decision role, never answers Ledger questions, and never confirms or archives work. Requests that are hard to undo are held for you, as are risky questions, questions with no selectable answer, and waits past the three-in-a-row limit. It does not approve Gitrochi's or gitch's own confirmation dialogs. Plan approval stays off by default. A non-interactive check with Claude Code 2.1.316 showed that an automatic approval goes through, but the hook does not receive the plan, so the Ledger cannot show what it would approve; interactive mode has not been checked.
 
 A **held wait** has a reason and no countdown. Choose **Answer in terminal** to bring forward the terminal Gitrochi started, then answer there. If that terminal is no longer available, answer wherever the agent runs. An answer entered into the Ledger cannot reach a held prompt because no hook is waiting on it.
 
 Every automatic answer appears in the Inbox for review. **Confirm** marks that answer reviewed. **Send correction…** queues a correction for the next agent report or read; open the terminal to say it immediately when needed. Reviewing an automatic answer is separate from confirming a session's outcome.
 
-If Gitrochi is not running, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+If Gitrochi is not running, or **Track agents I start** has been turned off since the agent started, synchronous hooks return without a decision so Claude Code can ask in its terminal. A free-text stop-question continuation runs in the background and can still work without the app. Hook behavior depends on the installed Claude Code version; it was checked against 2.1.309. Tracking does not depend on every auto-continue path working.
+
 
 ## Notifications and terminal quick launches
 

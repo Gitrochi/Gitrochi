@@ -2277,3 +2277,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Хост браузера не найден. Исправление зарегистрирует эту копию Gitrochi.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Скопировано. Выполните её в терминале, чтобы зарегистрировать инструменты Ledger.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Хуки запускают постоянную копию команды Ledger, которую Gitrochi поддерживает в актуальном состоянии, поэтому они продолжают работать после перемещения или обновления приложения. Gitrochi никогда не изменяет настройки MCP; скопируйте команду MCP и выполните её сами.";
+"%lld passing" = "Пройдено: %lld";
+"%lld failing" = "С ошибкой: %lld";
+"%lld pending" = "Ожидают: %lld";
+"Checks on the request's latest commit" = "Проверки последнего коммита запроса";
+"Request merged — mark merged?" = "Запрос слит — отметить как влитую?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Запрос слит на сервере. Выберите версию, в которую вошла эта работа; Журнал изменится только после вашего выбора.";

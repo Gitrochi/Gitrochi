@@ -2223,3 +2223,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "De browserhost ontbreekt. Herstellen registreert deze kopie van Gitrochi.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Gekopieerd. Voer hem uit in een terminal om de Ledger-tools te registreren.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooks voeren een vaste kopie van de Ledger-opdracht uit die Gitrochi up-to-date houdt, zodat ze blijven werken als de app wordt verplaatst of bijgewerkt. Gitrochi wijzigt nooit MCP-instellingen; kopieer de MCP-opdracht en voer hem zelf uit.";
+"%lld passing" = "%lld geslaagd";
+"%lld failing" = "%lld mislukt";
+"%lld pending" = "%lld in afwachting";
+"Checks on the request's latest commit" = "Controles op de nieuwste commit van het verzoek";
+"Request merged — mark merged?" = "Verzoek samengevoegd — markeren als samengevoegd?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Het verzoek is op de server samengevoegd. Kies de versie waarin dit werk is opgenomen; het Logboek verandert pas als u dat doet.";

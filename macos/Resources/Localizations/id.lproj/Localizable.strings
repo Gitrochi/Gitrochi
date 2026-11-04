@@ -2231,3 +2231,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Host browser tidak ada. Perbaiki mendaftarkan salinan Gitrochi ini.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Disalin. Jalankan di terminal untuk mendaftarkan alat Ledger.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hook menjalankan salinan tetap perintah Ledger yang selalu diperbarui Gitrochi, sehingga tetap berfungsi saat aplikasi dipindahkan atau diperbarui. Gitrochi tidak pernah mengubah pengaturan MCP; salin perintah MCP dan jalankan sendiri.";
+"%lld passing" = "%lld lulus";
+"%lld failing" = "%lld gagal";
+"%lld pending" = "%lld menunggu";
+"Checks on the request's latest commit" = "Pemeriksaan pada commit terbaru permintaan";
+"Request merged — mark merged?" = "Permintaan sudah digabung — tandai sudah digabung?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Permintaan sudah digabung di server. Pilih versi yang memuat pekerjaan ini; Buku Log hanya berubah saat Anda memilih.";

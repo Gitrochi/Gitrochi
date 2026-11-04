@@ -2272,3 +2272,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "ไม่พบโฮสต์เบราว์เซอร์ การซ่อมแซมจะลงทะเบียน Gitrochi ชุดนี้";
 "Copied. Run it in a terminal to register the Ledger tools." = "คัดลอกแล้ว เรียกใช้ในเทอร์มินัลเพื่อลงทะเบียนเครื่องมือ Ledger";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "ฮุกเรียกใช้สำเนาคงที่ของคำสั่ง Ledger ที่ Gitrochi อัปเดตให้เสมอ จึงยังทำงานได้เมื่อย้ายหรืออัปเดตแอป Gitrochi ไม่แก้ไขการตั้งค่า MCP ให้คัดลอกคำสั่ง MCP แล้วเรียกใช้เอง";
+"%lld passing" = "ผ่าน %lld";
+"%lld failing" = "ล้มเหลว %lld";
+"%lld pending" = "รอ %lld";
+"Checks on the request's latest commit" = "การตรวจสอบบนคอมมิตล่าสุดของคำขอ";
+"Request merged — mark merged?" = "คำขอรวมแล้ว — ทำเครื่องหมายว่ารวมแล้วไหม?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "คำขอถูกรวมบนเซิร์ฟเวอร์แล้ว เลือกเวอร์ชันที่งานนี้ถูกรวมเข้าไป สมุดบันทึกจะเปลี่ยนเมื่อคุณเลือกเท่านั้น";

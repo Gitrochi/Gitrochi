@@ -2300,5 +2300,11 @@
   "Pair a conversation from the extension's popup to send questions.": "Пов’яжіть розмову у спливному вікні розширення, щоб надсилати запитання.",
   "The browser host is missing. Repair registers this copy of Gitrochi.": "Хост браузера не знайдено. Виправлення зареєструє цю копію Gitrochi.",
   "Copied. Run it in a terminal to register the Ledger tools.": "Скопійовано. Виконайте її в терміналі, щоб зареєструвати інструменти Ledger.",
-  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Хуки запускають постійну копію команди Ledger, яку Gitrochi підтримує в актуальному стані, тож вони працюють і після переміщення чи оновлення застосунку. Gitrochi ніколи не змінює налаштування MCP; скопіюйте команду MCP і виконайте її самостійно."
+  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Хуки запускають постійну копію команди Ledger, яку Gitrochi підтримує в актуальному стані, тож вони працюють і після переміщення чи оновлення застосунку. Gitrochi ніколи не змінює налаштування MCP; скопіюйте команду MCP і виконайте її самостійно.",
+  "{0} passing": "Пройдено: {0}",
+  "{0} failing": "З помилкою: {0}",
+  "{0} pending": "Очікують: {0}",
+  "Checks on the request's latest commit": "Перевірки останнього коміту запиту",
+  "Request merged — mark merged?": "Запит злито — позначити як влиту?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Запит злито на сервері. Виберіть версію, до якої увійшла ця робота; Журнал зміниться лише після вашого вибору."
 }

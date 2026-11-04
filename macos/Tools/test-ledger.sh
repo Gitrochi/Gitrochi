@@ -88,6 +88,7 @@ let start: LedgerMs = 1_793_400_000_000
 @main struct LedgerTests {
     @MainActor static func main() async throws {
         pureLogic()
+        requestRules()
         try learning()
         try answerForms()
         try chatGPTDrafts()
@@ -322,6 +323,57 @@ let start: LedgerMs = 1_793_400_000_000
         check(try LedgerChatGPTDraft.parseQuestion(boundary).text == boundary, "the exact UTF-8 byte boundary preserves Unicode")
         rejected(boundary + "a", "Pasted text is limited to 64 KiB.")
         rejected("  \n", "Paste a question first.")
+    }
+
+    /// The linked request's pills and the merged suggestion (Views/Ledger/LedgerRequestStatus.swift; Windows:
+    /// tests/ledger-request-status.test.ts)
+    static func requestRules() {
+        typealias PR = LedgerSession.PullRequest
+        func session(project: String = "atlas", status: LedgerStatus = .active, links: LedgerSession.Links) -> LedgerSession {
+            LedgerSession(id: "S1", project: project, title: "Request", kind: "fix", role: .other, status: status, verdict: .active, baseVersion: nil,
+                          baseCurrent: nil, mergedInto: nil, touches: [], related: [], chatUrl: nil, links: links, color: 0,
+                          createdAt: 0, lastAt: 0, lastAgentAt: nil, ackAt: nil, snoozeUntil: nil, archivedAt: nil, openQuestions: 0,
+                          stream: nil, autoContinue: nil)
+        }
+        let pr = PR(host: "example.com", number: 142, url: "https://example.com/team/atlas/pull/142")
+        func link(_ s: LedgerSession, path: String? = "/Users/me/work/atlas", host: String? = "example.com") -> LedgerRequestLink? {
+            LedgerRequestRules.link(s, repositoryPath: path, repositoryProject: "atlas", host: host, path: "team/atlas")
+        }
+        let linked = link(session(links: .init(repoPath: "/Users/me/work/atlas/", pr: pr)))
+        check(linked?.number == 142 && linked?.key == "example.com/team/atlas#142", "a request in the open repository: \(String(describing: linked))")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 7, url: "https://example.com/team/atlas/-/merge_requests/7"))))?.number == 7,
+              "a GitLab merge request address")
+        check(link(session(links: .init(pr: pr))) != nil && link(session(project: "harbor", links: .init(pr: pr))) == nil,
+              "without a folder, the session's project must be the repository's")
+        check(link(session(links: .init(repoPath: "/Users/me/work/harbor", pr: pr))) == nil, "another repository")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "other.example.com", number: 142, url: "https://other.example.com/team/atlas/pull/142")))) == nil,
+              "another host")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 142, url: "https://example.com/team/atlas-fork/pull/142")))) == nil,
+              "another hosting project")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: pr)), host: nil) == nil
+              && link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: pr)), path: nil) == nil
+              && link(session(links: .init(repoPath: "/Users/me/work/atlas"))) == nil, "no host, no repository or no request: the chip as before")
+
+        let summary = LedgerRequestRules.summary
+        check(summary([("success", false), ("failed", false), ("running", false)]) == LedgerRequestChecks(state: .failing, count: 1), "a failure wins")
+        check(summary([("success", false), ("canceled", false)]) == LedgerRequestChecks(state: .failing, count: 1), "cancelled counts as failing")
+        check(summary([("success", false), ("pending", false), ("waiting", false)]) == LedgerRequestChecks(state: .pending, count: 2), "pending")
+        check(summary([("success", false), ("skipped", false), ("neutral", false), ("failed", true)]) == LedgerRequestChecks(state: .passing, count: 4),
+              "passing; a job allowed to fail passes")
+        check(summary([]) == nil && summary([("manual", false), ("unknown", false)]) == nil, "nothing reported")
+
+        let merged = LedgerRequestStatus(state: .merged, checks: nil)
+        check(LedgerRequestRules.suggestsMerged(session(links: .init()), merged) && LedgerRequestRules.suggestsMerged(session(status: .done, links: .init()), merged),
+              "a merged request suggests Mark merged… for unfinished sessions")
+        check([LedgerStatus.merged, .closed, .dropped].allSatisfy { !LedgerRequestRules.suggestsMerged(session(status: $0, links: .init()), merged) }
+              && !LedgerRequestRules.suggestsMerged(session(links: .init()), LedgerRequestStatus(state: .open, checks: nil))
+              && !LedgerRequestRules.suggestsMerged(session(links: .init()), nil), "no suggestion otherwise")
+        check(LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .open, checks: LedgerRequestChecks(state: .pending, count: 1))) == 20
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .draft, checks: LedgerRequestChecks(state: .passing, count: 3))) == 120
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .open, checks: nil)) == 120
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .merged, checks: LedgerRequestChecks(state: .pending, count: 1))) == nil
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .closed, checks: nil)) == nil
+              && LedgerRequestRules.pollSeconds(nil) == nil, "no faster than the request checks panel; never once settled")
     }
 
     static func pureLogic() {
@@ -1285,6 +1337,7 @@ swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I 
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
     "$ROOT/Sources/Services/LedgerConnectionSetup.swift" "$ROOT/Sources/Services/LedgerDemoConnections.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
+    "$ROOT/Sources/Views/Ledger/LedgerRequestStatus.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"
 [[ -x "$CORE" ]] || { echo "No gitrochi-ledger command at $CORE" >&2; exit 1; }

@@ -3,9 +3,9 @@ import AppKit
 
 /// Settings › Ledger: the rules the ledger core keeps in its database (when a session is stale, what each kind of
 /// session means, where a project's baselines come from), its backups, and the ways in: Connect agents and Import.
-/// Changes are saved as they are made. The tab goes with the Ledger page, so for now it shows only with
-/// GITROCHI_LEDGER_PREVIEW=1. Track agents I start is this app's choice (UserDefaults); auto-continue per repository
-/// lives in the ledger's `autoContinue` setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
+/// Changes are saved as they are made. Track agents I start, notifications and the Dock badge are this app's choices
+/// (UserDefaults), each off until a person turns it on; auto-continue per repository lives in the ledger's `autoContinue`
+/// setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
 struct LedgerSettings: View {
     static var isShown: Bool { true }
 
@@ -86,6 +86,7 @@ struct LedgerSettings: View {
     private var trackingSection: some View {
         Section {
             Toggle("Track agents I start", isOn: $trackAgents)
+                .onChange(of: trackAgents) { _, _ in LedgerHeartbeat.shared.refresh() }
             Toggle("Give them the Ledger tools", isOn: $agentTools).disabled(!trackAgents)
         } header: {
             Text("Agents Gitrochi starts")

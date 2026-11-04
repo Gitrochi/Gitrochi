@@ -2264,3 +2264,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Tarayıcı ana bilgisayarı eksik. Onarım, Gitrochi’nin bu kopyasını kaydeder.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Kopyalandı. Ledger araçlarını kaydetmek için bir terminalde çalıştırın.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Kancalar, Gitrochi’nin güncel tuttuğu Ledger komutunun sabit bir kopyasını çalıştırır; bu yüzden uygulama taşındığında veya güncellendiğinde çalışmaya devam eder. Gitrochi MCP ayarlarını asla düzenlemez; MCP komutunu kopyalayıp kendiniz çalıştırın.";
+"%lld passing" = "%lld başarılı";
+"%lld failing" = "%lld başarısız";
+"%lld pending" = "%lld bekliyor";
+"Checks on the request's latest commit" = "İsteğin en son commit'indeki denetimler";
+"Request merged — mark merged?" = "İstek birleştirildi — birleştirildi olarak işaretlensin mi?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "İstek sunucuda birleştirildi. Bu işin girdiği sürümü seçin; Defter yalnızca siz seçtiğinizde değişir.";

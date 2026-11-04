@@ -2242,3 +2242,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "O host do navegador está ausente. Reparar registra esta cópia do Gitrochi.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Copiado. Execute-o em um terminal para registrar as ferramentas do Ledger.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Os hooks executam uma cópia estável do comando do Ledger que o Gitrochi mantém atualizada, então continuam funcionando quando o app é movido ou atualizado. O Gitrochi nunca edita as configurações do MCP; copie o comando MCP e execute-o você mesmo.";
+"%lld passing" = "%lld aprovadas";
+"%lld failing" = "%lld com falha";
+"%lld pending" = "%lld pendentes";
+"Checks on the request's latest commit" = "Verificações do commit mais recente da solicitação";
+"Request merged — mark merged?" = "Solicitação mesclada — marcar como integrada?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "A solicitação foi mesclada no servidor. Escolha a versão que recebeu este trabalho; o Registro só muda quando você escolher.";
