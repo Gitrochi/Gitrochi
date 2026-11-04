@@ -305,8 +305,26 @@ pub(crate) fn record_without_delivery(
             row.title = title;
         }
     }
+    // A launch stays on the Board (DESIGN.md §7.11): its agent's implementation kind is
+    // recorded as `task`, unless a person already moved the session to Streams.
+    let mut reported_kind = None;
     if let Some(kind) = arg_str(args, "kind") {
-        row.kind = vocab::kind(&kind);
+        let kind = vocab::kind(&kind);
+        if settings.role(&kind) == Role::Implementation
+            && settings.role(&row.kind) != Role::Implementation
+            && track::stays_on_board(connection, &row.id)?
+        {
+            if row.kind != track::BOARD_KIND || event == "start" {
+                notices.push(format!(
+                    "Gitrochi started this agent, so its session stays on the Board: kind '{kind}' was recorded as '{}'. A person can move it to Streams.",
+                    track::BOARD_KIND
+                ));
+            }
+            row.kind = track::BOARD_KIND.into();
+            reported_kind = Some(kind);
+        } else {
+            row.kind = kind;
+        }
     }
     if let Some(url) = arg_str_any(args, &["chatUrl", "chat_url"]) {
         if is_link(&url) {
@@ -321,6 +339,9 @@ pub(crate) fn record_without_delivery(
     // Resume rules: new work on a session that is not active makes it active again, and any
     // report but a note or heartbeat brings an archived session back.
     let mut data = Map::new();
+    if let Some(kind) = reported_kind {
+        data.insert("reportedKind".into(), json!(kind));
+    }
     if !created && REOPEN_EVENTS.contains(&event) && row.status != "active" {
         notices.push(format!(
             "The session was {}; new work made it active again and cleared its confirmation.",

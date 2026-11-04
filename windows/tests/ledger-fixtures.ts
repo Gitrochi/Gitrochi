@@ -54,7 +54,7 @@ const sessionShape: Spec = {
   touches: ["string"], related: ["string"], "chatUrl?": "string",
   links: { "repoPath?": "string", "branch?": "string", "worktree?": "string", "pr?": { host: "string", number: "number", url: "string" }, "agentId?": "string", "agentSessionId?": "string", "cwd?": "string" },
   color: "number", createdAt: "number", lastAt: "number", "lastAgentAt?": "number", "ackAt?": "number", "snoozeUntil?": "number", "archivedAt?": "number", openQuestions: "number",
-  "stream?": { line: "string" }, "autoContinue?": { enabled: "boolean", delaySec: "number" },
+  "stream?": { line: "string" }, "autoContinue?": { enabled: "boolean", delaySec: "number" }, "wakeUntil?": "number",
 };
 const eventShape: Spec = { id: "number", sessionId: "string", ts: "number", type: "string", actor: enumOf("agent", "human", "auto", "hook"), "summary?": "string", "body?": "string", "version?": "string", "artifacts?": [{ name: "string", "ssot?": "string", "ver?": "string" }], "data?": record, "deliveredAt?": "number" };
 const questionShape: Spec = { "options?": [{ label: "string", "description?": "string", "recommended?": "boolean" }], "multiSelect?": "boolean", "suggestedAnswer?": "string", "browserSourceUrl?": "string", "browserDraft?": "string", id: "number", sessionId: "string", text: "string", state: enumOf("open", "answered", "dismissed"), "answer?": "string", "answeredBy?": enumOf("human", "auto"), createdAt: "number", "answeredAt?": "number", "deliveredAt?": "number" };
@@ -73,7 +73,7 @@ const graphShape: Spec = {
 };
 const roles = ["decision", "implementation", "research", "document", "other"];
 const settingsShape: Spec = {
-  staleHours: "number", backupKeep: "number", autoContinue: record,
+  staleHours: "number", backupKeep: "number", autoContinue: record, "wakeAgents?": { enabled: "boolean", waitSec: "number" },
   kinds: (v) => record(v) && Object.values(v as Record<string, unknown>).every((r) => shapeErrors(r, { role: enumOf(...roles), "line?": "string", "handoff?": "boolean" }).length === 0),
 };
 const projectShape: Spec = { key: "string", name: "string", "repoPath?": "string", baselineSource: enumOf("tags", "folder", "manual"), baselinePattern: "string", "baselineDir?": "string", scanFiles: "boolean", scanSubdirs: ["string"] };

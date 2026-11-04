@@ -10,6 +10,11 @@ struct LedgerInspector: View {
     var close: (() -> Void)?
     @ViewState private var confirmDrop = false
     @ViewState private var showActivity = false
+    /// The window's repository: a linked request is read through its hosting account, and the Checks row reads its
+    /// Flow run records
+    @Environment(RepoStore.self) private var repo: RepoStore?
+    private let requests = LedgerRequestStatusStore.shared
+    private let flows = LedgerFlowEvidenceStore.shared
 
     var body: some View {
         Group {
@@ -33,6 +38,7 @@ struct LedgerInspector: View {
                     actions(s)
                     if let detail {
                         questions(detail)
+                        flowChecks(s)
                         autoContinue(s)
                         timeline(detail)
                         touches(s, detail: detail)
@@ -40,6 +46,7 @@ struct LedgerInspector: View {
                         ProgressView().frame(maxWidth: .infinity)
                     }
                 }
+                .task(id: flowKey(s)) { await followFlows(s) }
             }
             .onChange(of: ledger.highlightedEvent, initial: true) { _, event in
                 if let event { DispatchQueue.main.async { withAnimation { proxy.scrollTo("event-\(event)", anchor: .center) } } }
@@ -68,6 +75,7 @@ struct LedgerInspector: View {
                 LedgerSessionLabel(id: s.id, color: s.color)
                     .textSelection(.enabled)
                 Spacer(minLength: 4)
+                if LedgerWake.waits(s, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 LedgerVerdictBadge(verdict: s.verdict)
                 if let close {
                     Button(action: close) { Image(systemName: "xmark") }
@@ -107,18 +115,47 @@ struct LedgerInspector: View {
             }
             Text(s.verdict.advice).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             links(s)
+            requestSuggestion(s)
         }
+        .task(id: requestLink(s)) { await followRequest(requestLink(s)) }
     }
 
     private func links(_ s: LedgerSession) -> some View {
         WorkbenchFlow(spacing: 6) {
             if let branch = s.links.branch { LedgerLinkChip(symbol: "arrow.triangle.branch", text: branch) }
             if let worktree = s.links.worktree { LedgerLinkChip(symbol: "folder", text: (worktree as NSString).lastPathComponent) }
-            if let pr = s.links.pr { LedgerLinkChip(symbol: "arrow.triangle.pull", text: "#\(pr.number)", url: URL(string: pr.url)) }
+            if let pr = s.links.pr { LedgerRequestChip(pr: pr, status: requests.status(requestLink(s))) }
             if let agent = s.links.agentId { LedgerLinkChip(symbol: "cpu", text: agent) }
             if let chat = s.chatUrl, let url = URL(string: chat) { LedgerLinkChip(symbol: "bubble.left.and.bubble.right", text: String(localized: "Open chat"), url: url) }
             if let auto = s.autoContinue, auto.enabled {
                 LedgerLinkChip(symbol: "timer", text: String(localized: "Auto-continue after \(auto.delaySec) s"))
+            }
+        }
+    }
+
+    // MARK: - Linked request
+
+    private func requestLink(_ s: LedgerSession) -> LedgerRequestLink? {
+        LedgerRequestStatusStore.link(s, repository: repo, project: ledger.repositoryProject)
+    }
+
+    /// Reads the request while it is on screen: again after 20 s while checks run, two minutes while it is open, and
+    /// not at all once it is merged or closed (LedgerRequestRules.pollSeconds)
+    private func followRequest(_ link: LedgerRequestLink?) async {
+        guard let link, let repo else { return }
+        await requests.refresh(link, in: repo)
+        while !Task.isCancelled, let wait = LedgerRequestRules.pollSeconds(requests.status(link)) {
+            do { try await Task.sleep(for: .seconds(wait)) } catch { return }
+            await requests.refresh(link, in: repo, maxAge: LedgerMs(wait) * 1000)
+        }
+    }
+
+    /// The merged request's suggestion opens the existing picker; nothing is marked until a version is chosen
+    @ViewBuilder private func requestSuggestion(_ s: LedgerSession) -> some View {
+        if LedgerRequestRules.suggestsMerged(s, requests.status(requestLink(s))) {
+            LedgerRequestMergedSuggestion {
+                LedgerMergeMenu(session: s, ledger: ledger, title: String(localized: "Request merged — mark merged?"))
+                    .controlSize(.small).disabled(ledger.working.contains(s.id))
             }
         }
     }
@@ -225,6 +262,39 @@ struct LedgerInspector: View {
                     .overlay(alignment: .leading) { Rectangle().fill(Color.secondary.opacity(0.3)).frame(width: 2) }
                 }
             }
+        }
+    }
+
+    // MARK: - Checks
+
+    /// The repository, branch and run-record folders for the Checks row; nil (no row) without a repository the session
+    /// belongs to or without a branch
+    private func flowContext(_ s: LedgerSession) -> (repository: URL, branch: String, folders: [URL])? {
+        guard let repo, let url = repo.url, let branch = s.links.branch, !branch.isEmpty,
+              LedgerFlowEvidence.belongs(s, repositoryPath: url.path, worktrees: repo.worktrees.map(\.path), repositoryProject: ledger.repositoryProject) else { return nil }
+        return (url, branch, LedgerFlowEvidenceStore.folders(repository: url, worktrees: repo.worktrees, branch: branch, sessionWorktree: s.links.worktree))
+    }
+
+    private func flowKey(_ s: LedgerSession) -> String? {
+        flowContext(s).map { ([$0.repository.path, $0.branch] + $0.folders.map(\.path)).joined(separator: "\0") }
+    }
+
+    /// Reads the records while the session is on screen, again every 30 s, the Flows panel's pace when nothing runs
+    private func followFlows(_ s: LedgerSession) async {
+        guard let context = flowContext(s) else { return }
+        while !Task.isCancelled {
+            await flows.refresh(repository: context.repository, branch: context.branch, folders: context.folders)
+            do { try await Task.sleep(for: .seconds(30)) } catch { return }
+        }
+    }
+
+    /// Read-only evidence; Open in Flows goes to the existing Flows workspace and never starts a run
+    @ViewBuilder private func flowChecks(_ s: LedgerSession) -> some View {
+        if let context = flowContext(s), let evidence = flows.evidence(repository: context.repository.path, branch: context.branch), !evidence.results.isEmpty {
+            LedgerFlowChecks(branch: context.branch, evidence: evidence, openFlows: {
+                close?()
+                repo?.navigate(.flows)
+            })
         }
     }
 

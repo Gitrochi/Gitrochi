@@ -1,9 +1,11 @@
+import { DemoConnections } from "./demo-connections";
 import { DemoLedgerExtras } from "./demo-extras";
 import type { LedgerHumanRequest, LedgerImportResult, LedgerKindRule, LedgerMethod, LedgerMethods, LedgerProjectSettings, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerSettings, LedgerState, LedgerStatus, Ms } from "../model/types";
 import { ledgerBaselineSources, ledgerRoles } from "../model/types";
 import { inboxGroups } from "../lib/inbox";
 import { STALE_HOURS } from "../lib/verdict";
 import { compareVersions } from "../lib/version";
+import { DEFAULT_WAKE, WAKE_MAX_SEC, WAKE_MIN_SEC } from "../lib/wake";
 import { LedgerError, type LedgerBackend } from "./backend";
 import { type DemoPrompt, type DemoSession, type DemoWorld, demoWorld, emptyWorld, largeDemoWorld, promptPayload } from "./demo-data";
 import { buildGraph, isLive, overlaps, rangeStart, searchWorld, sessionViews, streamCycles } from "./demo-views";
@@ -35,9 +37,10 @@ function defaultSettings(): LedgerSettings {
   const implementation = (line: string, handoff: boolean): LedgerKindRule => ({ role: "implementation", line, handoff });
   return {
     staleHours: STALE_HOURS,
-    kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" } },
+    kinds: { baseline: { role: "other" }, decision: { role: "decision" }, document: { role: "document" }, implementation: implementation("core", true), "llm-implementation": implementation("llm", false), other: { role: "other" }, research: { role: "research" }, review: { role: "other" }, task: { role: "other" } },
     autoContinue: { enabled: false, delaySec: 30 },
     backupKeep: 14,
+    wakeAgents: { ...DEFAULT_WAKE },
   };
 }
 
@@ -88,6 +91,7 @@ export class DemoLedgerBackend implements LedgerBackend {
   private spawned = 0;
   private settings = defaultSettings();
   private readonly extras = new DemoLedgerExtras();
+  private readonly connections: DemoConnections;
   private readonly projectSettings = new Map<string, LedgerProjectSettings>();
 
   constructor(options: DemoOptions = {}) {
@@ -95,6 +99,7 @@ export class DemoLedgerBackend implements LedgerBackend {
     this.lively = options.lively ?? false;
     const now = this.now();
     this.world = options.empty ? emptyWorld() : options.large ? largeDemoWorld(now, options.repoPath) : demoWorld(now, options.repoPath);
+    this.connections = new DemoConnections(now);
     this.nextSpawn = now + 60_000;
   }
 
@@ -115,6 +120,7 @@ export class DemoLedgerBackend implements LedgerBackend {
         this.browserHost = { ...this.browserHost, installed: true, extensionId: String(args.extensionId), hostPath: String(args.hostPath) };
         return { ...this.browserHost };
       case "browser_remove": this.browserHost = { ...this.browserHost, installed: false }; return { ...this.browserHost };
+      case "integration_command": case "integration_status": case "integration_install": case "integration_remove": return this.connections.call(method, args);
       case "records": {
         if (args.action === "version_note") {
           const baseline = w.baselines.find((row) => row.project === args.project && row.version === args.version);
@@ -195,7 +201,7 @@ export class DemoLedgerBackend implements LedgerBackend {
 
   /** As the core: each value is checked, null restores the default, kinds are replaced as a whole */
   private settingsSet(values: unknown) {
-    if (!isRecord(values)) throw invalid("Give values: {staleHours?, kinds?, autoContinue?, backupKeep?}");
+    if (!isRecord(values)) throw invalid("Give values: {staleHours?, kinds?, autoContinue?, backupKeep?, wakeAgents?}");
     const next = structuredClone(this.settings), defaults = defaultSettings();
     for (const [key, value] of Object.entries(values)) {
       if (key === "staleHours") {
@@ -209,7 +215,12 @@ export class DemoLedgerBackend implements LedgerBackend {
       } else if (key === "autoContinue") {
         if (value !== null && !isRecord(value)) throw invalid("autoContinue must be an object");
         next.autoContinue = (value as Record<string, unknown> | null) ?? defaults.autoContinue;
-      } else throw invalid(`Unknown setting ${key} (known: staleHours, kinds, autoContinue, backupKeep)`);
+      } else if (key === "wakeAgents") {
+        // as the core: a missing field takes its default
+        const wait = isRecord(value) ? value.waitSec : undefined, enabled = isRecord(value) ? value.enabled : undefined;
+        if (value !== null && (!isRecord(value) || (enabled !== undefined && typeof enabled !== "boolean") || (wait !== undefined && !(Number.isInteger(wait) && (wait as number) >= WAKE_MIN_SEC && (wait as number) <= WAKE_MAX_SEC)))) throw invalid(`wakeAgents takes enabled and waitSec (${WAKE_MIN_SEC}–${WAKE_MAX_SEC} seconds)`);
+        next.wakeAgents = value === null ? defaults.wakeAgents : { enabled: (enabled as boolean | undefined) ?? DEFAULT_WAKE.enabled, waitSec: (wait as number | undefined) ?? DEFAULT_WAKE.waitSec };
+      } else throw invalid(`Unknown setting ${key} (known: staleHours, kinds, autoContinue, backupKeep, wakeAgents)`);
     }
     this.settings = next;
     this.world.staleHours = next.staleHours;
@@ -436,14 +447,17 @@ export class DemoLedgerBackend implements LedgerBackend {
     }
     if (policy && (typeof policy.enabled !== "boolean" || !Number.isInteger(policy.delaySec))) throw invalid("autoContinue needs enabled and delaySec");
     const base = typeof args.base === "string" ? /^v?(\d+(?:\.\d+)+)$/i.exec(args.base.trim())?.[1] : undefined;
-    const kind = typeof args.kind === "string" ? args.kind.trim() : "";
+    // As the core: without a kind from the app, a launch is a task and stays on the Board
+    const chosen = typeof args.kind === "string" && args.kind.trim() ? args.kind.trim() : undefined;
+    const kind = chosen ?? "task";
     const d = new Date(now), day = `S${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-`;
     let n = w.sessions.filter((x) => x.id.startsWith(day)).length + 1;
     while (w.sessions.some((x) => x.id === `${day}${String(n).padStart(2, "0")}`)) n++;
     const id = `${day}${String(n).padStart(2, "0")}`;
     const title = typeof args.title === "string" && args.title.trim() ? args.title.trim() : links.branch ?? name(folder) ?? "(untitled)";
-    w.sessions.push({ id, project, title, kind, role: roleOf(kind), status: "active", ...(base ? { baseVersion: base, baseCurrent: base } : {}), touches: [], related: [], links, color: w.sessions.filter((x) => x.project === project).length % 8, createdAt: now, lastAt: now, ...(policy ? { autoContinue: { enabled: policy.enabled, delaySec: policy.delaySec } } : {}) });
-    w.events.push({ id: w.nextEvent++, sessionId: id, ts: now, type: "hook", actor: "hook", summary: "Started from Gitrochi", ...(base ? { version: base } : {}), data: { hook: "launch", ...(links.agentId ? { agentId: links.agentId } : {}), ...(policy ? { autoContinue: policy } : {}) } });
+    const rule = this.settings.kinds[kind], role = rule?.role ?? roleOf(kind);
+    w.sessions.push({ id, project, title, kind, role, ...(role === "implementation" ? { stream: { line: rule?.line ?? "core" } } : {}), status: "active", ...(base ? { baseVersion: base, baseCurrent: base } : {}), touches: [], related: [], links, color: w.sessions.filter((x) => x.project === project).length % 8, createdAt: now, lastAt: now, ...(policy ? { autoContinue: { enabled: policy.enabled, delaySec: policy.delaySec } } : {}) });
+    w.events.push({ id: w.nextEvent++, sessionId: id, ts: now, type: "hook", actor: "hook", summary: "Started from Gitrochi", ...(base ? { version: base } : {}), data: { hook: "launch", ...(chosen ? {} : { board: true }), ...(links.agentId ? { agentId: links.agentId } : {}), ...(policy ? { autoContinue: policy } : {}) } });
     w.rev++;
     return { ok: true, rev: w.rev, session: sessionViews(w, now).get(id)! };
   }

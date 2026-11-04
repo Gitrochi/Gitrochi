@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gitrochi/Gitrochi/crates/gitrochi-ledger/schema/integration-status.schema.json",
+  "title": "IntegrationStatus",
+  "description": "The result of `integrate <client> --install|--status|--remove` and of the apps' integration methods. Configuration counts never prove that hooks are trusted or running; the connection fields say whether the configured executables can still write this database.",
+  "type": "object",
+  "required": [
+    "client",
+    "action",
+    "installed",
+    "configPath",
+    "cliPath",
+    "ownedHookCount",
+    "expectedHookCount",
+    "otherHookCount",
+    "backupPath",
+    "verification",
+    "requiresClientTrust",
+    "hooksDisabled",
+    "hookCommand",
+    "mcp",
+    "databaseSchema",
+    "lastObservedAt",
+    "lastReportAt",
+    "health"
+  ],
+  "properties": {
+    "client": {
+      "enum": [
+        "claude",
+        "codex"
+      ]
+    },
+    "action": {
+      "enum": [
+        "install",
+        "status",
+        "remove"
+      ]
+    },
+    "installed": {
+      "type": "boolean"
+    },
+    "configPath": {
+      "type": "string"
+    },
+    "cliPath": {
+      "type": "string"
+    },
+    "ownedHookCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expectedHookCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "otherHookCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "backupPath": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "verification": {
+      "const": "configuration_only"
+    },
+    "requiresClientTrust": {
+      "type": "boolean"
+    },
+    "hooksDisabled": {
+      "type": "boolean"
+    },
+    "hookCommand": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/command"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "mcp": {
+      "type": "object",
+      "required": [
+        "configPath",
+        "registered",
+        "command"
+      ],
+      "properties": {
+        "configPath": {
+          "type": "string"
+        },
+        "registered": {
+          "type": "boolean"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/command"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "databaseSchema": {
+      "$ref": "#/$defs/optionalInteger"
+    },
+    "lastObservedAt": {
+      "$ref": "#/$defs/optionalInteger"
+    },
+    "lastReportAt": {
+      "$ref": "#/$defs/optionalInteger"
+    },
+    "health": {
+      "enum": [
+        "not_installed",
+        "ok",
+        "no_data_yet",
+        "incomplete",
+        "outdated_command",
+        "missing_command",
+        "other_database"
+      ]
+    }
+  },
+  "$defs": {
+    "optionalInteger": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "optionalBoolean": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "optionalString": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "command": {
+      "type": "object",
+      "required": [
+        "path",
+        "exists",
+        "executable",
+        "writesSchema",
+        "version",
+        "canWrite",
+        "dbPath",
+        "sameDatabase"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "executable": {
+          "type": "boolean"
+        },
+        "writesSchema": {
+          "$ref": "#/$defs/optionalInteger"
+        },
+        "version": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "canWrite": {
+          "$ref": "#/$defs/optionalBoolean"
+        },
+        "dbPath": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "sameDatabase": {
+          "$ref": "#/$defs/optionalBoolean"
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ struct RequestCheck: Identifiable {
     var output: String = ""
     var jobID: Int? = nil
     var logProjectID: Int? = nil
+    /// A GitLab job whose failure does not fail the pipeline
+    var allowFailure = false
 }
 struct RequestCheckResults {
     var checks: [RequestCheck] = []
@@ -75,7 +77,7 @@ struct RequestCheckResults {
                 while true {
                     let rows = try await CollaborationAPI.list(c, pipelineBase + "/pipelines/\(pipelineID)/jobs?include_retried=false&per_page=100&page=\(page)")
                     result.checks += rows.map { row in
-                        RequestCheck(id: "job:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(gitlab: CollaborationAPI.text(row, "status")), detail: CollaborationAPI.text(row, "stage") + (row["allow_failure"] as? Bool == true ? " · " + String(localized: "Allowed to fail") : ""), url: CollaborationAPI.text(row, "web_url"), jobID: CollaborationAPI.number(row, "id"), logProjectID: projectID > 0 ? projectID : nil)
+                        RequestCheck(id: "job:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(gitlab: CollaborationAPI.text(row, "status")), detail: CollaborationAPI.text(row, "stage") + (row["allow_failure"] as? Bool == true ? " · " + String(localized: "Allowed to fail") : ""), url: CollaborationAPI.text(row, "web_url"), jobID: CollaborationAPI.number(row, "id"), logProjectID: projectID > 0 ? projectID : nil, allowFailure: row["allow_failure"] as? Bool == true)
                     }
                     if rows.count < 100 { break }; page += 1
                 }

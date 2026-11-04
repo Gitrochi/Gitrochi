@@ -203,6 +203,9 @@ pub struct SessionView {
     pub stream: Option<StreamTag>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_continue: Option<Value>,
+    /// Its agent's Stop hook waits until then to wake it with a person's answer (`wake`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wake_until: Option<Ms>,
 }
 
 impl SessionView {
@@ -272,6 +275,7 @@ impl Viewer<'_> {
             open_questions,
             stream,
             auto_continue: row.auto_continue.clone(),
+            wake_until: None,
         }
     }
 }

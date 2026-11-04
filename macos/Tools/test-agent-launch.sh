@@ -63,15 +63,15 @@ func same(_ a: Any?, _ b: Any?) -> Bool { NSDictionary(dictionary: ["v": a ?? NS
         }
         check(AgentLaunch.environment(agent: "agent-1") == launch["environment"] as! [String: String], "environment")
 
-        // Track agents I start applies only while the Ledger is shown, and is off until a person turns it on
+        // Track agents I start is off until a person turns it on, and then the switch alone decides: no environment needed
         let suite = "gitrochi-agent-launch-test-\(ProcessInfo.processInfo.processIdentifier)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        check(!LedgerTracking.isOn(defaults: defaults, ledgerShown: true), "off by default")
+        check(!LedgerTracking.isOn(defaults: defaults), "off by default")
         defaults.set(true, forKey: LedgerTracking.trackKey)
-        check(!LedgerTracking.isOn(defaults: defaults, ledgerShown: false), "a stored switch does nothing while the Ledger is hidden")
-        check(LedgerTracking.isOn(defaults: defaults, ledgerShown: true), "on")
-        check(!LedgerTracking.isOn || WorkspaceDestination.ledgerPreview, "the app's own switch follows GITROCHI_LEDGER_PREVIEW")
+        check(LedgerTracking.isOn(defaults: defaults), "on with the switch alone")
+        defaults.set(false, forKey: LedgerTracking.trackKey)
+        check(!LedgerTracking.isOn(defaults: defaults), "off again")
     }
 
     static func tracked(_ fixtures: URL, rust: URL) throws {
@@ -134,8 +134,15 @@ func same(_ a: Any?, _ b: Any?) -> Bool { NSDictionary(dictionary: ["v": a ?? NS
         check(!(await LedgerTracking.hasLedgerServer(claude: folder.appendingPathComponent("absent").path, folder: folder.path)), "no claude to ask")
     }
 
-    /// app.alive gets a new modification time each beat, and nothing is created where the ledger has no folder
+    /// The heartbeat follows Track agents I start alone, never on GITROCHI_LEDGER=0 or the demo; app.alive gets a new
+    /// modification time each beat, and nothing is created where the ledger has no folder
     static func heartbeat(_ folder: URL) {
+        check(!LedgerHeartbeat.runs(tracking: false, environment: [:]), "no heartbeat with tracking off")
+        check(LedgerHeartbeat.runs(tracking: true, environment: [:]), "the switch alone starts it, without a preview environment")
+        check(LedgerHeartbeat.runs(tracking: true, environment: ["GITROCHI_LEDGER_PREVIEW": "0"]), "a leftover preview variable changes nothing")
+        check(!LedgerHeartbeat.runs(tracking: true, environment: ["GITROCHI_LEDGER": "0"]), "GITROCHI_LEDGER=0 still turns the ledger off")
+        check(!LedgerHeartbeat.runs(tracking: true, environment: ["GITROCHI_LEDGER_DEMO": "standard"]), "not on the demo")
+        check(!LedgerHeartbeat.runs(tracking: false, environment: ["GITROCHI_LEDGER_PREVIEW": "1"]), "nor with the old preview variable alone")
         let file = folder.appendingPathComponent("ledger/app.alive")
         LedgerHeartbeat.beat(file)
         check(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().path), "no ledger folder: nothing is created")
@@ -162,7 +169,7 @@ cargo run -q --locked --manifest-path "$ROOT/../crates/Cargo.toml" -p gitrochi-a
 swiftc -whole-module-optimization -Onone -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I "$ST" \
     -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
     "${SOURCES[@]}" "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/agent-launch-tests"
-mkdir -p "$TASK_TMP/hidden" "$TASK_TMP/shown"
-"$TASK_TMP/agent-launch-tests" "$ROOT/Tools/fixtures/agent-launch" "$TASK_TMP/hook-settings.json" "$TASK_TMP/hidden"
-# again with the Ledger shown: the untracked launch does not change with the preview
-GITROCHI_LEDGER_PREVIEW=1 "$TASK_TMP/agent-launch-tests" "$ROOT/Tools/fixtures/agent-launch" "$TASK_TMP/hook-settings.json" "$TASK_TMP/shown" > /dev/null
+mkdir -p "$TASK_TMP/plain" "$TASK_TMP/leftover"
+"$TASK_TMP/agent-launch-tests" "$ROOT/Tools/fixtures/agent-launch" "$TASK_TMP/hook-settings.json" "$TASK_TMP/plain"
+# again with the old preview variable left in the environment: it no longer changes anything
+GITROCHI_LEDGER_PREVIEW=1 "$TASK_TMP/agent-launch-tests" "$ROOT/Tools/fixtures/agent-launch" "$TASK_TMP/hook-settings.json" "$TASK_TMP/leftover" > /dev/null

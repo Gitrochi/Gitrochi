@@ -2,15 +2,15 @@ import Foundation
 
 /// Settings › Ledger › Track agents I start, and what a tracked launch does before Claude Code starts (DESIGN.md §7.11):
 /// the ledger session from the core's `track`, the wait its hooks allow for, and whether to hand it the Ledger tools.
-/// Off unless the Ledger is shown and a person turned it on, so every other launch stays as it is on main.
+/// Off unless a person turned it on, so every other launch stays as it is on main.
 /// (Windows: entities/agent/model/agents.ts)
 enum LedgerTracking {
     static let trackKey = "ledgerTrackAgents"
     static let toolsKey = "ledgerAgentTools"
 
-    /// Track agents I start: off until a person turns it on, and only while the Ledger is shown
-    static var isOn: Bool { isOn(defaults: .standard, ledgerShown: WorkspaceDestination.ledgerPreview) }
-    static func isOn(defaults: UserDefaults, ledgerShown: Bool) -> Bool { ledgerShown && defaults.bool(forKey: trackKey) }
+    /// Track agents I start: off until a person turns it on; the switch alone decides
+    static var isOn: Bool { isOn(defaults: .standard) }
+    static func isOn(defaults: UserDefaults) -> Bool { defaults.bool(forKey: trackKey) }
     /// Give them the Ledger tools: on unless a person turned it off
     static var givesTools: Bool { UserDefaults.standard.object(forKey: toolsKey) as? Bool ?? true }
 
@@ -56,21 +56,34 @@ enum LedgerTracking {
     }
 }
 
-/// Tells the hooks that a person can answer in Gitrochi: while the app runs with the Ledger shown, it sets the modification
+/// Tells the hooks that a person can answer in Gitrochi: while Track agents I start is on, the app sets the modification
 /// time of `app.alive` next to the ledger's database every 5 s. Synchronous hooks wait for an answer only while the file is
-/// under 15 s old (DESIGN.md §9.1, D10). Nothing is created before the ledger has a folder. (Windows: src-tauri/src/ledger.rs)
+/// under 15 s old (DESIGN.md §9.1, D10), so with the switch off they return at once and the terminal asks. Nothing is
+/// created before the ledger has a folder. (Windows: LedgerTracking.syncHeartbeat in entities/ledger/model/tracking.ts)
 @MainActor
 final class LedgerHeartbeat {
     static let shared = LedgerHeartbeat()
     private var timer: Timer?
 
-    func start() {
-        guard timer == nil, WorkspaceDestination.ledgerPreview, ProcessInfo.processInfo.environment["GITROCHI_LEDGER"] != "0" else { return }
+    /// Starts or stops with Track agents I start; Settings calls it when the switch changes
+    func refresh() {
+        guard Self.runs(tracking: LedgerTracking.isOn, environment: ProcessInfo.processInfo.environment) else {
+            timer?.invalidate()
+            timer = nil
+            return
+        }
+        guard timer == nil else { return }
         let file = Self.file()
         Self.beat(file)
         timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
             DispatchQueue.global(qos: .utility).async { LedgerHeartbeat.beat(file) }
         }
+    }
+
+    /// Only for agents this app tracks, and only next to the person's own database: not with GITROCHI_LEDGER=0, and not on
+    /// the demo (LedgerStore.makeBackend), where nobody can answer a real agent
+    nonisolated static func runs(tracking: Bool, environment: [String: String]) -> Bool {
+        tracking && environment["GITROCHI_LEDGER"] != "0" && (environment["GITROCHI_LEDGER_DEMO"] ?? "").isEmpty
     }
 
     /// `app.alive` in the database's folder: GITROCHI_LEDGER_DB's when it is set, else Application Support/Gitrochi/ledger

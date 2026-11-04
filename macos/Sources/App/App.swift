@@ -24,9 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
-        // Ledger preview only: tells auto-continue's hooks that a person can answer here (does nothing otherwise)
-        MainActor.assumeIsolated { LedgerHeartbeat.shared.start() }
-        // Ledger preview only: notifications and the Dock badge, when a person turned them on
+        // With Track agents I start on: tells auto-continue's hooks that a person can answer here (does nothing otherwise)
+        MainActor.assumeIsolated { LedgerHeartbeat.shared.refresh() }
+        // Notifications and the Dock badge, when a person turned them on (does nothing otherwise)
         MainActor.assumeIsolated { LedgerNotifier.shared.refresh() }
         // Settings › Ledger › Team hub: shares this computer's sessions only while a person turned it on
         MainActor.assumeIsolated { LedgerHubSharing.shared.refresh() }

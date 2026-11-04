@@ -11,6 +11,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 /// The local client whose hooks supplied the activity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -158,6 +159,19 @@ fn existing(
     find(connection, client, id)
 }
 
+/// The checkout is read with a deadline: a slow one (a network drive, a huge repository) must not hold the client's
+/// hook. After it, the session is titled by its folder, as outside a repository.
+const CHECKOUT_DEADLINE: Duration = Duration::from_millis(800);
+
+fn checkout_within(dir: &Path) -> Option<crate::git::Checkout> {
+    let (send, receive) = std::sync::mpsc::channel();
+    let dir = dir.to_path_buf();
+    std::thread::spawn(move || {
+        let _ = send.send(crate::git::checkout(&dir));
+    });
+    receive.recv_timeout(CHECKOUT_DEADLINE).ok().flatten()
+}
+
 fn plan(db: &Db, client: Client, raw: &Value) -> Result<track::Plan> {
     let cwd = raw["cwd"]
         .as_str()
@@ -165,17 +179,23 @@ fn plan(db: &Db, client: Client, raw: &Value) -> Result<track::Plan> {
             v.len() <= 4096 && !v.chars().any(char::is_control) && Path::new(v).is_absolute()
         })
         .ok_or_else(|| Error::invalid("Observer needs an absolute cwd"))?;
-    let repo = crate::git::checkout(Path::new(cwd))
-        .map(|c| c.root)
+    let checkout = checkout_within(Path::new(cwd));
+    let repo = checkout
+        .as_ref()
+        .map(|c| c.root.clone())
         .unwrap_or_else(|| cwd.into());
     let folder = Path::new(&repo)
         .file_name()
         .and_then(|s| s.to_str())
         .filter(|s| !s.is_empty())
         .unwrap_or("External work");
+    // The branch tells parallel sessions in one repository apart; a detached checkout is named by its worktree folder.
+    let label = checkout
+        .and_then(|c| c.branch)
+        .unwrap_or_else(|| folder.to_string());
     let mut args = json!({
         "cwd": cwd, "repoPath": repo,
-        "title": format!("{}: {}", client.title(), folder),
+        "title": format!("{} · {}", client.title(), label),
         "kind": "other", "autoContinue": {"enabled": false, "delaySec": 30}
     });
     if Path::new(&repo).file_name().is_none() {

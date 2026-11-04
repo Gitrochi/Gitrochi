@@ -38,7 +38,7 @@ export async function start() {
   // 숨긴 창에서는 requestAnimationFrame 이 돌지 않으므로 타이머로 부른다.
   setTimeout(() => void ipc.appReady(), 30);
   updater.start();
-  // the Ledger's notifications and badge, only with GITROCHI_LEDGER_PREVIEW
+  // the Ledger's notifications and badge, once a person turns one of them on
   void startLedgerNotifications();
   // the Ledger's team hub sharing, only when a person turned it on
   void startLedgerHubSharing();

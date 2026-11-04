@@ -88,6 +88,8 @@ let start: LedgerMs = 1_793_400_000_000
 @main struct LedgerTests {
     @MainActor static func main() async throws {
         pureLogic()
+        requestRules()
+        flowEvidence()
         hubShare()
         try learning()
         try answerForms()
@@ -288,6 +290,11 @@ let start: LedgerMs = 1_793_400_000_000
         let registration = try JSONDecoder().decode(LedgerBrowserStatus.self, from: Data(#"{"installed":false,"hostName":"com.gitrochi.ledger","manifestPath":"/tmp/example.json"}"#.utf8))
         check(!registration.installed && registration.extensionId == nil && registration.hostPath == nil, "an uninstalled host status has no imaginary connection")
         let demo = DemoLedgerBackend(mode: .empty)
+        let codex = try call(demo, "integration_status", ["client": "codex"], as: LedgerIntegrationStatus.self)
+        let stableCommand = try call(demo, "integration_command", ["bundled": "x"], as: LedgerStableCommand.self)
+        let repaired = try call(demo, "integration_install", ["client": "codex", "bundled": "x"], as: LedgerIntegrationStatus.self)
+        check(codex.health == "outdated_command" && codex.hookCommand?.canWrite == false && !stableCommand.refreshed && repaired.health == "no_data_yet",
+              "demo connections decode, and Repair replaces an outdated hook command")
         let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
         let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
         check(imported.results.first?.ok == true, "structured reported questions import")
@@ -369,6 +376,89 @@ let start: LedgerMs = 1_793_400_000_000
         rejected("  \n", "Paste a question first.")
     }
 
+    /// The linked request's pills and the merged suggestion (Views/Ledger/LedgerRequestStatus.swift; Windows:
+    /// tests/ledger-request-status.test.ts)
+    static func requestRules() {
+        typealias PR = LedgerSession.PullRequest
+        func session(project: String = "atlas", status: LedgerStatus = .active, links: LedgerSession.Links) -> LedgerSession {
+            LedgerSession(id: "S1", project: project, title: "Request", kind: "fix", role: .other, status: status, verdict: .active, baseVersion: nil,
+                          baseCurrent: nil, mergedInto: nil, touches: [], related: [], chatUrl: nil, links: links, color: 0,
+                          createdAt: 0, lastAt: 0, lastAgentAt: nil, ackAt: nil, snoozeUntil: nil, archivedAt: nil, openQuestions: 0,
+                          stream: nil, autoContinue: nil)
+        }
+        let pr = PR(host: "example.com", number: 142, url: "https://example.com/team/atlas/pull/142")
+        func link(_ s: LedgerSession, path: String? = "/Users/me/work/atlas", host: String? = "example.com") -> LedgerRequestLink? {
+            LedgerRequestRules.link(s, repositoryPath: path, repositoryProject: "atlas", host: host, path: "team/atlas")
+        }
+        let linked = link(session(links: .init(repoPath: "/Users/me/work/atlas/", pr: pr)))
+        check(linked?.number == 142 && linked?.key == "example.com/team/atlas#142", "a request in the open repository: \(String(describing: linked))")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 7, url: "https://example.com/team/atlas/-/merge_requests/7"))))?.number == 7,
+              "a GitLab merge request address")
+        check(link(session(links: .init(pr: pr))) != nil && link(session(project: "harbor", links: .init(pr: pr))) == nil,
+              "without a folder, the session's project must be the repository's")
+        check(link(session(links: .init(repoPath: "/Users/me/work/harbor", pr: pr))) == nil, "another repository")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "other.example.com", number: 142, url: "https://other.example.com/team/atlas/pull/142")))) == nil,
+              "another host")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 142, url: "https://example.com/team/atlas-fork/pull/142")))) == nil,
+              "another hosting project")
+        check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: pr)), host: nil) == nil
+              && link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: pr)), path: nil) == nil
+              && link(session(links: .init(repoPath: "/Users/me/work/atlas"))) == nil, "no host, no repository or no request: the chip as before")
+
+        let summary = LedgerRequestRules.summary
+        check(summary([("success", false), ("failed", false), ("running", false)]) == LedgerRequestChecks(state: .failing, count: 1), "a failure wins")
+        check(summary([("success", false), ("canceled", false)]) == LedgerRequestChecks(state: .failing, count: 1), "cancelled counts as failing")
+        check(summary([("success", false), ("pending", false), ("waiting", false)]) == LedgerRequestChecks(state: .pending, count: 2), "pending")
+        check(summary([("success", false), ("skipped", false), ("neutral", false), ("failed", true)]) == LedgerRequestChecks(state: .passing, count: 4),
+              "passing; a job allowed to fail passes")
+        check(summary([]) == nil && summary([("manual", false), ("unknown", false)]) == nil, "nothing reported")
+
+        let merged = LedgerRequestStatus(state: .merged, checks: nil)
+        check(LedgerRequestRules.suggestsMerged(session(links: .init()), merged) && LedgerRequestRules.suggestsMerged(session(status: .done, links: .init()), merged),
+              "a merged request suggests Mark merged… for unfinished sessions")
+        check([LedgerStatus.merged, .closed, .dropped].allSatisfy { !LedgerRequestRules.suggestsMerged(session(status: $0, links: .init()), merged) }
+              && !LedgerRequestRules.suggestsMerged(session(links: .init()), LedgerRequestStatus(state: .open, checks: nil))
+              && !LedgerRequestRules.suggestsMerged(session(links: .init()), nil), "no suggestion otherwise")
+        check(LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .open, checks: LedgerRequestChecks(state: .pending, count: 1))) == 20
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .draft, checks: LedgerRequestChecks(state: .passing, count: 3))) == 120
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .open, checks: nil)) == 120
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .merged, checks: LedgerRequestChecks(state: .pending, count: 1))) == nil
+              && LedgerRequestRules.pollSeconds(LedgerRequestStatus(state: .closed, checks: nil)) == nil
+              && LedgerRequestRules.pollSeconds(nil) == nil, "no faster than the request checks panel; never once settled")
+    }
+
+    /// The inspector's Checks row (Views/Ledger/LedgerFlowEvidence.swift; Windows: tests/ledger-flow-evidence.test.ts)
+    static func flowEvidence() {
+        let head = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"
+        func run(_ id: String, _ flow: String, _ state: String, sha: String = head, at: LedgerMs? = 1_000) -> LedgerFlowRun {
+            LedgerFlowRun(runId: id, flow: flow, state: state, sha: sha, finishedAt: at)
+        }
+        let runs = [run("r1", "pre-push", "FAILED", at: 1_000), run("r2", "pre-push", "SUCCEEDED", at: 2_000),
+                    run("r3", "deploy", "ROLLBACK_FAILED", at: 1_500), run("r4", "nightly", "SUCCEEDED", sha: "ffff", at: 9_000),
+                    run("r5", "lint", "RUNNING", at: nil), run("r6", "lint", "REJECTED", at: 500), run("r7", "smoke", "CANCELLED", at: 400)]
+        let latest = LedgerFlowEvidence.latest(runs, head: head.uppercased())
+        check(latest.map(\.run.runId) == ["r2", "r3", "r6", "r7"], "newest finished run per flow for the head only: \(latest.map(\.run.runId))")
+        check(latest.map(\.outcome) == [.passed, .held, .held, .canceled], "outcomes: \(latest.map(\.outcome))")
+        check(LedgerFlowEvidence.latest(runs, head: "").isEmpty && LedgerFlowEvidence.latest(runs, head: "0000").isEmpty, "no head or no run for it: no row")
+        check(LedgerFlowOutcome(state: "FAILED") == .failed && LedgerFlowOutcome(state: "ROLLED_BACK") == .failed
+              && LedgerFlowOutcome(state: "RUNNING") == nil && LedgerFlowOutcome(state: "PENDING") == nil, "only recorded results count")
+
+        func session(project: String = "atlas", links: LedgerSession.Links) -> LedgerSession {
+            LedgerSession(id: "S1", project: project, title: "Checks", kind: "fix", role: .other, status: .active, verdict: .active, baseVersion: nil,
+                          baseCurrent: nil, mergedInto: nil, touches: [], related: [], chatUrl: nil, links: links, color: 0,
+                          createdAt: 0, lastAt: 0, lastAgentAt: nil, ackAt: nil, snoozeUntil: nil, archivedAt: nil, openQuestions: 0,
+                          stream: nil, autoContinue: nil)
+        }
+        let repo = "/Users/me/work/atlas", worktree = "/Users/me/work/atlas-worktrees/fix-retry"
+        check(LedgerFlowEvidence.belongs(session(links: .init(repoPath: repo + "/")), repositoryPath: repo, worktrees: [], repositoryProject: nil), "the repository")
+        check(LedgerFlowEvidence.belongs(session(links: .init(worktree: worktree)), repositoryPath: repo, worktrees: [worktree], repositoryProject: nil), "one of its worktrees")
+        check(!LedgerFlowEvidence.belongs(session(links: .init(repoPath: "/Users/me/work/harbor")), repositoryPath: repo, worktrees: [worktree], repositoryProject: "atlas"), "another repository")
+        check(LedgerFlowEvidence.belongs(session(links: .init(branch: "fix/retry")), repositoryPath: repo, worktrees: [], repositoryProject: "atlas")
+              && !LedgerFlowEvidence.belongs(session(project: "harbor", links: .init(branch: "fix/retry")), repositoryPath: repo, worktrees: [], repositoryProject: "atlas"),
+              "without a folder, the repository's project")
+        check(!LedgerFlowEvidence.belongs(session(links: .init(repoPath: repo)), repositoryPath: nil, worktrees: [], repositoryProject: "atlas"), "no repository: no row")
+    }
+
     static func pureLogic() {
         check(Set(LedgerVerdict.displayOrder) == Set(LedgerVerdict.allCases) && LedgerVerdict.displayOrder.count == 8, "every verdict once")
         check(LedgerVerdict.displayOrder.first == .needsHuman && LedgerVerdict.displayOrder.last == .archived, "most urgent first")
@@ -433,6 +523,11 @@ let start: LedgerMs = 1_793_400_000_000
                           createdAt: 0, lastAt: last, lastAgentAt: last, ackAt: nil, snoozeUntil: nil, archivedAt: nil, openQuestions: 0,
                           stream: stream ? .init(line: "Implementation") : nil, autoContinue: nil)
         }
+        // Wake waiting agents with my answers: the hint lasts while the Stop hook's claim does, on the core's clock
+        var waking = session("S9", "Waiting agent", verdict: .needsHuman, last: 1)
+        check(!LedgerWake.waits(waking, now: 1_000), "no claim, no hint")
+        waking.wakeUntil = 2_000
+        check(LedgerWake.waits(waking, now: 1_999) && !LedgerWake.waits(waking, now: 2_000), "the hint ends with the wait")
         let list = [session("S1", "Retry sign-in after a timeout", verdict: .active, last: 5),
                     session("S2", "Add CSV export", verdict: .needsHuman, last: 1, touches: ["src/export/csv.swift"]),
                     session("S3", "Old work", verdict: .archived, last: 9),
@@ -1147,6 +1242,10 @@ let start: LedgerMs = 1_793_400_000_000
         // Settings: the demo's defaults are the core's; verdicts follow the stale hours
         let initial = try await client.settings()
         check(initial == DemoLedgerBackend.defaultSettings, "the demo's default settings are the core's: \(initial)")
+        check(initial.wake == .init(enabled: false, waitSec: 300), "waking agents starts off: \(initial)")
+        let woken = try await client.setSettings(["wakeAgents": .object(["enabled": .bool(true), "waitSec": .number(120)])])
+        check(woken.wake == .init(enabled: true, waitSec: 120), "the wake-up setting is kept: \(woken)")
+        check(try await client.setSettings(["wakeAgents": .null]).wake == initial.wake, "null turns the wake-up back off")
         let now = try await client.state(project: nil, range: .all)
         let quiet = now.sessions.first { $0.verdict == .active && $0.stream == nil && $0.lastAt < now.now - 2 * hour && ($0.snoozeUntil ?? 0) < now.now }
         let hourly = try await client.setSettings(["staleHours": 1])
@@ -1228,11 +1327,14 @@ let start: LedgerMs = 1_793_400_000_000
         check(launched.project == "harbor-app" && launched.title == "feature/retry" && launched.baseVersion == "3.1.0" && launched.lastAgentAt == nil
               && launched.links.agentId == "agent-native" && launched.links.branch == "feature/retry" && launched.autoContinue == .init(enabled: true, delaySec: 40),
               "track: branch, base and the repository's policy, unreported: \(launched)")
+        check(launched.kind == "task" && launched.role == .other && launched.stream == nil, "a launch is a task on the Board: \(launched)")
         let launchRecord = try await client.session(launched.id)
-        check(launchRecord.events.count == 1 && launchRecord.events[0].actor == .hook && launchRecord.events[0].data?["hook"]?.string == "launch", "the launch is on record")
+        check(launchRecord.events.count == 1 && launchRecord.events[0].actor == .hook && launchRecord.events[0].data?["hook"]?.string == "launch"
+              && launchRecord.events[0].data?["board"]?.bool == true, "the launch is on record")
         let agentStart = try LedgerClient.decode(LedgerJSON.self, from: CLIBackend(binary: cli, db: db).call(method: "report", args: JSONEncoder().encode(LedgerJSON.object(
-            ["session": .string(launched.id), "event": "start", "project": "harbor-app", "title": "Retry sign-in", "base": "3.1.0"]))))
+            ["session": .string(launched.id), "event": "start", "project": "harbor-app", "title": "Retry sign-in", "base": "3.1.0", "kind": "implementation"]))))
         check(agentStart["event"].string == "start" && agentStart["session"]["title"].string == "Retry sign-in", "the agent's own start takes over: \(agentStart)")
+        check(agentStart["session"]["kind"].string == "task" && agentStart["session"]["stream"] == .null, "its implementation kind keeps it on the Board: \(agentStart)")
         check(failure(CLIBackend(binary: cli, db: db), "track", ["repoPath": .string(repo)])?.code == "NOT_ALLOWED", "agents cannot track")
         _ = try await client.human(.autoContinue(nil), sessionId: launched.id)
         check(try await client.session(launched.id).session.autoContinue == nil, "the session follows the default again")
@@ -1333,7 +1435,10 @@ swiftc -O -parse-as-library -swift-version 5 -target "$ARCH-apple-macos15.0" -I 
     "$ROOT/Sources/Core/LedgerModels.swift" "$ROOT/Sources/Core/LedgerLearning.swift" "$ROOT/Sources/Core/LedgerChatGPTDraft.swift" "$ROOT/Sources/Core/LedgerHubShare.swift" \
     "$ROOT/Sources/Services/LedgerBackend.swift" "$ROOT/Sources/Services/LedgerDemoBackend.swift" "$ROOT/Sources/Services/LedgerDemoExtras.swift" \
     "$ROOT/Sources/Services/LedgerNativeBackend.swift" "$ROOT/Sources/Services/LedgerCommandLine.swift" "$ROOT/Sources/Services/LedgerBrowserSetup.swift" "$ROOT/Sources/Services/LedgerNotices.swift" \
+    "$ROOT/Sources/Services/LedgerConnectionSetup.swift" "$ROOT/Sources/Services/LedgerDemoConnections.swift" \
     "$ROOT/Sources/Store/LedgerStore.swift" "$ROOT/Sources/Views/Ledger/LedgerPresentation.swift" "$ROOT/Sources/Views/Ledger/LedgerPromptAnswers.swift" "$ROOT/Sources/Views/Ledger/LedgerGraphLayout.swift" \
+    "$ROOT/Sources/Views/Ledger/LedgerRequestStatus.swift" \
+    "$ROOT/Sources/Views/Ledger/LedgerFlowEvidence.swift" \
     "$TASK_TMP/main.swift" "$TASK_TMP/core.a" -o "$TASK_TMP/test-ledger"
 CORE="${GITROCHI_LEDGER_BIN:-$ROOT/../crates/target/$TRIPLE/release/gitrochi-ledger}"
 [[ -x "$CORE" ]] || { echo "No gitrochi-ledger command at $CORE" >&2; exit 1; }

@@ -26,6 +26,22 @@ struct LedgerClient: Sendable {
         try await call("browser_install", ["extensionId": .string(extensionId), "hostPath": .string(hostPath)])
     }
     func removeBrowser() async throws -> LedgerBrowserStatus { try await call("browser_remove") }
+
+    /// Refreshes an existing stable command from `bundled`; `create` only for Set up and Repair
+    func stableCommand(bundled: String, create: Bool = false) async throws -> LedgerStableCommand {
+        try await call("integration_command", ["bundled": .string(bundled), "create": .bool(create)])
+    }
+    /// Whether a client's hooks and MCP entry reach this ledger (read only)
+    func integrationStatus(_ client: LedgerSetupClient) async throws -> LedgerIntegrationStatus {
+        try await call("integration_status", ["client": .string(client.rawValue)])
+    }
+    /// Set up and Repair: refreshes or creates the stable command and installs hooks that run it
+    func installIntegration(_ client: LedgerSetupClient, bundled: String) async throws -> LedgerIntegrationStatus {
+        try await call("integration_install", ["client": .string(client.rawValue), "bundled": .string(bundled)])
+    }
+    func removeIntegration(_ client: LedgerSetupClient) async throws -> LedgerIntegrationStatus {
+        try await call("integration_remove", ["client": .string(client.rawValue)])
+    }
     func rev() async throws -> Int { try await call("rev", as: LedgerRev.self).rev }
 
     func state(project: String?, range: LedgerRange) async throws -> LedgerState {
