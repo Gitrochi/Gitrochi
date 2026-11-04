@@ -315,7 +315,10 @@
   color: var(--text-2);
 }
 
-.graph-header > .head-opt {
+.graph-header > .head-opt,
+.graph-header > .head-ref,
+.graph-header > .graph-head-cell,
+.graph-header > .graph-head-message {
   position: relative;
   overflow: visible;
 }
@@ -326,7 +329,7 @@
   text-overflow: ellipsis;
 }
 
-/* drag an optional column's left edge to change its width */
+/* drag a column header's edge to change its width */
 .graph-header .col-resizer {
   position: absolute;
   top: 0;
@@ -334,6 +337,14 @@
   left: -4px;
   width: 8px;
   cursor: col-resize;
+  /* above the next column's label, which a right-edge handle overlaps */
+  z-index: 1;
+}
+
+/* the branch and graph columns are dragged by their right edge */
+.graph-header .col-resizer.right {
+  left: auto;
+  right: -4px;
 }
 
 .graph-header .col-resizer::before {
@@ -352,6 +363,19 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* rows wider than the window: the header scrolls with the list, and its menus stay at its right end */
+.graph-header.wide {
+  overflow: hidden;
+}
+
+.graph-header.wide > .graph-head-tools {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  height: 100%;
+  background: inherit;
 }
 
 /* the message header: its label, taking the room left over */

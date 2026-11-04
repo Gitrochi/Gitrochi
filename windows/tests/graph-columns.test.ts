@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampLaneOffset, columnWidths, DEFAULT_WIDTHS, graphColumns, graphFullWidth, graphWidth, LANE_W, LEFT_PAD, laneOffsetForThumb, laneThumb, revealLaneOffset, toggleColumn, trailingWidth } from "@/widgets/commit-graph/lib/metrics";
+import { clampColumnWidth, clampLaneOffset, columnWidths, DEFAULT_WIDTHS, graphColumns, graphColumnWidth, graphFullWidth, graphWidth, isDefaultWidth, messageWidth, tableWidth, LANE_W, LEFT_PAD, laneOffsetForThumb, laneThumb, revealLaneOffset, toggleColumn, trailingWidth } from "@/widgets/commit-graph/lib/metrics";
 
 describe("graph lane scrolling", () => {
   it("measures every lane while the column stays capped", () => {
@@ -65,8 +65,41 @@ describe("그래프 칸", () => {
   });
   it("keeps dragged widths inside each column's range and ignores anything else stored", () => {
     expect(columnWidths(undefined)).toEqual(DEFAULT_WIDTHS);
-    expect(columnWidths({ author: 500, time: 10, sha: 80, ref: 9 })).toEqual({ author: 320, time: 60, sha: 80 });
-    expect(columnWidths({ author: "wide", time: Number.NaN })).toEqual(DEFAULT_WIDTHS);
+    expect(columnWidths({ author: 500, time: 10, sha: 80, ref: 9, subject: 300 })).toEqual({ author: 320, time: 60, sha: 80, ref: 80 });
+    expect(columnWidths({ author: "wide", time: Number.NaN, graph: "auto" })).toEqual(DEFAULT_WIDTHS);
+    expect(columnWidths({ ref: 260, graph: 120 })).toEqual({ ...DEFAULT_WIDTHS, ref: 260, graph: 120 });
+  });
+  it("uses the dragged branch width, and shrinks it for room no further than it already is", () => {
+    expect(graphColumns(1100, graphWidth(5), new Set(), new Set(), { ...DEFAULT_WIDTHS, ref: 260 })).toMatchObject({ ref: 260 });
+    expect(graphColumns(500, graphWidth(5), new Set(), new Set(), { ...DEFAULT_WIDTHS, ref: 260 })).toMatchObject({ ref: 136 });
+    expect(graphColumns(400, graphWidth(5), new Set(), new Set(), { ...DEFAULT_WIDTHS, ref: 90 })).toMatchObject({ ref: 90 });
+  });
+  it("follows the lane count until the graph is dragged, then keeps the dragged width up to every lane", () => {
+    expect(graphColumnWidth(12)).toBe(graphWidth(12));
+    expect(graphColumnWidth(12, 100)).toBe(100);
+    expect(graphColumnWidth(12, 2000)).toBe(graphFullWidth(12));
+    expect(graphColumnWidth(3, 400)).toBe(graphFullWidth(3));
+  });
+  it("clamps a drag to the column's range and an upper limit, and stores only widths off their default", () => {
+    expect(clampColumnWidth("ref", 30)).toBe(80);
+    expect(clampColumnWidth("graph", 500, 300)).toBe(300);
+    expect(clampColumnWidth("graph", 10, 20)).toBe(44);
+    expect(isDefaultWidth("ref", 190) && isDefaultWidth("author", 120)).toBe(true);
+    expect(isDefaultWidth("ref", 200) || isDefaultWidth("graph", 120) || isDefaultWidth("message", 300)).toBe(false);
+  });
+  it("lays the rows out at the window's width until the message is dragged past it, then wider without shrinking a column", () => {
+    const g = graphWidth(5);
+    expect(tableWidth(1100, g)).toBe(1100);
+    // 190 + the graph + 300 + the menus' 60 + 12 fits 1100, so nothing scrolls
+    expect(tableWidth(1100, g, new Set(), new Set(), { ...DEFAULT_WIDTHS, message: 300 })).toBe(1100);
+    expect(tableWidth(1100, g, new Set(), new Set(), { ...DEFAULT_WIDTHS, message: 1200 })).toBe(190 + g + 1200 + 72);
+    expect(tableWidth(900, g, new Set(["ref"]), all, { ...DEFAULT_WIDTHS, message: 900 })).toBe(g + 900 + 120 + 84 + 72 + 72);
+    // a narrow window does not drop the optional columns once the rows scroll
+    const wide = tableWidth(600, g, new Set(), all, { ...DEFAULT_WIDTHS, message: 400 });
+    const c = graphColumns(wide, g, new Set(), all);
+    expect(c).toMatchObject({ ref: 190, author: 120, time: 84, sha: 72 });
+    expect(messageWidth(wide, c)).toBe(400);
+    expect(columnWidths({ message: 50 }).message).toBe(200);
   });
   it("좁아지면 브랜치 칸을 줄여 메시지 칸을 지킨다", () => {
     const g = graphWidth(7);
