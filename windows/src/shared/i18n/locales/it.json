@@ -2279,5 +2279,11 @@
   "Pair a conversation from the extension's popup to send questions.": "Abbina una conversazione dal popup dell’estensione per inviare domande.",
   "The browser host is missing. Repair registers this copy of Gitrochi.": "L’host del browser manca. Ripara registra questa copia di Gitrochi.",
   "Copied. Run it in a terminal to register the Ledger tools.": "Copiato. Eseguilo in un terminale per registrare gli strumenti di Ledger.",
-  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Gli hook eseguono una copia stabile del comando Ledger che Gitrochi mantiene aggiornata, così continuano a funzionare quando l’app viene spostata o aggiornata. Gitrochi non modifica mai le impostazioni MCP; copia il comando MCP ed eseguilo tu."
+  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Gli hook eseguono una copia stabile del comando Ledger che Gitrochi mantiene aggiornata, così continuano a funzionare quando l’app viene spostata o aggiornata. Gitrochi non modifica mai le impostazioni MCP; copia il comando MCP ed eseguilo tu.",
+  "{0} passing": "{0} superati",
+  "{0} failing": "{0} non superati",
+  "{0} pending": "{0} in attesa",
+  "Checks on the request's latest commit": "Controlli sull'ultimo commit della richiesta",
+  "Request merged — mark merged?": "Richiesta unita — segnare come integrata?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "La richiesta è stata unita sul server. Scegli la versione in cui è entrato questo lavoro; il Registro cambia solo quando lo fai."
 }

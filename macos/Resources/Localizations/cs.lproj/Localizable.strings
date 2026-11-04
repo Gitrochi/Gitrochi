@@ -2258,3 +2258,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Chybí hostitel prohlížeče. Oprava zaregistruje tuto kopii Gitrochi.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Zkopírováno. Spusťte ho v terminálu a zaregistrujte nástroje Ledgeru.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooky spouštějí stálou kopii příkazu Ledger, kterou Gitrochi udržuje aktuální, takže fungují i po přesunutí nebo aktualizaci aplikace. Gitrochi nikdy neupravuje nastavení MCP; zkopírujte příkaz MCP a spusťte ho sami.";
+"%lld passing" = "Úspěšné: %lld";
+"%lld failing" = "Neúspěšné: %lld";
+"%lld pending" = "Čekající: %lld";
+"Checks on the request's latest commit" = "Kontroly nejnovějšího commitu požadavku";
+"Request merged — mark merged?" = "Požadavek sloučen — označit jako začleněné?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Požadavek byl na serveru sloučen. Vyberte verzi, do které tato práce vešla; Evidence se změní, až když to uděláte.";

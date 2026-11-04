@@ -48,7 +48,7 @@ Gitrochi 0.3.14 brings Git history, connected project work and AI sessions into 
 - **Build and run Flows** — edit `.gitch/flow.yml` in Code, preview dependencies, inspect run history and test results, and configure modules or CI connections. Run through the app or `gitch flow`, locally, in Docker or through supported CI services, with configured undo steps on failure. [Flows guide](docs/flow/README.md)
 - **Use AI and your terminal** — draft commit messages and request descriptions with Claude Code, Codex, Gemini CLI or an API provider; run agent sessions in worktree terminals, and preview repository context before sending it. The bundled **gitch** CLI manages Git identities and repository checks. [CLI workflows](docs/cli-workflows.md)
 
-Optional Ledger launch tracking, background notifications and badges still require `GITROCHI_LEDGER_PREVIEW=1` at app startup and their settings. Tracking starts off; opening the Ledger does not import conversations or turn it on. See the guide before enabling these integrations.
+Optional Ledger launch tracking, background notifications and badges each have their own switch in Settings › Ledger; all of them start off, and no environment variable is needed. Opening the Ledger does not import conversations or turn any of them on. See the guide before enabling these integrations.
 
 <p align="center">
   <picture>

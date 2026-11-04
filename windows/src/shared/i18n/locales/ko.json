@@ -4429,5 +4429,11 @@
   "Pair a conversation from the extension's popup to send questions.": "확장 프로그램 팝업에서 대화를 연결하면 질문이 전송됩니다.",
   "The browser host is missing. Repair registers this copy of Gitrochi.": "브라우저 연결 도구가 없습니다. 복구하면 이 Gitrochi로 다시 등록합니다.",
   "Copied. Run it in a terminal to register the Ledger tools.": "복사했습니다. 터미널에서 실행해 원장 도구를 등록하세요.",
-  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "훅은 Gitrochi가 최신으로 유지하는 원장 명령의 고정 사본을 실행하므로 앱을 옮기거나 업데이트해도 계속 동작합니다. Gitrochi는 MCP 설정을 수정하지 않으니 MCP 명령을 복사해 직접 실행하세요."
+  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "훅은 Gitrochi가 최신으로 유지하는 원장 명령의 고정 사본을 실행하므로 앱을 옮기거나 업데이트해도 계속 동작합니다. Gitrochi는 MCP 설정을 수정하지 않으니 MCP 명령을 복사해 직접 실행하세요.",
+  "{0} passing": "통과 {0}",
+  "{0} failing": "실패 {0}",
+  "{0} pending": "대기 {0}",
+  "Checks on the request's latest commit": "요청의 최신 커밋에 대한 검사",
+  "Request merged — mark merged?": "요청이 병합됨 — 반영됨으로 표시할까요?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "서버에서 요청이 병합되었습니다. 이 작업이 들어간 버전을 고르세요. 고르기 전에는 원장이 바뀌지 않습니다."
 }

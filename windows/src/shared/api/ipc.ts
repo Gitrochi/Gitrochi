@@ -51,8 +51,6 @@ export interface EnvInfo {
   localAppData: string;
   /** 앱과 함께 설치되는 파일(gitch)이 있는 폴더 */
   resourceDir: string;
-  /** GITROCHI_LEDGER_PREVIEW: shows the Ledger page until it is turned on for everyone */
-  ledgerPreview?: string | null;
   /** GITROCHI_LEDGER_DEMO: the Ledger on demo data instead of the ledger database ("large" or "empty" for those demos) */
   ledgerDemo?: string | null;
 }

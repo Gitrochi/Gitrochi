@@ -2261,3 +2261,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Hiányzik a böngésző-gazdaprogram. A javítás ezt a Gitrochi-példányt regisztrálja.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Kimásolva. Futtassa egy terminálban a Ledger-eszközök regisztrálásához.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "A hookok a Ledger-parancs egy állandó másolatát futtatják, amelyet a Gitrochi naprakészen tart, így az alkalmazás áthelyezése vagy frissítése után is működnek. A Gitrochi soha nem módosítja az MCP-beállításokat; másolja ki az MCP-parancsot, és futtassa saját maga.";
+"%lld passing" = "%lld sikeres";
+"%lld failing" = "%lld sikertelen";
+"%lld pending" = "%lld függőben";
+"Checks on the request's latest commit" = "A kérés legújabb commitjának ellenőrzései";
+"Request merged — mark merged?" = "A kérés egyesítve — megjelöli beolvasztottként?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "A kérést a szerveren egyesítették. Válassza ki a verziót, amelybe ez a munka bekerült; a Napló csak ekkor változik.";

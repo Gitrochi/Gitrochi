@@ -2282,3 +2282,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "瀏覽器主機程式遺失。修復會以此 Gitrochi 重新註冊。";
 "Copied. Run it in a terminal to register the Ledger tools." = "已複製。請在終端機中執行以註冊 Ledger 工具。";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "掛鉤執行由 Gitrochi 保持最新的 Ledger 命令固定副本，因此移動或更新 App 後仍能運作。Gitrochi 不會修改 MCP 設定；請複製 MCP 命令並自行執行。";
+"%lld passing" = "%lld 項通過";
+"%lld failing" = "%lld 項失敗";
+"%lld pending" = "%lld 項等待中";
+"Checks on the request's latest commit" = "請求最新提交上的檢查";
+"Request merged — mark merged?" = "請求已合併 — 標記為已合併?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "請求已在伺服器上合併。請選擇此工作併入的版本；在你選擇之前帳本不會改變。";

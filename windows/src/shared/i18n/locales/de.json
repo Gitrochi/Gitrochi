@@ -2297,5 +2297,11 @@
   "Pair a conversation from the extension's popup to send questions.": "Kopple eine Unterhaltung im Pop-up der Erweiterung, um Fragen zu senden.",
   "The browser host is missing. Repair registers this copy of Gitrochi.": "Der Browser-Host fehlt. Reparieren registriert diese Kopie von Gitrochi.",
   "Copied. Run it in a terminal to register the Ledger tools.": "Kopiert. Führe ihn in einem Terminal aus, um die Ledger-Werkzeuge zu registrieren.",
-  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Hooks führen eine feste Kopie des Ledger-Befehls aus, die Gitrochi aktuell hält, damit sie weiter funktionieren, wenn die App verschoben oder aktualisiert wird. Gitrochi bearbeitet nie MCP-Einstellungen; kopiere den MCP-Befehl und führe ihn selbst aus."
+  "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.": "Hooks führen eine feste Kopie des Ledger-Befehls aus, die Gitrochi aktuell hält, damit sie weiter funktionieren, wenn die App verschoben oder aktualisiert wird. Gitrochi bearbeitet nie MCP-Einstellungen; kopiere den MCP-Befehl und führe ihn selbst aus.",
+  "{0} passing": "{0} erfolgreich",
+  "{0} failing": "{0} fehlgeschlagen",
+  "{0} pending": "{0} ausstehend",
+  "Checks on the request's latest commit": "Prüfungen des neuesten Commits der Anfrage",
+  "Request merged — mark merged?": "Anfrage zusammengeführt — als übernommen markieren?",
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Die Anfrage wurde auf dem Server zusammengeführt. Wählen Sie die Version, in die diese Arbeit eingeflossen ist; das Logbuch ändert sich erst dann."
 }

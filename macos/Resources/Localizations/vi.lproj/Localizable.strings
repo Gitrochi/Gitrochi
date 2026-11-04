@@ -2236,3 +2236,9 @@
 "The browser host is missing. Repair registers this copy of Gitrochi." = "Thiếu trình chủ trình duyệt. Sửa sẽ đăng ký bản Gitrochi này.";
 "Copied. Run it in a terminal to register the Ledger tools." = "Đã sao chép. Hãy chạy trong terminal để đăng ký công cụ Ledger.";
 "Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hook chạy một bản sao cố định của lệnh Ledger mà Gitrochi luôn cập nhật, nên vẫn hoạt động khi ứng dụng được di chuyển hoặc cập nhật. Gitrochi không bao giờ sửa cài đặt MCP; hãy sao chép lệnh MCP và tự chạy.";
+"%lld passing" = "%lld đạt";
+"%lld failing" = "%lld lỗi";
+"%lld pending" = "%lld đang chờ";
+"Checks on the request's latest commit" = "Kiểm tra trên commit mới nhất của yêu cầu";
+"Request merged — mark merged?" = "Yêu cầu đã hợp nhất — đánh dấu đã gộp?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Yêu cầu đã được hợp nhất trên máy chủ. Hãy chọn phiên bản đã nhận công việc này; Sổ theo dõi chỉ thay đổi khi bạn chọn.";
