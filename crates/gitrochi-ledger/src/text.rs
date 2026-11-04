@@ -108,6 +108,14 @@ fn messages_block(lines: &mut Vec<String>, messages: &[Message]) {
     }
 }
 
+/// What wakes a waiting agent (`wake`): the person's messages as a report reply lists them,
+/// tagged as Gitrochi's like auto-continue's replies.
+pub fn wake(messages: &[Message]) -> String {
+    let mut lines = Vec::new();
+    messages_block(&mut lines, messages);
+    format!("[Gitrochi] {}", lines.join("\n"))
+}
+
 pub fn overview(data: &Overview, now: Ms) -> String {
     let Some(project) = &data.project else {
         return if data.projects.is_empty() {

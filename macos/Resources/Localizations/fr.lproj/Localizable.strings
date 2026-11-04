@@ -1753,7 +1753,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI et les tâches locales de l’application de bureau partagent cette configuration. Les tâches orchestrées dans le cloud n’exécutent pas ces hooks ; elles apparaissent uniquement lorsque l’agent envoie des rapports au registre.";
 "Check or remove automatic activity" = "Vérifier ou supprimer l’activité automatique";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "L’état de configuration vérifie uniquement les paramètres, pas si les hooks sont approuvés ou en cours d’exécution.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Cette fenêtre ne modifie aucun paramètre client. Exécutez uniquement les commandes que vous souhaitez activer.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "Configurer, Réparer et Supprimer ne modifient que les entrées de Gitrochi dans les réglages de hooks de ce client, après en avoir fait une sauvegarde. Les commandes MCP sont seulement affichées pour que vous les copiiez.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Vérifie le registre de cette application, pas la configuration de l’agent ni l’approbation des hooks.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Connectez les agents pour qu’ils puissent faire des rapports ici. L’import lit des rapports collés ou une base claude-ledger.";
 "Connect Claude Code" = "Connecter Claude Code";
@@ -2025,6 +2025,11 @@
 "Decision sessions never continue automatically." = "Les sessions de décision ne se poursuivent jamais automatiquement.";
 "Use the default" = "Utiliser la valeur par défaut";
 "Follow the repository's or the default auto-continue setting again" = "Suivre à nouveau le réglage du dépôt ou la poursuite automatique par défaut";
+"Delivering answers" = "Remise des réponses";
+"Wake waiting agents with my answers" = "Réveiller les agents en attente avec mes réponses";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Un agent que vous avez lancé reste à l'écoute pendant ce temps après la fin de son tour. Une réponse ou un message envoyé à sa session dans le Registre lui parvient alors aussitôt, au lieu d'attendre son prochain rapport.";
+"Answer wakes the agent" = "La réponse réveille l'agent";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "L'agent attend en arrière-plan : une réponse ou un message envoyé maintenant lui parvient aussitôt.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Fonctionne pour les agents Claude Code que Gitrochi lance tant que Suivre les agents que je lance est activé.";
 "Auto-continue changed for %@" = "Poursuite automatique modifiée pour %@";
 "Stop waiting here and answer in the agent's own terminal" = "Ne plus attendre ici et répondre dans le terminal de l’agent";
@@ -2063,6 +2068,22 @@
 "Start Claude Code in this repository" = "Lancer Claude Code dans ce dépôt";
 "Open a repository to use its terminal" = "Ouvrez un dépôt pour utiliser son terminal";
 "Open in the terminal" = "Ouvrir dans le terminal";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Hub d'équipe";
+"Share this computer's Ledger sessions with the team hub" = "Partager les sessions du Registre de cet ordinateur avec le hub d'équipe";
+"What is shared" = "Ce qui est partagé";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Pour chaque session active : son ID, son projet, son titre, son type et son rôle, sa branche, son verdict, ses éléments concernés et sa dernière activité, sous le dépôt distant de son dépôt. Jamais les questions, réponses, rapports, messages, notes, le carnet, les documents, les liens de discussion ni les chemins de dossiers. Les chantiers et les sessions archivées restent sur cet ordinateur.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Désactiver retire vos sessions ; ce qui reste expire sur le hub en quelques minutes. Les chevauchements avec les sessions d'autres membres apparaissent dans les éléments concernés de l'inspecteur.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Connectez d'abord un hub d'équipe dans Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Connexion à %@…";
+"Sessions shared with %@: %lld" = "Sessions partagées avec %1$@ : %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Gardées sur cet ordinateur, sans dépôt distant : %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Ce hub ne conserve que les branches et les éléments concernés ; les titres et verdicts nécessitent un hub plus récent.";
+"Couldn't reach %@. Gitrochi tries again later." = "Impossible de joindre %@. Gitrochi réessaiera plus tard.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Le jeton du hub pour %@ n'a pas été accepté ou n'a pas pu être lu. Reconnectez-vous dans Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Les données de démonstration ne sont jamais partagées.";
+"Also touched on another computer by %@ · %@" = "Également concerné sur un autre ordinateur par %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "La poursuite automatique ne répond jamais à ce type de demande.";
@@ -2299,3 +2320,45 @@
 "Release notes are drafted from sessions merged into a baseline." = "Les notes de version sont rédigées à partir des sessions fusionnées dans une référence.";
 "No sessions were merged into %@." = "Aucune session n’a été fusionnée dans %@.";
 "Sessions merged into %@: %lld" = "Sessions fusionnées dans %@ : %lld";
+"Checks" = "Vérifications";
+"Open in Flows" = "Ouvrir dans Flux";
+"Latest Flow runs recorded for this branch's head commit" = "Dernières exécutions de flux enregistrées pour le commit de tête de cette branche";
+"Held" = "En suspens";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Connexions";
+"Not set up" = "Non configuré";
+"Connected · last data %@" = "Connecté · dernières données %@";
+"Connected · no data yet" = "Connecté · aucune donnée";
+"Needs repair" = "Réparation nécessaire";
+"Command missing" = "Commande introuvable";
+"Set up" = "Configurer";
+"Set up…" = "Configurer…";
+"Repair" = "Réparer";
+"Repair…" = "Réparer…";
+"Copy MCP command" = "Copier la commande MCP";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Non connecté. La configuration installe des hooks d’activité qui exécutent la commande Ledger stable de Gitrochi.";
+"Activity and reports reach this Ledger." = "L’activité et les rapports parviennent à ce Ledger.";
+"The MCP server is registered. Set up also records activity." = "Le serveur MCP est enregistré. La configuration enregistre aussi l’activité.";
+"Start or restart %@ to send activity." = "Démarrez ou redémarrez %@ pour envoyer l’activité.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Démarrez ou redémarrez Codex, puis examinez les hooks du Ledger dans /hooks et faites-leur confiance.";
+"Hooks are turned off in this client's settings." = "Les hooks sont désactivés dans les réglages de ce client.";
+"Some activity hooks are missing." = "Certains hooks d’activité sont manquants.";
+"The hook command is older than this Ledger and cannot write to it." = "La commande des hooks est plus ancienne que ce Ledger et ne peut pas y écrire.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "La commande MCP est plus ancienne que ce Ledger et ne peut pas y écrire. Copiez la commande MCP et exécutez-la.";
+"The hook command no longer exists." = "La commande des hooks n’existe plus.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "La commande MCP n’existe plus. Copiez la commande MCP et exécutez-la.";
+"The hooks write to a different Ledger database." = "Les hooks écrivent dans une autre base de données Ledger.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Le serveur MCP utilise une autre base de données Ledger. Copiez la commande MCP et exécutez-la.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Non connecté. Chargez l’extension dans Chrome et autorisez-la à se connecter.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Les questions des conversations ChatGPT associées parviennent à ce Ledger.";
+"Pair a conversation from the extension's popup to send questions." = "Associez une conversation depuis la fenêtre de l’extension pour envoyer des questions.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "L’hôte du navigateur est introuvable. Réparer enregistre cette copie de Gitrochi.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Copié. Exécutez-la dans un terminal pour enregistrer les outils du Ledger.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Les hooks exécutent une copie stable de la commande Ledger que Gitrochi tient à jour, ils continuent donc de fonctionner quand l’app est déplacée ou mise à jour. Gitrochi ne modifie jamais les réglages MCP ; copiez la commande MCP et exécutez-la vous-même.";
+"%lld passing" = "%lld réussies";
+"%lld failing" = "%lld en échec";
+"%lld pending" = "%lld en attente";
+"Checks on the request's latest commit" = "Vérifications du dernier commit de la demande";
+"Request merged — mark merged?" = "Demande fusionnée — marquer comme intégrée ?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "La demande a été fusionnée sur le serveur. Choisissez la version qui intègre ce travail ; le Registre ne change que lorsque vous le faites.";

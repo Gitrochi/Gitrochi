@@ -1725,7 +1725,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI 與本機桌面工作共用此設定。由雲端協調的工作不會執行這些掛鉤，只有代理傳送台帳報告時才會顯示。";
 "Check or remove automatic activity" = "檢查或移除自動活動記錄";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "設定狀態只檢查組態，不檢查掛鉤是否受信任或正在執行。";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "此畫面不會變更用戶端設定。請只執行您想啟用的設定命令。";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "設定、修復與移除只會變更該用戶端掛鉤設定中 Gitrochi 自己的項目，並先保留備份。MCP 命令只會顯示供你複製。";
 "Checks this app's Ledger, not agent configuration or hook trust." = "檢查此應用程式的台帳，不檢查代理組態或掛鉤的信任狀態。";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "連接代理即可讓其在此報告。匯入會讀取貼上的報告或 claude-ledger 資料庫。";
 "Connect Claude Code" = "連接 Claude Code";
@@ -1995,6 +1995,11 @@
 "Decision sessions never continue automatically." = "決策工作階段從不自動繼續。";
 "Use the default" = "使用預設值";
 "Follow the repository's or the default auto-continue setting again" = "重新遵循存放庫或預設的自動繼續設定";
+"Delivering answers" = "答覆送達";
+"Wake waiting agents with my answers" = "用我的答覆喚醒等待中的代理程式";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "你啟動的代理程式結束本輪後，仍會在這段時間內繼續等待。期間你在台帳中傳給該工作階段的答覆或訊息會立即送達，不必等到它下一次回報。";
+"Answer wakes the agent" = "答覆會喚醒代理程式";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "代理程式正在背景等待：你現在傳送的答覆或訊息會立即送達。";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "適用於「追蹤我啟動的代理程式」開啟時由 Gitrochi 啟動的 Claude Code 代理程式。";
 "Auto-continue changed for %@" = "已變更 %@ 的自動繼續";
 "Stop waiting here and answer in the agent's own terminal" = "不在這裡等待，改在代理程式自己的終端機中回答";
@@ -2033,6 +2038,22 @@
 "Start Claude Code in this repository" = "在此存放庫中啟動 Claude Code";
 "Open a repository to use its terminal" = "開啟一個存放庫以使用它的終端機";
 "Open in the terminal" = "在終端機中開啟";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "團隊中心服務";
+"Share this computer's Ledger sessions with the team hub" = "與團隊中心服務分享此電腦的台帳工作階段";
+"What is shared" = "分享的內容";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "每個進行中工作階段的 ID、專案、標題、類型與角色、分支、判定、涉及範圍和最近活動時間，依其存放庫的遠端位址分享。絕不分享問題、回答、報告、訊息、備註、筆記本、文件、聊天連結或資料夾路徑。實作流和已封存的工作階段只保留在此電腦上。";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "關閉後會撤回已分享的工作階段；剩下的內容會在幾分鐘內從中心服務過期。與其他成員工作階段的重疊會顯示在檢閱器的涉及範圍中。";
+"Connect a team hub under Work validation › Team overlap evidence first." = "請先在 Work validation › Team overlap evidence 中連線團隊中心服務。";
+"Connecting to %@…" = "正在連線 %@…";
+"Sessions shared with %@: %lld" = "已與 %1$@ 分享的工作階段：%2$lld";
+"Kept on this computer, no repository remote: %lld" = "沒有存放庫遠端位址、只保留在此電腦上的工作階段：%lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "此中心服務只保存分支和涉及範圍；標題和判定需要較新版本的中心服務。";
+"Couldn't reach %@. Gitrochi tries again later." = "無法連線 %@。Gitrochi 稍後會重試。";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@ 的中心服務權杖未被接受或無法讀取。請在 Work validation › Team overlap evidence 中重新連線。";
+"Demo data is never shared." = "示範資料從不分享。";
+"Also touched on another computer by %@ · %@" = "另一台電腦也涉及：%1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "自動繼續從不回答這類請求。";
@@ -2269,3 +2290,45 @@
 "Release notes are drafted from sessions merged into a baseline." = "版本說明根據合併到基準的工作階段起草。";
 "No sessions were merged into %@." = "沒有工作階段合併到 %@。";
 "Sessions merged into %@: %lld" = "合併到 %@ 的工作階段：%lld";
+"Checks" = "檢查";
+"Open in Flows" = "在流程中開啟";
+"Latest Flow runs recorded for this branch's head commit" = "為此分支最新提交記錄的最近流程執行";
+"Held" = "已保留";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "連線";
+"Not set up" = "未設定";
+"Connected · last data %@" = "已連線 · 最近資料 %@";
+"Connected · no data yet" = "已連線 · 尚無資料";
+"Needs repair" = "需要修復";
+"Command missing" = "缺少命令";
+"Set up" = "設定";
+"Set up…" = "設定…";
+"Repair" = "修復";
+"Repair…" = "修復…";
+"Copy MCP command" = "複製 MCP 命令";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "尚未連線。設定會安裝執行 Gitrochi 固定 Ledger 命令的活動掛鉤。";
+"Activity and reports reach this Ledger." = "活動與報告正在送達此 Ledger。";
+"The MCP server is registered. Set up also records activity." = "MCP 伺服器已註冊。設定後也會記錄活動。";
+"Start or restart %@ to send activity." = "啟動或重新啟動 %@ 以傳送活動。";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "啟動或重新啟動 Codex，然後在 /hooks 中檢查並信任 Ledger 掛鉤。";
+"Hooks are turned off in this client's settings." = "此用戶端的設定已關閉掛鉤。";
+"Some activity hooks are missing." = "部分活動掛鉤遺失。";
+"The hook command is older than this Ledger and cannot write to it." = "掛鉤命令比此 Ledger 舊，無法寫入。";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "MCP 命令比此 Ledger 舊，無法寫入。請複製 MCP 命令並執行。";
+"The hook command no longer exists." = "掛鉤命令已不存在。";
+"The MCP command no longer exists. Copy the MCP command and run it." = "MCP 命令已不存在。請複製 MCP 命令並執行。";
+"The hooks write to a different Ledger database." = "掛鉤寫入的是另一個 Ledger 資料庫。";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "MCP 伺服器使用的是另一個 Ledger 資料庫。請複製 MCP 命令並執行。";
+"Not connected. Load the extension in Chrome and allow it to connect." = "尚未連線。請在 Chrome 中載入擴充功能並允許其連線。";
+"Questions from paired ChatGPT conversations reach this Ledger." = "已配對的 ChatGPT 對話中的問題正在送達此 Ledger。";
+"Pair a conversation from the extension's popup to send questions." = "在擴充功能的彈出視窗中配對對話即可傳送問題。";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "瀏覽器主機程式遺失。修復會以此 Gitrochi 重新註冊。";
+"Copied. Run it in a terminal to register the Ledger tools." = "已複製。請在終端機中執行以註冊 Ledger 工具。";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "掛鉤執行由 Gitrochi 保持最新的 Ledger 命令固定副本，因此移動或更新 App 後仍能運作。Gitrochi 不會修改 MCP 設定；請複製 MCP 命令並自行執行。";
+"%lld passing" = "%lld 項通過";
+"%lld failing" = "%lld 項失敗";
+"%lld pending" = "%lld 項等待中";
+"Checks on the request's latest commit" = "請求最新提交上的檢查";
+"Request merged — mark merged?" = "請求已合併 — 標記為已合併?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "請求已在伺服器上合併。請選擇此工作併入的版本；在你選擇之前帳本不會改變。";

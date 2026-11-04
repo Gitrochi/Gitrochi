@@ -1715,7 +1715,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI และงานเดสก์ท็อปในเครื่องใช้การตั้งค่านี้ร่วมกัน งานที่ควบคุมจากคลาวด์จะไม่เรียกใช้ฮุกเหล่านี้ และจะแสดงเมื่อเอเจนต์ส่งรายงานบัญชีงานเท่านั้น";
 "Check or remove automatic activity" = "ตรวจสอบหรือลบกิจกรรมอัตโนมัติ";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "สถานะการตั้งค่าตรวจสอบเฉพาะการกำหนดค่า ไม่ได้ตรวจสอบว่าฮุกเชื่อถือได้หรือกำลังทำงานหรือไม่";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "หน้าจอนี้ไม่เปลี่ยนการตั้งค่าไคลเอนต์ เรียกใช้เฉพาะคำสั่งตั้งค่าที่คุณต้องการเปิดใช้";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "ตั้งค่า ซ่อมแซม และนำออก จะเปลี่ยนเฉพาะรายการของ Gitrochi เองในการตั้งค่าฮุกของไคลเอนต์นั้น และสำรองไฟล์ไว้ก่อน คำสั่ง MCP แสดงไว้ให้คุณคัดลอกเท่านั้น";
 "Checks this app's Ledger, not agent configuration or hook trust." = "ตรวจสอบบัญชีงานของแอปนี้ ไม่ได้ตรวจสอบการตั้งค่าเอเจนต์หรือความเชื่อถือฮุก";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "เชื่อมต่อเอเจนต์เพื่อให้ส่งรายงานที่นี่ การนำเข้าจะอ่านรายงานที่วางหรือฐานข้อมูล claude-ledger";
 "Connect Claude Code" = "เชื่อมต่อ Claude Code";
@@ -1985,6 +1985,11 @@
 "Decision sessions never continue automatically." = "เซสชันการตัดสินใจจะไม่ดำเนินการต่ออัตโนมัติ";
 "Use the default" = "ใช้ค่าเริ่มต้น";
 "Follow the repository's or the default auto-continue setting again" = "กลับไปใช้การตั้งค่าของรีโพสิทอรีหรือค่าเริ่มต้นของการดำเนินการต่ออัตโนมัติ";
+"Delivering answers" = "การส่งคำตอบ";
+"Wake waiting agents with my answers" = "ปลุกเอเจนต์ที่รออยู่ด้วยคำตอบของฉัน";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "เอเจนต์ที่คุณเริ่มจะยังคงรอฟังต่อไปเป็นเวลานี้หลังจบรอบของมัน คำตอบหรือข้อความที่คุณส่งถึงเซสชันของมันใน Ledger จะไปถึงทันที แทนที่จะรอรายงานครั้งถัดไป";
+"Answer wakes the agent" = "คำตอบจะปลุกเอเจนต์";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "เอเจนต์กำลังรออยู่เบื้องหลัง: คำตอบหรือข้อความที่คุณส่งตอนนี้จะไปถึงทันที";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "ใช้กับเอเจนต์ Claude Code ที่ Gitrochi เริ่มขณะเปิดติดตามเอเจนต์ที่ฉันเริ่มไว้";
 "Auto-continue changed for %@" = "เปลี่ยนการดำเนินการต่ออัตโนมัติของ %@ แล้ว";
 "Stop waiting here and answer in the agent's own terminal" = "เลิกรอที่นี่และตอบในเทอร์มินัลของเอเจนต์เอง";
@@ -2023,6 +2028,22 @@
 "Start Claude Code in this repository" = "เริ่ม Claude Code ในรีโพสิทอรีนี้";
 "Open a repository to use its terminal" = "เปิดรีโพสิทอรีเพื่อใช้เทอร์มินัลของรีโพสิทอรีนั้น";
 "Open in the terminal" = "เปิดในเทอร์มินัล";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "ฮับของทีม";
+"Share this computer's Ledger sessions with the team hub" = "แชร์เซสชัน Ledger ของคอมพิวเตอร์เครื่องนี้กับฮับของทีม";
+"What is shared" = "สิ่งที่แชร์";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "สำหรับแต่ละเซสชันที่ทำงานอยู่: ID โปรเจกต์ ชื่อ ชนิดและบทบาท สาขา ผลการตัดสิน ขอบเขตงาน และกิจกรรมล่าสุด ภายใต้รีโมตของรีโพสิทอรี ไม่แชร์คำถาม คำตอบ รายงาน ข้อความ บันทึก สมุดบันทึก เอกสาร ลิงก์แชต หรือพาธโฟลเดอร์ สตรีมและเซสชันที่เก็บถาวรจะอยู่บนคอมพิวเตอร์เครื่องนี้เท่านั้น";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "เมื่อปิด ระบบจะถอนเซสชันของคุณ ส่วนที่เหลือจะหมดอายุบนฮับภายในไม่กี่นาที การทับซ้อนกับเซสชันของสมาชิกคนอื่นจะแสดงในขอบเขตงานของแผงรายละเอียด";
+"Connect a team hub under Work validation › Team overlap evidence first." = "เชื่อมต่อฮับของทีมใน Work validation › Team overlap evidence ก่อน";
+"Connecting to %@…" = "กำลังเชื่อมต่อกับ %@…";
+"Sessions shared with %@: %lld" = "เซสชันที่แชร์กับ %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "เก็บไว้บนคอมพิวเตอร์เครื่องนี้ ไม่มีรีโมตของรีโพสิทอรี: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "ฮับนี้เก็บเฉพาะสาขาและขอบเขตงาน ชื่อและผลการตัดสินต้องใช้ฮับที่ใหม่กว่า";
+"Couldn't reach %@. Gitrochi tries again later." = "ติดต่อ %@ ไม่ได้ Gitrochi จะลองใหม่ภายหลัง";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "โทเค็นฮับสำหรับ %@ ไม่ได้รับการยอมรับหรืออ่านไม่ได้ เชื่อมต่อใหม่ใน Work validation › Team overlap evidence";
+"Demo data is never shared." = "ไม่แชร์ข้อมูลตัวอย่างเด็ดขาด";
+"Also touched on another computer by %@ · %@" = "มีการทำงานบนคอมพิวเตอร์เครื่องอื่นด้วย โดย %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "การดำเนินการต่ออัตโนมัติจะไม่ตอบคำขอประเภทนี้";
@@ -2259,3 +2280,45 @@
 "Release notes are drafted from sessions merged into a baseline." = "บันทึกประจำรุ่นร่างจากเซสชันที่รวมเข้าเบสไลน์";
 "No sessions were merged into %@." = "ไม่มีเซสชันที่รวมเข้า %@";
 "Sessions merged into %@: %lld" = "เซสชันที่รวมเข้า %@: %lld";
+"Checks" = "การตรวจสอบ";
+"Open in Flows" = "เปิดในโฟลว์";
+"Latest Flow runs recorded for this branch's head commit" = "การรันโฟลว์ล่าสุดที่บันทึกไว้สำหรับคอมมิตล่าสุดของแบรนช์นี้";
+"Held" = "ระงับไว้";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "การเชื่อมต่อ";
+"Not set up" = "ยังไม่ได้ตั้งค่า";
+"Connected · last data %@" = "เชื่อมต่อแล้ว · ข้อมูลล่าสุด %@";
+"Connected · no data yet" = "เชื่อมต่อแล้ว · ยังไม่มีข้อมูล";
+"Needs repair" = "ต้องซ่อมแซม";
+"Command missing" = "ไม่พบคำสั่ง";
+"Set up" = "ตั้งค่า";
+"Set up…" = "ตั้งค่า…";
+"Repair" = "ซ่อมแซม";
+"Repair…" = "ซ่อมแซม…";
+"Copy MCP command" = "คัดลอกคำสั่ง MCP";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "ยังไม่ได้เชื่อมต่อ การตั้งค่าจะติดตั้งฮุกกิจกรรมที่เรียกใช้คำสั่ง Ledger แบบคงที่ของ Gitrochi";
+"Activity and reports reach this Ledger." = "กิจกรรมและรายงานส่งมาถึง Ledger นี้";
+"The MCP server is registered. Set up also records activity." = "ลงทะเบียนเซิร์ฟเวอร์ MCP แล้ว การตั้งค่าจะบันทึกกิจกรรมด้วย";
+"Start or restart %@ to send activity." = "เริ่มหรือเริ่ม %@ ใหม่เพื่อส่งกิจกรรม";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "เริ่มหรือเริ่ม Codex ใหม่ จากนั้นตรวจสอบและเชื่อถือฮุกของ Ledger ใน /hooks";
+"Hooks are turned off in this client's settings." = "ฮุกถูกปิดในการตั้งค่าของไคลเอนต์นี้";
+"Some activity hooks are missing." = "ฮุกกิจกรรมบางรายการหายไป";
+"The hook command is older than this Ledger and cannot write to it." = "คำสั่งของฮุกเก่ากว่า Ledger นี้และเขียนข้อมูลลงไม่ได้";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "คำสั่ง MCP เก่ากว่า Ledger นี้และเขียนข้อมูลลงไม่ได้ คัดลอกคำสั่ง MCP แล้วเรียกใช้";
+"The hook command no longer exists." = "คำสั่งของฮุกไม่มีอยู่แล้ว";
+"The MCP command no longer exists. Copy the MCP command and run it." = "คำสั่ง MCP ไม่มีอยู่แล้ว คัดลอกคำสั่ง MCP แล้วเรียกใช้";
+"The hooks write to a different Ledger database." = "ฮุกเขียนข้อมูลลงฐานข้อมูล Ledger อื่น";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "เซิร์ฟเวอร์ MCP ใช้ฐานข้อมูล Ledger อื่น คัดลอกคำสั่ง MCP แล้วเรียกใช้";
+"Not connected. Load the extension in Chrome and allow it to connect." = "ยังไม่ได้เชื่อมต่อ โหลดส่วนขยายใน Chrome และอนุญาตให้เชื่อมต่อ";
+"Questions from paired ChatGPT conversations reach this Ledger." = "คำถามจากการสนทนา ChatGPT ที่จับคู่ไว้ส่งมาถึง Ledger นี้";
+"Pair a conversation from the extension's popup to send questions." = "จับคู่การสนทนาจากป๊อปอัปของส่วนขยายเพื่อส่งคำถาม";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "ไม่พบโฮสต์เบราว์เซอร์ การซ่อมแซมจะลงทะเบียน Gitrochi ชุดนี้";
+"Copied. Run it in a terminal to register the Ledger tools." = "คัดลอกแล้ว เรียกใช้ในเทอร์มินัลเพื่อลงทะเบียนเครื่องมือ Ledger";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "ฮุกเรียกใช้สำเนาคงที่ของคำสั่ง Ledger ที่ Gitrochi อัปเดตให้เสมอ จึงยังทำงานได้เมื่อย้ายหรืออัปเดตแอป Gitrochi ไม่แก้ไขการตั้งค่า MCP ให้คัดลอกคำสั่ง MCP แล้วเรียกใช้เอง";
+"%lld passing" = "ผ่าน %lld";
+"%lld failing" = "ล้มเหลว %lld";
+"%lld pending" = "รอ %lld";
+"Checks on the request's latest commit" = "การตรวจสอบบนคอมมิตล่าสุดของคำขอ";
+"Request merged — mark merged?" = "คำขอรวมแล้ว — ทำเครื่องหมายว่ารวมแล้วไหม?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "คำขอถูกรวมบนเซิร์ฟเวอร์แล้ว เลือกเวอร์ชันที่งานนี้ถูกรวมเข้าไป สมุดบันทึกจะเปลี่ยนเมื่อคุณเลือกเท่านั้น";

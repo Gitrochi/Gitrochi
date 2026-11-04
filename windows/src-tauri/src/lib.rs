@@ -84,6 +84,8 @@ pub fn run() {
             watch::watch_stop,
             net::http_request,
             net::team_hub_read,
+            net::team_hub_publish,
+            net::team_hub_withdraw,
             net::ci_job_log,
             net::http_image,
             net::resolve_host,

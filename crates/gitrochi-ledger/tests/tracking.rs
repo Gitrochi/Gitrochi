@@ -139,6 +139,12 @@ fn a_launched_session_is_set_from_the_checkout_and_stays_unreported() {
     );
     assert_eq!(session["status"], "active");
     assert_eq!(session["verdict"], "active");
+    assert_eq!(
+        (session["kind"].clone(), session["role"].clone()),
+        (json!("task"), json!("other")),
+        "on the Board by default (2026-11-03)"
+    );
+    assert!(session.get("stream").is_none());
     assert!(session.get("lastAgentAt").is_none(), "unreported (D13)");
     let links = &session["links"];
     assert_eq!(links["branch"], "feature/retry");
@@ -188,6 +194,7 @@ fn a_launched_session_is_set_from_the_checkout_and_stays_unreported() {
         ),
         (json!("hook"), json!("hook"), json!("launch"))
     );
+    assert_eq!(events[0]["data"]["board"], true, "the app named no kind");
     // with the commit the agent starts on, from which D13 counts the branch's own commits
     assert_eq!(
         events[0]["data"]["head"],
@@ -213,7 +220,7 @@ fn the_agents_first_start_replaces_what_gitrochi_set() {
         .to_string();
     let reply = repo.report(
         json!({"session": id, "event": "start", "project": "harbor", "title": "Retry sign-in",
-                                   "kind": "research", "base": "1.1.0", "summary": "starting"}),
+              "kind": "research", "base": "1.1.0", "summary": "starting"}),
     );
     assert_eq!(reply["created"], false);
     assert_eq!(
@@ -240,6 +247,195 @@ fn the_agents_first_start_replaces_what_gitrochi_set() {
     assert_eq!(other.code, "CONFLICT");
 }
 
+/// Where `state` puts a session: on the Board (sessions without `stream`) or in Streams, and
+/// whether it is in an overlap.
+fn placement(repo: &Repo, id: &str) -> (bool, bool, bool) {
+    let state = app(&repo.db(), "state", json!({"project": "harbor"}));
+    let session = state["sessions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == json!(id))
+        .unwrap()
+        .clone();
+    let streamed = state["streams"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|c| c["sessionId"] == json!(id));
+    let overlapping = state["overlaps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|o| o["a"] == json!(id) || o["b"] == json!(id));
+    (session.get("stream").is_none(), streamed, overlapping)
+}
+
+#[test]
+fn a_launched_agent_stays_on_the_board_until_a_person_moves_it() {
+    let repo = Repo::new();
+    let id = repo.track(json!({}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    // another live session on the same file, which a stream would stay out of
+    repo.report(
+        json!({"project": "harbor", "session": "S-other", "event": "start",
+              "title": "Retry docs", "kind": "document", "touches": ["src/retry.rs"]}),
+    );
+    let reply = repo.report(json!({"session": id, "event": "start", "project": "harbor",
+                                   "title": "Retry sign-in", "kind": "implementation",
+                                   "touches": ["src/retry.rs"]}));
+    assert!(
+        reply["notices"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|n| n.as_str().unwrap().contains("stays on the Board")),
+        "{reply}"
+    );
+    let detail = repo.detail(&id);
+    let session = &detail["session"];
+    assert_eq!(
+        (session["kind"].clone(), session["role"].clone()),
+        (json!("task"), json!("other"))
+    );
+    Schemas::load().check("session.schema.json", session);
+    let start = detail["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["type"] == "start")
+        .unwrap();
+    assert_eq!(
+        start["data"]["reportedKind"], "implementation",
+        "what the agent said stays on record"
+    );
+    assert_eq!(
+        placement(&repo, &id),
+        (true, false, true),
+        "Board and overlaps"
+    );
+    // later reports with the same kind change nothing and say nothing more
+    let again = repo.report(
+        json!({"session": id, "event": "progress", "kind": "llm-implementation",
+              "summary": "Working"}),
+    );
+    assert!(!again["notices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|n| n.as_str().unwrap().contains("stays on the Board")));
+    assert_eq!(repo.detail(&id)["session"]["kind"], "task");
+
+    // A person moves it to Streams with Manage records; its agent's reports keep it there.
+    app(
+        &repo.db(),
+        "records",
+        json!({"action": "update", "sessionId": id, "kind": "implementation"}),
+    );
+    assert_eq!(placement(&repo, &id), (false, true, false));
+    repo.report(
+        json!({"session": id, "event": "progress", "kind": "implementation",
+              "summary": "Still working"}),
+    );
+    assert_eq!(repo.detail(&id)["session"]["kind"], "implementation");
+    // and back to the Board: its agent cannot take it to Streams again
+    app(
+        &repo.db(),
+        "records",
+        json!({"action": "update", "sessionId": id, "kind": "research"}),
+    );
+    repo.report(
+        json!({"session": id, "event": "progress", "kind": "implementation",
+              "summary": "Next part"}),
+    );
+    assert_eq!(repo.detail(&id)["session"]["kind"], "task");
+    // other kinds an agent reports apply as before
+    repo.report(
+        json!({"session": id, "event": "progress", "kind": "decision",
+              "summary": "Deciding"}),
+    );
+    assert_eq!(repo.detail(&id)["session"]["role"], "decision");
+}
+
+#[test]
+fn a_kind_chosen_at_launch_or_for_tasks_puts_launches_in_streams() {
+    let repo = Repo::new();
+    // the app may name the kind: an explicit choice, with no Board mark
+    let chosen = repo.track(json!({"kind": "implementation"}))["session"].clone();
+    assert_eq!(chosen["role"], "implementation");
+    assert!(chosen["stream"].is_object());
+    let id = chosen["id"].as_str().unwrap();
+    assert!(repo.detail(id)["events"][0]["data"].get("board").is_none());
+    let researched = repo.track(json!({"kind": "research"}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    repo.report(json!({"session": researched, "event": "progress", "kind": "implementation"}));
+    assert_eq!(
+        repo.detail(&researched)["session"]["kind"],
+        "implementation"
+    );
+    // a person who maps task to the implementation role puts every launch in Streams
+    let mut kinds = app(&repo.db(), "settings", json!({}))["kinds"].clone();
+    kinds["task"] = json!({"role": "implementation"});
+    app(
+        &repo.db(),
+        "settings_set",
+        json!({"values": {"kinds": kinds}}),
+    );
+    let launched = repo.track(json!({}))["session"].clone();
+    assert_eq!(
+        (launched["kind"].clone(), launched["role"].clone()),
+        (json!("task"), json!("implementation"))
+    );
+    let id = launched["id"].as_str().unwrap();
+    repo.report(
+        json!({"session": id, "event": "start", "project": "harbor", "title": "Retry",
+              "kind": "implementation"}),
+    );
+    assert_eq!(repo.detail(id)["session"]["kind"], "implementation");
+}
+
+#[test]
+fn launches_from_before_the_board_default_keep_their_rules() {
+    let repo = Repo::new();
+    let id = repo.track(json!({}))["session"]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    // as `track` stored them before: no kind and no Board mark
+    let connection = rusqlite::Connection::open(repo.db()).unwrap();
+    connection
+        .execute(
+            "UPDATE sessions SET kind = '' WHERE id = ?1",
+            rusqlite::params![id],
+        )
+        .unwrap();
+    connection
+        .execute(
+            "UPDATE events SET data = json_remove(data, '$.board') WHERE session_id = ?1",
+            rusqlite::params![id],
+        )
+        .unwrap();
+    let reply = repo.report(json!({"session": id, "event": "start", "project": "harbor",
+                                   "title": "Retry", "kind": "implementation"}));
+    assert!(!reply["notices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|n| n.as_str().unwrap().contains("stays on the Board")));
+    assert_eq!(repo.detail(&id)["session"]["kind"], "implementation");
+    assert_eq!(placement(&repo, &id), (false, true, false));
+    // and a session an agent started itself is a stream as always
+    let own = repo.report(
+        json!({"project": "harbor", "event": "start", "title": "Own",
+              "kind": "implementation"}),
+    );
+    assert!(own["session"]["stream"].is_object());
+}
+
 #[test]
 fn the_agent_may_name_another_project() {
     let repo = Repo::new();
@@ -249,7 +445,7 @@ fn the_agent_may_name_another_project() {
         .to_string();
     let reply = repo.report(
         json!({"session": id, "event": "start", "project": "Harbor App", "title": "Retry",
-                                   "summary": "starting"}),
+              "summary": "starting"}),
     );
     assert_eq!(reply["session"]["project"], "Harbor App");
     assert!(
@@ -291,7 +487,7 @@ fn explicit_values_and_the_policy_are_kept() {
     let repo = Repo::new();
     let result = repo.track(
         json!({"project": "Harbor", "title": "Launch title", "base": "latest",
-                                   "autoContinue": {"enabled": true, "delaySec": 45}}),
+              "autoContinue": {"enabled": true, "delaySec": 45}}),
     );
     let session = &result["session"];
     assert_eq!(
@@ -338,7 +534,7 @@ fn the_repositorys_policy_is_the_sessions_unless_the_app_gives_one() {
         &repo.db(),
         "settings_set",
         json!({"values": {"autoContinue": {"enabled": false, "delaySec": 30,
-                                            "repositories": {format!("{}/", repo.path("harbor")): policy}}}}),
+              "repositories": {format!("{}/", repo.path("harbor")): policy}}}}),
     );
     assert_eq!(repo.track(json!({}))["session"]["autoContinue"], policy);
     let given = json!({"enabled": false, "delaySec": 60});
@@ -581,7 +777,7 @@ fn windows_paths_match_whatever_their_case_and_separators() {
         &db,
         "settings_set",
         json!({"values": {"autoContinue": {"enabled": false, "delaySec": 30,
-                                            "repositories": {r"c:\work\App\": policy}}}}),
+              "repositories": {r"c:\work\App\": policy}}}}),
     );
     let session = &app(
         &db,

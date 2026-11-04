@@ -5,7 +5,9 @@
 //! reachable from it. The session stays unreported (no `lastAgentAt`, D13) until its agent
 //! reports, and the agent's first report replaces the guess (`report`, through
 //! `is_unreported_launch`). Until then it turns stale only once its branch has moved on from
-//! where it started (`waiting_unreported`).
+//! where it started (`waiting_unreported`). A launch `track` names the kind of itself stays on
+//! the Board as a `task` (decided 2026-11-03): its agent's implementation kinds do not make it
+//! a stream (`stays_on_board`); a person moves it to Streams.
 
 use crate::baseline;
 use crate::db::Db;
@@ -25,6 +27,10 @@ use std::path::Path;
 /// `data.hook` of the event `track` records: how a session is known to come from a launch.
 pub const LAUNCH: &str = "launch";
 
+/// The kind `track` gives a launch when the app names none: role `other` by default, so the
+/// agents Gitrochi starts are on the Board, in overlaps and in clean-up rather than streams.
+pub const BOARD_KIND: &str = "task";
+
 const LINK_KEYS: [&str; 5] = ["repoPath", "branch", "worktree", "agentId", "cwd"];
 
 /// What `track` creates, worked out before the write so git runs outside the transaction.
@@ -35,6 +41,8 @@ pub struct Plan {
     /// A version, or `latest` (HEAD at the write).
     pub base: Option<String>,
     pub kind: String,
+    /// The app named no kind, so the session keeps its agent's reports off Streams.
+    pub board: bool,
     pub links: Map<String, Value>,
     pub auto_continue: Option<Value>,
     /// The commit the agent starts on, from which D13 counts the branch's own commits.
@@ -47,7 +55,8 @@ pub struct Plan {
 /// `worktree`, what git says about `cwd`; without `title`, the branch (or the folder's name);
 /// without `base`, the newest tag reachable from `cwd` that matches the project's pattern,
 /// when its baselines come from tags; without `autoContinue`, the repository's policy from
-/// the `autoContinue.repositories` setting (`null` = the global default).
+/// the `autoContinue.repositories` setting (`null` = the global default); without `kind`,
+/// `task`, and the session stays on the Board.
 pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
     if !args.is_object() {
         return Err(Error::invalid("track takes a JSON object"));
@@ -112,11 +121,13 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
             None => None,
         },
     };
+    let kind = arg_str(args, "kind").map(|k| vocab::kind(&k));
     Ok(Plan {
         project,
         title,
         base,
-        kind: arg_str(args, "kind").map_or_else(String::new, |k| vocab::kind(&k)),
+        board: kind.is_none(),
+        kind: kind.unwrap_or_else(|| BOARD_KIND.to_string()),
         links,
         auto_continue,
         head,
@@ -269,6 +280,9 @@ fn create_from(
     if let Some(agent) = plan.links.get("agentId") {
         data["agentId"] = agent.clone();
     }
+    if plan.board {
+        data["board"] = json!(true);
+    }
     if let Some(policy) = &plan.auto_continue {
         data["autoContinue"] = policy.clone();
     }
@@ -327,6 +341,19 @@ pub fn is_unreported_launch(connection: &Connection, row: &SessionRow) -> Result
         "SELECT EXISTS (SELECT 1 FROM events WHERE session_id = ?1 AND type = 'hook'
             AND actor = 'hook' AND json_extract(data, '$.hook') = ?2)",
         params![row.id, LAUNCH],
+        |r| r.get(0),
+    )?)
+}
+
+/// A launch `track` gave the Board kind (`data.board` on its `launch` event): an implementation
+/// kind its agent reports is recorded as `task`, so it does not become a stream. Sessions from
+/// before this rule, or launched with a kind the app chose, have no such mark.
+pub fn stays_on_board(connection: &Connection, id: &str) -> Result<bool> {
+    Ok(connection.query_row(
+        "SELECT EXISTS (SELECT 1 FROM events WHERE session_id = ?1 AND type = 'hook'
+            AND actor = 'hook' AND json_extract(data, '$.hook') = ?2
+            AND json_extract(data, '$.board') = 1)",
+        params![id, LAUNCH],
         |r| r.get(0),
     )?)
 }

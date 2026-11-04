@@ -48,6 +48,14 @@
 .ledger-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 button.ledger-link { cursor: pointer; }
 button.ledger-link:hover { color: var(--text); border-color: var(--border-strong); }
+/* a linked request's chip with its state and checks pills; the strip suggesting Mark merged… (docs/design.md, Badges and banners) */
+.ledger-request { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; flex-wrap: wrap; }
+.ledger-request-merged { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text-2); }
+.ledger-row .ledger-request-merged { margin-top: 6px; }
+/* the inspector's Checks row: the branch head it is for, then one row per flow (docs/design.md, Badges) */
+.ledger-flow-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ledger-flow-head .ellipsis { font-weight: 600; color: var(--text-2); }
+.ledger-flow-result { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 3px 0; }
 .ledger-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
 .ledger-inspector-body { padding: 4px 16px 18px; display: flex; flex-direction: column; }
 .ledger-placeholder { flex: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -170,6 +178,10 @@ button.ledger-link:hover { color: var(--text); border-color: var(--border-strong
 .ledger-question + .ledger-question { border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
 .ledger-touch { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; min-width: 0; }
 .ledger-touch .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+/* other computers' sessions from the team hub: the pill shortens rather than widening the inspector */
+.ledger-hub-overlap { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 4px 0; min-width: 0; max-width: 100%; }
+.ledger-hub-overlap .status-pill { max-width: 100%; min-width: 0; }
+.ledger-hub-overlap-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
 /* Search */
 .ledger-search-results { display: flex; flex-direction: column; max-height: 52vh; overflow-y: auto; margin: 0 -8px; }

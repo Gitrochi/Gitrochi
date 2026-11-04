@@ -1703,7 +1703,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "A Codex CLI és a helyi asztali feladatok közös beállítást használnak. A felhőből vezérelt feladatok nem futtatják ezeket a hookokat; csak az ügynök naplójelentései alapján jelennek meg.";
 "Check or remove automatic activity" = "Automatikus tevékenység ellenőrzése vagy eltávolítása";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "Az állapot csak a konfigurációt ellenőrzi, a hookok megbízhatóságát vagy futását nem.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Ez az ablak nem módosítja a kliens beállításait. Csak a bekapcsolni kívánt beállítási parancsokat futtassa.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "A Beállítás, a Javítás és az Eltávolítás csak a Gitrochi saját bejegyzéseit módosítja az adott kliens hookbeállításaiban, és előtte biztonsági másolatot készít. Az MCP-parancsok csak másolásra jelennek meg.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Az alkalmazás naplóját ellenőrzi, nem az ügynök beállításait vagy a hookok megbízhatóságát.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Csatlakoztassa az ügynököket, hogy itt jelentést küldhessenek. Az importálás beillesztett jelentéseket vagy claude-ledger-adatbázist olvas.";
 "Connect Claude Code" = "Claude Code csatlakoztatása";
@@ -1974,6 +1974,11 @@
 "Decision sessions never continue automatically." = "A döntési munkamenetek soha nem folytatódnak automatikusan.";
 "Use the default" = "Az alapértelmezett használata";
 "Follow the repository's or the default auto-continue setting again" = "Ismét a tároló vagy az alapértelmezett automatikus folytatás beállítását követi";
+"Delivering answers" = "Válaszok kézbesítése";
+"Wake waiting agents with my answers" = "Várakozó ügynökök felébresztése a válaszaimmal";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Az általad indított ügynök a köre végeztével még ennyi ideig figyel. Az ilyenkor a Nyilvántartásban a munkamenetének küldött válasz vagy üzenet azonnal eljut hozzá, nem csak a következő jelentésével.";
+"Answer wakes the agent" = "A válasz felébreszti az ügynököt";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "Az ügynök a háttérben várakozik: a most küldött válasz vagy üzenet azonnal eljut hozzá.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "A Gitrochi által indított Claude Code-ügynököknél működik, ha Az általam indított ügynökök követése be van kapcsolva.";
 "Auto-continue changed for %@" = "Az automatikus folytatás módosult: %@";
 "Stop waiting here and answer in the agent's own terminal" = "Itt ne várjon tovább, válaszoljon az ügynök saját terminálján";
@@ -2012,6 +2017,22 @@
 "Start Claude Code in this repository" = "Claude Code indítása ebben a tárolóban";
 "Open a repository to use its terminal" = "Nyisson meg egy tárolót a terminálja használatához";
 "Open in the terminal" = "Megnyitás a terminálban";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Csapat-hub";
+"Share this computer's Ledger sessions with the team hub" = "A gép Nyilvántartás-munkameneteinek megosztása a csapat-hubbal";
+"What is shared" = "Mi kerül megosztásra";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Minden aktív munkamenet azonosítója, projektje, címe, fajtája és szerepe, ága, értékelése, érintett elemei és utolsó aktivitása, a tároló távoli címe alatt. Soha nem kerülnek megosztásra kérdések, válaszok, jelentések, üzenetek, jegyzetek, a jegyzetfüzet, dokumentumok, csevegőlinkek vagy mappaútvonalak. A csatornák és az archivált munkamenetek ezen a gépen maradnak.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Kikapcsoláskor a munkameneteid visszavonásra kerülnek; ami megmarad, perceken belül lejár a hubon. A más tagok munkameneteivel való átfedések a részletek Érintett elemek szakaszában jelennek meg.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Előbb csatlakoztass egy csapat-hubot itt: Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Csatlakozás ide: %@…";
+"Sessions shared with %@: %lld" = "Megosztott munkamenetek itt: %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Ezen a gépen maradt, nincs távoli tároló: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Ez a hub csak ágakat és érintett elemeket tárol; a címekhez és értékelésekhez újabb hub kell.";
+"Couldn't reach %@. Gitrochi tries again later." = "Nem érhető el: %@. A Gitrochi később újra próbálkozik.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "A(z) %@ hub-tokenjét nem fogadták el, vagy nem olvasható. Csatlakozz újra itt: Work validation › Team overlap evidence.";
+"Demo data is never shared." = "A bemutató adatok soha nem kerülnek megosztásra.";
+"Also touched on another computer by %@ · %@" = "Másik gépen is érinti: %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Az automatikus folytatás az ilyen kérésekre soha nem válaszol.";
@@ -2248,3 +2269,45 @@
 "Release notes are drafted from sessions merged into a baseline." = "A kiadási megjegyzések az alapverzióba beolvasztott munkamenetekből készülnek.";
 "No sessions were merged into %@." = "A(z) %@ verzióba nem került munkamenet.";
 "Sessions merged into %@: %lld" = "A(z) %@ verzióba beolvasztott munkamenetek: %lld";
+"Checks" = "Ellenőrzések";
+"Open in Flows" = "Megnyitás a Folyamatokban";
+"Latest Flow runs recorded for this branch's head commit" = "Az ág legfrissebb commitjára rögzített legutóbbi folyamatfuttatások";
+"Held" = "Visszatartva";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Kapcsolatok";
+"Not set up" = "Nincs beállítva";
+"Connected · last data %@" = "Csatlakozva · utolsó adat %@";
+"Connected · no data yet" = "Csatlakozva · még nincs adat";
+"Needs repair" = "Javítás szükséges";
+"Command missing" = "Hiányzik a parancs";
+"Set up" = "Beállítás";
+"Set up…" = "Beállítás…";
+"Repair" = "Javítás";
+"Repair…" = "Javítás…";
+"Copy MCP command" = "MCP-parancs másolása";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Nincs kapcsolat. A beállítás olyan tevékenységhookokat telepít, amelyek a Gitrochi állandó Ledger-parancsát futtatják.";
+"Activity and reports reach this Ledger." = "A tevékenység és a jelentések megérkeznek ebbe a Ledgerbe.";
+"The MCP server is registered. Set up also records activity." = "Az MCP-kiszolgáló regisztrálva van. A beállítás a tevékenységet is rögzíti.";
+"Start or restart %@ to send activity." = "Indítsa el vagy indítsa újra a(z) %@ alkalmazást a tevékenység küldéséhez.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Indítsa el vagy indítsa újra a Codexet, majd a /hooks alatt tekintse át és jelölje megbízhatónak a Ledger hookjait.";
+"Hooks are turned off in this client's settings." = "A hookok ki vannak kapcsolva ennek a kliensnek a beállításaiban.";
+"Some activity hooks are missing." = "Néhány tevékenységhook hiányzik.";
+"The hook command is older than this Ledger and cannot write to it." = "A hookparancs régebbi ennél a Ledgernél, és nem tud bele írni.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Az MCP-parancs régebbi ennél a Ledgernél, és nem tud bele írni. Másolja ki az MCP-parancsot, és futtassa.";
+"The hook command no longer exists." = "A hookparancs már nem létezik.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Az MCP-parancs már nem létezik. Másolja ki az MCP-parancsot, és futtassa.";
+"The hooks write to a different Ledger database." = "A hookok egy másik Ledger-adatbázisba írnak.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Az MCP-kiszolgáló egy másik Ledger-adatbázist használ. Másolja ki az MCP-parancsot, és futtassa.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Nincs kapcsolat. Töltse be a bővítményt a Chrome-ban, és engedélyezze a kapcsolódást.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "A párosított ChatGPT-beszélgetések kérdései megérkeznek ebbe a Ledgerbe.";
+"Pair a conversation from the extension's popup to send questions." = "Párosítson egy beszélgetést a bővítmény felugró ablakában a kérdések küldéséhez.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Hiányzik a böngésző-gazdaprogram. A javítás ezt a Gitrochi-példányt regisztrálja.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Kimásolva. Futtassa egy terminálban a Ledger-eszközök regisztrálásához.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "A hookok a Ledger-parancs egy állandó másolatát futtatják, amelyet a Gitrochi naprakészen tart, így az alkalmazás áthelyezése vagy frissítése után is működnek. A Gitrochi soha nem módosítja az MCP-beállításokat; másolja ki az MCP-parancsot, és futtassa saját maga.";
+"%lld passing" = "%lld sikeres";
+"%lld failing" = "%lld sikertelen";
+"%lld pending" = "%lld függőben";
+"Checks on the request's latest commit" = "A kérés legújabb commitjának ellenőrzései";
+"Request merged — mark merged?" = "A kérés egyesítve — megjelöli beolvasztottként?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "A kérést a szerveren egyesítették. Válassza ki a verziót, amelybe ez a munka bekerült; a Napló csak ekkor változik.";

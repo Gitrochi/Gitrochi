@@ -12,6 +12,7 @@ use crate::streams::{self, CycleEvent, StreamCycle};
 use crate::track;
 use crate::util::{Ms, DAY};
 use crate::vocab::Verdict;
+use crate::wake;
 use rusqlite::Connection;
 use serde::Serialize;
 use serde_json::Value;
@@ -134,6 +135,7 @@ pub fn snapshot(
         views.push(viewer.view(row, counts.get(&row.id).copied().unwrap_or(0)));
     }
     track::apply_unreported_verdicts(connection, &rows, &mut views)?;
+    wake::apply(connection, &mut views, now)?;
     Ok(Snapshot {
         trunks,
         rows,

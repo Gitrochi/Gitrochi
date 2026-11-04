@@ -75,6 +75,8 @@ See [tools/gitrochi-py/README.md](../tools/gitrochi-py/README.md).
 - `serve` (default `127.0.0.1:7420`) — a self-hosted team service: who is working on which branch and files, overlap warnings when teammates touch the same files or files the index says change together, a live event feed over Server-Sent Events with resume, and shared notes. Bearer tokens stored only as SHA-256 hashes; state in memory with a crash-safe journal and snapshots.
 - `monitor` (status on `127.0.0.1:7421`) — runs on a developer's machine: polls repositories with a bounded pool of git processes, detects ref changes including forced updates, keeps the index in sync (`gitrochi-index sync`), asks it for related files (`impact`), and reports presence and events to the hub with backoff.
 
+The apps can also share their Ledger sessions with the hub (Settings › Ledger › Team hub, off by default): the ledger core's `hub_share` builds one presence entry per live session, with an optional `ledger` object, and the apps post it with the hub URL and token they already keep ([docs/ledger/README.md](ledger/README.md#share-sessions-with-the-team-hub)).
+
 See [services/hub/README.md](../services/hub/README.md).
 
 ## Rules across languages

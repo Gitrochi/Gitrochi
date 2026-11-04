@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
+import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";
@@ -11,6 +11,8 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { type LedgerLauncher, quickLaunchItems } from "../lib/quick-launch";
+import type { LedgerFlowHost } from "../model/flow-evidence";
+import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerBoard } from "./LedgerBoard";
 import { LedgerTopBar } from "./LedgerFilters";
 import { LedgerGraph } from "./LedgerGraph";
@@ -41,9 +43,11 @@ const views: { id: LedgerView; label: string; icon: typeof Inbox }[] = [
  * The Ledger page: what each agent session was for, which baseline it started from and where it stands. Tabs and
  * compact filters sit above the view; below 1,080 px the inspector opens as a sheet and below 640 px controls wrap.
  * Opens without a repository and filters to the open one's project. `launcher` is the repository's tab, for the quick
- * launches. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
+ * launches; `requests`, the same tab, reads the state and checks of requests linked in that repository through its
+ * hosting account, and `flows` gives the inspector's Checks row its Flow run records and Open in Flows. Without them
+ * the request chips show as before and there is no Checks row. (macOS: Views/Ledger/LedgerWorkspaceView.swift)
  */
-export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher }) {
+export function LedgerWorkspace({ repoPath, ledger, launcher, requests, flows }: { repoPath: string | null; ledger?: LedgerStore; launcher?: LedgerLauncher; requests?: LedgerRequestHost; flows?: LedgerFlowHost }) {
   const store = useObserve(ledger ?? ledgerStore(repoPath));
   useEffect(() => store.start(), [store]);
   const root = useRef<HTMLDivElement>(null);
@@ -136,7 +140,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
   };
   const waiting = visiblePrompts(store).length;
   const selected = !!store.selectedId;
-  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
+  const inspector = <LedgerInspector key={store.selectedId ?? ""} store={store} requests={requests} flows={flows} onClose={layout === "wide" ? undefined : () => setInspectorOpen(false)} />;
   return (
     <div className={`ledger-page ${layout}`} ref={root} data-layout={layout}>
       <div className="ledger-main">
@@ -170,6 +174,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
             <Button size="small" data-learn-ledger onClick={() => setSheet("learning")}><BookOpen size={14} />{t("Learn Ledger")}</Button>
             <IconButton icon={<Globe size={16} />} tip={t("ChatGPT browser extension")} aria-label={t("ChatGPT browser extension")} data-chatgpt-browser onClick={() => setSheet("browser")} />
             <IconButton icon={<MessageSquare size={16} />} tip={t("Bring a ChatGPT draft…")} aria-label={t("Bring a ChatGPT draft…")} onClick={() => setSheet("chatgpt")} />
+            <IconButton icon={<Bot size={16} />} tip={t("Connect Claude Code…")} aria-label={t("Connect Claude Code…")} data-connect-claude onClick={() => setSheet("connect")} />
             <IconButton icon={<Search size={16} />} tip={`${t("Search the Ledger")}||${keyLabel("Ctrl+K")}`} aria-label={t("Search the Ledger")} onClick={() => setSheet("search")} />
             <IconButton icon={<ClipboardPaste size={16} />} tip={`${t("Paste reports")}|${t("Import report blocks from a conversation.")}`} aria-label={t("Paste reports")} onClick={() => setSheet("import")} />
             <IconButton icon={<PlugZap size={16} />} tip={`${t("Connect agents")}|${t("Let agents report to the Ledger.")}`} aria-label={t("Connect agents")} onClick={() => setSheet("connect")} />
@@ -187,7 +192,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
           <div className="ledger-view"><Empty title={t("No sessions for this repository")} detail={t("Agents working here have not reported to the Ledger yet.")} /><div className="row" style={{ justifyContent: "center" }}><Button onClick={() => store.setProjectChoice("all")}>{t("Show all projects")}</Button></div></div>
         ) : (
           <div className={`ledger-view${store.view === "board" || store.view === "graph" ? " fixed" : ""}`} data-view={store.view}>
-            {store.view === "inbox" && <LedgerInbox store={store} onOpen={open} onOpenTerminal={openTerminal} />}
+            {store.view === "inbox" && <LedgerInbox store={store} onOpen={open} onOpenTerminal={openTerminal} requests={requests} />}
             {store.view === "board" && <LedgerBoard store={store} onOpen={open} />}
             {store.view === "graph" && <LedgerGraph store={store} onOpen={open} onReleaseNotes={(project, version) => releaseNotes({ project, version })} />}
             {store.view === "streams" && <LedgerStreams store={store} onOpen={open} />}
@@ -206,7 +211,7 @@ export function LedgerWorkspace({ repoPath, ledger, launcher }: { repoPath: stri
       )}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onOpenSession={(id) => { setSheet(null); open(id); }} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} onOpenBrowser={() => setSheet("browser")} />}
       {sheet === "search" && <LedgerSearch store={store} onClose={() => setSheet(null)} onPick={pick} />}
       {sheet === "learning" && <LedgerLearning onClose={() => setSheet(null)} onConnect={() => setSheet("connect")} onImport={() => setSheet("import")} onBringChatGPT={() => setSheet("chatgpt")} onBrowser={() => setSheet("browser")} />}
       {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
@@ -225,7 +230,7 @@ function Onboarding({ onConnect, onImport, onImportLegacy, onLearn, onBrowser }:
   return (
     <div className="ledger-onboarding">
       <Empty icon={<Waypoints size={34} strokeWidth={1.4} />} title={t("No reports yet")} detail={t("No reports have arrived yet. Register the tools, then ask your agent to send a start report.")} />
-      <div className="row"><Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button><Button onClick={onBrowser}><Globe size={14} />{t("ChatGPT browser extension")}</Button></div>
+      <div className="row"><Button data-learn-ledger onClick={onLearn}><BookOpen size={14} />{t("Learn Ledger")}</Button><Button onClick={onBrowser}><Globe size={14} />{t("ChatGPT browser extension")}</Button><Button data-connect-claude onClick={onConnect}><Bot size={14} />{t("Connect Claude Code…")}</Button></div>
       <span className="hint">{t("To track new Claude Code agents launched from Gitrochi automatically, turn on Settings > Ledger > Track agents I start. It is off by default.")}</span>
       <div className="ledger-onboarding-steps">
         <div className="card">

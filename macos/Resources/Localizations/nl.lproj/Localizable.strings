@@ -1665,7 +1665,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI en lokale desktoptaken delen deze configuratie. Cloudgestuurde taken voeren deze hooks niet uit; ze verschijnen alleen wanneer de agent Ledger-rapporten stuurt.";
 "Check or remove automatic activity" = "Automatische activiteit controleren of verwijderen";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "De status controleert alleen de configuratie, niet of hooks vertrouwd zijn of worden uitgevoerd.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Dit venster wijzigt geen clientinstellingen. Voer alleen de configuratieopdrachten uit die je wilt inschakelen.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "Instellen, Herstellen en Verwijderen wijzigen alleen de eigen items van Gitrochi in de hookinstellingen van die client en maken eerst een back-up. MCP-opdrachten worden alleen getoond zodat je ze kunt kopiëren.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Controleert het Ledger van deze app, niet de agentconfiguratie of het vertrouwen van hooks.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Verbind agents zodat ze hier kunnen rapporteren. Importeren leest geplakte rapporten of een claude-ledger-database.";
 "Connect Claude Code" = "Claude Code koppelen";
@@ -1936,6 +1936,11 @@
 "Decision sessions never continue automatically." = "Beslissingssessies gaan nooit automatisch door.";
 "Use the default" = "Standaard gebruiken";
 "Follow the repository's or the default auto-continue setting again" = "Weer de instelling van de repository of het standaard automatisch doorgaan volgen";
+"Delivering answers" = "Antwoorden bezorgen";
+"Wake waiting agents with my answers" = "Wachtende agents wekken met mijn antwoorden";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "Een agent die je hebt gestart, blijft na het einde van zijn beurt nog zo lang luisteren. Een antwoord of bericht dat je zijn sessie in het Register stuurt, bereikt hem dan meteen in plaats van bij zijn volgende rapport.";
+"Answer wakes the agent" = "Antwoord wekt de agent";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "De agent wacht op de achtergrond: een antwoord of bericht dat je nu stuurt, bereikt hem meteen.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "Werkt voor Claude Code-agents die Gitrochi start terwijl Agents volgen die ik start aan staat.";
 "Auto-continue changed for %@" = "Automatisch doorgaan gewijzigd voor %@";
 "Stop waiting here and answer in the agent's own terminal" = "Hier niet meer wachten en in de eigen terminal van de agent antwoorden";
@@ -1974,6 +1979,22 @@
 "Start Claude Code in this repository" = "Claude Code in deze repository starten";
 "Open a repository to use its terminal" = "Open een repository om de terminal ervan te gebruiken";
 "Open in the terminal" = "Openen in de terminal";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "Teamhub";
+"Share this computer's Ledger sessions with the team hub" = "Registersessies van deze computer delen met de teamhub";
+"What is shared" = "Wat er wordt gedeeld";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "Van elke actieve sessie de ID, het project, de titel, het soort en de rol, de branch, het oordeel, de betrokken items en de laatste activiteit, onder de remote van de repository. Nooit vragen, antwoorden, rapporten, berichten, notities, het notitieboek, documenten, chatlinks of mappaden. Streams en gearchiveerde sessies blijven op deze computer.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "Uitschakelen trekt uw sessies in; wat overblijft verloopt binnen enkele minuten op de hub. Overlap met sessies van andere leden staat in de inspector bij Betrokken items.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "Verbind eerst een teamhub onder Work validation › Team overlap evidence.";
+"Connecting to %@…" = "Verbinden met %@…";
+"Sessions shared with %@: %lld" = "Sessies gedeeld met %1$@: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "Op deze computer gehouden, geen repository-remote: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "Deze hub bewaart alleen branches en betrokken items; titels en oordelen vereisen een nieuwere hub.";
+"Couldn't reach %@. Gitrochi tries again later." = "Kan %@ niet bereiken. Gitrochi probeert het later opnieuw.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "Het hubtoken voor %@ is niet geaccepteerd of kon niet worden gelezen. Verbind opnieuw onder Work validation › Team overlap evidence.";
+"Demo data is never shared." = "Demogegevens worden nooit gedeeld.";
+"Also touched on another computer by %@ · %@" = "Ook op een andere computer betrokken door %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "Automatisch doorgaan beantwoordt dit soort verzoeken nooit.";
@@ -2210,3 +2231,45 @@
 "Release notes are drafted from sessions merged into a baseline." = "Releaseopmerkingen worden opgesteld uit sessies die in een baseline zijn samengevoegd.";
 "No sessions were merged into %@." = "Er zijn geen sessies samengevoegd in %@.";
 "Sessions merged into %@: %lld" = "Sessies samengevoegd in %@: %lld";
+"Checks" = "Controles";
+"Open in Flows" = "Openen in Flows";
+"Latest Flow runs recorded for this branch's head commit" = "Nieuwste flow-runs vastgelegd voor de kopcommit van deze branch";
+"Held" = "Aangehouden";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Verbindingen";
+"Not set up" = "Niet ingesteld";
+"Connected · last data %@" = "Verbonden · laatste gegevens %@";
+"Connected · no data yet" = "Verbonden · nog geen gegevens";
+"Needs repair" = "Herstel nodig";
+"Command missing" = "Opdracht ontbreekt";
+"Set up" = "Instellen";
+"Set up…" = "Instellen…";
+"Repair" = "Herstellen";
+"Repair…" = "Herstellen…";
+"Copy MCP command" = "MCP-opdracht kopiëren";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Niet verbonden. Instellen installeert activiteitshooks die de vaste Ledger-opdracht van Gitrochi uitvoeren.";
+"Activity and reports reach this Ledger." = "Activiteit en rapporten bereiken deze Ledger.";
+"The MCP server is registered. Set up also records activity." = "De MCP-server is geregistreerd. Instellen legt ook activiteit vast.";
+"Start or restart %@ to send activity." = "Start %@ (opnieuw) om activiteit te verzenden.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Start Codex (opnieuw), controleer daarna de Ledger-hooks in /hooks en vertrouw ze.";
+"Hooks are turned off in this client's settings." = "Hooks zijn uitgeschakeld in de instellingen van deze client.";
+"Some activity hooks are missing." = "Sommige activiteitshooks ontbreken.";
+"The hook command is older than this Ledger and cannot write to it." = "De hookopdracht is ouder dan deze Ledger en kan er niet naar schrijven.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "De MCP-opdracht is ouder dan deze Ledger en kan er niet naar schrijven. Kopieer de MCP-opdracht en voer hem uit.";
+"The hook command no longer exists." = "De hookopdracht bestaat niet meer.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "De MCP-opdracht bestaat niet meer. Kopieer de MCP-opdracht en voer hem uit.";
+"The hooks write to a different Ledger database." = "De hooks schrijven naar een andere Ledger-database.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "De MCP-server gebruikt een andere Ledger-database. Kopieer de MCP-opdracht en voer hem uit.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Niet verbonden. Laad de extensie in Chrome en sta de verbinding toe.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Vragen uit gekoppelde ChatGPT-gesprekken bereiken deze Ledger.";
+"Pair a conversation from the extension's popup to send questions." = "Koppel een gesprek via de pop-up van de extensie om vragen te verzenden.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "De browserhost ontbreekt. Herstellen registreert deze kopie van Gitrochi.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Gekopieerd. Voer hem uit in een terminal om de Ledger-tools te registreren.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hooks voeren een vaste kopie van de Ledger-opdracht uit die Gitrochi up-to-date houdt, zodat ze blijven werken als de app wordt verplaatst of bijgewerkt. Gitrochi wijzigt nooit MCP-instellingen; kopieer de MCP-opdracht en voer hem zelf uit.";
+"%lld passing" = "%lld geslaagd";
+"%lld failing" = "%lld mislukt";
+"%lld pending" = "%lld in afwachting";
+"Checks on the request's latest commit" = "Controles op de nieuwste commit van het verzoek";
+"Request merged — mark merged?" = "Verzoek samengevoegd — markeren als samengevoegd?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Het verzoek is op de server samengevoegd. Kies de versie waarin dit werk is opgenomen; het Logboek verandert pas als u dat doet.";

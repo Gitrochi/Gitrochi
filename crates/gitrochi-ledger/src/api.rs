@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 36] = [
+pub const METHODS: [(&str, &[Caller]); 41] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -67,7 +67,12 @@ pub const METHODS: [(&str, &[Caller]); 36] = [
     ("browser_status", &[Caller::App]),
     ("browser_install", &[Caller::App]),
     ("browser_remove", &[Caller::App]),
+    ("integration_command", &[Caller::App]),
+    ("integration_status", &[Caller::App]),
+    ("integration_install", &[Caller::App]),
+    ("integration_remove", &[Caller::App]),
     ("track", &[Caller::App]),
+    ("hub_share", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
     ("prompt_get", &[Caller::App, Caller::Hook]),
     ("prompt_resolve", &[Caller::App, Caller::Hook]),
@@ -356,16 +361,49 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
             })
         }
         "settings" => db.read(|c| Ok(Settings::load(c)?.to_json())),
-        "browser_status" => crate::browser_install::status(),
-        "browser_remove" => crate::browser_install::remove(),
-        "browser_install" => {
-            let extension = arg_str(args, "extensionId")
-                .ok_or_else(|| Error::invalid("Missing extensionId"))?;
-            let host =
-                arg_str(args, "hostPath").ok_or_else(|| Error::invalid("Missing hostPath"))?;
-            crate::browser_install::install(&db.path, &extension, std::path::Path::new(&host))
+        "browser_status" | "browser_remove" | "browser_install" => {
+            let mut status = match method {
+                "browser_status" => crate::browser_install::status()?,
+                "browser_remove" => crate::browser_install::remove()?,
+                _ => {
+                    let extension = arg_str(args, "extensionId")
+                        .ok_or_else(|| Error::invalid("Missing extensionId"))?;
+                    let host = arg_str(args, "hostPath")
+                        .ok_or_else(|| Error::invalid("Missing hostPath"))?;
+                    crate::browser_install::install(
+                        &db.path,
+                        &extension,
+                        std::path::Path::new(&host),
+                    )?
+                }
+            };
+            // When a captured question last arrived, for the apps' Connections list
+            status["lastDataAt"] = json!(db.read(|c| Ok(c.query_row(
+                "SELECT MAX(created_at) FROM questions WHERE browser_source_url IS NOT NULL",
+                [],
+                |r| r.get::<_, Option<i64>>(0)
+            )?))?);
+            Ok(status)
+        }
+        "integration_command" => {
+            // Without a bundled command (a development run) an existing copy is only reported.
+            let bundled = arg_str(args, "bundled").unwrap_or_default();
+            let path = arg_str(args, "path")
+                .map(PathBuf::from)
+                .unwrap_or_else(crate::stable_command::default_path);
+            let create = util::arg_bool(args, "create").unwrap_or(false);
+            views::to_value(&crate::stable_command::refresh(
+                std::path::Path::new(&bundled),
+                &path,
+                create,
+                db.newer_schema().is_some(),
+            )?)
+        }
+        "integration_status" | "integration_install" | "integration_remove" => {
+            crate::integrations::app_call(&db.path, method, args, db.newer_schema().is_some())
         }
         "projects" => db.read(|c| Ok(json!({"projects": baseline::projects(c)?}))),
+        "hub_share" => crate::hub::share(db, args, now),
         "human" => {
             let (_, rev) = db.write(|c| {
                 let settings = Settings::load(c)?;

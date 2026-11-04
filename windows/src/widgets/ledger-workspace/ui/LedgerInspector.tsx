@@ -1,30 +1,38 @@
-import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, X } from "lucide-react";
+import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, MessageSquare, Monitor, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
-import { compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore } from "@/entities/ledger";
+import { agentWaits, compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerHubSharing, ledgerHubSharing, type LedgerQuestion, type LedgerSession, type LedgerStore, serverNow } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
+import type { LedgerFlowHost } from "../model/flow-evidence";
+import { FlowChecks } from "./FlowChecks";
+import { suggestsRequestMerged } from "../lib/request-status";
+import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerTimeline } from "./LedgerTimeline";
+import { RequestChip, RequestMergedSuggestion, useLedgerRequest } from "./RequestStatus";
 import { mergeMenu, moreMenu } from "./session-actions";
-import { BaseLine, SessionId, Section, VerdictBadge, When } from "./parts";
+import { BaseLine, SessionId, Section, VerdictBadge, WakePill, When } from "./parts";
 
 const HOUR = 3_600_000;
 
 /**
  * One session: what it is and where it stands, its links, the operations a person may take, its questions, its
- * timeline and what it touches. Dropping asks once; the rest is undone from the toast. (macOS: Views/Ledger/LedgerInspector.swift)
+ * timeline and what it touches. Dropping asks once; the rest is undone from the toast. With `requests`, the repository's
+ * tab, a request linked in that repository shows its state and checks; with `flows`, the same tab, Checks shows the
+ * Flow results recorded for the session's branch head. (macOS: Views/Ledger/LedgerInspector.swift)
  */
-export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClose?: () => void }) {
+export function LedgerInspector({ store, onClose, requests, flows }: { store: LedgerStore; onClose?: () => void; requests?: LedgerRequestHost; flows?: LedgerFlowHost }) {
   useObserve(store);
   useObserve(agents);
   const [dropping, setDropping] = useState(false);
   const live = store.session(store.selectedId);
   const detail = store.detail?.session.id === store.selectedId ? store.detail : null;
   const s = live ?? detail?.session;
+  const request = useLedgerRequest(s, store, requests, true);
   if (!s) {
     return (
       <div className="ledger-inspector ledger-placeholder" aria-busy={!store.detailError}>
@@ -48,8 +56,9 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
           <SessionId session={s} />
           <IconButton small icon={<Copy size={13} />} tip={t("Copy the session ID")} aria-label={t("Copy the session ID")} onClick={() => void navigator.clipboard.writeText(s.id).then(() => store.showToast(t("Copied"), null), () => {})} />
           <span className="spacer" />
+          {agentWaits(s, store.state ? serverNow(store.state.now, store.stateReadAt, Date.now()) : Date.now()) && <WakePill />}
           <VerdictBadge verdict={s.verdict} />
-          {onClose && <IconButton small icon={<X size={15} />} tip={t("Close")} aria-label={t("Close")} onClick={onClose} />}
+          {onClose &&<IconButton small icon={<X size={15} />} tip={t("Close")} aria-label={t("Close")} onClick={onClose} />}
         </div>
         <h2 className="selectable">{s.title}</h2>
         <div className="ledger-meta">
@@ -63,12 +72,13 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
         <div className="ledger-links">
           {s.links.branch && <span className="ledger-link" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
           {s.links.worktree && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
-          {s.links.pr && <button type="button" className="ledger-link" data-tip={s.links.pr.url} onClick={() => void ipc.openUrl(s.links.pr!.url)}><GitPullRequest size={12} /><span>#{s.links.pr.number}</span></button>}
+          {s.links.pr && <RequestChip pr={s.links.pr} status={request.status} />}
           {s.links.agentId && (agent && agents.canFocus(agent)
             ? <button type="button" className="ledger-link" data-tip={t("Open the agent's terminal")} onClick={() => agents.focus(agent)}><Bot size={12} /><span>{agentStatusTitle[agent.status]}</span></button>
             : <span className="ledger-link" data-tip={t("The agent is not running in Gitrochi.")}><Bot size={12} /><span>{t("Agent")}</span></span>)}
           {s.chatUrl && <button type="button" className="ledger-link" data-tip={s.chatUrl} onClick={() => void ipc.openUrl(s.chatUrl!)}><MessageSquare size={12} /><span>{t("Open chat")}</span></button>}
         </div>
+        {suggestsRequestMerged(s, request.status) && <RequestMergedSuggestion disabled={busy} onChoose={(anchor) => mergeMenu(anchor, store, s)} />}
       </div>
       <div className="ledger-actions" role="toolbar" aria-label={t("Session actions")}>
         <PrimaryActions store={store} s={s} busy={busy} human={human} />
@@ -98,6 +108,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
             ))}
           </Section>
         )}
+        <FlowChecks store={store} session={s} host={flows} />
         {s.links.agentId && <AutoContinue store={store} s={s} busy={busy} />}
         <Section title={t("Timeline")}>
           {detail ? <LedgerTimeline key={s.id} events={detail.events} focus={store.focusEventId} /> : <Spinner />}
@@ -130,6 +141,7 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
               </div>
             );
           })}
+          <HubOverlaps sessionId={s.id} />
         </Section>
       </div>
       {dropping && (
@@ -198,6 +210,27 @@ function WaitField({ value, disabled, onCommit }: { value: number; disabled: boo
     else setDraft(String(value));
   };
   return <input className="input" type="number" min={10} max={300} value={draft} disabled={disabled} aria-label={t("Wait")} style={{ width: 72 }} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />;
+}
+
+/**
+ * Other computers' sessions touching the same things, as the team hub reports them while sharing is on (Settings › Ledger ›
+ * Team hub). (macOS: Views/Ledger/LedgerInspector.swift, LedgerHubOverlapRow)
+ */
+export function HubOverlaps({ sessionId, sharing = ledgerHubSharing }: { sessionId: string; sharing?: LedgerHubSharing }) {
+  useObserve(sharing);
+  return (
+    <>
+      {sharing.overlapsFor(sessionId).map((o) => {
+        const title = t("Also touched on another computer by {0} · {1}", o.session, o.member);
+        return (
+          <div key={`${o.member}-${o.session}`} className="ledger-hub-overlap" role="group" aria-label={`${title}: ${o.paths.join(", ")}`} data-tip={o.branch ? `${title}|${o.branch}` : title}>
+            <StatusPill tone="waiting" icon={<Monitor size={12} />}><span className="ledger-hub-overlap-text">{title}</span></StatusPill>
+            <span className="hint selectable">{o.paths.join(", ")}</span>
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 function OpenQuestion({ store, q, busy }: { store: LedgerStore; q: LedgerQuestion; busy: boolean }) {

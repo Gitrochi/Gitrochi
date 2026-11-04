@@ -3517,7 +3517,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI와 로컬 데스크톱 작업은 이 설정을 공유합니다. 클라우드에서 조정되는 작업은 이 훅을 실행하지 않으며 에이전트가 원장 보고를 보낼 때만 표시됩니다.";
 "Check or remove automatic activity" = "자동 활동 기록 확인 또는 제거";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "설정 상태는 구성만 확인하며, 훅의 신뢰 여부나 실행 여부는 확인하지 않습니다.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "이 화면은 클라이언트 설정을 변경하지 않습니다. 사용하려는 설정 명령만 실행하세요.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "설정, 복구, 제거는 해당 클라이언트의 훅 설정에서 Gitrochi가 추가한 항목만 바꾸며, 바꾸기 전에 백업을 남깁니다. MCP 명령은 직접 복사하도록 보여 주기만 합니다.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "이 앱의 원장을 확인하며, 에이전트 설정이나 훅의 신뢰 여부는 확인하지 않습니다.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "에이전트를 연결하면 여기에 보고할 수 있습니다. 가져오기는 붙여넣은 보고나 claude-ledger 데이터베이스를 읽습니다.";
 "Connect Claude Code" = "Claude Code 연결";
@@ -3778,6 +3778,11 @@
 "Decision sessions never continue automatically." = "결정 세션은 자동으로 진행하지 않습니다.";
 "Use the default" = "기본값 따르기";
 "Follow the repository's or the default auto-continue setting again" = "저장소 설정이나 기본 자동 진행 설정을 다시 따릅니다";
+"Delivering answers" = "답 전달";
+"Wake waiting agents with my answers" = "기다리는 에이전트를 내 답으로 깨우기";
+"After an agent you started ends its turn, it keeps listening for this long. An answer or message you send its session in the Ledger then reaches it at once, instead of with its next report." = "시작한 에이전트는 차례를 마친 뒤에도 이 시간 동안 귀를 기울입니다. 그동안 원장에서 그 세션에 보낸 답이나 메시지는 다음 보고를 기다리지 않고 바로 전달됩니다.";
+"Answer wakes the agent" = "답하면 에이전트가 깨어남";
+"The agent is waiting in the background: an answer or message you send now reaches it at once." = "에이전트가 백그라운드에서 기다리는 중입니다. 지금 보내는 답이나 메시지는 바로 전달됩니다.";
 "Works for Claude Code agents Gitrochi starts while Track agents I start is on." = "내가 시작한 에이전트 추적이 켜져 있을 때 Gitrochi가 시작한 Claude Code 에이전트에만 적용됩니다.";
 "Auto-continue changed for %@" = "%@의 자동 진행을 바꿨습니다";
 "Stop waiting here and answer in the agent's own terminal" = "여기서 기다리지 않고 에이전트의 터미널에서 답합니다";
@@ -3816,6 +3821,22 @@
 "Start Claude Code in this repository" = "이 저장소에서 Claude Code 시작";
 "Open a repository to use its terminal" = "터미널을 쓰려면 저장소를 여세요";
 "Open in the terminal" = "터미널에서 열기";
+
+/* Ledger: sharing with the team hub. */
+"Team hub" = "팀 허브";
+"Share this computer's Ledger sessions with the team hub" = "이 컴퓨터의 원장 세션을 팀 허브와 공유";
+"What is shared" = "공유하는 내용";
+"Each active session's ID, project, title, kind and role, branch, verdict, touches and last activity, under its repository's remote. Never questions, answers, reports, messages, notes, the notebook, documents, chat links or folder paths. Streams and archived sessions stay on this computer." = "진행 중인 세션마다 ID, 프로젝트, 제목, 종류와 역할, 브랜치, 판정, 다루는 것, 마지막 활동 시각을 저장소 원격 주소 아래에 공유합니다. 질문, 답, 보고, 메시지, 메모, 노트북, 문서, 대화 링크, 폴더 경로는 공유하지 않습니다. 구현 채널과 보관된 세션은 이 컴퓨터에만 남습니다.";
+"Turning this off withdraws your sessions; anything left expires on the hub within minutes. Overlaps with other members' sessions show in the inspector's Touches." = "끄면 공유한 세션을 거둬들이고, 남은 것도 몇 분 안에 허브에서 사라집니다. 다른 구성원의 세션과 겹치는 것은 상세의 다루는 것에 표시됩니다.";
+"Connect a team hub under Work validation › Team overlap evidence first." = "먼저 작업 검증 › 팀 작업 겹침 근거에서 팀 허브를 연결하세요.";
+"Connecting to %@…" = "%@에 연결하는 중…";
+"Sessions shared with %@: %lld" = "%1$@에 공유한 세션: %2$lld";
+"Kept on this computer, no repository remote: %lld" = "원격 저장소가 없어 이 컴퓨터에만 남긴 세션: %lld";
+"This hub keeps branches and touches only; titles and verdicts need a newer hub." = "이 허브는 브랜치와 다루는 것만 보관합니다. 제목과 판정까지 보관하려면 더 새로운 허브가 필요합니다.";
+"Couldn't reach %@. Gitrochi tries again later." = "%@에 연결하지 못했습니다. Gitrochi가 잠시 뒤 다시 시도합니다.";
+"The hub token for %@ was not accepted or could not be read. Connect again under Work validation › Team overlap evidence." = "%@의 허브 토큰이 받아들여지지 않았거나 읽을 수 없습니다. 작업 검증 › 팀 작업 겹침 근거에서 다시 연결하세요.";
+"Demo data is never shared." = "데모 데이터는 공유하지 않습니다.";
+"Also touched on another computer by %@ · %@" = "다른 컴퓨터에서도 다룸: %1$@ · %2$@";
 
 /* Ledger: waits held for the person. */
 "Auto-continue never answers this kind of request." = "자동 진행은 이런 요청에 답하지 않습니다.";
@@ -4430,3 +4451,43 @@
 "Release notes are drafted from sessions merged into a baseline." = "릴리스 노트는 기준 버전에 합쳐진 세션으로 만듭니다.";
 "No sessions were merged into %@." = "%@에 합쳐진 세션이 없습니다.";
 "Sessions merged into %@: %lld" = "%@에 합쳐진 세션: %lld개";
+"Open in Flows" = "흐름에서 열기";
+"Latest Flow runs recorded for this branch's head commit" = "이 브랜치의 최신 커밋에 기록된 최근 흐름 실행";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "연결";
+"Not set up" = "설정 안 됨";
+"Connected · last data %@" = "연결됨 · 마지막 데이터 %@";
+"Connected · no data yet" = "연결됨 · 아직 데이터 없음";
+"Needs repair" = "복구 필요";
+"Command missing" = "명령 없음";
+"Set up" = "설정";
+"Set up…" = "설정…";
+"Repair" = "복구";
+"Repair…" = "복구…";
+"Copy MCP command" = "MCP 명령 복사";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "연결되지 않았습니다. 설정하면 Gitrochi의 고정 원장 명령을 실행하는 활동 훅이 설치됩니다.";
+"Activity and reports reach this Ledger." = "활동과 보고가 이 원장에 들어옵니다.";
+"The MCP server is registered. Set up also records activity." = "MCP 서버가 등록되어 있습니다. 설정하면 활동도 기록합니다.";
+"Start or restart %@ to send activity." = "%@을(를) 시작하거나 다시 시작하면 활동이 전송됩니다.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Codex를 시작하거나 다시 시작한 뒤 /hooks에서 원장 훅을 검토하고 신뢰하세요.";
+"Hooks are turned off in this client's settings." = "이 클라이언트 설정에서 훅이 꺼져 있습니다.";
+"Some activity hooks are missing." = "일부 활동 훅이 없습니다.";
+"The hook command is older than this Ledger and cannot write to it." = "훅 명령이 이 원장보다 오래된 버전이라 기록할 수 없습니다.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "MCP 명령이 이 원장보다 오래된 버전이라 기록할 수 없습니다. MCP 명령을 복사해 실행하세요.";
+"The hook command no longer exists." = "훅 명령이 더 이상 존재하지 않습니다.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "MCP 명령이 더 이상 존재하지 않습니다. MCP 명령을 복사해 실행하세요.";
+"The hooks write to a different Ledger database." = "훅이 다른 원장 데이터베이스에 기록합니다.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "MCP 서버가 다른 원장 데이터베이스를 사용합니다. MCP 명령을 복사해 실행하세요.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "연결되지 않았습니다. Chrome에서 확장 프로그램을 불러오고 연결을 허용하세요.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "연결한 ChatGPT 대화의 질문이 이 원장에 들어옵니다.";
+"Pair a conversation from the extension's popup to send questions." = "확장 프로그램 팝업에서 대화를 연결하면 질문이 전송됩니다.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "브라우저 연결 도구가 없습니다. 복구하면 이 Gitrochi로 다시 등록합니다.";
+"Copied. Run it in a terminal to register the Ledger tools." = "복사했습니다. 터미널에서 실행해 원장 도구를 등록하세요.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "훅은 Gitrochi가 최신으로 유지하는 원장 명령의 고정 사본을 실행하므로 앱을 옮기거나 업데이트해도 계속 동작합니다. Gitrochi는 MCP 설정을 수정하지 않으니 MCP 명령을 복사해 직접 실행하세요.";
+"%lld passing" = "통과 %lld";
+"%lld failing" = "실패 %lld";
+"%lld pending" = "대기 %lld";
+"Checks on the request's latest commit" = "요청의 최신 커밋에 대한 검사";
+"Request merged — mark merged?" = "요청이 병합됨 — 반영됨으로 표시할까요?";
+"The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "서버에서 요청이 병합되었습니다. 이 작업이 들어간 버전을 고르세요. 고르기 전에는 원장이 바뀌지 않습니다.";
