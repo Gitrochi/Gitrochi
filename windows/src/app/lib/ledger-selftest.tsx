@@ -491,6 +491,12 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => button(".ledger-settings", "Back up now") && !button(".ledger-settings", "Back up now")!.disabled), "Back up now stayed disabled after the project was saved");
     button(".ledger-settings", "Back up now")!.click();
     ensure(await until(() => $(".ledger-settings [role='status']")?.getAttribute("data-tip")?.startsWith("ledger/backups/ledger-")), `Back up now did not say where the copy went: ${$(".ledger-settings [role='status']")?.textContent}`);
+    // Restore lists the backups with their safety copies; demo data can never be restored
+    ensure(await until(() => $$(".ledger-restore .ledger-backup").length === 3), `Settings › Ledger did not list the backups to restore: ${$$(".ledger-restore .ledger-backup").length}`);
+    ensure($$<HTMLButtonElement>(".ledger-restore .ledger-backup button").every((b) => b.disabled), "Restore… must be disabled on demo data");
+    ensure(!!$(`.ledger-restore .ledger-backup[data-kind="safety"] .status-pill`), "A safety copy did not show as Before restore");
+    ensure($$(".ledger-restore .hint").some((h) => h.textContent === t("Restore is not available on demo data.")), "Restore did not say why demo data cannot be restored");
+    passed.push("ledger backups to restore");
     // Track agents I start, and auto-continue per repository in the ledger's setting
     const trackBoxes = () => $$<HTMLInputElement>(`.ledger-settings [data-ledger-section="tracking"] input[type="checkbox"]`);
     ensure(trackBoxes().length === 2 && !trackBoxes()[0].checked && trackBoxes()[1].disabled, "Track agents I start must start off, its tools switch waiting for it");

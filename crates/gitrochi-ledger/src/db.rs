@@ -333,12 +333,7 @@ impl Db {
         &self,
         body: impl FnOnce(&Connection) -> Result<(T, bool)>,
     ) -> Result<(T, i64)> {
-        if let Some(found) = self.newer_schema {
-            return Err(Error::new(
-                "SCHEMA_MISMATCH",
-                format!("The ledger has schema {found}; this build writes schema {DB_SCHEMA}"),
-            ));
-        }
+        self.ensure_writable()?;
         let mut connection = lock(&self.writer);
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         let (value, changed) = body(&tx)?;
@@ -358,6 +353,17 @@ impl Db {
 
     pub fn rev(&self) -> Result<i64> {
         self.read(rev)
+    }
+
+    /// `SCHEMA_MISMATCH` when a newer build wrote the file: it is read, never written.
+    pub fn ensure_writable(&self) -> Result<()> {
+        match self.newer_schema {
+            Some(found) => Err(Error::new(
+                "SCHEMA_MISMATCH",
+                format!("The ledger has schema {found}; this build writes schema {DB_SCHEMA}"),
+            )),
+            None => Ok(()),
+        }
     }
 }
 

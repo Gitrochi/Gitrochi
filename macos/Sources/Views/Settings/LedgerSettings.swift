@@ -29,6 +29,14 @@ struct LedgerSettings: View {
     @ViewState private var projectKey: String?
     @ViewState private var scanNotice: String?
     @ViewState private var backupNotice: String?
+    /// Backups and safety copies `restore` can use, newest first
+    @ViewState private var backupFiles: [LedgerBackupFile] = []
+    @ViewState private var showAllBackups = false
+    /// The backup waiting for the person's confirmation
+    @ViewState private var restoreCandidate: LedgerBackupFile?
+    /// The backup being restored
+    @ViewState private var restoringPath: String?
+    @ViewState private var restoreNotice: String?
     @ViewState private var working = false
     @ViewState private var sheet: Sheet?
     @ViewState private var generation = 0
@@ -60,6 +68,7 @@ struct LedgerSettings: View {
                 kindsSection(settings)
                 projectsSection
                 backupsSection
+                restoreSection
                 connectionsSection
                 connectSection
             } else if let loadError {
@@ -84,6 +93,13 @@ struct LedgerSettings: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(error ?? "")
+        }
+        .alert("Restore this backup?", isPresented: Binding(get: { restoreCandidate != nil }, set: { if !$0 { restoreCandidate = nil } }),
+               presenting: restoreCandidate) { file in
+            Button("Restore", role: .destructive) { restore(file) }
+            Button("Cancel", role: .cancel) {}
+        } message: { file in
+            Text("The ledger is replaced with the backup from \(Self.backupTime(file)). Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost.")
         }
     }
 
@@ -413,6 +429,55 @@ struct LedgerSettings: View {
         }
     }
 
+    private var restoreSection: some View {
+        Section {
+            if backupFiles.isEmpty {
+                Text("No backups yet.").foregroundStyle(.secondary)
+            } else {
+                ForEach(showAllBackups ? backupFiles : Array(backupFiles.prefix(5))) { backupRow($0) }
+                if backupFiles.count > 5 {
+                    Button { showAllBackups.toggle() } label: {
+                        showAllBackups ? Text("Show less") : Text("Show all \(backupFiles.count) backups")
+                    }
+                    .buttonStyle(.link)
+                }
+            }
+            if ledger.isDemo {
+                Text("Restore is not available on demo data.").font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            if let restoreNotice { Text(restoreNotice).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled) }
+        } header: {
+            Text("Restore a backup")
+        } footer: {
+            Text("Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func backupRow(_ file: LedgerBackupFile) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: Self.backupTime(file)).font(.system(size: 13))
+                Text(verbatim: ByteCountFormatter.string(fromByteCount: Int64(file.size), countStyle: .file))
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+            if file.kind == .safety {
+                StatusPill(title: String(localized: "Before restore"), symbol: "arrow.uturn.backward", tone: .neutral)
+            }
+            Spacer(minLength: 8)
+            if restoringPath == file.path { ProgressView().controlSize(.small) }
+            Button("Restore…") { restoreCandidate = file }
+                .disabled(ledger.isDemo || restoringPath != nil)
+        }
+        .help(file.name)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: Self.backupTime(file)))
+    }
+
+    private static func backupTime(_ file: LedgerBackupFile) -> String {
+        Date(timeIntervalSince1970: Double(file.modifiedAt) / 1000).formatted(date: .abbreviated, time: .shortened)
+    }
+
     /// Claude Code, Codex and the browser extension, each with whether its data reaches this Ledger
     private var connectionsSection: some View {
         Section {
@@ -483,6 +548,7 @@ struct LedgerSettings: View {
             let settings = try await ledger.settings()
             let projects = try await ledger.projectSettings()
             let sessions = try await ledger.client.state(project: nil, range: .all).sessions
+            backupFiles = (try? await ledger.backups()) ?? []
             self.info = info
             show(settings)
             self.projects = projects
@@ -572,10 +638,28 @@ struct LedgerSettings: View {
             do {
                 let path = try await ledger.backup()
                 backupNotice = String(localized: "Backed up to \(path)")
+                backupFiles = (try? await ledger.backups()) ?? backupFiles
             } catch {
                 self.error = error.localizedDescription
             }
             working = false
+        }
+    }
+
+    /// Restores after the person confirmed; the whole page reads again, since the restored ledger has its own settings
+    private func restore(_ file: LedgerBackupFile) {
+        restoringPath = file.path
+        restoreNotice = nil
+        Task {
+            do {
+                let result = try await ledger.restore(file)
+                let kept = result.safety.map { ($0.path as NSString).lastPathComponent } ?? ""
+                restoreNotice = String(localized: "Restored the backup from \(Self.backupTime(file)). The previous ledger is kept as \(kept).")
+                generation += 1
+            } catch {
+                self.error = error.localizedDescription
+            }
+            restoringPath = nil
         }
     }
 

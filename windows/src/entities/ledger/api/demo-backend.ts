@@ -178,6 +178,17 @@ export class DemoLedgerBackend implements LedgerBackend {
         const d = new Date(this.now()), pad = (n: number) => String(n).padStart(2, "0");
         return { path: `ledger/backups/ledger-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}.sqlite3`, created: true, size: 4096 * (8 + w.sessions.length), removed: [] };
       }
+      case "backups": {
+        // examples so the list can be seen; the demo has no file to restore
+        const now = this.now(), day = 86_400_000, hour = 3_600_000;
+        const files = ([[0, "backup"], [1, "backup"], [2, "safety"]] as const).map(([days, kind]) => {
+          const name = kind === "safety" ? `ledger-before-restore-demo-${days}.sqlite3` : `ledger-demo-${days}.sqlite3`;
+          return { path: `demo/backups/${name}`, name, size: 4096 * (40 + days), modifiedAt: now - days * day - 3 * hour, kind };
+        });
+        return { directory: "demo/backups", backups: files };
+      }
+      case "restore":
+        throw new LedgerError("NOT_ALLOWED", "The demo cannot restore a backup");
       case "settings":
         return structuredClone(this.settings);
       case "settings_set":

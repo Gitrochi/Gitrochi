@@ -2253,6 +2253,15 @@
 "View all tasks" = "Alle Aufgaben anzeigen";
 "Show more tasks" = "Weitere Aufgaben anzeigen";
 "Project items could not be fully loaded. Retry the project." = "Die Projektelemente konnten nicht vollständig geladen werden. Lade das Projekt erneut.";
+"Restore a backup" = "Sicherung wiederherstellen";
+"No backups yet." = "Noch keine Sicherungen.";
+"Show all %lld backups" = "Alle %lld Sicherungen anzeigen";
+"Before restore" = "Vor der Wiederherstellung";
+"Restore…" = "Wiederherstellen…";
+"Restore is not available on demo data." = "Demodaten können nicht wiederhergestellt werden.";
+"Restoring checks the backup first and keeps the current ledger as a Before restore copy, which is never removed automatically. Agents that are running keep writing to the restored ledger." = "Beim Wiederherstellen wird die Sicherung zuerst geprüft und das aktuelle Ledger als Kopie „Vor der Wiederherstellung“ aufbewahrt, die nie automatisch entfernt wird. Laufende Agenten schreiben weiter in das wiederhergestellte Ledger.";
+"The ledger is replaced with the backup from %@. Its current state is kept first as a Before restore copy in the backups folder, so you can restore it again. Agents that are still running keep writing to the restored ledger, and reports sent during the restore can be lost." = "Das Ledger wird durch die Sicherung vom %@ ersetzt. Sein aktueller Stand wird zuerst als Kopie „Vor der Wiederherstellung“ im Ordner backups aufbewahrt, sodass du ihn wiederherstellen kannst. Laufende Agenten schreiben weiter in das wiederhergestellte Ledger, und Berichte, die während der Wiederherstellung eintreffen, können verloren gehen.";
+"Restored the backup from %@. The previous ledger is kept as %@." = "Die Sicherung vom %@ wurde wiederhergestellt. Das vorherige Ledger ist als %@ aufbewahrt.";
 "Checks" = "Prüfungen";
 "Open in Flows" = "In Abläufen öffnen";
 "Latest Flow runs recorded for this branch's head commit" = "Neueste Ablaufläufe für den Kopf-Commit dieses Branches";

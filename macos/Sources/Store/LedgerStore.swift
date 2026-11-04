@@ -529,6 +529,22 @@ final class LedgerStore {
     func info() async throws -> LedgerInfo { try await client.info() }
     func backup() async throws -> String { try await client.backup() }
 
+    /// Example data, not the person's ledger: nothing there can be restored
+    var isDemo: Bool { client.backend is DemoLedgerBackend }
+
+    func backups() async throws -> [LedgerBackupFile] { try await client.backups().backups }
+
+    /// Replaces the ledger with a backup after a safety copy; every view reads the restored ledger at once
+    func restore(_ backup: LedgerBackupFile) async throws -> LedgerRestoreResult {
+        let result = try await client.restore(path: backup.path)
+        // what the restored ledger lacks cannot be undone or kept selected
+        detail = nil
+        boardSelection = []
+        undoStack = []
+        await reload()
+        return result
+    }
+
     // MARK: - Settings
 
     func settings() async throws -> LedgerGlobalSettings { try await client.settings() }

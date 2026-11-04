@@ -86,6 +86,14 @@ struct LedgerClient: Sendable {
         try await call("backup", daily ? ["daily": true] : [:], as: LedgerBackupResult.self).path
     }
 
+    /// Backups and the safety copies restores kept, newest first
+    func backups() async throws -> LedgerBackupList { try await call("backups") }
+
+    /// Checks a backup read-only; without `dryRun` keeps a safety copy of the ledger and restores the backup into it
+    func restore(path: String, dryRun: Bool = false) async throws -> LedgerRestoreResult {
+        try await call("restore", ["path": .string(path), "dryRun": .bool(dryRun)])
+    }
+
     func work(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("work", args) }
     func documents(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("documents", args) }
     func notebook(_ args: [String: LedgerJSON]) async throws -> LedgerJSON { try await call("notebook", args) }

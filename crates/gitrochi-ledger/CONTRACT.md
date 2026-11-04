@@ -2,7 +2,7 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `integration-status` and `hub-share`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import`, `integration-status`, `hub-share`, `backups` and `restore`. The tests check real results against them.
 
 ## Decisions
 
@@ -144,6 +144,8 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `scan` | `{project?}` | `{results: [{project, source, found, added, error?}]}` (forced, all projects without one) | app, agent |
 | `register_baseline` | `{project, version, note?}` | `{ok, rev, project, version}` | app, agent |
 | `backup` | `{daily?, keep?}` | `{path, created, size, removed}` | app, agent |
+| `backups` | `{}` | `{directory, backups: [{path, name, size, modifiedAt, kind: "backup" \| "safety"}]}`, newest first ([below](#restoring-a-backup)) | app, agent |
+| `restore` | `{path, dryRun?}` | `{ok, dryRun, path, contents: {schema, rev, sessions, events}, safety?: {path, created, size, removed}, rev}` ([below](#restoring-a-backup)) | app |
 | `settings` | `{}` | `{staleHours, kinds, autoContinue, backupKeep, wakeAgents}` with defaults | all |
 | `projects` | `{}` | `{projects: [{key, name, repoPath?, baselineSource, baselinePattern, baselineDir?, scanFiles, scanSubdirs}]}` | app, agent |
 | `human` | `{action, sessionId, …}` (below) | `{ok, rev}` | app only |
@@ -225,6 +227,19 @@ Until the agent reports, those values are Gitrochi's guess. The agent's first re
 
 A session whose ID the ledger already has is skipped with its events and questions and listed in `skipped`. Rows that cannot be read — an ID the ledger does not accept, an unknown status or question state, history that belongs to no session — are listed in `errors`, and the rest is imported. The copy is one write transaction; a dry run, or a file with nothing new, writes nothing and leaves `rev` alone, so a second import of the same file changes nothing.
 
+### Restoring a backup
+
+`backups` lists the files in `backups/` next to the database that `restore` is meant for: backups (`<name>-YYYYMMDD-HHMM.sqlite3`, kind `backup`) and the safety copies a restore keeps (`<name>-before-restore-YYYYMMDD-HHMMSS.sqlite3`, or with `-N` for a second one in the same second, kind `safety`). `modifiedAt` is the file's time from the file system. Retention (`backupKeep`) and `backup --daily` look only at backups, so a safety copy stays until a person removes it.
+
+`restore` takes any file, as given:
+
+1. It opens the file read-only, as `import_legacy` does (`immutable=1` with nothing next to it, else `mode=ro`), and runs `PRAGMA integrity_check`. A damaged file, one that is not a Ledger database (no storage schema, no `meta.rev`, no sessions or events tables) or the ledger's own file is `INVALID_ARGUMENT`; a storage schema newer than this build writes is `SCHEMA_MISMATCH`, and so is a live database a newer build wrote. Nothing has changed at that point. `dryRun` stops here and answers what the backup holds, without a `safety` entry.
+2. It copies the backup into a private working file next to the backups, migrates that copy to this build's schema, and sets its `meta.rev` above both the backup's and the live ledger's.
+3. It keeps the live database as a safety copy, with the online backup `backup` uses.
+4. It copies the working file into the live database with SQLite's online backup API: one write transaction, so the apps, the CLI, MCP and hooks that have the file open keep their connections and see either the old ledger or the restored one; SQLite raises the schema cookie so they read the schema again. A writer that holds the lock past the busy timeout makes it fail with `DATABASE` and nothing restored (the safety copy stays).
+
+The backup file is never written. Reports written between steps 3 and 4 are in neither file; agents that keep running report into the restored ledger, and a session the backup does not have comes back with its agent's next report that names the project (the usual rule for an unknown session). Restoring a safety copy undoes a restore. `rev` in the result is the new revision, so every poller reloads.
+
 ### Errors
 
 `INVALID_ARGUMENT` (bad or missing input), `NOT_FOUND`, `CONFLICT` (a session ID with another title or project), `NOT_ALLOWED` (wrong caller), `DISABLED` (`GITROCHI_LEDGER=0`), `DATABASE`, `SCHEMA_MISMATCH`, `GIT_FAILED` (scans report it in their result instead).
@@ -233,7 +248,7 @@ A session whose ID the ledger already has is skipped with its events and questio
 
 - **C ABI** (macOS): `char *gitrochi_ledger_call(const char *method, const char *json)` and `void gitrochi_ledger_free(char *)` in [`include/gitrochi_ledger.h`](include/gitrochi_ledger.h). NULL `json` means `{}`; the result is never NULL; safe from several threads; panics become `DATABASE` errors. Linking it into `libgitrochi_core.a` is wave 2.
 - **Windows**: one Tauri command `ledger_call(method: String, args: serde_json::Value) -> Result<serde_json::Value, String>` calling `gitrochi_ledger::call` (wave 2).
-- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`, `hook <event>` ([below](#hooks)). See the [README](README.md).
+- **CLI** `gitrochi-ledger`: `report`, `overview`, `session`, `import`, `import-legacy <file> [--dry-run]`, `scan`, `register`, `backup`, `restore <file> [--yes]` (a person at a terminal: without `--yes` it only checks the file), `demo <db> [--large]`, `call <method> [json]` (agent caller), `mcp`, `hook <event>` ([below](#hooks)). See the [README](README.md).
 - **MCP** (`gitrochi-ledger mcp`): `ledger_overview`, `ledger_report`, `ledger_session`; delivery only for the caller's own session; no person's operations. Protocol versions as `tools/gitrochi-mcp`: `2025-11-25`, `2025-06-18`, `2024-11-05`.
 - `GITROCHI_LEDGER_SESSION` is the default session of the CLI and the MCP tools (for agents Gitrochi launches).
 
@@ -397,6 +412,10 @@ Added for waking waiting agents:
 Added for team hub sharing (D4, opt-in, 2026-11-03):
 
 26. The app method `hub_share` ([above](#sharing-with-the-team-hub)) and the schema `hub-share`. It reads only: no storage schema change, no new setting in the database (the switch is the app's own), and nothing changes while it is off.
+
+Added for restoring backups:
+
+27. Restoring a backup: the methods `backups` (app, agent) and `restore` (app only), the CLI command `restore`, safety copies named `<name>-before-restore-…` that retention leaves alone, and the schemas `backups` and `restore`. `backup` and its file names are unchanged.
 
 
 ## Work, documents and personal records

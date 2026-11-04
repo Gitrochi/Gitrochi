@@ -227,6 +227,19 @@ export class LedgerStore extends LedgerReader {
     return this.backend.call("backup", {});
   }
 
+  async backups() {
+    return (await this.backend.call("backups", {})).backups;
+  }
+
+  /** Replaces the ledger with a backup after a safety copy; what the restored ledger lacks cannot stay selected or be undone */
+  async restore(path: string) {
+    const result = await this.backend.call("restore", { path });
+    this.hideToast();
+    this.select(null);
+    await this.refresh(true);
+    return result;
+  }
+
   /** A claude-ledger database: `dryRun` only counts what an import would copy */
   async importLegacy(path: string, dryRun: boolean) {
     const result = await this.backend.call("import_legacy", { path, dryRun });

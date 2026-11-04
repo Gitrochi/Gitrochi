@@ -351,7 +351,7 @@ Replies to agents are short English text, because every report reply costs each 
 
 ### 7.14 Backups
 
-While the app runs, once a day, `VACUUM INTO` writes `ledger/backups/ledger-YYYYMMDD-HHMM.sqlite3`; the newest 14 are kept and only files with that name shape are ever removed. `backup` does the same on demand. Restoring is manual and documented.
+While the app runs, once a day, `VACUUM INTO` writes `ledger/backups/ledger-YYYYMMDD-HHMM.sqlite3`; the newest 14 are kept and only files with that name shape are ever removed. `backup` does the same on demand. Settings › Ledger lists the backups (`backups`) and restores one after a confirmation (`restore`, app only; the CLI's `restore FILE --yes` for a person at a terminal): the file is checked read-only, the current database is kept as `ledger-before-restore-YYYYMMDD-HHMMSS.sqlite3` (never removed automatically), and the backup is copied in with SQLite's online backup so every open connection stays consistent ([contract](../../crates/gitrochi-ledger/CONTRACT.md#restoring-a-backup)). Restoring by hand remains documented.
 
 ### 7.15 Tracking external agents
 
@@ -605,7 +605,7 @@ New questions, new sessions to clean up and new `applied` reports raise one nati
 
 ### 10.12 Settings › Ledger
 
-Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Delivering answers (Wake waiting agents with my answers, off by default; wait in seconds) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Team hub (off until a person turns it on; what is shared next to the switch; one status line) · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer) · Connections (the same list as the sheet) · Connect agents… · Import…
+Use the Ledger · Track agents I start (off until a person turns it on; + give them the Ledger tools) · Delivering answers (Wake waiting agents with my answers, off by default; wait in seconds) · Auto-continue (per repository; wait in seconds; plan approval; answer template; AI refinement; extra never-auto-allowed rules and allowed MCP tools) · Notifications · Badge · Team hub (off until a person turns it on; what is shared next to the switch; one status line) · Stale after (hours) · Roles and stream lines · Projects (repository, baseline source and pattern) · Backups (keep, Back up now, Show in Finder/Explorer, the list of backups with Restore…) · Connections (the same list as the sheet) · Connect agents… · Import…
 
 ### 10.13 Visual rules
 
