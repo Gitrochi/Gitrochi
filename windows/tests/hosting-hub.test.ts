@@ -48,12 +48,12 @@ describe("hosting workspace endpoints",()=>{
 
  it("resolves connected gitch SSH aliases to canonical GitHub and GitLab API targets",async()=>{
    const saved=accounts.accounts;
-   accounts.accounts=[{id:"gh",provider:"github",server:"https://github.com",username:"jjunhaa0211",name:null,avatarURL:null},{id:"gl",provider:"gitlab",server:"https://gitlab.smart-fact.co.kr",username:"hyginopjh",name:null,avatarURL:null}];
+   accounts.accounts=[{id:"gh",provider:"github",server:"https://github.com",username:"alice",name:null,avatarURL:null},{id:"gl",provider:"gitlab",server:"https://gitlab.example.test",username:"bob",name:null,avatarURL:null}];
    try {
-     const target=findTarget(["origin"],{origin:"git@github-jjunhaa0211:Gitrochi/Gitrochi.git"},[],accounts.sshHostAliases)!;
+     const target=findTarget(["origin"],{origin:"git@github-alice:Gitrochi/Gitrochi.git"},[],accounts.sshHostAliases)!;
      expect(target).toMatchObject({provider:"github",host:"github.com",path:"Gitrochi/Gitrochi"});
-     expect(findTarget(["origin"],{origin:"ssh://git@gitlab-hyginopjh:2222/group/repo.git"},["gitlab.smart-fact.co.kr"],accounts.sshHostAliases)).toMatchObject({provider:"gitlab",host:"gitlab.smart-fact.co.kr",path:"group/repo"});
-     expect(findTarget(["origin"],{origin:"https://github-jjunhaa0211/owner/repo.git"},[],accounts.sshHostAliases)).toBeNull();
+     expect(findTarget(["origin"],{origin:"ssh://git@gitlab-bob:2222/group/repo.git"},["gitlab.example.test"],accounts.sshHostAliases)).toMatchObject({provider:"gitlab",host:"gitlab.example.test",path:"group/repo"});
+     expect(findTarget(["origin"],{origin:"https://github-alice/owner/repo.git"},[],accounts.sshHostAliases)).toBeNull();
      expect(findTarget(["origin"],{origin:"git@github-unknown:owner/repo.git"},[],accounts.sshHostAliases)).toBeNull();
      vi.spyOn(accounts,"token").mockResolvedValue("fixture-token");
      const http=vi.spyOn(ipc,"http").mockResolvedValue(response([{id:1,tag_name:"v0.3.11",name:"Gitrochi"}]));

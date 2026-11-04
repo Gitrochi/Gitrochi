@@ -12,14 +12,14 @@ struct PullRequest { var number: Int; var title: String; var author: String; var
 struct RemoteRepo { var fullName: String; var cloneURL: String; var isPrivate: Bool; var summary: String? }
 @main struct TargetTests {
     static func main() {
-        let aliases = ["github-jjunhaa0211": "github.com", "gitlab-hyginopjh": "gitlab.smart-fact.co.kr"]
-        let target = Hosting.target(remotes: ["origin"], urls: ["origin": "git@github-jjunhaa0211:Gitrochi/Gitrochi.git"], gitlabHosts: [], sshAliases: aliases)
+        let aliases = ["github-alice": "github.com", "gitlab-bob": "gitlab.example.test"]
+        let target = Hosting.target(remotes: ["origin"], urls: ["origin": "git@github-alice:Gitrochi/Gitrochi.git"], gitlabHosts: [], sshAliases: aliases)
         precondition(target?.provider == .github && target?.host == "github.com" && target?.path == "Gitrochi/Gitrochi")
-        let gitlab = Hosting.target(remotes: ["origin"], urls: ["origin": "ssh://git@gitlab-hyginopjh:2222/group/sub/repo.git"], gitlabHosts: ["gitlab.smart-fact.co.kr"], sshAliases: aliases)
-        precondition(gitlab?.provider == .gitlab && gitlab?.host == "gitlab.smart-fact.co.kr" && gitlab?.path == "group/sub/repo")
-        precondition(Hosting.target(remotes: ["origin"], urls: ["origin": "https://github-jjunhaa0211/owner/repo.git"], gitlabHosts: [], sshAliases: aliases) == nil)
+        let gitlab = Hosting.target(remotes: ["origin"], urls: ["origin": "ssh://git@gitlab-bob:2222/group/sub/repo.git"], gitlabHosts: ["gitlab.example.test"], sshAliases: aliases)
+        precondition(gitlab?.provider == .gitlab && gitlab?.host == "gitlab.example.test" && gitlab?.path == "group/sub/repo")
+        precondition(Hosting.target(remotes: ["origin"], urls: ["origin": "https://github-alice/owner/repo.git"], gitlabHosts: [], sshAliases: aliases) == nil)
         precondition(Hosting.target(remotes: ["origin"], urls: ["origin": "git@github-unknown:owner/repo.git"], gitlabHosts: [], sshAliases: aliases) == nil)
-        precondition(Hosting.target(remotes: ["upstream", "origin"], urls: ["upstream": "https://github.com/other/repo", "origin": "git@github-jjunhaa0211:Gitrochi/Gitrochi.git"], gitlabHosts: [], sshAliases: aliases)?.remote == "origin")
+        precondition(Hosting.target(remotes: ["upstream", "origin"], urls: ["upstream": "https://github.com/other/repo", "origin": "git@github-alice:Gitrochi/Gitrochi.git"], gitlabHosts: [], sshAliases: aliases)?.remote == "origin")
         print("Hosting targets: connected SSH aliases, GitHub/GitLab canonical API hosts, HTTPS isolation, unknown aliases and origin preference passed")
     }
 }
