@@ -2341,3 +2341,11 @@
 "Checks on the request's latest commit" = "A kérés legújabb commitjának ellenőrzései";
 "Request merged — mark merged?" = "A kérés egyesítve — megjelöli beolvasztottként?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "A kérést a szerveren egyesítették. Válassza ki a verziót, amelybe ez a munka bekerült; a Napló csak ekkor változik.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Az issue-táblák böngészéséhez válasszon csoportot, vagy nyisson meg egy GitLab-tárolót.";
+"Select an issue from a repository in this group." = "Válasszon egy issue-t a csoport egyik tárolójából.";
+"Group: {0}" = "Csoport: {0}";
+"Choose a group" = "Válasszon csoportot";
+"No groups found" = "Nem találhatók csoportok";
+"Other group…" = "Másik csoport…";
+"Group path" = "Csoport elérési útja";
+"Groups could not be loaded. Repository boards are still available." = "A csoportokat nem sikerült betölteni. A tároló táblái továbbra is elérhetők.";

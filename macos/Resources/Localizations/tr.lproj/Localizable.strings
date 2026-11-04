@@ -2344,3 +2344,11 @@
 "Checks on the request's latest commit" = "İsteğin en son commit'indeki denetimler";
 "Request merged — mark merged?" = "İstek birleştirildi — birleştirildi olarak işaretlensin mi?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "İstek sunucuda birleştirildi. Bu işin girdiği sürümü seçin; Defter yalnızca siz seçtiğinizde değişir.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Sorun panolarına göz atmak için bir grup seçin veya bir GitLab deposu açın.";
+"Select an issue from a repository in this group." = "Bu gruptaki bir depodan bir sorun seçin.";
+"Group: {0}" = "Grup: {0}";
+"Choose a group" = "Grup seçin";
+"No groups found" = "Grup bulunamadı";
+"Other group…" = "Başka grup…";
+"Group path" = "Grup yolu";
+"Groups could not be loaded. Repository boards are still available." = "Gruplar yüklenemedi. Depo panoları hâlâ kullanılabilir.";

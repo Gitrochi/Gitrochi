@@ -2332,5 +2332,14 @@
   "{0} pending": "{0} menunggu",
   "Checks on the request's latest commit": "Pemeriksaan pada commit terbaru permintaan",
   "Request merged — mark merged?": "Permintaan sudah digabung — tandai sudah digabung?",
-  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Permintaan sudah digabung di server. Pilih versi yang memuat pekerjaan ini; Buku Log hanya berubah saat Anda memilih."
+  "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do.": "Permintaan sudah digabung di server. Pilih versi yang memuat pekerjaan ini; Buku Log hanya berubah saat Anda memilih.",
+  "Choose a group or open a GitLab repository to browse its issue boards.": "Pilih grup atau buka repositori GitLab untuk menelusuri papan issue-nya.",
+  "Select an issue from a repository in this group.": "Pilih issue dari repositori di grup ini.",
+  "Group: {0}": "Grup: {0}",
+  "Choose a group": "Pilih grup",
+  "No groups found": "Tidak ada grup yang ditemukan",
+  "Other group…": "Grup lain…",
+  "Group path": "Path grup",
+  "Groups could not be loaded. Repository boards are still available.": "Grup tidak dapat dimuat. Papan repositori tetap tersedia.",
+  "Repository: {0}": "Repositori: {0}"
 }

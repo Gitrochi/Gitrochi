@@ -2303,3 +2303,11 @@
 "Checks on the request's latest commit" = "Controles op de nieuwste commit van het verzoek";
 "Request merged — mark merged?" = "Verzoek samengevoegd — markeren als samengevoegd?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Het verzoek is op de server samengevoegd. Kies de versie waarin dit werk is opgenomen; het Logboek verandert pas als u dat doet.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Kies een groep of open een GitLab-repository om de issueborden te bekijken.";
+"Select an issue from a repository in this group." = "Selecteer een issue uit een repository in deze groep.";
+"Group: {0}" = "Groep: {0}";
+"Choose a group" = "Kies een groep";
+"No groups found" = "Geen groepen gevonden";
+"Other group…" = "Andere groep…";
+"Group path" = "Groepspad";
+"Groups could not be loaded. Repository boards are still available." = "Groepen konden niet worden geladen. Repositoryborden zijn nog steeds beschikbaar.";

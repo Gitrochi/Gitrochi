@@ -803,7 +803,27 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
         const payload = JSON.parse(body!);
         writes.push({ method, url, body: payload });
         result = {};
-      } else if (path.endsWith("/boards"))
+      } else if (path === "/api/v4/groups")
+        result = [{ id: 5, name: "Design", full_path: "team/design" }];
+      else if (path.endsWith("/groups/team%2Fdesign/boards"))
+        result = [{ id: 3, name: "Design board" }];
+      else if (path.endsWith("/groups/team%2Fdesign/boards/3"))
+        result = { id: 3, name: "Design board" };
+      else if (path.endsWith("/groups/team%2Fdesign/boards/3/lists"))
+        result = [];
+      else if (path.endsWith("/groups/team%2Fdesign/issues"))
+        result = [
+          {
+            iid: 1,
+            id: 90,
+            title: "Plan the design review",
+            labels: [],
+            state: "opened",
+            references: { full: "team/design/app#1" },
+            web_url: "https://gitlab.test/team/design/app/-/issues/1",
+          },
+        ];
+      else if (path.endsWith("/boards"))
         result = [{ id: 1, name: "Release board" }];
       else if (path.endsWith("/boards/1"))
         result = { id: 1, name: "Release board" };
@@ -863,10 +883,27 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       moved.body.remove_labels === "Ready",
       "GitLab move changed an unrelated label",
     );
+    const gitlabScope = host.querySelector<HTMLSelectElement>(
+      `select[aria-label="${t("Project scope")}"]`,
+    );
+    ensure(gitlabScope?.value === "repository", "GitLab project scope picker missing");
+    ensure(
+      await until(() =>
+        [...gitlabScope!.options].some(
+          (option) => option.value === "organization:team/design",
+        ),
+      ),
+      "GitLab groups were not offered as project scopes",
+    );
+    enter(gitlabScope!, "organization:team/design");
+    ensure(
+      await until(() => host.textContent?.includes("Plan the design review") === true),
+      "GitLab group board did not open without its repository",
+    );
     accounts.accounts = githubAccounts;
     ipc.http = githubHTTP;
     details.push(
-      "GitLab board provider actions + unrelated label preservation",
+      "GitLab board provider actions + unrelated label preservation + group scope boards",
     );
     let cloneURL = "";
     await mount(

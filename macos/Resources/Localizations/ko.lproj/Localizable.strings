@@ -1792,7 +1792,6 @@
 "Only complete files owned by this account can be edited." = "이 계정이 소유하고 전체 내용을 불러온 파일만 수정할 수 있습니다.";
 "Only items owned by this account can be deleted." = "이 계정이 소유한 항목만 삭제할 수 있습니다.";
 "Only members visible to this account are returned by the server." = "서버가 이 계정에 공개한 구성원만 표시됩니다.";
-"Open a GitLab repository to browse its issue boards." = "이슈 보드를 조회하려면 GitLab 저장소를 여세요.";
 "Open a local repository or clone one to get started." = "로컬 저장소를 열거나 서버의 저장소를 복제해서 시작하세요.";
 "Open a repository on the selected account's server to use releases and projects." = "릴리스와 프로젝트를 사용하려면 선택한 계정 서버의 저장소를 여세요.";
 "Open a repository to use this page." = "이 화면을 사용하려면 리포지터리를 여세요.";
@@ -4521,3 +4520,11 @@
 "Checks on the request's latest commit" = "요청의 최신 커밋에 대한 검사";
 "Request merged — mark merged?" = "요청이 병합됨 — 반영됨으로 표시할까요?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "서버에서 요청이 병합되었습니다. 이 작업이 들어간 버전을 고르세요. 고르기 전에는 원장이 바뀌지 않습니다.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "이슈 보드를 조회하려면 그룹을 고르거나 GitLab 저장소를 여세요.";
+"Select an issue from a repository in this group." = "이 그룹에 있는 저장소의 이슈를 선택하세요.";
+"Group: {0}" = "그룹: {0}";
+"Choose a group" = "그룹 선택";
+"No groups found" = "그룹을 찾지 못했습니다";
+"Other group…" = "다른 그룹…";
+"Group path" = "그룹 경로";
+"Groups could not be loaded. Repository boards are still available." = "그룹을 불러오지 못했습니다. 저장소 보드는 계속 사용할 수 있습니다.";

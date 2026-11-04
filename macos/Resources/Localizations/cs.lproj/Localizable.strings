@@ -2338,3 +2338,11 @@
 "Checks on the request's latest commit" = "Kontroly nejnovějšího commitu požadavku";
 "Request merged — mark merged?" = "Požadavek sloučen — označit jako začleněné?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Požadavek byl na serveru sloučen. Vyberte verzi, do které tato práce vešla; Evidence se změní, až když to uděláte.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Chcete-li procházet nástěnky problémů, vyberte skupinu nebo otevřete repozitář GitLab.";
+"Select an issue from a repository in this group." = "Vyberte problém z repozitáře v této skupině.";
+"Group: {0}" = "Skupina: {0}";
+"Choose a group" = "Vyberte skupinu";
+"No groups found" = "Nebyly nalezeny žádné skupiny";
+"Other group…" = "Jiná skupina…";
+"Group path" = "Cesta ke skupině";
+"Groups could not be loaded. Repository boards are still available." = "Skupiny se nepodařilo načíst. Nástěnky repozitáře jsou stále k dispozici.";

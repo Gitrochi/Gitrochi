@@ -180,6 +180,60 @@ enum Hosting {
         }
         let labProject = try await HostingHubAPI.detail(gl, section: .projects, item: HubItem(id: "1", title: "Board"))
         precondition(labProject.rows[0].kind == .issue && labProject.rows[0].number == 2 && labProject.rows[0].repository == "team/repo" && labProject.rows[0].state == "OPEN" && labProject.rows[0].assignees == ["alex"] && labProject.rows[0].updatedAt == "today")
+        // GitLab groups: full paths, every board and issue page, and writes through each issue's own project.
+        precondition(HostingHubAPI.projectOrganization(scope: "organization:team/design", provider: .gitlab) == "team/design" && HostingHubAPI.projectOrganization(scope: "organization:team/design") == nil)
+        for value in ["", "../team", "team//design", "team/..", "-team", "team/design?x", String(repeating: "a", count: 256)] { precondition(HostingHubAPI.projectOrganization(scope: "organization:" + value, provider: .gitlab) == nil) }
+        let labGroup = HubAccess(target: HostingHubAPI.projectTarget(nil, provider: .gitlab, host: "gitlab.test", username: "me", personal: false, organization: "team/design"), token: "fixture", apiBase: "https://gitlab.test/api/v4", me: "me", projectOrganization: "team/design")
+        func pageNumber(_ r: URLRequest) -> Int { Int(URLComponents(url: r.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "page" }?.value ?? "") ?? 0 }
+        calls = []
+        Hosting.handler = { r in calls.append(r); return try json((0..<(pageNumber(r) == 1 ? 100 : 5)).map { ["id": (pageNumber(r) - 1) * 100 + $0, "name": "Board \($0)"] as [String: Any] }) }
+        let groupBoards = try await HostingHubAPI.page(labGroup, section: .projects)
+        precondition(groupBoards.items.count == 105 && !groupBoards.more && groupBoards.items[0].url == "https://gitlab.test/groups/team/design/-/boards/0")
+        precondition(calls.map { $0.url!.absoluteString } == ["https://gitlab.test/api/v4/groups/team%2Fdesign/boards?per_page=100&page=1", "https://gitlab.test/api/v4/groups/team%2Fdesign/boards?per_page=100&page=2"])
+        do { _ = try await HostingHubAPI.page(HubAccess(target: RepoTarget(provider: .gitlab, remote: "origin", host: "gitlab.test", path: "me/workspace"), token: "fixture", apiBase: "https://gitlab.test/api/v4", me: "me"), section: .projects); fatalError("GitLab boards without a scope") } catch { precondition(error.localizedDescription.contains("Choose a group")) }
+        func labIssue(_ id: Int, _ project: String, _ iid: Int, _ labels: [String] = []) -> [String: Any] { ["id": id, "iid": iid, "title": "Task \(id)", "state": "opened", "web_url": "https://gitlab.test/\(project)/-/issues/\(iid)", "references": ["full": "\(project)#\(iid)"], "labels": labels] }
+        var writes = [URLRequest]()
+        Hosting.handler = { r in
+            calls.append(r); let url = r.url!.absoluteString
+            if r.httpMethod == "PUT" { writes.append(r); return try json([String: Any]()) }
+            if url.contains("/lists?") { return try json([["label": ["id": 11, "name": "Doing"] as [String: Any]]]) }
+            if url.contains("/issues?") { return try json(pageNumber(r) == 1 ? (0..<100).map { labIssue($0 + 1, $0 % 2 == 1 ? "team/design/app" : "team/design/web", $0 / 2 + 1) } : [labIssue(100, "team/design/app", 50), labIssue(101, "team/design/app", 51, ["Doing"])]) }
+            if url.contains("/issues/") { return try json(["labels": [String]()]) }
+            return try json(["id": 4, "name": "Delivery", "labels": [Any]()] as [String: Any])
+        }
+        calls = []
+        let groupBoard = try await HostingHubAPI.detail(labGroup, section: .projects, item: HubItem(id: "4", title: "Delivery"))
+        precondition(groupBoard.rows.count == 101 && !groupBoard.more && Set(groupBoard.rows.map(\.id)).count == 101)
+        precondition(groupBoard.rows[0].id == "1" && groupBoard.rows[0].number == 1 && groupBoard.rows[0].repository == "team/design/web")
+        precondition(groupBoard.rows[100].id == "101" && groupBoard.rows[100].repository == "team/design/app" && groupBoard.rows[100].statuses["board"] == "11")
+        precondition(calls.allSatisfy { $0.url!.absoluteString.hasPrefix("https://gitlab.test/api/v4/groups/team%2Fdesign/") })
+        try await HostingHubAPI.move(labGroup, detail: groupBoard, row: groupBoard.rows[1], field: groupBoard.fields[0], option: "11")
+        precondition(writes.map { $0.url!.absoluteString } == ["https://gitlab.test/api/v4/projects/team%2Fdesign%2Fapp/issues/1"])
+        let moved = try JSONSerialization.jsonObject(with: writes[0].httpBody!) as! [String: Any]
+        precondition(moved["add_labels"] as? String == "Doing" && moved["state_event"] as? String == "reopen")
+        calls = []
+        Hosting.handler = { r in calls.append(r); let value: [String: Any] = r.httpMethod == "PUT" ? [:] : ["id": 70, "iid": 7, "title": "Task", "labels": [String]()]; return try json(value) }
+        let emptyBoard = HubDetail(item: groupBoard.item, fields: groupBoard.fields)
+        for foreign in ["https://gitlab.test/other/app/-/issues/7", "https://gitlab.test/team/designer/app/-/issues/7"] {
+            do { try await HostingHubAPI.addIssue(labGroup, detail: emptyBoard, issueURL: foreign); fatalError("Foreign group issue accepted") } catch { precondition(error.localizedDescription.contains("repository in this group")) }
+        }
+        precondition(calls.isEmpty)
+        try await HostingHubAPI.addIssue(labGroup, detail: emptyBoard, issueURL: "https://gitlab.test/team/design/sub/app/-/issues/7")
+        precondition(calls.map { $0.url!.absoluteString } == Array(repeating: "https://gitlab.test/api/v4/projects/team%2Fdesign%2Fsub%2Fapp/issues/7", count: 3) && calls.last?.httpMethod == "PUT")
+        Hosting.handler = { r in
+            let url = r.url!.absoluteString, page = pageNumber(r)
+            if url.contains("/boards?") { return try json((0..<(page == 1 ? 100 : 1)).map { ["id": (page - 1) * 100 + $0, "name": "Board"] as [String: Any] }) }
+            if url.contains("/lists?") { return try json([Any]()) }
+            if url.contains("/issues?") {
+                let count = page == 1 ? 100 : 3, first = (page - 1) * 100
+                let issues: [[String: Any]] = (0..<count).map { index in let iid: Int = first + index + 1; return ["id": page * 1000 + index, "iid": iid, "title": "Task", "state": "opened"] }
+                return try json(issues)
+            }
+            return try json(["id": 4, "name": "Board"] as [String: Any])
+        }
+        let repositoryBoards = try await HostingHubAPI.page(gl, section: .projects)
+        let repositoryBoard = try await HostingHubAPI.detail(gl, section: .projects, item: HubItem(id: "4", title: "Board"))
+        precondition(repositoryBoards.items.count == 101 && !repositoryBoards.more && repositoryBoard.rows.count == 103 && !repositoryBoard.more && repositoryBoard.rows[102].id == "103" && repositoryBoard.rows[102].repository == "team/repo")
         var creations = 0
         Hosting.handler = { request in creations += 1; throw NSError(domain: "fixture", code: 1, userInfo: [NSLocalizedDescriptionKey: "connection lost"]) }
         do { try await HostingHubAPI.saveGist(gh, HubGistInput(description: "new", files: [HubFile(name: "a.txt", content: "text")])); fatalError("Uncertain creation accepted") } catch is HubUncertainWriteError {} catch { fatalError("Unexpected error type") }
@@ -319,7 +373,7 @@ enum Hosting {
         precondition(conversionRequests == 2)
         let secret = NSError(domain: "x", code: 1, userInfo: [NSLocalizedDescriptionKey: "fixture github_pat_abc token"])
         precondition(!HostingHubAPI.error(secret, token: "fixture").contains("fixture"))
-        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, snippet refs, status-board grouping, project scope recovery, typed fields, rich project rows, drafts, item actions, manual position and draft conversion passed")
+        print("Hosting hub: organization avatars in lists and details, pagination, stale context, safe member profiles, batched profile enrichment and fallback, URL restrictions, gist conflict protection, GitLab drafts, GitLab group boards and complete board reads, snippet refs, status-board grouping, project scope recovery, typed fields, rich project rows, drafts, item actions, manual position and draft conversion passed")
     }
 }
 SWIFT

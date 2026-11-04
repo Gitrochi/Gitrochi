@@ -2316,3 +2316,11 @@
 "Checks on the request's latest commit" = "Kiểm tra trên commit mới nhất của yêu cầu";
 "Request merged — mark merged?" = "Yêu cầu đã hợp nhất — đánh dấu đã gộp?";
 "The request was merged on the server. Choose the version this work went into; the Ledger changes only when you do." = "Yêu cầu đã được hợp nhất trên máy chủ. Hãy chọn phiên bản đã nhận công việc này; Sổ theo dõi chỉ thay đổi khi bạn chọn.";
+"Choose a group or open a GitLab repository to browse its issue boards." = "Chọn một nhóm hoặc mở kho lưu trữ GitLab để xem các bảng issue.";
+"Select an issue from a repository in this group." = "Chọn một issue từ kho lưu trữ trong nhóm này.";
+"Group: {0}" = "Nhóm: {0}";
+"Choose a group" = "Chọn nhóm";
+"No groups found" = "Không tìm thấy nhóm";
+"Other group…" = "Nhóm khác…";
+"Group path" = "Đường dẫn nhóm";
+"Groups could not be loaded. Repository boards are still available." = "Không thể tải các nhóm. Các bảng của kho lưu trữ vẫn khả dụng.";
