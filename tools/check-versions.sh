@@ -13,6 +13,9 @@ check() {
 json_versions() { sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1"; }
 case "$expected" in ''|*[!0-9.]*) printf 'Gitrochi 앱 버전을 읽지 못했습니다.\n' >&2; exit 1 ;; esac
 check gitch "$(sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$ROOT/tools/gitch/gitch" | head -1)"
+# The README states the current version and shows it in a sample graph output; both went stale after releases.
+check tools/gitch/README.md "$(sed -n 's/.*(현재 `\([^`]*\)`).*/\1/p' "$ROOT/tools/gitch/README.md" | head -1)"
+check 'tools/gitch/README.md graph JSON' "$(json_versions "$ROOT/tools/gitch/README.md" | head -1)"
 check windows/package.json "$(json_versions "$ROOT/windows/package.json" | head -1)"
 check windows/package-lock.json "$(json_versions "$ROOT/windows/package-lock.json" | head -1)"
 check 'windows/package-lock.json packages[""]' "$(json_versions "$ROOT/windows/package-lock.json" | sed -n '2p')"
