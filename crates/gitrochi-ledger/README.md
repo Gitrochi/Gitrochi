@@ -11,7 +11,7 @@ The session ledger. Agents report which baseline their work started from and whe
 | Scripts, terminals, pasted reports | The `gitrochi-ledger` command line |
 | Claude Code hooks of agents Gitrochi launches | `gitrochi-ledger hook <event>`: activity, and auto-continue where a person turned it on ([below](#hooks)) |
 
-For the app workflow, see [Using the Ledger preview](../../docs/ledger/README.md). [Moving from Claude Ledger](../../docs/ledger/MIGRATION.md) covers existing records and clients, Work log, Document tracker and Notebook.
+For the app workflow, see [Using the Ledger](../../docs/ledger/README.md). [Moving from Claude Ledger](../../docs/ledger/MIGRATION.md) covers existing records and clients, Work log, Document tracker and Notebook.
 
 [CONTRACT.md](CONTRACT.md) is the API: storage, vocabulary, verdicts, hand-offs, types, methods, callers and errors. [`schema/`](schema/) has JSON Schemas for `State`, `Session`, `LedgerEvent`, `Question`, `Graph`, `PendingPrompt`, the session detail and the result of a claude-ledger import.
 
@@ -84,6 +84,7 @@ gitrochi-ledger [--db FILE] [--json] [--pretty] <command> [arguments]
   serve [--listen 127.0.0.1:8765]
   observe <claude|codex> EVENT < input.json
   integrate <claude|codex> --install|--status|--remove [--cli FILE] [--config FILE]
+            [--mcp-config FILE]
   hook EVENT < input.json
 ```
 
@@ -120,7 +121,9 @@ gitrochi-ledger integrate codex --remove
 
 Use a stable installed executable; `--cli FILE` registers that executable instead of the command currently running. `--config FILE` selects another settings file for an isolated trial. The defaults are the user's `.claude/settings.json` and `.codex/hooks.json`. Installation appends only owned callbacks, keeps unrelated settings and callbacks, and saves an existing file in a private adjacent backup before an atomic update. Repeating installation does not duplicate callbacks. Removal deletes only this client's marked observer callbacks.
 
-Installation creates the selected Ledger database if it is missing. Status and removal do not create one. Status is **configuration only**: it does not prove that the client loaded, trusted or ran the hooks. Start or restart the client after installation. Codex requires review of non-managed hooks in its own `/hooks` flow; this command never writes trust hashes, enables features or approves hooks. Local hooks do not cover cloud-orchestrated Codex tasks.
+Installation creates the selected Ledger database if it is missing. Status and removal do not create one. Status is **configuration only**: it does not prove that the client loaded, trusted or ran the hooks. Start or restart the client after installation.
+
+Status also checks whether the connection can still deliver, without changing anything: the executable the owned hooks run (`hookCommand`) and the one the client's user-level MCP entry starts (`mcp`: `mcpServers.gitrochi-ledger` in `~/.claude.json`, `[mcp_servers.gitrochi-ledger]` in `~/.codex/config.toml`; `--mcp-config FILE` reads another file). Each must exist, be executable and write a schema at least as new as this database's `PRAGMA user_version`: the check runs the executable's own `call info` with `GITROCHI_LEDGER=0`, which never opens a database, for at most three seconds. `lastObservedAt` and `lastReportAt` say when observations and agent reports last arrived from sessions bound to that client. `health` sums it up: `not_installed`, `ok`, `no_data_yet`, `incomplete`, `outdated_command`, `missing_command` or `other_database`. An older build that cannot write a newer database exits 0 without recording anything, so a hook that is installed but `outdated_command` is the usual reason for "connected but no data". Install again with a current `--cli` to repair it. Codex requires review of non-managed hooks in its own `/hooks` flow; this command never writes trust hashes, enables features or approves hooks. Local hooks do not cover cloud-orchestrated Codex tasks.
 
 `observe CLIENT EVENT` reads one JSON object from standard input and always exits 0. Its only context output is a bounded `SessionStart` instruction containing the Ledger session ID explicitly, so an available `ledger_report` tool can report to that same row. MCP registration remains separate. No permission decision or continuation command is emitted.
 

@@ -48,7 +48,8 @@ export function badgeImage(total: number, size = BADGE_SIZE): number[] | null {
  * stay off until a person turns them on.
  * Polls `rev` like the page does, reads the state of every project when it moved, and tells the person what is new;
  * a click opens the Ledger at the item (`onOpen`). The badge is the overlay on the taskbar button with
- * `attention.total`. Started with the Ledger preview only. (macOS: the Dock badge and UserNotifications)
+ * `attention.total`. Started once a person turns one of them on (app/lib/ledger-notifications.ts). (macOS: the Dock badge
+ * and UserNotifications)
  */
 export class LedgerNotifier extends Observable {
   private last: LedgerState | null = null;

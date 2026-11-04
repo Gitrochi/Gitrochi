@@ -1,3 +1,4 @@
+import { DemoConnections } from "./demo-connections";
 import { DemoLedgerExtras } from "./demo-extras";
 import type { LedgerHumanRequest, LedgerImportResult, LedgerKindRule, LedgerMethod, LedgerMethods, LedgerProjectSettings, LedgerPromptAnswer, LedgerRange, LedgerRole, LedgerSettings, LedgerState, LedgerStatus, Ms } from "../model/types";
 import { ledgerBaselineSources, ledgerRoles } from "../model/types";
@@ -88,6 +89,7 @@ export class DemoLedgerBackend implements LedgerBackend {
   private spawned = 0;
   private settings = defaultSettings();
   private readonly extras = new DemoLedgerExtras();
+  private readonly connections: DemoConnections;
   private readonly projectSettings = new Map<string, LedgerProjectSettings>();
 
   constructor(options: DemoOptions = {}) {
@@ -95,6 +97,7 @@ export class DemoLedgerBackend implements LedgerBackend {
     this.lively = options.lively ?? false;
     const now = this.now();
     this.world = options.empty ? emptyWorld() : options.large ? largeDemoWorld(now, options.repoPath) : demoWorld(now, options.repoPath);
+    this.connections = new DemoConnections(now);
     this.nextSpawn = now + 60_000;
   }
 
@@ -115,6 +118,7 @@ export class DemoLedgerBackend implements LedgerBackend {
         this.browserHost = { ...this.browserHost, installed: true, extensionId: String(args.extensionId), hostPath: String(args.hostPath) };
         return { ...this.browserHost };
       case "browser_remove": this.browserHost = { ...this.browserHost, installed: false }; return { ...this.browserHost };
+      case "integration_command": case "integration_status": case "integration_install": case "integration_remove": return this.connections.call(method, args);
       case "records": {
         if (args.action === "version_note") {
           const baseline = w.baselines.find((row) => row.project === args.project && row.version === args.version);

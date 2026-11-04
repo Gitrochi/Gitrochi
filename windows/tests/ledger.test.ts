@@ -6,7 +6,6 @@ import {
 } from "@/entities/ledger";
 import { edgePath as edgePathForTest } from "@/entities/ledger/lib/graph";
 import { destinationEnabled, isWorkspaceDestination, previewDestinations, restoredDestination, workspaceDestinations } from "@/entities/git";
-import { env } from "@/shared/config";
 import { prompt, question, session } from "./ledger-fixtures";
 
 const HOUR = 3_600_000;
@@ -311,18 +310,10 @@ describe("Ledger imports, undo, layout and versions", () => {
 });
 
 describe("Ledger destination", () => {
-  it("opens without a repository or a preview environment", () => {
-    const before = env.ledgerPreview;
-    try {
-      env.ledgerPreview = null;
-      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false)]).toEqual([true, true, "ledger"]);
-      expect(workspaceDestinations).not.toContain("ledger");
-      expect(previewDestinations).toEqual(["ledger"]);
-      env.ledgerPreview = "1";
-      expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false), restoredDestination("ledger", true)]).toEqual([true, true, "ledger", "ledger"]);
-      expect(workspaceDestinations.every(destinationEnabled)).toBe(true);
-    } finally {
-      env.ledgerPreview = before;
-    }
+  it("opens without a repository or an environment variable", () => {
+    expect([isWorkspaceDestination("ledger"), destinationEnabled("ledger"), restoredDestination("ledger", false), restoredDestination("ledger", true)]).toEqual([true, true, "ledger", "ledger"]);
+    expect(workspaceDestinations).not.toContain("ledger");
+    expect(previewDestinations).toEqual(["ledger"]);
+    expect(workspaceDestinations.every(destinationEnabled)).toBe(true);
   });
 });

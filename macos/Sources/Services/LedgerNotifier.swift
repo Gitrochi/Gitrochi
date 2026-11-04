@@ -2,8 +2,8 @@ import AppKit
 import Observation
 import UserNotifications
 
-/// Settings › Ledger › Notifications and the Dock badge (DESIGN.md §10.11). While the Ledger is shown and a person turned
-/// one of them on, the ledger is read every 2 s; each read that brings news posts a native notification, and the Dock
+/// Settings › Ledger › Notifications and the Dock badge (DESIGN.md §10.11). While a person has one of them on, the ledger
+/// is read every 2 s; each read that brings news posts a native notification, and the Dock
 /// icon shows the Inbox's count (`attention.total`). Nothing is announced for what the first read finds. Clicking a
 /// notification opens the Ledger at its session. Permission is asked for only when a person turns notifications on.
 /// (Windows: the Tauri notification plugin and the taskbar overlay)
@@ -13,8 +13,9 @@ final class LedgerNotifier: NSObject, UNUserNotificationCenterDelegate {
     static let notifyKey = "ledgerNotifications"
     static let badgeKey = "ledgerDockBadge"
 
-    static var notifies: Bool { WorkspaceDestination.ledgerPreview && UserDefaults.standard.bool(forKey: notifyKey) }
-    static var badges: Bool { WorkspaceDestination.ledgerPreview && UserDefaults.standard.bool(forKey: badgeKey) }
+    /// Each switch alone decides, and both are off until a person turns them on
+    static var notifies: Bool { UserDefaults.standard.bool(forKey: notifyKey) }
+    static var badges: Bool { UserDefaults.standard.bool(forKey: badgeKey) }
 
     private let ledger = LedgerStore.shared
     private var seen: LedgerSeen?

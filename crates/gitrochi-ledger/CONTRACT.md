@@ -2,7 +2,7 @@
 
 The API every Ledger client relies on: the macOS app (C ABI), the Windows app (Tauri command), the `gitrochi-ledger` CLI, its MCP server and the hook handler. This crate owns it. It started as contract v0, written before any code; [Changes from v0](#changes-from-v0) lists what the implementation added or settled. Additions are free; renaming, removing or changing the meaning of anything here needs a note in that list and the maintainer's agreement.
 
-The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt` and `legacy-import`. The tests check real results against them.
+The shapes are also JSON Schemas (draft 2020-12) in [`schema/`](schema/): `state`, `session`, `session-detail`, `ledger-event`, `question`, `graph`, `pending-prompt`, `legacy-import` and `integration-status`. The tests check real results against them.
 
 ## Decisions
 
@@ -150,6 +150,10 @@ Every entry point takes a method name and a JSON object and returns JSON; failur
 | `settings_set` | `{values: {key: value \| null}}` (null = default) | `{ok, rev, settings}` | app only |
 | `project_set` | `{project, name?, repoPath?, baselineSource?, baselinePattern?, baselineDir?, scanFiles?, scanSubdirs?}` (null clears) | `{ok, rev, project}` | app only |
 | `track` | `{project?, title?, base?, kind?, repoPath?, branch?, worktree?, agentId?, cwd?, autoContinue?}` | `{ok, rev, session}` ([below](#sessions-for-agents-gitrochi-starts)) | app only |
+| `integration_command` | `{bundled?, create?, path?}` | `{path, exists, current, refreshed, held}` — the stable command ([below](#passive-external-observers)) | app only |
+| `integration_status` | `{client, path?, config?, mcpConfig?}` | The `integrate --status` result ([`integration-status`](schema/integration-status.schema.json)) | app only |
+| `integration_install` | `{client, bundled, path?, config?, mcpConfig?}` | The same, after installing hooks that run the stable command | app only |
+| `integration_remove` | `{client, path?, config?, mcpConfig?}` | The same, after removing the client's owned hooks | app only |
 | `prompt_create` | `{kind, sessionId?, agentId?, payload?, delaySec? (30) \| deadline?}` | `{ok, rev, prompt}` | app, hook |
 | `prompt_get` | `{id}` | `PendingPrompt` | app, hook |
 | `prompt_resolve` | `{id, state: "auto" \| "released" \| "expired", answer? (auto), summary?}` | `{ok, rev, state, prompt}`; `auto` also records an `auto_reply` event | app, hook |
@@ -231,7 +235,7 @@ The hook handler creates a `pending_prompts` row when an agent stops to ask (`pr
 
 The CLI also has an independent opt-in path for local clients: `observe <claude|codex> EVENT` reads hook JSON from standard input. It does not call the auto-continue handler or broaden any API caller's permissions. `hook EVENT` keeps its existing launch-only behavior.
 
-The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a truthful provider/repository title, `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"` and no `board` mark. Existing rows retain their kind, status and auto-continue policy. The Board default for Gitrochi launches (D14) does not apply to them.
+The observer atomically looks up or creates a session by the provider and client session ID in `links.observer`. A supplied `GITROCHI_LEDGER_SESSION` reuses that row; Claude's existing `links.agentSessionId` is also recognized. New rows have kind `other`, status `active`, a title of the provider and the checkout's branch (`Claude Code · feature/x`; the worktree or folder name for a detached checkout or outside a repository, also when the checkout cannot be read within 800 ms), `autoContinue.enabled: false`, and a launch `hook` event with `source: "external"` and no `board` mark. Existing rows retain their kind, status and auto-continue policy. The Board default for Gitrochi launches (D14) does not apply to them.
 
 Allowed activity metadata is the client/session ID, event, tool name, tool-use ID, turn ID, subagent ID and the checkout context. Prompts, transcript paths/content, tool arguments/results and assistant output are ignored. These observations advance `lastAt` and append `hook` events; they never advance `lastAgentAt`, create questions or pending permission prompts, acknowledge, archive or change a session's status. `Stop` is a turn boundary, not task completion. Only actual agent reports establish reported progress and outcomes.
 
@@ -240,6 +244,10 @@ On `SessionStart` the handler may return bounded additional context naming the L
 `integrate <client> --install|--status|--remove [--cli FILE] [--config FILE]` manages passive callbacks in the user's `.claude/settings.json` or `.codex/hooks.json`. Installation is explicit, initializes the selected database if needed, uses a stable executable path, preserves unrelated keys and callbacks, backs up existing bytes privately and replaces the file atomically only if it has not changed meanwhile. Owned command callbacks carry `--managed-hook`; reinstalling replaces only those callbacks and removal deletes only that client's callbacks. Status/removal never initialize a database or missing settings file.
 
 JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`, `ownedHookCount`, `expectedHookCount`, `otherHookCount`, `backupPath`, `verification: "configuration_only"`, `requiresClientTrust` and `hooksDisabled`. Installed configuration does not prove execution, MCP registration or trust. Codex trust hashes, feature flags and all permission/auto-continue settings are outside this installer. Client settings, trust, disabled hooks and local/cloud execution determine coverage.
+
+Connection fields ([`integration-status`](schema/integration-status.schema.json)) say whether the configuration can still deliver. `hookCommand` is the executable the owned callbacks run, parsed from their commands (the worst one when they differ); `mcp` is `{configPath, registered, command}` for the client's user-level entry named `gitrochi-ledger` (Claude Code `~/.claude.json` `mcpServers`, Codex `~/.codex/config.toml` `[mcp_servers]`, or `--mcp-config FILE`), read only. Each command is `{path, exists, executable, writesSchema, version, canWrite, dbPath, sameDatabase}`: `writesSchema` and `version` come from the executable's own `call info` run with `GITROCHI_LEDGER=0` (which never opens a database) and a three-second limit; `canWrite` compares `writesSchema` with `databaseSchema`, this database's `PRAGMA user_version` read through a read-only connection; `dbPath` is its `--db` (for MCP, the entry's `GITROCHI_LEDGER_DB` or the per-user default). Unknown values are null. `lastObservedAt` is the newest `observer` event and `lastReportAt` the newest `lastAgentAt` of sessions whose `links.observer.client` is the client. `health` is the most urgent of `missing_command`, `outdated_command`, `other_database`, then `incomplete` (owned callbacks missing for some events), `no_data_yet` (hooks installed, nothing observed or reported) and `ok`; `not_installed` when neither hooks nor an MCP entry exist. MCP reports carry no client, so an MCP-only connection is `ok` rather than `no_data_yet`. Checking never creates, migrates or writes a file.
+
+**The stable command.** Hooks and MCP entries the apps set up name one stable copy of the ledger command instead of the one inside the app, which moves with the app and changes with every update: macOS `~/Library/Application Support/Gitrochi/bin/gitrochi-ledger`, Windows `%APPDATA%\Gitrochi\bin\gitrochi-ledger.exe` (`path` overrides it for tests). `integration_command` replaces that copy with the app's `bundled` command whenever their bytes differ, through a new file renamed over the old one (on Windows a running copy is renamed aside first), and reports `{path, exists, current, refreshed, held}`. Without `create` it never makes a missing copy; the apps call it so when the Ledger opens. With a database newer than the app (`held`), an existing copy is kept, so an older app never puts back a command that cannot write. `integration_install` creates or refreshes the copy (a person chose Set up or Repair) and installs hooks with it as `--cli`; `integration_status` and `integration_remove` are the CLI's `--status` and `--remove` for that command. No method edits a client's MCP settings.
 
 `gitrochi-ledger hook <event>` handles the Claude Code hooks the apps add to the sessions they launch while **Track agents I start** is on: `SessionStart`, `UserPromptSubmit`, `Stop`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PostToolUseFailure` and `SessionEnd`. It is the `hook` caller, and Claude Code passes it the hook input as JSON on stdin (DESIGN.md §7.11, §9). Its session is `GITROCHI_LEDGER_SESSION`. An agent Gitrochi did not launch has no such session, and for it the handler does nothing. It only opens a database that already exists, never creating one, and waits at most one second for a lock.
 
@@ -275,7 +283,7 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
   - auto-continue is off for the session (the global `autoContinue` setting, with the session's own `enabled` and `delaySec` on top);
   - the session has the decision role;
   - the trigger for this kind of prompt is off;
-  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s: rewriting an empty file does not change it on Windows;
+  - the hook is synchronous and the app is not running (`app.alive`, next to the database, was last modified 15 s ago or more; D10). The app sets the file's modification time every 5 s while its **Track agents I start** switch is on: rewriting an empty file does not change it on Windows;
   - the turn did not end with a question;
   - `stop_hook_active` is set and there has been no automatic answer since the person's last input.
 - **Waits held for the person.** With auto-continue on, some waits are never answered automatically: a request that is never auto-allowed, a risky question or plan, an `AskUserQuestion` without unique nonempty question texts, and anything past the limit in a row (a stop question only when the turn asked one). The hook still ends at once with no decision, so the terminal asks, but it stores a waiting prompt the apps can show and notify about:
@@ -295,7 +303,7 @@ JSON status fields are `client`, `action`, `installed`, `configPath`, `cliPath`,
 
 The companion `gitrochi-ledger-browser` is a separate Chrome native-messaging entry point. It uses native-endian u32 byte lengths followed by UTF-8 JSON, a 65,536-byte request cap and a 1 MiB response cap. It validates Chrome's caller origin against its installed, exact extension allowlist and reloads that configuration on every request. Removing registration or changing its database invalidates previous bindings.
 
-`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?}`. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
+`browser_status`, `browser_install {extensionId, hostPath}` and `browser_remove` are **App-only** methods. Their result is `{installed, hostName, manifestPath, extensionId?, hostPath?, hostExists?, lastDataAt}`: `hostExists` is false for a registration whose host program moved or was deleted (then `installed` is false and the extension ID is kept for a repair), and `lastDataAt` is when the newest browser-captured question arrived, or null. The CLI exposes the equivalent explicit `browser-host install --extension-id ID [--host-path FILE]`, `browser-host status` and `browser-host remove`. The installer registers only the per-user Chrome host and refuses unrelated manifests or registry entries.
 
 Native requests have `{version:1, id:string, op, ...fields}`. Replies have `{version:1, id, ok:true, data}` or `{version:1, id, ok:false, error}`. Operations are limited to:
 
@@ -353,9 +361,17 @@ Added for opt-in local client activity:
 
 19. Browser observation: optional `Question.browserSourceUrl` and `browserDraft`, storage schema 8, App-only host registration and the separate scoped native protocol above. Browser answers remain local and do not change normal agent delivery.
 
-Requests for later waves: live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them. Settled by 20 below.
+20. Connection health on the `integrate` status: `hookCommand`, `mcp`, `databaseSchema`, `lastObservedAt`, `lastReportAt` and `health`, the schema `integration-status`, and the CLI option `--mcp-config`. Existing status fields keep their meaning.
 
-20. Launched agents on the Board (DESIGN.md D14, decided 2026-11-03): `track` without `kind` stores `task`, a new default kind with the role `other`, and marks its `launch` event `data.board: true`; an implementation kind its agent reports is stored as `task` with `data.reportedKind` on the event ([Sessions for agents Gitrochi starts](#sessions-for-agents-gitrochi-starts)). The maintainer approved this change of launch behaviour; sessions launched before it keep theirs.
+21. The stable command and the App-only methods `integration_command`, `integration_status`, `integration_install` and `integration_remove`.
+
+22. `browser_status`, `browser_install` and `browser_remove` add `hostExists` and `lastDataAt`, for the apps' Connections list.
+
+23. New observed sessions are titled `<client> · <branch>` instead of `<client>: <folder>`. Existing titles are not changed, and a `start` report still replaces an unreported observed session's title.
+
+Requests for later waves: live `implementation` sessions are streams by contract, so agents Gitrochi launches with that kind would stay out of overlaps and clean-up until a person closes them. Settled by 24 below.
+
+24. Launched agents on the Board (DESIGN.md D14, decided 2026-11-03): `track` without `kind` stores `task`, a new default kind with the role `other`, and marks its `launch` event `data.board: true`; an implementation kind its agent reports is stored as `task` with `data.reportedKind` on the event ([Sessions for agents Gitrochi starts](#sessions-for-agents-gitrochi-starts)). The maintainer approved this change of launch behaviour; sessions launched before it keep theirs.
 
 
 ## Work, documents and personal records
