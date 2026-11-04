@@ -27,4 +27,8 @@ struct LedgerBrowserStatus: Decodable, Sendable {
     let manifestPath: String
     let extensionId: String?
     let hostPath: String?
+    /// False when a registration's host moved with the app or was deleted
+    var hostExists: Bool? = nil
+    /// When the newest browser-captured question arrived (epoch milliseconds)
+    var lastDataAt: Int? = nil
 }

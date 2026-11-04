@@ -17,6 +17,9 @@ struct LedgerInboxView: View {
     /// The session M asked to mark merged; a dialog picks the version
     @ViewState private var merging: LedgerSession?
     @FocusState private var listFocused: Bool
+    /// The window's repository: linked requests are read through its hosting account
+    @Environment(RepoStore.self) private var repo: RepoStore?
+    private let requests = LedgerRequestStatusStore.shared
 
     private var items: [LedgerInbox.Item] { ledger.inbox.items }
 
@@ -156,8 +159,14 @@ struct LedgerInboxView: View {
             case .autoReply(let prompt):
                 autoReply(prompt)
             case .session:
-                if let session { sessionLine(session, group: item.group) }
+                if let session {
+                    sessionLine(session, group: item.group)
+                    if item.group == .decide { requestSuggestion(session) }
+                }
             }
+        }
+        .task(id: requestLink(item, session)) {
+            if let link = requestLink(item, session), let repo { await requests.refresh(link, in: repo) }
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 8).fill(highlighted == item.id ? StudioStyle.selection : Color(nsColor: .controlBackgroundColor)))
@@ -255,6 +264,23 @@ struct LedgerInboxView: View {
         .controlSize(.small)
     }
 
+    /// Sessions to decide have their linked request read, for the merged suggestion
+    private func requestLink(_ item: LedgerInbox.Item, _ session: LedgerSession?) -> LedgerRequestLink? {
+        guard item.group == .decide, let session else { return nil }
+        return LedgerRequestStatusStore.link(session, repository: repo, project: ledger.repositoryProject)
+    }
+
+    /// "Request merged — mark merged?" opens the same version picker as M; it never marks anything by itself
+    @ViewBuilder private func requestSuggestion(_ s: LedgerSession) -> some View {
+        let link = LedgerRequestStatusStore.link(s, repository: repo, project: ledger.repositoryProject)
+        if LedgerRequestRules.suggestsMerged(s, requests.status(link)) {
+            LedgerRequestMergedSuggestion {
+                Button("Request merged — mark merged?") { merging = s }
+                    .controlSize(.small).disabled(ledger.working.contains(s.id))
+            }
+        }
+    }
+
     private func summary(_ s: LedgerSession) -> String {
         var parts = [s.status.title]
         if let into = s.mergedInto { parts[0] += " → " + into }
@@ -281,6 +307,8 @@ struct LedgerInboxView: View {
 struct LedgerMergeMenu: View {
     let session: LedgerSession
     let ledger: LedgerStore
+    /// The same picker under another label, as the merged-request suggestion offers it
+    var title = String(localized: "Mark merged…")
 
     /// The project's versions, newest first
     static func versions(_ session: LedgerSession, baselines: [LedgerBaseline]) -> [String] {
@@ -292,7 +320,7 @@ struct LedgerMergeMenu: View {
         let baselines = ledger.state?.baselines ?? []
         let versions = Self.versions(session, baselines: baselines)
         let newest = LedgerProjects.head(session.project, baselines: baselines)
-        Menu("Mark merged…") {
+        Menu(title) {
             ForEach(versions, id: \.self) { version in
                 Button(version == newest ? String(localized: "\(version) (newest)") : version) {
                     Task { await ledger.perform(.setStatus(.merged, version: version), on: [session.id], message: String(localized: "Marked \(session.id) merged into \(version)")) }

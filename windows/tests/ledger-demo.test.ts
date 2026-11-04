@@ -317,6 +317,22 @@ describe("Ledger demo backend: settings, projects and a claude-ledger database",
     expect(await stale()).toBe(before);
   });
 
+  it("launches agents as tasks on the Board unless the app names a kind, as the core's track", async () => {
+    const { backend } = demo();
+    expect((await backend.call("settings", {})).kinds.task).toEqual({ role: "other" });
+    const { session: launched } = await backend.call("track", { cwd: "C:/Work/app", repoPath: "C:/Work/app", agentId: "agent-1" });
+    expect([launched.kind, launched.role, launched.stream]).toEqual(["task", "other", undefined]);
+    const launch = (await backend.call("session", { id: launched.id })).events.find((e) => e.data?.hook === "launch");
+    expect(launch?.data?.board).toBe(true);
+    const state = await backend.call("state", {});
+    expect(state.sessions.some((s) => s.id === launched.id && !s.stream)).toBe(true);
+    expect(state.streams.some((c) => c.sessionId === launched.id)).toBe(false);
+    // an explicit kind is the app's choice, with no Board mark
+    const { session: chosen } = await backend.call("track", { cwd: "C:/Work/app", repoPath: "C:/Work/app", kind: "implementation" });
+    expect([chosen.role, chosen.stream]).toEqual(["implementation", { line: "core" }]);
+    expect((await backend.call("session", { id: chosen.id })).events[0].data?.board).toBeUndefined();
+  });
+
   it("keeps each project's baseline source and binds the first project to the open repository", async () => {
     const { backend } = demo({ repoPath: "C:/Code/atlas" });
     const { projects } = await backend.call("projects", {});

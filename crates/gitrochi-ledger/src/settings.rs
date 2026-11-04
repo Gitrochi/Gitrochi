@@ -71,6 +71,8 @@ impl Default for Settings {
         kinds.insert("review".into(), rule(Role::Other));
         kinds.insert("document".into(), rule(Role::Document));
         kinds.insert("baseline".into(), rule(Role::Other));
+        // What the agents Gitrochi starts are (track's default): on the Board, not a stream.
+        kinds.insert("task".into(), rule(Role::Other));
         kinds.insert("other".into(), rule(Role::Other));
         Settings {
             stale_hours: 72.0,

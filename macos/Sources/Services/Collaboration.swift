@@ -13,6 +13,10 @@ struct RequestLifecycle {
     var reviewers: [String]; var methods: [String]; var blockers: [String]; var checks: String; var policy: String
     var canEdit: Bool; var canRebase: Bool
 }
+/// A request's state ("open", "merged" or "closed"), draft flag and head commit
+struct RequestState {
+    var number: Int; var state: String; var draft: Bool; var headSHA: String
+}
 struct CollaborationInboxItem: Identifiable {
     var id: String; var kind: String; var number: Int; var title: String; var url: String; var body: String
     var state: String; var author: String; var unread = false; var readID: String?; var isRequest = false; var createdAt: String? = nil; var updatedAt: String? = nil
@@ -118,6 +122,17 @@ struct CollaborationInboxDetail {
         }
         guard !search.isEmpty else { return true }
         return [text(p, "title"), "#" + String(number(p, "number")), text(obj(p, "user"), "login"), text(obj(p, "head"), "ref")].contains { $0.localizedCaseInsensitiveContains(search) }
+    }
+    /// One request's state (open, merged or closed), whether it is a draft, and its head commit: a single read, unlike
+    /// `lifecycle`, for places that only show where a request stands. Windows: `requestState` in collaboration.ts.
+    static func requestState(_ c: ReviewAccess, _ n: Int) async throws -> RequestState {
+        let p = try await object(c, requestURL(c, n))
+        if c.target.provider == .github {
+            let state = bool(p, "merged") || p["merged_at"] is String ? "merged" : text(p, "state") == "open" ? "open" : "closed"
+            return RequestState(number: n, state: state, draft: bool(p, "draft"), headSHA: text(obj(p, "head"), "sha"))
+        }
+        let raw = text(p, "state"), state = raw == "merged" ? "merged" : raw == "opened" || raw == "locked" ? "open" : "closed"
+        return RequestState(number: n, state: state, draft: bool(p, "draft") || bool(p, "work_in_progress"), headSHA: text(p, "sha"))
     }
     static func lifecycle(_ c: ReviewAccess, _ n: Int) async throws -> RequestLifecycle {
         let p = try await object(c, requestURL(c, n) + (c.target.provider == .gitlab ? "?with_merge_status_recheck=true" : ""))

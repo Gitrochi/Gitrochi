@@ -6,7 +6,7 @@
 # in a temporary database.
 # Text recognition checks that each part is drawn (on its larger text: small labels are read unreliably), and the
 # large demo reports frame and filter timings.
-#   macos/Tools/test-ledger-layout.sh [--connect-only] [output folder for the screenshots]
+#   macos/Tools/test-ledger-layout.sh [--connect-only | --connections-only] [output folder for the screenshots]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -19,6 +19,7 @@ if [[ "${1:-}" == "--tutorial-only" ]]; then TASK_CAPTURE_MODE=--tutorial-only; 
 if [[ "${1:-}" == "--chatgpt-only" ]]; then TASK_CAPTURE_MODE=--chatgpt-only; shift; fi
 if [[ "${1:-}" == "--browser-only" ]]; then TASK_CAPTURE_MODE=--browser-only; shift; fi
 if [[ "${1:-}" == "--extras-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--extras-only; shift; fi
+if [[ "${1:-}" == "--connections-only" ]]; then TASK_CONNECT_ONLY=1; TASK_CAPTURE_MODE=--connections-only; shift; fi
 TASK_OUTPUT="${1:-$(mktemp -d "${TMPDIR:-/tmp}/gitrochi-ledger-layout.XXXXXX")}"
 mkdir -p "$TASK_OUTPUT"
 ARCH="$(uname -m)"
@@ -351,7 +352,7 @@ struct AnswerKeyboardFixture: View {
             print("PASS: \(shots) explicit ChatGPT paste screenshots in light and dark; answer, reviewed question, empty and narrow size warning. \(output.path)")
             return
         }
-        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") && !CommandLine.arguments.contains("--tutorial-only") && !CommandLine.arguments.contains("--extras-only") {
+        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") && !CommandLine.arguments.contains("--tutorial-only") && !CommandLine.arguments.contains("--extras-only") && !CommandLine.arguments.contains("--connections-only") {
             try chatGPTShots()
         }
 
@@ -410,7 +411,7 @@ struct AnswerKeyboardFixture: View {
             print("PASS: \(shots) tutorial and guide screenshots in light and dark; native Tab/edit/send, practice gates, restore and restart. \(output.path)")
             return
         }
-        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") && !CommandLine.arguments.contains("--extras-only") {
+        if !CommandLine.arguments.contains("--connect-only") && !CommandLine.arguments.contains("--questions-only") && !CommandLine.arguments.contains("--extras-only") && !CommandLine.arguments.contains("--connections-only") {
             try tutorialShots()
         }
 
@@ -427,6 +428,19 @@ struct AnswerKeyboardFixture: View {
             try shoot("documents", LedgerDocumentsSheet(ledger: ledger), width: 1040, height: 720, expect: ["Document tracker", "Save folders and scan", "DOC-12"])
             try shoot("records", LedgerManageSheet(ledger: ledger), width: 840, height: 720, expect: ["Manage records", "Session details", "Save session details"])
             print("PASS: \(shots) added-feature screenshots in light and dark. \(output.path)")
+            return
+        }
+        if CommandLine.arguments.contains("--connections-only") {
+            // The demo's connections: Claude Code delivering, Codex on an outdated command, the browser extension not set up
+            let sheet = LedgerConnectSheet(ledger: ledger, binaryPath: "/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger")
+            try shoot("connections-sheet", sheet, width: 680, height: 700,
+                      expect: ["Connect agents", "Connections", "Claude Code", "Needs repair", "ChatGPT browser extension", "Copy MCP command"])
+            try shoot("connections-settings", LedgerSettings(ledger: ledger), width: 640, height: 900,
+                      expect: ["Connections", "Claude Code", "Needs repair", "Not set up", "Connect and import"], scrollToEnd: true)
+            let empty = store(.empty)
+            try shoot("connections-entry", LedgerWorkspaceView(repositoryPath: nil, ledger: empty), width: 1200, height: 760,
+                      expect: ["No reports yet", "ChatGPT browser extension", "Connect Claude Code"])
+            print("PASS: \(shots) connection screenshots in light and dark. \(output.path)")
             return
         }
         func connectShots() throws {

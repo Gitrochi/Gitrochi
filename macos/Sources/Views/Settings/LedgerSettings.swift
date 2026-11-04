@@ -3,9 +3,9 @@ import AppKit
 
 /// Settings › Ledger: the rules the ledger core keeps in its database (when a session is stale, what each kind of
 /// session means, where a project's baselines come from), its backups, and the ways in: Connect agents and Import.
-/// Changes are saved as they are made. The tab goes with the Ledger page, so for now it shows only with
-/// GITROCHI_LEDGER_PREVIEW=1. Track agents I start is this app's choice (UserDefaults); auto-continue per repository
-/// lives in the ledger's `autoContinue` setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
+/// Changes are saved as they are made. Track agents I start, notifications and the Dock badge are this app's choices
+/// (UserDefaults), each off until a person turns it on; auto-continue per repository lives in the ledger's `autoContinue`
+/// setting, where `track` reads it. (Windows: widgets/settings/ui/LedgerSettings.tsx)
 struct LedgerSettings: View {
     static var isShown: Bool { true }
 
@@ -55,6 +55,7 @@ struct LedgerSettings: View {
                 kindsSection(settings)
                 projectsSection
                 backupsSection
+                connectionsSection
                 connectSection
             } else if let loadError {
                 Section {
@@ -69,7 +70,7 @@ struct LedgerSettings: View {
         .task(id: generation) { await load() }
         .sheet(item: $sheet, onDismiss: { generation += 1 }) { sheet in
             switch sheet {
-            case .connect: LedgerConnectSheet(ledger: ledger)
+            case .connect: LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
             case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             }
@@ -86,6 +87,7 @@ struct LedgerSettings: View {
     private var trackingSection: some View {
         Section {
             Toggle("Track agents I start", isOn: $trackAgents)
+                .onChange(of: trackAgents) { _, _ in LedgerHeartbeat.shared.refresh() }
             Toggle("Give them the Ledger tools", isOn: $agentTools).disabled(!trackAgents)
         } header: {
             Text("Agents Gitrochi starts")
@@ -358,6 +360,23 @@ struct LedgerSettings: View {
             Text("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
+    }
+
+    /// Claude Code, Codex and the browser extension, each with whether its data reaches this Ledger
+    private var connectionsSection: some View {
+        Section {
+            LedgerConnectionsSection(ledger: ledger, openBrowser: { sheet = .browser })
+        } header: {
+            Text("Connections")
+        } footer: {
+            Text("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+    }
+
+    private func switchSheet(to destination: Sheet) {
+        sheet = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { sheet = destination }
     }
 
     private var connectSection: some View {

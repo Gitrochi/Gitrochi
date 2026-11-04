@@ -37,7 +37,7 @@ export async function start() {
   // 숨긴 창에서는 requestAnimationFrame 이 돌지 않으므로 타이머로 부른다.
   setTimeout(() => void ipc.appReady(), 30);
   updater.start();
-  // the Ledger's notifications and badge, only with GITROCHI_LEDGER_PREVIEW
+  // the Ledger's notifications and badge, once a person turns one of them on
   void startLedgerNotifications();
   // 윈도에서 못 찾은 AI CLI 는 WSL 에서 한 번 찾아 둔다(WSL 을 깨우느라 몇 초 걸릴 수 있어 뒤에서)
   if (!env.selftest) setTimeout(() => void tools.probeWsl(), 6000);

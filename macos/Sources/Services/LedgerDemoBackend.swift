@@ -18,6 +18,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     private let clock: @Sendable () -> LedgerMs
     private var rev = 1
     private let extras = LedgerDemoExtras()
+    private var connections: LedgerDemoConnections?
     private var projects: [LedgerProject] = []
     private var baselines: [LedgerBaseline] = []
     private var sessions: [String: LedgerSession] = [:]
@@ -80,6 +81,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 rev += 1
                 return try encode(LedgerWriteResult(ok: true, rev: rev))
             case "work", "documents", "notebook": return try encode(extras.call(method, a, now: now))
+            case "browser_status", "integration_command", "integration_status", "integration_install", "integration_remove":
+                let demo = connections ?? LedgerDemoConnections(now: now)
+                connections = demo
+                return try encode(demo.call(method, a))
             case "info": return try encode(LedgerInfo(schemaVersion: 1, dbPath: "demo (in memory)", rev: rev, enabled: true))
             case "rev": return try encode(LedgerRev(rev: rev))
             case "state": return try encode(state(project: a["project"].string, range: range(a), now: now))
@@ -465,12 +470,15 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         if !projects.contains(where: { $0.key == project }) { projects.append(LedgerProject(key: project, name: project, open: 0)) }
         let policy = a["autoContinue"].object == nil ? settings.autoContinue(forRepository: repository)
             : a["autoContinue"]["enabled"].bool.flatMap { enabled in a["autoContinue"]["delaySec"].int.map { .init(enabled: enabled, delaySec: $0) } }
-        let id = add(project: project, title: a["title"].string ?? a["branch"].string ?? name(folder ?? repository), kind: "",
-                     created: now, base: a["base"].string) { s in
+        // As the core: without a kind from the app, a launch is a task and stays on the Board
+        let chosen = a["kind"].string.map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
+        let kind = chosen ?? "task"
+        let id = add(project: project, title: a["title"].string ?? a["branch"].string ?? name(folder ?? repository), kind: kind,
+                     role: settings.kinds[kind]?.role ?? .other, created: now, base: a["base"].string) { s in
             s.links = .init(repoPath: repository, branch: a["branch"].string, worktree: folder, agentId: a["agentId"].string, cwd: folder)
             s.autoContinue = policy
         }
-        record(id, "hook", at: now, actor: .hook, summary: "Started from Gitrochi", data: ["hook": "launch"])
+        record(id, "hook", at: now, actor: .hook, summary: "Started from Gitrochi", data: chosen == nil ? ["hook": "launch", "board": .bool(true)] : ["hook": "launch"])
         rev += 1
         return LedgerTrackResult(ok: true, rev: rev, session: sessions[id]!)
     }
@@ -496,7 +504,8 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
         kinds: ["research": .init(role: .research), "decision": .init(role: .decision),
                 "implementation": .init(role: .implementation, line: "core", handoff: true),
                 "llm-implementation": .init(role: .implementation, line: "llm", handoff: false),
-                "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "other": .init(role: .other)],
+                "review": .init(role: .other), "document": .init(role: .document), "baseline": .init(role: .other), "task": .init(role: .other),
+                "other": .init(role: .other)],
         autoContinue: ["enabled": false, "delaySec": 30],
         backupKeep: 14,
         wakeAgents: .init(enabled: false, waitSec: 300))

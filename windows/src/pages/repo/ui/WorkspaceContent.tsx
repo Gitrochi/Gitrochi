@@ -42,7 +42,7 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
-    case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} launcher={store} /></Suspense>;
+    case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} launcher={store} requests={store} /></Suspense>;
     default: return null;
   }
 }

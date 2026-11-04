@@ -1,4 +1,4 @@
-import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, GitPullRequest, MessageSquare, X } from "lucide-react";
+import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, MessageSquare, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
 import { agentWaits, compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerQuestion, type LedgerSession, type LedgerStore, serverNow } from "@/entities/ledger";
@@ -8,7 +8,10 @@ import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Checkbox, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { suggestsRequestMerged } from "../lib/request-status";
+import type { LedgerRequestHost } from "../model/request-status";
 import { LedgerTimeline } from "./LedgerTimeline";
+import { RequestChip, RequestMergedSuggestion, useLedgerRequest } from "./RequestStatus";
 import { mergeMenu, moreMenu } from "./session-actions";
 import { BaseLine, SessionId, Section, VerdictBadge, WakePill, When } from "./parts";
 
@@ -16,15 +19,17 @@ const HOUR = 3_600_000;
 
 /**
  * One session: what it is and where it stands, its links, the operations a person may take, its questions, its
- * timeline and what it touches. Dropping asks once; the rest is undone from the toast. (macOS: Views/Ledger/LedgerInspector.swift)
+ * timeline and what it touches. Dropping asks once; the rest is undone from the toast. With `requests`, the repository's
+ * tab, a request linked in that repository shows its state and checks. (macOS: Views/Ledger/LedgerInspector.swift)
  */
-export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClose?: () => void }) {
+export function LedgerInspector({ store, onClose, requests }: { store: LedgerStore; onClose?: () => void; requests?: LedgerRequestHost }) {
   useObserve(store);
   useObserve(agents);
   const [dropping, setDropping] = useState(false);
   const live = store.session(store.selectedId);
   const detail = store.detail?.session.id === store.selectedId ? store.detail : null;
   const s = live ?? detail?.session;
+  const request = useLedgerRequest(s, store, requests, true);
   if (!s) {
     return (
       <div className="ledger-inspector ledger-placeholder" aria-busy={!store.detailError}>
@@ -64,12 +69,13 @@ export function LedgerInspector({ store, onClose }: { store: LedgerStore; onClos
         <div className="ledger-links">
           {s.links.branch && <span className="ledger-link" data-tip={t("Branch")}><GitBranch size={12} /><span>{s.links.branch}</span></span>}
           {s.links.worktree && <span className="ledger-link" data-tip={`${t("Worktree")}|${displayPath(s.links.worktree)}`}><FolderTree size={12} /><span>{t("Worktree")}</span></span>}
-          {s.links.pr && <button type="button" className="ledger-link" data-tip={s.links.pr.url} onClick={() => void ipc.openUrl(s.links.pr!.url)}><GitPullRequest size={12} /><span>#{s.links.pr.number}</span></button>}
+          {s.links.pr && <RequestChip pr={s.links.pr} status={request.status} />}
           {s.links.agentId && (agent && agents.canFocus(agent)
             ? <button type="button" className="ledger-link" data-tip={t("Open the agent's terminal")} onClick={() => agents.focus(agent)}><Bot size={12} /><span>{agentStatusTitle[agent.status]}</span></button>
             : <span className="ledger-link" data-tip={t("The agent is not running in Gitrochi.")}><Bot size={12} /><span>{t("Agent")}</span></span>)}
           {s.chatUrl && <button type="button" className="ledger-link" data-tip={s.chatUrl} onClick={() => void ipc.openUrl(s.chatUrl!)}><MessageSquare size={12} /><span>{t("Open chat")}</span></button>}
         </div>
+        {suggestsRequestMerged(s, request.status) && <RequestMergedSuggestion disabled={busy} onChoose={(anchor) => mergeMenu(anchor, store, s)} />}
       </div>
       <div className="ledger-actions" role="toolbar" aria-label={t("Session actions")}>
         <PrimaryActions store={store} s={s} busy={busy} human={human} />
