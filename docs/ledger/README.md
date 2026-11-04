@@ -44,11 +44,27 @@ For Claude Code outside Gitrochi:
 
 **Test Ledger** checks this app's Ledger and bundled MCP command. It does not check Claude Code's MCP registration or prove that a client has loaded the tools. Registration makes the tools available; the first agent report creates a reported session. Existing conversations are not imported automatically.
 
-The sheet also supplies configuration for other MCP clients and instructions you can add to a project. Gitrochi does not edit a client's settings files from this sheet. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+The sheet also supplies configuration for other MCP clients and instructions you can add to a project. In **Connections**, Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after backing up the file; nothing in the sheet edits a client's MCP settings, whose commands are only shown for you to copy. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
 Existing Claude Ledger users can also retain their work records and personal notes. See [Moving from Claude Ledger](MIGRATION.md) for import conflicts, agent reconnection, the feature map and the optional local HTTP bridge. Importing does not keep the two databases synchronized.
+
+## See and repair your connections
+
+**Connections** lists Claude Code, Codex and the ChatGPT browser extension side by side, at the top of the **Connect agents** sheet and in **Settings › Ledger**. On macOS, **Connect Claude Code…** in the Ledger's **More ledger actions** menu opens it; on Windows, the Claude Code button in the Ledger toolbar does. Each row shows one status:
+
+| Status | Meaning |
+|---|---|
+| **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
+| **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
+
+**Repair** installs the hooks again with the stable command, which Gitrochi keeps current. When the MCP entry is the problem, Repair also copies an MCP command that replaces the registration; run it in a terminal. **Copy MCP command** does the same at any time. Gitrochi never edits a client's MCP settings itself. **Remove** removes only Gitrochi's hooks for that client. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
+
+Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does. [Screenshots](../screenshots/ledger-connection/README.md) show the list on both platforms.
 
 ## Track local Claude Code and Codex activity automatically
 
@@ -59,7 +75,7 @@ gitrochi-ledger integrate claude --install
 gitrochi-ledger integrate codex --install
 ```
 
-Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
+Use the stable installed Ledger command shown by Gitrochi. `--cli FILE` selects that executable explicitly. That command lives at `~/Library/Application Support/Gitrochi/bin/gitrochi-ledger` on macOS and `%APPDATA%\Gitrochi\bin\gitrochi-ledger.exe` on Windows. Once it exists, Gitrochi replaces it with its own bundled command whenever the two differ, each time the Ledger opens, so hooks and MCP entries that name it keep working after the app moves or updates. Gitrochi creates it only when you set up or repair a connection in the app. Installation preserves existing callbacks and settings and makes a private backup before updating the client's user-level hooks. To inspect or remove this connection:
 
 ```sh
 gitrochi-ledger --json integrate claude --status
@@ -69,6 +85,8 @@ gitrochi-ledger integrate codex --remove
 ```
 
 Start or restart the client after installing. Codex asks you to review non-managed hooks in its own `/hooks` flow; Gitrochi does not grant that trust or change permission settings. The status command confirms configuration only. A conversation appearing in Board or Streams confirms that its activity reached this Ledger. Cloud-orchestrated Codex tasks do not run these local hooks.
+
+The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself.
 
 Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions use a generic kind and have auto-continue off. Existing Gitrochi-tracked sessions keep their own kind and policy.
 

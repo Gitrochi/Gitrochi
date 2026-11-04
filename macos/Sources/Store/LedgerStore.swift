@@ -114,6 +114,7 @@ final class LedgerStore {
     private var generation = 0
     private var nextBackupAt: LedgerMs = 0
     private var backupInFlight = false
+    private var stableCommandChecked = false
 
     init(client: LedgerClient, defaults: UserDefaults = .standard, interval: Duration = .seconds(2),
          now: @escaping @Sendable () -> LedgerMs = { LedgerStore.localNow() }) {
@@ -142,6 +143,7 @@ final class LedgerStore {
 
     /// Starts reading every 2 seconds; every view that shows ledger data may call it
     func activate() {
+        refreshStableCommand()
         guard polling == nil else { return }
         let interval = interval
         polling = Task { [weak self] in
@@ -151,6 +153,15 @@ final class LedgerStore {
                 try? await Task.sleep(for: interval)
             }
         }
+    }
+
+    /// When the Ledger opens, an existing stable command follows this app's bundled one, so hooks that run it can write
+    /// the database this app may have just upgraded. It is never created here. (Windows: LedgerStore.refreshStableCommand)
+    private func refreshStableCommand() {
+        guard !stableCommandChecked, client.backend is NativeLedgerBackend else { return }
+        stableCommandChecked = true
+        let client = client, bundled = LedgerCommandLine.bundled.path
+        Task.detached(priority: .utility) { _ = try? await client.stableCommand(bundled: bundled) }
     }
 
     /// Reads changed state, and recomputes quiet sessions' verdicts at least once a minute.

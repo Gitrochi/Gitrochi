@@ -2,7 +2,7 @@ import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, Plus, PlugZap, Refre
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, repositoryPolicies, repositoryPolicy, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
-import { LedgerConnectSheet } from "@/features/connect-ledger-mcp";
+import { LedgerConnections, LedgerConnectSheet } from "@/features/connect-ledger-mcp";
 import { LedgerImportSheet, LedgerLegacyImportSheet } from "@/features/import-ledger-reports";
 import { ipc } from "@/shared/api";
 import { basename, displayPath, recents, samePath, samePathKey } from "@/shared/config";
@@ -149,6 +149,12 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
         <span className="hint">{t("Daily backups are checked while Gitrochi follows the Ledger. Failed attempts retry after five minutes.")}</span>
       </div>
 
+      <div className="form-section" data-ledger-section="connections">
+        <span className="form-section-title">{t("Connections")}</span>
+        <LedgerConnections store={store} onOpenBrowser={() => setSheet("browser")} />
+        <span className="hint">{t("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")}</span>
+      </div>
+
       <div className="form-section">
         <span className="form-section-title">{t("Connect and import")}</span>
         <div className="row" style={{ flexWrap: "wrap" }}>
@@ -160,7 +166,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       </div>
 
       {sheet === "browser" && <LedgerBrowserSheet store={store} onClose={() => setSheet(null)} />}
-      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} />}
+      {sheet === "connect" && <LedgerConnectSheet store={store} onClose={() => setSheet(null)} onOpenBrowser={() => setSheet("browser")} />}
       {sheet === "import" && <LedgerImportSheet store={store} onClose={() => setSheet(null)} onImportLegacy={() => setSheet("legacy")} />}
       {sheet === "legacy" && <LedgerLegacyImportSheet store={store} onClose={() => { setSheet(null); void load(); }} />}
     </div>

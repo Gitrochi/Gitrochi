@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { ledgerSelfTest } from "../src/app/lib/ledger-selftest";
 import { ledgerBrowserSelfTest } from "../src/app/lib/ledger-browser-selftest";
+import { ledgerConnectionsSelfTest } from "../src/app/lib/ledger-connections-selftest";
 import { ledgerChatGPTDraftSelfTest } from "../src/app/lib/ledger-chatgpt-draft-selftest";
 import { ledgerParitySelfTest } from "../src/app/lib/ledger-parity-selftest";
 import { ledgerRequestSelfTest } from "../src/app/lib/ledger-request-selftest";
@@ -31,7 +32,7 @@ if (mode === "selftest") {
   Object.defineProperty(workspace, "active", { get: () => workspace.tabs.find((tab) => tab.id === workspace.activeId) ?? workspace.tabs[0] ?? ({ path: "C:/fixture/app", confirmUndo: () => document.body.append(confirmation) }) });
   window.addEventListener("keydown", (e) => handleShortcut(e, () => {}));
   createRoot(root).render(<MenuHost />);
-  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerParitySelfTest(), await ledgerRequestSelfTest()];
+  const checks = [await ledgerSelfTest(), await ledgerChatGPTDraftSelfTest(), await ledgerBrowserSelfTest(), await ledgerConnectionsSelfTest(), await ledgerParitySelfTest(), await ledgerRequestSelfTest()];
   const passed = checks.every(([ok]) => ok);
   const detail = checks.map(([, message]) => message).join("\n");
   const result = document.createElement("pre");
@@ -53,6 +54,9 @@ if (mode === "selftest") {
   env.ledgerDemo = "1";
   ipc.ledgerPickDatabase = async () => "C:/Tools/claude-ledger/data/ledger.db";
   createRoot(root).render(<><SettingsDialog onClose={() => {}} initialTab="ledger" /><MenuHost /><TooltipHost /></>);
+  // ?scroll=<selector> brings a settings section into view for a screenshot
+  const section = params.get("scroll");
+  if (section) setTimeout(() => document.querySelector(section)?.scrollIntoView({ block: "start" }), 800);
 } else {
   ipc.openUrl = async () => {};
   const repoPath = "C:/Projects/atlas";
@@ -110,5 +114,11 @@ if (mode === "selftest") {
   for (const selector of (params.get("click") ?? "").split(";").filter(Boolean)) {
     await new Promise((resolve) => setTimeout(resolve, 300));
     document.querySelector<HTMLElement>(selector)?.click();
+  }
+  // ?hover=<selector> shows a toolbar button's tooltip for a screenshot
+  const hover = params.get("hover");
+  if (hover) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    document.querySelector(hover)?.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
   }
 }

@@ -18,6 +18,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
     private let clock: @Sendable () -> LedgerMs
     private var rev = 1
     private let extras = LedgerDemoExtras()
+    private var connections: LedgerDemoConnections?
     private var projects: [LedgerProject] = []
     private var baselines: [LedgerBaseline] = []
     private var sessions: [String: LedgerSession] = [:]
@@ -80,6 +81,10 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 rev += 1
                 return try encode(LedgerWriteResult(ok: true, rev: rev))
             case "work", "documents", "notebook": return try encode(extras.call(method, a, now: now))
+            case "browser_status", "integration_command", "integration_status", "integration_install", "integration_remove":
+                let demo = connections ?? LedgerDemoConnections(now: now)
+                connections = demo
+                return try encode(demo.call(method, a))
             case "info": return try encode(LedgerInfo(schemaVersion: 1, dbPath: "demo (in memory)", rev: rev, enabled: true))
             case "rev": return try encode(LedgerRev(rev: rev))
             case "state": return try encode(state(project: a["project"].string, range: range(a), now: now))

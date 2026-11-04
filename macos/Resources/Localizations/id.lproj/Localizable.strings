@@ -1671,7 +1671,7 @@
 "Codex CLI and local Desktop tasks share this setup. Cloud-orchestrated tasks do not run these hooks; they appear only when the agent sends Ledger reports." = "Codex CLI dan tugas Desktop lokal berbagi pengaturan ini. Tugas yang diorkestrasi cloud tidak menjalankan hook ini; tugas hanya muncul saat agen mengirim laporan buku besar.";
 "Check or remove automatic activity" = "Periksa atau hapus aktivitas otomatis";
 "Setup status checks configuration only, not whether hooks are trusted or running." = "Status hanya memeriksa konfigurasi, bukan apakah hook dipercaya atau sedang berjalan.";
-"This sheet changes no client settings. Run only the setup commands you want to enable." = "Layar ini tidak mengubah pengaturan klien. Jalankan hanya perintah pengaturan yang ingin Anda aktifkan.";
+"Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings and keep a backup first. MCP commands are only shown for you to copy." = "Siapkan, Perbaiki, dan Hapus hanya mengubah entri milik Gitrochi di pengaturan hook klien tersebut dan membuat cadangan terlebih dahulu. Perintah MCP hanya ditampilkan untuk Anda salin.";
 "Checks this app's Ledger, not agent configuration or hook trust." = "Memeriksa buku besar aplikasi ini, bukan konfigurasi agen atau kepercayaan hook.";
 "Connect agents to let them report here. Import reads pasted reports or a claude-ledger database." = "Hubungkan agen agar mereka dapat melapor di sini. Impor membaca laporan yang ditempel atau basis data claude-ledger.";
 "Connect Claude Code" = "Hubungkan Claude Code";
@@ -2199,6 +2199,38 @@
 "View all tasks" = "Lihat semua tugas";
 "Show more tasks" = "Tampilkan lebih banyak tugas";
 "Project items could not be fully loaded. Retry the project." = "Item proyek tidak dapat dimuat sepenuhnya. Muat ulang proyek.";
+
+/* Ledger: connection health, repair and the stable command. */
+"Connections" = "Koneksi";
+"Not set up" = "Belum disiapkan";
+"Connected · last data %@" = "Terhubung · data terakhir %@";
+"Connected · no data yet" = "Terhubung · belum ada data";
+"Needs repair" = "Perlu diperbaiki";
+"Command missing" = "Perintah tidak ada";
+"Set up" = "Siapkan";
+"Set up…" = "Siapkan…";
+"Repair" = "Perbaiki";
+"Repair…" = "Perbaiki…";
+"Copy MCP command" = "Salin perintah MCP";
+"Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command." = "Tidak terhubung. Siapkan memasang hook aktivitas yang menjalankan perintah Ledger tetap dari Gitrochi.";
+"Activity and reports reach this Ledger." = "Aktivitas dan laporan sampai ke Ledger ini.";
+"The MCP server is registered. Set up also records activity." = "Server MCP sudah terdaftar. Siapkan juga merekam aktivitas.";
+"Start or restart %@ to send activity." = "Mulai atau mulai ulang %@ untuk mengirim aktivitas.";
+"Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Mulai atau mulai ulang Codex, lalu tinjau dan percayai hook Ledger di /hooks.";
+"Hooks are turned off in this client's settings." = "Hook dimatikan di pengaturan klien ini.";
+"Some activity hooks are missing." = "Beberapa hook aktivitas tidak ada.";
+"The hook command is older than this Ledger and cannot write to it." = "Perintah hook lebih lama dari Ledger ini dan tidak dapat menulis ke dalamnya.";
+"The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it." = "Perintah MCP lebih lama dari Ledger ini dan tidak dapat menulis ke dalamnya. Salin perintah MCP dan jalankan.";
+"The hook command no longer exists." = "Perintah hook sudah tidak ada.";
+"The MCP command no longer exists. Copy the MCP command and run it." = "Perintah MCP sudah tidak ada. Salin perintah MCP dan jalankan.";
+"The hooks write to a different Ledger database." = "Hook menulis ke database Ledger yang lain.";
+"The MCP server uses a different Ledger database. Copy the MCP command and run it." = "Server MCP menggunakan database Ledger yang lain. Salin perintah MCP dan jalankan.";
+"Not connected. Load the extension in Chrome and allow it to connect." = "Tidak terhubung. Muat ekstensi di Chrome dan izinkan ekstensi terhubung.";
+"Questions from paired ChatGPT conversations reach this Ledger." = "Pertanyaan dari percakapan ChatGPT yang dipasangkan sampai ke Ledger ini.";
+"Pair a conversation from the extension's popup to send questions." = "Pasangkan percakapan dari popup ekstensi untuk mengirim pertanyaan.";
+"The browser host is missing. Repair registers this copy of Gitrochi." = "Host browser tidak ada. Perbaiki mendaftarkan salinan Gitrochi ini.";
+"Copied. Run it in a terminal to register the Ledger tools." = "Disalin. Jalankan di terminal untuk mendaftarkan alat Ledger.";
+"Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself." = "Hook menjalankan salinan tetap perintah Ledger yang selalu diperbarui Gitrochi, sehingga tetap berfungsi saat aplikasi dipindahkan atau diperbarui. Gitrochi tidak pernah mengubah pengaturan MCP; salin perintah MCP dan jalankan sendiri.";
 "%lld passing" = "%lld lulus";
 "%lld failing" = "%lld gagal";
 "%lld pending" = "%lld menunggu";
