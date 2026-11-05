@@ -18,7 +18,7 @@ struct RepoView: View {
         NavigationSplitView(columnVisibility: Binding(get: { sidebarPresentation.visibility }, set: { sidebarPresentation.setVisibility($0) })) {
             NavigationSidebar()
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
-                // the page list and the rail carry their own collapse and expand buttons
+                // the toolbar's own sidebar toggle folds and expands the page list
                 .toolbar(removing: .sidebarToggle)
                 .background(SidebarVisibilityObserver(expandRequest: sidebarExpandRequest, animateExpansion: !reduceMotion,
                                                       expansionAllowed: sidebarPresentation.visibility != .detailOnly) {
@@ -305,8 +305,7 @@ struct RepoView: View {
         .accessibilityAddTraits(store.area == .changes ? .isSelected : [])
         .hoverTip(String(localized: "Uncommitted changes"),
                   store.status.isEmpty ? String(localized: "No modified files. When you edit files, you can stage and commit them here.")
-                                       : String(localized: "\(store.status.count) modified files — stage and commit them."),
-                  shortcut: "⌘1")
+                                       : String(localized: "\(store.status.count) modified files — stage and commit them."))
     }
 
     private var fetchButton: some View {

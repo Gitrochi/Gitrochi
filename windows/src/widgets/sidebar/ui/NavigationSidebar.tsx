@@ -1,10 +1,11 @@
-import { Blocks, CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListChecks, ListOrdered, PanelLeftClose, PlayCircle, Settings, Tag, UserRound, Waypoints } from "lucide-react";
-import { destinationEnabled, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
+import { useEffect, useState } from "react";
+import { Blocks, CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListChecks, ListOrdered, PlayCircle, Settings, Tag, UserRound, Waypoints } from "lucide-react";
+import { destinationEnabled, destinationShortcut, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
 import { ledgerStore } from "@/entities/ledger";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import icon from "@/shared/assets/icon.png";
+import { tip } from "@/shared/ui";
 import "./navigation-sidebar.css";
 
 const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows", ledger: "Ledger" };
@@ -21,37 +22,56 @@ const groups: { title: string | null; pages: WorkspaceDestination[] }[] = [
 ];
 
 /**
- * The window's pages. Once the repository screen opens, this folds into the 52px icon rail (`compact`) and the branch
- * list takes its place; the toolbar's sidebar toggle expands it again (docs/design.md › App shell).
- * (macOS: NavigationSidebar.swift, NavigationSidebarRail.swift)
+ * The window's pages (docs/design.md › App shell, Sidebar): a source list with section titles, a neutral fill for the
+ * current page (the accent while the list has focus) and only Ledger's count. While no repository is open, a page that
+ * needs one is disabled and its section says why. Once the repository screen opens, this folds into the 52px icon rail
+ * (`compact`), where such a page is dimmed but stays enabled so its tip says why. The toolbar's sidebar toggle folds
+ * and expands it. (macOS: NavigationSidebar.swift, NavigationSidebarRail.swift)
  */
-export function NavigationSidebar({ store, openSettings, compact = false, onToggle }: { store: RepoStore; openSettings: () => void; compact?: boolean; onToggle?: () => void }) {
+export function NavigationSidebar({ store, openSettings, compact = false }: { store: RepoStore; openSettings: () => void; compact?: boolean }) {
   useObserve(store);
   const ledger = ledgerStore(null);
   useObserve(ledger);
+  // holding Ctrl shows every row's shortcut; otherwise a row shows its own on hover
+  const [shortcutsShown, setShortcutsShown] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => setShortcutsShown(e.ctrlKey);
+    const onBlur = () => setShortcutsShown(false);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
+    window.addEventListener("blur", onBlur);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("keyup", onKey); window.removeEventListener("blur", onBlur); };
+  }, []);
   const gitlab = store.target?.provider === "gitlab";
+  const needsRepository = (page: WorkspaceDestination) => !store.path && repositoryDestinations.has(page);
   const row = (page: WorkspaceDestination) => {
     const Icon = destinationIcons[page], selected = store.destination === page;
     const title = destinationTitle(page, gitlab);
-    // only Ledger counts something (docs/design.md › App shell, Sidebar)
+    const shortcut = destinationShortcut(page);
+    // only Ledger counts something
     const count = page === "ledger" ? (ledger.state?.attention.total ?? 0) : 0;
-    // in the rail a page that needs a repository is dimmed but stays enabled, so its tip says why
-    const blocked = compact && !store.path && repositoryDestinations.has(page);
-    return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${blocked ? " blocked" : ""}${page === "repository" ? " repository-entry" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined}
-      onClick={() => store.navigate(page)} data-page={page} data-tip={blocked ? t("Open a repository to use this page.") : count > 0 ? `${title} (${count})` : title}>
-      <Icon size={18} strokeWidth={compact ? 1.5 : selected ? 2 : 1.7} />
-      <span className="workspace-nav-copy"><span className="ellipsis">{title}</span>{page === "repository" && <small className="ellipsis">{store.path ? store.name : t("Open a repository to get started")}</small>}</span>
+    const blocked = needsRepository(page);
+    return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${blocked ? " blocked" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined}
+      disabled={blocked && !compact} onClick={() => store.navigate(page)} data-page={page}
+      data-tip={blocked ? t("Open a repository to use this page.") : tip(count > 0 ? `${title} (${count})` : title, "", shortcut ?? undefined)}>
+      <Icon size={compact ? 18 : 16} strokeWidth={1.5} />
+      <span className="workspace-nav-copy"><span className="ellipsis">{title}</span></span>
       {count > 0 && <span className="workspace-nav-badge">{count > 999 ? "999+" : count}</span>}
+      {shortcut && <span className="workspace-nav-kbd">{shortcut}</span>}
     </button>;
   };
-  return <nav className={`workspace-navigation${compact ? " compact" : ""}`} aria-label={compact ? t("Collapsed navigation") : t("Workspace navigation")}>
-    <div className="workspace-nav-header"><div className="workspace-nav-brand"><img src={icon} alt="" /><span><strong>Gitrochi</strong><small>{t("Workspace")}</small></span></div>{/* the rail has no toggle of its own: the toolbar's sidebar toggle expands it */}{onToggle && !compact && <button type="button" className="workspace-nav-toggle" aria-label={t("Collapse sidebar")} aria-expanded onClick={onToggle} data-tip={`${t("Collapse sidebar")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} B`}><PanelLeftClose size={18} /></button>}</div>
+  return <nav className={`workspace-navigation${compact ? " compact" : ""}${shortcutsShown ? " show-shortcuts" : ""}`} aria-label={compact ? t("Collapsed navigation") : t("Workspace navigation")}>
     <div className="workspace-nav-scroll">
-      {groups.map((group, i) => <div className="workspace-nav-section" key={i}>
-        {group.title && <div className="workspace-nav-group"><span className="ellipsis">{group.title === "GitHub" ? (gitlab ? "GitLab" : "GitHub") : t(group.title)}</span><span /></div>}
-        <div className="workspace-nav-card">{group.pages.filter(destinationEnabled).map(row)}</div>
-      </div>)}
+      {groups.map((group, i) => {
+        const pages = group.pages.filter(destinationEnabled);
+        return <div className="workspace-nav-section" key={i}>
+          {group.title && <div className="workspace-nav-group"><span className="ellipsis">{group.title === "GitHub" ? (gitlab ? "GitLab" : "GitHub") : t(group.title)}</span><span /></div>}
+          {/* the reason sits under the section, not in a tip: a disabled row shows no tip */}
+          {group.title && pages.some(needsRepository) && <div className="workspace-nav-why">{t("Open a repository to use these")}</div>}
+          <div className="workspace-nav-card">{pages.map(row)}</div>
+        </div>;
+      })}
     </div>
-    <div className="workspace-nav-footer"><button type="button" className="workspace-nav-item" aria-label={t("Settings")} data-tip={`${t("Settings")} · ${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} ,`} onClick={openSettings}><Settings size={18} strokeWidth={1.7} /><span className="workspace-nav-copy"><span className="ellipsis">{t("Settings")}</span></span></button></div>
+    <div className="workspace-nav-footer"><button type="button" className="workspace-nav-item" aria-label={t("Settings")} data-tip={tip(t("Settings"), "", "Ctrl+,")} onClick={openSettings}><Settings size={compact ? 18 : 16} strokeWidth={1.5} /><span className="workspace-nav-copy"><span className="ellipsis">{t("Settings")}</span></span><span className="workspace-nav-kbd">Ctrl+,</span></button></div>
   </nav>;
 }

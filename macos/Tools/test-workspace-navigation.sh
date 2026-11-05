@@ -265,6 +265,10 @@ import SwiftUI
         precondition(WorkspaceDestination.allCases.allSatisfy { ToolbarSet(destination: $0, hasRepository: false) == .noRepository }, "Without a repository only the account")
         precondition(RecommendedSync(ahead: 2, behind: 0, hasUpstream: true) == .push && RecommendedSync(ahead: 0, behind: 5, hasUpstream: true) == .pull, "Push or Pull is prominent when it is the clear next step")
         precondition(RecommendedSync(ahead: 2, behind: 5, hasUpstream: true) == .none && RecommendedSync(ahead: 2, behind: 0, hasUpstream: false) == .none, "Nothing is prominent when diverged or without an upstream")
+        let numbered: [WorkspaceDestination] = [.repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .flows, .ledger]
+        precondition(numbered.map(\.shortcutDigit) == Array(1...9), "Pages take ⌘1–⌘9 in the sidebar's order")
+        precondition(WorkspaceDestination.home.shortcutLabel == "⇧⌘H" && WorkspaceDestination.compare.shortcutLabel == "⌘2", "Home is ⇧⌘H and the rest show ⌘ and their number")
+        precondition([WorkspaceDestination.releases, .projects, .account].allSatisfy { $0.shortcutDigit == nil && $0.shortcutLabel == nil }, "Releases, Projects and Account have no shortcut")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])

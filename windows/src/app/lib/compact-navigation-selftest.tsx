@@ -43,9 +43,10 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     await settle();
     ensure(!isCompact() && toggle().getAttribute("aria-expanded") === "true", "Home must show the full page list");
     ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool:not(.sidebar-toggle)"), "Home without a repository must show the welcome screen and, beside the sidebar toggle and the repository button, only the account control in the toolbar");
-    ensure(!row("repository")?.disabled && !row("issues")?.disabled, "Initial navigation must remain available");
+    // the page list disables pages that need a repository and says why; Issues works without one
+    ensure(row("repository")?.disabled && !row("issues")?.disabled && !!host.querySelector(".workspace-nav-why"), "Without a repository the page list must disable Repository with its reason and keep Issues");
     for (const destination of ["repository", "code", "pullRequests", "actions", "flows"] as const) {
-      row(destination)!.click(); await settle();
+      store.navigate(destination); await settle();
       ensure(store.destination === destination && !!host.querySelector(".workspace-repository-required") && !host.querySelector(".repository-screen"), `The ${destination} page must offer a repository chooser without starting local tools`);
     }
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();

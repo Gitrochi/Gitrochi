@@ -4,7 +4,9 @@
 "Compare with %@" = "%1$@ ile karşılaştır";
 "Fast-forward only" = "Yalnızca ileri sar";
 "Find in file" = "Dosyada bul";
+"Go" = "Git";
 "Merge" = "Birleştir";
+"Open a repository to use these" = "Bunları kullanmak için bir depo açın";
 "Pop latest stash" = "En son stash'i uygula";
 "Pop latest stash (none saved)" = "En son stash'i uygula (kayıtlı yok)";
 "Previous match" = "Önceki eşleşme";
@@ -1169,9 +1171,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Depolarını aramak için bir GitHub veya GitLab hesabı bağlayın.";
 "Remote branches" = "Uzak dallar";
 "Section" = "Bölüm";
-"Show compare" = "Karşılaştırmayı göster";
-"Show flows" = "Akışları göster";
-"Show home" = "Ana sayfayı göster";
 "(current)" = "(geçerli)";
 "Checking saved account access…" = "Kayıtlı hesaba erişim denetleniyor…";
 "Allow access to the saved account to use repository services." = "Depo hizmetlerini kullanmak için kayıtlı hesaba erişime izin verin.";
@@ -1801,7 +1800,6 @@
 "Shelve" = "Rafa kaldır";
 "Shelved" = "Rafa kaldırıldı";
 "Shelved %@" = "%@ rafa kaldırıldı";
-"Show ledger" = "Defteri göster";
 "Show less" = "Daha az göster";
 "Show more" = "Daha fazla göster";
 "Show only %@" = "Yalnızca “%@” göster";

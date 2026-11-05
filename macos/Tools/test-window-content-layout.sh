@@ -43,7 +43,7 @@ for source in (root / 'Sources').rglob('*.swift'):
         end = text.index('/// 창(탭) 하나 = 저장소 하나', start)
         text = text[:start] + text[end:]
     elif relative == 'Views/Sidebar/NavigationSidebar.swift':
-        needle = '.background(Color(nsColor: .windowBackgroundColor))'
+        needle = '.listStyle(.sidebar)'
         assert text.count(needle) == 1, 'Sidebar measurement attachment changed'
         text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "sidebar"))')
     elif relative == 'Views/RepoView.swift':

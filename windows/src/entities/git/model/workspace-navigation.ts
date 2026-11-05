@@ -10,6 +10,16 @@ export type WorkspaceDestination = (typeof workspaceDestinations)[number] | (typ
 export const destinationEnabled = (_page: WorkspaceDestination) => true;
 /** Pages whose tools need a repository; navigation shows a chooser until one is open. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
+/** The pages Ctrl+1–Ctrl+9 open, in the sidebar's order (docs/design.md › App shell, Sidebar). (macOS: shortcutDigit) */
+const numberedDestinations: readonly WorkspaceDestination[] = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows", "ledger"];
+/** The page's shortcut as menus and the sidebar show it; Home is Ctrl+Shift+H, Releases, Projects and Account have none */
+export const destinationShortcut = (page: WorkspaceDestination): string | null => {
+  if (page === "home") return "Ctrl+Shift+H";
+  const digit = numberedDestinations.indexOf(page) + 1;
+  return digit > 0 ? `Ctrl+${digit}` : null;
+};
+/** The page a Ctrl+digit shortcut opens */
+export const destinationForDigit = (digit: number): WorkspaceDestination | null => numberedDestinations[digit - 1] ?? null;
 /** Pages the repository screen links to (request and issue rows, a commit's CI badge, the tags); opened from there, they offer the way back (macOS: returnsToRepository) */
 export const returnsToRepository: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["pullRequests", "issues", "actions", "releases"]);
 /** The toolbar items a window shows (docs/design.md › App shell). (macOS: ToolbarSet) */

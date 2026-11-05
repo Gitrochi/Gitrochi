@@ -44,6 +44,24 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     /// they offer the way back
     var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
+    /// The Go menu's shortcut, ⌘1–⌘9 in the sidebar's order (docs/design.md › App shell, Sidebar). Home is ⇧⌘H;
+    /// Releases, Projects and Account have none. (Windows: destinationShortcut)
+    var shortcutDigit: Int? {
+        switch self {
+        case .repository: return 1
+        case .compare: return 2
+        case .rebase: return 3
+        case .code: return 4
+        case .pullRequests: return 5
+        case .issues: return 6
+        case .actions: return 7
+        case .flows: return 8
+        case .ledger: return 9
+        default: return nil
+        }
+    }
+    /// The shortcut as the sidebar shows it beside the row
+    var shortcutLabel: String? { self == .home ? "⇧⌘H" : shortcutDigit.map { "⌘\($0)" } }
     var title: String {
         switch self {
         case .home: return String(localized: "Home")

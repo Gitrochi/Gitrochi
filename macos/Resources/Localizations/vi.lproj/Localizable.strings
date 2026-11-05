@@ -4,7 +4,9 @@
 "Compare with %@" = "So sánh với %1$@";
 "Fast-forward only" = "Chỉ fast-forward";
 "Find in file" = "Tìm trong tệp";
+"Go" = "Đi";
 "Merge" = "Merge";
+"Open a repository to use these" = "Mở một kho lưu trữ để dùng các mục này";
 "Pop latest stash" = "Áp dụng stash mới nhất";
 "Pop latest stash (none saved)" = "Áp dụng stash mới nhất (chưa lưu stash nào)";
 "Previous match" = "Kết quả trước";
@@ -1139,9 +1141,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Kết nối tài khoản GitHub hoặc GitLab để tìm kiếm kho lưu trữ của tài khoản đó.";
 "Remote branches" = "Nhánh từ xa";
 "Section" = "Mục";
-"Show compare" = "Hiện so sánh";
-"Show flows" = "Hiện luồng";
-"Show home" = "Hiện trang chủ";
 "(current)" = "(hiện tại)";
 "Checking saved account access…" = "Đang kiểm tra quyền truy cập tài khoản đã lưu…";
 "Allow access to the saved account to use repository services." = "Cho phép truy cập tài khoản đã lưu để dùng các dịch vụ kho lưu trữ.";
@@ -1775,7 +1774,6 @@
 "Shelve" = "Gác lại";
 "Shelved" = "Đã gác lại";
 "Shelved %@" = "Đã gác lại %@";
-"Show ledger" = "Hiện sổ theo dõi";
 "Show less" = "Thu gọn";
 "Show more" = "Xem thêm";
 "Show only %@" = "Chỉ hiện “%@”";

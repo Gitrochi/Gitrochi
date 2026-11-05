@@ -3,8 +3,10 @@
 "Compare with %@" = "%1$@ と比較";
 "Development" = "開発";
 "Fast-forward only" = "早送りのみ";
+"Go" = "移動";
 "Merge" = "マージ";
 "Newest first" = "新しい順";
+"Open a repository to use these" = "これらを使うにはリポジトリを開いてください";
 "Pop latest stash" = "最新のスタッシュを適用";
 "Pop latest stash (none saved)" = "最新のスタッシュを適用 (保存なし)";
 "Pull as configured in git" = "git の設定どおりにプル";
@@ -1757,11 +1759,9 @@
 
 /* Shared workspace navigation and account messages. */
 "merged" = "マージ済み";
-"Show compare" = "比較を表示";
 "closed" = "クローズ";
 "Drag to resize the column" = "ドラッグして列の幅を変更";
 "Run #%lld" = "実行 #%1$lld";
-"Show home" = "ホームを表示";
 "Description (Markdown)" = "説明(Markdown)";
 "Copy folder path" = "フォルダのパスをコピー";
 "Comparing…" = "比較中…";
@@ -1770,7 +1770,6 @@
 "Checking saved account access…" = "保存済みアカウントへのアクセスを確認中…";
 "Copy redacted log" = "秘密情報を伏せたログをコピー";
 "Click to bring %@ to the front" = "クリックすると %1$@ を前面に表示します";
-"Show flows" = "フローを表示";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ を開けませんでした: Git リポジトリの中にありません。";
 "Search pull requests" = "プルリクエストを検索";
 "Icons and text" = "アイコンとテキスト";
@@ -2543,7 +2542,6 @@
 "Shelve" = "保留";
 "Shelved" = "保留中";
 "Shelved %@" = "%@ を保留にしました";
-"Show ledger" = "台帳を表示";
 "Show less" = "折りたたむ";
 "Show more" = "さらに表示";
 "Show only %@" = "%@ だけ表示";

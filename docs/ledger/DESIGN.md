@@ -491,7 +491,7 @@ Product rules. Widening any of them needs the maintainer's approval, recorded he
 
 ### 10.1 Placement
 
-- A new workspace destination `ledger`, titled **Ledger** (D1), in the sidebar's **Tools** group under Flows (symbol `checklist` · lucide `ListChecks`), with a badge = `attention.total`; `⌘7` / `Ctrl+7`, both free today. It opens without a repository (`needsRepository = false`) and filters to the current repository's project when there is one.
+- A new workspace destination `ledger`, titled **Ledger** (D1), in the sidebar's **Tools** group under Flows (symbol `checklist` · lucide `ListChecks`), with a badge = `attention.total`; `⌘9` / `Ctrl+9` since the page shortcuts follow the sidebar's order (#328; `⌘7` / `Ctrl+7` before). It opens without a repository (`needsRepository = false`) and filters to the current repository's project when there is one.
 - The destination is shown without any environment variable. Until wave 2 wired the native backend it was hidden behind `GITROCHI_LEDGER_PREVIEW=1`; launch tracking, the heartbeat, notifications and the badge kept that requirement on top of their own switches until 2026-11-03, when each became controlled by its switch alone. The app no longer reads the variable. `GITROCHI_LEDGER_DEMO` still selects demo data and `GITROCHI_LEDGER=0` still turns the core off.
 
 ### 10.2 Layout

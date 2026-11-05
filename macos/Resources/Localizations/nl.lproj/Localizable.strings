@@ -4,7 +4,9 @@
 "Compare with %@" = "Vergelijken met %1$@";
 "Fast-forward only" = "Alleen fast-forward";
 "Find in file" = "Zoeken in bestand";
+"Go" = "Ga";
 "Merge" = "Merge";
+"Open a repository to use these" = "Open een repository om deze te gebruiken";
 "Pop latest stash" = "Laatste stash toepassen";
 "Pop latest stash (none saved)" = "Laatste stash toepassen (geen opgeslagen)";
 "Previous match" = "Vorige overeenkomst";
@@ -1127,9 +1129,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Koppel een GitHub- of GitLab-account om de repositories ervan te doorzoeken.";
 "Remote branches" = "Externe branches";
 "Section" = "Sectie";
-"Show compare" = "Vergelijking tonen";
-"Show flows" = "Flows tonen";
-"Show home" = "Start tonen";
 "(current)" = "(huidig)";
 "Checking saved account access…" = "Toegang tot het opgeslagen account wordt gecontroleerd…";
 "Allow access to the saved account to use repository services." = "Sta toegang tot het opgeslagen account toe om repositorydiensten te gebruiken.";
@@ -1762,7 +1761,6 @@
 "Shelve" = "In de wacht zetten";
 "Shelved" = "In de wacht";
 "Shelved %@" = "%@ in de wacht gezet";
-"Show ledger" = "Logboek tonen";
 "Show less" = "Minder tonen";
 "Show more" = "Meer tonen";
 "Show only %@" = "Alleen ‘%@’ tonen";

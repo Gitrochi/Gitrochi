@@ -70,9 +70,34 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
             guard let self else { return }
             self.measurementScheduled = false
             self.refreshObservers()
-            guard let collapsed = self.measuredCollapse(), collapsed != self.lastValue else { return }
+            guard let collapsed = self.measuredCollapse() else { return }
+            if !collapsed { self.scheduleWidthCorrection() }
+            guard collapsed != self.lastValue else { return }
             self.lastValue = collapsed
             self.onChange(collapsed)
+        }
+    }
+
+    private var widthCorrectionScheduled = false
+    /// AppKit opens a window's page list at 144pt, below its 210pt minimum, and SwiftUI's column width does not move it.
+    /// Once the list has settled (after any expand animation), a list still that narrow opens at the design's 240pt.
+    private func scheduleWidthCorrection() {
+        guard !widthCorrectionScheduled else { return }
+        widthCorrectionScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self else { return }
+            self.widthCorrectionScheduled = false
+            var child: NSView = self
+            while let parent = child.superview {
+                if let split = parent as? NSSplitView, split.isVertical,
+                   split.arrangedSubviews.first === child {
+                    if !split.isSubviewCollapsed(child), child.frame.width > 1, child.frame.width < 210 {
+                        split.setPosition(240, ofDividerAt: 0)
+                    }
+                    return
+                }
+                child = parent
+            }
         }
     }
 

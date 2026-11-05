@@ -4,7 +4,9 @@
 "Compare with %@" = "与 %1$@ 比较";
 "Fast-forward only" = "仅快进";
 "Find in file" = "在文件中查找";
+"Go" = "前往";
 "Merge" = "合并";
+"Open a repository to use these" = "打开仓库后才能使用这些";
 "Pop latest stash" = "应用最新的贮藏";
 "Pop latest stash (none saved)" = "应用最新的贮藏（没有已保存的贮藏）";
 "Previous match" = "上一个匹配项";
@@ -1193,9 +1195,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "连接 GitHub 或 GitLab 账户后即可搜索其仓库。";
 "Remote branches" = "远程分支";
 "Section" = "分区";
-"Show compare" = "显示比较";
-"Show flows" = "显示流程";
-"Show home" = "显示主页";
 "(current)" = "(当前)";
 "Checking saved account access…" = "正在检查已保存账户的访问权限…";
 "Allow access to the saved account to use repository services." = "允许访问已保存的账户以使用仓库服务。";
@@ -1958,7 +1957,6 @@
 "Shelve" = "搁置";
 "Shelved" = "已搁置";
 "Shelved %@" = "已搁置 %@";
-"Show ledger" = "显示账本";
 "Show less" = "收起";
 "Show more" = "显示更多";
 "Show only %@" = "只显示%@";

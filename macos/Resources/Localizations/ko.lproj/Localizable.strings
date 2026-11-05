@@ -2,7 +2,9 @@
 "All branches…" = "모든 브랜치…";
 "Compare with %@" = "%1$@ 기준으로 비교";
 "Fast-forward only" = "fast-forward만";
+"Go" = "이동";
 "Merge" = "병합";
+"Open a repository to use these" = "이 항목을 쓰려면 저장소를 여세요";
 "Pop latest stash" = "가장 최근 stash 꺼내기";
 "Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
 "Pull as configured in git" = "git 설정대로 Pull";
@@ -1303,7 +1305,6 @@
 "Columns" = "칸";
 
 /* 목적별 작업 화면과 커밋 준비 */
-"Workspace" = "작업 화면";
 "Show history" = "히스토리 보기";
 "Repository tools" = "저장소 도구";
 "Branches" = "브랜치";
@@ -1920,7 +1921,6 @@
 "GitHub didn't allow account verification (403). Check the login's permissions, then retry connecting." = "GitHub가 계정 확인을 허용하지 않았습니다(403). 로그인 권한을 확인한 뒤 계정 연결을 다시 시도하세요.";
 "GitHub account verification failed (HTTP %@). Retry connecting." = "GitHub 계정 확인에 실패했습니다(HTTP %@). 계정 연결을 다시 시도하세요.";
 "Keychain error %@." = "키체인 오류 %@.";
-"Open a repository to get started" = "저장소를 열어 시작하세요";
 "Repository shortcuts" = "저장소 바로가기";
 
 "Connect project access for this GitHub account to load projects." = "프로젝트를 불러오려면 이 GitHub 계정에 프로젝트 접근 권한을 연결하세요.";
@@ -2019,8 +2019,6 @@
 "Repository overview" = "저장소 개요";
 "Pull ↓%lld" = "풀 ↓%lld";
 "Push ↑%lld" = "푸시 ↑%lld";
-"Show pull requests" = "풀 리퀘스트 보기";
-"Show CI/CD" = "CI/CD 보기";
 "Branch details" = "브랜치 상세";
 "Pull request" = "풀 리퀘스트";
 "Back (Esc)" = "돌아가기 (Esc)";
@@ -2135,9 +2133,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "GitHub 또는 GitLab 계정을 연결하면 그 계정의 저장소를 검색할 수 있습니다.";
 "Remote branches" = "원격 브랜치";
 "Section" = "구분";
-"Show compare" = "비교 보기";
-"Show flows" = "플로 보기";
-"Show home" = "홈 보기";
 "(current)" = "(현재)";
 "Compare with the current branch" = "현재 브랜치와 비교";
 "Filter branches and tags" = "브랜치·태그 검색";
@@ -3603,7 +3598,6 @@
 "Shelve" = "보관";
 "Shelved" = "보관됨";
 "Shelved %@" = "%@을(를) 보관했습니다";
-"Show ledger" = "원장 보기";
 "Show less" = "접기";
 "Show more" = "더 보기";
 "Show only %@" = "%@만 보기";

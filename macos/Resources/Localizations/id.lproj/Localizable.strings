@@ -4,7 +4,9 @@
 "Compare with %@" = "Bandingkan dengan %1$@";
 "Fast-forward only" = "Hanya fast-forward";
 "Find in file" = "Cari dalam file";
+"Go" = "Pergi";
 "Merge" = "Merge";
+"Open a repository to use these" = "Buka repositori untuk menggunakannya";
 "Pop latest stash" = "Terapkan stash terakhir";
 "Pop latest stash (none saved)" = "Terapkan stash terakhir (tidak ada)";
 "Previous match" = "Kecocokan sebelumnya";
@@ -1134,9 +1136,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Hubungkan akun GitHub atau GitLab untuk mencari repositorinya.";
 "Remote branches" = "Cabang remote";
 "Section" = "Bagian";
-"Show compare" = "Tampilkan perbandingan";
-"Show flows" = "Tampilkan alur";
-"Show home" = "Tampilkan beranda";
 "(current)" = "(saat ini)";
 "Checking saved account access…" = "Memeriksa akses ke akun tersimpan…";
 "Allow access to the saved account to use repository services." = "Izinkan akses ke akun tersimpan untuk menggunakan layanan repositori.";
@@ -1770,7 +1769,6 @@
 "Shelve" = "Simpan dulu";
 "Shelved" = "Disimpan dulu";
 "Shelved %@" = "%@ disimpan dulu";
-"Show ledger" = "Tampilkan Buku Log";
 "Show less" = "Tampilkan lebih sedikit";
 "Show more" = "Tampilkan lebih banyak";
 "Show only %@" = "Tampilkan hanya “%@”";

@@ -4,7 +4,9 @@
 "Compare with %@" = "เปรียบเทียบกับ %1$@";
 "Fast-forward only" = "fast-forward เท่านั้น";
 "Find in file" = "ค้นหาในไฟล์";
+"Go" = "ไป";
 "Merge" = "เมิร์จ";
+"Open a repository to use these" = "เปิดรีโพสิทอรีเพื่อใช้รายการเหล่านี้";
 "Pop latest stash" = "นำสแตชล่าสุดกลับมาใช้";
 "Pop latest stash (none saved)" = "นำสแตชล่าสุดกลับมาใช้ (ไม่มีที่เก็บไว้)";
 "Previous match" = "รายการที่ตรงกันก่อนหน้า";
@@ -1177,9 +1179,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "เชื่อมต่อบัญชี GitHub หรือ GitLab เพื่อค้นหาที่เก็บของบัญชีนั้น";
 "Remote branches" = "สาขาระยะไกล";
 "Section" = "ส่วน";
-"Show compare" = "แสดงการเปรียบเทียบ";
-"Show flows" = "แสดงโฟลว์";
-"Show home" = "แสดงหน้าแรก";
 "(current)" = "(ปัจจุบัน)";
 "Checking saved account access…" = "กำลังตรวจสอบสิทธิ์เข้าถึงบัญชีที่บันทึกไว้…";
 "Allow access to the saved account to use repository services." = "อนุญาตให้เข้าถึงบัญชีที่บันทึกไว้เพื่อใช้บริการของคลัง";
@@ -1809,7 +1808,6 @@
 "Shelve" = "พักไว้";
 "Shelved" = "พักไว้แล้ว";
 "Shelved %@" = "พัก %@ ไว้แล้ว";
-"Show ledger" = "แสดงสมุดบันทึก";
 "Show less" = "แสดงน้อยลง";
 "Show more" = "แสดงเพิ่ม";
 "Show only %@" = "แสดงเฉพาะ “%@”";
