@@ -40,8 +40,9 @@ private struct FlowConnectionsSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Label("Connected services", systemImage: "network").font(.title3.weight(.semibold))
-            HSplitView {
-                sidebar.frame(minWidth: 160, idealWidth: 180, maxWidth: 210)
+            FlowSplitView(initialFraction: 0.22, minimumLeading: 170, minimumTrailing: 430, maximumLeading: 210) {
+                sidebar
+            } trailing: {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         fields
@@ -52,7 +53,7 @@ private struct FlowConnectionsSheet: View {
                         Text("GitHub Actions and GitLab history, jobs and controls appear in the repository CI panel. Jenkins and other providers run through reviewed CI modules; HTTP CI endpoints are configured per module.")
                             .font(.caption).foregroundStyle(.secondary)
                     }.padding(.horizontal, 14)
-                }.frame(minWidth: 430)
+                }
             }
             HStack { if busy { ProgressView().controlSize(.small) }; Spacer(); Button("Done") { dismiss() }.disabled(busy) }
         }
@@ -85,24 +86,33 @@ private struct FlowConnectionsSheet: View {
 
     private var fields: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LabeledContent("Connection name") { TextField("build-server", text: $draft.name).disabled(selected != nil) }
-            Picker("Provider", selection: $draft.kind) {
-                Text("GitHub Actions").tag("github"); Text("GitLab CI/CD").tag("gitlab"); Text("Jenkins").tag("jenkins")
-                Text("HTTP CI").tag("http"); Text("Webhook").tag("webhook")
+            field("Connection name") { TextField("build-server", text: $draft.name).disabled(selected != nil) }
+            field("Provider") {
+                Picker("Provider", selection: $draft.kind) {
+                    Text("GitHub Actions").tag("github"); Text("GitLab CI/CD").tag("gitlab"); Text("Jenkins").tag("jenkins")
+                    Text("HTTP CI").tag("http"); Text("Webhook").tag("webhook")
+                }.labelsHidden()
             }
-            LabeledContent("Server address") { TextField("https://ci.example.com", text: $draft.url) }
-            LabeledContent("User (optional)") { TextField("", text: Binding(get: { draft.user ?? "" }, set: { draft.user = $0.isEmpty ? nil : $0 })) }
-            LabeledContent("Project (optional)") { TextField("owner/repository", text: Binding(get: { draft.project ?? "" }, set: { draft.project = $0.isEmpty ? nil : $0 })) }
+            field("Server address") { TextField("https://ci.example.com", text: $draft.url) }
+            field("User (optional)") { TextField("", text: Binding(get: { draft.user ?? "" }, set: { draft.user = $0.isEmpty ? nil : $0 })) }
+            field("Project (optional)") { TextField("owner/repository", text: Binding(get: { draft.project ?? "" }, set: { draft.project = $0.isEmpty ? nil : $0 })) }
             VStack(alignment: .leading, spacing: 5) {
-                LabeledContent("Credential reference") { TextField("env:CI_TOKEN", text: $draft.secret).autocorrectionDisabled() }
+                field("Credential reference") { TextField("env:CI_TOKEN", text: $draft.secret).autocorrectionDisabled() }
                 Text("Use env:CI_TOKEN, app:account-id or gh:login. Existing saved tokens can use keystore.").font(.caption).foregroundStyle(.secondary)
             }
-            LabeledContent("Allowed jobs (comma separated)") {
+            field("Allowed jobs (comma separated)") {
                 TextField("team/*", text: Binding(get: { draft.allow.joined(separator: ", ") }, set: {
                     draft.allow = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                 }))
             }
         }.textFieldStyle(.roundedBorder).disabled(busy)
+    }
+
+    private func field<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title).font(.caption.weight(.medium))
+            content().frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private var actions: some View {

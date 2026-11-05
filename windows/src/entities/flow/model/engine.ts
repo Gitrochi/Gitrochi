@@ -3,7 +3,7 @@ import { ipc } from "@/shared/api";
 import { env, isWindows, joinPath, slash } from "@/shared/config";
 import { language, t } from "@/shared/i18n";
 import { type FlowDetached, type FlowGate, type FlowInitProposal, type FlowList, type FlowPlan, type FlowRunRow, parseEngineError } from "./types";
-import type { FlowBlock, FlowDesignInspection, FlowDesignRender, FlowDocument } from "./design";
+import type { FlowBlock, FlowDesignInspection, FlowDesignRender, FlowDocument, FlowSourceFile } from "./design";
 
 /**
  * Calls the flow engine (gitch-flow, tools/gitch-flow), like the macOS FlowEngine.swift. The app's gitch-flow.exe comes first,
@@ -70,6 +70,14 @@ class FlowEngineService {
   }
 
   async blocks(repo: string) { return (await this.json<{ blocks: FlowBlock[] }>(["blocks"], repo)).blocks; }
+
+  sourceFile(repo: string, path: string) {
+    return this.designRequest<FlowSourceFile>("source", { operation: "read", path }, repo);
+  }
+
+  saveSourceFile(repo: string, path: string, content: string, expected: string | null, createParents = false) {
+    return this.designRequest<FlowSourceFile>("source", { operation: "write", path, content, expected, ...(createParents ? { createParents: true } : {}) }, repo);
+  }
 
   /** A command that prints JSON. On failure it throws the engine's error envelope. */
   async json<T>(args: string[], repo: string, ok: number[] = [0], timeoutMs = 120_000): Promise<T> {

@@ -15,6 +15,8 @@ enum FlowGraphLayout {
         let items: [Item]
         let width: CGFloat
         let height: CGFloat
+        var missingDependencies: [String] = []
+        var unresolved: [String] = []
     }
 
     static let cardWidth: CGFloat = 220
@@ -29,6 +31,7 @@ enum FlowGraphLayout {
         var seen = Set<String>()
         let nodes = input.filter { seen.insert($0.id).inserted }
         let known = Set(nodes.map(\.id))
+        let missing = nodes.flatMap { node in node.needs.filter { !known.contains($0) }.map { node.id + " → " + $0 } }.sorted()
         var remaining: [String: Int] = [:]
         var children: [String: [String]] = [:]
         var levels: [String: Int] = [:]
@@ -61,6 +64,7 @@ enum FlowGraphLayout {
         }
         return Layout(items: items,
                       width: max(276, (items.map(\.x).max() ?? 28) + cardWidth + 28),
-                      height: max(168, (items.map(\.y).max() ?? 28) + cardHeight + 28))
+                      height: max(168, (items.map(\.y).max() ?? 28) + cardHeight + 28),
+                      missingDependencies: Array(Set(missing)).sorted(), unresolved: nodes.filter { remaining[$0.id, default: 0] > 0 }.map(\.id))
     }
 }

@@ -2,13 +2,14 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// Visual forms are the default; YAML remains available for advanced settings.
+/// Code is authoritative; modules and the live diagram are alternate views of the same source.
 struct FlowEditorSheet: View {
     let flows: FlowStore
     var initialFlow: String? = nil
     var initialNode: String? = nil
     @Environment(\.dismiss) private var dismiss
     @ViewState private var design: FlowAuthoringStore?
+    @ViewState private var related: FlowRelatedFileStore?
     @ViewState private var mode = 0
     @ViewState private var confirmClose = false
     @ViewState private var pendingFile: String?
@@ -20,10 +21,14 @@ struct FlowEditorSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
-            if let design {
+            if let design, let related {
                 controls(design)
                 if design.loading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
-                else if mode == 0, design.editable {
+                else if mode == 0 {
+                    FlowCodeAuthoringView(design: design, related: related)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.quaternary))
+                } else if design.editable {
                     FlowVisualEditor(design: design)
                         .id(design.file)
                         .disabled(design.saving || design.loading)
@@ -36,14 +41,14 @@ struct FlowEditorSheet: View {
         }
         .padding(18).frame(minWidth: 980, idealWidth: 1180, minHeight: 700, idealHeight: 820)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(dropTarget ? Color.accentColor : .clear, lineWidth: 3))
-        .interactiveDismissDisabled(design?.dirty == true || design?.saving == true)
+        .interactiveDismissDisabled(design?.dirty == true || design?.saving == true || related?.dirty == true || related?.saving == true)
         .onDrop(of: [UTType.fileURL.identifier], isTargeted: $dropTarget, perform: receiveDrop)
         .confirmationDialog("Discard unsaved changes?", isPresented: $confirmClose) {
             Button("Discard changes", role: .destructive) { dismiss() }
             Button("Keep editing", role: .cancel) {}
         }
         .confirmationDialog("Discard unsaved changes?", isPresented: Binding(get: { pendingFile != nil }, set: { if !$0 { pendingFile = nil } }), presenting: pendingFile) { file in
-            Button("Discard changes", role: .destructive) { pendingFile = nil; Task { await design?.load(file) } }
+            Button("Discard changes", role: .destructive) { pendingFile = nil; Task { related?.close(); await design?.load(file) } }
             Button("Keep editing", role: .cancel) { pendingFile = nil }
         }
         .sheet(item: $pendingImport) { draft in
@@ -58,10 +63,10 @@ struct FlowEditorSheet: View {
         .task {
             let model = FlowAuthoringStore(flows: flows, initialFlow: initialFlow, initialNode: initialNode)
             design = model
+            related = FlowRelatedFileStore(repo: flows.repo)
             await model.initialize()
-            if !model.editable { mode = 1 }
         }
-        .task(id: design?.revision) { await design?.updatePreview() }
+        .task(id: design?.revision) { if mode == 1 { await design?.updatePreview() } }
     }
 
     private var header: some View {
@@ -69,8 +74,8 @@ struct FlowEditorSheet: View {
             Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 21)).foregroundStyle(Color.accentColor)
                 .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 4) {
-                Text("Design flows").font(.title3.weight(.semibold))
-                Text("Add modules, configure inputs and connect dependencies. Scripts run only when you start a flow.").font(.caption).foregroundStyle(.secondary)
+                Text("Edit flow code").font(.title3.weight(.semibold))
+                Text("Edit the flow definition and related files. The diagram follows your code; nothing runs automatically.").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             if design?.dirty == true { Label("Unsaved changes", systemImage: "circle.fill").font(.caption2).foregroundStyle(.secondary) }
@@ -79,32 +84,33 @@ struct FlowEditorSheet: View {
 
     private func controls(_ model: FlowAuthoringStore) -> some View {
         HStack(spacing: 12) {
+            Text("Flow file").font(.callout)
             Picker("Flow file", selection: Binding(get: { model.file }, set: { file in
-                if model.dirty { pendingFile = file } else { Task { await model.load(file) } }
-            })) { ForEach(model.files, id: \.self) { Text($0).tag($0) } }.frame(maxWidth: 400)
+                if model.dirty { pendingFile = file } else { Task { related?.close(); await model.load(file) } }
+            })) { ForEach(model.files, id: \.self) { Text($0).tag($0) } }.labelsHidden().frame(minWidth: 180, idealWidth: 260, maxWidth: 340, alignment: .leading)
             Spacer()
             Picker("Editor", selection: Binding(get: { mode }, set: { selected in
-                if selected == 0, mode == 1 {
+                if selected == 1, mode == 0 {
                     Task {
                         model.loading = true
                         defer { model.loading = false }
-                        do { try await model.inspect(); model.fieldErrors = [:]; if model.editable { mode = 0 } }
+                        do { try await model.inspect(); model.fieldErrors = [:]; if model.editable { related?.close(); mode = 1 } }
                         catch { model.error = error.localizedDescription }
                     }
-                } else if selected == 1, mode == 0, model.editable {
+                } else if selected == 0, mode == 1, model.editable {
                     Task {
                         model.loading = true
                         defer { model.loading = false }
-                        do { try await model.prepareSource(); mode = 1 }
+                        do { try await model.prepareSource(); try await model.inspect(); mode = 0 }
                         catch { model.error = error.localizedDescription }
                     }
                 } else { mode = selected }
             })) {
-                Text("Visual").tag(0)
-                Text("YAML").tag(1)
-            }.labelsHidden().pickerStyle(.segmented).frame(width: 150)
+                Text("Code").tag(0)
+                Text("Modules").tag(1)
+            }.labelsHidden().pickerStyle(.segmented).frame(width: 180)
             Button { chooseImport() } label: { Label("Import file…", systemImage: "square.and.arrow.down") }
-        }.controlSize(.small).disabled(model.loading || model.saving)
+        }.controlSize(.small).disabled(model.loading || model.saving || model.formatting || related?.dirty == true || related?.saving == true || related?.loading == true)
     }
 
     private func sourceEditor(_ model: FlowAuthoringStore) -> some View {
@@ -122,11 +128,15 @@ struct FlowEditorSheet: View {
     }
 
     @ViewBuilder private func diagnostics(_ model: FlowAuthoringStore) -> some View {
-        if model.error != nil || !model.diagnostics.isEmpty || !model.fieldErrors.isEmpty {
+        if model.error != nil || !model.diagnostics.isEmpty || !model.fieldErrors.isEmpty || related?.error != nil || related?.diagnostics.isEmpty == false {
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     if let error = model.error { Text(error).foregroundStyle(.red) }
                     FlowDesignDiagnosticsView(diagnostics: model.diagnostics)
+                    if let related {
+                        if let error = related.error { Text(LocalizedStringKey(error)).foregroundStyle(.red) }
+                        FlowDesignDiagnosticsView(diagnostics: related.diagnostics)
+                    }
                     ForEach(model.fieldErrors.keys.sorted(), id: \.self) { key in Text(key + ": " + (model.fieldErrors[key] ?? "")).foregroundStyle(.red) }
                 }.font(.caption).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
             }.frame(maxHeight: 78)
@@ -138,20 +148,21 @@ struct FlowEditorSheet: View {
             if model.saving { ProgressView().controlSize(.small) }
             Label("Changed commands require review before the next run.", systemImage: "checkmark.shield").font(.caption).foregroundStyle(.secondary)
             Spacer()
-            Button("Cancel", role: .cancel) { if model.dirty { confirmClose = true } else { dismiss() } }
-                .keyboardShortcut(.cancelAction).disabled(model.saving)
+            Button("Cancel", role: .cancel) { if model.dirty || related?.dirty == true { confirmClose = true } else { dismiss() } }
+                .keyboardShortcut(.cancelAction).disabled(model.saving || related?.saving == true || related?.loading == true)
             Button("Validate and save") {
                 Task {
-                    do { try await model.save(visual: mode == 0 && model.editable); dismiss() }
+                    do { try await model.save(visual: mode == 1 && model.editable); dismiss() }
                     catch { model.error = error.localizedDescription }
                 }
-            }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                .disabled(model.loading || model.saving || !model.dirty || !model.fieldErrors.isEmpty)
+            }.buttonStyle(.borderedProminent).keyboardShortcut(related?.active == true ? nil : KeyboardShortcut("s", modifiers: .command))
+                .disabled(model.loading || model.saving || model.formatting || !model.dirty || !model.fieldErrors.isEmpty || related?.dirty == true || related?.saving == true || related?.loading == true)
+                .help("Save the open file before saving the flow. File saves are independent.")
         }
     }
 
     private func chooseImport() {
-        guard design?.saving == false, design?.loading == false else { return }
+        guard design?.saving == false, design?.loading == false, related?.dirty != true, related?.saving != true, related?.loading != true else { return }
         let panel = NSOpenPanel()
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
@@ -160,7 +171,7 @@ struct FlowEditorSheet: View {
     }
 
     private func receiveDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard providers.count == 1, let provider = providers.first, design?.saving == false, design?.loading == false else { return false }
+        guard providers.count == 1, let provider = providers.first, design?.saving == false, design?.loading == false, related?.dirty != true, related?.saving != true, related?.loading != true else { return false }
         provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
             let url: URL?
             if let value = item as? URL { url = value }
@@ -172,7 +183,7 @@ struct FlowEditorSheet: View {
     }
 
     private func inspectImport(_ url: URL) async {
-        guard let design, !design.saving, !design.loading else { return }
+        guard let design, !design.saving, !design.loading, related?.dirty != true, related?.saving != true, related?.loading != true else { return }
         let generation = UUID()
         importGeneration = generation
         let access = url.startAccessingSecurityScopedResource()
@@ -184,13 +195,13 @@ struct FlowEditorSheet: View {
             }
             let source = try String(contentsOf: url, encoding: .utf8)
             let inspection = try await FlowEngine.inspectDesign(source, file: url.lastPathComponent, in: flows.repo)
-            guard generation == importGeneration, !design.saving, !design.loading else { return }
+            guard generation == importGeneration, !design.saving, !design.loading, related?.dirty != true, related?.saving != true else { return }
             pendingImport = FlowImportDraft(name: url.lastPathComponent, inspection: inspection)
         } catch { if generation == importGeneration, !design.saving { design.error = error.localizedDescription } }
     }
 
     private func useImport(_ draft: FlowImportDraft, choice: FlowImportChoice) async {
-        guard let design, !design.saving, !design.loading else { return }
+        guard let design, !design.saving, !design.loading, related?.dirty != true, related?.saving != true else { return }
         if design.document != design.baseline || design.yaml != design.source {
             replacement = FlowImportReplacement(draft: draft, choice: choice)
             return
@@ -199,7 +210,7 @@ struct FlowEditorSheet: View {
     }
 
     private func applyImport(_ draft: FlowImportDraft, choice: FlowImportChoice) async {
-        guard let design, !design.saving, !design.loading else { return }
+        guard let design, !design.saving, !design.loading, related?.dirty != true, related?.saving != true else { return }
         replacement = nil
         do {
             switch choice {
@@ -208,6 +219,7 @@ struct FlowEditorSheet: View {
                 if let proposal = draft.inspection.proposal { try await design.importDraft(yaml: proposal.yaml, name: (draft.name as NSString).deletingPathExtension) }
             case .compose: try await design.importCompose(draft.inspection, name: (draft.name as NSString).deletingPathExtension)
             }
+            related?.close()
             mode = 0
         } catch { design.error = error.localizedDescription }
     }

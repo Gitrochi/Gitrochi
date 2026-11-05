@@ -91,6 +91,20 @@ inspection = json.loads((folder / "inspect.json").read_text())
 PY
 "$ENGINE" design render --json < "$T/render-request.json" > "$T/render.json"
 "$ENGINE" blocks --json > "$T/blocks.json"
+python3 - "$ENGINE" "$T" <<'PY'
+import json, pathlib, subprocess, sys
+engine, folder = sys.argv[1], pathlib.Path(sys.argv[2])
+def request(name, payload):
+    result = subprocess.run([engine, "design", "source", "--json"], input=json.dumps(payload), text=True, capture_output=True, check=True)
+    (folder / name).write_text(result.stdout)
+    return json.loads(result.stdout)
+opened = request("source-read.json", {"operation": "read", "path": "tests/r.sh"})
+saved = request("source-save.json", {"operation": "write", "path": "tests/r.sh", "content": opened["content"] + "# Edited in the code workspace\n", "expected": opened["fingerprint"]})
+request("source-conflict.json", {"operation": "write", "path": "tests/r.sh", "content": opened["content"], "expected": opened["fingerprint"]})
+request("source-create.json", {"operation": "write", "path": "tests/generated/created.sh", "content": "#!/bin/sh\nprintf 'created\\n'\n", "expected": None, "createParents": True})
+request("source-outside.json", {"operation": "read", "path": "../outside.sh"})
+assert saved["saved"] and pathlib.Path("tests/r.sh").read_text().endswith("# Edited in the code workspace\n")
+PY
 
 cat > "$T/main.swift" <<'SWIFT'
 import Foundation
@@ -152,10 +166,21 @@ import Foundation
         precondition(connection.problem == nil)
         connection.url = "https://user:password@ci.example.com"
         precondition(connection.problem != nil)
-        print("Flow contract passed: execution, history, design inspect/render, block forms, retained fields and connection references")
+        let openedSource = try dec.decode(FlowSourceResult.self, from: data("source-read.json"))
+        precondition(openedSource.exists && !openedSource.saved && !openedSource.hasErrors && openedSource.fingerprint?.count == 64)
+        let savedSource = try dec.decode(FlowSourceResult.self, from: data("source-save.json"))
+        precondition(savedSource.saved && !savedSource.hasErrors && savedSource.fingerprint != openedSource.fingerprint)
+        let conflict = try dec.decode(FlowSourceResult.self, from: data("source-conflict.json"))
+        precondition(!conflict.saved && conflict.hasErrors && conflict.diagnostics.first?.code == "SOURCE_CONFLICT")
+        let createdSource = try dec.decode(FlowSourceResult.self, from: data("source-create.json"))
+        precondition(createdSource.saved && createdSource.exists && createdSource.path == "tests/generated/created.sh" && createdSource.content?.contains("created") == true)
+        let outsideSource = try dec.decode(FlowSourceResult.self, from: data("source-outside.json"))
+        precondition(outsideSource.hasErrors && outsideSource.content == nil && !outsideSource.saved)
+        print("Flow contract passed: execution, history, design inspect/render, safe source editing, block forms, retained fields and connection references")
     }
 }
 SWIFT
 swiftc -parse-as-library "$ROOT/Sources/Core/FlowModels.swift" "$ROOT/Sources/Core/FlowDesignModels.swift" "$ROOT/Sources/Core/FlowConnectionModels.swift" "$T/main.swift" -o "$T/test-flow"
 "$T/test-flow" "$T"
 bash "$ROOT/Tools/test-flow-authoring.sh"
+bash "$ROOT/Tools/test-flow-creation.sh"
