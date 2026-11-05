@@ -97,7 +97,7 @@ struct ProjectWorkspace: View {
             guard detail != nil, lastViewKey != settingsKey else { return }
             lastViewKey = settingsKey
             selectedID = nil
-            let saved = UserDefaults.standard.string(forKey: settingsKey + ".layout") ?? "overview"
+            let saved = UserDefaults.standard.string(forKey: settingsKey + ".layout") ?? (store.hubProvider == .github && !isLocal ? "table" : "overview")
             layout = store.hubProvider == .github || ["board", "table", "roadmap"].contains(saved) ? saved : "board"
             scheduleSettings = ProjectSchedulePreferences.load(accountID: scheduleAccount, projectID: detail?.item.id ?? "")
             groupID = UserDefaults.standard.string(forKey: settingsKey + ".group") ?? ""
@@ -266,7 +266,7 @@ struct ProjectWorkspace: View {
     private func workspace(_ detail: HubDetail) -> some View {
         HStack(spacing: 0) {
             Group {
-                if layout == "overview" { ProjectDashboard(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, manageFields: { manage(isLocal ? .overview : .fields) }, addTask: { compose(.draft) }, openCalendar: { layout = "calendar" }) }
+                if layout == "overview" { ProjectDashboard(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, manageFields: { manage(isLocal ? .overview : .fields) }, addTask: { compose(.draft) }, openCalendar: { layout = "calendar" }, viewAllTasks: { layout = "table"; sharedViewID = nil; filter = ProjectWorkbenchFilter(); filter.includeArchived = true }) }
                 else if layout == "calendar" { ProjectCalendar(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, reschedule: reschedule, manageFields: { manage(isLocal ? .overview : .fields) }) }
                 else if layout == "table" { ProjectTaskTable(rows: rows, fields: tableFields, selectedID: selectedID, selectedItems: selectedItems, select: select, edit: editField,
                     setField: { row, field, value in await saveField(row, field: field, detail: detail, value: value) }, canEdit: !locked && !hub.uncertainWrite).id(detail.item.id) }

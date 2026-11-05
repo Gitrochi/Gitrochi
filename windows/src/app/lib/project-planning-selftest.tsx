@@ -8,7 +8,7 @@ const pause = (ms = 25) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 /** Home and Projects are mounted together to verify the real task handoff without remote writes. */
 export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
-  const fixture = planningFixture(),
+  const fixture = planningFixture({ organization: true }),
     host = document.createElement("div");
   host.hidden = true;
   document.body.append(host);
@@ -48,6 +48,28 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
       await until(() => !!host.querySelector(".planning-dashboard")),
       "Home planning dashboard missing",
     );
+    ensure(fixture.store.target === null && fixture.store.path === null, "Organization planning unexpectedly required a repository");
+    ensure(host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:team", "Home did not preserve its organization scope without a repository");
+    const organizationScope = host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(organizationScope, "other");
+    organizationScope.dispatchEvent(new Event("change", { bubbles: true }));
+    ensure(await until(() => !!host.querySelector(`input[aria-label="${t("Organization login")}"]`)), "Manual organization entry missing");
+    const enterOrganization = (value: string) => {
+      const organizationInput = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Organization login")}"]`)!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(organizationInput, value);
+      organizationInput.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    enterOrganization("invalid/organization"); await pause();
+    ensure(button("Open organization")!.disabled, "Invalid organization login was accepted");
+    enterOrganization("TEAM"); await pause(); button("Open organization")!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:team"), "Organization login casing changed the visible scope");
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(organizationScope, "other");
+    organizationScope.dispatchEvent(new Event("change", { bubbles: true })); await pause();
+    enterOrganization("shared-team"); await pause(); button("Open organization")!.click();
+    ensure(await until(() => host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)?.value === "organization:shared-team"), "An organization outside the membership list could not be selected");
+    const scope = host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Project scope")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(scope, "organization:team");
+    scope.dispatchEvent(new Event("change", { bubbles: true })); await pause();
     ensure(
       JSON.stringify(metricCounts()) === JSON.stringify([1, 1, 2, 1, 1]),
       "Home metrics did not deduplicate shared issues",
@@ -172,6 +194,7 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
       ),
       "Home did not open the exact task in Projects",
     );
+    ensure(fixture.store.hostingHub.projectScope === "organization:team", "Home lost organization scope during navigation to Projects");
     ensure(
       fixture.store.hostingHub.detail?.item.id === "QUALITY" &&
         fixture.store.hostingHub.requestedProjectRowID === null &&
@@ -204,7 +227,7 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
     ensure(fixture.writes === 0, "Home planning issued a remote mutation");
     return [
       true,
-      "Home deduplicated metrics + task/project search + assignee and overdue filters + week navigation + project selection persistence + unavailable selection removal + exact earliest-date page-2 project/task handoff + one-time inspector focus without remote writes",
+      "Organization Home without a repository + preserved organization project/task handoff + Home deduplicated metrics + task/project search + assignee and overdue filters + week navigation + project selection persistence + unavailable selection removal + exact earliest-date page-2 project/task handoff + one-time inspector focus without remote writes",
     ];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
@@ -220,4 +243,37 @@ export async function projectPlanningSelfTest(): Promise<[boolean, string]> {
       /* Only isolated fixture preferences. */
     }
   }
+}
+
+/** Exercises a real three-page organization project through Home and the complete task table. */
+export async function projectItemCompletenessSelfTest(): Promise<[boolean, string]> {
+  const fixture = planningFixture({organization:true,complete:true}), host = document.createElement("div");
+  host.hidden = true; document.body.append(host);
+  const root = createRoot(host), ensure = (condition:boolean,message:string) => {if(!condition)throw new Error(message);};
+  const until = async (test:() => boolean) => {for(let i=0;i<160;i++){if(test())return true;await pause();}return false;};
+  const button = (label:string) => [...host.querySelectorAll<HTMLButtonElement>("button")].find(item => item.textContent?.trim() === t(label));
+  try {
+    await fixture.load();
+    ensure(fixture.store.target === null && fixture.data.details[0].rows.length === 203 && !fixture.data.details[0].more, "Organization project did not load every issue, draft, archived item and restricted placeholder");
+    ensure(fixture.itemPages === 2, "Home did not read all three project pages");
+    root.render(<PlanningFixtureShell fixture={fixture}/>);
+    ensure(await until(() => host.querySelectorAll(".planning-agenda .planning-task").length === 16), "Home agenda preview missing");
+    let expanded = 0;
+    while (button("Show more tasks") && expanded < 10) {button("Show more tasks")!.click();expanded++;await pause();}
+    ensure(host.querySelectorAll(".planning-agenda .planning-task").length === 67 && !button("Show more tasks"), "Home agenda could not expose every active task after its first sixteen");
+    ensure(host.querySelector(".planning-agenda")?.textContent?.includes("Final planning draft") === true, "The later-page draft remained hidden in Home");
+    fixture.store.navigate("projects");
+    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 103), "Fresh GitHub Projects did not open the complete unarchived task table");
+    ensure(fixture.store.hostingHub.detail?.rows.length === 203 && fixture.store.hostingHub.projectScope === "organization:team", "Projects lost the complete organization snapshot");
+    ensure(host.querySelector(".project-list")?.textContent?.includes("Delivery task 1") === true && host.querySelector(".project-list")?.textContent?.includes("Final planning draft") === true, "Closed issues or later drafts were absent from the task table");
+    button("Overview")!.click(); await pause();
+    const search = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Search project items")}"]`)!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(search,"does-not-match"); search.dispatchEvent(new Event("input",{bubbles:true}));await pause();
+    button("View all tasks")!.click();
+    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 203), "View all tasks did not clear filters and include archived items");
+    ensure(search.value === "", "View all tasks retained the prior search");
+    ensure(fixture.writes === 0, "Reading the complete project or changing views mutated GitHub");
+    return [true,"Three project pages + 203 mixed items without a repository + expandable Home agenda + fresh full task table including closed issues and late draft + View all tasks clears filters and includes archived items"];
+  } catch (error) {return [false,error instanceof Error ? error.message : String(error)];}
+  finally {root.unmount();host.remove();fixture.restore();}
 }

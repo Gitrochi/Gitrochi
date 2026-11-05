@@ -222,10 +222,9 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
       return { status: 200, body: JSON.stringify({ data: value }) };
     };
     root.render(<HostingHubPanel store={source} section="projects" />);
-    ensure(
-      await until(() => !!host.querySelector(".project-overview")),
-      "Default schedule overview missing",
-    );
+    ensure(await until(() => !!host.querySelector(".project-list")), "Default project table missing");
+    button("Overview")!.click();
+    ensure(await until(() => !!host.querySelector(".project-overview")), "Schedule overview missing");
     ensure(
       host.querySelectorAll(".project-schedule-metrics>button").length === 5,
       "Schedule metrics missing",

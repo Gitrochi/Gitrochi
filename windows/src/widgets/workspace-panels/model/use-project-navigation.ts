@@ -1,13 +1,13 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { HostAccount } from "@/entities/git";
-import type { HubItem } from "@/entities/hosting";
+import type { HubItem, HubProjectScope } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 /** Preload the exact project task before mounting Projects, including later item pages. */
 export function useProjectNavigation(
   store: RepoStore,
   account: HostAccount | undefined,
-  scope: "personal" | "repository",
+  scope: HubProjectScope,
   isCurrent: () => boolean,
   navigationContext: string,
   source: "local" | "remote" = "remote",

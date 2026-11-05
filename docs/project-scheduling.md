@@ -4,11 +4,17 @@ Home and Projects use the same GitHub Projects items and date-field settings. Sc
 
 ## Home
 
-Choose a connected GitHub account, a personal or repository-owner scope, and the projects to include. The selection is remembered on this device for that account and scope. Home initially loads three projects; add others with **Choose projects** and **Load more projects**.
+Choose a connected GitHub account, a personal, organization or repository-owner scope, and the projects to include. Organization projects work without opening a repository: select an organization from **Project scope** to load its accessible projects. Use **Load more organizations** when the account belongs to more organizations than the first page shows. The selection is remembered on this device for that account and scope. Home initially loads three projects; add others with **Choose projects** and **Load more projects**.
 
-The agenda groups attention around overdue, today, next seven days, unscheduled and completed work. Search titles, projects, repositories and assignees, or limit the agenda to work assigned to you. Week and Projects views show dated work and each project's loaded progress. Opening a task takes you to its project inspector and local development actions.
+The agenda groups attention around overdue, today, next seven days, unscheduled and completed work. Search titles, projects, repositories and assignees, or limit the agenda to work assigned to you. Use **Show more tasks** to expand the agenda beyond its initial rows. Week and Projects views show dated work and each project's loaded progress. Opening a task takes you to its project inspector and local development actions.
 
-An issue or pull request included in several selected projects is counted once. An active membership takes precedence over completed memberships, and the earliest valid active date determines the displayed schedule. Drafts remain separate project tasks. Counts cover loaded items; **Load more tasks** fetches the next page for a project. A failed refresh preserves previously loaded work and marks it as potentially out of date.
+An issue or pull request included in several selected projects is counted once. An active membership takes precedence over completed memberships, and the earliest valid active date determines the displayed schedule. Drafts remain separate project tasks. GitHub item queries read every page before publishing a project's snapshot, so initial loads and refreshes include later issues and drafts. A failed refresh preserves previously loaded work and marks it as potentially out of date. Project catalogs remain paginated independently of their items.
+
+## Complete project lists
+
+A GitHub project with no saved view opens in Table/List, including closed issues, completed work and undated drafts. Existing saved view choices remain available. The scheduling Overview is a focused summary; **View all tasks** opens the complete list and clears its task filters, including the archive filter. Restricted content remains a placeholder when GitHub does not permit the account to read it.
+
+Initial reads, edits, item creation and Home refreshes use the same complete item loader. It follows item cursors without a fixed page limit, keeps server ordering, deduplicates project-item IDs and checks the captured account/project context on every page. A missing, repeated or cyclic cursor is an error rather than a successful partial result. No live project items are changed while reading.
 
 ## Project overview and calendar
 
@@ -40,3 +46,13 @@ These captures use synthetic project and account data.
 - Rust was unchanged in this scheduling change, so `cargo check` was skipped.
 - The local macOS build succeeds with 13 existing warnings: two legacy Keychain API deprecations and eleven Rust standard-library deployment-target linker warnings. It is not a warning-free build.
 - The final macOS app was launched and its live account/project catalog, Home-to-project navigation, localized labels and accessibility names were checked. Live task data was not modified.
+
+### Complete-item loading
+
+The item-completeness regression checks cover more than two pages of mixed issues, drafts, archived items and restricted placeholders; sparse and duplicate-only pages; cursor failures; account changes; and edits/creation followed by complete refresh. The Windows suite passed 945 tests, and 63 targeted integration regressions passed in the existing workspace. The real browser fixture read 203 synthetic items through the production loader and verified full-list navigation and the expandable Home agenda. The macOS transport, hosting and portfolio scripts passed; the production query was also checked read-only against a connected project without saving its content or changing its items.
+
+Both application builds passed with the existing warnings. The macOS native fixture passed 104 English/Korean scenarios with no unexpected network requests.
+
+The `gitch test --affected --summary` wrapper still requires human flow approval (`TRUST-01`) and is not counted as a pass. Rust is unchanged, so `cargo check` is skipped. Existing build warnings remain documented above.
+
+Synthetic full-list captures: [Light](screenshots/project-item-completeness/windows-list-light.jpg) · [Dark](screenshots/project-item-completeness/windows-list-dark.jpg).

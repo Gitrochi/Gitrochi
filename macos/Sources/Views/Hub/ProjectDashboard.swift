@@ -12,6 +12,7 @@ struct ProjectDashboard: View {
     let manageFields: () -> Void
     var addTask: (() -> Void)? = nil
     var openCalendar: (() -> Void)? = nil
+    var viewAllTasks: (() -> Void)? = nil
     @ViewState private var focus = "focus"
     @ViewState private var width: CGFloat = 1000
     @ViewState private var today = ProjectSchedule.today()
@@ -73,6 +74,7 @@ struct ProjectDashboard: View {
             WorkbenchFlow(spacing: 12) {
                 if let addTask { Button(action: addTask) { Label("New task", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(locked) }
                 if let openCalendar { Button(action: openCalendar) { Label("Open calendar", systemImage: "calendar") }.buttonStyle(.bordered) }
+                if let viewAllTasks { Button("View all tasks", action: viewAllTasks).buttonStyle(.borderless) }
                 Label("Planning overview", systemImage: "sparkle").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
                 if let due = scheduleFields.due { Label(due.name, systemImage: "calendar").font(.caption).foregroundStyle(.secondary) }
                 ProjectScheduleConfiguration(fields: fields, settings: $settings, manageFields: manageFields).controlSize(.small)

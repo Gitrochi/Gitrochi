@@ -74,7 +74,7 @@ describe("hosting workspace endpoints",()=>{
    });
    expect((await hubPage(c(),"projects",1,"before")).cursor).toBe("next");
    expect(JSON.parse(http.mock.calls[0][3]!).variables.cursor).toBe("before");
-   const d=await hubDetail(c(),"projects",item());
+   const d=await hubDetail(c(),"projects",{...item(),id:"P"},2,"before-items");
    expect(d.fields[0].options[0].name).toBe("Done"); expect(d.rows[0].statuses.F).toBe("O"); expect(d.more).toBe(true);
  });
  it("supports account-only user projects",async()=>{const http=vi.spyOn(ipc,"http").mockResolvedValue(response({data:{user:{projectsV2:{nodes:[],pageInfo:{hasNextPage:false}}}}}));const a=c();a.target.path="me/workspace";await hubPage(a,"projects");expect(JSON.parse(http.mock.calls[0][3]!).query).toContain("user(login:$owner)");});
@@ -101,7 +101,7 @@ describe("hosting workspace endpoints",()=>{
 
  it("loads rich issue, PR, draft and redacted metadata plus every supported custom field",async()=>{
    const http=vi.spyOn(ipc,"http").mockResolvedValue(response({data:{node:{id:"P",title:"Plan",readme:"Project handbook",closed:false,public:true,updatedAt:"today",fields:{nodes:[{id:"S",name:"Status",options:[{id:"done",name:"Done"}]},{id:"T",name:"Notes",dataType:"TEXT"},{id:"N",name:"Estimate",dataType:"NUMBER"},{id:"D",name:"Due",dataType:"DATE"},{id:"I",name:"Sprint",configuration:{iterations:[{id:"current",title:"Sprint 2",startDate:"2026-10-20",duration:14}],completedIterations:[{id:"previous",title:"Sprint 1"}]}},{id:"L",name:"Labels",dataType:"LABELS"},{id:"M",name:"Teams",dataType:"MULTI_SELECT"}],pageInfo:{}},items:{nodes:[{id:"1",type:"ISSUE",isArchived:true,updatedAt:"project-newer",content:{__typename:"Issue",id:"C1",title:"Fix",number:12,state:"OPEN",repository:{nameWithOwner:"team/repo"},assignees:{nodes:[{login:"alex"}]},labels:{nodes:[{name:"bug"}]},updatedAt:"today"},fieldValues:{nodes:[{optionId:"done",field:{id:"S"}},{text:"Note",field:{id:"T"}},{number:0,field:{id:"N"}},{date:"2026-11-01",field:{id:"D"}},{iterationId:"current",field:{id:"I"}}],pageInfo:{}}},{id:"2",content:{__typename:"PullRequest",id:"C2",title:"Feature",headRefName:"feature/plan",state:"MERGED"}},{id:"3",content:{__typename:"DraftIssue",id:"C3",title:"Draft"}},{id:"4",type:"REDACTED",content:null}],pageInfo:{hasNextPage:false}}}}}));
-   const d=await hubDetail(c(),"projects",item());
+   const d=await hubDetail(c(),"projects",{...item(),id:"P"});
    expect(d.fields.map(field=>field.kind)).toEqual(["singleSelect","text","number","date","iteration","unsupported","unsupported"]);
    expect(d.fields[6]).toMatchObject({id:"M",name:"Teams",kind:"unsupported"});
    expect(d.fields[4].options).toMatchObject([{id:"current",startDate:"2026-10-20",duration:14},{id:"previous"}]);

@@ -8,7 +8,9 @@ import "../src/app/styles/global.css";
 const params = new URLSearchParams(location.search);
 await loadLanguage(params.get("lang") ?? "en");
 document.documentElement.dataset.theme = params.get("theme") ?? "light";
-const fixture = planningFixture();
+const fixture = planningFixture({ organization: params.has("organization"), complete: params.has("complete") });
+await fixture.load();
+if (params.has("project")) fixture.store.navigate("projects");
 createRoot(document.getElementById("root")!).render(
   <div
     style={{
@@ -42,11 +44,11 @@ if (params.get("view"))
         ?.click(),
     200,
   );
-if (params.has("selftest")) {
-  const { projectPlanningSelfTest } = await import(
+if (params.has("selftest") || params.has("complete-selftest")) {
+  const { projectPlanningSelfTest, projectItemCompletenessSelfTest } = await import(
     "../src/app/lib/project-planning-selftest"
   );
-  const result = await projectPlanningSelfTest();
+  const result = await (params.has("complete-selftest") ? projectItemCompletenessSelfTest() : projectPlanningSelfTest());
   const output = document.createElement("pre");
   output.id = "planning-selftest-result";
   output.dataset.passed = String(result[0]);

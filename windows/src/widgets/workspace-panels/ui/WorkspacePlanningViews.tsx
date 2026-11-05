@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   CalendarDays,
@@ -50,6 +51,8 @@ export function WorkspacePlanningViews({
   openProject: (item: HubItem, rowID?: string) => Promise<void>;
   loadMore: (id: string) => void;
 }) {
+  const [agendaLimit, setAgendaLimit] = useState(16);
+  useEffect(() => setAgendaLimit(16), [focus, filtered, mode]);
   const dateLabel = (day: string) =>
     new Intl.DateTimeFormat(language, {
       month: "short",
@@ -105,7 +108,7 @@ export function WorkspacePlanningViews({
             )}
           </div>
           {agenda.length ? (
-            agenda.slice(0, 16).map(taskRow)
+            agenda.slice(0, agendaLimit).map(taskRow)
           ) : (
             <p className="planning-empty">
               {t(
@@ -115,8 +118,8 @@ export function WorkspacePlanningViews({
               )}
             </p>
           )}
-          {agenda.length > 16 && (
-            <p className="muted">{t("Open a project to see its full plan.")}</p>
+          {agenda.length > agendaLimit && (
+            <Button size="small" onClick={() => setAgendaLimit(limit => limit + 16)}>{t("Show more tasks")}</Button>
           )}
         </div>
       )}

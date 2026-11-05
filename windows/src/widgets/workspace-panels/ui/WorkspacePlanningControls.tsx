@@ -1,6 +1,7 @@
+import { ProjectScopePicker } from "@/features/select-project-scope";
 import { Cloud, HardDrive, Plus } from "lucide-react";
 import { accountHost, type HostAccount } from "@/entities/git";
-import type { ProjectPortfolioState } from "@/entities/hosting";
+import type { HubProjectScope, ProjectPortfolioState } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
 export function WorkspacePlanningControls({
@@ -8,7 +9,7 @@ export function WorkspacePlanningControls({
   available,
   accountID,
   chooseAccount,
-  repositoryScope,
+  repositoryOwner,
   scope,
   chooseScope,
   data,
@@ -20,9 +21,9 @@ export function WorkspacePlanningControls({
   available: HostAccount[];
   accountID: string;
   chooseAccount: (id: string) => void;
-  repositoryScope: boolean;
-  scope: "personal" | "repository";
-  chooseScope: (value: "personal" | "repository") => void;
+  repositoryOwner: string | null;
+  scope: HubProjectScope;
+  chooseScope: (value: HubProjectScope) => void;
   data: ProjectPortfolioState;
   chooseProject: (id: string, checked: boolean) => void;
   loadMore: () => void;
@@ -44,18 +45,8 @@ export function WorkspacePlanningControls({
           ))}
         </select>
       )}
-      {!local && repositoryScope && (
-        <select
-          className="select"
-          aria-label={t("Project scope")}
-          value={scope}
-          onChange={(event) =>
-            chooseScope(event.target.value as "personal" | "repository")
-          }
-        >
-          <option value="personal">{t("My projects")}</option>
-          <option value="repository">{t("Repository owner projects")}</option>
-        </select>
+      {!local && available.some(account => account.id === accountID) && (
+        <ProjectScopePicker account={available.find(account => account.id === accountID)!} repositoryOwner={repositoryOwner} scope={scope} onChange={chooseScope}/>
       )}
       <details className="planning-project-picker">
         <summary>

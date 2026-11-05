@@ -69,7 +69,7 @@ function plan(rawName: unknown, source: HubProjectPlanSource, ownerKind: HubProj
 }
 /** Projects are available on Free; plan probes never pretend to prove Projects write permission. */
 export async function inspectHubProjectCreationCapabilities(c: HubAccess): Promise<HubProjectCreationCapabilities> {
-  github(c); const requestedOwner = c.target.path.split("/")[0] || c.me;
+  github(c); const requestedOwner = c.projectOrganization ?? (c.target.path.split("/")[0] || c.me);
   let viewer: ObjectValue = {}, owner: ObjectValue = {};
   try { viewer = await hubRequest<ObjectValue>(c, `${c.apiBase}/user`); } catch { ensureHubCurrent(c); }
   try { const data = await hubGraphql<ObjectValue>(c, "query($owner:String!){repositoryOwner(login:$owner){__typename id login}}", { owner: requestedOwner }); owner = object(data.repositoryOwner); } catch { ensureHubCurrent(c); }
@@ -90,10 +90,10 @@ export async function inspectHubProjectCreationCapabilities(c: HubAccess): Promi
 
 /** Creates under the captured scope, resolving its owner and optional repository on the same API. */
 export async function createHubProject(c: HubAccess, title: string, isPublic = false): Promise<HubItem> {
-  github(c); const cleanTitle = name(title), [owner, repository] = c.target.path.split("/");
-  const personal = repository === "workspace";
-  const result = await hubGraphql<ObjectValue>(c, personal ? "query($owner:String!){repositoryOwner(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}", personal ? { owner } : { owner, name: repository });
-  const source = object(result.repository), ownerID = text((personal ? object(result.repositoryOwner) : object(source.owner)).id);
+  github(c); const cleanTitle = name(title), [repositoryOwner, repository] = c.target.path.split("/");
+  const owner = c.projectOrganization ?? repositoryOwner, personal = !!c.projectOrganization || repository === "workspace";
+  const result = await hubGraphql<ObjectValue>(c, c.projectOrganization ? "query($owner:String!){organization(login:$owner){id}}" : personal ? "query($owner:String!){repositoryOwner(login:$owner){id}}" : "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id owner{id}}}", personal ? { owner } : { owner, name: repository });
+  const source = object(result.repository), ownerID = text((c.projectOrganization ? object(result.organization) : personal ? object(result.repositoryOwner) : object(source.owner)).id);
   if (!ownerID || !personal && !text(source.id)) throw new Error(t("Projects are unavailable for this repository owner."));
   return creation(c, async () => {
     const response = await hubGraphql<ObjectValue>(c, `mutation($input:CreateProjectV2Input!){createProjectV2(input:$input){projectV2{${projectFragment}}}}`, { input: { ownerId: ownerID, title: cleanTitle, ...(!personal ? { repositoryId: source.id } : {}) } });

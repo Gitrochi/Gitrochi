@@ -51,6 +51,32 @@ enum Hosting {
         _ = try await HostingHubAPI.createProject(HubAccess(target: personal, token: c.token, apiBase: c.apiBase, me: c.me), title: "Personal")
         precondition(try! input(calls.last!)["repositoryId"] == nil)
 
+        Hosting.handler = { request in
+            calls.append(request)
+            let body = try requestBody(request), query = body["query"] as! String
+            if query.hasPrefix("query") {
+                precondition(query.contains("organization(login:$owner)") && !query.contains("repository(owner:"))
+                precondition(try! variables(request)["owner"] as? String == "organization-team")
+                return try json(["data": ["organization": ["id": "ORG"]]])
+            }
+            return try json(["data": ["createProjectV2": ["projectV2": metadata]]])
+        }
+        _ = try await HostingHubAPI.createProject(HubAccess(target: c.target, token: c.token, apiBase: c.apiBase, me: c.me, projectOrganization: "organization-team"), title: "Organization plan")
+        let organizationInput = try input(calls.last!)
+        precondition(organizationInput["ownerId"] as? String == "ORG" && organizationInput["repositoryId"] == nil)
+
+        let beforeMissingOrganization = calls.count
+        Hosting.handler = { request in
+            calls.append(request)
+            precondition((try! requestBody(request)["query"] as! String).hasPrefix("query"))
+            return try json(["data": ["organization": NSNull()]])
+        }
+        do {
+            _ = try await HostingHubAPI.createProject(HubAccess(target: personal, token: c.token, apiBase: c.apiBase, me: c.me, projectOrganization: "reader"), title: "Wrong owner")
+            fatalError("A user login must not create a personal project from organization scope")
+        } catch {}
+        precondition(calls.count == beforeMissingOrganization + 1)
+
         let settings = HubProjectSettingsInput(title: "Release", shortDescription: "Summary", readme: "Handbook", isPublic: true, closed: true)
         Hosting.handler = { request in calls.append(request); return try json(["data": ["node": metadata]]) }
         try await HostingHubAPI.saveProjectSettings(c, detail: detail, input: settings)

@@ -47,7 +47,7 @@ struct HostingHubState {
     var generation = UUID(); var listID = UUID(); var detailID = UUID(); var context = ""
     var filteredItems: [HubItem] { let q = query.trimmingCharacters(in: .whitespacesAndNewlines); return q.isEmpty ? items : items.filter { ($0.title + " " + $0.subtitle + " " + $0.body).localizedCaseInsensitiveContains(q) } }
 }
-struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)?; var local = false }
+struct HubAccess { let target: RepoTarget; let token: String; let apiBase: String; let me: String; var isCurrent: (() -> Bool)?; var local = false; var projectOrganization: String? = nil }
 
 struct HubProjectPermissionError: LocalizedError {
     var errorDescription: String? { String(localized: "Connect project access for this GitHub account to load projects.") }
@@ -170,7 +170,14 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         return result
     }
     static func error(_ e: Error, token: String? = nil) -> String { var text = e.localizedDescription; if let token, !token.isEmpty { text = text.replacingOccurrences(of: token, with: "[redacted]") }; for pattern in ["\\b(?:gh[pousr]_[\\w]+|github_pat_[\\w]+|glpat-[\\w-]+)\\b", "(?i)[?&](?:access_token|private_token|token|api_key)=[^&\\s]+"] { if let regex = try? NSRegularExpression(pattern: pattern) { text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "[redacted]") } }; return String(text.prefix(1200)) }
-    static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool) -> RepoTarget {
+    static func projectOrganization(scope: String) -> String? {
+        guard scope.hasPrefix("organization:") else { return nil }
+        let login = String(scope.dropFirst("organization:".count))
+        guard !login.isEmpty, login.count <= 39, login.range(of: "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$", options: .regularExpression) != nil else { return nil }
+        return login
+    }
+    static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool, organization: String? = nil) -> RepoTarget {
+        if let organization { return RepoTarget(provider: provider, remote: "origin", host: host, path: organization + "/workspace") }
         if !personal, let repository { return repository }
         return RepoTarget(provider: provider, remote: "origin", host: host, path: username + "/workspace")
     }
@@ -203,7 +210,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         ... on ProjectV2SingleSelectField{id name options{id name}}
         ... on ProjectV2IterationField{id name configuration{iterations{id title startDate duration} completedIterations{id title startDate duration}}}
       } pageInfo{hasNextPage}}
-      items(first:30,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
+      items(first:100,after:$cursor,archivedStates:[ARCHIVED,NOT_ARCHIVED]){nodes{id type isArchived updatedAt content{__typename
         ... on Issue{id title body url number state createdAt author{login} updatedAt repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
         ... on PullRequest{id title body url number state createdAt author{login} updatedAt headRefName repository{nameWithOwner} assignees(first:100){nodes{login}} labels(first:100){nodes{name}}}
         ... on DraftIssue{id title body createdAt creator{login} updatedAt assignees(first:100){nodes{login}}}
@@ -260,9 +267,10 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             if p == .gitlab { guard !c.target.path.hasSuffix("/workspace") else { throw fail(String(localized: "Open a GitLab repository to browse its issue boards.")) }; let rows = try await list(c, repo(c) + "/boards"); return HubPage(items: Array(rows.dropFirst((page - 1) * 30).prefix(30)).map { HubItem(id: id($0), title: s($0, "name"), subtitle: String(localized: "GitLab issue board"), url: "https://\(c.target.host)/\(c.target.path)/-/boards/\(id($0))", data: $0) }, more: rows.count > page * 30) }
             let parts = c.target.path.split(separator: "/").map(String.init), owner = parts.first ?? c.me, name = parts.last ?? "workspace", noRepo = name == "workspace"
             let connection = "projectsV2(first:30,after:$cursor){nodes{\(projectFields)} pageInfo{hasNextPage endCursor}}"
-            let query = noRepo ? "query($owner:String!,$cursor:String){user(login:$owner){\(connection)}}" : "query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{\(connection)} ... on Organization{\(connection)}}}}"
-            var variables: J = ["owner": owner, "cursor": cursor as Any? ?? NSNull()]; if !noRepo { variables["name"] = name }
-            let data = try await graph(c, query, variables), connectionData = obj(noRepo ? obj(data, "user") : obj(obj(data, "repository"), "owner"), "projectsV2")
+            let organization = c.projectOrganization
+            let query = organization != nil ? "query($owner:String!,$cursor:String){organization(login:$owner){\(connection)}}" : noRepo ? "query($owner:String!,$cursor:String){user(login:$owner){\(connection)}}" : "query($owner:String!,$name:String!,$cursor:String){repository(owner:$owner,name:$name){owner{... on User{\(connection)} ... on Organization{\(connection)}}}}"
+            var variables: J = ["owner": organization ?? owner, "cursor": cursor as Any? ?? NSNull()]; if organization == nil && !noRepo { variables["name"] = name }
+            let data = try await graph(c, query, variables), connectionData = obj(organization != nil ? obj(data, "organization") : noRepo ? obj(data, "user") : obj(obj(data, "repository"), "owner"), "projectsV2")
             guard !connectionData.isEmpty else { throw fail(String(localized: "Projects are unavailable for this repository owner.")) }
             return HubPage(items: arr(connectionData, "nodes").map { HubItem(id: id($0), title: s($0, "title"), subtitle: "#\(id($0, "number"))" + ($0["closed"] as? Bool == true ? " · closed" : ""), body: s($0, "shortDescription"), url: s($0, "url"), data: $0) }, more: obj(connectionData, "pageInfo")["hasNextPage"] as? Bool == true, cursor: obj(connectionData, "pageInfo")["endCursor"] as? String, notice: String(localized: "Projects sync with GitHub. Changes are saved after confirmation."))
         }
@@ -283,14 +291,43 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             else { let files = arr(x, "files").isEmpty ? [["path": s(x, "file_name")]] : arr(x, "files"); for f in files.prefix(30) { let name = s(f, "path"), branch = snippetRef(rawURL: s(f, "raw_url"), file: name) ?? "main"; try check(c); let data = try await Hosting.data(Hosting.request(p, base + "/files/\(enc(branch))/\(enc(name))/raw", token: c.token)); try check(c); d.files.append(HubFile(name: name, content: String(decoding: data.prefix(1_000_000), as: UTF8.self), truncated: data.count > 1_000_000)) }; if files.count > 30 { d.notice = String(localized: "The server returned more files. Open the snippet in a browser before editing.") } }; return d
         case .projects:
             if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: c.target.path, state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at"), author: obj(x, "author")["username"] as? String, createdAt: x["created_at"] as? String) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
-            let data = try await graph(c, projectDetailQuery, ["id": item.id, "cursor": cursor as Any? ?? NSNull()]), x = obj(data, "node")
-            guard !id(x).isEmpty else { throw fail(String(localized: "Project is unavailable or this account cannot access it.")) }
-            var updated = item; updated.title = s(x, "title"); updated.body = s(x, "shortDescription"); updated.url = s(x, "url"); updated.data.merge(x) { _, new in new }; var d = HubDetail(item: updated)
-            d.fields = arr(obj(x, "fields"), "nodes").filter { !id($0).isEmpty }.map(projectField)
-            d.rows = arr(obj(x, "items"), "nodes").map(projectRow)
-            d.more = obj(obj(x, "items"), "pageInfo")["hasNextPage"] as? Bool == true; d.cursor = obj(obj(x, "items"), "pageInfo")["endCursor"] as? String
-            if obj(obj(x, "fields"), "pageInfo")["hasNextPage"] as? Bool == true || arr(obj(x, "items"), "nodes").contains(where: { obj(obj($0, "fieldValues"), "pageInfo")["hasNextPage"] as? Bool == true }) { d.notice = String(localized: "Some project fields were truncated by the server. Only loaded fields can be edited.") }; return d
+            var result = try await projectDetailPage(c, item: item, cursor: cursor)
+            guard page == 1, cursor == nil else { return result }
+            var rows: [HubProjectRow] = [], itemIDs = Set<String>(), cursors = Set<String>()
+            var notice = result.notice
+            while true {
+                try Task.checkCancellation(); try check(c)
+                let fresh = result.rows.filter { itemIDs.insert($0.id).inserted }
+                rows += fresh
+                guard result.more else { break }
+                guard let next = result.cursor, !next.isEmpty, cursors.insert(next).inserted else {
+                    throw fail(String(localized: "Project items could not be fully loaded. Retry the project."))
+                }
+                result = try await projectDetailPage(c, item: item, cursor: next)
+                notice = notice ?? result.notice
+            }
+            result.rows = rows; result.more = false; result.cursor = nil; result.notice = notice
+            return result
         }
+    }
+    /// Explicit cursor reads stay available; default detail reads never present one page as a full project.
+    private static func projectDetailPage(_ c: HubAccess, item: HubItem, cursor: String?) async throws -> HubDetail {
+        try Task.checkCancellation(); try check(c)
+        let data = try await graph(c, projectDetailQuery, ["id": item.id, "cursor": cursor as Any? ?? NSNull()]), x = obj(data, "node")
+        try Task.checkCancellation(); try check(c)
+        guard id(x) == item.id else { throw fail(String(localized: "Project is unavailable or this account cannot access it.")) }
+        let nodes = arr(obj(x, "items"), "nodes")
+        guard nodes.allSatisfy({ !id($0).isEmpty }) else { throw fail(String(localized: "The server returned an unexpected response.")) }
+        var updated = item; updated.title = s(x, "title"); updated.body = s(x, "shortDescription"); updated.url = s(x, "url"); updated.data.merge(x) { _, new in new }
+        var detail = HubDetail(item: updated)
+        detail.fields = arr(obj(x, "fields"), "nodes").filter { !id($0).isEmpty }.map(projectField)
+        detail.rows = nodes.map(projectRow)
+        detail.more = obj(obj(x, "items"), "pageInfo")["hasNextPage"] as? Bool == true
+        detail.cursor = obj(obj(x, "items"), "pageInfo")["endCursor"] as? String
+        if obj(obj(x, "fields"), "pageInfo")["hasNextPage"] as? Bool == true || nodes.contains(where: { obj(obj($0, "fieldValues"), "pageInfo")["hasNextPage"] as? Bool == true }) {
+            detail.notice = String(localized: "Some project fields were truncated by the server. Only loaded fields can be edited.")
+        }
+        return detail
     }
     static func snippetRef(rawURL: String, file: String) -> String? { guard let u = URL(string: rawURL), let range = u.path.range(of: "/raw/"), u.path.hasSuffix("/" + file) else { return nil }; let value = String(u.path[range.upperBound...].dropLast(file.count + 1)); return value.isEmpty ? nil : value }
     static func saveRelease(_ c: HubAccess, _ input: HubReleaseInput, previous: HubItem? = nil) async throws {

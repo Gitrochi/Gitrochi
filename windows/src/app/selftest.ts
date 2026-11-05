@@ -39,7 +39,7 @@ import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { localPlannerSelfTest } from "./lib/local-planner-selftest";
-import { projectPlanningSelfTest } from "./lib/project-planning-selftest";
+import { projectItemCompletenessSelfTest, projectPlanningSelfTest } from "./lib/project-planning-selftest";
 import { projectScheduleSelfTest } from "./lib/project-schedule-selftest";
 import { issueWorkflowSelfTest } from "./lib/issue-workflow-selftest";
 import { releaseOverviewSelfTest } from "./lib/release-overview-selftest";
@@ -281,7 +281,8 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Repository release overview", releaseOverviewSelfTest);
   await step("Issue development workflow", issueWorkflowSelfTest);
   await step("Project scheduling overview, calendar, and confirmed rescheduling", projectScheduleSelfTest);
-  await step("Home portfolio scheduling and exact project task handoff", projectPlanningSelfTest);
+  await step("Organization projects without a repository, Home scheduling, and exact task handoff", projectPlanningSelfTest);
+  await step("Complete organization project tasks, refresh, and expandable Home agenda", projectItemCompletenessSelfTest);
   await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
 

@@ -159,9 +159,11 @@ enum ProjectPortfolio {
     }
 
     private func guarded(_ c: HubAccess, generation: UUID, requestID: UUID) -> HubAccess {
-        HubAccess(target: c.target, token: c.token, apiBase: c.apiBase, me: c.me, isCurrent: { [weak self] in
+        var access = c
+        access.isCurrent = { [weak self] in
             c.isCurrent?() != false && !Task.isCancelled && self?.generation == generation && self?.requestID == requestID
-        }, local: c.local)
+        }
+        return access
     }
     private func current(_ c: HubAccess, generation: UUID, requestID: UUID) -> Bool {
         !Task.isCancelled && self.generation == generation && self.requestID == requestID && c.isCurrent?() != false
