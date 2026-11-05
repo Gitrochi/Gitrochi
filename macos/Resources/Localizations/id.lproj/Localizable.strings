@@ -1,8 +1,18 @@
 /* Gitrochi — id. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Semua branch…";
+"Compare with %@" = "Bandingkan dengan %1$@";
+"Fast-forward only" = "Hanya fast-forward";
 "Find in file" = "Cari dalam file";
+"Merge" = "Merge";
+"Pop latest stash" = "Terapkan stash terakhir";
+"Pop latest stash (none saved)" = "Terapkan stash terakhir (tidak ada)";
 "Previous match" = "Kecocokan sebelumnya";
 "Next match" = "Kecocokan berikutnya";
+"Pull as configured in git" = "Pull sesuai konfigurasi git";
+"Pull options" = "Opsi pull";
+"Start %@ here" = "Mulai %1$@ di sini";
+"Switch branch or repository, open or clone one, or close the tab" = "Ganti branch atau repositori, buka atau klon repositori, atau tutup tab";
 "{0} of {1}" = "{0} dari {1}";
 "No matches" = "Tidak ada kecocokan";
 "Wrap lines" = "Bungkus baris";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " %1$lld file yang tidak di-commit tetap seperti semula.";
 " (current)" = " (saat ini)";
 " (on)" = " (aktif)";
-" Choose merge or rebase from ▾." = " Pilih merge atau rebase dari ▾.";
-" Force push from ▾." = " Force push dari ▾.";
 " · %@ stages" = " · %1$@ tahap";
 " · %lld outside the graph" = " · %1$lld di luar grafik";
 " · %lld%% similar" = " · %1$lld%% mirip";
@@ -375,7 +383,6 @@
 "Create worktree" = "Buat worktree";
 "Create worktree from here…" = "Buat worktree dari sini…";
 "Created" = "Dibuat";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Membuat branch baru di posisi saat ini. Dari ▾: worktree baru, jalankan agen (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Membuat %1$@…";
 "Creating branch…" = "Membuat branch…";
 "Creating commit %lld/%lld…" = "Membuat commit %1$lld/%2$lld…";
@@ -673,7 +680,6 @@
 "Pipelines" = "Pipeline";
 "Plan only" = "Hanya rencana";
 "Plan only (read-only)" = "Hanya rencana (baca-saja)";
-"Pop (apply the latest stash)" = "Pop (terapkan stash terakhir)";
 "Popping stash…" = "Melakukan pop stash…";
 "Preparing…" = "Menyiapkan…";
 "Previous name: %@" = "Nama sebelumnya: %1$@";
@@ -682,8 +688,6 @@
 "Protect from direct push (gitch)" = "Lindungi dari push langsung (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Dilindungi gitch: tidak boleh push langsung, gabungkan lewat pull request";
 "Pruning worktrees…" = "Membersihkan worktree…";
-"Pull (as configured in git)" = "Pull (sesuai konfigurasi git)";
-"Pull — fast-forward only" = "Pull — hanya fast-forward";
 "Pulling…" = "Melakukan pull…";
 "Pushes %lld unpushed commits to the remote." = "Melakukan push %1$lld commit yang belum di-push ke remote.";
 "Pushes as %@" = "Push sebagai %1$@";
@@ -757,7 +761,6 @@
 "Rules" = "Aturan";
 "Run" = "Jalankan";
 "Run %@ after creating" = "Jalankan %1$@ setelah dibuat";
-"Run %@ here" = "Jalankan %1$@ di sini";
 "Run again" = "Jalankan lagi";
 "Run agent (%@)" = "Jalankan agen (%1$@)";
 "Run an agent in a worktree" = "Jalankan agen di worktree";
@@ -843,7 +846,6 @@
 "Stash changes" = "Stash perubahan";
 "Stashes %lld" = "Stash %1$lld";
 "Stashing…" = "Melakukan stash…";
-"Stash… (save changes for later)" = "Stash… (simpan perubahan untuk nanti)";
 "Structure graph" = "Grafik struktur";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Grafik struktur memerlukan gitch %1$@ atau yang lebih baru, tetapi gitch di dalam Gitrochi adalah %2$@.";
 "Subject line only, no body" = "Hanya baris subjek, tanpa isi";

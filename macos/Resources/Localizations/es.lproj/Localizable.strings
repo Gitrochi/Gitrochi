@@ -1,6 +1,16 @@
 /* Release and issue workspace. */
+"All branches…" = "Todas las ramas…";
+"Compare with %@" = "Comparar con %1$@";
 "Development" = "Desarrollo";
+"Fast-forward only" = "Solo fast-forward";
+"Merge" = "Fusionar";
 "Newest first" = "Más recientes";
+"Pop latest stash" = "Aplicar el stash más reciente";
+"Pop latest stash (none saved)" = "Aplicar el stash más reciente (no hay ninguno)";
+"Pull as configured in git" = "Pull según la configuración de git";
+"Pull options" = "Opciones de pull";
+"Start %@ here" = "Iniciar %1$@ aquí";
+"Switch branch or repository, open or clone one, or close the tab" = "Cambiar de rama o de repositorio, abrir o clonar uno, o cerrar la pestaña";
 "Version number" = "Número de versión";
 "Create branch" = "Crear rama";
 "Create pull request" = "Crear pull request";
@@ -101,8 +111,6 @@
 " %lld files that aren't committed stay as they are." = " Los archivos sin commit (%1$lld) se quedan como están.";
 " (current)" = " (actual)";
 " (on)" = " (activado)";
-" Choose merge or rebase from ▾." = " Elige fusionar o rebase en ▾.";
-" Force push from ▾." = " Haz un push forzado desde ▾.";
 " · %@ stages" = " · etapas: %1$@";
 " · %lld outside the graph" = " · %1$lld fuera del grafo";
 " · %lld%% similar" = " · %1$lld%% de similitud";
@@ -392,7 +400,6 @@
 "Create worktree" = "Crear worktree";
 "Create worktree from here…" = "Crear worktree desde aquí…";
 "Created" = "Creado";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Crea una nueva rama en la posición actual. Desde ▾: nuevo worktree, ejecutar un agente (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Creando %1$@…";
 "Creating branch…" = "Creando rama…";
 "Creating commit %lld/%lld…" = "Creando commit %1$lld/%2$lld…";
@@ -701,7 +708,6 @@
 "Pinned" = "Fijadas";
 "Plan only" = "Solo planificar";
 "Plan only (read-only)" = "Solo planificar (solo lectura)";
-"Pop (apply the latest stash)" = "Pop (aplicar el stash más reciente)";
 "Popping stash…" = "Haciendo pop del stash…";
 "Preparing…" = "Preparando…";
 "Previous name: %@" = "Nombre anterior: %1$@";
@@ -710,9 +716,6 @@
 "Protect from direct push (gitch)" = "Proteger del push directo (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Protegida por gitch: sin push directo, se fusiona mediante pull request";
 "Pruning worktrees…" = "Limpiando worktrees…";
-"Pull (as configured in git)" = "Pull (según la configuración de git)";
-"Pull — fast-forward only" = "Pull — solo fast-forward";
-"Pull — merge" = "Pull — fusionar";
 "Pulling…" = "Haciendo pull…";
 "Push tag" = "Hacer push de la etiqueta";
 "Pushes %lld unpushed commits to the remote." = "Hace push al remoto de los commits pendientes (%1$lld).";
@@ -790,7 +793,6 @@
 "Rules" = "Reglas";
 "Run" = "Ejecutar";
 "Run %@ after creating" = "Ejecutar %1$@ después de crearlo";
-"Run %@ here" = "Ejecutar %1$@ aquí";
 "Run again" = "Ejecutar de nuevo";
 "Run agent (%@)" = "Ejecutar agente (%1$@)";
 "Run an agent in a worktree" = "Ejecutar un agente en un worktree";
@@ -877,7 +879,6 @@
 "Start with the reason for the change" = "Empezar con el motivo del cambio";
 "Stash changes" = "Guardar cambios en stash";
 "Stashing…" = "Guardando en stash…";
-"Stash… (save changes for later)" = "Stash… (guardar los cambios para más tarde)";
 "Structure graph" = "Grafo de estructura";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "El grafo de estructura necesita gitch %1$@ o posterior, pero el gitch de Gitrochi es %2$@.";
 "Subject line only, no body" = "Solo la línea de asunto, sin cuerpo";

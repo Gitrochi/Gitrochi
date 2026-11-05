@@ -1,4 +1,14 @@
 /* Release and issue workspace. */
+"All branches…" = "모든 브랜치…";
+"Compare with %@" = "%1$@ 기준으로 비교";
+"Fast-forward only" = "fast-forward만";
+"Merge" = "병합";
+"Pop latest stash" = "가장 최근 stash 꺼내기";
+"Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
+"Pull as configured in git" = "git 설정대로 Pull";
+"Pull options" = "Pull 옵션";
+"Start %@ here" = "여기서 %1$@ 시작";
+"Switch branch or repository, open or clone one, or close the tab" = "브랜치나 저장소 전환, 저장소 열기·복제, 탭 닫기";
 "Versions" = "버전";
 "Version" = "버전";
 "Newest loaded stable" = "불러온 정식 릴리스 중 최신";
@@ -286,8 +296,6 @@
 " %lld files that aren't committed stay as they are." = " 커밋하지 않는 %1$lld개 파일은 그대로 남습니다.";
 " (current)" = " (현재)";
 " (on)" = "(켜짐)";
-" Choose merge or rebase from ▾." = " ▾ 에서 merge·rebase 방식을 고를 수 있습니다.";
-" Force push from ▾." = " ▾ 에서 Force push.";
 " · %@ stages" = " · %1$@ 단계";
 " · %lld outside the graph" = " · 그래프 밖 %1$lld";
 " · %lld%% similar" = " · %1$lld%% 같음";
@@ -587,7 +595,6 @@
 "Create worktree" = "워크트리 만들기";
 "Create worktree from here…" = "여기서 워크트리 만들기…";
 "Created" = "생성됨";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "지금 위치에서 새 브랜치를 만듭니다. ▾ 에서 새 워크트리, 에이전트(Claude Code·Codex·Gemini) 실행.";
 "Creating %@…" = "%1$@ 만드는 중…";
 "Creating branch…" = "브랜치 만드는 중…";
 "Creating commit %lld/%lld…" = "커밋 %1$lld/%2$lld 만드는 중…";
@@ -898,7 +905,6 @@
 "Plan only" = "계획만 세우기";
 "Plan only (read-only)" = "계획만 세우기(읽기 전용)";
 "Pop" = "꺼내기 (Pop)";
-"Pop (apply the latest stash)" = "Pop (가장 최근 stash 꺼내기)";
 "Popping stash…" = "Stash Pop 중…";
 "Preparing…" = "준비 중…";
 "Previous name: %@" = "이전 이름: %1$@";
@@ -907,8 +913,6 @@
 "Protect from direct push (gitch)" = "직접 push 막기(gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "gitch 가 보호하는 브랜치: 직접 push 할 수 없고 PR 로 합칩니다";
 "Pruning worktrees…" = "워크트리 정리 중…";
-"Pull (as configured in git)" = "Pull (git 설정대로)";
-"Pull — fast-forward only" = "Pull — fast-forward 만";
 "Pulling…" = "Pull 중…";
 "Push tag" = "태그 Push";
 "Pushes %lld unpushed commits to the remote." = "올리지 않은 커밋 %1$lld개를 원격에 올립니다.";
@@ -986,7 +990,6 @@
 "Rules" = "규칙";
 "Run" = "실행";
 "Run %@ after creating" = "만든 뒤 %1$@ 실행";
-"Run %@ here" = "여기서 %1$@ 실행";
 "Run again" = "다시 실행";
 "Run agent (%@)" = "에이전트 실행 (%1$@)";
 "Run an agent in a worktree" = "워크트리에서 에이전트 실행";
@@ -1074,7 +1077,6 @@
 "Stash changes" = "변경 사항 Stash";
 "Stashes %lld" = "스태시 %1$lld";
 "Stashing…" = "Stash 중…";
-"Stash… (save changes for later)" = "Stash… (변경 임시 보관)";
 "Structure graph" = "구조 그래프";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "구조 그래프에는 gitch %1$@ 이상이 필요한데, Gitrochi 안의 gitch 는 %2$@ 입니다.";
 "The gitch inside Gitrochi doesn't support structure graphs. Update Gitrochi and try again." = "Gitrochi 안의 gitch 가 구조 그래프를 지원하지 않습니다. Gitrochi 를 업데이트한 뒤 다시 시도하세요.";
@@ -1886,9 +1888,7 @@
 
 "Force push (with lease)…" = "안전 조건으로 강제 Push…";
 
-"Pull — merge" = "Pull — 병합";
 
-"Pull — rebase" = "Pull — 리베이스";
 
 "Push" = "Push";
 

@@ -1,6 +1,16 @@
 /* Release and issue workspace. */
+"All branches…" = "すべてのブランチ…";
+"Compare with %@" = "%1$@ と比較";
 "Development" = "開発";
+"Fast-forward only" = "早送りのみ";
+"Merge" = "マージ";
 "Newest first" = "新しい順";
+"Pop latest stash" = "最新のスタッシュを適用";
+"Pop latest stash (none saved)" = "最新のスタッシュを適用 (保存なし)";
+"Pull as configured in git" = "git の設定どおりにプル";
+"Pull options" = "プルのオプション";
+"Start %@ here" = "ここで %1$@ を開始";
+"Switch branch or repository, open or clone one, or close the tab" = "ブランチやリポジトリを切り替える、リポジトリを開く・クローンする、またはタブを閉じる";
 "Version number" = "バージョン順";
 "Create branch" = "ブランチを作成";
 "Create pull request" = "プルリクエストを作成";
@@ -111,8 +121,6 @@
 " %lld files that aren't committed stay as they are." = " コミットしない %1$lld 個のファイルはそのまま残ります。";
 " (current)" = " (現在)";
 " (on)" = " (オン)";
-" Choose merge or rebase from ▾." = " ▾ からマージまたはリベースを選べます。";
-" Force push from ▾." = " ▾ から強制プッシュできます。";
 " · %@ stages" = " · %1$@ ステージ";
 " · %lld outside the graph" = " · グラフ外 %1$lld";
 " · %lld%% similar" = " · 類似度 %1$lld%%";
@@ -413,7 +421,6 @@
 "Create worktree" = "ワークツリーを作成";
 "Create worktree from here…" = "ここからワークツリーを作成…";
 "Created" = "作成済み";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "現在の位置に新しいブランチを作成します。▾ から: 新しいワークツリー、エージェントの実行 (Claude Code・Codex・Gemini)。";
 "Creating %@…" = "%1$@ を作成しています…";
 "Creating branch…" = "ブランチを作成しています…";
 "Creating commit %lld/%lld…" = "コミット %1$lld/%2$lld を作成しています…";
@@ -727,7 +734,6 @@
 "Plan only" = "計画のみ";
 "Plan only (read-only)" = "計画のみ (読み取り専用)";
 "Pop" = "ポップ";
-"Pop (apply the latest stash)" = "ポップ (最新のスタッシュを適用)";
 "Popping stash…" = "スタッシュをポップしています…";
 "Preparing…" = "準備しています…";
 "Previous name: %@" = "以前の名前: %1$@";
@@ -737,10 +743,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "gitch で保護: 直接 push はできず、プルリクエストでマージします";
 "Pruning worktrees…" = "ワークツリーを整理しています…";
 "Pull" = "プル";
-"Pull (as configured in git)" = "プル (git の設定どおり)";
-"Pull — fast-forward only" = "プル — 早送りのみ";
-"Pull — merge" = "プル — マージ";
-"Pull — rebase" = "プル — リベース";
 "Pulling…" = "プルしています…";
 "Push" = "プッシュ";
 "Push tag" = "タグをプッシュ";
@@ -819,7 +821,6 @@
 "Rules" = "ルール";
 "Run" = "実行";
 "Run %@ after creating" = "作成後に %1$@ を実行";
-"Run %@ here" = "ここで %1$@ を実行";
 "Run again" = "再実行";
 "Run agent (%@)" = "エージェントを実行 (%1$@)";
 "Run an agent in a worktree" = "ワークツリーでエージェントを実行";
@@ -909,7 +910,6 @@
 "Stashes %lld" = "スタッシュ %1$lld";
 "Stashing…" = "スタッシュしています…";
 "Stash…" = "スタッシュ…";
-"Stash… (save changes for later)" = "スタッシュ… (変更を一時的に退避)";
 "Structure graph" = "構造グラフ";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "構造グラフには gitch %1$@ 以降が必要ですが、Gitrochi 内の gitch は %2$@ です。";
 "Subject line only, no body" = "件名のみ、本文なし";

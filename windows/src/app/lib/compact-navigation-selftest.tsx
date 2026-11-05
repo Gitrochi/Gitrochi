@@ -41,7 +41,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     root.render(<RepoPage store={store} openSettings={() => { opened++; }} />);
     await settle();
     ensure(!isCompact() && toggle().getAttribute("aria-expanded") === "true", "Home must show the full page list");
-    ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool"), "Home without a repository must show the welcome screen and only the account control in the toolbar");
+    ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool:not(.sidebar-toggle)"), "Home without a repository must show the welcome screen and, beside the sidebar toggle and the repository button, only the account control in the toolbar");
     ensure(!row("repository")?.disabled && !row("issues")?.disabled, "Initial navigation must remain available");
     for (const destination of ["repository", "code", "pullRequests", "actions", "flows"] as const) {
       row(destination)!.click(); await settle();

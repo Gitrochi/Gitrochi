@@ -1,8 +1,18 @@
 /* Gitrochi — uk. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Усі гілки…";
+"Compare with %@" = "Порівняти з %1$@";
+"Fast-forward only" = "Лише перемотуванням";
 "Find in file" = "Знайти у файлі";
+"Merge" = "Злиттям";
+"Pop latest stash" = "Застосувати останню схованку";
+"Pop latest stash (none saved)" = "Застосувати останню схованку (немає збережених)";
 "Previous match" = "Попередній збіг";
 "Next match" = "Наступний збіг";
+"Pull as configured in git" = "Підтягнути, як налаштовано в git";
+"Pull options" = "Параметри підтягування";
+"Start %@ here" = "Запустити %1$@ тут";
+"Switch branch or repository, open or clone one, or close the tab" = "Перемкнути гілку чи репозиторій, відкрити або клонувати репозиторій чи закрити вкладку";
 "{0} of {1}" = "{0} із {1}";
 "No matches" = "Немає збігів";
 "Wrap lines" = "Переносити рядки";
@@ -90,8 +100,6 @@
 " %lld files that aren't committed stay as they are." = " Файли, що не потрапили в коміти (%1$lld), залишаться як є.";
 " (current)" = " (поточна)";
 " (on)" = " (увімкнено)";
-" Choose merge or rebase from ▾." = " У ▾ можна вибрати злиття або перебазування.";
-" Force push from ▾." = " Примусове надсилання — у ▾.";
 " · %@ stages" = " · етапів: %1$@";
 " · %lld outside the graph" = " · поза графом: %1$lld";
 " · %lld%% similar" = " · схожість %1$lld%%";
@@ -391,7 +399,6 @@
 "Create worktree" = "Створити робоче дерево";
 "Create worktree from here…" = "Створити робоче дерево звідси…";
 "Created" = "Створено";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Створює нову гілку в поточній позиції. У ▾: нове робоче дерево, запуск агента (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Створення %1$@…";
 "Creating branch…" = "Створення гілки…";
 "Creating commit %lld/%lld…" = "Створення коміту %1$lld/%2$lld…";
@@ -705,7 +712,6 @@
 "Plan only" = "Лише план";
 "Plan only (read-only)" = "Лише план (тільки читання)";
 "Pop" = "Дістати";
-"Pop (apply the latest stash)" = "Дістати (застосувати останню схованку)";
 "Popping stash…" = "Діставання зі схованки…";
 "Preparing…" = "Підготовка…";
 "Previous name: %@" = "Попередня назва: %1$@";
@@ -715,10 +721,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "Захищено gitch: без прямого push, злиття через pull request";
 "Pruning worktrees…" = "Очищення робочих дерев…";
 "Pull" = "Підтягнути";
-"Pull (as configured in git)" = "Підтягнути (як налаштовано в git)";
-"Pull — fast-forward only" = "Підтягнути — лише перемотуванням";
-"Pull — merge" = "Підтягнути — злиттям";
-"Pull — rebase" = "Підтягнути — перебазуванням";
 "Pulling…" = "Підтягування…";
 "Push" = "Надіслати";
 "Push tag" = "Надіслати тег";
@@ -797,7 +799,6 @@
 "Rules" = "Правила";
 "Run" = "Запустити";
 "Run %@ after creating" = "Запустити %1$@ після створення";
-"Run %@ here" = "Запустити %1$@ тут";
 "Run again" = "Запустити знову";
 "Run agent (%@)" = "Запустити агента (%1$@)";
 "Run an agent in a worktree" = "Запустити агента в робочому дереві";
@@ -887,7 +888,6 @@
 "Stashes %lld" = "Схованки %1$lld";
 "Stashing…" = "Збереження в схованку…";
 "Stash…" = "Сховати…";
-"Stash… (save changes for later)" = "Сховати… (відкласти зміни на потім)";
 "Structure graph" = "Граф структури";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Для графа структури потрібен gitch %1$@ або новіший, але gitch у Gitrochi — %2$@.";
 "Subject line only, no body" = "Лише рядок теми, без тіла";

@@ -1,8 +1,18 @@
 /* Gitrochi — hu. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Összes ág…";
+"Compare with %@" = "Összehasonlítás ezzel: %1$@";
+"Fast-forward only" = "Csak fast-forward";
 "Find in file" = "Keresés a fájlban";
+"Merge" = "Egyesítés";
+"Pop latest stash" = "Legutóbbi stash alkalmazása";
+"Pop latest stash (none saved)" = "Legutóbbi stash alkalmazása (nincs mentve)";
 "Previous match" = "Előző találat";
 "Next match" = "Következő találat";
+"Pull as configured in git" = "Pull a git beállításai szerint";
+"Pull options" = "Pull beállításai";
+"Start %@ here" = "%1$@ indítása itt";
+"Switch branch or repository, open or clone one, or close the tab" = "Ág vagy tároló váltása, egy tároló megnyitása vagy klónozása, vagy a lap bezárása";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Nincs találat";
 "Wrap lines" = "Sortördelés";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " A commitba nem kerülő fájlok (%1$lld) változatlanok maradnak.";
 " (current)" = " (aktuális)";
 " (on)" = " (bekapcsolva)";
-" Choose merge or rebase from ▾." = " A ▾ menüben választhat az egyesítés és a rebase között.";
-" Force push from ▾." = " Force push a ▾ menüben.";
 " · %@ stages" = " · szakasz: %1$@";
 " · %lld outside the graph" = " · %1$lld a gráfon kívül";
 " · %lld%% similar" = " · %1$lld%%-os egyezés";
@@ -385,7 +393,6 @@
 "Create worktree" = "Worktree létrehozása";
 "Create worktree from here…" = "Worktree létrehozása innen…";
 "Created" = "Létrehozva";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Új ágat hoz létre az aktuális pozíción. A ▾ menüben: új worktree, ügynök futtatása (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ létrehozása…";
 "Creating branch…" = "Ág létrehozása…";
 "Creating commit %lld/%lld…" = "Commit létrehozása (%1$lld/%2$lld)…";
@@ -695,7 +702,6 @@
 "Pipelines" = "Pipeline-ok";
 "Plan only" = "Csak tervezés";
 "Plan only (read-only)" = "Csak tervezés (csak olvasás)";
-"Pop (apply the latest stash)" = "Pop (a legutóbbi stash alkalmazása)";
 "Popping stash…" = "Stash pop folyamatban…";
 "Preparing…" = "Felkészülés…";
 "Previous name: %@" = "Korábbi név: %1$@";
@@ -704,9 +710,6 @@
 "Protect from direct push (gitch)" = "Védelem a közvetlen push ellen (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "A gitch védi: nincs közvetlen push, pull requesttel fésülhető össze";
 "Pruning worktrees…" = "Worktree-k takarítása…";
-"Pull (as configured in git)" = "Pull (a git beállításai szerint)";
-"Pull — fast-forward only" = "Pull — csak fast-forward";
-"Pull — merge" = "Pull — egyesítés";
 "Pulling…" = "Pull folyamatban…";
 "Push tag" = "Címke feltöltése";
 "Pushes %lld unpushed commits to the remote." = "Feltölti a még fel nem töltött commitokat (%1$lld) a távoli tárolóba.";
@@ -784,7 +787,6 @@
 "Rules" = "Szabályok";
 "Run" = "Futtatás";
 "Run %@ after creating" = "%1$@ futtatása a létrehozás után";
-"Run %@ here" = "%1$@ futtatása itt";
 "Run again" = "Újrafuttatás";
 "Run agent (%@)" = "Ügynök futtatása (%1$@)";
 "Run an agent in a worktree" = "Ügynök futtatása egy worktree-ben";
@@ -872,7 +874,6 @@
 "Stash changes" = "Módosítások félretétele (stash)";
 "Stashes %lld" = "Stash-ek %1$lld";
 "Stashing…" = "Stash folyamatban…";
-"Stash… (save changes for later)" = "Stash… (módosítások félretétele későbbre)";
 "Structure graph" = "Szerkezeti gráf";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "A szerkezeti gráfhoz gitch %1$@ vagy újabb kell, de a Gitrochiben lévő gitch verziója %2$@.";
 "Subject line only, no body" = "Csak tárgysor, törzs nélkül";

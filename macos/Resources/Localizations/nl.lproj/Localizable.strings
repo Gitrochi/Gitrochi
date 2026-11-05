@@ -1,8 +1,18 @@
 /* Gitrochi — nl. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Alle branches…";
+"Compare with %@" = "Vergelijken met %1$@";
+"Fast-forward only" = "Alleen fast-forward";
 "Find in file" = "Zoeken in bestand";
+"Merge" = "Merge";
+"Pop latest stash" = "Laatste stash toepassen";
+"Pop latest stash (none saved)" = "Laatste stash toepassen (geen opgeslagen)";
 "Previous match" = "Vorige overeenkomst";
 "Next match" = "Volgende overeenkomst";
+"Pull as configured in git" = "Pull volgens git-configuratie";
+"Pull options" = "Pull-opties";
+"Start %@ here" = "%1$@ hier starten";
+"Switch branch or repository, open or clone one, or close the tab" = "Van branch of repository wisselen, er een openen of klonen, of het tabblad sluiten";
 "{0} of {1}" = "{0} van {1}";
 "No matches" = "Geen overeenkomsten";
 "Wrap lines" = "Regels afbreken";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " Bestanden die niet gecommit worden (%1$lld), blijven ongewijzigd.";
 " (current)" = " (huidige)";
 " (on)" = " (aan)";
-" Choose merge or rebase from ▾." = " Kies merge of rebase via ▾.";
-" Force push from ▾." = " Force push via ▾.";
 " · %@ stages" = " · fase %1$@";
 " · %lld outside the graph" = " · %1$lld buiten de graaf";
 " · %lld%% similar" = " · %1$lld%% gelijk";
@@ -372,7 +380,6 @@
 "Create worktree" = "Worktree maken";
 "Create worktree from here…" = "Worktree maken vanaf hier…";
 "Created" = "Gemaakt";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Maakt een nieuwe branch op de huidige positie. Via ▾: nieuwe worktree, agent starten (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ wordt gemaakt…";
 "Creating branch…" = "Branch wordt gemaakt…";
 "Creating commit %lld/%lld…" = "Commit %1$lld/%2$lld wordt gemaakt…";
@@ -676,7 +683,6 @@
 "Pinned" = "Vastgezet";
 "Plan only" = "Alleen plannen";
 "Plan only (read-only)" = "Alleen plannen (alleen-lezen)";
-"Pop (apply the latest stash)" = "Pop (laatste stash toepassen)";
 "Popping stash…" = "Stash wordt toegepast (pop)…";
 "Preparing…" = "Bezig met voorbereiden…";
 "Previous name: %@" = "Vorige naam: %1$@";
@@ -685,8 +691,6 @@
 "Protect from direct push (gitch)" = "Beschermen tegen direct pushen (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Beschermd door gitch: niet direct pushen, samenvoegen via een pull request";
 "Pruning worktrees…" = "Worktrees worden opgeschoond…";
-"Pull (as configured in git)" = "Pull (volgens git-configuratie)";
-"Pull — fast-forward only" = "Pull — alleen fast-forward";
 "Pulling…" = "Bezig met pullen…";
 "Push tag" = "Tag pushen";
 "Pushes %lld unpushed commits to the remote." = "Pusht nog niet gepushte commits (%1$lld) naar de remote.";
@@ -759,7 +763,6 @@
 "Rules" = "Regels";
 "Run" = "Uitvoeren";
 "Run %@ after creating" = "%1$@ starten na het maken";
-"Run %@ here" = "%1$@ hier starten";
 "Run again" = "Opnieuw uitvoeren";
 "Run agent (%@)" = "Agent starten (%1$@)";
 "Run an agent in a worktree" = "Een agent starten in een worktree";
@@ -844,7 +847,6 @@
 "Start with the reason for the change" = "Begin met de reden van de wijziging";
 "Stash changes" = "Wijzigingen stashen";
 "Stashing…" = "Bezig met stashen…";
-"Stash… (save changes for later)" = "Stash… (wijzigingen bewaren voor later)";
 "Structure graph" = "Structuurgraaf";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "De structuurgraaf heeft gitch %1$@ of nieuwer nodig, maar de gitch in Gitrochi is %2$@.";
 "Subject line only, no body" = "Alleen een onderwerpregel, geen berichttekst";

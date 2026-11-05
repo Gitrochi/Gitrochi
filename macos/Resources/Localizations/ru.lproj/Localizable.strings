@@ -1,8 +1,18 @@
 /* Gitrochi — ru. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Все ветки…";
+"Compare with %@" = "Сравнить с %1$@";
+"Fast-forward only" = "Только перемотка вперёд";
 "Find in file" = "Найти в файле";
+"Merge" = "Слияние";
+"Pop latest stash" = "Применить последние спрятанные изменения";
+"Pop latest stash (none saved)" = "Применить последние спрятанные изменения (ничего не спрятано)";
 "Previous match" = "Предыдущее совпадение";
 "Next match" = "Следующее совпадение";
+"Pull as configured in git" = "Извлечь по настройкам git";
+"Pull options" = "Параметры извлечения";
+"Start %@ here" = "Запустить %1$@ здесь";
+"Switch branch or repository, open or clone one, or close the tab" = "Переключить ветку или репозиторий, открыть или клонировать репозиторий либо закрыть вкладку";
 "{0} of {1}" = "{0} из {1}";
 "No matches" = "Нет совпадений";
 "Wrap lines" = "Перенос строк";
@@ -90,8 +100,6 @@
 " %lld files that aren't committed stay as they are." = " Файлы, которые не войдут в коммиты, останутся как есть (%1$lld).";
 " (current)" = " (текущая)";
 " (on)" = " (вкл.)";
-" Choose merge or rebase from ▾." = " Выберите слияние или перебазирование в меню ▾.";
-" Force push from ▾." = " Принудительная отправка — в меню ▾.";
 " · %@ stages" = " · этап %1$@";
 " · %lld outside the graph" = " · вне графа: %1$lld";
 " · %lld%% similar" = " · сходство %1$lld%%";
@@ -391,7 +399,6 @@
 "Create worktree" = "Создать рабочее дерево";
 "Create worktree from here…" = "Создать рабочее дерево отсюда…";
 "Created" = "Создано";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Создаёт новую ветку в текущей позиции. В меню ▾: новое рабочее дерево, запуск агента (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Создание %1$@…";
 "Creating branch…" = "Создание ветки…";
 "Creating commit %lld/%lld…" = "Создание коммита %1$lld/%2$lld…";
@@ -705,7 +712,6 @@
 "Plan only" = "Только план";
 "Plan only (read-only)" = "Только план (только чтение)";
 "Pop" = "Достать";
-"Pop (apply the latest stash)" = "Достать (применить последние спрятанные изменения)";
 "Popping stash…" = "Возврат спрятанных изменений…";
 "Preparing…" = "Подготовка…";
 "Previous name: %@" = "Прежнее имя: %1$@";
@@ -715,10 +721,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "Защищена gitch: без прямого push, слияние через pull request";
 "Pruning worktrees…" = "Очистка рабочих деревьев…";
 "Pull" = "Извлечь";
-"Pull (as configured in git)" = "Извлечь (по настройкам git)";
-"Pull — fast-forward only" = "Извлечь — только перемотка вперёд";
-"Pull — merge" = "Извлечь — слияние";
-"Pull — rebase" = "Извлечь — перебазирование";
 "Pulling…" = "Извлечение…";
 "Push" = "Отправить";
 "Push tag" = "Отправить тег";
@@ -797,7 +799,6 @@
 "Rules" = "Правила";
 "Run" = "Запустить";
 "Run %@ after creating" = "Запустить %1$@ после создания";
-"Run %@ here" = "Запустить %1$@ здесь";
 "Run again" = "Запустить снова";
 "Run agent (%@)" = "Запустить агента (%1$@)";
 "Run an agent in a worktree" = "Запустить агента в рабочем дереве";
@@ -887,7 +888,6 @@
 "Stashes %lld" = "Спрятанные изменения %1$lld";
 "Stashing…" = "Изменения прячутся…";
 "Stash…" = "Спрятать…";
-"Stash… (save changes for later)" = "Спрятать… (отложить изменения на потом)";
 "Structure graph" = "Граф структуры";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Для графа структуры нужен gitch %1$@ или новее, но gitch внутри Gitrochi — %2$@.";
 "Subject line only, no body" = "Только заголовок, без тела";

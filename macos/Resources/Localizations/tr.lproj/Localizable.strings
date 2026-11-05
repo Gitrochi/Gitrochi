@@ -1,8 +1,18 @@
 /* Gitrochi — tr. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Tüm dallar…";
+"Compare with %@" = "%1$@ ile karşılaştır";
+"Fast-forward only" = "Yalnızca ileri sar";
 "Find in file" = "Dosyada bul";
+"Merge" = "Birleştir";
+"Pop latest stash" = "En son stash'i uygula";
+"Pop latest stash (none saved)" = "En son stash'i uygula (kayıtlı yok)";
 "Previous match" = "Önceki eşleşme";
 "Next match" = "Sonraki eşleşme";
+"Pull as configured in git" = "git ayarlarına göre çek";
+"Pull options" = "Çekme seçenekleri";
+"Start %@ here" = "Burada %1$@ başlat";
+"Switch branch or repository, open or clone one, or close the tab" = "Dalı veya depoyu değiştir, bir depo aç ya da klonla veya sekmeyi kapat";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Eşleşme yok";
 "Wrap lines" = "Satırları kaydır";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " Commit edilmemiş %1$lld dosya olduğu gibi kalır.";
 " (current)" = " (geçerli)";
 " (on)" = " (açık)";
-" Choose merge or rebase from ▾." = " ▾ menüsünden birleştirme veya rebase'i seçin.";
-" Force push from ▾." = " Zorla göndermek için ▾ menüsünü kullanın.";
 " · %@ stages" = " · %1$@ aşama";
 " · %lld outside the graph" = " · grafik dışında %1$lld";
 " · %lld%% similar" = " · %%%1$lld benzer";
@@ -381,7 +389,6 @@
 "Create worktree" = "Worktree oluştur";
 "Create worktree from here…" = "Buradan worktree oluştur…";
 "Created" = "Oluşturuldu";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Geçerli konumda yeni bir dal oluşturur. ▾ menüsünden: yeni worktree, ajan çalıştırma (Claude Code, Codex, Gemini).";
 "Creating %@…" = "%1$@ oluşturuluyor…";
 "Creating branch…" = "Dal oluşturuluyor…";
 "Creating commit %lld/%lld…" = "Commit oluşturuluyor %1$lld/%2$lld…";
@@ -694,7 +701,6 @@
 "Pipelines" = "Pipeline'lar";
 "Plan only" = "Yalnızca plan";
 "Plan only (read-only)" = "Yalnızca plan (salt okunur)";
-"Pop (apply the latest stash)" = "Pop (en son stash'i uygula)";
 "Popping stash…" = "Stash pop yapılıyor…";
 "Preparing…" = "Hazırlık yapılıyor…";
 "Previous name: %@" = "Önceki ad: %1$@";
@@ -704,10 +710,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "gitch tarafından korunuyor: doğrudan push yok, pull request ile birleştirilir";
 "Pruning worktrees…" = "Worktree'ler temizleniyor…";
 "Pull" = "Çek";
-"Pull (as configured in git)" = "Çek (git ayarlarına göre)";
-"Pull — fast-forward only" = "Çek — yalnızca ileri sar";
-"Pull — merge" = "Çek — birleştir";
-"Pull — rebase" = "Çek — rebase";
 "Pulling…" = "Çekiliyor…";
 "Push" = "Gönder";
 "Push tag" = "Etiketi gönder";
@@ -786,7 +788,6 @@
 "Rules" = "Kurallar";
 "Run" = "Çalıştır";
 "Run %@ after creating" = "Oluşturduktan sonra %1$@ çalıştır";
-"Run %@ here" = "Burada %1$@ çalıştır";
 "Run again" = "Yeniden çalıştır";
 "Run agent (%@)" = "Ajan çalıştır (%1$@)";
 "Run an agent in a worktree" = "Bir worktree'de ajan çalıştır";
@@ -874,7 +875,6 @@
 "Stash changes" = "Değişiklikleri stash'e kaydet";
 "Stashes %lld" = "Stash'ler %1$lld";
 "Stashing…" = "Stash'e kaydediliyor…";
-"Stash… (save changes for later)" = "Stash… (değişiklikleri sonrası için sakla)";
 "Structure graph" = "Yapı grafiği";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Yapı grafiği için gitch %1$@ veya üstü gerekir, ancak Gitrochi içindeki gitch %2$@.";
 "Subject line only, no body" = "Yalnızca konu satırı, gövde yok";

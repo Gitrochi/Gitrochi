@@ -1,8 +1,18 @@
 /* Gitrochi — pl. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Wszystkie gałęzie…";
+"Compare with %@" = "Porównaj z %1$@";
+"Fast-forward only" = "Tylko fast-forward";
 "Find in file" = "Znajdź w pliku";
+"Merge" = "Scalanie";
+"Pop latest stash" = "Zastosuj ostatni stash";
+"Pop latest stash (none saved)" = "Zastosuj ostatni stash (brak zapisanych)";
 "Previous match" = "Poprzednie dopasowanie";
 "Next match" = "Następne dopasowanie";
+"Pull as configured in git" = "Ściągnij wg konfiguracji git";
+"Pull options" = "Opcje ściągania";
+"Start %@ here" = "Uruchom %1$@ tutaj";
+"Switch branch or repository, open or clone one, or close the tab" = "Przełącz gałąź lub repozytorium, otwórz lub sklonuj repozytorium albo zamknij kartę";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Brak dopasowań";
 "Wrap lines" = "Zawijaj wiersze";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " Pliki pominięte w commitach (%1$lld) pozostaną bez zmian.";
 " (current)" = " (bieżąca)";
 " (on)" = " (włączone)";
-" Choose merge or rebase from ▾." = " Wybierz scalanie lub rebase z menu ▾.";
-" Force push from ▾." = " Wymuszone wypchnięcie w menu ▾.";
 " · %@ stages" = " · etap %1$@";
 " · %lld outside the graph" = " · poza grafem: %1$lld";
 " · %lld%% similar" = " · podobieństwo %1$lld%%";
@@ -380,7 +388,6 @@
 "Create worktree" = "Utwórz worktree";
 "Create worktree from here…" = "Utwórz worktree od tego miejsca…";
 "Created" = "Utworzono";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Tworzy nową gałąź w bieżącym miejscu. W menu ▾: nowy worktree, uruchomienie agenta (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Tworzenie: %1$@…";
 "Creating branch…" = "Tworzenie gałęzi…";
 "Creating commit %lld/%lld…" = "Tworzenie commita %1$lld/%2$lld…";
@@ -691,7 +698,6 @@
 "Pipelines" = "Pipeline'y";
 "Plan only" = "Tylko plan";
 "Plan only (read-only)" = "Tylko plan (tylko do odczytu)";
-"Pop (apply the latest stash)" = "Pop (zastosuj ostatni stash)";
 "Popping stash…" = "Przywracanie stasha (pop)…";
 "Preparing…" = "Przygotowywanie…";
 "Previous name: %@" = "Poprzednia nazwa: %1$@";
@@ -701,10 +707,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "Chroniona przez gitch: bez bezpośredniego push, scalanie przez pull request";
 "Pruning worktrees…" = "Czyszczenie worktree…";
 "Pull" = "Ściągnij";
-"Pull (as configured in git)" = "Ściągnij (wg konfiguracji git)";
-"Pull — fast-forward only" = "Ściągnij — tylko fast-forward";
-"Pull — merge" = "Ściągnij — scalanie";
-"Pull — rebase" = "Ściągnij — rebase";
 "Pulling…" = "Ściąganie…";
 "Push" = "Wypchnij";
 "Push tag" = "Wypchnij tag";
@@ -783,7 +785,6 @@
 "Rules" = "Reguły";
 "Run" = "Uruchom";
 "Run %@ after creating" = "Uruchom %1$@ po utworzeniu";
-"Run %@ here" = "Uruchom %1$@ tutaj";
 "Run again" = "Uruchom ponownie";
 "Run agent (%@)" = "Uruchom agenta (%1$@)";
 "Run an agent in a worktree" = "Uruchom agenta w worktree";
@@ -871,7 +872,6 @@
 "Stash changes" = "Zapisz zmiany w stashu";
 "Stashes %lld" = "Stashe %1$lld";
 "Stashing…" = "Zapisywanie w stashu…";
-"Stash… (save changes for later)" = "Stash… (odłóż zmiany na później)";
 "Structure graph" = "Graf struktury";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Graf struktury wymaga gitch %1$@ lub nowszego, ale gitch w Gitrochi ma wersję %2$@.";
 "Subject line only, no body" = "Tylko temat, bez treści";

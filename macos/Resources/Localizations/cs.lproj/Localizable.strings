@@ -1,8 +1,18 @@
 /* Gitrochi — cs. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Všechny větve…";
+"Compare with %@" = "Porovnat s %1$@";
+"Fast-forward only" = "Pouze fast-forward";
 "Find in file" = "Hledat v souboru";
+"Merge" = "Sloučení";
+"Pop latest stash" = "Použít poslední stash";
+"Pop latest stash (none saved)" = "Použít poslední stash (žádný není uložen)";
 "Previous match" = "Předchozí výskyt";
 "Next match" = "Další výskyt";
+"Pull as configured in git" = "Pull podle nastavení gitu";
+"Pull options" = "Možnosti pull";
+"Start %@ here" = "Spustit %1$@ zde";
+"Switch branch or repository, open or clone one, or close the tab" = "Přepnout větev nebo repozitář, otevřít nebo klonovat jiný, nebo zavřít kartu";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Žádné shody";
 "Wrap lines" = "Zalamovat řádky";
@@ -89,8 +99,6 @@
 " %lld files that aren't committed stay as they are." = " Necommitnuté soubory (%1$lld) zůstanou beze změny.";
 " (current)" = " (aktuální)";
 " (on)" = " (zapnuto)";
-" Choose merge or rebase from ▾." = " V nabídce ▾ zvolte sloučení nebo rebase.";
-" Force push from ▾." = " Vynucený push najdete v nabídce ▾.";
 " · %@ stages" = " · fáze %1$@";
 " · %lld outside the graph" = " · mimo graf: %1$lld";
 " · %lld%% similar" = " · podobnost %1$lld %%";
@@ -380,7 +388,6 @@
 "Create worktree" = "Vytvořit worktree";
 "Create worktree from here…" = "Vytvořit worktree odsud…";
 "Created" = "Vytvořeno";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Vytvoří novou větev na aktuální pozici. V nabídce ▾: nový worktree, spuštění agenta (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Vytváří se %1$@…";
 "Creating branch…" = "Vytváření větve…";
 "Creating commit %lld/%lld…" = "Vytváření commitu %1$lld/%2$lld…";
@@ -690,7 +697,6 @@
 "Pipelines" = "Pipeline";
 "Plan only" = "Jen plánovat";
 "Plan only (read-only)" = "Jen plánovat (jen pro čtení)";
-"Pop (apply the latest stash)" = "Pop (použít poslední stash)";
 "Popping stash…" = "Probíhá stash pop…";
 "Preparing…" = "Příprava…";
 "Previous name: %@" = "Předchozí název: %1$@";
@@ -699,9 +705,6 @@
 "Protect from direct push (gitch)" = "Chránit před přímým push (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Chráněno gitch: žádný přímý push, slučuje se přes pull request";
 "Pruning worktrees…" = "Pročišťování worktree…";
-"Pull (as configured in git)" = "Pull (podle nastavení gitu)";
-"Pull — fast-forward only" = "Pull — pouze fast-forward";
-"Pull — merge" = "Pull — sloučení";
 "Pulling…" = "Probíhá pull…";
 "Push tag" = "Push tagu";
 "Pushes %lld unpushed commits to the remote." = "Provede push neodeslaných commitů (%1$lld) do vzdáleného repozitáře.";
@@ -779,7 +782,6 @@
 "Rules" = "Pravidla";
 "Run" = "Spustit";
 "Run %@ after creating" = "Po vytvoření spustit %1$@";
-"Run %@ here" = "Spustit %1$@ zde";
 "Run again" = "Spustit znovu";
 "Run agent (%@)" = "Spustit agenta (%1$@)";
 "Run an agent in a worktree" = "Spustit agenta ve worktree";
@@ -867,7 +869,6 @@
 "Stash changes" = "Uložit změny do stashe";
 "Stashes %lld" = "Stashe %1$lld";
 "Stashing…" = "Ukládání do stashe…";
-"Stash… (save changes for later)" = "Stash… (odložit změny na později)";
 "Structure graph" = "Graf struktury";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Graf struktury potřebuje gitch %1$@ nebo novější, ale gitch v Gitrochi má verzi %2$@.";
 "Subject line only, no body" = "Jen předmět, bez těla";
