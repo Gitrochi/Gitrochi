@@ -246,6 +246,9 @@ struct AppCommands: Commands {
             Button("New terminal") { store?.newTerminal() }
                 .keyboardShortcut("`", modifiers: [.control, .shift])
                 .disabled(store?.url == nil)
+            Button("Voice input…") { store?.terminalVoice.open() }
+                .keyboardShortcut(" ", modifiers: [.control, .shift])
+                .disabled(store?.url == nil)
             Divider()
             Button("Stash…") { store?.sheet = .stash }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
@@ -272,6 +275,30 @@ struct RepoContainer: View {
             }
         }
         .animation(.easeInOut(duration: 0.4), value: showLoading)
+        .onAppear { store.terminalVoice.attach(to: store) }
+        .onChange(of: store.window) { _, _ in store.terminalVoice.attach(to: store) }
+        .onChange(of: store.url) { _, _ in
+            store.terminalVoice.dismiss()
+            store.terminalVoice.attach(to: store)
+        }
+        .onChange(of: store.activeTerminalID) { _, id in
+            if let context = store.terminalVoice.context, id != context.sessionID { store.terminalVoice.dismiss() }
+        }
+        .onChange(of: store.activeTerminal?.running) { _, running in
+            if running != true && store.terminalVoice.presented { store.terminalVoice.dismiss() }
+        }
+        .onChange(of: store.showTerminal) { _, visible in
+            if !visible { store.terminalVoice.dismiss() }
+        }
+        .onChange(of: store.isActive) { _, active in
+            if !active { store.terminalVoice.dismiss() }
+        }
+        .onDisappear { store.terminalVoice.detach() }
+        .sheet(isPresented: Binding(get: { store.terminalVoice.presented }, set: {
+            if !$0 && store.terminalVoice.presented { store.terminalVoice.dismiss() }
+        }), onDismiss: { store.terminalVoice.sheetDidClose() }) {
+            TerminalVoiceSheet().environment(store)
+        }
         .sheet(item: $store.sheet) { kind in
             switch kind {
             case .clone: CloneSheet()

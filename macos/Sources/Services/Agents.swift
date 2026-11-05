@@ -285,7 +285,10 @@ final class AgentCenter {
     func runsInApp(_ s: AgentSession) -> Bool { inApp[s.id]?.session != nil }
 
     /// 폴더에서 에이전트를 띄운다 — host 저장소 탭 아래 터미널의 새 탭(기본) 또는 새 Terminal 창. task 가 있으면 첫 요청으로 보낸다.
-    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil) throws {
+    func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil, place: Place? = nil) throws {
+        if place == .app, host == nil {
+            throw AIError.notConfigured(String(localized: "Choose an open repository before starting an in-app agent."))
+        }
         guard let exe = ToolStore.shared.path(kind.tool) else {
             throw AIError.notConfigured(String(localized: "Couldn't find \(kind.title). Locate the executable in Settings > Tools or install it."))
         }
@@ -296,8 +299,10 @@ final class AgentCenter {
         try JSONSerialization.data(withJSONObject: meta).write(to: file(id + ".meta"))
         let args = kind.arguments(hooks: hooksFile.path, task: task.trimmed, mode: permissionMode)
         let env = ["GITROCHI_AGENT_ID": id], pidFile = file(id + ".pid").path
-        if let host, Place.current == .app,
-           let session = host.newTerminal(in: path, command: .init(program: exe, args: args, env: env, title: kind.title, pidFile: pidFile)) {
+        if let host, (place ?? Place.current) == .app {
+            guard let session = host.newTerminal(in: path, command: .init(program: exe, args: args, env: env, title: kind.title, pidFile: pidFile)) else {
+                throw AIError.notConfigured(String(localized: "The in-app terminal could not start. Try again."))
+            }
             inApp[id] = TerminalLink(session, host)
         } else {
             try Launcher.run(exe, args: args, in: path, env: env, pidFile: pidFile)

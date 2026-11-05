@@ -67,8 +67,10 @@ struct TerminalPanel: View {
             Divider()
             if let layout = store.terminalLayout {
                 TerminalNodeView(node: layout, corner: layout.corner.id, split: layout.panes.count > 1)
+                    .padding(8)
             }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .frame(height: min(max(terminalHeight, range.lowerBound), range.upperBound))
         .overlay(alignment: .top) {
             SplitHandle(height: $terminalHeight, range: range)
@@ -159,6 +161,8 @@ private struct TerminalSplitLayout: Layout {
 
 private struct TerminalPaneView: View {
     @Environment(RepoStore.self) private var store
+    @AppStorage("terminalFontSize") private var fontSize = 13.0
+    @ViewState private var paneHeight: CGFloat = 260
     let pane: TerminalNode.Pane
     let isCorner: Bool
     let split: Bool
@@ -168,152 +172,160 @@ private struct TerminalPaneView: View {
         let focused = shown != nil && shown?.id == store.activeTerminal?.id
         VStack(spacing: 0) {
             header(shown)
-                .overlay(alignment: .bottom) {
-                    if split && focused { Rectangle().fill(Color.accentColor).frame(height: 2) }
-                }
             Divider()
             ZStack {
                 Color(nsColor: TerminalSession.background)
-                if let s = shown {
-                    TerminalHost(session: s, focus: focused)
-                        .id(s.id)
-                        .padding(.leading, 8)
-                        .padding(.top, 4)
-                    if !s.running {
-                        ended(s, focused: focused)
-                    }
+                if let session = shown {
+                    TerminalHost(session: session, focus: focused, fontSize: fontSize)
+                        .id(session.id)
+                        .padding(.horizontal, 10)
+                        .padding(.top, 8)
+                    if !session.running { ended(session, focused: focused) }
                 }
             }
+            if paneHeight >= 200 {
+                TerminalQuickActions(enabled: shown?.running == true) { command in
+                    insert(command.command, into: shown)
+                }
+            }
+            if let session = shown {
+                TerminalStatusBar(directory: session.directory, running: session.running,
+                                  program: session.command?.title ?? URL(fileURLWithPath: TerminalSession.loginShell).lastPathComponent,
+                                  branch: session.directory == store.url?.path ? store.currentBranch?.name : nil,
+                                  unseenCount: store.terminals.filter(\.unseenOutput).count,
+                                  copyDirectory: {
+                                      NSPasteboard.general.clearContents()
+                                      NSPasteboard.general.setString(session.directory, forType: .string)
+                                  }, nextUnseen: {
+                                      if let next = store.terminals.first(where: \.unseenOutput) { store.selectTerminal(next) }
+                                  })
+            }
         }
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(split && focused ? Color.primary.opacity(0.3) : Color.primary.opacity(0.12))
+                .allowsHitTesting(false)
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { paneHeight = $0 }
+
     }
 
     private func header(_ shown: TerminalSession?) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "apple.terminal")
-                .foregroundStyle(.secondary)
-                .padding(.trailing, 2)
+        ViewThatFits(in: .horizontal) {
+            headerContents(shown, style: 0)
+            headerContents(shown, style: 1)
+            headerContents(shown, style: 2)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 42)
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private func headerContents(_ shown: TerminalSession?, style: Int) -> some View {
+        HStack(spacing: 8) {
+            TerminalBrand(compact: style != 0)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
                     ForEach(pane.sessions, id: \.self) { id in
-                        if let s = store.terminals.first(where: { $0.id == id }) {
-                            TerminalTab(session: s,
-                                        number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == id } ?? 0) + 1 : nil,
-                                        selected: s.id == shown?.id,
-                                        select: { store.selectTerminal(s) },
-                                        close: { store.requestCloseTerminal(s) })
+                        if let session = store.terminals.first(where: { $0.id == id }) {
+                            TerminalSessionTab(title: session.title, directory: session.directory,
+                                               number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == id } ?? 0) + 1 : nil,
+                                               running: session.running, unseenOutput: session.unseenOutput,
+                                               selected: session.id == shown?.id,
+                                               select: { store.selectTerminal(session) },
+                                               close: { store.requestCloseTerminal(session) })
                         }
                     }
                 }
             }
-            .fixedSize(horizontal: false, vertical: true)
-            Button {
-                if let shown { store.selectTerminal(shown) }
-                store.newTerminal()
-            } label: {
-                Image(systemName: "plus")
-            }
-            .buttonStyle(.borderless)
-            .hoverTip(String(localized: "New terminal"), String(localized: "Opens another shell in the repository folder."))
-            Button { store.splitTerminal(pane, .sideBySide) } label: {
-                Image(systemName: "rectangle.split.2x1")
-            }
-            .buttonStyle(.borderless)
-            .hoverTip(String(localized: "Split right"), String(localized: "Opens another shell next to this one, in the same folder."))
-            Button { store.splitTerminal(pane, .stacked) } label: {
-                Image(systemName: "rectangle.split.1x2")
-            }
-            .buttonStyle(.borderless)
-            .hoverTip(String(localized: "Split down"), String(localized: "Opens another shell below this one, in the same folder."))
-            Spacer(minLength: 8)
-            if isCorner {
-                if let s = shown {
-                    Button { Launcher.openTerminal(at: s.directory) } label: {
-                        Image(systemName: "arrow.up.forward.app")
-                    }
-                    .buttonStyle(.borderless)
-                    .hoverTip(String(localized: "Open in Terminal"), String(localized: "Opens the current folder (\(abbreviate(s.directory))) in a new macOS Terminal window."))
+            .frame(minWidth: style == 0 ? 200 : style == 1 ? 60 : 40,
+                   idealWidth: style == 0 ? 200 : style == 1 ? 60 : 40)
+            if style < 2 {
+                TerminalToolbarButton(symbol: "plus", label: "New terminal") { newTerminal(at: shown) }
+                TerminalToolbarButton(symbol: "mic", label: "Voice input", selected: store.terminalVoice.presented && store.terminalVoice.context?.sessionID == shown?.id) {
+                    openDictation(for: shown)
                 }
-                Button { store.showTerminal = false } label: {
-                    Image(systemName: "chevron.down")
-                }
-                .buttonStyle(.borderless)
-                .hoverTip(String(localized: "Hide terminal"), String(localized: "Only the panel is hidden; shells keep running."), shortcut: "⌃`")
+                .disabled(shown?.running != true)
+            }
+            actions(shown, compact: style == 2)
+            if isCorner && style < 2 {
+                TerminalToolbarButton(symbol: "chevron.down", label: "Hide terminal") { store.showTerminal = false }
             }
         }
-        .font(.callout)
-        .padding(.horizontal, 10)
-        .frame(height: 30)
-        .background(.bar)
     }
 
-    private func ended(_ s: TerminalSession, focused: Bool) -> some View {
-        VStack(spacing: 8) {
-            Group {
-                if s.command != nil {
-                    Text(s.exitCode.map { "The process exited (code \($0))" } ?? "The process exited")
-                } else {
-                    Text(s.exitCode.map { "The shell exited (code \($0))" } ?? "The shell exited")
+    private func actions(_ shown: TerminalSession?, compact: Bool) -> some View {
+        Menu {
+            if compact {
+                Button("New terminal", systemImage: "plus") { newTerminal(at: shown) }
+                Button("Voice input", systemImage: "mic") { openDictation(for: shown) }
+                    .disabled(shown?.running != true)
+            }
+            Section("Insert command") {
+                ForEach(TerminalQuickCommand.allCases) { command in
+                    Button { insert(command.command, into: shown) } label: { Text(command.title) }
                 }
             }
-                .foregroundStyle(.secondary)
+            .disabled(shown?.running != true)
+            Section {
+                Button("Split right", systemImage: "rectangle.split.2x1") { store.splitTerminal(pane, .sideBySide) }
+                Button("Split down", systemImage: "rectangle.split.1x2") { store.splitTerminal(pane, .stacked) }
+                if let shown {
+                    Button("Open in Terminal", systemImage: "arrow.up.forward.app") { Launcher.openTerminal(at: shown.directory) }
+                }
+                if compact && isCorner {
+                    Button("Hide terminal", systemImage: "chevron.down") { store.showTerminal = false }
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 12, weight: .semibold))
+                .frame(width: 26, height: 26)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Terminal actions")
+        .accessibilityLabel("Terminal actions")
+    }
+
+    private func newTerminal(at session: TerminalSession?) {
+        if let session { store.selectTerminal(session) }
+        store.newTerminal(in: session?.directory)
+    }
+
+    private func openDictation(for session: TerminalSession?) {
+        guard let session, session.running else { return }
+        store.terminalVoice.open(for: session)
+    }
+
+    private func insert(_ text: String, into session: TerminalSession?) {
+        guard let session, session.running else { return }
+        store.selectTerminal(session)
+        session.insertText(text)
+        session.focus()
+    }
+
+    private func ended(_ session: TerminalSession, focused: Bool) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: session.exitCode == 0 ? "checkmark.circle" : "terminal")
+                .font(.title2).foregroundStyle(.secondary)
+            Text(session.command != nil ? "The process exited" : "The shell exited")
+                .font(.headline)
+            if let code = session.exitCode {
+                Text("Exit code: \(code)")
+                    .font(.caption.monospaced()).foregroundStyle(.secondary)
+            }
             HStack {
-                Button("Restart") { s.start(); s.focus() }
+                Button("Restart") { session.start(); session.focus() }
                     .keyboardShortcut(focused ? .defaultAction : nil)
-                Button("Close") { store.closeTerminal(s) }
+                Button("Close") { store.closeTerminal(session) }
             }
         }
-        .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    private func abbreviate(_ path: String) -> String {
-        let home = NSHomeDirectory()
-        return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
-    }
-}
-
-private struct TerminalTab: View {
-    let session: TerminalSession
-    /// 같은 폴더 이름의 탭을 구분하려고 여러 개일 때만 번호를 붙인다
-    let number: Int?
-    let selected: Bool
-    let select: () -> Void
-    let close: () -> Void
-    @ViewState private var hovering = false
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(session.running ? (session.unseenOutput ? Color.accentColor : Color.green) : Color.secondary)
-                .frame(width: 6, height: 6)
-            if let number {
-                Text("\(number)").foregroundStyle(.secondary).monospacedDigit()
-            }
-            Text(session.title)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: 160, alignment: .leading)
-            Button(action: close) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 8, weight: .bold))
-                    .frame(width: 14, height: 14)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .opacity(hovering || selected ? 1 : 0)
-            .help("Close terminal")
-        }
-        .font(.caption)
-        .padding(.leading, 8)
-        .padding(.trailing, 4)
-        .padding(.vertical, 3)
-        .background(selected ? Color.primary.opacity(0.1) : (hovering ? Color.primary.opacity(0.05) : .clear),
-                    in: RoundedRectangle(cornerRadius: 5))
-        .contentShape(Rectangle())
-        .onTapGesture(perform: select)
-        .onHover { hovering = $0 }
-        .help(session.directory)
+        .padding(20)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -322,15 +334,18 @@ private struct TerminalHost: NSViewRepresentable {
     let session: TerminalSession
     /// With several panes only the focused one takes the keyboard
     var focus = true
+    var fontSize = 13.0
 
     func makeNSView(context: Context) -> TerminalContainer {
         let c = TerminalContainer()
+        session.applyFont(size: fontSize)
         c.takesFocus = focus
         c.attach(session)
         return c
     }
 
     func updateNSView(_ c: TerminalContainer, context: Context) {
+        session.applyFont(size: fontSize)
         let gained = focus && !c.takesFocus
         c.takesFocus = focus
         if c.session !== session {

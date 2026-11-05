@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "앱 터미널에서 음성 입력을 시작할 때만 마이크를 사용합니다.";
+"NSSpeechRecognitionUsageDescription" = "Mac 안에서 음성을 받아쓰며, 내용을 확인한 뒤 선택한 앱 터미널에 입력할 수 있습니다.";
