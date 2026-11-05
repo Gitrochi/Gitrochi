@@ -56,9 +56,10 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Page measurement attachment changed'
         text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "page-title:" + store.destination.rawValue))')
     elif relative == 'Views/Sidebar/NavigationSidebarRail.swift':
-        needle = '.accessibilityIdentifier("navigation-rail-expand")'
+        # The rail's first button (Home) is the control that must stay below the titlebar and answer clicks.
+        needle = '.accessibilityIdentifier("navigation-rail-" + page.rawValue)'
         assert text.count(needle) == 1, 'Rail control measurement attachment changed'
-        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "rail-control"))')
+        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: page == .home ? "rail-control" : "rail-" + page.rawValue))')
     elif relative == 'Views/Hub/HostingHubPanel.swift':
         needle = 'Text(title).font(.title2.weight(.semibold))'
         assert text.count(needle) == 1, 'Hosting heading measurement attachment changed'

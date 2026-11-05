@@ -20,7 +20,7 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
   const navigate = store.navigate.bind(store); store.navigate = (page) => navigate(page, false);
   const row = (page: string) => host.querySelector<HTMLButtonElement>(`.workspace-nav-item[data-page="${page}"]`);
   const rows = () => [...host.querySelectorAll<HTMLButtonElement>(".workspace-nav-scroll .workspace-nav-item")];
-  function Fixture({ compact }: { compact: boolean }) { useObserve(store); return <div style={{ width: compact ? 56 : 250, height: 780 }}><NavigationSidebar store={store} openSettings={() => { opened++; }} compact={compact} onToggle={() => { toggles++; }} /></div>; }
+  function Fixture({ compact }: { compact: boolean }) { useObserve(store); return <div style={{ width: compact ? 52 : 250, height: 780 }}><NavigationSidebar store={store} openSettings={() => { opened++; }} compact={compact} onToggle={() => { toggles++; }} /></div>; }
   try {
     // Navigation remembers pages even with data loading disabled; keep those writes out of the real settings timer.
     settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;
@@ -41,19 +41,20 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     store.path = "C:/fixture/navigation"; store.changed(); await pause();
     for (const page of workspaceDestinations) { row(page)!.click(); await pause(); ensure(store.destination === page && row(page)?.getAttribute("aria-current") === "page", `Navigation did not select ${page}`); }
     const groups = [...host.querySelectorAll(".workspace-nav-group")].map((group) => group.textContent?.trim());
-    ensure(groups.join("|") === [t("Workspace"), "GitHub", t("Tools")].join("|"), `Unexpected group titles: ${groups.join("|")}`);
+    ensure(groups.join("|") === [t("Repository"), "GitHub", t("Tools")].join("|"), `Unexpected group titles: ${groups.join("|")}`);
     host.querySelector<HTMLButtonElement>(".workspace-nav-footer button")!.click(); ensure(opened === 1, "Settings footer did not open preferences");
     host.querySelector<HTMLButtonElement>(".workspace-nav-toggle")!.click(); ensure(toggles === 1, "The collapse control did not ask to fold the page list");
     store.target = { provider: "gitlab", host: "gitlab.example.com", path: "demo/repo", remote: "origin" }; store.changed(); await pause();
     const navText = host.querySelector("nav")?.textContent ?? "";
     ensure(["Merge requests", "Pipelines"].every((value) => navText.includes(t(value))) && navText.includes("GitLab"), "Provider-specific menu names were not applied");
     root.render(<Fixture compact />); await pause();
-    ensure(host.querySelector("nav")?.getBoundingClientRect().width === 56, "The rail must be 56px wide");
-    ensure(host.querySelector(".workspace-nav-toggle")?.getAttribute("aria-label") === t("Expand sidebar"), "The rail has no accessible expand control");
+    ensure(host.querySelector("nav")?.getBoundingClientRect().width === 52, "The rail must be 52px wide");
+    // the toolbar's sidebar toggle expands the rail (docs/design.md › App shell)
+    ensure(!host.querySelector(".workspace-nav-toggle"), "The rail must not carry a toggle of its own");
     ensure(rows().every((button) => !!button.getAttribute("aria-label") && !!button.dataset.tip && button.querySelector("svg")!.getBoundingClientRect().width > 0), "Rail icons lost their labels, tooltips or visible symbols");
     ensure(row("flows")?.getAttribute("aria-current") === "page", "The rail lost the current page");
     row("home")!.click(); await pause(); ensure(store.destination === "home", "Rail icons did not route to their pages");
-    return [true, "All thirteen pages including Ledger, available initial navigation, group titles, settings and collapse controls, GitLab names, 56px rail with labels, tooltips, current page and routing"];
+    return [true, "All thirteen pages including Ledger, available initial navigation, group titles, settings and collapse controls, GitLab names, 52px rail without its own toggle, with labels, tooltips, current page and routing"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

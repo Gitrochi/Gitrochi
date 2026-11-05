@@ -65,7 +65,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
   const leading = (
     <>
       <div className="tool-group">
-        <button type="button" className="tool sidebar-toggle" aria-label={sidebarTitle} data-tip={tip(sidebarTitle, "", "Ctrl+B")} onClick={() => settings.set("navigationSidebarCollapsed", !navigationCollapsed)}>
+        <button type="button" className="tool sidebar-toggle" aria-label={sidebarTitle} aria-expanded={!navigationCollapsed} data-tip={tip(sidebarTitle, "", "Ctrl+B")} onClick={() => settings.set("navigationSidebarCollapsed", !navigationCollapsed)}>
           <PanelLeft size={16} />
         </button>
       </div>

@@ -23,7 +23,8 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
   const nav = () => host.querySelector<HTMLElement>(".workspace-navigation")!;
   const frame = () => host.querySelector<HTMLElement>(".navigation")!;
   const row = (page: string) => host.querySelector<HTMLButtonElement>(`.workspace-nav-item[data-page="${page}"]`);
-  const toggle = () => host.querySelector<HTMLButtonElement>(".workspace-nav-toggle")!;
+  // the toolbar's sidebar toggle folds and expands the page list; the rail has no toggle of its own
+  const toggle = () => host.querySelector<HTMLButtonElement>(".toolbar .sidebar-toggle")!;
   const isCompact = () => host.querySelector(".main")?.getAttribute("data-navigation-mode") === "compact";
   const settle = async () => {
     await pause(); await pause();
@@ -48,7 +49,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
       ensure(store.destination === destination && !!host.querySelector(".workspace-repository-required") && !host.querySelector(".repository-screen"), `The ${destination} page must offer a repository chooser without starting local tools`);
     }
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();
-    ensure(isCompact() && frame().getBoundingClientRect().width === 56, "Opening the repository screen must fold the page list into a 56px rail");
+    ensure(isCompact() && frame().getBoundingClientRect().width === 52, "Opening the repository screen must fold the page list into a 52px rail");
     ensure(host.querySelector(".repository-screen > .sidebar") && host.querySelector(".repository-screen > .center") && host.querySelector(".repository-screen > .inspector"), "The repository screen must show its three columns");
     ensure(!!host.querySelector(".toolbar") && !host.querySelector(".workspace-location") && !host.querySelector('[role="tab"]'), "The icon toolbar must be back, without a page header or tab strip");
     ensure(toggle().getAttribute("aria-label") === t("Expand sidebar") && row("repository")?.getAttribute("aria-current") === "page", "The rail has no expand control or lost the current page");
@@ -58,7 +59,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     ensure(reducedMotion ? transitionDuration.every((duration) => duration === 0) : transitionDuration.some((duration) => duration > 0), "Navigation motion must follow the reduced-motion preference");
     toggleButton.focus(); toggleButton.click(); await pause();
     const openingWidth = frame().getBoundingClientRect().width;
-    ensure(reducedMotion ? openingWidth === 240 : openingWidth > 56 && openingWidth < 240, `The page list must ${reducedMotion ? "open immediately with reduced motion" : "animate between its rail and saved widths"}: ${openingWidth}`);
+    ensure(reducedMotion ? openingWidth === 240 : openingWidth > 52 && openingWidth < 240, `The page list must ${reducedMotion ? "open immediately with reduced motion" : "animate between its rail and saved widths"}: ${openingWidth}`);
     ensure(row("repository") === repositoryButton && toggle() === toggleButton && document.activeElement === toggleButton, "Sidebar motion must preserve mounted controls and keyboard focus");
     await settle();
     ensure(!isCompact() && host.querySelector(".navigation-splitter") && host.querySelector(".repository-screen"), "Expanding from the rail must show the page list beside the repository screen");
@@ -86,7 +87,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     nav().querySelector<HTMLButtonElement>(".workspace-nav-footer button")!.click();
     ensure(opened === 1, "The rail's Settings button did not open preferences");
     ensure(unexpected.length === 0, `Navigation triggered external work: ${unexpected.join(", ")}`);
-    return [true, "Welcome without a toolbar; the repository screen folds the page list into a 56px rail with three columns, an icon toolbar and no tab strip; rail and Ctrl+B animate without replacing controls or losing focus, respect reduced motion, and restore a dragged width without resize lag; branch list folds into its rail; full-width pages with the terminal below, the repository screen with it under the graph; no network, processes or writes"];
+    return [true, "Welcome without a toolbar; the repository screen folds the page list into a 52px rail with three columns, an icon toolbar and no tab strip; rail and Ctrl+B animate without replacing controls or losing focus, respect reduced motion, and restore a dragged width without resize lag; branch list folds into its rail; full-width pages with the terminal below, the repository screen with it under the graph; no network, processes or writes"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

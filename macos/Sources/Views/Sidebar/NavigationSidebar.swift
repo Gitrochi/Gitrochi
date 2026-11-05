@@ -20,9 +20,10 @@ struct NavigationSidebar: View {
             .padding(.leading, 14).padding(.trailing, 8).frame(height: 56)
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
-                    section([.home, .repository])
-                    groupTitle(String(localized: "Workspace"))
-                    section([.compare, .rebase, .code])
+                    // the sections of the rail and the redesign's sidebar: Home, then the repository's own pages
+                    section([.home])
+                    groupTitle(String(localized: "Repository"))
+                    section([.repository, .compare, .rebase, .code])
                     groupTitle(store.target?.provider == .gitlab ? "GitLab" : "GitHub")
                     section([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     groupTitle(String(localized: "Tools"))
@@ -64,8 +65,7 @@ struct NavigationSidebar: View {
                         }
                     }
                     Spacer(minLength: 2)
-                    if page == .repository, store.status.count > 0 { badge(store.status.count) }
-                    if page == .pullRequests, !store.pullRequests.isEmpty { badge(store.pullRequests.count) }
+                    // only Ledger counts something (docs/design.md › App shell, Sidebar)
                     if page == .ledger, LedgerStore.shared.attentionTotal > 0 { badge(LedgerStore.shared.attentionTotal) }
                 }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 46 : 32)
                     .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.8))

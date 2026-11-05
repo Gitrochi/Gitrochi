@@ -25,7 +25,7 @@
   overflow: hidden;
   transition: width 220ms cubic-bezier(.2,.8,.2,1), min-width 220ms cubic-bezier(.2,.8,.2,1);
 }
-.navigation.compact { min-width: 56px; }
+.navigation.compact { min-width: 52px; }
 .navigation.resizing { transition: none; }
 @media (prefers-reduced-motion: reduce) { .navigation { transition: none; } }
 

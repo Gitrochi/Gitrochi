@@ -29,9 +29,7 @@ struct RepoView: View {
         } detail: {
             HStack(spacing: 0) {
                 if showsNavigationRail {
-                    NavigationSidebarRail {
-                        expandSidebar()
-                    }
+                    NavigationSidebarRail()
                     .transition(.move(edge: .leading).combined(with: .opacity))
                     Divider().transition(.opacity)
                 }

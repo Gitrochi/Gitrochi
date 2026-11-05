@@ -53,6 +53,21 @@ enum StudioStyle {
     /// already draw it
     static let link = Color(nsColor: .linkColor)
 
+    /// The icon rail (docs/design.md › App shell): the sidebar's grey, neutral fills for the current page and hover,
+    /// never the accent
+    enum Rail {
+        static let background = dynamic(light: 0xefeff1, dark: 0x262629)
+        static let selected = dynamic(light: 0xdcdce0, dark: 0x3a3a3e)
+        static let hover = dynamic(light: 0xe5e5e8, dark: 0x303034)
+        static let icon = dynamic(light: 0x66666b, dark: 0xa1a1a6)
+        /// A page that needs a repository while none is open: dimmed, but the button stays enabled so its tip says why
+        static let blocked = dynamic(light: 0xc7c7cc, dark: 0x58585d)
+        static let settings = dynamic(light: 0x3a3a3c, dark: 0xd1d1d6)
+        static let separator = dynamic(light: 0xdcdce0, dark: 0x3a3a3e)
+        static let badge = dynamic(light: 0xffffff, dark: 0x2c2c2e)
+        static let badgeText = dynamic(light: 0x3a3a3c, dark: 0xd1d1d6)
+    }
+
     private enum Tones {
         static let waitingText = dynamic(light: 0x8a4600, dark: 0xf2b35e)
         static let waitingFill = dynamic(light: 0xf8ecdc, dark: 0x3a2c18)
