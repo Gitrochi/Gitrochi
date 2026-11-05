@@ -81,10 +81,10 @@ struct RepoView: View {
         // opening the repository screen folds the page list into the rail, so the branch list takes its place
         .onChange(of: store.destination) { _, page in
             if page == .repository, store.url != nil {
-                withAnimation(sidebarAnimation) { sidebarPresentation.setVisibility(.detailOnly) }
+                withAnimation(sidebarAnimation) { sidebarPresentation.fold() }
             }
         }
-        .onAppear { if store.destination == .repository, store.url != nil { sidebarPresentation.setVisibility(.detailOnly) } }
+        .onAppear { if store.destination == .repository, store.url != nil { sidebarPresentation.fold() } }
         .onChange(of: AccountStore.shared.revision) { _, _ in
             Task { await store.refreshHostingAccount() }
         }
