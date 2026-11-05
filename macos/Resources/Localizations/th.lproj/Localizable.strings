@@ -1,20 +1,35 @@
 /* Gitrochi — th. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "ไฟล์ที่เปลี่ยน %1$lld ไฟล์";
+"%lld not pushed" = "ยังไม่ได้พุช %1$lld รายการ";
+"%lld to pull" = "รอพูล %1$lld รายการ";
 "All branches…" = "แบรนช์ทั้งหมด…";
 "Compare with %@" = "เปรียบเทียบกับ %1$@";
 "Fast-forward only" = "fast-forward เท่านั้น";
+"Filter repositories" = "กรองรีโพสิทอรี";
 "Find in file" = "ค้นหาในไฟล์";
 "Go" = "ไป";
+"Last opened" = "เปิดล่าสุด";
+"Last opened repository" = "รีโพสิทอรีที่เปิดล่าสุด";
 "Merge" = "เมิร์จ";
+"New repository…" = "รีโพสิทอรีใหม่…";
+"Nothing is due today." = "วันนี้ไม่มีงานที่ถึงกำหนด";
+"Open Projects" = "เปิดโปรเจกต์";
 "Open a repository to use these" = "เปิดรีโพสิทอรีเพื่อใช้รายการเหล่านี้";
+"Open…" = "เปิด…";
+"Overdue · %@" = "เลยกำหนด · %1$@";
 "Pop latest stash" = "นำสแตชล่าสุดกลับมาใช้";
 "Pop latest stash (none saved)" = "นำสแตชล่าสุดกลับมาใช้ (ไม่มีที่เก็บไว้)";
 "Previous match" = "รายการที่ตรงกันก่อนหน้า";
 "Next match" = "รายการที่ตรงกันถัดไป";
 "Pull as configured in git" = "พูลตามที่ตั้งค่าไว้ใน git";
 "Pull options" = "ตัวเลือกพูล";
+"Recent" = "ล่าสุด";
 "Start %@ here" = "เริ่ม %1$@ ที่นี่";
 "Switch branch or repository, open or clone one, or close the tab" = "สลับแบรนช์หรือรีโพสิทอรี เปิดหรือโคลนรีโพสิทอรี หรือปิดแท็บ";
+"Tasks for today" = "งานสำหรับวันนี้";
+"Up to date" = "เป็นปัจจุบัน";
+"Yesterday" = "เมื่อวาน";
 "{0} of {1}" = "{0} จาก {1}";
 "No matches" = "ไม่พบรายการที่ตรงกัน";
 "Wrap lines" = "ตัดบรรทัด";
@@ -2237,8 +2252,6 @@
 "Git accounts" = "บัญชี Git";
 "Manage Git accounts…" = "จัดการบัญชี Git…";
 "Open a repository to see its Git identity." = "เปิดคลังเพื่อดูข้อมูลประจำตัว Git ของคลังนั้น";
-"Open repositories" = "คลังที่เปิดอยู่";
-"Recent local repositories" = "คลังในเครื่องล่าสุด";
 "Open repository" = "เปิดคลัง";
 "Organization: {0}" = "องค์กร: {0}";
 "Load more organizations" = "โหลดองค์กรเพิ่มเติม";

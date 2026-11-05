@@ -272,6 +272,15 @@ import SwiftUI
         precondition(PageListFold(showing: 240, sliding: false).rail == 0 && PageListFold(showing: 0, sliding: false).rail == 53 && PageListFold(showing: 20, sliding: true).rail == 33, "The rail shows only where the page list has left it")
         precondition(PageListFold(showing: 240, sliding: false).overhang == 0 && PageListFold(showing: 20, sliding: true).overhang == 0, "A resting list, or one that covers only the rail, leaves the page its own width")
         precondition([60, 120, 240].allSatisfy { PageListFold(showing: $0, sliding: true).overhang == $0 - 53 }, "While the list slides, the page counts on the width it has with the list folded")
+        precondition(HomeRepositories.sync(ahead: 2, behind: 0) == "2 not pushed" && HomeRepositories.sync(ahead: 1, behind: 3) == "1 not pushed · 3 to pull" && HomeRepositories.sync(ahead: 0, behind: 0) == "Up to date", "Home says what is not pushed and what is to pull, or that the repository is up to date")
+        var homeCalendar = Calendar(identifier: .gregorian)
+        homeCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let homeNow = homeCalendar.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 9))!
+        func homeOpened(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0) -> String {
+            HomeRepositories.opened(homeCalendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour))!, now: homeNow, calendar: homeCalendar, locale: Locale(identifier: "en_US"))
+        }
+        precondition(homeOpened(2026, 11, 5, 1) == "Today" && homeOpened(2026, 11, 4, 23) == "Yesterday" && homeOpened(2026, 10, 29) == "Oct 29" && homeOpened(2025, 12, 30) == "Dec 30, 2025", "Home names today and yesterday and dates the rest, with the year only for another year")
+        precondition(HomeRepositories.matches(URL(fileURLWithPath: "/tmp/Projects/design-tokens"), filter: " TOKENS ") && !HomeRepositories.matches(URL(fileURLWithPath: "/tmp/Projects/design-tokens"), filter: "website"), "Home's filter matches any part of the path")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])

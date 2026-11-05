@@ -1,20 +1,35 @@
 /* Gitrochi — ru. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "Изменённых файлов: %1$lld";
+"%lld not pushed" = "Не отправлено: %1$lld";
+"%lld to pull" = "К получению: %1$lld";
 "All branches…" = "Все ветки…";
 "Compare with %@" = "Сравнить с %1$@";
 "Fast-forward only" = "Только перемотка вперёд";
+"Filter repositories" = "Фильтр репозиториев";
 "Find in file" = "Найти в файле";
 "Go" = "Переход";
+"Last opened" = "Последний открытый";
+"Last opened repository" = "Последний открытый репозиторий";
 "Merge" = "Слияние";
+"New repository…" = "Новый репозиторий…";
+"Nothing is due today." = "На сегодня ничего нет.";
+"Open Projects" = "Открыть проекты";
 "Open a repository to use these" = "Откройте репозиторий, чтобы ими пользоваться";
+"Open…" = "Открыть…";
+"Overdue · %@" = "Просрочено · %1$@";
 "Pop latest stash" = "Применить последние спрятанные изменения";
 "Pop latest stash (none saved)" = "Применить последние спрятанные изменения (ничего не спрятано)";
 "Previous match" = "Предыдущее совпадение";
 "Next match" = "Следующее совпадение";
 "Pull as configured in git" = "Извлечь по настройкам git";
 "Pull options" = "Параметры извлечения";
+"Recent" = "Недавние";
 "Start %@ here" = "Запустить %1$@ здесь";
 "Switch branch or repository, open or clone one, or close the tab" = "Переключить ветку или репозиторий, открыть или клонировать репозиторий либо закрыть вкладку";
+"Tasks for today" = "Задачи на сегодня";
+"Up to date" = "Актуально";
+"Yesterday" = "Вчера";
 "{0} of {1}" = "{0} из {1}";
 "No matches" = "Нет совпадений";
 "Wrap lines" = "Перенос строк";
@@ -2242,8 +2257,6 @@
 "Git accounts" = "Учётные записи Git";
 "Manage Git accounts…" = "Управление учётными записями Git…";
 "Open a repository to see its Git identity." = "Откройте репозиторий, чтобы увидеть его данные Git.";
-"Open repositories" = "Открытые репозитории";
-"Recent local repositories" = "Недавние локальные репозитории";
 "Open repository" = "Открыть репозиторий";
 "Organization: {0}" = "Организация: {0}";
 "Load more organizations" = "Загрузить ещё организации";

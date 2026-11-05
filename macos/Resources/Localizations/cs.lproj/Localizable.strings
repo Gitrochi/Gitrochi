@@ -1,20 +1,35 @@
 /* Gitrochi — cs. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "Změněné soubory: %1$lld";
+"%lld not pushed" = "%1$lld neodesláno";
+"%lld to pull" = "%1$lld ke stažení";
 "All branches…" = "Všechny větve…";
 "Compare with %@" = "Porovnat s %1$@";
 "Fast-forward only" = "Pouze fast-forward";
+"Filter repositories" = "Filtrovat repozitáře";
 "Find in file" = "Hledat v souboru";
 "Go" = "Přejít";
+"Last opened" = "Naposledy otevřeno";
+"Last opened repository" = "Naposledy otevřený repozitář";
 "Merge" = "Sloučení";
+"New repository…" = "Nový repozitář…";
+"Nothing is due today." = "Na dnešek není nic naplánováno.";
+"Open Projects" = "Otevřít Projekty";
 "Open a repository to use these" = "Otevřete repozitář, abyste je mohli používat";
+"Open…" = "Otevřít…";
+"Overdue · %@" = "Po termínu · %1$@";
 "Pop latest stash" = "Použít poslední stash";
 "Pop latest stash (none saved)" = "Použít poslední stash (žádný není uložen)";
 "Previous match" = "Předchozí výskyt";
 "Next match" = "Další výskyt";
 "Pull as configured in git" = "Pull podle nastavení gitu";
 "Pull options" = "Možnosti pull";
+"Recent" = "Nedávné";
 "Start %@ here" = "Spustit %1$@ zde";
 "Switch branch or repository, open or clone one, or close the tab" = "Přepnout větev nebo repozitář, otevřít nebo klonovat jiný, nebo zavřít kartu";
+"Tasks for today" = "Úkoly na dnešek";
+"Up to date" = "Aktuální";
+"Yesterday" = "Včera";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Žádné shody";
 "Wrap lines" = "Zalamovat řádky";
@@ -2224,8 +2239,6 @@
 "Git accounts" = "Git účty";
 "Manage Git accounts…" = "Spravovat Git účty…";
 "Open a repository to see its Git identity." = "Otevřete repozitář pro zobrazení jeho Git identity.";
-"Open repositories" = "Otevřené repozitáře";
-"Recent local repositories" = "Nedávné místní repozitáře";
 "Open repository" = "Otevřít repozitář";
 "Organization: {0}" = "Organizace: {0}";
 "Load more organizations" = "Načíst další organizace";

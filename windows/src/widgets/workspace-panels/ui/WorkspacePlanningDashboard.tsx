@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  CircleAlert,
   RefreshCw,
   Search,
   Sun,
@@ -24,7 +25,7 @@ import {
   type ProjectPortfolioTask,
   type HubProjectScope,
 } from "@/entities/hosting";
-import { t } from "@/shared/i18n";
+import { language, t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Spinner } from "@/shared/ui";
 import {
@@ -32,17 +33,23 @@ import {
   WorkspacePlanningSource,
 } from "./WorkspacePlanningControls";
 import { WorkspacePlanningViews } from "./WorkspacePlanningViews";
+import { homeTodayTasks } from "../model/home";
 import { usePlanningPortfolio } from "../model/use-planning-portfolio";
 import { useProjectNavigation } from "../model/use-project-navigation";
 import "./planning-dashboard.css";
 
-/** Home reads a portfolio independently of the active project's mutable controller. */
+/**
+ * Home reads a portfolio independently of the active project's mutable controller. With `todayOnly` it draws only
+ * Home's "Tasks for today": at most five rows of title, project and due label.
+ */
 export function WorkspacePlanningDashboard({
   store,
   fixture,
+  todayOnly = false,
 }: {
   store: RepoStore;
   fixture?: ProjectPortfolioState;
+  todayOnly?: boolean;
 }) {
   useObserve(store);
   useObserve(accounts);
@@ -203,6 +210,40 @@ export function WorkspacePlanningDashboard({
     context,
     source,
   );
+  /** The Projects page on the source, account and scope this list was loaded with */
+  const openProjects = () => {
+    if (account) store.hostingHub.selectedAccountID = account.id;
+    store.hostingHub.projectScope = effectiveScope;
+    void store.hostingHub.selectProjectSource(source).then(() => store.navigate("projects"));
+  };
+  if (todayOnly) {
+    const rows = homeTodayTasks(tasks, today);
+    const dateLabel = (day: string) =>
+      new Intl.DateTimeFormat(language, { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${day}T00:00:00Z`));
+    return (
+      <section className="home-tasks" aria-labelledby="home-tasks-title">
+        <div className="home-tasks-head">
+          <h2 id="home-tasks-title">{t("Tasks for today")}</h2>
+          <button className="home-text-button" onClick={openProjects}>{t("Open Projects")}</button>
+        </div>
+        <div className="home-list" role="list" aria-labelledby="home-tasks-title">
+          {!rows.length && <p className="home-empty">{t(data.loading ? "Loading project schedules…" : "Nothing is due today.")}</p>}
+          {rows.map((task) => {
+            const due = task.entry.due, overdue = !!due && due < today;
+            return (
+              <button role="listitem" className="home-task" key={task.id} disabled={opening} onClick={() => void openProject(task.detail.item, task.entry.row.id)}>
+                <span className="home-task-title ellipsis">{task.entry.row.title}</span>
+                <span className="home-task-project ellipsis">{task.projectNames.join(" · ")}</span>
+                <span className="home-task-due">
+                  {overdue ? <span className="status-tone" data-tone="failed"><CircleAlert size={12} aria-hidden />{t("Overdue · {0}", dateLabel(due))}</span> : t("Today")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
   const chooseProject = (id: string, checked: boolean) => {
     const selected = new Set(data.selectedIDs);
     checked ? selected.add(id) : selected.delete(id);
@@ -285,16 +326,7 @@ export function WorkspacePlanningDashboard({
           {(local || account) &&
             !data.loading &&
             (readError || data.error || !data.projects.length) && (
-              <Button
-                size="small"
-                onClick={() => {
-                  if (account) store.hostingHub.selectedAccountID = account.id;
-                  store.hostingHub.projectScope = effectiveScope;
-                  void store.hostingHub
-                    .selectProjectSource(source)
-                    .then(() => store.navigate("projects"));
-                }}
-              >
+              <Button size="small" onClick={openProjects}>
                 {t("Open project workspace")}
               </Button>
             )}

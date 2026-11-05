@@ -1,20 +1,35 @@
 /* Gitrochi — tr. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld değişen dosya";
+"%lld not pushed" = "%1$lld gönderilmedi";
+"%lld to pull" = "%1$lld çekilecek";
 "All branches…" = "Tüm dallar…";
 "Compare with %@" = "%1$@ ile karşılaştır";
 "Fast-forward only" = "Yalnızca ileri sar";
+"Filter repositories" = "Depoları filtrele";
 "Find in file" = "Dosyada bul";
 "Go" = "Git";
+"Last opened" = "Son açılan";
+"Last opened repository" = "Son açılan depo";
 "Merge" = "Birleştir";
+"New repository…" = "Yeni depo…";
+"Nothing is due today." = "Bugün teslim edilecek bir şey yok.";
+"Open Projects" = "Projeleri aç";
 "Open a repository to use these" = "Bunları kullanmak için bir depo açın";
+"Open…" = "Aç…";
+"Overdue · %@" = "Gecikti · %1$@";
 "Pop latest stash" = "En son stash'i uygula";
 "Pop latest stash (none saved)" = "En son stash'i uygula (kayıtlı yok)";
 "Previous match" = "Önceki eşleşme";
 "Next match" = "Sonraki eşleşme";
 "Pull as configured in git" = "git ayarlarına göre çek";
 "Pull options" = "Çekme seçenekleri";
+"Recent" = "Son kullanılanlar";
 "Start %@ here" = "Burada %1$@ başlat";
 "Switch branch or repository, open or clone one, or close the tab" = "Dalı veya depoyu değiştir, bir depo aç ya da klonla veya sekmeyi kapat";
+"Tasks for today" = "Bugünün görevleri";
+"Up to date" = "Güncel";
+"Yesterday" = "Dün";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Eşleşme yok";
 "Wrap lines" = "Satırları kaydır";
@@ -2229,8 +2244,6 @@
 "Git accounts" = "Git hesapları";
 "Manage Git accounts…" = "Git hesaplarını yönet…";
 "Open a repository to see its Git identity." = "Git kimliğini görmek için bir depo açın.";
-"Open repositories" = "Açık depolar";
-"Recent local repositories" = "Son yerel depolar";
 "Open repository" = "Depoyu aç";
 "Organization: {0}" = "Kuruluş: {0}";
 "Load more organizations" = "Daha fazla kuruluş yükle";

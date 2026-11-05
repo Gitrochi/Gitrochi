@@ -4,12 +4,13 @@ import SwiftUI
 /// tall, 8 pt at each side, fully rounded, 11 pt semibold. Colour is never the only sign: the icon and the label say it.
 struct StatusPill: View {
     let title: String
-    let symbol: String
+    /// nil for a plain count, which says nothing about a state
+    var symbol: String?
     let tone: StudioStyle.Tone
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true)
+            if let symbol { Image(systemName: symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true) }
             Text(title).lineLimit(1)
         }
         .font(.system(size: 11, weight: .semibold))

@@ -4,7 +4,7 @@ import type { SheetKind } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
 import { accounts } from "@/entities/hosting";
 import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
-import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { WorkspaceHomePanel, ActionsWorkspacePanel, RemoteRepositorySearch } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
 import { Toolbar } from "@/widgets/toolbar";
@@ -81,13 +81,15 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       return { status: 200, body: JSON.stringify(issue) };
     };
     ipc.ciLog = async () => ({ body: "build passed\nAuthorization: Bearer private-secret\nfixture-token", truncated: false });
-    // Home: the welcome actions, recents and the search of repositories on a server
+    // Home: the three repository actions, the filter and today's tasks, and nothing else
     await mount(<WorkspaceHomePanel store={store} />);
-    check(await until(() => projectReads === 1 && [...host.querySelectorAll("button")].some((button) => button.textContent?.trim() === t("Open project workspace"))), "Home project catalog did not finish loading");
-    check(!host.querySelector(".planning-error"), "Home project catalog returned a hidden fixture error");
+    check(await until(() => projectReads === 1 && !!host.querySelector(".home-tasks .home-list")), "Home task list did not finish loading");
     check(writes === 0, `Home performed an unexpected mutation: ${writeDetails()}`);
-    check(host.querySelector(".welcome") && [...host.querySelectorAll("button")].some((b) => b.textContent?.trim() === t("Open repository…")), "Home missing the welcome actions");
-    check(host.textContent?.includes(t("Recent repositories")) && host.textContent?.includes(t("Repositories on a server")), "Home missing recents or the server search");
+    check(host.querySelector(".home-page") && [t("Open…"), t("Clone…"), t("New repository…")].every((label) => [...host.querySelectorAll(".home-actions button")].some((b) => b.textContent?.trim() === label)), "Home missing the repository actions");
+    check(host.querySelector(".home-filter input") && host.textContent?.includes(t("Tasks for today")) && [...host.querySelectorAll("button")].some((b) => b.textContent?.trim() === t("Open Projects")), "Home missing the filter or today's tasks");
+    check(!host.querySelector(".planning-dashboard") && !host.querySelector(".remote-search") && !host.querySelector(".welcome"), "Home must show only repositories and today's tasks");
+    // The search of repositories on a server, no longer on Home, keeps its checks
+    await mount(<RemoteRepositorySearch store={store} />);
     await change(host.querySelector(".remote-search select")!, profile.id);
     await change(host.querySelector(".remote-search input")!, "fixture remote");
     await click("Search");

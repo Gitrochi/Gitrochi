@@ -40,6 +40,8 @@ final class FileWatcher {
 /// 최근 연 저장소 목록(UserDefaults)
 enum Recents {
     private static let key = "recentRepositories"
+    /// When each repository was last opened, by path; Home shows it beside the repository
+    private static let openedKey = "recentRepositoryOpened"
 
     static func load() -> [URL] {
         (UserDefaults.standard.stringArray(forKey: key) ?? [])
@@ -52,8 +54,17 @@ enum Recents {
         var list = UserDefaults.standard.stringArray(forKey: key) ?? []
         list.removeAll { $0 == url.path }
         list.insert(url.path, at: 0)
-        UserDefaults.standard.set(Array(list.prefix(12)), forKey: key)
+        let kept = Array(list.prefix(12))
+        UserDefaults.standard.set(kept, forKey: key)
+        var opened = (UserDefaults.standard.dictionary(forKey: openedKey) as? [String: Double]) ?? [:]
+        opened[url.path] = Date().timeIntervalSince1970
+        UserDefaults.standard.set(opened.filter { kept.contains($0.key) }, forKey: openedKey)
         return load()
+    }
+
+    /// When the repository was last opened; nil for one opened before this was recorded
+    static func opened(_ url: URL) -> Date? {
+        ((UserDefaults.standard.dictionary(forKey: openedKey) as? [String: Double]) ?? [:])[url.path].map(Date.init(timeIntervalSince1970:))
     }
 
     @discardableResult

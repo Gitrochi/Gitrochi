@@ -1,20 +1,35 @@
 /* Gitrochi — hu. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld módosított fájl";
+"%lld not pushed" = "%1$lld nincs feltöltve";
+"%lld to pull" = "%1$lld letöltendő";
 "All branches…" = "Összes ág…";
 "Compare with %@" = "Összehasonlítás ezzel: %1$@";
 "Fast-forward only" = "Csak fast-forward";
+"Filter repositories" = "Tárolók szűrése";
 "Find in file" = "Keresés a fájlban";
 "Go" = "Ugrás";
+"Last opened" = "Legutóbb megnyitva";
+"Last opened repository" = "Legutóbb megnyitott tároló";
 "Merge" = "Egyesítés";
+"New repository…" = "Új tároló…";
+"Nothing is due today." = "Mára nincs esedékes feladat.";
+"Open Projects" = "Projektek megnyitása";
 "Open a repository to use these" = "Ezek használatához nyisson meg egy tárolót";
+"Open…" = "Megnyitás…";
+"Overdue · %@" = "Lejárt · %1$@";
 "Pop latest stash" = "Legutóbbi stash alkalmazása";
 "Pop latest stash (none saved)" = "Legutóbbi stash alkalmazása (nincs mentve)";
 "Previous match" = "Előző találat";
 "Next match" = "Következő találat";
 "Pull as configured in git" = "Pull a git beállításai szerint";
 "Pull options" = "Pull beállításai";
+"Recent" = "Legutóbbiak";
 "Start %@ here" = "%1$@ indítása itt";
 "Switch branch or repository, open or clone one, or close the tab" = "Ág vagy tároló váltása, egy tároló megnyitása vagy klónozása, vagy a lap bezárása";
+"Tasks for today" = "Mai feladatok";
+"Up to date" = "Naprakész";
+"Yesterday" = "Tegnap";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Nincs találat";
 "Wrap lines" = "Sortördelés";
@@ -2227,8 +2242,6 @@
 "Git accounts" = "Git-fiókok";
 "Manage Git accounts…" = "Git-fiókok kezelése…";
 "Open a repository to see its Git identity." = "Nyisson meg egy tárolót a Git-azonosság megtekintéséhez.";
-"Open repositories" = "Megnyitott tárolók";
-"Recent local repositories" = "Legutóbbi helyi tárolók";
 "Open repository" = "Tároló megnyitása";
 "Organization: {0}" = "Szervezet: {0}";
 "Load more organizations" = "További szervezetek betöltése";
