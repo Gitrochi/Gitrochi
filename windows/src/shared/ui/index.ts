@@ -6,3 +6,5 @@ export { SharedPane, SharedStack } from "./SharedStack";
 export { theme, themeModes } from "./theme";
 export { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, MenuHost, type MenuItem, Modal, Segmented, showContextMenu, showMenuBelow, Spinner, tip, TooltipHost } from "./ui";
 export { HostingDate } from "./HostingDate";
+export { CodeEditor } from "./CodeEditor";
+export { SourceSplit } from "./SourceSplit";

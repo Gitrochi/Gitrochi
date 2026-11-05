@@ -10,3 +10,5 @@ export { workPrompts, renderWorkPrompt, workPromptTemplate, type WorkPrompt } fr
 export { screenCodeMap, screenCodeFor, type ScreenCodeEntry } from "./screen-code-map";
 export { flowEvidence, safeWorkPath, decodeAgentAssignments, decodeValidationBindings, taskBoundaryOverlaps, handoffReport, type ValidationBinding, type FlowEvidence, type AgentAssignment } from "./work-validation";
 export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, type TeamSnapshot, type TeamOverlap, type TeamPresence } from "./team-hub";
+export { sourceLanguage, sourceTokens, sourceMatches, sourceLineCount, sourceMatchLimit, syntaxCharacterLimit, syntaxTokenLimit, wrappingLineLimit, type SourceMatch, type SourceToken } from "./source-reader";
+export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";

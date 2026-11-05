@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Reading controls are independent of Git requests and never modify the file.
+/// Code controls are independent of Git requests; editing is enabled only with an explicit draft binding.
 struct RepositoryCodeReader: View {
     let text: String
     let path: String
@@ -10,6 +10,7 @@ struct RepositoryCodeReader: View {
     @Binding var wraps: Bool
     @Binding var findText: String
     @Binding var matchIndex: Int
+    var editableText: Binding<String>? = nil
     @ViewState private var tokens: [RepositoryCodeReading.Token] = []
     @ViewState private var starts: [Int] = []
     @ViewState private var matches: [NSRange] = []
@@ -20,6 +21,7 @@ struct RepositoryCodeReader: View {
     @ViewState private var lineInput = ""
     @ViewState private var targetLine: Int?
     @ViewState private var jumpID: UUID?
+    @ViewState private var replaceRequest: UUID?
     @FocusState private var findFocused: Bool
     @FocusState private var lineFocused: Bool
 
@@ -45,12 +47,16 @@ struct RepositoryCodeReader: View {
                     Button { advance(1) } label: { Image(systemName: "chevron.down") }.disabled(matches.isEmpty).help("Next match").accessibilityLabel("Next match")
                     Button { findText = "" } label: { Image(systemName: "xmark") }.help("Clear search").accessibilityLabel("Clear search")
                 }
+                if editableText != nil {
+                    Button { replaceRequest = UUID() } label: { Image(systemName: "arrow.triangle.2.circlepath") }
+                        .keyboardShortcut("f", modifiers: [.command, .option]).help("Find and replace").accessibilityLabel("Find and replace")
+                }
             }.buttonStyle(.borderless).font(.callout).padding(.horizontal, 14).padding(.vertical, 11)
             Divider()
             if truncatedMatches {
                 Text("More than 10,000 matches. Refine your search.").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(10)
             }
-            RepositorySourceView(text: text, tokens: tokens, lineStarts: starts, fontSize: fontSize, wraps: wraps, activeMatch: activeMatch, targetLine: targetLine, jumpID: jumpID)
+            RepositorySourceView(text: text, tokens: tokens, lineStarts: starts, fontSize: fontSize, wraps: wraps, activeMatch: activeMatch, targetLine: targetLine, jumpID: jumpID, editableText: editableText, replaceRequest: replaceRequest)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             WorkbenchFlow(spacing: 12) {
@@ -72,7 +78,8 @@ struct RepositoryCodeReader: View {
                     } label: { Label("Outline", systemImage: "list.bullet.indent") }
                         .menuStyle(.borderlessButton).fixedSize().help("Outline").accessibilityIdentifier("code-outline")
                 }
-                Label("Read only", systemImage: "lock")
+                if editableText == nil { Label("Read only", systemImage: "lock") }
+                else { Label("Editable", systemImage: "pencil").help("Tab indents, Shift-Tab outdents. Undo and redo use the standard Edit menu shortcuts.") }
                 Button { wraps.toggle() } label: {
                     Image(systemName: "text.word.spacing").foregroundStyle(wraps ? Color.accentColor : .secondary)
                 }.help("Wrap lines").accessibilityLabel("Wrap lines").accessibilityValue(wraps ? String(localized: "On") : String(localized: "Off"))
@@ -92,7 +99,8 @@ struct RepositoryCodeReader: View {
                 .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         }
         .task(id: Document(text: text, path: path, syntax: syntax)) {
-            tokens = []; starts = []; symbols = []; copied = false; targetLine = nil; jumpID = nil; lineInput = ""; goToLine = false
+            if editableText == nil { tokens = []; starts = []; symbols = [] }
+            copied = false; targetLine = nil; jumpID = nil; lineInput = ""; goToLine = false
             let input = text, inputPath = path, shouldStyle = syntax
             let result = await Task.detached(priority: .userInitiated) {
                 (RepositoryCodeReading.lineStarts(in: input), shouldStyle ? RepositoryCodeReading.tokens(in: input, path: inputPath) : [], shouldStyle ? RepositoryCodeReading.outline(in: input, path: inputPath) : [])

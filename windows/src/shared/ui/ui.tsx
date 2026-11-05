@@ -126,9 +126,13 @@ export function Modal({
   width?: number;
   onClose: () => void;
 }) {
+  const backdrop = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        const dialogs = document.querySelectorAll(".modal-backdrop");
+        if (dialogs[dialogs.length - 1] !== backdrop.current) return;
+        if ((e.target as Element | null)?.closest?.('.code-editor[data-search-open="true"]')) return;
         e.stopPropagation();
         onClose();
       }
@@ -137,7 +141,7 @@ export function Modal({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
   return (
-    <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={backdrop} className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ width }} role="dialog">
         {title && <div className="modal-title">{title}</div>}
         {children && <div className="modal-body">{children}</div>}
