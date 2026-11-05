@@ -31,7 +31,7 @@ struct WorkspaceHomePanel: View {
                 if !repositoryOnly { WorkspacePlanningDashboard(todayOnly: true) }
             }
             .padding(EdgeInsets(top: 16, leading: 20, bottom: 32, trailing: 20))
-            .frame(maxWidth: 1280, alignment: .leading)
+            // as wide as the window: the board's 1280 is the size it was drawn at, not a limit
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(dropping ? Color.accentColor.opacity(0.08) : Color.clear)
