@@ -1,6 +1,16 @@
 /* Release and issue workspace. */
+"All branches…" = "Toutes les branches…";
+"Compare with %@" = "Comparer avec %1$@";
 "Development" = "Développement";
+"Fast-forward only" = "Fast-forward uniquement";
+"Merge" = "Fusion";
 "Newest first" = "Plus récentes";
+"Pop latest stash" = "Appliquer le dernier stash";
+"Pop latest stash (none saved)" = "Appliquer le dernier stash (aucun enregistré)";
+"Pull as configured in git" = "Pull selon la configuration de git";
+"Pull options" = "Options de pull";
+"Start %@ here" = "Démarrer %1$@ ici";
+"Switch branch or repository, open or clone one, or close the tab" = "Changer de branche ou de dépôt, en ouvrir ou en cloner un, ou fermer l’onglet";
 "Version number" = "Version";
 "Create branch" = "Créer une branche";
 "Create pull request" = "Créer une pull request";
@@ -99,12 +109,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nPour le lancer, votre jeton doit avoir l’accès en écriture à Actions (jeton classique : repo ; jeton fine-grained : Actions: Read and write). Essayez de reconnecter le compte dans les Paramètres.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... suite omise : %1$lld caractères ...]";
 " %lld files that aren't committed stay as they are." = " Les fichiers non inclus (%1$lld) restent tels quels.";
-" %lld stashes saved." = " Stashs enregistrés : %1$lld.";
 " (current)" = " (actuelle)";
 " (on)" = " (activé)";
-" Choose Stash or Pop from ▾." = " Choisissez Stash ou Pop dans ▾.";
-" Choose merge or rebase from ▾." = " Choisissez fusion ou rebase dans ▾.";
-" Force push from ▾." = " Force push via ▾.";
 " · %@ stages" = " · étape %1$@";
 " · %lld outside the graph" = " · %1$lld hors du graphe";
 " · %lld%% similar" = " · similaire à %1$lld %%";
@@ -180,7 +186,6 @@
 "Another account's token" = "Jeton d’un autre compte";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Tout serveur compatible avec le format OpenAI (/chat/completions) fonctionne. Exemple : Ollama http://localhost:11434/v1";
 "Appearance" = "Apparence";
-"Applies the most recently stashed changes (Pop)." = "Applique le stash le plus récent (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "S’applique à toutes les fonctions d’IA, en plus des règles propres à chaque fonction ci-dessous.";
 "Apply" = "Appliquer";
 "Applying stash…" = "Application du stash…";
@@ -395,8 +400,6 @@
 "Create worktree" = "Créer le worktree";
 "Create worktree from here…" = "Créer un worktree à partir d’ici…";
 "Created" = "Créé";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Crée une %1$@ à partir de la branche actuelle (%2$@). Effectue d’abord un push si nécessaire.";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Crée une branche à la position actuelle. Via ▾ : nouveau worktree, lancer un agent (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Création de la %1$@…";
 "Creating branch…" = "Création de la branche…";
 "Creating commit %lld/%lld…" = "Création du commit %1$lld/%2$lld…";
@@ -606,6 +609,7 @@
 "Name" = "Nom";
 "Needs permission" = "Autorisation requise";
 "New %@" = "Nouvelle %1$@";
+"New %@…" = "Nouvelle %1$@…";
 "New %@ from the current branch" = "Nouvelle %1$@ depuis la branche actuelle";
 "New branch" = "Nouvelle branche";
 "New branch from here…" = "Nouvelle branche à partir d’ici…";
@@ -657,7 +661,6 @@
 "Not installed" = "Non installé";
 "Not managed by gitch" = "Non géré par gitch";
 "Nothing to draw" = "Rien à dessiner";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Rien à annuler. Les opérations comme le commit, la fusion, le rebase, le changement de branche et la suppression de branche peuvent être annulées ici.";
 "Off" = "Désactivé";
 "On" = "Activé";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "L’un des côtés a supprimé le fichier, ou il s’agit d’un fichier binaire. Choisissez de le conserver ou de le supprimer.";
@@ -679,7 +682,6 @@
 "Open in Terminal" = "Ouvrir dans Terminal";
 "Open in browser" = "Ouvrir dans le navigateur";
 "Open in the terminal below" = "Ouvrir dans le terminal ci-dessous";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Ouvrir ou cloner un autre dépôt, dépôts récents, graphe de structure, fermer des onglets";
 "Open releases page" = "Ouvrir la page des versions";
 "Open repository…" = "Ouvrir un dépôt…";
 "Open that one instead? The disk image will be ejected." = "Ouvrir plutôt celui-là ? L’image disque sera éjectée.";
@@ -705,7 +707,6 @@
 "Pinned" = "Épinglées";
 "Plan only" = "Planifier uniquement";
 "Plan only (read-only)" = "Planifier uniquement (lecture seule)";
-"Pop (apply the latest stash)" = "Pop (appliquer le dernier stash)";
 "Popping stash…" = "Pop du stash…";
 "Preparing…" = "Préparation…";
 "Previous name: %@" = "Ancien nom : %1$@";
@@ -714,9 +715,6 @@
 "Protect from direct push (gitch)" = "Protéger du push direct (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Protégée par gitch : pas de push direct, fusion par pull request";
 "Pruning worktrees…" = "Nettoyage des worktrees…";
-"Pull (as configured in git)" = "Pull (selon la configuration de git)";
-"Pull — fast-forward only" = "Pull — fast-forward uniquement";
-"Pull — merge" = "Pull — fusion";
 "Pulling…" = "Pull en cours…";
 "Push tag" = "Pousser le tag";
 "Pushes %lld unpushed commits to the remote." = "Pousse vers le dépôt distant les commits pas encore poussés (%1$lld).";
@@ -794,7 +792,6 @@
 "Rules" = "Règles";
 "Run" = "Lancer";
 "Run %@ after creating" = "Lancer %1$@ après la création";
-"Run %@ here" = "Lancer %1$@ ici";
 "Run again" = "Relancer";
 "Run agent (%@)" = "Lancer un agent (%1$@)";
 "Run an agent in a worktree" = "Lancer un agent dans un worktree";
@@ -816,7 +813,6 @@
 "Save an API key first." = "Enregistrez d’abord une clé API.";
 "Save and mark as resolved" = "Enregistrer et marquer comme résolu";
 "Saves the file as chosen and stages it" = "Enregistre le fichier selon vos choix et l’indexe";
-"Saves uncommitted changes for later." = "Met de côté les modifications non validées pour plus tard.";
 "Scheduled" = "Planifié";
 "Search" = "Rechercher";
 "Search commits" = "Rechercher des commits";
@@ -883,7 +879,6 @@
 "Stash changes" = "Stash des modifications";
 "Stashes %lld" = "Stashs %1$lld";
 "Stashing…" = "Stash en cours…";
-"Stash… (save changes for later)" = "Stash… (mettre les modifications de côté)";
 "Structure graph" = "Graphe de structure";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Le graphe de structure nécessite gitch %1$@ ou plus récent, mais le gitch de Gitrochi est en version %2$@.";
 "Subject line only, no body" = "Ligne d’objet uniquement, sans corps";
@@ -960,7 +955,6 @@
 "Undo “%@”?" = "Annuler « %1$@ » ?";
 "Undo: %@" = "Annuler : %1$@";
 "Undoes the commit and leaves its changes staged." = "Annule le commit et laisse ses modifications indexées.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Annule la dernière opération, « %1$@ ». Annuler un commit conserve ses modifications.";
 "Undoing…" = "Annulation…";
 "Unified view" = "Vue unifiée";
 "Unknown" = "Inconnu";

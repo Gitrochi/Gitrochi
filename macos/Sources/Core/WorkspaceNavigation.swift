@@ -1,5 +1,29 @@
 import Foundation
 
+/// The toolbar items a window shows (docs/design.md › App shell). (Windows: toolbarSet in workspace-navigation.ts)
+enum ToolbarSet: Equatable {
+    /// The repository screen: Changes, Fetch, Pull, Push, Branch, More, terminal, right panel and account
+    case repository
+    /// Another page with a repository open: More, terminal and account
+    case page
+    /// No repository open: only the account; More and the terminal act on a repository
+    case noRepository
+
+    init(destination: WorkspaceDestination, hasRepository: Bool) {
+        if !hasRepository { self = .noRepository } else { self = destination == .repository ? .repository : .page }
+    }
+}
+
+/// The one sync action drawn prominent: Push when there are only commits to push, Pull when a fast-forward is
+/// possible, none when the branch has diverged or has no upstream. (Windows: recommendedSync)
+enum RecommendedSync: Equatable {
+    case push, pull, none
+
+    init(ahead: Int, behind: Int, hasUpstream: Bool) {
+        if !hasUpstream { self = .none } else if ahead > 0 && behind == 0 { self = .push } else if behind > 0 && ahead == 0 { self = .pull } else { self = .none }
+    }
+}
+
 /// The pages of a repository window. Repository is the three-column screen (branches | graph | inspector);
 /// the rest are full-width pages. (Windows: entities/git/model/workspace-navigation.ts)
 enum WorkspaceDestination: String, CaseIterable, Identifiable {

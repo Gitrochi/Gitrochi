@@ -53,6 +53,7 @@ import { issueWorkflowSelfTest } from "./lib/issue-workflow-selftest";
 import { releaseOverviewSelfTest } from "./lib/release-overview-selftest";
 import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
 import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
+import { toolbarSelfTest } from "./lib/toolbar-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
@@ -301,6 +302,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Complete organization project tasks, refresh, and expandable Home agenda", projectItemCompletenessSelfTest);
   await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
+  await step("Toolbar by page: repository, other pages and no repository; the More menu", toolbarSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");
   await step("파일 감시 → 새 파일 표시", async () => {

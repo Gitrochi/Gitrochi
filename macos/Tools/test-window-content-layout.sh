@@ -51,9 +51,10 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
         text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
     elif relative == 'Views/Workspace/WorkspaceDestinationContent.swift':
-        needle = '.font(.title2.weight(.semibold))\n                .lineLimit(1)'
-        assert text.count(needle) == 1, 'Page title measurement attachment changed'
-        text = text.replace(needle, needle + '\n                .background(WindowContentProbe(identifier: "page-title:" + page.rawValue))')
+        # Pages have no title row; the probe measures the page itself, which must stay below the native titlebar.
+        needle = '.accessibilityLabel(Text(store.destination.title(gitlab: store.target?.provider == .gitlab)))'
+        assert text.count(needle) == 1, 'Page measurement attachment changed'
+        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "page-title:" + store.destination.rawValue))')
     elif relative == 'Views/Sidebar/NavigationSidebarRail.swift':
         needle = '.accessibilityIdentifier("navigation-rail-expand")'
         assert text.count(needle) == 1, 'Rail control measurement attachment changed'

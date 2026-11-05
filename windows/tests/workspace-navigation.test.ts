@@ -4,7 +4,7 @@ vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
-import { isWorkspaceDestination, repositoryDestinations, restoredDestination, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
+import { isWorkspaceDestination, recommendedSync, repositoryDestinations, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
 import { env, settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
@@ -25,6 +25,22 @@ beforeEach(() => {
   vi.spyOn(ipc, "run").mockImplementation(async () => { throw new Error("Navigation tests must not start processes"); });
 });
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
+
+describe("toolbar by page", () => {
+  it("gives the repository screen the Git actions, other pages the short set and no repository only the account", () => {
+    expect(toolbarSet("repository", true)).toBe("repository");
+    for (const page of workspaceDestinations.filter((page) => page !== "repository")) expect(toolbarSet(page, true)).toBe("page");
+    expect(toolbarSet("ledger", true)).toBe("page");
+    for (const page of workspaceDestinations) expect(toolbarSet(page, false)).toBe("noRepository");
+  });
+  it("draws one sync action prominent only when it is the clear next step", () => {
+    expect(recommendedSync(2, 0, true)).toBe("push");
+    expect(recommendedSync(0, 5, true)).toBe("pull");
+    expect(recommendedSync(2, 5, true)).toBe("none");
+    expect(recommendedSync(0, 0, true)).toBe("none");
+    expect(recommendedSync(2, 0, false)).toBe("none");
+  });
+});
 
 describe("workspace navigation", () => {
   it.each([

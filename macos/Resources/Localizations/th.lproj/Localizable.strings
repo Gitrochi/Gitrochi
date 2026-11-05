@@ -1,8 +1,18 @@
 /* Gitrochi — th. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "แบรนช์ทั้งหมด…";
+"Compare with %@" = "เปรียบเทียบกับ %1$@";
+"Fast-forward only" = "fast-forward เท่านั้น";
 "Find in file" = "ค้นหาในไฟล์";
+"Merge" = "เมิร์จ";
+"Pop latest stash" = "นำสแตชล่าสุดกลับมาใช้";
+"Pop latest stash (none saved)" = "นำสแตชล่าสุดกลับมาใช้ (ไม่มีที่เก็บไว้)";
 "Previous match" = "รายการที่ตรงกันก่อนหน้า";
 "Next match" = "รายการที่ตรงกันถัดไป";
+"Pull as configured in git" = "พูลตามที่ตั้งค่าไว้ใน git";
+"Pull options" = "ตัวเลือกพูล";
+"Start %@ here" = "เริ่ม %1$@ ที่นี่";
+"Switch branch or repository, open or clone one, or close the tab" = "สลับแบรนช์หรือรีโพสิทอรี เปิดหรือโคลนรีโพสิทอรี หรือปิดแท็บ";
 "{0} of {1}" = "{0} จาก {1}";
 "No matches" = "ไม่พบรายการที่ตรงกัน";
 "Wrap lines" = "ตัดบรรทัด";
@@ -88,12 +98,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... ละไว้อีก %1$lld ตัวอักษร ...]";
 "  (fork)" = "  (ฟอร์ก)";
 " %lld files that aren't committed stay as they are." = " ไฟล์ที่ยังไม่ได้คอมมิต %1$lld ไฟล์จะยังคงอยู่เหมือนเดิม";
-" %lld stashes saved." = " บันทึกสแตชไว้ %1$lld รายการ";
 " (current)" = " (ปัจจุบัน)";
 " (on)" = " (เปิด)";
-" Choose Stash or Pop from ▾." = " เลือกสแตชหรือป๊อปได้จาก ▾";
-" Choose merge or rebase from ▾." = " เลือกเมิร์จหรือรีเบสได้จาก ▾";
-" Force push from ▾." = " พุชแบบบังคับได้จาก ▾";
 " · %@ stages" = " · %1$@ ขั้นตอน";
 " · %lld outside the graph" = " · นอกกราฟ %1$lld";
 " · %lld%% similar" = " · คล้ายกัน %1$lld%%";
@@ -174,7 +180,6 @@
 "Another account's token" = "โทเค็นของบัญชีอื่น";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "ใช้ได้กับทุกเซิร์ฟเวอร์ที่รองรับรูปแบบ OpenAI (/chat/completions) ตัวอย่าง: Ollama http://localhost:11434/v1";
 "Appearance" = "ลักษณะที่ปรากฏ";
-"Applies the most recently stashed changes (Pop)." = "นำการเปลี่ยนแปลงที่สแตชไว้ล่าสุดกลับมาใช้ (ป๊อป)";
 "Applies to every AI feature, together with the rules written for each feature below." = "ใช้กับฟีเจอร์ AI ทั้งหมด ร่วมกับกฎที่เขียนไว้สำหรับแต่ละฟีเจอร์ด้านล่าง";
 "Apply" = "นำไปใช้";
 "Applying stash…" = "กำลังนำสแตชไปใช้…";
@@ -393,8 +398,6 @@
 "Create worktree" = "สร้างเวิร์กทรี";
 "Create worktree from here…" = "สร้างเวิร์กทรีจากตรงนี้…";
 "Created" = "สร้างแล้ว";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "สร้าง %1$@ จากแบรนช์ปัจจุบัน (%2$@) จะพุชก่อนหากจำเป็น";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "สร้างแบรนช์ใหม่ที่ตำแหน่งปัจจุบัน จาก ▾: เวิร์กทรีใหม่, รันเอเจนต์ (Claude Code, Codex, Gemini)";
 "Creating %@…" = "กำลังสร้าง %1$@…";
 "Creating branch…" = "กำลังสร้างแบรนช์…";
 "Creating commit %lld/%lld…" = "กำลังสร้างคอมมิต %1$lld/%2$lld…";
@@ -604,6 +607,7 @@
 "Name" = "ชื่อ";
 "Needs permission" = "รอการอนุญาต";
 "New %@" = "%1$@ ใหม่";
+"New %@…" = "%1$@ ใหม่…";
 "New %@ from the current branch" = "%1$@ ใหม่จากแบรนช์ปัจจุบัน";
 "New branch" = "แบรนช์ใหม่";
 "New branch from here…" = "แบรนช์ใหม่จากตรงนี้…";
@@ -655,7 +659,6 @@
 "Not installed" = "ยังไม่ได้ติดตั้ง";
 "Not managed by gitch" = "gitch ไม่ได้จัดการ";
 "Nothing to draw" = "ไม่มีอะไรให้วาด";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "ไม่มีอะไรให้เลิกทำ การดำเนินการอย่างคอมมิต เมิร์จ รีเบส เช็กเอาต์ และการลบแบรนช์สามารถเลิกทำได้ที่นี่";
 "OK" = "ตกลง";
 "Off" = "ปิด";
 "On" = "เปิด";
@@ -678,7 +681,6 @@
 "Open in Terminal" = "เปิดในเทอร์มินัล";
 "Open in browser" = "เปิดในเบราว์เซอร์";
 "Open in the terminal below" = "เปิดในเทอร์มินัลด้านล่าง";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "เปิดหรือโคลนรีโพสิทอรีอื่น, รีโพสิทอรีล่าสุด, กราฟโครงสร้าง, ปิดแท็บ";
 "Open releases page" = "เปิดหน้ารีลีส";
 "Open repository…" = "เปิดรีโพสิทอรี…";
 "Open that one instead? The disk image will be ejected." = "เปิดตัวนั้นแทนหรือไม่ ดิสก์อิมเมจจะถูกดีดออก";
@@ -706,7 +708,6 @@
 "Plan only" = "วางแผนเท่านั้น";
 "Plan only (read-only)" = "วางแผนเท่านั้น (อ่านอย่างเดียว)";
 "Pop" = "ป๊อป";
-"Pop (apply the latest stash)" = "ป๊อป (นำสแตชล่าสุดกลับมาใช้)";
 "Popping stash…" = "กำลังป๊อปสแตช…";
 "Preparing…" = "กำลังเตรียม…";
 "Previous name: %@" = "ชื่อเดิม: %1$@";
@@ -716,10 +717,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "gitch ป้องกันไว้: push โดยตรงไม่ได้ ให้รวมผ่าน pull request";
 "Pruning worktrees…" = "กำลัง Prune เวิร์กทรี…";
 "Pull" = "พูล";
-"Pull (as configured in git)" = "พูล (ตามที่ตั้งค่าไว้ใน git)";
-"Pull — fast-forward only" = "พูล — fast-forward เท่านั้น";
-"Pull — merge" = "พูล — เมิร์จ";
-"Pull — rebase" = "พูล — รีเบส";
 "Pulling…" = "กำลังพูล…";
 "Push" = "พุช";
 "Push tag" = "พุชแท็ก";
@@ -798,7 +795,6 @@
 "Rules" = "กฎ";
 "Run" = "รัน";
 "Run %@ after creating" = "รัน %1$@ หลังสร้าง";
-"Run %@ here" = "รัน %1$@ ที่นี่";
 "Run again" = "รันอีกครั้ง";
 "Run agent (%@)" = "รันเอเจนต์ (%1$@)";
 "Run an agent in a worktree" = "รันเอเจนต์ในเวิร์กทรี";
@@ -820,7 +816,6 @@
 "Save an API key first." = "บันทึกคีย์ API ก่อน";
 "Save and mark as resolved" = "บันทึกและทำเครื่องหมายว่าแก้แล้ว";
 "Saves the file as chosen and stages it" = "บันทึกไฟล์ตามที่เลือกและสเตจไฟล์";
-"Saves uncommitted changes for later." = "เก็บการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตไว้ใช้ภายหลัง";
 "Scheduled" = "ตั้งเวลาไว้";
 "Search" = "ค้นหา";
 "Search commits" = "ค้นหาคอมมิต";
@@ -889,7 +884,6 @@
 "Stashes %lld" = "สแตช %1$lld";
 "Stashing…" = "กำลังสแตช…";
 "Stash…" = "สแตช…";
-"Stash… (save changes for later)" = "สแตช… (เก็บการเปลี่ยนแปลงไว้ใช้ภายหลัง)";
 "Structure graph" = "กราฟโครงสร้าง";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "กราฟโครงสร้างต้องใช้ gitch %1$@ ขึ้นไป แต่ gitch ใน Gitrochi เป็นเวอร์ชัน %2$@";
 "Subject line only, no body" = "บรรทัดหัวเรื่องเท่านั้น ไม่มีเนื้อหา";
@@ -969,7 +963,6 @@
 "Undo “%@”?" = "เลิกทำ “%1$@” หรือไม่";
 "Undo: %@" = "เลิกทำ: %1$@";
 "Undoes the commit and leaves its changes staged." = "ยกเลิกคอมมิตและเก็บการเปลี่ยนแปลงไว้ในสถานะสเตจ";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "เลิกทำการดำเนินการล่าสุด “%1$@” การเลิกทำคอมมิตจะเก็บการเปลี่ยนแปลงไว้";
 "Undoing…" = "กำลังเลิกทำ…";
 "Unified view" = "มุมมองแบบรวม";
 "Unknown" = "ไม่ทราบ";

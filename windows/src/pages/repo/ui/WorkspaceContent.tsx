@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
 import { Inspector, IssueDetail } from "@/widgets/inspector";
-import { FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
+import { destinationTitle, FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
@@ -11,20 +11,22 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
-import { PageHeader } from "./PageHeader";
 
 // The Ledger is a preview page: its code loads the first time it opens
 const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
 
-/** The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift) */
-// Pages with the shared title row; Home has its own welcome and the repository screen is the work screen
-const titled = new Set(["compare", "rebase", "code", "pullRequests", "issues", "actions", "releases", "projects", "account", "flows", "ledger"]);
-
+/**
+ * The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift)
+ * No title row: the selected sidebar item names the page and the toolbar is the only title (docs/design.md › App shell);
+ * screen readers still hear the page name.
+ */
 export function WorkspaceContent({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
-  const page = <WorkspacePage store={store} openSettings={openSettings} />;
-  if (!titled.has(store.destination)) return page;
-  return <div className="workspace-titled"><PageHeader store={store} /><div className="workspace-titled-body">{page}</div></div>;
+  return (
+    <section className="workspace-page" aria-label={destinationTitle(store.destination, store.target?.provider === "gitlab")}>
+      <WorkspacePage store={store} openSettings={openSettings} />
+    </section>
+  );
 }
 
 function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {

@@ -1,8 +1,18 @@
 /* Gitrochi — uk. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Усі гілки…";
+"Compare with %@" = "Порівняти з %1$@";
+"Fast-forward only" = "Лише перемотуванням";
 "Find in file" = "Знайти у файлі";
+"Merge" = "Злиттям";
+"Pop latest stash" = "Застосувати останню схованку";
+"Pop latest stash (none saved)" = "Застосувати останню схованку (немає збережених)";
 "Previous match" = "Попередній збіг";
 "Next match" = "Наступний збіг";
+"Pull as configured in git" = "Підтягнути, як налаштовано в git";
+"Pull options" = "Параметри підтягування";
+"Start %@ here" = "Запустити %1$@ тут";
+"Switch branch or repository, open or clone one, or close the tab" = "Перемкнути гілку чи репозиторій, відкрити або клонувати репозиторій чи закрити вкладку";
 "{0} of {1}" = "{0} із {1}";
 "No matches" = "Немає збігів";
 "Wrap lines" = "Переносити рядки";
@@ -88,12 +98,8 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... пропущено ще символів: %1$lld ...]";
 "  (fork)" = "  (форк)";
 " %lld files that aren't committed stay as they are." = " Файли, що не потрапили в коміти (%1$lld), залишаться як є.";
-" %lld stashes saved." = " Збережених схованок: %1$lld.";
 " (current)" = " (поточна)";
 " (on)" = " (увімкнено)";
-" Choose Stash or Pop from ▾." = " У ▾ можна вибрати «Сховати» або «Дістати».";
-" Choose merge or rebase from ▾." = " У ▾ можна вибрати злиття або перебазування.";
-" Force push from ▾." = " Примусове надсилання — у ▾.";
 " · %@ stages" = " · етапів: %1$@";
 " · %lld outside the graph" = " · поза графом: %1$lld";
 " · %lld%% similar" = " · схожість %1$lld%%";
@@ -174,7 +180,6 @@
 "Another account's token" = "Токен іншого облікового запису";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Підійде будь-який сервер, що приймає формат OpenAI (/chat/completions). Приклад: Ollama http://localhost:11434/v1";
 "Appearance" = "Вигляд";
-"Applies the most recently stashed changes (Pop)." = "Застосовує останні сховані зміни (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Діє для всіх функцій AI разом із правилами, заданими нижче для кожної функції.";
 "Apply" = "Застосувати";
 "Applying stash…" = "Застосування схованки…";
@@ -394,8 +399,6 @@
 "Create worktree" = "Створити робоче дерево";
 "Create worktree from here…" = "Створити робоче дерево звідси…";
 "Created" = "Створено";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Створює %1$@ з поточної гілки (%2$@). За потреби спершу надсилає її.";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Створює нову гілку в поточній позиції. У ▾: нове робоче дерево, запуск агента (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Створення %1$@…";
 "Creating branch…" = "Створення гілки…";
 "Creating commit %lld/%lld…" = "Створення коміту %1$lld/%2$lld…";
@@ -609,6 +612,7 @@
 "Name" = "Назва";
 "Needs permission" = "Запитувати дозвіл";
 "New %@" = "Новий %1$@";
+"New %@…" = "Новий %1$@…";
 "New %@ from the current branch" = "Новий %1$@ з поточної гілки";
 "New branch" = "Нова гілка";
 "New branch from here…" = "Нова гілка звідси…";
@@ -660,7 +664,6 @@
 "Not installed" = "Не встановлено";
 "Not managed by gitch" = "Не керується gitch";
 "Nothing to draw" = "Нічого малювати";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Нічого відміняти. Тут можна відмінити такі операції, як коміт, злиття, перебазування, перехід на гілку й видалення гілки.";
 "Off" = "Вимк.";
 "On" = "Увімк.";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Одна зі сторін видалила файл, або це двійковий файл. Виберіть, залишити його чи видалити.";
@@ -682,7 +685,6 @@
 "Open in Terminal" = "Відкрити в Терміналі";
 "Open in browser" = "Відкрити в браузері";
 "Open in the terminal below" = "Відкрити в терміналі внизу";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Відкрити або клонувати інший репозиторій, недавні репозиторії, граф структури, закриття вкладок";
 "Open releases page" = "Відкрити сторінку випусків";
 "Open repository…" = "Відкрити репозиторій…";
 "Open that one instead? The disk image will be ejected." = "Відкрити ту копію замість цієї? Образ диска буде виштовхнуто.";
@@ -710,7 +712,6 @@
 "Plan only" = "Лише план";
 "Plan only (read-only)" = "Лише план (тільки читання)";
 "Pop" = "Дістати";
-"Pop (apply the latest stash)" = "Дістати (застосувати останню схованку)";
 "Popping stash…" = "Діставання зі схованки…";
 "Preparing…" = "Підготовка…";
 "Previous name: %@" = "Попередня назва: %1$@";
@@ -720,10 +721,6 @@
 "Protected by gitch: no direct pushes, merge through a pull request" = "Захищено gitch: без прямого push, злиття через pull request";
 "Pruning worktrees…" = "Очищення робочих дерев…";
 "Pull" = "Підтягнути";
-"Pull (as configured in git)" = "Підтягнути (як налаштовано в git)";
-"Pull — fast-forward only" = "Підтягнути — лише перемотуванням";
-"Pull — merge" = "Підтягнути — злиттям";
-"Pull — rebase" = "Підтягнути — перебазуванням";
 "Pulling…" = "Підтягування…";
 "Push" = "Надіслати";
 "Push tag" = "Надіслати тег";
@@ -802,7 +799,6 @@
 "Rules" = "Правила";
 "Run" = "Запустити";
 "Run %@ after creating" = "Запустити %1$@ після створення";
-"Run %@ here" = "Запустити %1$@ тут";
 "Run again" = "Запустити знову";
 "Run agent (%@)" = "Запустити агента (%1$@)";
 "Run an agent in a worktree" = "Запустити агента в робочому дереві";
@@ -824,7 +820,6 @@
 "Save an API key first." = "Спершу збережіть ключ API.";
 "Save and mark as resolved" = "Зберегти й позначити як розв’язане";
 "Saves the file as chosen and stages it" = "Зберігає файл із вибраним варіантом та індексує його";
-"Saves uncommitted changes for later." = "Відкладає незакомічені зміни на потім.";
 "Scheduled" = "Заплановано";
 "Search" = "Пошук";
 "Search commits" = "Пошук комітів";
@@ -893,7 +888,6 @@
 "Stashes %lld" = "Схованки %1$lld";
 "Stashing…" = "Збереження в схованку…";
 "Stash…" = "Сховати…";
-"Stash… (save changes for later)" = "Сховати… (відкласти зміни на потім)";
 "Structure graph" = "Граф структури";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Для графа структури потрібен gitch %1$@ або новіший, але gitch у Gitrochi — %2$@.";
 "Subject line only, no body" = "Лише рядок теми, без тіла";
@@ -973,7 +967,6 @@
 "Undo “%@”?" = "Відмінити «%1$@»?";
 "Undo: %@" = "Відмінити: %1$@";
 "Undoes the commit and leaves its changes staged." = "Відміняє коміт і залишає його зміни в індексі.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Відміняє останню операцію «%1$@». Під час відміни коміту його зміни зберігаються.";
 "Undoing…" = "Відміна…";
 "Unified view" = "Об’єднаний вигляд";
 "Unknown" = "Невідомо";

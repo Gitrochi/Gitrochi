@@ -41,7 +41,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     root.render(<RepoPage store={store} openSettings={() => { opened++; }} />);
     await settle();
     ensure(!isCompact() && toggle().getAttribute("aria-expanded") === "true", "Home must show the full page list");
-    ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool"), "Home without a repository must show the welcome screen and only the account control in the toolbar");
+    ensure(!!host.querySelector(".welcome") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool:not(.sidebar-toggle)"), "Home without a repository must show the welcome screen and, beside the sidebar toggle and the repository button, only the account control in the toolbar");
     ensure(!row("repository")?.disabled && !row("issues")?.disabled, "Initial navigation must remain available");
     for (const destination of ["repository", "code", "pullRequests", "actions", "flows"] as const) {
       row(destination)!.click(); await settle();
@@ -76,9 +76,9 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     ensure(host.querySelector(".repository-screen > .sidebar"), "The branch rail must expand the branch list again");
     // Issues needs no repository process; the Code page would read the tree
     row("issues")!.click(); await settle();
-    const pane = host.querySelector<HTMLElement>(".workspace-pane"), page = host.querySelector<HTMLElement>(".workspace-pane > .workspace-titled");
+    const pane = host.querySelector<HTMLElement>(".workspace-pane"), page = host.querySelector<HTMLElement>(".workspace-pane > .workspace-page");
     const paneWidth = pane?.getBoundingClientRect().width ?? 0, pageWidth = page?.getBoundingClientRect().width ?? 0;
-    ensure(store.destination === "issues" && !host.querySelector(".repository-screen") && page?.querySelector(".workspace-titled-body") && paneWidth > 0 && pageWidth > 0 && Math.abs(pageWidth - paneWidth) <= 1, `Other pages must be full-width: destination=${store.destination}; pane=${paneWidth}; page=${pageWidth}`);
+    ensure(store.destination === "issues" && !host.querySelector(".repository-screen") && !page?.querySelector(".page-header") && page?.getAttribute("aria-label") === t("Issues") && paneWidth > 0 && pageWidth > 0 && Math.abs(pageWidth - paneWidth) <= 1, `Other pages must be full-width: destination=${store.destination}; pane=${paneWidth}; page=${pageWidth}`);
     store.showTerminal = true; store.changed(); await settle();
     ensure(host.querySelector(".workspace-pane > .term-panel"), "The terminal must sit below a full-width page");
     row("repository")!.click(); await settle();

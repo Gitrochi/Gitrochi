@@ -2,18 +2,13 @@ import SwiftUI
 
 struct WorkspaceDestinationContent: View {
     @Environment(RepoStore.self) private var store
-    /// Pages with the shared title row; Home has its own welcome and Repository is the work screen
-    private static let titled: Set<WorkspaceDestination> = [.compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows, .ledger]
 
+    /// No title row: the selected sidebar item names the page and the toolbar is the only title (docs/design.md › App shell).
+    /// VoiceOver still hears the page name.
     var body: some View {
-        VStack(spacing: 0) {
-            if Self.titled.contains(store.destination) {
-                PageHeader(page: store.destination)
-                Divider()
-            }
-            page
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+        page
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text(store.destination.title(gitlab: store.target?.provider == .gitlab)))
     }
 
     @ViewBuilder private var page: some View {
@@ -40,34 +35,6 @@ struct WorkspaceDestinationContent: View {
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
-    }
-}
-
-/// The title row every workspace page shares (Windows: pages/repo/ui/PageHeader.tsx). A page reached from the repository
-/// screen also offers the way back.
-struct PageHeader: View {
-    @Environment(RepoStore.self) private var store
-    let page: WorkspaceDestination
-
-    var body: some View {
-        HStack(spacing: 10) {
-            if store.cameFromRepository, page.returnsToRepository {
-                Button { store.navigate(.repository) } label: { Label("Repository", systemImage: "chevron.left") }
-                    .buttonStyle(.borderless)
-                    .keyboardShortcut("[", modifiers: .command)
-                    .help("Back to the repository screen (⌘[)")
-                    .accessibilityLabel("Back to the repository screen")
-                Divider().frame(height: 20)
-            }
-            Image(systemName: page.symbol).font(.system(size: 18)).foregroundStyle(.secondary)
-            Text(page.title(gitlab: store.target?.provider == .gitlab))
-                .font(.title2.weight(.semibold))
-                .lineLimit(1)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 18)
-        .frame(height: 50)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
 

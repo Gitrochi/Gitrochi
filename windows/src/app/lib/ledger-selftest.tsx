@@ -112,7 +112,7 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     ensure(numberedShortcut() && app.destination === "ledger", "The numbered Ledger shortcut did not open without a repository");
     app.navigate("home");
     $<HTMLButtonElement>(".workspace-nav-item[data-page='ledger']")!.click();
-    ensure(await until(() => app.destination === "ledger" && $(".page-header h1")?.textContent === t("Ledger") && $(".ledger-page")), "The Ledger page did not open with its title");
+    ensure(await until(() => app.destination === "ledger" && $(".workspace-page")?.getAttribute("aria-label") === t("Ledger") && $(".ledger-page")), "The Ledger page did not open with its name");
     ensure(restoredDestination("ledger", false) === "ledger", "A remembered Ledger page must reopen without a repository");
     root.unmount();
     root = createRoot(host);

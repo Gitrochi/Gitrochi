@@ -1,35 +1,167 @@
-/* widgets/toolbar — 저장소 도구 막대 */
+/* widgets/toolbar — the window toolbar (docs/design.md › App shell): 36px capsules 8px apart in a 52px bar */
 
 .toolbar {
-  min-height: 48px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex: none;
 }
 
-.toolbar .title {
+/* keeps the sidebar toggle and the repository button leading and the actions trailing */
+.toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+/* a capsule: the card colour, a 1px ring outside it and a soft shadow */
+.toolbar .tool-group {
+  height: 36px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar .tool-group + .tool-group {
+  margin-left: 0;
+}
+
+/* a button in a capsule: 36px high, at least 36px wide */
+.toolbar .tool {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 9px;
+  gap: 6px;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 13px;
+}
+
+/* buttons sharing a capsule have no divider between them */
+.toolbar .tool + .tool {
+  border-left: 0;
+}
+
+/* Changes, Fetch, Pull and Push always show their title */
+.toolbar .tool.titled {
+  padding: 0 12px 0 10px;
+  white-space: nowrap;
+}
+
+.toolbar .tool:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+/* a toggle that is on draws a neutral fill (#f0f0f0 on white), never the accent */
+.toolbar .tool.on {
+  background: color-mix(in srgb, var(--text) 6%, var(--card));
+}
+
+.toolbar .tool.on:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 10%, var(--card));
+}
+
+/* the recommended sync action: the one filled capsule */
+.toolbar .tool-group.prominent {
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.toolbar .tool-group.prominent .tool {
+  color: var(--accent-text);
+}
+
+.toolbar .tool-group.prominent .tool:hover:not(:disabled) {
+  background: color-mix(in srgb, black 12%, transparent);
+}
+
+/* repository and branch in one button that opens the repository menu */
+.toolbar .picker {
+  min-width: 0;
+  max-width: 280px;
+}
+
+.toolbar .title-menu {
+  height: 36px;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 11px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.toolbar .title-menu:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.toolbar .title-menu > svg {
+  flex: none;
+}
+
+.toolbar .picker-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  flex: 1 1 100px;
-  margin-left: 4px;
-  line-height: 1.2;
 }
 
-.toolbar .title .name {
+.toolbar .picker-text .name {
+  font-size: 13px;
   font-weight: 600;
-  font-size: 13.5px;
+  line-height: 16px;
 }
 
-.toolbar .title .sub {
-  font-size: 11.5px;
+.toolbar .picker-text .sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 14px;
   color: var(--text-2);
+}
+
+.toolbar .picker-text .state,
+.toolbar .picker-text .counts {
+  flex: none;
+}
+
+.toolbar .picker-text .counts {
+  display: inline-flex;
+  gap: 5px;
+  font-family: var(--mono);
+  color: color-mix(in srgb, var(--text) 80%, transparent);
+}
+
+.toolbar .picker-chevron {
+  color: var(--text-2);
+}
+
+/* the account control sits in the trailing corner in a capsule like the others */
+.toolbar .account-quick-trigger {
+  height: 36px;
+  margin-left: 0;
+  padding: 0 12px 0 6px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar .account-quick-trigger:hover {
+  background: color-mix(in srgb, var(--text) 6%, var(--card));
 }
 
 .busy {

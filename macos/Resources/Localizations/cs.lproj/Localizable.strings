@@ -1,8 +1,18 @@
 /* Gitrochi — cs. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"All branches…" = "Všechny větve…";
+"Compare with %@" = "Porovnat s %1$@";
+"Fast-forward only" = "Pouze fast-forward";
 "Find in file" = "Hledat v souboru";
+"Merge" = "Sloučení";
+"Pop latest stash" = "Použít poslední stash";
+"Pop latest stash (none saved)" = "Použít poslední stash (žádný není uložen)";
 "Previous match" = "Předchozí výskyt";
 "Next match" = "Další výskyt";
+"Pull as configured in git" = "Pull podle nastavení gitu";
+"Pull options" = "Možnosti pull";
+"Start %@ here" = "Spustit %1$@ zde";
+"Switch branch or repository, open or clone one, or close the tab" = "Přepnout větev nebo repozitář, otevřít nebo klonovat jiný, nebo zavřít kartu";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Žádné shody";
 "Wrap lines" = "Zalamovat řádky";
@@ -87,12 +97,8 @@
 "\n\nTo run it, your token needs write access to Actions (classic token: repo; fine-grained token: Actions: Read and write). Try reconnecting the account in Settings." = "\n\nKe spuštění potřebuje token oprávnění k zápisu do Actions (klasický token: repo; token fine-grained: Actions: Read and write). Zkuste účet v Nastavení znovu připojit.";
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... vynecháno dalších znaků: %1$lld ...]";
 " %lld files that aren't committed stay as they are." = " Necommitnuté soubory (%1$lld) zůstanou beze změny.";
-" %lld stashes saved." = " Uložené stashe: %1$lld.";
 " (current)" = " (aktuální)";
 " (on)" = " (zapnuto)";
-" Choose Stash or Pop from ▾." = " V nabídce ▾ zvolte Stash nebo Pop.";
-" Choose merge or rebase from ▾." = " V nabídce ▾ zvolte sloučení nebo rebase.";
-" Force push from ▾." = " Vynucený push najdete v nabídce ▾.";
 " · %@ stages" = " · fáze %1$@";
 " · %lld outside the graph" = " · mimo graf: %1$lld";
 " · %lld%% similar" = " · podobnost %1$lld %%";
@@ -170,7 +176,6 @@
 "Another account's token" = "Token jiného účtu";
 "Any server that accepts the OpenAI format (/chat/completions) works. Example: Ollama http://localhost:11434/v1" = "Funguje jakýkoli server, který přijímá formát OpenAI (/chat/completions). Příklad: Ollama http://localhost:11434/v1";
 "Appearance" = "Vzhled";
-"Applies the most recently stashed changes (Pop)." = "Použije naposledy odložené změny (Pop).";
 "Applies to every AI feature, together with the rules written for each feature below." = "Platí pro všechny funkce AI, spolu s pravidly zadanými níže pro jednotlivé funkce.";
 "Apply" = "Použít";
 "Applying stash…" = "Aplikování stashe…";
@@ -383,8 +388,6 @@
 "Create worktree" = "Vytvořit worktree";
 "Create worktree from here…" = "Vytvořit worktree odsud…";
 "Created" = "Vytvořeno";
-"Creates a %@ from the current branch (%@). Pushes first if needed." = "Vytvoří %1$@ z aktuální větve (%2$@). V případě potřeby nejprve provede push.";
-"Creates a new branch at the current position. From ▾: new worktree, run an agent (Claude Code, Codex, Gemini)." = "Vytvoří novou větev na aktuální pozici. V nabídce ▾: nový worktree, spuštění agenta (Claude Code, Codex, Gemini).";
 "Creating %@…" = "Vytváří se %1$@…";
 "Creating branch…" = "Vytváření větve…";
 "Creating commit %lld/%lld…" = "Vytváření commitu %1$lld/%2$lld…";
@@ -595,6 +598,7 @@
 "Name" = "Název";
 "Needs permission" = "Žádá o oprávnění";
 "New %@" = "Nový %1$@";
+"New %@…" = "Nový %1$@…";
 "New %@ from the current branch" = "Nový %1$@ z aktuální větve";
 "New branch" = "Nová větev";
 "New branch from here…" = "Nová větev odsud…";
@@ -646,7 +650,6 @@
 "Not installed" = "Nenainstalováno";
 "Not managed by gitch" = "Nespravováno gitch";
 "Nothing to draw" = "Není co kreslit";
-"Nothing to undo. Operations like commit, merge, rebase, checkout and branch deletion can be undone here." = "Není co vrátit zpět. Zde lze vrátit operace jako commit, sloučení, rebase, přepnutí větve a smazání větve.";
 "Off" = "Vypnuto";
 "On" = "Zapnuto";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Jedna strana soubor smazala, nebo jde o binární soubor. Zvolte, zda ho ponechat, nebo smazat.";
@@ -668,7 +671,6 @@
 "Open in Terminal" = "Otevřít v Terminálu";
 "Open in browser" = "Otevřít v prohlížeči";
 "Open in the terminal below" = "Otevřít v terminálu dole";
-"Open or clone another repository, recent repositories, structure graph, close tabs" = "Otevřít nebo klonovat jiný repozitář, nedávné repozitáře, graf struktury, zavřít karty";
 "Open releases page" = "Otevřít stránku vydání";
 "Open repository…" = "Otevřít repozitář…";
 "Open that one instead? The disk image will be ejected." = "Otevřít místo toho tamten? Obraz disku bude vysunut.";
@@ -695,7 +697,6 @@
 "Pipelines" = "Pipeline";
 "Plan only" = "Jen plánovat";
 "Plan only (read-only)" = "Jen plánovat (jen pro čtení)";
-"Pop (apply the latest stash)" = "Pop (použít poslední stash)";
 "Popping stash…" = "Probíhá stash pop…";
 "Preparing…" = "Příprava…";
 "Previous name: %@" = "Předchozí název: %1$@";
@@ -704,9 +705,6 @@
 "Protect from direct push (gitch)" = "Chránit před přímým push (gitch)";
 "Protected by gitch: no direct pushes, merge through a pull request" = "Chráněno gitch: žádný přímý push, slučuje se přes pull request";
 "Pruning worktrees…" = "Pročišťování worktree…";
-"Pull (as configured in git)" = "Pull (podle nastavení gitu)";
-"Pull — fast-forward only" = "Pull — pouze fast-forward";
-"Pull — merge" = "Pull — sloučení";
 "Pulling…" = "Probíhá pull…";
 "Push tag" = "Push tagu";
 "Pushes %lld unpushed commits to the remote." = "Provede push neodeslaných commitů (%1$lld) do vzdáleného repozitáře.";
@@ -784,7 +782,6 @@
 "Rules" = "Pravidla";
 "Run" = "Spustit";
 "Run %@ after creating" = "Po vytvoření spustit %1$@";
-"Run %@ here" = "Spustit %1$@ zde";
 "Run again" = "Spustit znovu";
 "Run agent (%@)" = "Spustit agenta (%1$@)";
 "Run an agent in a worktree" = "Spustit agenta ve worktree";
@@ -806,7 +803,6 @@
 "Save an API key first." = "Nejprve uložte klíč API.";
 "Save and mark as resolved" = "Uložit a označit jako vyřešené";
 "Saves the file as chosen and stages it" = "Uloží soubor podle volby a připraví ho k commitu";
-"Saves uncommitted changes for later." = "Odloží necommitnuté změny na později.";
 "Scheduled" = "Naplánováno";
 "Search" = "Hledat";
 "Search commits" = "Hledat commity";
@@ -873,7 +869,6 @@
 "Stash changes" = "Uložit změny do stashe";
 "Stashes %lld" = "Stashe %1$lld";
 "Stashing…" = "Ukládání do stashe…";
-"Stash… (save changes for later)" = "Stash… (odložit změny na později)";
 "Structure graph" = "Graf struktury";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Graf struktury potřebuje gitch %1$@ nebo novější, ale gitch v Gitrochi má verzi %2$@.";
 "Subject line only, no body" = "Jen předmět, bez těla";
@@ -952,7 +947,6 @@
 "Undo “%@”?" = "Vrátit zpět „%1$@“?";
 "Undo: %@" = "Zpět: %1$@";
 "Undoes the commit and leaves its changes staged." = "Zruší commit a jeho změny ponechá připravené.";
-"Undoes the last operation, “%@”. Undoing a commit keeps its changes." = "Vrátí zpět poslední operaci „%1$@“. Při vrácení commitu zůstanou jeho změny zachovány.";
 "Undoing…" = "Vracení zpět…";
 "Unified view" = "Jednotné zobrazení";
 "Unknown" = "Neznámé";
