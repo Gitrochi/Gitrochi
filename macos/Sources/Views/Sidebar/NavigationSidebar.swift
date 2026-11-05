@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The window's pages as the native source list (docs/design.md › App shell, Sidebar). The OS draws the rows, their
-/// selection, the section headers and Ledger's count. While no repository is open, a page that needs one is disabled
-/// and its section says why. Once the repository screen opens, this folds into the icon rail.
+/// The window's pages as the native source list (docs/design.md › App shell, Sidebar). The OS lays out the rows, the
+/// sections and Ledger's count; the app draws the current page's fill, so it stays neutral with or without keyboard
+/// focus, as in the rail. While no repository is open, a page that needs one is disabled and its section says why.
+/// Once the repository screen opens, this folds into the icon rail.
 struct NavigationSidebar: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var hovered: WorkspaceDestination?
@@ -12,9 +13,9 @@ struct NavigationSidebar: View {
     private var gitlab: Bool { store.target?.provider == .gitlab }
 
     var body: some View {
-        List(selection: Binding(get: { store.destination }, set: { page in
-            if let page, page != store.destination { store.navigate(page) }
-        })) {
+        // No selection binding: the OS would fill the current page with the accent while the list has focus, next to
+        // the page's own filled button.
+        List {
             row(.home)
             section(String(localized: "Repository"), [.repository, .compare, .rebase, .code])
             section(gitlab ? "GitLab" : "GitHub", [.pullRequests, .issues, .actions, .releases, .projects, .account])
@@ -29,7 +30,7 @@ struct NavigationSidebar: View {
                     HStack(spacing: 8) {
                         Label { Text("Settings") } icon: { Image(systemName: "gearshape").foregroundStyle(.secondary) }
                         Spacer(minLength: 8)
-                        if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.secondary) }
+                        if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.primary.opacity(0.6)) }
                     }
                     .font(.system(size: 13))
                     .padding(.horizontal, 10).frame(height: 28)
@@ -51,12 +52,14 @@ struct NavigationSidebar: View {
             ForEach(pages) { row($0) }
         } header: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(title).font(.system(size: 11, weight: .semibold))
                 // the reason sits under the section, not in a tip: macOS shows no tip on a disabled row
                 if store.url == nil, pages.contains(where: \.needsRepository) {
-                    Text("Open a repository to use these").font(.system(size: 12, weight: .regular)).foregroundStyle(.secondary)
+                    Text("Open a repository to use these").font(.system(size: 12, weight: .regular))
                 }
             }
+            // the OS draws sidebar section titles at about 2.2:1 on the sidebar grey; the design's grey reaches 4.8:1
+            .foregroundStyle(StudioStyle.Rail.icon)
         }
     }
 
@@ -65,23 +68,34 @@ struct NavigationSidebar: View {
         // only Ledger counts something
         let count = page == .ledger ? LedgerStore.shared.attentionTotal : 0
         let blocked = store.url == nil && page.needsRepository
-        return HStack(spacing: 8) {
-            // secondary icons keep the accent for the selection (docs/design.md › App shell, Sidebar); a sidebar list
-            // does not dim a disabled row by itself, so a blocked one draws its own dimmed colours
-            Label {
-                Text(title).foregroundStyle(blocked ? .tertiary : .primary)
-            } icon: {
-                Image(systemName: page.symbol).foregroundStyle(blocked ? .quaternary : .secondary)
+        let active = store.destination == page
+        return Button { store.navigate(page) } label: {
+            HStack(spacing: 8) {
+                // a sidebar list does not dim a disabled row by itself, so a blocked one draws its own dimmed colours
+                Label {
+                    Text(title).foregroundStyle(blocked ? .tertiary : .primary)
+                } icon: {
+                    Image(systemName: page.symbol).foregroundStyle(blocked ? .quaternary : .secondary)
+                }
+                Spacer(minLength: 8)
+                if let shortcut = page.shortcutLabel, commandHeld || hovered == page {
+                    // 60% of the label colour reads at about 5:1 on the sidebar and on the current page's fill
+                    Text(verbatim: shortcut).font(.system(size: 12)).foregroundStyle(.primary.opacity(0.6))
+                }
             }
-            Spacer(minLength: 8)
-            if let shortcut = page.shortcutLabel, commandHeld || hovered == page {
-                Text(verbatim: shortcut).font(.system(size: 12)).foregroundStyle(.secondary)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .badge(count)
-        .tag(page)
         .disabled(blocked)
-        .selectionDisabled(blocked)
+        // the rail's fill for the current page: neutral, never the accent
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 6).fill(active ? StudioStyle.Rail.selected : Color.clear).padding(.horizontal, 10)
+        )
         .onHover { hovered = $0 ? page : (hovered == page ? nil : hovered) }
+        .accessibilityLabel(title)
+        .accessibilityValue(active ? String(localized: "Current page") : "")
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }

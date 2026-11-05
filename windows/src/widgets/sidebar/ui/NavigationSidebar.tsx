@@ -23,7 +23,7 @@ const groups: { title: string | null; pages: WorkspaceDestination[] }[] = [
 
 /**
  * The window's pages (docs/design.md › App shell, Sidebar): a source list with section titles, a neutral fill for the
- * current page (the accent while the list has focus) and only Ledger's count. While no repository is open, a page that
+ * current page (never the accent, as in the rail) and only Ledger's count. While no repository is open, a page that
  * needs one is disabled and its section says why. Once the repository screen opens, this folds into the 52px icon rail
  * (`compact`), where such a page is dimmed but stays enabled so its tip says why. The toolbar's sidebar toggle folds
  * and expands it. (macOS: NavigationSidebar.swift, NavigationSidebarRail.swift)

@@ -1,6 +1,7 @@
 /* widgets/sidebar — the page list, and its icon rail while the repository screen is open (docs/design.md › App shell, Sidebar).
-   The list is a source list: section titles, 28px rows, a neutral fill for the current page and the accent while the
-   list has focus, no hover fill (the row's shortcut shows instead), and only Ledger's count as a plain number. */
+   The list is a source list: section titles, 28px rows, no hover fill (the row's shortcut shows instead) and only
+   Ledger's count as a plain number. The current page is a neutral fill in the list and in the rail, with or without
+   keyboard focus: the accent stays on the page's one primary action. */
 .workspace-navigation { --navigation-motion:220ms cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; width:100%; height:100%; min-height:0; background:var(--rail-bg); }
 .workspace-nav-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
 .workspace-nav-scroll { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding:8px 10px 10px; transition:padding var(--navigation-motion); }
@@ -8,15 +9,12 @@
 .workspace-nav-item { position:relative; display:flex; width:100%; align-items:center; gap:8px; padding:0 10px; height:28px; min-height:28px; border:0; border-radius:6px; background:transparent; color:var(--text); font:inherit; font-size:13px; font-weight:400; cursor:pointer; text-align:left; transition:padding var(--navigation-motion),gap var(--navigation-motion),height var(--navigation-motion),width var(--navigation-motion); }
 .workspace-nav-item svg { flex:none; color:var(--rail-icon); }
 .workspace-nav-item.selected { background:var(--rail-selected); }
-.workspace-navigation:not(.compact):focus-within .workspace-nav-item.selected { background:var(--accent); color:var(--accent-text); }
-.workspace-navigation:not(.compact):focus-within .workspace-nav-item.selected svg,
-.workspace-navigation:not(.compact):focus-within .workspace-nav-item.selected .workspace-nav-badge,
-.workspace-navigation:not(.compact):focus-within .workspace-nav-item.selected .workspace-nav-kbd { color:var(--accent-text); }
 .workspace-nav-item:disabled { color:var(--rail-disabled-text); cursor:default; }
 .workspace-nav-item:disabled svg { color:var(--rail-blocked); }
 .workspace-nav-copy { display:flex; min-width:0; max-width:260px; flex:1; flex-direction:column; overflow:hidden; opacity:1; transform:translateX(0); transition:max-width var(--navigation-motion),opacity var(--navigation-motion),transform var(--navigation-motion); }
-.workspace-nav-badge { flex:none; margin-left:auto; font-size:12px; color:var(--text-2); font-variant-numeric:tabular-nums; }
-.workspace-nav-kbd { display:none; flex:none; margin-left:auto; padding-left:12px; font-size:12px; color:var(--text-2); white-space:nowrap; }
+/* 65% of the text colour keeps 4.5:1 on the sidebar grey and on the selected row's fill */
+.workspace-nav-badge { flex:none; margin-left:auto; font-size:12px; color:color-mix(in srgb, var(--text) 65%, transparent); font-variant-numeric:tabular-nums; }
+.workspace-nav-kbd { display:none; flex:none; margin-left:auto; padding-left:12px; font-size:12px; color:color-mix(in srgb, var(--text) 65%, transparent); white-space:nowrap; }
 .workspace-nav-badge + .workspace-nav-kbd { margin-left:8px; padding-left:0; }
 .workspace-navigation:not(.compact) .workspace-nav-item:hover .workspace-nav-kbd,
 .workspace-navigation.show-shortcuts:not(.compact) .workspace-nav-kbd { display:inline; }
