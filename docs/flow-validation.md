@@ -39,15 +39,14 @@ What has **actually been checked** for the flow engine (`tools/gitch-flow`), git
 - Visual verification: actual native dependency graph, visual settings, run history, completed-run output, interpreted CI import and connected build history are captured in both themes. Windows production components were checked in both themes through IAB with a real design CLI bridge; pointer dragging moved a card and its edges, and zoom/Fit, imported job steps and connection forms rendered correctly. [Capture gallery](flow/README.md#visual-workspace-and-scripts).
 - Shared `crates/` Rust is unchanged. The dependency graph diff introduces no new cycles. Tests and captures use isolated demo data; no real external deployment or credential changes were performed.
 
-The Windows real-app self-test now covers the visual editor, schema inputs, dependency editing, source validation, interpreted file drop, exclusive import creation and Connected CI. Its Windows runtime execution remains a pull-request CI check; the local Mac run verifies its compilation and the corresponding logic/component behavior.
+The Windows real-app self-test covers the visual editor, schema inputs, dependency editing, source validation, interpreted file drop, exclusive import creation and Connected CI. It passed on the Windows runner for [PR #150](https://github.com/Gitrochi/Gitrochi/pull/150). The same pull request's engine checks passed on Windows, macOS and Linux, along with the real-Docker tests and Linux static release checks.
 
 ## Not checked yet
 
 | What | Why, and how to check it |
 |---|---|
-| **The engine compiled and tested on Windows** | This Mac has no Rust standard library for Windows targets. The Job Object, console signal and process-check code has never been built on Windows. → The pull request's **Flow engine** job (windows-latest: fmt, clippy, tests, gitch front-door tests) and **Windows** job (the engine built through the Windows-only `tauri.windows.conf.json` and put into the installer, the portable zip, the self-test's flow step) check it first. |
-| **Engine tests and the static build on Linux** | Same reason. → The **Flow engine** job (ubuntu-latest) and the musl build on tag runs. |
-| **Real Docker** | The Docker daemon on this Mac was off, so `tests/real_docker.rs` (running in a real alpine container, file owner, an nginx service, containers reaching each other by alias, label cleanup) was skipped. The fake docker CLI tests check only arguments, order and cleanup. → The **Real Docker tests** job in **Flow engine**. compose.up has never run against a real compose. |
+| **Release installers on Windows and Linux** | Pull-request engine and Windows app checks pass, but signed installers and published release assets require tag or manual release workflows. |
+| **Real Compose deployment** | The real-Docker tests passed in CI. Compose deployment is still covered by fake CLI tests rather than a real Compose deployment. |
 | **Real GitLab, GitHub and Jenkins** | The driving rules were checked against fake servers, but not real servers' response shapes, permissions, artifact paths (GitHub artifacts are zip files, so the verdict currently comes from the log marker) or Jenkins plugin differences. → Make a connection and run each once with a CI file from `gitch flow export`. |
 | **Full accessibility walkthrough** | The actual-app checks above cover the requested screens and interactions. A complete VoiceOver walkthrough remains to be run. |
 | **Universal macOS build and release signing** | Development builds are arm64 only on this Mac. `build.sh release` (aarch64 + x86_64 with lipo) first runs on a CI tag run. |
