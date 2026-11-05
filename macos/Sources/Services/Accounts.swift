@@ -12,13 +12,15 @@ enum Keychain {
 
     /// 모든 Keychain 호출은 같은 큐에서 실행해 UI 허용 정책과 사용자 승인이 경합하지 않게 한다.
     /// With `allowInteraction` the system may ask the user to allow the read; a silent read fails with -25308 instead.
-    static func read(_ account: String, allowInteraction: Bool = false) async -> CredentialReadResult {
-        await withCheckedContinuation { continuation in
+    /// `rememberAccess` persists this app's trust only after explicit saved-account approval.
+    static func read(_ account: String, allowInteraction: Bool = false, rememberAccess: Bool = false) async -> CredentialReadResult {
+        guard !rememberAccess || allowInteraction else { return CredentialReadResult(value: nil, status: errSecParam) }
+        return await withCheckedContinuation { continuation in
             queue.async {
                 let result = withInteraction(allowInteraction) {
-                    let current = copy(service, account)
+                    let current = copy(service, account, rememberAccess: rememberAccess)
                     guard current.status == errSecItemNotFound else { return current }
-                    let legacy = copy(LegacyData.keychainService, account)
+                    let legacy = copy(LegacyData.keychainService, account, rememberAccess: rememberAccess)
                     // Migrate a legacy item only during an explicit approved read; automatic reads stay read-only.
                     if allowInteraction, let value = legacy.value, store(value, for: account) == errSecSuccess { _ = delete(LegacyData.keychainService, account) }
                     return legacy
@@ -79,15 +81,51 @@ enum Keychain {
         }, set: { SecKeychainSetUserInteractionAllowed($0) }, operation: operation)
     }
 
-    private static func copy(_ service: String, _ account: String) -> CredentialReadResult {
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+    private static func copy(_ service: String, _ account: String, rememberAccess: Bool) -> CredentialReadResult {
+        var query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
                                   kSecAttrAccount as String: account, kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
+        if rememberAccess { query[kSecReturnRef as String] = true }
         var out: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &out)
-        guard status == errSecSuccess, let data = out as? Data, let value = String(data: data, encoding: .utf8) else {
-            return CredentialReadResult(value: nil, status: status == errSecSuccess ? errSecDecode : status)
+        guard status == errSecSuccess else { return CredentialReadResult(value: nil, status: status) }
+        let item = out as? [String: Any]
+        let data = rememberAccess ? item?[kSecValueData as String] as? Data : out as? Data
+        guard let data,
+              let value = String(data: data, encoding: .utf8) else { return CredentialReadResult(value: nil, status: errSecDecode) }
+        if rememberAccess {
+            guard let reference = item?[kSecValueRef as String] else { return CredentialReadResult(value: nil, status: errSecDecode) }
+            let saved = persistAccess(reference as! SecKeychainItem)
+            guard saved == errSecSuccess else { return CredentialReadResult(value: nil, status: saved) }
         }
         return CredentialReadResult(value: value, status: errSecSuccess)
+    }
+
+    /// A one-time system Allow does not save trust for the next launch. Only explicit account approval does this.
+    private static func persistAccess(_ item: SecKeychainItem) -> OSStatus {
+        var access: SecAccess?
+        let copied = SecKeychainItemCopyAccess(item, &access)
+        guard copied == errSecSuccess else { return copied }
+        guard let access, let entries = SecAccessCopyMatchingACLList(access, kSecACLAuthorizationDecrypt) as? [SecACL],
+              !entries.isEmpty else { return errSecDecode }
+        var application: SecTrustedApplication?
+        let created = SecTrustedApplicationCreateFromPath(nil, &application)
+        guard created == errSecSuccess else { return created }
+        guard let application else { return errSecDecode }
+        var changed = false
+        for entry in entries {
+            var applications: CFArray?, description: CFString?
+            var selector = SecKeychainPromptSelector(rawValue: 0)
+            let copied = SecACLCopyContents(entry, &applications, &description, &selector)
+            guard copied == errSecSuccess else { return copied }
+            // A nil list already allows every app; keep existing applications and prompt restrictions intact.
+            guard let applications else { continue }
+            guard var trusted = applications as? [SecTrustedApplication], let description else { return errSecDecode }
+            trusted.append(application)
+            let updated = SecACLSetContents(entry, trusted as CFArray, description, selector)
+            guard updated == errSecSuccess else { return updated }
+            changed = true
+        }
+        return changed ? SecKeychainItemSetAccess(item, access) : errSecSuccess
     }
 
     private static func delete(_ service: String, _ account: String) -> OSStatus {
@@ -249,9 +287,9 @@ final class AccountStore {
     func allowStoredAccess(for account: HostAccount) async throws {
         guard accounts.contains(account) else { return }
         let name = "acct:" + account.id, attempt = credentials.begin("acct:" + account.id)
-        var result = await Keychain.read(name, allowInteraction: true)
+        var result = await Keychain.read(name, allowInteraction: true, rememberAccess: true)
         if result.status == errSecItemNotFound, account.id.hasPrefix("legacy-") {
-            result = await Keychain.read(account.provider.rawValue, allowInteraction: true)
+            result = await Keychain.read(account.provider.rawValue, allowInteraction: true, rememberAccess: true)
         }
         guard credentials.isCurrent(name, attempt: attempt), accounts.contains(account) else { return }
         guard let value = result.value else {
