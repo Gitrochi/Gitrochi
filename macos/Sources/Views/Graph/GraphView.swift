@@ -394,6 +394,8 @@ private struct GraphHeader: View {
     let messageFit: CGFloat
     let onMessageResize: () -> Void
     let onScroll: (CGFloat) -> Void
+    /// While the page list slides, the column is this much wider than what shows of it (PageListFold)
+    @Environment(\.pageListOverhang) private var overhang
     private var scrolls: Bool { columns.graph > 0 && contentWidth > columns.graph }
 
     var body: some View {
@@ -457,6 +459,8 @@ private struct GraphHeader: View {
             .padding(.trailing, 12)
             .frame(maxHeight: .infinity)
             .background(tableWidth == nil ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.bar))
+            // the menus stay at the edge that shows
+            .offset(x: -overhang)
         }
         .lineLimit(1)
         .font(.caption.weight(.semibold))

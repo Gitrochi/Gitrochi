@@ -43,12 +43,15 @@ struct RepositoryScreen: View {
     @AppStorage("repositorySidebarWidth") private var sidebarWidth = 250.0
     @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 380.0
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
+    /// While the page list slides, the side columns keep their widths and the centre one is cut off (PageListFold)
+    @Environment(\.pageListOverhang) private var overhang
 
     var body: some View {
-        WorkspaceColumns(width: $sidebarWidth, fixedTrailing: false, minimumFlexible: 560) {
+        WorkspaceColumns(width: $sidebarWidth, fixedTrailing: false, minimumFlexible: 560, overhang: overhang) {
             SidebarView()
         } trailing: {
-            WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 480, trailingCollapsed: inspectorCollapsed) {
+            WorkspaceColumns(width: $inspectorWidth, fixedTrailing: true, minimumFlexible: 480, trailingCollapsed: inspectorCollapsed,
+                             overhang: overhang) {
                 ContentColumn()
             } trailing: {
                 InspectorView()

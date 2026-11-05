@@ -24,6 +24,27 @@ enum RecommendedSync: Equatable {
     }
 }
 
+/// Where the icon rail and the page sit while the page list is open, folded or sliding between the two
+/// (docs/design.md › App shell, Sidebar). The list slides over the rail, so the rail shows only where the list has left
+/// it, and the page starts where the list or the rail ends. While the list slides, a page's flexible column keeps the
+/// width it has with the list folded and is cut off (WorkspaceColumns): laying it out again on every frame of the
+/// slide takes longer than a frame.
+struct PageListFold: Equatable {
+    /// The rail with its edge line
+    static let railWidth: CGFloat = 53
+    /// How much of the rail shows beside the list
+    let rail: CGFloat
+    /// How much wider the page will be once the list has folded; 0 unless the list is sliding
+    let overhang: CGFloat
+
+    /// showing: how much of the list is in the window
+    init(showing: CGFloat, sliding: Bool) {
+        let showing = max(0, showing)
+        rail = max(0, Self.railWidth - showing)
+        overhang = sliding ? max(0, showing - Self.railWidth) : 0
+    }
+}
+
 /// The pages of a repository window. Repository is the three-column screen (branches | graph | inspector);
 /// the rest are full-width pages. (Windows: entities/git/model/workspace-navigation.ts)
 enum WorkspaceDestination: String, CaseIterable, Identifiable {

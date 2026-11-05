@@ -10,6 +10,9 @@ struct RepoView: View {
     @ViewState private var sidebarExpandRequest = 0
     @ViewState private var pendingCommand: WorkspaceCommand?
     @ViewState private var pageHeight: CGFloat = 800
+    /// The page list is sliding in or out, when a page's flexible column is laid out once for the whole slide (PageListFold)
+    @ViewState private var pageListSliding = false
+    @ViewState private var slideEnd: Task<Void, Never>?
 
     private var showsNavigationRail: Bool { sidebarPresentation.visibility == .detailOnly || sidebarCollapsed }
     private var sidebarAnimation: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.24) }
@@ -27,12 +30,7 @@ struct RepoView: View {
                 .disabled(showsNavigationRail)
                 .accessibilityHidden(showsNavigationRail)
         } detail: {
-            HStack(spacing: 0) {
-                if showsNavigationRail {
-                    NavigationSidebarRail()
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                    Divider().transition(.opacity)
-                }
+            NavigationDetailColumn(sliding: pageListSliding) {
                 VStack(spacing: 0) {
                     if ToolStore.shared.path(.git) == nil {
                         HStack {
@@ -54,7 +52,6 @@ struct RepoView: View {
             }
             // Split details must shrink with the viewport instead of centering a page's larger minimum height.
             .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
-            .animation(sidebarAnimation, value: showsNavigationRail)
         }
         // the title keeps naming the window; the toolbar shows it as the repository button instead
         .navigationTitle(store.windowTitle)
@@ -76,12 +73,12 @@ struct RepoView: View {
         }
         .onChange(of: store.sidebarToggleRequest) { _, _ in
             if showsNavigationRail { expandSidebar() }
-            else { withAnimation(sidebarAnimation) { sidebarPresentation.setVisibility(.detailOnly) } }
+            else { slidePageList { sidebarPresentation.setVisibility(.detailOnly) } }
         }
         // opening the repository screen folds the page list into the rail, so the branch list takes its place
         .onChange(of: store.destination) { _, page in
             if page == .repository, store.url != nil {
-                withAnimation(sidebarAnimation) { sidebarPresentation.fold() }
+                slidePageList { sidebarPresentation.fold() }
             }
         }
         .onAppear { if store.destination == .repository, store.url != nil { sidebarPresentation.fold() } }
@@ -91,9 +88,22 @@ struct RepoView: View {
     }
 
     private func expandSidebar() {
-        withAnimation(sidebarAnimation) {
+        slidePageList {
             sidebarPresentation.expand()
             sidebarExpandRequest += 1
+        }
+    }
+
+    /// Folds or opens the page list. A page's flexible column is laid out once for the whole slide, so the flag stays
+    /// up until the slide's quarter second is safely over; the column then takes the width that shows.
+    private func slidePageList(_ change: () -> Void) {
+        guard let sidebarAnimation else { return change() }
+        pageListSliding = true
+        withAnimation(sidebarAnimation, change)
+        slideEnd?.cancel()
+        slideEnd = Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            if !Task.isCancelled { pageListSliding = false }
         }
     }
 
