@@ -336,6 +336,7 @@ pub fn help() -> String {
   blocks · block <ID> · explain <code> · gc [--older-than 7d] [--dry-run] · schema [name]
   export github|gitlab|jenkins [--flow F] [--out path] [--dry-run] · import [--dry-run]
   design inspect|render --json             inspect YAML or render visual edits from JSON stdin (read-only)
+  design source --json                     read or explicitly save one repository source file from JSON stdin
   connect list|add|test|remove · ci status|logs|report|trigger
   ci browse --connection NAME [JOB_PATH] [RUN_ID]  browse Jenkins jobs, runs and logs (read-only)
 

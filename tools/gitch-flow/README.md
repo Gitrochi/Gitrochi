@@ -4,7 +4,7 @@
 
 ## Read-only visual authoring
 
-The apps use one shared YAML implementation. Neither authoring command requires a Git repository, reads a source path, writes files, approves trust, accesses connections, nor executes source code.
+The apps use one shared YAML implementation. Neither `inspect` nor `render` requires a Git repository, reads a source path, writes files, approves trust, accesses connections, nor executes source code.
 
 Pass one JSON object on stdin:
 
@@ -49,6 +49,30 @@ gitch-flow schema flow-design-render
 
 The existing `blocks --json` and `block <id> --json` commands provide block categories, capabilities, outward/destructive flags and input JSON Schemas for module forms.
 
+## Related source files
+
+`design source --json` operates on one explicitly selected file in the current Git repository. It does not discover scripts or interpret their content. Pass one JSON object on stdin:
+
+```json
+{"operation":"read","path":"scripts/check.sh"}
+```
+
+An opened file returns its exact `content` and SHA-256 byte `fingerprint`:
+
+```json
+{"schemaVersion":1,"path":"scripts/check.sh","content":"echo example\n","fingerprint":"...64 lowercase hex digits...","exists":true,"saved":false,"diagnostics":[]}
+```
+
+Save with `{"operation":"write","path":"scripts/check.sh","content":"edited text\n","expected":"<fingerprint from read>"}`. The engine checks the fingerprint before preparing a temporary replacement and again immediately before the atomic replacement. A changed or deleted file returns `SOURCE_CONFLICT`; the app must keep the draft and ask the user to reopen the file. This is optimistic conflict detection followed by atomic replacement, not an operating-system atomic compare-and-swap against arbitrary simultaneous writers. Unix also checks the pinned parent directory identity before committing. New files require explicit `"expected":null` and are created exclusively; an existing file is never replaced by a create request. Parent folders must already exist unless that new-file request also explicitly supplies `"createParents":true`. Only exclusive new-file writes accept that option, which creates missing parents under the same path/link checks. Reads and existing-file saves never create directories. A failed create may leave newly created empty folders; existing folders and their permissions are preserved.
+
+Files must be regular UTF-8 text without NUL bytes, at most 2 MiB. Requests allow up to 16 MiB so JSON escaping does not reduce the text limit. UTF-8 BOMs and CRLF line endings remain in the returned content and fingerprint. Byte-identical saves do not replace the file or change its modification time. Existing Unix mode bits and macOS extended/Linux POSIX access ACLs are copied to the empty replacement before source bytes are written. Windows copies the source DACL before writing, then commits with `ReplaceFileW` without ignoring metadata errors. The replacement must already have the same owner (and group on Unix); saves do not change ownership or request privileges. New files inherit their selected parent's normal access settings. Changed existing saves fail with `SOURCE_METADATA` if access metadata cannot be preserved, including mismatched ownership, unsupported NFS4 ACLs or platforms without an access-control implementation. Paths use relative forward slashes. Traversal, absolute paths, Windows path aliases, any case-insensitive `.git` component, symbolic links and Windows reparse points are rejected.
+
+Windows replacement uses a protected recovery backup because some filesystem errors can move the old name before failing. A missing original name is restored exclusively. If restoration or recovery cleanup cannot finish, `SOURCE_RECOVERY` identifies the retained original copy in its diagnostic `path`; callers retain their draft and must reopen the file. The final source may already contain the new bytes when only backup cleanup failed. Recovery copies are never discarded to force a save through.
+
+Successful saves return `saved:true`, the saved content and its new fingerprint. Source errors return exit status 0 with `content:null`, `fingerprint:null`, `saved:false` and an error diagnostic. `exists` means a file was successfully opened or saved; it is false on errors, including conflicts. `SOURCE_NOT_FOUND` identifies a missing selected file and `SOURCE_PARENT_NOT_FOUND` a missing parent folder. An explicit New file action may use either to prepare a draft; other failures must not be treated as permission to create. Malformed JSON or unsupported CLI flags return exit status 1. Callers must check the payload, not just the exit status, and retain an unsaved draft after any error. No source operation approves trust or runs a script.
+
+The schema is available as `gitch-flow schema flow-design-source` (alias `design-source`).
+
 ## Checks
 
 ```sh
@@ -58,3 +82,4 @@ cargo test --locked
 ```
 
 `tests/design.rs` covers exact no-op preservation, full-tree edits, expressions, unusual scalars, external CI proposals, unsupported YAML, mutation-option rejection and the stdin transport.
+`tests/design_source.rs` covers byte preservation, fingerprint conflicts, exclusive creation, bounded strict text, path and link rejection, Unix mode/macOS ACL preservation, and editing without execution. Windows CI additionally runs `tests/design_source_windows.rs` against a protected owner-only DACL.
