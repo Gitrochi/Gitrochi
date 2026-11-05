@@ -269,3 +269,11 @@ export function ledgerStore(repoPath: string | null): LedgerStore {
   shared ??= new LedgerStore(demo ? new DemoLedgerBackend({ ...(repoPath ? { repoPath } : {}), large: demo === "large", empty: demo === "empty", lively: true }) : nativeLedgerBackend);
   return shared;
 }
+
+/**
+ * The app's Ledger if something has opened it. For readers that only show what it holds, like the sidebar's count:
+ * opening it from there would fix its backend before the first repository could bind the demo.
+ */
+export function openedLedgerStore(): LedgerStore | null {
+  return shared;
+}

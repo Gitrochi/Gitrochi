@@ -65,7 +65,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
   const leading = (
     <>
       <div className="tool-group">
-        <button type="button" className="tool sidebar-toggle" aria-label={sidebarTitle} data-tip={tip(sidebarTitle, "", "Ctrl+B")} onClick={() => settings.set("navigationSidebarCollapsed", !navigationCollapsed)}>
+        <button type="button" className="tool sidebar-toggle" aria-label={sidebarTitle} aria-expanded={!navigationCollapsed} data-tip={tip(sidebarTitle, "", "Ctrl+B")} onClick={() => settings.set("navigationSidebarCollapsed", !navigationCollapsed)}>
           <PanelLeft size={16} />
         </button>
       </div>
@@ -150,7 +150,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
   const branchMenu = (): MenuItem[] => [
     { label: t("New branch…"), shortcut: "Ctrl+Shift+B", onClick: () => store.requestNewBranch() },
     { label: t("New worktree…"), shortcut: "Ctrl+Alt+W", onClick: () => sheet({ kind: "addWorktree", branch: null, start: null }) },
-    { label: t("Compare revisions…"), shortcut: "Ctrl+3", onClick: () => store.navigate("compare") },
+    { label: t("Compare revisions…"), shortcut: "Ctrl+2", onClick: () => store.navigate("compare") },
     "divider",
     { label: t("Stash changes…"), shortcut: "Ctrl+Shift+S", disabled: statusIsEmpty(st), onClick: () => sheet({ kind: "stash" }) },
     { label: store.stashes.length ? t("Pop latest stash") : t("Pop latest stash (none saved)"), disabled: !store.stashes.length, onClick: () => void store.stashPop() },
@@ -242,7 +242,6 @@ export function Toolbar({ store }: { store: RepoStore }) {
               data-tip={tip(
                 t("Uncommitted changes"),
                 statusIsEmpty(st) ? t("No modified files. When you edit files, you can stage and commit them here.") : t("{0} modified files — stage and commit them.", store.wipCount),
-                "Ctrl+1",
               )}
             >
               <SquarePen size={16} />

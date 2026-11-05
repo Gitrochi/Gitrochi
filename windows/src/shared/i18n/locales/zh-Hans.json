@@ -4,6 +4,7 @@
   "Fast-forward only": "仅快进",
   "Find in file": "在文件中查找",
   "Merge": "合并",
+  "Open a repository to use these": "打开仓库后才能使用这些",
   "Pop latest stash": "应用最新的贮藏",
   "Pop latest stash (none saved)": "应用最新的贮藏（没有已保存的贮藏）",
   "Previous match": "上一个匹配项",

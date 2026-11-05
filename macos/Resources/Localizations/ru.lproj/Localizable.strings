@@ -4,7 +4,9 @@
 "Compare with %@" = "Сравнить с %1$@";
 "Fast-forward only" = "Только перемотка вперёд";
 "Find in file" = "Найти в файле";
+"Go" = "Переход";
 "Merge" = "Слияние";
+"Open a repository to use these" = "Откройте репозиторий, чтобы ими пользоваться";
 "Pop latest stash" = "Применить последние спрятанные изменения";
 "Pop latest stash (none saved)" = "Применить последние спрятанные изменения (ничего не спрятано)";
 "Previous match" = "Предыдущее совпадение";
@@ -1181,9 +1183,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Подключите учётную запись GitHub или GitLab, чтобы искать её репозитории.";
 "Remote branches" = "Удалённые ветки";
 "Section" = "Раздел";
-"Show compare" = "Показать сравнение";
-"Show flows" = "Показать потоки";
-"Show home" = "Показать главную";
 "(current)" = "(текущая)";
 "Checking saved account access…" = "Проверка доступа к сохранённой учётной записи…";
 "Allow access to the saved account to use repository services." = "Разрешите доступ к сохранённой учётной записи, чтобы пользоваться сервисами репозитория.";
@@ -1814,7 +1813,6 @@
 "Shelve" = "Отложить";
 "Shelved" = "Отложена";
 "Shelved %@" = "%@ отложена";
-"Show ledger" = "Показать журнал";
 "Show less" = "Показать меньше";
 "Show more" = "Показать ещё";
 "Show only %@" = "Показать только «%@»";

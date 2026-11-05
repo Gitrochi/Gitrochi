@@ -46,8 +46,8 @@ export function RepoPage({ store, openSettings, gitMissing = false }: { store: R
     <div className="repo">
       <Toolbar store={store} />
       <div className="main" data-navigation-mode={compact ? "compact" : "expanded"}>
-        <div className={`navigation${compact ? " compact" : ""}${resizingNavigation ? " resizing" : ""}`} style={{ width: compact ? 56 : navigationW }}>
-          <NavigationSidebar store={store} openSettings={openSettings} compact={compact} onToggle={() => settings.set("navigationSidebarCollapsed", !compact)} />
+        <div className={`navigation${compact ? " compact" : ""}${resizingNavigation ? " resizing" : ""}`} style={{ width: compact ? 52 : navigationW }}>
+          <NavigationSidebar store={store} openSettings={openSettings} compact={compact} />
         </div>
         {!compact && <div className="splitter navigation-splitter" onMouseDown={(event) => { setResizingNavigation(true); resizeColumn("navigationSidebarWidth", navigationW, 200, 320, 1)(event); }} />}
         <div className="workspace-main">

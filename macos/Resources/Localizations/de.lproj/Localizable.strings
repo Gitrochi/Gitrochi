@@ -3,8 +3,10 @@
 "Compare with %@" = "Mit %1$@ vergleichen";
 "Development" = "Entwicklung";
 "Fast-forward only" = "Nur Fast-Forward";
+"Go" = "Gehe zu";
 "Merge" = "Merge";
 "Newest first" = "Neueste zuerst";
+"Open a repository to use these" = "Öffnen Sie ein Repository, um diese zu verwenden";
 "Pop latest stash" = "Neuesten Stash anwenden";
 "Pop latest stash (none saved)" = "Neuesten Stash anwenden (keiner gespeichert)";
 "Pull as configured in git" = "Pull gemäß git-Konfiguration";
@@ -1160,9 +1162,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Verbinden Sie ein GitHub- oder GitLab-Konto, um dessen Repositories zu durchsuchen.";
 "Remote branches" = "Remote-Branches";
 "Section" = "Abschnitt";
-"Show compare" = "Vergleich anzeigen";
-"Show flows" = "Flows anzeigen";
-"Show home" = "Start anzeigen";
 "(current)" = "(aktuell)";
 "Checking saved account access…" = "Zugriff auf das gespeicherte Konto wird geprüft…";
 "Allow access to the saved account to use repository services." = "Erlauben Sie den Zugriff auf das gespeicherte Konto, um Repository-Dienste zu nutzen.";
@@ -1800,7 +1799,6 @@
 "Shelve" = "Zurückstellen";
 "Shelved" = "Zurückgestellt";
 "Shelved %@" = "%@ zurückgestellt";
-"Show ledger" = "Logbuch anzeigen";
 "Show less" = "Weniger anzeigen";
 "Show more" = "Mehr anzeigen";
 "Show only %@" = "Nur „%@“ anzeigen";

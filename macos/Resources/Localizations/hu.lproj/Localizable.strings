@@ -4,7 +4,9 @@
 "Compare with %@" = "Összehasonlítás ezzel: %1$@";
 "Fast-forward only" = "Csak fast-forward";
 "Find in file" = "Keresés a fájlban";
+"Go" = "Ugrás";
 "Merge" = "Egyesítés";
+"Open a repository to use these" = "Ezek használatához nyisson meg egy tárolót";
 "Pop latest stash" = "Legutóbbi stash alkalmazása";
 "Pop latest stash (none saved)" = "Legutóbbi stash alkalmazása (nincs mentve)";
 "Previous match" = "Előző találat";
@@ -1165,9 +1167,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Kapcsolj össze egy GitHub- vagy GitLab-fiókot a tárolói kereséséhez.";
 "Remote branches" = "Távoli ágak";
 "Section" = "Szakasz";
-"Show compare" = "Összehasonlítás megjelenítése";
-"Show flows" = "Folyamatok megjelenítése";
-"Show home" = "Kezdőlap megjelenítése";
 "(current)" = "(jelenlegi)";
 "Checking saved account access…" = "A mentett fiók hozzáférésének ellenőrzése…";
 "Allow access to the saved account to use repository services." = "Engedélyezze a mentett fiók elérését a tárolószolgáltatások használatához.";
@@ -1799,7 +1798,6 @@
 "Shelve" = "Félretétel";
 "Shelved" = "Félretéve";
 "Shelved %@" = "%@ félretéve";
-"Show ledger" = "Napló megjelenítése";
 "Show less" = "Kevesebb";
 "Show more" = "Több";
 "Show only %@" = "Csak: %@";

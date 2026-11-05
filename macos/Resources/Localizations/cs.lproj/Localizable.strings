@@ -4,7 +4,9 @@
 "Compare with %@" = "Porovnat s %1$@";
 "Fast-forward only" = "Pouze fast-forward";
 "Find in file" = "Hledat v souboru";
+"Go" = "Přejít";
 "Merge" = "Sloučení";
+"Open a repository to use these" = "Otevřete repozitář, abyste je mohli používat";
 "Pop latest stash" = "Použít poslední stash";
 "Pop latest stash (none saved)" = "Použít poslední stash (žádný není uložen)";
 "Previous match" = "Předchozí výskyt";
@@ -1162,9 +1164,6 @@
 "Connect a GitHub or GitLab account to search its repositories." = "Připojte účet GitHub nebo GitLab, abyste mohli prohledávat jeho repozitáře.";
 "Remote branches" = "Vzdálené větve";
 "Section" = "Sekce";
-"Show compare" = "Zobrazit porovnání";
-"Show flows" = "Zobrazit toky";
-"Show home" = "Zobrazit domů";
 "(current)" = "(aktuální)";
 "Checking saved account access…" = "Kontrola přístupu k uloženému účtu…";
 "Allow access to the saved account to use repository services." = "Povolte přístup k uloženému účtu, abyste mohli používat služby repozitáře.";
@@ -1796,7 +1795,6 @@
 "Shelve" = "Odložit";
 "Shelved" = "Odloženo";
 "Shelved %@" = "%@ odloženo";
-"Show ledger" = "Zobrazit evidenci";
 "Show less" = "Zobrazit méně";
 "Show more" = "Zobrazit více";
 "Show only %@" = "Zobrazit jen „%@“";

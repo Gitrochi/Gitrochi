@@ -265,6 +265,13 @@ import SwiftUI
         precondition(WorkspaceDestination.allCases.allSatisfy { ToolbarSet(destination: $0, hasRepository: false) == .noRepository }, "Without a repository only the account")
         precondition(RecommendedSync(ahead: 2, behind: 0, hasUpstream: true) == .push && RecommendedSync(ahead: 0, behind: 5, hasUpstream: true) == .pull, "Push or Pull is prominent when it is the clear next step")
         precondition(RecommendedSync(ahead: 2, behind: 5, hasUpstream: true) == .none && RecommendedSync(ahead: 2, behind: 0, hasUpstream: false) == .none, "Nothing is prominent when diverged or without an upstream")
+        let numbered: [WorkspaceDestination] = [.repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .flows, .ledger]
+        precondition(numbered.map(\.shortcutDigit) == Array(1...9), "Pages take ⌘1–⌘9 in the sidebar's order")
+        precondition(WorkspaceDestination.home.shortcutLabel == "⇧⌘H" && WorkspaceDestination.compare.shortcutLabel == "⌘2", "Home is ⇧⌘H and the rest show ⌘ and their number")
+        precondition([WorkspaceDestination.releases, .projects, .account].allSatisfy { $0.shortcutDigit == nil && $0.shortcutLabel == nil }, "Releases, Projects and Account have no shortcut")
+        precondition(PageListFold(showing: 240, sliding: false).rail == 0 && PageListFold(showing: 0, sliding: false).rail == 53 && PageListFold(showing: 20, sliding: true).rail == 33, "The rail shows only where the page list has left it")
+        precondition(PageListFold(showing: 240, sliding: false).overhang == 0 && PageListFold(showing: 20, sliding: true).overhang == 0, "A resting list, or one that covers only the rail, leaves the page its own width")
+        precondition([60, 120, 240].allSatisfy { PageListFold(showing: $0, sliding: true).overhang == $0 - 53 }, "While the list slides, the page counts on the width it has with the list folded")
         precondition(SharedHeights.share([1000, 30], available: 300, floor: 96) == [270, 30])
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])

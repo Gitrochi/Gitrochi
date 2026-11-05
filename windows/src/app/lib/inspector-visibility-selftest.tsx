@@ -26,7 +26,8 @@ export async function inspectorVisibilitySelfTest(): Promise<[boolean, string]> 
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const panel = () => host.querySelector<HTMLElement>(".repository-screen > .inspector")!;
   const center = () => host.querySelector<HTMLElement>(".repository-screen > .center")!;
-  const toggle = () => host.querySelector<HTMLButtonElement>(".toolbar button[aria-expanded]")!;
+  // the right-panel toggle; the sidebar toggle leads the toolbar and also reports aria-expanded
+  const toggle = () => host.querySelector<HTMLButtonElement>(".toolbar button[aria-expanded]:not(.sidebar-toggle)")!;
   const expanded = () => [...panel().querySelectorAll("button")].some((button) => button.textContent === t("Collapse"));
   try {
     settings.get = <T,>(key: string, fallback: T): T => (memory.has(key) ? memory.get(key) : fallback) as T;

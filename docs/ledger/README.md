@@ -6,7 +6,7 @@ The Ledger brings agent reports, questions and finished work into one place in G
 
 ## Open the Ledger
 
-Open **Ledger** under **Tools**, or use **⌘7** on macOS / **Ctrl+7** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
+Open **Ledger** under **Tools**, or use **⌘9** on macOS / **Ctrl+9** on Windows. No environment flag is needed to show the page. Its settings appear in **Settings › Ledger**. Opening it does not import existing conversations, connect a reporting client or enable tracking.
 
 Optional launched-agent tracking, background notifications and the Dock/taskbar count each follow their own switch in **Settings › Ledger**, and all of them start off. No environment variable is needed: `GITROCHI_LEDGER_PREVIEW` is no longer read. The app's waiting-prompt heartbeat, which tells auto-continue's hooks that you can answer in Gitrochi, runs only while **Track agents I start** is on. Reading reports and using the Ledger's local tools need none of these switches.
 

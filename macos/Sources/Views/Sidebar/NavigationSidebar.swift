@@ -1,86 +1,101 @@
 import SwiftUI
 
-/// The window's pages. Once the repository screen opens, this folds into the icon rail and the branch list takes its place.
+/// The window's pages as the native source list (docs/design.md › App shell, Sidebar). The OS lays out the rows, the
+/// sections and Ledger's count; the app draws the current page's fill, so it stays neutral with or without keyboard
+/// focus, as in the rail. While no repository is open, a page that needs one is disabled and its section says why.
+/// Once the repository screen opens, this folds into the icon rail.
 struct NavigationSidebar: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var hovered: WorkspaceDestination?
+    /// Holding ⌘ shows every row's shortcut; otherwise a row shows its own on hover
+    @ViewState private var commandHeld = false
+
+    private var gitlab: Bool { store.target?.provider == .gitlab }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                NavigationBrand()
-                Spacer()
-                Button { store.sidebarToggleRequest += 1 } label: {
-                    Image(systemName: "sidebar.left").font(.system(size: 15)).frame(width: 28, height: 24)
-                }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
-                .help("Collapse sidebar").accessibilityLabel("Collapse sidebar")
-                .accessibilityIdentifier("navigation-sidebar-collapse")
-            }
-            .padding(.leading, 14).padding(.trailing, 8).frame(height: 56)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 4) {
-                    section([.home, .repository])
-                    groupTitle(String(localized: "Workspace"))
-                    section([.compare, .rebase, .code])
-                    groupTitle(store.target?.provider == .gitlab ? "GitLab" : "GitHub")
-                    section([.pullRequests, .issues, .actions, .releases, .projects, .account])
-                    groupTitle(String(localized: "Tools"))
-                    section([.flows, .ledger].filter(\.isShown))
-                }.padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 12)
-            }
-            Divider()
-            SettingsLink { Label("Settings", systemImage: "gearshape").font(.system(size: 13)).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 10).padding(.horizontal, 12) }
-                .buttonStyle(.plain).padding(8).keyboardShortcut(",", modifiers: .command).accessibilityLabel("Settings")
+        // No selection binding: the OS would fill the current page with the accent while the list has focus, next to
+        // the page's own filled button.
+        List {
+            row(.home)
+            section(String(localized: "Repository"), [.repository, .compare, .rebase, .code])
+            section(gitlab ? "GitLab" : "GitHub", [.pullRequests, .issues, .actions, .releases, .projects, .account])
+            section(String(localized: "Tools"), [.flows, .ledger].filter(\.isShown))
         }
-        .background(Color(nsColor: .windowBackgroundColor))
-    }
-
-    private func groupTitle(_ text: String) -> some View {
-        HStack { Text(text.uppercased()).font(.system(size: 11, weight: .medium)).tracking(0.7).lineLimit(1); Spacer() }
-            .foregroundStyle(.secondary).padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
-    }
-
-    private func section(_ pages: [WorkspaceDestination]) -> some View {
-        VStack(spacing: 3) { rows(pages) }
-            .padding(4)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.05), lineWidth: 1))
-    }
-
-    private func title(_ page: WorkspaceDestination) -> String { page.title(gitlab: store.target?.provider == .gitlab) }
-
-    private func rows(_ pages: [WorkspaceDestination]) -> some View {
-        ForEach(pages) { page in
-            let active = store.destination == page
-            Button { store.navigate(page) } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: page.symbol).font(.system(size: 16, weight: active ? .semibold : .regular)).frame(width: 21, height: 20)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(title(page)).font(.system(size: 13, weight: active ? .semibold : .medium)).lineLimit(1)
-                        if page == .repository {
-                            Text(store.url == nil ? String(localized: "Open a repository to get started") : store.name)
-                                .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                        }
+        .listStyle(.sidebar)
+        .onModifierKeysChanged(mask: .command) { _, keys in commandHeld = keys.contains(.command) }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                Divider()
+                SettingsLink {
+                    HStack(spacing: 8) {
+                        Label { Text("Settings") } icon: { Image(systemName: "gearshape").foregroundStyle(.secondary) }
+                        Spacer(minLength: 8)
+                        if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.primary.opacity(0.6)) }
                     }
-                    Spacer(minLength: 2)
-                    if page == .repository, store.status.count > 0 { badge(store.status.count) }
-                    if page == .pullRequests, !store.pullRequests.isEmpty { badge(store.pullRequests.count) }
-                    if page == .ledger, LedgerStore.shared.attentionTotal > 0 { badge(LedgerStore.shared.attentionTotal) }
-                }.padding(.horizontal, 12).frame(minHeight: page == .repository ? 46 : 32)
-                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.8))
-                    .background(active ? Color.accentColor.opacity(0.16) : hovered == page ? Color.primary.opacity(0.035) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 10).frame(height: 28)
                     .contentShape(Rectangle())
-            }.buttonStyle(.plain)
-                .onHover { hovered = $0 ? page : nil }
-                .help(title(page))
-                .accessibilityLabel(title(page))
-                .accessibilityValue(active ? String(localized: "Current page") : "")
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .onHover { settingsHovered = $0 }
+                .keyboardShortcut(",", modifiers: .command)
+                .accessibilityLabel("Settings")
+            }
         }
     }
 
-    private func badge(_ count: Int) -> some View {
-        Text(count > 999 ? "999+" : String(count)).font(.system(size: 11, weight: .semibold))
-            .padding(.horizontal, 6).frame(height: 18).background(Color(nsColor: .windowBackgroundColor), in: Capsule())
+    @ViewState private var settingsHovered = false
+
+    private func section(_ title: String, _ pages: [WorkspaceDestination]) -> some View {
+        Section {
+            ForEach(pages) { row($0) }
+        } header: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 11, weight: .semibold))
+                // the reason sits under the section, not in a tip: macOS shows no tip on a disabled row
+                if store.url == nil, pages.contains(where: \.needsRepository) {
+                    Text("Open a repository to use these").font(.system(size: 12, weight: .regular))
+                }
+            }
+            // the OS draws sidebar section titles at about 2.2:1 on the sidebar grey; the design's grey reaches 4.8:1
+            .foregroundStyle(StudioStyle.Rail.icon)
+        }
+    }
+
+    private func row(_ page: WorkspaceDestination) -> some View {
+        let title = page.title(gitlab: gitlab)
+        // only Ledger counts something
+        let count = page == .ledger ? LedgerStore.shared.attentionTotal : 0
+        let blocked = store.url == nil && page.needsRepository
+        let active = store.destination == page
+        return Button { store.navigate(page) } label: {
+            HStack(spacing: 8) {
+                // a sidebar list does not dim a disabled row by itself, so a blocked one draws its own dimmed colours
+                Label {
+                    Text(title).foregroundStyle(blocked ? .tertiary : .primary)
+                } icon: {
+                    Image(systemName: page.symbol).foregroundStyle(blocked ? .quaternary : .secondary)
+                }
+                Spacer(minLength: 8)
+                if let shortcut = page.shortcutLabel, commandHeld || hovered == page {
+                    // 60% of the label colour reads at about 5:1 on the sidebar and on the current page's fill
+                    Text(verbatim: shortcut).font(.system(size: 12)).foregroundStyle(.primary.opacity(0.6))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .badge(count)
+        .disabled(blocked)
+        // the rail's fill for the current page: neutral, never the accent
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 6).fill(active ? StudioStyle.Rail.selected : Color.clear).padding(.horizontal, 10)
+        )
+        .onHover { hovered = $0 ? page : (hovered == page ? nil : hovered) }
+        .accessibilityLabel(title)
+        .accessibilityValue(active ? String(localized: "Current page") : "")
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }

@@ -99,7 +99,8 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     app.loadGlobalIdentity = async () => {};
     workspace.tabs = [app]; workspace.activeId = app.id;
     const numberedShortcut = () => {
-      const event = new KeyboardEvent("keydown", { key: "7", cancelable: true, ...(env.os === "macos" ? { metaKey: true } : { ctrlKey: true }) });
+      // Ledger is the ninth page in the sidebar's order
+      const event = new KeyboardEvent("keydown", { key: "9", cancelable: true, ...(env.os === "macos" ? { metaKey: true } : { ctrlKey: true }) });
       handleShortcut(event, () => {});
       return event.defaultPrevented;
     };

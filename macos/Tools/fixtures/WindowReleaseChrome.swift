@@ -251,7 +251,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             if identifier == "rail-control" {
                 let center = content.convert(NSPoint(x: frame.midX, y: frame.midY), from: nil)
                 if frame.width < 36 || frame.height < 30 || content.hitTest(center) == nil {
-                    failures.append("The rail expand button has no visible hit target")
+                    failures.append("The rail's first button has no visible hit target")
                 }
             }
             for kind in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {

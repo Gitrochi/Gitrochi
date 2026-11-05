@@ -1,72 +1,84 @@
 import SwiftUI
 
-/// The page list folded to icons: always at the left edge while the repository screen is open
+/// The page list folded to icons while the repository screen is open (docs/design.md › App shell): 52pt on the
+/// sidebar's grey, the pages in the sidebar's sections and Settings at the bottom. The toolbar's sidebar toggle expands
+/// it, so the rail has no button of its own for that.
 struct NavigationSidebarRail: View {
     @Environment(RepoStore.self) private var store
-    let onExpand: () -> Void
+    @ViewState private var hovered: WorkspaceDestination?
 
     var body: some View {
         VStack(spacing: 0) {
-            NavigationBrand(compact: true).frame(width: 56, height: 42).padding(.top, 6)
-            Button(action: onExpand) {
-                Image(systemName: "sidebar.left").font(.system(size: 17)).frame(width: 40, height: 36)
-            }
-            .buttonStyle(.plain).foregroundStyle(.secondary)
-            .help("Expand sidebar").accessibilityLabel("Expand sidebar")
-            .accessibilityIdentifier("navigation-rail-expand")
-            .padding(.top, 2)
-            Divider().padding(.horizontal, 10).padding(.vertical, 6)
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 4) {
-                    rows([.home, .repository])
+                    rows([.home])
                     separator
-                    rows([.compare, .rebase, .code])
+                    rows([.repository, .compare, .rebase, .code])
                     separator
                     rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     separator
                     rows([.flows, .ledger].filter(\.isShown))
-                }.padding(.horizontal, 8).padding(.bottom, 8)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
             }
-            Divider()
             SettingsLink {
-                Image(systemName: "gearshape").font(.system(size: 18)).frame(width: 40, height: 40)
+                Image(systemName: "gearshape").font(.system(size: 17))
+                    .frame(width: 36, height: 32)
+                    .foregroundStyle(StudioStyle.Rail.settings)
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
             }
-            .buttonStyle(.plain).foregroundStyle(.secondary).padding(.vertical, 5)
-            .help("Settings").accessibilityLabel("Settings").keyboardShortcut(",", modifiers: .command)
+            .buttonStyle(.plain)
+            .padding(.bottom, 8)
+            .help(String(localized: "Settings") + " (⌘,)").accessibilityLabel("Settings")
+            .keyboardShortcut(",", modifiers: .command)
         }
-        .frame(width: 56)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 52)
+        .background(StudioStyle.Rail.background)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Collapsed navigation")
         .accessibilityIdentifier("navigation-sidebar-rail")
     }
 
-    private var separator: some View { Divider().padding(.horizontal, 4).padding(.vertical, 5) }
+    private var separator: some View {
+        Rectangle().fill(StudioStyle.Rail.separator).frame(width: 24, height: 1).padding(.vertical, 4)
+    }
 
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let count = page == .repository ? store.status.count : page == .pullRequests ? store.pullRequests.count
-                : page == .ledger ? LedgerStore.shared.attentionTotal : 0
+            // only Ledger counts something (docs/design.md › App shell, Sidebar)
+            let count = page == .ledger ? LedgerStore.shared.attentionTotal : 0
+            let blocked = store.url == nil && page.needsRepository
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
-                Image(systemName: page.symbol).font(.system(size: 18, weight: active ? .semibold : .regular))
-                    .frame(width: 40, height: 36)
-                    .foregroundStyle(active ? Color.primary : Color.primary.opacity(0.72))
-                    .background(active ? Color.accentColor.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
+                Image(systemName: page.symbol).font(.system(size: 17))
+                    .frame(width: 36, height: 32)
+                    .foregroundStyle(blocked ? StudioStyle.Rail.blocked : StudioStyle.Rail.icon)
+                    .background(active ? StudioStyle.Rail.selected : hovered == page ? StudioStyle.Rail.hover : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 8))
                     .overlay(alignment: .topTrailing) {
-                        if count > 0 {
-                            Text(count > 99 ? "99+" : String(count)).font(.system(size: 8, weight: .semibold, design: .monospaced))
-                                .padding(.horizontal, 3).padding(.vertical, 1)
-                                .background(Color(nsColor: .windowBackgroundColor), in: Capsule()).offset(x: 2, y: -1)
-                        }
+                        if count > 0 { badge(count).offset(x: 5, y: -3) }
                     }
-                    .contentShape(Rectangle())
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
-            .help(title + (count > 0 ? " (\(count))" : ""))
-            .accessibilityLabel(title).accessibilityValue(active ? String(localized: "Current page") : "")
+            .onHover { hovered = $0 ? page : (hovered == page ? nil : hovered) }
+            .help(blocked ? String(localized: "Open a repository to use this page.") : title)
+            .accessibilityLabel(title)
+            .accessibilityValue(active ? String(localized: "Current page") : "")
             .accessibilityIdentifier("navigation-rail-" + page.rawValue)
         }
+    }
+
+    private func badge(_ count: Int) -> some View {
+        Text(count > 99 ? "99+" : String(count))
+            .font(.system(size: 11, weight: .semibold)).monospacedDigit()
+            .foregroundStyle(StudioStyle.Rail.badgeText)
+            .padding(.horizontal, 5)
+            .frame(minWidth: 18, minHeight: 18)
+            .background(StudioStyle.Rail.badge, in: Capsule())
+            .overlay(Capsule().strokeBorder(StudioStyle.Rail.separator))
+            .fixedSize()
     }
 }

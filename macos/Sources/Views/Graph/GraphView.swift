@@ -126,7 +126,6 @@ enum GraphMetrics {
 struct GraphView: View {
     @Environment(RepoStore.self) private var store
     @FocusState private var focused: Bool
-    @ViewState private var width: CGFloat = 1000
     /// Columns the user turned off, comma-separated ("ref,graph")
     @AppStorage("graphHiddenColumns") private var hiddenColumns = ""
     /// Optional columns the user turned on ("author,time,sha"); off by default
@@ -139,6 +138,14 @@ struct GraphView: View {
     @ViewState private var tableOffset: CGFloat = 0
 
     var body: some View {
+        // The column's width comes straight from the layout. Kept in state, every resize laid the rows out twice: at
+        // the new width, and again once the state caught up — on each frame while the page list folds or opens.
+        GeometryReader { geometry in
+            table(width: geometry.size.width)
+        }
+    }
+
+    private func table(width: CGFloat) -> some View {
         let widths = GraphMetrics.widths(columnWidths)
         let graphWidth = GraphMetrics.width(lanes: store.maxLanes, dragged: widths["graph"])
         let contentWidth = GraphMetrics.contentWidth(lanes: store.maxLanes)
@@ -149,7 +156,7 @@ struct GraphView: View {
         // 좁은 화면에서는 작성자·시간 칸을 숨기고 브랜치·그래프 칸을 줄여 커밋 메시지 칸을 지킨다
         let columns = GraphMetrics.columns(width: tableWidth, graph: graphWidth, hidden: hidden, shown: shown, widths: widths)
         let offset = GraphMetrics.clampOffset(laneOffset, content: contentWidth, visible: columns.graph)
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
             if store.showSearchBar || store.isSearching {
                 SearchBar()
                 Divider()
@@ -231,7 +238,6 @@ struct GraphView: View {
                 }
             }
         }
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .background(SideScrollMonitor(active: contentWidth > columns.graph || wide) { delta, x in
             // with the rows wider than the window, a swipe over the graph column still moves its lanes and anywhere else moves the rows
             let overGraph = (columns.ref..<(columns.ref + columns.graph)).contains(x + table)
@@ -388,6 +394,8 @@ private struct GraphHeader: View {
     let messageFit: CGFloat
     let onMessageResize: () -> Void
     let onScroll: (CGFloat) -> Void
+    /// While the page list slides, the column is this much wider than what shows of it (PageListFold)
+    @Environment(\.pageListOverhang) private var overhang
     private var scrolls: Bool { columns.graph > 0 && contentWidth > columns.graph }
 
     var body: some View {
@@ -451,6 +459,8 @@ private struct GraphHeader: View {
             .padding(.trailing, 12)
             .frame(maxHeight: .infinity)
             .background(tableWidth == nil ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.bar))
+            // the menus stay at the edge that shows
+            .offset(x: -overhang)
         }
         .lineLimit(1)
         .font(.caption.weight(.semibold))
