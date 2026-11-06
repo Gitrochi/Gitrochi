@@ -35,6 +35,8 @@ function culprit(status: LedgerIntegrationStatus): "hook" | "mcp" {
  */
 export function agentConnection(status: LedgerIntegrationStatus, stableExists: boolean): ConnectionLook {
   const hooks = status.ownedHookCount > 0;
+  // hooks bring activity; only the MCP entry gives the agent the tools to report with
+  const reports = status.mcp.registered;
   const lastDataAt = Math.max(status.lastObservedAt ?? 0, status.lastReportAt ?? 0) || null;
   const copy: ConnectionAction[] = stableExists ? ["copy"] : [];
   let state: ConnectionState;
@@ -60,11 +62,11 @@ export function agentConnection(status: LedgerIntegrationStatus, stableExists: b
       break;
     case "no_data_yet":
       state = "no_data";
-      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks." : "Start or restart {0} to send activity.";
+      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks." : reports ? "Start or restart {0} to send activity." : "Copy the MCP command and run it, then start or restart {0}.";
       break;
     default:
       state = "connected";
-      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : hooks ? "Activity and reports reach this Ledger." : "The MCP server is registered. Set up also records activity.";
+      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : !hooks ? "The MCP server is registered. Set up also records activity." : reports ? "Activity and reports reach this Ledger." : "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.";
   }
   const broken = state === "repair" || state === "missing";
   const actions: ConnectionAction[] = [...(broken ? ["repair" as const] : hooks ? [] : ["setup" as const]), ...(hooks ? ["remove" as const] : []), ...copy];

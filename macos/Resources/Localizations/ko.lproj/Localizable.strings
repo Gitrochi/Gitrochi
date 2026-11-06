@@ -4499,6 +4499,8 @@
 "Activity and reports reach this Ledger." = "활동과 보고가 이 원장에 들어옵니다.";
 "The MCP server is registered. Set up also records activity." = "MCP 서버가 등록되어 있습니다. 설정하면 활동도 기록합니다.";
 "Start or restart %@ to send activity." = "%@을(를) 시작하거나 다시 시작하면 활동이 전송됩니다.";
+"Copy the MCP command and run it, then start or restart %@." = "MCP 명령을 복사해 실행한 뒤 %@을(를) 시작하거나 다시 시작하세요.";
+"Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it." = "활동은 이 원장에 들어오지만 에이전트는 아직 보고할 수 없습니다. MCP 명령을 복사해 실행하세요.";
 "Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Codex를 시작하거나 다시 시작한 뒤 /hooks에서 원장 훅을 검토하고 신뢰하세요.";
 "Hooks are turned off in this client's settings." = "이 클라이언트 설정에서 훅이 꺼져 있습니다.";
 "Some activity hooks are missing." = "일부 활동 훅이 없습니다.";

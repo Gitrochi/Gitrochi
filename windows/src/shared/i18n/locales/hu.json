@@ -2358,6 +2358,8 @@
   "Activity and reports reach this Ledger.": "A tevékenység és a jelentések megérkeznek ebbe a Ledgerbe.",
   "The MCP server is registered. Set up also records activity.": "Az MCP-kiszolgáló regisztrálva van. A beállítás a tevékenységet is rögzíti.",
   "Start or restart {0} to send activity.": "Indítsa el vagy indítsa újra a(z) {0} alkalmazást a tevékenység küldéséhez.",
+  "Copy the MCP command and run it, then start or restart {0}.": "Másolja ki az MCP-parancsot, futtassa, majd indítsa el vagy indítsa újra a(z) {0} alkalmazást.",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "A tevékenység megérkezik ebbe a Ledgerbe, de az ügynökök még nem tudnak jelentést küldeni. Másolja ki az MCP-parancsot, és futtassa.",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Indítsa el vagy indítsa újra a Codexet, majd a /hooks alatt tekintse át és jelölje megbízhatónak a Ledger hookjait.",
   "Hooks are turned off in this client's settings.": "A hookok ki vannak kapcsolva ennek a kliensnek a beállításaiban.",
   "Some activity hooks are missing.": "Néhány tevékenységhook hiányzik.",

@@ -57,8 +57,8 @@ Existing Claude Ledger users can also retain their work records and personal not
 | Status | Meaning |
 |---|---|
 | **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
-| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
-| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. Hooks without an MCP registration bring activity only, and the row says so: the agent has no tools to report with until you run the command from **Copy MCP command** in a terminal. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. If the row asks for it, run the command from **Copy MCP command** in a terminal. Then start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
 | **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
 | **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
 

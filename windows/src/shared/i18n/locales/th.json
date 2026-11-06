@@ -2368,6 +2368,8 @@
   "Activity and reports reach this Ledger.": "กิจกรรมและรายงานส่งมาถึง Ledger นี้",
   "The MCP server is registered. Set up also records activity.": "ลงทะเบียนเซิร์ฟเวอร์ MCP แล้ว การตั้งค่าจะบันทึกกิจกรรมด้วย",
   "Start or restart {0} to send activity.": "เริ่มหรือเริ่ม {0} ใหม่เพื่อส่งกิจกรรม",
+  "Copy the MCP command and run it, then start or restart {0}.": "คัดลอกคำสั่ง MCP แล้วเรียกใช้ จากนั้นเริ่มหรือเริ่ม {0} ใหม่",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "กิจกรรมส่งมาถึง Ledger นี้แล้ว แต่เอเจนต์ยังส่งรายงานไม่ได้ คัดลอกคำสั่ง MCP แล้วเรียกใช้",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "เริ่มหรือเริ่ม Codex ใหม่ จากนั้นตรวจสอบและเชื่อถือฮุกของ Ledger ใน /hooks",
   "Hooks are turned off in this client's settings.": "ฮุกถูกปิดในการตั้งค่าของไคลเอนต์นี้",
   "Some activity hooks are missing.": "ฮุกกิจกรรมบางรายการหายไป",

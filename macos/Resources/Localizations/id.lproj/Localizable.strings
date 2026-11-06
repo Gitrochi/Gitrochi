@@ -2296,6 +2296,8 @@
 "Activity and reports reach this Ledger." = "Aktivitas dan laporan sampai ke Ledger ini.";
 "The MCP server is registered. Set up also records activity." = "Server MCP sudah terdaftar. Siapkan juga merekam aktivitas.";
 "Start or restart %@ to send activity." = "Mulai atau mulai ulang %@ untuk mengirim aktivitas.";
+"Copy the MCP command and run it, then start or restart %@." = "Salin perintah MCP dan jalankan, lalu mulai atau mulai ulang %@.";
+"Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it." = "Aktivitas sampai ke Ledger ini, tetapi agen belum dapat mengirim laporan. Salin perintah MCP dan jalankan.";
 "Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "Mulai atau mulai ulang Codex, lalu tinjau dan percayai hook Ledger di /hooks.";
 "Hooks are turned off in this client's settings." = "Hook dimatikan di pengaturan klien ini.";
 "Some activity hooks are missing." = "Beberapa hook aktivitas tidak ada.";

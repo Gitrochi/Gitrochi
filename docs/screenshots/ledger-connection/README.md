@@ -1,6 +1,6 @@
 # Ledger connections
 
-All screenshots use synthetic demo data. The demo's connections are fixed: Claude Code delivering (**Connected · last data 5 min. ago**), Codex running a hook command older than the Ledger (**Needs repair**), and the ChatGPT browser extension **Not set up**. Rendering them reads no client settings and installs nothing.
+All screenshots use synthetic demo data. The demo's connections are fixed: Claude Code delivering activity without an MCP entry (**Connected · last data 5 min. ago**, and its row asks for the MCP command), Codex running a hook command older than the Ledger (**Needs repair**), and the ChatGPT browser extension **Not set up**. Rendering them reads no client settings and installs nothing.
 
 `ledger-connect-*` and `ledger-empty-*` (macOS) and `windows-connect-success-*` and `windows-empty-*` show the earlier Connect agents sheet and first-report guidance. `macos-connections-*` and `windows-connections-*` show the **Connections** list at the top of the Connect agents sheet and in **Settings › Ledger**. `windows-connect-toolbar-*` shows the Claude Code button beside the ChatGPT entries in the Ledger toolbar, with its tooltip. `macos-connect-entry-*` shows **Connect Claude Code…** next to the ChatGPT browser extension on the empty Ledger; on macOS the same entry sits in the **More ledger actions** menu, which an offscreen render cannot open.
 

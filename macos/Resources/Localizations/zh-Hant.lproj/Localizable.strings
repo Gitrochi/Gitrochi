@@ -2345,6 +2345,8 @@
 "Activity and reports reach this Ledger." = "活動與報告正在送達此 Ledger。";
 "The MCP server is registered. Set up also records activity." = "MCP 伺服器已註冊。設定後也會記錄活動。";
 "Start or restart %@ to send activity." = "啟動或重新啟動 %@ 以傳送活動。";
+"Copy the MCP command and run it, then start or restart %@." = "請複製 MCP 命令並執行，然後啟動或重新啟動 %@。";
+"Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it." = "活動正在送達此 Ledger，但代理程式還無法傳送報告。請複製 MCP 命令並執行。";
 "Start or restart Codex, then review and trust the Ledger hooks in /hooks." = "啟動或重新啟動 Codex，然後在 /hooks 中檢查並信任 Ledger 掛鉤。";
 "Hooks are turned off in this client's settings." = "此用戶端的設定已關閉掛鉤。";
 "Some activity hooks are missing." = "部分活動掛鉤遺失。";
