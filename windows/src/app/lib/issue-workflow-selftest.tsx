@@ -13,6 +13,8 @@ export async function issueWorkflowSelfTest(): Promise<[boolean, string]> {
   const pause = () => new Promise(resolve => setTimeout(resolve, 35));
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const button = (text: string) => [...host.querySelectorAll<HTMLButtonElement>("button")].find(value => value.textContent?.trim() === t(text));
+  // the issue has an Edit of its own in the header; a comment's commands are under the comment
+  const commentButton = (text: string) => [...host.querySelectorAll<HTMLButtonElement>(".issue-comment-actions button")].find(value => value.textContent?.trim() === t(text));
   const enter = (input: HTMLTextAreaElement, value: string) => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(input, value); input.dispatchEvent(new Event("input", { bubbles: true })); };
   let commentBody = "The **search** checklist is ready.", writes = 0;
   try {
@@ -33,20 +35,22 @@ export async function issueWorkflowSelfTest(): Promise<[boolean, string]> {
     };
     await store.openInboxItem(item);
     root.render(<IssueDetail store={store} detail={store.inboxDetail!}/>); await pause();
+    ensure(host.querySelector(".issue-number")?.textContent === "#7" && host.querySelector(".issue-head .status-pill") && host.querySelector(".issue-development .issue-steps") && host.querySelector(".issue-facts"), "Issue header, Development steps or Details card missing");
+    ensure(host.querySelector<HTMLTextAreaElement>(".issue-composer textarea") && !button("Preview"), "The comment field must be one line until it is used");
     button("Create branch")!.click(); await pause(); ensure(store.sheet?.kind === "newBranch", "Issue branch dialog missing"); store.sheet = null;
     button("Create pull request")!.click(); await pause(); ensure(store.newPullRequestDraft?.body.includes("Closes #7"), "Issue closing reference missing"); store.sheet = null;
     button("Load linked requests")!.click(); await pause(); ensure(host.textContent?.includes("Search implementation"), "Server-linked request missing");
-    button("Quote reply")!.click(); await pause(); const composer = host.querySelector<HTMLTextAreaElement>(".issue-composer textarea")!; ensure(composer.value.includes("> The **search**"), "Quote reply missing");
+    commentButton("Quote reply")!.click(); await pause(); const composer = host.querySelector<HTMLTextAreaElement>(".issue-composer textarea")!; ensure(composer.value.includes("> The **search**"), "Quote reply missing");
     button("Preview")!.click(); await pause(); ensure(host.querySelector(".issue-comment-preview strong")?.textContent === "search", "Comment preview missing"); button("Write")!.click(); await pause(); ensure(composer.value.includes("@reader"), "Preview lost the draft");
     const quoted = composer.value;
     accounts.revision++; store.changed(); await pause();
     ensure(host.querySelector<HTMLTextAreaElement>(".issue-composer textarea")?.value === quoted, "Credential refresh discarded the comment draft");
     accounts.revision = accountRevision;
-    button("Edit")!.click(); await pause(); const edit = host.querySelector<HTMLTextAreaElement>(`textarea[aria-label="${t("Edit comment")}"]`)!; enter(edit, "Updated **search** checklist"); await pause(); button("Save comment")!.click(); await pause(); await pause(); ensure(writes === 1 && commentBody.includes("Updated"), "Own comment edit failed");
-    root.render(<IssueDetail store={store} detail={store.inboxDetail!}/>); await pause(); button("Delete")!.click(); await pause(); ensure(store.confirm?.title === t("Delete comment?"), "Delete confirmation missing"); store.confirm = null; ensure(writes === 1, "Cancelled deletion wrote to the server");
+    commentButton("Edit")!.click(); await pause(); const edit = host.querySelector<HTMLTextAreaElement>(`textarea[aria-label="${t("Edit comment")}"]`)!; enter(edit, "Updated **search** checklist"); await pause(); button("Save comment")!.click(); await pause(); await pause(); ensure(writes === 1 && commentBody.includes("Updated"), "Own comment edit failed");
+    root.render(<IssueDetail store={store} detail={store.inboxDetail!}/>); await pause(); commentButton("Delete")!.click(); await pause(); ensure(store.confirm?.title === t("Delete comment?"), "Delete confirmation missing"); store.confirm = null; ensure(writes === 1, "Cancelled deletion wrote to the server");
     store.defaultBaseBranch = async () => "main"; store.pullRequestBaseCandidates = () => ["main"];
     root.render(<CreatePullRequestSheet store={store} close={() => {}}/>); await pause(); ensure(host.querySelector<HTMLTextAreaElement>("textarea")?.value.includes("Closes #7"), "PR editor lost the issue reference");
-    return [true, "issue branch/PR handoff, linked requests, comment timestamps/quote/preview/edit and delete cancellation"];
+    return [true, "issue header, development steps and details, branch/PR handoff, linked requests, the one-line comment field, comment quote/preview/edit and delete cancellation"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); ipc.http = http; accounts.revision = accountRevision; }
 }

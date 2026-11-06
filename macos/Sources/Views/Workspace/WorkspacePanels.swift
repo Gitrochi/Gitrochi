@@ -155,35 +155,6 @@ struct RepositoryMyWorkPanel: View {
         if let url = URL(string: string) { NSWorkspace.shared.open(url) }
     }
 }
-/// Issues: the shared issue list on the left, the selected issue on the right, like the Pull requests page
-struct IssuesWorkspacePanel: View {
-    @Environment(RepoStore.self) private var store
-    @Environment(\.openSettings) private var openSettings
-    var body: some View {
-        if store.target != nil {
-            AdaptiveWorkbenchSplit(listWidth: 290) {
-                ScrollView { IssueListSection(onPage: true).padding(.vertical, 6) }
-                    .environment(\.sidebarFlyout, true)
-                    .background(Color(nsColor: .windowBackgroundColor))
-            } detail: {
-                Group {
-                    if let detail = store.collaboration.inboxDetail, detail.item.kind == "issue" {
-                        IssueDetailView(detail: detail)
-                    } else {
-                        ContentUnavailableView("Select an issue", systemImage: "circle.dotted",
-                                               description: Text("Search the list, then read the conversation and reply here."))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-        } else {
-            VStack(spacing: 14) {
-                ContentUnavailableView("No hosting remote", systemImage: "circle.dotted", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Open repository…") { store.presentOpenPanel() }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-    }
-}
 /// Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page
 struct ActionsWorkspacePanel: View {
     @Environment(RepoStore.self) private var store

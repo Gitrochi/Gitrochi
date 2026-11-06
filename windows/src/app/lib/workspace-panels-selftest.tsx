@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import type { SheetKind } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
-import { accounts } from "@/entities/hosting";
+import { accounts, workStateTitle } from "@/entities/hosting";
 import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
 import { WorkspaceHomePanel, ActionsWorkspacePanel, RemoteRepositorySearch } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
@@ -25,7 +25,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
   const requests: { method: string; path: string }[] = [];
   let copies = "", writes = 0, mentions = 0, releases = 0, projectReads = 0;
   const profile = { id: "workspace-fixture", provider: "github" as const, server: "https://github.com", username: "fixture", name: null, avatarURL: null };
-  const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" } };
+  const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" }, comments: 2, assignees: [{ login: "fixture" }], labels: [{ name: "fixture-label", color: "1f5a9e" }] };
   const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const until = async (test: () => boolean) => {
     const deadline = Date.now() + 3500;
@@ -145,8 +145,16 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     reset();
     // the page keeps the issue that was just opened and shows it like a pull request; the way back is in the toolbar
     await mount(<><Toolbar store={store} /><WorkspaceContent store={store} openSettings={() => {}} /></>);
-    check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
-    check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    const issueRow = host.querySelector('.hosted-list .hosted-row[data-issue="7"]');
+    check(issueRow?.classList.contains("selected") && !host.querySelector(".hosted-list .side-head"), "The Issues page must show its own list column with the open issue selected");
+    // a row ends with its comment count and its author's avatar, like a pull request row
+    check(issueRow?.querySelector(".issue-row-comments")?.textContent === "2" && issueRow.querySelector(".issue-row-author .avatar"), "An issue row must end with its comment count and avatar");
+    // only the segment that needs attention counts; a count appears once per screen
+    check(await until(() => [...host.querySelectorAll(".hosted-list .hosted-segments button")].map((b) => b.textContent?.trim()).join("|") === [workStateTitle("open"), `${t("Assigned to you")} 1`, workStateTitle("closed")].join("|")),
+      `The issue filters must be Open, Assigned to you with its count, and Closed: ${[...host.querySelectorAll(".hosted-list .hosted-segments button")].map((b) => b.textContent).join("|")}`);
+    check(host.querySelector(".hosted-summary")?.textContent?.includes(t("Assigned to you")) && [...host.querySelectorAll(".hosted-summary button")].some((b) => b.textContent?.trim() === t("Create branch for #{0}", "7")), "The summary must say what is assigned and offer the next step");
+    check(host.querySelector(".issue-detail .issue-number")?.textContent === "#7" && host.querySelector(".issue-detail .issue-head .status-pill") && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    check(host.querySelector(".issue-detail .issue-facts")?.textContent?.includes("@fixture") && host.querySelector(".issue-detail .issue-labels")?.textContent?.includes("fixture-label"), "The Details card must list assignees and labels");
     check(writes === 1, `Navigation performed an unexpected mutation: ${writeDetails()}`);
     const before = writes;
     const composer = host.querySelector<HTMLTextAreaElement>(`.issue-detail textarea[aria-label="${t("Comment")}"]`)!;
@@ -157,7 +165,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(store.confirm?.destructive === false, "Closing an issue must ask first");
     store.confirm = null;
     // new and edited issues use the editor dialog
-    host.querySelector<HTMLButtonElement>(`button[aria-label="${t("New issue")}"]`)!.click(); await pause();
+    await click("New issue…");
     check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === undefined, "New issue did not open the editor dialog");
     const dialog = document.createElement("div"); document.body.append(dialog);
     let editor = createRoot(dialog);
@@ -173,8 +181,8 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     };
     check(await editIn(sheet(), "Created fixture issue") && await until(() => writes === before + 2), `Creating an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null;
-    await click("Edit issue");
-    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
+    await click("Edit");
+    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit did not open the editor dialog");
     check(await editIn(sheet(), "Edited fixture issue") && await until(() => writes === before + 3), `Editing an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null; dialog.remove();
     // opened from the repository screen, the toolbar offers the way back; from another page it does not
@@ -201,7 +209,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
     check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);
-    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
+    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, its list column with comment count, avatar and the one counted filter, the assigned summary, issue detail with Markdown, details, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {

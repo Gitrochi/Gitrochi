@@ -1,26 +1,22 @@
 import SwiftUI
 import AppKit
 
-/// The repository's issues: in the repository sidebar (a row opens the Issues page), and as the list of the Issues page (onPage).
+/// The repository's issues in the repository sidebar: a row opens the Issues page, which has the search, the filters and
+/// its own rows (IssuesWorkspacePanel). The list itself lives in the store, so both show the same items.
 /// (Windows: widgets/sidebar/ui/IssueListSection.tsx)
 struct IssueListSection: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings
-    var onPage = false
 
     private var filters: [(value: String, title: String)] {
-        [("open", WorkState.title("open")), ("closed", WorkState.title("closed")), ("all", String(localized: "All"))]
+        [("open", WorkState.title("open")), ("closed", WorkState.title("closed")), ("all", String(localized: "All")),
+         ("assigned", String(localized: "Assigned to you"))]
     }
 
     var body: some View {
         @Bindable var list = store.issueList
         SidebarSection("issues") {
-            if onPage {
-                ListSearchRow(prompt: String(localized: "Search issues"), text: $list.search, filters: filters,
-                              selection: list.scope, defaultFilter: "open",
-                              onSearch: { Task { await store.loadIssues() } },
-                              onFilter: { scope in Task { await store.filterIssues(scope: scope) } })
-            } else if list.scope != "open" || !list.loadedSearch.isEmpty {
+            if list.scope != "open" || !list.loadedSearch.isEmpty {
                 ListFilterCaption(filter: filters.first { $0.value == list.scope }?.title ?? list.scope, search: list.loadedSearch) {
                     list.search = ""
                     Task { await store.filterIssues(scope: "open") }
@@ -50,12 +46,8 @@ struct IssueListSection: View {
                     Text(verbatim: "\(WorkState.title(item.state)) · @\(item.author)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 .sidebarRow()
-                .background(onPage && store.collaboration.inboxDetail?.item.id == item.id ? Color.accentColor.opacity(0.15) : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 6))
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    if onPage { Task { await store.openInboxItem(item) } } else { store.openIssue(item) }
-                }
+                .onTapGesture { store.openIssue(item) }
                 .contextMenu {
                     Button("Open in browser") { if let u = URL(string: item.url) { NSWorkspace.shared.open(u) } }
                     Button("Copy link") { store.copy(item.url) }
@@ -69,16 +61,9 @@ struct IssueListSection: View {
                 Text(list.page > 0 ? "Issues \(list.items.count)" : "Issues")
                 Spacer()
                 if list.busy, !list.items.isEmpty { ProgressView().controlSize(.mini) }
-                if !onPage {
-                    Button { store.navigate(.issues) } label: { Image(systemName: "arrow.up.forward.square") }
-                        .buttonStyle(.borderless)
-                        .help("Open in Issues")
-                }
-                if onPage {
-                    Button { Task { await store.loadIssues() } } label: { Image(systemName: "arrow.clockwise") }
-                        .buttonStyle(.borderless)
-                        .help("Refresh list")
-                }
+                Button { store.navigate(.issues) } label: { Image(systemName: "arrow.up.forward.square") }
+                    .buttonStyle(.borderless)
+                    .help("Open in Issues")
                 Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { Image(systemName: "plus") }
                     .buttonStyle(.borderless)
                     .disabled(store.collaborationAccess == nil)

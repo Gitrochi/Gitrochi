@@ -4,7 +4,12 @@ import Foundation
 extension RepoStore {
     /// Which repository, account and filter the issue list belongs to
     var issueContextKey: String {
-        "\(url?.path ?? "")|\(collaboration.contextID)|\(AccountStore.shared.revision)|\(hostingAccount?.id ?? "")|\(issueList.scope)"
+        "\(issueAccountKey)|\(issueList.scope)|\(issueList.sort)"
+    }
+
+    /// Which repository and account the issues belong to, whatever the filter (what is assigned to you does not depend on it)
+    var issueAccountKey: String {
+        "\(url?.path ?? "")|\(collaboration.contextID)|\(AccountStore.shared.revision)|\(hostingAccount?.id ?? "")"
     }
 
     /// Access that turns stale as soon as the repository, account or context changes
@@ -43,6 +48,21 @@ extension RepoStore {
         await loadIssues()
     }
 
+    /// updated, created or oldest; the list starts over in the new order
+    func sortIssues(_ sort: String) async {
+        issueList.sort = sort
+        issueList.reset()
+        await loadIssues()
+    }
+
+    /// What is assigned to this account, for the Issues page's summary and the count on its segment
+    func loadAssignedIssues() async {
+        let key = issueAccountKey
+        if issueList.assignedKey != key { issueList.assigned = nil; issueList.assignedMore = false; issueList.assignedFailed = false; issueList.assignedKey = key }
+        guard await resolveCollaborationAccess() != nil, let c = issueAccess, issueAccountKey == key else { return }
+        await issueList.loadAssigned(c)
+    }
+
     /// Shows the issue on the Issues page
     func openIssue(_ item: CollaborationInboxItem) {
         navigate(.issues)
@@ -57,6 +77,42 @@ extension RepoStore {
         await loadIssues()
         await openInboxItem(item)
     }
+    /// The local branches this repository linked to the issue
+    func issueBranches(_ item: CollaborationInboxItem) -> [String] {
+        guard let task = issueTask(item), let path = url?.path else { return [] }
+        return ProjectTaskLinks.issueBranches(task, repositoryPath: path).filter { name in localBranches.contains { $0.name == name } }
+    }
+
+    /// The branches of the loaded requests, when the request list shows open ones (a closed request is no review)
+    private var openRequestBranches: Set<String> {
+        ["open", "mine", "reviewRequested"].contains(collaboration.query.scope) ? Set(pullRequests.map(\.source)) : []
+    }
+
+    /// How far the issue's work is, as this repository knows it: its linked branches and their loaded requests
+    func issueProgress(_ item: CollaborationInboxItem) -> IssuePage.Assigned {
+        let branches = issueBranches(item)
+        return IssuePage.Assigned(number: item.number, progress: IssuePage.progress(branches: branches, requestBranches: openRequestBranches),
+                                  branch: branches.first { $0 == headBranch } ?? branches.first)
+    }
+
+    /// Shows a request one of the issue's branches opened on the Pull requests page
+    func openIssueRequest(_ request: PullRequest) {
+        navigate(.pullRequests, prepare: false)
+        select(.pullRequest(request.number))
+    }
+
+    /// The loaded request each issue's branch opened, by issue number
+    func issueRequests(_ items: [CollaborationInboxItem]) -> [Int: PullRequest] {
+        let open = openRequestBranches
+        guard !open.isEmpty else { return [:] }
+        var out: [Int: PullRequest] = [:]
+        for item in items {
+            let branches = issueBranches(item)
+            if let request = pullRequests.first(where: { branches.contains($0.source) }) { out[item.number] = request }
+        }
+        return out
+    }
+
     func issueTask(_ item: CollaborationInboxItem) -> ProjectTaskReference? {
         IssueWorkflow.task(target: target, number: item.number, title: item.title, url: item.url, isIssue: item.kind == "issue" && !item.isRequest)
     }

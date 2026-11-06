@@ -19,6 +19,7 @@ let fixtureLinkedRequests = [IssueLinkedRequest(number: 58, title: "Preserve sea
     var headHash: String? = "fixture-head"
     var busy: String? = nil
     var localBranches: [Branch] = []
+    var pullRequests: [PullRequest] = []
     var hostingAccount: HostAccount? = nil
     var issueContextKey = "fixture"
     var sheet: SheetKind?
@@ -32,6 +33,9 @@ let fixtureLinkedRequests = [IssueLinkedRequest(number: 58, title: "Preserve sea
     func openInboxItem(_ item: CollaborationInboxItem, append: Bool = false) async {}
     func inboxAction(_ item: CollaborationInboxItem, action: String, body: String) async -> Bool { false }
     func checkout(_ branch: Branch) async {}
+    func copy(_ text: String) {}
+    func issueBranches(_ item: CollaborationInboxItem) -> [String] { [] }
+    func openIssueRequest(_ request: PullRequest) {}
 }
 @main struct IssueWorkspaceLayoutFixture {
     @MainActor static func main() throws {

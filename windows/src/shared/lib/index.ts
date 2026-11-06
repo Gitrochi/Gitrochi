@@ -1,6 +1,7 @@
 // shared/lib 의 공개 API — 다른 조각은 이 파일로만 가져온다
 export { drag } from "./drag";
 export { laneColor, longDate, shortDate, stableHash, validBranchName } from "./format";
+export { listDay, listWhen } from "./list-date";
 export { type MdBlock, type MdInline, type MdRefs, parseMarkdown } from "./markdown";
 export { markdownImageURL } from "./markdown-inline";
 export { Observable, useObserve } from "./observable";

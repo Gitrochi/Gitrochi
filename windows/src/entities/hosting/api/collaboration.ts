@@ -12,9 +12,13 @@ export interface RequestLifecycle {
   reviewers: string[]; methods: MergeMethod[]; blockers: string[]; checks: string; policy: string;
   canEdit: boolean; canRebase: boolean; squashRequired: boolean;
 }
+/** A label on an issue; GitLab's list names labels without their colour */
+export interface IssueLabel { name: string; color?: string | null }
 export interface InboxItem {
   id: string; kind: "issue" | "review" | "mention"; number: number; title: string; url: string; body: string;
   state: string; updated: number | null; created?: number | null; author: string; unread: boolean; readID?: string; readProvider?: "github" | "gitlab"; isRequest?: boolean;
+  /** What an issue's own list or detail response says about it; missing when the server did not say */
+  comments?: number | null; assignees?: string[]; labels?: IssueLabel[];
 }
 export interface InboxDetail { item: InboxItem; comments: { id: string; author: string; body: string; date: number | null; editable?: boolean }[]; more: boolean; page: number }
 export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "github" ? `${c.apiBase}/repos/${c.target.path}` : `${c.apiBase}/projects/${H.projectID(c.target.path)}`;
@@ -145,8 +149,19 @@ export async function setReviewers(c: ReviewAccess, n: number, names: string[], 
   }
 }
 
-interface Issue { number?: number; iid?: number; title: string; body?: string; description?: string; html_url?: string; web_url?: string; state: string; updated_at?: string; created_at?: string; user?: User; author?: User; pull_request?: unknown }
-const issue = (i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", unread: false });
+/** The fields of an issue that GitHub and GitLab name differently */
+export interface IssueFactsRecord { created_at?: string; comments?: number; user_notes_count?: number; assignees?: User[] | null; labels?: (string | { name?: string; color?: string | null })[] | null }
+interface Issue extends IssueFactsRecord { number?: number; iid?: number; title: string; body?: string; description?: string; html_url?: string; web_url?: string; state: string; updated_at?: string; user?: User; author?: User; pull_request?: unknown }
+/** Opened date, comment count, assignees and labels, read from the issue's own response */
+export function issueFacts(i: IssueFactsRecord): Pick<InboxItem, "created" | "comments" | "assignees" | "labels"> {
+  return {
+    created: H.date(i.created_at),
+    comments: i.comments ?? i.user_notes_count ?? null,
+    assignees: (i.assignees ?? []).map((user) => user.login ?? user.username ?? "").filter(Boolean),
+    labels: (i.labels ?? []).map((label) => typeof label === "string" ? { name: label } : { name: label.name ?? "", color: label.color ?? null }).filter((label) => label.name),
+  };
+}
+const issue = (i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", unread: false, ...issueFacts(i) });
 /** 현재 저장소·연결된 계정 범위의 할 일. GitLab 멘션은 서버 To-do를 사용한다. */
 export async function inboxPage(c: ReviewAccess, kind: InboxItem["kind"], page = 1): Promise<{ items: InboxItem[]; more: boolean }> {
   if (kind === "review") {
@@ -173,7 +188,7 @@ export async function inboxDetail(c: ReviewAccess, item: InboxItem, page = 1): P
   const base = `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "issues" : isRequest ? "merge_requests" : "issues"}/${item.number}`;
   const detail = await send<Issue>(c, isRequest && c.target.provider === "github" ? reqURL(c, item.number) : base);
   const list = await send<{ id: number; body: string; user?: User; author?: User; created_at?: string; system?: boolean }[]>(c, `${base}/${c.target.provider === "github" ? "comments" : "notes"}?per_page=30&page=${page}`);
-  return { item: { ...item, title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
+  return { item: { ...item, ...(isRequest ? {} : issueFacts(detail)), title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
 }
 export async function postInboxComment(c: ReviewAccess, item: InboxItem, body: string) {
   if (!body.trim()) return;

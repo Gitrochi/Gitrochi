@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
-import { Inspector, IssueDetail } from "@/widgets/inspector";
-import { destinationTitle, FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
+import { Inspector } from "@/widgets/inspector";
+import { destinationTitle, FlowPanel, PullRequestSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
@@ -11,6 +11,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
+import { IssuesWorkspace } from "./IssuesWorkspace";
 
 // The Ledger is a preview page: its code loads the first time it opens
 const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
@@ -47,19 +48,6 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} launcher={store} requests={store} flows={store} /></Suspense>;
     default: return null;
   }
-}
-
-/** Issues: the shared issue list on the left, the open issue on the right, like the Pull requests page (macOS: IssuesWorkspacePanel) */
-export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
-  useObserve(store);
-  if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
-  const detail = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail : null;
-  return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
-    <div className="workspace-pr-detail col">
-      {detail ? <IssueDetail store={store} detail={detail} /> : <Empty title={t("Select an issue")} detail={t("Search the list, then read the conversation and reply here.")} />}
-    </div>
-  </div>;
 }
 
 function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
