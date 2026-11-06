@@ -3,9 +3,11 @@ import Foundation
 /// Release ordering mirrors Windows entities/hosting/model/releases.ts.
 enum ReleaseCatalog {
     struct Version { let family: String; let core: [String]; let pre: [String] }
+    // compiled once: every release's tag is read each time the page is drawn
+    private static let versionPattern = try? NSRegularExpression(pattern: #"^(.*?)(?:v|V)?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"#)
+
     static func version(_ tag: String) -> Version? {
-        let pattern = #"^(.*?)(?:v|V)?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"#
-        guard let regex = try? NSRegularExpression(pattern: pattern), let match = regex.firstMatch(in: tag, range: NSRange(tag.startIndex..., in: tag)) else { return nil }
+        guard let match = versionPattern?.firstMatch(in: tag, range: NSRange(tag.startIndex..., in: tag)) else { return nil }
         func group(_ n: Int) -> String { Range(match.range(at: n), in: tag).map { String(tag[$0]) } ?? "" }
         let family = group(1), pre = group(5).split(separator: ".").map(String.init)
         guard family.isEmpty || family.last.map({ "@/-_".contains($0) }) == true,

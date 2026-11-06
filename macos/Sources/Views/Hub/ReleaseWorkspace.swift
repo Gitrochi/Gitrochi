@@ -269,7 +269,8 @@ struct ReleaseWorkspace: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     LazyVStack(alignment: .leading, spacing: 4) {
-                        ForEach(items) { item in row(item) }
+                        let latestID = latest?.id
+                        ForEach(items) { item in row(item, latestID: latestID) }
                     }
                     // Keep pagination outside the lazy rows so repeated scrolls retain its position.
                     if hub.loading { ProgressView().controlSize(.small).frame(maxWidth: .infinity).padding(8) }
@@ -286,13 +287,13 @@ struct ReleaseWorkspace: View {
         if ReleaseCatalog.state(item) == "Draft" { return String(localized: "Not published") }
         return ListDate.parse(ReleaseCatalog.date(item)).map { ListDate.when($0, locale: locale) }
     }
-    private func row(_ item: HubItem) -> some View {
+    private func row(_ item: HubItem, latestID: String?) -> some View {
         let selected = store.hostingHub.detail?.item.id == item.id && editor == nil
         return HostedListRow(selected: selected, action: { editor = nil; detailOpen = true; select(item) }) {
             HostedListRowTitle(title: item.title, when: when(item), selected: selected)
             HStack(spacing: 6) {
                 Text(verbatim: ReleaseCatalog.tag(item)).font(.system(size: 11)).foregroundStyle(HostedList.secondary(selected: selected)).lineLimit(1).truncationMode(.middle)
-                markers(item, selected: selected)
+                markers(item, latestID: latestID, selected: selected)
             }
         }
         .disabled(store.hostingHub.busy)
@@ -300,9 +301,9 @@ struct ReleaseWorkspace: View {
     }
     /// Latest is a plain fact with the accent's dot; a prerelease or a draft is a state, with its reason on hover.
     /// Stable is the norm, so it gets no marker of its own.
-    @ViewBuilder private func markers(_ item: HubItem, selected: Bool) -> some View {
+    @ViewBuilder private func markers(_ item: HubItem, latestID: String?, selected: Bool) -> some View {
         let state = ReleaseCatalog.state(item)
-        if item.id == latest?.id { ReleaseLatestPill(selected: selected) }
+        if item.id == latestID { ReleaseLatestPill(selected: selected) }
         if state != "Stable" {
             HostedListChip(title: Bundle.main.localizedString(forKey: state, value: nil, table: nil), symbol: state == "Draft" ? nil : "tag", selected: selected, tone: state == "Draft" ? .neutral : .waiting)
                 .fixedSize()
@@ -356,7 +357,7 @@ struct ReleaseWorkspace: View {
             VStack(alignment: .leading, spacing: 8) {
                 WorkbenchFlow(spacing: 8) {
                     Text(verbatim: tag).font(.system(size: 13)).foregroundStyle(HostedList.caption).textSelection(.enabled)
-                    markers(d.item, selected: false)
+                    markers(d.item, latestID: latest?.id, selected: false)
                 }
                 // the title takes the line; its buttons move under it only when it would leave the title too narrow
                 if width < 560 {
