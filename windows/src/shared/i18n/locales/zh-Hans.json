@@ -2526,6 +2526,8 @@
   "Activity and reports reach this Ledger.": "活动和报告正在送达此 Ledger。",
   "The MCP server is registered. Set up also records activity.": "MCP 服务器已注册。设置后还会记录活动。",
   "Start or restart {0} to send activity.": "启动或重新启动 {0} 以发送活动。",
+  "Copy the MCP command and run it, then start or restart {0}.": "请复制 MCP 命令并运行，然后启动或重新启动 {0}。",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "活动正在送达此 Ledger，但代理还无法发送报告。请复制 MCP 命令并运行。",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "启动或重新启动 Codex，然后在 /hooks 中检查并信任 Ledger 钩子。",
   "Hooks are turned off in this client's settings.": "此客户端的设置中已关闭钩子。",
   "Some activity hooks are missing.": "部分活动钩子缺失。",

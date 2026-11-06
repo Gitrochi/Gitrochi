@@ -2375,6 +2375,8 @@
   "Activity and reports reach this Ledger.": "Aktywność i raporty docierają do tego Ledgera.",
   "The MCP server is registered. Set up also records activity.": "Serwer MCP jest zarejestrowany. Konfiguracja zapisuje też aktywność.",
   "Start or restart {0} to send activity.": "Uruchom {0} lub uruchom ponownie, aby wysyłać aktywność.",
+  "Copy the MCP command and run it, then start or restart {0}.": "Skopiuj polecenie MCP, uruchom je, a następnie uruchom {0} lub uruchom ponownie.",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "Aktywność dociera do tego Ledgera, ale agenci nie mogą jeszcze wysyłać raportów. Skopiuj polecenie MCP i uruchom je.",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Uruchom Codex lub uruchom ponownie, a następnie przejrzyj hooki Ledgera w /hooks i oznacz je jako zaufane.",
   "Hooks are turned off in this client's settings.": "Hooki są wyłączone w ustawieniach tego klienta.",
   "Some activity hooks are missing.": "Brakuje niektórych hooków aktywności.",

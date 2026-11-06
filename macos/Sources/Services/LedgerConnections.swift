@@ -40,6 +40,8 @@ struct LedgerConnectionLook: Equatable {
     /// otherwise. The MCP command can be copied once the stable command exists, since it names that file.
     static func agent(_ status: LedgerIntegrationStatus, stableExists: Bool) -> LedgerConnectionLook {
         let hooks = status.ownedHookCount > 0
+        // hooks bring activity; only the MCP entry gives the agent the tools to report with
+        let reports = status.mcp.registered
         let last = max(status.lastObservedAt ?? 0, status.lastReportAt ?? 0)
         let state: State
         let explanation: String
@@ -60,11 +62,13 @@ struct LedgerConnectionLook: Equatable {
             state = .noData
             explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings."
                 : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks."
-                : "Start or restart %@ to send activity."
+                : reports ? "Start or restart %@ to send activity." : "Copy the MCP command and run it, then start or restart %@."
         default:
             state = .connected
             explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings."
-                : hooks ? "Activity and reports reach this Ledger." : "The MCP server is registered. Set up also records activity."
+                : !hooks ? "The MCP server is registered. Set up also records activity."
+                : reports ? "Activity and reports reach this Ledger."
+                : "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it."
         }
         let broken = state == .repair || state == .missing
         var actions: [Action] = broken ? [.repair] : hooks ? [] : [.setUp]

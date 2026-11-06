@@ -468,11 +468,15 @@ enum LedgerUndo {
 
 /// Which project the open repository is (Windows: entities/ledger/lib/filter.ts projectForRepository)
 enum LedgerProjects {
-    /// The project its sessions are linked to, else a project named like the repository's folder
+    /// The project its sessions are linked to, else a project named like the repository's folder. A window can have a
+    /// linked worktree open, and a session in one names the main checkout as its repository, so the session's own
+    /// folders count too.
     static func key(forRepository path: String?, sessions: [LedgerSession], projects: [LedgerProject]) -> String? {
         guard let path, !path.isEmpty else { return nil }
         let target = normalized(path)
-        if let linked = sessions.first(where: { $0.links.repoPath.map(normalized) == target }) { return linked.project }
+        let linked = sessions.first { $0.links.repoPath.map(normalized) == target }
+            ?? sessions.first { [$0.links.worktree, $0.links.cwd].contains { $0.map(normalized) == target } }
+        if let linked { return linked.project }
         let folder = (target as NSString).lastPathComponent
         return projects.first { $0.key.caseInsensitiveCompare(folder) == .orderedSame || $0.name.caseInsensitiveCompare(folder) == .orderedSame }?.key
     }

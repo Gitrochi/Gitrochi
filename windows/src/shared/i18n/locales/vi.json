@@ -2348,6 +2348,8 @@
   "Activity and reports reach this Ledger.": "Hoạt động và báo cáo đang đến Ledger này.",
   "The MCP server is registered. Set up also records activity.": "Máy chủ MCP đã được đăng ký. Thiết lập cũng sẽ ghi lại hoạt động.",
   "Start or restart {0} to send activity.": "Khởi động hoặc khởi động lại {0} để gửi hoạt động.",
+  "Copy the MCP command and run it, then start or restart {0}.": "Hãy sao chép lệnh MCP và chạy, sau đó khởi động hoặc khởi động lại {0}.",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "Hoạt động đang đến Ledger này nhưng tác nhân chưa thể gửi báo cáo. Hãy sao chép lệnh MCP và chạy.",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Khởi động hoặc khởi động lại Codex, sau đó xem lại và tin cậy các hook của Ledger trong /hooks.",
   "Hooks are turned off in this client's settings.": "Hook đang tắt trong cài đặt của ứng dụng khách này.",
   "Some activity hooks are missing.": "Thiếu một số hook hoạt động.",

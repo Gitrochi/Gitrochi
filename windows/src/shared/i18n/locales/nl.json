@@ -2346,6 +2346,8 @@
   "Activity and reports reach this Ledger.": "Activiteit en rapporten bereiken deze Ledger.",
   "The MCP server is registered. Set up also records activity.": "De MCP-server is geregistreerd. Instellen legt ook activiteit vast.",
   "Start or restart {0} to send activity.": "Start {0} (opnieuw) om activiteit te verzenden.",
+  "Copy the MCP command and run it, then start or restart {0}.": "Kopieer de MCP-opdracht, voer hem uit en start {0} daarna (opnieuw).",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "Activiteit bereikt deze Ledger, maar agents kunnen nog geen rapporten sturen. Kopieer de MCP-opdracht en voer hem uit.",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Start Codex (opnieuw), controleer daarna de Ledger-hooks in /hooks en vertrouw ze.",
   "Hooks are turned off in this client's settings.": "Hooks zijn uitgeschakeld in de instellingen van deze client.",
   "Some activity hooks are missing.": "Sommige activiteitshooks ontbreken.",

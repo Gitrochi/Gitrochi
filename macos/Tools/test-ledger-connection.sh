@@ -36,6 +36,12 @@ func status(_ fields: String) -> LedgerIntegrationStatus {
 }
 let connected = LedgerConnectionLook.agent(status("{}"), stableExists: true)
 expect(connected.state == .connected && connected.lastDataAt == 2000 && connected.actions == [.remove, .copy], "A delivering connection shows its last data")
+let registered = #""mcp":{"configPath":"/c","registered":true,"command":{"path":"/data/bin/gitrochi-ledger","exists":true,"executable":true,"writesSchema":8,"canWrite":true,"sameDatabase":true}}"#
+expect(connected.explanation.contains("cannot report yet") && connected.actions.contains(.copy), "Hooks without the MCP entry bring activity, not reports, and say what to do")
+expect(LedgerConnectionLook.agent(status("{\(registered)}"), stableExists: true).explanation == "Activity and reports reach this Ledger.", "Only hooks with the MCP entry claim reports")
+let waiting = LedgerConnectionLook.agent(status(#"{"health":"no_data_yet"}"#), stableExists: true)
+expect(waiting.state == .noData && waiting.explanation == "Copy the MCP command and run it, then start or restart %@.", "A new connection names the MCP step before the restart")
+expect(LedgerConnectionLook.agent(status(#"{"health":"no_data_yet",\#(registered)}"#), stableExists: true).explanation == "Start or restart %@ to send activity.", "With the MCP entry only the restart is left")
 let missing = LedgerConnectionLook.agent(status(#"{"health":"not_installed","ownedHookCount":0,"hookCommand":null}"#), stableExists: false)
 expect(missing.state == .notSetUp && missing.actions == [.setUp], "No hooks and no MCP entry is Not set up")
 let stale = LedgerConnectionLook.agent(status(#"{"health":"outdated_command","hookCommand":{"path":"/old","exists":true,"executable":true,"canWrite":false}}"#), stableExists: true)

@@ -276,6 +276,13 @@ fn run_git(dir: &Path, args: &[&str]) {
     assert!(output.status.success(), "git {args:?}: {}", stderr(&output));
 }
 
+fn title(client: &str) -> &'static str {
+    match client {
+        "claude" => "Claude Code",
+        _ => "Codex",
+    }
+}
+
 fn observed(db: &Path, client_session: &str) -> Value {
     sessions(db)
         .into_iter()
@@ -335,4 +342,147 @@ fn new_observed_sessions_are_titled_by_client_and_branch_and_older_titles_stay()
         observed(&db, "title-branch")["title"],
         "Claude Code: harbor"
     );
+}
+
+/// What git calls the checkout at `dir`, which is how links name folders on every platform.
+fn top_folder(dir: &Path) -> String {
+    let output = std::process::Command::new("git")
+        .current_dir(dir)
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", stderr(&output));
+    stdout(&output).trim().to_string()
+}
+
+/// A repository with a branch checked out in a linked worktree, the way Claude Code's and
+/// Codex's desktop apps and Gitrochi's own Run agent start most sessions.
+fn worktree_fixture(dir: &TempDir) -> (std::path::PathBuf, std::path::PathBuf) {
+    let repo = dir.join("harbor");
+    std::fs::create_dir_all(&repo).unwrap();
+    run_git(&repo, &["init", "-q", "-b", "main"]);
+    run_git(&repo, &["commit", "-q", "--allow-empty", "-m", "Start"]);
+    run_git(&repo, &["tag", "v1.2.0"]);
+    run_git(
+        &repo,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "retry",
+            "../nimble-otter-1f2e",
+        ],
+    );
+    let worktree = dir.join("nimble-otter-1f2e");
+    (repo, worktree)
+}
+
+#[test]
+fn a_session_in_a_linked_worktree_joins_its_repositorys_project_and_reports_there() {
+    for client in ["claude", "codex"] {
+        let dir = TempDir::new("observer-worktree");
+        let db = dir.join("ledger.sqlite3");
+        app(&db, "info", json!({}));
+        let (repo, worktree) = worktree_fixture(&dir);
+        let start = |id: &str, cwd: &Path| {
+            let input = json!({"session_id": id, "cwd": cwd});
+            let output = observe(&db, client, "SessionStart", input, None);
+            assert!(output.status.success(), "{}", stderr(&output));
+            json_of(&output)["hookSpecificOutput"]["additionalContext"]
+                .as_str()
+                .unwrap()
+                .to_string()
+        };
+
+        // The first session of a repository may well be one in a worktree.
+        let context = start("in-worktree", &worktree);
+        assert!(
+            context.contains(r#""project":"harbor""#),
+            "the agent is told its repository's project: {context}"
+        );
+        let session = observed(&db, "in-worktree");
+        assert_eq!(session["project"], "harbor");
+        assert_eq!(session["title"], format!("{} · retry", title(client)));
+        assert_eq!(session["baseVersion"], "1.2.0", "a tag of the repository");
+        assert_eq!(session["links"]["repoPath"], top_folder(&repo));
+        assert_eq!(session["links"]["worktree"], top_folder(&worktree));
+        assert_eq!(session["links"]["branch"], "retry");
+        Schemas::load().check("session.schema.json", &session);
+
+        // Deep inside the worktree and in the main checkout, it is still the one project.
+        let deep = worktree.join("src/deep");
+        std::fs::create_dir_all(&deep).unwrap();
+        start("deep-in-worktree", &deep);
+        start("in-main-checkout", &repo);
+        assert_eq!(observed(&db, "deep-in-worktree")["project"], "harbor");
+        let main = observed(&db, "in-main-checkout");
+        assert_eq!(main["project"], "harbor");
+        assert_eq!(main["links"]["repoPath"], top_folder(&repo));
+        assert!(main["links"].get("worktree").is_none());
+
+        let projects = app(&db, "projects", json!({}));
+        let keys: Vec<&str> = projects["projects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p["key"].as_str().unwrap())
+            .collect();
+        assert_eq!(keys, ["harbor"], "no project named after the worktree");
+        assert_eq!(projects["projects"][0]["repoPath"], top_folder(&repo));
+
+        // The report the context asks for lands there, and the repository's page shows it.
+        let id = session["id"].as_str().unwrap();
+        let reported = gitrochi_ledger::call_as(
+            gitrochi_ledger::Caller::Agent,
+            "report",
+            &json!({"db": db.to_string_lossy(), "event": "start", "session": id,
+                    "project": "harbor", "kind": "implementation", "title": "Retry the upload",
+                    "summary": "Started"}),
+        )
+        .unwrap();
+        assert_eq!(reported["session"]["project"], "harbor");
+        let page = app(&db, "state", json!({"project": "harbor", "range": "all"}));
+        let shown: Vec<&str> = page["sessions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_str().unwrap())
+            .collect();
+        assert_eq!(shown.len(), 3, "every session of the repository: {shown:?}");
+        assert!(shown.contains(&id));
+    }
+}
+
+#[test]
+fn a_worktree_joins_the_project_bound_to_its_repository_whatever_its_name() {
+    let dir = TempDir::new("observer-bound-worktree");
+    let db = dir.join("ledger.sqlite3");
+    app(&db, "info", json!({}));
+    let (repo, worktree) = worktree_fixture(&dir);
+    app(
+        &db,
+        "project_set",
+        json!({"project": "Harbor app", "repoPath": top_folder(&repo)}),
+    );
+    let input = json!({"session_id": "bound", "cwd": worktree});
+    let output = observe(&db, "claude", "SessionStart", input, None);
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert_eq!(observed(&db, "bound")["project"], "Harbor app");
+}
+
+#[test]
+fn a_session_outside_a_linked_worktree_keeps_its_folder_as_its_project() {
+    let dir = TempDir::new("observer-no-worktree");
+    let db = dir.join("ledger.sqlite3");
+    app(&db, "info", json!({}));
+    let notes = dir.join("notes");
+    std::fs::create_dir_all(&notes).unwrap();
+    let input = json!({"session_id": "plain", "cwd": notes});
+    assert!(observe(&db, "claude", "SessionStart", input, None)
+        .status
+        .success());
+    let session = observed(&db, "plain");
+    assert_eq!(session["project"], "notes");
+    assert!(session["links"].get("worktree").is_none());
 }

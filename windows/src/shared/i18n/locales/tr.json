@@ -2379,6 +2379,8 @@
   "Activity and reports reach this Ledger.": "Etkinlik ve raporlar bu Ledger’a ulaşıyor.",
   "The MCP server is registered. Set up also records activity.": "MCP sunucusu kayıtlı. Kurulum etkinliği de kaydeder.",
   "Start or restart {0} to send activity.": "Etkinlik göndermek için {0} uygulamasını başlatın veya yeniden başlatın.",
+  "Copy the MCP command and run it, then start or restart {0}.": "MCP komutunu kopyalayıp çalıştırın, ardından {0} uygulamasını başlatın veya yeniden başlatın.",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "Etkinlik bu Ledger’a ulaşıyor ancak aracılar henüz rapor gönderemiyor. MCP komutunu kopyalayıp çalıştırın.",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Codex’i başlatın veya yeniden başlatın, ardından /hooks içinde Ledger kancalarını inceleyip güvenin.",
   "Hooks are turned off in this client's settings.": "Kancalar bu istemcinin ayarlarında kapalı.",
   "Some activity hooks are missing.": "Bazı etkinlik kancaları eksik.",

@@ -3302,6 +3302,8 @@
   "Activity and reports reach this Ledger.": "アクティビティとレポートはこの Ledger に届いています。",
   "The MCP server is registered. Set up also records activity.": "MCP サーバーは登録済みです。設定するとアクティビティも記録します。",
   "Start or restart {0} to send activity.": "{0} を起動または再起動すると、アクティビティが送信されます。",
+  "Copy the MCP command and run it, then start or restart {0}.": "MCP コマンドをコピーして実行してから、{0} を起動または再起動してください。",
+  "Activity reaches this Ledger, but agents cannot report yet. Copy the MCP command and run it.": "アクティビティはこの Ledger に届いていますが、エージェントはまだレポートを送信できません。MCP コマンドをコピーして実行してください。",
   "Start or restart Codex, then review and trust the Ledger hooks in /hooks.": "Codex を起動または再起動し、/hooks で Ledger のフックを確認して信頼してください。",
   "Hooks are turned off in this client's settings.": "このクライアントの設定でフックがオフになっています。",
   "Some activity hooks are missing.": "一部のアクティビティフックがありません。",

@@ -10,7 +10,8 @@ describe("Ledger connections", () => {
   it("maps every health to one of the five row states with its actions", () => {
     expect(agentConnection(status({ health: "not_installed", ownedHookCount: 0, hookCommand: null }), false)).toMatchObject({ state: "not_set_up", actions: ["setup"] });
     expect(agentConnection(status(), true)).toMatchObject({ state: "connected", lastDataAt: 2_000, actions: ["remove", "copy"] });
-    expect(agentConnection(status({ health: "no_data_yet", lastObservedAt: null, lastReportAt: null }), false)).toMatchObject({ state: "no_data", lastDataAt: null, explanation: "Start or restart {0} to send activity." });
+    const mcp = { configPath: "/c", registered: true, command: command() };
+    expect(agentConnection(status({ health: "no_data_yet", lastObservedAt: null, lastReportAt: null, mcp }), false)).toMatchObject({ state: "no_data", lastDataAt: null, explanation: "Start or restart {0} to send activity." });
     expect(agentConnection(status({ client: "codex", requiresClientTrust: true, health: "no_data_yet" }), false).explanation).toContain("/hooks");
     expect(agentConnection(status({ health: "incomplete" }), false)).toMatchObject({ state: "repair", actions: ["repair", "remove"] });
     expect(agentConnection(status({ health: "missing_command", hookCommand: command({ exists: false, executable: false }) }), false)).toMatchObject({ state: "missing", repairsMcp: false });
@@ -24,6 +25,17 @@ describe("Ledger connections", () => {
     expect(mcpOnly.explanation).toContain("Copy the MCP command");
     const noHooks = agentConnection(status({ health: "missing_command", ownedHookCount: 0, hookCommand: null, mcp: { configPath: "/c", registered: true, command: command({ exists: false }) } }), false);
     expect(noHooks.actions).toEqual(["repair"]);
+  });
+
+  it("does not claim reports while the agent has no tools to send them with", () => {
+    const mcp = { configPath: "/c", registered: true, command: command() };
+    expect(agentConnection(status({ mcp }), true).explanation).toBe("Activity and reports reach this Ledger.");
+    const hooksOnly = agentConnection(status(), true);
+    expect(hooksOnly).toMatchObject({ state: "connected", actions: ["remove", "copy"] });
+    expect(hooksOnly.explanation).toContain("agents cannot report yet");
+    expect(agentConnection(status({ health: "no_data_yet" }), true)).toMatchObject({ state: "no_data", explanation: "Copy the MCP command and run it, then start or restart {0}." });
+    // Codex still has to trust its hooks first
+    expect(agentConnection(status({ client: "codex", requiresClientTrust: true, health: "no_data_yet" }), true).explanation).toContain("/hooks");
   });
 
   it("does not call an MCP-only connection unused, and says when hooks are turned off", () => {

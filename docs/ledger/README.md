@@ -57,8 +57,8 @@ Existing Claude Ledger users can also retain their work records and personal not
 | Status | Meaning |
 |---|---|
 | **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
-| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
-| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. Hooks without an MCP registration bring activity only, and the row says so: the agent has no tools to report with until you run the command from **Copy MCP command** in a terminal. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. If the row asks for it, run the command from **Copy MCP command** in a terminal. Then start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
 | **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
 | **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
 
@@ -88,7 +88,7 @@ Start or restart the client after installing. Codex asks you to review non-manag
 
 The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself.
 
-Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions are titled by the client and the branch they started on, such as **Claude Code · feature/login** (the worktree folder for a detached checkout), use a generic kind and have auto-continue off. Sessions observed before keep their titles, and the agent's first start report replaces the title as before. Existing Gitrochi-tracked sessions keep their own kind and policy.
+Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions are titled by the client and the branch they started on, such as **Claude Code · feature/login** (the worktree folder for a detached checkout), use a generic kind and have auto-continue off. A session started in a linked worktree, as the Claude Code and Codex desktop apps usually do, belongs to its repository's project and shows on that repository's page, with the worktree as a link. Sessions observed before keep their titles and projects, and the agent's first start report replaces the title as before. Existing Gitrochi-tracked sessions keep their own kind and policy.
 
 MCP registration remains separate. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
 

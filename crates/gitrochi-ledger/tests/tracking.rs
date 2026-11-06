@@ -592,6 +592,53 @@ fn outside_a_repository_the_folder_names_the_session() {
 }
 
 #[test]
+fn a_window_opened_on_a_linked_worktree_tracks_into_the_repositorys_project() {
+    let repo = Repo::new();
+    // The app names the folder its window has open, here the worktree itself.
+    let worktree = repo.path("harbor-retry");
+    let policy = json!({"enabled": true, "delaySec": 45});
+    app(
+        &repo.db(),
+        "settings_set",
+        json!({"values": {"autoContinue": {"enabled": false, "delaySec": 30,
+              "repositories": {worktree.clone(): policy}}}}),
+    );
+    let result = app(
+        &repo.db(),
+        "track",
+        json!({"repoPath": worktree, "cwd": worktree, "agentId": "agent-1"}),
+    );
+    let session = &result["session"];
+    assert_eq!(
+        session["project"], "harbor",
+        "the repository, not the worktree"
+    );
+    assert_eq!(session["title"], "feature/retry");
+    assert_eq!(session["baseVersion"], "1.0.0", "what the worktree reaches");
+    let links = &session["links"];
+    assert!(links["worktree"]
+        .as_str()
+        .unwrap()
+        .ends_with("harbor-retry"));
+    let bound = links["repoPath"].as_str().unwrap();
+    assert!(
+        bound.ends_with("harbor") && !bound.contains("harbor-retry"),
+        "{bound}"
+    );
+    assert_eq!(
+        session["autoContinue"]["delaySec"], 45,
+        "a policy kept under the folder the window has open still applies"
+    );
+
+    // A repoPath elsewhere is the app's host repository: it stays as the app sent it.
+    let hosted = repo.track(json!({}));
+    assert_eq!(
+        hosted["session"]["links"]["repoPath"],
+        repo.path("harbor").as_str()
+    );
+}
+
+#[test]
 fn a_launch_in_the_main_checkout_has_no_worktree_link() {
     let repo = Repo::new();
     let session = &repo.track(json!({"cwd": repo.path("harbor")}))["session"];

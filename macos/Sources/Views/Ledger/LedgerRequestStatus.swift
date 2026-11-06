@@ -36,13 +36,14 @@ enum LedgerRequestRules {
     static let freshFor: LedgerMs = 60_000
 
     /// The request the session links to, only when the session belongs to the open repository and the request lives in
-    /// that repository's hosting project: the session's linked folder is the repository (or, with no folder, its
+    /// that repository's hosting project: one of the session's linked folders is the repository (or, with no folder, its
     /// project is the repository's), and the request's address is under the hosting project's path
     static func link(_ s: LedgerSession, repositoryPath: String?, repositoryProject: String?, host: String?, path: String?) -> LedgerRequestLink? {
         guard let pr = s.links.pr, pr.number > 0, let repositoryPath, !repositoryPath.isEmpty,
               let host, !host.isEmpty, let path, !path.isEmpty else { return nil }
-        if let linked = s.links.repoPath ?? s.links.worktree ?? s.links.cwd {
-            guard folder(linked) == folder(repositoryPath) else { return nil }
+        let linked = [s.links.repoPath, s.links.worktree, s.links.cwd].compactMap { $0 }
+        if !linked.isEmpty {
+            guard linked.map(folder).contains(folder(repositoryPath)) else { return nil }
         } else {
             guard let repositoryProject, s.project == repositoryProject else { return nil }
         }
