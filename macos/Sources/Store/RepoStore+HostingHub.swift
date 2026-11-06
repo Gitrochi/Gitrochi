@@ -29,6 +29,14 @@ extension RepoStore {
         guard !hostingHub.busy, (["repository", "personal"].contains(scope) || HostingHubAPI.projectOrganization(scope: scope, provider: hubProvider) != nil) else { return }
         hostingHub.projectScope = scope; await activateHostingHub(hostingHub.section)
     }
+    /// The Projects scope menu lists every connected account, so choosing an owner there may change the account in the same step.
+    func selectHubProjectScope(_ scope: String, account id: String) async {
+        guard !hostingHub.busy, AccountStore.shared.accounts.contains(where: { $0.id == id }) else { return }
+        hostingHub.selectedAccountID = id
+        // An organization of the account left behind means nothing to the new one.
+        hostingHub.projectScope = ["repository", "personal"].contains(scope) || HostingHubAPI.projectOrganization(scope: scope, provider: hubProvider) != nil ? scope : "personal"
+        await activateHostingHub(hostingHub.section)
+    }
     func selectHubProjectSource(_ source: String) async {
         guard !hostingHub.busy, ["local", "remote"].contains(source) else { return }
         hostingHub.projectSource = source

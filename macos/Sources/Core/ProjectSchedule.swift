@@ -46,6 +46,35 @@ struct ProjectScheduleChange: Equatable {
     var value: String
 }
 
+/// One chip of the overview. A chip counts open tasks only, and its count is the rows the Schedule list shows for it.
+enum ProjectScheduleGroup: String, CaseIterable {
+    case overdue, today, upcoming, unscheduled
+}
+
+/// Where a task stands, for its status pill and the progress bar.
+enum ProjectScheduleStage: Equatable {
+    case todo, inProgress, done
+}
+
+/// The overview's Schedule list and what it leaves to the cards beside it.
+struct ProjectScheduleOverview {
+    /// Open tasks a chip counts, by date, with the done tasks of the same days between them
+    var rows: [ProjectScheduleEntry] = []
+    /// Done tasks the list leaves out until they are asked for
+    var done: [ProjectScheduleEntry] = []
+    /// Open tasks due after the week the list covers, soonest first
+    var later: [ProjectScheduleEntry] = []
+    var counts: [ProjectScheduleGroup: Int] = [:]
+}
+
+struct ProjectScheduleProgress: Equatable {
+    var done = 0
+    var inProgress = 0
+    var todo = 0
+    var total: Int { done + inProgress + todo }
+    var percent: Int { total == 0 ? 0 : Int((Double(done) / Double(total) * 100).rounded()) }
+}
+
 enum ProjectScheduleError: Error {
     case invalidDate, invalidRange, missingDateField, unavailableItem
 }
@@ -151,6 +180,67 @@ enum ProjectSchedule {
             if let due = entry.due, due < today { result.overdue += 1 }
             if entry.date == today { result.today += 1 }
             if let day = entry.date, let horizon, day > today && day <= horizon { result.upcoming += 1 }
+        }
+        return result
+    }
+
+    /// The chip that counts a task, with the rules of `summary`; nil for a done task and for one no chip counts
+    /// (due after the week, started without a due date, or with its dates reversed).
+    static func group(_ entry: ProjectScheduleEntry, today: String) -> ProjectScheduleGroup? {
+        guard !entry.completed else { return nil }
+        guard let day = entry.date else { return .unscheduled }
+        guard parseDay(today) != nil, !entry.invalidRange else { return nil }
+        if let due = entry.due, due < today { return .overdue }
+        if day == today { return .today }
+        if let horizon = addDays(today, 7), day > today && day <= horizon { return .upcoming }
+        return nil
+    }
+
+    /// The Schedule list keeps the project's order within a day, so the chips always add up to its open rows.
+    static func overview(_ entries: [ProjectScheduleEntry], today: String) -> ProjectScheduleOverview {
+        var result = ProjectScheduleOverview()
+        let horizon = addDays(today, 7)
+        func ordered(_ values: [(Int, ProjectScheduleEntry)], by day: (ProjectScheduleEntry) -> String?) -> [ProjectScheduleEntry] {
+            values.sorted { lhs, rhs in
+                let left = day(lhs.1) ?? "9999-99-99", right = day(rhs.1) ?? "9999-99-99"
+                return left == right ? lhs.0 < rhs.0 : left < right
+            }.map(\.1)
+        }
+        var rows: [(Int, ProjectScheduleEntry)] = [], done: [(Int, ProjectScheduleEntry)] = [], later: [(Int, ProjectScheduleEntry)] = []
+        for (index, entry) in entries.enumerated() {
+            if let group = group(entry, today: today) {
+                result.counts[group, default: 0] += 1
+                rows.append((index, entry))
+            } else if entry.completed {
+                if let day = entry.date, let horizon, day >= today && day <= horizon { rows.append((index, entry)) }
+                else { done.append((index, entry)) }
+            } else if let due = entry.due, let horizon, due > horizon, !entry.invalidRange {
+                later.append((index, entry))
+            }
+        }
+        result.rows = ordered(rows) { $0.date }
+        result.done = ordered(done) { $0.date }
+        result.later = ordered(later) { $0.due }
+        return result
+    }
+
+    /// A task that left the first open status is in progress; one without a status field is still to do.
+    static func stage(_ entry: ProjectScheduleEntry, status: HubProjectField?, settings: ProjectScheduleSettings = .init()) -> ProjectScheduleStage {
+        if entry.completed { return .done }
+        guard let status else { return .todo }
+        let current = value(entry.row, field: status)
+        let first = status.options.first { !settings.completedOptionIDs.contains($0.id) }
+        return current == first?.id || !status.options.contains { $0.id == current } ? .todo : .inProgress
+    }
+
+    static func progress(_ entries: [ProjectScheduleEntry], status: HubProjectField?, settings: ProjectScheduleSettings = .init()) -> ProjectScheduleProgress {
+        var result = ProjectScheduleProgress()
+        for entry in entries {
+            switch stage(entry, status: status, settings: settings) {
+            case .done: result.done += 1
+            case .inProgress: result.inProgress += 1
+            case .todo: result.todo += 1
+            }
         }
         return result
     }

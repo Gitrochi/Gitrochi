@@ -267,13 +267,20 @@ export async function projectItemCompletenessSelfTest(): Promise<[boolean, strin
     ensure(fixture.store.hostingHub.detail?.rows.length === 203 && fixture.store.hostingHub.projectScope === "organization:team", "Projects lost the complete organization snapshot");
     ensure(host.querySelector(".project-list")?.textContent?.includes("Delivery task 1") === true && host.querySelector(".project-list")?.textContent?.includes("Final planning draft") === true, "Closed issues or later drafts were absent from the task table");
     button("Overview")!.click(); await pause();
-    const search = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Search project items")}"]`)!;
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(search,"does-not-match"); search.dispatchEvent(new Event("input",{bubbles:true}));await pause();
-    button("View all tasks")!.click();
-    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 203), "View all tasks did not clear filters and include archived items");
-    ensure(search.value === "", "View all tasks retained the prior search");
+    const search = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Search tasks")}"]`)!;
+    const type = (value:string) => {Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(search,value); search.dispatchEvent(new Event("input",{bubbles:true}));};
+    type("does-not-match");await pause();
+    button("Table")!.click();
+    ensure(await until(() => !!host.querySelector(".project-list") && host.querySelectorAll(".project-list .project-table-row").length === 0), "The search did not follow the task table");
+    type("");await pause();
+    // Archived items are a choice of the Filter menu, which the app mounts at its root.
+    const archived = () => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find(item => item.querySelector(".label")?.textContent === t("Include archived"));
+    button("Filter")!.click();
+    ensure(await until(() => !!archived()), "The Filter menu did not offer archived items");
+    archived()!.click();
+    ensure(await until(() => host.querySelectorAll(".project-list .project-table-row").length === 203), "Including archived items did not show the whole project");
     ensure(fixture.writes === 0, "Reading the complete project or changing views mutated GitHub");
-    return [true,"Three project pages + 203 mixed items without a repository + expandable Home agenda + fresh full task table including closed issues and late draft + View all tasks clears filters and includes archived items"];
+    return [true,"Three project pages + 203 mixed items without a repository + expandable Home agenda + fresh full task table including closed issues and late draft + the search follows the table and the Filter menu includes archived items"];
   } catch (error) {return [false,error instanceof Error ? error.message : String(error)];}
   finally {root.unmount();host.remove();fixture.restore();}
 }

@@ -77,6 +77,26 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
   const ensure = (condition: boolean, message: string) => {
     if (!condition) throw new Error(message);
   };
+  // A project may be named like a layout ("Roadmap"), so the tabs are found among the tabs.
+  const tab = (label: string) =>
+    [...host.querySelectorAll<HTMLButtonElement>(".project-tabs > button")].find((e) => e.textContent?.trim() === t(label));
+  // The Projects header: the project and its caption, the scope menu, and the shared menus behind the title and "More".
+  const projectHeading = () => host.querySelector(".project-title-row")?.textContent ?? "";
+  const menuItem = (label: string) =>
+    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === t(label));
+  const chooseMenu = async (opener: HTMLElement | undefined, label: string) => {
+    ensure(!!opener, `Menu button missing for ${label}`);
+    opener!.click();
+    ensure(await until(() => !!menuItem(label)), `Menu item missing: ${label}`);
+    menuItem(label)!.click();
+    await pause(25);
+  };
+  const scopeItem = (scope: string) => host.querySelector<HTMLButtonElement>(`.project-scope-menu [data-scope="${scope}"]`);
+  const chooseScope = async (scope: string) => {
+    host.querySelector<HTMLButtonElement>("button.project-scope")!.click();
+    ensure(await until(() => !!scopeItem(scope) && !scopeItem(scope)!.disabled), `Project scope missing: ${scope}`);
+    scopeItem(scope)!.click();
+  };
   const mount = async (view: ReactNode) => {
     root.unmount();
     host.replaceChildren();
@@ -394,30 +414,29 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     };
     await mount(<HostingHubPanel store={source} section="projects" />);
     ensure(
-      await until(() => !!host.querySelector("button.hub-item")),
+      await until(() => projectHeading().includes("Plan releases")),
       "Owner projects missing",
     );
-    const scope = host.querySelector<HTMLSelectElement>(
-      `select[aria-label="${t("Project scope")}"]`,
-    )!;
-    ensure(!!scope, "Project scope picker missing");
+    ensure(host.querySelector("button.project-scope")?.getAttribute("data-scope") === "repository", "Project scope picker missing");
     const beforeScope = writes.length;
-    enter(scope, "personal");
-    ensure(
-      await until(
-        () => host.textContent?.includes("Personal roadmap") === true,
-      ),
-      "Personal project scope did not load",
-    );
+    await chooseScope("personal");
+    // The owner's projects are the choices of the title menu.
+    let personalListed = false;
+    for (let attempt = 0; attempt < 100 && !personalListed; attempt++) {
+      const opener = host.querySelector<HTMLButtonElement>("button.project-title-menu");
+      if (opener && !opener.disabled) {
+        opener.click();
+        await pause(20);
+        personalListed = !!menuItem("Personal roadmap");
+        window.dispatchEvent(new MouseEvent("mousedown"));
+      }
+      await pause(20);
+    }
+    ensure(personalListed, "Personal project scope did not load");
     ensure(writes.length === beforeScope, "Scope selection mutated GitHub");
-    enter(scope, "repository");
+    await chooseScope("repository");
     ensure(
-      await until(
-        () =>
-          host
-            .querySelector("button.hub-item")
-            ?.textContent?.includes("Plan releases") === true,
-      ),
+      await until(() => projectHeading().includes("Plan releases")),
       "Repository project scope did not restore",
     );
     details.push("repository/personal project scopes");
@@ -434,10 +453,16 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       />,
     );
     ensure(
-      await until(() => !!host.querySelector(".project-overview")),
-      "First project did not open its schedule overview automatically",
+      await until(() => !!host.querySelector(".project-list")),
+      "First project did not open its task table automatically",
     );
-    button("Board")!.click();
+    tab("Overview")!.click();
+    await pause(25);
+    ensure(
+      !!host.querySelector(".project-overview") && host.querySelectorAll(".project-stats > button").length >= 3 && host.querySelectorAll(".project-header-actions .btn.primary").length === 1 && host.querySelectorAll(".project-workspace .btn.primary").length === 0,
+      "Schedule overview lacks its task counts, or New task… is not the page's one filled button",
+    );
+    tab("Board")!.click();
     await pause(25);
     ensure(
       host.querySelectorAll(".project-column").length === 2,
@@ -448,24 +473,24 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       "Project card was lost or duplicated",
     );
     const beforeView = writes.length;
-    button("List")!.click();
+    tab("Table")!.click();
     await pause(25);
     ensure(
       !!host.querySelector(".project-list") &&
         !host.querySelector(".project-board"),
-      "List view did not replace board",
+      "Table view did not replace board",
     );
-    button("Timeline")!.click();
+    tab("Roadmap")!.click();
     await pause(25);
-    ensure(!!host.querySelector(".project-roadmap"), "Timeline did not render");
-    button("Board")!.click();
+    ensure(!!host.querySelector(".project-roadmap"), "Roadmap did not render");
+    tab("Board")!.click();
     await pause(25);
     ensure(
       !!host.querySelector(".project-board") && writes.length === beforeView,
       "Changing view wrote to GitHub",
     );
     const search = host.querySelector<HTMLInputElement>(
-      `input[aria-label="${t("Search project items")}"]`,
+      `input[aria-label="${t("Search tasks")}"]`,
     )!;
     enter(search, "does-not-match");
     await pause(25);
@@ -513,7 +538,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(25);
     ensure(commentInput.value === "Check the uncertain reply." && writes.length === uncertainWrites, "Unknown comment was retried or lost input");
     uncertainComment = false;
-    button("Retry")!.click();
+    // The scope strip has a Retry of its own; this one belongs to the error notice.
+    host.querySelector<HTMLButtonElement>(".hub-error .hub-actions button")!.click();
     ensure(await until(() => button("Comment")?.disabled === false), "Project refresh did not reconcile the unknown comment lock");
     enter(commentInput, "");
     await pause(25);
@@ -561,10 +587,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       ),
       "Moving a task did not reveal native project order",
     );
-    button("Board")!.click();
+    tab("Board")!.click();
     await pause(25);
     host
-      .querySelector<HTMLButtonElement>(".project-hero-actions .btn.primary")!
+      .querySelector<HTMLButtonElement>(".project-header-actions .btn.primary")!
       .click();
     await pause(25);
     button("Paste a link")!.click();
@@ -595,7 +621,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       "Project did not refresh after adding an issue",
     );
     host
-      .querySelector<HTMLButtonElement>(".project-hero-actions .btn.primary")!
+      .querySelector<HTMLButtonElement>(".project-header-actions .btn.primary")!
       .click();
     await pause(25);
     const draft = host.querySelector<HTMLInputElement>(
@@ -607,7 +633,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLButtonElement>('.project-composer button[data-tip="' + t("Close") + '"]')!.click();
     await pause(25);
     ensure(writes.length === beforeDraft, "Closing the draft editor wrote a draft");
-    host.querySelector<HTMLButtonElement>(".project-hero-actions .btn.primary")!.click();
+    host.querySelector<HTMLButtonElement>(".project-header-actions .btn.primary")!.click();
     await pause(25);
     enter(host.querySelector<HTMLInputElement>(`input[aria-label="${t("Draft title")}"]`)!, "Plan the release");
     await pause(25);
@@ -648,7 +674,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       "Selecting a shared view wrote to GitHub",
     );
     enter(sharedPicker, "");
-    button("Board")!.click();
+    tab("Board")!.click();
     await pause(25);
     button("Select items")!.click();
     await pause(25);
@@ -675,8 +701,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       ),
       "Confirmed bulk edit did not finish",
     );
-    button("Project settings")!.click();
-    await pause(25);
+    await chooseMenu(button("More project actions"), "Rename project…");
     const settings = host.querySelector(".project-settings")!;
     const projectNameInput = [...settings.querySelectorAll("label")]
       .find((label) => label.textContent?.trim() === t("Project name"))!
@@ -693,7 +718,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ensure(
       await until(
         () =>
-          host.querySelector(".project-hero h1")?.textContent ===
+          host.querySelector(".project-title-menu > span")?.textContent ===
           "Release workspace",
       ),
       "Project settings did not refresh",
@@ -739,8 +764,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       )!
       .click();
     await pause(25);
-    button("New project")!.click();
-    await pause(25);
+    await chooseMenu(button("More project actions"), "New project…");
     const beforeProject = writes.length;
     const newProject = host.querySelector<HTMLInputElement>(
       `input[aria-label="${t("Project name")}"]`,
@@ -761,8 +785,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     projectEmpty = true;
     await mount(<HostingHubPanel store={source} section="projects" />);
-    ensure(await until(() => !!host.querySelector(".project-overview")), "Empty project overview missing");
-    button("Board")!.click();
+    ensure(await until(() => !!host.querySelector(".project-list")), "Empty project did not open");
+    tab("Board")!.click();
     ensure(
       await until(() => !!host.querySelector(".project-first-task")),
       "Empty project guidance missing",
@@ -773,7 +797,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     projectEmpty = false;
     details.push(
-      "project auto-selection + real empty columns + Board/List/Timeline + filters + inspector + local task handoff + single-submit fields/issues/drafts",
+      "project auto-selection + one filled New task… + real empty columns + Board/Table/Roadmap + filters + inspector + local task handoff + single-submit fields/issues/drafts",
     );
     const githubAccounts = accounts.accounts,
       githubHTTP = ipc.http;
@@ -883,19 +907,9 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       moved.body.remove_labels === "Ready",
       "GitLab move changed an unrelated label",
     );
-    const gitlabScope = host.querySelector<HTMLSelectElement>(
-      `select[aria-label="${t("Project scope")}"]`,
-    );
-    ensure(gitlabScope?.value === "repository", "GitLab project scope picker missing");
-    ensure(
-      await until(() =>
-        [...gitlabScope!.options].some(
-          (option) => option.value === "organization:team/design",
-        ),
-      ),
-      "GitLab groups were not offered as project scopes",
-    );
-    enter(gitlabScope!, "organization:team/design");
+    ensure(host.querySelector("button.project-scope")?.getAttribute("data-scope") === "repository", "GitLab project scope picker missing");
+    // The menu offers the account's groups beside its repository board.
+    await chooseScope("organization:team/design");
     ensure(
       await until(() => host.textContent?.includes("Plan the design review") === true),
       "GitLab group board did not open without its repository",

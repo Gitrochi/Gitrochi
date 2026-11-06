@@ -263,7 +263,7 @@ export function ProjectRoadmap({
                       <Button size="small" disabled={locked || !assignDate || (!startField && !endField)} onClick={() => {
                         setSchedulingID(row.id);
                         setDates((current) => ({ ...current, [row.id]: current[row.id] ?? localScheduleToday() }));
-                      }}><CalendarDays size={13} />{t("Schedule")}</Button>
+                      }}><CalendarDays size={13} />{t("Schedule…")}</Button>
                     )}
                   </div>
                 </div>

@@ -35,6 +35,15 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
     );
   const input = (label: string) =>
     host.querySelector<HTMLInputElement>(`input[aria-label="${t(label)}"]`)!;
+  // New project… is the empty page's one action; otherwise it is a choice of the More menu or of the title menu, which the app mounts at its root.
+  const newProject = async () => {
+    const direct = button("New project…");
+    if (direct) { direct.click(); return; }
+    const item = () => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((value) => value.querySelector(".label")?.textContent === t("New project…"));
+    (button("More project actions") ?? host.querySelector<HTMLButtonElement>("button.project-title-menu"))!.click();
+    ensure(await until(() => !!item()), "No menu offered a new project");
+    item()!.click();
+  };
   const enter = (
     element: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
     value: string,
@@ -69,10 +78,10 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
   try {
     root.render(<LocalPlannerFixtureShell fixture={fixture} />);
     ensure(
-      await until(() => !!button("New project")),
+      await until(() => !!button("New project…")),
       "Project workspace missing",
     );
-    button("New project")!.click();
+    await newProject();
     await pause();
     ensure(
       host.querySelectorAll(".project-create-mode").length === 3,
@@ -99,7 +108,7 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
       fixture.http === 0 && fixture.credentials === 0,
       "Local creation accessed remote account or network",
     );
-    button("Add task")!.click();
+    button("New task…")!.click();
     await pause();
     enter(input("Draft title"), "Ship offline planner");
     await pause();
@@ -118,12 +127,7 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
       fixture.store.hostingHub.detail?.rows.length === 1,
       "Local task not created",
     );
-    host.querySelector<HTMLButtonElement>(".project-agenda-task")?.click();
-    if (!host.querySelector(".project-inspector")) {
-      host
-        .querySelector<HTMLButtonElement>(".project-agenda-row button")
-        ?.click();
-    }
+    host.querySelector<HTMLButtonElement>(".project-todo-main")?.click();
     if (!host.querySelector(".project-inspector")) {
       const task = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
         (value) => value.textContent?.includes("Ship offline planner"),
@@ -240,7 +244,7 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
     button("Cancel", host.querySelector(".project-create-chooser")!)!.click();
     await pause();
     fixture.connect();
-    button("New project")!.click();
+    await newProject();
     await pause();
     fixture.slowProbe();
     host.querySelectorAll<HTMLButtonElement>(".project-create-mode")[1].click();
@@ -335,7 +339,7 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
       "Cancelled creation sent a remote mutation",
     );
     await pause();
-    button("New project")!.click();
+    await newProject();
     await pause();
     enter(input("Project name"), "Uncertain test creation");
     await pause();
@@ -358,7 +362,7 @@ export async function localPlannerSelfTest(): Promise<[boolean, string]> {
     await pause();
     button("Cancel", host.querySelector(".project-create-chooser")!)!.click();
     await pause();
-    button("New project")!.click();
+    await newProject();
     await pause();
     enter(input("Project name"), "Do not duplicate");
     await pause();
