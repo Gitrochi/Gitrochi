@@ -485,7 +485,7 @@ struct LedgerSettings: View {
         } header: {
             Text("Connections")
         } footer: {
-            Text("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")
+            Text("Hooks and the MCP server run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Set up has the client register the server; if it cannot, copy the MCP command and run it yourself.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }

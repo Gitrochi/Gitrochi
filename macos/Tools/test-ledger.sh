@@ -295,6 +295,9 @@ let start: LedgerMs = 1_793_400_000_000
         let repaired = try call(demo, "integration_install", ["client": "codex", "bundled": "x"], as: LedgerIntegrationStatus.self)
         check(codex.health == "outdated_command" && codex.hookCommand?.canWrite == false && !stableCommand.refreshed && repaired.health == "no_data_yet",
               "demo connections decode, and Repair replaces an outdated hook command")
+        let registeredDemo = try call(demo, "integration_mcp", ["client": "claude", "action": "register", "bundled": "x"], as: LedgerIntegrationStatus.self)
+        let removedDemo = try call(demo, "integration_mcp", ["client": "claude", "action": "remove"], as: LedgerIntegrationStatus.self)
+        check(registeredDemo.mcp.registered && !removedDemo.mcp.registered, "the demo registers and drops the Ledger tools")
         let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
         let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
         check(imported.results.first?.ok == true, "structured reported questions import")
@@ -1197,6 +1200,13 @@ let start: LedgerMs = 1_793_400_000_000
               "hub_share answers through the C ABI and keeps a session without a repository remote on this computer")
         check(failure(CLIBackend(binary: cli, db: connectionDB), "hub_share", ["client": .string("a1b2c3d4e5f6")])?.code == "NOT_ALLOWED",
               "agents cannot ask what would be shared with the team hub")
+        // Every path is named: the defaults are the person's own settings and stable command
+        let noClient = failure(connectionClient.backend, "integration_mcp", [
+            "client": .string("claude"), "action": .string("register"), "bundled": .string(cli), "program": .string(folder + "/no-such-client"),
+            "path": .string(folder + "/stable/gitrochi-ledger"), "config": .string(folder + "/settings.json"), "mcpConfig": .string(folder + "/claude.json")])
+        check(noClient?.code == "NOT_FOUND" && noClient?.message.contains("Claude Code") == true, "a client that is not installed is named, for the row to show")
+        check(failure(CLIBackend(binary: cli, db: connectionDB), "integration_mcp", ["client": .string("claude"), "action": .string("remove")])?.code == "NOT_ALLOWED",
+              "agents cannot make a client change its settings")
 
         let db = folder + "/ledger.sqlite3"
         _ = CLIBackend(binary: cli, db: db).run(["demo", db])

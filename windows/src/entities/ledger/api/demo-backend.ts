@@ -121,7 +121,7 @@ export class DemoLedgerBackend implements LedgerBackend {
         this.browserHost = { ...this.browserHost, installed: true, extensionId: String(args.extensionId), hostPath: String(args.hostPath) };
         return { ...this.browserHost };
       case "browser_remove": this.browserHost = { ...this.browserHost, installed: false }; return { ...this.browserHost };
-      case "integration_command": case "integration_status": case "integration_install": case "integration_remove": return this.connections.call(method, args);
+      case "integration_command": case "integration_status": case "integration_install": case "integration_remove": case "integration_mcp": return this.connections.call(method, args);
       case "records": {
         if (args.action === "version_note") {
           const baseline = w.baselines.find((row) => row.project === args.project && row.version === args.version);

@@ -42,6 +42,18 @@ struct LedgerClient: Sendable {
     func removeIntegration(_ client: LedgerSetupClient) async throws -> LedgerIntegrationStatus {
         try await call("integration_remove", ["client": .string(client.rawValue)])
     }
+    /// Set up and Repair: `program`, the client's own command, registers the ledger's MCP server. One that works stays.
+    func registerMcp(_ client: LedgerSetupClient, bundled: String, program: String?) async throws -> LedgerIntegrationStatus {
+        var args: [String: LedgerJSON] = ["client": .string(client.rawValue), "action": .string("register"), "bundled": .string(bundled)]
+        if let program { args["program"] = .string(program) }
+        return try await call("integration_mcp", args)
+    }
+    /// Remove: `program`, the client's own command, drops the ledger's MCP server
+    func removeMcp(_ client: LedgerSetupClient, program: String?) async throws -> LedgerIntegrationStatus {
+        var args: [String: LedgerJSON] = ["client": .string(client.rawValue), "action": .string("remove")]
+        if let program { args["program"] = .string(program) }
+        return try await call("integration_mcp", args)
+    }
     func rev() async throws -> Int { try await call("rev", as: LedgerRev.self).rev }
 
     func state(project: String?, range: LedgerRange) async throws -> LedgerState {

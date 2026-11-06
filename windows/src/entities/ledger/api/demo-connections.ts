@@ -12,6 +12,7 @@ const STABLE = "demo\\bin\\gitrochi-ledger.exe";
 export class DemoConnections {
   private stable = true;
   private hooks: Record<Client, { installed: boolean; command: string; schema: number; observedAt: Ms | null }>;
+  private registered = new Set<Client>();
 
   constructor(now: Ms) {
     this.hooks = {
@@ -33,6 +34,9 @@ export class DemoConnections {
       this.hooks[client] = { ...hooks, installed: true, command: STABLE, schema: 8 };
     } else if (method === "integration_remove") {
       this.hooks[client] = { ...hooks, installed: false };
+    } else if (method === "integration_mcp") {
+      if (args.action === "remove") this.registered.delete(client);
+      else { this.stable = true; this.registered.add(client); }
     }
     return this.status(client, method === "integration_install" ? "install" : method === "integration_remove" ? "remove" : "status");
   }
@@ -42,7 +46,8 @@ export class DemoConnections {
     const command: LedgerConnectionCommand | null = hooks.installed
       ? { path: hooks.command, exists: true, executable: true, writesSchema: hooks.schema, version: "0.1.0", canWrite: hooks.schema >= 8, dbPath: "demo", sameDatabase: true }
       : null;
-    const health = !hooks.installed ? "not_installed" : command?.canWrite === false ? "outdated_command" : hooks.observedAt === null ? "no_data_yet" : "ok";
+    const registered = this.registered.has(client);
+    const health = !hooks.installed ? (registered ? "ok" : "not_installed") : command?.canWrite === false ? "outdated_command" : hooks.observedAt === null ? "no_data_yet" : "ok";
     return {
       client,
       action,
@@ -53,7 +58,7 @@ export class DemoConnections {
       requiresClientTrust: client === "codex",
       hooksDisabled: false,
       hookCommand: command,
-      mcp: { configPath: client === "claude" ? "demo\\.claude.json" : "demo\\.codex\\config.toml", registered: false, command: null },
+      mcp: { configPath: client === "claude" ? "demo\\.claude.json" : "demo\\.codex\\config.toml", registered, command: null },
       databaseSchema: 8,
       lastObservedAt: hooks.installed ? hooks.observedAt : null,
       lastReportAt: null,
