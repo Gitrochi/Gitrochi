@@ -1,20 +1,35 @@
 /* Gitrochi — pl. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "Zmienione pliki: %1$lld";
+"%lld not pushed" = "%1$lld niewypchniętych";
+"%lld to pull" = "%1$lld do pobrania";
 "All branches…" = "Wszystkie gałęzie…";
 "Compare with %@" = "Porównaj z %1$@";
 "Fast-forward only" = "Tylko fast-forward";
+"Filter repositories" = "Filtruj repozytoria";
 "Find in file" = "Znajdź w pliku";
 "Go" = "Idź";
+"Last opened" = "Ostatnio otwarte";
+"Last opened repository" = "Ostatnio otwarte repozytorium";
 "Merge" = "Scalanie";
+"New repository…" = "Nowe repozytorium…";
+"Nothing is due today." = "Na dziś nic nie zaplanowano.";
+"Open Projects" = "Otwórz Projekty";
 "Open a repository to use these" = "Otwórz repozytorium, aby z nich korzystać";
+"Open…" = "Otwórz…";
+"Overdue · %@" = "Po terminie · %1$@";
 "Pop latest stash" = "Zastosuj ostatni stash";
 "Pop latest stash (none saved)" = "Zastosuj ostatni stash (brak zapisanych)";
 "Previous match" = "Poprzednie dopasowanie";
 "Next match" = "Następne dopasowanie";
 "Pull as configured in git" = "Ściągnij wg konfiguracji git";
 "Pull options" = "Opcje ściągania";
+"Recent" = "Ostatnie";
 "Start %@ here" = "Uruchom %1$@ tutaj";
 "Switch branch or repository, open or clone one, or close the tab" = "Przełącz gałąź lub repozytorium, otwórz lub sklonuj repozytorium albo zamknij kartę";
+"Tasks for today" = "Zadania na dziś";
+"Up to date" = "Aktualne";
+"Yesterday" = "Wczoraj";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Brak dopasowań";
 "Wrap lines" = "Zawijaj wiersze";
@@ -2226,8 +2241,6 @@
 "Git accounts" = "Konta Git";
 "Manage Git accounts…" = "Zarządzaj kontami Git…";
 "Open a repository to see its Git identity." = "Otwórz repozytorium, aby zobaczyć jego tożsamość Git.";
-"Open repositories" = "Otwarte repozytoria";
-"Recent local repositories" = "Ostatnie lokalne repozytoria";
 "Open repository" = "Otwórz repozytorium";
 "Organization: {0}" = "Organizacja: {0}";
 "Load more organizations" = "Wczytaj więcej organizacji";

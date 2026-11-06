@@ -1,20 +1,35 @@
 /* Gitrochi — nl. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld gewijzigde bestanden";
+"%lld not pushed" = "%1$lld niet gepusht";
+"%lld to pull" = "%1$lld te pullen";
 "All branches…" = "Alle branches…";
 "Compare with %@" = "Vergelijken met %1$@";
 "Fast-forward only" = "Alleen fast-forward";
+"Filter repositories" = "Repository's filteren";
 "Find in file" = "Zoeken in bestand";
 "Go" = "Ga";
+"Last opened" = "Laatst geopend";
+"Last opened repository" = "Laatst geopende repository";
 "Merge" = "Merge";
+"New repository…" = "Nieuwe repository…";
+"Nothing is due today." = "Vandaag staat er niets gepland.";
+"Open Projects" = "Projecten openen";
 "Open a repository to use these" = "Open een repository om deze te gebruiken";
+"Open…" = "Openen…";
+"Overdue · %@" = "Te laat · %1$@";
 "Pop latest stash" = "Laatste stash toepassen";
 "Pop latest stash (none saved)" = "Laatste stash toepassen (geen opgeslagen)";
 "Previous match" = "Vorige overeenkomst";
 "Next match" = "Volgende overeenkomst";
 "Pull as configured in git" = "Pull volgens git-configuratie";
 "Pull options" = "Pull-opties";
+"Recent" = "Recent";
 "Start %@ here" = "%1$@ hier starten";
 "Switch branch or repository, open or clone one, or close the tab" = "Van branch of repository wisselen, er een openen of klonen, of het tabblad sluiten";
+"Tasks for today" = "Taken voor vandaag";
+"Up to date" = "Bijgewerkt";
+"Yesterday" = "Gisteren";
 "{0} of {1}" = "{0} van {1}";
 "No matches" = "Geen overeenkomsten";
 "Wrap lines" = "Regels afbreken";
@@ -2190,8 +2205,6 @@
 "Git accounts" = "Git-accounts";
 "Manage Git accounts…" = "Git-accounts beheren…";
 "Open a repository to see its Git identity." = "Open een repository om de Git-identiteit te bekijken.";
-"Open repositories" = "Geopende repository’s";
-"Recent local repositories" = "Recente lokale repository’s";
 "Open repository" = "Repository openen";
 "Organization: {0}" = "Organisatie: {0}";
 "Load more organizations" = "Meer organisaties laden";

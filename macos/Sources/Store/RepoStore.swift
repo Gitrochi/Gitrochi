@@ -513,7 +513,7 @@ final class RepoStore: Identifiable {
 
     // MARK: - 새로 고침
 
-    private static let statusArgs = ["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"]
+    static let statusArgs = ["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"]
 
     /// GITROCHI_TRACE=1 이면 새로 고침 종류와 걸린 시간을 표준 오류로(성능 확인용)
     static let tracing = ProcessInfo.processInfo.environment["GITROCHI_TRACE"] == "1"

@@ -1,20 +1,35 @@
 /* Gitrochi — it. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld file modificati";
+"%lld not pushed" = "%1$lld non inviati";
+"%lld to pull" = "%1$lld da scaricare";
 "All branches…" = "Tutti i branch…";
 "Compare with %@" = "Confronta con %1$@";
 "Fast-forward only" = "Solo fast-forward";
+"Filter repositories" = "Filtra repository";
 "Find in file" = "Cerca nel file";
 "Go" = "Vai";
+"Last opened" = "Ultimo aperto";
+"Last opened repository" = "Ultimo repository aperto";
 "Merge" = "Merge";
+"New repository…" = "Nuovo repository…";
+"Nothing is due today." = "Niente in scadenza oggi.";
+"Open Projects" = "Apri Progetti";
 "Open a repository to use these" = "Apri un repository per usarle";
+"Open…" = "Apri…";
+"Overdue · %@" = "In ritardo · %1$@";
 "Pop latest stash" = "Applica l'ultimo stash";
 "Pop latest stash (none saved)" = "Applica l'ultimo stash (nessuno salvato)";
 "Previous match" = "Risultato precedente";
 "Next match" = "Risultato successivo";
 "Pull as configured in git" = "Pull come configurato in git";
 "Pull options" = "Opzioni di pull";
+"Recent" = "Recenti";
 "Start %@ here" = "Avvia %1$@ qui";
 "Switch branch or repository, open or clone one, or close the tab" = "Cambia branch o repository, aprine o clonane uno, oppure chiudi la scheda";
+"Tasks for today" = "Attività di oggi";
+"Up to date" = "Aggiornato";
+"Yesterday" = "Ieri";
 "{0} of {1}" = "{0} di {1}";
 "No matches" = "Nessun risultato";
 "Wrap lines" = "A capo automatico";
@@ -2219,8 +2234,6 @@
 "Git accounts" = "Account Git";
 "Manage Git accounts…" = "Gestisci account Git…";
 "Open a repository to see its Git identity." = "Apri un repository per visualizzarne l’identità Git.";
-"Open repositories" = "Repository aperti";
-"Recent local repositories" = "Repository locali recenti";
 "Open repository" = "Apri repository";
 "Organization: {0}" = "Organizzazione: {0}";
 "Load more organizations" = "Carica altre organizzazioni";

@@ -1,20 +1,35 @@
 /* Gitrochi — zh-Hans. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld 个已更改文件";
+"%lld not pushed" = "%1$lld 个未推送";
+"%lld to pull" = "%1$lld 个待拉取";
 "All branches…" = "所有分支…";
 "Compare with %@" = "与 %1$@ 比较";
 "Fast-forward only" = "仅快进";
+"Filter repositories" = "筛选仓库";
 "Find in file" = "在文件中查找";
 "Go" = "前往";
+"Last opened" = "上次打开";
+"Last opened repository" = "上次打开的仓库";
 "Merge" = "合并";
+"New repository…" = "新建仓库…";
+"Nothing is due today." = "今天没有到期的任务。";
+"Open Projects" = "打开项目";
 "Open a repository to use these" = "打开仓库后才能使用这些";
+"Open…" = "打开…";
+"Overdue · %@" = "已逾期 · %1$@";
 "Pop latest stash" = "应用最新的贮藏";
 "Pop latest stash (none saved)" = "应用最新的贮藏（没有已保存的贮藏）";
 "Previous match" = "上一个匹配项";
 "Next match" = "下一个匹配项";
 "Pull as configured in git" = "按 git 配置拉取";
 "Pull options" = "拉取选项";
+"Recent" = "最近";
 "Start %@ here" = "在此启动 %1$@";
 "Switch branch or repository, open or clone one, or close the tab" = "切换分支或仓库、打开或克隆仓库，或关闭标签页";
+"Tasks for today" = "今日任务";
+"Up to date" = "已是最新";
+"Yesterday" = "昨天";
 "{0} of {1}" = "第 {0} 项，共 {1} 项";
 "No matches" = "无匹配项";
 "Wrap lines" = "自动换行";
@@ -2385,8 +2400,6 @@
 "Git accounts" = "Git 账户";
 "Manage Git accounts…" = "管理 Git 账户…";
 "Open a repository to see its Git identity." = "打开仓库以查看其 Git 身份。";
-"Open repositories" = "已打开的仓库";
-"Recent local repositories" = "最近使用的本地仓库";
 "Open repository" = "打开仓库";
 "Organization: {0}" = "组织：{0}";
 "Load more organizations" = "加载更多组织";

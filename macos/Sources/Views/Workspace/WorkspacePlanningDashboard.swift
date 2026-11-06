@@ -19,6 +19,9 @@ struct WorkspacePlanningDashboard: View {
     @ViewState private var navigationID = UUID()
     @ViewState private var portfolioContext = ""
     @ViewState private var visibleTaskCount = 16
+    @ViewState private var hoveredTask: String?
+    /// Home shows only the few tasks due today; the full desk has the filters, the week and the projects
+    var todayOnly = false
     var fixture: ProjectPortfolioState? = nil
     private var data: ProjectPortfolioState { fixture ?? portfolio }
     private var accounts: [HostAccount] { AccountStore.shared.accounts.filter { $0.provider == .github } }
@@ -63,54 +66,9 @@ struct WorkspacePlanningDashboard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 7) {
-                    Label("Your planning desk", systemImage: "sun.horizon").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
-                    Text("A clear day starts with a clear plan.").font(.system(size: 27, weight: .bold, design: .rounded))
-                    Text("Bring project deadlines and your next actions into one place.").font(.callout).foregroundStyle(.secondary)
-                }.frame(maxWidth: .infinity, alignment: .leading)
-                if data.loading { ProgressView().controlSize(.small) }
-                Button("New project") { store.hostingHub.selectedAccountID = account?.id; store.hostingHub.projectScope = effectiveScope; creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
-                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
-            }
-            if fixture == nil && portfolioContext != context {
-                ProgressView("Loading project schedules…").font(.callout)
-            } else {
-                controls
-                if let error = data.error { Text(error).font(.callout).foregroundStyle(.red).textSelection(.enabled) }
-                if !isLocal && accounts.isEmpty && fixture == nil {
-                    Text("Connect a GitHub account to plan across your projects.").font(.callout).foregroundStyle(.secondary)
-                }
-                if !data.loading && (data.error != nil || data.projects.isEmpty) && (isLocal || account != nil) {
-                    Button("Open project workspace") {
-                        store.hostingHub.projectSource = isLocal ? "local" : "remote"
-                        if !isLocal { store.hostingHub.selectedAccountID = account?.id }
-                        store.hostingHub.projectScope = effectiveScope
-                        store.navigate(.projects)
-                    }
-                }
-                if !isLocal, fixture == nil, let account, AccountStore.shared.credentialState(for: account) == .authorizationRequired {
-                    Button("Allow saved account access") { Task { try? await AccountStore.shared.allowStoredAccess(for: account); await refresh() } }
-                }
-                if !data.projectErrors.isEmpty {
-                    Text("Some projects could not be refreshed. Their last loaded tasks may be out of date.").font(.caption).foregroundStyle(.orange)
-                }
-                metrics
-                WorkbenchFlow(spacing: 10) {
-                    Picker("Planning view", selection: $mode) { Text("Agenda").tag("agenda"); Text("Week").tag("week"); Text("Projects").tag("projects") }.labelsHidden().pickerStyle(.segmented).frame(width: 280)
-                    TextField("Search tasks and projects", text: $query).textFieldStyle(.roundedBorder).frame(maxWidth: 300)
-                    if !isLocal { Toggle("Assigned to me", isOn: $onlyMine).toggleStyle(.button) }
-                }.frame(maxWidth: .infinity, alignment: .leading)
-                if mode == "week" { week }
-                else if mode == "projects" { projects }
-                else { agendaList }
-                if isLocal { Text("Saved on this device. Local projects do not sync with GitHub.").font(.caption2).foregroundStyle(.secondary) }
-                else { Text("Loaded tasks from selected projects. Shared issues appear once, using their earliest active date.").font(.caption2).foregroundStyle(.secondary) }
-            }
-        }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [Color.accentColor.opacity(0.055), Color(nsColor: .controlBackgroundColor)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 19))
-        .overlay(RoundedRectangle(cornerRadius: 19).stroke(Color.accentColor.opacity(0.12)))
+        Group {
+            if todayOnly { todayTasks } else { desk }
+        }
         .task(id: context) {
             if fixture == nil {
                 data.reset(context: context)
@@ -137,7 +95,7 @@ struct WorkspacePlanningDashboard: View {
                 store.navigate(.projects)
             }
         }
-        .accessibilityElement(children: .contain).accessibilityLabel("Home planning dashboard")
+        .accessibilityElement(children: .contain).accessibilityLabel(todayOnly ? Text("Tasks for today") : Text("Home planning dashboard"))
         .onChange(of: context) { _, _ in navigationID = UUID(); opening = false; visibleTaskCount = 16 }
         .onChange(of: focus) { _, _ in visibleTaskCount = 16 }
         .onChange(of: query) { _, _ in visibleTaskCount = 16 }
@@ -146,6 +104,117 @@ struct WorkspacePlanningDashboard: View {
         .onDisappear { navigationID = UUID(); opening = false }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
+    /// The full planning desk: filters, agenda, week and projects
+    private var desk: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Label("Your planning desk", systemImage: "sun.horizon").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
+                    Text("A clear day starts with a clear plan.").font(.system(size: 27, weight: .bold, design: .rounded))
+                    Text("Bring project deadlines and your next actions into one place.").font(.callout).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                if data.loading { ProgressView().controlSize(.small) }
+                Button("New project") { store.hostingHub.selectedAccountID = account?.id; store.hostingHub.projectScope = effectiveScope; creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
+                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
+            }
+            if fixture == nil && portfolioContext != context {
+                ProgressView("Loading project schedules…").font(.callout)
+            } else {
+                controls
+                if let error = data.error { Text(error).font(.callout).foregroundStyle(.red).textSelection(.enabled) }
+                if !isLocal && accounts.isEmpty && fixture == nil {
+                    Text("Connect a GitHub account to plan across your projects.").font(.callout).foregroundStyle(.secondary)
+                }
+                if !data.loading && (data.error != nil || data.projects.isEmpty) && (isLocal || account != nil) {
+                    Button("Open project workspace") { openProjects() }
+                }
+                if !isLocal, fixture == nil, let account, AccountStore.shared.credentialState(for: account) == .authorizationRequired {
+                    Button("Allow saved account access") { Task { try? await AccountStore.shared.allowStoredAccess(for: account); await refresh() } }
+                }
+                if !data.projectErrors.isEmpty {
+                    Text("Some projects could not be refreshed. Their last loaded tasks may be out of date.").font(.caption).foregroundStyle(.orange)
+                }
+                metrics
+                WorkbenchFlow(spacing: 10) {
+                    Picker("Planning view", selection: $mode) { Text("Agenda").tag("agenda"); Text("Week").tag("week"); Text("Projects").tag("projects") }.labelsHidden().pickerStyle(.segmented).frame(width: 280)
+                    TextField("Search tasks and projects", text: $query).textFieldStyle(.roundedBorder).frame(maxWidth: 300)
+                    if !isLocal { Toggle("Assigned to me", isOn: $onlyMine).toggleStyle(.button) }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                if mode == "week" { week }
+                else if mode == "projects" { projects }
+                else { agendaList }
+                if isLocal { Text("Saved on this device. Local projects do not sync with GitHub.").font(.caption2).foregroundStyle(.secondary) }
+                else { Text("Loaded tasks from selected projects. Shared issues appear once, using their earliest active date.").font(.caption2).foregroundStyle(.secondary) }
+            }
+        }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+        .background(LinearGradient(colors: [Color.accentColor.opacity(0.055), Color(nsColor: .controlBackgroundColor)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 19))
+        .overlay(RoundedRectangle(cornerRadius: 19).stroke(Color.accentColor.opacity(0.12)))
+    }
+
+    /// Home's "Tasks for today" (the redesign's Home board): at most five rows of title, project and due label
+    private var todayTasks: some View {
+        let rows = HomeRepositories.today(tasks, today: today)
+        let loading = data.loading || (fixture == nil && portfolioContext != context)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text("Tasks for today").font(.system(size: 13, weight: .semibold))
+                Spacer(minLength: 8)
+                Button("Open Projects") { openProjects() }
+                    .buttonStyle(.plain).font(.system(size: 12, weight: .medium)).foregroundStyle(StudioStyle.Rail.icon)
+            }
+            .frame(minHeight: 24)
+            VStack(spacing: 0) {
+                if rows.isEmpty {
+                    Text(loading ? "Loading project schedules…" : "Nothing is due today.")
+                        .font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                        .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+                }
+                ForEach(rows) { task in
+                    todayRow(task)
+                    if task.id != rows.last?.id { Divider() }
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
+        }
+    }
+
+    private func todayRow(_ task: ProjectPortfolioTask) -> some View {
+        Button { open(task.detail.item, rowID: task.entry.row.id) } label: {
+            HStack(spacing: 16) {
+                Text(task.entry.row.title).font(.system(size: 13)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                Text(task.projectNames.joined(separator: " · ")).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                    .lineLimit(1).frame(width: 160, alignment: .leading)
+                Group {
+                    if let due = task.entry.due, due < today {
+                        // overdue is said by the icon and the word, not by the red alone
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.circle").accessibilityHidden(true)
+                            Text("Overdue · \(ProjectSchedulePresentation.date(due))")
+                        }
+                        .fontWeight(.semibold).foregroundStyle(StudioStyle.Tone.failed.text)
+                    } else {
+                        Text("Today").foregroundStyle(StudioStyle.Rail.icon)
+                    }
+                }
+                .font(.system(size: 12)).lineLimit(1).frame(width: 140, alignment: .trailing)
+            }
+            .padding(.horizontal, 12).frame(minHeight: 36)
+            .background(hoveredTask == task.id ? StudioStyle.hover : Color.clear)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).disabled(opening)
+        .onHover { hoveredTask = $0 ? task.id : (hoveredTask == task.id ? nil : hoveredTask) }
+    }
+
+    /// The Projects page on the source, account and scope this list was loaded with
+    private func openProjects() {
+        store.hostingHub.projectSource = isLocal ? "local" : "remote"
+        if !isLocal { store.hostingHub.selectedAccountID = account?.id }
+        store.hostingHub.projectScope = effectiveScope
+        store.navigate(.projects)
+    }
+
     private var controls: some View {
         WorkbenchFlow(spacing: 10) {
             Picker("Project source", selection: Binding(get: { isLocal ? "local" : "remote" }, set: { projectSource = $0 })) { Text("Local projects").tag("local"); Text("GitHub projects").tag("remote") }.labelsHidden().frame(width: 185)

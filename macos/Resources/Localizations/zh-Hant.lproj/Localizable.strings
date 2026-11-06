@@ -1,20 +1,35 @@
 /* Gitrochi — zh-Hant. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld 個已變更檔案";
+"%lld not pushed" = "%1$lld 個未推送";
+"%lld to pull" = "%1$lld 個待提取";
 "All branches…" = "所有分支…";
 "Compare with %@" = "與 %1$@ 比較";
 "Fast-forward only" = "僅快轉";
+"Filter repositories" = "篩選存放庫";
 "Find in file" = "在檔案中尋找";
 "Go" = "前往";
+"Last opened" = "上次開啟";
+"Last opened repository" = "上次開啟的存放庫";
 "Merge" = "合併";
+"New repository…" = "新增存放庫…";
+"Nothing is due today." = "今天沒有到期的工作。";
+"Open Projects" = "開啟專案";
 "Open a repository to use these" = "開啟存放庫後才能使用這些";
+"Open…" = "開啟…";
+"Overdue · %@" = "已逾期 · %1$@";
 "Pop latest stash" = "套用最近的擱置";
 "Pop latest stash (none saved)" = "套用最近的擱置（沒有已儲存的擱置）";
 "Previous match" = "上一個符合項目";
 "Next match" = "下一個符合項目";
 "Pull as configured in git" = "依 git 設定提取";
 "Pull options" = "提取選項";
+"Recent" = "最近";
 "Start %@ here" = "在此啟動 %1$@";
 "Switch branch or repository, open or clone one, or close the tab" = "切換分支或存放庫、開啟或複製存放庫，或關閉分頁";
+"Tasks for today" = "今日工作";
+"Up to date" = "已是最新";
+"Yesterday" = "昨天";
 "{0} of {1}" = "第 {0} 項，共 {1} 項";
 "No matches" = "沒有符合項目";
 "Wrap lines" = "自動換行";
@@ -2247,8 +2262,6 @@
 "Git accounts" = "Git 帳號";
 "Manage Git accounts…" = "管理 Git 帳號…";
 "Open a repository to see its Git identity." = "開啟儲存庫以查看其 Git 身分。";
-"Open repositories" = "已開啟的儲存庫";
-"Recent local repositories" = "最近使用的本機儲存庫";
 "Open repository" = "開啟儲存庫";
 "Organization: {0}" = "組織：{0}";
 "Load more organizations" = "載入更多組織";

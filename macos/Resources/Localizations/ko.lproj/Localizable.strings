@@ -1,16 +1,30 @@
 /* Release and issue workspace. */
+"%lld changed files" = "변경된 파일 %1$lld개";
+"%lld not pushed" = "푸시 안 한 커밋 %1$lld개";
+"%lld to pull" = "받을 커밋 %1$lld개";
 "All branches…" = "모든 브랜치…";
 "Compare with %@" = "%1$@ 기준으로 비교";
 "Fast-forward only" = "fast-forward만";
+"Filter repositories" = "저장소 필터";
 "Go" = "이동";
+"Last opened" = "마지막으로 연 저장소";
+"Last opened repository" = "마지막으로 연 저장소";
 "Merge" = "병합";
+"New repository…" = "새 저장소…";
+"Nothing is due today." = "오늘 마감인 일이 없습니다.";
+"Open Projects" = "프로젝트 열기";
 "Open a repository to use these" = "이 항목을 쓰려면 저장소를 여세요";
+"Open…" = "열기…";
+"Overdue · %@" = "기한 지남 · %1$@";
 "Pop latest stash" = "가장 최근 stash 꺼내기";
 "Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
 "Pull as configured in git" = "git 설정대로 Pull";
 "Pull options" = "Pull 옵션";
+"Recent" = "최근";
 "Start %@ here" = "여기서 %1$@ 시작";
 "Switch branch or repository, open or clone one, or close the tab" = "브랜치나 저장소 전환, 저장소 열기·복제, 탭 닫기";
+"Tasks for today" = "오늘 할 일";
+"Up to date" = "최신 상태";
 "Versions" = "버전";
 "Version" = "버전";
 "Newest loaded stable" = "불러온 정식 릴리스 중 최신";
@@ -76,6 +90,7 @@
 "Find in file" = "파일 내 검색";
 "Previous match" = "이전 검색 결과";
 "Next match" = "다음 검색 결과";
+"Yesterday" = "어제";
 "{0} of {1}" = "{1}개 중 {0}";
 "No matches" = "검색 결과 없음";
 "Wrap lines" = "자동 줄바꿈";
@@ -4403,8 +4418,6 @@
 "Git accounts" = "Git 계정";
 "Manage Git accounts…" = "Git 계정 관리…";
 "Open a repository to see its Git identity." = "저장소를 열면 해당 저장소의 Git 계정을 확인할 수 있습니다.";
-"Open repositories" = "열린 저장소";
-"Recent local repositories" = "최근 로컬 저장소";
 "Open repository" = "저장소 열기";
 "Organization: {0}" = "조직: {0}";
 "Load more organizations" = "조직 더 불러오기";

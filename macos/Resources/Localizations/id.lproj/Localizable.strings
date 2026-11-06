@@ -1,20 +1,35 @@
 /* Gitrochi — id. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "%1$lld file berubah";
+"%lld not pushed" = "%1$lld belum di-push";
+"%lld to pull" = "%1$lld perlu di-pull";
 "All branches…" = "Semua branch…";
 "Compare with %@" = "Bandingkan dengan %1$@";
 "Fast-forward only" = "Hanya fast-forward";
+"Filter repositories" = "Filter repositori";
 "Find in file" = "Cari dalam file";
 "Go" = "Pergi";
+"Last opened" = "Terakhir dibuka";
+"Last opened repository" = "Repositori yang terakhir dibuka";
 "Merge" = "Merge";
+"New repository…" = "Repositori baru…";
+"Nothing is due today." = "Tidak ada yang jatuh tempo hari ini.";
+"Open Projects" = "Buka Proyek";
 "Open a repository to use these" = "Buka repositori untuk menggunakannya";
+"Open…" = "Buka…";
+"Overdue · %@" = "Terlambat · %1$@";
 "Pop latest stash" = "Terapkan stash terakhir";
 "Pop latest stash (none saved)" = "Terapkan stash terakhir (tidak ada)";
 "Previous match" = "Kecocokan sebelumnya";
 "Next match" = "Kecocokan berikutnya";
 "Pull as configured in git" = "Pull sesuai konfigurasi git";
 "Pull options" = "Opsi pull";
+"Recent" = "Terbaru";
 "Start %@ here" = "Mulai %1$@ di sini";
 "Switch branch or repository, open or clone one, or close the tab" = "Ganti branch atau repositori, buka atau klon repositori, atau tutup tab";
+"Tasks for today" = "Tugas hari ini";
+"Up to date" = "Sudah terbaru";
+"Yesterday" = "Kemarin";
 "{0} of {1}" = "{0} dari {1}";
 "No matches" = "Tidak ada kecocokan";
 "Wrap lines" = "Bungkus baris";
@@ -2198,8 +2213,6 @@
 "Git accounts" = "Akun Git";
 "Manage Git accounts…" = "Kelola akun Git…";
 "Open a repository to see its Git identity." = "Buka repositori untuk melihat identitas Git-nya.";
-"Open repositories" = "Repositori terbuka";
-"Recent local repositories" = "Repositori lokal terbaru";
 "Open repository" = "Buka repositori";
 "Organization: {0}" = "Organisasi: {0}";
 "Load more organizations" = "Muat lebih banyak organisasi";

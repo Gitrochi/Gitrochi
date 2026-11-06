@@ -1,20 +1,35 @@
 /* Gitrochi — uk. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
+"%lld changed files" = "Змінених файлів: %1$lld";
+"%lld not pushed" = "Не надіслано: %1$lld";
+"%lld to pull" = "До отримання: %1$lld";
 "All branches…" = "Усі гілки…";
 "Compare with %@" = "Порівняти з %1$@";
 "Fast-forward only" = "Лише перемотуванням";
+"Filter repositories" = "Фільтр репозиторіїв";
 "Find in file" = "Знайти у файлі";
 "Go" = "Перехід";
+"Last opened" = "Останній відкритий";
+"Last opened repository" = "Останній відкритий репозиторій";
 "Merge" = "Злиттям";
+"New repository…" = "Новий репозиторій…";
+"Nothing is due today." = "На сьогодні нічого немає.";
+"Open Projects" = "Відкрити проєкти";
 "Open a repository to use these" = "Відкрийте репозиторій, щоб ними користуватися";
+"Open…" = "Відкрити…";
+"Overdue · %@" = "Прострочено · %1$@";
 "Pop latest stash" = "Застосувати останню схованку";
 "Pop latest stash (none saved)" = "Застосувати останню схованку (немає збережених)";
 "Previous match" = "Попередній збіг";
 "Next match" = "Наступний збіг";
 "Pull as configured in git" = "Підтягнути, як налаштовано в git";
 "Pull options" = "Параметри підтягування";
+"Recent" = "Нещодавні";
 "Start %@ here" = "Запустити %1$@ тут";
 "Switch branch or repository, open or clone one, or close the tab" = "Перемкнути гілку чи репозиторій, відкрити або клонувати репозиторій чи закрити вкладку";
+"Tasks for today" = "Завдання на сьогодні";
+"Up to date" = "Актуально";
+"Yesterday" = "Учора";
 "{0} of {1}" = "{0} із {1}";
 "No matches" = "Немає збігів";
 "Wrap lines" = "Переносити рядки";
@@ -2242,8 +2257,6 @@
 "Git accounts" = "Облікові записи Git";
 "Manage Git accounts…" = "Керувати обліковими записами Git…";
 "Open a repository to see its Git identity." = "Відкрийте репозиторій, щоб побачити його дані Git.";
-"Open repositories" = "Відкриті репозиторії";
-"Recent local repositories" = "Нещодавні локальні репозиторії";
 "Open repository" = "Відкрити репозиторій";
 "Organization: {0}" = "Організація: {0}";
 "Load more organizations" = "Завантажити ще організації";
