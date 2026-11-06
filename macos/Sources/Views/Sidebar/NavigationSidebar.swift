@@ -28,7 +28,7 @@ struct NavigationSidebar: View {
                 Divider()
                 SettingsLink {
                     HStack(spacing: 8) {
-                        Label { Text("Settings") } icon: { Image(systemName: "gearshape").foregroundStyle(.secondary) }
+                        Label { Text("Settings") } icon: { DesignIconImage(icon: .settings).foregroundStyle(.secondary) }
                         Spacer(minLength: 8)
                         if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.primary.opacity(0.6)) }
                     }
@@ -75,7 +75,7 @@ struct NavigationSidebar: View {
                 Label {
                     Text(title).foregroundStyle(blocked ? .tertiary : .primary)
                 } icon: {
-                    Image(systemName: page.symbol).foregroundStyle(blocked ? .quaternary : .secondary)
+                    NavigationPageIcon(page: page, size: 16).foregroundStyle(blocked ? .quaternary : .secondary)
                 }
                 Spacer(minLength: 8)
                 if let shortcut = page.shortcutLabel, commandHeld || hovered == page {

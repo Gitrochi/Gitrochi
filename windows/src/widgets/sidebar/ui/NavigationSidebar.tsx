@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
-import { Blocks, CircleDot, Code2, FolderGit2, GitCompareArrows, GitPullRequest, Home, ListChecks, ListOrdered, PlayCircle, Settings, Tag, UserRound, Waypoints } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { destinationEnabled, destinationShortcut, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
 import { openedLedgerStore } from "@/entities/ledger";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { Observable, useObserve } from "@/shared/lib";
-import { tip } from "@/shared/ui";
+import { designIcon, tip } from "@/shared/ui";
 import "./navigation-sidebar.css";
 
 const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows", ledger: "Ledger" };
 /** The page name as shown in the sidebar; GitLab repositories use that server's words. (macOS: WorkspaceDestination.title(gitlab:)) */
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : titles[page]);
 /** Each page's icon, shared with the page title row */
-export const destinationIcons = { home: Home, repository: FolderGit2, compare: GitCompareArrows, rebase: ListOrdered, code: Code2, pullRequests: GitPullRequest, issues: CircleDot, actions: PlayCircle, releases: Tag, projects: Blocks, account: UserRound, flows: Waypoints, ledger: ListChecks };
+export const destinationIcons = { home: designIcon("home"), repository: designIcon("repository"), compare: designIcon("compare"), rebase: designIcon("rebase"), code: designIcon("code"), pullRequests: designIcon("pullRequests"), issues: designIcon("issues"), actions: designIcon("actions"), releases: designIcon("releases"), projects: designIcon("projects"), account: UserRound, flows: designIcon("flows"), ledger: designIcon("ledger") };
+const Settings = designIcon("settings");
 // the sections of the rail and the redesign's sidebar: Home, then the repository's own pages
 /** Stands in for the Ledger while nothing has opened it; it never changes */
 const unopened = new Observable();
@@ -58,7 +59,7 @@ export function NavigationSidebar({ store, openSettings, compact = false }: { st
     return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${blocked ? " blocked" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined}
       disabled={blocked && !compact} onClick={() => store.navigate(page)} data-page={page}
       data-tip={blocked ? t("Open a repository to use this page.") : tip(count > 0 ? `${title} (${count})` : title, "", shortcut ?? undefined)}>
-      <Icon size={compact ? 18 : 16} strokeWidth={1.5} />
+      <Icon size={compact ? 18 : 16} />
       <span className="workspace-nav-copy"><span className="ellipsis">{title}</span></span>
       {count > 0 && <span className="workspace-nav-badge">{count > 999 ? "999+" : count}</span>}
       {shortcut && <span className="workspace-nav-kbd">{shortcut}</span>}
@@ -76,6 +77,6 @@ export function NavigationSidebar({ store, openSettings, compact = false }: { st
         </div>;
       })}
     </div>
-    <div className="workspace-nav-footer"><button type="button" className="workspace-nav-item" aria-label={t("Settings")} data-tip={tip(t("Settings"), "", "Ctrl+,")} onClick={openSettings}><Settings size={compact ? 18 : 16} strokeWidth={1.5} /><span className="workspace-nav-copy"><span className="ellipsis">{t("Settings")}</span></span><span className="workspace-nav-kbd">Ctrl+,</span></button></div>
+    <div className="workspace-nav-footer"><button type="button" className="workspace-nav-item" aria-label={t("Settings")} data-tip={tip(t("Settings"), "", "Ctrl+,")} onClick={openSettings}><Settings size={compact ? 18 : 16} /><span className="workspace-nav-copy"><span className="ellipsis">{t("Settings")}</span></span><span className="workspace-nav-kbd">Ctrl+,</span></button></div>
   </nav>;
 }
