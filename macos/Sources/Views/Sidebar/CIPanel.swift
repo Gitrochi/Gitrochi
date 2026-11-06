@@ -135,7 +135,7 @@ struct CIPanel: View {
             HStack(spacing: 6) {
                 // the usual workflow goes without saying; any other one is named before the run
                 (Text(verbatim: p.name.isEmpty || p.name == common ? "" : p.name + " · ") + Text(verbatim: ciRunName(p, target.provider)).font(.system(size: 11, design: .monospaced)))
-                    .font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1)
+                    .font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).fixedSize()
                 if waiting {
                     HostedListChip(title: String(localized: "Waiting"), symbol: "clock", selected: selected, tone: .waiting)
                         .help(manual > 0 ? String(localized: "\(manual) jobs waiting to be run manually") : p.status.title)
@@ -144,8 +144,8 @@ struct CIPanel: View {
                 }
                 if store.ciBusy.contains("pipeline:\(p.id)") { ProgressView().controlSize(.mini) }
                 Spacer(minLength: 6)
-                // the branch on the right is cut last, and from the front
-                if showRef { Text(verbatim: p.ref).font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).truncationMode(.head).layoutPriority(1) }
+                // the run is never cut; the branch gives way, from the front
+                if showRef { Text(verbatim: p.ref).font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).truncationMode(.head) }
             }
         }
         .contextMenu { CIRunMenu(pipeline: p, provider: target.provider) }

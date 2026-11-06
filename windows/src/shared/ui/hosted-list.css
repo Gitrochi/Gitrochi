@@ -39,6 +39,7 @@
 .hosted-segments { flex: none; }
 .hosted-segments .segmented { display: flex; border-radius: 6px; }
 .hosted-segments .segmented button { flex: 1 1 auto; justify-content: center; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.hosted-segments .segmented button.on { font-weight: 600; }
 
 .hosted-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
 .hosted-row { flex: none; display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; border: 0; border-radius: 6px; padding: 8px 10px; font: inherit; color: inherit; background: transparent; cursor: pointer; box-sizing: border-box; }

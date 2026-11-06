@@ -189,11 +189,11 @@ struct HostedListSegments<Value: Hashable>: View {
                 let on = option.value == selection
                 Button { if !on { onSelect(option.value) } } label: {
                     Text(verbatim: option.count.map { "\(option.title) \($0)" } ?? option.title)
-                        .font(.system(size: 12, weight: .medium)).lineLimit(1).fixedSize()
+                        .font(.system(size: 12, weight: on ? .semibold : .medium)).lineLimit(1).fixedSize()
                         .foregroundStyle(on ? Color.primary : StudioStyle.Tone.neutral.text)
                         .padding(.horizontal, 6)
                         .frame(maxWidth: .infinity).frame(height: 24)
-                        // the selected segment is a white thumb; the labels keep their weight so they never shift
+                        // the selected segment is a white thumb with a heavier label
                         .background(RoundedRectangle(cornerRadius: 4).fill(on ? StudioStyle.surface : Color.clear)
                             .shadow(color: .black.opacity(on ? 0.12 : 0), radius: 1, y: 1))
                         .contentShape(Rectangle())

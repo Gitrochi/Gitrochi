@@ -68,6 +68,7 @@
 "Open changes" = "Mở thay đổi";
 "Open…" = "Mở…";
 "Overdue · %@" = "Quá hạn · %1$@";
+"Passing for 1 run" = "1 lần chạy đạt";
 "Pop latest stash" = "Áp dụng stash mới nhất";
 "Pop latest stash (none saved)" = "Áp dụng stash mới nhất (chưa lưu stash nào)";
 "Previous file (K)" = "Tệp trước (K)";
@@ -831,7 +832,6 @@
 "Rerun all jobs" = "Chạy lại tất cả job";
 "Rerun failed and canceled jobs" = "Chạy lại các job thất bại và đã hủy";
 "Rerun failed jobs only" = "Chỉ chạy lại các job thất bại";
-"Rerun job" = "Chạy lại job";
 "Reset current branch to here" = "Reset nhánh hiện tại về đây";
 "Resetting…" = "Đang reset…";
 "Resolve the conflicts first." = "Hãy giải quyết xung đột trước.";

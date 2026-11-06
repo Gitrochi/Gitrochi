@@ -98,7 +98,6 @@ struct CIRunDetailView: View {
                 } else if pipeline.status.isActive, let start = pipeline.started ?? pipeline.created {
                     Text("Started \(ListDate.when(start, locale: locale))")
                 }
-                if !trigger.isEmpty { Text(verbatim: trigger) }
             }
             .font(.system(size: 12)).foregroundStyle(HostedList.caption)
         }
@@ -108,11 +107,6 @@ struct CIRunDetailView: View {
 
     private var title: some View {
         Text(verbatim: store.ciTitle(pipeline)).font(.system(size: 22, weight: .semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var trigger: String {
-        ([pipeline.eventTitle] + [pipeline.actor.map { "@\($0)" }].compactMap { $0 })
-            .filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     /// Open in browser stays in sight; rerunning, cancelling and the rest are in the More menu
@@ -187,7 +181,7 @@ private struct CIJobLogView: View {
     let job: CIJob
     let pipeline: CIPipeline
     let close: () -> Void
-    @AppStorage("ciLogWrap") private var wrap = true
+    @AppStorage("ciLogWrap") private var wrap = false
     @ViewState private var text = ""
     @ViewState private var loadedJob: Int?
     @ViewState private var error: String?
@@ -219,7 +213,7 @@ private struct CIJobLogView: View {
     }
 
     var body: some View {
-        let lines = text.components(separatedBy: "\n")
+        let lines = ActionsPage.lines(text)
         let hasError = lines.contains(where: ActionsPage.isError)
         let first = showAll ? 0 : ActionsPage.firstShown(lines)
         VStack(spacing: 0) {
@@ -280,7 +274,7 @@ private struct CIJobLogView: View {
 
     @ViewBuilder private var name: some View {
         CIStatusIcon(status: job.status, size: 13)
-        Text(verbatim: job.name).font(.system(size: 13, weight: .semibold, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+        Text(verbatim: job.name).font(.system(size: 13, weight: .semibold, design: .monospaced)).lineLimit(1)
         // the failed tone on words that say it failed; the icon says it too
         Text(verbatim: outcome).font(.system(size: 12)).foregroundStyle(job.status == .failed ? StudioStyle.Tone.failed.text : HostedList.caption)
             .lineLimit(1).fixedSize()
@@ -293,7 +287,7 @@ private struct CIJobLogView: View {
                 Button("Jump to first error") { showAll = false; jump += 1 }.buttonStyle(HostedListButtonStyle())
             }
             if canRetry {
-                Button { Task { await store.retryJob(job, in: pipeline) } } label: { Label("Rerun job", symbol: "arrow.clockwise") }
+                Button { Task { await store.retryJob(job, in: pipeline) } } label: { Label("Re-run job", symbol: "arrow.clockwise") }
                     .buttonStyle(HostedListButtonStyle())
                     .disabled(store.ciBusy.contains("job:\(job.id)"))
             }
@@ -370,6 +364,7 @@ private struct LogTextView: NSViewRepresentable {
         let scroll = NSTextView.scrollableTextView()
         scroll.drawsBackground = false
         if let view = scroll.documentView as? NSTextView {
+            view.textContainer?.replaceLayoutManager(LogLayoutManager())
             view.isEditable = false
             view.isSelectable = true
             view.isRichText = false
@@ -428,7 +423,7 @@ private struct LogTextView: NSViewRepresentable {
         let number: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: style]
         var marked = plain
         marked[.foregroundColor] = NSColor(StudioStyle.Tone.failed.text)
-        marked[.backgroundColor] = NSColor(StudioStyle.Tone.failed.fill)
+        marked[.logErrorLine] = true
         let out = NSMutableAttributedString()
         var error: NSRange?
         for (index, line) in lines.enumerated() {
@@ -440,6 +435,24 @@ private struct LogTextView: NSViewRepresentable {
             if isError, error == nil { error = NSRange(location: start, length: out.length - start) }
         }
         return (out, error)
+    }
+}
+
+private extension NSAttributedString.Key {
+    static let logErrorLine = NSAttributedString.Key("logErrorLine")
+}
+
+/// Draws the failed tone across a whole line, not only behind its text
+private final class LogLayoutManager: NSLayoutManager {
+    override func drawBackground(forGlyphRange range: NSRange, at origin: NSPoint) {
+        super.drawBackground(forGlyphRange: range, at: origin)
+        guard let storage = textStorage else { return }
+        NSColor(StudioStyle.Tone.failed.fill).setFill()
+        enumerateLineFragments(forGlyphRange: range) { rect, _, _, glyphs, _ in
+            let location = self.characterRange(forGlyphRange: glyphs, actualGlyphRange: nil).location
+            guard location < storage.length, storage.attribute(.logErrorLine, at: location, effectiveRange: nil) != nil else { return }
+            NSRect(x: 0, y: rect.minY + origin.y, width: 100_000, height: rect.height).fill()
+        }
     }
 }
 
@@ -460,7 +473,7 @@ private struct CIJobRow: View {
             Button(action: select) {
                 HStack(spacing: 8) {
                     CIStatusIcon(status: job.status, size: 13)
-                    Text(verbatim: job.name).font(.system(size: 13, weight: selected ? .semibold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+                    Text(verbatim: job.name).font(.system(size: 13, weight: selected ? .semibold : .regular, design: .monospaced)).lineLimit(1)
                     if job.allowFailure, job.status == .failed {
                         SymbolIcon("exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.waiting.text).help("Allowed to fail")
                     }

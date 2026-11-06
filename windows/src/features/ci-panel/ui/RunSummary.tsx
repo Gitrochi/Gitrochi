@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { type CIPipeline, CIStatusIcon, isActiveCI, isFinishedCI, runBaseRef, runHistory, runStreak, type RunStreak, runTook } from "@/entities/ci";
 import { branchShort } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -28,6 +29,9 @@ export function RunSummary({ store }: { store: RepoStore }) {
     return facts.join(" · ");
   };
   const start = streak.kind === "running" ? streak.run.started ?? streak.run.created : null;
+  // the summary counts the latest run's jobs, which the list alone does not load
+  const latestID = latest?.id;
+  useEffect(() => { if (latest && !ci.jobs.has(latest.id)) void ci.loadJobs(latest); }, [latestID]);
   return (
     <HostedListSummary
       label={t("This branch's runs")}
@@ -79,7 +83,7 @@ function streakLabel(store: RepoStore, streak: RunStreak): { text: string; tone:
   const provider = store.target?.provider ?? "github";
   switch (streak.kind) {
     case "none": return null;
-    case "passing": return { text: t("Passing for {0} runs", streak.count), tone: "passed" };
+    case "passing": return { text: streak.count === 1 ? t("Passing for 1 run") : t("Passing for {0} runs", streak.count), tone: "passed" };
     case "failed": {
       const job = store.ci.jobs.get(streak.run.id)?.find((value) => value.status === "failed" && !value.allowFailure)?.name;
       return { text: t("Failed on {0}", runName(provider, streak.run)) + (job ? ` · ${job}` : ""), tone: "failed" };

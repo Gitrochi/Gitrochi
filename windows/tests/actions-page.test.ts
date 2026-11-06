@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  commonWorkflow, firstLogLine, isLogError, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runTook, visibleRuns,
+  commonWorkflow, firstLogLine, isLogError, logLines, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runTook, visibleRuns,
 } from "@/entities/ci/model/actions-page";
 import type { CIJob, CIPipeline, CIStatus } from "@/entities/ci/model/types";
 
@@ -38,6 +38,7 @@ describe("Actions page", () => {
     expect(runHistory(runs, "topic").map((value) => value.id)).toEqual([3, 4, 6]);
     expect(runHistory(runs, "topic", 2).map((value) => value.id)).toEqual([4, 6]);
     expect(runHistory(runs, null)).toEqual([]);
+    expect(runHistory([{ ...runs[0], id: 20, ref: "mixed", name: "Windows" }, { ...runs[0], id: 19, ref: "mixed", name: "macOS" }, { ...runs[0], id: 18, ref: "mixed", name: "Windows" }], "mixed").map((value) => value.id)).toEqual([18, 20]);
     expect(runStreak(runHistory(runs, "topic"))).toEqual({ kind: "passing", count: 3 });
     expect(runStreak([run(1, "failed"), run(2, "success")])).toEqual({ kind: "passing", count: 1 });
     expect(runStreak([run(1, "success"), run(2, "failed")])).toEqual({ kind: "failed", run: run(2, "failed") });
@@ -76,5 +77,8 @@ describe("Actions page", () => {
     expect(firstLogLine(Array.from({ length: 46 }, (_, index) => (index === 40 ? "x.swift:58: error: failed" : `line ${index + 1}`)))).toBe(37);
     expect(firstLogLine(Array.from({ length: 500 }, (_, index) => `line ${index + 1}`))).toBe(300);
     expect(firstLogLine(["one"])).toBe(0);
+    expect(isLogError("curl --retry 10 --show-error --fail https://example.test")).toBe(false);
+    expect(isLogError("CACHE_ON_FAILURE: false")).toBe(false);
+    expect(logLines("2026-11-06T00:45:22.6820373Z ##[group]Run tests\r\n2026-11-06T00:45:22.68Z \u001b[36;1mmake\u001b[0m\n##[endgroup]\n##[error]Process completed\n##[start-action id=1]")).toEqual(["Run tests", "make", "Error: Process completed"]);
   });
 });

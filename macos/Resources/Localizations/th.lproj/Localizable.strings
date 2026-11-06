@@ -68,6 +68,7 @@
 "Open changes" = "เปิดการเปลี่ยนแปลง";
 "Open…" = "เปิด…";
 "Overdue · %@" = "เลยกำหนด · %1$@";
+"Passing for 1 run" = "ผ่าน 1 ครั้ง";
 "Pop latest stash" = "นำสแตชล่าสุดกลับมาใช้";
 "Pop latest stash (none saved)" = "นำสแตชล่าสุดกลับมาใช้ (ไม่มีที่เก็บไว้)";
 "Previous file (K)" = "ไฟล์ก่อนหน้า (K)";
@@ -856,7 +857,6 @@
 "Rerun all jobs" = "รันจ็อบทั้งหมดใหม่";
 "Rerun failed and canceled jobs" = "รันจ็อบที่ล้มเหลวและถูกยกเลิกใหม่";
 "Rerun failed jobs only" = "รันใหม่เฉพาะจ็อบที่ล้มเหลว";
-"Rerun job" = "รันจ็อบใหม่";
 "Reset current branch to here" = "รีเซ็ตแบรนช์ปัจจุบันมาที่นี่";
 "Resetting…" = "กำลังรีเซ็ต…";
 "Resolve the conflicts first." = "แก้คอนฟลิกต์ก่อน";

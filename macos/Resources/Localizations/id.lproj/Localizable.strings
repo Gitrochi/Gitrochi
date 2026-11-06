@@ -68,6 +68,7 @@
 "Open changes" = "Buka perubahan";
 "Open…" = "Buka…";
 "Overdue · %@" = "Terlambat · %1$@";
+"Passing for 1 run" = "1 proses lulus";
 "Pop latest stash" = "Terapkan stash terakhir";
 "Pop latest stash (none saved)" = "Terapkan stash terakhir (tidak ada)";
 "Previous file (K)" = "File sebelumnya (K)";
@@ -824,7 +825,6 @@
 "Rerun all jobs" = "Jalankan ulang semua job";
 "Rerun failed and canceled jobs" = "Jalankan ulang job yang gagal dan dibatalkan";
 "Rerun failed jobs only" = "Jalankan ulang hanya job yang gagal";
-"Rerun job" = "Jalankan ulang job";
 "Reset current branch to here" = "Reset branch saat ini ke sini";
 "Resetting…" = "Melakukan reset…";
 "Resolve the conflicts first." = "Selesaikan konflik terlebih dahulu.";

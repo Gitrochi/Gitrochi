@@ -68,6 +68,7 @@
 "Open changes" = "変更を開く";
 "Open…" = "開く…";
 "Overdue · %@" = "期限超過 · %1$@";
+"Passing for 1 run" = "1 回連続で合格";
 "Pop latest stash" = "最新のスタッシュを適用";
 "Pop latest stash (none saved)" = "最新のスタッシュを適用 (保存なし)";
 "Previous file (K)" = "前のファイル (K)";
@@ -881,7 +882,6 @@
 "Rerun all jobs" = "すべてのジョブを再実行";
 "Rerun failed and canceled jobs" = "失敗またはキャンセルされたジョブを再実行";
 "Rerun failed jobs only" = "失敗したジョブのみ再実行";
-"Rerun job" = "ジョブを再実行";
 "Reset current branch to here" = "現在のブランチをここにリセット";
 "Resetting…" = "リセットしています…";
 "Resolve the conflicts first." = "先に競合を解決してください。";

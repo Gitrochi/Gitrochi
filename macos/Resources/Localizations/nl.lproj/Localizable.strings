@@ -68,6 +68,7 @@
 "Open changes" = "Wijzigingen openen";
 "Open…" = "Openen…";
 "Overdue · %@" = "Te laat · %1$@";
+"Passing for 1 run" = "1 run geslaagd";
 "Pop latest stash" = "Laatste stash toepassen";
 "Pop latest stash (none saved)" = "Laatste stash toepassen (geen opgeslagen)";
 "Previous file (K)" = "Vorig bestand (K)";
@@ -825,7 +826,6 @@
 "Rerun all jobs" = "Alle jobs opnieuw uitvoeren";
 "Rerun failed and canceled jobs" = "Mislukte en geannuleerde jobs opnieuw uitvoeren";
 "Rerun failed jobs only" = "Alleen mislukte jobs opnieuw uitvoeren";
-"Rerun job" = "Job opnieuw uitvoeren";
 "Reset current branch to here" = "Huidige branch hierheen resetten";
 "Resetting…" = "Bezig met resetten…";
 "Resolve the conflicts first." = "Los eerst de conflicten op.";

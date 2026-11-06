@@ -68,6 +68,7 @@
 "Open changes" = "Открыть изменения";
 "Open…" = "Открыть…";
 "Overdue · %@" = "Просрочено · %1$@";
+"Passing for 1 run" = "1 запуск пройден";
 "Pop latest stash" = "Применить последние спрятанные изменения";
 "Pop latest stash (none saved)" = "Применить последние спрятанные изменения (ничего не спрятано)";
 "Previous file (K)" = "Предыдущий файл (K)";
@@ -860,7 +861,6 @@
 "Rerun all jobs" = "Перезапустить все задания";
 "Rerun failed and canceled jobs" = "Перезапустить задания со сбоем и отменённые";
 "Rerun failed jobs only" = "Перезапустить только задания со сбоем";
-"Rerun job" = "Перезапустить задание";
 "Reset current branch to here" = "Сбросить текущую ветку до этого коммита";
 "Resetting…" = "Сброс…";
 "Resolve the conflicts first." = "Сначала разрешите конфликты.";

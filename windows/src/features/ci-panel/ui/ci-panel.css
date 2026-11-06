@@ -4,6 +4,7 @@
 .ci-list-actions { flex: none; display: flex; align-items: center; gap: 4px; min-height: 20px; }
 .ci-run-which { white-space: nowrap; }
 /* the branch on the right is cut last, and from the front */
+.ci-run .ci-run-which { flex: none; }
 .ci-run .ci-run-ref { flex: 0 1 auto; min-width: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: right; }
 .ci-run .hosted-chip { flex: 0 1 auto; }
 .ci-branch { flex: none; display: flex; flex-direction: column; gap: 4px; }

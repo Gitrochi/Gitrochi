@@ -68,6 +68,7 @@
 "Open changes" = "Відкрити зміни";
 "Open…" = "Відкрити…";
 "Overdue · %@" = "Прострочено · %1$@";
+"Passing for 1 run" = "1 запуск пройдено";
 "Pop latest stash" = "Застосувати останню схованку";
 "Pop latest stash (none saved)" = "Застосувати останню схованку (немає збережених)";
 "Previous file (K)" = "Попередній файл (K)";
@@ -860,7 +861,6 @@
 "Rerun all jobs" = "Повторно запустити всі завдання";
 "Rerun failed and canceled jobs" = "Повторно запустити невдалі й скасовані завдання";
 "Rerun failed jobs only" = "Повторно запустити лише невдалі завдання";
-"Rerun job" = "Повторно запустити завдання";
 "Reset current branch to here" = "Скинути поточну гілку сюди";
 "Resetting…" = "Скидання…";
 "Resolve the conflicts first." = "Спершу розв’яжіть конфлікти.";

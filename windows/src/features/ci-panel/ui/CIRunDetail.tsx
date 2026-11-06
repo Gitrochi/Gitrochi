@@ -9,11 +9,11 @@ import {
   type CIPipeline,
   type CIStatus,
   CIStatusIcon,
-  eventTitle,
   firstLogLine,
   isActiveCI,
   isFinishedCI,
   isLogError,
+  logLines,
   type JobGroup,
   jobGroups,
   runTook,
@@ -57,9 +57,6 @@ export function CIRunDetail({
   const selected = jobs?.find((j) => j.id === job) ?? null;
   const busy = ci.busy.has(`pipeline:${p.id}`);
   const deployments = ci.deployments.get(p.id) ?? [];
-  const trigger = [eventTitle(p.event), p.actor ? `@${p.actor}` : ""]
-    .filter(Boolean)
-    .join(" · ");
   const took = runTook(p), start = p.started ?? p.created;
   const more = t("More run actions");
   return (
@@ -100,7 +97,6 @@ export function CIRunDetail({
           )}
           {/* the list row owns the date; the detail says how long the run took */}
           {took != null ? <span>{t("Took {0}", duration(took))}</span> : isActiveCI(p.status) && start != null ? <span>{t("Started {0}", listWhen(start))}</span> : null}
-          {trigger && <span>{trigger}</span>}
         </div>
       </header>
       {deployments.length > 0 && <DeploymentApproval store={store} pipeline={p} deployments={deployments} />}
@@ -219,7 +215,7 @@ function JobLog({
 }) {
   useObserve(accounts);
   useObserve(settings);
-  const wrap = settings.get<boolean>("ciLogWrap", true);
+  const wrap = settings.get<boolean>("ciLogWrap", false);
   const [text, setText] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -271,7 +267,7 @@ function JobLog({
     // the job, its status and the account decide what to read; `reload` is the button
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity, reload]);
-  const lines = useMemo(() => text.split("\n"), [text]);
+  const lines = useMemo(() => logLines(text), [text]);
   const errors = useMemo(() => lines.map(isLogError), [lines]);
   const hasError = errors.includes(true);
   const first = showAll ? 0 : firstLogLine(lines);
@@ -309,7 +305,7 @@ function JobLog({
             {canRetry && (
               <Button disabled={store.ci.busy.has(`job:${job.id}`)} onClick={() => void store.ci.retryJob(job, pipeline)}>
                 <RotateCw size={14} />
-                {t("Rerun job")}
+                {t("Re-run job")}
               </Button>
             )}
             <HostedListIconButton label={t("Open in browser")} onClick={() => store.openUrl(job.url)}>

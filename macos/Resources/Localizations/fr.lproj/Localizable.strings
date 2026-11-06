@@ -68,6 +68,7 @@
 "Open changes" = "Ouvrir les modifications";
 "Open…" = "Ouvrir…";
 "Overdue · %@" = "En retard · %1$@";
+"Passing for 1 run" = "1 exécution réussie";
 "Pop latest stash" = "Appliquer le dernier stash";
 "Pop latest stash (none saved)" = "Appliquer le dernier stash (aucun enregistré)";
 "Previous file (K)" = "Fichier précédent (K)";
@@ -853,7 +854,6 @@
 "Rerun all jobs" = "Relancer tous les jobs";
 "Rerun failed and canceled jobs" = "Relancer les jobs en échec et annulés";
 "Rerun failed jobs only" = "Relancer uniquement les jobs en échec";
-"Rerun job" = "Relancer le job";
 "Reset current branch to here" = "Réinitialiser la branche actuelle ici";
 "Resetting…" = "Réinitialisation…";
 "Resolve the conflicts first." = "Résolvez d’abord les conflits.";

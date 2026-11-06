@@ -42,10 +42,13 @@ enum ActionsPage {
         return order.max { counts[$0]! < counts[$1]! }
     }
 
-    /// This branch's latest runs, oldest first, as the summary draws them
-    static func history(_ runs: [CIPipeline], ref: String?, limit: Int = 6) -> [CIPipeline] {
+    /// The latest runs of this branch's newest workflow, oldest first, as the summary draws them: runs of different
+    /// workflows side by side say nothing about each other
+    static func history(_ runs: [CIPipeline], ref: String?, limit: Int = 3) -> [CIPipeline] {
         guard let ref else { return [] }
-        return Array(runs.filter { $0.ref == ref }.prefix(limit).reversed())
+        let branch = runs.filter { $0.ref == ref }
+        guard let workflow = branch.first?.name else { return [] }
+        return Array(branch.filter { $0.name == workflow }.prefix(limit).reversed())
     }
 
     enum Streak: Equatable {
@@ -102,8 +105,31 @@ enum ActionsPage {
 
     // MARK: Log
 
-    private static let errorWord = try! NSRegularExpression(pattern: #"(^|[^A-Za-z])(error|fatal)([^A-Za-z]|$)"#, options: .caseInsensitive)
-    private static let failWord = try! NSRegularExpression(pattern: #"(^|[^A-Za-z])FAIL(ED|URE)?([^A-Za-z]|$)"#)
+    private static let errorWord = try! NSRegularExpression(pattern: #"(^|[^A-Za-z_-])(error|fatal)([^A-Za-z_-]|$)"#, options: .caseInsensitive)
+    private static let failWord = try! NSRegularExpression(pattern: #"(^|[^A-Za-z_-])FAIL(ED|URE)?([^A-Za-z_-]|$)"#)
+
+    private static let stamp = try! NSRegularExpression(pattern: #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z "#)
+    private static let colour = try! NSRegularExpression(pattern: "\u{1B}\\[[0-9;]*[A-Za-z]")
+
+    /// A log as a person reads it: without the runner's time stamps, colour codes and bookkeeping lines. A flag, a
+    /// file name or a word like `--show-error` is not an error. (Windows: logLines)
+    static func lines(_ log: String) -> [String] {
+        log.components(separatedBy: "\n").compactMap { raw in
+            var line = raw.hasSuffix("\r") ? String(raw.dropLast()) : raw
+            for pattern in [stamp, colour] {
+                line = pattern.stringByReplacingMatches(in: line, range: NSRange(line.startIndex..., in: line), withTemplate: "")
+            }
+            guard line.hasPrefix("##["), let end = line.firstIndex(of: "]") else { return line }
+            let rest = String(line[line.index(after: end)...])
+            switch line[line.index(line.startIndex, offsetBy: 3)..<end] {
+            case "group": return rest
+            case "error": return "Error: " + rest
+            case "warning": return "Warning: " + rest
+            case "notice": return "Notice: " + rest
+            default: return nil
+            }
+        }
+    }
 
     /// A line the log marks: it names an error, or FAIL in capitals as test runners print it
     static func isError(_ line: String) -> Bool {

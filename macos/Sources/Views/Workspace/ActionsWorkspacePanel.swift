@@ -156,7 +156,7 @@ private struct RunSummaryCard: View {
                     }
                     // as many of the latest runs as fit, the newest always among them
                     ViewThatFits(in: .horizontal) {
-                        ForEach([6, 5, 4, 3, 2, 1], id: \.self) { count in track(Array(history.suffix(count))) }
+                        ForEach([3, 2, 1], id: \.self) { count in track(Array(history.suffix(count))) }
                     }
                 }
                 .accessibilityElement(children: .ignore)
@@ -177,6 +177,10 @@ private struct RunSummaryCard: View {
             else if let latest = history.last { HostedListSummaryCaption(text: ciRunName(latest, provider)) }
         }
         .accessibilityLabel("This branch's runs")
+        // the summary counts the latest run's jobs, which the list alone does not load
+        .task(id: history.last?.id) {
+            if let latest = history.last, store.ciJobs[latest.id] == nil { await store.loadJobs(latest) }
+        }
     }
 
     /// The newest finished run of the branch runs are compared with, unless this is that branch
@@ -189,7 +193,7 @@ private struct RunSummaryCard: View {
     private func label(_ streak: ActionsPage.Streak) -> (String, StudioStyle.Tone)? {
         switch streak {
         case .none: return nil
-        case .passing(let count): return (String(localized: "Passing for \(count) runs"), .passed)
+        case .passing(let count): return (count == 1 ? String(localized: "Passing for 1 run") : String(localized: "Passing for \(count) runs"), .passed)
         case .failed(let run):
             let job = store.ciJobs[run.id]?.first { $0.status == .failed && !$0.allowFailure }?.name
             return (String(localized: "Failed on \(ciRunName(run, provider))") + (job.map { " · " + $0 } ?? ""), .failed)

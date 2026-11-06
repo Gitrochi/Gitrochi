@@ -68,6 +68,7 @@
 "Open changes" = "Módosítások megnyitása";
 "Open…" = "Megnyitás…";
 "Overdue · %@" = "Lejárt · %1$@";
+"Passing for 1 run" = "1 futtatás sikeres";
 "Pop latest stash" = "Legutóbbi stash alkalmazása";
 "Pop latest stash (none saved)" = "Legutóbbi stash alkalmazása (nincs mentve)";
 "Previous file (K)" = "Előző fájl (K)";
@@ -848,7 +849,6 @@
 "Rerun all jobs" = "Összes job újrafuttatása";
 "Rerun failed and canceled jobs" = "Sikertelen és megszakított jobok újrafuttatása";
 "Rerun failed jobs only" = "Csak a sikertelen jobok újrafuttatása";
-"Rerun job" = "Job újrafuttatása";
 "Reset current branch to here" = "Aktuális ág visszaállítása ide";
 "Resetting…" = "Visszaállítás…";
 "Resolve the conflicts first." = "Előbb oldja fel az ütközéseket.";

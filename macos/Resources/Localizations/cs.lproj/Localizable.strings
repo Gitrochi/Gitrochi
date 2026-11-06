@@ -68,6 +68,7 @@
 "Open changes" = "Otevřít změny";
 "Open…" = "Otevřít…";
 "Overdue · %@" = "Po termínu · %1$@";
+"Passing for 1 run" = "1 běh v řadě prošel";
 "Pop latest stash" = "Použít poslední stash";
 "Pop latest stash (none saved)" = "Použít poslední stash (žádný není uložen)";
 "Previous file (K)" = "Předchozí soubor (K)";
@@ -843,7 +844,6 @@
 "Rerun all jobs" = "Znovu spustit všechny úlohy";
 "Rerun failed and canceled jobs" = "Znovu spustit neúspěšné a zrušené úlohy";
 "Rerun failed jobs only" = "Znovu spustit jen neúspěšné úlohy";
-"Rerun job" = "Znovu spustit úlohu";
 "Reset current branch to here" = "Resetovat aktuální větev sem";
 "Resetting…" = "Resetování…";
 "Resolve the conflicts first." = "Nejprve vyřešte konflikty.";

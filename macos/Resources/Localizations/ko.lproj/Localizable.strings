@@ -63,6 +63,7 @@
 "Open a repository to use these" = "이 항목을 쓰려면 저장소를 여세요";
 "Open…" = "열기…";
 "Overdue · %@" = "기한 지남 · %1$@";
+"Passing for 1 run" = "1회 연속 통과";
 "Pop latest stash" = "가장 최근 stash 꺼내기";
 "Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
 "Previous file (K)" = "이전 파일 (K)";
@@ -1045,7 +1046,6 @@
 "Rerun all jobs" = "모든 작업 다시 실행";
 "Rerun failed and canceled jobs" = "실패·취소된 작업 다시 실행";
 "Rerun failed jobs only" = "실패한 작업만 다시 실행";
-"Rerun job" = "작업 다시 실행";
 "Reset current branch to here" = "현재 브랜치를 여기로 Reset";
 "Resetting…" = "Reset 중…";
 "Resolve the conflicts first." = "충돌을 먼저 해결하세요.";

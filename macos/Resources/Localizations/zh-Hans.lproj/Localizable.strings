@@ -68,6 +68,7 @@
 "Open changes" = "打开更改";
 "Open…" = "打开…";
 "Overdue · %@" = "已逾期 · %1$@";
+"Passing for 1 run" = "连续 1 次通过";
 "Pop latest stash" = "应用最新的贮藏";
 "Pop latest stash (none saved)" = "应用最新的贮藏（没有已保存的贮藏）";
 "Previous file (K)" = "上一个文件 (K)";
@@ -872,7 +873,6 @@
 "Rerun all jobs" = "重新运行所有作业";
 "Rerun failed and canceled jobs" = "重新运行失败和已取消的作业";
 "Rerun failed jobs only" = "仅重新运行失败的作业";
-"Rerun job" = "重新运行作业";
 "Reset current branch to here" = "将当前分支重置到此处";
 "Resetting…" = "正在重置…";
 "Resolve the conflicts first." = "请先解决冲突。";
