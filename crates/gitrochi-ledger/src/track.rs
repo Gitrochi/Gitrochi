@@ -51,8 +51,9 @@ pub struct Plan {
 
 /// Reads the arguments and the checkout: `{project?, title?, base?, kind?, repoPath?,
 /// branch?, worktree?, agentId?, cwd?, autoContinue?}`. Without `project`, the project bound
-/// to `repoPath` in the ledger, else the repository folder's name; without `branch` and
-/// `worktree`, what git says about `cwd`; without `title`, the branch (or the folder's name);
+/// to `repoPath` in the ledger, else the repository folder's name; a `repoPath` in a linked
+/// worktree means that worktree's repository; without `branch` and `worktree`, what git says
+/// about `cwd`; without `title`, the branch (or the folder's name);
 /// without `base`, the newest tag reachable from `cwd` that matches the project's pattern,
 /// when its baselines come from tags; without `autoContinue`, the repository's policy from
 /// the `autoContinue.repositories` setting (`null` = the global default); without `kind`,
@@ -77,6 +78,8 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
     let folder = text("cwd")
         .or_else(|| text("worktree"))
         .or_else(|| text("repoPath"));
+    // Settings › Ledger keeps a policy under the folder the app names, even a worktree's
+    let policy_folder = text("repoPath");
     let mut head = None;
     if let Some(checkout) = folder.as_deref().and_then(|f| git::checkout(Path::new(f))) {
         let start = folder.as_deref().and_then(|f| git::start(Path::new(f)));
@@ -86,6 +89,9 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         }
         if let Some(branch) = checkout.branch {
             links.entry("branch").or_insert(json!(branch));
+        }
+        if start.as_ref().is_some_and(|s| s.linked) {
+            adopt_repository(&mut links, folder.as_deref());
         }
         head = start.and_then(|s| s.head);
     }
@@ -116,7 +122,7 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
     let auto_continue = match args.get("autoContinue") {
         Some(Value::Null) => None,
         Some(value) => Some(settings::session_auto_continue(value)?),
-        None => match text("repoPath") {
+        None => match policy_folder {
             Some(repo) => db.read(|c| repository_policy(c, &repo))?,
             None => None,
         },
@@ -132,6 +138,28 @@ pub fn plan(db: &Db, args: &Value) -> Result<Plan> {
         auto_continue,
         head,
     })
+}
+
+/// A linked worktree is part of its repository, not a repository of its own. A hook only knows
+/// the checkout it runs in, and an app window can be opened on a worktree: either way `repoPath`
+/// becomes the main checkout, so the session joins the repository's project and shows on its page.
+/// A `repoPath` elsewhere stays: the app's host repository is already right.
+fn adopt_repository(links: &mut Map<String, Value>, folder: Option<&str>) {
+    // git answers with real paths; the app may name the same folder through a symlink
+    let real = |path: &str| {
+        let path = same_path_key(path);
+        std::fs::canonicalize(&path).unwrap_or_else(|_| path.into())
+    };
+    let text = |key: &str| links.get(key).and_then(Value::as_str);
+    let Some(worktree) = text("worktree").map(real) else {
+        return;
+    };
+    if text("repoPath").is_some_and(|repo| !real(repo).starts_with(&worktree)) {
+        return;
+    }
+    if let Some(main) = folder.and_then(|f| git::main_checkout(Path::new(f))) {
+        links.insert("repoPath".into(), json!(main));
+    }
 }
 
 /// The policy Settings › Ledger keeps for the repository (`autoContinue.repositories`), if any.

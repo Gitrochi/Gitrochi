@@ -38,13 +38,13 @@ Tracking records activity times and session IDs through launch-specific hooks. T
 
 For Claude Code outside Gitrochi:
 
-1. Choose **Connect agents…** on the Ledger page or in its settings, then select **Claude Code**. Copy the command and run it yourself in a terminal.
+1. Choose **Connect agents…** on the Ledger page or in its settings, then choose **Set up** next to **Claude Code**. It installs the activity hooks and has Claude Code register the Ledger tools. If Claude Code's command cannot be found, the row says so: copy the command and run it yourself in a terminal.
 2. Start or restart a Claude Code conversation so it can load the registered tools.
 3. Choose **Copy reporting instruction** in the sheet and give that instruction to the agent. Ask it to call `ledger_report` with a start report for its current work, including the project and a short title. It can then send progress, question and done reports as the work changes.
 
 **Test Ledger** checks this app's Ledger and bundled MCP command. It does not check Claude Code's MCP registration or prove that a client has loaded the tools. Registration makes the tools available; the first agent report creates a reported session. Existing conversations are not imported automatically.
 
-The sheet also supplies configuration for other MCP clients and instructions you can add to a project. In **Connections**, Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after backing up the file; nothing in the sheet edits a client's MCP settings, whose commands are only shown for you to copy. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
+The sheet also supplies configuration for other MCP clients and instructions you can add to a project. In **Connections**, Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after backing up the file, and have the client itself add or remove its `gitrochi-ledger` MCP server by running its own `mcp` command. Gitrochi never writes a client's MCP settings file. MCP reports and launch tracking are separate: connecting a server alone does not add activity hooks to an outside agent.
 
 **Paste reports…** accepts pasted `ledger` blocks or JSON reports. **Import from claude-ledger…** previews and then copies a standalone claude-ledger database without writing to the source file. Existing session IDs are skipped and listed, and duplicate pasted blocks are recognized.
 
@@ -56,13 +56,13 @@ Existing Claude Ledger users can also retain their work records and personal not
 
 | Status | Meaning |
 |---|---|
-| **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks. |
-| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. |
-| **Connected · no data yet** | Hooks are installed but nothing has arrived. Start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
+| **Not set up** | Nothing connects this client yet. **Set up** installs its activity hooks and registers the Ledger tools. |
+| **Connected · last data 5m ago** | Data from this client is arriving. With only an MCP registration, it shows **Connected**, because reports do not say which client sent them. Hooks without an MCP registration bring activity only, and the row says so: the agent has no tools to report with until you choose **Set up** again. |
+| **Connected · no data yet** | Hooks are installed but nothing has arrived. If the row asks for it, choose **Set up**. Then start or restart the client; Codex also needs its hooks trusted in `/hooks`. |
 | **Needs repair** | The command the hooks or MCP entry run is older than your Ledger (it would silently refuse to write), writes to another database, or some hooks are missing. |
 | **Command missing** | That command was moved or deleted, for example with an old copy of the app. |
 
-**Repair** installs the hooks again with the stable command, which Gitrochi keeps current. When the MCP entry is the problem, Repair also copies an MCP command that replaces the registration; run it in a terminal. **Copy MCP command** does the same at any time. Gitrochi never edits a client's MCP settings itself. **Remove** removes only Gitrochi's hooks for that client. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
+**Set up** and **Repair** install the hooks with the stable command, which Gitrochi keeps current, and have the client register that command as its MCP server, replacing a registration that cannot work. A registration that works is left alone, and Repair adds no hooks to a connection that only has an MCP entry. When the client's command cannot be found or refuses, for example with only a desktop app or a client in WSL, the row says why: **Copy MCP command** gives you the command to run in a terminal. **Remove** removes Gitrochi's hooks and has the client drop the MCP server. For the browser extension, **Set up…** and **Repair…** open its own setup, which asks before it allows a connection.
 
 Opening Connections changes no client setting and never creates the stable command; at most it refreshes an existing one, as opening the Ledger does. [Screenshots](../screenshots/ledger-connection/README.md) show the list on both platforms.
 
@@ -86,11 +86,11 @@ gitrochi-ledger integrate codex --remove
 
 Start or restart the client after installing. Codex asks you to review non-managed hooks in its own `/hooks` flow; Gitrochi does not grant that trust or change permission settings. The status command confirms configuration only. A conversation appearing in Board or Streams confirms that its activity reached this Ledger. Cloud-orchestrated Codex tasks do not run these local hooks.
 
-The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself.
+The status also tells you whether the connection still works. Its `health` is `outdated_command` when the hooks or the client's MCP entry run a Ledger command older than your database (an older command refuses to write a newer database and stays silent), `missing_command` when that command was moved or deleted, `other_database` when it writes to a different database, `no_data_yet` before the first activity arrives, and `ok` with `lastObservedAt` and `lastReportAt` once it does. Reinstall with a current command to repair the hooks; re-register the MCP server yourself, or choose **Repair** in Connections.
 
-Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions are titled by the client and the branch they started on, such as **Claude Code · feature/login** (the worktree folder for a detached checkout), use a generic kind and have auto-continue off. Sessions observed before keep their titles, and the agent's first start report replaces the title as before. Existing Gitrochi-tracked sessions keep their own kind and policy.
+Activity shows starts, tool use and turn boundaries. It does not read conversation transcripts, prompts, tool arguments/results or assistant output. A stopped turn does not mark its task done. New external sessions are titled by the client and the branch they started on, such as **Claude Code · feature/login** (the worktree folder for a detached checkout), use a generic kind and have auto-continue off. A session started in a linked worktree, as the Claude Code and Codex desktop apps usually do, belongs to its repository's project and shows on that repository's page, with the worktree as a link. Sessions observed before keep their titles and projects, and the agent's first start report replaces the title as before. Existing Gitrochi-tracked sessions keep their own kind and policy.
 
-MCP registration remains separate. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
+The MCP server is separate from these hooks: `integrate` installs only the hooks, and **Set up** in Connections does both. When the tools are available, session-start context asks the agent to send real reports with the observed Ledger session ID explicitly. Those reports supply task titles, progress and outcomes; observed activity alone remains **Unreported**.
 
 These global hooks are independent of **Track agents I start** and observe local sessions wherever they start, including Gitrochi. The app's switch still controls its own per-launch tracking. Remove the passive hooks to stop this separate observation; the existing launch commands and off behavior are unchanged.
 

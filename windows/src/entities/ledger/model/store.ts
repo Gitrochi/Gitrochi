@@ -56,10 +56,16 @@ export class LedgerStore extends LedgerReader {
     return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "" });
   }
 
-  /** Repairing an MCP entry: the stable command it will name, created from the bundled one */
-  createStableCommand() {
-    return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "", create: true });
+  /** Set up and Repair: `program`, the client's own command, registers the ledger's MCP server. One that works stays. */
+  registerMcp(client: LedgerIntegrationStatus["client"], program: string | null) {
+    return this.backend.call("integration_mcp", { client, action: "register", bundled: bundledLedgerCommand() ?? "", ...(program ? { program } : {}) });
   }
+
+  /** Remove: `program`, the client's own command, drops the ledger's MCP server */
+  removeMcp(client: LedgerIntegrationStatus["client"], program: string | null) {
+    return this.backend.call("integration_mcp", { client, action: "remove", ...(program ? { program } : {}) });
+  }
+
   // MARK: A person's operations
 
   /** One operation; confirm, archive, status changes and snoozes show a toast with Undo */

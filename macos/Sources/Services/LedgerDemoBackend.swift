@@ -81,7 +81,7 @@ final class DemoLedgerBackend: LedgerBackend, @unchecked Sendable {
                 rev += 1
                 return try encode(LedgerWriteResult(ok: true, rev: rev))
             case "work", "documents", "notebook": return try encode(extras.call(method, a, now: now))
-            case "browser_status", "integration_command", "integration_status", "integration_install", "integration_remove":
+            case "browser_status", "integration_command", "integration_status", "integration_mcp", "integration_install", "integration_remove":
                 let demo = connections ?? LedgerDemoConnections(now: now)
                 connections = demo
                 return try encode(demo.call(method, a))

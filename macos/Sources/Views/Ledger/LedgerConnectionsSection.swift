@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 
 /// Claude Code, Codex and the ChatGPT browser extension as equals: whether each one's data reaches this Ledger, and the
-/// action that fixes it. Set up and Repair install hooks that run the stable ledger command; the app never edits a
-/// client's MCP settings, it only copies the command. Shown in the Connect agents sheet and Settings › Ledger.
+/// action that fixes it. Set up and Repair install hooks that run the stable ledger command and have the client register
+/// its MCP server, and the command stays there to copy when it cannot. Shown in the Connect agents sheet and Settings › Ledger.
 /// (Windows: features/connect-ledger-mcp/ui/LedgerConnections.tsx)
 struct LedgerConnectionsSection: View {
     let ledger: LedgerStore
@@ -139,21 +139,26 @@ struct LedgerConnectionsSection: View {
     private func perform(_ action: LedgerConnectionLook.Action, client: LedgerSetupClient, status: LedgerIntegrationStatus?,
                          look: LedgerConnectionLook?) {
         let bundled = LedgerCommandLine.bundled.path
+        let hooks = (status?.ownedHookCount ?? 0) > 0
+        let program = ToolStore.shared.path(client == .claude ? .claude : .codex)
         switch action {
-        case .setUp:
-            run(client.rawValue) { statuses[client] = try await ledger.client.installIntegration(client, bundled: bundled) }
-        case .repair:
+        case .setUp, .repair:
             run(client.rawValue) {
-                if look?.repairsMcp == true, (status?.ownedHookCount ?? 0) == 0 {
-                    stable = try await ledger.client.stableCommand(bundled: bundled, create: true)
-                } else {
+                // Repairing only the MCP entry adds no hooks a person did not choose
+                if action == .setUp || hooks || look?.repairsMcp != true {
                     statuses[client] = try await ledger.client.installIntegration(client, bundled: bundled)
-                    stable = try await ledger.client.stableCommand(bundled: bundled)
                 }
-                if look?.repairsMcp == true { copyMcp(client, registered: true) }
+                do {
+                    statuses[client] = try await ledger.client.registerMcp(client, bundled: bundled, program: program)
+                } catch {
+                    throw LedgerFailure(code: "MCP", message: String(localized: "The Ledger tools were not registered: \(error.localizedDescription) Copy the MCP command and run it."))
+                }
             }
         case .remove:
-            run(client.rawValue) { statuses[client] = try await ledger.client.removeIntegration(client) }
+            run(client.rawValue) {
+                if hooks { statuses[client] = try await ledger.client.removeIntegration(client) }
+                if status?.mcp.registered == true { statuses[client] = try await ledger.client.removeMcp(client, program: program) }
+            }
         case .copy:
             copyMcp(client, registered: status?.mcp.registered ?? false)
         }

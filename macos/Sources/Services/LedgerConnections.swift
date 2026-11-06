@@ -12,15 +12,14 @@ struct LedgerConnectionLook: Equatable {
     /// One line; `%@` is the client's name
     let explanation: String
     let actions: [Action]
-    /// Repair re-registers the MCP server (by copying its command) rather than only the hooks
+    /// Only the MCP entry is broken, so Repair leaves a person without hooks without them
     var repairsMcp = false
 
     private static let repairText: [String: (hook: String, mcp: String)] = [
         "outdated_command": ("The hook command is older than this Ledger and cannot write to it.",
-                             "The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it."),
-        "missing_command": ("The hook command no longer exists.", "The MCP command no longer exists. Copy the MCP command and run it."),
-        "other_database": ("The hooks write to a different Ledger database.",
-                           "The MCP server uses a different Ledger database. Copy the MCP command and run it."),
+                             "The MCP command is older than this Ledger and cannot write to it."),
+        "missing_command": ("The hook command no longer exists.", "The MCP command no longer exists."),
+        "other_database": ("The hooks write to a different Ledger database.", "The MCP server uses a different Ledger database."),
     ]
 
     /// Which command a problem comes from: the hooks unless only the MCP entry has it
@@ -36,10 +35,12 @@ struct LedgerConnectionLook: Equatable {
         return bad(status.hookCommand) || !bad(status.mcp.command)
     }
 
-    /// A local agent's row: Repair when the connection cannot deliver, Remove while hooks are installed, Set up
-    /// otherwise. The MCP command can be copied once the stable command exists, since it names that file.
+    /// A local agent's row: Repair when the connection cannot deliver, Set up while hooks or the MCP entry are missing,
+    /// Remove while either exists. The MCP command can be copied once the stable command exists, since it names that file.
     static func agent(_ status: LedgerIntegrationStatus, stableExists: Bool) -> LedgerConnectionLook {
         let hooks = status.ownedHookCount > 0
+        // hooks bring activity; only the MCP entry gives the agent the tools to report with
+        let reports = status.mcp.registered
         let last = max(status.lastObservedAt ?? 0, status.lastReportAt ?? 0)
         let state: State
         let explanation: String
@@ -47,7 +48,7 @@ struct LedgerConnectionLook: Equatable {
         switch status.health {
         case "not_installed":
             state = .notSetUp
-            explanation = "Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command."
+            explanation = "Not connected. Set up installs activity hooks and registers the Ledger tools."
         case "missing_command", "outdated_command", "other_database":
             state = status.health == "missing_command" ? .missing : .repair
             let text = repairText[status.health] ?? ("", "")
@@ -60,15 +61,17 @@ struct LedgerConnectionLook: Equatable {
             state = .noData
             explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings."
                 : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks."
-                : "Start or restart %@ to send activity."
+                : reports ? "Start or restart %@ to send activity." : "Set up registers the Ledger tools. Then start or restart %@."
         default:
             state = .connected
             explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings."
-                : hooks ? "Activity and reports reach this Ledger." : "The MCP server is registered. Set up also records activity."
+                : !hooks ? "The MCP server is registered. Set up also records activity."
+                : reports ? "Activity and reports reach this Ledger."
+                : "Activity reaches this Ledger, but agents cannot report yet. Set up registers the Ledger tools."
         }
         let broken = state == .repair || state == .missing
-        var actions: [Action] = broken ? [.repair] : hooks ? [] : [.setUp]
-        if hooks { actions.append(.remove) }
+        var actions: [Action] = broken ? [.repair] : hooks && reports ? [] : [.setUp]
+        if hooks || reports { actions.append(.remove) }
         if stableExists { actions.append(.copy) }
         return LedgerConnectionLook(state: state, lastDataAt: state == .connected && last > 0 ? last : nil,
                                     explanation: explanation, actions: actions, repairsMcp: repairsMcp)

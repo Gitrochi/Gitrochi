@@ -522,6 +522,8 @@ export interface LedgerMethods {
   /** Copies `bundled` to the stable command when needed and installs hooks that run it */
   integration_install: { args: { client: LedgerIntegrationStatus["client"]; bundled: string }; result: LedgerIntegrationStatus };
   integration_remove: { args: { client: LedgerIntegrationStatus["client"] }; result: LedgerIntegrationStatus };
+  /** Has the client itself add or drop the ledger's MCP server; `register` needs `bundled`, and one that works stays */
+  integration_mcp: { args: { client: LedgerIntegrationStatus["client"]; action: "register" | "remove"; bundled?: string; program?: string }; result: LedgerIntegrationStatus };
   work: { args: Record<string, unknown>; result: unknown };
   documents: { args: Record<string, unknown>; result: unknown };
   notebook: { args: Record<string, unknown>; result: unknown };

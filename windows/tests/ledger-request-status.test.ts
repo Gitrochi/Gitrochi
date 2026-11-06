@@ -22,6 +22,14 @@ describe("the request a session links to", () => {
     expect(ledgerRequestLink(session({ project: "harbor", links: { pr: pr() } }), repo)).toBeNull();
   });
 
+  it("is read for a session in a linked worktree, in the repository's window and in the worktree's", () => {
+    const worktree = "C:/work/atlas/.claude/worktrees/nimble-otter";
+    const inWorktree = session({ links: { repoPath: repo.path, worktree, pr: pr() } });
+    expect(ledgerRequestLink(inWorktree, repo)?.number).toBe(142);
+    expect(ledgerRequestLink(inWorktree, { ...repo, path: worktree })?.number).toBe(142);
+    expect(ledgerRequestLink(inWorktree, { ...repo, path: "C:/work/harbor" })).toBeNull();
+  });
+
   it("is nothing for another repository, another host or project, or with no host configured", () => {
     expect(ledgerRequestLink(session({ links: { repoPath: "C:/work/harbor", pr: pr() } }), repo)).toBeNull();
     expect(ledgerRequestLink(session({ links: { repoPath: repo.path, pr: pr({ host: "other.example.com", url: "https://other.example.com/team/atlas/pull/142" }) } }), repo)).toBeNull();

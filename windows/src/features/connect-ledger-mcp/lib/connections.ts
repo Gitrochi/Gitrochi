@@ -12,14 +12,14 @@ export interface ConnectionLook {
   /** One line; `{0}` is the client's name */
   explanation: string;
   actions: ConnectionAction[];
-  /** Repair re-registers the MCP server (by copying its command) rather than only the hooks */
+  /** Only the MCP entry is broken, so Repair leaves a person without hooks without them */
   repairsMcp: boolean;
 }
 
 const repairText: Record<string, [hook: string, mcp: string]> = {
-  outdated_command: ["The hook command is older than this Ledger and cannot write to it.", "The MCP command is older than this Ledger and cannot write to it. Copy the MCP command and run it."],
-  missing_command: ["The hook command no longer exists.", "The MCP command no longer exists. Copy the MCP command and run it."],
-  other_database: ["The hooks write to a different Ledger database.", "The MCP server uses a different Ledger database. Copy the MCP command and run it."],
+  outdated_command: ["The hook command is older than this Ledger and cannot write to it.", "The MCP command is older than this Ledger and cannot write to it."],
+  missing_command: ["The hook command no longer exists.", "The MCP command no longer exists."],
+  other_database: ["The hooks write to a different Ledger database.", "The MCP server uses a different Ledger database."],
 };
 
 /** Which command a problem comes from: the hooks unless only the MCP entry has it */
@@ -29,12 +29,14 @@ function culprit(status: LedgerIntegrationStatus): "hook" | "mcp" {
 }
 
 /**
- * A local agent's row: Repair when the connection cannot deliver, Remove while hooks are installed, Set up otherwise.
- * The MCP command can be copied once the stable command exists, since it names that file.
+ * A local agent's row: Repair when the connection cannot deliver, Set up while hooks or the MCP entry are missing,
+ * Remove while either exists. The MCP command can be copied once the stable command exists, since it names that file.
  * (macOS: LedgerConnectionLook.agent)
  */
 export function agentConnection(status: LedgerIntegrationStatus, stableExists: boolean): ConnectionLook {
   const hooks = status.ownedHookCount > 0;
+  // hooks bring activity; only the MCP entry gives the agent the tools to report with
+  const reports = status.mcp.registered;
   const lastDataAt = Math.max(status.lastObservedAt ?? 0, status.lastReportAt ?? 0) || null;
   const copy: ConnectionAction[] = stableExists ? ["copy"] : [];
   let state: ConnectionState;
@@ -43,7 +45,7 @@ export function agentConnection(status: LedgerIntegrationStatus, stableExists: b
   switch (status.health) {
     case "not_installed":
       state = "not_set_up";
-      explanation = "Not connected. Set up installs activity hooks that run Gitrochi's stable Ledger command.";
+      explanation = "Not connected. Set up installs activity hooks and registers the Ledger tools.";
       break;
     case "missing_command":
     case "outdated_command":
@@ -60,14 +62,14 @@ export function agentConnection(status: LedgerIntegrationStatus, stableExists: b
       break;
     case "no_data_yet":
       state = "no_data";
-      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks." : "Start or restart {0} to send activity.";
+      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : status.requiresClientTrust ? "Start or restart Codex, then review and trust the Ledger hooks in /hooks." : reports ? "Start or restart {0} to send activity." : "Set up registers the Ledger tools. Then start or restart {0}.";
       break;
     default:
       state = "connected";
-      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : hooks ? "Activity and reports reach this Ledger." : "The MCP server is registered. Set up also records activity.";
+      explanation = status.hooksDisabled ? "Hooks are turned off in this client's settings." : !hooks ? "The MCP server is registered. Set up also records activity." : reports ? "Activity and reports reach this Ledger." : "Activity reaches this Ledger, but agents cannot report yet. Set up registers the Ledger tools.";
   }
   const broken = state === "repair" || state === "missing";
-  const actions: ConnectionAction[] = [...(broken ? ["repair" as const] : hooks ? [] : ["setup" as const]), ...(hooks ? ["remove" as const] : []), ...copy];
+  const actions: ConnectionAction[] = [...(broken ? ["repair" as const] : hooks && reports ? [] : ["setup" as const]), ...(hooks || reports ? ["remove" as const] : []), ...copy];
   return { state, lastDataAt: state === "connected" ? lastDataAt : null, explanation, actions, repairsMcp };
 }
 

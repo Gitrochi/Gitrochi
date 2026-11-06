@@ -295,6 +295,9 @@ let start: LedgerMs = 1_793_400_000_000
         let repaired = try call(demo, "integration_install", ["client": "codex", "bundled": "x"], as: LedgerIntegrationStatus.self)
         check(codex.health == "outdated_command" && codex.hookCommand?.canWrite == false && !stableCommand.refreshed && repaired.health == "no_data_yet",
               "demo connections decode, and Repair replaces an outdated hook command")
+        let registeredDemo = try call(demo, "integration_mcp", ["client": "claude", "action": "register", "bundled": "x"], as: LedgerIntegrationStatus.self)
+        let removedDemo = try call(demo, "integration_mcp", ["client": "claude", "action": "remove"], as: LedgerIntegrationStatus.self)
+        check(registeredDemo.mcp.registered && !removedDemo.mcp.registered, "the demo registers and drops the Ledger tools")
         let report = #"{"event":"question","project":"harbor","session":"forms","summary":"Do not duplicate this summary","questions":[{"text":"Runtime?","options":[{"label":"Node 22","description":"Supported","recommended":true},{"label":"Node 24"}],"suggestedAnswer":"Node 24"},{"text":"Checks?","multiSelect":true,"options":["Build","Tests"]},"Any detail?"]}"#
         let imported = try call(demo, "import", ["text": .string(report)], as: LedgerImportResult.self)
         check(imported.results.first?.ok == true, "structured reported questions import")
@@ -397,6 +400,9 @@ let start: LedgerMs = 1_793_400_000_000
         check(link(session(links: .init(pr: pr))) != nil && link(session(project: "harbor", links: .init(pr: pr))) == nil,
               "without a folder, the session's project must be the repository's")
         check(link(session(links: .init(repoPath: "/Users/me/work/harbor", pr: pr))) == nil, "another repository")
+        let worktree = "/Users/me/work/atlas/.claude/worktrees/nimble-otter"
+        let inWorktree = session(links: .init(repoPath: "/Users/me/work/atlas", worktree: worktree, pr: pr))
+        check(link(inWorktree) != nil && link(inWorktree, path: worktree) != nil, "a session in a worktree: in the repository's window and in the worktree's")
         check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "other.example.com", number: 142, url: "https://other.example.com/team/atlas/pull/142")))) == nil,
               "another host")
         check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 142, url: "https://example.com/team/atlas-fork/pull/142")))) == nil,
@@ -592,6 +598,16 @@ let start: LedgerMs = 1_793_400_000_000
         let projects = [LedgerProject(key: "harbor", name: "Harbor", open: 1), LedgerProject(key: "meadow", name: "Meadow", open: 0)]
         check(LedgerProjects.key(forRepository: NSHomeDirectory() + "/Projects/harbor/", sessions: [linked], projects: projects) == "harbor", "linked repository, ~ expanded")
         check(LedgerProjects.key(forRepository: "/tmp/elsewhere/Meadow", sessions: [linked], projects: projects) == "meadow", "a project named like the folder")
+        // A session in a linked worktree names the main checkout as its repository and the worktree as its own folder.
+        var inWorktree = session("S8", "x", verdict: .active, last: 0)
+        inWorktree.project = "harbor"
+        inWorktree.links.repoPath = "/tmp/elsewhere/harbor-main"
+        inWorktree.links.worktree = "/tmp/elsewhere/.claude/worktrees/nimble-otter/"
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/harbor-main", sessions: [inWorktree], projects: projects) == "harbor", "the main checkout follows sessions in its worktrees")
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/.claude/worktrees/nimble-otter", sessions: [inWorktree], projects: projects) == "harbor", "a window on the worktree follows them too")
+        var movedOn = inWorktree
+        movedOn.links.cwd = "/tmp/elsewhere/harbor-main/sub"
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/harbor-main/sub", sessions: [movedOn], projects: projects) == "harbor", "a session's working folder counts when nothing else names it")
         check(LedgerProjects.key(forRepository: "/tmp/elsewhere/unknown", sessions: [linked], projects: projects) == nil && LedgerProjects.key(forRepository: nil, sessions: [], projects: projects) == nil, "no project")
         let baselines = ["v1.9.2", "v1.10.0", "v1.2.0"].map { LedgerBaseline(project: "harbor", version: $0, ts: 0, source: .tag, note: nil, bySession: nil) }
         check(LedgerProjects.head("harbor", baselines: baselines) == "v1.10.0", "numeric version order")
@@ -1184,6 +1200,13 @@ let start: LedgerMs = 1_793_400_000_000
               "hub_share answers through the C ABI and keeps a session without a repository remote on this computer")
         check(failure(CLIBackend(binary: cli, db: connectionDB), "hub_share", ["client": .string("a1b2c3d4e5f6")])?.code == "NOT_ALLOWED",
               "agents cannot ask what would be shared with the team hub")
+        // Every path is named: the defaults are the person's own settings and stable command
+        let noClient = failure(connectionClient.backend, "integration_mcp", [
+            "client": .string("claude"), "action": .string("register"), "bundled": .string(cli), "program": .string(folder + "/no-such-client"),
+            "path": .string(folder + "/stable/gitrochi-ledger"), "config": .string(folder + "/settings.json"), "mcpConfig": .string(folder + "/claude.json")])
+        check(noClient?.code == "NOT_FOUND" && noClient?.message.contains("Claude Code") == true, "a client that is not installed is named, for the row to show")
+        check(failure(CLIBackend(binary: cli, db: connectionDB), "integration_mcp", ["client": .string("claude"), "action": .string("remove")])?.code == "NOT_ALLOWED",
+              "agents cannot make a client change its settings")
 
         let db = folder + "/ledger.sqlite3"
         _ = CLIBackend(binary: cli, db: db).run(["demo", db])
