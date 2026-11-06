@@ -198,21 +198,25 @@ private struct AccountWorkPanel: View {
                     sortMenu
                 }
                 if model.inbox {
-                    Picker("Filter", selection: $unreadOnly) {
-                        Text("Unread \(model.items.filter(\.unread).count)").tag(true)
-                        Text("All \(model.items.count)").tag(false)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                    AccountSegments(options: [(true, String(localized: "Unread \(model.items.filter(\.unread).count)")), (false, String(localized: "All \(model.items.count)"))],
+                                    selection: $unreadOnly)
+                        .accessibilityLabel("Filter")
                 } else {
-                    Picker("Work category", selection: $model.kind) {
-                        Text("Authored requests").tag("mine")
-                        Text("Assigned requests").tag("assignedRequests")
-                        Text("Review requested").tag("review")
-                        Text("Assigned issues").tag("issues")
-                        Text("Authored issues").tag("myIssues")
+                    AccountMenu(fills: true) {
+                        ForEach(Self.categories, id: \.value) { category in
+                            Button { model.kind = category.value } label: {
+                                if category.value == model.kind { Label(category.title, systemImage: "checkmark") } else { Text(verbatim: category.title) }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(verbatim: Self.categories.first { $0.value == model.kind }?.title ?? "").font(.system(size: 13)).foregroundStyle(.primary).lineLimit(1)
+                            Spacer(minLength: 4)
+                            Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+                        }
+                        .padding(.horizontal, 10)
                     }
-                    .pickerStyle(.menu).labelsHidden()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("Work category")
                     .disabled(model.busy)
                 }
             }
@@ -258,17 +262,20 @@ private struct AccountWorkPanel: View {
     }
 
     private var sortMenu: some View {
-        Menu {
+        AccountMenu {
             Button { oldestFirst = false } label: { if oldestFirst { Text("Newest first") } else { Label("Newest first", systemImage: "checkmark") } }
             Button { oldestFirst = true } label: { if oldestFirst { Label("Oldest first", systemImage: "checkmark") } else { Text("Oldest first") } }
         } label: {
-            Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
+            Image(systemName: "arrow.up.arrow.down").font(.system(size: 12)).frame(width: 28)
         }
-        .menuStyle(.borderlessButton).menuIndicator(.hidden)
-        .frame(width: 28, height: 28)
-        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(AccountStyle.edge))
         .help("Sort").accessibilityLabel("Sort")
+    }
+
+    /// The lists of My work, in the order the servers were always asked for them
+    private static var categories: [(value: String, title: String)] {
+        [("mine", String(localized: "Authored requests")), ("assignedRequests", String(localized: "Assigned requests")),
+         ("review", String(localized: "Review requested")), ("issues", String(localized: "Assigned issues")),
+         ("myIssues", String(localized: "Authored issues"))]
     }
 
     /// A refresh that failed leaves the last rows and says how old they are
@@ -284,7 +291,7 @@ private struct AccountWorkPanel: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Retry") { Task { await model.load(account) } }.controlSize(.large).disabled(model.busy)
+                Button("Retry") { Task { await model.load(account) } }.accountButtonSize().disabled(model.busy)
             }
         }
         .padding(.bottom, 6)
@@ -351,7 +358,7 @@ private struct AccountWorkPanel: View {
             let reason = AccountInbox.reason(item)
             AccountRowPill(title: AccountInbox.label(reason, actor: item.actor), symbol: Self.symbol(reason), tone: Self.tone(reason), onSelection: on)
         } else if item.status == "draft" {
-            AccountRowPill(title: String(localized: "Draft"), symbol: "pencil.circle", tone: .waiting, onSelection: on)
+            AccountRowPill(title: String(localized: "Draft"), symbol: "pencil.line", tone: .waiting, onSelection: on)
         } else if !item.author.isEmpty, item.author.caseInsensitiveCompare(account.username) != .orderedSame {
             Text(verbatim: "@" + item.author).lineLimit(1).fixedSize()
         }
@@ -417,18 +424,20 @@ private struct AccountWorkPanel: View {
                     }
                     Text(verbatim: item.title).font(.system(size: 22, weight: .semibold))
                         .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                    // every part is as tall as the avatar, so the line reads on one centre
                     WorkbenchFlow(spacing: 12) {
                         let name = item.actor.isEmpty ? item.author : item.actor
                         if !name.isEmpty {
                             HStack(spacing: 6) {
                                 HostingAvatar(name: name, username: item.author.isEmpty ? name : item.author, size: 20)
-                                Text(verbatim: item.actor.isEmpty ? "@" + name : name).fontWeight(.semibold).foregroundStyle(.primary)
+                                // a colour, not the hierarchical style, which would follow the grey of the line
+                                Text(verbatim: item.actor.isEmpty ? "@" + name : name).fontWeight(.semibold).foregroundStyle(Color.primary)
                             }
                         }
-                        if model.inbox { Text(verbatim: AccountInbox.label(AccountInbox.reason(item))) }
+                        if model.inbox { Text(verbatim: AccountInbox.label(AccountInbox.reason(item))).frame(height: 20) }
                         // the row shows the repository's name only; here is where it lives
-                        Text(verbatim: item.host + "/" + item.repository).textSelection(.enabled)
-                        if !item.source.isEmpty, !item.target.isEmpty { StatusPill(title: item.source + " → " + item.target, tone: .neutral) }
+                        Text(verbatim: item.host + "/" + item.repository).textSelection(.enabled).frame(height: 20)
+                        if !item.source.isEmpty, !item.target.isEmpty { StatusPill(title: item.source + " → " + item.target, tone: .neutral).frame(height: 20) }
                     }
                     .font(.system(size: 12))
                     .foregroundStyle(StudioStyle.Rail.icon)
@@ -436,8 +445,7 @@ private struct AccountWorkPanel: View {
                         Text(verbatim: item.body).font(.system(size: 13)).lineSpacing(4).lineLimit(3)
                             .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 8)
                     }
-                    // the board's buttons are 28 pt tall, which is the system's large size
-                    WorkbenchFlow(spacing: 8) { actions(item) }.controlSize(.large).padding(.top, 10)
+                    WorkbenchFlow(spacing: 8) { actions(item) }.accountButtonSize().padding(.top, 10)
                 }
                 .padding(.horizontal, 24).padding(.vertical, 20)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -451,7 +459,7 @@ private struct AccountWorkPanel: View {
         let request = item.kind == .request
         switch item.status {
         case "open": StatusPill(title: WorkState.title("open"), symbol: request ? "arrow.triangle.pull" : "circle.dotted", tone: .passed)
-        case "draft": StatusPill(title: String(localized: "Draft"), symbol: "pencil.circle", tone: .waiting)
+        case "draft": StatusPill(title: String(localized: "Draft"), symbol: "pencil.line", tone: .waiting)
         case "merged": StatusPill(title: WorkState.title("merged"), symbol: "arrow.triangle.merge", tone: .neutral)
         case "closed": StatusPill(title: WorkState.title("closed"), symbol: "xmark.circle", tone: .neutral)
         default: EmptyView()

@@ -47,6 +47,8 @@ struct AccountWorkspacePanel: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // the board's page is the white surface, not the window's grey
+        .background(StudioStyle.surface)
     }
 
     // MARK: Sections
@@ -72,30 +74,24 @@ struct AccountWorkspacePanel: View {
 
     private func toolbar(_ account: HostAccount) -> some View {
         HStack(spacing: 10) {
-            HStack(spacing: 6) {
-                HostingAvatar(name: account.name ?? account.username, username: account.username,
-                              avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: 20)
-                Menu {
-                    ForEach(accounts) { other in
-                        Button { choose(other.id) } label: {
-                            if other.id == account.id { Label(Self.title(other), systemImage: "checkmark") } else { Text(verbatim: Self.title(other)) }
-                        }
-                    }
-                    Divider()
-                    Button("Account settings…") { openSettings() }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text(verbatim: Self.title(account)).font(.system(size: 13)).foregroundStyle(.primary).lineLimit(1)
-                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+            AccountMenu {
+                ForEach(accounts) { other in
+                    Button { choose(other.id) } label: {
+                        if other.id == account.id { Label(Self.title(other), systemImage: "checkmark") } else { Text(verbatim: Self.title(other)) }
                     }
                 }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-                .accessibilityLabel("Account and server")
+                Divider()
+                Button("Account settings…") { openSettings() }
+            } label: {
+                HStack(spacing: 6) {
+                    HostingAvatar(name: account.name ?? account.username, username: account.username,
+                                  avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: 20)
+                    Text(verbatim: Self.title(account)).font(.system(size: 13)).foregroundStyle(Color.primary).lineLimit(1)
+                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+                }
+                .padding(.leading, 4).padding(.trailing, 12)
             }
-            .padding(.leading, 4).padding(.trailing, 12)
-            .frame(height: 28)
-            .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(AccountStyle.edge))
+            .accessibilityLabel("Account and server")
             .disabled(current == "organizations" && hubLocked)
             Button { refresh(account) } label: { Image(systemName: "arrow.clockwise") }
                 .buttonStyle(AccountIconButtonStyle())
@@ -128,6 +124,11 @@ struct AccountWorkspacePanel: View {
 }
 
 // MARK: Parts the sections share
+
+extension View {
+    /// The board's button: 28 pt tall, which is the system's large size, with the 6 pt corners that size no longer has
+    func accountButtonSize() -> some View { controlSize(.large).buttonBorderShape(.roundedRectangle(radius: 6)) }
+}
 
 enum AccountStyle {
     /// The hairline of the board's 28 pt controls
@@ -202,12 +203,11 @@ struct AccountState: View {
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).frame(maxWidth: 380)
             }
             if let action {
-                // 28 pt tall, the system's large size
-                if filled {
-                    Button(action, action: perform).buttonStyle(.borderedProminent).controlSize(.large).padding(.top, 4)
-                } else {
-                    Button(action, action: perform).controlSize(.large).padding(.top, 4)
+                Group {
+                    if filled { Button(action, action: perform).buttonStyle(.borderedProminent) } else { Button(action, action: perform) }
                 }
+                .accountButtonSize()
+                .padding(.top, 4)
             }
         }
         .padding(24)
@@ -226,6 +226,60 @@ struct AccountNotice<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
+    }
+}
+
+/// A 28 pt bordered control whose whole frame opens a menu. A borderless menu keeps only one icon and one text of
+/// its label and puts the icon first, so this one is a plain button, which draws the label as it is laid out (as the
+/// toolbar's menus do). The label brings its own padding.
+struct AccountMenu<Items: View, MenuLabel: View>: View {
+    /// Takes the width it is offered instead of the label's own
+    var fills = false
+    @ViewBuilder let items: Items
+    @ViewBuilder let label: MenuLabel
+
+    var body: some View {
+        Menu { items } label: {
+            label
+                .frame(maxWidth: fills ? .infinity : nil, alignment: .leading)
+                .frame(height: 28)
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize(horizontal: !fills, vertical: true)
+        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(AccountStyle.edge))
+    }
+}
+
+/// The board's segmented filter: equal segments that fill the width, 12 pt medium labels, the chosen one a white
+/// thumb. The system's segmented picker keeps its own width, so it cannot fill the list column.
+struct AccountSegments<Value: Hashable>: View {
+    let options: [(value: Value, title: String)]
+    @Binding var selection: Value
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.value) { option in
+                let on = option.value == selection
+                Button { selection = option.value } label: {
+                    Text(verbatim: option.title)
+                        .font(.system(size: 12, weight: .medium)).lineLimit(1)
+                        .foregroundStyle(on ? Color.primary : StudioStyle.Tone.neutral.text)
+                        .frame(maxWidth: .infinity).frame(height: 24)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(on ? Color(nsColor: .controlColor) : Color.clear)
+                            .shadow(color: .black.opacity(on ? 0.12 : 0), radius: 1, y: 1))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.Tone.neutral.fill))
+        .accessibilityElement(children: .contain)
     }
 }
 
