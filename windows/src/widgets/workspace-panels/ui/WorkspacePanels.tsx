@@ -10,10 +10,9 @@ import {
 import type { RepoStore } from "@/entities/repo";
 import { CollaborationInboxSheet } from "@/features/collaboration-inbox";
 import { AccountWorkPanel } from "@/features/account-work";
-import { CIPanel, CIRunDetail } from "@/features/ci-panel";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, Spinner } from "@/shared/ui";
+import { Button, Spinner } from "@/shared/ui";
 import "./workspace-panels.css";
 
 export interface WorkspacePanelProps {
@@ -203,60 +202,6 @@ function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
     </Page>
   );
 }
-/** Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page (macOS: ActionsWorkspacePanel) */
-export function ActionsWorkspacePanel({
-  store,
-  openSettings,
-}: WorkspacePanelProps) {
-  useObserve(store);
-  useObserve(store.ci);
-  const settingsOpener =
-    openSettings ??
-    (() =>
-      window.dispatchEvent(
-        new CustomEvent("gitrochi-open-settings", { detail: "accounts" }),
-      ));
-  // a CI badge may ask for a run in a repository without a remote; nothing can show it, so let go
-  useEffect(() => {
-    if (store.target || store.ciFocus === null) return;
-    store.ciFocus = null;
-    store.changed();
-  }, [store, store.target, store.ciFocus]);
-  if (!store.target)
-    return (
-      <div
-        className="col grow"
-        style={{ alignItems: "center", justifyContent: "center", gap: 12 }}
-      >
-        <Empty
-          title={t("No hosting remote")}
-          detail={t(
-            "Open a repository with a GitHub or GitLab remote to use this workspace.",
-          )}
-        />
-        <Button onClick={settingsOpener}>{t("Connect account…")}</Button>
-      </div>
-    );
-  const run = store.ci.pipelines.find((p) => p.id === store.ciSelected);
-  return (
-    <div className="workspace-pr-page">
-      <div className="workspace-pr-list col">
-        <CIPanel store={store} openSettings={settingsOpener} />
-      </div>
-      <div className="workspace-pr-detail col">
-        {run ? (
-          <CIRunDetail store={store} pipeline={run} />
-        ) : (
-          <Empty
-            title={t("Select a run")}
-            detail={t("Choose a run to see its jobs and read their logs.")}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
 function ScopedWorkPanel({
   store,
   openSettings,

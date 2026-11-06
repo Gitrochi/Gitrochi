@@ -32,6 +32,8 @@ export class CIStore extends Observable {
   deployments = new Map<number, CIDeployment[]>();
   /** 커밋 SHA → 그 커밋의 가장 최근 파이프라인(그래프·PR 목록의 CI 표시) */
   bySha = new Map<string, CIPipeline>();
+  /** When the runs last arrived, in seconds, for "Showing data from 12m ago" after a refresh fails */
+  loadedAt: number | null = null;
   private badgeTimer: ReturnType<typeof setTimeout> | null = null;
   /** 진행 중인 버튼 동작(같은 버튼을 두 번 누르지 않게) */
   busy = new Set<string>();
@@ -57,6 +59,7 @@ export class CIStore extends Observable {
     this.jobs = new Map();
     this.deployments = new Map();
     this.state = { kind: "idle" };
+    this.loadedAt = null;
     this.emit();
   }
 
@@ -111,6 +114,7 @@ export class CIStore extends Observable {
     for (const p of list) if (!map.has(p.sha)) map.set(p.sha, p);
     this.bySha = map;
     this.state = { kind: "loaded" };
+    this.loadedAt = Date.now() / 1000;
     this.emit();
   }
 

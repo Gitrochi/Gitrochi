@@ -1,240 +1,209 @@
 import SwiftUI
 import AppKit
 
-/// The Actions page's run list: GitLab pipelines or GitHub Actions runs, newest first or grouped by branch.
+/// The Actions page's list column, as the Actions board draws it: search with the sort and filter menu (order, all
+/// branches or this one, grouping), the segments that count what failed, runs or waits, and two-line rows.
 /// A row shows the run on the right (CIRunDetailView). (Windows: features/ci-panel/ui/CIPanel.tsx)
 struct CIPanel: View {
     @Environment(RepoStore.self) private var store
-    @Environment(\.openSettings) private var openSettings
-    /// 보기: 시간순 목록 / 브랜치별(접은 브랜치는 이 창에서만 기억)
+    @Environment(\.locale) private var locale
+    /// Rows in one list, or under their branches (the folded branches are remembered for this window only)
     @AppStorage("ciGroupByBranch") private var byBranch = false
+    @AppStorage("ciOldestFirst") private var oldestFirst = false
     @ViewState private var collapsedRefs: Set<String> = []
     @ViewState private var scrollTarget: Int?
+    @ViewState private var search = ""
+    @ViewState private var segment = ActionsPage.Segment.all
+
+    private var host: String { store.target?.host ?? "" }
 
     var body: some View {
-        if let target = store.target {
-            VStack(spacing: 0) {
-                header(target)
-                list(target)
+        @Bindable var store = store
+        let target = store.target
+        VStack(alignment: .leading, spacing: 10) {
+            if case .failed(let message) = store.ciState, !store.ciPipelines.isEmpty {
+                HostedListNotice(title: String(localized: "Couldn't reach \(host)"), caption: hostedListAge(store.ciLoadedAt, locale: locale)) {
+                    Task { await store.loadCI() }
+                }
+                .help(message)
             }
-            .task(id: "\(target.host)/\(target.path)/\(store.ciCurrentBranchOnly)") { await poll() }
-            .onChange(of: AccountStore.shared.revision) { _, _ in Task { await store.loadCI() } }
-            .onChange(of: store.ciFocus, initial: true) { _, _ in reveal() }
-            .onChange(of: store.ciPipelines) { _, _ in reveal() }
-        } else {
-            VStack(spacing: 8) {
-                Image(systemName: "bolt.horizontal.circle").font(.largeTitle).foregroundStyle(.tertiary)
-                Text("You can view and run pipelines in repositories with a GitHub or GitLab remote.")
-                    .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-    }
-
-    /// 처음 읽고, 실행 중인 게 있으면 8초·없으면 45초마다 새로 고친다(고른 실행의 작업도)
-    private func poll() async {
-        await store.loadCI()
-        while !Task.isCancelled {
-            let active = store.ciPipelines.contains { $0.status.isActive }
-            try? await Task.sleep(for: .seconds(active ? 8 : 45))
-            if Task.isCancelled { break }
-            await store.loadCI(silent: true)
-            if let p = store.ciPipelines.first(where: { $0.id == store.ciSelected }), p.status.isActive || store.ciJobs[p.id] == nil {
-                await store.loadJobs(p, silent: true)
-            }
-        }
-    }
-
-    /// Styled like the Pull requests and Issues lists' section header
-    private func header(_ target: RepoTarget) -> some View {
-        HStack(spacing: 8) {
-            Text(target.provider == .gitlab ? "Pipelines" : "Runs")
-            if !store.ciPipelines.isEmpty { Text(verbatim: "\(store.ciPipelines.count)") }
-            if store.ciState == .loading { ProgressView().controlSize(.mini) }
-            Spacer()
-            Menu {
-                Picker("", selection: $byBranch) {
-                    Label("List", systemImage: "list.bullet").tag(false)
-                    Label("By branch", systemImage: "arrow.triangle.branch").tag(true)
+            HostedListSearch(prompt: String(localized: "Search runs"), text: $search, menuTitle: menuTitle) {
+                Picker("Sort", selection: $oldestFirst) {
+                    Text("Newest first").tag(false)
+                    Text("Oldest first").tag(true)
                 }
                 .pickerStyle(.inline)
-                .labelsHidden()
-            } label: {
-                Image(systemName: byBranch ? "arrow.triangle.branch" : "list.bullet")
+                // the branch filter lives here, not in a control of its own
+                Picker("Branch", selection: $store.ciCurrentBranchOnly) {
+                    Text("All branches").tag(false)
+                    Text(verbatim: store.ciCurrentRef ?? String(localized: "Current branch")).tag(true)
+                }
+                .pickerStyle(.inline)
+                Divider()
+                Toggle("Group by branch", isOn: $byBranch)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Show runs as a list or grouped by branch")
-            .accessibilityLabel("Show runs as a list or grouped by branch")
-            Button { store.ciCurrentBranchOnly.toggle() } label: {
-                Image(systemName: store.ciCurrentBranchOnly ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-            }
-            .buttonStyle(.borderless)
-            .help(store.ciCurrentBranchOnly ? "Show all branches" : "Show only the current branch (\(store.ciCurrentRef ?? "-"))")
-            Button { Task { await store.loadCI() } } label: { Image(systemName: "arrow.clockwise") }
-                .buttonStyle(.borderless)
-                .help("Refresh")
-            Button { store.sheet = .runPipeline } label: { Image(systemName: "play.circle") }
-                .buttonStyle(.borderless)
-                .disabled(store.ciAccess == nil || store.ciBusy.contains("run"))
-                .help(target.provider == .gitlab ? "Run new pipeline (branch, variables)" : "Run workflow")
+            HostedListSegments(options: ActionsPage.Segment.allCases.map { segment in
+                (value: segment, title: Self.title(segment), count: count(segment))
+            }, selection: segment) { segment = $0 }
+            if let target { list(target) }
         }
-        .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
-        .padding(.horizontal, 10)
-        .frame(height: 26)
-        .padding(.top, 6)
+        .padding(12)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Run list")
+        .onChange(of: store.ciSelected, initial: true) { _, id in show(id) }
+    }
+
+    private var menuTitle: String {
+        let order = oldestFirst ? String(localized: "Oldest first") : String(localized: "Newest first")
+        let branch = store.ciCurrentBranchOnly ? store.ciCurrentRef ?? String(localized: "Current branch") : String(localized: "All branches")
+        return String(localized: "Sort and filter") + ": " + order + ", " + branch
+    }
+
+    private static func title(_ segment: ActionsPage.Segment) -> String {
+        switch segment {
+        case .all: return String(localized: "All")
+        case .failed: return String(localized: "Failed")
+        case .running: return String(localized: "Running")
+        case .waiting: return String(localized: "Waiting")
+        }
+    }
+
+    /// Failed, Running and Waiting count what they hold; All never does, and nothing counts zero
+    private func count(_ segment: ActionsPage.Segment) -> String? {
+        guard segment != .all else { return nil }
+        let count = ActionsPage.count(store.ciPipelines, segment)
+        return count > 0 ? String(count) : nil
     }
 
     @ViewBuilder
     private func list(_ target: RepoTarget) -> some View {
-        switch store.ciState {
-        case .authorizationRequired:
-            if let account = store.pendingCredentialAccount {
-                SavedAccountAccessNotice(account: account) { Task { await store.loadCI() } }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        let runs = ActionsPage.visible(store.ciPipelines, segment: segment, search: search, oldestFirst: oldestFirst, title: store.ciTitle)
+        if store.ciPipelines.isEmpty {
+            switch store.ciState {
+            case .failed(let message):
+                HostedListEmpty(symbol: "xmark.circle.fill", title: String(localized: "Couldn't reach \(host)"), caption: message,
+                                actionTitle: String(localized: "Retry"), failed: true) { Task { await store.loadCI() } }
+            case .loaded:
+                HostedListEmpty(symbol: "play.circle",
+                                title: store.ciCurrentBranchOnly ? String(localized: "No runs for this branch.") : String(localized: "No runs yet."),
+                                actionTitle: store.ciCurrentBranchOnly ? String(localized: "Show all branches") : nil) { store.ciCurrentBranchOnly = false }
+            default:
+                HostedListLoading(caption: String(localized: "Loading runs…"))
+                Spacer(minLength: 0)
             }
-        case .needsAccount:
-            if let account = store.hostingAccount {
-                SavedAccountAccessNotice(account: account) { Task { await store.loadCI() } }.padding(12)
-            } else {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Connect a \(target.provider == .gitlab ? String(localized: "Self-hosted GitLab (\(target.host))") : "GitHub") account to see pipelines.")
-                    .font(.callout).foregroundStyle(.secondary)
-                Button("Connect account…") { openSettings() }.buttonStyle(.link)
+        } else if runs.isEmpty {
+            HostedListEmpty(symbol: "magnifyingglass", title: String(localized: "No runs match this filter."),
+                            actionTitle: search.isEmpty ? String(localized: "Show all runs") : String(localized: "Clear search")) {
+                search = ""
+                segment = .all
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-        case .failed(let m):
-            VStack(alignment: .leading, spacing: 8) {
-                Text(m).font(.caption).foregroundStyle(.red).textSelection(.enabled)
-                Button("Try again") { Task { await store.loadCI() } }.buttonStyle(.link)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        case .loaded where store.ciPipelines.isEmpty:
-            Text(store.ciCurrentBranchOnly ? "No runs for this branch." : "No runs yet.")
-                .font(.callout).foregroundStyle(.secondary)
-                .padding(12)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        default:
+        } else {
+            let common = ActionsPage.commonWorkflow(store.ciPipelines)
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
+                    LazyVStack(alignment: .leading, spacing: 4) {
                         if byBranch {
-                            ForEach(CIBranchGroup.group(store.ciPipelines)) { g in
+                            ForEach(CIBranchGroup.group(runs)) { g in
                                 branchHeader(g)
                                 if !collapsedRefs.contains(g.ref) {
-                                    ForEach(g.pipelines) { p in row(p, target: target, showRef: false).padding(.leading, 14) }
+                                    ForEach(g.pipelines) { p in row(p, target: target, showRef: false, common: common).padding(.leading, 14) }
                                 }
                             }
                         } else {
-                            ForEach(store.ciPipelines) { p in row(p, target: target, showRef: true) }
+                            ForEach(runs) { p in row(p, target: target, showRef: true, common: common) }
                         }
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.bottom, 6)
                 }
                 .onChange(of: scrollTarget, initial: true) { _, id in
                     guard let id else { return }
-                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    // no anchor: a row already in view stays where it is
+                    withAnimation { proxy.scrollTo(id) }
                     scrollTarget = nil
                 }
             }
         }
     }
 
-    private func row(_ p: CIPipeline, target: RepoTarget, showRef: Bool) -> some View {
-        PipelineRow(pipeline: p, provider: target.provider, showRef: showRef)
-            .sidebarRow()
-            .background(store.ciSelected == p.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
-            .contentShape(Rectangle())
-            .onTapGesture { store.selectRun(p) }
-            .focusable()
-            .onKeyPress(.return) { store.selectRun(p); return .handled }
-            .onKeyPress(.space) { store.selectRun(p); return .handled }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(store.ciSelected == p.id ? [.isButton, .isSelected] : [.isButton])
-            .accessibilityAction { store.selectRun(p) }
-            .id(p.id)
+    private func row(_ p: CIPipeline, target: RepoTarget, showRef: Bool, common: String?) -> some View {
+        let selected = store.ciSelected == p.id
+        let secondary = HostedList.secondary(selected: selected)
+        let manual = (store.ciJobs[p.id] ?? []).filter(\.canPlay).count
+        // a waiting run says so in words, so it carries no separate status icon
+        let waiting = ActionsPage.segment(p.status) == .waiting || manual > 0
+        return HostedListRow(selected: selected) { store.selectRun(p) } content: {
+            HostedListRowTitle(title: store.ciTitle(p), when: p.created.map { ListDate.when($0, locale: locale) }, selected: selected)
+            HStack(spacing: 6) {
+                // the usual workflow goes without saying; any other one is named before the run
+                (Text(verbatim: p.name.isEmpty || p.name == common ? "" : p.name + " · ") + Text(verbatim: ciRunName(p, target.provider)).font(.system(size: 11, design: .monospaced)))
+                    .font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1)
+                if waiting {
+                    HostedListChip(title: String(localized: "Waiting"), symbol: "clock", selected: selected, tone: .waiting)
+                        .help(manual > 0 ? String(localized: "\(manual) jobs waiting to be run manually") : p.status.title)
+                } else {
+                    CIStatusIcon(status: p.status, size: 11)
+                }
+                if store.ciBusy.contains("pipeline:\(p.id)") { ProgressView().controlSize(.mini) }
+                Spacer(minLength: 6)
+                // the branch on the right is cut last, and from the front
+                if showRef { Text(verbatim: p.ref).font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).truncationMode(.head).layoutPriority(1) }
+            }
+        }
+        .contextMenu { CIRunMenu(pipeline: p, provider: target.provider) }
+        .accessibilityAction { store.selectRun(p) }
+        .id(p.id)
     }
 
     private func branchHeader(_ g: CIBranchGroup) -> some View {
         let open = !collapsedRefs.contains(g.ref)
-        return HStack(spacing: 6) {
-            Image(systemName: "chevron.down")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-                .rotationEffect(.degrees(open ? 0 : -90))
-                .frame(width: 10)
-            CIStatusIcon(status: g.pipelines[0].status, size: 11)
-            Text(g.ref).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
-            Spacer()
-            Text(verbatim: "\(g.pipelines.count)").font(.caption).foregroundStyle(.secondary)
+        return Button { if open { collapsedRefs.insert(g.ref) } else { collapsedRefs.remove(g.ref) } } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.down")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(HostedList.caption)
+                    .rotationEffect(.degrees(open ? 0 : -90))
+                    .frame(width: 10)
+                CIStatusIcon(status: g.pipelines[0].status, size: 11)
+                Text(verbatim: g.ref).font(.system(size: 13)).lineLimit(1).truncationMode(.head)
+                Spacer()
+            }
+            .padding(.horizontal, 10).frame(height: 28)
+            .contentShape(Rectangle())
         }
-        .sidebarRow()
-        .contentShape(Rectangle())
-        .onTapGesture { if open { collapsedRefs.insert(g.ref) } else { collapsedRefs.remove(g.ref) } }
+        .buttonStyle(.plain)
         .help("\(g.ref) · \(g.pipelines[0].status.title)")
     }
 
-    /// A commit's CI icon asked for this pipeline: open its branch group, select the run and bring it into view
-    private func reveal() {
-        guard let id = store.ciFocus, let p = store.ciPipelines.first(where: { $0.id == id }) else { return }
+    /// The run the page selected (a row, or a commit's CI icon): open its branch group, drop a filter that hides it and
+    /// bring it into view
+    private func show(_ id: Int?) {
+        guard let id, let p = store.ciPipelines.first(where: { $0.id == id }) else { return }
         collapsedRefs.remove(p.ref)
-        store.selectRun(p)
-        scrollTarget = id
-        store.ciFocus = nil
-    }
-}
-
-/// 파이프라인 한 줄: 상태 · 제목 · 브랜치 · 시간. 버튼은 오른쪽 상세와 우클릭 메뉴에 있다.
-private struct PipelineRow: View {
-    @Environment(RepoStore.self) private var store
-    let pipeline: CIPipeline
-    let provider: Provider
-    /// 브랜치별 보기에서는 묶음 머리에 브랜치가 있으니 줄마다 다시 적지 않는다
-    var showRef = true
-
-    var body: some View {
-        let p = pipeline
-        let manual = (store.ciJobs[p.id] ?? []).filter(\.canPlay).count
-        HStack(alignment: .center, spacing: 6) {
-            CIStatusIcon(status: p.status)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(store.ciTitle(p)).fontWeight(.medium).lineLimit(2)
-                Text(p.status.title).font(.caption2).foregroundStyle(p.status.color)
-                HStack(spacing: 4) {
-                    if provider == .github, !p.name.isEmpty { Text(p.name).lineLimit(1) }
-                    Text("#\(p.number)").monospacedDigit()
-                    if showRef { Text(p.ref).font(.caption.monospaced()).lineLimit(1) }
-                    if let d = p.created { Text(Fmt.short(d)).lineLimit(1) }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-            if manual > 0 {
-                HStack(spacing: 2) {
-                    Image(systemName: "play.fill")
-                    Text(verbatim: "\(manual)")
-                }
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.orange)
-                .help("\(manual) jobs waiting to be run manually")
-            }
-            if store.ciBusy.contains("pipeline:\(p.id)") { ProgressView().controlSize(.mini) }
+        if !ActionsPage.visible(store.ciPipelines, segment: segment, search: search, oldestFirst: oldestFirst, title: store.ciTitle).contains(where: { $0.id == id }) {
+            search = ""
+            segment = .all
         }
-        .contextMenu { CIRunMenu(pipeline: p, provider: provider) }
+        scrollTarget = id
     }
 }
 
-/// The run's commands, for the list's context menu
+/// Runs are written "run #318", never a bare number (docs/design.md, Text); GitLab calls them pipelines
+func ciRunName(_ p: CIPipeline, _ provider: Provider) -> String {
+    provider == .gitlab ? String(localized: "pipeline #\(String(p.number))") : String(localized: "run #\(String(p.number))")
+}
+
+extension CIStatus {
+    /// The tone a status badge takes; a status never uses the accent
+    var tone: StudioStyle.Tone {
+        switch self {
+        case .success: return .passed
+        case .failed: return .failed
+        case .created, .waiting, .pending, .running, .manual, .scheduled: return .waiting
+        case .canceled, .skipped, .neutral, .unknown: return .neutral
+        }
+    }
+}
+
+/// The run's commands, for the list's context menu and the detail's More menu
 struct CIRunMenu: View {
     @Environment(RepoStore.self) private var store
     let pipeline: CIPipeline

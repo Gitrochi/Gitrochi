@@ -1,14 +1,15 @@
-import { Circle, CircleCheck, CircleDashed, CirclePause, CircleSlash, CircleX, Clock, Hand, SkipForward } from "lucide-react";
+import { Circle, CircleCheck, CircleDashed, CirclePause, CircleSlash, CircleX, Clock, Hand, RefreshCw, SkipForward } from "lucide-react";
 import type { ReactNode } from "react";
 import { Spinner } from "@/shared/ui";
 import { type CIStatus, statusInfo } from "../model/types";
 
 /** 파이프라인·작업 상태 아이콘(실행 중이면 도는 표시) — 그래프·PR 목록에서도 쓴다 */
-export function CIStatusIcon({ status, size = 14 }: { status: CIStatus; size?: number }) {
+export function CIStatusIcon({ status, size = 14, plain = false }: { status: CIStatus; size?: number; /** Inside a status badge: the badge's colour and no tip of its own */ plain?: boolean }) {
   const info = statusInfo[status];
   let icon: ReactNode;
   switch (status) {
     case "running":
+      if (plain) return <RefreshCw size={size} />;
       return (
         <span data-tip={info.title} style={{ display: "inline-flex", width: size, justifyContent: "center", flex: "none" }}>
           <Spinner size={size - 2} />
@@ -42,6 +43,7 @@ export function CIStatusIcon({ status, size = 14 }: { status: CIStatus; size?: n
     default:
       icon = <Circle size={size} />;
   }
+  if (plain) return <>{icon}</>;
   return (
     <span data-tip={info.title} style={{ color: info.color, display: "inline-flex", flex: "none" }}>
       {icon}

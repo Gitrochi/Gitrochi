@@ -1,9 +1,11 @@
 /* Release and issue workspace. */
 "%@ and %@" = "%1$@, %2$@";
+"%@ fails on %@" = "%1$@: %2$@ 실패";
 "%@ in progress" = "%@ 진행 중";
 "%@ in review" = "%@ 리뷰 중";
 "%@ is on %@. Connect an account to see its pull requests, issues and runs." = "%1$@ 저장소는 %2$@에 있습니다. 계정을 연결하면 풀 리퀘스트, 이슈, 실행을 볼 수 있습니다.";
 "%@ not started" = "%@ 시작 전";
+"%@ passes on %@" = "%1$@: %2$@ 통과";
 "%lld changed files" = "변경된 파일 %1$lld개";
 "%lld comments" = "댓글 %lld개";
 "%lld commits replay on top of %@, newest first." = "커밋 %1$lld개를 %2$@ 위에 다시 쌓습니다. 최신순입니다.";
@@ -11,6 +13,7 @@
 "%lld issues are open in %@." = "%2$@에 열린 이슈가 %1$lld개 있습니다.";
 "%lld new commits" = "새 커밋 %1$lld개";
 "%lld not pushed" = "푸시 안 한 커밋 %1$lld개";
+"%lld of %lld jobs" = "작업 %2$lld개 중 %1$lld개";
 "%lld to pull" = "받을 커밋 %1$lld개";
 "%lld uncommitted files. Stash them above or commit first." = "커밋하지 않은 파일 %1$lld개. 위에서 스태시를 켜거나 먼저 커밋하세요.";
 "%lldh ago" = "%lld시간 전";
@@ -18,10 +21,12 @@
 "1 comment" = "댓글 1개";
 "A comment needs text" = "댓글 내용을 입력하세요";
 "Activity" = "활동";
+"All branches" = "모든 브랜치";
 "All branches…" = "모든 브랜치…";
 "Already in this branch" = "이미 이 브랜치에 있음";
 "Assigned to you" = "내 담당";
 "Back to issues" = "이슈 목록으로";
+"Back to runs" = "실행 목록으로";
 "Choose a base to see the commits that replay." = "기준을 고르면 다시 쌓을 커밋이 보입니다.";
 "Choose the new base" = "새 기준 고르기";
 "Clean up history" = "히스토리 정리";
@@ -33,18 +38,26 @@
 "Create branch for #%@" = "#%@ 브랜치 만들기";
 "Create merge request for #%@…" = "#%@ MR 만들기…";
 "Create pull request for #%@…" = "#%@ PR 만들기…";
+"Failed after %@" = "%@ 후 실패";
+"Failed on %@" = "%@에서 실패";
 "Fast-forward only" = "fast-forward만";
 "Filter repositories" = "저장소 필터";
 "Go" = "이동";
+"Group by branch" = "브랜치별로 묶기";
 "In review" = "리뷰 중";
 "Issue list" = "이슈 목록";
 "Issues assigned to you" = "내 담당 이슈";
+"Jump to first error" = "첫 오류로 이동";
 "Just now" = "방금";
 "Last opened" = "마지막으로 연 저장소";
 "Last opened repository" = "마지막으로 연 저장소";
+"Latest run" = "최근 실행";
 "Loading issues…" = "이슈 불러오는 중…";
+"Loading runs…" = "실행 불러오는 중…";
 "Merge" = "병합";
 "More issue actions" = "이슈 동작 더 보기";
+"More job actions" = "작업 동작 더 보기";
+"More run actions" = "실행 동작 더 보기";
 "Move onto another branch" = "다른 브랜치 위로 옮기기";
 "New base" = "새 기준";
 "New issue…" = "새 이슈…";
@@ -53,6 +66,8 @@
 "No issues match “%@”" = "“%@”에 맞는 이슈가 없습니다";
 "No open issues" = "열린 이슈 없음";
 "No open issues are assigned to you" = "내가 담당한 열린 이슈가 없습니다";
+"No runs match this filter." = "이 조건에 맞는 실행이 없습니다.";
+"No runs on this branch yet" = "이 브랜치에는 아직 실행이 없습니다";
 "Not on the server yet" = "아직 서버에 없음";
 "Not started" = "시작 전";
 "Nothing is due today." = "오늘 마감인 일이 없습니다.";
@@ -64,24 +79,39 @@
 "Opened" = "생성됨";
 "Open…" = "열기…";
 "Overdue · %@" = "기한 지남 · %1$@";
+"Passing for %lld runs" = "%lld회 연속 통과";
 "Pop latest stash" = "가장 최근 stash 꺼내기";
 "Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
 "Pull as configured in git" = "git 설정대로 Pull";
 "Pull options" = "Pull 옵션";
+"Pull request #%@" = "풀 리퀘스트 #%@";
 "Rebase mode" = "리베이스 방식";
 "Recent" = "최근";
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "이 브랜치의 커밋을 새 기준 위에 다시 쌓습니다. 브랜치가 거기서 시작한 것처럼 됩니다.";
 "Review the commits" = "커밋 확인";
+"Run list" = "실행 목록";
+"Run pipeline…" = "파이프라인 실행…";
+"Run workflow…" = "워크플로 실행…";
+"Running · %lld of %lld jobs done" = "실행 중 · 작업 %2$lld개 중 %1$lld개 완료";
 "Search branches and tags" = "브랜치와 태그 검색";
+"Show %lld earlier lines" = "이전 %lld줄 보기";
+"Show all runs" = "모든 실행 보기";
 "Show closed issues" = "닫힌 이슈 보기";
 "Show open issues" = "열린 이슈 보기";
+"Show run" = "실행 보기";
 "Show this branch's issue" = "이 브랜치의 이슈 보기";
+"Show this branch's latest run" = "이 브랜치의 최근 실행 보기";
 "Showing data from %@" = "%@ 데이터를 표시 중";
 "Sort" = "정렬";
+"Sort and filter" = "정렬 및 필터";
 "Start %@ here" = "여기서 %1$@ 시작";
+"Started %@" = "%@ 시작";
 "Stash uncommitted changes and restore them after" = "커밋하지 않은 변경을 스태시했다가 끝나면 되돌리기";
 "Switch branch or repository, open or clone one, or close the tab" = "브랜치나 저장소 전환, 저장소 열기·복제, 탭 닫기";
 "Tasks for today" = "오늘 할 일";
+"This branch" = "이 브랜치";
+"This branch's runs" = "이 브랜치의 실행";
+"Took %@" = "%@ 걸림";
 "Up to date" = "최신 상태";
 "Versions" = "버전";
 "Version" = "버전";
@@ -149,9 +179,12 @@
 "Next match" = "다음 검색 결과";
 "When the merge request merges" = "머지 리퀘스트가 병합되면";
 "When the pull request merges" = "풀 리퀘스트가 병합되면";
+"Wrap long lines" = "긴 줄 줄바꿈";
 "Yesterday" = "어제";
 "choose a new base" = "새 기준을 고르세요";
 "on this branch" = "이 브랜치";
+"pipeline #%@" = "파이프라인 #%@";
+"run #%@" = "실행 #%@";
 "{0} of {1}" = "{1}개 중 {0}";
 "No matches" = "검색 결과 없음";
 "Wrap lines" = "자동 줄바꿈";
@@ -517,7 +550,6 @@
 "Gitrochi update" = "Gitrochi 업데이트";
 "Brings %lld new commits from the remote into the current branch." = "원격의 새 커밋 %1$lld개를 현재 브랜치로 가져옵니다.";
 "Browser" = "브라우저";
-"By branch" = "브랜치별";
 "CI: %@ · %@#%lld — click to open in Actions" = "CI: %1$@ · %2$@#%3$lld — 눌러서 Actions 페이지로";
 "Calls Chat Completions with an OpenAI API key." = "OpenAI API 키로 Chat Completions 를 부릅니다.";
 "Calls Gemini with a Google AI Studio API key." = "Google AI Studio API 키로 Gemini 를 부릅니다.";
@@ -614,7 +646,6 @@
 "Conflict without conflict markers" = "충돌 표시가 없는 충돌";
 "Connect" = "연결";
 "Connect a %@ (%@) account first (Settings > Accounts)." = "%1$@(%2$@) 계정을 먼저 연결하세요(설정 > 계정).";
-"Connect a %@ account to see pipelines." = "파이프라인을 보려면 %1$@ 계정을 연결하세요.";
 "Connect a GitHub account…" = "GitHub 계정 연결…";
 "Connect a self-hosted GitLab (%@) account…" = "사내 GitLab(%1$@) 계정 연결…";
 "Connect account…" = "계정 연결…";
@@ -1117,8 +1148,6 @@
 "Show in graph" = "그래프에서 보기";
 "Show in graph again" = "그래프에 다시 보이기";
 "Show only the current branch" = "현재 브랜치만 보기";
-"Show only the current branch (%@)" = "현재 브랜치(%1$@)만 보기";
-"Show runs as a list or grouped by branch" = "실행 기록을 목록으로 또는 브랜치별로 묶어서 보기";
 "Show terminal" = "터미널 보기";
 "Show this commit in the graph" = "그래프에서 이 커밋 보기";
 "Show uncommitted changes" = "작업 중인 변경 보기";
@@ -1304,7 +1333,6 @@
 "You can also drop a folder onto this window to open it" = "폴더를 이 창에 끌어다 놓아도 열립니다";
 "You can always return to the state before you started (Undo, ⌥⌘Z)." = "시작하기 전 상태로 언제든 되돌릴 수 있습니다(되돌리기 ⌥⌘Z).";
 "You can only clean up commits that are on the current branch '%@'." = "현재 브랜치 '%1$@'에 들어 있는 커밋만 정리할 수 있습니다.";
-"You can view and run pipelines in repositories with a GitHub or GitLab remote." = "GitHub·GitLab 원격이 있는 저장소에서 파이프라인을 보고 실행할 수 있습니다.";
 "You can't cherry-pick onto a remote branch directly." = "원격 브랜치에는 바로 cherry-pick 할 수 없습니다.";
 "You can't clean up commits right now (%@)." = "%1$@인 동안에는 커밋을 정리할 수 없습니다.";
 "You're not logged in to gh. Run `gh auth login` in a terminal first." = "gh 에 로그인돼 있지 않습니다. 터미널에서 `gh auth login` 을 먼저 하세요.";
@@ -2248,7 +2276,6 @@
 "Select a run" = "실행을 선택하세요";
 "Choose a run to see its jobs and read their logs." = "실행을 고르면 작업과 로그를 볼 수 있습니다.";
 
-"Run #%lld" = "실행 #%1$lld";
 "%lld jobs waiting to be run manually" = "수동 실행을 기다리는 작업 %1$lld개";
 "Reset to default layout" = "기본 레이아웃으로 되돌리기";
 "Drag to resize the column" = "끌어서 칸 너비 조정";
@@ -3127,7 +3154,6 @@
 "Subgroup owners can manage this subgroup's members and settings." = "하위 그룹 소유자는 해당 하위 그룹의 구성원과 설정을 관리할 수 있습니다.";
 
 // Pipeline and request workspaces
-"Loaded jobs" = "불러온 작업";
 "No changed files" = "변경된 파일이 없습니다";
 "Checks are unavailable until the request's commit is known." = "리퀘스트의 커밋을 확인해야 검사 결과를 볼 수 있습니다.";
 "Multi-repository CLI workflows" = "여러 저장소 CLI 작업";

@@ -155,30 +155,3 @@ struct RepositoryMyWorkPanel: View {
         if let url = URL(string: string) { NSWorkspace.shared.open(url) }
     }
 }
-/// Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page
-struct ActionsWorkspacePanel: View {
-    @Environment(RepoStore.self) private var store
-    @Environment(\.openSettings) private var openSettings
-    var body: some View {
-        if store.target != nil {
-            AdaptiveWorkbenchSplit(listWidth: 300) {
-                CIPanel().background(Color(nsColor: .windowBackgroundColor))
-            } detail: {
-                Group {
-                    if let p = store.ciPipelines.first(where: { $0.id == store.ciSelected }) {
-                        CIRunDetailView(pipeline: p)
-                    } else {
-                        ContentUnavailableView("Select a run", systemImage: "bolt.horizontal.circle",
-                                               description: Text("Choose a run to see its jobs and read their logs."))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                }.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-        } else {
-            VStack(spacing: 14) {
-                ContentUnavailableView("No hosting remote", systemImage: "bolt.horizontal.circle", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Open repository…") { store.presentOpenPanel() }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-    }
-}

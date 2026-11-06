@@ -201,15 +201,24 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // a row selects the run; a job shows its log beside the jobs
     host.querySelector<HTMLElement>('.ci-run[data-pipeline="1"]')!.click(); await pause(); await pause();
     check(store.ciSelected === 1 && host.querySelector(".ci-run-detail")?.textContent?.includes("Fixture run"), "Selecting a run did not show it");
-    check(!!host.querySelector(".ci-job-summary") && !!host.querySelector(".ci-stage-group"), "Run status summary or stage hierarchy is missing");
+    check(host.querySelector(".ci-run-detail .ci-run-head .status-pill") && host.querySelector(".ci-run-detail .ci-run-which")?.textContent === `CI · ${t("run #{0}", "12")}`, "The run header must name the workflow and the run and show its state");
+    check(host.querySelector(".ci-job-group-title")?.textContent === `${t("Passed")} 1`, "The jobs must be grouped by result with their count");
+    // counts only on the segments that need attention or are live; nothing failed, runs or waits here
+    check([...host.querySelectorAll(".ci-runs .hosted-segments button")].map((b) => b.textContent?.trim()).join("|") === [t("All"), t("Failed"), t("Running"), t("Waiting")].join("|"), "The run filters must be All, Failed, Running and Waiting, without counts of zero");
+    // the branch filter lives in the list's sort and filter menu
+    host.querySelector<HTMLButtonElement>(".ci-runs .hosted-sort")!.click(); await pause();
+    check([t("Newest first"), t("All branches"), t("Group by branch")].every((label) => [...document.querySelectorAll(".menu .menu-item")].some((item) => item.textContent?.trim() === label)), "The sort and filter menu must hold the order, the branch filter and the grouping");
+    window.dispatchEvent(new MouseEvent("mousedown")); await pause();
     host.querySelector<HTMLButtonElement>(".ci-job-select")!.click(); await pause(); await pause(); await pause();
     check(host.querySelector(".ci-log-text")?.textContent?.includes("build passed"), "Job log preview missing");
     check(host.querySelector(".ci-job-select")?.getAttribute("aria-pressed") === "true", "Selected job is not accessible");
-    host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
+    check(host.querySelector(".ci-log-line .ci-log-number")?.textContent === "1", "Log lines must be numbered");
+    host.querySelector<HTMLButtonElement>('button[aria-label="' + t("More job actions") + '"]')!.click(); await pause();
+    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === t("Copy redacted log"))!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
     check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);
-    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, its list column with comment count, avatar and the one counted filter, the assigned summary, issue detail with Markdown, details, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
+    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, its list column with comment count, avatar and the one counted filter, the assigned summary, issue detail with Markdown, details, composer, close confirmation and the create/edit dialog, and Actions with grouped jobs, uncounted quiet filters, the branch filter in the sort menu and a bounded redacted log passed`];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {
