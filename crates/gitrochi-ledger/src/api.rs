@@ -35,7 +35,7 @@ pub enum Caller {
 }
 
 /// Every method, with the callers allowed to use it.
-pub const METHODS: [(&str, &[Caller]); 42] = [
+pub const METHODS: [(&str, &[Caller]); 43] = [
     ("info", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("rev", &[Caller::App, Caller::Agent, Caller::Hook]),
     ("state", &[Caller::App, Caller::Agent]),
@@ -72,6 +72,7 @@ pub const METHODS: [(&str, &[Caller]); 42] = [
     ("integration_status", &[Caller::App]),
     ("integration_install", &[Caller::App]),
     ("integration_remove", &[Caller::App]),
+    ("integration_mcp", &[Caller::App]),
     ("track", &[Caller::App]),
     ("hub_share", &[Caller::App]),
     ("prompt_create", &[Caller::App, Caller::Hook]),
@@ -416,6 +417,9 @@ pub fn dispatch(db: &Arc<Db>, caller: Caller, method: &str, args: &Value) -> Res
         }
         "integration_status" | "integration_install" | "integration_remove" => {
             crate::integrations::app_call(&db.path, method, args, db.newer_schema().is_some())
+        }
+        "integration_mcp" => {
+            crate::integrations::app_mcp(&db.path, args, db.newer_schema().is_some())
         }
         "projects" => db.read(|c| Ok(json!({"projects": baseline::projects(c)?}))),
         "hub_share" => crate::hub::share(db, args, now),

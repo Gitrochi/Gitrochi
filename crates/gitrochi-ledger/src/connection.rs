@@ -49,6 +49,18 @@ pub struct McpCheck {
     pub command: Option<CommandCheck>,
 }
 
+impl McpCheck {
+    /// Registered, with a command that can deliver. A registration without a local command
+    /// (a remote server) cannot be checked, so it counts as working.
+    pub fn works(&self) -> bool {
+        self.registered
+            && self
+                .command
+                .as_ref()
+                .is_none_or(|command| classify_command(command).is_none())
+    }
+}
+
 /// Additive fields of the integrate status.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

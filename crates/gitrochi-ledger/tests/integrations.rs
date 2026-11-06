@@ -487,3 +487,197 @@ fn app_setup_runs_hooks_from_the_stable_command_and_keeps_it_current() {
         assert_eq!(refused.unwrap_err().code, "NOT_ALLOWED", "{method}");
     }
 }
+
+/// A client's own `mcp` command as the real ones behave: it keeps one server, `add` refuses a second one and `remove` a
+/// missing one, and every call is logged.
+#[cfg(unix)]
+fn fake_client(dir: &TempDir, client: &str, config: &Path) -> (PathBuf, PathBuf) {
+    use std::os::unix::fs::PermissionsExt;
+    let script = dir.join(&format!("fake-{client}"));
+    let log = dir.join(&format!("{client}.log"));
+    let (config, log_path) = (config.display(), log.display());
+    let entry = if client == "claude" {
+        r#"{"mcpServers":{"gitrochi-ledger":{"command":"%s","args":["%s","%s","%s"]}}}"#
+    } else {
+        r#"[mcp_servers.gitrochi-ledger]\ncommand = "%s"\nargs = ["%s", "%s", "%s"]\n"#
+    };
+    std::fs::write(
+        &script,
+        format!(
+            r#"#!/bin/sh
+printf '%s\n' "$*" >> '{log_path}'
+case "$2" in
+add)
+  [ ! -e '{config}' ] || {{ echo 'MCP server gitrochi-ledger already exists in user config' >&2; exit 1; }}
+  while [ "$1" != "--" ]; do shift; done
+  shift
+  printf '{entry}' "$1" "$2" "$3" "$4" > '{config}'
+  ;;
+remove)
+  [ -e '{config}' ] || {{ echo 'No MCP server named gitrochi-ledger' >&2; exit 1; }}
+  rm '{config}'
+  ;;
+esac
+"#
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    (script, log)
+}
+
+#[cfg(unix)]
+fn client_calls(log: &Path) -> Vec<String> {
+    std::fs::read_to_string(log)
+        .unwrap_or_default()
+        .lines()
+        .map(str::to_string)
+        .collect()
+}
+
+#[cfg(unix)]
+#[test]
+fn set_up_asks_the_client_to_register_and_leaves_a_registration_that_works() {
+    for (client, scope, file) in [
+        ("claude", "--scope user ", "claude.json"),
+        ("codex", "", "config.toml"),
+    ] {
+        let dir = TempDir::new("integration-mcp");
+        let db = dir.join("ledger.sqlite3");
+        let stable = dir.join("data").join("bin").join("gitrochi-ledger");
+        let mcp_config = dir.join(file);
+        let (program, log) = fake_client(&dir, client, &mcp_config);
+        let base = json!({"client": client, "config": dir.join("hooks.json"), "mcpConfig": mcp_config,
+                          "path": stable, "program": program, "bundled": this_cli()});
+        let with = |action: &str| {
+            let mut args = base.clone();
+            args["action"] = json!(action);
+            args
+        };
+        let schemas = Schemas::load();
+
+        // Nothing registered: the client adds the stable command, told its database as the hooks are.
+        let added = app(&db, "integration_mcp", with("register"));
+        schemas.check("integration-status.schema.json", &added);
+        let add = format!(
+            "mcp add {scope}gitrochi-ledger -- {} --db {} mcp",
+            stable.display(),
+            db.display()
+        );
+        assert_eq!(client_calls(&log), std::slice::from_ref(&add));
+        assert_eq!(added["mcp"]["registered"], true);
+        assert_eq!(added["mcp"]["command"]["path"], json!(stable));
+        assert_eq!(added["mcp"]["command"]["sameDatabase"], true);
+        assert_eq!(added["mcp"]["command"]["canWrite"], true);
+        assert_eq!(added["health"], "ok");
+        assert!(
+            stable.is_file(),
+            "the registration names a file that exists"
+        );
+
+        // Registering again is free: a registration that works stays, whoever made it.
+        app(&db, "integration_mcp", with("register"));
+        assert_eq!(client_calls(&log).len(), 1, "a working entry is left alone");
+
+        // A registration that cannot work is replaced, which takes a remove first.
+        let gone = dir.join("moved").join("gitrochi-ledger");
+        let broken = std::fs::read_to_string(&mcp_config)
+            .unwrap()
+            .replace(stable.to_str().unwrap(), gone.to_str().unwrap());
+        std::fs::write(&mcp_config, broken).unwrap();
+        let before = app(&db, "integration_status", base.clone());
+        assert_eq!(before["health"], "missing_command");
+        let repaired = app(&db, "integration_mcp", with("register"));
+        let remove = format!("mcp remove {scope}gitrochi-ledger");
+        assert_eq!(
+            client_calls(&log)[1..],
+            [remove.clone(), add.clone()],
+            "add refuses a server that exists"
+        );
+        assert_eq!(repaired["mcp"]["command"]["path"], json!(stable));
+        assert_eq!(repaired["health"], "ok");
+
+        // Remove undoes it, and has nothing to do the second time.
+        let removed = app(&db, "integration_mcp", with("remove"));
+        assert_eq!(&client_calls(&log)[3..], std::slice::from_ref(&remove));
+        assert_eq!(removed["mcp"]["registered"], false);
+        assert_eq!(removed["health"], "not_installed");
+        app(&db, "integration_mcp", with("remove"));
+        assert_eq!(
+            client_calls(&log).len(),
+            4,
+            "remove refuses a missing server"
+        );
+    }
+}
+
+#[test]
+fn a_client_that_cannot_register_says_why() {
+    let dir = TempDir::new("integration-mcp-fail");
+    let db = dir.join("ledger.sqlite3");
+    let stable = dir
+        .join("data")
+        .join("bin")
+        .join(format!("gitrochi-ledger{}", std::env::consts::EXE_SUFFIX));
+    let mcp_config = dir.join("claude.json");
+    let config = dir.join("settings.json");
+    let args = |program: Value, action: &str| {
+        json!({"client": "claude", "config": config, "mcpConfig": mcp_config, "path": stable, "action": action,
+               "program": program, "bundled": this_cli(), "db": db})
+    };
+    let call = |method: &str, args: &Value| {
+        gitrochi_ledger::api::call_as(gitrochi_ledger::api::Caller::App, method, args)
+    };
+
+    // Not installed, as with a client that only has a desktop app: the person is told, and can copy the command.
+    let missing = dir.join("no-such-client");
+    let error = call("integration_mcp", &args(json!(missing), "register")).unwrap_err();
+    assert_eq!(error.code, "NOT_FOUND");
+    assert!(
+        error.message.contains("Claude Code") && error.message.contains("not found"),
+        "{}",
+        error.message
+    );
+    assert!(stable.is_file(), "the command to copy names this file");
+    assert!(!config.exists(), "the hooks are not this method's business");
+
+    // Only a person's app may run a program.
+    let agent = gitrochi_ledger::api::call_as(
+        gitrochi_ledger::api::Caller::Agent,
+        "integration_mcp",
+        &args(json!("/bin/sh"), "register"),
+    )
+    .unwrap_err();
+    assert_eq!(agent.code, "NOT_ALLOWED", "{}", agent.message);
+    let unknown = call("integration_mcp", &args(json!(missing), "replace")).unwrap_err();
+    assert_eq!(unknown.code, "INVALID_ARGUMENT");
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let script = dir.join("failing-client");
+        let write = |body: &str| {
+            std::fs::write(&script, format!("#!/bin/sh\n{body}\n")).unwrap();
+            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        };
+        write("echo 'Config is read-only' >&2\necho 'second line' >&2\nexit 1");
+        let refused = call("integration_mcp", &args(json!(script), "register")).unwrap_err();
+        assert_eq!(refused.code, "CLIENT_FAILED");
+        assert!(
+            refused.message.contains("Config is read-only"),
+            "{}",
+            refused.message
+        );
+        assert!(
+            !refused.message.contains("second line"),
+            "{}",
+            refused.message
+        );
+
+        // It says it worked, yet the entry is not where the status reads it: the row must not pretend.
+        write("exit 0");
+        let lost = call("integration_mcp", &args(json!(script), "register")).unwrap_err();
+        assert_eq!(lost.code, "CLIENT_FAILED");
+        assert!(lost.message.contains("did not keep"), "{}", lost.message);
+    }
+}
