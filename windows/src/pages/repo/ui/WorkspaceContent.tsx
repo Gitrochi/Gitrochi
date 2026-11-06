@@ -1,7 +1,6 @@
-import { lazy, Suspense, useEffect } from "react";
-import { DiffView } from "@/widgets/diff-viewer";
-import { Inspector, IssueDetail } from "@/widgets/inspector";
-import { destinationTitle, FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
+import { lazy, Suspense } from "react";
+import { IssueDetail } from "@/widgets/inspector";
+import { destinationTitle, FlowPanel, IssueListSection } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
@@ -11,6 +10,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
+import { PullRequestsWorkspace } from "./PullRequestsWorkspace";
 
 // The Ledger is a preview page: its code loads the first time it opens
 const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
@@ -58,26 +58,6 @@ export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; ope
     <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
     <div className="workspace-pr-detail col">
       {detail ? <IssueDetail store={store} detail={detail} /> : <Empty title={t("Select an issue")} detail={t("Search the list, then read the conversation and reply here.")} />}
-    </div>
-  </div>;
-}
-
-function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
-  useObserve(store);
-  const target = store.target;
-  const targetKey = target ? `${target.provider}:${target.host}/${target.path}` : "";
-  useEffect(() => { if (store.target) void store.loadPullRequests(); }, [store, targetKey]);
-  if (!target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
-  const selected = store.selection?.kind === "pullRequest";
-  const diff = selected && store.diffSource?.kind === "review";
-  return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><PullRequestSection store={store} target={target} openSettings={openSettings} onPage /></div>
-    <div className="workspace-pr-detail col">
-      {!selected ? <Empty title={t("Select a pull request")} detail={t("Search the list, then review the conversation, files and merge checks here.")} /> : <>
-        {/* 파일을 확인하는 동안에도 대화를 유지해 작성 중인 댓글을 보존한다. */}
-        <div className="workspace-pr-conversation col grow" style={{ display: diff ? "none" : "flex" }}><Inspector store={store} /></div>
-        {diff && <><header className="row" style={{ padding: 10, borderBottom: "1px solid var(--border)" }}><Button onClick={() => store.closeDiff()}>{t("Back to conversation")}</Button></header><DiffView store={store} /></>}
-      </>}
     </div>
   </div>;
 }

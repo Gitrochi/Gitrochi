@@ -263,7 +263,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
   await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
-  await step("PR timeline, keyboard tabs, checks and retained review drafts", prConversationSelfTest);
+  await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);

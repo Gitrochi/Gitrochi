@@ -86,10 +86,12 @@ struct CollaborationInboxDetail {
         if c.target.provider == .github {
             let head = obj(p, "head"), base = obj(p, "base")
             guard number(p, "number") > 0, !text(head, "sha").isEmpty else { throw fail(String(localized: "The server returned an unexpected response.")) }
-            return PullRequest(number: number(p, "number"), title: text(p, "title"), author: text(obj(p, "user"), "login"), source: text(head, "ref"), target: text(base, "ref"), url: text(p, "html_url"), isDraft: bool(p, "draft"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "body"), headSHA: text(head, "sha"), fromFork: text(obj(head, "repo"), "full_name").lowercased() != c.target.path.lowercased())
+            return PullRequest(number: number(p, "number"), title: text(p, "title"), author: text(obj(p, "user"), "login"), source: text(head, "ref"), target: text(base, "ref"), url: text(p, "html_url"), isDraft: bool(p, "draft"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "body"), headSHA: text(head, "sha"), fromFork: text(obj(head, "repo"), "full_name").lowercased() != c.target.path.lowercased(),
+                               comments: p["comments"] as? Int, reviewRequested: array(p, "requested_reviewers").contains { text($0, "login").caseInsensitiveCompare(c.me) == .orderedSame })
         }
         guard number(p, "iid") > 0 else { throw fail(String(localized: "The server returned an unexpected response.")) }
-        return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"))
+        return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"),
+                           comments: p["user_notes_count"] as? Int, reviewRequested: array(p, "reviewers").contains { text($0, "username").caseInsensitiveCompare(c.me) == .orderedSame })
     }
     /// One page of the request list. GitHub's list endpoint carries everything the list shows, so no request is read on its own;
     /// it has no author, reviewer or text filter, so those narrow each loaded page here (the search API is rate limited,

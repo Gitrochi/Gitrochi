@@ -8,7 +8,7 @@ import Foundation
 extension String { var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) } }
 enum Provider { case github, gitlab }
 struct RepoTarget { let provider: Provider; let host: String; let path: String }
-struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool }
+struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false }
 enum Hosting {
     static var handler: (URLRequest) throws -> Data = { _ in fatalError("Unexpected request") }
     static func request(_ p: Provider, _ url: String, token: String, method: String = "GET", body: [String: Any]? = nil) throws -> URLRequest {
@@ -43,6 +43,10 @@ enum Hosting {
         }
         let page = try await CollaborationAPI.requests(gh, RequestQuery(scope: "reviewRequested", search: "fix", page: 2))
         precondition(page.0.map(\.number) == [1] && !page.1 && page.2 != nil && requests == 1, "The list page was not narrowed on the client in one request")
+        // The list row's review-requested pill and comment count come from the list response itself.
+        precondition(page.0.first?.reviewRequested == true && page.0.first?.comments == nil, "GitHub's list has the requested reviewers and no comment count")
+        let noted = try CollaborationAPI.pull(gl, ["iid": 7, "title": "T", "author": ["username": "a"], "source_branch": "s", "target_branch": "main", "web_url": "u", "sha": "h", "user_notes_count": 4, "reviewers": [["username": "Reviewer"]]])
+        precondition(noted.comments == 4 && noted.reviewRequested, "GitLab's list carries the comment count and the reviewers")
         Hosting.handler = { r in
             let q = URLComponents(url: r.url!, resolvingAgainstBaseURL: false)!.queryItems!
             precondition(q.first { $0.name == "state" }!.value == "closed" && q.first { $0.name == "per_page" }!.value == "100")

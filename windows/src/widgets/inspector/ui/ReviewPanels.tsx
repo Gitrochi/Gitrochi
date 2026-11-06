@@ -46,11 +46,11 @@ export function ReviewThreadActions({ store, number, comment }: { store: RepoSto
   const [replying, setReplying] = useState(false);
   const [body, setBody] = useState("");
   if (!comment.threadID || comment.kind !== "comment") return null;
-  return <div className="col" style={{ gap: 6 }}>
-    <div className="row" style={{ gap: 6 }}>
-      <Button size="small" disabled={store.reviewBusy} onClick={() => setReplying(!replying)}>{t("Reply")}</Button>
-      {comment.resolvable && <Button size="small" disabled={store.reviewBusy} onClick={() => void store.resolveReviewThread(number, comment)}>{t(comment.resolved ? "Reopen thread" : "Resolve thread")}</Button>}
-      {comment.resolved && <span className="hint">{t("Resolved")}</span>}
+  return <div className="pr-thread-actions">
+    <div className="pr-text-actions">
+      <button type="button" className="pr-text-button" disabled={store.reviewBusy} aria-expanded={replying} onClick={() => setReplying(!replying)}>{t("Reply")}</button>
+      {comment.resolvable && <button type="button" className="pr-text-button" disabled={store.reviewBusy} onClick={() => void store.resolveReviewThread(number, comment)}>{t(comment.resolved ? "Reopen thread" : "Resolve")}</button>}
+      {comment.resolved && <span className="pr-cap">{t("Resolved")}</span>}
     </div>
     {replying && <>
       <textarea className="textarea" rows={3} aria-label={t("Reply")} value={body} disabled={store.reviewBusy} onChange={(e) => setBody(e.target.value)} />
