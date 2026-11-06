@@ -2443,3 +2443,12 @@
 "Other group…" = "Другая группа…";
 "Group path" = "Путь группы";
 "Groups could not be loaded. Repository boards are still available." = "Не удалось загрузить группы. Доски репозитория по-прежнему доступны.";
+"%lld unchanged lines" = "Неизменённых строк: %1$lld";
+"Blame before this change" = "Авторство до этого изменения";
+"Blame of the revision shown · uncommitted changes not shown" = "Авторство для показанной ревизии · незакоммиченные изменения не показаны";
+"Changes in %@ against its parent" = "Изменения в %1$@ относительно родительского коммита";
+"Commits that changed this file" = "Коммиты, изменявшие этот файл";
+"Show %lld unchanged lines, %lld to %lld" = "Показать неизменённые строки (%1$lld), с %2$lld по %3$lld";
+"Show commit" = "Показать коммит";
+"Uncommitted changes against HEAD" = "Незакоммиченные изменения относительно HEAD";
+"local" = "локальный";

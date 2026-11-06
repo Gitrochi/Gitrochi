@@ -2586,3 +2586,12 @@
 "Other group…" = "其他群组…";
 "Group path" = "群组路径";
 "Groups could not be loaded. Repository boards are still available." = "无法加载群组。仓库看板仍然可用。";
+"%lld unchanged lines" = "%1$lld 行未更改";
+"Blame before this change" = "追溯此更改之前";
+"Blame of the revision shown · uncommitted changes not shown" = "所显示修订的追溯 · 不显示未提交的更改";
+"Changes in %@ against its parent" = "%1$@ 相对于其父提交的更改";
+"Commits that changed this file" = "更改过此文件的提交";
+"Show %lld unchanged lines, %lld to %lld" = "显示 %1$lld 行未更改的内容，第 %2$lld 至 %3$lld 行";
+"Show commit" = "显示提交";
+"Uncommitted changes against HEAD" = "相对于 HEAD 的未提交更改";
+"local" = "本地";

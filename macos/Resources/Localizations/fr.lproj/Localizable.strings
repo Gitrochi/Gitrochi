@@ -2479,3 +2479,12 @@
 "Other group…" = "Autre groupe…";
 "Group path" = "Chemin du groupe";
 "Groups could not be loaded. Repository boards are still available." = "Impossible de charger les groupes. Les tableaux du dépôt restent disponibles.";
+"%lld unchanged lines" = "%1$lld lignes inchangées";
+"Blame before this change" = "Blame avant cette modification";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame de la révision affichée · modifications non validées non affichées";
+"Changes in %@ against its parent" = "Modifications de %1$@ par rapport à son parent";
+"Commits that changed this file" = "Commits ayant modifié ce fichier";
+"Show %lld unchanged lines, %lld to %lld" = "Afficher %1$lld lignes inchangées, de %2$lld à %3$lld";
+"Show commit" = "Afficher le commit";
+"Uncommitted changes against HEAD" = "Modifications non validées par rapport à HEAD";
+"local" = "local";

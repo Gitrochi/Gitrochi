@@ -2443,3 +2443,12 @@
 "Other group…" = "Інша група…";
 "Group path" = "Шлях групи";
 "Groups could not be loaded. Repository boards are still available." = "Не вдалося завантажити групи. Дошки репозиторію досі доступні.";
+"%lld unchanged lines" = "Незмінених рядків: %1$lld";
+"Blame before this change" = "Авторство рядків до цієї зміни";
+"Blame of the revision shown · uncommitted changes not shown" = "Авторство рядків для показаної ревізії · незакомічені зміни не показано";
+"Changes in %@ against its parent" = "Зміни в %1$@ відносно батьківського коміту";
+"Commits that changed this file" = "Коміти, що змінювали цей файл";
+"Show %lld unchanged lines, %lld to %lld" = "Показати незмінені рядки (%1$lld), з %2$lld по %3$lld";
+"Show commit" = "Показати коміт";
+"Uncommitted changes against HEAD" = "Незакомічені зміни відносно HEAD";
+"local" = "локальний";

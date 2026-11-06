@@ -2482,5 +2482,14 @@
   "Other group…": "Інша група…",
   "Group path": "Шлях групи",
   "Groups could not be loaded. Repository boards are still available.": "Не вдалося завантажити групи. Дошки репозиторію досі доступні.",
-  "Repository: {0}": "Репозиторій: {0}"
+  "Repository: {0}": "Репозиторій: {0}",
+  "Blame before this change": "Авторство рядків до цієї зміни",
+  "Blame of the revision shown · uncommitted changes not shown": "Авторство рядків для показаної ревізії · незакомічені зміни не показано",
+  "Changes in {0} against its parent": "Зміни в {0} відносно батьківського коміту",
+  "Couldn't read this commit's changes.": "Не вдалося прочитати зміни цього коміту.",
+  "Show commit": "Показати коміт",
+  "Show {0} unchanged lines, {1} to {2}": "Показати незмінені рядки ({0}), з {1} по {2}",
+  "Uncommitted changes against HEAD": "Незакомічені зміни відносно HEAD",
+  "local": "локальний",
+  "{0} unchanged lines": "Незмінених рядків: {0}"
 }

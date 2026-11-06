@@ -2448,3 +2448,12 @@
 "Other group…" = "其他群組…";
 "Group path" = "群組路徑";
 "Groups could not be loaded. Repository boards are still available." = "無法載入群組。存放庫看板仍可使用。";
+"%lld unchanged lines" = "%1$lld 行未變更";
+"Blame before this change" = "追溯此變更之前";
+"Blame of the revision shown · uncommitted changes not shown" = "所顯示修訂的逐行追溯 · 不顯示未提交的變更";
+"Changes in %@ against its parent" = "%1$@ 相對於其父提交的變更";
+"Commits that changed this file" = "變更過此檔案的提交";
+"Show %lld unchanged lines, %lld to %lld" = "顯示 %1$lld 行未變更的內容，第 %2$lld 至 %3$lld 行";
+"Show commit" = "顯示提交";
+"Uncommitted changes against HEAD" = "相對於 HEAD 的未提交變更";
+"local" = "本機";

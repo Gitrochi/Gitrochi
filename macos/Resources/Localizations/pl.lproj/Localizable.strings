@@ -2427,3 +2427,12 @@
 "Other group…" = "Inna grupa…";
 "Group path" = "Ścieżka grupy";
 "Groups could not be loaded. Repository boards are still available." = "Nie udało się wczytać grup. Tablice repozytorium są nadal dostępne.";
+"%lld unchanged lines" = "Niezmienione wiersze: %1$lld";
+"Blame before this change" = "Blame sprzed tej zmiany";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame wyświetlanej rewizji · bez niezatwierdzonych zmian";
+"Changes in %@ against its parent" = "Zmiany w %1$@ względem commita nadrzędnego";
+"Commits that changed this file" = "Commity, które zmieniły ten plik";
+"Show %lld unchanged lines, %lld to %lld" = "Pokaż niezmienione wiersze (%1$lld), od %2$lld do %3$lld";
+"Show commit" = "Pokaż commit";
+"Uncommitted changes against HEAD" = "Niezatwierdzone zmiany względem HEAD";
+"local" = "lokalny";

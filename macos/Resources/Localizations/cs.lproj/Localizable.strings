@@ -2425,3 +2425,12 @@
 "Other group…" = "Jiná skupina…";
 "Group path" = "Cesta ke skupině";
 "Groups could not be loaded. Repository boards are still available." = "Skupiny se nepodařilo načíst. Nástěnky repozitáře jsou stále k dispozici.";
+"%lld unchanged lines" = "Nezměněné řádky: %1$lld";
+"Blame before this change" = "Blame před touto změnou";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame zobrazené revize · necommitnuté změny se nezobrazují";
+"Changes in %@ against its parent" = "Změny v %1$@ oproti rodičovskému commitu";
+"Commits that changed this file" = "Commity, které změnily tento soubor";
+"Show %lld unchanged lines, %lld to %lld" = "Zobrazit nezměněné řádky (%1$lld), %2$lld až %3$lld";
+"Show commit" = "Zobrazit commit";
+"Uncommitted changes against HEAD" = "Necommitnuté změny oproti HEAD";
+"local" = "místní";

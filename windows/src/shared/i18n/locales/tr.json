@@ -2470,5 +2470,14 @@
   "Other group…": "Başka grup…",
   "Group path": "Grup yolu",
   "Groups could not be loaded. Repository boards are still available.": "Gruplar yüklenemedi. Depo panoları hâlâ kullanılabilir.",
-  "Repository: {0}": "Depo: {0}"
+  "Repository: {0}": "Depo: {0}",
+  "Blame before this change": "Bu değişiklikten önceki blame",
+  "Blame of the revision shown · uncommitted changes not shown": "Gösterilen revizyonun blame'i · commit edilmemiş değişiklikler gösterilmez",
+  "Changes in {0} against its parent": "{0} içindeki değişiklikler (üst commit'e göre)",
+  "Couldn't read this commit's changes.": "Bu commit'in değişiklikleri okunamadı.",
+  "Show commit": "Commit'i göster",
+  "Show {0} unchanged lines, {1} to {2}": "{0} değişmemiş satırı göster, {1}–{2}",
+  "Uncommitted changes against HEAD": "HEAD'e göre commit edilmemiş değişiklikler",
+  "local": "yerel",
+  "{0} unchanged lines": "{0} değişmemiş satır"
 }

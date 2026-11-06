@@ -2438,3 +2438,12 @@
 "Other group…" = "กลุ่มอื่น…";
 "Group path" = "พาธของกลุ่ม";
 "Groups could not be loaded. Repository boards are still available." = "ไม่สามารถโหลดกลุ่มได้ บอร์ดของรีโพสิทอรียังใช้งานได้อยู่";
+"%lld unchanged lines" = "%1$lld บรรทัดที่ไม่เปลี่ยนแปลง";
+"Blame before this change" = "Blame ก่อนการเปลี่ยนแปลงนี้";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame ของรีวิชันที่แสดง · ไม่แสดงการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต";
+"Changes in %@ against its parent" = "การเปลี่ยนแปลงใน %1$@ เทียบกับคอมมิตแม่";
+"Commits that changed this file" = "คอมมิตที่เปลี่ยนแปลงไฟล์นี้";
+"Show %lld unchanged lines, %lld to %lld" = "แสดง %1$lld บรรทัดที่ไม่เปลี่ยนแปลง บรรทัดที่ %2$lld ถึง %3$lld";
+"Show commit" = "แสดงคอมมิต";
+"Uncommitted changes against HEAD" = "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตเทียบกับ HEAD";
+"local" = "ในเครื่อง";

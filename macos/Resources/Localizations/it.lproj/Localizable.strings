@@ -2420,3 +2420,12 @@
 "Other group…" = "Altro gruppo…";
 "Group path" = "Percorso del gruppo";
 "Groups could not be loaded. Repository boards are still available." = "Impossibile caricare i gruppi. Le board del repository sono ancora disponibili.";
+"%lld unchanged lines" = "%1$lld righe non modificate";
+"Blame before this change" = "Blame prima di questa modifica";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame della revisione mostrata · modifiche non sottoposte a commit non mostrate";
+"Changes in %@ against its parent" = "Modifiche in %1$@ rispetto al commit padre";
+"Commits that changed this file" = "Commit che hanno modificato questo file";
+"Show %lld unchanged lines, %lld to %lld" = "Mostra %1$lld righe non modificate, da %2$lld a %3$lld";
+"Show commit" = "Mostra commit";
+"Uncommitted changes against HEAD" = "Modifiche non sottoposte a commit rispetto a HEAD";
+"local" = "locale";

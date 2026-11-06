@@ -2519,5 +2519,14 @@
   "Other group…": "Autre groupe…",
   "Group path": "Chemin du groupe",
   "Groups could not be loaded. Repository boards are still available.": "Impossible de charger les groupes. Les tableaux du dépôt restent disponibles.",
-  "Repository: {0}": "Dépôt : {0}"
+  "Repository: {0}": "Dépôt : {0}",
+  "Blame before this change": "Blame avant cette modification",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame de la révision affichée · modifications non validées non affichées",
+  "Changes in {0} against its parent": "Modifications de {0} par rapport à son parent",
+  "Couldn't read this commit's changes.": "Impossible de lire les modifications de ce commit.",
+  "Show commit": "Afficher le commit",
+  "Show {0} unchanged lines, {1} to {2}": "Afficher {0} lignes inchangées, de {1} à {2}",
+  "Uncommitted changes against HEAD": "Modifications non validées par rapport à HEAD",
+  "local": "local",
+  "{0} unchanged lines": "{0} lignes inchangées"
 }

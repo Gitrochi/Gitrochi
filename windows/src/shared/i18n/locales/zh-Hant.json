@@ -2487,5 +2487,14 @@
   "Other group…": "其他群組…",
   "Group path": "群組路徑",
   "Groups could not be loaded. Repository boards are still available.": "無法載入群組。存放庫看板仍可使用。",
-  "Repository: {0}": "存放庫：{0}"
+  "Repository: {0}": "存放庫：{0}",
+  "Blame before this change": "追溯此變更之前",
+  "Blame of the revision shown · uncommitted changes not shown": "所顯示修訂的逐行追溯 · 不顯示未提交的變更",
+  "Changes in {0} against its parent": "{0} 相對於其父提交的變更",
+  "Couldn't read this commit's changes.": "無法讀取此提交的變更。",
+  "Show commit": "顯示提交",
+  "Show {0} unchanged lines, {1} to {2}": "顯示 {0} 行未變更的內容，第 {1} 至 {2} 行",
+  "Uncommitted changes against HEAD": "相對於 HEAD 的未提交變更",
+  "local": "本機",
+  "{0} unchanged lines": "{0} 行未變更"
 }

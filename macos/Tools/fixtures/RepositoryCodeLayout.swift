@@ -3,8 +3,11 @@ import SwiftUI
 import Observation
 import Vision
 
-typealias ViewState<Value> = SwiftUI.State<Value>
 @MainActor var repositoryCodeLayoutQuickScenario: String?
+/// The view the panel opens its first file on; nil for Source
+@MainActor var repositoryCodeLayoutView: String?
+/// Side by side instead of unified, as the diff layout setting would have it
+@MainActor var repositoryCodeLayoutSplit = false
 
 private let fixtureSource = """
 import SwiftUI
@@ -41,6 +44,70 @@ struct RepositoryPreview: View {
 """ + "\n"
 
 private let fixtureOID = String(repeating: "a", count: 40)
+
+/// The file's history, newest first: who changed it, when, and which of its lines each commit last touched
+private struct FixtureCommit {
+    let id: String
+    let author: String
+    let subject: String
+    let hoursAgo: Double
+    let lines: [ClosedRange<Int>]
+    var email: String { author.lowercased().replacingOccurrences(of: " ", with: ".") + "@example.com" }
+    var time: Int { Int(Date().timeIntervalSince1970 - hoursAgo * 3600) }
+}
+private let fixtureCommits = [
+    FixtureCommit(id: String(repeating: "c", count: 40), author: "Alex Kim", subject: "Count the sections in the detail", hoursAgo: 2, lines: [24...26]),
+    FixtureCommit(id: String(repeating: "b", count: 40), author: "Alex Kim", subject: "Search the file list", hoursAgo: 30, lines: [7...7, 9...11, 18...18]),
+    FixtureCommit(id: String(repeating: "9", count: 40), author: "Morgan Park", subject: "Add the repository preview", hoursAgo: 24 * 40, lines: [1...6, 8...8, 12...17, 19...23, 27...31]),
+]
+/// `git log --follow --name-only -z` in the app's history format
+private let fixtureLog = fixtureCommits.enumerated().map { index, commit in
+    let parent = index + 1 < fixtureCommits.count ? fixtureCommits[index + 1].id : ""
+    return "\u{1e}" + [commit.id, parent, commit.author, commit.email, String(commit.time), commit.subject].joined(separator: "\u{1f}") + "\0\nsrc/Preview.swift\0"
+}.joined()
+/// `git blame --porcelain`: a commit's details come with its first line only
+private let fixtureBlame: String = {
+    var seen = Set<String>(), output = ""
+    for (index, text) in fixtureSource.split(separator: "\n", omittingEmptySubsequences: false).dropLast().enumerated() {
+        let commit = fixtureCommits.first { $0.lines.contains { $0.contains(index + 1) } }!
+        output += "\(commit.id) \(index + 1) \(index + 1)\n"
+        if seen.insert(commit.id).inserted {
+            output += "author \(commit.author)\nauthor-mail <\(commit.email)>\nauthor-time \(commit.time)\nsummary \(commit.subject)\nfilename src/Preview.swift\n"
+        }
+        output += "\t\(text)\n"
+    }
+    return output
+}()
+/// The newest commit against its parent: two hunks, with unchanged lines before, between and after them
+private let fixtureChange = #"""
+diff --git a/src/Preview.swift b/src/Preview.swift
+index 1111111..2222222 100644
+--- a/src/Preview.swift
++++ b/src/Preview.swift
+@@ -4,7 +4,7 @@ struct RepositoryPreview: View {
+ struct RepositoryPreview: View {
+     let files: [String]
+     @State private var selected = "Preview.swift"
+-    @State private var filter = ""
++    @State private var query = ""
+
+     private var matching: [String] {
+         files.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }
+@@ -19,8 +19,11 @@ struct RepositoryPreview: View {
+         } detail: {
+             VStack(alignment: .leading, spacing: 16) {
+                 Text(selected).font(.headline)
+                 Text("A clear place to read and explore your code.")
+                     .foregroundStyle(.secondary)
++                ForEach(0..<3) { index in
++                    Text("Section \(index + 1)")
++                }
+             }
+             .padding(24)
+         }
+
+"""#
+
 struct FixtureRef: Identifiable {
     let name: String
     var id: String { name }
@@ -50,7 +117,22 @@ struct FixtureRef: Identifiable {
     let localBranches = [FixtureRef(name: "main"), FixtureRef(name: "feature/code-reader")]
     let remoteBranches = [FixtureRef(name: "origin/main")]
     let tags = [FixtureRef(name: "v1.0")]
+    let headBranch: String? = "feature/code-reader"
+    let status = WorkingStatus(unstaged: [FileChange(path: "src/Theme.swift", oldPath: nil, kind: .modified, staged: false)])
+    var diffSplit = repositoryCodeLayoutSplit
+    var diffIgnoreWhitespace = false
+    var diffSettingsVersion = 0
+    var revealed: [String] = []
     func describe(_ error: Error) -> String { error.localizedDescription }
+    func reveal(_ sha: String) { revealed.append(sha) }
+    func copy(_ text: String) {}
+}
+/// The app's avatar reads accounts and the network; a list only needs its place
+struct AuthorAvatar: View {
+    let name: String
+    let email: String
+    var size: CGFloat = 20
+    var body: some View { Avatar(name: name, email: email, size: size) }
 }
 struct GitResult {
     let data: Data
@@ -60,6 +142,8 @@ enum Git {
     static func run(_ args: [String], in directory: URL) async throws -> GitResult {
         precondition(directory.path == "/fixture/repository", "Only synthetic repository reads are allowed")
         if args.first == "cat-file" {
+            // the file as a commit has it, for the unchanged lines of its change
+            if args.last?.hasSuffix(":src/Preview.swift") == true { return GitResult(data: Data(fixtureSource.utf8)) }
             let oid = args.last ?? ""
             guard let data = oid == fixtureOID ? Data(fixtureSource.utf8) : RepositoryHTMLFixtureData.objects[oid] else { fatalError("Unknown fixture object") }
             return GitResult(data: args.contains("-s") ? Data(String(data.count).utf8) : data)
@@ -73,9 +157,13 @@ enum Git {
             }.joined() + RepositoryHTMLFixtureData.entries.map {
                 "100644 blob \($0.oid) \($0.size)\t\($0.path)\0"
             }.joined()
-        case "log": text = "a1b2c3d 2026-01-01 Demo Developer\nImprove source readability\n"
-        case "blame": text = "a1b2c3d (Demo Developer 2026-01-01 1) import SwiftUI\n"
-        case "diff": text = ""
+        case "log": text = fixtureLog
+        case "blame":
+            precondition(args.contains("--porcelain") && args.contains("1,31"), "Blame must ask for the file's lines in the porcelain form")
+            text = fixtureBlame
+        case "show": text = fixtureChange
+        case "rev-list": text = fixtureCommits[0].id + "\n"
+        case "diff": text = fixtureChange
         default: fatalError("Unexpected repository operation: \(args)")
         }
         return GitResult(data: Data(text.utf8))
@@ -117,21 +205,8 @@ private struct NativeReaderFixture: View {
         var results: [[String: Any]] = []
         for width: CGFloat in [440, 1100] {
             for dark in [false, true] {
-                let theme = dark ? "dark" : "light"
-                let bounds = NSRect(x: 0, y: 0, width: width, height: 780)
-                let store = RepoStore()
-                let host = NSHostingView(rootView: RepositoryCodePanel().environment(store)
-                    .frame(width: width, height: bounds.height)
-                    .background(Color(nsColor: .windowBackgroundColor))
-                    .preferredColorScheme(dark ? .dark : .light))
-                let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)
-                window.setFrameOrigin(NSPoint(x: -4000, y: 0))
-                window.contentView = host
-                host.frame = bounds
-                window.orderBack(nil)
-                RunLoop.current.run(until: Date().addingTimeInterval(0.6))
-                host.layoutSubtreeIfNeeded()
-                window.displayIfNeeded()
+                let theme = dark ? "dark" : "light", name = "code-reader-\(Int(width))-\(theme).png"
+                let (host, window) = show(width: width, dark: dark)
                 let textViews = descendants(of: host).compactMap { $0 as? NSTextView }
                 guard let reader = textViews.first(where: { $0.string.contains("struct RepositoryPreview") }) else {
                     fatalError("The production code panel did not show its automatic source preview")
@@ -139,29 +214,82 @@ private struct NativeReaderFixture: View {
                 precondition(!reader.isEditable && reader.isSelectable, "Source must remain read-only and selectable")
                 precondition(reader.string == fixtureSource, "Source text changed in the reader")
                 checkGutter(reader)
-                guard let bitmap = host.bitmapImageRepForCachingDisplay(in: bounds) else { fatalError("No bitmap") }
-                host.cacheDisplay(in: bounds, to: bitmap)
-                guard let rendered = bitmap.representation(using: .png, properties: [:]) else { fatalError("No PNG") }
-                let name = "code-reader-\(Int(width))-\(theme).png"
-                try rendered.write(to: output.appendingPathComponent(name))
-                let request = VNRecognizeTextRequest()
-                request.recognitionLevel = .accurate
-                request.recognitionLanguages = ["en-US"]
-                try VNImageRequestHandler(data: rendered).perform([request])
-                let text = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
-                for expected in ["Preview.swift", "Source", "File history", "Blame", "import SwiftUI"] {
+                let text = try capture(host, name: name, output: output)
+                // one status-bar grammar for every view: what is shown, then the language, the lines and "Read only"
+                for expected in ["Preview.swift", "Source", "History", "Blame", "Working changes", "import SwiftUI", "31 lines", "Read only"] {
                     precondition(text.contains(expected), "Visible code content missing: \(expected), \(name)\n\(text)")
                 }
+                precondition(!text.contains("Load revision") && !text.contains("File history"), "The revision field or the old tab name is still on the page, \(name)\n\(text)")
                 results.append(["width": width, "theme": theme, "screenshot": name, "sourceSelectable": true, "readOnly": true])
                 window.orderOut(nil)
             }
         }
+        // History and Blame read real `git log`, `git show` and `git blame --porcelain` output through the core's parsers
+        let views = ["History": ["Count the sections in the detail", "Search the file list", "Add the repository preview", "Unified", "unchanged lines", "against its parent", "31 lines"],
+                     "Blame": ["Add the repository preview", "Search the file list", "Count the sections", "import SwiftUI", "uncommitted changes not shown", "31 lines"],
+                     "Working changes": ["Unified", "private var query", "Uncommitted changes against HEAD", "Read only"]]
+        for (view, expected) in views.sorted(by: { $0.key < $1.key }) {
+            repositoryCodeLayoutView = view
+            for (width, dark) in [(CGFloat(1100), false), (1100, true), (440, false)] {
+                let name = "code-\(view.lowercased().replacingOccurrences(of: " ", with: "-"))-\(Int(width))-\(dark ? "dark" : "light").png"
+                let (host, window) = show(width: width, dark: dark)
+                let text = try capture(host, name: name, output: output)
+                for value in (width > 1000 ? expected : Array(expected.prefix(1))) {
+                    precondition(text.contains(value), "\(view) content missing: \(value), \(name)\n\(text)")
+                }
+                precondition(!text.contains("Demo Developer 2026"), "\(view) still shows raw Git output, \(name)")
+                results.append(["width": width, "theme": dark ? "dark" : "light", "screenshot": name, "view": view])
+                window.orderOut(nil)
+            }
+        }
+        // side by side: the removed line on the left and its replacement on the right, with the folds between the hunks kept
+        repositoryCodeLayoutSplit = true
+        repositoryCodeLayoutView = "History"
+        let (splitHost, splitWindow) = show(width: 1100, dark: false)
+        let splitText = try capture(splitHost, name: "code-history-split-1100-light.png", output: output)
+        for value in ["filter", "query", "unchanged lines", "Split"] {
+            precondition(splitText.contains(value), "Side-by-side change missing: \(value)\n\(splitText)")
+        }
+        splitWindow.orderOut(nil)
+        repositoryCodeLayoutSplit = false
+        repositoryCodeLayoutView = nil
         checkQuickOpenSubmission()
         try checkQuickOpen(output: output)
         try RepositoryHTMLLayoutFixture.run(output: output)
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
         print("PASS: Production Code panel light/dark and narrow/wide layouts; native syntax colors, wrap resizing, line6000 goto, match scrolling, bounded session navigation, quick-open immediate submission and previews. \(output.path)")
+    }
+
+    /// The production panel in an off-screen window, after its first reads have settled
+    @MainActor private static func show(width: CGFloat, dark: Bool) -> (NSHostingView<some View>, NSWindow) {
+        let bounds = NSRect(x: 0, y: 0, width: width, height: 780)
+        let host = NSHostingView(rootView: RepositoryCodePanel().environment(RepoStore())
+            .frame(width: width, height: bounds.height)
+            .background(Color(nsColor: .windowBackgroundColor))
+            .preferredColorScheme(dark ? .dark : .light))
+        let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.setFrameOrigin(NSPoint(x: -4000, y: 0))
+        window.contentView = host
+        host.frame = bounds
+        window.orderBack(nil)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
+        host.layoutSubtreeIfNeeded()
+        window.displayIfNeeded()
+        return (host, window)
+    }
+
+    /// Writes the screenshot and returns the text read from it
+    @MainActor private static func capture(_ host: NSView, name: String, output: URL) throws -> String {
+        guard let bitmap = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { fatalError("No bitmap") }
+        host.cacheDisplay(in: host.bounds, to: bitmap)
+        guard let rendered = bitmap.representation(using: .png, properties: [:]) else { fatalError("No PNG") }
+        try rendered.write(to: output.appendingPathComponent(name))
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages = ["en-US"]
+        try VNImageRequestHandler(data: rendered).perform([request])
+        return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
     }
 
     private static func checkLanguageComposition() {

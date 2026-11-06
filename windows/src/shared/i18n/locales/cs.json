@@ -2465,5 +2465,14 @@
   "Other group…": "Jiná skupina…",
   "Group path": "Cesta ke skupině",
   "Groups could not be loaded. Repository boards are still available.": "Skupiny se nepodařilo načíst. Nástěnky repozitáře jsou stále k dispozici.",
-  "Repository: {0}": "Repozitář: {0}"
+  "Repository: {0}": "Repozitář: {0}",
+  "Blame before this change": "Blame před touto změnou",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame zobrazené revize · necommitnuté změny se nezobrazují",
+  "Changes in {0} against its parent": "Změny v {0} oproti rodičovskému commitu",
+  "Couldn't read this commit's changes.": "Změny v tomto commitu se nepodařilo přečíst.",
+  "Show commit": "Zobrazit commit",
+  "Show {0} unchanged lines, {1} to {2}": "Zobrazit nezměněné řádky ({0}), {1} až {2}",
+  "Uncommitted changes against HEAD": "Necommitnuté změny oproti HEAD",
+  "local": "místní",
+  "{0} unchanged lines": "Nezměněné řádky: {0}"
 }

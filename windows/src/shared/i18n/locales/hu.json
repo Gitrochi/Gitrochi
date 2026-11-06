@@ -2467,5 +2467,14 @@
   "Other group…": "Másik csoport…",
   "Group path": "Csoport elérési útja",
   "Groups could not be loaded. Repository boards are still available.": "A csoportokat nem sikerült betölteni. A tároló táblái továbbra is elérhetők.",
-  "Repository: {0}": "Tároló: {0}"
+  "Repository: {0}": "Tároló: {0}",
+  "Blame before this change": "Blame a módosítás előtt",
+  "Blame of the revision shown · uncommitted changes not shown": "A megjelenített revízió blame-je · a nem commitolt módosítások nem láthatók",
+  "Changes in {0} against its parent": "A(z) {0} módosításai a szülő commithoz képest",
+  "Couldn't read this commit's changes.": "Nem sikerült beolvasni a commit módosításait.",
+  "Show commit": "Commit megjelenítése",
+  "Show {0} unchanged lines, {1} to {2}": "{0} változatlan sor megjelenítése, {1}–{2}",
+  "Uncommitted changes against HEAD": "Nem commitolt módosítások a HEAD-hez képest",
+  "local": "helyi",
+  "{0} unchanged lines": "{0} változatlan sor"
 }

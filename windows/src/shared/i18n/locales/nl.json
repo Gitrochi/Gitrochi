@@ -2437,5 +2437,14 @@
   "Other group…": "Andere groep…",
   "Group path": "Groepspad",
   "Groups could not be loaded. Repository boards are still available.": "Groepen konden niet worden geladen. Repositoryborden zijn nog steeds beschikbaar.",
-  "Repository: {0}": "Repository: {0}"
+  "Repository: {0}": "Repository: {0}",
+  "Blame before this change": "Blame vóór deze wijziging",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame van de getoonde revisie · niet-gecommitte wijzigingen worden niet getoond",
+  "Changes in {0} against its parent": "Wijzigingen in {0} ten opzichte van de bovenliggende commit",
+  "Couldn't read this commit's changes.": "Kan de wijzigingen van deze commit niet lezen.",
+  "Show commit": "Commit tonen",
+  "Show {0} unchanged lines, {1} to {2}": "{0} ongewijzigde regels tonen, {1} tot en met {2}",
+  "Uncommitted changes against HEAD": "Niet-gecommitte wijzigingen ten opzichte van HEAD",
+  "local": "lokaal",
+  "{0} unchanged lines": "{0} ongewijzigde regels"
 }

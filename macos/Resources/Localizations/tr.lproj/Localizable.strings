@@ -2430,3 +2430,12 @@
 "Other group…" = "Başka grup…";
 "Group path" = "Grup yolu";
 "Groups could not be loaded. Repository boards are still available." = "Gruplar yüklenemedi. Depo panoları hâlâ kullanılabilir.";
+"%lld unchanged lines" = "%1$lld değişmemiş satır";
+"Blame before this change" = "Bu değişiklikten önceki blame";
+"Blame of the revision shown · uncommitted changes not shown" = "Gösterilen revizyonun blame'i · commit edilmemiş değişiklikler gösterilmez";
+"Changes in %@ against its parent" = "%1$@ içindeki değişiklikler (üst commit'e göre)";
+"Commits that changed this file" = "Bu dosyayı değiştiren commit'ler";
+"Show %lld unchanged lines, %lld to %lld" = "%1$lld değişmemiş satırı göster, %2$lld–%3$lld";
+"Show commit" = "Commit'i göster";
+"Uncommitted changes against HEAD" = "HEAD'e göre commit edilmemiş değişiklikler";
+"local" = "yerel";

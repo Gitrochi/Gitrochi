@@ -2477,5 +2477,14 @@
   "Other group…": "กลุ่มอื่น…",
   "Group path": "พาธของกลุ่ม",
   "Groups could not be loaded. Repository boards are still available.": "ไม่สามารถโหลดกลุ่มได้ บอร์ดของรีโพสิทอรียังใช้งานได้อยู่",
-  "Repository: {0}": "รีโพสิทอรี: {0}"
+  "Repository: {0}": "รีโพสิทอรี: {0}",
+  "Blame before this change": "Blame ก่อนการเปลี่ยนแปลงนี้",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame ของรีวิชันที่แสดง · ไม่แสดงการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต",
+  "Changes in {0} against its parent": "การเปลี่ยนแปลงใน {0} เทียบกับคอมมิตแม่",
+  "Couldn't read this commit's changes.": "ไม่สามารถอ่านการเปลี่ยนแปลงของคอมมิตนี้ได้",
+  "Show commit": "แสดงคอมมิต",
+  "Show {0} unchanged lines, {1} to {2}": "แสดง {0} บรรทัดที่ไม่เปลี่ยนแปลง บรรทัดที่ {1} ถึง {2}",
+  "Uncommitted changes against HEAD": "การเปลี่ยนแปลงที่ยังไม่ได้คอมมิตเทียบกับ HEAD",
+  "local": "ในเครื่อง",
+  "{0} unchanged lines": "{0} บรรทัดที่ไม่เปลี่ยนแปลง"
 }

@@ -2428,3 +2428,12 @@
 "Other group…" = "Másik csoport…";
 "Group path" = "Csoport elérési útja";
 "Groups could not be loaded. Repository boards are still available." = "A csoportokat nem sikerült betölteni. A tároló táblái továbbra is elérhetők.";
+"%lld unchanged lines" = "%1$lld változatlan sor";
+"Blame before this change" = "Blame a módosítás előtt";
+"Blame of the revision shown · uncommitted changes not shown" = "A megjelenített revízió blame-je · a nem commitolt módosítások nem láthatók";
+"Changes in %@ against its parent" = "A(z) %1$@ módosításai a szülő commithoz képest";
+"Commits that changed this file" = "A fájlt módosító commitok";
+"Show %lld unchanged lines, %lld to %lld" = "%1$lld változatlan sor megjelenítése, %2$lld–%3$lld";
+"Show commit" = "Commit megjelenítése";
+"Uncommitted changes against HEAD" = "Nem commitolt módosítások a HEAD-hez képest";
+"local" = "helyi";

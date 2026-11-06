@@ -2404,3 +2404,12 @@
 "Other group…" = "Nhóm khác…";
 "Group path" = "Đường dẫn nhóm";
 "Groups could not be loaded. Repository boards are still available." = "Không thể tải các nhóm. Các bảng của kho lưu trữ vẫn khả dụng.";
+"%lld unchanged lines" = "%1$lld dòng không đổi";
+"Blame before this change" = "Blame trước thay đổi này";
+"Blame of the revision shown · uncommitted changes not shown" = "Blame của bản sửa đổi đang hiển thị · không hiện thay đổi chưa commit";
+"Changes in %@ against its parent" = "Thay đổi trong %1$@ so với commit cha";
+"Commits that changed this file" = "Các commit đã thay đổi tệp này";
+"Show %lld unchanged lines, %lld to %lld" = "Hiện %1$lld dòng không đổi, từ dòng %2$lld đến %3$lld";
+"Show commit" = "Hiện commit";
+"Uncommitted changes against HEAD" = "Thay đổi chưa commit so với HEAD";
+"local" = "cục bộ";

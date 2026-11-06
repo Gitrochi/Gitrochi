@@ -2439,5 +2439,14 @@
   "Other group…": "Nhóm khác…",
   "Group path": "Đường dẫn nhóm",
   "Groups could not be loaded. Repository boards are still available.": "Không thể tải các nhóm. Các bảng của kho lưu trữ vẫn khả dụng.",
-  "Repository: {0}": "Kho lưu trữ: {0}"
+  "Repository: {0}": "Kho lưu trữ: {0}",
+  "Blame before this change": "Blame trước thay đổi này",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame của bản sửa đổi đang hiển thị · không hiện thay đổi chưa commit",
+  "Changes in {0} against its parent": "Thay đổi trong {0} so với commit cha",
+  "Couldn't read this commit's changes.": "Không đọc được thay đổi của commit này.",
+  "Show commit": "Hiện commit",
+  "Show {0} unchanged lines, {1} to {2}": "Hiện {0} dòng không đổi, từ dòng {1} đến {2}",
+  "Uncommitted changes against HEAD": "Thay đổi chưa commit so với HEAD",
+  "local": "cục bộ",
+  "{0} unchanged lines": "{0} dòng không đổi"
 }

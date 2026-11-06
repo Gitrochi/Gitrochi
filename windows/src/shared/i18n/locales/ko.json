@@ -1987,7 +1987,6 @@
   "Search": "검색",
   "Search branches, tags and stashes": "브랜치·태그·스태시 검색",
   "Search commits": "커밋 검색",
-  "Search files": "파일 검색",
   "Search filters loaded pages. Load more to search older items.": "불러온 페이지 안에서 검색합니다. 이전 항목을 검색하려면 더 불러오세요.",
   "Search in": "검색 대상",
   "Search issues": "이슈 검색",
@@ -2643,7 +2642,6 @@
   "{0} fields": "필드 {0}개",
   "{0} files": "{0}개 파일",
   "{0} files that aren't committed stay as they are.": "커밋하지 않는 {0}개 파일은 그대로 남습니다.",
-  "{0} files · {1} folders": "파일 {0}개 · 폴더 {1}개",
   "{0} groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules.": "{0} 가 바뀐 파일을 주요 내용별로 묶어 여러 커밋으로 나눕니다. 나눈 결과를 확인·수정한 뒤 커밋합니다. 규칙은 설정 > 규칙에서.",
   "{0} is splitting the changes by topic…": "{0} 가 변경을 주요 내용별로 나누는 중…",
   "{0} is writing the commit message…": "{0} 가 커밋 메시지를 쓰는 중…",
@@ -4567,5 +4565,14 @@
   "Other group…": "다른 그룹…",
   "Group path": "그룹 경로",
   "Groups could not be loaded. Repository boards are still available.": "그룹을 불러오지 못했습니다. 저장소 보드는 계속 사용할 수 있습니다.",
-  "Repository: {0}": "저장소: {0}"
+  "Repository: {0}": "저장소: {0}",
+  "Blame before this change": "이 변경 이전의 줄별 작성자",
+  "Blame of the revision shown · uncommitted changes not shown": "표시 중인 시점의 줄별 작성자 · 커밋하지 않은 변경은 표시하지 않음",
+  "Changes in {0} against its parent": "{0}에서 부모 커밋 대비 바뀐 내용",
+  "Couldn't read this commit's changes.": "이 커밋의 변경을 읽지 못했습니다.",
+  "Show commit": "커밋 보기",
+  "Show {0} unchanged lines, {1} to {2}": "바뀌지 않은 {0}줄 보기, {1}~{2}번 줄",
+  "Uncommitted changes against HEAD": "HEAD 대비 커밋하지 않은 변경",
+  "local": "로컬",
+  "{0} unchanged lines": "바뀌지 않은 {0}줄"
 }

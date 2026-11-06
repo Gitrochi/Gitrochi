@@ -2437,5 +2437,14 @@
   "Other group…": "Grup lain…",
   "Group path": "Path grup",
   "Groups could not be loaded. Repository boards are still available.": "Grup tidak dapat dimuat. Papan repositori tetap tersedia.",
-  "Repository: {0}": "Repositori: {0}"
+  "Repository: {0}": "Repositori: {0}",
+  "Blame before this change": "Blame sebelum perubahan ini",
+  "Blame of the revision shown · uncommitted changes not shown": "Blame untuk revisi yang ditampilkan · perubahan yang belum di-commit tidak ditampilkan",
+  "Changes in {0} against its parent": "Perubahan di {0} terhadap induknya",
+  "Couldn't read this commit's changes.": "Tidak dapat membaca perubahan commit ini.",
+  "Show commit": "Tampilkan commit",
+  "Show {0} unchanged lines, {1} to {2}": "Tampilkan {0} baris tidak berubah, {1} sampai {2}",
+  "Uncommitted changes against HEAD": "Perubahan yang belum di-commit terhadap HEAD",
+  "local": "lokal",
+  "{0} unchanged lines": "{0} baris tidak berubah"
 }

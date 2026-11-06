@@ -3385,5 +3385,14 @@
   "Other group…": "他のグループ…",
   "Group path": "グループのパス",
   "Groups could not be loaded. Repository boards are still available.": "グループを読み込めませんでした。リポジトリのボードは引き続き利用できます。",
-  "Repository: {0}": "リポジトリ: {0}"
+  "Repository: {0}": "リポジトリ: {0}",
+  "Blame before this change": "この変更より前の行ごとの作成者",
+  "Blame of the revision shown · uncommitted changes not shown": "表示中のリビジョンの行ごとの作成者 · 未コミットの変更は表示されません",
+  "Changes in {0} against its parent": "{0} での変更（親コミットとの比較）",
+  "Couldn't read this commit's changes.": "このコミットの変更を読み取れませんでした。",
+  "Show commit": "コミットを表示",
+  "Show {0} unchanged lines, {1} to {2}": "変更のない {0} 行を表示（{1}〜{2} 行目）",
+  "Uncommitted changes against HEAD": "HEAD と比較した未コミットの変更",
+  "local": "ローカル",
+  "{0} unchanged lines": "変更のない {0} 行"
 }
