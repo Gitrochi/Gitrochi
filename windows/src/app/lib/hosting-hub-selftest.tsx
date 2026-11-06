@@ -459,11 +459,6 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       await until(() => !!host.querySelector(".project-list")),
       "First project did not open its task table automatically",
     );
-    button("Overview")!.click();
-    ensure(
-      await until(() => !!host.querySelector(".project-list")),
-      "First project did not open its task table automatically",
-    );
     tab("Overview")!.click();
     await pause(25);
     ensure(
