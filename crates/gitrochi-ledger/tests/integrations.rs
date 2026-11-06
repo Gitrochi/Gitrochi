@@ -2,7 +2,9 @@
 
 mod common;
 
-use common::{app, binary, cli, json_of, stderr, stdout, Schemas, TempDir};
+#[cfg(unix)]
+use common::stdout;
+use common::{app, binary, cli, json_of, stderr, Schemas, TempDir};
 use serde_json::{json, Value};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -56,6 +58,8 @@ fn stale_cli(dir: &TempDir) -> PathBuf {
     path
 }
 
+// Only the stale-command check calls it, and that needs a shell script for a command
+#[cfg_attr(not(unix), allow(dead_code))]
 fn observe(db: &Path, cwd: &Path) {
     let mut child = binary()
         .args([
