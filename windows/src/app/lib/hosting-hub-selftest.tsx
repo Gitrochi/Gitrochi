@@ -4,6 +4,7 @@ import { accounts, HostingHubStore } from "@/entities/hosting";
 import type { RepoTarget } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
+import { MenuHost } from "@/shared/ui";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 
 const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -335,7 +336,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     };
     await mount(<HostingHubPanel store={source} section="releases" />);
     ensure(
-      await until(() => !!host.querySelector("button.hub-item")),
+      await until(() => !!host.querySelector(".release-workspace .hosted-row")),
       "Release list did not render",
     );
     ensure(
@@ -344,10 +345,11 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     // The fixture's only release is a draft: the status filter explains it and no version summary is invented.
     ensure(
-      !!host.querySelector(`.release-states button[data-tip="${t("Saved but not published; only people with write access see it")}"]`) && !host.querySelector(".release-summary") && !host.querySelector(".release-package"),
-      "Draft-only releases did not show the explained status filter without a summary or package menu",
+      !!host.querySelector(`.release-workspace .hosted-chip[data-tip="${t("Saved but not published; only people with write access see it")}"]`) && !host.querySelector(".hosted-summary") && !host.querySelector(".release-package"),
+      "Draft-only releases did not explain the draft without a summary or package menu",
     );
-    host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
+    // the page opens a release on arrival; the row only has to be there
+    ensure(!!host.querySelector(".release-workspace .hosted-row.selected") || await until(() => !!host.querySelector(".release-workspace .hosted-row.selected")), "No release opened on arrival");
     ensure(
       await until(() => !!button("Download in browser")),
       "Release assets did not render",
@@ -1022,11 +1024,12 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     await pause(25);
     ensure(writes.length === beforeCancel, "Cancelled invitation cancellation changed the server");
     details.push("organization overview + icons + repositories + members + teams + reviewed invitations + cancellation");
-    await mount(<HostingHubPanel store={source} section="releases" />);
-    ensure(await until(() => !!host.querySelector("button.hub-item")), "Release list did not render again");
-    host.querySelector<HTMLButtonElement>("button.hub-item")!.click();
-    ensure(await until(() => !!button("Delete")), "Release delete control missing");
-    button("Delete")!.click();
+    await mount(<><HostingHubPanel store={source} section="releases" /><MenuHost /></>);
+    ensure(await until(() => !!host.querySelector(".release-workspace .hosted-row")), "Release list did not render again");
+    ensure(await until(() => !!button("More release actions") && !button("More release actions")!.disabled), "Release actions missing");
+    button("More release actions")!.click();
+    ensure(await until(() => !!button("Delete…")), "Release delete control missing");
+    button("Delete…")!.click();
     await pause(25);
     const before = writes.length;
     button("Cancel")!.click();
@@ -1036,7 +1039,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     root.render(<HostingHubPanel store={source} section="organizations"/>);
     ensure(await until(() => !!host.querySelector(".hub-organization-row")), "Shared controller did not switch from releases to organizations");
     root.render(<HostingHubPanel store={source} section="releases"/>);
-    ensure(await until(() => !!host.querySelector(".release-workspace button.hub-item")), "Shared controller did not switch back to releases");
+    ensure(await until(() => !!host.querySelector(".release-workspace .hosted-row")), "Shared controller did not switch back to releases");
     details.push("shared controller section transitions");
     return [true, details.join("; ")];
   } catch (e) {

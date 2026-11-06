@@ -74,17 +74,17 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Hosting detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Views/Hub/ReleaseWorkspace.swift':
-        # The page's own top row (repository, package, Refresh, New release) is what must stay below the titlebar.
-        needle = '}.padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)'
+        # The page's own top row (repository, Refresh, New release) is what must stay below the titlebar.
+        needle = 'HostedListHeader(target: target) { headerActions }'
         assert text.count(needle) == 1, 'Release heading measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-title:releases"))')
-        needle = '}.padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())'
+        needle = 'HostedListRowTitle(title: item.title, when: when(item), selected: selected)'
         assert text.count(needle) == 1, 'Release list measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-item:" + item.id))')
         needle = 'label: { Text("Load more").frame(maxWidth: .infinity) }.disabled(locked)'
         assert text.count(needle) == 1, 'Release pagination measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-pagination"))')
-        needle = '}.frame(maxWidth: 1100, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)'
+        needle = '.padding(.horizontal, 24).padding(.vertical, 20)\n        }\n        .frame(maxWidth: .infinity, alignment: .topLeading)'
         assert text.count(needle) == 1, 'Release detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Services/Accounts.swift':

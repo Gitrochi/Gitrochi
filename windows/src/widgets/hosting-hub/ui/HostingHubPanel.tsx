@@ -21,8 +21,8 @@ import type { ProjectCreationMode } from "./ProjectCreationChooser";
 import type { ProjectLocalActions } from "../lib/project-workspace";
 const ReleaseWorkspace = lazy(() => import("./ReleaseWorkspace").then(module => ({ default: module.ReleaseWorkspace })));
 
-export function HostingHubPanel(props: Parameters<typeof StandardHostingHubPanel>[0]) {
-  return props.section === "releases" ? <Suspense fallback={<Spinner/>}><ReleaseWorkspace source={props.store}/></Suspense> : <StandardHostingHubPanel {...props}/>;
+export function HostingHubPanel(props: Parameters<typeof StandardHostingHubPanel>[0] & { openSettings?: () => void }) {
+  return props.section === "releases" ? <Suspense fallback={<Spinner/>}><ReleaseWorkspace source={props.store} openSettings={props.openSettings}/></Suspense> : <StandardHostingHubPanel {...props}/>;
 }
 const names: Record<HostingHubSection,string>={releases:"Releases",projects:"Projects",organizations:"Organizations"};
 function StandardHostingHubPanel({store,section,onClone,projectActions}:{store:HubSource;section:HostingHubSection;onClone?:(url:string)=>void;projectActions?:Omit<ProjectLocalActions,"repository"|"host">}){

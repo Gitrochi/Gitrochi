@@ -75,6 +75,17 @@ enum ReleaseCatalog {
         let older = Array(sorted[(index + 1)...].filter { state($0) == "Stable" }.prefix(count - 1).reversed())
         return Timeline(stable: stable, prerelease: prerelease, path: older + [stable] + (prerelease.map { [$0] } ?? []))
     }
+    /// What the page opens on arrival: the newest stable release of the list, else the first published one, else its first row
+    static func releaseToOpen(_ items: [HubItem]) -> HubItem? {
+        items.first { state($0) == "Stable" } ?? items.first { state($0) != "Draft" } ?? items.first
+    }
+    /// What a release's "Tagged on" line names: the tag's commit in this clone, else what the server says it was cut from, which may be a branch
+    static func taggedOn(commit: String?, target: String) -> (value: String, commit: Bool)? {
+        if let commit, !commit.isEmpty { return (String(commit.prefix(7)), true) }
+        guard !target.isEmpty else { return nil }
+        let isHash = target.count == 40 && target.utf8.allSatisfy { (48...57).contains($0) || (97...102).contains($0) }
+        return isHash ? (String(target.prefix(7)), true) : (target, false)
+    }
     /// Installers and archives of this version come first; checksums, signatures and helper binaries fold away.
     static func assetGroups<Asset>(_ assets: [Asset], tag value: String, name: (Asset) -> String) -> (primary: [Asset], other: [Asset]) {
         let packages = assets.indices.filter { name(assets[$0]).range(of: #"\.(dmg|pkg|zip|exe|msi|msix|appimage|deb|rpm|apk|tar\.gz|tgz|tar\.xz|7z)$"#, options: [.regularExpression, .caseInsensitive]) != nil }

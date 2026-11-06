@@ -67,6 +67,16 @@ export function releaseTimeline(items: HubItem[], family: string, count = 4) {
   const older = sorted.slice(index + 1).filter(item => releaseState(item) === "Stable").slice(0, count - 1).reverse();
   return { stable, prerelease, path: [...older, stable, ...(prerelease ? [prerelease] : [])] };
 }
+/** What the page opens on arrival: the newest stable release of the list, else the first published one, else its first row. */
+export function releaseToOpen(items: HubItem[]): HubItem | undefined {
+  return items.find(item => releaseState(item) === "Stable") ?? items.find(item => releaseState(item) !== "Draft") ?? items[0];
+}
+/** What a release's "Tagged on" line names: the tag's commit in this clone, else what the server says it was cut from, which may be a branch. */
+export function releaseTaggedOn(commit: string | null | undefined, target: string): { value: string; commit: boolean } | null {
+  if (commit) return { value: commit.slice(0, 7), commit: true };
+  if (!target) return null;
+  return /^[0-9a-f]{40}$/.test(target) ? { value: target.slice(0, 7), commit: true } : { value: target, commit: false };
+}
 const packageFile = /\.(dmg|pkg|zip|exe|msi|msix|appimage|deb|rpm|apk|tar\.gz|tgz|tar\.xz|7z)$/i;
 /** Installers and archives of this version come first; checksums, signatures and helper binaries fold away. */
 export function releaseAssetGroups<T extends { name: string }>(assets: T[], tag: string): { primary: T[]; other: T[] } {

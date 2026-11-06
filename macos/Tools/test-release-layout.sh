@@ -17,6 +17,7 @@ swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" 
     "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
     "$ROOT/Sources/Core/ReleaseCatalog.swift" "$ROOT/Sources/Views/Shared/MarkdownView.swift" \
     "$ROOT/Sources/Views/Workbench/AdaptiveWorkbenchLayout.swift" \
-    "$ROOT/Sources/Views/Shared/HostingDate.swift" "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Hub/ReleaseWorkspace.swift" "$TASK_TMP/HubModels.swift" \
+    "$ROOT/Sources/Core/ListDate.swift" "$ROOT/Sources/Views/Shared/StudioStyle.swift" "$ROOT/Sources/Views/Shared/StatusPill.swift" "$ROOT/Sources/Views/Shared/HostedList.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Hub/ReleaseWorkspace.swift" "$TASK_TMP/HubModels.swift" \
     "$ROOT/Tools/fixtures/ReleaseWorkspaceLayout.swift" -o "$TASK_TMP/release-layout"
 "$TASK_TMP/release-layout" "$TASK_OUTPUT"
