@@ -204,6 +204,8 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
+    // A settings save this step left pending would otherwise fire inside the next step's fakes
+    await settings.flush();
     await selfTestProgress(`${name}: finished`, checks);
   };
 

@@ -36,7 +36,7 @@ export async function inspectorVisibilitySelfTest(): Promise<[boolean, string]> 
     settings.getVersion = () => version;
     ipc.run = async () => { unexpected.push("process"); throw new Error("Inspector fixture blocked process"); };
     ipc.http = async () => { unexpected.push("network"); throw new Error("Inspector fixture blocked network"); };
-    ipc.writeText = async () => { unexpected.push("write"); throw new Error("Inspector fixture blocked write"); };
+    ipc.writeText = async (path) => { unexpected.push(`write ${path}`); throw new Error("Inspector fixture blocked write"); };
     root.render(<RepoPage store={store} openSettings={() => {}} />); await settle();
     const originalPanel = panel(), originalCenter = center(), graph = center().querySelector(".graph-scroll"), terminal = center().querySelector<HTMLElement>(".term-panel")!;
     const width = panel().getBoundingClientRect().width, centerWidth = center().getBoundingClientRect().width;
