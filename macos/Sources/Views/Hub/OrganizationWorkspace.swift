@@ -21,13 +21,17 @@ struct OrganizationWorkspace: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            WorkbenchFlow(spacing: 6) {
-                tab(String(localized: "Overview"), "overview", "square.grid.2x2")
-                tab(String(localized: "Repositories"), "repositories", "folder")
-                tab(String(localized: "Members"), "members", "person.2")
-                tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams", "person.3")
-                tab(String(localized: "Invitations"), "invitations", "envelope")
-            }.disabled(locked)
+            // switching content uses underline tabs, like the page's sections (docs/design.md, Controls)
+            VStack(spacing: 0) {
+                WorkbenchFlow(spacing: 4) {
+                    tab(String(localized: "Overview"), "overview")
+                    tab(String(localized: "Repositories"), "repositories")
+                    tab(String(localized: "Members"), "members")
+                    tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams")
+                    tab(String(localized: "Invitations"), "invitations")
+                }.disabled(locked)
+                AccountStyle.rule
+            }
             switch store.hostingHub.tab {
             case "overview": overview
             case "members": members; sectionStatus("members")
@@ -71,9 +75,8 @@ struct OrganizationWorkspace: View {
             TextField("Search loaded people and teams", text: $query).textFieldStyle(.roundedBorder).frame(maxWidth: 390)
         }
     }
-    private func tab(_ title: String, _ value: String, _ icon: String) -> some View {
-        Button { inviting = false; Task { await store.selectHostingHubItem(detail.item, tab: value) } } label: { Label(title, systemImage: icon) }
-            .buttonStyle(.bordered).tint(store.hostingHub.tab == value ? .accentColor : .secondary)
+    private func tab(_ title: String, _ value: String) -> some View {
+        AccountTab(title: title, on: store.hostingHub.tab == value) { inviting = false; Task { await store.selectHostingHubItem(detail.item, tab: value) } }
     }
     private var overview: some View {
         VStack(alignment: .leading, spacing: 18) {
