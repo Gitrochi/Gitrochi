@@ -6,7 +6,6 @@
 "%lld checks failed" = "%lld denetim başarısız";
 "%lld checks running" = "%lld denetim çalışıyor";
 "%lld comments" = "%lld yorum";
-"%lld commits in %@" = "%2$@ içinde %1$lld commit";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit, en yenisi önce olacak şekilde %2$@ üzerine yeniden uygulanır.";
 "%lld failed" = "%lld başarısız";
 "%lld new commits" = "%1$lld yeni commit";

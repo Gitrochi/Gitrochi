@@ -6,7 +6,6 @@
 "%lld checks failed" = "%lld 项检查失败";
 "%lld checks running" = "%lld 项检查运行中";
 "%lld comments" = "%lld 条评论";
-"%lld commits in %@" = "%2$@ 中的 %1$lld 个提交";
 "%lld commits replay on top of %@, newest first." = "%1$lld 个提交将重新应用到 %2$@ 之上，最新的在前。";
 "%lld failed" = "%lld 个失败";
 "%lld new commits" = "%1$lld 个新提交";

@@ -131,7 +131,6 @@
   "{0} checks failed": "Nieudane sprawdzenia: {0}",
   "{0} checks running": "Sprawdzenia w toku: {0}",
   "{0} comments": "Komentarze: {0}",
-  "{0} commits in {1}": "{0} commitów w {1}",
   "{0} commits replay on top of {1}, newest first.": "Commity ({0}) zostaną odtworzone na {1}, od najnowszego.",
   "{0} failed": "Niepowodzenia: {0}",
   "{0} new commits": "Nowe commity: {0}",

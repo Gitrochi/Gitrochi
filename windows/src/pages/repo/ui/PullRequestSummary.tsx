@@ -38,7 +38,7 @@ export function PullRequestSummary({ store }: { store: RepoStore }) {
   const state = branchSummary(!!request, store.status.ahead, counts.incoming, counts.commits);
   const server = t(gitlab ? "on GitLab" : "on GitHub");
   const headline = state.kind === "noRequest" ? (store.status.upstream ? t("Based on {0}", base) : t("Not on the server yet")) : t(gitlab ? "Merge request open" : "Pull request open");
-  const commits = (count: number) => (request ? t("{0} commits in {1}", count, `#${request.number}`) : t("{0} commits", count));
+  const commits = (count: number) => t("{0} commits", count);
   const sha = (store.headHash ?? "").slice(0, 7);
   const action = state.kind === "noRequest" ? <Button onClick={() => store.openSheet({ kind: "createPullRequest" })}>{t(gitlab ? "Create merge request…" : "Create pull request…")}</Button>
     : state.kind === "moved" ? <Button onClick={() => store.merge(remoteBase)}>{t("Update branch")}</Button>

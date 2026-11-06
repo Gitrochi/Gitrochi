@@ -5,7 +5,6 @@
 "%lld checks failed" = "%lld comprobaciones fallidas";
 "%lld checks running" = "%lld comprobaciones en curso";
 "%lld comments" = "%lld comentarios";
-"%lld commits in %@" = "%1$lld commits en %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commits se vuelven a aplicar sobre %2$@, los más recientes primero.";
 "%lld failed" = "Fallidas: %lld";
 "%lld new commits" = "%1$lld commits nuevos";

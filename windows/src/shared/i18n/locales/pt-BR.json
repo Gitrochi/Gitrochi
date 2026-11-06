@@ -131,7 +131,6 @@
   "{0} checks failed": "{0} verificações falharam",
   "{0} checks running": "{0} verificações em execução",
   "{0} comments": "{0} comentários",
-  "{0} commits in {1}": "{0} commits em {1}",
   "{0} commits replay on top of {1}, newest first.": "{0} commits são reaplicados sobre {1}, do mais recente ao mais antigo.",
   "{0} failed": "Com falha: {0}",
   "{0} new commits": "{0} novos commits",

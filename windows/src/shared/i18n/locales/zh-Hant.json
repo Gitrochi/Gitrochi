@@ -131,7 +131,6 @@
   "{0} checks failed": "{0} 項檢查失敗",
   "{0} checks running": "{0} 項檢查執行中",
   "{0} comments": "{0} 則留言",
-  "{0} commits in {1}": "{1} 中的 {0} 個提交",
   "{0} commits replay on top of {1}, newest first.": "{0} 個提交將重新套用到 {1} 之上，最新的在前。",
   "{0} failed": "{0} 個失敗",
   "{0} new commits": "{0} 個新提交",

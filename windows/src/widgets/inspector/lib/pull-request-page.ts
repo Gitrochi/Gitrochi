@@ -102,6 +102,10 @@ export function mergeReason(conflicts: boolean, base: string, badge: ReturnType<
   return blockers[0];
 }
 
+/** The request the page opens on when none is chosen: this branch's, else the first in the list */
+export const requestToOpen = (requests: PullRequest[], branch: string | null | undefined) =>
+  (requests.find((request) => isThisBranch(request, branch)) ?? requests[0])?.number ?? null;
+
 /** What the summary card says about the current branch (macOS: PullRequestPage.BranchSummary) */
 export type BranchSummary =
   | { kind: "noRequest"; commits: number }

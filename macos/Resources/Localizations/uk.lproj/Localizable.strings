@@ -6,7 +6,6 @@
 "%lld checks failed" = "Не пройдено перевірок: %lld";
 "%lld checks running" = "Виконується перевірок: %lld";
 "%lld comments" = "Коментарів: %lld";
-"%lld commits in %@" = "Комітів у %2$@: %1$lld";
 "%lld commits replay on top of %@, newest first." = "Комітів: %1$lld — буде застосовано поверх %2$@, спочатку нові.";
 "%lld failed" = "Зі збоєм: %lld";
 "%lld new commits" = "Нових комітів: %1$lld";

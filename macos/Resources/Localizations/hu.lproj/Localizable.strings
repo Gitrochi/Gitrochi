@@ -6,7 +6,6 @@
 "%lld checks failed" = "%lld ellenőrzés sikertelen";
 "%lld checks running" = "%lld ellenőrzés fut";
 "%lld comments" = "%lld megjegyzés";
-"%lld commits in %@" = "%1$lld commit itt: %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit kerül újrajátszásra a(z) %2$@ tetején, a legújabbal kezdve.";
 "%lld failed" = "%lld sikertelen";
 "%lld new commits" = "%1$lld új commit";

@@ -29,6 +29,11 @@ struct PullRequestsWorkspace: View {
                 }
             }
             .task { await store.loadPullRequests() }
+            .onChange(of: store.pullRequests, initial: true) { _, requests in
+                // an empty page says nothing: open a request, the one this branch is about if there is one
+                if case .pullRequest? = store.selection { return }
+                if let number = PullRequestPage.requestToOpen(requests, branch: store.headBranch) { store.select(.pullRequest(number)) }
+            }
         } else {
             VStack(spacing: 14) {
                 ContentUnavailableView("No hosting remote", symbol: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))

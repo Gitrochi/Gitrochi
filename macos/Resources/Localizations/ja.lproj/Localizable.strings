@@ -5,7 +5,6 @@
 "%lld checks failed" = "%lld 件のチェックが失敗";
 "%lld checks running" = "%lld 件のチェックを実行中";
 "%lld comments" = "コメント %lld 件";
-"%lld commits in %@" = "%2$@ の %1$lld 件のコミット";
 "%lld commits replay on top of %@, newest first." = "%1$lld 件のコミットを %2$@ の上に適用し直します（新しい順）。";
 "%lld failed" = "%lld 件失敗";
 "%lld new commits" = "新しいコミット %1$lld 件";

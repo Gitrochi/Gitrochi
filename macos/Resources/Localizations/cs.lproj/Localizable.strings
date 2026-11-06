@@ -6,7 +6,6 @@
 "%lld checks failed" = "Neúspěšné kontroly: %lld";
 "%lld checks running" = "Běžící kontroly: %lld";
 "%lld comments" = "Komentáře: %lld";
-"%lld commits in %@" = "%1$lld commitů v %2$@";
 "%lld commits replay on top of %@, newest first." = "Commity (%1$lld) se znovu přehrají na %2$@, nejnovější první.";
 "%lld failed" = "Selhalo: %lld";
 "%lld new commits" = "Nové commity: %1$lld";

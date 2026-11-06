@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { UserRound } from "@/shared/icons";
 import { destinationEnabled, destinationShortcut, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
 import { openedLedgerStore } from "@/entities/ledger";
 import type { RepoStore } from "@/entities/repo";
@@ -13,7 +12,7 @@ const titles: Record<WorkspaceDestination, string> = { home: "Home", repository:
 /** The page name as shown in the sidebar; GitLab repositories use that server's words. (macOS: WorkspaceDestination.title(gitlab:)) */
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : titles[page]);
 /** Each page's icon, shared with the page title row */
-export const destinationIcons = { home: designIcon("home"), repository: designIcon("repository"), compare: designIcon("compare"), rebase: designIcon("rebase"), code: designIcon("code"), pullRequests: designIcon("pullRequests"), issues: designIcon("issues"), actions: designIcon("actions"), releases: designIcon("releases"), projects: designIcon("projects"), account: UserRound, flows: designIcon("flows"), ledger: designIcon("ledger") };
+export const destinationIcons = { home: designIcon("home"), repository: designIcon("repository"), compare: designIcon("compare"), rebase: designIcon("rebase"), code: designIcon("code"), pullRequests: designIcon("pullRequests"), issues: designIcon("issues"), actions: designIcon("actions"), releases: designIcon("releases"), projects: designIcon("projects"), account: designIcon("account"), flows: designIcon("flows"), ledger: designIcon("ledger") };
 const Settings = designIcon("settings");
 // the sections of the rail and the redesign's sidebar: Home, then the repository's own pages
 /** Stands in for the Ledger while nothing has opened it; it never changes */

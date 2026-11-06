@@ -131,7 +131,6 @@
   "{0} checks failed": "{0} denetim başarısız",
   "{0} checks running": "{0} denetim çalışıyor",
   "{0} comments": "{0} yorum",
-  "{0} commits in {1}": "{1} içinde {0} commit",
   "{0} commits replay on top of {1}, newest first.": "{0} commit, en yenisi önce olacak şekilde {1} üzerine yeniden uygulanır.",
   "{0} failed": "{0} başarısız",
   "{0} new commits": "{0} yeni commit",

@@ -101,10 +101,9 @@ struct NavigationSidebar: View {
 }
 
 extension WorkspaceDestination {
-    /// nil for a page the Shell board draws no icon for: it keeps `symbol`
-    var designIcon: DesignIcon? {
+    var designIcon: DesignIcon {
         switch self {
-        case .account: return nil
+        case .account: return .account
         case .home: return .home
         case .repository: return .repository
         case .compare: return .compare
@@ -127,7 +126,6 @@ struct NavigationPageIcon: View {
     var size: CGFloat = 16
 
     var body: some View {
-        if let icon = page.designIcon { DesignIconImage(icon: icon, size: size) }
-        else { SymbolIcon(page.symbol).font(.system(size: size)).frame(width: size, height: size) }
+        DesignIconImage(icon: page.designIcon, size: size)
     }
 }

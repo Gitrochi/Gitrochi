@@ -129,7 +129,6 @@
   "{0} checks failed": "체크 {0}개 실패",
   "{0} checks running": "체크 {0}개 실행 중",
   "{0} comments": "댓글 {0}개",
-  "{0} commits in {1}": "{1}의 커밋 {0}개",
   "{0} commits replay on top of {1}, newest first.": "커밋 {0}개를 {1} 위에 다시 쌓습니다. 최신순입니다.",
   "{0} failed": "{0}개 실패",
   "{0} new commits": "새 커밋 {0}개",

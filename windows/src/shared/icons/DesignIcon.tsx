@@ -5,6 +5,7 @@ import type { LucideIcon, LucideProps } from "lucide-react";
  * macos/Sources/Views/Shared/DesignIcon.swift: change both together.
  */
 const drawings = {
+  account: "<circle cx=\"8\" cy=\"8\" r=\"6.5\"/><circle cx=\"8\" cy=\"6.6\" r=\"2.1\"/><path d=\"M4 12.6c.9-1.6 2.3-2.4 4-2.4s3.1.8 4 2.4\"/>",
   home: "<path d=\"M2.5 7.2 8 2.8l5.5 4.4\"/><path d=\"M4 6.2V13h3v-3.2h2V13h3V6.2\"/>",
   repository: "<path d=\"M1.8 4.2a1 1 0 0 1 1-1h3.1l1.4 1.5h5.9a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1z\"/>",
   compare: "<path d=\"M2.5 5.5h10M10 3l2.5 2.5L10 8\"/><path d=\"M13.5 10.5h-10M6 8l-2.5 2.5L6 13\"/>",

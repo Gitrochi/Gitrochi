@@ -17,7 +17,6 @@ struct PullRequestSummary: View {
     }
     private var remoteBase: String? { base.map { target.remote + "/" + $0 } }
     private var server: String { gitlab ? String(localized: "on GitLab") : String(localized: "on GitHub") }
-    private var requestShort: String { request.map { "#\($0.number)" } ?? "" }
 
     var body: some View {
         // not a Group: with no card yet it would be no view at all, and its task would never read the counts
@@ -64,7 +63,7 @@ struct PullRequestSummary: View {
     }
 
     private func commitsLabel(_ count: Int) -> String {
-        request != nil ? String(localized: "\(count) commits in \(requestShort)") : String(localized: "\(count) commits")
+        String(localized: "\(count) commits")
     }
 
     @ViewBuilder private func track(_ state: PullRequestPage.BranchSummary, base: String) -> some View {

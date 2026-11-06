@@ -6,7 +6,6 @@
 "%lld checks failed" = "การตรวจสอบล้มเหลว %lld รายการ";
 "%lld checks running" = "กำลังตรวจสอบ %lld รายการ";
 "%lld comments" = "%lld ความคิดเห็น";
-"%lld commits in %@" = "%1$lld คอมมิตใน %2$@";
 "%lld commits replay on top of %@, newest first." = "commit %1$lld รายการจะถูกวางซ้ำบน %2$@ เรียงจากใหม่สุด";
 "%lld failed" = "ล้มเหลว %lld รายการ";
 "%lld new commits" = "commit ใหม่ %1$lld รายการ";

@@ -131,7 +131,6 @@
   "{0} checks failed": "{0} 件のチェックが失敗",
   "{0} checks running": "{0} 件のチェックを実行中",
   "{0} comments": "コメント {0} 件",
-  "{0} commits in {1}": "{1} の {0} 件のコミット",
   "{0} commits replay on top of {1}, newest first.": "{0} 件のコミットを {1} の上に適用し直します（新しい順）。",
   "{0} failed": "{0} 件失敗",
   "{0} new commits": "新しいコミット {0} 件",

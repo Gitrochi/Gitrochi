@@ -137,6 +137,11 @@ enum PullRequestPage {
         return first
     }
 
+    /// The request the page opens on when none is chosen: this branch's, else the first in the list
+    static func requestToOpen(_ requests: [PullRequest], branch: String?) -> Int? {
+        (requests.first { $0.source == branch && !$0.fromFork } ?? requests.first)?.number
+    }
+
     /// What the summary card says about the current branch
     enum BranchSummary: Equatable {
         case noRequest(commits: Int)
