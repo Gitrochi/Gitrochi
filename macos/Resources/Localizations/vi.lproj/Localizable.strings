@@ -29,6 +29,7 @@
 "Already in this branch" = "Đã có trong nhánh này";
 "Approvals" = "Lượt phê duyệt";
 "Approved" = "Đã phê duyệt";
+"Approve…" = "Phê duyệt…";
 "Ask questions about the selected changes" = "Đặt câu hỏi về các thay đổi đã chọn";
 "Based on %@" = "Dựa trên %@";
 "Changes requested" = "Đã yêu cầu thay đổi";
@@ -111,6 +112,7 @@
 "Review type" = "Loại review";
 "Reviewers" = "Người review";
 "Review…" = "Review…";
+"Saved sign-in needs your approval" = "Đăng nhập đã lưu cần bạn phê duyệt";
 "Search branches and tags" = "Tìm nhánh và thẻ";
 "Show" = "Hiển thị";
 "Show %lld earlier lines" = "Hiện %lld dòng trước đó";
@@ -139,6 +141,7 @@
 "base" = "gốc";
 "choose a new base" = "chọn gốc mới";
 "line %lld" = "dòng %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS sẽ hỏi trước khi Gitrochi dùng đăng nhập đã lưu của @%@. Bản nháp của bạn được giữ lại.";
 "on GitHub" = "trên GitHub";
 "on GitLab" = "trên GitLab";
 "{0} of {1}" = "{0} trên {1}";

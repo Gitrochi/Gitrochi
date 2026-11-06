@@ -29,6 +29,7 @@
 "Already in this branch" = "Sudah ada di branch ini";
 "Approvals" = "Persetujuan";
 "Approved" = "Disetujui";
+"Approve…" = "Setujui…";
 "Ask questions about the selected changes" = "Ajukan pertanyaan tentang perubahan yang dipilih";
 "Based on %@" = "Berdasarkan %@";
 "Changes requested" = "Perubahan diminta";
@@ -111,6 +112,7 @@
 "Review type" = "Jenis tinjauan";
 "Reviewers" = "Peninjau";
 "Review…" = "Tinjau…";
+"Saved sign-in needs your approval" = "Info masuk tersimpan perlu persetujuan Anda";
 "Search branches and tags" = "Cari branch dan tag";
 "Show" = "Tampilkan";
 "Show %lld earlier lines" = "Tampilkan %lld baris sebelumnya";
@@ -139,6 +141,7 @@
 "base" = "dasar";
 "choose a new base" = "pilih basis baru";
 "line %lld" = "baris %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS bertanya sebelum Gitrochi memakai info masuk tersimpan untuk @%@. Draf Anda tetap ada.";
 "on GitHub" = "di GitHub";
 "on GitLab" = "di GitLab";
 "{0} of {1}" = "{0} dari {1}";

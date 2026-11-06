@@ -29,6 +29,7 @@
 "Already in this branch" = "อยู่ใน branch นี้แล้ว";
 "Approvals" = "การอนุมัติ";
 "Approved" = "อนุมัติแล้ว";
+"Approve…" = "อนุมัติ…";
 "Ask questions about the selected changes" = "ถามเกี่ยวกับการเปลี่ยนแปลงที่เลือก";
 "Based on %@" = "อิงจาก %@";
 "Changes requested" = "ขอให้แก้ไขแล้ว";
@@ -111,6 +112,7 @@
 "Review type" = "ประเภทการรีวิว";
 "Reviewers" = "ผู้รีวิว";
 "Review…" = "รีวิว…";
+"Saved sign-in needs your approval" = "การลงชื่อเข้าที่บันทึกไว้ต้องได้รับการอนุมัติ";
 "Search branches and tags" = "ค้นหา branch และแท็ก";
 "Show" = "แสดง";
 "Show %lld earlier lines" = "แสดง %lld บรรทัดก่อนหน้า";
@@ -139,6 +141,7 @@
 "base" = "ฐาน";
 "choose a new base" = "เลือกฐานใหม่";
 "line %lld" = "บรรทัด %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS จะถามก่อนที่ Gitrochi จะใช้การลงชื่อเข้าที่บันทึกไว้ของ @%@ แบบร่างจะยังอยู่";
 "on GitHub" = "บน GitHub";
 "on GitLab" = "บน GitLab";
 "{0} of {1}" = "{0} จาก {1}";

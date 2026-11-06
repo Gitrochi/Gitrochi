@@ -32,7 +32,8 @@ export function PullRequestSummary({ store }: { store: RepoStore }) {
     }).catch(() => {});
     return () => { current = false; };
   }, [store, store.path, head, store.headHash, remoteBase, base]);
-  if (!target || !head || !base || !remoteBase || head === base || !counts) return null;
+  // before the list is read, "no request yet" would be a guess
+  if (!target || !head || !base || !remoteBase || head === base || !counts || store.prState.kind !== "loaded") return null;
   const gitlab = target.provider === "gitlab";
   const state = branchSummary(!!request, store.status.ahead, counts.incoming, counts.commits);
   const server = t(gitlab ? "on GitLab" : "on GitHub");
@@ -51,7 +52,7 @@ export function PullRequestSummary({ store }: { store: RepoStore }) {
         <span className="hosted-summary-value pr-summary-branch"><bdi>{head}</bdi></span>
         <span className="hosted-caption">{headline}</span>
       </>}
-      middle={<div className="pr-track" role="img" aria-label={headline}>{track(state, base, remoteBase, target.remote, server, sha, commits)}</div>}
+      middle={<div className="pr-track" role="img" aria-label={headline}>{track(state, base, remoteBase, counts.incoming, target.remote, server, sha, commits)}</div>}
       trail={<>
         {action}
         {state.kind === "moved" && <span className="hosted-caption">{t("Merges {0} into this branch", remoteBase)}</span>}
@@ -74,9 +75,9 @@ function Node({ title, caption, kind = "", warn = false, mono = false }: { title
 
 const Line = ({ label, dashed = false }: { label: string; dashed?: boolean }) => <div className={`pr-track-line${dashed ? " dashed" : ""}`}><span>{label}</span></div>;
 
-function track(state: BranchSummary, base: string, remoteBase: string, remote: string, server: string, sha: string, commits: (count: number) => string) {
+function track(state: BranchSummary, base: string, remoteBase: string, incoming: number, remote: string, server: string, sha: string, commits: (count: number) => string) {
   switch (state.kind) {
-    case "noRequest": return <><Node title={base} caption={t("base")} /><Line label={commits(state.commits)} /><Node title="HEAD" caption={sha} kind="current" mono /></>;
+    case "noRequest": return <>{incoming > 0 ? <Node title={remoteBase} caption={t("{0} new commits", incoming)} warn /> : <Node title={base} caption={t("base")} />}<Line label={commits(state.commits)} /><Node title="HEAD" caption={sha} kind="current" mono /></>;
     case "moved": return <><Node title={remoteBase} caption={t("{0} new commits", state.incoming)} warn /><Line label={commits(state.commits)} /><Node title={`HEAD = ${remote}`} caption={server} kind="current" /></>;
     case "upToDate": return <><Node title={base} caption={t("base")} /><Line label={commits(state.commits)} /><Node title={`HEAD = ${remote}`} caption={server} kind="current" /></>;
     case "notPushed": return <><Node title={base} caption={t("base")} /><Line label={commits(state.onServer)} /><Node title={remote} caption={server} kind="strong" /><Line label={t("Not pushed")} dashed /><Node title="HEAD" caption={sha} kind="current" mono /></>;

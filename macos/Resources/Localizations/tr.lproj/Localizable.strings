@@ -29,6 +29,7 @@
 "Already in this branch" = "Zaten bu dalda";
 "Approvals" = "Onaylar";
 "Approved" = "Onaylandı";
+"Approve…" = "Onayla…";
 "Ask questions about the selected changes" = "Seçili değişiklikler hakkında soru sor";
 "Based on %@" = "%@ tabanlı";
 "Changes requested" = "Değişiklik istendi";
@@ -111,6 +112,7 @@
 "Review type" = "İnceleme türü";
 "Reviewers" = "İnceleyenler";
 "Review…" = "İncele…";
+"Saved sign-in needs your approval" = "Kayıtlı oturum onayınızı bekliyor";
 "Search branches and tags" = "Dal ve etiket ara";
 "Show" = "Göster";
 "Show %lld earlier lines" = "Önceki %lld satırı göster";
@@ -139,6 +141,7 @@
 "base" = "taban";
 "choose a new base" = "yeni bir taban seçin";
 "line %lld" = "satır %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "Gitrochi, @%@ için kayıtlı oturumu kullanmadan önce macOS sorar. Taslaklarınız korunur.";
 "on GitHub" = "GitHub'da";
 "on GitLab" = "GitLab'da";
 "{0} of {1}" = "{0} / {1}";

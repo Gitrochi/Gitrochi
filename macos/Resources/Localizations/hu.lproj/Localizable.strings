@@ -29,6 +29,7 @@
 "Already in this branch" = "Már benne van ebben az ágban";
 "Approvals" = "Jóváhagyások";
 "Approved" = "Jóváhagyva";
+"Approve…" = "Jóváhagyás…";
 "Ask questions about the selected changes" = "Kérdések feltevése a kijelölt módosításokról";
 "Based on %@" = "Alap: %@";
 "Changes requested" = "Módosítások kérve";
@@ -111,6 +112,7 @@
 "Review type" = "Felülvizsgálat típusa";
 "Reviewers" = "Felülvizsgálók";
 "Review…" = "Felülvizsgálat…";
+"Saved sign-in needs your approval" = "A mentett bejelentkezés jóváhagyást igényel";
 "Search branches and tags" = "Ágak és címkék keresése";
 "Show" = "Megjelenítés";
 "Show %lld earlier lines" = "%lld korábbi sor megjelenítése";
@@ -139,6 +141,7 @@
 "base" = "alap";
 "choose a new base" = "válasszon új alapot";
 "line %lld" = "%lld. sor";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "A macOS rákérdez, mielőtt a Gitrochi használná @%@ mentett bejelentkezését. A piszkozatok megmaradnak.";
 "on GitHub" = "a GitHubon";
 "on GitLab" = "a GitLabon";
 "{0} of {1}" = "{0} / {1}";

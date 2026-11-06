@@ -23,7 +23,8 @@ struct PullRequestSummary: View {
         // not a Group: with no card yet it would be no view at all, and its task would never read the counts
         VStack(spacing: 0) {
             Color.clear.frame(height: 0)
-            if let head, let base, head != base, let counts {
+            // before the list is read, "no request yet" would be a guess
+            if let head, let base, head != base, let counts, store.prState == .loaded {
                 let state = PullRequestPage.branchSummary(hasRequest: request != nil, ahead: store.status.ahead, incoming: counts.incoming, commits: counts.commits)
                 HostedListSummary(compact: compact) {
                     HostedListSummaryCaption(text: String(localized: "This branch"))
@@ -71,7 +72,12 @@ struct PullRequestSummary: View {
         HStack(alignment: .top, spacing: 0) {
             switch state {
             case .noRequest(let commits):
-                node(base, String(localized: "base")); line(commitsLabel(commits)); node("HEAD", sha, current: true, mono: true)
+                if let counts, counts.incoming > 0 {
+                    node(remoteBase ?? base, String(localized: "\(counts.incoming) new commits"), tone: .waiting)
+                } else {
+                    node(base, String(localized: "base"))
+                }
+                line(commitsLabel(commits)); node("HEAD", sha, current: true, mono: true)
             case .moved(let incoming, let commits):
                 node(remoteBase ?? base, String(localized: "\(incoming) new commits"), tone: .waiting); line(commitsLabel(commits)); node("HEAD = \(target.remote)", server, current: true)
             case .upToDate(let commits):

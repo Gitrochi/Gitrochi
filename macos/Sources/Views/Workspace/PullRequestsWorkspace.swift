@@ -7,16 +7,25 @@ struct PullRequestsWorkspace: View {
     @Environment(RepoStore.self) private var store
     @AppStorage("pullRequestListHidden") private var listHidden = false
 
+    /// An account is there but its saved sign-in cannot be read yet; the page can show nothing of the server until then
+    private var blocked: Bool {
+        store.prState == .authorizationRequired || (store.prState == .needsAccount && store.hostingAccount != nil)
+    }
+
     var body: some View {
         if let target = store.target {
             VStack(spacing: 0) {
                 top(target)
+                if blocked {
+                    HostedAccountNeeded(target: target) { Task { await store.loadPullRequests() } }
+                } else {
                 GeometryReader { geometry in
                     VStack(spacing: 0) {
                         PullRequestSummary(target: target, compact: geometry.size.width < 680)
                         Divider()
                         columns(target)
                     }
+                }
                 }
             }
             .task { await store.loadPullRequests() }
@@ -63,7 +72,7 @@ struct PullRequestsWorkspace: View {
                 Label(target.provider == .gitlab ? "New merge request…" : "New pull request…", symbol: "plus")
             }
             .buttonStyle(PullRequestButtonStyle())
-            .disabled(store.headBranch == nil)
+            .disabled(store.headBranch == nil || blocked)
             .help("New \(target.provider.requestShort) from the current branch")
         }
         .padding(.horizontal, 20).padding(.vertical, 12)

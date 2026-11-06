@@ -28,6 +28,7 @@
 "Already in this branch" = "すでにこのブランチに含まれています";
 "Approvals" = "承認";
 "Approved" = "承認済み";
+"Approve…" = "承認…";
 "Ask questions about the selected changes" = "選択した変更について質問する";
 "Based on %@" = "%@ がベース";
 "Changes requested" = "変更要求";
@@ -109,6 +110,7 @@
 "Review type" = "レビューの種類";
 "Reviewers" = "レビュアー";
 "Review…" = "レビュー…";
+"Saved sign-in needs your approval" = "保存済みのサインインには承認が必要です";
 "Search branches and tags" = "ブランチとタグを検索";
 "Show" = "表示";
 "Show %lld earlier lines" = "前の %lld 行を表示";
@@ -150,6 +152,7 @@
 "base" = "ベース";
 "choose a new base" = "新しいベースを選択";
 "line %lld" = "%lld 行目";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "Gitrochi が @%@ の保存済みサインインを使う前に macOS が確認します。下書きは保持されます。";
 "on GitHub" = "GitHub 上";
 "on GitLab" = "GitLab 上";
 "{0} of {1}" = "{1}件中{0}件";

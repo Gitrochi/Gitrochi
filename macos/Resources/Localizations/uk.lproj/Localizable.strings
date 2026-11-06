@@ -29,6 +29,7 @@
 "Already in this branch" = "Уже в цій гілці";
 "Approvals" = "Схвалення";
 "Approved" = "Схвалено";
+"Approve…" = "Схвалити…";
 "Ask questions about the selected changes" = "Поставити запитання про вибрані зміни";
 "Based on %@" = "На основі %@";
 "Changes requested" = "Запитано зміни";
@@ -111,6 +112,7 @@
 "Review type" = "Тип рев’ю";
 "Reviewers" = "Рецензенти";
 "Review…" = "Рев’ю…";
+"Saved sign-in needs your approval" = "Збережений вхід потребує вашого схвалення";
 "Search branches and tags" = "Пошук гілок і тегів";
 "Show" = "Показувати";
 "Show %lld earlier lines" = "Показати попередні рядки (%lld)";
@@ -139,6 +141,7 @@
 "base" = "база";
 "choose a new base" = "виберіть нову базу";
 "line %lld" = "рядок %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS запитає, перш ніж Gitrochi використає збережений вхід @%@. Чернетки збережуться.";
 "on GitHub" = "на GitHub";
 "on GitLab" = "на GitLab";
 "{0} of {1}" = "{0} із {1}";

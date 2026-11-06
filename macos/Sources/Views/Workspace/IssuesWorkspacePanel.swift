@@ -116,10 +116,7 @@ struct HostedAccountNeeded: View {
 
     var body: some View {
         if let account = store.pendingCredentialAccount ?? store.hostingAccount {
-            SavedAccountAccessNotice(account: account, restored: restored)
-                .padding(24)
-                .frame(maxWidth: 520, maxHeight: .infinity, alignment: .topLeading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            SavedAccountAccessNotice(account: account, page: true, restored: restored)
         } else {
             HostedListEmpty(symbol: "person.crop.circle.badge.plus",
                             title: String(localized: "Connect a \(target.provider == .gitlab ? "GitLab" : "GitHub") account"),

@@ -28,6 +28,7 @@
 "Already in this branch" = "Ya está en esta rama";
 "Approvals" = "Aprobaciones";
 "Approved" = "Aprobado";
+"Approve…" = "Aprobar…";
 "Ask questions about the selected changes" = "Hacer preguntas sobre los cambios seleccionados";
 "Based on %@" = "Basada en %@";
 "Changes requested" = "Cambios solicitados";
@@ -109,6 +110,7 @@
 "Review type" = "Tipo de revisión";
 "Reviewers" = "Revisores";
 "Review…" = "Revisar…";
+"Saved sign-in needs your approval" = "El inicio de sesión guardado necesita tu aprobación";
 "Search branches and tags" = "Buscar ramas y etiquetas";
 "Show" = "Mostrar";
 "Show %lld earlier lines" = "Mostrar %lld líneas anteriores";
@@ -151,6 +153,7 @@
 "base" = "base";
 "choose a new base" = "elige una nueva base";
 "line %lld" = "línea %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS pregunta antes de que Gitrochi use el inicio de sesión guardado de @%@. Tus borradores se conservan.";
 "on GitHub" = "en GitHub";
 "on GitLab" = "en GitLab";
 "{0} of {1}" = "{0} de {1}";

@@ -29,6 +29,7 @@
 "Already in this branch" = "Už je v této větvi";
 "Approvals" = "Schválení";
 "Approved" = "Schváleno";
+"Approve…" = "Schválit…";
 "Ask questions about the selected changes" = "Položit otázky k vybraným změnám";
 "Based on %@" = "Vychází z %@";
 "Changes requested" = "Požadovány změny";
@@ -111,6 +112,7 @@
 "Review type" = "Typ revize";
 "Reviewers" = "Recenzenti";
 "Review…" = "Revize…";
+"Saved sign-in needs your approval" = "Uložené přihlášení vyžaduje vaše schválení";
 "Search branches and tags" = "Hledat větve a tagy";
 "Show" = "Zobrazit";
 "Show %lld earlier lines" = "Zobrazit dřívější řádky (%lld)";
@@ -139,6 +141,7 @@
 "base" = "základ";
 "choose a new base" = "vyberte nový základ";
 "line %lld" = "řádek %lld";
+"macOS asks before Gitrochi uses the saved sign-in for @%@. Your drafts are kept." = "macOS se před použitím uloženého přihlášení pro @%@ zeptá. Vaše koncepty zůstanou zachovány.";
 "on GitHub" = "na GitHubu";
 "on GitLab" = "na GitLabu";
 "{0} of {1}" = "{0} z {1}";
