@@ -4,6 +4,7 @@ import type { LedgerBrowserStatus, LedgerIntegrationStatus, LedgerStableCommand,
 import { isWindows } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { shortDate } from "@/shared/lib";
+import { tools } from "@/shared/platform";
 import { Button, Spinner, StatusPill } from "@/shared/ui";
 import { agentConnection, browserConnection, type ConnectionAction, type ConnectionLook, mcpCommand } from "../lib/connections";
 import "./ledger-connections.css";
@@ -51,8 +52,8 @@ function Row({ id, title, icon, look, error, detail, busy, disabled, dialogs, on
 
 /**
  * Claude Code, Codex and the ChatGPT browser extension as equals: whether each one's data reaches this Ledger, and the
- * action that fixes it. Set up and Repair install hooks that run the stable ledger command; the app never edits a
- * client's MCP settings, it only copies the command. Shown in the Connect agents sheet and Settings › Ledger.
+ * action that fixes it. Set up and Repair install hooks that run the stable ledger command and have the client register
+ * its MCP server, and the command stays there to copy when it cannot. Shown in the Connect agents sheet and Settings › Ledger.
  * (macOS: Views/Ledger/LedgerConnectionsSection.swift)
  */
 export function LedgerConnections({ store, onOpenBrowser }: { store: LedgerStore; onOpenBrowser: () => void }) {
@@ -88,18 +89,27 @@ export function LedgerConnections({ store, onOpenBrowser }: { store: LedgerStore
     setWorking(null);
     await load(failed);
   };
-  const copyMcp = async (client: Client, registered: boolean, path = stable?.path) => {
-    if (!path) return;
-    await navigator.clipboard.writeText(mcpCommand(client, path, registered, isWindows()));
+  const copyMcp = async (client: Client, registered: boolean) => {
+    if (!stable?.path) return;
+    await navigator.clipboard.writeText(mcpCommand(client, stable.path, registered, isWindows()));
     setNotice(t("Copied. Run it in a terminal to register the Ledger tools."));
   };
   const agentAction = (client: Client, look: ConnectionLook, status: LedgerIntegrationStatus, action: ConnectionAction) => {
     if (action === "copy") return void copyMcp(client, status.mcp.registered).catch(() => setNotice(t("Could not copy to the clipboard.")));
+    const hooks = status.ownedHookCount > 0;
+    const tool = tools.command(client);
+    const program = tool?.kind === "native" ? tool.exe : null;
     void run(client, async () => {
-      if (action === "remove") return void (await store.removeIntegration(client));
-      // Only the MCP entry is broken and no hooks are installed: the stable command is all it needs before the copy
-      const path = action === "repair" && look.repairsMcp && status.ownedHookCount === 0 ? (await store.createStableCommand()).path : (await store.installIntegration(client)).cliPath;
-      if (action === "repair" && look.repairsMcp) await copyMcp(client, true, path);
+      if (action === "remove") {
+        if (hooks) await store.removeIntegration(client);
+        if (status.mcp.registered) await store.removeMcp(client, program);
+        return;
+      }
+      // Repairing only the MCP entry adds no hooks a person did not choose
+      if (action === "setup" || hooks || !look.repairsMcp) await store.installIntegration(client);
+      await store.registerMcp(client, program).catch((e: unknown) => {
+        throw new Error(t("The Ledger tools were not registered: {0} Copy the MCP command and run it.", message(e)));
+      });
     });
   };
 

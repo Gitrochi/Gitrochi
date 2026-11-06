@@ -9,7 +9,7 @@ const status = (over: Partial<LedgerIntegrationStatus> = {}): LedgerIntegrationS
 describe("Ledger connections", () => {
   it("maps every health to one of the five row states with its actions", () => {
     expect(agentConnection(status({ health: "not_installed", ownedHookCount: 0, hookCommand: null }), false)).toMatchObject({ state: "not_set_up", actions: ["setup"] });
-    expect(agentConnection(status(), true)).toMatchObject({ state: "connected", lastDataAt: 2_000, actions: ["remove", "copy"] });
+    expect(agentConnection(status(), true)).toMatchObject({ state: "connected", lastDataAt: 2_000, actions: ["setup", "remove", "copy"] });
     const mcp = { configPath: "/c", registered: true, command: command() };
     expect(agentConnection(status({ health: "no_data_yet", lastObservedAt: null, lastReportAt: null, mcp }), false)).toMatchObject({ state: "no_data", lastDataAt: null, explanation: "Start or restart {0} to send activity." });
     expect(agentConnection(status({ client: "codex", requiresClientTrust: true, health: "no_data_yet" }), false).explanation).toContain("/hooks");
@@ -22,24 +22,26 @@ describe("Ledger connections", () => {
     expect(stale).toMatchObject({ state: "repair", repairsMcp: false, explanation: "The hook command is older than this Ledger and cannot write to it." });
     const mcpOnly = agentConnection(status({ health: "outdated_command", mcp: { configPath: "/c", registered: true, command: command({ canWrite: false }) } }), true);
     expect(mcpOnly.repairsMcp).toBe(true);
-    expect(mcpOnly.explanation).toContain("Copy the MCP command");
+    expect(mcpOnly.explanation).toBe("The MCP command is older than this Ledger and cannot write to it.");
     const noHooks = agentConnection(status({ health: "missing_command", ownedHookCount: 0, hookCommand: null, mcp: { configPath: "/c", registered: true, command: command({ exists: false }) } }), false);
-    expect(noHooks.actions).toEqual(["repair"]);
+    expect(noHooks.actions).toEqual(["repair", "remove"]);
   });
 
-  it("does not claim reports while the agent has no tools to send them with", () => {
+  it("does not claim reports while the agent has no tools to send them with, and Set up finishes the job", () => {
     const mcp = { configPath: "/c", registered: true, command: command() };
-    expect(agentConnection(status({ mcp }), true).explanation).toBe("Activity and reports reach this Ledger.");
+    expect(agentConnection(status({ mcp }), true)).toMatchObject({ explanation: "Activity and reports reach this Ledger.", actions: ["remove", "copy"] });
     const hooksOnly = agentConnection(status(), true);
-    expect(hooksOnly).toMatchObject({ state: "connected", actions: ["remove", "copy"] });
+    expect(hooksOnly).toMatchObject({ state: "connected", actions: ["setup", "remove", "copy"] });
     expect(hooksOnly.explanation).toContain("agents cannot report yet");
-    expect(agentConnection(status({ health: "no_data_yet" }), true)).toMatchObject({ state: "no_data", explanation: "Copy the MCP command and run it, then start or restart {0}." });
+    expect(agentConnection(status({ health: "no_data_yet" }), true)).toMatchObject({ state: "no_data", explanation: "Set up registers the Ledger tools. Then start or restart {0}.", actions: ["setup", "remove", "copy"] });
+    // Remove also takes away a registration without hooks
+    expect(agentConnection(status({ ownedHookCount: 0, hookCommand: null, mcp }), true)).toMatchObject({ state: "connected", actions: ["setup", "remove", "copy"] });
     // Codex still has to trust its hooks first
     expect(agentConnection(status({ client: "codex", requiresClientTrust: true, health: "no_data_yet" }), true).explanation).toContain("/hooks");
   });
 
   it("does not call an MCP-only connection unused, and says when hooks are turned off", () => {
-    expect(agentConnection(status({ ownedHookCount: 0, hookCommand: null, lastObservedAt: null, lastReportAt: null, mcp: { configPath: "/c", registered: true, command: command() } }), true)).toMatchObject({ state: "connected", lastDataAt: null, actions: ["setup", "copy"] });
+    expect(agentConnection(status({ ownedHookCount: 0, hookCommand: null, lastObservedAt: null, lastReportAt: null, mcp: { configPath: "/c", registered: true, command: command() } }), true)).toMatchObject({ state: "connected", lastDataAt: null, actions: ["setup", "remove", "copy"] });
     expect(agentConnection(status({ hooksDisabled: true, health: "no_data_yet" }), false).explanation).toBe("Hooks are turned off in this client's settings.");
   });
 
@@ -62,6 +64,9 @@ describe("Ledger connections", () => {
     expect((await demo.call("integration_status", { client: "codex" })).health).toBe("outdated_command");
     expect((await demo.call("integration_command", { bundled: "x" })).refreshed).toBe(false);
     expect((await demo.call("integration_install", { client: "codex", bundled: "x" })).health).toBe("no_data_yet");
-    expect((await demo.call("integration_remove", { client: "claude" })).health).toBe("not_installed");
+    expect((await demo.call("integration_mcp", { client: "claude", action: "register", bundled: "x" })).mcp.registered).toBe(true);
+    expect((await demo.call("integration_remove", { client: "claude" })).health).toBe("ok");
+    const removed = await demo.call("integration_mcp", { client: "claude", action: "remove" });
+    expect([removed.mcp.registered, removed.health]).toEqual([false, "not_installed"]);
   });
 });

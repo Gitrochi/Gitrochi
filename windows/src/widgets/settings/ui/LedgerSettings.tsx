@@ -156,7 +156,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       <div className="form-section" data-ledger-section="connections">
         <span className="form-section-title">{t("Connections")}</span>
         <LedgerConnections store={store} onOpenBrowser={() => setSheet("browser")} />
-        <span className="hint">{t("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")}</span>
+        <span className="hint">{t("Hooks and the MCP server run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Set up has the client register the server; if it cannot, copy the MCP command and run it yourself.")}</span>
       </div>
 
       <div className="form-section">
