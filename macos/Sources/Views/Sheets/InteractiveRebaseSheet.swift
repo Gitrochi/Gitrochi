@@ -15,7 +15,7 @@ struct InteractiveRebaseSheet: View {
                 Text("\(plan?.items.count ?? 0) commits on '\(store.headBranch ?? "")' — newest at the top. Squash combines a commit into the one right below it (older).")
                     .font(.callout).foregroundStyle(.secondary)
                 if plan?.pushed == true {
-                    Label("Includes commits already pushed to the remote. You'll need to force push after cleaning up.", systemImage: "exclamationmark.triangle.fill")
+                    Label("Includes commits already pushed to the remote. You'll need to force push after cleaning up.", symbol: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
@@ -33,7 +33,7 @@ struct InteractiveRebaseSheet: View {
             }
             HStack {
                 if let p = plan?.problem {
-                    Label(p, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red)
+                    Label(p, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red)
                 } else {
                     Text("You can always return to the state before you started (Undo, ⌥⌘Z).").font(.caption).foregroundStyle(.secondary)
                 }
@@ -70,7 +70,7 @@ struct InteractiveRebaseSheet: View {
             HStack(spacing: 8) {
                 Picker("", selection: item.action) {
                     ForEach(RebaseAction.allCases) { act in
-                        Label(act.title, systemImage: act.symbol).tag(act)
+                        Label(act.title, symbol: act.symbol).tag(act)
                     }
                 }
                 .labelsHidden()
@@ -86,10 +86,10 @@ struct InteractiveRebaseSheet: View {
                     .help(item.wrappedValue.message)
                 Spacer(minLength: 4)
                 Text(item.wrappedValue.author).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                Button { move(i, -1) } label: { Image(systemName: "arrow.up") }
+                Button { move(i, -1) } label: { DesignIconImage(icon: .push) }
                     .buttonStyle(.borderless).disabled(i == 0).help("Up (later)")
                     .accessibilityLabel("Up")
-                Button { move(i, 1) } label: { Image(systemName: "arrow.down") }
+                Button { move(i, 1) } label: { DesignIconImage(icon: .pull) }
                     .buttonStyle(.borderless).disabled(i == count - 1).help("Down (earlier)")
                     .accessibilityLabel("Down")
             }

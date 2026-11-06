@@ -132,11 +132,11 @@ struct RepoView: View {
             Divider()
             HStack(spacing: 8) {
                 if store.busy != nil || store.graphProgress != nil { ProgressView().controlSize(.mini) }
-                else { Image(systemName: "checkmark.circle").foregroundStyle(.green) }
+                else { SymbolIcon("checkmark.circle").foregroundStyle(.green) }
                 Text(text).font(.caption).lineLimit(2)
                 Spacer()
                 if store.busy == nil, store.graphProgress == nil {
-                    Button { store.operationNotice = nil } label: { Image(systemName: "xmark") }
+                    Button { store.operationNotice = nil } label: { DesignIconImage(icon: .close) }
                         .buttonStyle(.plain).accessibilityLabel("Dismiss notification")
                 }
             }
@@ -158,7 +158,7 @@ struct RepoView: View {
         ToolbarItem(placement: .navigation) {
             ToolbarCapsule {
                 Button { store.sidebarToggleRequest += 1 } label: {
-                    Label(sidebarToggleTitle, systemImage: "sidebar.left").labelStyle(.iconOnly).font(.system(size: 14))
+                    Label(sidebarToggleTitle, symbol: "sidebar.left").labelStyle(.iconOnly).font(.system(size: 14))
                 }
                 .buttonStyle(ToolbarCapsuleButtonStyle())
                 .help(sidebarToggleTitle + " (⌃⌘S)")
@@ -244,14 +244,14 @@ struct RepoView: View {
     private var repositoryButton: some View {
         ToolbarCapsuleMenu(leading: 11, trailing: 12) { repositoryMenu } label: {
             HStack(spacing: 8) {
-                Image(systemName: "folder").font(.system(size: 14))
+                DesignIconImage(icon: .repository, size: 14)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(store.windowTitle).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                     if store.url != nil { branchLine }
                 }
                 // the button is at most 280pt wide with its padding; longer names truncate
                 .modifier(WidthLimit(limit: 208))
-                Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)).foregroundStyle(.secondary)
+                DesignIconImage(icon: .chevronDown, size: 8).foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
         }
@@ -390,7 +390,7 @@ struct RepoView: View {
         } label: {
             HStack(spacing: 6) {
                 ToolLabel(title: String(localized: "Branch"), icon: "arrow.triangle.branch")
-                Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold))
+                DesignIconImage(icon: .chevronDown, size: 8)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(String(localized: "Branch"))
@@ -456,7 +456,7 @@ struct InspectorView: View {
         case .worktree(let path)?: WorktreeChangesView(path: path)
         case .pullRequest(let n)?: PullRequestDetailView(number: n)
         case nil:
-            ContentUnavailableView("No commit selected", systemImage: "point.3.connected.trianglepath.dotted",
+            ContentUnavailableView("No commit selected", symbol: "point.3.connected.trianglepath.dotted",
                                    description: Text("Select a commit in the graph."))
         }
     }
@@ -471,7 +471,7 @@ struct ToolLabel: View {
         if showsTitles {
             TitledToolLabel(title: title, icon: icon)
         } else {
-            Label(title, systemImage: icon).labelStyle(.iconOnly).font(.system(size: 14))
+            Label(title, symbol: icon).labelStyle(.iconOnly).font(.system(size: 14))
         }
     }
 }
@@ -482,7 +482,7 @@ struct TitledToolLabel: View {
     let icon: String
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 14))
+            SymbolIcon(icon).font(.system(size: 14))
             Text(title).font(.system(size: 13))
         }
         .fixedSize()

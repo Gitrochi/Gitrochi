@@ -1,4 +1,5 @@
-import { Circle, CircleX, FileSearch, Undo2 } from "lucide-react";
+import { FileSearch } from "lucide-react";
+import { Circle, CircleX, Undo2 } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type FlowStore, flowEngine, formatDuration, isBadState, runCounts, runPresentationState, type RunNode } from "@/entities/flow";
 import { ipc } from "@/shared/api";

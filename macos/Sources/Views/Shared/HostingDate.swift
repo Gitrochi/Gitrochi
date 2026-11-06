@@ -22,7 +22,7 @@ struct HostingDate: View {
             let short = abs(date.timeIntervalSinceNow) < 7 * 86_400 ? formatter.localizedString(for: date, relativeTo: Date()) : date.formatted(.dateTime.year().month(.abbreviated).day().locale(locale))
             let full = date.formatted(.dateTime.year().month(.wide).day().hour().minute().locale(locale))
             let template = published ? "Published {0}" : label
-            Label(template.map { String(localized: String.LocalizationValue($0)).replacingOccurrences(of: "{0}", with: short) } ?? short, systemImage: "calendar")
+            Label(template.map { String(localized: String.LocalizationValue($0)).replacingOccurrences(of: "{0}", with: short) } ?? short, symbol: "calendar")
                 .font(.caption).foregroundStyle(.secondary).help(full).accessibilityLabel(full)
         } else { Text("Date unavailable").font(.caption).foregroundStyle(.secondary) }
     }

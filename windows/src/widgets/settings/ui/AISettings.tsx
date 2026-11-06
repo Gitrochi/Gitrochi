@@ -1,4 +1,4 @@
-import { CircleCheck, KeyRound } from "lucide-react";
+import { CircleCheck, KeyRound } from "@/shared/icons";
 import { useState } from "react";
 import { ai, type AIProviderId, aiProviders, providerById } from "@/entities/ai";
 import { ipc } from "@/shared/api";

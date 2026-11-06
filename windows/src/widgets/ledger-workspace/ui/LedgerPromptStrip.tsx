@@ -1,4 +1,5 @@
-import { Check, CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, SquareTerminal, Timer, TimerOff, X } from "lucide-react";
+import { CircleHelp, ClipboardList, MessageCircleQuestion, ShieldQuestion, Timer, TimerOff } from "lucide-react";
+import { Check, SquareTerminal, X } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { countdown, describeAnswer, heldText, type AnswerDraft, type LedgerPendingPrompt, type LedgerStore, promptActions, promptAnswerQuestions, promptDraftAnswer, promptHold, promptSummary, serverNow, waitingPrompts } from "@/entities/ledger";
 import { answerText } from "./parts";

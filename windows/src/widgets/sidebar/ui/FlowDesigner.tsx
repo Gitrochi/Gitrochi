@@ -1,4 +1,4 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search } from "@/shared/icons";
 import { useState } from "react";
 import { type FlowBlock, type FlowConnection, type FlowDocument, addDesignModule, designFlowNames, designModules, flowObject, removeDesignModule } from "@/entities/flow";
 import { t } from "@/shared/i18n";

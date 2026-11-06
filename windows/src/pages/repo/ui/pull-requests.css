@@ -1,0 +1,71 @@
+/* The Pull requests page (the redesign's pull request boards): a caption row, then a 312px list column, or the 40px
+   strip that brings it back, beside the selected request. macOS: PullRequestsWorkspace.swift, PullRequestList.swift. */
+.pr-page { display: flex; flex-direction: column; flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--surface); color: var(--text); font-size: 13px; container: pr-page hosted / inline-size; }
+.pr-page-top { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; min-width: 0; }
+.pr-page-where { font-size: 13px; color: var(--text-2); min-width: 0; overflow-wrap: anywhere; }
+.pr-page .btn.pr-page-icon { width: 28px; padding: 0; flex: none; }
+.pr-page .btn.pr-page-icon.on { background: var(--bar); }
+/* disabled is neutral, never a faded copy of the enabled button (docs/design.md, Controls) */
+.pr-page-top .btn:disabled { opacity: 1; background: var(--bar); border-color: var(--border); color: var(--text-3); }
+.pr-page-split { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; border-top: 1px solid var(--border); }
+.pr-page-detail { flex: 1 1 360px; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+
+.pr-list { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.pr-list-strip { flex: 0 0 40px; width: 40px; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 12px; }
+.pr-list-controls { flex: none; display: flex; align-items: center; gap: 8px; }
+.pr-list-search { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text-2); box-sizing: border-box; }
+.pr-list-search > svg { flex: none; }
+.pr-list-search input { border: 0; outline: 0; font: inherit; flex: 1; min-width: 0; background: transparent; color: var(--text); padding: 0; }
+.pr-list-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.pr-list-clear { flex: none; width: 24px; height: 24px; margin-right: -8px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pr-list-clear:hover { background: var(--hover); }
+/* the filter: neutral, 28px tall, every segment 12/500 so the labels never shift; a segment is as wide as its label
+   plus a share of the rest (equal thirds cut "Review requested 12"), whichever stylesheet loads last */
+.pr-list .segmented { border-radius: 6px; }
+.pr-list .segmented.stretch button { flex: 1 1 auto; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; min-width: 0; }
+.pr-list-note { font-size: 12px; color: var(--text-2); }
+.pr-list-state { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+.pr-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.pr-row { flex: none; display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.pr-row:hover:not(.selected) { background: var(--hover); }
+/* selection is the tint alone: no bar, border or outline */
+.pr-row.selected { background: var(--select); }
+.pr-row:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -2px; }
+.pr-row-top { display: flex; align-items: flex-start; gap: 8px; }
+.pr-row-title { flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pr-row.selected .pr-row-title { font-weight: 600; }
+.pr-row-when { flex: none; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.pr-row-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pr-row-number { flex: none; font-size: 11px; color: var(--text-2); }
+.pr-row-dot { flex: none; width: 6px; height: 6px; margin-right: 1px; border-radius: 50%; background: var(--accent); }
+/* the right slot never truncates: the review pill gives way first */
+.pr-row-meta .status-pill.pr-row-shrink { flex: 0 1 auto; min-width: 0; }
+.pr-row-comments { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-2); }
+.pr-row-meta > [role="img"] { display: inline-flex; flex: none; }
+/* on the tinted row pills turn to the surface colour and secondary text darkens a step, so both stay readable */
+.pr-row.selected .status-pill { --status-fill: var(--surface); }
+.pr-row.selected .pr-row-when, .pr-row.selected .pr-row-number, .pr-row.selected .pr-row-comments { color: color-mix(in srgb, var(--text-2) 80%, var(--text)); }
+.pr-list-more { flex: none; height: 32px; width: 100%; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 12px; color: var(--text-2); cursor: pointer; }
+.pr-list-more:hover:not(:disabled) { background: var(--hover); }
+/* a narrow window stacks the list above the request instead of squeezing both */
+@container pr-page (max-width: 680px) {
+  .pr-page-split { flex-direction: column; }
+  .pr-list { flex: 0 0 auto; max-height: 42%; border-right: 0; border-bottom: 1px solid var(--border); }
+  .pr-list-strip { flex: 0 0 auto; width: auto; flex-direction: row; padding: 6px 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .pr-page-detail { flex: 1 1 auto; }
+}
+
+/* the summary's line from the base to HEAD */
+.pr-summary-branch { direction: rtl; text-align: left; }
+.pr-track { flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-start; padding: 20px 8px 0; }
+.pr-track-node { flex: 0 0 96px; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; text-align: center; color: var(--text-2); white-space: nowrap; }
+.pr-track-node strong { font-weight: 600; color: var(--text); }
+.pr-track-node .status-tone { color: var(--status-text); }
+.pr-track-dot { width: 10px; height: 10px; margin: 3px 0; border-radius: 50%; background: var(--text-3); }
+.pr-track-node.strong .pr-track-dot { width: 12px; height: 12px; margin: 2px 0; background: var(--text); }
+.pr-track-node.current .pr-track-dot { width: 12px; height: 12px; margin: 2px 0; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.pr-track-line { flex: 1 1 0; min-width: 40px; margin: 0 -48px; position: relative; height: 16px; }
+.pr-track-line::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; border-top: 2px solid var(--border-strong); }
+.pr-track-line.dashed::before { border-top: 2px dashed var(--text); }
+.pr-track-line > span { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 11px; color: var(--text-2); white-space: nowrap; }
+.pr-track-line.dashed > span { font-weight: 600; color: var(--text); }

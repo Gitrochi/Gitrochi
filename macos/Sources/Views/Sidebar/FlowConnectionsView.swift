@@ -8,7 +8,7 @@ struct FlowConnectionsView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "network").foregroundStyle(Color.accentColor)
+            SymbolIcon("network").foregroundStyle(Color.accentColor)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Connected services").font(.callout.weight(.semibold))
                 Text("Docker, Compose, Jenkins and HTTP CI modules · GitHub Actions and GitLab runs")
@@ -39,7 +39,7 @@ private struct FlowConnectionsSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("Connected services", systemImage: "network").font(.title3.weight(.semibold))
+            Label("Connected services", symbol: "network").font(.title3.weight(.semibold))
             FlowSplitView(initialFraction: 0.22, minimumLeading: 170, minimumTrailing: 430, maximumLeading: 210) {
                 sidebar
             } trailing: {
@@ -144,7 +144,7 @@ private struct FlowConnectionsSheet: View {
             }
             ForEach(result.jobs) { item in
                 Button { loadBuilds(item.path) } label: {
-                    HStack { Image(systemName: item.folder ? "folder" : "shippingbox"); Text(item.name); Spacer(); Image(systemName: "chevron.right") }
+                    HStack { SymbolIcon(item.folder ? "folder" : "shippingbox"); Text(item.name); Spacer(); DesignIconImage(icon: .chevronRight) }
                         .padding(8).contentShape(Rectangle())
                 }.buttonStyle(.plain)
             }

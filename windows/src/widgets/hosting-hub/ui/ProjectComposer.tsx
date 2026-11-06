@@ -1,6 +1,8 @@
 import { useProjectEdit } from "../model/use-project-edit";
 import { useEffect, useRef, useState } from "react";
-import { Circle, FilePlus2, Link, Plus, Search, X } from "lucide-react";
+import { FilePlus2 } from "lucide-react";
+import { Circle, Link } from "@/shared/icons";
+import { Plus, Search, X } from "@/shared/icons";
 import {
   addHubProjectIssue,
   saveHubProjectDraft,

@@ -1,4 +1,5 @@
-import { BarChart3, Bot, Clock, Hourglass, MessageCircleQuestion, MessageSquareText } from "lucide-react";
+import { BarChart3, Bot, Hourglass, MessageCircleQuestion, MessageSquareText } from "lucide-react";
+import { Clock } from "@/shared/icons";
 import { type ReactNode, useEffect, useState } from "react";
 import { barShare, insightDuration, insightsEmpty, type LedgerInsights as Insights, type LedgerRange, ledgerRanges, ledgerRoles, type LedgerStore, type LedgerVerdict, verdictLook } from "@/entities/ledger";
 import { language, t } from "@/shared/i18n";

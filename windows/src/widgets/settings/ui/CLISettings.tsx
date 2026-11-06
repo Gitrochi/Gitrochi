@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy } from "@/shared/icons";
 import { gitch, type GitchAccount, type GitchDoctor } from "@/entities/gitch";
 import { displayPath, env, slash } from "@/shared/config";
 import { t } from "@/shared/i18n";

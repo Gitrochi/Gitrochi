@@ -19,7 +19,7 @@ struct CreatePullRequestSheet: View {
             Text("New \(provider.requestName)").font(.title3.weight(.semibold))
             HStack {
                 Text(store.headBranch ?? "").font(.system(.body, design: .monospaced))
-                Image(systemName: "arrow.right").foregroundStyle(.secondary)
+                SymbolIcon("arrow.right").foregroundStyle(.secondary)
                 Picker("", selection: $base) {
                     ForEach(bases, id: \.self) { Text($0).tag($0) }
                 }
@@ -60,7 +60,7 @@ struct CreatePullRequestSheet: View {
                 Toggle("Draft", isOn: $draft)
                 Spacer()
                 if generating { ProgressView().controlSize(.small) }
-                Button { generate() } label: { Label("Write with \(AIStore.shared.short(for: .pullRequest))", systemImage: "sparkles") }
+                Button { generate() } label: { Label("Write with \(AIStore.shared.short(for: .pullRequest))", symbol: "sparkles") }
                     .disabled(generating || base.isEmpty)
             }
             if store.status.upstream == nil || store.status.ahead > 0 {

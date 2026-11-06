@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/shared/icons";
 import { createContext, type ReactNode, useContext } from "react";
 import { settings } from "@/shared/config";
 import { useObserve } from "@/shared/lib";

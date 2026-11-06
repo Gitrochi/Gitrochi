@@ -21,6 +21,7 @@ extension RepoStore {
         ciJobs = [:]
         ciDeployments = [:]
         ciState = .idle
+        ciLoadedAt = nil
     }
 
     /// 서버에서의 현재 브랜치 이름(추적 브랜치가 있으면 그 이름)
@@ -82,6 +83,7 @@ extension RepoStore {
             let before = Dictionary(ciPipelines.map { ($0.id, $0.status) }, uniquingKeysWith: { a, _ in a })
             ciPipelines = list
             ciState = .loaded
+            ciLoadedAt = Date()
             let ids = Set(list.map(\.id))
             ciJobs = ciJobs.filter { ids.contains($0.key) }
             ciDeployments = ciDeployments.filter { ids.contains($0.key) }

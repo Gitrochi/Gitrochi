@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Cloud, GitBranch, Search, Tag, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { Cloud, GitBranch, Search, Tag } from "@/shared/icons";
 import { validRevisionInput, fullObjectID, defaultRebaseBase, loadRebaseBases, loadRebasePreview, rebaseBaseMatches, statusIsEmpty, type RebaseBase, type RebasePreview } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { InteractiveRebaseSheet } from "@/features/interactive-rebase";

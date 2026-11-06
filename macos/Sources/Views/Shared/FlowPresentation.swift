@@ -29,7 +29,7 @@ struct FlowStatusBadge: View {
                 Circle().fill(color).frame(width: 4, height: 4).accessibilityHidden(true)
             } else {
                 if state == "RUNNING", !reduceMotion { ProgressView().controlSize(.mini).scaleEffect(0.7).frame(width: 10, height: 10) }
-                else { Image(systemName: style.0).font(.system(size: 9, weight: .semibold)).foregroundStyle(color) }
+                else { SymbolIcon(style.0).font(.system(size: 9, weight: .semibold)).foregroundStyle(color) }
             }
             Text(FlowFormat.shortStateTitle(state)).lineLimit(1)
         }
@@ -50,7 +50,7 @@ struct FlowStateIcon: View {
 
     var body: some View {
         let (name, color) = FlowStateIcon.look(state)
-        Image(systemName: name)
+        SymbolIcon(name)
             .font(.system(size: size))
             .foregroundStyle(color)
             .help(FlowFormat.stateTitle(state))

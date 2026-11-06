@@ -1,4 +1,4 @@
-import { RefreshCw, Tag } from "lucide-react";
+import { RefreshCw, Tag } from "@/shared/icons";
 import { workspace } from "@/entities/workspace";
 import { accounts, releasePortfolio, newestReleases, releaseTag, releaseDate, releaseFamily } from "@/entities/hosting";
 import { t } from "@/shared/i18n";

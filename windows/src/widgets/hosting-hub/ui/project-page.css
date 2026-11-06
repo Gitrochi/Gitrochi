@@ -1,0 +1,135 @@
+/* The Projects page as the redesign's Projects board draws it. The sizes are the board's; nothing here limits the
+   page's width. Imported last, so it also resets the older rules of the parts it keeps. macOS: ProjectWorkspace. */
+.hosting-hub-projects.project-page { background: var(--surface); }
+.project-page > .hub-notice { flex: none; margin: 8px 20px 0; }
+.project-page > .hub-content { flex: 1; min-height: 0; overflow: auto; padding: 0; display: flex; flex-direction: column; }
+.project-page .project-workspace { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
+.project-page .project-body { flex: 1 0 auto; }
+.project-page .project-canvas { padding: 4px 20px 20px; background: transparent; }
+
+/* Header: whose projects, where they are kept, then the project and its one filled action */
+.project-scope-row { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 20px 0; }
+.project-scope-failure:empty { display: none; }
+.project-scope-failure { flex: none; padding: 8px 20px 0; }
+.project-title-row { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 16px 20px 12px; }
+.project-title-main { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.project-title-menu { font: inherit; align-self: flex-start; max-width: 100%; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: transparent; padding: 0 6px 0 0; color: var(--text); cursor: pointer; }
+.project-title-menu:disabled { cursor: default; }
+.project-title-menu > span { font-size: 22px; line-height: 1.25; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.project-title-menu > svg { flex: none; color: var(--text-2); }
+.project-title-caption { font-size: 12px; color: var(--text-2); padding-left: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.project-page .project-icon-button { width: 28px; padding: 0; }
+
+/* Layouts switch content, so they are underline tabs: the label keeps its weight and the 2px accent line moves. */
+.project-page .project-controls { flex: none; padding: 0; gap: 0; border-bottom: 0; background: transparent; display: flex; flex-direction: column; }
+.project-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 0 20px 0 8px; border-bottom: 1px solid var(--border); }
+.project-tabs > button { font: inherit; font-weight: 500; color: color-mix(in srgb, var(--text) 78%, var(--surface)); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; }
+.project-tabs > button.on { color: var(--text); border-bottom-color: var(--accent); }
+.project-page .project-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 20px; }
+.project-page .project-search { flex: 0 1 280px; min-width: 0; max-width: 100%; height: 28px; padding: 0 10px; gap: 6px !important; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text-2); box-sizing: border-box; }
+.project-page .project-search input { font-size: 13px; }
+.project-page .project-filters > .btn { font-size: 13px; }
+/* A pressed toggle is tinted, never filled: New task… is the page's one filled button. */
+.project-page .project-filters > .btn.pressed { background: var(--select); border-color: transparent; }
+.project-page .project-workspace .project-group { margin-left: 0; }
+.project-page .project-group > .select { height: 28px; padding: 0 8px; font-size: 13px; background: var(--surface); border-color: var(--border-strong); }
+/* What the row already offered keeps its own panels; they open under the row, from its left edge, at any width. */
+.project-page .project-filters { position: relative; }
+.project-page .project-schedule-config, .project-page .project-shared-menu { position: static; }
+.project-page .project-schedule-config > summary, .project-page .project-shared-menu > summary { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 13px; color: var(--text); box-sizing: border-box; list-style: none; cursor: pointer; }
+.project-page .project-schedule-config > summary strong { font-size: 13px; font-weight: 400; }
+.project-page .project-schedule-config-body, .project-page .project-shared-menu > div { left: 20px; right: auto; top: calc(100% - 4px); max-width: calc(100% - 40px); box-sizing: border-box; }
+
+/* Overview: chips that count open tasks, the Schedule list they add up to, and the cards beside it */
+.project-page .project-overview { display: flex; flex-direction: column; gap: 16px; }
+.project-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.project-stat { font: inherit; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; box-sizing: border-box; white-space: nowrap; }
+.project-stat.on { background: var(--select); border-color: transparent; }
+.project-stat-n { font-size: 15px; font-weight: 600; line-height: 1; }
+.project-stat-l { font-size: 12px; line-height: 1; color: var(--text-2); }
+.project-stat.zero .project-stat-n { color: var(--text-2); }
+.project-stat.alert, .project-stat.alert .project-stat-n, .project-stat.alert .project-stat-l { color: var(--status-text); }
+
+.project-strip { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 8px 8px 8px 12px; }
+.project-strip > svg { flex: none; color: var(--text-2); }
+.project-strip.warning > svg { color: var(--status-text); }
+.project-strip > span { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.project-strip strong { font-size: 13px; line-height: 18px; font-weight: 600; }
+.project-strip small { font-size: 12px; line-height: 16px; color: var(--text-2); }
+.project-strip > .btn { flex: none; }
+
+.project-overview-columns { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.project-schedule-list { flex: 999 1 520px; min-width: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.project-schedule-head { padding: 12px 12px 8px; }
+.project-panel-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.project-todo { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border-top: 1px solid var(--border); box-sizing: border-box; }
+.project-todo:hover { background: color-mix(in srgb, var(--surface) 96%, var(--text)); }
+/* Selection is the tint alone; pills on it turn to the surface colour. */
+.project-todo.selected { background: var(--select); }
+.project-todo.selected .project-todo-title { font-weight: 600; }
+.project-todo.selected .status-pill { background: var(--surface); }
+.project-page .project-complete-task { flex: 0 0 24px; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: transparent; padding: 0; color: var(--text-2); cursor: pointer; opacity: 1; }
+.project-page .project-complete-task:disabled { cursor: default; }
+.project-page .project-todo.done .project-complete-task { color: var(--accent); }
+.project-todo-main { font: inherit; flex: 1 1 auto; min-width: 0; min-height: 36px; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; cursor: pointer; }
+.project-todo-title { flex: 0 1 auto; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-todo.done .project-todo-title { color: var(--text-2); }
+.project-todo-meta { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.project-todo-meta.overdue { color: var(--status-text); font-weight: 600; }
+.project-todo-grow { flex: 1 1 auto; }
+.project-todo-pill { flex: 0 0 96px; min-width: 0; display: flex; overflow: hidden; }
+.project-todo-avatar { flex: 0 0 20px; width: 20px; height: 20px; display: inline-flex; }
+.project-schedule-foot { display: flex; align-items: center; height: 36px; padding: 0 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+.project-text-button { font: inherit; font-size: 12px; font-weight: 500; min-height: 24px; display: inline-flex; align-items: center; border: 0; background: transparent; color: var(--text-2); padding: 2px 0; cursor: pointer; }
+
+.project-overview-side { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.project-side-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.project-progress-value { font-size: 15px; font-weight: 600; }
+.project-progress-bar { display: flex; gap: 4px; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--text) 8%, transparent); }
+.project-progress-bar > span { min-width: 0; }
+.project-progress-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: color-mix(in srgb, var(--text) 78%, var(--surface)); }
+.project-progress-legend > span { display: flex; align-items: center; gap: 6px; }
+.project-progress-legend i { flex: none; width: 8px; height: 8px; border-radius: 2px; box-sizing: border-box; }
+.project-progress-bar > .done, .project-progress-legend i.done, .project-progress-bar > .progress, .project-progress-legend i.progress { background: var(--status-text); }
+.project-progress-bar > .todo, .project-progress-legend i.todo { background: var(--status-fill); }
+.project-progress-legend i.todo { border: 1px solid var(--border-strong); }
+.project-side-note { font-size: 12px; color: var(--text-2); }
+.project-deadline { font: inherit; display: flex; align-items: center; gap: 8px; min-width: 0; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; cursor: pointer; }
+.project-deadline > svg { flex: none; color: var(--text-2); }
+.project-deadline > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-deadline > time { flex: 0 0 auto; font-size: 12px; color: var(--text-2); }
+.project-workload-row { font: inherit; display: flex; align-items: center; gap: 8px; min-width: 0; border: 0; border-radius: 6px; background: transparent; color: inherit; padding: 2px 4px; margin: 0 -4px; text-align: left; }
+button.project-workload-row { cursor: pointer; }
+button.project-workload-row:hover { background: color-mix(in srgb, var(--surface) 96%, var(--text)); }
+.project-workload-row.on { background: var(--select); }
+.project-workload-row > span:not(.status-pill):not(.avatar) { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-workload-row > svg { flex: none; width: 20px; color: var(--text-2); }
+.project-workload-row > b { flex: none; font-size: 12px; font-weight: 400; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* Board columns as the board draws them: a soft panel without a frame, a square swatch and the count in a neutral
+   pill. They share the whole width; below their basis the board scrolls. A selected card is tinted, never outlined. */
+.project-page .project-board { gap: 12px; align-items: flex-start; }
+.project-page .project-column { flex: 1 0 235px; width: auto; max-width: none; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--surface) 97.5%, var(--text)); box-sizing: border-box; }
+.hosting-hub.project-page .project-column > header { padding: 4px; margin: 0; border: 0; gap: 8px; }
+.project-page .project-column > header > strong { font-size: 13px; font-weight: 600; }
+.project-page .project-status-dot { width: 8px; height: 8px; flex-basis: 8px; border-radius: 2px; }
+.project-page .project-count { display: inline-flex; align-items: center; height: 18px; padding: 0 8px; margin-left: 0; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--text) 78%, var(--surface)); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.project-page .project-column-cards { padding: 0; gap: 8px; }
+.project-page .project-card { padding: 8px 10px; gap: 6px; border-radius: 10px; box-shadow: none; }
+.project-page .project-card:hover { border-color: var(--border); box-shadow: none; background: color-mix(in srgb, var(--surface) 96%, var(--text)); }
+.project-page .project-card.selected { border-color: var(--border); box-shadow: none; background: linear-gradient(var(--select), var(--select)), var(--surface); }
+.project-page .project-card-title { font-weight: 400; }
+.project-page .project-card.selected .project-card-title { font-weight: 600; }
+.project-page .project-column-add { min-height: 24px; padding: 2px 4px; font-size: 12px; font-weight: 500; }
+.project-page .project-column-add:hover { color: var(--text-2); }
+
+/* Footer: what is loaded, and where the project is kept */
+.project-footer { flex: none; display: flex; align-items: center; gap: 12px; height: 28px; padding: 0 20px; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 96.5%, var(--text)); font-size: 12px; color: var(--text-2); box-sizing: border-box; }
+.project-footer > .grow { flex: 1 1 auto; }
+
+/* Nothing to show yet: a 24px gray icon, one 15px line, one caption and one action */
+.project-page .project-hub-empty { flex: 1; min-height: 240px; gap: 8px; padding: 24px; }
+.project-page .project-hub-empty > svg { color: var(--text-2); }
+.project-page .project-hub-empty > h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
+.project-page .project-hub-empty > p { max-width: 420px; font-size: 12px; line-height: 1.45; margin: 0 0 4px; }

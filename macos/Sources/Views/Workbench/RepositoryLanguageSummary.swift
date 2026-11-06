@@ -13,12 +13,12 @@ struct RepositoryLanguageControl: View {
                     HStack(spacing: 5) {
                         Text("Languages").font(.caption.weight(.medium))
                         if let selected { Text(LocalizedStringKey(selected)).font(.caption).foregroundStyle(Color.accentColor).lineLimit(1) }
-                        Image(systemName: "chevron.down").font(.system(size: 8))
+                        DesignIconImage(icon: .chevronDown, size: 8)
                     }
                 }.buttonStyle(.plain).help("Language composition").accessibilityIdentifier("code-language-composition")
                     .popover(isPresented: $showing) { RepositoryLanguageSummary(segments: segments, truncated: truncated, selected: $selected).frame(width: 280) }
                 Spacer(minLength: 0)
-                if selected != nil { Button { selected = nil } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary).help("All languages").accessibilityLabel("All languages") }
+                if selected != nil { Button { selected = nil } label: { SymbolIcon("xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary).help("All languages").accessibilityLabel("All languages") }
             }
             GeometryReader { geometry in
                 HStack(spacing: 0) {

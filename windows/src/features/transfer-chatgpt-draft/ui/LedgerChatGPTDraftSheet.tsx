@@ -1,4 +1,5 @@
-import { Clipboard, MessageSquare } from "lucide-react";
+import { Clipboard } from "lucide-react";
+import { MessageSquare } from "@/shared/icons";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { parseChatGPTQuestion, type ChatGPTQuestion, type LedgerStore } from "@/entities/ledger";
 import { t } from "@/shared/i18n";

@@ -1,13 +1,18 @@
 import { ai, changeQuestionLimits, changeQuestionPrompt, changeQuestionSystem, createChangeQuestionSnapshot, type ChangeQuestionMessage, type ChangeQuestionSnapshot, type AIProviderId, clip, Prompts, providerById, splitMessage } from "@/entities/ai";
 import { gitch, type GraphReview } from "@/entities/gitch";
-import { type FileChange, parseSplitPlan, type SplitGroup } from "@/entities/git";
+import { type DiffDocument, type FileChange, parseSplitPlan, type SplitGroup } from "@/entities/git";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { describe, git } from "@/shared/platform";
 import { RepoIssues } from "./issues";
 
+/** A change the Code page shows, which is not the repository screen's open diff. (macOS: ChangeQuestionCode) */
+export interface ChangeQuestionCode { scope: string; path: string; doc: DiffDocument }
+
 export interface ChangeQuestionSession {
+  /** The Code page's change, for New snapshot to read again */
+  readonly code?: ChangeQuestionCode;
   readonly repository: string;
   readonly origin: string;
   readonly provider: AIProviderId;
@@ -34,10 +39,11 @@ export abstract class RepoAI extends RepoIssues {
   changeQuestionSession: ChangeQuestionSession | null = null;
 
   /** 보내기 전에는 AI를 호출하지 않고, 사용자가 확인할 로컬 스냅샷만 준비한다. */
-  async openChangeQuestion(refresh = false) {
+  async openChangeQuestion(refresh = false, requested?: ChangeQuestionCode) {
     const repository = this.path;
     if (!repository) return;
-    const origin = JSON.stringify([this.diffSource, this.selection, this.headHash]);
+    const code = requested ?? (refresh ? this.changeQuestionSession?.code : undefined);
+    const origin = code ? JSON.stringify(["code", code.scope, code.path, this.headHash]) : JSON.stringify([this.diffSource, this.selection, this.headHash]);
     const existing = this.changeQuestionSession;
     if (!refresh && existing?.repository === repository && existing.origin === origin && existing.snapshot) {
       existing.active = true;
@@ -47,16 +53,16 @@ export abstract class RepoAI extends RepoIssues {
     this.cancelChangeQuestion();
     const provider = ai.providerFor("explain");
     const model = ai.model(provider);
-    const session: ChangeQuestionSession = { repository, origin, provider, providerTitle: providerById(provider).title + (model ? ` · ${model}` : ""),
+    const session: ChangeQuestionSession = { code, repository, origin, provider, providerTitle: providerById(provider).title + (model ? ` · ${model}` : ""),
       system: ai.systemFor("explain", changeQuestionSystem), configuration: changeQuestionConfiguration(), snapshot: null, loading: true, question: "", messages: [], error: null, working: false, active: true, generation: 0 };
     this.changeQuestionSession = session;
     this.openSheet({ kind: "askChanges" });
     // 기다리는 사이 선택이 바뀌어도 같은 표시 내용을 참조한다.
-    const source = this.diffSource;
+    const source = code ? null : this.diffSource;
     const selection = this.selection;
-    const doc = this.diff;
-    const picked = new Set(this.diffSelection);
-    const loading = this.diffLoading;
+    const doc = code?.doc ?? this.diff;
+    const picked = new Set(code ? [] : this.diffSelection);
+    const loading = !code && this.diffLoading;
     const ignoreWhitespace = this.diffIgnoreWhitespace;
     const current = () => this.path === repository && this.changeQuestionSession === session && session.active;
     try {
@@ -64,10 +70,10 @@ export abstract class RepoAI extends RepoIssues {
       let scope: string, path: string | null = null, text: string;
       const limitations: string[] = [];
       let impact: string | null = null;
-      if (source) {
-        path = source.change.path;
-        scope = source.kind === "review" ? `PR/MR #${source.number}` : source.kind === "commit" ? `${t("Commit")} ${source.sha}`
-          : source.change.kind === "untracked" ? t("Untracked file") : source.change.staged ? t("Staged file") : t("Unstaged file");
+      if (code || source) {
+        path = code?.path ?? source!.change.path;
+        scope = code ? code.scope : source!.kind === "review" ? `PR/MR #${source!.number}` : source!.kind === "commit" ? `${t("Commit")} ${source!.sha}`
+          : source!.change.kind === "untracked" ? t("Untracked file") : source!.change.staged ? t("Staged file") : t("Unstaged file");
         // 새 파일도 이미 읽은 표시 내용을 재사용해 경로를 다시 읽거나 심볼릭 링크를 따라가지 않는다.
         if (!doc || loading) throw new Error(t("Wait for the selected diff to finish loading."));
         if (doc.error) throw new Error(doc.error);

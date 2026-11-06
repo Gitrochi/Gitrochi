@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "@/shared/icons";
 import { useEffect, useMemo, useState } from "react";
 import { issueRequestBody } from "@/entities/hosting";
 import { ai } from "@/entities/ai";

@@ -1,4 +1,5 @@
-import { ExternalLink, RefreshCw, Route, TriangleAlert } from "lucide-react";
+import { Route, TriangleAlert } from "lucide-react";
+import { ExternalLink, RefreshCw } from "@/shared/icons";
 import type { ReactNode } from "react";
 import type { GraphReviewImpact } from "@/entities/gitch";
 import type { RepoStore } from "@/entities/repo";

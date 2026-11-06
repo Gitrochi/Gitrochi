@@ -8,7 +8,7 @@ struct SidebarTreeGroup: DisclosureGroupStyle {
                 configuration.isExpanded.toggle()
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "chevron.right")
+                    DesignIconImage(icon: .chevronRight)
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(configuration.isExpanded ? 90 : 0))

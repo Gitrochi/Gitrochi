@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { formatRepositoryBytes, type RepositoryLanguageSummary } from "../lib/repository-languages";
 

@@ -23,7 +23,7 @@ struct ConflictView: View {
     /// 충돌 표시가 없는 충돌(한쪽이 지웠거나 바이너리)
     private var noMarkers: some View {
         VStack(spacing: 12) {
-            ContentUnavailableView("Conflict without conflict markers", systemImage: "exclamationmark.triangle",
+            ContentUnavailableView("Conflict without conflict markers", symbol: "exclamationmark.triangle",
                                    description: Text("One side deleted the file, or it's a binary file. Choose whether to keep or delete it."))
             HStack {
                 Button("Delete this file") { Task { await store.resolveDeleted(change, keep: false) } }
@@ -48,7 +48,7 @@ struct ConflictView: View {
         let canSave = manualResult == nil ? done == doc.blocks.count : remaining == 0 && result.range(of: "(?m)^<{7,}([ \\t]|$)", options: .regularExpression) == nil
         return VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                SymbolIcon("exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Text("\(doc.blocks.count) conflicts — \(done) chosen").font(.callout.weight(.semibold))
                 Spacer()
                 Button(threeWay ? String(localized: "Block view") : String(localized: "Three-way editor")) { threeWay.toggle() }
@@ -153,7 +153,7 @@ private struct BlockCard: View {
         VStack(alignment: .leading, spacing: 8) {
             if let choice, !editing {
                 HStack {
-                    Label("Chosen: \(title(choice))", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout.weight(.semibold))
+                    Label("Chosen: \(title(choice))", symbol: "checkmark.circle.fill").foregroundStyle(.green).font(.callout.weight(.semibold))
                     Spacer()
                     Button("Choose again") { store.chooseConflict(block.id, nil) }.controlSize(.small)
                 }

@@ -12,7 +12,7 @@ struct LedgerFlowChecks: View {
         VStack(alignment: .leading, spacing: 6) {
             LedgerSectionHeader(title: String(localized: "Checks"), count: evidence.results.count)
             HStack(spacing: 6) {
-                Image(systemName: "arrow.triangle.branch").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                DesignIconImage(icon: .branch, size: 11).foregroundStyle(.secondary).accessibilityHidden(true)
                 Text(branch).font(.system(size: 11, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                 Text(String(evidence.head.prefix(8))).font(.system(size: 11).monospaced()).foregroundStyle(.secondary).textSelection(.enabled)
                 Spacer(minLength: 4)

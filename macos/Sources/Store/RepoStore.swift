@@ -235,6 +235,8 @@ final class RepoStore: Identifiable {
     var ciBySha: [String: CIPipeline] = [:]
     var ciBadgeTask: Task<Void, Never>?
     var ciState: LoadState = .idle
+    /// When the runs last arrived, for "Showing data from 12m ago" after a refresh fails
+    var ciLoadedAt: Date?
     var ciJobs: [Int: [CIJob]] = [:]
     var ciDeployments: [Int: [CIDeployment]] = [:]
     /// 진행 중인 버튼 동작(같은 버튼을 두 번 누르지 않게)

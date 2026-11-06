@@ -149,13 +149,13 @@ struct LedgerWorkspaceView: View {
             LedgerViewTabs(ledger: ledger)
             Spacer(minLength: 6)
             if let error = ledger.loadError {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(StudioStyle.Tone.failed.text)
+                SymbolIcon("exclamationmark.triangle.fill").foregroundStyle(StudioStyle.Tone.failed.text)
                     .help(error).accessibilityLabel(error)
             }
             quickLaunches
-            Button { sheet = .learning } label: { Label("Learn Ledger", systemImage: "book") }
+            Button { sheet = .learning } label: { Label("Learn Ledger", symbol: "book") }
                 .buttonStyle(.borderless).font(.system(size: 12)).help("Learn Ledger")
-            Button { sheet = .importReports } label: { Image(systemName: "doc.on.clipboard") }
+            Button { sheet = .importReports } label: { SymbolIcon("doc.on.clipboard") }
                 .buttonStyle(.borderless)
                 .help("Paste reports from a conversation")
                 .accessibilityLabel("Paste reports")
@@ -179,7 +179,7 @@ struct LedgerWorkspaceView: View {
                 Button("Back up now") { backup() }
                 Button("Refresh") { Task { await ledger.reload() } }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                SymbolIcon("ellipsis.circle")
             }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .help("More ledger actions")
@@ -203,7 +203,7 @@ struct LedgerWorkspaceView: View {
             }
             .help("Start Claude Code in this repository")
         } label: {
-            Image(systemName: "apple.terminal")
+            SymbolIcon("apple.terminal")
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
         .disabled(folder == nil)

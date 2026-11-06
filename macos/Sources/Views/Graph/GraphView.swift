@@ -252,7 +252,7 @@ struct GraphView: View {
         })
         .overlay {
             if store.entries.isEmpty {
-                ContentUnavailableView("No commits yet", systemImage: "circle.dotted",
+                ContentUnavailableView("No commits yet", symbol: "circle.dotted",
                                        description: Text("Create a file and make your first commit on the right."))
             }
         }
@@ -306,7 +306,7 @@ private struct SearchBar: View {
         @Bindable var store = store
         HStack(spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                DesignIconImage(icon: .search).foregroundStyle(.secondary)
                 TextField(store.searchScope.prompt, text: $store.searchText)
                     .textFieldStyle(.plain)
                     .focused($focused)
@@ -318,7 +318,7 @@ private struct SearchBar: View {
                     }
                 if store.searching { ProgressView().controlSize(.small) }
                 if !store.searchText.isEmpty {
-                    Button { store.clearSearch() } label: { Image(systemName: "xmark.circle.fill") }
+                    Button { store.clearSearch() } label: { SymbolIcon("xmark.circle.fill") }
                         .buttonStyle(.borderless)
                         .foregroundStyle(.secondary)
                         .help("Clear search (Esc)")
@@ -343,9 +343,9 @@ private struct SearchBar: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 ControlGroup {
-                    Button { store.previousMatch() } label: { Image(systemName: "chevron.up") }
+                    Button { store.previousMatch() } label: { DesignIconImage(icon: .chevronUp) }
                         .help("Previous result (⇧⌘G)")
-                    Button { store.nextMatch() } label: { Image(systemName: "chevron.down") }
+                    Button { store.nextMatch() } label: { DesignIconImage(icon: .chevronDown) }
                         .help("Next result (⌘G · Enter)")
                 }
                 .fixedSize()
@@ -355,7 +355,7 @@ private struct SearchBar: View {
                         .controlSize(.small)
                 }
             }
-            Button { store.closeSearchBar() } label: { Image(systemName: "xmark") }
+            Button { store.closeSearchBar() } label: { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help("Close search (Esc)").accessibilityLabel("Close search")
         }
@@ -448,7 +448,7 @@ private struct GraphHeader: View {
             // the graph filter lives here so it stays reachable while the search bar is hidden
             HStack(spacing: 10) {
                 GraphFilterMenu()
-                Menu { toggles } label: { Image(systemName: "gearshape") }
+                Menu { toggles } label: { SymbolIcon("gearshape") }
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
                     .fixedSize()
@@ -632,7 +632,7 @@ private struct GraphFilterMenu: View {
                 .disabled(hidden == 0)
         } label: {
             // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
-            Image(systemName: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+            SymbolIcon(active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                 .foregroundStyle(active ? Color.accentColor : .secondary)
         }
         .menuStyle(.borderlessButton)

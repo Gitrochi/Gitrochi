@@ -32,7 +32,7 @@ struct ProjectCalendar: View {
             Divider()
             if scheduleFields.start == nil && scheduleFields.due == nil {
                 ContentUnavailableView {
-                    Label("Give your work a date", systemImage: "calendar.badge.plus")
+                    Label("Give your work a date", symbol: "calendar.badge.plus")
                 } description: {
                     Text("Add a date field to this project, then choose it in Schedule settings. Your task dates will stay in sync with GitHub.")
                 } actions: { Button("Set up schedule fields…", action: manageFields).buttonStyle(.borderedProminent) }
@@ -62,8 +62,8 @@ struct ProjectCalendar: View {
         VStack(alignment: .leading, spacing: 12) {
             WorkbenchFlow(spacing: 12) {
                 HStack(spacing: 4) {
-                    Button { navigate(-1) } label: { Image(systemName: "chevron.left").frame(width: 20, height: 20) }.help("Previous calendar period")
-                    Button { navigate(1) } label: { Image(systemName: "chevron.right").frame(width: 20, height: 20) }.help("Next calendar period")
+                    Button { navigate(-1) } label: { DesignIconImage(icon: .chevronLeft).frame(width: 20, height: 20) }.help("Previous calendar period")
+                    Button { navigate(1) } label: { DesignIconImage(icon: .chevronRight).frame(width: 20, height: 20) }.help("Next calendar period")
                 }
                 Text(periodTitle).font(.system(size: 19, weight: .semibold)).frame(minWidth: 170, alignment: .leading)
                 Button("Today") { anchor = today }
@@ -71,11 +71,11 @@ struct ProjectCalendar: View {
                 Menu {
                     Toggle("Show completed tasks", isOn: $includeCompleted)
                     Toggle("Show unscheduled tasks", isOn: $showingUndated)
-                } label: { Image(systemName: "eye") }.help("Calendar visibility")
+                } label: { DesignIconImage(icon: .eye) }.help("Calendar visibility")
                 ProjectScheduleConfiguration(fields: fields, settings: $settings, manageFields: manageFields)
             }
             HStack(spacing: 7) {
-                Image(systemName: "calendar").foregroundStyle(Color.accentColor)
+                SymbolIcon("calendar").foregroundStyle(Color.accentColor)
                 Text(scheduleFields.due?.name ?? scheduleFields.start?.name ?? String(localized: "No date field selected")).fontWeight(.medium)
                 Text("·")
                 Text("Loaded project items")
@@ -143,8 +143,8 @@ struct ProjectCalendar: View {
                     Text(entry.row.title).font(.system(size: 10, weight: .medium)).lineLimit(mode == "month" ? 2 : 3).multilineTextAlignment(.leading).foregroundStyle(.primary)
                     if mode == "week", let person = entry.row.assignees.first { Text("@" + person).font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1) }
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                if entry.completed { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(.green) }
-                else if let day, day == entry.due { Image(systemName: "flag.fill").font(.system(size: 8)).foregroundStyle(color).accessibilityLabel("Due date") }
+                if entry.completed { DesignIconImage(icon: .check, size: 8).foregroundStyle(.green) }
+                else if let day, day == entry.due { SymbolIcon("flag.fill").font(.system(size: 8)).foregroundStyle(color).accessibilityLabel("Due date") }
             }.padding(.vertical, 6).padding(.horizontal, 5).fixedSize(horizontal: false, vertical: true)
                 .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 5))
         }.buttonStyle(.plain).help(entry.row.title)
@@ -158,7 +158,7 @@ struct ProjectCalendar: View {
     private var undatedPanel: some View {
         VStack(alignment: .leading, spacing: 13) {
             HStack {
-                Button { showingUndated.toggle() } label: { HStack(spacing: 8) { Image(systemName: showingUndated ? "chevron.down" : "chevron.right").font(.caption2); Label("Unscheduled", systemImage: "tray").font(.callout.weight(.semibold)); Text(undated.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary) } }.buttonStyle(.plain)
+                Button { showingUndated.toggle() } label: { HStack(spacing: 8) { SymbolIcon(showingUndated ? "chevron.down" : "chevron.right").font(.caption2); Label("Unscheduled", symbol: "tray").font(.callout.weight(.semibold)); Text(undated.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary) } }.buttonStyle(.plain)
                 Spacer()
                 Text("Drag onto a day to schedule").font(.caption).foregroundStyle(.secondary)
             }
@@ -177,7 +177,7 @@ struct ProjectCalendar: View {
             Text("Loaded project items").font(.caption).foregroundStyle(.secondary)
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    if tasks(day).isEmpty { ContentUnavailableView("No tasks on this day", systemImage: "calendar", description: Text("Drag a task here from the calendar to propose a date.")) }
+                    if tasks(day).isEmpty { ContentUnavailableView("No tasks on this day", symbol: "calendar", description: Text("Drag a task here from the calendar to propose a date.")) }
                     ForEach(tasks(day)) { entry in
                         ProjectScheduleTaskRow(entry: entry, today: today, dateField: scheduleFields.due ?? scheduleFields.start, canComplete: canComplete, locked: locked,
                             select: { row in afterDayDismiss { select(row) } }, editDate: { row, field in afterDayDismiss { editDate(row, field) } }, complete: { row in afterDayDismiss { complete(row) } })

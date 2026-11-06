@@ -26,9 +26,9 @@ struct SplitCommitsSheet: View {
                                     Text("Commit \(i + 1)").font(.subheadline.weight(.semibold))
                                     Text("\(g.files.count) files").font(.caption).foregroundStyle(.secondary)
                                     Spacer()
-                                    Button { shift(i, -1) } label: { Image(systemName: "arrow.up") }
+                                    Button { shift(i, -1) } label: { DesignIconImage(icon: .push) }
                                         .buttonStyle(.borderless).disabled(i == 0).help("Up")
-                                    Button { shift(i, 1) } label: { Image(systemName: "arrow.down") }
+                                    Button { shift(i, 1) } label: { DesignIconImage(icon: .pull) }
                                         .buttonStyle(.borderless).disabled(i == groups.count - 1).help("Down")
                                 }
                                 TextEditor(text: Binding(get: { groups[i].message }, set: { groups[i].message = $0 }))

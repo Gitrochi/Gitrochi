@@ -11,7 +11,7 @@ struct WorktreeChangesView: View {
         let files = store.worktreeStatus[path]?.files ?? []
         VStack(spacing: 0) {
             HStack(spacing: 6) {
-                Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
+                DesignIconImage(icon: .branch).foregroundStyle(.secondary)
                 Text(worktree?.branch ?? String(localized: "Detached HEAD")).font(.headline).lineLimit(1)
                 Spacer()
                 Text("Worktree").foregroundStyle(.secondary)
@@ -27,7 +27,7 @@ struct WorktreeChangesView: View {
                         .textSelection(.enabled)
                     HStack {
                         Button { Task { await store.switchWorktree(to: path) } } label: {
-                            Label("Open worktree", systemImage: "arrow.right.circle")
+                            Label("Open worktree", symbol: "arrow.right.circle")
                         }
                         .buttonStyle(.borderedProminent)
                         Button("Open in new tab") { Task { await store.openOrReport(URL(fileURLWithPath: path, isDirectory: true)) } }

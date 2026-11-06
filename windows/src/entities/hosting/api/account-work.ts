@@ -20,13 +20,36 @@ export interface AccountWorkItem {
   unread: boolean;
   readID?: string;
   origin: string;
+  /** What the item is about; only requests and issues can open on a page of the app */
+  kind: "request" | "issue" | "other";
+  /** Why the server put it in the inbox, as it says it (`review_requested`, `mentioned` ...); empty in My work */
+  reason: string;
+  /** Who caused the notification, when the server names them */
+  actor: string;
+  /** Seconds since 1970, or null when the list carries no time */
+  updated: number | null;
+  /** open, draft, merged or closed; empty when the list does not say */
+  status: "open" | "draft" | "merged" | "closed" | "";
+  body: string;
+  /** A request's branches, when the list carries them */
+  source: string;
+  target: string;
 }
-interface RecordItem {
-  id?: number | string;
-  number?: number;
+/** What a list says about its subject; a GitLab to-do carries it in `target` */
+interface Subject {
   iid?: number;
   title?: string;
   state?: string;
+  draft?: boolean;
+  work_in_progress?: boolean;
+  body?: string | null;
+  description?: string | null;
+  source_branch?: string;
+  target_branch?: string;
+}
+interface RecordItem extends Subject {
+  id?: number | string;
+  number?: number;
   html_url?: string;
   web_url?: string;
   target_url?: string;
@@ -34,11 +57,15 @@ interface RecordItem {
   repository?: { full_name: string };
   subject?: { title: string; url?: string; type: string };
   user?: { login?: string };
-  author?: { username?: string };
+  author?: { username?: string; name?: string };
   unread?: boolean;
   project?: { path_with_namespace: string };
-  target?: { iid?: number; title?: string };
+  target?: Subject;
   target_type?: string;
+  reason?: string;
+  action_name?: string;
+  updated_at?: string;
+  created_at?: string;
 }
 const current = (c: ReviewAccess) => {
   if (c.stillCurrent?.() === false)
@@ -120,7 +147,36 @@ function item(
     repository = path.split("/-/")[0].replace(/^\//, "");
   }
   if (!repository) return null;
+  // What the list already carries about the subject; nothing more is requested for a row
+  const type = r.subject?.type ?? r.target_type ?? "";
+  const details: Subject = kind === "inbox" ? (r.target ?? {}) : r;
+  const state = details.state ?? "";
+  const time = Date.parse(r.updated_at || r.created_at || "");
   return {
+    kind:
+      kind === "inbox"
+        ? type === "PullRequest" || type === "MergeRequest"
+          ? "request"
+          : type === "Issue"
+            ? "issue"
+            : "other"
+        : kind === "issues" || kind === "myIssues"
+          ? "issue"
+          : "request",
+    reason: kind === "inbox" ? r.reason || r.action_name || "" : "",
+    actor: kind === "inbox" ? r.author?.name || r.author?.username || "" : "",
+    updated: Number.isFinite(time) ? time / 1000 : null,
+    status:
+      state === "open" || state === "opened"
+        ? details.draft || details.work_in_progress
+          ? "draft"
+          : "open"
+        : state === "merged" || state === "closed"
+          ? state
+          : "",
+    body: details.body || details.description || "",
+    source: details.source_branch ?? "",
+    target: details.target_branch ?? "",
     id: `${kind}-${r.id ?? number}-${repository}`,
     origin: accountWorkOrigin(c, accountID),
     title: r.title ?? r.subject?.title ?? r.target?.title ?? "",

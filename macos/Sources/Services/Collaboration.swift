@@ -9,6 +9,8 @@ struct RequestQuery {
     var page = 1
 }
 struct RequestLifecycle {
+    /// The server says the request conflicts with its base
+    var conflicts = false
     var number: Int; var headSHA: String; var state: String; var title: String; var body: String; var base: String
     var reviewers: [String]; var methods: [String]; var blockers: [String]; var checks: String; var policy: String
     var canEdit: Bool; var canRebase: Bool
@@ -17,9 +19,13 @@ struct RequestLifecycle {
 struct RequestState {
     var number: Int; var state: String; var draft: Bool; var headSHA: String
 }
+/// A label on an issue; GitLab's list names labels without their colour
+struct IssueLabel: Hashable { var name: String; var color: String? = nil }
 struct CollaborationInboxItem: Identifiable {
     var id: String; var kind: String; var number: Int; var title: String; var url: String; var body: String
     var state: String; var author: String; var unread = false; var readID: String?; var isRequest = false; var createdAt: String? = nil; var updatedAt: String? = nil
+    /// What an issue's own list or detail response says about it; nil or empty when the server did not say
+    var comments: Int? = nil; var assignees: [String] = []; var labels: [IssueLabel] = []
 }
 struct CollaborationInboxComment: Identifiable {
     var id: String; var author: String; var body: String; var createdAt: String? = nil; var editable = false
@@ -86,10 +92,12 @@ struct CollaborationInboxDetail {
         if c.target.provider == .github {
             let head = obj(p, "head"), base = obj(p, "base")
             guard number(p, "number") > 0, !text(head, "sha").isEmpty else { throw fail(String(localized: "The server returned an unexpected response.")) }
-            return PullRequest(number: number(p, "number"), title: text(p, "title"), author: text(obj(p, "user"), "login"), source: text(head, "ref"), target: text(base, "ref"), url: text(p, "html_url"), isDraft: bool(p, "draft"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "body"), headSHA: text(head, "sha"), fromFork: text(obj(head, "repo"), "full_name").lowercased() != c.target.path.lowercased())
+            return PullRequest(number: number(p, "number"), title: text(p, "title"), author: text(obj(p, "user"), "login"), source: text(head, "ref"), target: text(base, "ref"), url: text(p, "html_url"), isDraft: bool(p, "draft"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "body"), headSHA: text(head, "sha"), fromFork: text(obj(head, "repo"), "full_name").lowercased() != c.target.path.lowercased(),
+                               comments: p["comments"] as? Int, reviewRequested: array(p, "requested_reviewers").contains { text($0, "login").caseInsensitiveCompare(c.me) == .orderedSame })
         }
         guard number(p, "iid") > 0 else { throw fail(String(localized: "The server returned an unexpected response.")) }
-        return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"))
+        return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"),
+                           comments: p["user_notes_count"] as? Int, reviewRequested: array(p, "reviewers").contains { text($0, "username").caseInsensitiveCompare(c.me) == .orderedSame })
     }
     /// One page of the request list. GitHub's list endpoint carries everything the list shows, so no request is read on its own;
     /// it has no author, reviewer or text filter, so those narrow each loaded page here (the search API is rate limited,
@@ -156,7 +164,7 @@ struct CollaborationInboxDetail {
             var methods: [String] = []
             if bool(r, "allow_merge_commit") { methods.append("merge") }; if bool(r, "allow_squash_merge") { methods.append("squash") }; if bool(r, "allow_rebase_merge") { methods.append("rebase") }
             if methods.isEmpty { blockers.append(String(localized: "The server did not allow a merge method.")) }
-            return RequestLifecycle(number: n, headSHA: text(obj(p, "head"), "sha"), state: state, title: text(p, "title"), body: text(p, "body"), base: text(obj(p, "base"), "ref"), reviewers: array(p, "requested_reviewers").map { text($0, "login") }, methods: methods, blockers: blockers, checks: readiness + " · " + ci, policy: String(localized: "GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: text(obj(p, "user"), "login") == c.me || write, canRebase: false)
+            return RequestLifecycle(conflicts: text(p, "mergeable_state") == "dirty", number: n, headSHA: text(obj(p, "head"), "sha"), state: state, title: text(p, "title"), body: text(p, "body"), base: text(obj(p, "base"), "ref"), reviewers: array(p, "requested_reviewers").map { text($0, "login") }, methods: methods, blockers: blockers, checks: readiness + " · " + ci, policy: String(localized: "GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: text(obj(p, "user"), "login") == c.me || write, canRebase: false)
         }
         let approvals = try? await object(c, requestURL(c, n) + "/approvals")
         let state = text(p, "state"), readiness = (p["detailed_merge_status"] as? String) ?? (p["merge_status"] as? String) ?? "unknown"
@@ -169,7 +177,7 @@ struct CollaborationInboxDetail {
         else if (approvals?["approvals_left"] as? Int ?? 0) > 0 { blockers.append(String(localized: "More approvals are required.")) }
         if bool(r, "only_allow_merge_if_pipeline_succeeds") && pipeline != "success" { blockers.append(String(localized: "The required pipeline has not succeeded.")) }
         let squash = text(r, "squash_option"), methods = squash == "always" ? ["squash"] : squash == "never" ? ["merge"] : ["merge", "squash"]
-        return RequestLifecycle(number: n, headSHA: text(p, "sha"), state: state == "opened" ? "open" : state, title: text(p, "title"), body: text(p, "description"), base: text(p, "target_branch"), reviewers: array(p, "reviewers").map { text($0, "username") }, methods: methods, blockers: blockers, checks: "\(readiness) · pipeline: \(pipeline.isEmpty ? "none" : pipeline)", policy: String(localized: "GitLab project merge method: \(text(r, "merge_method")). The server enforces approval, discussion and pipeline rules."), canEdit: text(obj(p, "author"), "username") == c.me || canMerge, canRebase: state == "opened" && canMerge)
+        return RequestLifecycle(conflicts: bool(p, "has_conflicts"), number: n, headSHA: text(p, "sha"), state: state == "opened" ? "open" : state, title: text(p, "title"), body: text(p, "description"), base: text(p, "target_branch"), reviewers: array(p, "reviewers").map { text($0, "username") }, methods: methods, blockers: blockers, checks: "\(readiness) · pipeline: \(pipeline.isEmpty ? "none" : pipeline)", policy: String(localized: "GitLab project merge method: \(text(r, "merge_method")). The server enforces approval, discussion and pipeline rules."), canEdit: text(obj(p, "author"), "username") == c.me || canMerge, canRebase: state == "opened" && canMerge)
     }
     static func merge(_ c: ReviewAccess, expected: RequestLifecycle, method: String) async throws {
         let fresh = try await lifecycle(c, expected.number)
@@ -203,7 +211,23 @@ struct CollaborationInboxDetail {
     }
     static func issue(_ p: Object) -> CollaborationInboxItem {
         let n = (p["number"] as? Int) ?? number(p, "iid")
-        return CollaborationInboxItem(id: "issue-\(n)", kind: "issue", number: n, title: text(p, "title"), url: (p["html_url"] as? String) ?? text(p, "web_url"), body: (p["body"] as? String) ?? text(p, "description"), state: text(p, "state"), author: (obj(p, "user")["login"] as? String) ?? text(obj(p, "author"), "username"))
+        var item = CollaborationInboxItem(id: "issue-\(n)", kind: "issue", number: n, title: text(p, "title"), url: (p["html_url"] as? String) ?? text(p, "web_url"), body: (p["body"] as? String) ?? text(p, "description"), state: text(p, "state"), author: (obj(p, "user")["login"] as? String) ?? text(obj(p, "author"), "username"))
+        issueFacts(p, into: &item)
+        return item
+    }
+    /// Dates, comment count, assignees and labels, read from the issue's own response (GitHub and GitLab name them differently)
+    static func issueFacts(_ p: Object, into item: inout CollaborationInboxItem) {
+        if let created = p["created_at"] as? String { item.createdAt = created }
+        if let updated = p["updated_at"] as? String { item.updatedAt = updated }
+        if let count = (p["comments"] as? Int) ?? (p["user_notes_count"] as? Int) { item.comments = count }
+        if let people = p["assignees"] as? [Object] { item.assignees = people.compactMap { ($0["login"] as? String) ?? ($0["username"] as? String) } }
+        if let labels = p["labels"] as? [Any] {
+            item.labels = labels.compactMap { value in
+                if let name = value as? String { return IssueLabel(name: name) }
+                guard let label = value as? Object, let name = label["name"] as? String else { return nil }
+                return IssueLabel(name: name, color: label["color"] as? String)
+            }
+        }
     }
     static func inbox(_ c: ReviewAccess, kind: String, page: Int) async throws -> ([CollaborationInboxItem], Bool) {
         if kind == "review" {
@@ -237,6 +261,7 @@ struct CollaborationInboxDetail {
         let detail = try await object(c, item.isRequest && c.target.provider == .github ? requestURL(c, item.number) : base)
         let values = try await list(c, base + "/\(c.target.provider == .github ? "comments" : "notes")?per_page=30&page=\(page)")
         var item = item; item.title = text(detail, "title"); item.body = (detail["body"] as? String) ?? text(detail, "description"); item.state = text(detail, "state"); item.createdAt = detail["created_at"] as? String; item.updatedAt = detail["updated_at"] as? String
+        if !item.isRequest { issueFacts(detail, into: &item) }
         let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body"), createdAt: $0["created_at"] as? String, editable: $0["system"] as? Bool != true && (c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username")).caseInsensitiveCompare(c.me) == .orderedSame) }
         return CollaborationInboxDetail(item: item, comments: comments, page: page, more: values.count == 30)
     }

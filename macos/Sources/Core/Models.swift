@@ -497,6 +497,10 @@ struct PullRequest: Identifiable, Hashable {
     let body: String
     let headSHA: String?
     let fromFork: Bool
+    /// Comments on the request, when the list response carries the count (GitLab does, GitHub's list does not)
+    var comments: Int? = nil
+    /// The signed-in user is asked to review it
+    var reviewRequested = false
     var id: Int { number }
 }
 

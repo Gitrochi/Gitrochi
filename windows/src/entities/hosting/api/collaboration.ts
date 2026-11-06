@@ -8,22 +8,30 @@ export interface RequestQuery { scope: RequestScope; search: string; page: numbe
 export interface RequestPage { items: PullRequest[]; more: boolean; warning?: string }
 export type MergeMethod = "merge" | "squash" | "rebase";
 export interface RequestLifecycle {
+  /** The server says the request conflicts with its base */
+  conflicts: boolean;
   number: number; headSHA: string; state: "open" | "closed" | "merged"; title: string; body: string; base: string;
   reviewers: string[]; methods: MergeMethod[]; blockers: string[]; checks: string; policy: string;
   canEdit: boolean; canRebase: boolean; squashRequired: boolean;
 }
+/** A label on an issue; GitLab's list names labels without their colour */
+export interface IssueLabel { name: string; color?: string | null }
 export interface InboxItem {
   id: string; kind: "issue" | "review" | "mention"; number: number; title: string; url: string; body: string;
   state: string; updated: number | null; created?: number | null; author: string; unread: boolean; readID?: string; readProvider?: "github" | "gitlab"; isRequest?: boolean;
+  /** What an issue's own list or detail response says about it; missing when the server did not say */
+  comments?: number | null; assignees?: string[]; labels?: IssueLabel[];
 }
 export interface InboxDetail { item: InboxItem; comments: { id: string; author: string; body: string; date: number | null; editable?: boolean }[]; more: boolean; page: number }
 export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "github" ? `${c.apiBase}/repos/${c.target.path}` : `${c.apiBase}/projects/${H.projectID(c.target.path)}`;
 const reqURL = (c: ReviewAccess, n: number) => `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "pulls" : "merge_requests"}/${n}`;
 interface User { login?: string; username?: string; id?: number }
 interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; merged_at?: string | null; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
-interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number }
-const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase() });
-const glPull = (p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id });
+interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; has_conflicts?: boolean; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number; user_notes_count?: number }
+// The comment count and the review request come with the list response the page already loads. macOS: CollaborationAPI.pull.
+const isMe = (c: ReviewAccess, name?: string) => !!name && name.toLowerCase() === c.me.toLowerCase();
+const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase(), reviewRequested: (p.requested_reviewers ?? []).some((u) => isMe(c, u.login)) });
+const glPull = (c: ReviewAccess, p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id, comments: p.user_notes_count, reviewRequested: (p.reviewers ?? []).some((u) => isMe(c, u.username)) });
 const ensureCurrent = (c: ReviewAccess) => { if (c.stillCurrent?.() === false) throw new Error(t("The repository or account changed. Reopen this action.")); };
 const send = <T>(c: ReviewAccess, url: string, method = "GET", body?: unknown) => { ensureCurrent(c); return H.send<T>(c.target.provider, url, c.token, method, body); };
 const raw = (c: ReviewAccess, url: string, method: string, body?: unknown) => { ensureCurrent(c); return H.sendRaw(c.target.provider, url, c.token, method, body); };
@@ -47,7 +55,7 @@ export async function requestPage(c: ReviewAccess, query: RequestQuery): Promise
   if (query.scope === "mine") p.set("author_username", c.me);
   if (query.scope === "reviewRequested") p.set("reviewer_username", c.me);
   const items = await send<GLMerge[]>(c, `${collaborationRepoURL(c)}/merge_requests?${p}`);
-  return { items: items.map(glPull), more: items.length === 30 };
+  return { items: items.map((item) => glPull(c, item)), more: items.length === 30 };
 }
 function matchesQuery(c: ReviewAccess, p: GHPull, scope: RequestScope, search: string) {
   const me = (name?: string) => (name ?? "").toLowerCase() === c.me.toLowerCase();
@@ -99,7 +107,7 @@ export async function requestLifecycle(c: ReviewAccess, n: number): Promise<Requ
     const methods: MergeMethod[] = [];
     if (r.allow_merge_commit) methods.push("merge"); if (r.allow_squash_merge) methods.push("squash"); if (r.allow_rebase_merge) methods.push("rebase");
     if (!methods.length) blockers.push(t("The server did not allow a merge method."));
-    return { number: n, headSHA: p.head.sha, state: p.merged ? "merged" : p.state === "open" ? "open" : "closed", title: p.title, body: p.body ?? "", base: p.base.ref, reviewers: (p.requested_reviewers ?? []).map((u) => u.login ?? ""), methods, blockers, checks: `${p.mergeable_state ?? "unknown"} · ${ci}`, policy: t("GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: p.user.login === c.me || !!r.permissions?.push, canRebase: false, squashRequired: false };
+    return { conflicts: p.mergeable_state === "dirty", number: n, headSHA: p.head.sha, state: p.merged ? "merged" : p.state === "open" ? "open" : "closed", title: p.title, body: p.body ?? "", base: p.base.ref, reviewers: (p.requested_reviewers ?? []).map((u) => u.login ?? ""), methods, blockers, checks: `${p.mergeable_state ?? "unknown"} · ${ci}`, policy: t("GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: p.user.login === c.me || !!r.permissions?.push, canRebase: false, squashRequired: false };
   }
   const [p, r, approvals] = await Promise.all([send<GLMerge>(c, reqURL(c, n) + "?with_merge_status_recheck=true"), send<{ merge_method?: string; squash_option?: string; only_allow_merge_if_pipeline_succeeds?: boolean; only_allow_merge_if_all_discussions_are_resolved?: boolean }>(c, collaborationRepoURL(c)), send<{ approvals_left?: number; approved?: boolean }>(c, reqURL(c, n) + "/approvals").catch(() => null)]);
   const status = p.detailed_merge_status ?? p.merge_status ?? "unknown", blockers: string[] = [];
@@ -112,7 +120,7 @@ export async function requestLifecycle(c: ReviewAccess, n: number): Promise<Requ
   const pipeline = p.head_pipeline?.status ?? "none";
   if (r.only_allow_merge_if_pipeline_succeeds && pipeline !== "success") blockers.push(t("The required pipeline has not succeeded."));
   const methods: MergeMethod[] = r.squash_option === "always" ? ["squash"] : r.squash_option === "never" ? ["merge"] : ["merge", "squash"];
-  return { number: n, headSHA: p.sha, state: p.state === "merged" ? "merged" : p.state === "opened" ? "open" : "closed", title: p.title, body: p.description ?? "", base: p.target_branch, reviewers: (p.reviewers ?? []).map((u) => u.username ?? ""), methods, blockers, checks: `${status} · pipeline: ${pipeline}`, policy: t("GitLab project merge method: {0}. The server enforces approval, discussion and pipeline rules.", r.merge_method ?? "unknown"), canEdit: p.author.username === c.me || p.user?.can_merge === true, canRebase: p.state === "opened" && p.user?.can_merge === true, squashRequired: r.squash_option === "always" };
+  return { conflicts: p.has_conflicts === true, number: n, headSHA: p.sha, state: p.state === "merged" ? "merged" : p.state === "opened" ? "open" : "closed", title: p.title, body: p.description ?? "", base: p.target_branch, reviewers: (p.reviewers ?? []).map((u) => u.username ?? ""), methods, blockers, checks: `${status} · pipeline: ${pipeline}`, policy: t("GitLab project merge method: {0}. The server enforces approval, discussion and pipeline rules.", r.merge_method ?? "unknown"), canEdit: p.author.username === c.me || p.user?.can_merge === true, canRebase: p.state === "opened" && p.user?.can_merge === true, squashRequired: r.squash_option === "always" };
 }
 export async function mergeRequest(c: ReviewAccess, expected: RequestLifecycle, method: MergeMethod) {
   const fresh = await requestLifecycle(c, expected.number);
@@ -145,8 +153,19 @@ export async function setReviewers(c: ReviewAccess, n: number, names: string[], 
   }
 }
 
-interface Issue { number?: number; iid?: number; title: string; body?: string; description?: string; html_url?: string; web_url?: string; state: string; updated_at?: string; created_at?: string; user?: User; author?: User; pull_request?: unknown }
-const issue = (i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", unread: false });
+/** The fields of an issue that GitHub and GitLab name differently */
+export interface IssueFactsRecord { created_at?: string; comments?: number; user_notes_count?: number; assignees?: User[] | null; labels?: (string | { name?: string; color?: string | null })[] | null }
+interface Issue extends IssueFactsRecord { number?: number; iid?: number; title: string; body?: string; description?: string; html_url?: string; web_url?: string; state: string; updated_at?: string; user?: User; author?: User; pull_request?: unknown }
+/** Opened date, comment count, assignees and labels, read from the issue's own response */
+export function issueFacts(i: IssueFactsRecord): Pick<InboxItem, "created" | "comments" | "assignees" | "labels"> {
+  return {
+    created: H.date(i.created_at),
+    comments: i.comments ?? i.user_notes_count ?? null,
+    assignees: (i.assignees ?? []).map((user) => user.login ?? user.username ?? "").filter(Boolean),
+    labels: (i.labels ?? []).map((label) => typeof label === "string" ? { name: label } : { name: label.name ?? "", color: label.color ?? null }).filter((label) => label.name),
+  };
+}
+const issue = (i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", unread: false, ...issueFacts(i) });
 /** 현재 저장소·연결된 계정 범위의 할 일. GitLab 멘션은 서버 To-do를 사용한다. */
 export async function inboxPage(c: ReviewAccess, kind: InboxItem["kind"], page = 1): Promise<{ items: InboxItem[]; more: boolean }> {
   if (kind === "review") {
@@ -173,7 +192,7 @@ export async function inboxDetail(c: ReviewAccess, item: InboxItem, page = 1): P
   const base = `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "issues" : isRequest ? "merge_requests" : "issues"}/${item.number}`;
   const detail = await send<Issue>(c, isRequest && c.target.provider === "github" ? reqURL(c, item.number) : base);
   const list = await send<{ id: number; body: string; user?: User; author?: User; created_at?: string; system?: boolean }[]>(c, `${base}/${c.target.provider === "github" ? "comments" : "notes"}?per_page=30&page=${page}`);
-  return { item: { ...item, title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
+  return { item: { ...item, ...(isRequest ? {} : issueFacts(detail)), title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
 }
 export async function postInboxComment(c: ReviewAccess, item: InboxItem, body: string) {
   if (!body.trim()) return;

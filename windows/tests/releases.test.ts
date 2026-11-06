@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups } from "@/entities/hosting/model/releases";
+import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups, releaseToOpen, releaseTaggedOn } from "@/entities/hosting/model/releases";
 import { ReleasePortfolio } from "@/entities/hosting/model/release-portfolio";
 import { accounts } from "@/entities/hosting/model/accounts";
 import type { HubSource } from "@/entities/hosting/model/hub";
@@ -65,6 +65,19 @@ describe("release page summary", () => {
     expect(releaseTimeline(line.slice(2), "").prerelease).toBeUndefined();
     expect(releaseTimeline([line[0]], "")).toMatchObject({ stable: undefined, prerelease: { id: "v1.3.0-rc.1" } });
     expect(releaseTimeline([], "").path).toEqual([]);
+  });
+  it("opens the newest stable release, else what is published, and only then a draft", () => {
+    const draft = item("v3.0.0", "2026-10-03", { draft: true }), pre = item("v2.0.0-rc.1", "2026-10-02", { prerelease: true }), stable = item("v1.0.0", "2026-10-01");
+    expect(releaseToOpen([draft, pre, stable])).toBe(stable);
+    expect(releaseToOpen([draft, pre])).toBe(pre);
+    expect(releaseToOpen([draft])).toBe(draft);
+    expect(releaseToOpen([])).toBeUndefined();
+  });
+  it("names the tag's commit when this clone has it, else what the server says", () => {
+    expect(releaseTaggedOn("3a28170ffee", "main")).toEqual({ value: "3a28170", commit: true });
+    expect(releaseTaggedOn(undefined, "main")).toEqual({ value: "main", commit: false });
+    expect(releaseTaggedOn("", "0123456789abcdef0123456789abcdef01234567")).toEqual({ value: "0123456", commit: true });
+    expect(releaseTaggedOn(null, "")).toBeNull();
   });
   it("puts this version's installers first and folds checksums, signatures and helpers away", () => {
     const names = ["Desktop-0.3.13-macOS.dmg", "Desktop-0.3.13-macOS.zip", "Desktop-0.3.13-macOS.zip.sig", "Desktop_0.3.13_x64-setup.exe", "helper-windows-x64.exe", "helper", "checksums.sha256", "latest.json"];

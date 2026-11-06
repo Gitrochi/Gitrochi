@@ -35,7 +35,7 @@ worktree = models[models.index('struct Worktree: Identifiable, Hashable {'):mode
 (target / 'WorktreeRow.swift').write_text('import SwiftUI\n' + worktree + '\n' + worktreeRow)
 PY
 xcrun swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
-    "$ROOT/Sources/Views/Sidebar/SidebarTreeGroup.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Sidebar/SidebarTreeGroup.swift" \
     "$TASK_TMP/BranchRow.swift" "$TASK_TMP/WorktreeRow.swift" "$ROOT/Tools/fixtures/SidebarTreeLayout.swift" \
     -o "$TASK_TMP/sidebar-tree-layout"
 "$TASK_TMP/sidebar-tree-layout" "$TASK_OUTPUT"

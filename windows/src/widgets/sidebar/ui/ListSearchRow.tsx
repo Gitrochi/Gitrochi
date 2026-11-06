@@ -1,4 +1,5 @@
-import { Funnel, Search, X } from "lucide-react";
+import { Funnel } from "lucide-react";
+import { Search, X } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { showMenuBelow } from "@/shared/ui";
 

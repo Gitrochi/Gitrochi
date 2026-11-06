@@ -22,7 +22,7 @@ struct RepositoryExternalEditorMenu: View {
             }
             Divider()
             Button("Refresh applications", action: refresh)
-        } label: { Image(systemName: "arrow.up.forward.app") }
+        } label: { DesignIconImage(icon: .external) }
             .menuStyle(.borderlessButton).fixedSize().help("Open with…").accessibilityLabel("Open with…")
             .accessibilityIdentifier("code-open-with")
     }

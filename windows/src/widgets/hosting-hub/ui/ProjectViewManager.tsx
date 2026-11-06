@@ -1,6 +1,6 @@
 import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "@/shared/icons";
 import {
   saveHubProjectView,
   deleteHubProjectView,

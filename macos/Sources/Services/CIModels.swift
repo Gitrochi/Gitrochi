@@ -104,6 +104,11 @@ struct CIPipeline: Identifiable, Hashable {
     /// push, web, schedule, workflow_dispatch …
     let event: String
     let actor: String?
+    /// When this attempt started and when the run last changed; together they say how long a finished run took
+    var started: Date? = nil
+    var updated: Date? = nil
+    /// GitHub: the pull request the run belongs to, when the run list names one
+    var request: Int? = nil
 
     var eventTitle: String {
         switch event {

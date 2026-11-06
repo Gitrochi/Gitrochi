@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Globe2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Globe2, ShieldCheck } from "lucide-react";
+import { LockKeyhole } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";
 export function ProjectCreateReview({

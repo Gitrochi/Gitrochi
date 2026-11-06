@@ -71,14 +71,14 @@ struct FlowEditorSheet: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 21)).foregroundStyle(Color.accentColor)
+            SymbolIcon("point.3.connected.trianglepath.dotted").font(.system(size: 21)).foregroundStyle(Color.accentColor)
                 .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 4) {
                 Text("Edit flow code").font(.title3.weight(.semibold))
                 Text("Edit the flow definition and related files. The diagram follows your code; nothing runs automatically.").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            if design?.dirty == true { Label("Unsaved changes", systemImage: "circle.fill").font(.caption2).foregroundStyle(.secondary) }
+            if design?.dirty == true { Label("Unsaved changes", symbol: "circle.fill").font(.caption2).foregroundStyle(.secondary) }
         }
     }
 
@@ -109,14 +109,14 @@ struct FlowEditorSheet: View {
                 Text("Code").tag(0)
                 Text("Modules").tag(1)
             }.labelsHidden().pickerStyle(.segmented).frame(width: 180)
-            Button { chooseImport() } label: { Label("Import file…", systemImage: "square.and.arrow.down") }
+            Button { chooseImport() } label: { Label("Import file…", symbol: "square.and.arrow.down") }
         }.controlSize(.small).disabled(model.loading || model.saving || model.formatting || related?.dirty == true || related?.saving == true || related?.loading == true)
     }
 
     private func sourceEditor(_ model: FlowAuthoringStore) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if !model.editable {
-                Label("This source needs YAML editing. Diagnostics explain why visual editing is unavailable.", systemImage: "info.circle")
+                Label("This source needs YAML editing. Diagnostics explain why visual editing is unavailable.", symbol: "info.circle")
                     .font(.caption).foregroundStyle(.secondary).padding(10)
             }
             TextEditor(text: Binding(get: { model.yaml }, set: { model.yaml = $0 }))
@@ -146,7 +146,7 @@ struct FlowEditorSheet: View {
     private func footer(_ model: FlowAuthoringStore) -> some View {
         HStack(spacing: 12) {
             if model.saving { ProgressView().controlSize(.small) }
-            Label("Changed commands require review before the next run.", systemImage: "checkmark.shield").font(.caption).foregroundStyle(.secondary)
+            Label("Changed commands require review before the next run.", symbol: "checkmark.shield").font(.caption).foregroundStyle(.secondary)
             Spacer()
             Button("Cancel", role: .cancel) { if model.dirty || related?.dirty == true { confirmClose = true } else { dismiss() } }
                 .keyboardShortcut(.cancelAction).disabled(model.saving || related?.saving == true || related?.loading == true)

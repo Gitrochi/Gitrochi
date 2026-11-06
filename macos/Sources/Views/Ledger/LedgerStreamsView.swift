@@ -88,7 +88,7 @@ private struct LedgerCycleRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Label(cycle.version, systemImage: "tag").font(.callout.weight(.semibold))
+                Label(cycle.version, symbol: "tag").font(.callout.weight(.semibold))
                 stateChip
                 Text(times).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 Spacer(minLength: 4)

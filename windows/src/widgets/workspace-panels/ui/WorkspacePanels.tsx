@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { PullRequest } from "@/entities/git";
+import type { HostAccount, PullRequest } from "@/entities/git";
 import {
   accounts,
   inboxPage,
@@ -9,11 +9,10 @@ import {
 } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { CollaborationInboxSheet } from "@/features/collaboration-inbox";
-import { AccountWorkPanel } from "@/features/account-work";
-import { CIPanel, CIRunDetail } from "@/features/ci-panel";
+import { AccountWorkPanel, type AccountWorkModel } from "@/features/account-work";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, Spinner } from "@/shared/ui";
+import { Button, Spinner } from "@/shared/ui";
 import "./workspace-panels.css";
 
 export interface WorkspacePanelProps {
@@ -69,7 +68,11 @@ function AccountNeeded({ store, openSettings }: WorkspacePanelProps) {
     </div>
   );
 }
-function RepositoryWorkInboxPanel(props: WorkspacePanelProps) {
+/**
+ * The inbox of the open repository alone, with its conversations. Off the Account page since the redesign, whose
+ * inbox covers every repository of the account and hands a request or an issue to its own page.
+ */
+export function RepositoryWorkInboxPanel(props: WorkspacePanelProps) {
   useObserve(props.store);
   return (
     <Page>
@@ -85,7 +88,8 @@ function RepositoryWorkInboxPanel(props: WorkspacePanelProps) {
     </Page>
   );
 }
-function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
+/** The open repository's requests and issues for the account. Off the Account page since the redesign, like the panel above. */
+export function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
   const { store } = props;
   useObserve(store);
   useObserve(accounts);
@@ -203,103 +207,37 @@ function RepositoryMyWorkPanel(props: WorkspacePanelProps) {
     </Page>
   );
 }
-/** Actions: the runs on the left, the selected run with its jobs and a job's log on the right, like the Pull requests page (macOS: ActionsWorkspacePanel) */
-export function ActionsWorkspacePanel({
-  store,
-  openSettings,
-}: WorkspacePanelProps) {
+export interface AccountWorkProps {
+  store: RepoStore;
+  model: AccountWorkModel;
+  account: HostAccount;
+  openSettings: () => void;
+}
+/** The Account page's lists hand the open repository's own requests and issues to their pages of the app */
+function AccountWork({ store, model, account, openSettings }: AccountWorkProps) {
   useObserve(store);
-  useObserve(store.ci);
-  const settingsOpener =
-    openSettings ??
-    (() =>
-      window.dispatchEvent(
-        new CustomEvent("gitrochi-open-settings", { detail: "accounts" }),
-      ));
-  // a CI badge may ask for a run in a repository without a remote; nothing can show it, so let go
-  useEffect(() => {
-    if (store.target || store.ciFocus === null) return;
-    store.ciFocus = null;
-    store.changed();
-  }, [store, store.target, store.ciFocus]);
-  if (!store.target)
-    return (
-      <div
-        className="col grow"
-        style={{ alignItems: "center", justifyContent: "center", gap: 12 }}
-      >
-        <Empty
-          title={t("No hosting remote")}
-          detail={t(
-            "Open a repository with a GitHub or GitLab remote to use this workspace.",
-          )}
-        />
-        <Button onClick={settingsOpener}>{t("Connect account…")}</Button>
-      </div>
-    );
-  const run = store.ci.pipelines.find((p) => p.id === store.ciSelected);
   return (
-    <div className="workspace-pr-page">
-      <div className="workspace-pr-list col">
-        <CIPanel store={store} openSettings={settingsOpener} />
-      </div>
-      <div className="workspace-pr-detail col">
-        {run ? (
-          <CIRunDetail store={store} pipeline={run} />
-        ) : (
-          <Empty
-            title={t("Select a run")}
-            detail={t("Choose a run to see its jobs and read their logs.")}
-          />
-        )}
-      </div>
-    </div>
+    <AccountWorkPanel
+      model={model}
+      account={account}
+      target={store.target}
+      openSettings={openSettings}
+      onOpen={(item) => {
+        if (item.kind === "request") {
+          store.navigate("pullRequests");
+          store.select({ kind: "pullRequest", number: item.number });
+        } else {
+          store.openIssue({ id: `issue-${item.number}`, kind: "issue", number: item.number, title: item.title, url: item.url, body: item.body, state: item.status === "closed" ? "closed" : "open", updated: item.updated, author: item.author, unread: false });
+        }
+      }}
+    />
   );
 }
-
-function ScopedWorkPanel({
-  store,
-  openSettings,
-  inbox = false,
-}: WorkspacePanelProps & { inbox?: boolean }) {
-  useObserve(store);
-  const [scope, setScope] = useState("repository");
-  useEffect(() => { if (store.hostingHub.selectedAccountID) setScope("account"); }, [store, store.hostingHub.selectedAccountID]);
-  const effective = store.target ? scope : "account";
-  return (
-    <div className="col" style={{ flex: 1, minHeight: 0 }}>
-      <div className="row" style={{ padding: "16px 28px 0" }}>
-        <label>
-          {t("Work scope")}{" "}
-          <select
-            aria-label={t("Work scope")}
-            value={effective}
-            onChange={(e) => setScope(e.target.value)}
-          >
-            <option value="repository" disabled={!store.target}>
-              {t("Current repository")}
-            </option>
-            <option value="account">
-              {t("Selected account · all repositories")}
-            </option>
-          </select>
-        </label>
-      </div>
-      {effective === "account" ? (
-        <Page>
-          <AccountWorkPanel inbox={inbox} selectedAccountID={store.hostingHub.selectedAccountID ?? ""} onAccountChange={(value) => { store.hostingHub.selectedAccountID = value; store.changed(); }} />
-        </Page>
-      ) : inbox ? (
-        <RepositoryWorkInboxPanel store={store} openSettings={openSettings} />
-      ) : (
-        <RepositoryMyWorkPanel store={store} openSettings={openSettings} />
-      )}
-    </div>
-  );
+/** The Inbox section: the chosen account's notifications across its repositories (macOS: WorkInboxPanel) */
+export function WorkInboxPanel(props: AccountWorkProps) {
+  return <AccountWork {...props} />;
 }
-export function WorkInboxPanel(props: WorkspacePanelProps) {
-  return <ScopedWorkPanel {...props} inbox />;
-}
-export function MyWorkPanel(props: WorkspacePanelProps) {
-  return <ScopedWorkPanel {...props} />;
+/** The My work section: the open requests and issues the chosen account wrote, was assigned or has to review (macOS: MyWorkPanel) */
+export function MyWorkPanel(props: AccountWorkProps) {
+  return <AccountWork {...props} />;
 }

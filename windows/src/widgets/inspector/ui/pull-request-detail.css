@@ -1,0 +1,201 @@
+/* A pull/merge request as the redesign draws it: header, underline tabs, the conversation with its side cards and the
+   one-line composer, Changed files (tree + diff header) and Checks. macOS: PullRequestDetailView.swift and its parts. */
+.pr-detail { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; background: var(--surface); color: var(--text); font-size: 13px; container: pr-detail / inline-size; }
+.pr-detail button:focus-visible, .pr-detail [role="checkbox"]:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -2px; }
+.pr-cap { font-size: 12px; color: var(--text-2); }
+.pr-detail p.pr-cap { margin: 0; }
+/* disabled is neutral, never a faded copy of the enabled button (docs/design.md, Controls) */
+.pr-detail .btn:disabled, .btn.pr-neutral-disabled:disabled { opacity: 1; background: var(--bar); border-color: var(--border); color: var(--text-3); }
+.btn.pr-button-icon { width: 28px; padding: 0; flex: none; }
+.pr-text-button { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 0; border: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; white-space: nowrap; }
+.pr-text-button:hover:not(:disabled) { color: var(--text); }
+.pr-text-button:disabled { color: var(--text-3); cursor: default; }
+.pr-text-actions { display: flex; align-items: center; gap: 16px; }
+.pr-icon-button { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: color-mix(in srgb, var(--text) 80%, var(--text-2)); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pr-icon-button:hover:not(:disabled) { background: var(--hover); }
+.pr-icon-button:disabled { color: var(--text-3); cursor: default; }
+/* an on state is a neutral fill, so it never reads as a selection */
+.pr-icon-button.on { background: var(--bar); color: var(--text); }
+.pr-link { border: 0; padding: 0; background: transparent; font: inherit; font-weight: 500; color: #0b5cad; cursor: pointer; }
+.pr-link:hover { text-decoration: underline; }
+:root[data-theme="dark"] .pr-link { color: #8cb8ff; }
+.pr-stat { flex: none; font-size: 11px; white-space: nowrap; }
+.pr-stat .a { color: var(--green); }
+.pr-stat .d { color: var(--red); }
+.pr-dot { flex: none; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--accent); }
+
+/* Header: the title is the protagonist; on the page's Changed files tab the same parts fold into one 44px row */
+.pr-head { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "id id" "title actions" "meta meta" "tabs tabs"; gap: 8px 12px; align-items: center; padding: 20px 24px 0; min-width: 0; }
+.pr-head-id { grid-area: id; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pr-head-id > .mono { font-size: 13px; color: var(--text-2); }
+.pr-head-title { grid-area: title; margin: 0; font-size: 22px; line-height: 1.25; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.pr-head-actions { grid-area: actions; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pr-head-meta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; color: var(--text-2); font-size: 12px; min-width: 0; }
+.pr-author { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pr-author strong { color: var(--text); font-weight: 600; font-size: 13px; }
+.pr-chip { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: 6px; background: var(--bar); color: color-mix(in srgb, var(--text) 80%, var(--text-2)); font-size: 11px; font-weight: 600; overflow-wrap: anywhere; }
+.pr-tabs { grid-area: tabs; display: flex; gap: 4px; margin-top: 4px; border-bottom: 1px solid var(--border); min-width: 0; }
+.pr-tabs > button { font: inherit; font-weight: 500; color: color-mix(in srgb, var(--text) 80%, var(--text-2)); background: transparent; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+.pr-tabs > button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+@container pr-detail (max-width: 640px) {
+  .pr-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "title" "actions" "meta" "tabs"; padding: 14px 14px 0; }
+  .pr-head-title { font-size: 17px; }
+  .pr-tabs { overflow-x: auto; }
+  .pr-tabs > button { padding: 8px; }
+}
+.pr-head[data-row="true"] { display: flex; align-items: stretch; gap: 16px; height: 44px; box-sizing: border-box; padding: 0 24px; border-bottom: 1px solid var(--border); }
+.pr-head[data-row="true"] .pr-head-id { flex: none; margin-right: -8px; }
+.pr-head[data-row="true"] .pr-head-id > .status-pill, .pr-head[data-row="true"] .pr-head-meta { display: none; }
+/* the title gives way first and keeps 160px; the tabs never shrink */
+.pr-head[data-row="true"] .pr-head-title { flex: 0 1 auto; min-width: 160px; align-self: center; font-size: 15px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-head[data-row="true"] .pr-tabs { order: 1; flex: none; align-items: stretch; margin: 0; border-bottom: 0; }
+.pr-head[data-row="true"] .pr-tabs > button { padding: 0 10px; margin-bottom: 0; }
+.pr-head[data-row="true"] .pr-head-actions { order: 2; flex: none; flex-wrap: nowrap; margin-left: auto; }
+.pr-error { margin: 12px 24px 0; }
+
+.pr-panel { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.pr-panel[hidden] { display: none; }
+
+/* Conversation */
+.pr-conversation-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 24px 28px; }
+.pr-thread-column { flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.request-description { line-height: 1.55; min-width: 0; overflow-wrap: anywhere; }
+.pr-activity-title { margin: 0; font-size: 15px; font-weight: 600; border-top: 1px solid var(--border); padding-top: 16px; }
+.request-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+.request-event { min-width: 0; }
+.pr-event-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: color-mix(in srgb, var(--text) 80%, var(--text-2)); }
+.pr-event-line > svg { flex: none; color: var(--text-2); }
+.pr-event-line.status-tone > svg { color: var(--status-text); }
+.pr-event-line strong { color: var(--text); font-weight: 600; }
+.pr-event-note { margin: 6px 0 0 26px; line-height: 1.55; }
+.pr-comment { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.pr-comment-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.pr-comment-body > header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.pr-comment-body > header strong { font-weight: 600; }
+.pr-comment-body .md { line-height: 1.55; }
+.pr-comment-actions, .pr-thread-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-left: 34px; }
+.pr-comment-actions > .pr-thread-actions { padding-left: 0; align-self: stretch; }
+.pr-thread-actions > .textarea { align-self: stretch; }
+.pr-thread { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.pr-thread > header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--sidebar); border-bottom: 1px solid var(--border); min-width: 0; }
+.pr-thread > header > svg { flex: none; color: var(--text-2); }
+.pr-thread-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Side cards */
+.pr-side { flex: 0 0 280px; width: 280px; max-width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+@container pr-detail (max-width: 716px) { .pr-side { flex: 1 1 100%; width: auto; } .pr-conversation-scroll { padding: 16px 14px; } }
+.pr-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pr-card-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.pr-card-row { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.pr-card-row > svg { flex: none; }
+.pr-card-row.status-tone > svg { color: var(--status-text); }
+.pr-neutral-icon { color: var(--text-2); }
+.pr-card label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-2); }
+.pr-card-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.pr-merge-row { display: flex; gap: 6px; margin-top: 4px; }
+.pr-merge-row > .select { flex: 1 1 auto; min-width: 0; height: 28px; padding: 0 8px; }
+.pr-merge-reason { margin-top: -4px; white-space: pre-line; }
+.pr-reviewer-status { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--status-text); }
+.pr-issue-link { border: 0; padding: 0; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.pr-issue-link > svg { color: var(--green); }
+.pr-issue-link .mono { font-size: 11px; color: var(--text-2); }
+
+/* Composer: one 36px line until it is used */
+.pr-composer { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-top: 1px solid var(--border); background: var(--sidebar); }
+.pr-composer.expanded { align-items: flex-end; }
+.pr-composer-field { flex: 1 1 auto; min-width: 0; height: 36px; box-sizing: border-box; resize: none; font: inherit; line-height: 18px; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text); outline: none; overflow: hidden; white-space: nowrap; user-select: text; }
+.pr-composer.expanded .pr-composer-field { height: 96px; overflow: auto; white-space: pre-wrap; }
+.pr-composer-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.pr-composer-send { display: inline-flex; flex: none; }
+@container pr-detail (max-width: 640px) { .pr-composer { padding: 10px 14px; } }
+.pr-review-dialog { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.pr-review-dialog > .textarea { align-self: stretch; }
+
+/* Changed files: the tree, and on the page the diff beside it */
+.pr-files { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; align-items: stretch; }
+.pr-tree { flex: 0 0 var(--pr-tree-width, 340px); width: var(--pr-tree-width, 340px); min-width: 0; min-height: 0; box-sizing: border-box; border-right: 1px solid var(--border); padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+.pr-files-only > .pr-tree { flex: 1 1 auto; width: auto; border-right: 0; }
+/* too narrow for both: the tree sits above the diff */
+@container pr-detail (max-width: 640px) {
+  .pr-files:not(.pr-files-only) { flex-direction: column; }
+  .pr-files:not(.pr-files-only) > .pr-tree { flex: 0 0 auto; width: auto; max-height: 40%; border-right: 0; border-bottom: 1px solid var(--border); }
+  .pr-diff-head { padding: 0 10px; }
+}
+.pr-tree-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding-left: 6px; }
+.pr-tree-rows { display: flex; flex-direction: column; gap: 1px; }
+.pr-folder-row { display: flex; align-items: center; gap: 6px; width: 100%; height: 28px; box-sizing: border-box; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; }
+.pr-folder-row > svg { flex: none; color: var(--text-2); }
+.pr-folder-row > .ellipsis { flex: 0 1 auto; }
+.pr-folder-row:hover, .pr-file-row:hover:not(.selected) { background: var(--hover); }
+.pr-file-row { display: flex; align-items: center; gap: 6px; height: 28px; flex: none; box-sizing: border-box; padding: 0 2px 0 6px; border-radius: 6px; min-width: 0; }
+.pr-file-row.selected { background: var(--select); }
+.pr-file-row.selected .pr-file-name { font-weight: 600; }
+.pr-file-open { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0; border: 0; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; overflow: hidden; }
+/* a file name is never cut: the name it was renamed from, or its folder, gives way first */
+.pr-file-name { flex: none; white-space: nowrap; }
+.pr-file-from { flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-2); }
+.pr-file-threads { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-2); }
+.pr-viewed { flex: 0 0 24px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pr-viewed-box { width: 14px; height: 14px; box-sizing: border-box; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--input); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-text); }
+.pr-viewed[aria-checked="true"] .pr-viewed-box { border-color: var(--accent); background: var(--accent); }
+.pr-diff { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.pr-diff-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--border); min-width: 0; }
+/* the folder drops to a clipped second line when it does not fit, so it hides whole instead of being cut */
+.pr-diff-file { flex: 1 1 auto; min-width: 0; height: 20px; overflow: hidden; display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+.pr-diff-file > * { height: 20px; line-height: 20px; }
+.pr-diff-file > .status-badge { height: 16px; line-height: 16px; margin: 2px 0; }
+.pr-diff-name { flex: none; font-weight: 600; white-space: nowrap; }
+.pr-diff-dir { flex: none; font-size: 11px; color: var(--text-2); white-space: nowrap; }
+.pr-diff-nav { flex: none; display: flex; align-items: center; gap: 4px; }
+.pr-diff-count { font-size: 11px; color: var(--text-2); margin-right: 4px; white-space: nowrap; }
+.pr-diff-layout { flex: none; border-radius: 6px; }
+.pr-diff-layout button { height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.pr-diff-layout button:disabled { color: var(--text-3); cursor: default; }
+.pr-split { display: inline-flex; }
+.pr-diff-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: stretch; }
+.pr-diff-body > .spinner { align-self: center; margin-top: 24px; }
+
+/* Checks */
+.pr-checks-scroll { overflow: auto; padding: 20px 24px; }
+.pr-checks { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pr-checks > p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pr-checks-head { display: flex; flex-direction: column; gap: 4px; }
+.pr-checks-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pr-checks-title h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.pr-checks-title code { font-size: 11px; }
+.pr-check-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pr-group { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 24px; border: 0; background: transparent; padding: 2px 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--text-2); text-align: left; box-sizing: border-box; min-width: 0; }
+button.pr-group { cursor: pointer; }
+.pr-group > svg, .pr-group > span:first-of-type { flex: none; }
+.pr-passed-icon { color: var(--green); }
+.pr-group-names { flex: 1 1 auto; font-size: 11px; font-weight: 400; }
+.pr-check-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.pr-check-top { padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.pr-check-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.pr-check-name { flex: 0 1 auto; min-width: 0; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.pr-check-status { flex: none; font-size: 12px; color: var(--status-text); }
+.pr-check-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pr-check-summary { padding-left: 22px; overflow-wrap: anywhere; }
+.pr-check-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.pr-check-item + .pr-check-item { border-top: 1px solid var(--border); }
+.pr-check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 36px; padding: 4px 12px; min-width: 0; }
+.pr-check-row > svg { flex: none; }
+.pr-job-log { border-top: 1px solid var(--border); }
+.pr-job-log > .pr-text-actions { padding: 2px 16px; justify-content: flex-end; }
+.pr-log { border-top: 1px solid var(--border); background: var(--sidebar); padding: 8px 0; max-height: 320px; overflow: auto; }
+.pr-log-note { margin: 0 16px 4px; }
+.pr-log-earlier { display: flex; margin: 0 16px 4px 56px; }
+.pr-log-line { display: flex; gap: 14px; width: max-content; min-width: 100%; box-sizing: border-box; font-size: 12px; line-height: 20px; padding: 0 16px; white-space: pre; }
+.pr-log-n { flex: none; min-width: 26px; text-align: right; color: var(--text-2); user-select: none; }
+.pr-log-text { flex: 1 1 auto; min-width: 0; }
+/* an error line wraps inside the visible box so it is never cut; the others scroll sideways */
+.pr-log-line.error { width: 100%; white-space: pre-wrap; position: sticky; left: 0; background: var(--status-fill); color: var(--status-text); }
+.pr-log-line.error .pr-log-text { overflow-wrap: anywhere; }
+.pr-run { border-top: 1px solid var(--border); padding-top: 10px; }
+.pr-run > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; list-style: none; }
+.pr-run > summary::-webkit-details-marker { display: none; }
+.pr-run > summary:before { content: "›"; color: var(--text-3); }
+.pr-run[open] > summary:before { transform: rotate(90deg); }
+.pr-run > summary > strong { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.pr-run .request-run-jobs { padding: 10px 0 0 14px; display: flex; flex-direction: column; gap: 4px; }
+@container pr-detail (max-width: 640px) { .pr-checks-scroll { padding: 16px 14px; } }

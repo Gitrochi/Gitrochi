@@ -89,6 +89,11 @@ select {
   color: inherit;
 }
 
+/* Lucide draws on a 24 grid: this is the 1.5px stroke of the redesign's icons at 16px */
+.lucide {
+  stroke-width: 2.25;
+}
+
 .selectable {
   user-select: text;
 }

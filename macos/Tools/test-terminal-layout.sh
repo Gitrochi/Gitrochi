@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import sys
 root, target = map(Path, sys.argv[1:])
-for relative in ['Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
+for relative in ['Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/Shared/DesignIcon.swift', 'Sources/Views/Shared/DesignSymbols.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
     source = root / relative
     (target / source.name).write_bytes(source.read_bytes())
 service = (root / 'Sources/Services/TerminalDictation.swift').read_text()
@@ -90,7 +90,7 @@ cp -R "$ROOT/Resources/Localizations/ko.lproj" "$TASK_APP/Contents/Resources/"
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     -module-cache-path "${GITROCHI_TERMINAL_LAYOUT_MODULE_CACHE:-$TASK_TMP/module-cache}" \
     "$TASK_TMP/TerminalInput.swift" "$TASK_TMP/TerminalVoiceAction.swift" "$TASK_TMP/TerminalSpeechVocabulary.swift" \
-    "$TASK_TMP/TerminalCleanupPolicy.swift" "$TASK_TMP/TerminalTextCleanup.swift" "$TASK_TMP/TerminalChrome.swift" \
+    "$TASK_TMP/TerminalCleanupPolicy.swift" "$TASK_TMP/TerminalTextCleanup.swift" "$TASK_TMP/TerminalChrome.swift" "$TASK_TMP/DesignIcon.swift" "$TASK_TMP/DesignSymbols.swift" \
     "$TASK_TMP/TerminalVoiceReview.swift" "$TASK_TMP/TerminalDictationComposer.swift" "$TASK_TMP/TerminalLayout.swift" \
     -o "$TASK_APP/Contents/MacOS/TerminalLayout"
 for TASK_LANGUAGE in en ko; do

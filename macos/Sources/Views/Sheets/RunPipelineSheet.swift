@@ -63,7 +63,7 @@ struct RunPipelineSheet: View {
             HStack {
                 Text("Variables").font(.subheadline.weight(.semibold))
                 Spacer()
-                Button { variables.append(Variable(key: "", value: "")) } label: { Image(systemName: "plus") }
+                Button { variables.append(Variable(key: "", value: "")) } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
                     .help("Add variable")
             }
@@ -88,7 +88,7 @@ struct RunPipelineSheet: View {
                                     }
                                     .labelsHidden()
                                 }
-                                Button { variables.removeAll { $0.id == v.id } } label: { Image(systemName: "minus.circle") }
+                                Button { variables.removeAll { $0.id == v.id } } label: { SymbolIcon("minus.circle") }
                                     .buttonStyle(.borderless)
                                     .help("Remove this variable")
                             }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { X } from "@/shared/icons";
 import { resolveHubOrganizationMember, readHubOrganizationMemberAccess, readHubOrganizationTeamAccess, setHubOrganizationMemberRole, setHubOrganizationTeamRole, hubError, type HostingHubStore, type HubDetail, type HubMember, type HubOrganizationTeam, type HubOrganizationMemberAccess, type HubAccess } from "@/entities/hosting";
 import { accountHost } from "@/entities/git";
 import { Button, Spinner } from "@/shared/ui";
