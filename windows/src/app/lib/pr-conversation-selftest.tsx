@@ -42,7 +42,8 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     // the fixture keeps settings in memory, and still tells the views that one changed
     settings.set = (key, value) => { memory.set(key, value); (settings as unknown as { emit(): void }).emit(); };
     accounts.accounts = [];
-    ipc.run = async () => { unexpected.push("process"); throw new Error("Fixture blocked process"); };
+    // the summary card's local count is the one process this page may start
+    ipc.run = async (_program, args) => { if (args.includes("rev-list")) return { status: 1, stdout: "", stderr: "" }; unexpected.push("process"); throw new Error("Fixture blocked process"); };
     ipc.http = async () => { unexpected.push("network"); throw new Error("Fixture blocked network"); };
     store.path = "C:/gitrochi-pr-conversation-fixture"; store.headHash = head; store.headBranch = "topic";
     store.target = { provider: "github", host: "github.example.invalid", path: "fixture/review", remote: "origin" };

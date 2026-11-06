@@ -1045,7 +1045,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
   } catch (e) {
     return [
       false,
-      [...details, e instanceof Error ? e.message : String(e)].join("; "),
+      // the reason first: the report keeps only the start of this text
+      [e instanceof Error ? e.message : String(e), ...details].join("; "),
     ];
   } finally {
     root.unmount();

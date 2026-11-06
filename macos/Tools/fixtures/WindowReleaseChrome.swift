@@ -188,6 +188,11 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             stores[1].navigate(.releases, prepare: false)
             await settle(0.7)
             try require(stores[1].cameFromRepository, "Release navigation must retain the repository back link")
+            // the page needs a remote the fixture's account can use, and the synthetic folder's first read drops any remote
+            stores[1].target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "fixture/repository-1")
+            seedReleases()
+            await settle(0.3)
+            // the page opens the latest release itself, which has no server here to answer: put the detail back
             seedReleases()
             await settle(0.3)
             try await capture("swiftui-releases-\(name)-wide", window: selected, expectedFrame: original)
