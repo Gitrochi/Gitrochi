@@ -433,9 +433,15 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
         }}
       />,
     );
+    // A GitHub project with no saved view opens in Table/List (docs/project-scheduling.md); Overview is one click away.
+    ensure(
+      await until(() => !!host.querySelector(".project-list")),
+      "First project did not open its task table automatically",
+    );
+    button("Overview")!.click();
     ensure(
       await until(() => !!host.querySelector(".project-overview")),
-      "First project did not open its schedule overview automatically",
+      "Schedule overview did not open",
     );
     button("Board")!.click();
     await pause(25);
@@ -761,6 +767,8 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     );
     projectEmpty = true;
     await mount(<HostingHubPanel store={source} section="projects" />);
+    ensure(await until(() => !!host.querySelector(".project-list")), "Empty project did not open its task table");
+    button("Overview")!.click();
     ensure(await until(() => !!host.querySelector(".project-overview")), "Empty project overview missing");
     button("Board")!.click();
     ensure(
