@@ -105,7 +105,7 @@ private struct FlowPanelBody: View {
             if flows.loading { ProgressView().controlSize(.mini) }
             Spacer()
             if let list = flows.list, !list.flows.isEmpty { gateMenu(list) }
-            Toggle(isOn: $affectedOnly) { Image(systemName: "scope") }
+            Toggle(isOn: $affectedOnly) { SymbolIcon("scope") }
                 .toggleStyle(.button)
                 .buttonStyle(.borderless)
                 .help(affectedOnly ? "Running only tests affected by your changes" : "Run only tests affected by your changes")
@@ -113,11 +113,11 @@ private struct FlowPanelBody: View {
             Button { Task { await flows.refresh() } } label: { DesignIconImage(icon: .refresh) }
                 .buttonStyle(.borderless)
                 .help("Refresh")
-            Button { sheet = .edit } label: { Image(systemName: "square.and.pencil") }
+            Button { sheet = .edit } label: { SymbolIcon("square.and.pencil") }
                 .buttonStyle(.borderless)
                 .help("Edit flow file…")
                 .disabled(!flows.engineAvailable)
-            Button { sheet = .setup } label: { Image(systemName: "wand.and.stars") }
+            Button { sheet = .setup } label: { SymbolIcon("wand.and.stars") }
                 .buttonStyle(.borderless)
                 .help("Detect tests and propose a flow file")
                 .disabled(!flows.engineAvailable)
@@ -142,7 +142,7 @@ private struct FlowPanelBody: View {
                 Text(flows.gate?.gate == "OK" ? String(localized: "This commit has passed") : String(localized: "This commit hasn't passed yet"))
             }
         } label: {
-            Image(systemName: on ? "checkmark.shield.fill" : "shield")
+            SymbolIcon(on ? "checkmark.shield.fill" : "shield")
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -188,7 +188,7 @@ private struct FlowPanelBody: View {
 
     private func emptyState(icon: String, text: String) -> some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.largeTitle).foregroundStyle(.tertiary)
+            SymbolIcon(icon).font(.largeTitle).foregroundStyle(.tertiary)
             Text(text).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .padding(20)

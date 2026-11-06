@@ -69,9 +69,9 @@ struct RequestActivity: View {
             WorkbenchFlow(spacing: 10) {
                 HStack(spacing: 10) {
                     switch comment.kind {
-                    case .approved: Image(systemName: "checkmark.circle.fill").foregroundStyle(StudioStyle.Tone.passed.text)
-                    case .changesRequested: Image(systemName: "exclamationmark.bubble.fill").foregroundStyle(StudioStyle.Tone.waiting.text)
-                    default: Image(systemName: "circle.dotted").foregroundStyle(StudioStyle.Rail.icon)
+                    case .approved: SymbolIcon("checkmark.circle.fill").foregroundStyle(StudioStyle.Tone.passed.text)
+                    case .changesRequested: SymbolIcon("exclamationmark.bubble.fill").foregroundStyle(StudioStyle.Tone.waiting.text)
+                    default: SymbolIcon("circle.dotted").foregroundStyle(StudioStyle.Rail.icon)
                     }
                     switch comment.kind {
                     case .approved: Text("\(Text(verbatim: "@" + comment.author).fontWeight(.semibold).foregroundStyle(.primary)) approved these changes")

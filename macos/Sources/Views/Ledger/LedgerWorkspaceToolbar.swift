@@ -98,7 +98,7 @@ struct LedgerWorkspaceFilters: View {
                 }
             }
         } label: {
-            Label(projectName, systemImage: "folder").lineLimit(1).truncationMode(.middle)
+            Label(projectName, symbol: "folder").lineLimit(1).truncationMode(.middle)
         }
         .frame(maxWidth: 200)
         .help("Project")
@@ -126,7 +126,7 @@ struct LedgerWorkspaceFilters: View {
                 }
             }
         } label: {
-            Label(verdictName, systemImage: "line.3.horizontal.decrease.circle").lineLimit(1)
+            Label(verdictName, symbol: "line.3.horizontal.decrease.circle").lineLimit(1)
         }
         .fixedSize()
         .help("Verdicts")
@@ -148,6 +148,6 @@ struct LedgerWorkspaceFilters: View {
     }
 
     @ViewBuilder private func menuLabel(_ title: String, selected: Bool) -> some View {
-        if selected { Label(title, systemImage: "checkmark") } else { Text(title) }
+        if selected { Label(title, symbol: "checkmark") } else { Text(title) }
     }
 }

@@ -89,9 +89,9 @@ struct IssueDetailView: View {
 
     private var actions: some View {
         HStack(spacing: 6) {
-            Button { store.sheet = .issueEditor(number: item.number, title: item.title, body: item.body) } label: { Label("Edit", systemImage: "pencil") }
+            Button { store.sheet = .issueEditor(number: item.number, title: item.title, body: item.body) } label: { Label("Edit", symbol: "pencil") }
                 .buttonStyle(HostedListButtonStyle()).disabled(busy)
-            Button { if let url = URL(string: item.url) { NSWorkspace.shared.open(url) } } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }
+            Button { if let url = URL(string: item.url) { NSWorkspace.shared.open(url) } } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
                 .buttonStyle(HostedListButtonStyle())
             Menu {
                 Button("Refresh conversation") { Task { await store.openInboxItem(item) } }
@@ -261,7 +261,7 @@ struct IssueDetailView: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(composerFocused ? Color.accentColor.opacity(0.7) : HostedList.edge))
                 if store.collaboration.inboxBusy { ProgressView().controlSize(.small).frame(height: 28) }
                 Button { store.confirmIssueState(item) } label: {
-                    Label(isOpen ? String(localized: "Close issue…") : String(localized: "Reopen…"), systemImage: isOpen ? "checkmark.circle" : "arrow.uturn.backward.circle")
+                    Label(isOpen ? String(localized: "Close issue…") : String(localized: "Reopen…"), symbol: isOpen ? "checkmark.circle" : "arrow.uturn.backward.circle")
                 }
                 .buttonStyle(HostedListButtonStyle()).disabled(busy)
                 Button("Comment") { send() }

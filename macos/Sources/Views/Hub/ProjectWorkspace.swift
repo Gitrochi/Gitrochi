@@ -181,7 +181,7 @@ struct ProjectWorkspace: View {
     /// Nothing to show yet: one line, one caption and the one action that gets the user going (docs/design.md, Controls).
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Image(systemName: "checkmark.square").font(.system(size: 24)).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
+            SymbolIcon("checkmark.square").font(.system(size: 24)).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
             Text("No projects yet").font(.system(size: 15, weight: .semibold))
             Text(isLocal ? String(localized: "Create a local project and start organizing tasks, dates, and priorities without an account.")
                  : String(localized: "No projects found for {0}.").replacingOccurrences(of: "{0}", with: store.hubProjectOwner))
@@ -200,7 +200,7 @@ struct ProjectWorkspace: View {
     /// A notice as docs/design.md draws one: a white strip with a hairline, a 14 pt icon, dark text and plain actions
     private func strip<Content: View>(symbol: String, color: Color, @ViewBuilder content: () -> Content) -> some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
+            SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
             content()
         }
         .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 8)).frame(maxWidth: .infinity, alignment: .leading)
@@ -269,7 +269,7 @@ struct ProjectWorkspace: View {
         HStack(spacing: 6) {
             DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
             TextField("Search tasks", text: $filter.query).font(.system(size: 13)).textFieldStyle(.plain)
-            if !filter.query.isEmpty { Button { filter.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search") }
+            if !filter.query.isEmpty { Button { filter.query = "" } label: { SymbolIcon("xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search") }
         }
         .padding(.horizontal, 10).frame(width: 280, height: 28)
         .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
@@ -281,7 +281,7 @@ struct ProjectWorkspace: View {
             Toggle("Include archived", isOn: $filter.includeArchived)
             Divider()
             Picker("Sort by", selection: $filter.sort) { Text("Project order").tag("manual"); Text("Recently updated").tag("updated"); Text("Title").tag("title"); if !isLocal { Text("Number").tag("number") } }
-        } label: { Label("Filter", systemImage: "line.3.horizontal.decrease") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
+        } label: { Label("Filter", symbol: "line.3.horizontal.decrease") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
         // The board draws search and Filter; what the page already offered follows them on the same row.
         if layout == "overview" {
             ProjectScheduleConfiguration(fields: detail.fields, settings: $scheduleSettings, manageFields: { manage(isLocal ? .overview : .fields) }).menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
@@ -297,9 +297,9 @@ struct ProjectWorkspace: View {
         if ["board", "table"].contains(layout) {
             if let grouping {
                 Menu { Picker("Group by", selection: Binding(get: { grouping.id }, set: { groupID = $0 })) { ForEach(detail.fields.filter { !$0.options.isEmpty }) { field in Text(field.name).tag(field.id) } } }
-                    label: { Label(grouping.name, systemImage: "rectangle.3.group") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
+                    label: { Label(grouping.name, symbol: "rectangle.3.group") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
             }
-            Toggle(isOn: $selectingItems) { Label("Select", systemImage: "checkmark.square") }.toggleStyle(.button).controlSize(.large)
+            Toggle(isOn: $selectingItems) { Label("Select", symbol: "checkmark.square") }.toggleStyle(.button).controlSize(.large)
         }
     }
     private func workspace(_ detail: HubDetail) -> some View {

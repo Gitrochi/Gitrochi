@@ -57,7 +57,7 @@ struct RepositoryCodePanel: View {
             toolbar
             Divider()
             if let error {
-                Label(error, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(StudioStyle.Tone.failed.text)
+                Label(error, symbol: "exclamationmark.triangle").font(.callout).foregroundStyle(StudioStyle.Tone.failed.text)
                     .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 8)
                 Divider()
             }
@@ -170,7 +170,7 @@ struct RepositoryCodePanel: View {
                     ForEach(refs.filter { typed.isEmpty || $0.1.localizedCaseInsensitiveContains(typed) }, id: \.1) { icon, name in
                         RepositoryCodeRow(selected: name == revisionInput, action: { load(name) }) {
                             HStack(spacing: 8) {
-                                Image(systemName: icon).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                SymbolIcon(icon).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
                                 Text(name).font(.system(size: 13)).lineLimit(1).truncationMode(.middle)
                             }
                             .padding(.horizontal, 10).frame(height: 28)
@@ -261,7 +261,7 @@ struct RepositoryCodePanel: View {
                         let current = selected?.path == entry.path
                         RepositoryCodeRow(selected: current, action: { requestOpen(entry) }) {
                             HStack(spacing: 8) {
-                                Image(systemName: entry.isSubmodule ? "shippingbox" : entry.isSymlink ? "link" : "doc").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                SymbolIcon(entry.isSubmodule ? "shippingbox" : entry.isSymlink ? "link" : "doc").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
                                 Text(languageFilter == nil ? String(entry.path.dropFirst(prefix.count)) : entry.path).font(.system(size: 13, weight: current ? .semibold : .regular))
                                     .lineLimit(1).truncationMode(.middle).frame(maxWidth: .infinity, alignment: .leading)
                                 // changed in the working tree and not committed yet
@@ -272,7 +272,7 @@ struct RepositoryCodePanel: View {
                         .help(entry.path)
                     }
                     if matching.count > 2000 { Text("Showing the first 2,000 matches. Search to narrow the file list.").font(.caption).foregroundStyle(.secondary).padding(10) }
-                    if tree != nil && matching.isEmpty && folders.isEmpty { ContentUnavailableView("No matching files", systemImage: "doc.text.magnifyingglass") }
+                    if tree != nil && matching.isEmpty && folders.isEmpty { ContentUnavailableView("No matching files", symbol: "doc.text.magnifyingglass") }
                 }
                 .padding(.horizontal, 8).padding(.vertical, 10)
             }
@@ -300,11 +300,11 @@ struct RepositoryCodePanel: View {
             if let selected {
                 viewTabs(selected)
                 Divider()
-                if let notice = preview?.notice { Label(notice, systemImage: "info.circle").font(.callout).foregroundStyle(.secondary).padding(.horizontal, 16).padding(.vertical, 8) }
+                if let notice = preview?.notice { Label(notice, symbol: "info.circle").font(.callout).foregroundStyle(.secondary).padding(.horizontal, 16).padding(.vertical, 8) }
                 content(selected).frame(maxWidth: .infinity, maxHeight: .infinity)
                 statusBar(selected)
             } else {
-                ContentUnavailableView("Choose a file", systemImage: "doc.text.magnifyingglass", description: Text("Search paths or choose a file from the repository tree."))
+                ContentUnavailableView("Choose a file", symbol: "doc.text.magnifyingglass", description: Text("Search paths or choose a file from the repository tree."))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
@@ -342,7 +342,7 @@ struct RepositoryCodePanel: View {
                 }.scrollIndicators(.hidden).accessibilityLabel("Open files")
                     .onChange(of: selected?.path) { _, path in if let path { proxy.scrollTo(path, anchor: .center) } }
             }
-            Button(action: closeAllFiles) { Image(systemName: "xmark.square").foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24).contentShape(Rectangle()) }.padding(.trailing, 12)
+            Button(action: closeAllFiles) { SymbolIcon("xmark.square").foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24).contentShape(Rectangle()) }.padding(.trailing, 12)
                 .help("Close all files").accessibilityLabel("Close all files").accessibilityIdentifier("code-close-all")
         }.buttonStyle(.plain).frame(height: Set(navigation.tabs.map { ($0 as NSString).lastPathComponent }).count == navigation.tabs.count ? 36 : 44)
             .background(StudioStyle.canvas)
@@ -389,7 +389,7 @@ struct RepositoryCodePanel: View {
         } else if mode == "Source", let text = preview?.text {
             RepositoryCodeReader(text: text, path: selected.path, syntax: true, fontSize: $fontSize, wraps: $wraps, findText: $findText, matchIndex: $matchIndex, statusBar: false)
         } else {
-            ContentUnavailableView("No content to show.", systemImage: "doc.text")
+            ContentUnavailableView("No content to show.", symbol: "doc.text")
         }
     }
 

@@ -1,4 +1,5 @@
-import { Columns2, CornerDownLeft, Equal, FileArchive, FolderOpen, History, ImageOff, LockOpen, Rows3, ScanText, Space, TriangleAlert } from "lucide-react";
+import { Columns2, CornerDownLeft, Equal, FileArchive, History, ImageOff, LockOpen, Rows3, ScanText, Space, TriangleAlert } from "lucide-react";
+import { FolderOpen } from "@/shared/icons";
 import { ChevronLeft, FileText, Pencil, Sparkles, Trash2 } from "@/shared/icons";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";

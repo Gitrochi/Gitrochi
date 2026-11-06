@@ -11,7 +11,7 @@ struct CommitImpactView: View {
     var body: some View {
         Card(spacing: 8) {
             HStack(spacing: 8) {
-                Label("Review staged changes", systemImage: "point.3.connected.trianglepath.dotted")
+                Label("Review staged changes", symbol: "point.3.connected.trianglepath.dotted")
                     .font(.subheadline.weight(.semibold))
                 Spacer(minLength: 4)
                 Button {
@@ -68,7 +68,7 @@ struct CommitImpactView: View {
             }
             .accessibilityElement(children: .combine)
         case .failed(let message):
-            Label("Couldn't analyze staged changes", systemImage: "exclamationmark.triangle")
+            Label("Couldn't analyze staged changes", symbol: "exclamationmark.triangle")
                 .font(.caption.weight(.medium)).foregroundStyle(.orange)
             Text(message).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
         case .ready(let report, let stale):
@@ -78,7 +78,7 @@ struct CommitImpactView: View {
 
     @ViewBuilder private func reportContent(_ report: CommitReviewReport, stale: Bool) -> some View {
         if stale {
-            Label("Staged changes have changed. Analyze again to refresh this result.", systemImage: "arrow.clockwise.circle")
+            Label("Staged changes have changed. Analyze again to refresh this result.", symbol: "arrow.clockwise.circle")
                 .font(.caption).foregroundStyle(.orange)
         }
         if let error = store.commitImpactValidationError {

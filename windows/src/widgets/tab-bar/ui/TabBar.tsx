@@ -1,4 +1,5 @@
-import { Menu, Settings } from "lucide-react";
+import { Menu } from "lucide-react";
+import { Settings } from "@/shared/icons";
 import { Plus, X } from "@/shared/icons";
 import { structureGraphMenus } from "@/features/git-menus";
 import type { RepoStore } from "@/entities/repo";

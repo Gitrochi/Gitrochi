@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AlertCircle, CalendarDays, Circle } from "lucide-react";
+import { AlertCircle, CalendarDays } from "lucide-react";
+import { Circle } from "@/shared/icons";
 import { ExternalLink } from "@/shared/icons";
 import { localScheduleToday, parseScheduleDay } from "@/entities/hosting";
 import type {

@@ -1,4 +1,5 @@
-import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, History, PlugZap, Undo2 } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, History, PlugZap } from "lucide-react";
+import { Globe, FolderOpen, Undo2 } from "@/shared/icons";
 import { Plus, RefreshCw, X } from "@/shared/icons";
 import { useCallback, useEffect, useState } from "react";
 import { backupSize, BACKUPS_SHOWN, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBackupFile, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, type LedgerHubSharing, ledgerHubSharing, type LedgerHubStatus, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, type LedgerWakeAgents, repositoryPolicies, repositoryPolicy, shownBackups, WAKE_MAX_SEC, WAKE_MIN_SEC, wakeSetting, withRepositoryPolicy } from "@/entities/ledger";

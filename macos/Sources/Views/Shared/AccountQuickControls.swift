@@ -126,7 +126,7 @@ struct AccountQuickControls: View {
                                     Text(verbatim: a.hosts).font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", systemImage: "lock.fill").font(.caption) }
+                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", symbol: "lock.fill").font(.caption) }
                             }
                         }
                         Button("Manage Git accounts…") { present(.gitAccounts) }
@@ -141,7 +141,7 @@ struct AccountQuickControls: View {
                     HStack {
                         Text("Git identity").font(.callout.weight(.semibold))
                         Spacer()
-                        if store.gitchStatus?.lockedAccount != nil { Label("Locked", systemImage: "lock.fill").font(.caption).foregroundStyle(.secondary) }
+                        if store.gitchStatus?.lockedAccount != nil { Label("Locked", symbol: "lock.fill").font(.caption).foregroundStyle(.secondary) }
                     }
                     accountLine("Git account", value: gitAccount)
                     accountLine("Author", value: store.me?.name ?? String(localized: "Not configured"))
@@ -211,7 +211,7 @@ struct AccountQuickControls: View {
             image.resizable().scaledToFill()
         } placeholder: {
             if let value { Avatar(name: value.name ?? value.username, email: value.username, size: size) }
-            else { Image(systemName: "person.crop.circle").resizable().scaledToFit().foregroundStyle(.secondary) }
+            else { DesignSymbols.labelImage("person.crop.circle").resizable().scaledToFit().foregroundStyle(.secondary) }
         }.frame(width: size, height: size).clipShape(Circle())
     }
 }

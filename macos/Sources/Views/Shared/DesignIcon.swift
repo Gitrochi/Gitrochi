@@ -119,11 +119,98 @@ enum DesignIcon: String {
     }
 }
 
+/// Takes the size of the text around it, as a symbol does, unless given one: an invisible symbol holds the place
 struct DesignIconImage: View {
     let icon: DesignIcon
-    var size: CGFloat = 14
+    var size: CGFloat?
 
     var body: some View {
-        Image(nsImage: icon.image).renderingMode(.template).resizable().frame(width: size, height: size).accessibilityHidden(true)
+        let image = Image(nsImage: icon.image).renderingMode(.template).resizable()
+        Group {
+            if let size { image.frame(width: size, height: size) }
+            else { Image(systemName: "square").hidden().overlay(image.scaledToFit()) }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// What the app's `Image(systemName:)` became: the same name and size, the redesign's drawing
+struct SymbolIcon: View {
+    let name: String
+
+    init(_ name: String) { self.name = name }
+
+    var body: some View {
+        if let image = DesignSymbols.image(name) {
+            Image(systemName: "square").hidden()
+                .overlay(Image(nsImage: image).renderingMode(.template).resizable().scaledToFit())
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: name)
+        }
+    }
+}
+
+extension DesignSymbols {
+    @MainActor private static var images: [String: NSImage] = [:]
+
+    @MainActor static func image(_ name: String) -> NSImage? {
+        if let image = images[name] { return image }
+        guard let drawing = drawings[name] else { return nil }
+        func picture(_ body: String, solid: Bool) -> NSImage? {
+            let weight = drawing.grid == 16 ? "1.5" : "2.25"
+            let paint = solid ? #"fill="black" stroke="black""# : #"fill="none" stroke="black""#
+            let head = #"<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 \#(drawing.grid) \#(drawing.grid)" \#(paint) stroke-width="\#(weight)" stroke-linecap="round" stroke-linejoin="round">"#
+            return NSImage(data: Data((head + body + "</svg>").utf8))
+        }
+        guard let shape = picture(drawing.shape, solid: drawing.solid) else { return nil }
+        var result = shape
+        if let cutout = drawing.cutout.flatMap({ picture($0, solid: false) }) {
+            result = NSImage(size: NSSize(width: 16, height: 16), flipped: false) { rect in
+                shape.draw(in: rect)
+                cutout.draw(in: rect, from: .zero, operation: .destinationOut, fraction: 1)
+                return true
+            }
+        }
+        result.isTemplate = true
+        images[name] = result
+        return result
+    }
+
+    /// For the places that only take an Image (menus, tab items): a fixed 14 pt icon
+    @MainActor static func labelImage(_ name: String) -> Image {
+        guard let image = image(name)?.copy() as? NSImage else { return Image(systemName: name) }
+        image.size = NSSize(width: 14, height: 14)
+        return Image(nsImage: image).renderingMode(.template)
+    }
+}
+
+extension Label where Title == Text, Icon == Image {
+    @MainActor init(_ title: LocalizedStringKey, symbol: String) {
+        self.init { Text(title) } icon: { DesignSymbols.labelImage(symbol) }
+    }
+
+    @MainActor @_disfavoredOverload init<S: StringProtocol>(_ title: S, symbol: String) {
+        self.init { Text(title) } icon: { DesignSymbols.labelImage(symbol) }
+    }
+}
+
+extension Button where Label == SwiftUI.Label<Text, Image> {
+    @MainActor init(_ title: LocalizedStringKey, symbol: String, role: ButtonRole? = nil, action: @escaping @MainActor () -> Void) {
+        self.init(role: role, action: action) { SwiftUI.Label(title, symbol: symbol) }
+    }
+
+    @MainActor @_disfavoredOverload init<S: StringProtocol>(_ title: S, symbol: String, role: ButtonRole? = nil, action: @escaping @MainActor () -> Void) {
+        self.init(role: role, action: action) { SwiftUI.Label(title, symbol: symbol) }
+    }
+}
+
+extension ContentUnavailableView where Label == SwiftUI.Label<Text, SymbolIcon>, Description == Text?, Actions == EmptyView {
+    @MainActor init(_ title: LocalizedStringKey, symbol: String, description: Text? = nil) {
+        self.init { SwiftUI.Label { Text(title) } icon: { SymbolIcon(symbol) } } description: { description } actions: { EmptyView() }
+    }
+
+    @MainActor @_disfavoredOverload init<S: StringProtocol>(_ title: S, symbol: String, description: Text? = nil) {
+        self.init { SwiftUI.Label { Text(title) } icon: { SymbolIcon(symbol) } } description: { description } actions: { EmptyView() }
     }
 }

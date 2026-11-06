@@ -1,4 +1,5 @@
-import { Archive, CircleCheck } from "lucide-react";
+import { Archive } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
 import { Clock, X } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { filterSessions, type LedgerStore, stepIndex, streamCount, verdictCounts, verdictLook, visibleRows } from "@/entities/ledger";

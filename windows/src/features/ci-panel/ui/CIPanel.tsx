@@ -1,4 +1,5 @@
-import { CirclePlay, CircleX, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { CirclePlay, CircleX } from "@/shared/icons";
 import { ChevronRight, Clock, RefreshCw, Search } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import {

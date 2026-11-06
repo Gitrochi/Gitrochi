@@ -1,6 +1,7 @@
 import { ProjectScopeCatalogs } from "@/features/select-project-scope";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { SquareCheck, FileCode } from "lucide-react";
+import { FileCode } from "lucide-react";
+import { SquareCheck } from "@/shared/icons";
 import { ExternalLink, RefreshCw, Plus, Trash2 } from "@/shared/icons";
 import { accounts, HostingHubStore, hubSafeURL, hubError, saveHubRelease, deleteHubItem, issuePage, ensureHubCurrent, localProjects, type HubSource, type HostingHubSection, type HubReleaseInput, type HubAccess } from "@/entities/hosting";
 import { ipc } from "@/shared/api";

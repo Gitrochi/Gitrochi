@@ -84,10 +84,10 @@ struct WelcomeView: View {
     private func action(_ title: String, _ icon: String, prominent: Bool = false, _ run: @escaping () -> Void) -> some View {
         Group {
             if prominent {
-                Button(action: run) { Label(title, systemImage: icon).frame(width: 220) }
+                Button(action: run) { Label(title, symbol: icon).frame(width: 220) }
                     .buttonStyle(.borderedProminent)
             } else {
-                Button(action: run) { Label(title, systemImage: icon).frame(width: 220) }
+                Button(action: run) { Label(title, symbol: icon).frame(width: 220) }
                     .buttonStyle(.bordered)
             }
         }

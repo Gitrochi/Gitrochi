@@ -1,6 +1,6 @@
 import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
-import { Circle } from "lucide-react";
+import { Circle } from "@/shared/icons";
 import { Check, ExternalLink, GitBranch, GitPullRequest, Pencil, X } from "@/shared/icons";
 import {
   moveHubProjectItem,

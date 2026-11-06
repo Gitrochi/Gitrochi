@@ -18,7 +18,7 @@ struct RepositoryLanguageControl: View {
                 }.buttonStyle(.plain).help("Language composition").accessibilityIdentifier("code-language-composition")
                     .popover(isPresented: $showing) { RepositoryLanguageSummary(segments: segments, truncated: truncated, selected: $selected).frame(width: 280) }
                 Spacer(minLength: 0)
-                if selected != nil { Button { selected = nil } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary).help("All languages").accessibilityLabel("All languages") }
+                if selected != nil { Button { selected = nil } label: { SymbolIcon("xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary).help("All languages").accessibilityLabel("All languages") }
             }
             GeometryReader { geometry in
                 HStack(spacing: 0) {

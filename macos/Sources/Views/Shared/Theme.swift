@@ -130,7 +130,7 @@ struct RefBadge: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: icon).font(.system(size: 9, weight: .semibold))
+            SymbolIcon(icon).font(.system(size: 9, weight: .semibold))
             Text(label.name)
                 .font(.system(size: 11, weight: label.isCurrent ? .bold : .medium))
                 .lineLimit(1)
@@ -293,7 +293,7 @@ struct FileRow: View {
             }
             if let actionIcon {
                 Button(action: action) {
-                    Image(systemName: actionIcon)
+                    SymbolIcon(actionIcon)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(selected ? StudioStyle.accent : Color.secondary)

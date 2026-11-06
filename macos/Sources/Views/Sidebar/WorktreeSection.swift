@@ -57,7 +57,7 @@ private struct WorktreeRow: View {
         HStack(spacing: 6) {
             Color.clear.frame(width: 12, height: 16)
                 .accessibilityHidden(true)
-            Image(systemName: current ? "folder.fill" : "folder")
+            SymbolIcon(current ? "folder.fill" : "folder")
                 .foregroundStyle(current ? Color.accentColor : .secondary)
                 .frame(width: 16)
             VStack(alignment: .leading, spacing: 1) {
@@ -76,7 +76,7 @@ private struct WorktreeRow: View {
                     .help("Worktree in a temporary folder — it may break when the folder is deleted on restart")
             }
             if worktree.prunable {
-                Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                SymbolIcon("exclamationmark.triangle").foregroundStyle(.orange)
                     .help("Worktree whose folder is gone — remove it with 'Clean up'")
             } else if worktree.locked {
                 DesignIconImage(icon: .lock).foregroundStyle(.secondary).help("Locked worktree")

@@ -1,4 +1,5 @@
-import { Archive, CircleDot, PanelLeftOpen, Pin } from "lucide-react";
+import { Archive, PanelLeftOpen, Pin } from "lucide-react";
+import { CircleDot } from "@/shared/icons";
 import { Cloud, Folder, GitBranch, GitPullRequest, Tag as TagIcon } from "@/shared/icons";
 import type { ReactNode } from "react";
 import type { RepoStore } from "@/entities/repo";

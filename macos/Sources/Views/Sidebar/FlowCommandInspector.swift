@@ -11,7 +11,7 @@ struct FlowCommandInspector: View {
                 if let node {
                     let category = FlowBlockStyle.look(node.block)
                     HStack(spacing: 10) {
-                        Image(systemName: category.icon).font(.system(size: 16, weight: .medium)).foregroundStyle(category.color)
+                        SymbolIcon(category.icon).font(.system(size: 16, weight: .medium)).foregroundStyle(category.color)
                             .frame(width: 36, height: 36).background(category.color.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Step details").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
@@ -28,7 +28,7 @@ struct FlowCommandInspector: View {
                         Spacer()
                         FlowStatusBadge(state: node.decision == "skip" ? "SKIPPED" : node.decision == "rejected" ? "REJECTED" : nil, compact: true)
                     }
-                    Button(action: onEdit) { Label("Edit step", systemImage: "square.and.pencil").frame(maxWidth: .infinity) }
+                    Button(action: onEdit) { Label("Edit step", symbol: "square.and.pencil").frame(maxWidth: .infinity) }
                         .buttonStyle(.bordered).controlSize(.small)
                         .accessibilityLabel("Edit step")
                     Divider()
@@ -44,10 +44,10 @@ struct FlowCommandInspector: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.secondary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
                     }
-                    if node.outward == true { Label("outward", systemImage: "arrow.up.forward.app").font(.caption).foregroundStyle(.orange) }
-                    if node.destructive == true { Label("hard to undo", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
+                    if node.outward == true { Label("outward", symbol: "arrow.up.forward.app").font(.caption).foregroundStyle(.orange) }
+                    if node.destructive == true { Label("hard to undo", symbol: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
                 } else {
-                    Image(systemName: "cursorarrow.click").font(.title2).foregroundStyle(.tertiary)
+                    SymbolIcon("cursorarrow.click").font(.title2).foregroundStyle(.tertiary)
                     Text("Choose a step to inspect its script.").font(.callout).foregroundStyle(.secondary)
                 }
             }
@@ -58,7 +58,7 @@ struct FlowCommandInspector: View {
 
     private func field(_ title: LocalizedStringKey, _ text: String, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label(title, systemImage: icon).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+            Label(title, symbol: icon).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             Text(text).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -66,7 +66,7 @@ struct FlowCommandInspector: View {
 
     private func script(_ title: LocalizedStringKey, _ text: String, icon: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label(title, systemImage: icon).font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
+            Label(title, symbol: icon).font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
                 .padding(.horizontal, 11).padding(.vertical, 9)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(color.opacity(0.05))

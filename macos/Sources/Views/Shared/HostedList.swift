@@ -158,7 +158,7 @@ struct HostedListSearch<Items: View>: View {
                         return .handled
                     }
                 if !text.isEmpty {
-                    Button { text = ""; onSearch?() } label: { Image(systemName: "xmark.circle.fill") }
+                    Button { text = ""; onSearch?() } label: { SymbolIcon("xmark.circle.fill") }
                         .buttonStyle(.borderless).foregroundStyle(HostedList.caption)
                         .help("Clear search").accessibilityLabel("Clear search")
                 }
@@ -258,7 +258,7 @@ struct HostedListChip: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            if let symbol { Image(systemName: symbol).font(.system(size: 10, weight: .semibold)).accessibilityHidden(true) }
+            if let symbol { SymbolIcon(symbol).font(.system(size: 10, weight: .semibold)).accessibilityHidden(true) }
             Text(verbatim: title).lineLimit(1).truncationMode(.middle)
         }
         .font(.system(size: 11, weight: .semibold))
@@ -283,7 +283,7 @@ struct HostedListEmpty: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 24)).foregroundStyle(failed ? StudioStyle.Tone.failed.text : HostedList.caption)
+            SymbolIcon(symbol).font(.system(size: 24)).foregroundStyle(failed ? StudioStyle.Tone.failed.text : HostedList.caption)
                 .accessibilityHidden(true)
             Text(verbatim: title).font(.system(size: 15, weight: .semibold)).multilineTextAlignment(.center)
             if let caption {
@@ -312,7 +312,7 @@ struct HostedListNotice: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
+            SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: title).font(.system(size: 13, weight: .semibold)).foregroundStyle(StudioStyle.Tone.failed.text)
                 if let caption { Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(HostedList.caption) }

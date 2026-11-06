@@ -33,7 +33,7 @@ struct IssueDevelopmentPanel: View {
                     }
                     if branches.isEmpty {
                         step(.next) {
-                            Button { store.requestIssueBranch(item) } label: { Label("Create branch", systemImage: "arrow.triangle.branch") }
+                            Button { store.requestIssueBranch(item) } label: { Label("Create branch", symbol: "arrow.triangle.branch") }
                                 .buttonStyle(HostedListButtonStyle())
                                 .disabled(store.busy != nil || store.headHash == nil)
                         }
@@ -55,7 +55,7 @@ struct IssueDevelopmentPanel: View {
                     if !branches.isEmpty, local.isEmpty, linked.isEmpty {
                         step(.next) {
                             Button { store.requestIssuePullRequest(item) } label: {
-                                Label(gitlab ? String(localized: "Create merge request") : String(localized: "Create pull request"), systemImage: "arrow.triangle.pull")
+                                Label(gitlab ? String(localized: "Create merge request") : String(localized: "Create pull request"), symbol: "arrow.triangle.pull")
                             }
                             .buttonStyle(HostedListButtonStyle())
                             .disabled(store.busy != nil || store.headBranch == nil)

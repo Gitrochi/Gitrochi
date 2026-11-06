@@ -69,7 +69,7 @@ struct ProjectScopeMenu: View {
                 Button { enteringOrganization = false; open.toggle() } label: {
                     HStack(spacing: 8) {
                         label
-                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .medium)).foregroundStyle(StudioStyle.Rail.icon)
+                        SymbolIcon("chevron.up.chevron.down").font(.system(size: 10, weight: .medium)).foregroundStyle(StudioStyle.Rail.icon)
                     }
                     .padding(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 10))
                     .frame(width: accounts.count > 1 ? 280 : 240, height: 40)
@@ -98,7 +98,7 @@ struct ProjectScopeMenu: View {
     private var label: some View {
         HStack(spacing: 8) {
             if store.hubIsLocalProject {
-                Image(systemName: "laptopcomputer").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                SymbolIcon("laptopcomputer").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.neutral.text)
                     .frame(width: 24, height: 24).background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.Tone.neutral.fill)).accessibilityHidden(true)
             } else if let organization {
                 HostingAvatar(name: chosenOrganization?.title ?? organization, username: organization, avatarURL: chosenOrganization?.avatarURL, size: 24, style: .organization)
@@ -143,7 +143,7 @@ struct ProjectScopeMenu: View {
         }
         if let owner = repositoryOwner(value) {
             pick(group ? store.target?.path ?? owner : owner, account: value, scope: "repository") {
-                Image(systemName: "book.closed").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                SymbolIcon("book.closed").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
             }
         }
         if !several { divider; header(group ? String(localized: "Groups") : String(localized: "Organizations")) }
@@ -193,7 +193,7 @@ struct ProjectScopeMenu: View {
         Button(action: perform) {
             HStack(spacing: 8) {
                 Color.clear.frame(width: 13, height: 13)
-                Image(systemName: symbol).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 20, height: 20).accessibilityHidden(true)
+                SymbolIcon(symbol).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 20, height: 20).accessibilityHidden(true)
                 Text(title).font(.system(size: 13)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
             }
             .modifier(ProjectScopeMenuRow(hovered: hovered == id))
@@ -269,7 +269,7 @@ struct ProjectScopeFailureStrip: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
+            SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 0) {
                 Text(lead).font(.system(size: 13, weight: .semibold))
                 Text(caption).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)

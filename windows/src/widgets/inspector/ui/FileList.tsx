@@ -1,5 +1,6 @@
 import { FILE_ROW_HEIGHT, visibleFileRange } from "../lib/visible-file-range";
-import { FolderOpen, List, ListTree } from "lucide-react";
+import { List, ListTree } from "lucide-react";
+import { FolderOpen } from "@/shared/icons";
 import { ChevronDown, ChevronRight, Folder } from "@/shared/icons";
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { changeId, type FileChange, fileDir, fileName, type LineStat, StatusBadge } from "@/entities/git";

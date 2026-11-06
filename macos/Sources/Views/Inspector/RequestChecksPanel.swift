@@ -29,9 +29,9 @@ struct RequestChecksPanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 heading
-                if let error { Label(error, systemImage: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
+                if let error { Label(error, symbol: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
                 ForEach(results.warnings, id: \.self) { warning in
-                    Label(warning, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).textSelection(.enabled)
+                    Label(warning, symbol: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).textSelection(.enabled)
                 }
                 if !loading && results.checks.isEmpty && error == nil && results.warnings.isEmpty {
                     PullRequestCaption(String(localized: "No checks reported for this commit."))
@@ -92,7 +92,7 @@ struct RequestChecksPanel: View {
     private func groupButton(_ title: String, open: Binding<Bool>) -> some View {
         Button { open.wrappedValue.toggle() } label: {
             HStack(spacing: 6) {
-                Image(systemName: open.wrappedValue ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
+                SymbolIcon(open.wrappedValue ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
                 Text(verbatim: title)
                 Spacer(minLength: 0)
             }
@@ -106,9 +106,9 @@ struct RequestChecksPanel: View {
     private func passedButton(_ checks: [RequestCheck]) -> some View {
         Button { passedOpen.toggle() } label: {
             HStack(spacing: 6) {
-                Image(systemName: passedOpen ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
+                SymbolIcon(passedOpen ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
                 Text(verbatim: String(localized: "Passed") + " \(checks.count)").fixedSize()
-                Image(systemName: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.passed.text)
+                SymbolIcon("checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.passed.text)
                 Text(verbatim: checks.map(\.name).joined(separator: " · ")).font(.system(size: 11, design: .monospaced)).fontWeight(.regular).lineLimit(1).truncationMode(.tail)
                 Spacer(minLength: 0)
             }
@@ -178,7 +178,7 @@ struct RequestChecksPanel: View {
                     Button("Jump to first error") { jumps[check.id, default: 0] += 1 }.buttonStyle(PullRequestButtonStyle())
                 }
                 if check.jobID != nil {
-                    Button { Task { await rerun(check) } } label: { Label("Re-run job", systemImage: "arrow.clockwise") }
+                    Button { Task { await rerun(check) } } label: { Label("Re-run job", symbol: "arrow.clockwise") }
                         .buttonStyle(PullRequestButtonStyle()).disabled(rerunning.contains(check.id))
                 }
             } else if check.jobID != nil, log == nil {

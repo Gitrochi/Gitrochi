@@ -1,4 +1,5 @@
-import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, Globe, PlugZap, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
+import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, PlugZap, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
+import { Globe } from "@/shared/icons";
 import { Inbox, MessageSquare, MoreHorizontal, Search, SquareTerminal } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";

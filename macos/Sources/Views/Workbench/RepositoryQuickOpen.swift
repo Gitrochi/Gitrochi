@@ -16,7 +16,7 @@ struct RepositoryQuickOpen: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "doc.text.magnifyingglass").foregroundStyle(Color.accentColor)
+                SymbolIcon("doc.text.magnifyingglass").foregroundStyle(Color.accentColor)
                 TextField("Search files by name or path", text: $query).textFieldStyle(.plain)
                     .focused($focused).onSubmit(activate)
                     .onKeyPress(.downArrow) { move(1); return .handled }
@@ -28,7 +28,7 @@ struct RepositoryQuickOpen: View {
             Divider()
             HStack { Text(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Recent files" : "Files").font(.caption.weight(.semibold)).foregroundStyle(.secondary); Spacer() }.padding(.horizontal, 17).padding(.vertical, 11)
             if results.isEmpty {
-                ContentUnavailableView("No matching files", systemImage: "doc.text.magnifyingglass").frame(maxHeight: .infinity)
+                ContentUnavailableView("No matching files", symbol: "doc.text.magnifyingglass").frame(maxHeight: .infinity)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -42,7 +42,7 @@ struct RepositoryQuickOpen: View {
                                             Text(path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                                         }
                                         Spacer(minLength: 0)
-                                        if highlighted == path { Image(systemName: "return").font(.caption).foregroundStyle(.secondary) }
+                                        if highlighted == path { SymbolIcon("return").font(.caption).foregroundStyle(.secondary) }
                                     }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                                         .background(highlighted == path ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 7))
                                         .contentShape(Rectangle())

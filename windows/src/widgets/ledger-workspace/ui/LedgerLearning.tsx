@@ -1,4 +1,5 @@
-import { Archive, ArrowRight, BookOpen, CheckCheck, CircleCheck, SquareKanban, Waves, Waypoints } from "lucide-react";
+import { Archive, ArrowRight, BookOpen, CheckCheck, SquareKanban, Waves, Waypoints } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
 import { GitBranch, Inbox, Search, X } from "@/shared/icons";
 import { useEffect, useId, useRef, useState } from "react";
 import { advanceLearningDelivery, canAdvanceLedgerLearning, emptyAnswerDraft, LEDGER_LEARNING_SETTING, ledgerLearningConnectBody, type LedgerLearningProgress, ledgerLearningSteps, ledgerLearningTitles, ledgerLearningTopics, readLedgerLearning, searchLedgerGuide, type AnswerDraft, type AnswerQuestion } from "@/entities/ledger";

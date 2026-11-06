@@ -79,7 +79,7 @@ struct LedgerDocumentsSheet: View {
                     .frame(height: 54).overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
                     .accessibilityLabel("Document folders, one per line")
                 VStack(spacing: 6) {
-                    Button("Add folder…", systemImage: "folder.badge.plus") { chooseFolder() }
+                    Button("Add folder…", symbol: "folder.badge.plus") { chooseFolder() }
                     Button("Save folders and scan") {
                         run {
                             let values = folders.split(separator: "\n").map { LedgerJSON.string(String($0)) }
@@ -104,7 +104,7 @@ struct LedgerDocumentsSheet: View {
             .onChange(of: mode) { _, _ in Task { await refresh() } }
             TextField("Search documents", text: $query).onSubmit { Task { await refresh() } }
             Button("Search") { Task { await refresh() } }.disabled(busy)
-            Button("Scan", systemImage: "arrow.clockwise") { run { try await scan() } }.disabled(busy || roots.isEmpty)
+            Button("Scan", symbol: "arrow.clockwise") { run { try await scan() } }.disabled(busy || roots.isEmpty)
             if busy { ProgressView().controlSize(.small) }
         }
     }
@@ -147,7 +147,7 @@ struct LedgerDocumentsSheet: View {
                                 .foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading)
                             Text(source(entry)).font(.system(size: 11)).foregroundStyle(.secondary)
                             if entry["changed"].bool == true {
-                                Label("Changed since held", systemImage: "exclamationmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
+                                Label("Changed since held", symbol: "exclamationmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
                             }
                         }
                         .padding(.horizontal, 12).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading)

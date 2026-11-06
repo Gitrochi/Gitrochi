@@ -56,7 +56,7 @@ struct ProjectDependencyView: View {
         }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .contain).accessibilityLabel("Task dependency graph")
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
-    private var arrow: some View { Image(systemName: "arrow.right").foregroundStyle(.secondary).padding(.top, 34).accessibilityLabel("Precedes") }
+    private var arrow: some View { SymbolIcon("arrow.right").foregroundStyle(.secondary).padding(.top, 34).accessibilityLabel("Precedes") }
     private var summary: String {
         let ready = graph.nodes.filter { !$0.completed && !$0.row.archived && $0.blockedBy.isEmpty }.count
         let blocked = graph.nodes.filter { !$0.completed && !$0.row.archived && !$0.blockedBy.isEmpty }.count

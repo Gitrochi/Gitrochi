@@ -129,7 +129,7 @@ struct CommitRow: View {
         .contentShape(Rectangle())
         // 커밋 줄을 끌어 브랜치에 놓으면 cherry-pick, 이 줄에 브랜치를 놓으면 머지·리베이스
         .draggable(RepoStore.commitPayload + c.id) {
-            Label("Commit \(c.short)  \(c.subject)", systemImage: "smallcircle.filled.circle")
+            Label("Commit \(c.short)  \(c.subject)", symbol: "smallcircle.filled.circle")
                 .lineLimit(1)
                 .padding(6)
                 .background(RoundedRectangle(cornerRadius: 6).fill(.regularMaterial))
@@ -245,12 +245,12 @@ private struct RefPill: View {
         HStack(spacing: 3) {
             if solid { DesignIconImage(icon: .check, size: 8) }
             if group.isTag { DesignIconImage(icon: .releases, size: 9) }
-            if group.isHead { Image(systemName: "scope").font(.system(size: 9, weight: .semibold)) }
+            if group.isHead { SymbolIcon("scope").font(.system(size: 9, weight: .semibold)) }
             Text(group.name)
                 .font(.system(size: 11, weight: solid ? .bold : .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            if group.local != nil { Image(systemName: "laptopcomputer").font(.system(size: 9)) }
+            if group.local != nil { SymbolIcon("laptopcomputer").font(.system(size: 9)) }
             if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 9) }
         }
         .padding(.horizontal, 6)

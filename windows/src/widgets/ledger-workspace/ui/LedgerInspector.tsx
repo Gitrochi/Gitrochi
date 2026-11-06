@@ -1,4 +1,5 @@
-import { Bot, FolderTree, GitMerge, Monitor } from "lucide-react";
+import { Bot, FolderTree, Monitor } from "lucide-react";
+import { GitMerge } from "@/shared/icons";
 import { ChevronDown, Copy, GitBranch, MessageSquare, X } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";

@@ -10,7 +10,7 @@ struct SavedAccountAccessNotice: View {
     var body: some View {
         let accounts = AccountStore.shared
         VStack(alignment: .leading, spacing: 10) {
-            Label("@" + account.username + " · " + account.host, systemImage: "person.crop.circle.badge.checkmark").font(.callout.weight(.medium))
+            Label("@" + account.username + " · " + account.host, symbol: "person.crop.circle.badge.checkmark").font(.callout.weight(.medium))
             Text(accounts.savedAccessMessage(for: account)).font(.callout).foregroundStyle(.secondary)
             if accounts.credentialState(for: account) == .loading { ProgressView().controlSize(.small) }
             else {

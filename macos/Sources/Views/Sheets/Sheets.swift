@@ -116,7 +116,7 @@ struct CloneSheet: View {
                     List(filteredRepos, selection: Binding(get: { repos.first { $0.cloneURL == remote }?.id },
                                                            set: { id in if let r = repos.first(where: { $0.id == id }) { remote = r.cloneURL } })) { r in
                         HStack(spacing: 6) {
-                            Image(systemName: r.isPrivate ? "lock" : "globe").foregroundStyle(.secondary).frame(width: 14)
+                            SymbolIcon(r.isPrivate ? "lock" : "globe").foregroundStyle(.secondary).frame(width: 14)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(r.fullName).lineLimit(1)
                                 if let d = r.summary, !d.isEmpty {

@@ -239,7 +239,7 @@ struct CIStatusIcon: View {
             if status == .running {
                 ProgressView().controlSize(.mini).frame(width: size + 2, height: size + 2)
             } else {
-                Image(systemName: status.symbol)
+                SymbolIcon(status.symbol)
                     .font(.system(size: size))
                     .foregroundStyle(status.color)
                     .frame(width: size + 2, height: size + 2)

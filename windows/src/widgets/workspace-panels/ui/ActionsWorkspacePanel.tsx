@@ -1,4 +1,5 @@
-import { Globe, Play } from "lucide-react";
+import { Play } from "lucide-react";
+import { Globe } from "@/shared/icons";
 import { ChevronLeft, PanelRight, RefreshCw } from "@/shared/icons";
 import { runHistory } from "@/entities/ci";
 import type { RepoStore } from "@/entities/repo";

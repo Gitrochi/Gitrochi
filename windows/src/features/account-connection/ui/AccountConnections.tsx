@@ -1,4 +1,4 @@
-import { CircleCheck } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
 import { useState } from "react";
 import { avatars } from "@/entities/avatar";
 import { accountHost, type HostAccount, type Provider } from "@/entities/git";

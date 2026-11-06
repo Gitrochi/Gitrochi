@@ -1,4 +1,4 @@
-import { FolderOpen, Globe } from "lucide-react";
+import { FolderOpen, Globe } from "@/shared/icons";
 import { useEffect, useId, useRef, useState } from "react";
 import type { LedgerBrowserStatus, LedgerStore } from "@/entities/ledger";
 import { ipc } from "@/shared/api";

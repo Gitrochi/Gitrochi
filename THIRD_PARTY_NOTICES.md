@@ -255,6 +255,8 @@ THE SOFTWARE.
 
 Declared license: `ISC`. Source package: https://registry.npmjs.org/lucide-react/-/lucide-react-0.511.0.tgz
 
+The macOS app embeds drawings from this package in `macos/Sources/Views/Shared/DesignSymbols.swift`, for the icons the redesign's boards do not draw.
+
 Original `LICENSE`:
 
 ```text

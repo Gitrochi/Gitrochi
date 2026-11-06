@@ -20,11 +20,11 @@ struct IssuesWorkspacePanel: View {
             if let target = store.target {
                 VStack(spacing: 0) {
                     HostedListHeader(target: target) {
-                        Button { refresh() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                        Button { refresh() } label: { Label("Refresh", symbol: "arrow.clockwise") }
                             .buttonStyle(HostedListButtonStyle(iconOnly: true))
                             .disabled(store.issueList.busy)
                             .help("Refresh list")
-                        Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { Label("New issue…", systemImage: "plus") }
+                        Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { Label("New issue…", symbol: "plus") }
                             .buttonStyle(HostedListButtonStyle())
                             .disabled(store.collaborationAccess == nil)
                     }
@@ -67,7 +67,7 @@ struct IssuesWorkspacePanel: View {
                         VStack(spacing: 0) {
                             if compact {
                                 HStack {
-                                    Button { store.collaboration.inboxDetail = nil } label: { Label("Back to issues", systemImage: "chevron.left") }
+                                    Button { store.collaboration.inboxDetail = nil } label: { Label("Back to issues", symbol: "chevron.left") }
                                         .buttonStyle(HostedListButtonStyle())
                                     Spacer()
                                 }
@@ -189,7 +189,7 @@ private struct IssueSummaryCard: View {
                 HostedListSummaryCaption(text: branch)
             }
         } strip: {
-            Image(systemName: "smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(HostedList.caption).accessibilityHidden(true)
+            SymbolIcon("smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(HostedList.caption).accessibilityHidden(true)
             HostedListSummaryCaption(text: String(localized: "Assigned to you")).fixedSize()
             Text(verbatim: items == nil ? pending : summary.total == 0 ? String(localized: "No open issues are assigned to you") : summary.counts.replacingOccurrences(of: ", ", with: " · "))
                 .font(.system(size: 12, weight: .semibold)).lineLimit(1)
@@ -219,7 +219,7 @@ private struct IssueSummaryCard: View {
         switch next {
         case .createBranch(let number)?:
             if let item = items.first(where: { $0.number == number }) {
-                Button { store.requestIssueBranch(item) } label: { Label(String(localized: "Create branch for #\(String(number))"), systemImage: "arrow.triangle.branch") }
+                Button { store.requestIssueBranch(item) } label: { Label(String(localized: "Create branch for #\(String(number))"), symbol: "arrow.triangle.branch") }
                     .buttonStyle(HostedListButtonStyle())
                     .disabled(store.busy != nil || store.headHash == nil)
             }
@@ -227,7 +227,7 @@ private struct IssueSummaryCard: View {
             if let item = items.first(where: { $0.number == number }) {
                 Button { store.requestIssuePullRequest(item) } label: {
                     Label(store.target?.provider == .gitlab ? String(localized: "Create merge request for #\(String(number))…") : String(localized: "Create pull request for #\(String(number))…"),
-                          systemImage: "arrow.triangle.pull")
+                          symbol: "arrow.triangle.pull")
                 }
                 .buttonStyle(HostedListButtonStyle())
                 .disabled(store.busy != nil)

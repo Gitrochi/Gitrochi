@@ -128,6 +128,6 @@ struct NavigationPageIcon: View {
 
     var body: some View {
         if let icon = page.designIcon { DesignIconImage(icon: icon, size: size) }
-        else { Image(systemName: page.symbol).font(.system(size: size)).frame(width: size, height: size) }
+        else { SymbolIcon(page.symbol).font(.system(size: size)).frame(width: size, height: size) }
     }
 }

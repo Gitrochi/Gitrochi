@@ -43,7 +43,7 @@ struct ProjectTaskCard: View {
         Button(action: select) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: selectingItems ? selected ? "checkmark.square.fill" : "square" : entry?.completed == true ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(row))
+                    SymbolIcon(selectingItems ? selected ? "checkmark.square.fill" : "square" : entry?.completed == true ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(row))
                         .font(.system(size: 13)).foregroundStyle(entry?.completed == true ? .green : ProjectTaskStyle.color(row)).padding(.top, 2)
                     Text(row.title).font(.system(size: 13, weight: selected ? .semibold : .regular)).lineLimit(3).multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(.primary)
@@ -65,12 +65,12 @@ struct ProjectTaskCard: View {
                 if !row.repository.isEmpty || !row.assignees.isEmpty {
                     HStack(spacing: 7) {
                         if !row.repository.isEmpty {
-                            if local { Image(systemName: "laptopcomputer").help("Local repository") }
+                            if local { SymbolIcon("laptopcomputer").help("Local repository") }
                             Text(row.repository).lineLimit(1).truncationMode(.middle)
                         }
                         Spacer(minLength: 0)
                         if let name = row.assignees.first {
-                            Image(systemName: "person.crop.circle").font(.system(size: 12))
+                            SymbolIcon("person.crop.circle").font(.system(size: 12))
                             Text(name).lineLimit(1)
                             if row.assignees.count > 1 { Text("+\(row.assignees.count - 1)") }
                         }
@@ -86,7 +86,7 @@ struct ProjectTaskCard: View {
     }
 
     private func badge(_ title: String, symbol: String?, color: Color) -> some View {
-        HStack(spacing: 4) { if let symbol { Image(systemName: symbol) }; Text(title).lineLimit(1) }
+        HStack(spacing: 4) { if let symbol { SymbolIcon(symbol) }; Text(title).lineLimit(1) }
             .font(.system(size: 10, weight: .medium)).foregroundStyle(color)
             .padding(.horizontal, 6).padding(.vertical, 4).background(color.opacity(0.065), in: RoundedRectangle(cornerRadius: 5))
     }
@@ -136,7 +136,7 @@ struct ProjectBoardColumn: View {
                     .onDrag { NSItemProvider(object: row.id as NSString) }
             }
             if column.rows.isEmpty {
-                Label("No tasks here yet", systemImage: "tray").font(.system(size: 11)).foregroundStyle(.tertiary)
+                Label("No tasks here yet", symbol: "tray").font(.system(size: 11)).foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 5).padding(.vertical, 18)
             }
             if adding { quickAddForm }
@@ -146,7 +146,7 @@ struct ProjectBoardColumn: View {
                     if quickAdd != nil { adding = true; createError = nil; titleFocused = true }
                     else { add() }
                 } label: {
-                    Label("Add item", systemImage: "plus").font(.system(size: 12, weight: .medium))
+                    Label("Add item", symbol: "plus").font(.system(size: 12, weight: .medium))
                         .foregroundStyle(StudioStyle.Rail.icon).frame(maxWidth: .infinity, minHeight: 24, alignment: .leading).padding(.horizontal, 4).contentShape(Rectangle())
                 }.buttonStyle(.plain).disabled(!canEdit)
             }
@@ -162,7 +162,7 @@ struct ProjectBoardColumn: View {
             TextField("Task title", text: $title).textFieldStyle(.plain).font(.system(size: 12)).focused($titleFocused)
                 .onSubmit { Task { await submitQuickAdd() } }.onExitCommand { cancelQuickAdd() }
                 .padding(9).background(Color.secondary.opacity(0.045), in: RoundedRectangle(cornerRadius: 6)).disabled(creating || !canEdit)
-            if let createError { Label(createError, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+            if let createError { Label(createError, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             HStack(spacing: 8) {
                 if creating { ProgressView().controlSize(.small) }
                 Spacer(minLength: 0)
@@ -228,7 +228,7 @@ struct ProjectTaskInspector: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Label(ProjectTaskStyle.kind(row), systemImage: ProjectTaskStyle.symbol(row)).font(.caption.weight(.medium)).foregroundStyle(ProjectTaskStyle.color(row))
+                Label(ProjectTaskStyle.kind(row), symbol: ProjectTaskStyle.symbol(row)).font(.caption.weight(.medium)).foregroundStyle(ProjectTaskStyle.color(row))
                 if !localProject, !row.state.isEmpty {
                     Text(row.state.lowercased() == "merged" ? String(localized: "Merged") : row.state.lowercased() == "closed" ? String(localized: "Closed") : String(localized: "Open"))
                         .font(.caption2.weight(.medium)).padding(.horizontal, 7).padding(.vertical, 3)
@@ -244,20 +244,20 @@ struct ProjectTaskInspector: View {
                     VStack(alignment: .leading, spacing: 8) { if !row.repository.isEmpty { Text(row.repository + (row.number.map { " #\($0)" } ?? "")).font(.caption.monospaced()).foregroundStyle(.secondary) }; Text(row.title).font(.system(size: 20, weight: .bold)).fixedSize(horizontal: false, vertical: true) }
                     if local {
                         VStack(alignment: .leading, spacing: 11) {
-                            Label("Build this task", systemImage: "hammer").font(.callout.weight(.semibold))
+                            Label("Build this task", symbol: "hammer").font(.callout.weight(.semibold))
                             if row.kind == .issue {
                                 Button {
                                     let reference = ProjectTaskReference(id: row.id, title: row.title, url: row.url, number: row.number, repository: row.repository, host: store.hubAccount?.host ?? "")
                                     store.sheet = .newBranch(start: store.headHash ?? "HEAD", label: store.headBranch ?? "HEAD", suggestedName: ProjectWorkbench.suggestedBranch(number: row.number, title: row.title), projectTask: reference)
-                                } label: { Label("Start work in a branch", systemImage: "arrow.triangle.branch").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
+                                } label: { Label("Start work in a branch", symbol: "arrow.triangle.branch").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
                             }
                             if row.kind == .pullRequest, let number = row.number {
-                                Button { store.navigate(.pullRequests); store.select(.pullRequest(number)) } label: { Label("Review in Gitrochi", systemImage: "arrow.triangle.pull").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
+                                Button { store.navigate(.pullRequests); store.select(.pullRequest(number)) } label: { Label("Review in Gitrochi", symbol: "arrow.triangle.pull").frame(maxWidth: .infinity) }.buttonStyle(.borderedProminent)
                             }
-                            Button { store.navigate(.repository); store.showArea(.changes) } label: { Label("Open local changes", systemImage: "square.and.pencil") }
-                            Label(store.headBranch ?? String(localized: "Detached HEAD"), systemImage: "arrow.triangle.branch").font(.caption.monospaced()).foregroundStyle(.secondary).lineLimit(2)
+                            Button { store.navigate(.repository); store.showArea(.changes) } label: { Label("Open local changes", symbol: "square.and.pencil") }
+                            Label(store.headBranch ?? String(localized: "Detached HEAD"), symbol: "arrow.triangle.branch").font(.caption.monospaced()).foregroundStyle(.secondary).lineLimit(2)
                             ForEach(linkedBranches) { branch in
-                                Button { Task { await store.checkout(branch) } } label: { Label(branch.name, systemImage: branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch").font(.caption.monospaced()) }.disabled(branch.isCurrent || store.busy != nil)
+                                Button { Task { await store.checkout(branch) } } label: { Label(branch.name, symbol: branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch").font(.caption.monospaced()) }.disabled(branch.isCurrent || store.busy != nil)
                             }
                         }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(Color.accentColor.opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
                     }
@@ -271,7 +271,7 @@ struct ProjectTaskInspector: View {
                         else { MarkdownView(row.body).font(.callout) }
                     }
                     if hasConversation { conversationSection }
-                    if let safe = HostingHubAPI.safeURL(provider: store.hubProvider, host: store.hubAccount?.host ?? "", row.url) { Link(destination: safe) { Label("Open in browser", systemImage: "arrow.up.right.square") }.font(.callout) }
+                    if let safe = HostingHubAPI.safeURL(provider: store.hubProvider, host: store.hubAccount?.host ?? "", row.url) { Link(destination: safe) { Label("Open in browser", symbol: "arrow.up.right.square") }.font(.callout) }
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
             }
         }.background(Color(nsColor: .controlBackgroundColor))
@@ -295,7 +295,7 @@ struct ProjectTaskInspector: View {
                 }
                 if !row.labels.isEmpty { property("Labels", value: row.labels.joined(separator: ", ")).padding(.top, 10) }
             }
-            if let fieldError { Label(fieldError, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+            if let fieldError { Label(fieldError, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
         }.padding(14).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
             .accessibilityElement(children: .contain)
     }
@@ -308,7 +308,7 @@ struct ProjectTaskInspector: View {
                     .disabled(localProject && ["local-status", "local-priority"].contains(field.id))
                 ForEach(field.options) { option in
                     Button { Task { await updateField(field, value: option.id, using: setField) } } label: {
-                        if (row.values[field.id] ?? row.statuses[field.id]) == option.id { Label(option.name, systemImage: "checkmark") }
+                        if (row.values[field.id] ?? row.statuses[field.id]) == option.id { Label(option.name, symbol: "checkmark") }
                         else { Text(option.name) }
                     }
                 }
@@ -320,7 +320,7 @@ struct ProjectTaskInspector: View {
         }
     }
     private func propertyValue(_ value: String, color: Color, symbol: String) -> some View {
-        HStack(spacing: 6) { Text(value.isEmpty ? String(localized: "Not set") : value).font(.system(size: 11, weight: .medium)).lineLimit(2); Spacer(minLength: 4); Image(systemName: symbol).font(.system(size: 9)).foregroundStyle(.secondary) }
+        HStack(spacing: 6) { Text(value.isEmpty ? String(localized: "Not set") : value).font(.system(size: 11, weight: .medium)).lineLimit(2); Spacer(minLength: 4); SymbolIcon(symbol).font(.system(size: 9)).foregroundStyle(.secondary) }
             .foregroundStyle(value.isEmpty ? Color.secondary : color).contentShape(Rectangle())
     }
     private func updateField(_ field: HubProjectField, value: String?, using action: (HubProjectField, String?) async -> String?) async {
@@ -369,7 +369,7 @@ struct ProjectTaskInspector: View {
             ForEach(conversationComments) { comment in
                 discussionCard(author: comment.author, createdAt: comment.createdAt, body: comment.body)
             }
-            if let conversationError { Label(conversationError, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+            if let conversationError { Label(conversationError, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             if conversation?.more == true {
                 Button("Load more comments") { Task { await readConversation(page: (conversation?.page ?? 1) + 1) } }.font(.callout).disabled(reading || postingComment)
             }
@@ -381,8 +381,8 @@ struct ProjectTaskInspector: View {
                         if commentText.isEmpty { Text("Write a comment…").font(.callout).foregroundStyle(.tertiary).padding(.horizontal, 10).padding(.vertical, 13).allowsHitTesting(false) }
                     }.background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.18))).disabled(postingComment || locked)
-                    if let commentError { Label(commentError, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
-                    if commentPosted { Label("Comment posted", systemImage: "checkmark.circle").font(.caption).foregroundStyle(.green) }
+                    if let commentError { Label(commentError, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+                    if commentPosted { Label("Comment posted", symbol: "checkmark.circle").font(.caption).foregroundStyle(.green) }
                     HStack { if postingComment { ProgressView().controlSize(.small) }; Spacer(); Button("Comment") { Task { await submitComment() } }.buttonStyle(.borderedProminent).keyboardShortcut(.return, modifiers: .command).disabled(postingComment || locked || commentText.trimmed.isEmpty) }
                 }
             }
@@ -458,7 +458,7 @@ struct ProjectTaskTable: View {
                             HStack(spacing: 0) {
                                 Button { select(row) } label: {
                                     HStack(spacing: 9) {
-                                        Image(systemName: ProjectTaskStyle.symbol(row)).foregroundStyle(ProjectTaskStyle.color(row))
+                                        SymbolIcon(ProjectTaskStyle.symbol(row)).foregroundStyle(ProjectTaskStyle.color(row))
                                         Text(row.title).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.leading)
                                         Spacer(minLength: 0)
                                         if let n = row.number { Text("#\(n)").font(.caption).foregroundStyle(.secondary) }
@@ -475,7 +475,7 @@ struct ProjectTaskTable: View {
                             Divider()
                         }
                         if rows.isEmpty {
-                            Label("No items match these filters.", systemImage: "line.3.horizontal.decrease.circle").font(.callout).foregroundStyle(.secondary)
+                            Label("No items match these filters.", symbol: "line.3.horizontal.decrease.circle").font(.callout).foregroundStyle(.secondary)
                                 .padding(20).frame(maxWidth: .infinity, alignment: .leading)
                         }
                     } header: {
@@ -492,7 +492,7 @@ struct ProjectTaskTable: View {
                     .padding(20).frame(minWidth: geometry.size.width, minHeight: geometry.size.height, alignment: .topLeading)
             }.defaultScrollAnchor(.topLeading)
         }.accessibilityLabel("Project table").overlay(alignment: .bottomLeading) {
-            if let fieldError { Label(fieldError, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8)).padding(20) }
+            if let fieldError { Label(fieldError, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8)).padding(20) }
         }
     }
     @ViewBuilder private func fieldCell(_ row: HubProjectRow, field: HubProjectField) -> some View {
@@ -504,7 +504,7 @@ struct ProjectTaskTable: View {
                     .disabled(row.id.hasPrefix("local-task:") && ["local-status", "local-priority"].contains(field.id))
                 ForEach(field.options) { option in
                     Button { Task { await updateField(row, field: field, value: option.id, using: setField) } } label: {
-                        if (row.values[field.id] ?? row.statuses[field.id]) == option.id { Label(option.name, systemImage: "checkmark") }
+                        if (row.values[field.id] ?? row.statuses[field.id]) == option.id { Label(option.name, symbol: "checkmark") }
                         else { Text(option.name) }
                     }
                 }

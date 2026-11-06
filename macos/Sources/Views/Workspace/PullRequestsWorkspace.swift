@@ -35,7 +35,7 @@ struct PullRequestsWorkspace: View {
             .task { await store.loadPullRequests() }
         } else {
             VStack(spacing: 14) {
-                ContentUnavailableView("No hosting remote", systemImage: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
+                ContentUnavailableView("No hosting remote", symbol: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
                 Button("Open repository…") { store.presentOpenPanel() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -51,7 +51,7 @@ struct PullRequestsWorkspace: View {
                 .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                 .help("Refresh list").accessibilityLabel("Refresh list")
             Button { store.sheet = .createPullRequest } label: {
-                Label(target.provider == .gitlab ? "New merge request…" : "New pull request…", systemImage: "plus")
+                Label(target.provider == .gitlab ? "New merge request…" : "New pull request…", symbol: "plus")
             }
             .buttonStyle(PullRequestButtonStyle())
             .disabled(store.headBranch == nil)

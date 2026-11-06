@@ -71,7 +71,7 @@ struct LedgerQuestionAnswerEditor: View {
             text = LedgerPromptAnswers.selectedText(next, options: question.options)
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 7) {
-                Image(systemName: picked ? (question.multiple ? "checkmark.square.fill" : "largecircle.fill.circle") : (question.multiple ? "square" : "circle"))
+                SymbolIcon(picked ? (question.multiple ? "checkmark.square.fill" : "largecircle.fill.circle") : (question.multiple ? "square" : "circle"))
                     .foregroundStyle(picked ? Color.primary : .secondary).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {

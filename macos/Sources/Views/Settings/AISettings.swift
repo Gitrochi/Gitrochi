@@ -49,7 +49,7 @@ struct AISettings: View {
                 if !selected.isCLI {
                     if ai.hasKey[selected.rawValue] == true {
                         HStack {
-                            Label("API key saved", systemImage: "key.fill")
+                            Label("API key saved", symbol: "key.fill")
                             Spacer()
                             Button("Delete") { ai.setKey(selected, "") }
                         }

@@ -53,6 +53,20 @@ const drawings = {
   cloud: "<path d=\"M4.6 12.5h7a2.9 2.9 0 0 0 .4-5.8 4 4 0 0 0-7.7.9 2.5 2.5 0 0 0 .3 4.9z\"/>",
   minus: "<path d=\"M3.5 8h9\"/>",
   more: "<circle cx=\"3.5\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12.5\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/>",
+  checkCircle: "<circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"m5.4 8.2 1.8 1.8 3.4-3.8\"/>",
+  xCircle: "<circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M5.9 5.9l4.2 4.2M10.1 5.9l-4.2 4.2\"/>",
+  circle: "<circle cx=\"8\" cy=\"8\" r=\"6.2\"/>",
+  merged: "<circle cx=\"4.5\" cy=\"3.5\" r=\"1.5\"/><circle cx=\"4.5\" cy=\"12.5\" r=\"1.5\"/><circle cx=\"11.5\" cy=\"9\" r=\"1.5\"/><path d=\"M4.5 5v6M4.5 5c0 3 3 4 5.5 4\"/>",
+  undo: "<path d=\"M5.5 3.5 2.5 6.5l3 3\"/><path d=\"M2.5 6.5h7a3.5 3.5 0 0 1 0 7H7\"/>",
+  checkout: "<path d=\"M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10\"/>",
+  link: "<path d=\"M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8\"/>",
+  globe: "<circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M2 8h12M8 2c1.7 1.8 2.5 3.8 2.5 6S9.7 12.2 8 14C6.3 12.2 5.5 10.2 5.5 8S6.3 3.8 8 2z\"/>",
+  key: "<circle cx=\"5\" cy=\"11\" r=\"2.8\"/><path d=\"M7 9l6.5-6.5M11.4 4.6l1.8 1.8M9.6 6.4l1.4 1.4\"/>",
+  mic: "<rect x=\"6\" y=\"1.8\" width=\"4\" height=\"8\" rx=\"2\"/><path d=\"M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.3\"/>",
+  filter: "<path d=\"M2.5 4h11M4.5 8h7M6.5 12h3\"/>",
+  squareCheck: "<rect x=\"2\" y=\"2\" width=\"12\" height=\"12\" rx=\"3\"/><path d=\"m5 8.2 2 2 4-4.4\"/>",
+  edit: "<path d=\"M13 9v3.5a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1H7\"/><path d=\"M11.5 2.5l2 2L8 10H6V8z\"/>",
+  image: "<rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.5\"/><circle cx=\"5.8\" cy=\"6.4\" r=\"1.1\"/><path d=\"m2.5 12 3.8-3.6 2.4 2.2 2-1.8 2.8 2.7\"/>",
 } as const;
 
 export type DesignIconName = keyof typeof drawings;

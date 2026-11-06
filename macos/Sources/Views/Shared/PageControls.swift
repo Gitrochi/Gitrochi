@@ -64,7 +64,7 @@ struct PullRequestSegmented<Value: Hashable>: View {
                 let on = item.value == selection, disabled = item.disabledReason != nil
                 Button { select(item.value) } label: {
                     Group {
-                        if let symbol = item.symbol { Image(systemName: symbol).font(.system(size: 11, weight: .medium)) }
+                        if let symbol = item.symbol { SymbolIcon(symbol).font(.system(size: 11, weight: .medium)) }
                         // a label is never cut: segments grow from their own width
                         else { Text(verbatim: item.title).lineLimit(1).fixedSize() }
                     }

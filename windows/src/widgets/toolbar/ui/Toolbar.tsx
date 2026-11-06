@@ -1,4 +1,5 @@
-import { PanelRightClose, PanelRightOpen, RefreshCcw, SquarePen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, RefreshCcw } from "lucide-react";
+import { SquarePen } from "@/shared/icons";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, Ellipsis, Folder, GitBranch, PanelLeft, SquareTerminal } from "@/shared/icons";
 import { agentKind, agents } from "@/entities/agent";
 import { providerInfo, recommendedSync, returnsToRepository, statusIsEmpty, toolbarSet } from "@/entities/git";

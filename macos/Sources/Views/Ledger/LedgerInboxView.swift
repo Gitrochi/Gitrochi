@@ -209,11 +209,11 @@ struct LedgerInboxView: View {
         let sent = LedgerPromptText.sent(prompt.answer ?? [:])
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(asked).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(.tertiary).accessibilityHidden(true)
+            SymbolIcon("arrow.right").font(.system(size: 11)).foregroundStyle(.tertiary).accessibilityHidden(true)
             Text("“\(sent)”").font(.callout.weight(.medium)).lineLimit(3).fixedSize(horizontal: false, vertical: true)
         }
         if let outcome = LedgerPromptText.outcome(prompt.answer) {
-            Label(outcome, systemImage: "questionmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
+            Label(outcome, symbol: "questionmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
         }
         let busy = ledger.working.contains("p\(prompt.id)")
         if correcting == prompt.id {

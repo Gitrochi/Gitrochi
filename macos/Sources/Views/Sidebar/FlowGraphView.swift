@@ -126,7 +126,7 @@ struct FlowGraphView: View {
     private func controls(scale: CGFloat) -> some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) {
-                Label("Dependency graph", systemImage: "point.3.connected.trianglepath.dotted")
+                Label("Dependency graph", symbol: "point.3.connected.trianglepath.dotted")
                     .font(.caption.weight(.medium)).foregroundStyle(.secondary).fixedSize()
                 Spacer(minLength: 0)
                 zoomControls(scale: scale)
@@ -140,14 +140,14 @@ struct FlowGraphView: View {
 
     private func zoomControls(scale: CGFloat) -> some View {
         HStack(spacing: 8) {
-            Button { zoom = max(0.1, scale - 0.15) } label: { Image(systemName: "minus.magnifyingglass") }
+            Button { zoom = max(0.1, scale - 0.15) } label: { SymbolIcon("minus.magnifyingglass") }
                 .help("Zoom out").accessibilityLabel("Zoom out").disabled(scale <= 0.1)
             Text(scale, format: .percent.precision(.fractionLength(0))).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 34)
-            Button { zoom = min(2.5, scale + 0.15) } label: { Image(systemName: "plus.magnifyingglass") }
+            Button { zoom = min(2.5, scale + 0.15) } label: { SymbolIcon("plus.magnifyingglass") }
                 .help("Zoom in").accessibilityLabel("Zoom in").disabled(scale >= 2.5)
             Divider().frame(height: 12)
             Button("Fit") { zoom = nil }.help("Fit graph to view")
-            Button { offsets = [:]; zoom = 1 } label: { Image(systemName: "arrow.counterclockwise") }
+            Button { offsets = [:]; zoom = 1 } label: { SymbolIcon("arrow.counterclockwise") }
                 .help("Reset layout").accessibilityLabel("Reset layout")
         }
         .fixedSize().accessibilityElement(children: .contain).accessibilityLabel("Dependency graph")
@@ -168,7 +168,7 @@ struct FlowGraphView: View {
     }
 
     private func dependencyWarning(_ title: LocalizedStringKey, details: [String]) -> some View {
-        Label(title, systemImage: "exclamationmark.triangle")
+        Label(title, symbol: "exclamationmark.triangle")
             .font(.caption).foregroundStyle(.orange).lineLimit(1)
             .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
             .background(Color.orange.opacity(0.05)).help(details.joined(separator: "\n"))
@@ -231,7 +231,7 @@ struct FlowGraphView: View {
         return Button { selected = node.id; graphFocused = true } label: {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
-                    Image(systemName: category.icon)
+                    SymbolIcon(category.icon)
                         .font(.system(size: 13, weight: .medium)).foregroundStyle(category.color)
                         .frame(width: 28, height: 28).background(category.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
                     VStack(alignment: .leading, spacing: 3) {

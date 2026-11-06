@@ -62,7 +62,7 @@ struct PullRequestRowPill: View {
     var body: some View {
         HStack(spacing: marker ? 5 : 4) {
             if marker { Circle().fill(Color.accentColor).frame(width: 6, height: 6) }
-            if let symbol { Image(systemName: symbol).font(.system(size: 10, weight: .semibold)) }
+            if let symbol { SymbolIcon(symbol).font(.system(size: 10, weight: .semibold)) }
             Text(verbatim: title).lineLimit(1)
         }
         .font(.system(size: 11, weight: .semibold))

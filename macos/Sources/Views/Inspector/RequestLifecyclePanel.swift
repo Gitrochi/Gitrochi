@@ -94,7 +94,7 @@ struct RequestLifecyclePanel: View {
     /// A checklist row: the icon carries the state, the text stays neutral
     private func row<Content: View>(_ symbol: String, _ tone: StudioStyle.Tone, @ViewBuilder content: () -> Content) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 13)).foregroundStyle(tone.text).frame(width: 14)
+            SymbolIcon(symbol).font(.system(size: 13)).foregroundStyle(tone.text).frame(width: 14)
             content().fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -130,7 +130,7 @@ struct RequestLifecyclePanel: View {
 
     private func status(_ title: LocalizedStringKey, _ symbol: String, _ tone: StudioStyle.Tone) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 11))
+            SymbolIcon(symbol).font(.system(size: 11))
             Text(title)
         }
         .font(.system(size: 12, weight: .semibold)).foregroundStyle(tone.text).fixedSize()

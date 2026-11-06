@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { GitCompare } from "lucide-react";
+import { GitCompare } from "@/shared/icons";
 import { releaseDate, releaseState, releaseTag, releaseTimeline, type HubItem, type HubSource } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { git } from "@/shared/platform";

@@ -1,4 +1,4 @@
-import { CircleCheck } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
 import { ChevronDown, ChevronRight, Ellipsis, ExternalLink, RefreshCw, RotateCw } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CIAPI, CIStatusIcon, isActiveCI, statusInfo, type CIJob, type CIPipeline, type CIRequestCheck } from "@/entities/ci";

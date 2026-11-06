@@ -88,7 +88,7 @@ struct RunPipelineSheet: View {
                                     }
                                     .labelsHidden()
                                 }
-                                Button { variables.removeAll { $0.id == v.id } } label: { Image(systemName: "minus.circle") }
+                                Button { variables.removeAll { $0.id == v.id } } label: { SymbolIcon("minus.circle") }
                                     .buttonStyle(.borderless)
                                     .help("Remove this variable")
                             }

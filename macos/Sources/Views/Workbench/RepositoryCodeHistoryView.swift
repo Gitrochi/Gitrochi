@@ -23,7 +23,7 @@ struct RepositoryCodeHistoryView: View {
                     RepositoryCodeChangesView(repository: repository, path: entry.path, commit: entry.commit.id, wraps: $wraps, lineCount: $lineCount)
                 }
             } else {
-                ContentUnavailableView("No history", systemImage: "clock", description: Text("This file hasn't been committed yet."))
+                ContentUnavailableView("No history", symbol: "clock", description: Text("This file hasn't been committed yet."))
             }
         } else {
             ProgressView().controlSize(.small).frame(maxWidth: .infinity, maxHeight: .infinity)

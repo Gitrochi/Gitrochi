@@ -100,7 +100,7 @@ private struct LedgerPromptLine: View {
         let session = ledger.session(prompt.sessionId)
         let summary = LedgerPromptText.summary(prompt)
         HStack(spacing: 8) {
-            Image(systemName: prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
+            SymbolIcon(prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
                 .accessibilityHidden(true)
             if let session { LedgerSessionLabel(id: session.id, color: session.color) }
             Text(summary).font(.callout).lineLimit(1).truncationMode(.tail).layoutPriority(-1)
@@ -176,7 +176,7 @@ private struct LedgerPromptCard: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
+            SymbolIcon(prompt.kind.symbol).font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text)
                 .frame(width: 20).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(prompt.kind.title).font(.callout.weight(.semibold))
@@ -256,7 +256,7 @@ private struct LedgerPromptCard: View {
 
     private func optionText(_ option: LedgerPromptText.Option, picked: Bool, multiple: Bool) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 7) {
-            Image(systemName: picked ? (multiple ? "checkmark.square.fill" : "largecircle.fill.circle") : (multiple ? "square" : "circle"))
+            SymbolIcon(picked ? (multiple ? "checkmark.square.fill" : "largecircle.fill.circle") : (multiple ? "square" : "circle"))
                 .foregroundStyle(picked ? Color.accentColor : .secondary)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 5) {
@@ -345,7 +345,7 @@ struct LedgerCountdownView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Label(LedgerCountdown.isAutomatic(prompt)
                           ? String(localized: "Auto in \(LedgerCountdown.text(deadline: prompt.deadline, now: now))")
-                          : String(localized: "Time left \(LedgerCountdown.text(deadline: prompt.deadline, now: now))"), systemImage: "timer")
+                          : String(localized: "Time left \(LedgerCountdown.text(deadline: prompt.deadline, now: now))"), symbol: "timer")
                         .font(.system(size: 11, weight: .semibold).monospacedDigit())
                         .foregroundStyle(StudioStyle.Tone.waiting.text)
                         .fixedSize()
@@ -360,7 +360,7 @@ struct LedgerCountdownView: View {
                                      : String(localized: "Answer within \(LedgerCountdown.spoken(deadline: prompt.deadline, now: now))"))
             }
         } else {
-            Label("Waiting for you", systemImage: "hand.raised").font(.system(size: 11, weight: .semibold))
+            Label("Waiting for you", symbol: "hand.raised").font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(StudioStyle.Tone.waiting.text)
                 .help(LedgerPromptText.heldText(prompt))
         }

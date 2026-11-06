@@ -61,7 +61,7 @@ struct RevisionComparisonPanel: View {
 
     private func referenceRow(_ reference: Reference, state: HistoryToolsState) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: reference.icon).foregroundStyle(.secondary).frame(width: 16)
+            SymbolIcon(reference.icon).foregroundStyle(.secondary).frame(width: 16)
             Text(reference.name).lineLimit(1).truncationMode(.middle).help(reference.name)
             Spacer(minLength: 4)
             if reference.isCurrent {
@@ -117,7 +117,7 @@ struct RevisionComparisonPanel: View {
                     HistoryPatchView(text: result.files.isEmpty ? String(localized: "No differences between these revisions.") : state.comparisonPatch)
                 }
             } else if !state.comparisonLoading {
-                ContentUnavailableView("Choose two revisions to compare", systemImage: "arrow.left.arrow.right",
+                ContentUnavailableView("Choose two revisions to compare", symbol: "arrow.left.arrow.right",
                                        description: Text("Use branches, tags or commit IDs, or pick a branch on the left."))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -161,7 +161,7 @@ struct LocalBranchesPanel: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 9) {
                     if tab == "Local" || tab == "Remote" {
-                        if branches.isEmpty { ContentUnavailableView("No matching branches", systemImage: "arrow.triangle.branch") }
+                        if branches.isEmpty { ContentUnavailableView("No matching branches", symbol: "arrow.triangle.branch") }
                         ForEach(branches) { branch in branchRow(branch) }
                     } else if tab == "Tags" {
                         ForEach(store.tags.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { tag in
@@ -204,7 +204,7 @@ struct LocalBranchesPanel: View {
                 HStack(spacing: 12) {
                     DesignIconImage(icon: .branch).font(.title3).foregroundStyle(Color.accentColor)
                     VStack(alignment: .leading, spacing: 4) {
-                        WorkbenchFlow(spacing: 6) { Text(branch.name).fontWeight(.semibold).lineLimit(1).truncationMode(.middle).help(branch.name); if branch.isCurrent { Text("Current").font(.caption).foregroundStyle(Color.accentColor) }; if store.isPinned(branch) { Label("Pinned", systemImage: "pin.fill").font(.caption).foregroundStyle(.secondary) }; if store.isHidden(branch) { Image(systemName: "eye.slash").foregroundStyle(.secondary).help("Show in graph again") } }
+                        WorkbenchFlow(spacing: 6) { Text(branch.name).fontWeight(.semibold).lineLimit(1).truncationMode(.middle).help(branch.name); if branch.isCurrent { Text("Current").font(.caption).foregroundStyle(Color.accentColor) }; if store.isPinned(branch) { Label("Pinned", symbol: "pin.fill").font(.caption).foregroundStyle(.secondary) }; if store.isHidden(branch) { SymbolIcon("eye.slash").foregroundStyle(.secondary).help("Show in graph again") } }
                         Text(activity[branch.name] ?? String(branch.target.prefix(12))).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                         Text(branch.upstream ?? String(localized: "No upstream")).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                         if branch.upstreamGone { Text("Upstream removed").font(.caption).foregroundStyle(.orange) }
@@ -221,7 +221,7 @@ struct LocalBranchesPanel: View {
     }
     private func branchActions(_ branch: Branch) -> some View {
         WorkbenchFlow {
-            if !branch.isRemote { Button { store.setPinned(branch, !store.isPinned(branch)) } label: { Label(store.isPinned(branch) ? String(localized: "Unpin") : String(localized: "Pin to top"), systemImage: "pin") } }
+            if !branch.isRemote { Button { store.setPinned(branch, !store.isPinned(branch)) } label: { Label(store.isPinned(branch) ? String(localized: "Unpin") : String(localized: "Pin to top"), symbol: "pin") } }
             Button(store.isHidden(branch) ? "Show in graph again" : "Hide from graph") { Task { await store.setHidden(branch, !store.isHidden(branch)) } }.disabled(store.busy != nil)
             Button("Check out") { Task { await store.checkout(branch) } }.disabled(branch.isCurrent || store.busy != nil)
             Button("View commits") { store.selectedBranchID = branch.id; store.navigate(.repository, prepare: false); store.reveal(branch.target) }

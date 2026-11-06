@@ -1,4 +1,5 @@
-import { CircleDashed, ListFilter, Settings as Gear } from "lucide-react";
+import { CircleDashed } from "lucide-react";
+import { ListFilter, Settings as Gear } from "@/shared/icons";
 import { ChevronDown, ChevronUp, Search, X } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { type Commit, emptyStatus, isWIP, type SearchScope, searchScopes, statusFiles, wipWorktree } from "@/entities/git";

@@ -41,7 +41,7 @@ struct ProjectScheduleConfiguration: View {
             }
             Divider()
             Button("Manage date and status fields…", action: manageFields)
-        } label: { Label("Schedule settings", systemImage: "slider.horizontal.3") }
+        } label: { Label("Schedule settings", symbol: "slider.horizontal.3") }
             .help("Choose the project fields used for scheduling and completion")
     }
 
@@ -106,7 +106,7 @@ struct ProjectScheduleTaskRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Button { complete(entry.row) } label: {
-                Image(systemName: entry.completed ? "checkmark.square.fill" : "square")
+                SymbolIcon(entry.completed ? "checkmark.square.fill" : "square")
                     .font(.system(size: 16)).foregroundStyle(entry.completed ? Color.accentColor : StudioStyle.Rail.icon)
                     .frame(width: 24, height: 24).contentShape(Rectangle())
             }.buttonStyle(.plain).disabled(locked || entry.completed || !canComplete)
@@ -136,7 +136,7 @@ struct ProjectScheduleTaskRow: View {
     /// One line: when the task is due, and that it is overdue in words as well as in colour
     private var meta: some View {
         HStack(spacing: 4) {
-            if overdue || entry.invalidDate || entry.invalidRange { Image(systemName: overdue ? "exclamationmark.circle" : "exclamationmark.triangle").font(.system(size: 11)).accessibilityHidden(true) }
+            if overdue || entry.invalidDate || entry.invalidRange { SymbolIcon(overdue ? "exclamationmark.circle" : "exclamationmark.triangle").font(.system(size: 11)).accessibilityHidden(true) }
             Text(verbatim: dueText).lineLimit(1)
         }
         .font(.system(size: 12, weight: overdue ? .semibold : .regular))

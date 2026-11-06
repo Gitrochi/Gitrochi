@@ -1,4 +1,5 @@
-import { CircleCheck, CircleX, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleX } from "@/shared/icons";
 import { Ellipsis, Lock, User } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import type { GitchLevel, GitchStatus } from "@/entities/gitch";

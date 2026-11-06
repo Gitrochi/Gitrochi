@@ -71,7 +71,7 @@ struct OrganizationWorkspace: View {
                     invitations
                     sectionStatus("invitations")
                 } label: {
-                    HStack { Label("Pending invitations", systemImage: "envelope"); if detail.organizationSections["invitations"]?.error != nil { Text("Unavailable").font(.caption).foregroundStyle(.secondary) } else if detail.organizationSections["invitations"]?.loading == true { ProgressView().controlSize(.small) } else if detail.organizationSections["invitations"]?.loaded != true { Text("Not loaded").font(.caption).foregroundStyle(.secondary) } else { Text(verbatim: String(localized: "{0} loaded").replacingOccurrences(of: "{0}", with: detail.invitations.count.formatted())).font(.caption).foregroundStyle(.secondary) } }
+                    HStack { Label("Pending invitations", symbol: "envelope"); if detail.organizationSections["invitations"]?.error != nil { Text("Unavailable").font(.caption).foregroundStyle(.secondary) } else if detail.organizationSections["invitations"]?.loading == true { ProgressView().controlSize(.small) } else if detail.organizationSections["invitations"]?.loaded != true { Text("Not loaded").font(.caption).foregroundStyle(.secondary) } else { Text(verbatim: String(localized: "{0} loaded").replacingOccurrences(of: "{0}", with: detail.invitations.count.formatted())).font(.caption).foregroundStyle(.secondary) } }
                 }
             }
         }
@@ -143,7 +143,7 @@ struct OrganizationWorkspace: View {
                 if !github { Text(member.role).font(.caption2).foregroundStyle(.secondary) }
             }
             Spacer(minLength: 0)
-            if canInvite { Button { accessRequest = OrganizationAccessRequest(member: member, team: team) } label: { Image(systemName: "key").font(.caption2) }.buttonStyle(.borderless).help("Manage access").accessibilityLabel("Manage access").disabled(managementLocked) }
+            if canInvite { Button { accessRequest = OrganizationAccessRequest(member: member, team: team) } label: { SymbolIcon("key").font(.caption2) }.buttonStyle(.borderless).help("Manage access").accessibilityLabel("Manage access").disabled(managementLocked) }
             if let url = member.profileURL { Link(destination: url) { DesignIconImage(icon: .external).font(.caption2) }.help("Open profile").accessibilityLabel("Open profile") }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(7).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
     }

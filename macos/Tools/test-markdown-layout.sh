@@ -9,6 +9,6 @@ mkdir -p "$TASK_OUTPUT"
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     "$ROOT/Sources/Core/Markdown.swift" "$ROOT/Sources/Core/MarkdownInline.swift" \
     "$ROOT/Sources/Core/Models.swift" "$ROOT/Sources/Core/ProjectTaskReference.swift" \
-    "$ROOT/Sources/Views/Shared/MarkdownView.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Shared/MarkdownView.swift" \
     "$ROOT/Tools/fixtures/MarkdownLayout.swift" -o "$TASK_TMP/markdown-layout"
 "$TASK_TMP/markdown-layout" "$TASK_OUTPUT"

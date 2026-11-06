@@ -1,4 +1,5 @@
-import { CheckCircle2, Clock3, Code2, History, Layers3, ListFilter, Play, ShieldCheck, TriangleAlert, Workflow } from "lucide-react";
+import { Clock3, History, Layers3, Play, ShieldCheck, TriangleAlert, Workflow } from "lucide-react";
+import { CheckCircle2, Code2, ListFilter } from "@/shared/icons";
 import { ChevronRight, Cloud, GitBranch, Plus, Search, Terminal, X } from "@/shared/icons";
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, formatDuration, runRowPresentationState } from "@/entities/flow";

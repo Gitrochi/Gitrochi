@@ -47,11 +47,11 @@ struct ProjectWorkspaceHeader: View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Image(systemName: "checkmark.square").font(.system(size: 15)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16).accessibilityHidden(true)
+                    SymbolIcon("checkmark.square").font(.system(size: 15)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16).accessibilityHidden(true)
                     // A menu's label keeps only its text, so the icon sits beside it and the chevron after it is the menu's own.
                     Menu {
                         ForEach(hub.items) { item in
-                            Button { chooseProject(item) } label: { if item.id == detail?.item.id { Label(item.title, systemImage: "checkmark") } else { Text(item.title) } }
+                            Button { chooseProject(item) } label: { if item.id == detail?.item.id { Label(item.title, symbol: "checkmark") } else { Text(item.title) } }
                         }
                         if hub.more { Button("Load more projects") { Task { await store.loadHostingHub(append: true) } } }
                         if !hub.items.isEmpty { Divider() }
@@ -77,7 +77,7 @@ struct ProjectWorkspaceHeader: View {
                         if !local { Button("Open in GitHub", action: openBrowser) }
                         if local { Divider(); Button("Delete project…", role: .destructive, action: deleteProject) }
                     } label: { DesignIconImage(icon: .more) }.menuStyle(.button).menuIndicator(.hidden).fixedSize().help("More project actions").accessibilityLabel("More project actions").disabled(hub.uncertainWrite)
-                    Button(action: store.hubProvider == .github ? addTask : importItem) { Label("New task…", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(hub.uncertainWrite)
+                    Button(action: store.hubProvider == .github ? addTask : importItem) { Label("New task…", symbol: "plus") }.buttonStyle(.borderedProminent).disabled(hub.uncertainWrite)
                 }.controlSize(.large).disabled(locked)
             }
         }.padding(EdgeInsets(top: 16, leading: 20, bottom: 12, trailing: 20))

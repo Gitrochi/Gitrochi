@@ -205,7 +205,7 @@ private struct AccountWorkPanel: View {
                     AccountMenu(fills: true) {
                         ForEach(Self.categories, id: \.value) { category in
                             Button { model.kind = category.value } label: {
-                                if category.value == model.kind { Label(category.title, systemImage: "checkmark") } else { Text(verbatim: category.title) }
+                                if category.value == model.kind { Label(category.title, symbol: "checkmark") } else { Text(verbatim: category.title) }
                             }
                         }
                     } label: {
@@ -263,8 +263,8 @@ private struct AccountWorkPanel: View {
 
     private var sortMenu: some View {
         AccountMenu {
-            Button { oldestFirst = false } label: { if oldestFirst { Text("Newest first") } else { Label("Newest first", systemImage: "checkmark") } }
-            Button { oldestFirst = true } label: { if oldestFirst { Label("Oldest first", systemImage: "checkmark") } else { Text("Oldest first") } }
+            Button { oldestFirst = false } label: { if oldestFirst { Text("Newest first") } else { Label("Newest first", symbol: "checkmark") } }
+            Button { oldestFirst = true } label: { if oldestFirst { Label("Oldest first", symbol: "checkmark") } else { Text("Oldest first") } }
         } label: {
             DesignIconImage(icon: .sort, size: 12).frame(width: 28)
         }
@@ -282,7 +282,7 @@ private struct AccountWorkPanel: View {
     private func failed(_ failure: AccountWorkModel.Failure) -> some View {
         AccountNotice {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
+                SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: title(failure)).font(.system(size: 13, weight: .semibold)).foregroundStyle(StudioStyle.Tone.failed.text)
                         .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
@@ -473,22 +473,22 @@ private struct AccountWorkPanel: View {
         if local {
             Button { open(item) } label: {
                 if item.kind == .request {
-                    Label(AccountInbox.reason(item) == .review ? String(localized: "Review in Pull requests") : String(localized: "Open in Pull requests"), systemImage: "arrow.triangle.pull")
+                    Label(AccountInbox.reason(item) == .review ? String(localized: "Review in Pull requests") : String(localized: "Open in Pull requests"), symbol: "arrow.triangle.pull")
                 } else {
-                    Label("Open in Issues", systemImage: "circle.dotted")
+                    Label("Open in Issues", symbol: "circle.dotted")
                 }
             }
             .buttonStyle(.borderedProminent)
         }
         if let url = URL(string: item.url) {
             if local {
-                Button { NSWorkspace.shared.open(url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }
+                Button { NSWorkspace.shared.open(url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
             } else {
-                Button { NSWorkspace.shared.open(url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }.buttonStyle(.borderedProminent)
+                Button { NSWorkspace.shared.open(url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }.buttonStyle(.borderedProminent)
             }
         }
         if item.unread, item.readID != nil {
-            Button { Task { await model.read(item, account: account) } } label: { Label("Mark as read", systemImage: "checkmark") }
+            Button { Task { await model.read(item, account: account) } } label: { Label("Mark as read", symbol: "checkmark") }
                 .disabled(model.busy)
         }
     }
@@ -515,7 +515,7 @@ private struct AccountRowPill: View {
     var body: some View {
         if onSelection {
             HStack(spacing: 4) {
-                Image(systemName: symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true)
+                SymbolIcon(symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true)
                 Text(verbatim: title).lineLimit(1)
             }
             .font(.system(size: 11, weight: .semibold))

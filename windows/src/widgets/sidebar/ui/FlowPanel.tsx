@@ -1,4 +1,5 @@
-import { CircleCheck, Code2, Crosshair, Hand, Shield, ShieldCheck, TriangleAlert, Wand2, Workflow } from "lucide-react";
+import { Crosshair, Hand, Shield, ShieldCheck, TriangleAlert, Wand2, Workflow } from "lucide-react";
+import { CircleCheck, Code2 } from "@/shared/icons";
 import { RefreshCw } from "@/shared/icons";
 import { type ReactNode, useEffect, useState } from "react";
 import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, flowStoreFor, type FlowInitProposal, type FlowImportSource, needsConfirmation, readFlowImport, readWebFlowImport } from "@/entities/flow";

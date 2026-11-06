@@ -44,7 +44,7 @@ struct HostingHubPanel: View {
                             }.frame(maxWidth: 310).disabled(locked)
                         }
                         Button { editor = nil; Task { await store.loadHostingHub() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").disabled(locked)
-                        if section == .releases || section == .gists { Button { startEditor(edit: false) } label: { Label("New", systemImage: "plus") }.disabled(locked || store.hubAccount == nil) }
+                        if section == .releases || section == .gists { Button { startEditor(edit: false) } label: { Label("New", symbol: "plus") }.disabled(locked || store.hubAccount == nil) }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
                 Divider()
@@ -64,7 +64,7 @@ struct HostingHubPanel: View {
             } else {
                 if let error = store.hostingHub.error {
                     VStack(alignment: .leading, spacing: 10) {
-                        Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: accessRequired ? "lock.shield" : "exclamationmark.circle") }
+                        Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { SymbolIcon(accessRequired ? "lock.shield" : "exclamationmark.circle") }
                             .font(.callout).foregroundStyle(accessRequired ? Color.secondary : Color.red)
                         WorkbenchFlow(spacing: 8) {
                             if let account = store.pendingHubCredentialAccount {
@@ -195,10 +195,10 @@ struct HostingHubPanel: View {
             Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
             Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
         WorkbenchFlow {
-            if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
+            if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") } }
             if section == .releases || section == .gists && d.item.editable { Button("Edit") { startEditor(edit: true) }.disabled(section == .gists && (d.files.contains(where: \.truncated) || d.item.data["truncated"] as? Bool == true)) }
-            if section == .gists, let starred = d.starred { Button { let context = store.hubActionStamp; Task { await store.hostingHubAction(expected: context) { c in try await HostingHubAPI.star(c, item: d.item, starred: !starred) } } } label: { Label(starred ? String(localized: "Unstar") : String(localized: "Star"), systemImage: starred ? "star.fill" : "star") } }
-            if section == .releases || section == .gists && d.item.editable { Button(role: .destructive) { confirm(String(localized: "Delete this item?"), d.item.title + "\n" + String(localized: "This removes the remote item. Release tags and git history are kept."), refreshList: true, destructive: true) { c in try await HostingHubAPI.delete(c, section: section, item: d.item) } } label: { Label("Delete", systemImage: "trash") } }
+            if section == .gists, let starred = d.starred { Button { let context = store.hubActionStamp; Task { await store.hostingHubAction(expected: context) { c in try await HostingHubAPI.star(c, item: d.item, starred: !starred) } } } label: { Label(starred ? String(localized: "Unstar") : String(localized: "Star"), symbol: starred ? "star.fill" : "star") } }
+            if section == .releases || section == .gists && d.item.editable { Button(role: .destructive) { confirm(String(localized: "Delete this item?"), d.item.title + "\n" + String(localized: "This removes the remote item. Release tags and git history are kept."), refreshList: true, destructive: true) { c in try await HostingHubAPI.delete(c, section: section, item: d.item) } } label: { Label("Delete", symbol: "trash") } }
         }.controlSize(.small).disabled(locked)
         if let notice = d.notice { noticeView(notice) }
         if !d.item.body.isEmpty { Text(d.item.body).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) }
@@ -225,7 +225,7 @@ struct HostingHubPanel: View {
     private func projectWorkspace(_ detail: HubDetail) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             WorkbenchFlow(spacing: 12) {
-                Picker("Project view", selection: $projectLayout) { Label("Board", systemImage: "rectangle.split.3x1").tag("board"); Label("List", systemImage: "list.bullet").tag("list") }.pickerStyle(.segmented).frame(width: 170)
+                Picker("Project view", selection: $projectLayout) { Label("Board", symbol: "rectangle.split.3x1").tag("board"); Label("List", symbol: "list.bullet").tag("list") }.pickerStyle(.segmented).frame(width: 170)
                 Text(verbatim: String(localized: "{0} loaded items").replacingOccurrences(of: "{0}", with: detail.rows.count.formatted())).font(.caption).foregroundStyle(.secondary)
                 if let field = groupingField(detail) {
                     Picker("Group by", selection: Binding(get: { field.id }, set: { projectFieldID = $0 })) { ForEach(detail.fields) { value in Text(value.name).tag(value.id) } }.frame(maxWidth: 230)
@@ -233,7 +233,7 @@ struct HostingHubPanel: View {
             }
             if detail.fields.isEmpty { Text("No editable single-select fields. Add a Status field in the project to move items here.").font(.caption).foregroundStyle(.secondary) }
             if detail.rows.isEmpty {
-                VStack(spacing: 10) { Image(systemName: "rectangle.split.3x1").font(.title); Text("This project has no loaded items.").font(.headline); Text("Add an existing issue below or manage the project in GitHub.").font(.caption) }
+                VStack(spacing: 10) { SymbolIcon("rectangle.split.3x1").font(.title); Text("This project has no loaded items.").font(.headline); Text("Add an existing issue below or manage the project in GitHub.").font(.caption) }
                     .foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(28).background(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.2), style: StrokeStyle(lineWidth: 1, dash: [5])))
             } else if projectLayout == "board" {
                 ScrollView(.horizontal) {
@@ -250,7 +250,7 @@ struct HostingHubPanel: View {
             Divider()
             WorkbenchFlow(spacing: 8) {
                 TextField("Issue URL", text: $issueURL).textFieldStyle(.roundedBorder).frame(minWidth: 200, idealWidth: 330)
-                Button { let url = issueURL; confirm(store.hubProvider == .gitlab ? String(localized: "Move issue to the Open column?") : String(localized: "Add issue to project?"), store.hubProvider == .gitlab ? url + "\n" + String(localized: "This reopens the issue and removes its board column labels.") : url) { c in try await HostingHubAPI.addIssue(c, detail: detail, issueURL: url) } } label: { Label("Add issue", systemImage: "plus") }.disabled(issueURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button { let url = issueURL; confirm(store.hubProvider == .gitlab ? String(localized: "Move issue to the Open column?") : String(localized: "Add issue to project?"), store.hubProvider == .gitlab ? url + "\n" + String(localized: "This reopens the issue and removes its board column labels.") : url) { c in try await HostingHubAPI.addIssue(c, detail: detail, issueURL: url) } } label: { Label("Add issue", symbol: "plus") }.disabled(issueURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(locked)
         }
     }
@@ -265,7 +265,7 @@ struct HostingHubPanel: View {
     private func projectCard(_ row: HubProjectRow, detail: HubDetail) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 7) {
-                Image(systemName: "circle").foregroundStyle(Color.accentColor).font(.caption).padding(.top, 3)
+                SymbolIcon("circle").foregroundStyle(Color.accentColor).font(.caption).padding(.top, 3)
                 Text(row.title).font(.callout.weight(.semibold)).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
                 if safeURL(row.url) != nil { Button { open(row.url) } label: { DesignIconImage(icon: .external) }.buttonStyle(.borderless).help("Open in browser") }
             }

@@ -359,11 +359,11 @@ struct UpdateView: View {
             case .checking:
                 HStack { ProgressView().controlSize(.small); Text("Checking for a new version…") }
             case .upToDate, .idle:
-                Label("Gitrochi \(UpdateCenter.currentVersion) is the latest version.", systemImage: "checkmark.circle.fill")
+                Label("Gitrochi \(UpdateCenter.currentVersion) is the latest version.", symbol: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                 HStack { Spacer(); Button("OK") { center.closeWindow() }.keyboardShortcut(.defaultAction) }
             case .failed(let m):
-                Label("Couldn't update", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Label("Couldn't update", symbol: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Text(m).font(.callout).textSelection(.enabled)
                 HStack {
                     if let u = center.latest?.pageURL { Link("Open releases page", destination: u) }
@@ -386,7 +386,7 @@ struct UpdateView: View {
                     }
                     if center.phase == .available {
                         if center.readyVersion == r.version {
-                            Label("Downloaded and verified — ready to install.", systemImage: "checkmark.seal")
+                            Label("Downloaded and verified — ready to install.", symbol: "checkmark.seal")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         HStack {

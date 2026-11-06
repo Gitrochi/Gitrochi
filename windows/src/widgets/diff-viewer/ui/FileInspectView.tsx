@@ -1,4 +1,5 @@
-import { FileArchive, FolderOpen, History, ScanText, TriangleAlert } from "lucide-react";
+import { FileArchive, History, ScanText, TriangleAlert } from "lucide-react";
+import { FolderOpen } from "@/shared/icons";
 import { ChevronLeft, Clock } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { avatars } from "@/entities/avatar";

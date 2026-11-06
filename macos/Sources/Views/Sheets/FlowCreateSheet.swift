@@ -96,14 +96,14 @@ struct FlowCreateSheet: View {
             }
             Text(draft.execution == .inOrder ? String(localized: "Each step starts after the previous step succeeds.") : String(localized: "Steps run independently at the same time."))
                 .font(.caption).foregroundStyle(.secondary)
-            Label("Commands run from the repository folder.", systemImage: "folder").font(.caption).foregroundStyle(.secondary)
+            Label("Commands run from the repository folder.", symbol: "folder").font(.caption).foregroundStyle(.secondary)
         }
     }
 
     private var steps: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach($draft.steps) { step in stepCard(step) }
-            Button { draft.steps.append(.init()) } label: { Label("Add step", systemImage: "plus") }
+            Button { draft.steps.append(.init()) } label: { Label("Add step", symbol: "plus") }
                 .buttonStyle(.bordered)
         }
     }

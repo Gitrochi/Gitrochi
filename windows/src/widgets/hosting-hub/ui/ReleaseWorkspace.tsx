@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Download, GitCompare, ArrowDownWideNarrow } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowDownWideNarrow } from "lucide-react";
+import { Download, GitCompare } from "@/shared/icons";
 import { ExternalLink, MoreHorizontal, Pencil, Plus, RefreshCw, Search, Tag } from "@/shared/icons";
 import { accounts, HostingHubStore, deleteHubItem, hubSafeURL, orderedReleases, newestReleases, defaultReleaseFamily, releasePackageName, releaseAssetGroups, releaseTag, releaseDate, releaseState, releaseFamily, releaseCompareURL, releaseAssetSize, saveHubRelease, type HubSource, type HubItem, type HubReleaseInput, type HubAccess, type HubDetail } from "@/entities/hosting";
 import { ipc } from "@/shared/api";

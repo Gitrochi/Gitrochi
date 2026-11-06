@@ -1,4 +1,5 @@
-import { Bell, Circle, CircleCheck, CircleSlash, CircleX, Container, Database, FlaskConical, MinusCircle, Rocket, RotateCcw, ShieldCheck, Wrench } from "lucide-react";
+import { Bell, CircleSlash, Container, Database, FlaskConical, MinusCircle, Rocket, RotateCcw, ShieldCheck, Wrench } from "lucide-react";
+import { Circle, CircleCheck, CircleX } from "@/shared/icons";
 import { Cloud, Terminal } from "@/shared/icons";
 import type { ReactNode } from "react";
 import { t } from "@/shared/i18n";

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AtSign, Bell, CircleDot, CirclePlay, CircleX, GitMerge, ListChecks, PencilLine, TriangleAlert } from "lucide-react";
+import { AtSign, Bell, PencilLine, TriangleAlert } from "lucide-react";
+import { CircleDot, CirclePlay, CircleX, GitMerge, ListChecks } from "@/shared/icons";
 import { ArrowUpDown, Check, ExternalLink, Eye, GitPullRequest, Inbox, Search, User } from "@/shared/icons";
 import { accountHost, type HostAccount } from "@/entities/git";
 import { accounts, workStateTitle, type AccountWorkItem, type AccountWorkKind } from "@/entities/hosting";

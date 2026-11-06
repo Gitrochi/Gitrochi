@@ -101,7 +101,7 @@ struct LedgerConnectionsSection: View {
     }
 
     private func icon(_ symbol: String) -> some View {
-        Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
+        SymbolIcon(symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
             .frame(width: 26, height: 26)
             .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.canvas))
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))

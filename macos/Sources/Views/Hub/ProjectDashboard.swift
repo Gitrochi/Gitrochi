@@ -163,7 +163,7 @@ struct ProjectDashboard: View {
             ForEach(overview.later.prefix(5)) { entry in
                 Button { select(entry.row) } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "flag").font(.system(size: 12)).foregroundStyle(caption).accessibilityHidden(true)
+                        SymbolIcon("flag").font(.system(size: 12)).foregroundStyle(caption).accessibilityHidden(true)
                         Text(entry.row.title).font(.system(size: 13)).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                         Text(verbatim: entry.due.map { ProjectSchedulePresentation.date($0) } ?? "").font(.system(size: 12)).foregroundStyle(caption).fixedSize()
                     }.contentShape(Rectangle())
@@ -182,7 +182,7 @@ struct ProjectDashboard: View {
                 cardTitle("Team workload")
                 ForEach(Array(workload.prefix(6)), id: \.assignee) { member in
                     HStack(spacing: 8) {
-                        if member.assignee.isEmpty { Image(systemName: "person.crop.circle.dashed").font(.system(size: 16)).foregroundStyle(caption).frame(width: 20, height: 20).accessibilityHidden(true) }
+                        if member.assignee.isEmpty { SymbolIcon("person.crop.circle.dashed").font(.system(size: 16)).foregroundStyle(caption).frame(width: 20, height: 20).accessibilityHidden(true) }
                         else { Avatar(name: member.assignee, email: member.assignee, size: 20).accessibilityHidden(true) }
                         Text(member.assignee.isEmpty ? String(localized: "Unassigned") : "@" + member.assignee).font(.system(size: 13)).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                         if member.summary.overdue > 0 { StatusPill(title: String(localized: "Overdue") + " " + member.summary.overdue.formatted(), symbol: "exclamationmark.circle", tone: .failed) }
@@ -208,7 +208,7 @@ struct ProjectDashboard: View {
     /// A notice as docs/design.md draws one: a white strip with a hairline, a 14 pt icon, dark lead text and one plain action
     private func strip<Action: View>(symbol: String, color: Color, lead: LocalizedStringKey, caption text: LocalizedStringKey?, @ViewBuilder action: () -> Action) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
+            SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 0) {
                 Text(lead).font(.system(size: 13, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 if let text { Text(text).font(.system(size: 12)).foregroundStyle(caption).fixedSize(horizontal: false, vertical: true) }

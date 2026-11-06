@@ -33,7 +33,7 @@ struct GitchGuideSheet: View {
             }.padding(20)
             Form {
                 Section {
-                    Label("gitch is already included in Gitrochi", systemImage: "checkmark.seal.fill").font(.headline)
+                    Label("gitch is already included in Gitrochi", symbol: "checkmark.seal.fill").font(.headline)
                     Text("No separate download is needed. Gitrochi can add Git accounts, connect with SSH, check your setup and draw code maps from the app. Terminal commands are optional.")
                         .font(.callout).foregroundStyle(.secondary)
                 }
@@ -114,7 +114,7 @@ struct GitchGuideSheet: View {
             HStack {
                 Button(Gitch.installedIsBundled ? String(localized: "Reinstall terminal command…") : String(localized: "Enable terminal command…")) { confirmInstall = true }
                     .disabled(accounts.isEmpty || busy || Gitch.bundled == nil)
-                if Gitch.installedIsBundled { Label("Installed", systemImage: "checkmark.circle").foregroundStyle(.green) }
+                if Gitch.installedIsBundled { Label("Installed", symbol: "checkmark.circle").foregroundStyle(.green) }
                 if busy { ProgressView().controlSize(.small) }
             }
             Text("You will see the files and settings it changes before installation. Open a new Terminal window after installing.").font(.caption).foregroundStyle(.secondary)
@@ -139,7 +139,7 @@ struct GitchGuideSheet: View {
                 Text(doctor.problems == 0 ? String(localized: "Setup checks passed") : String(localized: "Some setup steps need attention")).font(.headline)
                 ForEach(Array(doctor.items.enumerated()), id: \.offset) { _, item in
                     HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: item.level == "OK" ? "checkmark.circle.fill" : item.level == "INFO" ? "info.circle" : "exclamationmark.triangle.fill")
+                        SymbolIcon(item.level == "OK" ? "checkmark.circle.fill" : item.level == "INFO" ? "info.circle" : "exclamationmark.triangle.fill")
                             .foregroundStyle(item.level == "OK" ? Color.green : item.level == "INFO" ? Color.secondary : Color.orange)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(verbatim: item.section).font(.caption.weight(.semibold)).foregroundStyle(.secondary)

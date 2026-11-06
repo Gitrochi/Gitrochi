@@ -1,4 +1,5 @@
-import { Circle, CircleCheck, CircleDot, Square, SquareCheck, TriangleAlert } from "lucide-react";
+import { Square, TriangleAlert } from "lucide-react";
+import { Circle, CircleCheck, CircleDot, SquareCheck } from "@/shared/icons";
 import { CircleAlert } from "@/shared/icons";
 import {
   scheduleStage,

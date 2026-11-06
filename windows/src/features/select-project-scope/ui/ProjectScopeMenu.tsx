@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowDownToLine, Book, Building2, ChevronsUpDown, CircleX, Monitor } from "lucide-react";
+import { Book, Building2, ChevronsUpDown, Monitor } from "lucide-react";
+import { ArrowDownToLine, CircleX } from "@/shared/icons";
 import { Check, RefreshCw } from "@/shared/icons";
 import { avatars } from "@/entities/avatar";
 import { accountHost, type HostAccount } from "@/entities/git";

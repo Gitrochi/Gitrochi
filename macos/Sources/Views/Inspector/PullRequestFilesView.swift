@@ -133,7 +133,7 @@ struct PullRequestFilesView: View {
         let open = !collapsed.contains(path)
         return Button { if open { collapsed.insert(path) } else { collapsed.remove(path) } } label: {
             HStack(spacing: 6) {
-                Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
+                SymbolIcon(open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
                 DesignIconImage(icon: .repository, size: 11).foregroundStyle(StudioStyle.Rail.icon)
                 Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head)
                 // a folder holding a single file needs no count
@@ -185,7 +185,7 @@ struct PullRequestFilesView: View {
             }
             if !compact { LineStatText(added: file.additions, deleted: file.deletions).fixedSize() }
             Button { setViewed(file.path, !isViewed) } label: {
-                Image(systemName: isViewed ? "checkmark.square.fill" : "square").font(.system(size: 14))
+                SymbolIcon(isViewed ? "checkmark.square.fill" : "square").font(.system(size: 14))
                     .foregroundStyle(isViewed ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
                     .frame(width: 24, height: 24).contentShape(Rectangle())
             }
@@ -246,7 +246,7 @@ struct PullRequestFilesView: View {
                 .init(value: false, title: String(localized: "Unified")),
                 .init(value: true, title: String(localized: "Split"), disabledReason: splitAllowed ? nil : String(localized: "Split needs a diff at least 1000 px wide")),
             ], selection: store.diffSplit && splitAllowed) { store.diffSplit = $0 }
-            Button { store.diffIgnoreWhitespace.toggle() } label: { Image(systemName: "text.word.spacing") }
+            Button { store.diffIgnoreWhitespace.toggle() } label: { SymbolIcon("text.word.spacing") }
                 .buttonStyle(PullRequestIconButtonStyle(on: whitespace))
                 .help("Hide whitespace")
                 .accessibilityLabel("Hide whitespace")

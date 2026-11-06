@@ -49,7 +49,7 @@ struct PullRequestDetailView: View {
             // the open file belongs to Changed files: no other tab or page should find it still open
             .onChange(of: tab) { old, _ in if old == "files", case .review? = store.diffSource { store.closeDiff() } }
         } else {
-            ContentUnavailableView("\(store.target?.provider.requestShort ?? "PR") not in the list", systemImage: "arrow.triangle.pull",
+            ContentUnavailableView("\(store.target?.provider.requestShort ?? "PR") not in the list", symbol: "arrow.triangle.pull",
                                    description: Text("It was closed or hasn't been loaded yet."))
         }
     }
@@ -132,7 +132,7 @@ struct PullRequestDetailView: View {
     private func open(_ string: String) { if let url = URL(string: string) { NSWorkspace.shared.open(url) } }
 
     private func graphButton(_ sha: String) -> some View {
-        Button { store.reveal(sha) } label: { Label("Show in graph", systemImage: "point.3.connected.trianglepath.dotted") }
+        Button { store.reveal(sha) } label: { Label("Show in graph", symbol: "point.3.connected.trianglepath.dotted") }
             .buttonStyle(PullRequestButtonStyle())
     }
 
@@ -141,13 +141,13 @@ struct PullRequestDetailView: View {
         if ownBranch(pr) {
             if let sha = graphCommit(pr) { graphButton(sha) }
         } else {
-            Button { Task { await store.checkoutPullRequest(pr) } } label: { Label("Check out", systemImage: "arrow.down.to.line") }
+            Button { Task { await store.checkoutPullRequest(pr) } } label: { Label("Check out", symbol: "arrow.down.to.line") }
                 .buttonStyle(PullRequestButtonStyle())
         }
     }
 
     private func reviewButton(_ t: RepoTarget) -> some View {
-        Button { reviewing = true } label: { Label("Review…", systemImage: "text.bubble") }
+        Button { reviewing = true } label: { Label("Review…", symbol: "text.bubble") }
             .buttonStyle(PullRequestButtonStyle())
             .popover(isPresented: $reviewing, arrowEdge: .bottom) {
                 PullRequestReviewForm(number: number, provider: t.provider, draft: $draft) { reviewing = false }
@@ -155,7 +155,7 @@ struct PullRequestDetailView: View {
     }
 
     private func browserButton(_ pr: PullRequest) -> some View {
-        Button { open(pr.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }
+        Button { open(pr.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
             .buttonStyle(PullRequestButtonStyle())
     }
 
@@ -164,11 +164,11 @@ struct PullRequestDetailView: View {
         let own = ownBranch(pr), busy = store.collaboration.lifecycleBusy || store.collaboration.lifecycleLoading
         return Menu {
             if navigation || !own, let sha = graphCommit(pr) {
-                Button { store.reveal(sha) } label: { Label("Show in graph", systemImage: "point.3.connected.trianglepath.dotted") }
+                Button { store.reveal(sha) } label: { Label("Show in graph", symbol: "point.3.connected.trianglepath.dotted") }
             }
-            if navigation { Button { open(pr.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
+            if navigation { Button { open(pr.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") } }
             Divider()
-            Button { store.copy(pr.url) } label: { Label("Copy link", systemImage: "doc.on.doc") }
+            Button { store.copy(pr.url) } label: { Label("Copy link", symbol: "doc.on.doc") }
             Button { Task { await store.checkoutPullRequest(pr) } } label: {
                 Text("Check out branch")
                 // a disabled item says why
@@ -270,7 +270,7 @@ struct PullRequestDetailView: View {
     private func thread(_ pr: PullRequest, _ t: RepoTarget) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             if let error = store.reviewError {
-                Label(error, systemImage: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled)
+                Label(error, symbol: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled)
             }
             if pr.body.trimmed.isEmpty { PullRequestCaption(String(localized: "No description")) }
             else { MarkdownView(pr.body, target: t, revision: pr.headSHA ?? pr.source, baseURL: URL(string: pr.url)) }
@@ -297,7 +297,7 @@ struct PullRequestDetailView: View {
                     ForEach(issues, id: \.self) { issue in
                         Button { open(t.webURL + (t.provider == .github ? "/issues/\(issue)" : "/-/issues/\(issue)")) } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(StudioStyle.Tone.passed.text)
+                                SymbolIcon("smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(StudioStyle.Tone.passed.text)
                                 Text(verbatim: "#\(issue)").font(.system(size: 12, design: .monospaced))
                                 Spacer(minLength: 0)
                             }

@@ -45,7 +45,7 @@ struct ProjectItemComposer: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: linking ? "link" : "square.and.pencil")
+                SymbolIcon(linking ? "link" : "square.and.pencil")
                     .font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 6) {
@@ -59,7 +59,7 @@ struct ProjectItemComposer: View {
                 VStack(alignment: .leading, spacing: 18) {
                     if linking { linkForm } else { taskForm }
                     if let error {
-                        Label(error, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red)
+                        Label(error, symbol: "exclamationmark.circle").font(.callout).foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                     }
                 }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
@@ -105,7 +105,7 @@ struct ProjectItemComposer: View {
                     ForEach(candidates) { item in
                         Button { url = item.url } label: {
                             HStack(alignment: .top, spacing: 9) {
-                                Image(systemName: url == item.url ? "checkmark.circle.fill" : "circle").foregroundStyle(Color.accentColor)
+                                SymbolIcon(url == item.url ? "checkmark.circle.fill" : "circle").foregroundStyle(Color.accentColor)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(item.title).font(.callout.weight(.medium)).lineLimit(2)
                                     Text("#\(item.number) · \(item.state)").font(.caption).foregroundStyle(.secondary)
@@ -165,7 +165,7 @@ struct ProjectFieldEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: symbol).font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
+                SymbolIcon(symbol).font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 6) {
                     Text(request.field.name).font(.system(size: 19, weight: .semibold))
@@ -189,7 +189,7 @@ struct ProjectFieldEditor: View {
                 }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
                 if let error {
-                    Label(error, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red)
+                    Label(error, symbol: "exclamationmark.circle").font(.callout).foregroundStyle(.red)
                         .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                 }
             }.padding(.horizontal, 24).padding(.bottom, 24).disabled(saving)

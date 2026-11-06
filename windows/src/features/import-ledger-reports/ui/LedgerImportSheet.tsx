@@ -1,4 +1,5 @@
-import { CircleCheck, CircleX, Equal } from "lucide-react";
+import { Equal } from "lucide-react";
+import { CircleCheck, CircleX } from "@/shared/icons";
 import { useState } from "react";
 import { countReports, type ImportSummary, type LedgerStore } from "@/entities/ledger";
 import { keyLabel } from "@/shared/config";

@@ -43,7 +43,7 @@ struct CompareRevisionsSheet: View {
                     HistoryPatchView(text: result.files.isEmpty ? String(localized: "No differences between these revisions.") : state.comparisonPatch)
                 }.frame(minHeight: 250, maxHeight: embedded ? .infinity : 440)
             } else if !state.comparisonLoading {
-                ContentUnavailableView("Choose two revisions to compare", systemImage: "arrow.left.arrow.right", description: Text("Use branches, tags or commit IDs.")).frame(height: 250)
+                ContentUnavailableView("Choose two revisions to compare", symbol: "arrow.left.arrow.right", description: Text("Use branches, tags or commit IDs.")).frame(height: 250)
             }
             if !embedded { HStack { Spacer(); Button("Close") { dismiss() }.keyboardShortcut(.cancelAction) } }
         }.padding(embedded ? 0 : 20).frame(width: embedded ? nil : 1020)
@@ -81,7 +81,7 @@ struct RevisionPicker: View {
                     Section("Tags") { ForEach(store.tags) { tag in Button(tag.name) { revision = tag.name } } }
                 }
             } label: {
-                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .semibold))
+                SymbolIcon("chevron.up.chevron.down").font(.system(size: 11, weight: .semibold))
             }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .frame(width: 24)

@@ -1,4 +1,5 @@
-import { CalendarDays, CheckCircle2, Settings2 } from "lucide-react";
+import { CalendarDays, Settings2 } from "lucide-react";
+import { CheckCircle2 } from "@/shared/icons";
 import { Plus } from "@/shared/icons";
 import {
   resolveScheduleFields,

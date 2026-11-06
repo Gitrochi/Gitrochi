@@ -34,7 +34,7 @@ struct TerminalToolbarButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
+            SymbolIcon(symbol)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(selected ? Color.primary : Color.secondary)
                 .frame(width: 26, height: 26)
@@ -277,7 +277,7 @@ struct TerminalStatusBar: View {
             DesignIconImage(icon: .repository).accessibilityHidden(true)
             Text(verbatim: abbreviatedDirectory).lineLimit(1).truncationMode(.head)
             if copyDirectory != nil {
-                Image(systemName: copyFeedbackToken != nil ? "checkmark" : "doc.on.doc")
+                SymbolIcon(copyFeedbackToken != nil ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 9))
                     .foregroundStyle(copyFeedbackToken != nil ? Color(nsColor: .systemGreen) : Color(nsColor: .tertiaryLabelColor))
                     .accessibilityHidden(true)

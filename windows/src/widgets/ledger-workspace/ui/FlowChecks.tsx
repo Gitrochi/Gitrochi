@@ -1,4 +1,5 @@
-import { CircleCheck, CircleStop, CircleX, type LucideIcon, PauseCircle } from "lucide-react";
+import { CircleStop, type LucideIcon, PauseCircle } from "lucide-react";
+import { CircleCheck, CircleX } from "@/shared/icons";
 import { GitBranch } from "@/shared/icons";
 import { useEffect } from "react";
 import type { LedgerSession, LedgerStore } from "@/entities/ledger";

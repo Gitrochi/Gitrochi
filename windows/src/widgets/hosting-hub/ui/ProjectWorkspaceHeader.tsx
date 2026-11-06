@@ -1,4 +1,4 @@
-import { SquareCheck } from "lucide-react";
+import { SquareCheck } from "@/shared/icons";
 import { ChevronDown, Ellipsis, Plus, RefreshCw } from "@/shared/icons";
 import type { HostAccount } from "@/entities/git";
 import { accounts, type HostingHubStore, type HubItem } from "@/entities/hosting";

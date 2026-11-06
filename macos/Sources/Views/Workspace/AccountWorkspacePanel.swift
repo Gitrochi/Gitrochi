@@ -77,7 +77,7 @@ struct AccountWorkspacePanel: View {
             AccountMenu {
                 ForEach(accounts) { other in
                     Button { choose(other.id) } label: {
-                        if other.id == account.id { Label(Self.title(other), systemImage: "checkmark") } else { Text(verbatim: Self.title(other)) }
+                        if other.id == account.id { Label(Self.title(other), symbol: "checkmark") } else { Text(verbatim: Self.title(other)) }
                     }
                 }
                 Divider()
@@ -196,7 +196,7 @@ struct AccountState: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 22)).foregroundStyle(tint).frame(height: 24).accessibilityHidden(true)
+            SymbolIcon(symbol).font(.system(size: 22)).foregroundStyle(tint).frame(height: 24).accessibilityHidden(true)
             Text(verbatim: title).font(.system(size: 15, weight: .semibold)).multilineTextAlignment(.center)
             if let caption {
                 Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)

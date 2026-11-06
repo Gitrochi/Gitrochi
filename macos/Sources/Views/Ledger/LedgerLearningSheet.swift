@@ -27,7 +27,7 @@ import SwiftUI
                 Text("Learn Ledger").font(.title3.weight(.semibold))
                 Spacer(minLength: 4)
                 if learning.progress.completed {
-                    Label("Completed", systemImage: "checkmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Label("Completed", symbol: "checkmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
                 }
                 Button { dismiss() } label: { DesignIconImage(icon: .close).frame(width: 24, height: 24) }
                     .buttonStyle(.borderless).help("Close").accessibilityLabel("Close")
@@ -90,12 +90,12 @@ import SwiftUI
         case .concepts:
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Baseline", systemImage: "tag").font(.system(size: 12, weight: .medium))
+                    Label("Baseline", symbol: "tag").font(.system(size: 12, weight: .medium))
                     Text("v1.0.0").font(.system(size: 13))
                 }
                 DesignIconImage(icon: .branch).foregroundStyle(.secondary).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Session", systemImage: "bubble.left.and.bubble.right").font(.system(size: 12, weight: .medium))
+                    Label("Session", symbol: "bubble.left.and.bubble.right").font(.system(size: 12, weight: .medium))
                     Text("S1").font(.system(size: 13))
                 }
                 Spacer(minLength: 0)
@@ -105,7 +105,7 @@ import SwiftUI
             HStack(spacing: 8) {
                 ForEach(Array(LedgerPage.allCases.enumerated()), id: \.offset) { index, page in
                     Button { learning.chosenView = index } label: {
-                        Label(page.title, systemImage: page.symbol).font(.system(size: 12))
+                        Label(page.title, symbol: page.symbol).font(.system(size: 12))
                             .padding(8).frame(maxWidth: .infinity)
                             .background(RoundedRectangle(cornerRadius: 6).fill(learning.chosenView == index ? StudioStyle.selection : Color.clear))
                             .contentShape(Rectangle())
@@ -122,7 +122,7 @@ import SwiftUI
                     .prominentButton(!learning.progress.answerSent)
                     .disabled(learning.answerDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 if learning.progress.answerSent {
-                    Label("Saved", systemImage: "checkmark.circle").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Label("Saved", symbol: "checkmark.circle").font(.system(size: 12)).foregroundStyle(.secondary)
                 }
             }
             Text("Return adds a line · ⌘Return saves").font(.system(size: 11)).foregroundStyle(.secondary)
@@ -136,7 +136,7 @@ import SwiftUI
                 case .saved: Button("Mark delivered") { learning.deliver() }.buttonStyle(.borderedProminent)
                 case .delivered: Button("Confirm") { learning.confirm() }.buttonStyle(.borderedProminent)
                 case .confirmed: Button("Clean up") { learning.archive() }.buttonStyle(.borderedProminent)
-                case .archived: Label("Archived", systemImage: "archivebox").font(.system(size: 12)).foregroundStyle(.secondary)
+                case .archived: Label("Archived", symbol: "archivebox").font(.system(size: 12)).foregroundStyle(.secondary)
                 }
             }
             .padding(16).frame(maxWidth: .infinity, alignment: .leading)

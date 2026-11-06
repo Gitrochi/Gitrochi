@@ -16,12 +16,12 @@ struct ActionsWorkspacePanel: View {
             if let target = store.target {
                 VStack(spacing: 0) {
                     HostedListHeader(target: target) {
-                        Button { Task { await store.loadCI() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                        Button { Task { await store.loadCI() } } label: { Label("Refresh", symbol: "arrow.clockwise") }
                             .buttonStyle(HostedListButtonStyle(iconOnly: true))
                             .disabled(store.ciState == .loading)
                             .help("Refresh")
                         Button { store.sheet = .runPipeline } label: {
-                            Label(target.provider == .gitlab ? String(localized: "Run pipeline…") : String(localized: "Run workflow…"), systemImage: "play.fill")
+                            Label(target.provider == .gitlab ? String(localized: "Run pipeline…") : String(localized: "Run workflow…"), symbol: "play.fill")
                         }
                         .buttonStyle(HostedListButtonStyle())
                         .disabled(store.ciAccess == nil || store.ciBusy.contains("run"))
@@ -67,7 +67,7 @@ struct ActionsWorkspacePanel: View {
                         VStack(spacing: 0) {
                             if compact {
                                 HStack {
-                                    Button { store.ciSelected = nil } label: { Label("Back to runs", systemImage: "chevron.left") }
+                                    Button { store.ciSelected = nil } label: { Label("Back to runs", symbol: "chevron.left") }
                                         .buttonStyle(HostedListButtonStyle())
                                     Spacer()
                                 }

@@ -28,7 +28,7 @@ struct CLISettings: View {
                 Text("Quick commands fill the terminal. Review them, then press Return to run.")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "waveform").foregroundStyle(Color.accentColor)
+                    SymbolIcon("waveform").foregroundStyle(Color.accentColor)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Voice workspace on macOS").font(.callout.weight(.medium))
                         Text("Hold Control-Shift-Space to dictate, optionally clean up your words, then review the destination before sending.")

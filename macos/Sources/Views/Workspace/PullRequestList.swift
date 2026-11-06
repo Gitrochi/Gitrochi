@@ -73,7 +73,7 @@ struct PullRequestList: View {
                     return .handled
                 }
             if !search.isEmpty {
-                Button { search = ""; runSearch() } label: { Image(systemName: "xmark.circle.fill") }
+                Button { search = ""; runSearch() } label: { SymbolIcon("xmark.circle.fill") }
                     .buttonStyle(.borderless).foregroundStyle(.secondary)
                     .help("Clear search").accessibilityLabel("Clear search")
             }
@@ -112,7 +112,7 @@ struct PullRequestList: View {
     }
 
     private func check(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) { if on { Label(title, systemImage: "checkmark") } else { Text(verbatim: title) } }
+        Button(action: action) { if on { Label(title, symbol: "checkmark") } else { Text(verbatim: title) } }
     }
 
     private var filters: [PullRequestSegmented<String>.Item] {
@@ -149,7 +149,7 @@ struct PullRequestList: View {
             }
         case .failed(let message):
             VStack(alignment: .leading, spacing: 6) {
-                Label(message, systemImage: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).lineLimit(3)
+                Label(message, symbol: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).lineLimit(3)
                 Button("Retry") { Task { await store.loadPullRequests() } }.buttonStyle(PullRequestButtonStyle())
             }
             .padding(.horizontal, 10)

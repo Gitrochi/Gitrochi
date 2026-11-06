@@ -19,7 +19,7 @@ struct GitchBar: View {
         if let s = store.gitchStatus {
             HStack(spacing: 5) {
                 Text(verbatim: "gitch").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-                Image(systemName: s.account == nil ? "exclamationmark.triangle.fill" : s.lockedAccount != nil ? "lock.fill" : "person.fill")
+                SymbolIcon(s.account == nil ? "exclamationmark.triangle.fill" : s.lockedAccount != nil ? "lock.fill" : "person.fill")
                     .font(.caption2)
                     .foregroundStyle(s.account == nil ? Color.orange : Color.secondary)
                 Menu {
@@ -119,7 +119,7 @@ struct GitchBar: View {
             }
             Button("Run doctor in Terminal") { try? Gitch.openInTerminal(["doctor"], in: store.url?.path) }
         } label: {
-            Image(systemName: "ellipsis.circle")
+            SymbolIcon("ellipsis.circle")
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -170,7 +170,7 @@ private struct GitchResultPill: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: GitchLevel.icon(result))
+            SymbolIcon(GitchLevel.icon(result))
             Text(GitchLevel.title(result))
         }
         .font(.caption2.weight(.semibold))
@@ -192,7 +192,7 @@ private struct GitchChecks: View {
             if let p = store.gitchPreflight {
                 ForEach(p.checks, id: \.self) { c in
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Image(systemName: GitchLevel.icon(c.level)).foregroundStyle(GitchLevel.color(c.level))
+                        SymbolIcon(GitchLevel.icon(c.level)).foregroundStyle(GitchLevel.color(c.level))
                         Text(c.message).font(.callout).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -232,7 +232,7 @@ private struct GitchBackupsSheet: View {
             Text("gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent.")
                 .font(.callout).foregroundStyle(.secondary)
             if loaded && backups.isEmpty {
-                ContentUnavailableView("No backups yet", systemImage: "clock.arrow.circlepath")
+                ContentUnavailableView("No backups yet", symbol: "clock.arrow.circlepath")
                     .frame(maxWidth: .infinity, minHeight: 140)
             } else {
                 List(backups) { b in

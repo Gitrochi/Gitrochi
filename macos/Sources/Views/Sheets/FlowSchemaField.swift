@@ -21,7 +21,7 @@ struct FlowSchemaField: View {
                 if required { Text("*").foregroundStyle(.orange) }
                 Spacer()
                 if value != .null {
-                    Button { value = .null; jsonDraft = ""; onError(nil) } label: { Image(systemName: "xmark.circle").font(.system(size: 10)) }
+                    Button { value = .null; jsonDraft = ""; onError(nil) } label: { SymbolIcon("xmark.circle").font(.system(size: 10)) }
                         .buttonStyle(.borderless).help("Clear input")
                 }
             } }

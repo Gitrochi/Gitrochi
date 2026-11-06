@@ -1,4 +1,5 @@
-import { Activity, Archive, ArchiveRestore, Ban, Bot, CheckCheck, CircleCheck, CirclePlay, Gavel, GitMerge, type LucideIcon, Library, MessageCircleQuestion, MessageSquareReply, SquareCheck, StickyNote } from "lucide-react";
+import { Activity, Archive, ArchiveRestore, Ban, Bot, CheckCheck, Gavel, type LucideIcon, Library, MessageCircleQuestion, MessageSquareReply, StickyNote } from "lucide-react";
+import { CircleCheck, CirclePlay, GitMerge, SquareCheck } from "@/shared/icons";
 import { Clock, FileText, RefreshCw, Tag, UserRound } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { timelineEvents, type LedgerEvent } from "@/entities/ledger";

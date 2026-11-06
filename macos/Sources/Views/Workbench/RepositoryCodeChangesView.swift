@@ -105,11 +105,11 @@ struct RepositoryCodeChangesView: View {
     @ViewBuilder private var content: some View {
         if let document {
             if let error = document.error {
-                ContentUnavailableView("Couldn't read the changes", systemImage: "exclamationmark.triangle", description: Text(error))
+                ContentUnavailableView("Couldn't read the changes", symbol: "exclamationmark.triangle", description: Text(error))
             } else if document.isBinary {
-                ContentUnavailableView("Binary file", systemImage: "doc.zipper")
+                ContentUnavailableView("Binary file", symbol: "doc.zipper")
             } else if document.lines.isEmpty {
-                ContentUnavailableView("No changes to show", systemImage: "equal.circle",
+                ContentUnavailableView("No changes to show", symbol: "equal.circle",
                                        description: Text(verbatim: store.diffIgnoreWhitespace ? String(localized: "Only whitespace changed (turn off Ignore whitespace to see it).") : ""))
             } else {
                 lines(document)
@@ -190,7 +190,7 @@ struct RepositoryCodeChangesView: View {
                 .padding(.leading, indent).padding(.trailing, 12).frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
                 .background(StudioStyle.Tone.info.fill.opacity(0.6))
         case .note(let line):
-            Label(line.text, systemImage: "arrow.turn.down.left").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon)
+            Label(line.text, symbol: "arrow.turn.down.left").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon)
                 .padding(.leading, indent).frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
         case .line(_, let cell):
             HStack(alignment: .firstTextBaseline, spacing: 0) {

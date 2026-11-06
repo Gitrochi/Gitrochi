@@ -1,4 +1,5 @@
-import { Circle, CircleCheck, CircleDashed, CirclePause, CircleSlash, CircleX, Hand, SkipForward } from "lucide-react";
+import { CircleDashed, CirclePause, CircleSlash, Hand, SkipForward } from "lucide-react";
+import { Circle, CircleCheck, CircleX } from "@/shared/icons";
 import { Clock, RefreshCw } from "@/shared/icons";
 import type { ReactNode } from "react";
 import { Spinner } from "@/shared/ui";

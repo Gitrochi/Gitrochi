@@ -19,7 +19,7 @@ struct ReviewDraftPanel: View {
                 ForEach(drafts) { draft in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
-                            Image(systemName: "text.bubble").font(.caption)
+                            SymbolIcon("text.bubble").font(.caption)
                             Text("\(draft.anchor.path):\(draft.anchor.line)").font(.caption.monospaced()).lineLimit(2)
                             Text(draft.anchor.side == .left ? String(localized: "Old version") : String(localized: "New version")).font(.caption).foregroundStyle(.secondary)
                             Spacer()

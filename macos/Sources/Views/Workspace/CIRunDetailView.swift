@@ -121,7 +121,7 @@ struct CIRunDetailView: View {
         let failed = p.status == .failed || p.status == .canceled
         let busy = store.ciBusy.contains("pipeline:\(p.id)")
         return HStack(spacing: 6) {
-            Button { open(p.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }
+            Button { open(p.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
                 .buttonStyle(HostedListButtonStyle())
             Menu {
                 if p.status.isActive {
@@ -293,11 +293,11 @@ private struct CIJobLogView: View {
                 Button("Jump to first error") { showAll = false; jump += 1 }.buttonStyle(HostedListButtonStyle())
             }
             if canRetry {
-                Button { Task { await store.retryJob(job, in: pipeline) } } label: { Label("Rerun job", systemImage: "arrow.clockwise") }
+                Button { Task { await store.retryJob(job, in: pipeline) } } label: { Label("Rerun job", symbol: "arrow.clockwise") }
                     .buttonStyle(HostedListButtonStyle())
                     .disabled(store.ciBusy.contains("job:\(job.id)"))
             }
-            Button { open(job.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") }
+            Button { open(job.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
                 .buttonStyle(HostedListButtonStyle(iconOnly: true))
                 .help("Open in browser")
             Menu {
@@ -462,7 +462,7 @@ private struct CIJobRow: View {
                     CIStatusIcon(status: job.status, size: 13)
                     Text(verbatim: job.name).font(.system(size: 13, weight: selected ? .semibold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
                     if job.allowFailure, job.status == .failed {
-                        Image(systemName: "exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.waiting.text).help("Allowed to fail")
+                        SymbolIcon("exclamationmark.triangle").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.waiting.text).help("Allowed to fail")
                     }
                     Spacer(minLength: 0)
                     if let d = job.duration, d > 0 {
@@ -501,11 +501,11 @@ private struct CIJobRow: View {
         if store.ciBusy.contains("job:\(job.id)") {
             ProgressView().controlSize(.mini)
         } else if job.canPlay, provider == .gitlab {
-            Button { store.playJob(job, in: pipeline) } label: { Image(systemName: "play.circle").frame(width: 24, height: 24).contentShape(Rectangle()) }
+            Button { store.playJob(job, in: pipeline) } label: { SymbolIcon("play.circle").frame(width: 24, height: 24).contentShape(Rectangle()) }
                 .buttonStyle(.borderless)
                 .help(job.status == .scheduled ? "Run now (don't wait for the schedule)" : "Run manual job")
         } else if job.status.isActive, provider == .gitlab {
-            Button { Task { await store.cancelJob(job, in: pipeline) } } label: { Image(systemName: "stop.circle").frame(width: 24, height: 24).contentShape(Rectangle()) }
+            Button { Task { await store.cancelJob(job, in: pipeline) } } label: { SymbolIcon("stop.circle").frame(width: 24, height: 24).contentShape(Rectangle()) }
                 .buttonStyle(.borderless)
                 .help("Cancel job")
         }
@@ -522,7 +522,7 @@ private struct DeploymentApproval: View {
     var body: some View {
         let mine = deployments.filter(\.canApprove)
         HStack(spacing: 10) {
-            Image(systemName: "hand.raised.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text).accessibilityHidden(true)
+            SymbolIcon("hand.raised.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text).accessibilityHidden(true)
             Text("Waiting for deployment approval: \(deployments.map(\.environment).joined(separator: ", "))")
                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(StudioStyle.Tone.waiting.text)
                 .frame(maxWidth: .infinity, alignment: .leading)

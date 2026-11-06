@@ -27,7 +27,7 @@ struct WorktreeChangesView: View {
                         .textSelection(.enabled)
                     HStack {
                         Button { Task { await store.switchWorktree(to: path) } } label: {
-                            Label("Open worktree", systemImage: "arrow.right.circle")
+                            Label("Open worktree", symbol: "arrow.right.circle")
                         }
                         .buttonStyle(.borderedProminent)
                         Button("Open in new tab") { Task { await store.openOrReport(URL(fileURLWithPath: path, isDirectory: true)) } }

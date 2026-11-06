@@ -52,9 +52,9 @@ struct WorkspaceHomePanel: View {
             }
             Text("Repositories").font(.system(size: 15, weight: .semibold))
             HStack(spacing: 8) {
-                Button { store.presentOpenPanel() } label: { Label("Open…", systemImage: "folder") }
-                Button { store.sheet = .clone } label: { Label("Clone…", systemImage: "arrow.down.to.line") }
-                Button { store.presentInitPanel() } label: { Label("New repository…", systemImage: "plus") }
+                Button { store.presentOpenPanel() } label: { Label("Open…", symbol: "folder") }
+                Button { store.sheet = .clone } label: { Label("Clone…", symbol: "arrow.down.to.line") }
+                Button { store.presentInitPanel() } label: { Label("New repository…", symbol: "plus") }
                 Spacer(minLength: 8)
                 filterField
             }

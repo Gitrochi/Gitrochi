@@ -1,4 +1,5 @@
-import { CircleCheck, CircleDot, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
+import { CircleCheck, CircleDot } from "@/shared/icons";
 import { Ellipsis, ExternalLink, Pencil } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { markdownLinks } from "@/entities/git";

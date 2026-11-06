@@ -1,4 +1,4 @@
-import { Globe } from "lucide-react";
+import { Globe } from "@/shared/icons";
 import { Lock } from "@/shared/icons";
 import { useEffect, useMemo, useState } from "react";
 import { accountApiBase, accountHost, type RemoteRepo } from "@/entities/git";

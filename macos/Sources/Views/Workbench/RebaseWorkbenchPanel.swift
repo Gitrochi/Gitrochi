@@ -130,7 +130,7 @@ struct RebaseWorkbenchPanel: View {
     private func option(_ option: RebaseBase) -> some View {
         let selected = option.name == base, disabled = option.incoming == 0
         return row(id: option.id, selected: selected, disabled: disabled) {
-            Image(systemName: option.kind == .remote ? "cloud" : option.kind == .tag ? "tag" : "arrow.triangle.branch")
+            SymbolIcon(option.kind == .remote ? "cloud" : option.kind == .tag ? "tag" : "arrow.triangle.branch")
                 .font(.system(size: 12)).foregroundStyle(disabled ? StudioStyle.Rail.blocked : StudioStyle.Rail.icon).frame(width: 14)
             // only the name dims; the reason beside it stays readable
             Text(option.name).lineLimit(1).truncationMode(.middle).fontWeight(selected ? .semibold : .regular)
@@ -229,7 +229,7 @@ struct RebaseWorkbenchPanel: View {
             }
             if let blocked {
                 // the icon and the sentence carry the warning, not the colour alone
-                Label(blocked, systemImage: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.waiting.text)
+                Label(blocked, symbol: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.waiting.text)
             }
         }
         if let error { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) }

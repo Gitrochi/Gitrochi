@@ -6,23 +6,23 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             AccountsSettings()
-                .tabItem { Label("Accounts", systemImage: "person.crop.circle") }
+                .tabItem { Label("Accounts", symbol: "person.crop.circle") }
             AISettings()
-                .tabItem { Label("AI", systemImage: "sparkles") }
+                .tabItem { Label("AI", symbol: "sparkles") }
             RulesSettings()
-                .tabItem { Label("Rules", systemImage: "text.badge.checkmark") }
+                .tabItem { Label("Rules", symbol: "text.badge.checkmark") }
             ToolsSettings()
-                .tabItem { Label("Tool locations", systemImage: "wrench.and.screwdriver") }
+                .tabItem { Label("Tool locations", symbol: "wrench.and.screwdriver") }
             CLISettings()
                 .tabItem { Label { Text(verbatim: "CLI") } icon: { DesignIconImage(icon: .terminal) } }
             AppearanceSettings()
-                .tabItem { Label("Appearance", systemImage: "paintpalette") }
+                .tabItem { Label("Appearance", symbol: "paintpalette") }
             UpdateSettings()
-                .tabItem { Label("Update", systemImage: "arrow.down.circle") }
+                .tabItem { Label("Update", symbol: "arrow.down.circle") }
             // Added after the others, and only while the Ledger is shown
             if LedgerSettings.isShown {
                 LedgerSettings()
-                    .tabItem { Label("Ledger", systemImage: WorkspaceDestination.ledger.symbol) }
+                    .tabItem { Label("Ledger", symbol: WorkspaceDestination.ledger.symbol) }
             }
         }
         .frame(width: 600, height: 560)

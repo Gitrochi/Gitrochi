@@ -8,8 +8,8 @@ struct FileViewToggle: View {
 
     var body: some View {
         Picker("File display", selection: $mode) {
-            Image(systemName: "list.bullet").tag("list").help("Show as list").accessibilityLabel("Show as list")
-            Image(systemName: "list.bullet.indent").tag("tree").help("Show as folder tree").accessibilityLabel("Show as folder tree")
+            SymbolIcon("list.bullet").tag("list").help("Show as list").accessibilityLabel("Show as list")
+            SymbolIcon("list.bullet.indent").tag("tree").help("Show as folder tree").accessibilityLabel("Show as folder tree")
         }
         .pickerStyle(.segmented)
         .labelsHidden()
@@ -146,11 +146,11 @@ private struct FolderRow: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            Image(systemName: expanded ? "chevron.down" : "chevron.right")
+            SymbolIcon(expanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 10)
-            Image(systemName: expanded ? "folder.fill" : "folder")
+            SymbolIcon(expanded ? "folder.fill" : "folder")
                 .foregroundStyle(Color.accentColor.opacity(0.85))
             Text(name)
                 .lineLimit(1)
@@ -160,7 +160,7 @@ private struct FolderRow: View {
                 .foregroundStyle(.secondary)
             Spacer(minLength: 4)
             if let actionIcon, hover {
-                Button(action: action) { Image(systemName: actionIcon) }
+                Button(action: action) { SymbolIcon(actionIcon) }
                     .buttonStyle(.borderless)
                     .help(actionHelp + String(localized: " — whole folder"))
             }

@@ -69,7 +69,7 @@ struct ReleaseWorkspace: View {
             }
             Spacer(minLength: 0)
             Button { detailOpen = false; Task { await store.loadHostingHub() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").accessibilityLabel("Refresh").disabled(locked || editor != nil)
-            Button { startEditor(false) } label: { Label("New release", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(locked || store.hubAccount == nil)
+            Button { startEditor(false) } label: { Label("New release", symbol: "plus") }.buttonStyle(.borderedProminent).disabled(locked || store.hubAccount == nil)
         }.padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)
     }
     private func packageTitle(_ value: String) -> String {
@@ -96,7 +96,7 @@ struct ReleaseWorkspace: View {
                 } else { Spacer(minLength: 0) }
                 if !atLast, value?.ahead != nil {
                     VStack(spacing: 6) {
-                        Button { store.showRevisionComparison(left: ReleaseCatalog.tag(latest), right: store.headHash ?? "HEAD") } label: { Label("Compare changes", systemImage: "arrow.left.arrow.right") }.fixedSize()
+                        Button { store.showRevisionComparison(left: ReleaseCatalog.tag(latest), right: store.headHash ?? "HEAD") } label: { Label("Compare changes", symbol: "arrow.left.arrow.right") }.fixedSize()
                         Text(verbatim: ReleaseCatalog.tag(latest) + " → " + headLabel).font(.caption2.monospaced()).foregroundStyle(.secondary)
                             .lineLimit(1).truncationMode(.middle).help(ReleaseCatalog.tag(latest) + " → " + headLabel)
                     }.frame(maxWidth: 200)
@@ -207,11 +207,11 @@ struct ReleaseWorkspace: View {
     private func detail(narrow: Bool) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                if narrow { Button { detailOpen = false; editor = nil } label: { Label("Back to releases", systemImage: "chevron.left") }.buttonStyle(.plain) }
+                if narrow { Button { detailOpen = false; editor = nil } label: { Label("Back to releases", symbol: "chevron.left") }.buttonStyle(.plain) }
                 if editor != nil { editForm }
                 else if let d = store.hostingHub.detail { releaseDetail(d) }
                 else if store.hostingHub.detailLoading { ProgressView() }
-                else { Label("Select a release to read its notes and compare versions.", systemImage: "tag").foregroundStyle(.secondary).padding(.vertical, 40) }
+                else { Label("Select a release to read its notes and compare versions.", symbol: "tag").foregroundStyle(.secondary).padding(.vertical, 40) }
             }.frame(maxWidth: 1100, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 - 44 }
         }
@@ -227,8 +227,8 @@ struct ReleaseWorkspace: View {
             Text(d.item.title).font(.title.weight(.semibold)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             HStack(spacing: 6) {
-                if safe(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
-                Button { startEditor(true) } label: { Label("Edit", systemImage: "pencil") }.disabled(locked)
+                if safe(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") } }
+                Button { startEditor(true) } label: { Label("Edit", symbol: "pencil") }.disabled(locked)
                 Menu {
                     Button("Delete", role: .destructive) {
                         confirm(String(localized: "Delete this item?"), d.item.title + "\n" + String(localized: "This removes the remote item. Release tags and git history are kept."), destructive: true) { c in
@@ -281,7 +281,7 @@ struct ReleaseWorkspace: View {
             }
             Spacer(minLength: 0)
             if safe(asset.url, asset: true) != nil {
-                Button { open(asset.url, asset: true) } label: { Image(systemName: "arrow.down.circle") }.buttonStyle(.borderless).help("Download in browser").accessibilityLabel("Download in browser")
+                Button { open(asset.url, asset: true) } label: { SymbolIcon("arrow.down.circle") }.buttonStyle(.borderless).help("Download in browser").accessibilityLabel("Download in browser")
             }
         }.padding(.vertical, 4)
     }
@@ -297,11 +297,11 @@ struct ReleaseWorkspace: View {
                 Text("Compare changes").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     Picker("Compare from", selection: Binding(get: { from }, set: { base = $0 })) { ForEach(comparable) { Text(ReleaseCatalog.tag($0)).tag(ReleaseCatalog.tag($0)) } }.labelsHidden()
-                    Image(systemName: "arrow.right").foregroundStyle(.secondary)
+                    SymbolIcon("arrow.right").foregroundStyle(.secondary)
                     Text(tag).font(.caption.monospaced().weight(.semibold)).lineLimit(1).truncationMode(.middle).padding(.horizontal, 8).padding(.vertical, 4).background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6)).help(tag)
                     Button { if let url { open(url.absoluteString) } } label: { DesignIconImage(icon: .external) }.buttonStyle(.borderless).help("Compare in browser").accessibilityLabel("Compare in browser").disabled(url == nil)
                 }
-                Button { store.showRevisionComparison(left: from, right: tag) } label: { Label("Compare in app", systemImage: "arrow.left.arrow.right").frame(maxWidth: .infinity) }.disabled(from.isEmpty)
+                Button { store.showRevisionComparison(left: from, right: tag) } label: { Label("Compare in app", symbol: "arrow.left.arrow.right").frame(maxWidth: .infinity) }.disabled(from.isEmpty)
             }.padding(12).frame(maxWidth: .infinity, alignment: .leading).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor).opacity(0.6)))
         }
     }

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Archive, ArchiveRestore, CheckSquare } from "lucide-react";
+import { Archive, ArchiveRestore } from "lucide-react";
+import { CheckSquare } from "@/shared/icons";
 import { Trash2, X } from "@/shared/icons";
 import {
   localProjects,
