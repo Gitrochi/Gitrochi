@@ -1,10 +1,19 @@
 /* Gitrochi — cs. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "Změněné soubory: %1$lld";
+"%lld commits replay on top of %@, newest first." = "Commity (%1$lld) se znovu přehrají na %2$@, nejnovější první.";
+"%lld new commits" = "Nové commity: %1$lld";
 "%lld not pushed" = "%1$lld neodesláno";
 "%lld to pull" = "%1$lld ke stažení";
+"%lld uncommitted files. Stash them above or commit first." = "Necommitnuté soubory: %1$lld. Odložte je výše, nebo je nejdřív commitněte.";
 "All branches…" = "Všechny větve…";
+"Already in this branch" = "Už je v této větvi";
+"Choose a base to see the commits that replay." = "Vyberte základ, abyste viděli commity, které se přehrají.";
+"Choose the new base" = "Vyberte nový základ";
+"Clean up history" = "Uklidit historii";
+"Commits to replay" = "Commity k přehrání";
 "Compare with %@" = "Porovnat s %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Konflikty rebase pozastaví, dokud nebudete pokračovat nebo ho nepřerušíte; dokončený rebase lze vrátit zpět.";
 "Fast-forward only" = "Pouze fast-forward";
 "Filter repositories" = "Filtrovat repozitáře";
 "Find in file" = "Hledat v souboru";
@@ -12,10 +21,13 @@
 "Last opened" = "Naposledy otevřeno";
 "Last opened repository" = "Naposledy otevřený repozitář";
 "Merge" = "Sloučení";
+"Move onto another branch" = "Přesunout na jinou větev";
+"New base" = "Nový základ";
 "New repository…" = "Nový repozitář…";
 "Nothing is due today." = "Na dnešek není nic naplánováno.";
 "Open Projects" = "Otevřít Projekty";
 "Open a repository to use these" = "Otevřete repozitář, abyste je mohli používat";
+"Open changes" = "Otevřít změny";
 "Open…" = "Otevřít…";
 "Overdue · %@" = "Po termínu · %1$@";
 "Pop latest stash" = "Použít poslední stash";
@@ -24,12 +36,18 @@
 "Next match" = "Další výskyt";
 "Pull as configured in git" = "Pull podle nastavení gitu";
 "Pull options" = "Možnosti pull";
+"Rebase mode" = "Režim rebase";
 "Recent" = "Nedávné";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Znovu přehraje commity této větve na novém základu, jako by větev začínala tam.";
+"Review the commits" = "Zkontrolujte commity";
+"Search branches and tags" = "Hledat větve a tagy";
 "Start %@ here" = "Spustit %1$@ zde";
+"Stash uncommitted changes and restore them after" = "Odložit necommitnuté změny a potom je obnovit";
 "Switch branch or repository, open or clone one, or close the tab" = "Přepnout větev nebo repozitář, otevřít nebo klonovat jiný, nebo zavřít kartu";
 "Tasks for today" = "Úkoly na dnešek";
 "Up to date" = "Aktuální";
 "Yesterday" = "Včera";
+"choose a new base" = "vyberte nový základ";
 "{0} of {1}" = "{0} z {1}";
 "No matches" = "Žádné shody";
 "Wrap lines" = "Zalamovat řádky";

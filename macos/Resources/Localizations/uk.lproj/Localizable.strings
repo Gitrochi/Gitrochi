@@ -1,10 +1,19 @@
 /* Gitrochi — uk. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "Змінених файлів: %1$lld";
+"%lld commits replay on top of %@, newest first." = "Комітів: %1$lld — буде застосовано поверх %2$@, спочатку нові.";
+"%lld new commits" = "Нових комітів: %1$lld";
 "%lld not pushed" = "Не надіслано: %1$lld";
 "%lld to pull" = "До отримання: %1$lld";
+"%lld uncommitted files. Stash them above or commit first." = "Незакомічених файлів: %1$lld. Сховайте їх вище або спершу закомітьте.";
 "All branches…" = "Усі гілки…";
+"Already in this branch" = "Уже в цій гілці";
+"Choose a base to see the commits that replay." = "Виберіть базу, щоб побачити коміти, які буде застосовано повторно.";
+"Choose the new base" = "Виберіть нову базу";
+"Clean up history" = "Упорядкувати історію";
+"Commits to replay" = "Коміти для повторного застосування";
 "Compare with %@" = "Порівняти з %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "У разі конфліктів перебазування призупиняється, доки ви не продовжите або не скасуєте його; завершене перебазування можна скасувати.";
 "Fast-forward only" = "Лише перемотуванням";
 "Filter repositories" = "Фільтр репозиторіїв";
 "Find in file" = "Знайти у файлі";
@@ -12,10 +21,13 @@
 "Last opened" = "Останній відкритий";
 "Last opened repository" = "Останній відкритий репозиторій";
 "Merge" = "Злиттям";
+"Move onto another branch" = "Перенести на іншу гілку";
+"New base" = "Нова база";
 "New repository…" = "Новий репозиторій…";
 "Nothing is due today." = "На сьогодні нічого немає.";
 "Open Projects" = "Відкрити проєкти";
 "Open a repository to use these" = "Відкрийте репозиторій, щоб ними користуватися";
+"Open changes" = "Відкрити зміни";
 "Open…" = "Відкрити…";
 "Overdue · %@" = "Прострочено · %1$@";
 "Pop latest stash" = "Застосувати останню схованку";
@@ -24,12 +36,18 @@
 "Next match" = "Наступний збіг";
 "Pull as configured in git" = "Підтягнути, як налаштовано в git";
 "Pull options" = "Параметри підтягування";
+"Rebase mode" = "Режим перебазування";
 "Recent" = "Нещодавні";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Повторно застосовує коміти цієї гілки поверх нової бази, ніби гілка починалася звідти.";
+"Review the commits" = "Перевірте коміти";
+"Search branches and tags" = "Пошук гілок і тегів";
 "Start %@ here" = "Запустити %1$@ тут";
+"Stash uncommitted changes and restore them after" = "Сховати незакомічені зміни й повернути їх після";
 "Switch branch or repository, open or clone one, or close the tab" = "Перемкнути гілку чи репозиторій, відкрити або клонувати репозиторій чи закрити вкладку";
 "Tasks for today" = "Завдання на сьогодні";
 "Up to date" = "Актуально";
 "Yesterday" = "Учора";
+"choose a new base" = "виберіть нову базу";
 "{0} of {1}" = "{0} із {1}";
 "No matches" = "Немає збігів";
 "Wrap lines" = "Переносити рядки";

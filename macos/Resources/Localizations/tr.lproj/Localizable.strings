@@ -1,10 +1,19 @@
 /* Gitrochi — tr. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "%1$lld değişen dosya";
+"%lld commits replay on top of %@, newest first." = "%1$lld commit, en yenisi önce olacak şekilde %2$@ üzerine yeniden uygulanır.";
+"%lld new commits" = "%1$lld yeni commit";
 "%lld not pushed" = "%1$lld gönderilmedi";
 "%lld to pull" = "%1$lld çekilecek";
+"%lld uncommitted files. Stash them above or commit first." = "%1$lld commit edilmemiş dosya. Yukarıdan stash'leyin veya önce commit edin.";
 "All branches…" = "Tüm dallar…";
+"Already in this branch" = "Zaten bu dalda";
+"Choose a base to see the commits that replay." = "Yeniden uygulanacak commit'leri görmek için bir taban seçin.";
+"Choose the new base" = "Yeni tabanı seçin";
+"Clean up history" = "Geçmişi düzenle";
+"Commits to replay" = "Yeniden uygulanacak commit'ler";
 "Compare with %@" = "%1$@ ile karşılaştır";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Çakışmalar, siz devam edene veya iptal edene kadar rebase'i duraklatır; tamamlanan rebase geri alınabilir.";
 "Fast-forward only" = "Yalnızca ileri sar";
 "Filter repositories" = "Depoları filtrele";
 "Find in file" = "Dosyada bul";
@@ -12,10 +21,13 @@
 "Last opened" = "Son açılan";
 "Last opened repository" = "Son açılan depo";
 "Merge" = "Birleştir";
+"Move onto another branch" = "Başka bir dalın üzerine taşı";
+"New base" = "Yeni taban";
 "New repository…" = "Yeni depo…";
 "Nothing is due today." = "Bugün teslim edilecek bir şey yok.";
 "Open Projects" = "Projeleri aç";
 "Open a repository to use these" = "Bunları kullanmak için bir depo açın";
+"Open changes" = "Değişiklikleri aç";
 "Open…" = "Aç…";
 "Overdue · %@" = "Gecikti · %1$@";
 "Pop latest stash" = "En son stash'i uygula";
@@ -24,12 +36,18 @@
 "Next match" = "Sonraki eşleşme";
 "Pull as configured in git" = "git ayarlarına göre çek";
 "Pull options" = "Çekme seçenekleri";
+"Rebase mode" = "Rebase modu";
 "Recent" = "Son kullanılanlar";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Bu dalın commit'lerini, dal oradan başlamış gibi yeni bir tabanın üzerine yeniden uygular.";
+"Review the commits" = "Commit'leri gözden geçirin";
+"Search branches and tags" = "Dal ve etiket ara";
 "Start %@ here" = "Burada %1$@ başlat";
+"Stash uncommitted changes and restore them after" = "Commit edilmemiş değişiklikleri stash'le ve sonra geri yükle";
 "Switch branch or repository, open or clone one, or close the tab" = "Dalı veya depoyu değiştir, bir depo aç ya da klonla veya sekmeyi kapat";
 "Tasks for today" = "Bugünün görevleri";
 "Up to date" = "Güncel";
 "Yesterday" = "Dün";
+"choose a new base" = "yeni bir taban seçin";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Eşleşme yok";
 "Wrap lines" = "Satırları kaydır";

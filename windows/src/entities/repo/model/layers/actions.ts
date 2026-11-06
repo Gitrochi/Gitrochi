@@ -163,8 +163,9 @@ export abstract class RepoActions extends RepoPushReview {
   merge(name: string) {
     return this.run(t("Merging…"), ["merge", name]);
   }
-  rebase(onto: string) {
-    return this.run(t("Rebasing…"), ["rebase", onto]);
+  /** autostash: stash uncommitted changes first and restore them once the rebase has finished */
+  rebase(onto: string, autostash = false) {
+    return this.run(t("Rebasing…"), ["rebase", ...(autostash ? ["--autostash"] : []), onto]);
   }
   cherryPick(sha: string) {
     return this.run(t("Cherry-picking…"), ["cherry-pick", sha]);

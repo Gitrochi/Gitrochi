@@ -1,10 +1,19 @@
 /* Gitrochi — pt-BR. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "%1$lld arquivos alterados";
+"%lld commits replay on top of %@, newest first." = "%1$lld commits são reaplicados sobre %2$@, do mais recente ao mais antigo.";
+"%lld new commits" = "%1$lld novos commits";
 "%lld not pushed" = "%1$lld não enviados";
 "%lld to pull" = "%1$lld para baixar";
+"%lld uncommitted files. Stash them above or commit first." = "%1$lld arquivos sem commit. Guarde-os no stash acima ou faça o commit primeiro.";
 "All branches…" = "Todos os branches…";
+"Already in this branch" = "Já está neste branch";
+"Choose a base to see the commits that replay." = "Escolha uma base para ver os commits reaplicados.";
+"Choose the new base" = "Escolha a nova base";
+"Clean up history" = "Limpar o histórico";
+"Commits to replay" = "Commits a reaplicar";
 "Compare with %@" = "Comparar com %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Conflitos pausam o rebase até você continuar ou abortar, e um rebase concluído pode ser desfeito.";
 "Fast-forward only" = "Só fast-forward";
 "Filter repositories" = "Filtrar repositórios";
 "Find in file" = "Buscar no arquivo";
@@ -12,10 +21,13 @@
 "Last opened" = "Último aberto";
 "Last opened repository" = "Último repositório aberto";
 "Merge" = "Merge";
+"Move onto another branch" = "Mover para cima de outro branch";
+"New base" = "Nova base";
 "New repository…" = "Novo repositório…";
 "Nothing is due today." = "Nada vence hoje.";
 "Open Projects" = "Abrir Projetos";
 "Open a repository to use these" = "Abra um repositório para usá-las";
+"Open changes" = "Abrir alterações";
 "Open…" = "Abrir…";
 "Overdue · %@" = "Atrasada · %1$@";
 "Pop latest stash" = "Aplicar o stash mais recente";
@@ -24,12 +36,18 @@
 "Next match" = "Próximo resultado";
 "Pull as configured in git" = "Pull conforme configurado no git";
 "Pull options" = "Opções de pull";
+"Rebase mode" = "Modo de rebase";
 "Recent" = "Recentes";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Reaplica os commits deste branch sobre uma nova base, como se o branch tivesse começado ali.";
+"Review the commits" = "Revise os commits";
+"Search branches and tags" = "Buscar branches e tags";
 "Start %@ here" = "Iniciar %1$@ aqui";
+"Stash uncommitted changes and restore them after" = "Guardar no stash as alterações sem commit e restaurá-las depois";
 "Switch branch or repository, open or clone one, or close the tab" = "Trocar de branch ou repositório, abrir ou clonar um, ou fechar a aba";
 "Tasks for today" = "Tarefas de hoje";
 "Up to date" = "Atualizado";
 "Yesterday" = "Ontem";
+"choose a new base" = "escolha uma nova base";
 "{0} of {1}" = "{0} de {1}";
 "No matches" = "Nenhum resultado";
 "Wrap lines" = "Quebrar linhas";
