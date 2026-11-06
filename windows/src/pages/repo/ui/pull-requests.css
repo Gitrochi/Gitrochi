@@ -19,9 +19,10 @@
 .pr-list-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .pr-list-clear { flex: none; width: 24px; height: 24px; margin-right: -8px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .pr-list-clear:hover { background: var(--hover); }
-/* the filter: neutral, 28px tall, every segment 12/500 so the labels never shift */
+/* the filter: neutral, 28px tall, every segment 12/500 so the labels never shift; a segment is as wide as its label
+   plus a share of the rest (equal thirds cut "Review requested 12"), whichever stylesheet loads last */
 .pr-list .segmented { border-radius: 6px; }
-.pr-list .segmented button { flex: 1 1 auto; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; min-width: 0; }
+.pr-list .segmented.stretch button { flex: 1 1 auto; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; min-width: 0; }
 .pr-list-note { font-size: 12px; color: var(--text-2); }
 .pr-list-state { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
 .pr-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
