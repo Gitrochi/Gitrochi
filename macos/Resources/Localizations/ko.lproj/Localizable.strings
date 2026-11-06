@@ -4,12 +4,17 @@
 "%lld new commits" = "새 커밋 %1$lld개";
 "%lld not pushed" = "푸시 안 한 커밋 %1$lld개";
 "%lld to pull" = "받을 커밋 %1$lld개";
+"%lld unchanged lines" = "바뀌지 않은 %1$lld줄";
 "%lld uncommitted files. Stash them above or commit first." = "커밋하지 않은 파일 %1$lld개. 위에서 스태시를 켜거나 먼저 커밋하세요.";
 "All branches…" = "모든 브랜치…";
 "Already in this branch" = "이미 이 브랜치에 있음";
+"Blame before this change" = "이 변경 이전의 줄별 작성자";
+"Blame of the revision shown · uncommitted changes not shown" = "표시 중인 시점의 줄별 작성자 · 커밋하지 않은 변경은 표시하지 않음";
+"Changes in %@ against its parent" = "%1$@에서 부모 커밋 대비 바뀐 내용";
 "Choose a base to see the commits that replay." = "기준을 고르면 다시 쌓을 커밋이 보입니다.";
 "Choose the new base" = "새 기준 고르기";
 "Clean up history" = "히스토리 정리";
+"Commits that changed this file" = "이 파일을 바꾼 커밋들";
 "Commits to replay" = "다시 쌓을 커밋";
 "Compare with %@" = "%1$@ 기준으로 비교";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "충돌이 나면 계속하거나 중단할 때까지 리베이스가 멈추고, 끝난 리베이스는 되돌릴 수 있습니다.";
@@ -36,10 +41,15 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "이 브랜치의 커밋을 새 기준 위에 다시 쌓습니다. 브랜치가 거기서 시작한 것처럼 됩니다.";
 "Review the commits" = "커밋 확인";
 "Search branches and tags" = "브랜치와 태그 검색";
+"Show %lld unchanged lines, %lld to %lld" = "바뀌지 않은 %1$lld줄 보기, %2$lld~%3$lld번 줄";
+"Show commit" = "커밋 보기";
+"Split" = "나란히";
 "Start %@ here" = "여기서 %1$@ 시작";
 "Stash uncommitted changes and restore them after" = "커밋하지 않은 변경을 스태시했다가 끝나면 되돌리기";
 "Switch branch or repository, open or clone one, or close the tab" = "브랜치나 저장소 전환, 저장소 열기·복제, 탭 닫기";
 "Tasks for today" = "오늘 할 일";
+"Uncommitted changes against HEAD" = "HEAD 대비 커밋하지 않은 변경";
+"Unified" = "한 줄로";
 "Up to date" = "최신 상태";
 "Versions" = "버전";
 "Version" = "버전";
@@ -108,6 +118,7 @@
 "Next match" = "다음 검색 결과";
 "Yesterday" = "어제";
 "choose a new base" = "새 기준을 고르세요";
+"local" = "로컬";
 "{0} of {1}" = "{1}개 중 {0}";
 "No matches" = "검색 결과 없음";
 "Wrap lines" = "자동 줄바꿈";
@@ -1857,7 +1868,6 @@
 "Save gist changes?" = "Gist 변경을 저장할까요?";
 "Save release draft?" = "릴리스 초안을 저장할까요?";
 "Search branches, tags and stashes" = "브랜치·태그·스태시 검색";
-"Search files" = "파일 검색";
 "Search filters loaded pages. Load more to search older items." = "불러온 페이지 안에서 검색합니다. 이전 항목을 검색하려면 더 불러오세요.";
 "Search issues" = "이슈 검색";
 "Search loaded items" = "불러온 항목 검색";
@@ -1995,7 +2005,6 @@
 "Renew browser connection…" = "브라우저 연결 갱신…";
 "Connect another GitHub account…" = "다른 GitHub 계정 연결…";
 "Add or remove connected accounts…" = "연결 계정 추가·해제…";
-"{0} files · {1} folders" = "파일 {0}개 · 폴더 {1}개";
 "Choose a valid base branch to preview its commits." = "올바른 대상 브랜치를 선택하면 커밋을 미리 볼 수 있습니다.";
 "The branch summary could not be read. Refresh and try again." = "브랜치 요약을 읽지 못했습니다. 대상을 확인하고 다시 시도하세요.";
 "Reading branch summary…" = "브랜치 요약을 읽는 중…";
